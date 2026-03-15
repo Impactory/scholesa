@@ -3188,6 +3188,10 @@ class FederatedLearningAggregationRunModel {
     required this.averageUpdateNorm,
     required this.schemaVersions,
     required this.runtimeTargets,
+    required this.optimizerStrategies,
+    this.compatibilityKey,
+    this.warmStartPackageId,
+    this.warmStartModelVersion,
     required this.contributionDetails,
     this.createdBy,
     this.createdAt,
@@ -3223,6 +3227,10 @@ class FederatedLearningAggregationRunModel {
   final double averageUpdateNorm;
   final List<String> schemaVersions;
   final List<String> runtimeTargets;
+  final List<String> optimizerStrategies;
+  final String? compatibilityKey;
+  final String? warmStartPackageId;
+  final String? warmStartModelVersion;
   final List<FederatedLearningContributionDetailModel> contributionDetails;
   final String? createdBy;
   final Timestamp? createdAt;
@@ -3273,7 +3281,11 @@ class FederatedLearningAggregationRunModel {
       averageUpdateNorm: (data['averageUpdateNorm'] as num?)?.toDouble() ?? 0,
       schemaVersions: _stringListOrEmpty(data['schemaVersions']),
       runtimeTargets: _stringListOrEmpty(data['runtimeTargets']),
-        contributionDetails:
+      optimizerStrategies: _stringListOrEmpty(data['optimizerStrategies']),
+      compatibilityKey: data['compatibilityKey'] as String?,
+      warmStartPackageId: data['warmStartPackageId'] as String?,
+      warmStartModelVersion: data['warmStartModelVersion'] as String?,
+      contributionDetails:
           _contributionDetailListOrEmpty(data['contributionDetails']),
       createdBy: data['createdBy'] as String?,
       createdAt: _timestampOrNull(data['createdAt']),
@@ -3310,6 +3322,10 @@ class FederatedLearningAggregationRunModel {
         'averageUpdateNorm': averageUpdateNorm,
         'schemaVersions': schemaVersions,
         'runtimeTargets': runtimeTargets,
+        'optimizerStrategies': optimizerStrategies,
+        'compatibilityKey': compatibilityKey,
+        'warmStartPackageId': warmStartPackageId,
+        'warmStartModelVersion': warmStartModelVersion,
         'contributionDetails': contributionDetails
           .map((FederatedLearningContributionDetailModel detail) =>
             detail.toMap())
@@ -3347,6 +3363,10 @@ class FederatedLearningMergeArtifactModel {
     required this.maxVectorLength,
     required this.totalPayloadBytes,
     required this.averageUpdateNorm,
+    required this.optimizerStrategies,
+    this.compatibilityKey,
+    this.warmStartPackageId,
+    this.warmStartModelVersion,
     required this.contributionDetails,
     this.createdBy,
     this.createdAt,
@@ -3377,6 +3397,10 @@ class FederatedLearningMergeArtifactModel {
   final int maxVectorLength;
   final int totalPayloadBytes;
   final double averageUpdateNorm;
+  final List<String> optimizerStrategies;
+  final String? compatibilityKey;
+  final String? warmStartPackageId;
+  final String? warmStartModelVersion;
   final List<FederatedLearningContributionDetailModel> contributionDetails;
   final String? createdBy;
   final Timestamp? createdAt;
@@ -3421,7 +3445,11 @@ class FederatedLearningMergeArtifactModel {
       maxVectorLength: (data['maxVectorLength'] as num?)?.toInt() ?? 0,
       totalPayloadBytes: (data['totalPayloadBytes'] as num?)?.toInt() ?? 0,
       averageUpdateNorm: (data['averageUpdateNorm'] as num?)?.toDouble() ?? 0,
-        contributionDetails:
+      optimizerStrategies: _stringListOrEmpty(data['optimizerStrategies']),
+      compatibilityKey: data['compatibilityKey'] as String?,
+      warmStartPackageId: data['warmStartPackageId'] as String?,
+      warmStartModelVersion: data['warmStartModelVersion'] as String?,
+      contributionDetails:
           _contributionDetailListOrEmpty(data['contributionDetails']),
       createdBy: data['createdBy'] as String?,
       createdAt: _timestampOrNull(data['createdAt']),
@@ -3453,6 +3481,10 @@ class FederatedLearningMergeArtifactModel {
         'maxVectorLength': maxVectorLength,
         'totalPayloadBytes': totalPayloadBytes,
         'averageUpdateNorm': averageUpdateNorm,
+        'optimizerStrategies': optimizerStrategies,
+        'compatibilityKey': compatibilityKey,
+        'warmStartPackageId': warmStartPackageId,
+        'warmStartModelVersion': warmStartModelVersion,
         'contributionDetails': contributionDetails
           .map((FederatedLearningContributionDetailModel detail) =>
             detail.toMap())
@@ -3504,6 +3536,10 @@ class FederatedLearningCandidateModelPackageModel {
     required this.maxVectorLength,
     required this.totalPayloadBytes,
     required this.averageUpdateNorm,
+    required this.optimizerStrategies,
+    this.compatibilityKey,
+    this.warmStartPackageId,
+    this.warmStartModelVersion,
     required this.contributionDetails,
     this.createdBy,
     this.createdAt,
@@ -3548,6 +3584,10 @@ class FederatedLearningCandidateModelPackageModel {
   final int maxVectorLength;
   final int totalPayloadBytes;
   final double averageUpdateNorm;
+  final List<String> optimizerStrategies;
+  final String? compatibilityKey;
+  final String? warmStartPackageId;
+  final String? warmStartModelVersion;
   final List<FederatedLearningContributionDetailModel> contributionDetails;
   final String? createdBy;
   final Timestamp? createdAt;
@@ -3611,6 +3651,10 @@ class FederatedLearningCandidateModelPackageModel {
       maxVectorLength: (data['maxVectorLength'] as num?)?.toInt() ?? 0,
       totalPayloadBytes: (data['totalPayloadBytes'] as num?)?.toInt() ?? 0,
       averageUpdateNorm: (data['averageUpdateNorm'] as num?)?.toDouble() ?? 0,
+        optimizerStrategies: _stringListOrEmpty(data['optimizerStrategies']),
+        compatibilityKey: data['compatibilityKey'] as String?,
+        warmStartPackageId: data['warmStartPackageId'] as String?,
+        warmStartModelVersion: data['warmStartModelVersion'] as String?,
         contributionDetails:
           _contributionDetailListOrEmpty(data['contributionDetails']),
       createdBy: data['createdBy'] as String?,
@@ -3657,6 +3701,10 @@ class FederatedLearningCandidateModelPackageModel {
         'maxVectorLength': maxVectorLength,
         'totalPayloadBytes': totalPayloadBytes,
         'averageUpdateNorm': averageUpdateNorm,
+        'optimizerStrategies': optimizerStrategies,
+        'compatibilityKey': compatibilityKey,
+        'warmStartPackageId': warmStartPackageId,
+        'warmStartModelVersion': warmStartModelVersion,
         'contributionDetails': contributionDetails
           .map((FederatedLearningContributionDetailModel detail) =>
             detail.toMap())

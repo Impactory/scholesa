@@ -1607,6 +1607,13 @@ Map<String, dynamic> _aggregationRunRow({
     'contributionDetails': _contributionDetailRows(),
     'schemaVersions': <String>['v1'],
     'runtimeTargets': <String>['flutter_mobile'],
+    'optimizerStrategies': <String>[
+      'bounded_runtime_vector_local_finetune_v1',
+    ],
+    'compatibilityKey':
+        'v1|flutter_mobile|bounded_runtime_vector_local_finetune_v1|fl_pkg_1|fl_runtime_model_v1|8',
+    'warmStartPackageId': 'fl_pkg_1',
+    'warmStartModelVersion': 'fl_runtime_model_v1',
     'createdAt': createdAt ?? DateTime(2026, 3, 14, 12),
   };
 }
@@ -1665,6 +1672,13 @@ Map<String, dynamic> _candidatePackageRow({
     'contributingSiteIds': contributingSiteIds,
     'schemaVersions': <String>['v1'],
     'runtimeTargets': <String>['flutter_mobile'],
+    'optimizerStrategies': <String>[
+      'bounded_runtime_vector_local_finetune_v1',
+    ],
+    'compatibilityKey':
+        'v1|flutter_mobile|bounded_runtime_vector_local_finetune_v1|fl_pkg_1|fl_runtime_model_v1|8',
+    'warmStartPackageId': 'fl_pkg_1',
+    'warmStartModelVersion': 'fl_runtime_model_v1',
     'maxVectorLength': 128,
     'totalPayloadBytes': 1792,
     'averageUpdateNorm': 1.35,

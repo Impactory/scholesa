@@ -302,6 +302,39 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     return 'Runtime payload: model ${package.modelVersion} · vector ${package.runtimeVectorLength}/${package.maxVectorLength} · payload ${package.totalPayloadBytes} bytes · avg norm ${_formatMergeMetric(package.averageUpdateNorm)} · digest ${package.runtimeVectorDigest}';
   }
 
+  String _formatCompatibilityRollup({
+    required List<String> schemaVersions,
+    required List<String> runtimeTargets,
+    required List<String> optimizerStrategies,
+    String? warmStartPackageId,
+    String? warmStartModelVersion,
+  }) {
+    final String schemaLabel = schemaVersions.isEmpty
+        ? 'n/a'
+        : schemaVersions.length == 1
+            ? schemaVersions.first
+            : 'mixed';
+    final String runtimeTargetLabel = runtimeTargets.isEmpty
+        ? 'n/a'
+        : runtimeTargets.length == 1
+            ? runtimeTargets.first
+            : 'mixed';
+    final String optimizerLabel = optimizerStrategies.isEmpty
+        ? 'n/a'
+        : optimizerStrategies.length == 1
+            ? optimizerStrategies.first
+            : 'mixed';
+    final String warmStartPackageLabel =
+        (warmStartPackageId ?? '').trim().isEmpty
+            ? 'n/a'
+            : warmStartPackageId!.trim();
+    final String warmStartModelLabel =
+        (warmStartModelVersion ?? '').trim().isEmpty
+            ? 'n/a'
+            : warmStartModelVersion!.trim();
+    return 'Compatibility batch: runtime $runtimeTargetLabel · schema $schemaLabel · optimizer $optimizerLabel · warm start $warmStartPackageLabel · model $warmStartModelLabel';
+  }
+
   Future<void> _showContributionDetailsDialog({
     required String experimentLabel,
     required List<FederatedLearningContributionDetailModel> details,
@@ -1215,6 +1248,23 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                   ),
                 ),
               ],
+              const SizedBox(height: 4),
+              Text(
+                _tHqFeatureFlags(
+                  context,
+                  'Latest aggregation compatibility: ${_formatCompatibilityRollup(
+                    schemaVersions: latestRun.schemaVersions,
+                    runtimeTargets: latestRun.runtimeTargets,
+                    optimizerStrategies: latestRun.optimizerStrategies,
+                    warmStartPackageId: latestRun.warmStartPackageId,
+                    warmStartModelVersion: latestRun.warmStartModelVersion,
+                  )}',
+                ),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: ScholesaColors.textSecondary,
+                ),
+              ),
               if (latestRun.contributionDetails.isNotEmpty) ...<Widget>[
                 const SizedBox(height: 4),
                 Text(
@@ -1298,6 +1348,23 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                   ),
                 ),
               ],
+              const SizedBox(height: 4),
+              Text(
+                _tHqFeatureFlags(
+                  context,
+                  'Latest package compatibility: ${_formatCompatibilityRollup(
+                    schemaVersions: latestPackage.schemaVersions,
+                    runtimeTargets: latestPackage.runtimeTargets,
+                    optimizerStrategies: latestPackage.optimizerStrategies,
+                    warmStartPackageId: latestPackage.warmStartPackageId,
+                    warmStartModelVersion: latestPackage.warmStartModelVersion,
+                  )}',
+                ),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: ScholesaColors.textSecondary,
+                ),
+              ),
               if (latestPackage.contributionDetails.isNotEmpty) ...<Widget>[
                 const SizedBox(height: 4),
                 Text(
@@ -2552,6 +2619,13 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     final String localTrainingRollup = _formatLocalTrainingRollup(run.summaryIds);
     final String runtimePayloadSummary =
       _formatRuntimePayloadSummary(candidatePackage);
+    final String compatibilityRollup = _formatCompatibilityRollup(
+      schemaVersions: run.schemaVersions,
+      runtimeTargets: run.runtimeTargets,
+      optimizerStrategies: run.optimizerStrategies,
+      warmStartPackageId: run.warmStartPackageId,
+      warmStartModelVersion: run.warmStartModelVersion,
+    );
 
     return Container(
       width: double.infinity,
@@ -2642,6 +2716,14 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               ),
             ),
           ],
+          const SizedBox(height: 4),
+          Text(
+            _tHqFeatureFlags(context, compatibilityRollup),
+            style: const TextStyle(
+              fontSize: 12,
+              color: ScholesaColors.textSecondary,
+            ),
+          ),
           if (artifactId.isNotEmpty) ...<Widget>[
             const SizedBox(height: 4),
             Text(
@@ -2947,6 +3029,13 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
       _formatLocalTrainingRollup(package.summaryIds);
     final String runtimePayloadSummary =
       _formatRuntimePayloadSummary(package);
+    final String compatibilityRollup = _formatCompatibilityRollup(
+      schemaVersions: package.schemaVersions,
+      runtimeTargets: package.runtimeTargets,
+      optimizerStrategies: package.optimizerStrategies,
+      warmStartPackageId: package.warmStartPackageId,
+      warmStartModelVersion: package.warmStartModelVersion,
+    );
     final bool isApproved = effectiveStatus == 'approved_for_eval';
     final bool isHold = effectiveStatus == 'hold';
 
@@ -2998,6 +3087,14 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               ),
             ),
           ],
+          const SizedBox(height: 4),
+          Text(
+            _tHqFeatureFlags(context, compatibilityRollup),
+            style: const TextStyle(
+              fontSize: 12,
+              color: ScholesaColors.textSecondary,
+            ),
+          ),
           if (mergeStrategy.isNotEmpty) ...<Widget>[
             const SizedBox(height: 4),
             Text(
@@ -3915,6 +4012,15 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
       _formatLocalTrainingRollup(package?.summaryIds ?? const <String>[]);
     final String runtimePayloadSummary =
       _formatRuntimePayloadSummary(package);
+    final String compatibilityRollup = package == null
+        ? ''
+        : _formatCompatibilityRollup(
+            schemaVersions: package.schemaVersions,
+            runtimeTargets: package.runtimeTargets,
+            optimizerStrategies: package.optimizerStrategies,
+            warmStartPackageId: package.warmStartPackageId,
+            warmStartModelVersion: package.warmStartModelVersion,
+          );
     final bool isRevoked = revocation != null;
 
     return Container(
@@ -4094,6 +4200,16 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               const SizedBox(height: 4),
               Text(
                 _tHqFeatureFlags(context, localTrainingRollup),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: ScholesaColors.textSecondary,
+                ),
+              ),
+            ],
+            if (compatibilityRollup.isNotEmpty) ...<Widget>[
+              const SizedBox(height: 4),
+              Text(
+                _tHqFeatureFlags(context, compatibilityRollup),
                 style: const TextStyle(
                   fontSize: 12,
                   color: ScholesaColors.textSecondary,
@@ -5268,6 +5384,18 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                               _formatLocalTrainingRollup(summaryIds);
                             final String runtimePayloadSummary =
                               _formatRuntimePayloadSummary(package);
+                            final String compatibilityRollup = package == null
+                                ? ''
+                                : _formatCompatibilityRollup(
+                                    schemaVersions: package.schemaVersions,
+                                    runtimeTargets: package.runtimeTargets,
+                                    optimizerStrategies:
+                                        package.optimizerStrategies,
+                                    warmStartPackageId:
+                                        package.warmStartPackageId,
+                                    warmStartModelVersion:
+                                        package.warmStartModelVersion,
+                                  );
                             final List<FederatedLearningContributionDetailModel>
                               contributionDetails =
                               package?.contributionDetails ??
@@ -5329,6 +5457,18 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                                       _tHqFeatureFlags(
                                         dialogContext,
                                         runtimePayloadSummary,
+                                      ),
+                                      style: const TextStyle(
+                                        color: ScholesaColors.textSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                  if (compatibilityRollup.isNotEmpty) ...<Widget>[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      _tHqFeatureFlags(
+                                        dialogContext,
+                                        compatibilityRollup,
                                       ),
                                       style: const TextStyle(
                                         color: ScholesaColors.textSecondary,
