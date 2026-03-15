@@ -272,6 +272,22 @@ export interface FederatedLearningExperimentReviewRecord {
   updatedAt: number;
 }
 
+export interface FederatedLearningContributionDetail {
+  summaryId: string;
+  siteId: string;
+  sampleCount: number;
+  payloadBytes: number;
+  vectorLength: number;
+  updateNorm: number;
+  schemaVersion: string;
+  runtimeTarget?: string;
+  traceId?: string;
+  payloadDigest?: string;
+  rawWeight: number;
+  normScale: number;
+  effectiveWeight: number;
+}
+
 export interface FederatedLearningAggregationRun {
   id: string;
   experimentId: string;
@@ -302,6 +318,7 @@ export interface FederatedLearningAggregationRun {
   averageUpdateNorm: number;
   schemaVersions: string[];
   runtimeTargets: string[];
+  contributionDetails?: FederatedLearningContributionDetail[];
   createdBy?: string;
   createdAt: number;
   updatedAt: number;
@@ -332,6 +349,7 @@ export interface FederatedLearningMergeArtifact {
   maxVectorLength: number;
   totalPayloadBytes: number;
   averageUpdateNorm: number;
+  contributionDetails?: FederatedLearningContributionDetail[];
   createdBy?: string;
   createdAt: number;
   updatedAt: number;
@@ -376,6 +394,7 @@ export interface FederatedLearningCandidateModelPackage {
   maxVectorLength: number;
   totalPayloadBytes: number;
   averageUpdateNorm: number;
+  contributionDetails?: FederatedLearningContributionDetail[];
   createdBy?: string;
   createdAt: number;
   updatedAt: number;

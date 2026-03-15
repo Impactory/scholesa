@@ -31,6 +31,7 @@ import {
   buildFederatedLearningRuntimeRolloutAlertRecordDocId,
   buildFederatedLearningRuntimeRolloutEscalationRecordDocId,
   buildFederatedLearningRuntimeRolloutControlRecordDocId,
+  buildFederatedLearningContributionDetails,
   buildFederatedLearningMergeWeightSummary,
   buildFederatedLearningMergedRuntimeVector,
   buildFederatedLearningCandidateModelPackageSummary,
@@ -1649,6 +1650,7 @@ interface FederatedPendingSummaryRow {
   schemaVersion: string;
   runtimeTarget?: string | null;
   traceId: string;
+  payloadDigest: string;
   aggregationStatus: string;
   aggregationRunId?: string;
   ref: FirebaseFirestore.DocumentReference;
@@ -1680,6 +1682,7 @@ function mapPendingFederatedSummary(
     schemaVersion: asTrimmedString(data.schemaVersion) || 'v1',
     runtimeTarget: asTrimmedString(data.runtimeTarget) || null,
     traceId: asTrimmedString(data.traceId),
+    payloadDigest: asTrimmedString(data.payloadDigest),
     aggregationStatus: asTrimmedString(data.aggregationStatus) || 'pending',
     aggregationRunId: asTrimmedString(data.aggregationRunId) || undefined,
     ref: snapDoc.ref,
@@ -1762,11 +1765,16 @@ async function maybeMaterializeFederatedLearningAggregationRun({
     const mergeWeights = buildFederatedLearningMergeWeightSummary(
       refreshedRows,
     );
+    const contributionDetails = buildFederatedLearningContributionDetails(
+      refreshedRows,
+      mergeWeights.normCap,
+    );
     const artifactSummary = buildFederatedLearningMergeArtifactSummary(
       triggerSummaryId,
       refreshedSelection,
       mergedRuntimeVector,
       mergeWeights,
+      contributionDetails,
     );
     const packageSummary = buildFederatedLearningCandidateModelPackageSummary(
       runId,
@@ -1803,6 +1811,7 @@ async function maybeMaterializeFederatedLearningAggregationRun({
       schemaVersions: refreshedSelection.schemaVersions,
       runtimeTargets: refreshedSelection.runtimeTargets,
       boundedDigest: artifactSummary.boundedDigest,
+      contributionDetails: artifactSummary.contributionDetails,
       createdBy: actorId,
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
@@ -1832,6 +1841,7 @@ async function maybeMaterializeFederatedLearningAggregationRun({
       maxVectorLength: artifactSummary.maxVectorLength,
       totalPayloadBytes: artifactSummary.totalPayloadBytes,
       averageUpdateNorm: artifactSummary.averageUpdateNorm,
+      contributionDetails: artifactSummary.contributionDetails,
       createdBy: actorId,
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
@@ -1864,6 +1874,7 @@ async function maybeMaterializeFederatedLearningAggregationRun({
       maxVectorLength: packageSummary.maxVectorLength,
       totalPayloadBytes: packageSummary.totalPayloadBytes,
       averageUpdateNorm: packageSummary.averageUpdateNorm,
+      contributionDetails: packageSummary.contributionDetails,
       createdBy: actorId,
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),

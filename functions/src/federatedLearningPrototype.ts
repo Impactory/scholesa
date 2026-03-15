@@ -57,6 +57,24 @@ export interface FederatedLearningAggregationCandidate {
   updateNorm: number;
   schemaVersion: string;
   runtimeTarget?: string | null;
+  traceId?: string | null;
+  payloadDigest?: string | null;
+}
+
+export interface FederatedLearningContributionDetail {
+  summaryId: string;
+  siteId: string;
+  sampleCount: number;
+  payloadBytes: number;
+  vectorLength: number;
+  updateNorm: number;
+  schemaVersion: string;
+  runtimeTarget?: string;
+  traceId?: string;
+  payloadDigest?: string;
+  rawWeight: number;
+  normScale: number;
+  effectiveWeight: number;
 }
 
 export interface FederatedLearningAggregationSelection {
@@ -98,6 +116,7 @@ export interface FederatedLearningMergeArtifactSummary {
   totalPayloadBytes: number;
   averageUpdateNorm: number;
   boundedDigest: string;
+  contributionDetails: FederatedLearningContributionDetail[];
 }
 
 export interface FederatedLearningCandidateModelPackageSummary {
@@ -123,6 +142,7 @@ export interface FederatedLearningCandidateModelPackageSummary {
   maxVectorLength: number;
   totalPayloadBytes: number;
   averageUpdateNorm: number;
+  contributionDetails: FederatedLearningContributionDetail[];
 }
 
 function asTrimmedString(value: unknown): string {
@@ -666,11 +686,54 @@ export function buildFederatedLearningMergeWeightSummary(
   };
 }
 
+export function buildFederatedLearningContributionDetails(
+  candidates: Array<
+    Pick<
+      FederatedLearningAggregationCandidate,
+      | 'id'
+      | 'siteId'
+      | 'sampleCount'
+      | 'payloadBytes'
+      | 'vectorLength'
+      | 'updateNorm'
+      | 'schemaVersion'
+      | 'runtimeTarget'
+      | 'traceId'
+      | 'payloadDigest'
+    >
+  >,
+  normCap: number,
+): FederatedLearningContributionDetail[] {
+  return candidates.map((candidate) => {
+    const rawWeight = Number(Math.max(0, candidate.sampleCount).toFixed(6));
+    const normScale = candidate.updateNorm > 0
+      ? Number(Math.min(1, normCap / candidate.updateNorm).toFixed(6))
+      : 1;
+    const effectiveWeight = Number((rawWeight * normScale).toFixed(6));
+    return {
+      summaryId: candidate.id,
+      siteId: candidate.siteId,
+      sampleCount: candidate.sampleCount,
+      payloadBytes: candidate.payloadBytes,
+      vectorLength: candidate.vectorLength,
+      updateNorm: Number(candidate.updateNorm.toFixed(6)),
+      schemaVersion: candidate.schemaVersion,
+      runtimeTarget: candidate.runtimeTarget ?? undefined,
+      traceId: candidate.traceId ?? undefined,
+      payloadDigest: candidate.payloadDigest ?? undefined,
+      rawWeight,
+      normScale,
+      effectiveWeight,
+    };
+  });
+}
+
 export function buildFederatedLearningMergeArtifactSummary(
   triggerSummaryId: string,
   selection: FederatedLearningAggregationSelection,
   runtimeVector: number[],
   mergeWeights: FederatedLearningMergeWeightSummary,
+  contributionDetails: FederatedLearningContributionDetail[],
 ): FederatedLearningMergeArtifactSummary {
   const mergeStrategy = FEDERATED_LEARNING_MERGE_STRATEGY;
   const payloadFormat = 'runtime_vector_v1';
@@ -703,6 +766,7 @@ export function buildFederatedLearningMergeArtifactSummary(
       averageUpdateNorm: selection.averageUpdateNorm,
       schemaVersions: selection.schemaVersions,
       runtimeTargets: selection.runtimeTargets,
+      contributionDetails,
     }))
     .digest('hex');
 
@@ -727,6 +791,7 @@ export function buildFederatedLearningMergeArtifactSummary(
     totalPayloadBytes: selection.totalPayloadBytes,
     averageUpdateNorm: selection.averageUpdateNorm,
     boundedDigest: `sha256:${boundedDigest}`,
+    contributionDetails,
   };
 }
 
@@ -762,6 +827,7 @@ export function buildFederatedLearningCandidateModelPackageSummary(
       maxVectorLength: artifactSummary.maxVectorLength,
       totalPayloadBytes: artifactSummary.totalPayloadBytes,
       averageUpdateNorm: artifactSummary.averageUpdateNorm,
+      contributionDetails: artifactSummary.contributionDetails,
     }))
     .digest('hex');
 
@@ -788,5 +854,6 @@ export function buildFederatedLearningCandidateModelPackageSummary(
     maxVectorLength: artifactSummary.maxVectorLength,
     totalPayloadBytes: artifactSummary.totalPayloadBytes,
     averageUpdateNorm: artifactSummary.averageUpdateNorm,
+    contributionDetails: artifactSummary.contributionDetails,
   };
 }
