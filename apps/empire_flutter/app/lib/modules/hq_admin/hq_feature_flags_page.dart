@@ -6821,10 +6821,10 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     }
 
     final List<_RuntimeRolloutHealthRow> rows = delivery.targetSiteIds
-        .map((_siteId) => _buildRuntimeRolloutHealthRow(
-              _siteId,
+        .map((siteId) => _buildRuntimeRolloutHealthRow(
+              siteId,
               delivery,
-              latestActivationBySite[_siteId],
+              latestActivationBySite[siteId],
             ))
         .toList(growable: false);
 
