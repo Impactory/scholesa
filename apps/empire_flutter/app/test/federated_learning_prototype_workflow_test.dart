@@ -3388,6 +3388,12 @@ void main() {
     );
     expect(
       find.text(
+        'Latest aggregation compatibility: Compatibility batch: runtime flutter_mobile · schema v1 · optimizer bounded_runtime_vector_local_finetune_v1 · warm start fl_pkg_1 · model fl_runtime_model_v1',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
         'Latest package damping: Damping: 1 of 2 summaries scaled · raw weight 24 · effective weight 22.429',
       ),
       findsOneWidget,
@@ -3395,6 +3401,12 @@ void main() {
     expect(
       find.text(
         'Latest package training: Local training rollup: bounded_runtime_vector_local_finetune_v1 · 2 summaries · epochs 2 · steps 24 · window 135s · warm start fl_pkg_1',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Latest package compatibility: Compatibility batch: runtime flutter_mobile · schema v1 · optimizer bounded_runtime_vector_local_finetune_v1 · warm start fl_pkg_1 · model fl_runtime_model_v1',
       ),
       findsOneWidget,
     );
@@ -3827,6 +3839,12 @@ void main() {
       findsOneWidget,
     );
     expect(
+      find.text(
+        'Compatibility batch: runtime flutter_mobile · schema v1 · optimizer bounded_runtime_vector_local_finetune_v1 · warm start fl_pkg_1 · model fl_runtime_model_v1',
+      ),
+      findsOneWidget,
+    );
+    expect(
       find.widgetWithText(OutlinedButton, 'Open accepted summaries'),
       findsOneWidget,
     );
@@ -4001,6 +4019,12 @@ void main() {
     expect(
       find.text(
         'Local training rollup: bounded_runtime_vector_local_finetune_v1 · 2 summaries · epochs 2 · steps 24 · window 135s · warm start fl_pkg_1',
+      ),
+      findsWidgets,
+    );
+    expect(
+      find.text(
+        'Compatibility batch: runtime flutter_mobile · schema v1 · optimizer bounded_runtime_vector_local_finetune_v1 · warm start fl_pkg_1 · model fl_runtime_model_v1',
       ),
       findsWidgets,
     );
