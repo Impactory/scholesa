@@ -920,6 +920,8 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
       'candidateModelPackageId': packageId,
       'aggregationRunId': packageRow['aggregationRunId'] ?? '',
       'mergeArtifactId': packageRow['mergeArtifactId'] ?? '',
+      'packageDigest': packageRow['packageDigest'] ?? '',
+      'boundedDigest': packageRow['boundedDigest'] ?? '',
       'status': status,
       'target': target,
       'rationale': rationale,
@@ -956,6 +958,10 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   ) async {
     final String packageId =
         (data['candidateModelPackageId'] as String? ?? '').trim();
+    final Map<String, dynamic> packageRow = _candidatePackages.firstWhere(
+      (Map<String, dynamic> row) => row['id'] == packageId,
+      orElse: () => <String, dynamic>{},
+    );
     final Map<String, dynamic> promotionRow = _promotionRecords.firstWhere(
       (Map<String, dynamic> row) => row['candidateModelPackageId'] == packageId,
       orElse: () => <String, dynamic>{},
@@ -969,6 +975,8 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
       'candidatePromotionRecordId': promotionRow['id'] ?? '',
       'aggregationRunId': promotionRow['aggregationRunId'] ?? '',
       'mergeArtifactId': promotionRow['mergeArtifactId'] ?? '',
+      'packageDigest': promotionRow['packageDigest'] ?? packageRow['packageDigest'] ?? '',
+      'boundedDigest': promotionRow['boundedDigest'] ?? packageRow['boundedDigest'] ?? '',
       'revokedStatus': promotionRow['status'] ?? '',
       'target': promotionRow['target'] ?? 'sandbox_eval',
       'rationale': (data['rationale'] as String? ?? '').trim(),
@@ -2006,6 +2014,8 @@ Map<String, dynamic> _promotionRecordRow({
   String candidateModelPackageId = 'fl_pkg_1',
   String aggregationRunId = 'fl_agg_1',
   String mergeArtifactId = 'fl_merge_1',
+  String packageDigest = 'sha256:pkg-1',
+  String boundedDigest = 'sha256:digest-1',
   String status = 'approved_for_eval',
   String rationale = 'Ready for bounded sandbox evaluation.',
 }) {
@@ -2015,6 +2025,8 @@ Map<String, dynamic> _promotionRecordRow({
     'candidateModelPackageId': candidateModelPackageId,
     'aggregationRunId': aggregationRunId,
     'mergeArtifactId': mergeArtifactId,
+    'packageDigest': packageDigest,
+    'boundedDigest': boundedDigest,
     'status': status,
     'target': 'sandbox_eval',
     'rationale': rationale,
@@ -3760,6 +3772,14 @@ void main() {
       bridge.recordedPromotionDecisions.single['candidateModelPackageId'],
       'fl_pkg_2',
     );
+    expect(
+      bridge.recordedPromotionDecisions.single['packageDigest'],
+      'sha256:pkg-2',
+    );
+    expect(
+      bridge.recordedPromotionDecisions.single['boundedDigest'],
+      'sha256:digest-2',
+    );
 
     await tester.ensureVisible(holdFilterChip);
     await tester.tap(holdFilterChip);
@@ -3813,6 +3833,22 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Showing 1-1 of 1'), findsOneWidget);
+    expect(
+      find.text('Decision digests: package sha256:pkg-1 · bounded sha256:digest-1'),
+      findsOneWidget,
+    );
+    final Finder packageTraceButton = find.widgetWithText(
+      OutlinedButton,
+      'Open aggregation run',
+    );
+    await tester.ensureVisible(packageTraceButton.first);
+    await tester.tap(packageTraceButton.first);
+    await tester.pumpAndSettle();
+    expect(find.text('Aggregation history: Literacy Pilot'), findsOneWidget);
+    expect(find.text('Artifact: fl_merge_1'), findsOneWidget);
+    expect(find.text('Showing 1-1 of 1'), findsOneWidget);
+    await tester.tap(find.widgetWithText(TextButton, 'Close').last);
+    await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(TextButton, 'Close').last);
     await tester.pumpAndSettle();
 
@@ -3870,6 +3906,10 @@ void main() {
       find.text('Decision fl_prom_2 · hold (sandbox_eval)'),
       findsOneWidget,
     );
+    expect(
+      find.text('Decision digests: package sha256:pkg-1 · bounded sha256:digest-1'),
+      findsOneWidget,
+    );
 
     await tester.enterText(
       find.widgetWithText(
@@ -3888,6 +3928,18 @@ void main() {
       find.text('Decision fl_prom_1 · approved_for_eval (sandbox_eval)'),
       findsOneWidget,
     );
+    final Finder promotionTraceButton = find.widgetWithText(
+      OutlinedButton,
+      'Open aggregation run',
+    );
+    await tester.ensureVisible(promotionTraceButton.first);
+    await tester.tap(promotionTraceButton.first);
+    await tester.pumpAndSettle();
+    expect(find.text('Aggregation history: Literacy Pilot'), findsOneWidget);
+    expect(find.text('Artifact: fl_merge_1'), findsOneWidget);
+    expect(find.text('Showing 1-1 of 1'), findsOneWidget);
+    await tester.tap(find.widgetWithText(TextButton, 'Close').last);
+    await tester.pumpAndSettle();
 
     final Finder revokeDecisionButton = find.widgetWithText(
       OutlinedButton,
@@ -3923,6 +3975,14 @@ void main() {
       bridge.recordedPromotionRevocations.single['revokedStatus'],
       'approved_for_eval',
     );
+    expect(
+      bridge.recordedPromotionRevocations.single['packageDigest'],
+      'sha256:pkg-1',
+    );
+    expect(
+      bridge.recordedPromotionRevocations.single['boundedDigest'],
+      'sha256:digest-1',
+    );
 
     await tester.ensureVisible(approvedPromotionChip);
     await tester.tap(approvedPromotionChip);
@@ -3944,6 +4004,10 @@ void main() {
     expect(
       find.text(
           'Rollback rationale: Sandbox regression exceeded the bounded threshold.'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Revocation digests: package sha256:pkg-1 · bounded sha256:digest-1'),
       findsOneWidget,
     );
 

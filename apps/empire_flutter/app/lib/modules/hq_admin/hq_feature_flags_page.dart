@@ -1134,8 +1134,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
   }
 
   Future<void> _showAggregationHistoryDialog(
-    FederatedLearningExperimentModel experiment,
-  ) {
+    FederatedLearningExperimentModel experiment, {
+    String initialQuery = '',
+  }) async {
     final List<FederatedLearningAggregationRunModel> runs =
         _aggregationRunsByExperiment[experiment.id] ??
             const <FederatedLearningAggregationRunModel>[];
@@ -1153,13 +1154,16 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         package.aggregationRunId: package,
     };
     const int pageSize = 2;
-    String filterQuery = '';
+    String filterQuery = initialQuery;
     int pageIndex = 0;
     String sortMode = 'newest';
     String artifactFilter = 'all';
     bool latestOnly = false;
+    final TextEditingController filterController = TextEditingController(
+      text: initialQuery,
+    );
 
-    return showDialog<void>(
+    await showDialog<void>(
       context: context,
       builder: (BuildContext context) {
         return StatefulBuilder(
@@ -1280,6 +1284,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                     children: <Widget>[
                       if (runs.isNotEmpty) ...<Widget>[
                         TextField(
+                          controller: filterController,
                           onChanged: (String value) {
                             setDialogState(() {
                               filterQuery = value;
@@ -1484,6 +1489,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         );
       },
     );
+    filterController.dispose();
   }
 
   Future<void> _showCandidatePackageHistoryDialog(
@@ -1824,6 +1830,11 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                                   _promotionRecordsByPackageId[package.id],
                                   _promotionRevocationRecordsByPackageId[
                                       package.id],
+                                  onTraceAggregation: () =>
+                                      _showAggregationHistoryDialog(
+                                    experiment,
+                                    initialQuery: package.aggregationRunId,
+                                  ),
                                   onApprove: () =>
                                       _showCandidatePromotionDecisionDialog(
                                     experiment: experiment,
@@ -2229,6 +2240,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     FederatedLearningCandidatePromotionRevocationRecordModel? revocation, {
     VoidCallback? onApprove,
     VoidCallback? onHold,
+    VoidCallback? onTraceAggregation,
   }) {
     final String createdLabel = _formatTimestamp(package.createdAt);
     final String decidedLabel = _formatTimestamp(promotion?.decidedAt);
@@ -2406,6 +2418,20 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 ),
               ),
             ],
+            if (promotion.packageDigest.trim().isNotEmpty ||
+                promotion.boundedDigest.trim().isNotEmpty) ...<Widget>[
+              const SizedBox(height: 4),
+              Text(
+                _tHqFeatureFlags(
+                  context,
+                  'Decision digests: package ${promotion.packageDigest} · bounded ${promotion.boundedDigest}',
+                ),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: ScholesaColors.textSecondary,
+                ),
+              ),
+            ],
           ],
           if (revocation != null) ...<Widget>[
             const SizedBox(height: 4),
@@ -2425,6 +2451,20 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 _tHqFeatureFlags(
                   context,
                   'Revoked by: ${revocation.revokedBy}',
+                ),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: ScholesaColors.textSecondary,
+                ),
+              ),
+            ],
+            if (revocation.packageDigest.trim().isNotEmpty ||
+                revocation.boundedDigest.trim().isNotEmpty) ...<Widget>[
+              const SizedBox(height: 4),
+              Text(
+                _tHqFeatureFlags(
+                  context,
+                  'Revocation digests: package ${revocation.packageDigest} · bounded ${revocation.boundedDigest}',
                 ),
                 style: const TextStyle(
                   fontSize: 12,
@@ -2480,6 +2520,13 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                     context,
                     isHold ? 'On hold' : 'Mark hold',
                   ),
+                ),
+              ),
+              OutlinedButton.icon(
+                onPressed: onTraceAggregation,
+                icon: const Icon(Icons.timeline_rounded),
+                label: Text(
+                  _tHqFeatureFlags(context, 'Open aggregation run'),
                 ),
               ),
             ],
@@ -2699,6 +2746,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 record.candidateModelPackageId,
                 record.aggregationRunId,
                 record.mergeArtifactId,
+                record.packageDigest,
+                record.boundedDigest,
                 record.status,
                 record.target,
                 record.rationale ?? '',
@@ -2709,6 +2758,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 package?.boundedDigest ?? '',
                 package?.contributingSiteIds.join(' ') ?? '',
                 revocation?.id ?? '',
+                revocation?.packageDigest ?? '',
+                revocation?.boundedDigest ?? '',
                 revocation?.revokedStatus ?? '',
                 revocation?.rationale ?? '',
               ].join(' ').toLowerCase();
@@ -2934,6 +2985,11 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                                   packagesById[record.candidateModelPackageId],
                                   _promotionRevocationRecordsByPackageId[
                                       record.candidateModelPackageId],
+                                  onTraceAggregation: () =>
+                                      _showAggregationHistoryDialog(
+                                    experiment,
+                                    initialQuery: record.aggregationRunId,
+                                  ),
                                   onRevoke: () =>
                                       _showCandidatePromotionRevocationDialog(
                                     record: record,
@@ -3037,6 +3093,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     FederatedLearningCandidateModelPackageModel? package,
     FederatedLearningCandidatePromotionRevocationRecordModel? revocation, {
     VoidCallback? onRevoke,
+    VoidCallback? onTraceAggregation,
   }) {
     final String decidedLabel = _formatTimestamp(record.decidedAt);
     final String updatedLabel = _formatTimestamp(record.updatedAt);
@@ -3099,6 +3156,20 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               color: ScholesaColors.textSecondary,
             ),
           ),
+          if (record.packageDigest.trim().isNotEmpty ||
+              record.boundedDigest.trim().isNotEmpty) ...<Widget>[
+            const SizedBox(height: 4),
+            Text(
+              _tHqFeatureFlags(
+                context,
+                'Decision digests: package ${record.packageDigest} · bounded ${record.boundedDigest}',
+              ),
+              style: const TextStyle(
+                fontSize: 12,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+          ],
           if (package != null) ...<Widget>[
             const SizedBox(height: 4),
             Text(
@@ -3228,20 +3299,44 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 ),
               ),
             ],
-          ],
-          const SizedBox(height: 10),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: OutlinedButton.icon(
-              onPressed: isRevoked ? null : onRevoke,
-              icon: const Icon(Icons.undo_rounded),
-              label: Text(
+            if (revocation.packageDigest.trim().isNotEmpty ||
+                revocation.boundedDigest.trim().isNotEmpty) ...<Widget>[
+              const SizedBox(height: 4),
+              Text(
                 _tHqFeatureFlags(
                   context,
-                  isRevoked ? 'Revoked' : 'Revoke decision',
+                  'Revocation digests: package ${revocation.packageDigest} · bounded ${revocation.boundedDigest}',
+                ),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: ScholesaColors.textSecondary,
                 ),
               ),
-            ),
+            ],
+          ],
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: <Widget>[
+              OutlinedButton.icon(
+                onPressed: isRevoked ? null : onRevoke,
+                icon: const Icon(Icons.undo_rounded),
+                label: Text(
+                  _tHqFeatureFlags(
+                    context,
+                    isRevoked ? 'Revoked' : 'Revoke decision',
+                  ),
+                ),
+              ),
+              OutlinedButton.icon(
+                onPressed: onTraceAggregation,
+                icon: const Icon(Icons.timeline_rounded),
+                label: Text(
+                  _tHqFeatureFlags(context, 'Open aggregation run'),
+                ),
+              ),
+            ],
           ),
         ],
       ),
