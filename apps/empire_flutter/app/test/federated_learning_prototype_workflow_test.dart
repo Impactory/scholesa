@@ -749,52 +749,55 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
       'revoked': 2,
       'superseded': 1,
     };
-    final Map<String, dynamic> deliveryRow =
-        deliveryRecordId != null && deliveryRecordId.isNotEmpty
-            ? _runtimeDeliveryRecords.firstWhere(
-                (Map<String, dynamic> row) => row['id'] == deliveryRecordId,
-                orElse: () => <String, dynamic>{},
-              )
-            : (() {
-                final List<Map<String, dynamic>> matches = _runtimeDeliveryRecords
-                    .where((Map<String, dynamic> row) {
-                  final List<dynamic> targetSiteIds =
-                      row['targetSiteIds'] as List<dynamic>? ?? <dynamic>[];
-                  final String status = (row['status'] as String? ?? '').trim();
-                  final bool matchesExperiment =
-                      (experimentId ?? '').trim().isEmpty ||
-                          row['experimentId'] == experimentId;
-                  final bool matchesRuntime =
-                      (runtimeTarget ?? '').trim().isEmpty ||
-                          row['runtimeTarget'] == runtimeTarget;
-                  return targetSiteIds.contains(resolvedSiteId) &&
-                      deliveryPriority.containsKey(status) &&
-                      matchesExperiment &&
-                      matchesRuntime;
-                }).toList()
-                  ..sort((Map<String, dynamic> left, Map<String, dynamic> right) {
-                    final int leftPriority =
-                        deliveryPriority[(left['status'] as String? ?? '').trim()] ?? 0;
-                    final int rightPriority =
-                        deliveryPriority[(right['status'] as String? ?? '').trim()] ?? 0;
-                    if (leftPriority != rightPriority) {
-                      return rightPriority.compareTo(leftPriority);
-                    }
-                    final DateTime? leftUpdatedAt = left['updatedAt'] as DateTime?;
-                    final DateTime? rightUpdatedAt = right['updatedAt'] as DateTime?;
-                    if (leftUpdatedAt == null && rightUpdatedAt == null) {
-                      return 0;
-                    }
-                    if (leftUpdatedAt == null) {
-                      return 1;
-                    }
-                    if (rightUpdatedAt == null) {
-                      return -1;
-                    }
-                    return rightUpdatedAt.compareTo(leftUpdatedAt);
-                  });
-                return matches.isEmpty ? <String, dynamic>{} : matches.first;
-              })();
+    final Map<String, dynamic> deliveryRow = deliveryRecordId != null &&
+            deliveryRecordId.isNotEmpty
+        ? _runtimeDeliveryRecords.firstWhere(
+            (Map<String, dynamic> row) => row['id'] == deliveryRecordId,
+            orElse: () => <String, dynamic>{},
+          )
+        : (() {
+            final List<Map<String, dynamic>> matches = _runtimeDeliveryRecords
+                .where((Map<String, dynamic> row) {
+              final List<dynamic> targetSiteIds =
+                  row['targetSiteIds'] as List<dynamic>? ?? <dynamic>[];
+              final String status = (row['status'] as String? ?? '').trim();
+              final bool matchesExperiment =
+                  (experimentId ?? '').trim().isEmpty ||
+                      row['experimentId'] == experimentId;
+              final bool matchesRuntime =
+                  (runtimeTarget ?? '').trim().isEmpty ||
+                      row['runtimeTarget'] == runtimeTarget;
+              return targetSiteIds.contains(resolvedSiteId) &&
+                  deliveryPriority.containsKey(status) &&
+                  matchesExperiment &&
+                  matchesRuntime;
+            }).toList()
+              ..sort((Map<String, dynamic> left, Map<String, dynamic> right) {
+                final int leftPriority = deliveryPriority[
+                        (left['status'] as String? ?? '').trim()] ??
+                    0;
+                final int rightPriority = deliveryPriority[
+                        (right['status'] as String? ?? '').trim()] ??
+                    0;
+                if (leftPriority != rightPriority) {
+                  return rightPriority.compareTo(leftPriority);
+                }
+                final DateTime? leftUpdatedAt = left['updatedAt'] as DateTime?;
+                final DateTime? rightUpdatedAt =
+                    right['updatedAt'] as DateTime?;
+                if (leftUpdatedAt == null && rightUpdatedAt == null) {
+                  return 0;
+                }
+                if (leftUpdatedAt == null) {
+                  return 1;
+                }
+                if (rightUpdatedAt == null) {
+                  return -1;
+                }
+                return rightUpdatedAt.compareTo(leftUpdatedAt);
+              });
+            return matches.isEmpty ? <String, dynamic>{} : matches.first;
+          })();
     if (deliveryRow.isEmpty) {
       return null;
     }
@@ -810,27 +813,29 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     final DateTime? expiresAt = deliveryRow['expiresAt'] as DateTime?;
     final DateTime? supersededAt = deliveryRow['supersededAt'] as DateTime?;
     final String supersededBy =
-      (deliveryRow['supersededBy'] as String? ?? '').trim();
+        (deliveryRow['supersededBy'] as String? ?? '').trim();
     final String supersededByDeliveryRecordId =
-      (deliveryRow['supersededByDeliveryRecordId'] as String? ?? '').trim();
+        (deliveryRow['supersededByDeliveryRecordId'] as String? ?? '').trim();
     final String supersededByCandidateModelPackageId =
-      (deliveryRow['supersededByCandidateModelPackageId'] as String? ?? '')
-        .trim();
+        (deliveryRow['supersededByCandidateModelPackageId'] as String? ?? '')
+            .trim();
     final String supersessionReason =
-      (deliveryRow['supersessionReason'] as String? ?? '').trim();
+        (deliveryRow['supersessionReason'] as String? ?? '').trim();
     final DateTime? revokedAt = deliveryRow['revokedAt'] as DateTime?;
     final String status = (deliveryRow['status'] as String? ?? '').trim();
-    final Map<String, dynamic> controlRow = _runtimeRolloutControlRecords.firstWhere(
-      (Map<String, dynamic> row) => row['deliveryRecordId'] == (deliveryRow['id'] ?? ''),
+    final Map<String, dynamic> controlRow =
+        _runtimeRolloutControlRecords.firstWhere(
+      (Map<String, dynamic> row) =>
+          row['deliveryRecordId'] == (deliveryRow['id'] ?? ''),
       orElse: () => <String, dynamic>{},
     );
     String resolutionStatus = status == 'revoked' || revokedAt != null
         ? 'revoked'
-      : (status == 'superseded' || supersededAt != null)
-        ? 'superseded'
-        : (expiresAt != null && !expiresAt.isAfter(now))
-            ? 'expired'
-            : 'resolved';
+        : (status == 'superseded' || supersededAt != null)
+            ? 'superseded'
+            : (expiresAt != null && !expiresAt.isAfter(now))
+                ? 'expired'
+                : 'resolved';
     final String controlMode = (controlRow['mode'] as String? ?? '').trim();
     final String controlReason = (controlRow['reason'] as String? ?? '').trim();
     final DateTime? controlReviewByAt = controlRow['reviewByAt'] as DateTime?;
@@ -838,9 +843,11 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
       resolutionStatus = 'paused';
     }
     if (resolutionStatus == 'resolved' && controlMode == 'restricted') {
-      final Map<String, dynamic> activationRow = _runtimeActivationRecords.firstWhere(
+      final Map<String, dynamic> activationRow =
+          _runtimeActivationRecords.firstWhere(
         (Map<String, dynamic> row) =>
-            row['deliveryRecordId'] == deliveryRow['id'] && row['siteId'] == resolvedSiteId,
+            row['deliveryRecordId'] == deliveryRow['id'] &&
+            row['siteId'] == resolvedSiteId,
         orElse: () => <String, dynamic>{},
       );
       final String activationStatus =
@@ -870,17 +877,16 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
       'runtimeVectorDigest': packageRow['runtimeVectorDigest'] ?? '',
       'rolloutStatus': packageRow['rolloutStatus'] ?? 'not_distributed',
       'expiresAt': deliveryRow['expiresAt'],
-        'supersededAt': supersededAt,
-        'supersededBy': supersededBy.isEmpty ? null : supersededBy,
-        'supersededByDeliveryRecordId':
-          supersededByDeliveryRecordId.isEmpty
-            ? null
-            : supersededByDeliveryRecordId,
-        'supersededByCandidateModelPackageId':
+      'supersededAt': supersededAt,
+      'supersededBy': supersededBy.isEmpty ? null : supersededBy,
+      'supersededByDeliveryRecordId': supersededByDeliveryRecordId.isEmpty
+          ? null
+          : supersededByDeliveryRecordId,
+      'supersededByCandidateModelPackageId':
           supersededByCandidateModelPackageId.isEmpty
-            ? null
-            : supersededByCandidateModelPackageId,
-        'supersessionReason':
+              ? null
+              : supersededByCandidateModelPackageId,
+      'supersessionReason':
           supersessionReason.isEmpty ? null : supersessionReason,
       'revokedAt': deliveryRow['revokedAt'],
       'revokedBy': deliveryRow['revokedBy'],
@@ -1170,11 +1176,11 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
               data['expiresAt'] as int,
               isUtc: true,
             ),
-        'supersededAt': null,
-        'supersededBy': null,
-        'supersededByDeliveryRecordId': null,
-        'supersededByCandidateModelPackageId': null,
-        'supersessionReason': null,
+      'supersededAt': null,
+      'supersededBy': null,
+      'supersededByDeliveryRecordId': null,
+      'supersededByCandidateModelPackageId': null,
+      'supersessionReason': null,
       'revokedAt': (data['status'] as String? ?? '').trim() == 'revoked'
           ? DateTime(2026, 3, 14, 20, 45)
           : null,
@@ -1197,7 +1203,8 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
         if ((existing['id'] as String? ?? '') == deliveryId) {
           continue;
         }
-        final String existingStatus = (existing['status'] as String? ?? '').trim();
+        final String existingStatus =
+            (existing['status'] as String? ?? '').trim();
         final String existingExperimentId =
             (existing['experimentId'] as String? ?? '').trim();
         final String existingRuntimeTarget =
@@ -1335,20 +1342,21 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
 
     final String alertId =
         'fl_rollout_alert_${deliveryRecordId.replaceAll('fl_delivery_', '')}';
-      final DateTime now = DateTime(2026, 3, 15, 10, 0);
-      final DateTime? expiresAt = deliveryRow['expiresAt'] as DateTime?;
-      final String deliveryStatus = (deliveryRow['status'] as String? ?? '').trim();
-      final String terminalLifecycleStatus = deliveryStatus == 'revoked'
+    final DateTime now = DateTime(2026, 3, 15, 10, 0);
+    final DateTime? expiresAt = deliveryRow['expiresAt'] as DateTime?;
+    final String deliveryStatus =
+        (deliveryRow['status'] as String? ?? '').trim();
+    final String terminalLifecycleStatus = deliveryStatus == 'revoked'
         ? 'revoked'
         : deliveryStatus == 'superseded'
-          ? 'superseded'
-          : (expiresAt != null && !expiresAt.isAfter(now))
-            ? 'expired'
-            : '';
-      final String requestedStatus =
+            ? 'superseded'
+            : (expiresAt != null && !expiresAt.isAfter(now))
+                ? 'expired'
+                : '';
+    final String requestedStatus =
         (data['status'] as String? ?? 'active').trim();
-      final String status = terminalLifecycleStatus.isNotEmpty ||
-          (fallbackCount == 0 && pendingCount == 0)
+    final String status = terminalLifecycleStatus.isNotEmpty ||
+            (fallbackCount == 0 && pendingCount == 0)
         ? 'acknowledged'
         : requestedStatus;
     final Map<String, dynamic> record = <String, dynamic>{
@@ -1414,28 +1422,29 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     );
     final DateTime now = DateTime(2026, 3, 15, 10, 0);
     final DateTime? expiresAt = deliveryRow['expiresAt'] as DateTime?;
-    final String deliveryStatus = (deliveryRow['status'] as String? ?? '').trim();
+    final String deliveryStatus =
+        (deliveryRow['status'] as String? ?? '').trim();
     final String terminalLifecycleStatus = deliveryStatus == 'revoked'
-      ? 'revoked'
-      : deliveryStatus == 'superseded'
-        ? 'superseded'
-        : (expiresAt != null && !expiresAt.isAfter(now))
-          ? 'expired'
-          : '';
-    final String requestedStatus =
-      (data['status'] as String? ?? 'open').trim();
+        ? 'revoked'
+        : deliveryStatus == 'superseded'
+            ? 'superseded'
+            : (expiresAt != null && !expiresAt.isAfter(now))
+                ? 'expired'
+                : '';
+    final String requestedStatus = (data['status'] as String? ?? 'open').trim();
     final bool currentIssueActive = fallbackCount > 0 || pendingCount > 0;
     final String existingStatus =
-      (existingEscalation['status'] as String? ?? '').trim();
+        (existingEscalation['status'] as String? ?? '').trim();
     final String reopenedStatus =
-      existingStatus.isNotEmpty && existingStatus != 'resolved'
-        ? existingStatus
-        : 'open';
-    final String status = terminalLifecycleStatus.isNotEmpty || !currentIssueActive
-      ? 'resolved'
-      : requestedStatus == 'resolved'
-        ? reopenedStatus
-        : requestedStatus;
+        existingStatus.isNotEmpty && existingStatus != 'resolved'
+            ? existingStatus
+            : 'open';
+    final String status =
+        terminalLifecycleStatus.isNotEmpty || !currentIssueActive
+            ? 'resolved'
+            : requestedStatus == 'resolved'
+                ? reopenedStatus
+                : requestedStatus;
     final DateTime openedAt = DateTime(2026, 3, 15, 6, 0);
     final DateTime? dueAt = status == 'resolved'
         ? null
@@ -1500,18 +1509,18 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
         'fl_rollout_control_${deliveryRecordId.replaceAll('fl_delivery_', '')}';
     final DateTime now = DateTime(2026, 3, 15, 10, 0);
     final DateTime? expiresAt = deliveryRow['expiresAt'] as DateTime?;
-    final String deliveryStatus = (deliveryRow['status'] as String? ?? '').trim();
+    final String deliveryStatus =
+        (deliveryRow['status'] as String? ?? '').trim();
     final String terminalLifecycleStatus = deliveryStatus == 'revoked'
-      ? 'revoked'
-      : deliveryStatus == 'superseded'
-        ? 'superseded'
-        : (expiresAt != null && !expiresAt.isAfter(now))
-          ? 'expired'
-          : '';
-    final String requestedMode =
-      (data['mode'] as String? ?? 'monitor').trim();
+        ? 'revoked'
+        : deliveryStatus == 'superseded'
+            ? 'superseded'
+            : (expiresAt != null && !expiresAt.isAfter(now))
+                ? 'expired'
+                : '';
+    final String requestedMode = (data['mode'] as String? ?? 'monitor').trim();
     final String mode =
-      terminalLifecycleStatus.isNotEmpty ? 'monitor' : requestedMode;
+        terminalLifecycleStatus.isNotEmpty ? 'monitor' : requestedMode;
     final Map<String, dynamic> record = <String, dynamic>{
       'id': controlId,
       'experimentId': deliveryRow['experimentId'] ?? '',
@@ -1519,9 +1528,10 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
       'deliveryRecordId': deliveryRecordId,
       'mode': mode,
       'ownerUserId': terminalLifecycleStatus.isNotEmpty
-        ? null
-        : (data['ownerUserId'] as String? ?? '').trim(),
-      'reason': mode == 'monitor' ? null : (data['reason'] as String? ?? '').trim(),
+          ? null
+          : (data['ownerUserId'] as String? ?? '').trim(),
+      'reason':
+          mode == 'monitor' ? null : (data['reason'] as String? ?? '').trim(),
       'releasedBy': mode == 'monitor' ? 'hq-1' : null,
       'releasedAt': mode == 'monitor' ? now : null,
       'createdAt': DateTime(2026, 3, 15, 10, 0),
@@ -2759,7 +2769,8 @@ void main() {
     expect(escalation['openedAt'], isNull);
     expect(escalation['dueAt'], isNull);
     expect(escalation['resolvedBy'], 'hq-1');
-    expect(bridge._runtimeRolloutEscalationHistoryRecords.first['status'], 'resolved');
+    expect(bridge._runtimeRolloutEscalationHistoryRecords.first['status'],
+        'resolved');
   });
 
   test('runtime rollout escalation cannot remain resolved while issue is live',
@@ -2804,11 +2815,11 @@ void main() {
     expect(escalation['resolvedBy'], isNull);
     expect(escalation['resolvedAt'], isNull);
     expect(escalation['fallbackCount'], 1);
-    expect(bridge._runtimeRolloutEscalationHistoryRecords.first['status'], 'investigating');
+    expect(bridge._runtimeRolloutEscalationHistoryRecords.first['status'],
+        'investigating');
   });
 
-  test('runtime rollout control auto-releases for terminal delivery',
-      () async {
+  test('runtime rollout control auto-releases for terminal delivery', () async {
     final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
       runtimeDeliveryRecords: <Map<String, dynamic>>[
         _runtimeDeliveryRecordRow(
@@ -2840,8 +2851,7 @@ void main() {
     expect(control['releasedAt'], isNotNull);
   });
 
-  test('runtime rollout alert auto-acknowledges when issue clears',
-      () async {
+  test('runtime rollout alert auto-acknowledges when issue clears', () async {
     final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
       runtimeDeliveryRecords: <Map<String, dynamic>>[
         _runtimeDeliveryRecordRow(
@@ -3098,7 +3108,8 @@ void main() {
       find.text('Latest candidate package: fl_pkg_1 (runtime_vector_v1)'),
       findsOneWidget,
     );
-    expect(find.text('Latest package rollout: not_distributed'), findsOneWidget);
+    expect(
+        find.text('Latest package rollout: not_distributed'), findsOneWidget);
     expect(
       find.text('Latest package promotion: approved_for_eval (sandbox_eval)'),
       findsOneWidget,
@@ -4076,6 +4087,77 @@ void main() {
     expect(find.text('Latest site report requested fallback.'), findsOneWidget);
   });
 
+  testWidgets('HQ page suppresses active rollout alert for superseded delivery',
+      (WidgetTester tester) async {
+    final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
+      experiments: <Map<String, dynamic>>[
+        _experimentRow(),
+      ],
+      aggregationRuns: <Map<String, dynamic>>[
+        _aggregationRunRow(),
+      ],
+      mergeArtifacts: <Map<String, dynamic>>[
+        _mergeArtifactRow(),
+      ],
+      candidatePackages: <Map<String, dynamic>>[
+        _candidatePackageRow(),
+      ],
+      runtimeDeliveryRecords: <Map<String, dynamic>>[
+        _runtimeDeliveryRecordRow(
+          status: 'superseded',
+          targetSiteIds: <String>['site-1', 'site-2'],
+          supersededAt: DateTime(2026, 3, 14, 20, 15),
+          supersededByDeliveryRecordId: 'fl_delivery_2',
+          supersessionReason:
+              'Superseded by fl_delivery_2 for overlapping site cohort.',
+        ),
+      ],
+      runtimeActivationRecords: <Map<String, dynamic>>[
+        _runtimeActivationRecordRow(siteId: 'site-1', status: 'resolved'),
+      ],
+      runtimeRolloutAlertRecords: <Map<String, dynamic>>[
+        _runtimeRolloutAlertRecordRow(
+          status: 'acknowledged',
+          fallbackCount: 0,
+          pendingCount: 1,
+          notes: 'Legacy alert should not stay active on superseded delivery.',
+          acknowledgedBy: 'hq-1',
+          acknowledgedAt: DateTime(2026, 3, 14, 21),
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      _wrapWithMaterial(HqFeatureFlagsPage(workflowBridge: bridge)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Rollout alert: 1 fallback site statuses need review. Use Site rollout for detail.',
+      ),
+      findsNothing,
+    );
+    expect(
+      find.text(
+        'Rollout alert acknowledged: 1 pending site statuses reviewed. Use Site rollout for detail.',
+      ),
+      findsNothing,
+    );
+    expect(
+      find.text('Site rollout: 0 resolved · 0 staged · 2 fallback · 0 pending'),
+      findsOneWidget,
+    );
+    expect(find.widgetWithText(TextButton, 'Acknowledge alert'), findsNothing);
+    expect(find.widgetWithText(TextButton, 'Update triage'), findsNothing);
+    expect(find.widgetWithText(TextButton, 'Escalate alert'), findsNothing);
+    expect(
+      find.textContaining(
+          'Superseded by fl_delivery_2 for overlapping site cohort.'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('HQ page shows acknowledged rollout alert triage',
       (WidgetTester tester) async {
     final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
@@ -4720,7 +4802,8 @@ void main() {
     );
   });
 
-  testWidgets('HQ page does not treat resolved escalation as current when issue persists',
+  testWidgets(
+      'HQ page does not treat resolved escalation as current when issue persists',
       (WidgetTester tester) async {
     final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
       experiments: <Map<String, dynamic>>[

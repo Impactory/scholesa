@@ -39,8 +39,8 @@ Implemented prototype scope:
 - HQ runtime-delivery lifecycle visibility, including recent delivery history with expiry and revocation detail per experiment
 - HQ per-site rollout-health visibility for the latest runtime delivery, including resolved, staged, fallback, and pending site counts plus site-by-site drill-in detail
 - HQ runtime-activation history visibility for the latest package, including status counts and per-site activation or fallback evidence drill-in
-- HQ rollout-alert highlighting on experiment cards when fallback or pending site statuses exist for the latest runtime delivery
-- HQ alert-first ordering of experiment cards so fallback and pending rollout issues surface ahead of healthy prototype experiments
+- HQ rollout-alert highlighting on experiment cards when fallback or pending site statuses exist for a live latest runtime delivery, while terminal deliveries stay visible as lifecycle history without surfacing as current alerts
+- HQ alert-first ordering of experiment cards so live fallback and pending rollout issues surface ahead of healthy prototype experiments without prioritizing terminal deliveries as active incidents
 - HQ persisted rollout-alert triage records so fallback and pending delivery issues can be acknowledged with notes instead of remaining permanently raw operator alerts
 - HQ rollout-alert history visibility across runtime deliveries, plus a bounded rollout-audit feed covering delivery, activation, and alert-triage state changes per experiment
 - HQ rollout-audit filtering by package and site directly in the operator UI, acknowledgement-change history for alert triage, and bounded escalation-state tracking for unresolved rollout issues
@@ -135,6 +135,7 @@ Passed on 2026-03-14:
 - Runtime rollout alert triage updates now also auto-settle to acknowledged when a delivery is terminal or no longer has any live fallback/pending sites, so stale active alerts cannot persist underneath an already healthy or terminal bounded rollout.
 - Runtime rollout escalation updates now also refuse to persist a resolved current escalation while fallback or pending sites still exist, so live rollout issues reopen as active escalation state instead of hiding behind stale resolved records.
 - Site-scoped runtime delivery listing now also filters expired, revoked, and superseded manifests before returning assignment history to device-side resolvers, so site assignment discovery stays aligned with the bounded runtime package lifecycle instead of exposing terminal manifests and relying on client-side cleanup.
+- The HQ feature-flags surface now also suppresses current rollout-alert banners and alert-first severity ordering when the latest runtime delivery is already terminal, while keeping per-site rollout counts and lifecycle drill-in detail visible for superseded, revoked, or expired deliveries.
 - Downstream promotion is still bounded to HQ-readable approval records targeting sandbox evaluation only; there is still no deployed model rollout, device delivery path, or production promotion executor in this repo.
 - HQ can now inspect a short recent history of aggregation runs per experiment, including artifact generation status, instead of only a single latest-run summary.
 

@@ -418,13 +418,17 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         latestRuntimeRolloutControl = latestRuntimeDelivery == null
             ? null
             : _runtimeRolloutControlsByDeliveryId[latestRuntimeDelivery.id];
-    final String runtimeRolloutAlert = runtimeRolloutHealth == null
-        ? ''
-        : _buildRuntimeRolloutAlert(
-            runtimeRolloutHealth,
-            latestRuntimeRolloutAlert,
-          );
-    final bool rolloutAlertAcknowledged = runtimeRolloutHealth != null &&
+    final bool runtimeDeliveryTerminal = latestRuntimeDelivery != null &&
+        _isRuntimeDeliveryTerminalLifecycle(latestRuntimeDelivery);
+    final String runtimeRolloutAlert =
+        runtimeRolloutHealth == null || runtimeDeliveryTerminal
+            ? ''
+            : _buildRuntimeRolloutAlert(
+                runtimeRolloutHealth,
+                latestRuntimeRolloutAlert,
+              );
+    final bool rolloutAlertAcknowledged = !runtimeDeliveryTerminal &&
+        runtimeRolloutHealth != null &&
         _isRuntimeRolloutAlertAcknowledged(
           runtimeRolloutHealth,
           latestRuntimeRolloutAlert,
@@ -437,7 +441,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
             latestRuntimeRolloutAlert != null
         ? 'Acknowledged ${_formatTimestamp(latestRuntimeRolloutAlert.acknowledgedAt)} by ${latestRuntimeRolloutAlert.acknowledgedBy ?? "hq"}'
         : '';
-    final bool rolloutEscalationCurrent = runtimeRolloutHealth != null &&
+    final bool rolloutEscalationCurrent = !runtimeDeliveryTerminal &&
+        runtimeRolloutHealth != null &&
         _isRuntimeRolloutEscalationCurrent(
           runtimeRolloutHealth,
           latestRuntimeRolloutEscalation,
@@ -5494,6 +5499,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     if (latestRuntimeDelivery == null) {
       return 0;
     }
+    if (_isRuntimeDeliveryTerminalLifecycle(latestRuntimeDelivery)) {
+      return 0;
+    }
     final List<FederatedLearningRuntimeActivationRecordModel>
         runtimeActivationRecords =
         _runtimeActivationRecordsByPackageId[latestPackage.id] ??
@@ -5556,6 +5564,22 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     );
   }
 
+  bool _isRuntimeDeliveryTerminalLifecycle(
+    FederatedLearningRuntimeDeliveryRecordModel delivery,
+  ) {
+    if (delivery.status == 'superseded' || delivery.supersededAt != null) {
+      return true;
+    }
+    if (delivery.status == 'revoked' || delivery.revokedAt != null) {
+      return true;
+    }
+    final DateTime? expiresAt = delivery.expiresAt?.toDate().toUtc();
+    if (expiresAt != null && !expiresAt.isAfter(DateTime.now().toUtc())) {
+      return true;
+    }
+    return false;
+  }
+
   _RuntimeRolloutHealthRow _buildRuntimeRolloutHealthRow(
     String siteId,
     FederatedLearningRuntimeDeliveryRecordModel delivery,
@@ -5566,9 +5590,10 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
           (delivery.supersededByDeliveryRecordId ?? '').trim().isEmpty
               ? 'newer delivery'
               : delivery.supersededByDeliveryRecordId!.trim();
-      final String reason = (delivery.supersessionReason ?? '').trim().isNotEmpty
-          ? ' ${(delivery.supersessionReason ?? '').trim()}'
-          : '';
+      final String reason =
+          (delivery.supersessionReason ?? '').trim().isNotEmpty
+              ? ' ${(delivery.supersessionReason ?? '').trim()}'
+              : '';
       return _RuntimeRolloutHealthRow(
         siteId: siteId,
         status: 'fallback',
