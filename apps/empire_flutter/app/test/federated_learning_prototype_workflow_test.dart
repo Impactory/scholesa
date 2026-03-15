@@ -1397,6 +1397,11 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
 
     final String escalationId =
         'fl_rollout_escalation_${deliveryRecordId.replaceAll('fl_delivery_', '')}';
+    final Map<String, dynamic> existingEscalation =
+        _runtimeRolloutEscalationRecords.firstWhere(
+      (Map<String, dynamic> row) => row['id'] == escalationId,
+      orElse: () => <String, dynamic>{},
+    );
     final DateTime now = DateTime(2026, 3, 15, 10, 0);
     final DateTime? expiresAt = deliveryRow['expiresAt'] as DateTime?;
     final String deliveryStatus = (deliveryRow['status'] as String? ?? '').trim();
@@ -1410,9 +1415,17 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     final String requestedStatus =
       (data['status'] as String? ?? 'open').trim();
     final bool currentIssueActive = fallbackCount > 0 || pendingCount > 0;
+    final String existingStatus =
+      (existingEscalation['status'] as String? ?? '').trim();
+    final String reopenedStatus =
+      existingStatus.isNotEmpty && existingStatus != 'resolved'
+        ? existingStatus
+        : 'open';
     final String status = terminalLifecycleStatus.isNotEmpty || !currentIssueActive
       ? 'resolved'
-      : requestedStatus;
+      : requestedStatus == 'resolved'
+        ? reopenedStatus
+        : requestedStatus;
     final DateTime openedAt = DateTime(2026, 3, 15, 6, 0);
     final DateTime? dueAt = status == 'resolved'
         ? null
@@ -2690,6 +2703,51 @@ void main() {
     expect(escalation['dueAt'], isNull);
     expect(escalation['resolvedBy'], 'hq-1');
     expect(bridge._runtimeRolloutEscalationHistoryRecords.first['status'], 'resolved');
+  });
+
+  test('runtime rollout escalation cannot remain resolved while issue is live',
+      () async {
+    final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
+      runtimeDeliveryRecords: <Map<String, dynamic>>[
+        _runtimeDeliveryRecordRow(
+          status: 'active',
+          targetSiteIds: <String>['site-1', 'site-2'],
+        ),
+      ],
+      runtimeActivationRecords: <Map<String, dynamic>>[
+        _runtimeActivationRecordRow(siteId: 'site-1', status: 'resolved'),
+        _runtimeActivationRecordRow(
+          id: 'fl_runtime_activation_1_site-2',
+          siteId: 'site-2',
+          status: 'fallback',
+        ),
+      ],
+      runtimeRolloutEscalationRecords: <Map<String, dynamic>>[
+        _runtimeRolloutEscalationRecordRow(
+          status: 'investigating',
+          ownerUserId: 'hq-ops-2',
+          notes: 'Investigating site runtime mismatch.',
+        ),
+      ],
+    );
+
+    await bridge.upsertFederatedLearningRuntimeRolloutEscalationRecord(
+      <String, dynamic>{
+        'deliveryRecordId': 'fl_delivery_1',
+        'status': 'resolved',
+        'ownerUserId': 'hq-ops-2',
+        'notes': 'Attempted early closure.',
+      },
+    );
+
+    expect(bridge.recordedRuntimeRolloutEscalationSaves, isNotEmpty);
+    final Map<String, dynamic> escalation =
+        bridge.recordedRuntimeRolloutEscalationSaves.last;
+    expect(escalation['status'], 'investigating');
+    expect(escalation['resolvedBy'], isNull);
+    expect(escalation['resolvedAt'], isNull);
+    expect(escalation['fallbackCount'], 1);
+    expect(bridge._runtimeRolloutEscalationHistoryRecords.first['status'], 'investigating');
   });
 
   test('runtime rollout control auto-releases for terminal delivery',
@@ -4603,6 +4661,55 @@ void main() {
       find.textContaining('Investigating site runtime mismatch.'),
       findsOneWidget,
     );
+  });
+
+  testWidgets('HQ page does not treat resolved escalation as current when issue persists',
+      (WidgetTester tester) async {
+    final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
+      experiments: <Map<String, dynamic>>[
+        _experimentRow(),
+      ],
+      aggregationRuns: <Map<String, dynamic>>[
+        _aggregationRunRow(),
+      ],
+      mergeArtifacts: <Map<String, dynamic>>[
+        _mergeArtifactRow(),
+      ],
+      candidatePackages: <Map<String, dynamic>>[
+        _candidatePackageRow(),
+      ],
+      runtimeDeliveryRecords: <Map<String, dynamic>>[
+        _runtimeDeliveryRecordRow(
+          status: 'active',
+          targetSiteIds: <String>['site-1', 'site-2'],
+        ),
+      ],
+      runtimeActivationRecords: <Map<String, dynamic>>[
+        _runtimeActivationRecordRow(siteId: 'site-1', status: 'resolved'),
+        _runtimeActivationRecordRow(
+          id: 'fl_runtime_activation_1_site-2',
+          siteId: 'site-2',
+          status: 'fallback',
+        ),
+      ],
+      runtimeRolloutEscalationRecords: <Map<String, dynamic>>[
+        _runtimeRolloutEscalationRecordRow(
+          status: 'resolved',
+          ownerUserId: 'hq-ops-1',
+          notes: 'Closed too early.',
+          resolvedBy: 'hq-1',
+          resolvedAt: DateTime(2026, 3, 15, 10),
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      _wrapWithMaterial(HqFeatureFlagsPage(workflowBridge: bridge)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.widgetWithText(TextButton, 'Escalate alert'), findsOneWidget);
+    expect(find.widgetWithText(TextButton, 'Update escalation'), findsNothing);
   });
 
   testWidgets('HQ page saves rollout control state',

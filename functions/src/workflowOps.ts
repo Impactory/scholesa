@@ -3713,9 +3713,15 @@ export const upsertFederatedLearningRuntimeRolloutEscalationRecord = onCall(asyn
 
   const currentIssueActive = fallbackCount > 0 || pendingCount > 0;
   const terminalLifecycleStatus = getRuntimeDeliveryTerminalLifecycleStatus(deliveryData);
+  const existingStatus = normalizeFederatedLearningRuntimeRolloutEscalationStatus(escalationData.status);
+  const reopenedStatus = existingStatus && existingStatus !== 'resolved'
+    ? existingStatus
+    : 'open';
   const status = terminalLifecycleStatus || !currentIssueActive
     ? 'resolved'
-    : requestedStatus;
+    : requestedStatus === 'resolved'
+      ? reopenedStatus
+      : requestedStatus;
   const existingOpenedAt = asTimestampMillis(escalationData.openedAt);
   const openedAt = status === 'resolved' || !currentIssueActive
     ? null

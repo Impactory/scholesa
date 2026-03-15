@@ -133,6 +133,7 @@ Passed on 2026-03-14:
 - Site-scoped runtime resolution now also returns explicit superseded terminal package state, including supersession metadata and device-side fallback reporting, so superseded deliveries no longer disappear as null resolution gaps when HQ advances a bounded manifest.
 - Runtime rollout escalation updates now also auto-resolve when a delivery is already terminal or no longer has live fallback/pending sites, and rollout-control updates now auto-release terminal deliveries back to monitor, so stale operator interventions do not outlive revoked, superseded, or expired bounded manifests.
 - Runtime rollout alert triage updates now also auto-settle to acknowledged when a delivery is terminal or no longer has any live fallback/pending sites, so stale active alerts cannot persist underneath an already healthy or terminal bounded rollout.
+- Runtime rollout escalation updates now also refuse to persist a resolved current escalation while fallback or pending sites still exist, so live rollout issues reopen as active escalation state instead of hiding behind stale resolved records.
 - Downstream promotion is still bounded to HQ-readable approval records targeting sandbox evaluation only; there is still no deployed model rollout, device delivery path, or production promotion executor in this repo.
 - HQ can now inspect a short recent history of aggregation runs per experiment, including artifact generation status, instead of only a single latest-run summary.
 

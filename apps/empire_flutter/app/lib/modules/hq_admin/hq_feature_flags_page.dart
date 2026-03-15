@@ -5282,6 +5282,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     if (escalationRecord == null) {
       return false;
     }
+    if (escalationRecord.status == 'resolved') {
+      return false;
+    }
     return escalationRecord.fallbackCount == summary.fallbackCount &&
         escalationRecord.pendingCount == summary.pendingCount &&
         (summary.fallbackCount > 0 || summary.pendingCount > 0);
