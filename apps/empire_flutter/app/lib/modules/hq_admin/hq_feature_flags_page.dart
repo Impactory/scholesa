@@ -1367,9 +1367,6 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     String sortMode = 'newest';
     String artifactFilter = 'all';
     bool latestOnly = false;
-    final TextEditingController filterController = TextEditingController(
-      text: initialQuery,
-    );
 
     await showDialog<void>(
       context: context,
@@ -1496,8 +1493,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       if (runs.isNotEmpty) ...<Widget>[
-                        TextField(
-                          controller: filterController,
+                        TextFormField(
+                          initialValue: initialQuery,
                           onChanged: (String value) {
                             setDialogState(() {
                               filterQuery = value;
@@ -1703,7 +1700,6 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         );
       },
     );
-    filterController.dispose();
   }
 
   Future<void> _showCandidatePackageHistoryDialog(
