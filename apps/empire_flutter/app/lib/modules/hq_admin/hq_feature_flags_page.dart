@@ -232,6 +232,67 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     return 'Damping: $dampedSummaryCount of $summaryCount summaries scaled · raw weight ${_formatMergeMetric(rawTotalWeight)} · effective weight ${_formatMergeMetric(effectiveWeight)}';
   }
 
+  List<FederatedLearningUpdateSummaryModel> _summaryModelsForIds(
+    List<String> summaryIds,
+  ) {
+    return summaryIds
+        .map((String summaryId) => _updateSummariesById[summaryId.trim()])
+        .whereType<FederatedLearningUpdateSummaryModel>()
+        .toList(growable: false);
+  }
+
+  String _formatLocalTrainingRollup(List<String> summaryIds) {
+    final List<FederatedLearningUpdateSummaryModel> summaries =
+        _summaryModelsForIds(summaryIds).where((summary) {
+      return (summary.optimizerStrategy ?? '').trim().isNotEmpty ||
+          summary.localEpochCount != null ||
+          summary.localStepCount != null ||
+          summary.trainingWindowSeconds != null ||
+          (summary.warmStartPackageId ?? '').trim().isNotEmpty;
+    }).toList(growable: false);
+    if (summaries.isEmpty) {
+      return '';
+    }
+
+    final Set<String> optimizerStrategies = summaries
+        .map((FederatedLearningUpdateSummaryModel summary) =>
+            (summary.optimizerStrategy ?? '').trim())
+        .where((String value) => value.isNotEmpty)
+        .toSet();
+    final Set<String> warmStartPackageIds = summaries
+        .map((FederatedLearningUpdateSummaryModel summary) =>
+            (summary.warmStartPackageId ?? '').trim())
+        .where((String value) => value.isNotEmpty)
+        .toSet();
+    final int totalEpochs = summaries.fold<int>(
+      0,
+      (int sum, FederatedLearningUpdateSummaryModel summary) =>
+          sum + (summary.localEpochCount ?? 0),
+    );
+    final int totalSteps = summaries.fold<int>(
+      0,
+      (int sum, FederatedLearningUpdateSummaryModel summary) =>
+          sum + (summary.localStepCount ?? 0),
+    );
+    final int totalWindowSeconds = summaries.fold<int>(
+      0,
+      (int sum, FederatedLearningUpdateSummaryModel summary) =>
+          sum + (summary.trainingWindowSeconds ?? 0),
+    );
+    final String optimizerLabel = optimizerStrategies.isEmpty
+        ? 'n/a'
+        : optimizerStrategies.length == 1
+            ? optimizerStrategies.first
+            : 'mixed';
+    final String warmStartLabel = warmStartPackageIds.isEmpty
+        ? 'n/a'
+        : warmStartPackageIds.length == 1
+            ? warmStartPackageIds.first
+            : 'mixed';
+
+    return 'Local training rollup: $optimizerLabel · ${summaries.length} summaries · epochs $totalEpochs · steps $totalSteps · window ${totalWindowSeconds}s · warm start $warmStartLabel';
+  }
+
   Future<void> _showContributionDetailsDialog({
     required String experimentLabel,
     required List<FederatedLearningContributionDetailModel> details,
@@ -1100,6 +1161,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               ),
             ],
             if (latestRun != null) ...<Widget>[
+              final String latestAggregationTrainingRollup =
+                  _formatLocalTrainingRollup(latestRun.summaryIds);
               const SizedBox(height: 8),
               Text(
                 _tHqFeatureFlags(
@@ -1117,6 +1180,19 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                   _tHqFeatureFlags(
                     context,
                     'Latest aggregation contributors: ${_formatSiteList(latestRun.contributingSiteIds)}',
+                  ),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: ScholesaColors.textSecondary,
+                  ),
+                ),
+              ],
+              if (latestAggregationTrainingRollup.isNotEmpty) ...<Widget>[
+                const SizedBox(height: 4),
+                Text(
+                  _tHqFeatureFlags(
+                    context,
+                    'Latest aggregation training: $latestAggregationTrainingRollup',
                   ),
                   style: const TextStyle(
                     fontSize: 12,
@@ -1144,6 +1220,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               ],
             ],
             if (latestPackage != null) ...<Widget>[
+              final String latestPackageTrainingRollup =
+                  _formatLocalTrainingRollup(latestPackage.summaryIds);
               const SizedBox(height: 4),
               Text(
                 _tHqFeatureFlags(
@@ -1174,6 +1252,19 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                   _tHqFeatureFlags(
                     context,
                     'Latest package merge: ${latestPackage.mergeStrategy} · norm cap ${_formatMergeMetric(latestPackage.normCap)} · effective weight ${_formatMergeMetric(latestPackage.effectiveTotalWeight)}',
+                  ),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: ScholesaColors.textSecondary,
+                  ),
+                ),
+              ],
+              if (latestPackageTrainingRollup.isNotEmpty) ...<Widget>[
+                const SizedBox(height: 4),
+                Text(
+                  _tHqFeatureFlags(
+                    context,
+                    'Latest package training: $latestPackageTrainingRollup',
                   ),
                   style: const TextStyle(
                     fontSize: 12,
@@ -2432,6 +2523,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         .trim();
     final String triggerSummaryId = run.triggerSummaryId.trim();
     final String acceptedSummaryIds = run.summaryIds.join(', ');
+    final String localTrainingRollup = _formatLocalTrainingRollup(run.summaryIds);
 
     return Container(
       width: double.infinity,
@@ -2509,6 +2601,16 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               icon: const Icon(Icons.description_rounded),
               label: Text(
                 _tHqFeatureFlags(context, 'Open accepted summaries'),
+              ),
+            ),
+          ],
+          if (localTrainingRollup.isNotEmpty) ...<Widget>[
+            const SizedBox(height: 4),
+            Text(
+              _tHqFeatureFlags(context, localTrainingRollup),
+              style: const TextStyle(
+                fontSize: 12,
+                color: ScholesaColors.textSecondary,
               ),
             ),
           ],
