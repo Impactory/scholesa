@@ -3744,6 +3744,22 @@ void main() {
       OutlinedButton,
       'Open accepted summaries',
     );
+    expect(
+      find.widgetWithText(OutlinedButton, 'Open trigger summary'),
+      findsWidgets,
+    );
+    final Finder aggregationTriggerButton = find.widgetWithText(
+      OutlinedButton,
+      'Open trigger summary',
+    );
+    await tester.ensureVisible(aggregationTriggerButton.first);
+    await tester.tap(aggregationTriggerButton.first);
+    await tester.pumpAndSettle();
+    expect(find.text('Requested summaries: update-2'), findsOneWidget);
+    expect(find.text('Summary update-2 · site site-2 · 11 samples'), findsOneWidget);
+    expect(find.text('Trace: trace-2 · Digest: sha256:update-2'), findsOneWidget);
+    await tester.tap(find.widgetWithText(TextButton, 'Close').last);
+    await tester.pumpAndSettle();
     await tester.ensureVisible(aggregationSummaryButton.first);
     await tester.tap(aggregationSummaryButton.first);
     await tester.pumpAndSettle();

@@ -2026,6 +2026,16 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                                                 experiment: experiment,
                                                 summaryIds: package.summaryIds,
                                               ),
+                                  onTraceTriggerSummary:
+                                      package.triggerSummaryId.trim().isEmpty
+                                          ? null
+                                          : () => _showAcceptedSummaryDialog(
+                                                experiment: experiment,
+                                                summaryIds: <String>[
+                                                  package.triggerSummaryId,
+                                                ],
+                                                title: 'Trigger summary',
+                                              ),
                                   onApprove: () =>
                                       _showCandidatePromotionDecisionDialog(
                                     experiment: experiment,
@@ -2457,6 +2467,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     VoidCallback? onHold,
     VoidCallback? onTraceAggregation,
     VoidCallback? onTraceAcceptedSummaries,
+    VoidCallback? onTraceTriggerSummary,
   }) {
     final String createdLabel = _formatTimestamp(package.createdAt);
     final String decidedLabel = _formatTimestamp(promotion?.decidedAt);
@@ -2570,26 +2581,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
             ),
             const SizedBox(height: 8),
             OutlinedButton.icon(
-              onPressed: () => _showAcceptedSummaryDialog(
-                experiment: _experiments.firstWhere(
-                  (FederatedLearningExperimentModel experiment) =>
-                      experiment.id == package.experimentId,
-                  orElse: () => FederatedLearningExperimentModel(
-                    id: package.experimentId,
-                    name: package.experimentId,
-                    description: '',
-                    runtimeTarget: '',
-                    status: '',
-                    aggregateThreshold: 0,
-                    maxRawUpdateBytes: 0,
-                    uploadEnabled: false,
-                    allowedSiteIds: const <String>[],
-                    createdBy: '',
-                  ),
-                ),
-                summaryIds: <String>[package.triggerSummaryId],
-                title: 'Trigger summary',
-              ),
+              onPressed: onTraceTriggerSummary,
               icon: const Icon(Icons.playlist_add_check_rounded),
               label: Text(
                 _tHqFeatureFlags(context, 'Open trigger summary'),
@@ -3253,6 +3245,23 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                                           .summaryIds,
                                         )
                                       : null,
+                                    onTraceTriggerSummary:
+                                      packagesById[record
+                                            .candidateModelPackageId]
+                                          ?.triggerSummaryId
+                                          .trim()
+                                          .isNotEmpty ==
+                                        true
+                                        ? () => _showAcceptedSummaryDialog(
+                                          experiment: experiment,
+                                          summaryIds: <String>[
+                                            packagesById[record
+                                                .candidateModelPackageId]!
+                                              .triggerSummaryId,
+                                          ],
+                                          title: 'Trigger summary',
+                                          )
+                                        : null,
                                   onRevoke: () =>
                                       _showCandidatePromotionRevocationDialog(
                                     record: record,
@@ -3358,6 +3367,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     VoidCallback? onRevoke,
     VoidCallback? onTraceAggregation,
     VoidCallback? onTraceAcceptedSummaries,
+    VoidCallback? onTraceTriggerSummary,
   }) {
     final String decidedLabel = _formatTimestamp(record.decidedAt);
     final String updatedLabel = _formatTimestamp(record.updatedAt);
@@ -3512,26 +3522,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               ),
               const SizedBox(height: 8),
               OutlinedButton.icon(
-                onPressed: () => _showAcceptedSummaryDialog(
-                  experiment: _experiments.firstWhere(
-                    (FederatedLearningExperimentModel experiment) =>
-                        experiment.id == package.experimentId,
-                    orElse: () => FederatedLearningExperimentModel(
-                      id: package.experimentId,
-                      name: package.experimentId,
-                      description: '',
-                      runtimeTarget: '',
-                      status: '',
-                      aggregateThreshold: 0,
-                      maxRawUpdateBytes: 0,
-                      uploadEnabled: false,
-                      allowedSiteIds: const <String>[],
-                      createdBy: '',
-                    ),
-                  ),
-                  summaryIds: <String>[package.triggerSummaryId],
-                  title: 'Trigger summary',
-                ),
+                onPressed: onTraceTriggerSummary,
                 icon: const Icon(Icons.playlist_add_check_rounded),
                 label: Text(
                   _tHqFeatureFlags(context, 'Open trigger summary'),
