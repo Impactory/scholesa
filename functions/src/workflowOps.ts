@@ -31,6 +31,7 @@ import {
   buildFederatedLearningRuntimeRolloutAlertRecordDocId,
   buildFederatedLearningRuntimeRolloutEscalationRecordDocId,
   buildFederatedLearningRuntimeRolloutControlRecordDocId,
+  buildFederatedLearningMergeWeightSummary,
   buildFederatedLearningMergedRuntimeVector,
   buildFederatedLearningCandidateModelPackageSummary,
   buildFederatedLearningMergeArtifactDocId,
@@ -1758,9 +1759,13 @@ async function maybeMaterializeFederatedLearningAggregationRun({
       refreshedRows,
       refreshedSelection.maxVectorLength,
     );
+    const mergeWeights = buildFederatedLearningMergeWeightSummary(
+      refreshedRows,
+    );
     const artifactSummary = buildFederatedLearningMergeArtifactSummary(
       refreshedSelection,
       mergedRuntimeVector,
+      mergeWeights,
     );
     const packageSummary = buildFederatedLearningCandidateModelPackageSummary(
       runId,
@@ -1783,6 +1788,8 @@ async function maybeMaterializeFederatedLearningAggregationRun({
       runtimeVectorLength: artifactSummary.runtimeVectorLength,
       runtimeVectorDigest: artifactSummary.runtimeVectorDigest,
       mergeStrategy: FEDERATED_LEARNING_MERGE_STRATEGY,
+      normCap: mergeWeights.normCap,
+      effectiveTotalWeight: mergeWeights.effectiveTotalWeight,
       triggerSummaryId,
       summaryIds: refreshedSelection.summaryIds,
       summaryCount: refreshedSelection.summaryCount,
@@ -1804,6 +1811,8 @@ async function maybeMaterializeFederatedLearningAggregationRun({
       aggregationRunId: runId,
       status: 'generated',
       mergeStrategy: FEDERATED_LEARNING_MERGE_STRATEGY,
+      normCap: artifactSummary.normCap,
+      effectiveTotalWeight: artifactSummary.effectiveTotalWeight,
       boundedDigest: artifactSummary.boundedDigest,
       payloadFormat: artifactSummary.payloadFormat,
       modelVersion: artifactSummary.modelVersion,
@@ -1828,8 +1837,11 @@ async function maybeMaterializeFederatedLearningAggregationRun({
       aggregationRunId: runId,
       mergeArtifactId: artifactId,
       status: 'staged',
+      mergeStrategy: packageSummary.mergeStrategy,
       packageFormat: packageSummary.packageFormat,
       rolloutStatus: packageSummary.rolloutStatus,
+      normCap: packageSummary.normCap,
+      effectiveTotalWeight: packageSummary.effectiveTotalWeight,
       modelVersion: packageSummary.modelVersion,
       packageDigest: packageSummary.packageDigest,
       boundedDigest: packageSummary.boundedDigest,

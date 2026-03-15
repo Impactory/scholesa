@@ -3060,6 +3060,8 @@ class FederatedLearningAggregationRunModel {
     this.candidateModelPackageStatus,
     this.candidateModelPackageFormat,
     this.mergeStrategy,
+    this.normCap,
+    this.effectiveTotalWeight,
     this.boundedDigest,
     this.payloadFormat,
     this.modelVersion,
@@ -3091,6 +3093,8 @@ class FederatedLearningAggregationRunModel {
   final String? candidateModelPackageStatus;
   final String? candidateModelPackageFormat;
   final String? mergeStrategy;
+  final double? normCap;
+  final double? effectiveTotalWeight;
   final String? boundedDigest;
   final String? payloadFormat;
   final String? modelVersion;
@@ -3137,6 +3141,8 @@ class FederatedLearningAggregationRunModel {
       candidateModelPackageFormat:
           data['candidateModelPackageFormat'] as String?,
       mergeStrategy: data['mergeStrategy'] as String?,
+        normCap: (data['normCap'] as num?)?.toDouble(),
+        effectiveTotalWeight: (data['effectiveTotalWeight'] as num?)?.toDouble(),
       boundedDigest: data['boundedDigest'] as String?,
       payloadFormat: data['payloadFormat'] as String?,
       modelVersion: data['modelVersion'] as String?,
@@ -3169,6 +3175,8 @@ class FederatedLearningAggregationRunModel {
         'candidateModelPackageStatus': candidateModelPackageStatus,
         'candidateModelPackageFormat': candidateModelPackageFormat,
         'mergeStrategy': mergeStrategy,
+        'normCap': normCap,
+        'effectiveTotalWeight': effectiveTotalWeight,
         'boundedDigest': boundedDigest,
         'payloadFormat': payloadFormat,
         'modelVersion': modelVersion,
@@ -3198,6 +3206,8 @@ class FederatedLearningMergeArtifactModel {
     required this.aggregationRunId,
     required this.status,
     required this.mergeStrategy,
+    required this.normCap,
+    required this.effectiveTotalWeight,
     required this.boundedDigest,
     required this.payloadFormat,
     required this.modelVersion,
@@ -3222,6 +3232,8 @@ class FederatedLearningMergeArtifactModel {
   final String aggregationRunId;
   final String status;
   final String mergeStrategy;
+  final double normCap;
+  final double effectiveTotalWeight;
   final String boundedDigest;
   final String payloadFormat;
   final String modelVersion;
@@ -3259,6 +3271,9 @@ class FederatedLearningMergeArtifactModel {
       aggregationRunId: data['aggregationRunId'] as String? ?? '',
       status: data['status'] as String? ?? 'generated',
       mergeStrategy: data['mergeStrategy'] as String? ?? '',
+        normCap: (data['normCap'] as num?)?.toDouble() ?? 0,
+        effectiveTotalWeight:
+          (data['effectiveTotalWeight'] as num?)?.toDouble() ?? 0,
       boundedDigest: data['boundedDigest'] as String? ?? '',
       payloadFormat: data['payloadFormat'] as String? ?? 'runtime_vector_v1',
       modelVersion: data['modelVersion'] as String? ?? 'fl_runtime_model_v1',
@@ -3284,6 +3299,8 @@ class FederatedLearningMergeArtifactModel {
         'aggregationRunId': aggregationRunId,
         'status': status,
         'mergeStrategy': mergeStrategy,
+        'normCap': normCap,
+        'effectiveTotalWeight': effectiveTotalWeight,
         'boundedDigest': boundedDigest,
         'payloadFormat': payloadFormat,
         'modelVersion': modelVersion,
@@ -3312,6 +3329,7 @@ class FederatedLearningCandidateModelPackageModel {
     required this.aggregationRunId,
     required this.mergeArtifactId,
     required this.status,
+    this.mergeStrategy,
     required this.packageFormat,
     required this.rolloutStatus,
     this.latestPromotionRecordId,
@@ -3328,6 +3346,8 @@ class FederatedLearningCandidateModelPackageModel {
     required this.modelVersion,
     required this.packageDigest,
     required this.boundedDigest,
+    this.normCap,
+    this.effectiveTotalWeight,
     required this.runtimeVectorLength,
     required this.runtimeVector,
     required this.runtimeVectorDigest,
@@ -3349,6 +3369,7 @@ class FederatedLearningCandidateModelPackageModel {
   final String aggregationRunId;
   final String mergeArtifactId;
   final String status;
+  final String? mergeStrategy;
   final String packageFormat;
   final String rolloutStatus;
   final String? latestPromotionRecordId;
@@ -3365,6 +3386,8 @@ class FederatedLearningCandidateModelPackageModel {
   final String modelVersion;
   final String packageDigest;
   final String boundedDigest;
+  final double? normCap;
+  final double? effectiveTotalWeight;
   final int runtimeVectorLength;
   final List<double> runtimeVector;
   final String runtimeVectorDigest;
@@ -3399,6 +3422,7 @@ class FederatedLearningCandidateModelPackageModel {
       aggregationRunId: data['aggregationRunId'] as String? ?? '',
       mergeArtifactId: data['mergeArtifactId'] as String? ?? '',
       status: data['status'] as String? ?? 'staged',
+      mergeStrategy: data['mergeStrategy'] as String?,
       packageFormat: data['packageFormat'] as String? ?? '',
       rolloutStatus: data['rolloutStatus'] as String? ?? '',
       latestPromotionRecordId: data['latestPromotionRecordId'] as String?,
@@ -3421,6 +3445,8 @@ class FederatedLearningCandidateModelPackageModel {
       modelVersion: data['modelVersion'] as String? ?? 'fl_runtime_model_v1',
       packageDigest: data['packageDigest'] as String? ?? '',
       boundedDigest: data['boundedDigest'] as String? ?? '',
+      normCap: (data['normCap'] as num?)?.toDouble(),
+      effectiveTotalWeight: (data['effectiveTotalWeight'] as num?)?.toDouble(),
       runtimeVectorLength: (data['runtimeVectorLength'] as num?)?.toInt() ?? 0,
       runtimeVector: _doubleListOrEmpty(data['runtimeVector']),
       runtimeVectorDigest: data['runtimeVectorDigest'] as String? ?? '',
@@ -3443,6 +3469,7 @@ class FederatedLearningCandidateModelPackageModel {
         'aggregationRunId': aggregationRunId,
         'mergeArtifactId': mergeArtifactId,
         'status': status,
+        'mergeStrategy': mergeStrategy,
         'packageFormat': packageFormat,
         'rolloutStatus': rolloutStatus,
         'latestPromotionRecordId': latestPromotionRecordId,
@@ -3459,6 +3486,8 @@ class FederatedLearningCandidateModelPackageModel {
         'modelVersion': modelVersion,
         'packageDigest': packageDigest,
         'boundedDigest': boundedDigest,
+        'normCap': normCap,
+        'effectiveTotalWeight': effectiveTotalWeight,
         'runtimeVectorLength': runtimeVectorLength,
         'runtimeVector': runtimeVector,
         'runtimeVectorDigest': runtimeVectorDigest,

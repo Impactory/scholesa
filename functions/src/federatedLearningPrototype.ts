@@ -71,8 +71,15 @@ export interface FederatedLearningAggregationSelection {
   runtimeTargets: string[];
 }
 
+export interface FederatedLearningMergeWeightSummary {
+  normCap: number;
+  effectiveTotalWeight: number;
+}
+
 export interface FederatedLearningMergeArtifactSummary {
   mergeStrategy: string;
+  normCap: number;
+  effectiveTotalWeight: number;
   payloadFormat: 'runtime_vector_v1';
   modelVersion: string;
   sampleCount: number;
@@ -91,6 +98,8 @@ export interface FederatedLearningMergeArtifactSummary {
 
 export interface FederatedLearningCandidateModelPackageSummary {
   mergeStrategy: string;
+  normCap: number;
+  effectiveTotalWeight: number;
   packageFormat: 'runtime_vector_v1';
   rolloutStatus: FederatedLearningCandidateModelPackageRolloutStatus;
   modelVersion: string;
@@ -601,21 +610,12 @@ export function buildFederatedLearningMergedRuntimeVector(
   const boundedLength = asIntegerInRange(vectorLength, 'vectorLength', 1, 100000, 1);
   const merged = Array.from({ length: boundedLength }, () => 0);
   let totalWeight = 0;
-  const positiveNorms = candidates
-    .map((candidate) => candidate.updateNorm)
-    .filter((value): value is number => Number.isFinite(value) && value > 0);
-  const normReference = positiveNorms.length === 0
-    ? 1
-    : Math.exp(
-      positiveNorms.reduce((sum, value) => sum + Math.log(value), 0) /
-        positiveNorms.length,
-    );
-  const normCap = Math.max(1, Number((normReference * 2).toFixed(6)));
+  const mergeWeights = buildFederatedLearningMergeWeightSummary(candidates);
 
   for (const candidate of candidates) {
     const baseWeight = Math.max(0, candidate.sampleCount);
     const normScale = candidate.updateNorm > 0
-      ? Math.min(1, normCap / candidate.updateNorm)
+      ? Math.min(1, mergeWeights.normCap / candidate.updateNorm)
       : 1;
     const weight = Number((baseWeight * normScale).toFixed(6));
     if (weight <= 0) continue;
@@ -632,9 +632,36 @@ export function buildFederatedLearningMergedRuntimeVector(
   return merged.map((value) => Number((value / totalWeight).toFixed(6)));
 }
 
+export function buildFederatedLearningMergeWeightSummary(
+  candidates: Array<Pick<FederatedLearningAggregationCandidate, 'sampleCount' | 'updateNorm'>>,
+): FederatedLearningMergeWeightSummary {
+  const positiveNorms = candidates
+    .map((candidate) => candidate.updateNorm)
+    .filter((value): value is number => Number.isFinite(value) && value > 0);
+  const normReference = positiveNorms.length === 0
+    ? 1
+    : Math.exp(
+      positiveNorms.reduce((sum, value) => sum + Math.log(value), 0) /
+        positiveNorms.length,
+    );
+  const normCap = Math.max(1, Number((normReference * 2).toFixed(6)));
+  const effectiveTotalWeight = Number(candidates.reduce((sum, candidate) => {
+    const baseWeight = Math.max(0, candidate.sampleCount);
+    const normScale = candidate.updateNorm > 0
+      ? Math.min(1, normCap / candidate.updateNorm)
+      : 1;
+    return sum + (baseWeight * normScale);
+  }, 0).toFixed(6));
+  return {
+    normCap,
+    effectiveTotalWeight,
+  };
+}
+
 export function buildFederatedLearningMergeArtifactSummary(
   selection: FederatedLearningAggregationSelection,
   runtimeVector: number[],
+  mergeWeights: FederatedLearningMergeWeightSummary,
 ): FederatedLearningMergeArtifactSummary {
   const mergeStrategy = FEDERATED_LEARNING_MERGE_STRATEGY;
   const payloadFormat = 'runtime_vector_v1';
@@ -651,6 +678,8 @@ export function buildFederatedLearningMergeArtifactSummary(
     .update(JSON.stringify({
       summaryIds: selection.summaryIds,
       mergeStrategy,
+      normCap: mergeWeights.normCap,
+      effectiveTotalWeight: mergeWeights.effectiveTotalWeight,
       totalSampleCount: selection.totalSampleCount,
       summaryCount: selection.summaryCount,
       distinctSiteCount: selection.distinctSiteCount,
@@ -668,6 +697,8 @@ export function buildFederatedLearningMergeArtifactSummary(
 
   return {
     mergeStrategy,
+    normCap: mergeWeights.normCap,
+    effectiveTotalWeight: mergeWeights.effectiveTotalWeight,
     payloadFormat,
     modelVersion,
     sampleCount: selection.totalSampleCount,
@@ -697,6 +728,8 @@ export function buildFederatedLearningCandidateModelPackageSummary(
       runId,
       artifactId,
       mergeStrategy: artifactSummary.mergeStrategy,
+      normCap: artifactSummary.normCap,
+      effectiveTotalWeight: artifactSummary.effectiveTotalWeight,
       packageFormat,
       rolloutStatus,
       modelVersion: artifactSummary.modelVersion,
@@ -717,6 +750,8 @@ export function buildFederatedLearningCandidateModelPackageSummary(
 
   return {
     mergeStrategy: artifactSummary.mergeStrategy,
+    normCap: artifactSummary.normCap,
+    effectiveTotalWeight: artifactSummary.effectiveTotalWeight,
     packageFormat,
     rolloutStatus,
     modelVersion: artifactSummary.modelVersion,

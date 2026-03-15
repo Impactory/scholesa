@@ -1563,6 +1563,8 @@ Map<String, dynamic> _aggregationRunRow({
   int distinctSiteCount = 2,
   String mergeArtifactId = 'fl_merge_1',
   String boundedDigest = 'sha256:digest-1',
+  double normCap = 2.4,
+  double effectiveTotalWeight = 17.6,
   DateTime? createdAt,
 }) {
   return <String, dynamic>{
@@ -1584,6 +1586,8 @@ Map<String, dynamic> _aggregationRunRow({
     'runtimeVectorLength': 8,
     'runtimeVectorDigest': 'sha256:runtime-digest-1',
     'mergeStrategy': 'norm_capped_weighted_runtime_vector_average_v2',
+    'normCap': normCap,
+    'effectiveTotalWeight': effectiveTotalWeight,
     'boundedDigest': boundedDigest,
     'triggerSummaryId': 'update-2',
     'summaryIds': <String>['update-1', 'update-2'],
@@ -1610,6 +1614,8 @@ Map<String, dynamic> _candidatePackageRow({
   int sampleCount = 24,
   int summaryCount = 2,
   int distinctSiteCount = 2,
+  double normCap = 2.4,
+  double effectiveTotalWeight = 17.6,
 }) {
   return <String, dynamic>{
     'id': id,
@@ -1617,6 +1623,7 @@ Map<String, dynamic> _candidatePackageRow({
     'aggregationRunId': aggregationRunId,
     'mergeArtifactId': mergeArtifactId,
     'status': 'staged',
+    'mergeStrategy': 'norm_capped_weighted_runtime_vector_average_v2',
     'packageFormat': 'runtime_vector_v1',
     'rolloutStatus': rolloutStatus,
     'modelVersion': 'fl_runtime_model_v1',
@@ -1633,6 +1640,8 @@ Map<String, dynamic> _candidatePackageRow({
     'latestRuntimeDeliveryStatus': '',
     'packageDigest': 'sha256:pkg-${id.replaceAll('fl_pkg_', '')}',
     'boundedDigest': boundedDigest,
+    'normCap': normCap,
+    'effectiveTotalWeight': effectiveTotalWeight,
     'runtimeVectorLength': 8,
     'runtimeVector': <double>[1.0, 0.4, 0.8, 0.2, 0.1, 0.6, 0.3, 0.05],
     'runtimeVectorDigest':
@@ -2011,6 +2020,8 @@ Map<String, dynamic> _mergeArtifactRow({
   String experimentId = 'fl_exp_literacy_pilot',
   String aggregationRunId = 'fl_agg_1',
   String boundedDigest = 'sha256:digest-1',
+  double normCap = 2.4,
+  double effectiveTotalWeight = 17.6,
 }) {
   return <String, dynamic>{
     'id': id,
@@ -2018,6 +2029,8 @@ Map<String, dynamic> _mergeArtifactRow({
     'aggregationRunId': aggregationRunId,
     'status': 'generated',
     'mergeStrategy': 'norm_capped_weighted_runtime_vector_average_v2',
+    'normCap': normCap,
+    'effectiveTotalWeight': effectiveTotalWeight,
     'boundedDigest': boundedDigest,
     'payloadFormat': 'runtime_vector_v1',
     'modelVersion': 'fl_runtime_model_v1',
@@ -3548,6 +3561,10 @@ void main() {
     expect(find.text('Samples: 62'), findsOneWidget);
     expect(
       find.text('Strategy: norm_capped_weighted_runtime_vector_average_v2'),
+      findsWidgets,
+    );
+    expect(
+      find.text('Norm cap: 2.400 · Effective weight: 17.600'),
       findsWidgets,
     );
     expect(find.text('Digest: sha256:digest-1'), findsWidgets);

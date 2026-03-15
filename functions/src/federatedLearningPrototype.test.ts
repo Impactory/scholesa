@@ -14,6 +14,7 @@ import {
   buildFederatedLearningRuntimeRolloutEscalationRecordDocId,
   buildFederatedLearningRuntimeRolloutControlRecordDocId,
   FEDERATED_LEARNING_MERGE_STRATEGY,
+  buildFederatedLearningMergeWeightSummary,
   buildFederatedLearningMergedRuntimeVector,
   buildFederatedLearningCandidateModelPackageSummary,
   buildFederatedLearningMergeArtifactDocId,
@@ -245,9 +246,26 @@ describe('federated learning prototype helpers', () => {
         updateNorm: 1.2,
       },
     ], 3);
+    const mergeWeights = buildFederatedLearningMergeWeightSummary([
+      {
+        sampleCount: 10,
+        updateNorm: 1.5,
+      },
+      {
+        sampleCount: 8,
+        updateNorm: 1.2,
+      },
+    ]);
 
-    expect(buildFederatedLearningMergeArtifactSummary(selection!, mergedRuntimeVector)).toEqual({
+    expect(mergeWeights).toEqual({
+      normCap: 2.683282,
+      effectiveTotalWeight: 18,
+    });
+
+    expect(buildFederatedLearningMergeArtifactSummary(selection!, mergedRuntimeVector, mergeWeights)).toEqual({
       mergeStrategy: FEDERATED_LEARNING_MERGE_STRATEGY,
+      normCap: 2.683282,
+      effectiveTotalWeight: 18,
       payloadFormat: 'runtime_vector_v1',
       modelVersion: 'fl_runtime_model_v1',
       sampleCount: 18,
@@ -267,9 +285,11 @@ describe('federated learning prototype helpers', () => {
     expect(buildFederatedLearningCandidateModelPackageSummary(
       'fl_agg_1cb85e2396ee2ed67818ed78',
       'fl_merge_1cb85e2396ee2ed67818ed78',
-      buildFederatedLearningMergeArtifactSummary(selection!, mergedRuntimeVector),
+      buildFederatedLearningMergeArtifactSummary(selection!, mergedRuntimeVector, mergeWeights),
     )).toEqual({
       mergeStrategy: FEDERATED_LEARNING_MERGE_STRATEGY,
+      normCap: 2.683282,
+      effectiveTotalWeight: 18,
       packageFormat: 'runtime_vector_v1',
       rolloutStatus: 'not_distributed',
       modelVersion: 'fl_runtime_model_v1',

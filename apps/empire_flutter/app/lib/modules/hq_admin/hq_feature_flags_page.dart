@@ -1885,6 +1885,10 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         (artifact?.boundedDigest ?? run.boundedDigest ?? '').trim();
     final String strategy =
         (artifact?.mergeStrategy ?? run.mergeStrategy ?? '').trim();
+    final double? normCap = artifact?.normCap ?? candidatePackage?.normCap ?? run.normCap;
+    final double? effectiveTotalWeight = artifact?.effectiveTotalWeight ??
+      candidatePackage?.effectiveTotalWeight ??
+      run.effectiveTotalWeight;
     final String artifactId =
         (artifact?.id ?? run.mergeArtifactId ?? '').trim();
     final String packageId =
@@ -1938,6 +1942,19 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
             const SizedBox(height: 4),
             Text(
               _tHqFeatureFlags(context, 'Strategy: $strategy'),
+              style: const TextStyle(
+                fontSize: 12,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+          ],
+          if (normCap != null || effectiveTotalWeight != null) ...<Widget>[
+            const SizedBox(height: 4),
+            Text(
+              _tHqFeatureFlags(
+                context,
+                'Norm cap: ${_formatMergeMetric(normCap)} · Effective weight: ${_formatMergeMetric(effectiveTotalWeight)}',
+              ),
               style: const TextStyle(
                 fontSize: 12,
                 color: ScholesaColors.textSecondary,
@@ -5240,6 +5257,14 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
   String _formatTimestamp(Timestamp? value) {
     if (value == null) return _tHqFeatureFlags(context, 'unknown');
     return value.toDate().toIso8601String();
+  }
+
+  String _formatMergeMetric(double? value) {
+    if (value == null) return _tHqFeatureFlags(context, 'unknown');
+    if (value == value.roundToDouble()) {
+      return value.toStringAsFixed(0);
+    }
+    return value.toStringAsFixed(3);
   }
 
   String _summarizeRuntimeDeliveryLifecycle(

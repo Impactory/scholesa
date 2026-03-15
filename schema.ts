@@ -284,6 +284,8 @@ export interface FederatedLearningAggregationRun {
   candidateModelPackageStatus?: 'staged';
   candidateModelPackageFormat?: 'runtime_vector_v1';
   mergeStrategy?: string;
+  normCap?: number;
+  effectiveTotalWeight?: number;
   boundedDigest?: string;
   payloadFormat?: 'runtime_vector_v1';
   modelVersion?: string;
@@ -310,6 +312,8 @@ export interface FederatedLearningMergeArtifact {
   aggregationRunId: string;
   status: 'generated';
   mergeStrategy: string;
+  normCap: number;
+  effectiveTotalWeight: number;
   boundedDigest: string;
   payloadFormat: 'runtime_vector_v1';
   modelVersion: string;
@@ -335,6 +339,7 @@ export interface FederatedLearningCandidateModelPackage {
   aggregationRunId: string;
   mergeArtifactId: string;
   status: 'staged';
+  mergeStrategy?: string;
   packageFormat: 'runtime_vector_v1';
   rolloutStatus: 'not_distributed' | 'distributed' | 'retired';
   modelVersion: string;
@@ -351,6 +356,8 @@ export interface FederatedLearningCandidateModelPackage {
   latestRuntimeDeliveryStatus?: FederatedLearningRuntimeDeliveryStatus;
   packageDigest: string;
   boundedDigest: string;
+  normCap?: number;
+  effectiveTotalWeight?: number;
   runtimeVectorLength: number;
   runtimeVector: number[];
   runtimeVectorDigest: string;
