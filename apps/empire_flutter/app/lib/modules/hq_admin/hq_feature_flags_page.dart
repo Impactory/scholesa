@@ -6699,14 +6699,21 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
           if (package.triggerSummaryId.trim().isNotEmpty)
             package.triggerSummaryId,
       };
-      final Map<String, FederatedLearningUpdateSummaryModel> summariesById =
-          <String, FederatedLearningUpdateSummaryModel>{
-        for (final FederatedLearningUpdateSummaryModel summary
-            in await _updateSummaryRepository.listByIds(
-          summaryIds.toList()..sort(),
-        ))
-          summary.id: summary,
-      };
+      Map<String, FederatedLearningUpdateSummaryModel> summariesById =
+          <String, FederatedLearningUpdateSummaryModel>{};
+      if (summaryIds.isNotEmpty) {
+        try {
+          summariesById = <String, FederatedLearningUpdateSummaryModel>{
+            for (final FederatedLearningUpdateSummaryModel summary
+                in await _updateSummaryRepository.listByIds(
+              summaryIds.toList()..sort(),
+            ))
+              summary.id: summary,
+          };
+        } catch (_) {
+          summariesById = <String, FederatedLearningUpdateSummaryModel>{};
+        }
+      }
       if (!mounted) return;
       setState(() {
         _experiments = loaded;
