@@ -876,6 +876,12 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
             : _promotionRevocationRecordsByPackageId[latestPackage.id];
     final FederatedLearningAggregationRunModel? latestRun =
         runs.isNotEmpty ? runs.first : null;
+    final String latestAggregationTrainingRollup = latestRun == null
+      ? ''
+      : _formatLocalTrainingRollup(latestRun.summaryIds);
+    final String latestPackageTrainingRollup = latestPackage == null
+      ? ''
+      : _formatLocalTrainingRollup(latestPackage.summaryIds);
     final String runtimeDeliveryLifecycle = latestRuntimeDelivery == null
         ? ''
         : _summarizeRuntimeDeliveryLifecycle(latestRuntimeDelivery);
@@ -1161,8 +1167,6 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               ),
             ],
             if (latestRun != null) ...<Widget>[
-              final String latestAggregationTrainingRollup =
-                  _formatLocalTrainingRollup(latestRun.summaryIds);
               const SizedBox(height: 8),
               Text(
                 _tHqFeatureFlags(
@@ -1220,8 +1224,6 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               ],
             ],
             if (latestPackage != null) ...<Widget>[
-              final String latestPackageTrainingRollup =
-                  _formatLocalTrainingRollup(latestPackage.summaryIds);
               const SizedBox(height: 4),
               Text(
                 _tHqFeatureFlags(
@@ -2905,6 +2907,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     final String effectiveTarget =
         _effectivePromotionTarget(promotion, revocation);
     final String mergeStrategy = (package.mergeStrategy ?? '').trim();
+    final String localTrainingRollup =
+      _formatLocalTrainingRollup(package.summaryIds);
     final bool isApproved = effectiveStatus == 'approved_for_eval';
     final bool isHold = effectiveStatus == 'hold';
 
@@ -3032,6 +3036,16 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 context,
                 'Accepted summaries: ${package.summaryIds.join(', ')}',
               ),
+              style: const TextStyle(
+                fontSize: 12,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+          ],
+          if (localTrainingRollup.isNotEmpty) ...<Widget>[
+            const SizedBox(height: 4),
+            Text(
+              _tHqFeatureFlags(context, localTrainingRollup),
               style: const TextStyle(
                 fontSize: 12,
                 color: ScholesaColors.textSecondary,
@@ -3849,6 +3863,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         _effectivePromotionStatus(record, revocation);
     final String effectiveTarget =
         _effectivePromotionTarget(record, revocation);
+    final String localTrainingRollup =
+      _formatLocalTrainingRollup(package?.summaryIds ?? const <String>[]);
     final bool isRevoked = revocation != null;
 
     return Container(
@@ -4018,6 +4034,16 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                   context,
                   'Accepted summaries: ${package.summaryIds.join(', ')}',
                 ),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: ScholesaColors.textSecondary,
+                ),
+              ),
+            ],
+            if (localTrainingRollup.isNotEmpty) ...<Widget>[
+              const SizedBox(height: 4),
+              Text(
+                _tHqFeatureFlags(context, localTrainingRollup),
                 style: const TextStyle(
                   fontSize: 12,
                   color: ScholesaColors.textSecondary,
@@ -5085,6 +5111,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                               record.summaryIds.isNotEmpty
                                 ? record.summaryIds
                                 : package?.summaryIds ?? const <String>[];
+                            final String localTrainingRollup =
+                              _formatLocalTrainingRollup(summaryIds);
                             final List<FederatedLearningContributionDetailModel>
                               contributionDetails =
                               package?.contributionDetails ??
@@ -5177,6 +5205,18 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                                       _tHqFeatureFlags(
                                         dialogContext,
                                         'Accepted summaries: ${summaryIds.join(', ')}',
+                                      ),
+                                      style: const TextStyle(
+                                        color: ScholesaColors.textSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                  if (localTrainingRollup.isNotEmpty) ...<Widget>[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      _tHqFeatureFlags(
+                                        dialogContext,
+                                        localTrainingRollup,
                                       ),
                                       style: const TextStyle(
                                         color: ScholesaColors.textSecondary,

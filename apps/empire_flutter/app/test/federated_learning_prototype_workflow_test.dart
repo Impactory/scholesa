@@ -3738,6 +3738,12 @@ void main() {
     expect(find.text('Trigger summary: update-2'), findsOneWidget);
     expect(find.text('Accepted summaries: update-1, update-2'), findsOneWidget);
     expect(
+      find.text(
+        'Local training rollup: bounded_runtime_vector_local_finetune_v1 · 2 summaries · epochs 2 · steps 24 · window 135s · warm start fl_pkg_1',
+      ),
+      findsOneWidget,
+    );
+    expect(
       find.widgetWithText(OutlinedButton, 'Open accepted summaries'),
       findsOneWidget,
     );
@@ -3889,6 +3895,12 @@ void main() {
     );
     expect(find.text('Trigger summary: update-2'), findsWidgets);
     expect(find.text('Accepted summaries: update-1, update-2'), findsWidgets);
+    expect(
+      find.text(
+        'Local training rollup: bounded_runtime_vector_local_finetune_v1 · 2 summaries · epochs 2 · steps 24 · window 135s · warm start fl_pkg_1',
+      ),
+      findsWidgets,
+    );
     expect(find.text('Contributor sites: site-1, site-2'), findsWidgets);
     expect(find.text('Digest: sha256:digest-1'), findsWidgets);
     expect(find.text('Artifact: fl_merge_1'), findsWidgets);
@@ -4060,6 +4072,12 @@ void main() {
     expect(find.text('Contributor sites: site-1, site-2'), findsWidgets);
     expect(find.text('Trigger summary: update-2'), findsWidgets);
     expect(find.text('Accepted summaries: update-1, update-2'), findsWidgets);
+    expect(
+      find.text(
+        'Local training rollup: bounded_runtime_vector_local_finetune_v1 · 2 summaries · epochs 2 · steps 24 · window 135s · warm start fl_pkg_1',
+      ),
+      findsWidgets,
+    );
     expect(find.text('Promotion: approved_for_eval (sandbox_eval)'),
         findsOneWidget);
     expect(
@@ -4279,6 +4297,12 @@ void main() {
     expect(find.text('Contributor sites: site-1, site-2'), findsWidgets);
     expect(find.text('Trigger summary: update-2'), findsWidgets);
     expect(find.text('Accepted summaries: update-1, update-2'), findsWidgets);
+    expect(
+      find.text(
+        'Local training rollup: bounded_runtime_vector_local_finetune_v1 · 2 summaries · epochs 2 · steps 24 · window 135s · warm start fl_pkg_1',
+      ),
+      findsWidgets,
+    );
     expect(
       find.text('Decision fl_prom_2 · hold (sandbox_eval)'),
       findsOneWidget,
