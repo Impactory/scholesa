@@ -180,6 +180,32 @@ function asFiniteNumber(value: unknown): number | null {
   return null;
 }
 
+function normalizedCompatibilityValue(value: string | null | undefined): string {
+  const trimmed = typeof value === 'string' ? value.trim() : '';
+  return trimmed.length > 0 ? trimmed : '__none__';
+}
+
+function buildFederatedLearningAggregationCompatibilityKey(
+  candidate: Pick<
+    FederatedLearningAggregationCandidate,
+    | 'schemaVersion'
+    | 'runtimeTarget'
+    | 'optimizerStrategy'
+    | 'warmStartPackageId'
+    | 'warmStartModelVersion'
+    | 'vectorLength'
+  >,
+): string {
+  return [
+    normalizedCompatibilityValue(candidate.schemaVersion),
+    normalizedCompatibilityValue(candidate.runtimeTarget),
+    normalizedCompatibilityValue(candidate.optimizerStrategy),
+    normalizedCompatibilityValue(candidate.warmStartPackageId),
+    normalizedCompatibilityValue(candidate.warmStartModelVersion),
+    String(candidate.vectorLength),
+  ].join('|');
+}
+
 function asIntegerInRange(
   value: unknown,
   fieldName: string,
@@ -325,16 +351,8 @@ export function buildFederatedLearningPilotExecutionRecordDocId(packageId: strin
 export function buildFederatedLearningRuntimeDeliveryRecordDocId(packageId: string): string {
   return `fl_delivery_${packageId.replace(/^fl_pkg_/, '')}`;
 }
-      let compatibilityKey = '';
 
 export function buildFederatedLearningRuntimeActivationRecordDocId(deliveryId: string, siteId: string): string {
-        const candidateCompatibilityKey = buildFederatedLearningAggregationCompatibilityKey(candidate);
-        if (!compatibilityKey) {
-          compatibilityKey = candidateCompatibilityKey;
-        }
-        if (candidateCompatibilityKey !== compatibilityKey) {
-          continue;
-        }
   const digest = createHash('sha256')
     .update(`${deliveryId}|${siteId.trim()}`)
     .digest('hex')
@@ -344,7 +362,6 @@ export function buildFederatedLearningRuntimeActivationRecordDocId(deliveryId: s
 
 export function buildFederatedLearningRuntimeRolloutAlertRecordDocId(deliveryId: string): string {
   return `fl_rollout_alert_${deliveryId.replace(/^fl_delivery_/, '')}`;
-      const optimizerStrategies = new Set<string>();
 }
 
 export function buildFederatedLearningRuntimeRolloutEscalationRecordDocId(deliveryId: string): string {
@@ -355,9 +372,6 @@ export function buildFederatedLearningRuntimeRolloutControlRecordDocId(deliveryI
   return `fl_rollout_control_${deliveryId.replace(/^fl_delivery_/, '')}`;
 }
 
-        if (typeof candidate.optimizerStrategy === 'string' && candidate.optimizerStrategy.trim().length > 0) {
-          optimizerStrategies.add(candidate.optimizerStrategy.trim());
-        }
 export function buildFederatedLearningRuntimeDeliveryManifestDigest(
   packageDigest: string,
   targetSiteIds: string[],
@@ -384,10 +398,6 @@ export function normalizeFederatedLearningExperimentReviewStatus(
 }
 
 export function normalizeFederatedLearningCandidatePromotionStatus(
-        optimizerStrategies: Array.from(optimizerStrategies).sort(),
-        compatibilityKey,
-        warmStartPackageId,
-        warmStartModelVersion,
   value: unknown,
 ): FederatedLearningCandidatePromotionStatus | null {
   const normalized = asTrimmedString(value).toLowerCase();
@@ -644,8 +654,16 @@ export function selectFederatedLearningAggregationBatch(
   );
   const selected: FederatedLearningAggregationCandidate[] = [];
   let totalSampleCount = 0;
+  let compatibilityKey = '';
   for (const candidate of candidates) {
     if (candidate.sampleCount <= 0) continue;
+    const candidateCompatibilityKey = buildFederatedLearningAggregationCompatibilityKey(candidate);
+    if (!compatibilityKey) {
+      compatibilityKey = candidateCompatibilityKey;
+    }
+    if (candidateCompatibilityKey !== compatibilityKey) {
+      continue;
+    }
     selected.push(candidate);
     totalSampleCount += candidate.sampleCount;
     if (totalSampleCount >= threshold) {
@@ -659,6 +677,7 @@ export function selectFederatedLearningAggregationBatch(
   const siteIds = new Set<string>();
   const schemaVersions = new Set<string>();
   const runtimeTargets = new Set<string>();
+  const optimizerStrategies = new Set<string>();
   let totalPayloadBytes = 0;
   let maxVectorLength = 0;
   let updateNormTotal = 0;
@@ -669,10 +688,23 @@ export function selectFederatedLearningAggregationBatch(
     if (typeof candidate.runtimeTarget === 'string' && candidate.runtimeTarget.trim().length > 0) {
       runtimeTargets.add(candidate.runtimeTarget.trim());
     }
+    if (typeof candidate.optimizerStrategy === 'string' && candidate.optimizerStrategy.trim().length > 0) {
+      optimizerStrategies.add(candidate.optimizerStrategy.trim());
+    }
     totalPayloadBytes += candidate.payloadBytes;
     maxVectorLength = Math.max(maxVectorLength, candidate.vectorLength);
     updateNormTotal += candidate.updateNorm;
   }
+
+  const firstSelected = selected[0];
+  const warmStartPackageId = typeof firstSelected?.warmStartPackageId === 'string' &&
+    firstSelected.warmStartPackageId.trim().length > 0
+    ? firstSelected.warmStartPackageId.trim()
+    : undefined;
+  const warmStartModelVersion = typeof firstSelected?.warmStartModelVersion === 'string' &&
+    firstSelected.warmStartModelVersion.trim().length > 0
+    ? firstSelected.warmStartModelVersion.trim()
+    : undefined;
 
   return {
     summaryIds: selected.map((candidate) => candidate.id),
@@ -685,6 +717,10 @@ export function selectFederatedLearningAggregationBatch(
     averageUpdateNorm: selected.length > 0 ? Number((updateNormTotal / selected.length).toFixed(6)) : 0,
     schemaVersions: Array.from(schemaVersions).sort(),
     runtimeTargets: Array.from(runtimeTargets).sort(),
+    optimizerStrategies: Array.from(optimizerStrategies).sort(),
+    compatibilityKey,
+    warmStartPackageId,
+    warmStartModelVersion,
   };
 }
 

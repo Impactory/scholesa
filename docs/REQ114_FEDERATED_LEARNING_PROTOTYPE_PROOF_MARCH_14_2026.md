@@ -113,6 +113,7 @@ Additional focused validation passed on 2026-03-15:
 - Flutter repositories and rules expose read-only experiment/update-summary records while keeping writes behind server callables.
 - Runtime BOS signals now feed a bounded warm-start local fine-tune step in the Flutter adapter, which uses the currently resolved runtime package as a local starting point, nudges a bounded runtime vector toward event-derived targets across a small epoch budget, and uploads the resulting bounded local model payload on mission/checkpoint/session triggers without sending raw learner content.
 - When accepted summaries cumulatively hit the experiment threshold, the backend now materializes a bounded aggregation-run record, marks the source summaries as consumed, and merges the uploaded bounded local runtime vectors into a weighted runtime payload instead of only emitting metadata.
+- Aggregation selection now also skips accepted summaries whose runtime target, schema version, optimizer strategy, vector length, or warm-start package/model lineage do not match the active batch, so prototype merge runs no longer average incompatible bounded local models together just because they arrived in the same threshold window.
 - Each materialized run now also emits a bounded merge-artifact record that includes the merged runtime vector, model version, and payload digest alongside the aggregate metadata, while remaining an auditable bounded payload rather than a general model binary.
 - Each generated merge artifact now also stages a bounded candidate-model-package payload record for downstream inspection and delivery, carrying the merged runtime vector for site-scoped resolution without claiming a generalized production rollout path.
 - HQ can now inspect candidate-package history separately from aggregation runs, including package digests, linked artifacts, whether a package is still awaiting promotion, on hold, or approved for eval, and can write the bounded decision record directly from the package drill-in dialog.
@@ -175,6 +176,6 @@ Additional focused validation passed on 2026-03-15:
 REQ-114 remains partial until all of the following exist and are approved:
 
 - production-grade on-device training beyond the current bounded warm-start local fine-tune path
-- production-grade merge semantics beyond the current bounded norm-capped weighted runtime-vector averaging path
+- production-grade merge semantics beyond the current bounded compatibility-aware, norm-capped weighted runtime-vector averaging path
 - richer production-grade aggregation observability beyond the current bounded merge-strategy, norm-cap, effective-weight, contributor-site lineage, and accepted-summary local-training transparency surfaced in prototype records and HQ history
 - production-grade rollout orchestration and long-lived model lifecycle management beyond the current bounded site-scoped expiry, supersession, retirement, revocation, paused/restricted control, and fallback path
