@@ -480,6 +480,9 @@ export interface FederatedLearningRuntimeDeliveryRecord {
   targetSiteIds: string[];
   status: FederatedLearningRuntimeDeliveryStatus;
   packageDigest: string;
+  boundedDigest: string;
+  triggerSummaryId: string;
+  summaryIds: string[];
   manifestDigest: string;
   expiresAt?: number;
   supersededAt?: number;

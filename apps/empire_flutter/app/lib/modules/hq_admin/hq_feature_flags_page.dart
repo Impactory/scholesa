@@ -4562,50 +4562,186 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: records.map(
-                          (FederatedLearningRuntimeDeliveryRecordModel record) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              Text(
-                                _tHqFeatureFlags(
-                                  dialogContext,
-                                  '${record.id} · ${record.status} · ${record.targetSiteIds.length} sites · ${record.runtimeTarget}',
-                                ),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                _tHqFeatureFlags(
-                                  dialogContext,
-                                  'Lifecycle: ${_runtimeDeliveryLifecycleDetail(record)}',
-                                ),
-                                style: const TextStyle(
-                                  color: ScholesaColors.textSecondary,
-                                ),
-                              ),
-                              if ((record.revocationReason ?? '')
-                                  .trim()
-                                  .isNotEmpty) ...<Widget>[
-                                const SizedBox(height: 4),
-                                Text(
-                                  _tHqFeatureFlags(
-                                    dialogContext,
-                                    'Revocation reason: ${record.revocationReason}',
+                      children: records
+                          .map(
+                            (FederatedLearningRuntimeDeliveryRecordModel
+                                    record) =>
+                                Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  Text(
+                                    _tHqFeatureFlags(
+                                      dialogContext,
+                                      '${record.id} · ${record.status} · ${record.targetSiteIds.length} sites · ${record.runtimeTarget}',
+                                    ),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                    ),
                                   ),
-                                  style: const TextStyle(
-                                    color: ScholesaColors.textSecondary,
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    _tHqFeatureFlags(
+                                      dialogContext,
+                                      'Lifecycle: ${_runtimeDeliveryLifecycleDetail(record)}',
+                                    ),
+                                    style: const TextStyle(
+                                      color: ScholesaColors.textSecondary,
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        );
-                      }).toList(growable: false),
+                                  if (record.aggregationRunId
+                                          .trim()
+                                          .isNotEmpty ||
+                                      record.mergeArtifactId
+                                          .trim()
+                                          .isNotEmpty) ...<Widget>[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      _tHqFeatureFlags(
+                                        dialogContext,
+                                        'Aggregation run: ${record.aggregationRunId} · Artifact: ${record.mergeArtifactId}',
+                                      ),
+                                      style: const TextStyle(
+                                        color: ScholesaColors.textSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                  if (record.packageDigest.trim().isNotEmpty ||
+                                      record.boundedDigest
+                                          .trim()
+                                          .isNotEmpty) ...<Widget>[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      _tHqFeatureFlags(
+                                        dialogContext,
+                                        'Delivery digests: package ${record.packageDigest} · bounded ${record.boundedDigest}',
+                                      ),
+                                      style: const TextStyle(
+                                        color: ScholesaColors.textSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                  if (record.triggerSummaryId
+                                      .trim()
+                                      .isNotEmpty) ...<Widget>[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      _tHqFeatureFlags(
+                                        dialogContext,
+                                        'Trigger summary: ${record.triggerSummaryId}',
+                                      ),
+                                      style: const TextStyle(
+                                        color: ScholesaColors.textSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                  if (record.summaryIds.isNotEmpty) ...<Widget>[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      _tHqFeatureFlags(
+                                        dialogContext,
+                                        'Accepted summaries: ${record.summaryIds.join(', ')}',
+                                      ),
+                                      style: const TextStyle(
+                                        color: ScholesaColors.textSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                  if ((record.revocationReason ?? '')
+                                      .trim()
+                                      .isNotEmpty) ...<Widget>[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      _tHqFeatureFlags(
+                                        dialogContext,
+                                        'Revocation reason: ${record.revocationReason}',
+                                      ),
+                                      style: const TextStyle(
+                                        color: ScholesaColors.textSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                  if (record.aggregationRunId
+                                          .trim()
+                                          .isNotEmpty ||
+                                      record.summaryIds.isNotEmpty ||
+                                      record.triggerSummaryId
+                                          .trim()
+                                          .isNotEmpty) ...<Widget>[
+                                    const SizedBox(height: 10),
+                                    Wrap(
+                                      spacing: 8,
+                                      runSpacing: 8,
+                                      children: <Widget>[
+                                        if (record.aggregationRunId
+                                            .trim()
+                                            .isNotEmpty)
+                                          OutlinedButton.icon(
+                                            onPressed: () =>
+                                                _showAggregationHistoryDialog(
+                                              experiment,
+                                              initialQuery:
+                                                  record.aggregationRunId,
+                                            ),
+                                            icon: const Icon(
+                                              Icons.timeline_rounded,
+                                            ),
+                                            label: Text(
+                                              _tHqFeatureFlags(
+                                                dialogContext,
+                                                'Open aggregation run',
+                                              ),
+                                            ),
+                                          ),
+                                        if (record.summaryIds.isNotEmpty)
+                                          OutlinedButton.icon(
+                                            onPressed: () =>
+                                                _showAcceptedSummaryDialog(
+                                              experiment: experiment,
+                                              summaryIds: record.summaryIds,
+                                              title: 'Accepted summaries',
+                                            ),
+                                            icon: const Icon(
+                                              Icons.description_rounded,
+                                            ),
+                                            label: Text(
+                                              _tHqFeatureFlags(
+                                                dialogContext,
+                                                'Open accepted summaries',
+                                              ),
+                                            ),
+                                          ),
+                                        if (record.triggerSummaryId
+                                            .trim()
+                                            .isNotEmpty)
+                                          OutlinedButton.icon(
+                                            onPressed: () =>
+                                                _showAcceptedSummaryDialog(
+                                              experiment: experiment,
+                                              summaryIds: <String>[
+                                                record.triggerSummaryId,
+                                              ],
+                                              title: 'Trigger summary',
+                                            ),
+                                            icon: const Icon(
+                                              Icons.bolt_rounded,
+                                            ),
+                                            label: Text(
+                                              _tHqFeatureFlags(
+                                                dialogContext,
+                                                'Open trigger summary',
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          )
+                          .toList(growable: false),
                     ),
                   ),
           ),

@@ -3252,6 +3252,9 @@ export const upsertFederatedLearningRuntimeDeliveryRecord = onCall(async (reques
   const aggregationRunId = asTrimmedString(packageData.aggregationRunId);
   const mergeArtifactId = asTrimmedString(packageData.mergeArtifactId);
   const packageDigest = asTrimmedString(packageData.packageDigest);
+  const boundedDigest = asTrimmedString(packageData.boundedDigest);
+  const triggerSummaryId = asTrimmedString(packageData.triggerSummaryId);
+  const summaryIds = toStringArray(packageData.summaryIds);
   const executionId = buildFederatedLearningPilotExecutionRecordDocId(candidateModelPackageId);
   const deliveryId = buildFederatedLearningRuntimeDeliveryRecordDocId(candidateModelPackageId);
   const deliveryRef = admin.firestore().collection('federatedLearningRuntimeDeliveryRecords').doc(deliveryId);
@@ -3388,6 +3391,9 @@ export const upsertFederatedLearningRuntimeDeliveryRecord = onCall(async (reques
       targetSiteIds: effectiveTargetSiteIds,
       status,
       packageDigest,
+      boundedDigest,
+      triggerSummaryId,
+      summaryIds,
       manifestDigest,
       expiresAt: effectiveExpiresAt ?? FieldValue.delete(),
       supersededAt: FieldValue.delete(),

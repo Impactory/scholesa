@@ -3143,8 +3143,8 @@ class FederatedLearningAggregationRunModel {
       candidateModelPackageFormat:
           data['candidateModelPackageFormat'] as String?,
       mergeStrategy: data['mergeStrategy'] as String?,
-        normCap: (data['normCap'] as num?)?.toDouble(),
-        effectiveTotalWeight: (data['effectiveTotalWeight'] as num?)?.toDouble(),
+      normCap: (data['normCap'] as num?)?.toDouble(),
+      effectiveTotalWeight: (data['effectiveTotalWeight'] as num?)?.toDouble(),
       boundedDigest: data['boundedDigest'] as String?,
       payloadFormat: data['payloadFormat'] as String?,
       modelVersion: data['modelVersion'] as String?,
@@ -3284,7 +3284,7 @@ class FederatedLearningMergeArtifactModel {
       normCap: (data['normCap'] as num?)?.toDouble() ?? 0,
       effectiveTotalWeight:
           (data['effectiveTotalWeight'] as num?)?.toDouble() ?? 0,
-        triggerSummaryId: data['triggerSummaryId'] as String? ?? '',
+      triggerSummaryId: data['triggerSummaryId'] as String? ?? '',
       summaryIds: _stringListOrEmpty(data['summaryIds']),
       boundedDigest: data['boundedDigest'] as String? ?? '',
       payloadFormat: data['payloadFormat'] as String? ?? 'runtime_vector_v1',
@@ -3802,6 +3802,9 @@ class FederatedLearningRuntimeDeliveryRecordModel {
     required this.targetSiteIds,
     required this.status,
     required this.packageDigest,
+    required this.boundedDigest,
+    required this.triggerSummaryId,
+    required this.summaryIds,
     required this.manifestDigest,
     this.expiresAt,
     this.supersededAt,
@@ -3829,6 +3832,9 @@ class FederatedLearningRuntimeDeliveryRecordModel {
   final List<String> targetSiteIds;
   final String status;
   final String packageDigest;
+  final String boundedDigest;
+  final String triggerSummaryId;
+  final List<String> summaryIds;
   final String manifestDigest;
   final Timestamp? expiresAt;
   final Timestamp? supersededAt;
@@ -3869,15 +3875,18 @@ class FederatedLearningRuntimeDeliveryRecordModel {
       targetSiteIds: _stringListOrEmpty(data['targetSiteIds']),
       status: data['status'] as String? ?? 'prepared',
       packageDigest: data['packageDigest'] as String? ?? '',
+      boundedDigest: data['boundedDigest'] as String? ?? '',
+      triggerSummaryId: data['triggerSummaryId'] as String? ?? '',
+      summaryIds: _stringListOrEmpty(data['summaryIds']),
       manifestDigest: data['manifestDigest'] as String? ?? '',
       expiresAt: _timestampOrNull(data['expiresAt']),
-        supersededAt: _timestampOrNull(data['supersededAt']),
-        supersededBy: data['supersededBy'] as String?,
-        supersededByDeliveryRecordId:
+      supersededAt: _timestampOrNull(data['supersededAt']),
+      supersededBy: data['supersededBy'] as String?,
+      supersededByDeliveryRecordId:
           data['supersededByDeliveryRecordId'] as String?,
-        supersededByCandidateModelPackageId:
+      supersededByCandidateModelPackageId:
           data['supersededByCandidateModelPackageId'] as String?,
-        supersessionReason: data['supersessionReason'] as String?,
+      supersessionReason: data['supersessionReason'] as String?,
       revokedAt: _timestampOrNull(data['revokedAt']),
       revokedBy: data['revokedBy'] as String?,
       revocationReason: data['revocationReason'] as String?,
@@ -3899,13 +3908,16 @@ class FederatedLearningRuntimeDeliveryRecordModel {
         'targetSiteIds': targetSiteIds,
         'status': status,
         'packageDigest': packageDigest,
+        'boundedDigest': boundedDigest,
+        'triggerSummaryId': triggerSummaryId,
+        'summaryIds': summaryIds,
         'manifestDigest': manifestDigest,
         'expiresAt': expiresAt,
         'supersededAt': supersededAt,
         'supersededBy': supersededBy,
         'supersededByDeliveryRecordId': supersededByDeliveryRecordId,
         'supersededByCandidateModelPackageId':
-          supersededByCandidateModelPackageId,
+            supersededByCandidateModelPackageId,
         'supersessionReason': supersessionReason,
         'revokedAt': revokedAt,
         'revokedBy': revokedBy,
@@ -4385,19 +4397,20 @@ class FederatedLearningResolvedRuntimePackageModel {
       runtimeVectorDigest: data['runtimeVectorDigest'] as String? ?? '',
       rolloutStatus: data['rolloutStatus'] as String? ?? 'not_distributed',
       expiresAt: _timestampOrNull(data['expiresAt']),
-        supersededAt: _timestampOrNull(data['supersededAt']),
-        supersededBy: data['supersededBy'] as String?,
-        supersededByDeliveryRecordId:
+      supersededAt: _timestampOrNull(data['supersededAt']),
+      supersededBy: data['supersededBy'] as String?,
+      supersededByDeliveryRecordId:
           data['supersededByDeliveryRecordId'] as String?,
-        supersededByCandidateModelPackageId:
+      supersededByCandidateModelPackageId:
           data['supersededByCandidateModelPackageId'] as String?,
-        supersessionReason: data['supersessionReason'] as String?,
+      supersessionReason: data['supersessionReason'] as String?,
       revokedAt: _timestampOrNull(data['revokedAt']),
       revokedBy: data['revokedBy'] as String?,
       revocationReason: data['revocationReason'] as String?,
       rolloutControlMode: data['rolloutControlMode'] as String?,
       rolloutControlReason: data['rolloutControlReason'] as String?,
-      rolloutControlReviewByAt: _timestampOrNull(data['rolloutControlReviewByAt']),
+      rolloutControlReviewByAt:
+          _timestampOrNull(data['rolloutControlReviewByAt']),
       resolvedAt: _timestampOrNull(data['resolvedAt']),
     );
   }
@@ -4422,7 +4435,7 @@ class FederatedLearningResolvedRuntimePackageModel {
         'supersededBy': supersededBy,
         'supersededByDeliveryRecordId': supersededByDeliveryRecordId,
         'supersededByCandidateModelPackageId':
-          supersededByCandidateModelPackageId,
+            supersededByCandidateModelPackageId,
         'supersessionReason': supersessionReason,
         'revokedAt': revokedAt,
         'revokedBy': revokedBy,
@@ -4573,8 +4586,8 @@ class FederatedLearningCandidatePromotionRevocationRecordModel {
           data['candidatePromotionRecordId'] as String? ?? '',
       aggregationRunId: data['aggregationRunId'] as String? ?? '',
       mergeArtifactId: data['mergeArtifactId'] as String? ?? '',
-        packageDigest: data['packageDigest'] as String? ?? '',
-        boundedDigest: data['boundedDigest'] as String? ?? '',
+      packageDigest: data['packageDigest'] as String? ?? '',
+      boundedDigest: data['boundedDigest'] as String? ?? '',
       revokedStatus: data['revokedStatus'] as String? ?? '',
       target: data['target'] as String? ?? '',
       rationale: data['rationale'] as String?,

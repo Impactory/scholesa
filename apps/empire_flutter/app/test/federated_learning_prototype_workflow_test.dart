@@ -146,16 +146,6 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   }
 
   @override
-  Future<String?> upsertFeatureFlag(Map<String, dynamic> data) async {
-    final String id = (data['id'] as String?) ?? 'flag-${_flags.length + 1}';
-    final Map<String, dynamic> row = <String, dynamic>{
-      'id': id,
-      ...data,
-    };
-    _flags.removeWhere((entry) => entry['id'] == id);
-    _flags.insert(0, row);
-    return id;
-  }
 
   @override
   Future<List<Map<String, dynamic>>> listFederatedLearningExperiments({
@@ -176,14 +166,10 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     final Iterable<Map<String, dynamic>> scoped =
         (experimentId == null || experimentId.isEmpty)
             ? _experimentReviewRecords
-            : _experimentReviewRecords.where(
-                (Map<String, dynamic> row) =>
-                    row['experimentId'] == experimentId,
-              );
-    return scoped
-        .take(limit)
-        .map((row) => Map<String, dynamic>.from(row))
-        .toList();
+            : _experimentReviewRecords
+                .where((Map<String, dynamic> row) => row['experimentId'] == experimentId)
+                .toList();
+    return scoped.take(limit).map((row) => Map<String, dynamic>.from(row)).toList();
   }
 
   @override
@@ -211,19 +197,13 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   ) async {
     final String id = (data['id'] as String?) ??
         'fl_exp_${(data['name'] as String? ?? 'prototype').toLowerCase().replaceAll(' ', '_')}';
+      ],
     final Map<String, dynamic> row = <String, dynamic>{
       'id': id,
+          status: 'active',
+          targetSiteIds: <String>['site-1'],
+        ),
       ...data,
-      'featureFlagId': 'feature_$id',
-    };
-    _experiments.removeWhere((entry) => entry['id'] == id);
-    _experiments.insert(0, row);
-    _siteExperiments.removeWhere((entry) => entry['id'] == id);
-    _siteExperiments.insert(0, row);
-    return id;
-  }
-
-  @override
   Future<String?> upsertFederatedLearningExperimentReviewRecord(
     Map<String, dynamic> data,
   ) async {
@@ -1748,6 +1728,9 @@ Map<String, dynamic> _runtimeDeliveryRecordRow({
   String aggregationRunId = 'fl_agg_1',
   String mergeArtifactId = 'fl_merge_1',
   String status = 'assigned',
+  String boundedDigest = 'sha256:digest-1',
+  String triggerSummaryId = 'update-2',
+  List<String> summaryIds = const <String>['update-1', 'update-2'],
   List<String> targetSiteIds = const <String>['site-1'],
   DateTime? expiresAt,
   DateTime? supersededAt,
@@ -1774,6 +1757,9 @@ Map<String, dynamic> _runtimeDeliveryRecordRow({
     'status': status,
     'packageDigest':
         'sha256:pkg-${candidateModelPackageId.replaceAll('fl_pkg_', '')}',
+    'boundedDigest': boundedDigest,
+    'triggerSummaryId': triggerSummaryId,
+    'summaryIds': summaryIds,
     'manifestDigest':
         'sha256:delivery-${candidateModelPackageId.replaceAll('fl_pkg_', '')}',
     'expiresAt': expiresAt ?? DateTime(2026, 3, 21, 19),
@@ -2364,7 +2350,9 @@ void main() {
       ],
       runtimeDeliveryRecords: <Map<String, dynamic>>[
         _runtimeDeliveryRecordRow(
-            status: 'active', targetSiteIds: <String>['site-1']),
+          status: 'active',
+          targetSiteIds: <String>['site-1'],
+        ),
       ],
     );
     final FederatedLearningRuntimePackageResolver resolver =
@@ -3629,6 +3617,72 @@ void main() {
       findsOneWidget,
     );
     expect(find.textContaining('Lifecycle: live until'), findsOneWidget);
+    expect(
+      find.textContaining('Aggregation run: fl_agg_1'),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('sha256:pkg-1'),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('sha256:digest-1'),
+      findsWidgets,
+    );
+    expect(find.textContaining('Trigger summary: update-2'), findsOneWidget);
+    expect(
+      find.textContaining('Accepted summaries: update-1, update-2'),
+      findsOneWidget,
+    );
+    final Finder deliveryTraceButton = find.widgetWithText(
+      OutlinedButton,
+      'Open aggregation run',
+    );
+    await tester.ensureVisible(deliveryTraceButton.first);
+    await tester.tap(deliveryTraceButton.first);
+    await tester.pumpAndSettle();
+    expect(find.text('Aggregation history: Literacy Pilot'), findsOneWidget);
+    expect(find.text('Artifact: fl_merge_1'), findsOneWidget);
+    expect(find.text('Showing 1-1 of 1'), findsWidgets);
+    await tester.tap(find.widgetWithText(TextButton, 'Close').last);
+    await tester.pumpAndSettle();
+
+    final Finder deliverySummaryButton = find.widgetWithText(
+      OutlinedButton,
+      'Open accepted summaries',
+    );
+    await tester.ensureVisible(deliverySummaryButton.first);
+    await tester.tap(deliverySummaryButton.first);
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Requested summaries: update-1, update-2'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Summary update-1 · site site-1 · 13 samples'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Summary update-2 · site site-2 · 11 samples'),
+      findsOneWidget,
+    );
+    await tester.tap(find.widgetWithText(TextButton, 'Close').last);
+    await tester.pumpAndSettle();
+
+    final Finder deliveryTriggerButton = find.widgetWithText(
+      OutlinedButton,
+      'Open trigger summary',
+    );
+    await tester.ensureVisible(deliveryTriggerButton.first);
+    await tester.tap(deliveryTriggerButton.first);
+    await tester.pumpAndSettle();
+    expect(find.text('Requested summaries: update-2'), findsOneWidget);
+    expect(
+      find.text('Summary update-2 · site site-2 · 11 samples'),
+      findsOneWidget,
+    );
+    await tester.tap(find.widgetWithText(TextButton, 'Close').last);
+    await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(TextButton, 'Close'));
     await tester.pumpAndSettle();
 
