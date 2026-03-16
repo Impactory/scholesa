@@ -2800,6 +2800,18 @@ List<FederatedLearningContributionDetailModel> _contributionDetailListOrEmpty(
       .toList(growable: false);
 }
 
+List<FederatedLearningSiteContributionSummaryModel>
+    _siteContributionSummaryListOrEmpty(dynamic value) {
+  if (value is! List) {
+    return const <FederatedLearningSiteContributionSummaryModel>[];
+  }
+  return value
+      .map((dynamic entry) => _mapOrNull(entry))
+      .whereType<Map<String, dynamic>>()
+      .map(FederatedLearningSiteContributionSummaryModel.fromMap)
+      .toList(growable: false);
+}
+
 Map<String, dynamic>? _mapOrNull(dynamic value) {
   if (value is Map<String, dynamic>) return value;
   if (value is Map) {
@@ -2876,6 +2888,59 @@ class FederatedLearningContributionDetailModel {
         'rawWeight': rawWeight,
         'normScale': normScale,
         'effectiveWeight': effectiveWeight,
+      };
+}
+
+@immutable
+class FederatedLearningSiteContributionSummaryModel {
+  const FederatedLearningSiteContributionSummaryModel({
+    required this.siteId,
+    required this.summaryCount,
+    required this.totalSampleCount,
+    required this.totalPayloadBytes,
+    required this.rawWeight,
+    required this.effectiveWeight,
+    required this.dampedSummaryCount,
+    required this.minUpdateNorm,
+    required this.maxUpdateNorm,
+  });
+
+  final String siteId;
+  final int summaryCount;
+  final int totalSampleCount;
+  final int totalPayloadBytes;
+  final double rawWeight;
+  final double effectiveWeight;
+  final int dampedSummaryCount;
+  final double minUpdateNorm;
+  final double maxUpdateNorm;
+
+  factory FederatedLearningSiteContributionSummaryModel.fromMap(
+    Map<String, dynamic> data,
+  ) {
+    return FederatedLearningSiteContributionSummaryModel(
+      siteId: data['siteId'] as String? ?? '',
+      summaryCount: (data['summaryCount'] as num?)?.toInt() ?? 0,
+      totalSampleCount: (data['totalSampleCount'] as num?)?.toInt() ?? 0,
+      totalPayloadBytes: (data['totalPayloadBytes'] as num?)?.toInt() ?? 0,
+      rawWeight: (data['rawWeight'] as num?)?.toDouble() ?? 0,
+      effectiveWeight: (data['effectiveWeight'] as num?)?.toDouble() ?? 0,
+      dampedSummaryCount: (data['dampedSummaryCount'] as num?)?.toInt() ?? 0,
+      minUpdateNorm: (data['minUpdateNorm'] as num?)?.toDouble() ?? 0,
+      maxUpdateNorm: (data['maxUpdateNorm'] as num?)?.toDouble() ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'siteId': siteId,
+        'summaryCount': summaryCount,
+        'totalSampleCount': totalSampleCount,
+        'totalPayloadBytes': totalPayloadBytes,
+        'rawWeight': rawWeight,
+        'effectiveWeight': effectiveWeight,
+        'dampedSummaryCount': dampedSummaryCount,
+        'minUpdateNorm': minUpdateNorm,
+        'maxUpdateNorm': maxUpdateNorm,
       };
 }
 
@@ -3202,6 +3267,7 @@ class FederatedLearningAggregationRunModel {
     this.warmStartPackageId,
     this.warmStartModelVersion,
     required this.contributionDetails,
+    required this.siteContributionSummaries,
     this.createdBy,
     this.createdAt,
     this.updatedAt,
@@ -3245,6 +3311,8 @@ class FederatedLearningAggregationRunModel {
   final String? warmStartPackageId;
   final String? warmStartModelVersion;
   final List<FederatedLearningContributionDetailModel> contributionDetails;
+  final List<FederatedLearningSiteContributionSummaryModel>
+      siteContributionSummaries;
   final String? createdBy;
   final Timestamp? createdAt;
   final Timestamp? updatedAt;
@@ -3304,6 +3372,9 @@ class FederatedLearningAggregationRunModel {
       warmStartModelVersion: data['warmStartModelVersion'] as String?,
       contributionDetails:
           _contributionDetailListOrEmpty(data['contributionDetails']),
+      siteContributionSummaries: _siteContributionSummaryListOrEmpty(
+        data['siteContributionSummaries'],
+      ),
       createdBy: data['createdBy'] as String?,
       createdAt: _timestampOrNull(data['createdAt']),
       updatedAt: _timestampOrNull(data['updatedAt']),
@@ -3351,6 +3422,10 @@ class FederatedLearningAggregationRunModel {
             .map((FederatedLearningContributionDetailModel detail) =>
                 detail.toMap())
             .toList(growable: false),
+        'siteContributionSummaries': siteContributionSummaries
+          .map((FederatedLearningSiteContributionSummaryModel summary) =>
+            summary.toMap())
+          .toList(growable: false),
         'createdBy': createdBy,
         'createdAt': createdAt ?? Timestamp.now(),
         'updatedAt': updatedAt ?? Timestamp.now(),
@@ -3393,6 +3468,7 @@ class FederatedLearningMergeArtifactModel {
     this.warmStartPackageId,
     this.warmStartModelVersion,
     required this.contributionDetails,
+    required this.siteContributionSummaries,
     this.createdBy,
     this.createdAt,
     this.updatedAt,
@@ -3431,6 +3507,8 @@ class FederatedLearningMergeArtifactModel {
   final String? warmStartPackageId;
   final String? warmStartModelVersion;
   final List<FederatedLearningContributionDetailModel> contributionDetails;
+  final List<FederatedLearningSiteContributionSummaryModel>
+      siteContributionSummaries;
   final String? createdBy;
   final Timestamp? createdAt;
   final Timestamp? updatedAt;
@@ -3484,6 +3562,9 @@ class FederatedLearningMergeArtifactModel {
       warmStartModelVersion: data['warmStartModelVersion'] as String?,
       contributionDetails:
           _contributionDetailListOrEmpty(data['contributionDetails']),
+      siteContributionSummaries: _siteContributionSummaryListOrEmpty(
+        data['siteContributionSummaries'],
+      ),
       createdBy: data['createdBy'] as String?,
       createdAt: _timestampOrNull(data['createdAt']),
       updatedAt: _timestampOrNull(data['updatedAt']),
@@ -3526,6 +3607,10 @@ class FederatedLearningMergeArtifactModel {
             .map((FederatedLearningContributionDetailModel detail) =>
                 detail.toMap())
             .toList(growable: false),
+        'siteContributionSummaries': siteContributionSummaries
+          .map((FederatedLearningSiteContributionSummaryModel summary) =>
+            summary.toMap())
+          .toList(growable: false),
         'createdBy': createdBy,
         'createdAt': createdAt ?? Timestamp.now(),
         'updatedAt': updatedAt ?? Timestamp.now(),
@@ -3582,6 +3667,7 @@ class FederatedLearningCandidateModelPackageModel {
     this.warmStartPackageId,
     this.warmStartModelVersion,
     required this.contributionDetails,
+    required this.siteContributionSummaries,
     this.createdBy,
     this.createdAt,
     this.updatedAt,
@@ -3634,6 +3720,8 @@ class FederatedLearningCandidateModelPackageModel {
   final String? warmStartPackageId;
   final String? warmStartModelVersion;
   final List<FederatedLearningContributionDetailModel> contributionDetails;
+  final List<FederatedLearningSiteContributionSummaryModel>
+      siteContributionSummaries;
   final String? createdBy;
   final Timestamp? createdAt;
   final Timestamp? updatedAt;
@@ -3706,6 +3794,9 @@ class FederatedLearningCandidateModelPackageModel {
       warmStartModelVersion: data['warmStartModelVersion'] as String?,
       contributionDetails:
           _contributionDetailListOrEmpty(data['contributionDetails']),
+      siteContributionSummaries: _siteContributionSummaryListOrEmpty(
+        data['siteContributionSummaries'],
+      ),
       createdBy: data['createdBy'] as String?,
       createdAt: _timestampOrNull(data['createdAt']),
       updatedAt: _timestampOrNull(data['updatedAt']),
@@ -3762,6 +3853,10 @@ class FederatedLearningCandidateModelPackageModel {
             .map((FederatedLearningContributionDetailModel detail) =>
                 detail.toMap())
             .toList(growable: false),
+        'siteContributionSummaries': siteContributionSummaries
+          .map((FederatedLearningSiteContributionSummaryModel summary) =>
+            summary.toMap())
+          .toList(growable: false),
         'createdBy': createdBy,
         'createdAt': createdAt ?? Timestamp.now(),
         'updatedAt': updatedAt ?? Timestamp.now(),

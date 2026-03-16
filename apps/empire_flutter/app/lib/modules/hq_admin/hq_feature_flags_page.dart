@@ -250,6 +250,17 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     return 'Observability: $dampedCount of $summaryCount damped · raw weight ${_formatMergeMetric(rawTotalWeight)} · effective weight ${_formatMergeMetric(effectiveTotalWeight)} · norm range $normRange';
   }
 
+  String _formatSiteContributionSummaryPreview(
+    List<FederatedLearningSiteContributionSummaryModel> summaries,
+  ) {
+    if (summaries.isEmpty) {
+      return '';
+    }
+    return summaries.take(3).map((summary) {
+      return '${summary.siteId} ${summary.summaryCount} summaries · effective ${_formatMergeMetric(summary.effectiveWeight)}';
+    }).join(' | ');
+  }
+
   String _formatMergeStrategyLabel(
     String? mergeStrategy, {
     bool compact = false,
@@ -592,6 +603,104 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                               ),
                             ),
                           ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(_tHqFeatureFlags(dialogContext, 'Close')),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _showSiteContributionSummariesDialog({
+    required String experimentLabel,
+    required List<FederatedLearningSiteContributionSummaryModel> summaries,
+    String title = 'Site contribution summaries',
+  }) async {
+    if (summaries.isEmpty) {
+      return;
+    }
+
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: Text(
+            _tHqFeatureFlags(dialogContext, '$title: $experimentLabel'),
+          ),
+          content: SizedBox(
+            width: 720,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    _tHqFeatureFlags(
+                      dialogContext,
+                      'Contributing sites: ${summaries.length}',
+                    ),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: ScholesaColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  ...summaries.map(
+                    (FederatedLearningSiteContributionSummaryModel summary) =>
+                        Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.03),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.black12),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            _tHqFeatureFlags(
+                              dialogContext,
+                              'Site ${summary.siteId} · ${summary.summaryCount} summaries · ${summary.totalSampleCount} samples',
+                            ),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _tHqFeatureFlags(
+                              dialogContext,
+                              'Raw weight: ${_formatMergeMetric(summary.rawWeight)} · Effective weight: ${_formatMergeMetric(summary.effectiveWeight)} · Damped: ${summary.dampedSummaryCount}',
+                            ),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: ScholesaColors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _tHqFeatureFlags(
+                              dialogContext,
+                              'Payload: ${summary.totalPayloadBytes} bytes · Norm range: ${_formatMergeMetric(summary.minUpdateNorm)}-${_formatMergeMetric(summary.maxUpdateNorm)}',
+                            ),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: ScholesaColors.textSecondary,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -1471,6 +1580,19 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                   ),
                 ),
               ],
+              if (latestRun.siteContributionSummaries.isNotEmpty) ...<Widget>[
+                const SizedBox(height: 4),
+                Text(
+                  _tHqFeatureFlags(
+                    context,
+                    'Latest aggregation site influence: ${_formatSiteContributionSummaryPreview(latestRun.siteContributionSummaries)}',
+                  ),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: ScholesaColors.textSecondary,
+                  ),
+                ),
+              ],
             ],
             if (latestPackage != null) ...<Widget>[
               const SizedBox(height: 4),
@@ -1586,6 +1708,19 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                       minUpdateNorm: latestPackage.minUpdateNorm,
                       maxUpdateNorm: latestPackage.maxUpdateNorm,
                     )}',
+                  ),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: ScholesaColors.textSecondary,
+                  ),
+                ),
+              ],
+              if (latestPackage.siteContributionSummaries.isNotEmpty) ...<Widget>[
+                const SizedBox(height: 4),
+                Text(
+                  _tHqFeatureFlags(
+                    context,
+                    'Latest package site influence: ${_formatSiteContributionSummaryPreview(latestPackage.siteContributionSummaries)}',
                   ),
                   style: const TextStyle(
                     fontSize: 12,
@@ -2842,6 +2977,10 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         artifact?.contributionDetails ??
             candidatePackage?.contributionDetails ??
             run.contributionDetails;
+    final List<FederatedLearningSiteContributionSummaryModel>
+      siteContributionSummaries = artifact?.siteContributionSummaries ??
+        candidatePackage?.siteContributionSummaries ??
+        run.siteContributionSummaries;
     final double? rawTotalWeight = artifact?.rawTotalWeight ??
       candidatePackage?.rawTotalWeight ??
       run.rawTotalWeight;
@@ -3043,6 +3182,31 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               style: const TextStyle(
                 fontSize: 12,
                 color: ScholesaColors.textSecondary,
+              ),
+            ),
+          ],
+          if (siteContributionSummaries.isNotEmpty) ...<Widget>[
+            const SizedBox(height: 4),
+            Text(
+              _tHqFeatureFlags(
+                context,
+                'Site influence: ${_formatSiteContributionSummaryPreview(siteContributionSummaries)}',
+              ),
+              style: const TextStyle(
+                fontSize: 12,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: () => _showSiteContributionSummariesDialog(
+                experimentLabel: experiment.name,
+                summaries: siteContributionSummaries,
+                title: 'Site contribution summaries',
+              ),
+              icon: const Icon(Icons.account_tree_rounded),
+              label: Text(
+                _tHqFeatureFlags(context, 'Open site contribution summaries'),
               ),
             ),
           ],
@@ -3426,6 +3590,31 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               style: const TextStyle(
                 fontSize: 12,
                 color: ScholesaColors.textSecondary,
+              ),
+            ),
+          ],
+          if (package.siteContributionSummaries.isNotEmpty) ...<Widget>[
+            const SizedBox(height: 4),
+            Text(
+              _tHqFeatureFlags(
+                context,
+                'Site influence: ${_formatSiteContributionSummaryPreview(package.siteContributionSummaries)}',
+              ),
+              style: const TextStyle(
+                fontSize: 12,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: () => _showSiteContributionSummariesDialog(
+                experimentLabel: experiment.name,
+                summaries: package.siteContributionSummaries,
+                title: 'Site contribution summaries',
+              ),
+              icon: const Icon(Icons.account_tree_rounded),
+              label: Text(
+                _tHqFeatureFlags(context, 'Open site contribution summaries'),
               ),
             ),
           ],

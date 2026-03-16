@@ -93,6 +93,18 @@ export interface FederatedLearningContributionDetail {
   effectiveWeight: number;
 }
 
+export interface FederatedLearningSiteContributionSummary {
+  siteId: string;
+  summaryCount: number;
+  totalSampleCount: number;
+  totalPayloadBytes: number;
+  rawWeight: number;
+  effectiveWeight: number;
+  dampedSummaryCount: number;
+  minUpdateNorm: number;
+  maxUpdateNorm: number;
+}
+
 export interface FederatedLearningAggregationSelection {
   summaryIds: string[];
   summaryCount: number;
@@ -149,6 +161,7 @@ export interface FederatedLearningMergeArtifactSummary {
   averageUpdateNorm: number;
   boundedDigest: string;
   contributionDetails: FederatedLearningContributionDetail[];
+  siteContributionSummaries: FederatedLearningSiteContributionSummary[];
 }
 
 export interface FederatedLearningCandidateModelPackageSummary {
@@ -183,6 +196,7 @@ export interface FederatedLearningCandidateModelPackageSummary {
   totalPayloadBytes: number;
   averageUpdateNorm: number;
   contributionDetails: FederatedLearningContributionDetail[];
+  siteContributionSummaries: FederatedLearningSiteContributionSummary[];
 }
 
 function asTrimmedString(value: unknown): string {
@@ -899,6 +913,45 @@ export function buildFederatedLearningContributionDetails(
   });
 }
 
+export function buildFederatedLearningSiteContributionSummaries(
+  details: FederatedLearningContributionDetail[],
+): FederatedLearningSiteContributionSummary[] {
+  const perSite = new Map<string, FederatedLearningSiteContributionSummary>();
+  for (const detail of details) {
+    const existing = perSite.get(detail.siteId);
+    if (existing) {
+      existing.summaryCount += 1;
+      existing.totalSampleCount += detail.sampleCount;
+      existing.totalPayloadBytes += detail.payloadBytes;
+      existing.rawWeight = Number((existing.rawWeight + detail.rawWeight).toFixed(6));
+      existing.effectiveWeight = Number((existing.effectiveWeight + detail.effectiveWeight).toFixed(6));
+      existing.dampedSummaryCount += detail.normScale < 0.999999 ? 1 : 0;
+      existing.minUpdateNorm = Number(Math.min(existing.minUpdateNorm, detail.updateNorm).toFixed(6));
+      existing.maxUpdateNorm = Number(Math.max(existing.maxUpdateNorm, detail.updateNorm).toFixed(6));
+      continue;
+    }
+
+    perSite.set(detail.siteId, {
+      siteId: detail.siteId,
+      summaryCount: 1,
+      totalSampleCount: detail.sampleCount,
+      totalPayloadBytes: detail.payloadBytes,
+      rawWeight: detail.rawWeight,
+      effectiveWeight: detail.effectiveWeight,
+      dampedSummaryCount: detail.normScale < 0.999999 ? 1 : 0,
+      minUpdateNorm: detail.updateNorm,
+      maxUpdateNorm: detail.updateNorm,
+    });
+  }
+
+  return Array.from(perSite.values()).sort((left, right) => {
+    if (right.effectiveWeight !== left.effectiveWeight) {
+      return right.effectiveWeight - left.effectiveWeight;
+    }
+    return left.siteId.localeCompare(right.siteId);
+  });
+}
+
 export function buildFederatedLearningMergeArtifactSummary(
   triggerSummaryId: string,
   selection: FederatedLearningAggregationSelection,
@@ -907,6 +960,8 @@ export function buildFederatedLearningMergeArtifactSummary(
   contributionDetails: FederatedLearningContributionDetail[],
   mergeStrategy: FederatedLearningMergeStrategy = FEDERATED_LEARNING_MERGE_STRATEGY,
 ): FederatedLearningMergeArtifactSummary {
+  const siteContributionSummaries =
+    buildFederatedLearningSiteContributionSummaries(contributionDetails);
   const payloadFormat = 'runtime_vector_v1';
   const modelVersion = 'fl_runtime_model_v1';
   const normalizedRuntimeVector = runtimeVector.map((value) => Number(value.toFixed(6)));
@@ -946,6 +1001,7 @@ export function buildFederatedLearningMergeArtifactSummary(
       schemaVersions: selection.schemaVersions,
       runtimeTargets: selection.runtimeTargets,
       contributionDetails,
+      siteContributionSummaries,
     }))
     .digest('hex');
 
@@ -979,6 +1035,7 @@ export function buildFederatedLearningMergeArtifactSummary(
     averageUpdateNorm: selection.averageUpdateNorm,
     boundedDigest: `sha256:${boundedDigest}`,
     contributionDetails,
+    siteContributionSummaries,
   };
 }
 
@@ -1023,6 +1080,7 @@ export function buildFederatedLearningCandidateModelPackageSummary(
       totalPayloadBytes: artifactSummary.totalPayloadBytes,
       averageUpdateNorm: artifactSummary.averageUpdateNorm,
       contributionDetails: artifactSummary.contributionDetails,
+      siteContributionSummaries: artifactSummary.siteContributionSummaries,
     }))
     .digest('hex');
 
@@ -1058,5 +1116,6 @@ export function buildFederatedLearningCandidateModelPackageSummary(
     totalPayloadBytes: artifactSummary.totalPayloadBytes,
     averageUpdateNorm: artifactSummary.averageUpdateNorm,
     contributionDetails: artifactSummary.contributionDetails,
+    siteContributionSummaries: artifactSummary.siteContributionSummaries,
   };
 }
