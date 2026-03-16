@@ -33,6 +33,9 @@ export interface FederatedLearningExperimentConfig {
   runtimeTarget: FederatedLearningRuntimeTarget;
   status: FederatedLearningExperimentStatus;
   mergeStrategy: FederatedLearningMergeStrategy;
+  localEpochCap: number;
+  localStepCap: number;
+  localTrainingWindowCapSeconds: number;
   allowedSiteIds: string[];
   aggregateThreshold: number;
   rawUpdateMaxBytes: number;
@@ -584,6 +587,15 @@ export function sanitizeFederatedLearningExperimentConfig(
   const status = normalizeFederatedLearningExperimentStatus(input.status) ?? 'draft';
   const mergeStrategy = normalizeFederatedLearningMergeStrategy(input.mergeStrategy) ??
     FEDERATED_LEARNING_MERGE_STRATEGY;
+  const localEpochCap = asIntegerInRange(input.localEpochCap, 'localEpochCap', 1, 1000, 3);
+  const localStepCap = asIntegerInRange(input.localStepCap, 'localStepCap', 1, 100000, 24);
+  const localTrainingWindowCapSeconds = asIntegerInRange(
+    input.localTrainingWindowCapSeconds,
+    'localTrainingWindowCapSeconds',
+    0,
+    86400,
+    86400,
+  );
   const allowedSiteIds = normalizeFederatedLearningSiteIds(input.allowedSiteIds);
   const aggregateThreshold = asIntegerInRange(input.aggregateThreshold, 'aggregateThreshold', 5, 10000, 25);
   const rawUpdateMaxBytes = asIntegerInRange(input.rawUpdateMaxBytes, 'rawUpdateMaxBytes', 256, 262144, 16384);
@@ -599,6 +611,9 @@ export function sanitizeFederatedLearningExperimentConfig(
     runtimeTarget,
     status,
     mergeStrategy,
+    localEpochCap,
+    localStepCap,
+    localTrainingWindowCapSeconds,
     allowedSiteIds,
     aggregateThreshold,
     rawUpdateMaxBytes,

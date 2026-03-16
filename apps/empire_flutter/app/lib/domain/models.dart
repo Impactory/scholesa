@@ -2887,6 +2887,9 @@ class FederatedLearningExperimentModel {
     required this.runtimeTarget,
     required this.status,
     required this.mergeStrategy,
+    required this.localEpochCap,
+    required this.localStepCap,
+    required this.localTrainingWindowCapSeconds,
     required this.allowedSiteIds,
     required this.aggregateThreshold,
     required this.rawUpdateMaxBytes,
@@ -2904,6 +2907,9 @@ class FederatedLearningExperimentModel {
   final String runtimeTarget;
   final String status;
   final String mergeStrategy;
+  final int localEpochCap;
+  final int localStepCap;
+  final int localTrainingWindowCapSeconds;
   final List<String> allowedSiteIds;
   final int aggregateThreshold;
   final int rawUpdateMaxBytes;
@@ -2937,6 +2943,10 @@ class FederatedLearningExperimentModel {
       status: data['status'] as String? ?? 'draft',
         mergeStrategy: data['mergeStrategy'] as String? ??
           'norm_capped_weighted_runtime_vector_average_v2',
+        localEpochCap: (data['localEpochCap'] as num?)?.toInt() ?? 3,
+        localStepCap: (data['localStepCap'] as num?)?.toInt() ?? 24,
+        localTrainingWindowCapSeconds:
+          (data['localTrainingWindowCapSeconds'] as num?)?.toInt() ?? 86400,
       allowedSiteIds: _stringListOrEmpty(data['allowedSiteIds']),
       aggregateThreshold: (data['aggregateThreshold'] as num?)?.toInt() ?? 25,
       rawUpdateMaxBytes: (data['rawUpdateMaxBytes'] as num?)?.toInt() ?? 16384,
@@ -2955,6 +2965,9 @@ class FederatedLearningExperimentModel {
         'runtimeTarget': runtimeTarget,
         'status': status,
         'mergeStrategy': mergeStrategy,
+        'localEpochCap': localEpochCap,
+        'localStepCap': localStepCap,
+        'localTrainingWindowCapSeconds': localTrainingWindowCapSeconds,
         'allowedSiteIds': allowedSiteIds,
         'aggregateThreshold': aggregateThreshold,
         'rawUpdateMaxBytes': rawUpdateMaxBytes,

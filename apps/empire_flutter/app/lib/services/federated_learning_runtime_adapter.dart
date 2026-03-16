@@ -210,10 +210,21 @@ class FederatedLearningRuntimeAdapter {
                 experimentId: experiment.id,
                 runtimeTarget: experiment.runtimeTarget,
               );
-    final int localEpochCount = _deriveLocalEpochCount(
+    final int sampleCount = samples.length;
+    final int epochCap = experiment.localEpochCap.clamp(1, 1000);
+    final int stepCap = experiment.localStepCap.clamp(1, 100000);
+    final int derivedEpochCount = _deriveLocalEpochCount(
       sampleCount: samples.length,
       hasWarmStart: runtimePackage != null && runtimePackage.runtimeVector.isNotEmpty,
     );
+    final int epochCapFromSteps = sampleCount <= 0
+        ? epochCap
+        : math.max(1, stepCap ~/ sampleCount);
+    final int localEpochCount = math.max(
+      1,
+      math.min(derivedEpochCount, math.min(epochCap, epochCapFromSteps)),
+    );
+    final int localStepCount = math.min(sampleCount * localEpochCount, stepCap);
     final List<double> vectorSketch = _buildLocallyFineTunedVector(
       samples,
       runtimePackage: runtimePackage,
@@ -232,7 +243,7 @@ class FederatedLearningRuntimeAdapter {
     final int trainingWindowSeconds = latest
         .difference(earliest)
         .inSeconds
-        .clamp(0, 86400);
+      .clamp(0, experiment.localTrainingWindowCapSeconds);
 
     try {
       await _uploader!.uploadSummary(
@@ -253,7 +264,7 @@ class FederatedLearningRuntimeAdapter {
         ),
         optimizerStrategy: _optimizerStrategy,
         localEpochCount: localEpochCount,
-        localStepCount: samples.length * localEpochCount,
+        localStepCount: localStepCount,
         trainingWindowSeconds: trainingWindowSeconds,
         warmStartPackageId: runtimePackage?.candidateModelPackageId,
         warmStartDeliveryRecordId: runtimePackage?.deliveryRecordId,
