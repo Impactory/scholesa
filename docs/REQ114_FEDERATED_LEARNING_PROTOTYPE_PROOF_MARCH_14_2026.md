@@ -63,6 +63,14 @@ Not claimed by this proof:
 - functions/src/federatedLearningPrototype.ts
 - functions/src/federatedLearningPrototype.test.ts
 - functions/src/workflowOps.ts
+- functions/src/workflowOps.experimentSetup.test.ts
+- functions/src/workflowOps.prototypeUpdate.test.ts
+- functions/src/workflowOps.pilotLifecycle.test.ts
+- functions/src/workflowOps.runtimeDelivery.test.ts
+- functions/src/workflowOps.runtimeActivation.test.ts
+- functions/src/workflowOps.runtimeRolloutAlert.test.ts
+- functions/src/workflowOps.runtimeRolloutGovernance.test.ts
+- functions/src/workflowOps.candidatePromotion.test.ts
 - functions/src/index.ts
 - schema.ts
 - firestore.rules
@@ -102,6 +110,13 @@ Additional focused validation passed on 2026-03-15:
 3. Focused Flutter prototype workflow test
    - command: `cd apps/empire_flutter/app && flutter test test/federated_learning_prototype_workflow_test.dart`
 
+Additional focused validation passed on 2026-03-16:
+
+1. Focused functions workflow lifecycle suites
+   - command: `cd functions && npm test -- --runTestsByPath src/workflowOps.experimentSetup.test.ts src/workflowOps.prototypeUpdate.test.ts src/workflowOps.pilotLifecycle.test.ts src/workflowOps.runtimeDelivery.test.ts src/workflowOps.runtimeActivation.test.ts src/workflowOps.runtimeRolloutAlert.test.ts src/workflowOps.runtimeRolloutGovernance.test.ts src/workflowOps.candidatePromotion.test.ts`
+2. Full functions backend suite
+   - command: `cd functions && npm test`
+
 ## Evidence summary
 
 - Prototype experiments are now first-class backend records instead of draft-only concepts.
@@ -110,6 +125,7 @@ Additional focused validation passed on 2026-03-15:
 - Site-admin devices now have a dedicated callable to discover only enrolled, enabled experiment assignments.
 - Prototype update ingestion rejects raw content fields such as prompts, transcripts, raw updates, and artifact bodies.
 - Accepted summaries are now limited to bounded numeric runtime-vector payloads plus safe metadata such as payload size, vector length, sample count, digest, and trace identifier.
+- Focused backend Jest coverage now exercises the callable chain from experiment setup and prototype update ingestion through pilot evidence, approval, and execution, runtime delivery and activation, rollout alerts, escalation/control governance, and candidate promotion or revocation, including threshold-triggered aggregation materialization and cohort or ownership guard enforcement.
 - Audit logs record both experiment changes and accepted prototype updates.
 - The HQ feature-flags page now exposes a bounded experiment editor instead of leaving prototype configuration backend-only.
 - Flutter repositories and rules expose read-only experiment/update-summary records while keeping writes behind server callables.

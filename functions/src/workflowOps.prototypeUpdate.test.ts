@@ -292,7 +292,7 @@ function seedBaseExperiment(overrides: Record<string, unknown> = {}): void {
       enablePrototypeUploads: true,
       featureFlagId: 'feature_fl_exp_1',
       allowedSiteIds: ['site-1', 'site-2'],
-      aggregateThreshold: 2,
+      aggregateThreshold: 10,
       rawUpdateMaxBytes: 4096,
       ...overrides,
     },
@@ -399,6 +399,7 @@ describe('workflowOps prototype update', () => {
   });
 
   it('materializes aggregation outputs once accepted summaries cross the threshold', async () => {
+    seedBaseExperiment({ aggregateThreshold: 8 });
     seedCollection('federatedLearningUpdateSummaries', {
       seed_summary_1: {
         experimentId: 'fl_exp_1',
