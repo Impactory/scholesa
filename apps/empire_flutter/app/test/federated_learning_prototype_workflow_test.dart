@@ -1717,6 +1717,7 @@ Map<String, dynamic> _aggregationRunRow({
     'averageUpdateNorm': 1.35,
     'runtimeVector': <double>[1.0, 0.4, 0.8, 0.2, 0.1, 0.6, 0.3, 0.05],
     'contributionDetails': _contributionDetailRows(),
+    'siteContributionSummaries': _siteContributionSummaryRows(),
     'schemaVersions': <String>['v1'],
     'runtimeTargets': <String>['flutter_mobile'],
     'optimizerStrategies': optimizerStrategies,
@@ -1792,6 +1793,7 @@ Map<String, dynamic> _candidatePackageRow({
     'summaryCount': summaryCount,
     'distinctSiteCount': distinctSiteCount,
     'contributionDetails': _contributionDetailRows(),
+    'siteContributionSummaries': _siteContributionSummaryRows(),
     'contributingSiteIds': contributingSiteIds,
     'schemaVersions': <String>['v1'],
     'runtimeTargets': <String>['flutter_mobile'],
@@ -2286,6 +2288,7 @@ Map<String, dynamic> _mergeArtifactRow({
     'summaryCount': 2,
     'distinctSiteCount': 2,
     'contributionDetails': _contributionDetailRows(),
+    'siteContributionSummaries': _siteContributionSummaryRows(),
     'contributingSiteIds': contributingSiteIds,
     'schemaVersions': <String>['v1'],
     'runtimeTargets': <String>['flutter_mobile'],
@@ -2293,6 +2296,33 @@ Map<String, dynamic> _mergeArtifactRow({
     'totalPayloadBytes': 1792,
     'averageUpdateNorm': 1.35,
   };
+}
+
+List<Map<String, dynamic>> _siteContributionSummaryRows() {
+  return <Map<String, dynamic>>[
+    <String, dynamic>{
+      'siteId': 'site-1',
+      'summaryCount': 1,
+      'totalSampleCount': 12,
+      'totalPayloadBytes': 1024,
+      'rawWeight': 12.0,
+      'effectiveWeight': 10.4,
+      'dampedSummaryCount': 1,
+      'minUpdateNorm': 2.8,
+      'maxUpdateNorm': 2.8,
+    },
+    <String, dynamic>{
+      'siteId': 'site-2',
+      'summaryCount': 1,
+      'totalSampleCount': 12,
+      'totalPayloadBytes': 768,
+      'rawWeight': 12.0,
+      'effectiveWeight': 7.2,
+      'dampedSummaryCount': 0,
+      'minUpdateNorm': 1.1,
+      'maxUpdateNorm': 1.1,
+    },
+  ];
 }
 
 List<Map<String, dynamic>> _contributionDetailRows() {
@@ -3642,6 +3672,12 @@ void main() {
     );
     expect(
       find.text(
+        'Latest aggregation site influence: site-1 1 summaries · effective 10.400 | site-2 1 summaries · effective 7.200',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
         'Latest aggregation training: Local training rollup: bounded_runtime_vector_local_finetune_v1 · 2 summaries · epochs 2 · steps 24 · window 135s · warm start fl_pkg_1',
       ),
       findsOneWidget,
@@ -3661,6 +3697,12 @@ void main() {
     expect(
       find.text(
         'Latest package observability: Observability: 1 of 2 damped · raw weight 24 · effective weight 17.600 · norm range 1.100-2.800',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Latest package site influence: site-1 1 summaries · effective 10.400 | site-2 1 summaries · effective 7.200',
       ),
       findsOneWidget,
     );

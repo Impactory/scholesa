@@ -386,6 +386,30 @@ describe('federated learning prototype helpers', () => {
       averageUpdateNorm: 1.35,
       boundedDigest: expect.stringMatching(/^sha256:[a-f0-9]{64}$/),
       contributionDetails,
+      siteContributionSummaries: [
+        {
+          siteId: 'site-1',
+          summaryCount: 1,
+          totalSampleCount: 10,
+          totalPayloadBytes: 1024,
+          rawWeight: 10,
+          effectiveWeight: 10,
+          dampedSummaryCount: 0,
+          minUpdateNorm: 1.5,
+          maxUpdateNorm: 1.5,
+        },
+        {
+          siteId: 'site-2',
+          summaryCount: 1,
+          totalSampleCount: 8,
+          totalPayloadBytes: 768,
+          rawWeight: 8,
+          effectiveWeight: 8,
+          dampedSummaryCount: 0,
+          minUpdateNorm: 1.2,
+          maxUpdateNorm: 1.2,
+        },
+      ],
     });
 
     expect(buildFederatedLearningCandidateModelPackageSummary(
@@ -430,6 +454,30 @@ describe('federated learning prototype helpers', () => {
       totalPayloadBytes: 1792,
       averageUpdateNorm: 1.35,
       contributionDetails,
+      siteContributionSummaries: [
+        {
+          siteId: 'site-1',
+          summaryCount: 1,
+          totalSampleCount: 10,
+          totalPayloadBytes: 1024,
+          rawWeight: 10,
+          effectiveWeight: 10,
+          dampedSummaryCount: 0,
+          minUpdateNorm: 1.5,
+          maxUpdateNorm: 1.5,
+        },
+        {
+          siteId: 'site-2',
+          summaryCount: 1,
+          totalSampleCount: 8,
+          totalPayloadBytes: 768,
+          rawWeight: 8,
+          effectiveWeight: 8,
+          dampedSummaryCount: 0,
+          minUpdateNorm: 1.2,
+          maxUpdateNorm: 1.2,
+        },
+      ],
     });
   });
 
