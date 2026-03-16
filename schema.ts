@@ -232,6 +232,9 @@ export interface FederatedLearningExperiment {
   runtimeTarget: FederatedLearningRuntimeTarget;
   status: FederatedLearningExperimentStatus;
   mergeStrategy: FederatedLearningMergeStrategy;
+  maxLocalEpochs: number;
+  maxLocalSteps: number;
+  maxTrainingWindowSeconds: number;
   allowedSiteIds: string[];
   aggregateThreshold: number;
   rawUpdateMaxBytes: number;
