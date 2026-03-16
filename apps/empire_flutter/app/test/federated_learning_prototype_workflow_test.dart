@@ -2350,6 +2350,7 @@ Map<String, dynamic> _experimentRow({
   String name = 'Literacy Pilot',
   List<String> allowedSiteIds = const <String>['site-1'],
   String status = 'pilot_ready',
+  String mergeStrategy = 'norm_capped_weighted_runtime_vector_average_v2',
   bool enablePrototypeUploads = true,
 }) {
   return <String, dynamic>{
@@ -2358,6 +2359,7 @@ Map<String, dynamic> _experimentRow({
     'description': 'Site-scoped literacy cohort',
     'runtimeTarget': 'flutter_mobile',
     'status': status,
+    'mergeStrategy': mergeStrategy,
     'allowedSiteIds': allowedSiteIds,
     'aggregateThreshold': 25,
     'rawUpdateMaxBytes': 16384,
@@ -2566,6 +2568,10 @@ void main() {
 
     expect(experiments, hasLength(1));
     expect(experiments.single.name, 'Literacy Pilot');
+    expect(
+      experiments.single.mergeStrategy,
+      'norm_capped_weighted_runtime_vector_average_v2',
+    );
     expect(summaries, hasLength(1));
     expect(summaries.single.traceId, 'trace-1');
   });
@@ -3578,6 +3584,12 @@ void main() {
 
     expect(find.text('Federated learning experiments'), findsOneWidget);
     expect(find.text('Literacy Pilot'), findsOneWidget);
+    expect(
+      find.text(
+        'Configured merge policy: Sample-weighted norm-capped average',
+      ),
+      findsOneWidget,
+    );
     expect(
       find.text(
         'Latest aggregation: 24 samples from 2 summaries across 2 sites.',
@@ -4995,6 +5007,10 @@ void main() {
       find.widgetWithText(TextFormField, 'Description'),
       'Math prototype cohort',
     );
+    await tester.tap(find.text('Sample-weighted merge').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Summary-balanced merge').last);
+    await tester.pumpAndSettle();
     await tester.enterText(
       find.widgetWithText(TextFormField, 'Enabled site IDs'),
       'site-1, site-2',
@@ -5016,6 +5032,12 @@ void main() {
       bridge._experiments
           .any((Map<String, dynamic> row) => row['name'] == 'Math Pilot'),
       isTrue,
+    );
+    expect(
+      bridge._experiments.firstWhere(
+        (Map<String, dynamic> row) => row['name'] == 'Math Pilot',
+      )['mergeStrategy'],
+      'norm_capped_summary_balanced_runtime_vector_average_v1',
     );
   });
 

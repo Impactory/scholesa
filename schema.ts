@@ -205,6 +205,9 @@ export interface AuditLog {
 
 export type FederatedLearningRuntimeTarget = 'flutter_mobile' | 'web_pwa' | 'hybrid';
 export type FederatedLearningExperimentStatus = 'draft' | 'pilot_ready' | 'active' | 'paused' | 'disabled';
+export type FederatedLearningMergeStrategy =
+  'norm_capped_weighted_runtime_vector_average_v2' |
+  'norm_capped_summary_balanced_runtime_vector_average_v1';
 export type FederatedLearningExperimentReviewStatus = 'pending' | 'approved' | 'blocked';
 export type FederatedLearningPilotEvidenceStatus = 'pending' | 'ready_for_pilot' | 'blocked';
 export type FederatedLearningPilotApprovalStatus = 'pending' | 'approved' | 'blocked';
@@ -228,6 +231,7 @@ export interface FederatedLearningExperiment {
   description?: string;
   runtimeTarget: FederatedLearningRuntimeTarget;
   status: FederatedLearningExperimentStatus;
+  mergeStrategy: FederatedLearningMergeStrategy;
   allowedSiteIds: string[];
   aggregateThreshold: number;
   rawUpdateMaxBytes: number;
@@ -306,7 +310,7 @@ export interface FederatedLearningAggregationRun {
   candidateModelPackageId?: string;
   candidateModelPackageStatus?: 'staged';
   candidateModelPackageFormat?: 'runtime_vector_v1';
-  mergeStrategy?: string;
+  mergeStrategy?: FederatedLearningMergeStrategy;
   normCap?: number;
   effectiveTotalWeight?: number;
   rawTotalWeight?: number;
@@ -340,7 +344,7 @@ export interface FederatedLearningMergeArtifact {
   experimentId: string;
   aggregationRunId: string;
   status: 'generated';
-  mergeStrategy: string;
+  mergeStrategy: FederatedLearningMergeStrategy;
   normCap: number;
   effectiveTotalWeight: number;
   rawTotalWeight: number;
@@ -376,7 +380,7 @@ export interface FederatedLearningCandidateModelPackage {
   aggregationRunId: string;
   mergeArtifactId: string;
   status: 'staged';
-  mergeStrategy?: string;
+  mergeStrategy?: FederatedLearningMergeStrategy;
   triggerSummaryId: string;
   summaryIds: string[];
   packageFormat: 'runtime_vector_v1';

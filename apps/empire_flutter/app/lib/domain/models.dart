@@ -2886,6 +2886,7 @@ class FederatedLearningExperimentModel {
     required this.name,
     required this.runtimeTarget,
     required this.status,
+    required this.mergeStrategy,
     required this.allowedSiteIds,
     required this.aggregateThreshold,
     required this.rawUpdateMaxBytes,
@@ -2902,6 +2903,7 @@ class FederatedLearningExperimentModel {
   final String name;
   final String runtimeTarget;
   final String status;
+  final String mergeStrategy;
   final List<String> allowedSiteIds;
   final int aggregateThreshold;
   final int rawUpdateMaxBytes;
@@ -2933,6 +2935,8 @@ class FederatedLearningExperimentModel {
       description: data['description'] as String?,
       runtimeTarget: data['runtimeTarget'] as String? ?? 'flutter_mobile',
       status: data['status'] as String? ?? 'draft',
+        mergeStrategy: data['mergeStrategy'] as String? ??
+          'norm_capped_weighted_runtime_vector_average_v2',
       allowedSiteIds: _stringListOrEmpty(data['allowedSiteIds']),
       aggregateThreshold: (data['aggregateThreshold'] as num?)?.toInt() ?? 25,
       rawUpdateMaxBytes: (data['rawUpdateMaxBytes'] as num?)?.toInt() ?? 16384,
@@ -2950,6 +2954,7 @@ class FederatedLearningExperimentModel {
         'description': description,
         'runtimeTarget': runtimeTarget,
         'status': status,
+        'mergeStrategy': mergeStrategy,
         'allowedSiteIds': allowedSiteIds,
         'aggregateThreshold': aggregateThreshold,
         'rawUpdateMaxBytes': rawUpdateMaxBytes,

@@ -21,6 +21,7 @@ Implemented prototype scope:
 - Flutter device-side uploader service that resolves active site context and submits bounded update summaries through the callable boundary
 - Flutter runtime adapter that converts BOS event windows into bounded prototype summaries on real mission/session triggers
 - backend aggregation-run materialization once accepted summary windows cross the configured threshold
+- experiment-configurable bounded merge policy selection for prototype aggregations
 - Firestore rules for experiment and summary reads without exposing feature flags beyond HQ
 - HQ visibility for the latest materialized aggregation run per experiment
 - bounded merge-artifact records generated for each materialized aggregation run
@@ -112,7 +113,8 @@ Additional focused validation passed on 2026-03-15:
 - The HQ feature-flags page now exposes a bounded experiment editor instead of leaving prototype configuration backend-only.
 - Flutter repositories and rules expose read-only experiment/update-summary records while keeping writes behind server callables.
 - Runtime BOS signals now feed a bounded warm-start local fine-tune step in the Flutter adapter, which uses the currently resolved runtime package as a local starting point, nudges a bounded runtime vector toward event-derived targets across a small epoch budget, and uploads the resulting bounded local model payload on mission/checkpoint/session triggers without sending raw learner content.
-- When accepted summaries cumulatively hit the experiment threshold, the backend now materializes a bounded aggregation-run record, marks the source summaries as consumed, and merges the uploaded bounded local runtime vectors into a weighted runtime payload instead of only emitting metadata.
+- When accepted summaries cumulatively hit the experiment threshold, the backend now materializes a bounded aggregation-run record, marks the source summaries as consumed, and merges the uploaded bounded local runtime vectors into a runtime payload instead of only emitting metadata.
+- Each prototype experiment now also carries an explicit bounded merge policy, so aggregation materialization can use either the default sample-weighted norm-capped average or a stricter summary-balanced norm-capped average without editing backend code between cohorts.
 - Aggregation selection now also skips accepted summaries whose runtime target, schema version, optimizer strategy, vector length, or warm-start package/model lineage do not match the active batch, so prototype merge runs no longer average incompatible bounded local models together just because they arrived in the same threshold window.
 - That compatibility-aware merge lineage is now also visible on the HQ experiment card plus aggregation, package, promotion, and runtime-delivery history surfaces, so operators can audit which runtime target, schema version, optimizer, and warm-start lineage defined a bounded merge batch instead of inferring it only from accepted-summary drill-through.
 - Those same HQ history filters now also match compatibility-lineage fields such as runtime target, schema version, optimizer, warm-start package, warm-start model version, and the stored compatibility key, so operators can isolate bounded merge batches by batch-level lineage instead of relying only on summary-level provenance tokens.
@@ -140,7 +142,7 @@ Additional focused validation passed on 2026-03-15:
 - HQ can now inspect immutable escalation-history snapshots per runtime delivery, including due-versus-overdue cues for unresolved fallback or pending rollout issues plus direct delivery-lineage digest and compatibility metadata, instead of only the latest escalation state.
 - HQ can now also persist a bounded rollout-control record per runtime delivery with monitor-versus-restricted-versus-paused operator mode, owner, reason, and immutable delivery-lineage provenance, so delivery handling can be constrained without mutating the underlying runtime-delivery manifest record.
 - Site-scoped runtime package resolution now also honors those bounded rollout-control records, so paused deliveries force fallback for all sites while restricted deliveries remain usable only for sites that already reported resolved activation on that delivery.
-- Aggregation materialization now also applies a bounded norm-capped weighted runtime-vector merge strategy, so high-norm prototype updates are dampened instead of contributing with raw sample-count weight alone.
+- Aggregation materialization now also applies an experiment-configured bounded norm-capped runtime-vector merge strategy, so high-norm prototype updates are dampened and HQ can choose between sample-weighted or summary-balanced averaging for bounded cohorts instead of relying on one hard-coded path.
 - Aggregation materialization now also persists merge transparency metadata, including the applied norm cap, raw-versus-effective weight rollups, damped-summary count, min/max update-norm range, and contributor-site lineage for each aggregated cohort, and the HQ experiment cards, aggregation-history, candidate-package history, and promotion-history surfaces render that metadata alongside the merge strategy so operators can audit bounded merge behavior and cohort provenance throughout triage, review, and promotion flows instead of treating it as hidden backend state.
 - The HQ aggregation-history, candidate-package history, and promotion-history search surfaces now also index contributor-site lineage, so operators can filter bounded merge and promotion trails directly by site ID instead of scanning digests and record IDs by hand.
 - The HQ aggregation-history surface now also renders trigger-summary and accepted-summary identifiers and supports direct filtering by summary ID, so bounded merge records can be traced back to the exact accepted update-summary windows that formed each aggregation run.
@@ -178,6 +180,6 @@ Additional focused validation passed on 2026-03-15:
 REQ-114 remains partial until all of the following exist and are approved:
 
 - production-grade on-device training beyond the current bounded warm-start local fine-tune path
-- production-grade merge semantics beyond the current bounded compatibility-aware, norm-capped weighted runtime-vector averaging path
+- production-grade merge semantics beyond the current bounded compatibility-aware, experiment-configurable sample-weighted or summary-balanced norm-capped runtime-vector averaging path
 - richer production-grade aggregation observability beyond the current bounded merge-strategy, norm-cap, effective-weight, contributor-site lineage, and accepted-summary local-training transparency surfaced in prototype records and HQ history
 - production-grade rollout orchestration and long-lived model lifecycle management beyond the current bounded site-scoped expiry, supersession, retirement, revocation, paused/restricted control, and fallback path

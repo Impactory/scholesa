@@ -18,15 +18,21 @@ export type FederatedLearningPilotExecutionStatus = 'planned' | 'launched' | 'ob
 export type FederatedLearningRuntimeDeliveryStatus = 'prepared' | 'assigned' | 'active' | 'superseded' | 'revoked';
 export type FederatedLearningRuntimeActivationStatus = 'resolved' | 'staged' | 'fallback';
 export type FederatedLearningRuntimeRolloutControlMode = 'monitor' | 'restricted' | 'paused';
+export type FederatedLearningMergeStrategy =
+  'norm_capped_weighted_runtime_vector_average_v2' |
+  'norm_capped_summary_balanced_runtime_vector_average_v1';
 
 export const FEDERATED_LEARNING_MERGE_STRATEGY =
   'norm_capped_weighted_runtime_vector_average_v2';
+export const FEDERATED_LEARNING_SUMMARY_BALANCED_MERGE_STRATEGY =
+  'norm_capped_summary_balanced_runtime_vector_average_v1';
 
 export interface FederatedLearningExperimentConfig {
   name: string;
   description: string;
   runtimeTarget: FederatedLearningRuntimeTarget;
   status: FederatedLearningExperimentStatus;
+  mergeStrategy: FederatedLearningMergeStrategy;
   allowedSiteIds: string[];
   aggregateThreshold: number;
   rawUpdateMaxBytes: number;
@@ -195,6 +201,38 @@ function asFiniteNumber(value: unknown): number | null {
 function normalizedCompatibilityValue(value: string | null | undefined): string {
   const trimmed = typeof value === 'string' ? value.trim() : '';
   return trimmed.length > 0 ? trimmed : '__none__';
+}
+
+export function normalizeFederatedLearningMergeStrategy(
+  value: unknown,
+): FederatedLearningMergeStrategy | null {
+  const normalized = asTrimmedString(value).toLowerCase();
+  if (
+    normalized === FEDERATED_LEARNING_MERGE_STRATEGY ||
+    normalized === 'norm_capped_weighted_average' ||
+    normalized === 'weighted_average' ||
+    normalized === 'sample_weighted'
+  ) {
+    return FEDERATED_LEARNING_MERGE_STRATEGY;
+  }
+  if (
+    normalized === FEDERATED_LEARNING_SUMMARY_BALANCED_MERGE_STRATEGY ||
+    normalized === 'summary_balanced' ||
+    normalized === 'summary_balanced_average'
+  ) {
+    return FEDERATED_LEARNING_SUMMARY_BALANCED_MERGE_STRATEGY;
+  }
+  return null;
+}
+
+function resolveFederatedLearningBaseWeight(
+  candidate: Pick<FederatedLearningAggregationCandidate, 'sampleCount'>,
+  mergeStrategy: FederatedLearningMergeStrategy,
+): number {
+  if (mergeStrategy === FEDERATED_LEARNING_SUMMARY_BALANCED_MERGE_STRATEGY) {
+    return candidate.sampleCount > 0 ? 1 : 0;
+  }
+  return Math.max(0, candidate.sampleCount);
 }
 
 function buildFederatedLearningAggregationCompatibilityKey(
@@ -544,6 +582,8 @@ export function sanitizeFederatedLearningExperimentConfig(
   }
 
   const status = normalizeFederatedLearningExperimentStatus(input.status) ?? 'draft';
+  const mergeStrategy = normalizeFederatedLearningMergeStrategy(input.mergeStrategy) ??
+    FEDERATED_LEARNING_MERGE_STRATEGY;
   const allowedSiteIds = normalizeFederatedLearningSiteIds(input.allowedSiteIds);
   const aggregateThreshold = asIntegerInRange(input.aggregateThreshold, 'aggregateThreshold', 5, 10000, 25);
   const rawUpdateMaxBytes = asIntegerInRange(input.rawUpdateMaxBytes, 'rawUpdateMaxBytes', 256, 262144, 16384);
@@ -558,6 +598,7 @@ export function sanitizeFederatedLearningExperimentConfig(
     description: asTrimmedString(input.description),
     runtimeTarget,
     status,
+    mergeStrategy,
     allowedSiteIds,
     aggregateThreshold,
     rawUpdateMaxBytes,
@@ -744,14 +785,15 @@ export function buildFederatedLearningMergedRuntimeVector(
     >
   >,
   vectorLength: number,
+  mergeStrategy: FederatedLearningMergeStrategy = FEDERATED_LEARNING_MERGE_STRATEGY,
 ): number[] {
   const boundedLength = asIntegerInRange(vectorLength, 'vectorLength', 1, 100000, 1);
   const merged = Array.from({ length: boundedLength }, () => 0);
   let totalWeight = 0;
-  const mergeWeights = buildFederatedLearningMergeWeightSummary(candidates);
+  const mergeWeights = buildFederatedLearningMergeWeightSummary(candidates, mergeStrategy);
 
   for (const candidate of candidates) {
-    const baseWeight = Math.max(0, candidate.sampleCount);
+    const baseWeight = resolveFederatedLearningBaseWeight(candidate, mergeStrategy);
     const normScale = candidate.updateNorm > 0
       ? Math.min(1, mergeWeights.normCap / candidate.updateNorm)
       : 1;
@@ -772,6 +814,7 @@ export function buildFederatedLearningMergedRuntimeVector(
 
 export function buildFederatedLearningMergeWeightSummary(
   candidates: Array<Pick<FederatedLearningAggregationCandidate, 'sampleCount' | 'updateNorm'>>,
+  mergeStrategy: FederatedLearningMergeStrategy = FEDERATED_LEARNING_MERGE_STRATEGY,
 ): FederatedLearningMergeWeightSummary {
   const positiveNorms = candidates
     .map((candidate) => candidate.updateNorm)
@@ -783,33 +826,33 @@ export function buildFederatedLearningMergeWeightSummary(
         positiveNorms.length,
     );
   const normCap = Math.max(1, Number((normReference * 2).toFixed(6)));
-    const finiteNorms = candidates
-      .map((candidate) => candidate.updateNorm)
-      .filter((value): value is number => Number.isFinite(value) && value >= 0);
-    let rawTotalWeight = 0;
-    let effectiveWeightAccumulator = 0;
-    let dampedSummaryCount = 0;
+  const finiteNorms = candidates
+    .map((candidate) => candidate.updateNorm)
+    .filter((value): value is number => Number.isFinite(value) && value >= 0);
+  let rawTotalWeight = 0;
+  let effectiveWeightAccumulator = 0;
+  let dampedSummaryCount = 0;
 
-    for (const candidate of candidates) {
-      const baseWeight = Math.max(0, candidate.sampleCount);
-      const normScale = candidate.updateNorm > 0
-        ? Math.min(1, normCap / candidate.updateNorm)
-        : 1;
-      rawTotalWeight += baseWeight;
-      effectiveWeightAccumulator += baseWeight * normScale;
-      if (baseWeight > 0 && normScale < 0.999999) {
-        dampedSummaryCount += 1;
-      }
+  for (const candidate of candidates) {
+    const baseWeight = resolveFederatedLearningBaseWeight(candidate, mergeStrategy);
+    const normScale = candidate.updateNorm > 0
+      ? Math.min(1, normCap / candidate.updateNorm)
+      : 1;
+    rawTotalWeight += baseWeight;
+    effectiveWeightAccumulator += baseWeight * normScale;
+    if (baseWeight > 0 && normScale < 0.999999) {
+      dampedSummaryCount += 1;
     }
+  }
 
-    const effectiveTotalWeight = Number(effectiveWeightAccumulator.toFixed(6));
+  const effectiveTotalWeight = Number(effectiveWeightAccumulator.toFixed(6));
   return {
     normCap,
     effectiveTotalWeight,
-      rawTotalWeight: Number(rawTotalWeight.toFixed(6)),
-      dampedSummaryCount,
-      minUpdateNorm: finiteNorms.length > 0 ? Number(Math.min(...finiteNorms).toFixed(6)) : 0,
-      maxUpdateNorm: finiteNorms.length > 0 ? Number(Math.max(...finiteNorms).toFixed(6)) : 0,
+    rawTotalWeight: Number(rawTotalWeight.toFixed(6)),
+    dampedSummaryCount,
+    minUpdateNorm: finiteNorms.length > 0 ? Number(Math.min(...finiteNorms).toFixed(6)) : 0,
+    maxUpdateNorm: finiteNorms.length > 0 ? Number(Math.max(...finiteNorms).toFixed(6)) : 0,
   };
 }
 
@@ -830,9 +873,10 @@ export function buildFederatedLearningContributionDetails(
     >
   >,
   normCap: number,
+  mergeStrategy: FederatedLearningMergeStrategy = FEDERATED_LEARNING_MERGE_STRATEGY,
 ): FederatedLearningContributionDetail[] {
   return candidates.map((candidate) => {
-    const rawWeight = Number(Math.max(0, candidate.sampleCount).toFixed(6));
+    const rawWeight = Number(resolveFederatedLearningBaseWeight(candidate, mergeStrategy).toFixed(6));
     const normScale = candidate.updateNorm > 0
       ? Number(Math.min(1, normCap / candidate.updateNorm).toFixed(6))
       : 1;
@@ -861,8 +905,8 @@ export function buildFederatedLearningMergeArtifactSummary(
   runtimeVector: number[],
   mergeWeights: FederatedLearningMergeWeightSummary,
   contributionDetails: FederatedLearningContributionDetail[],
+  mergeStrategy: FederatedLearningMergeStrategy = FEDERATED_LEARNING_MERGE_STRATEGY,
 ): FederatedLearningMergeArtifactSummary {
-  const mergeStrategy = FEDERATED_LEARNING_MERGE_STRATEGY;
   const payloadFormat = 'runtime_vector_v1';
   const modelVersion = 'fl_runtime_model_v1';
   const normalizedRuntimeVector = runtimeVector.map((value) => Number(value.toFixed(6)));

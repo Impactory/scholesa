@@ -45,6 +45,7 @@ import {
   normalizeFederatedLearningCandidatePromotionStatus,
   normalizeFederatedLearningCandidatePromotionTarget,
   normalizeFederatedLearningExperimentReviewStatus,
+  normalizeFederatedLearningMergeStrategy,
   normalizeFederatedLearningPilotEvidenceStatus,
   normalizeFederatedLearningPilotApprovalStatus,
   normalizeFederatedLearningPilotExecutionStatus,
@@ -1743,6 +1744,8 @@ async function maybeMaterializeFederatedLearningAggregationRun({
   triggerSummaryId: string;
 }): Promise<{ runId: string; artifactId: string; packageId: string; created: boolean } | null> {
   const aggregateThreshold = asPositiveInteger(experiment.aggregateThreshold, 25);
+  const mergeStrategy = normalizeFederatedLearningMergeStrategy(experiment.mergeStrategy) ??
+    FEDERATED_LEARNING_MERGE_STRATEGY;
   const pendingSnap = await admin.firestore()
     .collection('federatedLearningUpdateSummaries')
     .where('experimentId', '==', experimentId)
@@ -1801,13 +1804,16 @@ async function maybeMaterializeFederatedLearningAggregationRun({
     const mergedRuntimeVector = buildFederatedLearningMergedRuntimeVector(
       refreshedRows,
       refreshedSelection.maxVectorLength,
+      mergeStrategy,
     );
     const mergeWeights = buildFederatedLearningMergeWeightSummary(
       refreshedRows,
+      mergeStrategy,
     );
     const contributionDetails = buildFederatedLearningContributionDetails(
       refreshedRows,
       mergeWeights.normCap,
+      mergeStrategy,
     );
     const artifactSummary = buildFederatedLearningMergeArtifactSummary(
       triggerSummaryId,
@@ -1815,6 +1821,7 @@ async function maybeMaterializeFederatedLearningAggregationRun({
       mergedRuntimeVector,
       mergeWeights,
       contributionDetails,
+      mergeStrategy,
     );
     const packageSummary = buildFederatedLearningCandidateModelPackageSummary(
       runId,
@@ -1836,7 +1843,7 @@ async function maybeMaterializeFederatedLearningAggregationRun({
       modelVersion: artifactSummary.modelVersion,
       runtimeVectorLength: artifactSummary.runtimeVectorLength,
       runtimeVectorDigest: artifactSummary.runtimeVectorDigest,
-      mergeStrategy: FEDERATED_LEARNING_MERGE_STRATEGY,
+      mergeStrategy,
       normCap: mergeWeights.normCap,
       effectiveTotalWeight: mergeWeights.effectiveTotalWeight,
       rawTotalWeight: mergeWeights.rawTotalWeight,
@@ -1869,7 +1876,7 @@ async function maybeMaterializeFederatedLearningAggregationRun({
       experimentId,
       aggregationRunId: runId,
       status: 'generated',
-      mergeStrategy: FEDERATED_LEARNING_MERGE_STRATEGY,
+      mergeStrategy,
       normCap: artifactSummary.normCap,
       effectiveTotalWeight: artifactSummary.effectiveTotalWeight,
       rawTotalWeight: artifactSummary.rawTotalWeight,
@@ -4269,6 +4276,7 @@ export const upsertFederatedLearningExperiment = onCall(async (request: Callable
     details: {
       runtimeTarget: config.runtimeTarget,
       status: config.status,
+      mergeStrategy: config.mergeStrategy,
       allowedSiteIds: config.allowedSiteIds,
       aggregateThreshold: config.aggregateThreshold,
       rawUpdateMaxBytes: config.rawUpdateMaxBytes,

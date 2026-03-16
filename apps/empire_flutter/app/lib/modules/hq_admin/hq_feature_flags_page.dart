@@ -250,6 +250,23 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     return 'Observability: $dampedCount of $summaryCount damped · raw weight ${_formatMergeMetric(rawTotalWeight)} · effective weight ${_formatMergeMetric(effectiveTotalWeight)} · norm range $normRange';
   }
 
+  String _formatMergeStrategyLabel(
+    String? mergeStrategy, {
+    bool compact = false,
+  }) {
+    switch ((mergeStrategy ?? '').trim()) {
+      case 'norm_capped_summary_balanced_runtime_vector_average_v1':
+        return compact
+            ? 'Summary-balanced merge'
+            : 'Summary-balanced norm-capped average';
+      case 'norm_capped_weighted_runtime_vector_average_v2':
+      default:
+        return compact
+            ? 'Sample-weighted merge'
+            : 'Sample-weighted norm-capped average';
+    }
+  }
+
   List<FederatedLearningUpdateSummaryModel> _summaryModelsForIds(
     List<String> summaryIds,
   ) {
@@ -1297,6 +1314,13 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 _buildExperimentChip(experiment.status, Icons.flag_rounded,
                     color: statusColor),
                 _buildExperimentChip(
+                  _formatMergeStrategyLabel(
+                    experiment.mergeStrategy,
+                    compact: true,
+                  ),
+                  Icons.balance_rounded,
+                ),
+                _buildExperimentChip(
                   '${experiment.aggregateThreshold} min cohort',
                   Icons.groups_rounded,
                 ),
@@ -1341,6 +1365,17 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 ),
               ),
             ],
+            const SizedBox(height: 4),
+            Text(
+              _tHqFeatureFlags(
+                context,
+                'Configured merge policy: ${_formatMergeStrategyLabel(experiment.mergeStrategy)}',
+              ),
+              style: const TextStyle(
+                fontSize: 12,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
             if (latestRun != null) ...<Widget>[
               const SizedBox(height: 8),
               Text(
@@ -8292,6 +8327,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     );
     String runtimeTarget = existing?.runtimeTarget ?? 'flutter_mobile';
     String status = existing?.status ?? 'draft';
+    String mergeStrategy = existing?.mergeStrategy ??
+      'norm_capped_weighted_runtime_vector_average_v2';
     bool enablePrototypeUploads = existing?.enablePrototypeUploads ?? false;
 
     final bool? shouldSave = await showDialog<bool>(
@@ -8384,6 +8421,32 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                         },
                       ),
                       const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        initialValue: mergeStrategy,
+                        decoration: InputDecoration(
+                          labelText:
+                              _tHqFeatureFlags(context, 'Merge policy'),
+                        ),
+                        items: const <DropdownMenuItem<String>>[
+                          DropdownMenuItem(
+                            value:
+                                'norm_capped_weighted_runtime_vector_average_v2',
+                            child: Text('Sample-weighted merge'),
+                          ),
+                          DropdownMenuItem(
+                            value:
+                                'norm_capped_summary_balanced_runtime_vector_average_v1',
+                            child: Text('Summary-balanced merge'),
+                          ),
+                        ],
+                        onChanged: (String? value) {
+                          setDialogState(() {
+                            mergeStrategy = value ??
+                                'norm_capped_weighted_runtime_vector_average_v2';
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 12),
                       TextFormField(
                         controller: sitesController,
                         decoration: InputDecoration(
@@ -8467,6 +8530,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         description: descriptionController.text,
         runtimeTarget: runtimeTarget,
         status: status,
+        mergeStrategy: mergeStrategy,
         enabledSiteIds: sitesController.text,
         aggregateThresholdText: thresholdController.text,
         rawUpdateMaxBytesText: rawBytesController.text,
@@ -8481,6 +8545,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     required String description,
     required String runtimeTarget,
     required String status,
+    required String mergeStrategy,
     required String enabledSiteIds,
     required String aggregateThresholdText,
     required String rawUpdateMaxBytesText,
@@ -8503,6 +8568,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         'description': description.trim(),
         'runtimeTarget': runtimeTarget,
         'status': status,
+        'mergeStrategy': mergeStrategy,
         'allowedSiteIds': allowedSiteIds,
         'aggregateThreshold': aggregateThreshold,
         'rawUpdateMaxBytes': rawUpdateMaxBytes,

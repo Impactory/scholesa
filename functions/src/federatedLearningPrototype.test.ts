@@ -14,6 +14,7 @@ import {
   buildFederatedLearningRuntimeRolloutEscalationRecordDocId,
   buildFederatedLearningRuntimeRolloutControlRecordDocId,
   FEDERATED_LEARNING_MERGE_STRATEGY,
+  FEDERATED_LEARNING_SUMMARY_BALANCED_MERGE_STRATEGY,
   buildFederatedLearningContributionDetails,
   buildFederatedLearningMergeWeightSummary,
   buildFederatedLearningMergedRuntimeVector,
@@ -143,6 +144,7 @@ describe('federated learning prototype helpers', () => {
       enablePrototypeUploads: true,
     });
     const payload = buildFederatedLearningFeatureFlagPayload(experimentId, config);
+    expect(config.mergeStrategy).toBe(FEDERATED_LEARNING_MERGE_STRATEGY);
     expect(payload.enabled).toBe(true);
     expect(payload.scope).toBe('site');
     expect(payload.enabledSites).toEqual(['site-1', 'site-2']);
@@ -429,6 +431,51 @@ describe('federated learning prototype helpers', () => {
       averageUpdateNorm: 1.35,
       contributionDetails,
     });
+  });
+
+  it('supports summary-balanced merge weighting for bounded experiments', () => {
+    const mergedRuntimeVector = buildFederatedLearningMergedRuntimeVector([
+      {
+        sampleCount: 20,
+        vectorSketch: [1, 0],
+        updateNorm: 1,
+      },
+      {
+        sampleCount: 5,
+        vectorSketch: [0, 1],
+        updateNorm: 1,
+      },
+    ], 2, FEDERATED_LEARNING_SUMMARY_BALANCED_MERGE_STRATEGY);
+    const mergeWeights = buildFederatedLearningMergeWeightSummary([
+      {
+        sampleCount: 20,
+        updateNorm: 1,
+      },
+      {
+        sampleCount: 5,
+        updateNorm: 1,
+      },
+    ], FEDERATED_LEARNING_SUMMARY_BALANCED_MERGE_STRATEGY);
+
+    expect(mergedRuntimeVector).toEqual([0.5, 0.5]);
+    expect(mergeWeights).toEqual({
+      normCap: 2,
+      effectiveTotalWeight: 2,
+      rawTotalWeight: 2,
+      dampedSummaryCount: 0,
+      minUpdateNorm: 1,
+      maxUpdateNorm: 1,
+    });
+
+    const summaryBalancedConfig = sanitizeFederatedLearningExperimentConfig({
+      name: 'Pilot Beta',
+      runtimeTarget: 'flutter_mobile',
+      status: 'draft',
+      mergeStrategy: 'summary_balanced',
+    });
+    expect(summaryBalancedConfig.mergeStrategy).toBe(
+      FEDERATED_LEARNING_SUMMARY_BALANCED_MERGE_STRATEGY,
+    );
   });
 
   it('skips incompatible warm-start lineages when assembling an aggregation batch', () => {
