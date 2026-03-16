@@ -145,6 +145,9 @@ describe('federated learning prototype helpers', () => {
     });
     const payload = buildFederatedLearningFeatureFlagPayload(experimentId, config);
     expect(config.mergeStrategy).toBe(FEDERATED_LEARNING_MERGE_STRATEGY);
+    expect(config.maxLocalEpochs).toBe(3);
+    expect(config.maxLocalSteps).toBe(24);
+    expect(config.maxTrainingWindowSeconds).toBe(1800);
     expect(payload.enabled).toBe(true);
     expect(payload.scope).toBe('site');
     expect(payload.enabledSites).toEqual(['site-1', 'site-2']);
@@ -520,10 +523,16 @@ describe('federated learning prototype helpers', () => {
       runtimeTarget: 'flutter_mobile',
       status: 'draft',
       mergeStrategy: 'summary_balanced',
+      maxLocalEpochs: 2,
+      maxLocalSteps: 12,
+      maxTrainingWindowSeconds: 900,
     });
     expect(summaryBalancedConfig.mergeStrategy).toBe(
       FEDERATED_LEARNING_SUMMARY_BALANCED_MERGE_STRATEGY,
     );
+    expect(summaryBalancedConfig.maxLocalEpochs).toBe(2);
+    expect(summaryBalancedConfig.maxLocalSteps).toBe(12);
+    expect(summaryBalancedConfig.maxTrainingWindowSeconds).toBe(900);
   });
 
   it('skips incompatible warm-start lineages when assembling an aggregation batch', () => {

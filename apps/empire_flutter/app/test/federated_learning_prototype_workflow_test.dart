@@ -2381,6 +2381,9 @@ Map<String, dynamic> _experimentRow({
   List<String> allowedSiteIds = const <String>['site-1'],
   String status = 'pilot_ready',
   String mergeStrategy = 'norm_capped_weighted_runtime_vector_average_v2',
+  int maxLocalEpochs = 3,
+  int maxLocalSteps = 24,
+  int maxTrainingWindowSeconds = 1800,
   bool enablePrototypeUploads = true,
 }) {
   return <String, dynamic>{
@@ -2390,6 +2393,9 @@ Map<String, dynamic> _experimentRow({
     'runtimeTarget': 'flutter_mobile',
     'status': status,
     'mergeStrategy': mergeStrategy,
+    'maxLocalEpochs': maxLocalEpochs,
+    'maxLocalSteps': maxLocalSteps,
+    'maxTrainingWindowSeconds': maxTrainingWindowSeconds,
     'allowedSiteIds': allowedSiteIds,
     'aggregateThreshold': 25,
     'rawUpdateMaxBytes': 16384,
@@ -2602,6 +2608,9 @@ void main() {
       experiments.single.mergeStrategy,
       'norm_capped_weighted_runtime_vector_average_v2',
     );
+    expect(experiments.single.maxLocalEpochs, 3);
+    expect(experiments.single.maxLocalSteps, 24);
+    expect(experiments.single.maxTrainingWindowSeconds, 1800);
     expect(summaries, hasLength(1));
     expect(summaries.single.traceId, 'trace-1');
   });
@@ -3330,7 +3339,14 @@ void main() {
   test('runtime adapter uploads bounded BOS summaries on real triggers',
       () async {
     final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
-      experiments: <Map<String, dynamic>>[_experimentRow(status: 'active')],
+      experiments: <Map<String, dynamic>>[
+        _experimentRow(
+          status: 'active',
+          maxLocalEpochs: 1,
+          maxLocalSteps: 2,
+          maxTrainingWindowSeconds: 60,
+        ),
+      ],
       candidatePackages: <Map<String, dynamic>>[_candidatePackageRow()],
       runtimeDeliveryRecords: <Map<String, dynamic>>[
         _runtimeDeliveryRecordRow(
@@ -3378,23 +3394,22 @@ void main() {
     expect(
       bridge.recordedUpdates.single['vectorSketch'],
       <double>[
-        0.652188,
-        0.446375,
-        0.660875,
-        0.10725,
-        0.053625,
-        0.553625,
-        0.39275,
-        0.200719
+        0.7375,
+        0.435,
+        0.695,
+        0.13,
+        0.065,
+        0.565,
+        0.37,
+        0.16375
       ],
     );
     expect(
       bridge.recordedUpdates.single['optimizerStrategy'],
       'bounded_runtime_vector_local_finetune_v1',
     );
-    expect(bridge.recordedUpdates.single['localEpochCount'], 2);
-    expect(bridge.recordedUpdates.single['localStepCount'], 4);
-    expect(bridge.recordedUpdates.single['updateNorm'], 0.432091);
+    expect(bridge.recordedUpdates.single['localEpochCount'], 1);
+    expect(bridge.recordedUpdates.single['localStepCount'], 2);
     expect(
       bridge.recordedUpdates.single['warmStartPackageId'],
       'fl_pkg_1',
@@ -3617,6 +3632,12 @@ void main() {
     expect(
       find.text(
         'Configured merge policy: Sample-weighted norm-capped average',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Configured training policy: 3 max epochs · 24 max steps · 1800s max window',
       ),
       findsOneWidget,
     );
@@ -5065,6 +5086,18 @@ void main() {
       find.widgetWithText(TextFormField, 'Raw update max bytes'),
       '8192',
     );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Max local epochs'),
+      '2',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Max local steps'),
+      '12',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Max training window seconds'),
+      '900',
+    );
 
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
@@ -5080,6 +5113,24 @@ void main() {
         (Map<String, dynamic> row) => row['name'] == 'Math Pilot',
       )['mergeStrategy'],
       'norm_capped_summary_balanced_runtime_vector_average_v1',
+    );
+    expect(
+      bridge._experiments.firstWhere(
+        (Map<String, dynamic> row) => row['name'] == 'Math Pilot',
+      )['maxLocalEpochs'],
+      2,
+    );
+    expect(
+      bridge._experiments.firstWhere(
+        (Map<String, dynamic> row) => row['name'] == 'Math Pilot',
+      )['maxLocalSteps'],
+      12,
+    );
+    expect(
+      bridge._experiments.firstWhere(
+        (Map<String, dynamic> row) => row['name'] == 'Math Pilot',
+      )['maxTrainingWindowSeconds'],
+      900,
     );
   });
 

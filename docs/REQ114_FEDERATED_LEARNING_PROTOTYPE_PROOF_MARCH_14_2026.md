@@ -22,6 +22,7 @@ Implemented prototype scope:
 - Flutter runtime adapter that converts BOS event windows into bounded prototype summaries on real mission/session triggers
 - backend aggregation-run materialization once accepted summary windows cross the configured threshold
 - experiment-configurable bounded merge policy selection for prototype aggregations
+- experiment-configurable bounded local training budgets for prototype runtime fine-tuning
 - Firestore rules for experiment and summary reads without exposing feature flags beyond HQ
 - HQ visibility for the latest materialized aggregation run per experiment
 - bounded merge-artifact records generated for each materialized aggregation run
@@ -113,6 +114,7 @@ Additional focused validation passed on 2026-03-15:
 - The HQ feature-flags page now exposes a bounded experiment editor instead of leaving prototype configuration backend-only.
 - Flutter repositories and rules expose read-only experiment/update-summary records while keeping writes behind server callables.
 - Runtime BOS signals now feed a bounded warm-start local fine-tune step in the Flutter adapter, which uses the currently resolved runtime package as a local starting point, nudges a bounded runtime vector toward event-derived targets across a small epoch budget, and uploads the resulting bounded local model payload on mission/checkpoint/session triggers without sending raw learner content.
+- That bounded local fine-tune path is now also governed by experiment-level training policy, including maximum local epochs, maximum local steps, and maximum training-window duration, so prototype cohorts can tighten or relax local adaptation budgets without editing the runtime adapter between pilots.
 - When accepted summaries cumulatively hit the experiment threshold, the backend now materializes a bounded aggregation-run record, marks the source summaries as consumed, and merges the uploaded bounded local runtime vectors into a runtime payload instead of only emitting metadata.
 - Each prototype experiment now also carries an explicit bounded merge policy, so aggregation materialization can use either the default sample-weighted norm-capped average or a stricter summary-balanced norm-capped average without editing backend code between cohorts.
 - Aggregation selection now also skips accepted summaries whose runtime target, schema version, optimizer strategy, vector length, or warm-start package/model lineage do not match the active batch, so prototype merge runs no longer average incompatible bounded local models together just because they arrived in the same threshold window.
@@ -180,7 +182,7 @@ Additional focused validation passed on 2026-03-15:
 
 REQ-114 remains partial until all of the following exist and are approved:
 
-- production-grade on-device training beyond the current bounded warm-start local fine-tune path
+- production-grade on-device training beyond the current bounded warm-start local fine-tune path with experiment-governed epoch, step, and training-window caps
 - production-grade merge semantics beyond the current bounded compatibility-aware, experiment-configurable sample-weighted or summary-balanced norm-capped runtime-vector averaging path
 - richer production-grade aggregation observability beyond the current bounded merge-strategy, norm-cap, effective-weight, contributor-site lineage, and accepted-summary local-training transparency surfaced in prototype records and HQ history
 - production-grade rollout orchestration and long-lived model lifecycle management beyond the current bounded site-scoped expiry, supersession, retirement, revocation, paused/restricted control, and fallback path
