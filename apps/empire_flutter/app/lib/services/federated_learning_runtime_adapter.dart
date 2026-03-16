@@ -213,6 +213,8 @@ class FederatedLearningRuntimeAdapter {
     final int localEpochCount = _deriveLocalEpochCount(
       sampleCount: samples.length,
       hasWarmStart: runtimePackage != null && runtimePackage.runtimeVector.isNotEmpty,
+      maxLocalEpochs: experiment.maxLocalEpochs,
+      maxLocalSteps: experiment.maxLocalSteps,
     );
     final List<double> vectorSketch = _buildLocallyFineTunedVector(
       samples,
@@ -232,7 +234,11 @@ class FederatedLearningRuntimeAdapter {
     final int trainingWindowSeconds = latest
         .difference(earliest)
         .inSeconds
-        .clamp(0, 86400);
+        .clamp(0, experiment.maxTrainingWindowSeconds);
+    final int localStepCount = math.min(
+      samples.length * localEpochCount,
+      experiment.maxLocalSteps,
+    );
 
     try {
       await _uploader!.uploadSummary(
@@ -253,7 +259,7 @@ class FederatedLearningRuntimeAdapter {
         ),
         optimizerStrategy: _optimizerStrategy,
         localEpochCount: localEpochCount,
-        localStepCount: samples.length * localEpochCount,
+        localStepCount: localStepCount,
         trainingWindowSeconds: trainingWindowSeconds,
         warmStartPackageId: runtimePackage?.candidateModelPackageId,
         warmStartDeliveryRecordId: runtimePackage?.deliveryRecordId,
@@ -284,20 +290,25 @@ class FederatedLearningRuntimeAdapter {
   int _deriveLocalEpochCount({
     required int sampleCount,
     required bool hasWarmStart,
+    required int maxLocalEpochs,
+    required int maxLocalSteps,
   }) {
     if (sampleCount <= 0) {
       return 1;
     }
+    final int stepBoundEpochs = math.max(1, maxLocalSteps ~/ sampleCount);
     if (!hasWarmStart) {
-      return 1;
+      return math.min(1, math.min(maxLocalEpochs, stepBoundEpochs));
     }
+    final int desiredEpochCount;
     if (sampleCount >= 6) {
-      return 3;
+      desiredEpochCount = 3;
+    } else if (sampleCount >= 2) {
+      desiredEpochCount = 2;
+    } else {
+      desiredEpochCount = 1;
     }
-    if (sampleCount >= 2) {
-      return 2;
-    }
-    return 1;
+    return math.max(1, math.min(desiredEpochCount, math.min(maxLocalEpochs, stepBoundEpochs)));
   }
 
   List<double> _buildLocallyFineTunedVector(

@@ -1438,6 +1438,10 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                   Icons.data_object_rounded,
                 ),
                 _buildExperimentChip(
+                  '${experiment.maxLocalEpochs} epochs · ${experiment.maxLocalSteps} steps',
+                  Icons.tune_rounded,
+                ),
+                _buildExperimentChip(
                   experiment.enablePrototypeUploads
                       ? 'Uploads enabled'
                       : 'Uploads disabled',
@@ -1479,6 +1483,17 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               _tHqFeatureFlags(
                 context,
                 'Configured merge policy: ${_formatMergeStrategyLabel(experiment.mergeStrategy)}',
+              ),
+              style: const TextStyle(
+                fontSize: 12,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              _tHqFeatureFlags(
+                context,
+                'Configured training policy: ${experiment.maxLocalEpochs} max epochs · ${experiment.maxLocalSteps} max steps · ${experiment.maxTrainingWindowSeconds}s max window',
               ),
               style: const TextStyle(
                 fontSize: 12,
@@ -8514,6 +8529,15 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     final TextEditingController rawBytesController = TextEditingController(
       text: '${existing?.rawUpdateMaxBytes ?? 16384}',
     );
+    final TextEditingController maxLocalEpochsController = TextEditingController(
+      text: '${existing?.maxLocalEpochs ?? 3}',
+    );
+    final TextEditingController maxLocalStepsController = TextEditingController(
+      text: '${existing?.maxLocalSteps ?? 24}',
+    );
+    final TextEditingController maxTrainingWindowController = TextEditingController(
+      text: '${existing?.maxTrainingWindowSeconds ?? 1800}',
+    );
     String runtimeTarget = existing?.runtimeTarget ?? 'flutter_mobile';
     String status = existing?.status ?? 'draft';
     String mergeStrategy = existing?.mergeStrategy ??
@@ -8674,6 +8698,41 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                         ],
                       ),
                       const SizedBox(height: 12),
+                      Row(
+                        children: <Widget>[
+                          Expanded(
+                            child: TextFormField(
+                              controller: maxLocalEpochsController,
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(
+                                labelText: _tHqFeatureFlags(
+                                    context, 'Max local epochs'),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: TextFormField(
+                              controller: maxLocalStepsController,
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(
+                                labelText: _tHqFeatureFlags(
+                                    context, 'Max local steps'),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: maxTrainingWindowController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: _tHqFeatureFlags(
+                              context, 'Max training window seconds'),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
                       SwitchListTile.adaptive(
                         value: enablePrototypeUploads,
                         contentPadding: EdgeInsets.zero,
@@ -8723,6 +8782,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         enabledSiteIds: sitesController.text,
         aggregateThresholdText: thresholdController.text,
         rawUpdateMaxBytesText: rawBytesController.text,
+        maxLocalEpochsText: maxLocalEpochsController.text,
+        maxLocalStepsText: maxLocalStepsController.text,
+        maxTrainingWindowSecondsText: maxTrainingWindowController.text,
         enablePrototypeUploads: enablePrototypeUploads,
       );
     }
@@ -8738,12 +8800,19 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     required String enabledSiteIds,
     required String aggregateThresholdText,
     required String rawUpdateMaxBytesText,
+    required String maxLocalEpochsText,
+    required String maxLocalStepsText,
+    required String maxTrainingWindowSecondsText,
     required bool enablePrototypeUploads,
   }) async {
     final int aggregateThreshold =
         int.tryParse(aggregateThresholdText.trim()) ?? 25;
     final int rawUpdateMaxBytes =
         int.tryParse(rawUpdateMaxBytesText.trim()) ?? 16384;
+    final int maxLocalEpochs = int.tryParse(maxLocalEpochsText.trim()) ?? 3;
+    final int maxLocalSteps = int.tryParse(maxLocalStepsText.trim()) ?? 24;
+    final int maxTrainingWindowSeconds =
+      int.tryParse(maxTrainingWindowSecondsText.trim()) ?? 1800;
     final List<String> allowedSiteIds = enabledSiteIds
         .split(',')
         .map((String entry) => entry.trim())
@@ -8758,6 +8827,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         'runtimeTarget': runtimeTarget,
         'status': status,
         'mergeStrategy': mergeStrategy,
+        'maxLocalEpochs': maxLocalEpochs,
+        'maxLocalSteps': maxLocalSteps,
+        'maxTrainingWindowSeconds': maxTrainingWindowSeconds,
         'allowedSiteIds': allowedSiteIds,
         'aggregateThreshold': aggregateThreshold,
         'rawUpdateMaxBytes': rawUpdateMaxBytes,
