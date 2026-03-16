@@ -2812,6 +2812,18 @@ List<FederatedLearningSiteContributionSummaryModel>
       .toList(growable: false);
 }
 
+List<FederatedLearningEnvironmentBreakdownEntryModel>
+    _environmentBreakdownListOrEmpty(dynamic value) {
+  if (value is! List) {
+    return const <FederatedLearningEnvironmentBreakdownEntryModel>[];
+  }
+  return value
+      .map((dynamic entry) => _mapOrNull(entry))
+      .whereType<Map<String, dynamic>>()
+      .map(FederatedLearningEnvironmentBreakdownEntryModel.fromMap)
+      .toList(growable: false);
+}
+
 Map<String, dynamic>? _mapOrNull(dynamic value) {
   if (value is Map<String, dynamic>) return value;
   if (value is Map) {
@@ -2945,6 +2957,31 @@ class FederatedLearningSiteContributionSummaryModel {
 }
 
 @immutable
+class FederatedLearningEnvironmentBreakdownEntryModel {
+  const FederatedLearningEnvironmentBreakdownEntryModel({
+    required this.value,
+    required this.count,
+  });
+
+  final String value;
+  final int count;
+
+  factory FederatedLearningEnvironmentBreakdownEntryModel.fromMap(
+    Map<String, dynamic> data,
+  ) {
+    return FederatedLearningEnvironmentBreakdownEntryModel(
+      value: data['value'] as String? ?? '',
+      count: (data['count'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'value': value,
+        'count': count,
+      };
+}
+
+@immutable
 class FederatedLearningExperimentModel {
   const FederatedLearningExperimentModel({
     required this.id,
@@ -2952,6 +2989,7 @@ class FederatedLearningExperimentModel {
     required this.runtimeTarget,
     required this.status,
     required this.mergeStrategy,
+    required this.requireWarmStartForTraining,
     required this.maxLocalEpochs,
     required this.maxLocalSteps,
     required this.maxTrainingWindowSeconds,
@@ -2972,6 +3010,7 @@ class FederatedLearningExperimentModel {
   final String runtimeTarget;
   final String status;
   final String mergeStrategy;
+  final bool requireWarmStartForTraining;
   final int maxLocalEpochs;
   final int maxLocalSteps;
   final int maxTrainingWindowSeconds;
@@ -3008,6 +3047,8 @@ class FederatedLearningExperimentModel {
       status: data['status'] as String? ?? 'draft',
         mergeStrategy: data['mergeStrategy'] as String? ??
           'norm_capped_weighted_runtime_vector_average_v2',
+        requireWarmStartForTraining:
+          data['requireWarmStartForTraining'] as bool? ?? false,
         maxLocalEpochs: (data['maxLocalEpochs'] as num?)?.toInt() ?? 3,
         maxLocalSteps: (data['maxLocalSteps'] as num?)?.toInt() ?? 24,
         maxTrainingWindowSeconds:
@@ -3030,6 +3071,7 @@ class FederatedLearningExperimentModel {
         'runtimeTarget': runtimeTarget,
         'status': status,
         'mergeStrategy': mergeStrategy,
+        'requireWarmStartForTraining': requireWarmStartForTraining,
         'maxLocalEpochs': maxLocalEpochs,
         'maxLocalSteps': maxLocalSteps,
         'maxTrainingWindowSeconds': maxTrainingWindowSeconds,
@@ -3262,6 +3304,8 @@ class FederatedLearningAggregationRunModel {
     this.oldestSummaryCreatedAtMs,
     this.newestSummaryCreatedAtMs,
     this.summaryFreshnessSpanSeconds,
+    required this.batteryStateBreakdown,
+    required this.networkTypeBreakdown,
     this.boundedDigest,
     this.payloadFormat,
     this.modelVersion,
@@ -3309,6 +3353,10 @@ class FederatedLearningAggregationRunModel {
   final int? oldestSummaryCreatedAtMs;
   final int? newestSummaryCreatedAtMs;
   final int? summaryFreshnessSpanSeconds;
+    final List<FederatedLearningEnvironmentBreakdownEntryModel>
+      batteryStateBreakdown;
+    final List<FederatedLearningEnvironmentBreakdownEntryModel>
+      networkTypeBreakdown;
   final String? boundedDigest;
   final String? payloadFormat;
   final String? modelVersion;
@@ -3375,6 +3423,12 @@ class FederatedLearningAggregationRunModel {
           (data['newestSummaryCreatedAtMs'] as num?)?.toInt(),
         summaryFreshnessSpanSeconds:
           (data['summaryFreshnessSpanSeconds'] as num?)?.toInt(),
+        batteryStateBreakdown: _environmentBreakdownListOrEmpty(
+          data['batteryStateBreakdown'],
+        ),
+        networkTypeBreakdown: _environmentBreakdownListOrEmpty(
+          data['networkTypeBreakdown'],
+        ),
       boundedDigest: data['boundedDigest'] as String?,
       payloadFormat: data['payloadFormat'] as String?,
       modelVersion: data['modelVersion'] as String?,
@@ -3426,6 +3480,14 @@ class FederatedLearningAggregationRunModel {
         'oldestSummaryCreatedAtMs': oldestSummaryCreatedAtMs,
         'newestSummaryCreatedAtMs': newestSummaryCreatedAtMs,
         'summaryFreshnessSpanSeconds': summaryFreshnessSpanSeconds,
+        'batteryStateBreakdown': batteryStateBreakdown
+          .map((FederatedLearningEnvironmentBreakdownEntryModel entry) =>
+            entry.toMap())
+          .toList(growable: false),
+        'networkTypeBreakdown': networkTypeBreakdown
+          .map((FederatedLearningEnvironmentBreakdownEntryModel entry) =>
+            entry.toMap())
+          .toList(growable: false),
         'boundedDigest': boundedDigest,
         'payloadFormat': payloadFormat,
         'modelVersion': modelVersion,
@@ -3477,6 +3539,8 @@ class FederatedLearningMergeArtifactModel {
     this.oldestSummaryCreatedAtMs,
     this.newestSummaryCreatedAtMs,
     this.summaryFreshnessSpanSeconds,
+    required this.batteryStateBreakdown,
+    required this.networkTypeBreakdown,
     required this.triggerSummaryId,
     required this.summaryIds,
     required this.boundedDigest,
@@ -3519,6 +3583,10 @@ class FederatedLearningMergeArtifactModel {
   final int? oldestSummaryCreatedAtMs;
   final int? newestSummaryCreatedAtMs;
   final int? summaryFreshnessSpanSeconds;
+    final List<FederatedLearningEnvironmentBreakdownEntryModel>
+      batteryStateBreakdown;
+    final List<FederatedLearningEnvironmentBreakdownEntryModel>
+      networkTypeBreakdown;
   final String triggerSummaryId;
   final List<String> summaryIds;
   final String boundedDigest;
@@ -3579,6 +3647,12 @@ class FederatedLearningMergeArtifactModel {
           (data['newestSummaryCreatedAtMs'] as num?)?.toInt(),
         summaryFreshnessSpanSeconds:
           (data['summaryFreshnessSpanSeconds'] as num?)?.toInt(),
+        batteryStateBreakdown: _environmentBreakdownListOrEmpty(
+          data['batteryStateBreakdown'],
+        ),
+        networkTypeBreakdown: _environmentBreakdownListOrEmpty(
+          data['networkTypeBreakdown'],
+        ),
       triggerSummaryId: data['triggerSummaryId'] as String? ?? '',
       summaryIds: _stringListOrEmpty(data['summaryIds']),
       boundedDigest: data['boundedDigest'] as String? ?? '',
@@ -3625,6 +3699,14 @@ class FederatedLearningMergeArtifactModel {
         'oldestSummaryCreatedAtMs': oldestSummaryCreatedAtMs,
         'newestSummaryCreatedAtMs': newestSummaryCreatedAtMs,
         'summaryFreshnessSpanSeconds': summaryFreshnessSpanSeconds,
+        'batteryStateBreakdown': batteryStateBreakdown
+          .map((FederatedLearningEnvironmentBreakdownEntryModel entry) =>
+            entry.toMap())
+          .toList(growable: false),
+        'networkTypeBreakdown': networkTypeBreakdown
+          .map((FederatedLearningEnvironmentBreakdownEntryModel entry) =>
+            entry.toMap())
+          .toList(growable: false),
         'triggerSummaryId': triggerSummaryId,
         'summaryIds': summaryIds,
         'boundedDigest': boundedDigest,
@@ -3696,6 +3778,8 @@ class FederatedLearningCandidateModelPackageModel {
     this.oldestSummaryCreatedAtMs,
     this.newestSummaryCreatedAtMs,
     this.summaryFreshnessSpanSeconds,
+    required this.batteryStateBreakdown,
+    required this.networkTypeBreakdown,
     required this.runtimeVectorLength,
     required this.runtimeVector,
     required this.runtimeVectorDigest,
@@ -3752,6 +3836,10 @@ class FederatedLearningCandidateModelPackageModel {
   final int? oldestSummaryCreatedAtMs;
   final int? newestSummaryCreatedAtMs;
   final int? summaryFreshnessSpanSeconds;
+    final List<FederatedLearningEnvironmentBreakdownEntryModel>
+      batteryStateBreakdown;
+    final List<FederatedLearningEnvironmentBreakdownEntryModel>
+      networkTypeBreakdown;
   final int runtimeVectorLength;
   final List<double> runtimeVector;
   final String runtimeVectorDigest;
@@ -3831,6 +3919,12 @@ class FederatedLearningCandidateModelPackageModel {
           (data['newestSummaryCreatedAtMs'] as num?)?.toInt(),
         summaryFreshnessSpanSeconds:
           (data['summaryFreshnessSpanSeconds'] as num?)?.toInt(),
+        batteryStateBreakdown: _environmentBreakdownListOrEmpty(
+          data['batteryStateBreakdown'],
+        ),
+        networkTypeBreakdown: _environmentBreakdownListOrEmpty(
+          data['networkTypeBreakdown'],
+        ),
       runtimeVectorLength: (data['runtimeVectorLength'] as num?)?.toInt() ?? 0,
       runtimeVector: _doubleListOrEmpty(data['runtimeVector']),
       runtimeVectorDigest: data['runtimeVectorDigest'] as String? ?? '',
@@ -3891,6 +3985,14 @@ class FederatedLearningCandidateModelPackageModel {
         'oldestSummaryCreatedAtMs': oldestSummaryCreatedAtMs,
         'newestSummaryCreatedAtMs': newestSummaryCreatedAtMs,
         'summaryFreshnessSpanSeconds': summaryFreshnessSpanSeconds,
+        'batteryStateBreakdown': batteryStateBreakdown
+          .map((FederatedLearningEnvironmentBreakdownEntryModel entry) =>
+            entry.toMap())
+          .toList(growable: false),
+        'networkTypeBreakdown': networkTypeBreakdown
+          .map((FederatedLearningEnvironmentBreakdownEntryModel entry) =>
+            entry.toMap())
+          .toList(growable: false),
         'runtimeVectorLength': runtimeVectorLength,
         'runtimeVector': runtimeVector,
         'runtimeVectorDigest': runtimeVectorDigest,

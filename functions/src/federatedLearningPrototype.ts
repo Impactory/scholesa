@@ -33,6 +33,7 @@ export interface FederatedLearningExperimentConfig {
   runtimeTarget: FederatedLearningRuntimeTarget;
   status: FederatedLearningExperimentStatus;
   mergeStrategy: FederatedLearningMergeStrategy;
+  requireWarmStartForTraining: boolean;
   maxLocalEpochs: number;
   maxLocalSteps: number;
   maxTrainingWindowSeconds: number;
@@ -67,6 +68,8 @@ export interface FederatedLearningAggregationCandidate {
   id: string;
   siteId: string;
   createdAtMs?: number | null;
+  batteryState?: FederatedLearningBatteryState | null;
+  networkType?: FederatedLearningNetworkType | null;
   sampleCount: number;
   vectorLength: number;
   vectorSketch: number[];
@@ -109,12 +112,19 @@ export interface FederatedLearningSiteContributionSummary {
   maxUpdateNorm: number;
 }
 
+export interface FederatedLearningEnvironmentBreakdownEntry {
+  value: string;
+  count: number;
+}
+
 export interface FederatedLearningAggregationSelection {
   summaryIds: string[];
   summaryCount: number;
   oldestSummaryCreatedAtMs?: number;
   newestSummaryCreatedAtMs?: number;
   summaryFreshnessSpanSeconds?: number;
+  batteryStateBreakdown: FederatedLearningEnvironmentBreakdownEntry[];
+  networkTypeBreakdown: FederatedLearningEnvironmentBreakdownEntry[];
   distinctSiteCount: number;
   contributingSiteIds: string[];
   totalSampleCount: number;
@@ -149,6 +159,8 @@ export interface FederatedLearningMergeArtifactSummary {
   oldestSummaryCreatedAtMs?: number;
   newestSummaryCreatedAtMs?: number;
   summaryFreshnessSpanSeconds?: number;
+  batteryStateBreakdown: FederatedLearningEnvironmentBreakdownEntry[];
+  networkTypeBreakdown: FederatedLearningEnvironmentBreakdownEntry[];
   triggerSummaryId: string;
   summaryIds: string[];
   payloadFormat: 'runtime_vector_v1';
@@ -185,6 +197,8 @@ export interface FederatedLearningCandidateModelPackageSummary {
   oldestSummaryCreatedAtMs?: number;
   newestSummaryCreatedAtMs?: number;
   summaryFreshnessSpanSeconds?: number;
+  batteryStateBreakdown: FederatedLearningEnvironmentBreakdownEntry[];
+  networkTypeBreakdown: FederatedLearningEnvironmentBreakdownEntry[];
   triggerSummaryId: string;
   summaryIds: string[];
   packageFormat: 'runtime_vector_v1';
@@ -611,6 +625,7 @@ export function sanitizeFederatedLearningExperimentConfig(
   const status = normalizeFederatedLearningExperimentStatus(input.status) ?? 'draft';
   const mergeStrategy = normalizeFederatedLearningMergeStrategy(input.mergeStrategy) ??
     FEDERATED_LEARNING_MERGE_STRATEGY;
+  const requireWarmStartForTraining = input.requireWarmStartForTraining === true;
   const maxLocalEpochs = asIntegerInRange(input.maxLocalEpochs, 'maxLocalEpochs', 1, 10, 3);
   const maxLocalSteps = asIntegerInRange(input.maxLocalSteps, 'maxLocalSteps', 1, 1000, 24);
   const maxTrainingWindowSeconds = asIntegerInRange(
@@ -635,6 +650,7 @@ export function sanitizeFederatedLearningExperimentConfig(
     runtimeTarget,
     status,
     mergeStrategy,
+    requireWarmStartForTraining,
     maxLocalEpochs,
     maxLocalSteps,
     maxTrainingWindowSeconds,
@@ -770,6 +786,8 @@ export function selectFederatedLearningAggregationBatch(
   const schemaVersions = new Set<string>();
   const runtimeTargets = new Set<string>();
   const optimizerStrategies = new Set<string>();
+  const batteryStateCounts = new Map<string, number>();
+  const networkTypeCounts = new Map<string, number>();
   let totalPayloadBytes = 0;
   let maxVectorLength = 0;
   let updateNormTotal = 0;
@@ -784,6 +802,20 @@ export function selectFederatedLearningAggregationBatch(
     if (typeof candidate.optimizerStrategy === 'string' && candidate.optimizerStrategy.trim().length > 0) {
       optimizerStrategies.add(candidate.optimizerStrategy.trim());
     }
+    const batteryState = typeof candidate.batteryState === 'string' && candidate.batteryState.trim().length > 0
+      ? candidate.batteryState.trim()
+      : 'unknown';
+    batteryStateCounts.set(
+      batteryState,
+      (batteryStateCounts.get(batteryState) ?? 0) + 1,
+    );
+    const networkType = typeof candidate.networkType === 'string' && candidate.networkType.trim().length > 0
+      ? candidate.networkType.trim()
+      : 'unknown';
+    networkTypeCounts.set(
+      networkType,
+      (networkTypeCounts.get(networkType) ?? 0) + 1,
+    );
     totalPayloadBytes += candidate.payloadBytes;
     maxVectorLength = Math.max(maxVectorLength, candidate.vectorLength);
     updateNormTotal += candidate.updateNorm;
@@ -802,6 +834,12 @@ export function selectFederatedLearningAggregationBatch(
     oldestSummaryCreatedAtMs != null && newestSummaryCreatedAtMs != null
       ? Math.max(0, Math.round((newestSummaryCreatedAtMs - oldestSummaryCreatedAtMs) / 1000))
       : undefined;
+  const batteryStateBreakdown = Array.from(batteryStateCounts.entries())
+    .map(([value, count]) => ({ value, count }))
+    .sort((left, right) => right.count - left.count || left.value.localeCompare(right.value));
+  const networkTypeBreakdown = Array.from(networkTypeCounts.entries())
+    .map(([value, count]) => ({ value, count }))
+    .sort((left, right) => right.count - left.count || left.value.localeCompare(right.value));
 
   const firstSelected = selected[0];
   const warmStartPackageId = typeof firstSelected?.warmStartPackageId === 'string' &&
@@ -819,6 +857,8 @@ export function selectFederatedLearningAggregationBatch(
     oldestSummaryCreatedAtMs,
     newestSummaryCreatedAtMs,
     summaryFreshnessSpanSeconds,
+    batteryStateBreakdown,
+    networkTypeBreakdown,
     distinctSiteCount: siteIds.size,
     contributingSiteIds: Array.from(siteIds).sort(),
     totalSampleCount,
@@ -1029,6 +1069,8 @@ export function buildFederatedLearningMergeArtifactSummary(
       oldestSummaryCreatedAtMs: selection.oldestSummaryCreatedAtMs,
       newestSummaryCreatedAtMs: selection.newestSummaryCreatedAtMs,
       summaryFreshnessSpanSeconds: selection.summaryFreshnessSpanSeconds,
+      batteryStateBreakdown: selection.batteryStateBreakdown,
+      networkTypeBreakdown: selection.networkTypeBreakdown,
       totalSampleCount: selection.totalSampleCount,
       summaryCount: selection.summaryCount,
       distinctSiteCount: selection.distinctSiteCount,
@@ -1062,6 +1104,8 @@ export function buildFederatedLearningMergeArtifactSummary(
     oldestSummaryCreatedAtMs: selection.oldestSummaryCreatedAtMs,
     newestSummaryCreatedAtMs: selection.newestSummaryCreatedAtMs,
     summaryFreshnessSpanSeconds: selection.summaryFreshnessSpanSeconds,
+    batteryStateBreakdown: selection.batteryStateBreakdown,
+    networkTypeBreakdown: selection.networkTypeBreakdown,
     triggerSummaryId,
     summaryIds: selection.summaryIds,
     payloadFormat,
@@ -1109,6 +1153,8 @@ export function buildFederatedLearningCandidateModelPackageSummary(
       oldestSummaryCreatedAtMs: artifactSummary.oldestSummaryCreatedAtMs,
       newestSummaryCreatedAtMs: artifactSummary.newestSummaryCreatedAtMs,
       summaryFreshnessSpanSeconds: artifactSummary.summaryFreshnessSpanSeconds,
+      batteryStateBreakdown: artifactSummary.batteryStateBreakdown,
+      networkTypeBreakdown: artifactSummary.networkTypeBreakdown,
       triggerSummaryId: artifactSummary.triggerSummaryId,
       summaryIds: artifactSummary.summaryIds,
       packageFormat,
@@ -1147,6 +1193,8 @@ export function buildFederatedLearningCandidateModelPackageSummary(
     oldestSummaryCreatedAtMs: artifactSummary.oldestSummaryCreatedAtMs,
     newestSummaryCreatedAtMs: artifactSummary.newestSummaryCreatedAtMs,
     summaryFreshnessSpanSeconds: artifactSummary.summaryFreshnessSpanSeconds,
+    batteryStateBreakdown: artifactSummary.batteryStateBreakdown,
+    networkTypeBreakdown: artifactSummary.networkTypeBreakdown,
     triggerSummaryId: artifactSummary.triggerSummaryId,
     summaryIds: artifactSummary.summaryIds,
     packageFormat,

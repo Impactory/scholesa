@@ -210,9 +210,14 @@ class FederatedLearningRuntimeAdapter {
                 experimentId: experiment.id,
                 runtimeTarget: experiment.runtimeTarget,
               );
+    final bool hasWarmStart =
+        runtimePackage != null && runtimePackage.runtimeVector.isNotEmpty;
+    final bool canFineTune =
+        !experiment.requireWarmStartForTraining || hasWarmStart;
     final int localEpochCount = _deriveLocalEpochCount(
       sampleCount: samples.length,
-      hasWarmStart: runtimePackage != null && runtimePackage.runtimeVector.isNotEmpty,
+      hasWarmStart: hasWarmStart,
+      allowFineTuning: canFineTune,
       maxLocalEpochs: experiment.maxLocalEpochs,
       maxLocalSteps: experiment.maxLocalSteps,
     );
@@ -231,14 +236,18 @@ class FederatedLearningRuntimeAdapter {
     final DateTime latest = samples
         .map((sample) => sample.capturedAt)
         .reduce((DateTime a, DateTime b) => a.isAfter(b) ? a : b);
-    final int trainingWindowSeconds = latest
+    final int trainingWindowSeconds = canFineTune
+      ? latest
         .difference(earliest)
         .inSeconds
-        .clamp(0, experiment.maxTrainingWindowSeconds);
-    final int localStepCount = math.min(
-      samples.length * localEpochCount,
-      experiment.maxLocalSteps,
-    );
+        .clamp(0, experiment.maxTrainingWindowSeconds)
+      : 0;
+    final int localStepCount = canFineTune
+      ? math.min(
+        samples.length * localEpochCount,
+        experiment.maxLocalSteps,
+        )
+      : 0;
 
     try {
       await _uploader!.uploadSummary(
@@ -257,7 +266,7 @@ class FederatedLearningRuntimeAdapter {
           vectorSketch: vectorSketch,
           runtimeVectorDigest: runtimePackage?.runtimeVectorDigest,
         ),
-        optimizerStrategy: _optimizerStrategy,
+        optimizerStrategy: canFineTune ? _optimizerStrategy : null,
         localEpochCount: localEpochCount,
         localStepCount: localStepCount,
         trainingWindowSeconds: trainingWindowSeconds,
@@ -290,9 +299,13 @@ class FederatedLearningRuntimeAdapter {
   int _deriveLocalEpochCount({
     required int sampleCount,
     required bool hasWarmStart,
+    required bool allowFineTuning,
     required int maxLocalEpochs,
     required int maxLocalSteps,
   }) {
+    if (!allowFineTuning) {
+      return 0;
+    }
     if (sampleCount <= 0) {
       return 1;
     }
@@ -320,6 +333,11 @@ class FederatedLearningRuntimeAdapter {
       samples,
       runtimePackage: runtimePackage,
     );
+    if (localEpochCount <= 0) {
+      return trainingTargets
+          .map((double value) => double.parse(value.toStringAsFixed(6)))
+          .toList(growable: false);
+    }
     final List<double> warmStartVector =
         runtimePackage?.runtimeVector ?? const <double>[];
     final List<double> current = List<double>.generate(

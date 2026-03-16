@@ -1678,6 +1678,8 @@ interface FederatedPendingSummaryRow {
   id: string;
   siteId: string;
   createdAtMs?: number;
+  batteryState?: string | null;
+  networkType?: string | null;
   sampleCount: number;
   vectorLength: number;
   vectorSketch: number[];
@@ -1710,6 +1712,8 @@ function mapPendingFederatedSummary(
     id: snapDoc.id,
     siteId: asTrimmedString(data.siteId),
     createdAtMs: toDateValue(data.createdAt || data.updatedAt)?.getTime(),
+    batteryState: asTrimmedString(data.batteryState) || null,
+    networkType: asTrimmedString(data.networkType) || null,
     sampleCount: asPositiveInteger(data.sampleCount, 0),
     vectorLength: asPositiveInteger(data.vectorLength, 0),
     vectorSketch: Array.isArray(data.vectorSketch)
@@ -1855,6 +1859,8 @@ async function maybeMaterializeFederatedLearningAggregationRun({
       oldestSummaryCreatedAtMs: refreshedSelection.oldestSummaryCreatedAtMs ?? null,
       newestSummaryCreatedAtMs: refreshedSelection.newestSummaryCreatedAtMs ?? null,
       summaryFreshnessSpanSeconds: refreshedSelection.summaryFreshnessSpanSeconds ?? null,
+      batteryStateBreakdown: refreshedSelection.batteryStateBreakdown,
+      networkTypeBreakdown: refreshedSelection.networkTypeBreakdown,
       triggerSummaryId,
       summaryIds: refreshedSelection.summaryIds,
       summaryCount: refreshedSelection.summaryCount,
@@ -1892,6 +1898,8 @@ async function maybeMaterializeFederatedLearningAggregationRun({
       oldestSummaryCreatedAtMs: artifactSummary.oldestSummaryCreatedAtMs ?? null,
       newestSummaryCreatedAtMs: artifactSummary.newestSummaryCreatedAtMs ?? null,
       summaryFreshnessSpanSeconds: artifactSummary.summaryFreshnessSpanSeconds ?? null,
+      batteryStateBreakdown: artifactSummary.batteryStateBreakdown,
+      networkTypeBreakdown: artifactSummary.networkTypeBreakdown,
       triggerSummaryId: artifactSummary.triggerSummaryId,
       summaryIds: artifactSummary.summaryIds,
       boundedDigest: artifactSummary.boundedDigest,
@@ -1937,6 +1945,8 @@ async function maybeMaterializeFederatedLearningAggregationRun({
       oldestSummaryCreatedAtMs: packageSummary.oldestSummaryCreatedAtMs ?? null,
       newestSummaryCreatedAtMs: packageSummary.newestSummaryCreatedAtMs ?? null,
       summaryFreshnessSpanSeconds: packageSummary.summaryFreshnessSpanSeconds ?? null,
+      batteryStateBreakdown: packageSummary.batteryStateBreakdown,
+      networkTypeBreakdown: packageSummary.networkTypeBreakdown,
       triggerSummaryId: packageSummary.triggerSummaryId,
       summaryIds: packageSummary.summaryIds,
       modelVersion: packageSummary.modelVersion,
@@ -4291,6 +4301,7 @@ export const upsertFederatedLearningExperiment = onCall(async (request: Callable
       runtimeTarget: config.runtimeTarget,
       status: config.status,
       mergeStrategy: config.mergeStrategy,
+      requireWarmStartForTraining: config.requireWarmStartForTraining,
       maxLocalEpochs: config.maxLocalEpochs,
       maxLocalSteps: config.maxLocalSteps,
       maxTrainingWindowSeconds: config.maxTrainingWindowSeconds,

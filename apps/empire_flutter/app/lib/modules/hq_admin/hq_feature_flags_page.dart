@@ -272,6 +272,27 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     return 'Freshness: ${spanSeconds}s span · oldest $oldestLabel · newest $newestLabel';
   }
 
+  String _formatEnvironmentBreakdownRollup({
+    required List<FederatedLearningEnvironmentBreakdownEntryModel>
+        batteryStateBreakdown,
+    required List<FederatedLearningEnvironmentBreakdownEntryModel>
+        networkTypeBreakdown,
+  }) {
+    final String batteryLabel = batteryStateBreakdown.isEmpty
+        ? 'none'
+        : batteryStateBreakdown
+            .map((FederatedLearningEnvironmentBreakdownEntryModel entry) =>
+                '${entry.value} ${entry.count}')
+            .join(' | ');
+    final String networkLabel = networkTypeBreakdown.isEmpty
+        ? 'none'
+        : networkTypeBreakdown
+            .map((FederatedLearningEnvironmentBreakdownEntryModel entry) =>
+                '${entry.value} ${entry.count}')
+            .join(' | ');
+    return 'Environment: battery $batteryLabel · network $networkLabel';
+  }
+
   String _formatSiteContributionSummaryPreview(
     List<FederatedLearningSiteContributionSummaryModel> summaries,
   ) {
@@ -1463,6 +1484,11 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                   '${experiment.maxLocalEpochs} epochs · ${experiment.maxLocalSteps} steps',
                   Icons.tune_rounded,
                 ),
+                if (experiment.requireWarmStartForTraining)
+                  _buildExperimentChip(
+                    'Warm start required',
+                    Icons.lock_clock_rounded,
+                  ),
                 _buildExperimentChip(
                   experiment.enablePrototypeUploads
                       ? 'Uploads enabled'
@@ -1515,7 +1541,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
             Text(
               _tHqFeatureFlags(
                 context,
-                'Configured training policy: ${experiment.maxLocalEpochs} max epochs · ${experiment.maxLocalSteps} max steps · ${experiment.maxTrainingWindowSeconds}s max window',
+                'Configured training policy: ${experiment.maxLocalEpochs} max epochs · ${experiment.maxLocalSteps} max steps · ${experiment.maxTrainingWindowSeconds}s max window${experiment.requireWarmStartForTraining ? ' · warm start required' : ''}',
               ),
               style: const TextStyle(
                 fontSize: 12,
@@ -1644,6 +1670,24 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                           latestRun.newestSummaryCreatedAtMs,
                       summaryFreshnessSpanSeconds:
                           latestRun.summaryFreshnessSpanSeconds,
+                    )}',
+                  ),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: ScholesaColors.textSecondary,
+                  ),
+                ),
+              ],
+              if (latestRun.batteryStateBreakdown.isNotEmpty ||
+                  latestRun.networkTypeBreakdown.isNotEmpty) ...<Widget>[
+                const SizedBox(height: 4),
+                Text(
+                  _tHqFeatureFlags(
+                    context,
+                    'Latest aggregation environment: ${_formatEnvironmentBreakdownRollup(
+                      batteryStateBreakdown:
+                          latestRun.batteryStateBreakdown,
+                      networkTypeBreakdown: latestRun.networkTypeBreakdown,
                     )}',
                   ),
                   style: const TextStyle(
@@ -1801,6 +1845,25 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                           latestPackage.newestSummaryCreatedAtMs,
                       summaryFreshnessSpanSeconds:
                           latestPackage.summaryFreshnessSpanSeconds,
+                    )}',
+                  ),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: ScholesaColors.textSecondary,
+                  ),
+                ),
+              ],
+              if (latestPackage.batteryStateBreakdown.isNotEmpty ||
+                  latestPackage.networkTypeBreakdown.isNotEmpty) ...<Widget>[
+                const SizedBox(height: 4),
+                Text(
+                  _tHqFeatureFlags(
+                    context,
+                    'Latest package environment: ${_formatEnvironmentBreakdownRollup(
+                      batteryStateBreakdown:
+                          latestPackage.batteryStateBreakdown,
+                      networkTypeBreakdown:
+                          latestPackage.networkTypeBreakdown,
                     )}',
                   ),
                   style: const TextStyle(
@@ -3310,6 +3373,23 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               ),
             ),
           ],
+          if (run.batteryStateBreakdown.isNotEmpty ||
+              run.networkTypeBreakdown.isNotEmpty) ...<Widget>[
+            const SizedBox(height: 4),
+            Text(
+              _tHqFeatureFlags(
+                context,
+                _formatEnvironmentBreakdownRollup(
+                  batteryStateBreakdown: run.batteryStateBreakdown,
+                  networkTypeBreakdown: run.networkTypeBreakdown,
+                ),
+              ),
+              style: const TextStyle(
+                fontSize: 12,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+          ],
           if (packageId.isNotEmpty) ...<Widget>[
             const SizedBox(height: 4),
             Text(
@@ -3730,6 +3810,23 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                   newestSummaryCreatedAtMs: package.newestSummaryCreatedAtMs,
                   summaryFreshnessSpanSeconds:
                       package.summaryFreshnessSpanSeconds,
+                ),
+              ),
+              style: const TextStyle(
+                fontSize: 12,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+          ],
+          if (package.batteryStateBreakdown.isNotEmpty ||
+              package.networkTypeBreakdown.isNotEmpty) ...<Widget>[
+            const SizedBox(height: 4),
+            Text(
+              _tHqFeatureFlags(
+                context,
+                _formatEnvironmentBreakdownRollup(
+                  batteryStateBreakdown: package.batteryStateBreakdown,
+                  networkTypeBreakdown: package.networkTypeBreakdown,
                 ),
               ),
               style: const TextStyle(
@@ -8647,6 +8744,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     String status = existing?.status ?? 'draft';
     String mergeStrategy = existing?.mergeStrategy ??
       'norm_capped_weighted_runtime_vector_average_v2';
+    bool requireWarmStartForTraining =
+        existing?.requireWarmStartForTraining ?? false;
     bool enablePrototypeUploads = existing?.enablePrototypeUploads ?? false;
 
     final bool? shouldSave = await showDialog<bool>(
@@ -8761,6 +8860,28 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                           setDialogState(() {
                             mergeStrategy = value ??
                                 'norm_capped_weighted_runtime_vector_average_v2';
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      SwitchListTile.adaptive(
+                        contentPadding: EdgeInsets.zero,
+                        value: requireWarmStartForTraining,
+                        title: Text(
+                          _tHqFeatureFlags(
+                            context,
+                            'Require warm start for training',
+                          ),
+                        ),
+                        subtitle: Text(
+                          _tHqFeatureFlags(
+                            context,
+                            'Skip local fine-tuning unless a runtime package is already resolved.',
+                          ),
+                        ),
+                        onChanged: (bool value) {
+                          setDialogState(() {
+                            requireWarmStartForTraining = value;
                           });
                         },
                       ),
@@ -8884,6 +9005,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         runtimeTarget: runtimeTarget,
         status: status,
         mergeStrategy: mergeStrategy,
+        requireWarmStartForTraining: requireWarmStartForTraining,
         enabledSiteIds: sitesController.text,
         aggregateThresholdText: thresholdController.text,
         rawUpdateMaxBytesText: rawBytesController.text,
@@ -8902,6 +9024,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     required String runtimeTarget,
     required String status,
     required String mergeStrategy,
+    required bool requireWarmStartForTraining,
     required String enabledSiteIds,
     required String aggregateThresholdText,
     required String rawUpdateMaxBytesText,
@@ -8932,6 +9055,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         'runtimeTarget': runtimeTarget,
         'status': status,
         'mergeStrategy': mergeStrategy,
+        'requireWarmStartForTraining': requireWarmStartForTraining,
         'maxLocalEpochs': maxLocalEpochs,
         'maxLocalSteps': maxLocalSteps,
         'maxTrainingWindowSeconds': maxTrainingWindowSeconds,

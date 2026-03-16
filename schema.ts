@@ -232,6 +232,7 @@ export interface FederatedLearningExperiment {
   runtimeTarget: FederatedLearningRuntimeTarget;
   status: FederatedLearningExperimentStatus;
   mergeStrategy: FederatedLearningMergeStrategy;
+  requireWarmStartForTraining: boolean;
   maxLocalEpochs: number;
   maxLocalSteps: number;
   maxTrainingWindowSeconds: number;
@@ -314,6 +315,11 @@ export interface FederatedLearningSiteContributionSummary {
   maxUpdateNorm: number;
 }
 
+export interface FederatedLearningEnvironmentBreakdownEntry {
+  value: string;
+  count: number;
+}
+
 export interface FederatedLearningAggregationRun {
   id: string;
   experimentId: string;
@@ -335,6 +341,8 @@ export interface FederatedLearningAggregationRun {
   oldestSummaryCreatedAtMs?: number;
   newestSummaryCreatedAtMs?: number;
   summaryFreshnessSpanSeconds?: number;
+  batteryStateBreakdown?: FederatedLearningEnvironmentBreakdownEntry[];
+  networkTypeBreakdown?: FederatedLearningEnvironmentBreakdownEntry[];
   boundedDigest?: string;
   payloadFormat?: 'runtime_vector_v1';
   modelVersion?: string;
@@ -373,6 +381,8 @@ export interface FederatedLearningMergeArtifact {
   oldestSummaryCreatedAtMs?: number;
   newestSummaryCreatedAtMs?: number;
   summaryFreshnessSpanSeconds?: number;
+  batteryStateBreakdown?: FederatedLearningEnvironmentBreakdownEntry[];
+  networkTypeBreakdown?: FederatedLearningEnvironmentBreakdownEntry[];
   triggerSummaryId: string;
   summaryIds: string[];
   boundedDigest: string;
@@ -431,6 +441,8 @@ export interface FederatedLearningCandidateModelPackage {
   oldestSummaryCreatedAtMs?: number;
   newestSummaryCreatedAtMs?: number;
   summaryFreshnessSpanSeconds?: number;
+  batteryStateBreakdown?: FederatedLearningEnvironmentBreakdownEntry[];
+  networkTypeBreakdown?: FederatedLearningEnvironmentBreakdownEntry[];
   runtimeVectorLength: number;
   runtimeVector: number[];
   runtimeVectorDigest: string;

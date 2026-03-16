@@ -1711,6 +1711,8 @@ Map<String, dynamic> _aggregationRunRow({
     'oldestSummaryCreatedAtMs': oldestSummaryCreatedAtMs,
     'newestSummaryCreatedAtMs': newestSummaryCreatedAtMs,
     'summaryFreshnessSpanSeconds': summaryFreshnessSpanSeconds,
+    'batteryStateBreakdown': _batteryStateBreakdownRows(),
+    'networkTypeBreakdown': _networkTypeBreakdownRows(),
     'boundedDigest': boundedDigest,
     'triggerSummaryId': triggerSummaryId,
     'summaryIds': summaryIds,
@@ -1797,6 +1799,8 @@ Map<String, dynamic> _candidatePackageRow({
     'oldestSummaryCreatedAtMs': oldestSummaryCreatedAtMs,
     'newestSummaryCreatedAtMs': newestSummaryCreatedAtMs,
     'summaryFreshnessSpanSeconds': summaryFreshnessSpanSeconds,
+    'batteryStateBreakdown': _batteryStateBreakdownRows(),
+    'networkTypeBreakdown': _networkTypeBreakdownRows(),
     'runtimeVectorLength': 8,
     'runtimeVector': <double>[1.0, 0.4, 0.8, 0.2, 0.1, 0.6, 0.3, 0.05],
     'runtimeVectorDigest':
@@ -2293,6 +2297,8 @@ Map<String, dynamic> _mergeArtifactRow({
     'oldestSummaryCreatedAtMs': oldestSummaryCreatedAtMs,
     'newestSummaryCreatedAtMs': newestSummaryCreatedAtMs,
     'summaryFreshnessSpanSeconds': summaryFreshnessSpanSeconds,
+    'batteryStateBreakdown': _batteryStateBreakdownRows(),
+    'networkTypeBreakdown': _networkTypeBreakdownRows(),
     'triggerSummaryId': triggerSummaryId,
     'summaryIds': summaryIds,
     'boundedDigest': boundedDigest,
@@ -2340,6 +2346,20 @@ List<Map<String, dynamic>> _siteContributionSummaryRows() {
       'minUpdateNorm': 1.1,
       'maxUpdateNorm': 1.1,
     },
+  ];
+}
+
+List<Map<String, dynamic>> _batteryStateBreakdownRows() {
+  return <Map<String, dynamic>>[
+    <String, dynamic>{'value': 'charging', 'count': 1},
+    <String, dynamic>{'value': 'low', 'count': 1},
+  ];
+}
+
+List<Map<String, dynamic>> _networkTypeBreakdownRows() {
+  return <Map<String, dynamic>>[
+    <String, dynamic>{'value': 'cellular', 'count': 1},
+    <String, dynamic>{'value': 'wifi', 'count': 1},
   ];
 }
 
@@ -2399,6 +2419,7 @@ Map<String, dynamic> _experimentRow({
   List<String> allowedSiteIds = const <String>['site-1'],
   String status = 'pilot_ready',
   String mergeStrategy = 'norm_capped_weighted_runtime_vector_average_v2',
+  bool requireWarmStartForTraining = false,
   int maxLocalEpochs = 3,
   int maxLocalSteps = 24,
   int maxTrainingWindowSeconds = 1800,
@@ -2411,6 +2432,7 @@ Map<String, dynamic> _experimentRow({
     'runtimeTarget': 'flutter_mobile',
     'status': status,
     'mergeStrategy': mergeStrategy,
+    'requireWarmStartForTraining': requireWarmStartForTraining,
     'maxLocalEpochs': maxLocalEpochs,
     'maxLocalSteps': maxLocalSteps,
     'maxTrainingWindowSeconds': maxTrainingWindowSeconds,
@@ -2484,6 +2506,12 @@ void main() {
       'runtimeVectorLength': 8,
       'runtimeVectorDigest': 'sha256:runtime-digest-1',
       'mergeStrategy': 'norm_capped_weighted_runtime_vector_average_v2',
+      'batteryStateBreakdown': <Map<String, dynamic>>[
+        <String, dynamic>{'value': 'charging', 'count': 1},
+      ],
+      'networkTypeBreakdown': <Map<String, dynamic>>[
+        <String, dynamic>{'value': 'wifi', 'count': 1},
+      ],
       'boundedDigest': 'sha256:digest-1',
       'triggerSummaryId': 'update-1',
       'summaryIds': <String>['update-1'],
@@ -2511,6 +2539,12 @@ void main() {
       'runtimeVectorLength': 8,
       'runtimeVector': <double>[1.0, 0.4, 0.8, 0.2, 0.1, 0.6, 0.3, 0.05],
       'runtimeVectorDigest': 'sha256:runtime-digest-1',
+      'batteryStateBreakdown': <Map<String, dynamic>>[
+        <String, dynamic>{'value': 'charging', 'count': 1},
+      ],
+      'networkTypeBreakdown': <Map<String, dynamic>>[
+        <String, dynamic>{'value': 'wifi', 'count': 1},
+      ],
       'sampleCount': 14,
       'summaryCount': 1,
       'distinctSiteCount': 1,
@@ -2534,6 +2568,12 @@ void main() {
       'modelVersion': 'fl_runtime_model_v1',
       'packageDigest': 'sha256:pkg-1',
       'boundedDigest': 'sha256:digest-1',
+      'batteryStateBreakdown': <Map<String, dynamic>>[
+        <String, dynamic>{'value': 'charging', 'count': 1},
+      ],
+      'networkTypeBreakdown': <Map<String, dynamic>>[
+        <String, dynamic>{'value': 'wifi', 'count': 1},
+      ],
       'runtimeVectorLength': 8,
       'runtimeVector': <double>[1.0, 0.4, 0.8, 0.2, 0.1, 0.6, 0.3, 0.05],
       'runtimeVectorDigest': 'sha256:runtime-digest-1',
@@ -2584,10 +2624,18 @@ void main() {
     expect(aggregationRuns, hasLength(1));
     expect(aggregationRuns.single.totalSampleCount, 14);
     expect(aggregationRuns.single.mergeArtifactStatus, 'generated');
+    expect(
+      aggregationRuns.single.batteryStateBreakdown.first.value,
+      'charging',
+    );
     expect(mergeArtifacts, hasLength(1));
     expect(mergeArtifacts.single.aggregationRunId, 'fl_agg_1');
     expect(candidatePackages, hasLength(1));
     expect(candidatePackages.single.mergeArtifactId, 'fl_merge_1');
+    expect(
+      candidatePackages.single.networkTypeBreakdown.first.value,
+      'wifi',
+    );
     expect(promotions, hasLength(1));
     expect(promotions.single.candidateModelPackageId, 'fl_pkg_1');
 
@@ -2626,6 +2674,7 @@ void main() {
       experiments.single.mergeStrategy,
       'norm_capped_weighted_runtime_vector_average_v2',
     );
+    expect(experiments.single.requireWarmStartForTraining, isFalse);
     expect(experiments.single.maxLocalEpochs, 3);
     expect(experiments.single.maxLocalSteps, 24);
     expect(experiments.single.maxTrainingWindowSeconds, 1800);
@@ -3434,6 +3483,53 @@ void main() {
     );
   });
 
+  test('runtime adapter can require a warm start before local fine-tuning',
+      () async {
+    final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
+      experiments: <Map<String, dynamic>>[
+        _experimentRow(
+          status: 'active',
+          requireWarmStartForTraining: true,
+        ),
+      ],
+    );
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final AppState appState = _buildSiteState();
+    FederatedLearningRuntimeAdapter.instance.configure(
+      appState: appState,
+      workflowBridge: bridge,
+    );
+
+    final LearningRuntimeProvider runtime = LearningRuntimeProvider(
+      siteId: 'site-1',
+      learnerId: 'learner-1',
+      sessionOccurrenceId: 'occ-1',
+      gradeBand: GradeBand.g4_6,
+      firestore: firestore,
+    );
+    addTearDown(runtime.dispose);
+
+    runtime.trackEvent(
+      'mission_started',
+      missionId: 'mission-1',
+      payload: <String, dynamic>{'source': 'test'},
+    );
+    runtime.trackEvent(
+      'checkpoint_submitted',
+      missionId: 'mission-1',
+      checkpointId: 'checkpoint-1',
+      payload: <String, dynamic>{'attempt': 1, 'confidence': 0.8},
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+
+    expect(bridge.recordedUpdates, hasLength(1));
+    expect(bridge.recordedUpdates.single['optimizerStrategy'], '');
+    expect(bridge.recordedUpdates.single['localEpochCount'], 0);
+    expect(bridge.recordedUpdates.single['localStepCount'], 0);
+    expect(bridge.recordedUpdates.single['trainingWindowSeconds'], 0);
+    expect(bridge.recordedUpdates.single['warmStartPackageId'], '');
+  });
+
   testWidgets('HQ page renders experiment section and saves a new cohort',
       (WidgetTester tester) async {
     final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
@@ -3723,6 +3819,12 @@ void main() {
     );
     expect(
       find.text(
+        'Latest aggregation environment: Environment: battery charging 1 | low 1 · network cellular 1 | wifi 1',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
         'Latest aggregation training: Local training rollup: bounded_runtime_vector_local_finetune_v1 · 2 summaries · epochs 2 · steps 24 · window 135s · warm start fl_pkg_1',
       ),
       findsOneWidget,
@@ -3754,6 +3856,12 @@ void main() {
     expect(
       find.text(
         'Latest package freshness: Freshness: 3600s span · oldest 2024-03-14T03:00:00.000 · newest 2024-03-14T04:00:00.000',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Latest package environment: Environment: battery charging 1 | low 1 · network cellular 1 | wifi 1',
       ),
       findsOneWidget,
     );
@@ -5128,6 +5236,13 @@ void main() {
       find.widgetWithText(TextFormField, 'Max training window seconds'),
       '900',
     );
+    final Finder requireWarmStartTile = find.widgetWithText(
+      SwitchListTile,
+      'Require warm start for training',
+    );
+    await tester.ensureVisible(requireWarmStartTile);
+    await tester.tap(requireWarmStartTile);
+    await tester.pumpAndSettle();
 
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
@@ -5161,6 +5276,12 @@ void main() {
         (Map<String, dynamic> row) => row['name'] == 'Math Pilot',
       )['maxTrainingWindowSeconds'],
       900,
+    );
+    expect(
+      bridge._experiments.firstWhere(
+        (Map<String, dynamic> row) => row['name'] == 'Math Pilot',
+      )['requireWarmStartForTraining'],
+      isTrue,
     );
   });
 

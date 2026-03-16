@@ -145,6 +145,7 @@ describe('federated learning prototype helpers', () => {
     });
     const payload = buildFederatedLearningFeatureFlagPayload(experimentId, config);
     expect(config.mergeStrategy).toBe(FEDERATED_LEARNING_MERGE_STRATEGY);
+    expect(config.requireWarmStartForTraining).toBe(false);
     expect(config.maxLocalEpochs).toBe(3);
     expect(config.maxLocalSteps).toBe(24);
     expect(config.maxTrainingWindowSeconds).toBe(1800);
@@ -209,6 +210,8 @@ describe('federated learning prototype helpers', () => {
         id: 'sum-1',
         siteId: 'site-1',
         createdAtMs: 1710410400000,
+        batteryState: 'charging',
+        networkType: 'wifi',
         sampleCount: 10,
         vectorLength: 3,
         vectorSketch: [1, 0.5, 0],
@@ -226,6 +229,8 @@ describe('federated learning prototype helpers', () => {
         id: 'sum-2',
         siteId: 'site-2',
         createdAtMs: 1710414000000,
+        batteryState: 'low',
+        networkType: 'cellular',
         sampleCount: 8,
         vectorLength: 3,
         vectorSketch: [0.5, 1, 0.5],
@@ -258,6 +263,14 @@ describe('federated learning prototype helpers', () => {
       oldestSummaryCreatedAtMs: 1710410400000,
       newestSummaryCreatedAtMs: 1710414000000,
       summaryFreshnessSpanSeconds: 3600,
+      batteryStateBreakdown: [
+        { value: 'charging', count: 1 },
+        { value: 'low', count: 1 },
+      ],
+      networkTypeBreakdown: [
+        { value: 'cellular', count: 1 },
+        { value: 'wifi', count: 1 },
+      ],
       distinctSiteCount: 2,
       contributingSiteIds: ['site-1', 'site-2'],
       totalSampleCount: 18,
@@ -375,6 +388,14 @@ describe('federated learning prototype helpers', () => {
       oldestSummaryCreatedAtMs: 1710410400000,
       newestSummaryCreatedAtMs: 1710414000000,
       summaryFreshnessSpanSeconds: 3600,
+      batteryStateBreakdown: [
+        { value: 'charging', count: 1 },
+        { value: 'low', count: 1 },
+      ],
+      networkTypeBreakdown: [
+        { value: 'cellular', count: 1 },
+        { value: 'wifi', count: 1 },
+      ],
       triggerSummaryId: 'sum-2',
       summaryIds: ['sum-1', 'sum-2'],
       payloadFormat: 'runtime_vector_v1',
@@ -444,6 +465,14 @@ describe('federated learning prototype helpers', () => {
       oldestSummaryCreatedAtMs: 1710410400000,
       newestSummaryCreatedAtMs: 1710414000000,
       summaryFreshnessSpanSeconds: 3600,
+      batteryStateBreakdown: [
+        { value: 'charging', count: 1 },
+        { value: 'low', count: 1 },
+      ],
+      networkTypeBreakdown: [
+        { value: 'cellular', count: 1 },
+        { value: 'wifi', count: 1 },
+      ],
       triggerSummaryId: 'sum-2',
       summaryIds: ['sum-1', 'sum-2'],
       packageFormat: 'runtime_vector_v1',
@@ -534,6 +563,7 @@ describe('federated learning prototype helpers', () => {
       runtimeTarget: 'flutter_mobile',
       status: 'draft',
       mergeStrategy: 'summary_balanced',
+      requireWarmStartForTraining: true,
       maxLocalEpochs: 2,
       maxLocalSteps: 12,
       maxTrainingWindowSeconds: 900,
@@ -541,6 +571,7 @@ describe('federated learning prototype helpers', () => {
     expect(summaryBalancedConfig.mergeStrategy).toBe(
       FEDERATED_LEARNING_SUMMARY_BALANCED_MERGE_STRATEGY,
     );
+    expect(summaryBalancedConfig.requireWarmStartForTraining).toBe(true);
     expect(summaryBalancedConfig.maxLocalEpochs).toBe(2);
     expect(summaryBalancedConfig.maxLocalSteps).toBe(12);
     expect(summaryBalancedConfig.maxTrainingWindowSeconds).toBe(900);
@@ -595,6 +626,15 @@ describe('federated learning prototype helpers', () => {
     expect(selection).toEqual({
       summaryIds: ['sum-1', 'sum-3'],
       summaryCount: 2,
+      oldestSummaryCreatedAtMs: undefined,
+      newestSummaryCreatedAtMs: undefined,
+      summaryFreshnessSpanSeconds: undefined,
+      batteryStateBreakdown: [
+        { value: 'unknown', count: 2 },
+      ],
+      networkTypeBreakdown: [
+        { value: 'unknown', count: 2 },
+      ],
       distinctSiteCount: 2,
       contributingSiteIds: ['site-1', 'site-3'],
       totalSampleCount: 19,
