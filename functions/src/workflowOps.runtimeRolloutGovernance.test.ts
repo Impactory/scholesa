@@ -124,7 +124,7 @@ class MockDocumentReference {
 
 class MockQuery {
   constructor(
-    private readonly collectionName: string,
+    protected readonly collectionName: string,
     private readonly filters: Array<{ field: string; value: unknown }> = [],
     private readonly limitCount: number | null = null,
   ) {}
@@ -153,7 +153,7 @@ class MockQuery {
 }
 
 class MockCollectionReference extends MockQuery {
-  constructor(private readonly collectionName: string) {
+  constructor(collectionName: string) {
     super(collectionName);
   }
 
@@ -225,6 +225,11 @@ import {
   upsertFederatedLearningRuntimeRolloutEscalationRecord,
 } from './workflowOps';
 
+type TestCallable = (request: { auth?: { uid?: string }; data?: Record<string, unknown> }) => Promise<unknown>;
+
+const upsertEscalation = upsertFederatedLearningRuntimeRolloutEscalationRecord as unknown as TestCallable;
+const upsertControl = upsertFederatedLearningRuntimeRolloutControlRecord as unknown as TestCallable;
+
 function buildRequest(data: Record<string, unknown>) {
   return {
     auth: { uid: 'hq-1' },
@@ -290,12 +295,12 @@ describe('workflowOps runtime rollout governance', () => {
 
   it('rejects unresolved escalation without an owner', async () => {
     await expect(
-      upsertFederatedLearningRuntimeRolloutEscalationRecord(
+      upsertEscalation(
         buildRequest({
           deliveryRecordId: 'fl_delivery_1',
           status: 'investigating',
           notes: 'Owner missing should fail.',
-        }) as never,
+        }),
       ),
     ).rejects.toMatchObject({
       code: 'failed-precondition',
@@ -313,12 +318,12 @@ describe('workflowOps runtime rollout governance', () => {
       },
     });
 
-    const result = await upsertFederatedLearningRuntimeRolloutEscalationRecord(
+    const result = await upsertEscalation(
       buildRequest({
         deliveryRecordId: 'fl_delivery_1',
         status: 'investigating',
         notes: 'Escalation still active.',
-      }) as never,
+      }),
     );
 
     expect(result).toMatchObject({
@@ -344,12 +349,12 @@ describe('workflowOps runtime rollout governance', () => {
 
   it('rejects paused control without an owner', async () => {
     await expect(
-      upsertFederatedLearningRuntimeRolloutControlRecord(
+      upsertControl(
         buildRequest({
           deliveryRecordId: 'fl_delivery_1',
           mode: 'paused',
           reason: 'Owner missing should fail.',
-        }) as never,
+        }),
       ),
     ).rejects.toMatchObject({
       code: 'failed-precondition',
@@ -368,12 +373,12 @@ describe('workflowOps runtime rollout governance', () => {
       },
     });
 
-    const result = await upsertFederatedLearningRuntimeRolloutControlRecord(
+    const result = await upsertControl(
       buildRequest({
         deliveryRecordId: 'fl_delivery_1',
         mode: 'paused',
         reason: 'Escalated from restricted to paused.',
-      }) as never,
+      }),
     );
 
     expect(result).toMatchObject({

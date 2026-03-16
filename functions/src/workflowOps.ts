@@ -55,9 +55,13 @@ import {
   normalizeFederatedLearningRuntimeRolloutEscalationStatus,
   normalizeFederatedLearningRuntimeRolloutControlMode,
   normalizeFederatedLearningRuntimeTarget,
+  normalizeFederatedLearningBatteryState,
+  normalizeFederatedLearningNetworkType,
   selectFederatedLearningAggregationBatch,
   sanitizeFederatedLearningExperimentConfig,
   sanitizeFederatedLearningUpdateSummary,
+  type FederatedLearningBatteryState,
+  type FederatedLearningNetworkType,
 } from './federatedLearningPrototype';
 
 type Role = 'learner' | 'educator' | 'parent' | 'site' | 'partner' | 'hq';
@@ -1678,8 +1682,8 @@ interface FederatedPendingSummaryRow {
   id: string;
   siteId: string;
   createdAtMs?: number;
-  batteryState?: string | null;
-  networkType?: string | null;
+  batteryState?: FederatedLearningBatteryState | null;
+  networkType?: FederatedLearningNetworkType | null;
   sampleCount: number;
   vectorLength: number;
   vectorSketch: number[];
@@ -1712,8 +1716,12 @@ function mapPendingFederatedSummary(
     id: snapDoc.id,
     siteId: asTrimmedString(data.siteId),
     createdAtMs: toDateValue(data.createdAt || data.updatedAt)?.getTime(),
-    batteryState: asTrimmedString(data.batteryState) || null,
-    networkType: asTrimmedString(data.networkType) || null,
+    batteryState: data.batteryState == null
+      ? null
+      : normalizeFederatedLearningBatteryState(data.batteryState),
+    networkType: data.networkType == null
+      ? null
+      : normalizeFederatedLearningNetworkType(data.networkType),
     sampleCount: asPositiveInteger(data.sampleCount, 0),
     vectorLength: asPositiveInteger(data.vectorLength, 0),
     vectorSketch: Array.isArray(data.vectorSketch)
