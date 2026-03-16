@@ -21,7 +21,7 @@ const database = new Map<string, CollectionStore>();
 
 function nextWriteMillis(): number {
   writeCounter += 1;
-  return 1710500000000 + writeCounter;
+  return 1710600000000 + writeCounter;
 }
 
 function clearDatabase(): void {
@@ -110,14 +110,14 @@ class MockDocumentReference {
   ) {}
 
   async get(): Promise<MockDocumentSnapshot> {
-    const store = ensureCollection(this.collectionName);
-    return new MockDocumentSnapshot(this.id, store.get(this.id));
+    return new MockDocumentSnapshot(this.id, ensureCollection(this.collectionName).get(this.id));
   }
 
   async set(data: Record<string, unknown>, options?: { merge?: boolean }): Promise<void> {
     const store = ensureCollection(this.collectionName);
-    const existing = store.get(this.id);
-    const next = options?.merge ? mergeWrite(existing, data) : materializeWrite(data);
+    const next = options?.merge
+      ? mergeWrite(store.get(this.id), data)
+      : materializeWrite(data);
     store.set(this.id, next);
   }
 }
@@ -141,13 +141,10 @@ class MockQuery {
   }
 
   async get(): Promise<MockQuerySnapshot> {
-    const store = ensureCollection(this.collectionName);
-    let docs = Array.from(store.entries())
+    const docs = Array.from(ensureCollection(this.collectionName).entries())
       .filter(([, data]) => this.filters.every((filter) => data[filter.field] === filter.value))
+      .slice(0, this.limitCount ?? Number.MAX_SAFE_INTEGER)
       .map(([id, data]) => new MockDocumentSnapshot(id, data));
-    if (this.limitCount != null) {
-      docs = docs.slice(0, this.limitCount);
-    }
     return new MockQuerySnapshot(docs);
   }
 }
@@ -220,15 +217,11 @@ jest.mock('./districtProviderIntegration', () => ({
   districtProviderSectionsField: jest.fn(),
 }));
 
-import {
-  upsertFederatedLearningRuntimeRolloutControlRecord,
-  upsertFederatedLearningRuntimeRolloutEscalationRecord,
-} from './workflowOps';
+import { upsertFederatedLearningRuntimeRolloutAlertRecord } from './workflowOps';
 
 type TestCallable = (request: { auth?: { uid?: string }; data?: Record<string, unknown> }) => Promise<unknown>;
 
-const upsertEscalation = upsertFederatedLearningRuntimeRolloutEscalationRecord as unknown as TestCallable;
-const upsertControl = upsertFederatedLearningRuntimeRolloutControlRecord as unknown as TestCallable;
+const upsertAlert = upsertFederatedLearningRuntimeRolloutAlertRecord as unknown as TestCallable;
 
 function buildRequest(data: Record<string, unknown>) {
   return {
@@ -241,7 +234,6 @@ function baseDeliveryRecord(overrides: Record<string, unknown> = {}): Record<str
   return {
     experimentId: 'fl_exp_1',
     candidateModelPackageId: 'fl_pkg_1',
-    deliveryRecordId: 'fl_delivery_1',
     runtimeTarget: 'flutter_mobile',
     targetSiteIds: ['site-1', 'site-2'],
     status: 'active',
@@ -274,7 +266,7 @@ function baseActivation(siteId: string, status: string): Record<string, unknown>
   };
 }
 
-describe('workflowOps runtime rollout governance', () => {
+describe('workflowOps runtime rollout alert', () => {
   beforeEach(() => {
     clearDatabase();
     seedCollection('users', {
@@ -287,110 +279,111 @@ describe('workflowOps runtime rollout governance', () => {
     seedCollection('federatedLearningRuntimeDeliveryRecords', {
       fl_delivery_1: baseDeliveryRecord(),
     });
+  });
+
+  it('auto-acknowledges a healthy rollout with no fallback or pending sites', async () => {
+    seedCollection('federatedLearningRuntimeActivationRecords', {
+      fl_activation_1: baseActivation('site-1', 'resolved'),
+      fl_activation_2: baseActivation('site-2', 'resolved'),
+    });
+
+    const result = await upsertAlert(
+      buildRequest({
+        deliveryRecordId: 'fl_delivery_1',
+        status: 'active',
+        notes: 'Healthy rollout snapshot.',
+      }),
+    );
+
+    expect(result).toMatchObject({
+      success: true,
+      status: 'acknowledged',
+      fallbackCount: 0,
+      pendingCount: 0,
+    });
+    const stored = ensureCollection('federatedLearningRuntimeRolloutAlertRecords')
+      .get('fl_rollout_alert_1');
+    expect(stored).toMatchObject({
+      status: 'acknowledged',
+      fallbackCount: 0,
+      pendingCount: 0,
+      acknowledgedBy: 'hq-1',
+      notes: 'Healthy rollout snapshot.',
+    });
+  });
+
+  it('keeps requested active status while a live issue remains', async () => {
     seedCollection('federatedLearningRuntimeActivationRecords', {
       fl_activation_1: baseActivation('site-1', 'resolved'),
       fl_activation_2: baseActivation('site-2', 'fallback'),
     });
-  });
 
-  it('rejects unresolved escalation without an owner', async () => {
-    await expect(
-      upsertEscalation(
-        buildRequest({
-          deliveryRecordId: 'fl_delivery_1',
-          status: 'investigating',
-          notes: 'Owner missing should fail.',
-        }),
-      ),
-    ).rejects.toMatchObject({
-      code: 'failed-precondition',
-      message: 'Open or investigating rollout escalation requires ownerUserId.',
-    });
-  });
-
-  it('reuses existing escalation owner when caller omits a new one', async () => {
-    seedCollection('federatedLearningRuntimeRolloutEscalationRecords', {
-      fl_rollout_escalation_1: {
-        status: 'open',
-        ownerUserId: 'hq-ops-existing',
-        createdAt: nextWriteMillis(),
-        updatedAt: nextWriteMillis(),
-      },
-    });
-
-    const result = await upsertEscalation(
+    const result = await upsertAlert(
       buildRequest({
         deliveryRecordId: 'fl_delivery_1',
-        status: 'investigating',
-        notes: 'Escalation still active.',
+        status: 'active',
+        notes: 'Fallback still live.',
       }),
     );
 
     expect(result).toMatchObject({
       success: true,
-      status: 'investigating',
-    });
-    const stored = ensureCollection('federatedLearningRuntimeRolloutEscalationRecords')
-      .get('fl_rollout_escalation_1');
-    expect(stored).toMatchObject({
-      ownerUserId: 'hq-ops-existing',
-      status: 'investigating',
+      status: 'active',
       fallbackCount: 1,
       pendingCount: 0,
     });
-    const historyRows = Array.from(
-      ensureCollection('federatedLearningRuntimeRolloutEscalationHistoryRecords').values(),
-    );
-    expect(historyRows[0]).toMatchObject({
-      ownerUserId: 'hq-ops-existing',
-      status: 'investigating',
+    const stored = ensureCollection('federatedLearningRuntimeRolloutAlertRecords')
+      .get('fl_rollout_alert_1');
+    expect(stored).toMatchObject({
+      status: 'active',
+      fallbackCount: 1,
+      pendingCount: 0,
+      notes: 'Fallback still live.',
     });
+    expect(stored?.acknowledgedBy).toBeUndefined();
   });
 
-  it('rejects paused control without an owner', async () => {
-    await expect(
-      upsertControl(
-        buildRequest({
-          deliveryRecordId: 'fl_delivery_1',
-          mode: 'paused',
-          reason: 'Owner missing should fail.',
-        }),
-      ),
-    ).rejects.toMatchObject({
-      code: 'failed-precondition',
-      message: 'Restricted or paused rollout control requires ownerUserId.',
+  it('auto-acknowledges for a superseded delivery while retaining issue counts', async () => {
+    seedCollection('federatedLearningRuntimeDeliveryRecords', {
+      fl_delivery_1: baseDeliveryRecord({
+        status: 'superseded',
+        supersededAt: 1710603600000,
+        supersededByDeliveryRecordId: 'fl_delivery_2',
+      }),
     });
-  });
-
-  it('reuses existing control owner when caller omits a new one', async () => {
-    seedCollection('federatedLearningRuntimeRolloutControlRecords', {
-      fl_rollout_control_1: {
-        mode: 'restricted',
-        ownerUserId: 'hq-ops-existing',
-        reason: 'Existing bounded hold.',
-        createdAt: nextWriteMillis(),
-        updatedAt: nextWriteMillis(),
-      },
+    seedCollection('federatedLearningRuntimeActivationRecords', {
+      fl_activation_1: baseActivation('site-1', 'resolved'),
     });
 
-    const result = await upsertControl(
+    const result = await upsertAlert(
       buildRequest({
         deliveryRecordId: 'fl_delivery_1',
-        mode: 'paused',
-        reason: 'Escalated from restricted to paused.',
+        status: 'active',
+        notes: 'Superseded deliveries should settle alerts.',
       }),
     );
 
     expect(result).toMatchObject({
       success: true,
-      mode: 'paused',
+      status: 'acknowledged',
+      fallbackCount: 0,
+      pendingCount: 1,
     });
-    const stored = ensureCollection('federatedLearningRuntimeRolloutControlRecords')
-      .get('fl_rollout_control_1');
+    const stored = ensureCollection('federatedLearningRuntimeRolloutAlertRecords')
+      .get('fl_rollout_alert_1');
     expect(stored).toMatchObject({
-      ownerUserId: 'hq-ops-existing',
-      mode: 'paused',
-      reason: 'Escalated from restricted to paused.',
+      status: 'acknowledged',
+      fallbackCount: 0,
+      pendingCount: 1,
+      acknowledgedBy: 'hq-1',
+    });
+    const auditRows = Array.from(ensureCollection('auditLogs').values());
+    expect(auditRows[0]).toMatchObject({
+      collection: 'federatedLearningRuntimeRolloutAlertRecords',
+    });
+    expect(auditRows[0].details).toMatchObject({
+      terminalLifecycleStatus: 'superseded',
+      acknowledgedBy: 'hq-1',
     });
   });
 });
