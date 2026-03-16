@@ -1499,6 +1499,20 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
             : requestedStatus == 'resolved'
                 ? reopenedStatus
                 : requestedStatus;
+    final String requestedOwnerUserId =
+      (data['ownerUserId'] as String? ?? '').trim();
+    final String existingOwnerUserId =
+      (existingEscalation['ownerUserId'] as String? ?? '').trim();
+    final String effectiveOwnerUserId = status == 'resolved'
+      ? ''
+      : (requestedOwnerUserId.isNotEmpty
+        ? requestedOwnerUserId
+        : existingOwnerUserId);
+    if (status != 'resolved' && effectiveOwnerUserId.isEmpty) {
+      throw StateError(
+      'Open or investigating rollout escalation requires ownerUserId.',
+      );
+    }
     final DateTime openedAt = DateTime(2026, 3, 15, 6, 0);
     final DateTime? dueAt = status == 'resolved'
         ? null
@@ -1539,7 +1553,7 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
       'pendingCount': pendingCount,
       'openedAt': status == 'resolved' ? null : openedAt,
       'dueAt': dueAt,
-      'ownerUserId': (data['ownerUserId'] as String? ?? '').trim(),
+      'ownerUserId': effectiveOwnerUserId,
       'notes': (data['notes'] as String? ?? '').trim(),
       'resolvedBy': status == 'resolved' ? 'hq-1' : null,
       'resolvedAt': status == 'resolved' ? now : null,
@@ -1599,6 +1613,25 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     final String requestedMode = (data['mode'] as String? ?? 'monitor').trim();
     final String mode =
         terminalLifecycleStatus.isNotEmpty ? 'monitor' : requestedMode;
+    final Map<String, dynamic> existingControl =
+        _runtimeRolloutControlRecords.firstWhere(
+      (Map<String, dynamic> row) => row['id'] == controlId,
+      orElse: () => <String, dynamic>{},
+    );
+    final String requestedOwnerUserId =
+        (data['ownerUserId'] as String? ?? '').trim();
+    final String existingOwnerUserId =
+        (existingControl['ownerUserId'] as String? ?? '').trim();
+    final String effectiveOwnerUserId = mode == 'monitor'
+        ? ''
+        : (requestedOwnerUserId.isNotEmpty
+            ? requestedOwnerUserId
+            : existingOwnerUserId);
+    if (mode != 'monitor' && effectiveOwnerUserId.isEmpty) {
+      throw StateError(
+        'Restricted or paused rollout control requires ownerUserId.',
+      );
+    }
     final Map<String, dynamic> lineage = _runtimeRolloutLineageFields(
       runtimeTarget: deliveryRow['runtimeTarget'] as String? ?? '',
       targetSiteIds: List<String>.from(
@@ -1630,7 +1663,7 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
       'mode': mode,
       'ownerUserId': terminalLifecycleStatus.isNotEmpty
           ? null
-          : (data['ownerUserId'] as String? ?? '').trim(),
+          : effectiveOwnerUserId,
       'reason':
           mode == 'monitor' ? null : (data['reason'] as String? ?? '').trim(),
       'releasedBy': mode == 'monitor' ? 'hq-1' : null,
@@ -3244,6 +3277,38 @@ void main() {
         'investigating');
   });
 
+  test('runtime rollout escalation requires owner while issue is live',
+      () async {
+    final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
+      runtimeDeliveryRecords: <Map<String, dynamic>>[
+        _runtimeDeliveryRecordRow(
+          status: 'active',
+          targetSiteIds: <String>['site-1', 'site-2'],
+        ),
+      ],
+      runtimeActivationRecords: <Map<String, dynamic>>[
+        _runtimeActivationRecordRow(siteId: 'site-1', status: 'resolved'),
+        _runtimeActivationRecordRow(
+          id: 'fl_runtime_activation_1_site-2',
+          siteId: 'site-2',
+          status: 'fallback',
+        ),
+      ],
+    );
+
+    await expectLater(
+      bridge.upsertFederatedLearningRuntimeRolloutEscalationRecord(
+        <String, dynamic>{
+          'deliveryRecordId': 'fl_delivery_1',
+          'status': 'investigating',
+          'notes': 'Missing owner should block unresolved escalation.',
+        },
+      ),
+      throwsStateError,
+    );
+    expect(bridge.recordedRuntimeRolloutEscalationSaves, isEmpty);
+  });
+
   test('runtime rollout control auto-releases for terminal delivery', () async {
     final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
       runtimeDeliveryRecords: <Map<String, dynamic>>[
@@ -3275,6 +3340,29 @@ void main() {
     expect(control['releasedBy'], 'hq-1');
     expect(control['releasedAt'], isNotNull);
     expect(control['boundedDigest'], 'sha256:digest-1');
+  });
+
+  test('runtime rollout control requires owner outside monitor', () async {
+    final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
+      runtimeDeliveryRecords: <Map<String, dynamic>>[
+        _runtimeDeliveryRecordRow(
+          status: 'active',
+          targetSiteIds: <String>['site-1'],
+        ),
+      ],
+    );
+
+    await expectLater(
+      bridge.upsertFederatedLearningRuntimeRolloutControlRecord(
+        <String, dynamic>{
+          'deliveryRecordId': 'fl_delivery_1',
+          'mode': 'paused',
+          'reason': 'Missing owner should block bounded override.',
+        },
+      ),
+      throwsStateError,
+    );
+    expect(bridge.recordedRuntimeRolloutControlSaves, isEmpty);
   });
 
   test('runtime rollout alert auto-acknowledges when issue clears', () async {
@@ -6329,6 +6417,71 @@ void main() {
     );
   });
 
+  testWidgets('HQ page blocks unresolved rollout escalation save without owner',
+      (WidgetTester tester) async {
+    final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
+      experiments: <Map<String, dynamic>>[
+        _experimentRow(),
+      ],
+      aggregationRuns: <Map<String, dynamic>>[
+        _aggregationRunRow(),
+      ],
+      mergeArtifacts: <Map<String, dynamic>>[
+        _mergeArtifactRow(),
+      ],
+      candidatePackages: <Map<String, dynamic>>[
+        _candidatePackageRow(),
+      ],
+      runtimeDeliveryRecords: <Map<String, dynamic>>[
+        _runtimeDeliveryRecordRow(
+          status: 'active',
+          targetSiteIds: <String>['site-1', 'site-2'],
+        ),
+      ],
+      runtimeActivationRecords: <Map<String, dynamic>>[
+        _runtimeActivationRecordRow(siteId: 'site-1', status: 'resolved'),
+        _runtimeActivationRecordRow(
+          id: 'fl_runtime_activation_1_site-2',
+          siteId: 'site-2',
+          status: 'fallback',
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      _wrapWithMaterial(HqFeatureFlagsPage(workflowBridge: bridge)),
+    );
+    await tester.pumpAndSettle();
+
+    final Finder escalationButton = find.widgetWithText(
+      TextButton,
+      'Escalate alert',
+    );
+    await tester.ensureVisible(escalationButton.first);
+    tester.widget<TextButton>(escalationButton.first).onPressed?.call();
+    await tester.pumpAndSettle();
+
+    final Finder escalationStatusDropdown = find.widgetWithText(
+      DropdownButtonFormField<String>,
+      'Escalation status',
+    );
+    await tester.tap(escalationStatusDropdown);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('investigating').last);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Owner user ID is required while the rollout issue remains active.',
+      ),
+      findsOneWidget,
+    );
+    expect(bridge.recordedRuntimeRolloutEscalationSaves, isEmpty);
+  });
+
   testWidgets(
       'HQ page does not treat resolved escalation as current when issue persists',
       (WidgetTester tester) async {
@@ -6456,6 +6609,75 @@ void main() {
       find.textContaining('Control: paused · owner hq-ops-9'),
       findsOneWidget,
     );
+  });
+
+  testWidgets('HQ page blocks rollout control save without owner',
+      (WidgetTester tester) async {
+    final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
+      experiments: <Map<String, dynamic>>[
+        _experimentRow(),
+      ],
+      aggregationRuns: <Map<String, dynamic>>[
+        _aggregationRunRow(),
+      ],
+      mergeArtifacts: <Map<String, dynamic>>[
+        _mergeArtifactRow(),
+      ],
+      candidatePackages: <Map<String, dynamic>>[
+        _candidatePackageRow(),
+      ],
+      runtimeDeliveryRecords: <Map<String, dynamic>>[
+        _runtimeDeliveryRecordRow(
+          status: 'active',
+          targetSiteIds: <String>['site-1', 'site-2'],
+        ),
+      ],
+      runtimeActivationRecords: <Map<String, dynamic>>[
+        _runtimeActivationRecordRow(siteId: 'site-1', status: 'resolved'),
+        _runtimeActivationRecordRow(
+          id: 'fl_runtime_activation_1_site-2',
+          siteId: 'site-2',
+          status: 'fallback',
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      _wrapWithMaterial(HqFeatureFlagsPage(workflowBridge: bridge)),
+    );
+    await tester.pumpAndSettle();
+
+    final Finder controlButton = find.widgetWithText(
+      TextButton,
+      'Rollout control',
+    );
+    await tester.ensureVisible(controlButton.first);
+    tester.widget<TextButton>(controlButton.first).onPressed?.call();
+    await tester.pumpAndSettle();
+
+    final Finder controlModeDropdown = find.widgetWithText(
+      DropdownButtonFormField<String>,
+      'Control mode',
+    );
+    await tester.tap(controlModeDropdown);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('paused').last);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Control reason'),
+      'Paused pending bounded verification.',
+    );
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Owner user ID is required for restricted or paused control.',
+      ),
+      findsOneWidget,
+    );
+    expect(bridge.recordedRuntimeRolloutControlSaves, isEmpty);
   });
 
   testWidgets('HQ page orders rollout alerts ahead of healthy experiments',

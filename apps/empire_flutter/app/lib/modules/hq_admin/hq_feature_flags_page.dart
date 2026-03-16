@@ -7240,6 +7240,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     FederatedLearningRuntimeRolloutEscalationRecordModel? existingEscalation,
   ) async {
     String status = existingEscalation?.status ?? 'open';
+    String? validationError;
     final TextEditingController ownerController = TextEditingController(
       text: existingEscalation?.ownerUserId ?? '',
     );
@@ -7292,12 +7293,21 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                         onChanged: (String? value) {
                           setDialogState(() {
                             status = value ?? 'open';
+                            validationError = null;
                           });
                         },
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: ownerController,
+                        onChanged: (_) {
+                          if (validationError == null) {
+                            return;
+                          }
+                          setDialogState(() {
+                            validationError = null;
+                          });
+                        },
                         decoration: InputDecoration(
                           labelText:
                               _tHqFeatureFlags(dialogContext, 'Owner user ID'),
@@ -7313,6 +7323,13 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                               dialogContext, 'Escalation notes'),
                         ),
                       ),
+                      if (validationError != null) ...<Widget>[
+                        const SizedBox(height: 12),
+                        Text(
+                          _tHqFeatureFlags(dialogContext, validationError!),
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -7323,7 +7340,16 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                   child: Text(_tHqFeatureFlags(dialogContext, 'Cancel')),
                 ),
                 FilledButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(true),
+                  onPressed: () {
+                    if (status != 'resolved' && ownerController.text.trim().isEmpty) {
+                      setDialogState(() {
+                        validationError =
+                            'Owner user ID is required while the rollout issue remains active.';
+                      });
+                      return;
+                    }
+                    Navigator.of(dialogContext).pop(true);
+                  },
                   child: Text(_tHqFeatureFlags(dialogContext, 'Save')),
                 ),
               ],
@@ -7377,6 +7403,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     FederatedLearningRuntimeRolloutControlRecordModel? existingControl,
   ) async {
     String mode = existingControl?.mode ?? 'monitor';
+    String? validationError;
     final TextEditingController ownerController = TextEditingController(
       text: existingControl?.ownerUserId ?? '',
     );
@@ -7430,12 +7457,21 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                         onChanged: (String? value) {
                           setDialogState(() {
                             mode = value ?? 'monitor';
+                            validationError = null;
                           });
                         },
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: ownerController,
+                        onChanged: (_) {
+                          if (validationError == null) {
+                            return;
+                          }
+                          setDialogState(() {
+                            validationError = null;
+                          });
+                        },
                         decoration: InputDecoration(
                           labelText:
                               _tHqFeatureFlags(dialogContext, 'Owner user ID'),
@@ -7455,6 +7491,13 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                           ),
                         ),
                       ),
+                      if (validationError != null) ...<Widget>[
+                        const SizedBox(height: 12),
+                        Text(
+                          _tHqFeatureFlags(dialogContext, validationError!),
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -7465,7 +7508,16 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                   child: Text(_tHqFeatureFlags(dialogContext, 'Cancel')),
                 ),
                 FilledButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(true),
+                  onPressed: () {
+                    if (mode != 'monitor' && ownerController.text.trim().isEmpty) {
+                      setDialogState(() {
+                        validationError =
+                            'Owner user ID is required for restricted or paused control.';
+                      });
+                      return;
+                    }
+                    Navigator.of(dialogContext).pop(true);
+                  },
                   child: Text(_tHqFeatureFlags(dialogContext, 'Save')),
                 ),
               ],

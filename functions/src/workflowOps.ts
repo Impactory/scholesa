@@ -3907,6 +3907,16 @@ export const upsertFederatedLearningRuntimeRolloutEscalationRecord = onCall(asyn
     : requestedStatus === 'resolved'
       ? reopenedStatus
       : requestedStatus;
+  const existingOwnerUserId = asTrimmedString(escalationData.ownerUserId);
+  const effectiveOwnerUserId = status === 'resolved'
+    ? ''
+    : (ownerUserId || existingOwnerUserId);
+  if (status !== 'resolved' && !effectiveOwnerUserId) {
+    throw new HttpsError(
+      'failed-precondition',
+      'Open or investigating rollout escalation requires ownerUserId.',
+    );
+  }
   const existingOpenedAt = asTimestampMillis(escalationData.openedAt);
   const openedAt = status === 'resolved' || !currentIssueActive
     ? null
@@ -3928,7 +3938,7 @@ export const upsertFederatedLearningRuntimeRolloutEscalationRecord = onCall(asyn
     pendingCount,
     openedAt: openedAt ?? FieldValue.delete(),
     dueAt: dueAt ?? FieldValue.delete(),
-    ownerUserId: ownerUserId || FieldValue.delete(),
+    ownerUserId: effectiveOwnerUserId || FieldValue.delete(),
     notes,
     resolvedBy: status === 'resolved' ? actor.uid : FieldValue.delete(),
     resolvedAt: status === 'resolved' ? FieldValue.serverTimestamp() : FieldValue.delete(),
@@ -3947,7 +3957,7 @@ export const upsertFederatedLearningRuntimeRolloutEscalationRecord = onCall(asyn
     pendingCount,
     openedAt: openedAt ?? FieldValue.delete(),
     dueAt: dueAt ?? FieldValue.delete(),
-    ownerUserId: ownerUserId || FieldValue.delete(),
+    ownerUserId: effectiveOwnerUserId || FieldValue.delete(),
     notes,
     resolvedBy: status === 'resolved' ? actor.uid : FieldValue.delete(),
     resolvedAt: status === 'resolved' ? FieldValue.serverTimestamp() : FieldValue.delete(),
@@ -3968,7 +3978,7 @@ export const upsertFederatedLearningRuntimeRolloutEscalationRecord = onCall(asyn
       ...lineage,
       status,
       requestedStatus,
-      ownerUserId,
+      ownerUserId: effectiveOwnerUserId,
       fallbackCount,
       pendingCount,
       openedAt,
@@ -4031,6 +4041,16 @@ export const upsertFederatedLearningRuntimeRolloutControlRecord = onCall(async (
   const controlData = (controlSnap.data() || {}) as Record<string, unknown>;
   const terminalLifecycleStatus = getRuntimeDeliveryTerminalLifecycleStatus(deliveryData);
   const mode = terminalLifecycleStatus ? 'monitor' : requestedMode;
+  const existingOwnerUserId = asTrimmedString(controlData.ownerUserId);
+  const effectiveOwnerUserId = mode === 'monitor'
+    ? ''
+    : (ownerUserId || existingOwnerUserId);
+  if (mode !== 'monitor' && !effectiveOwnerUserId) {
+    throw new HttpsError(
+      'failed-precondition',
+      'Restricted or paused rollout control requires ownerUserId.',
+    );
+  }
   const createdAt = controlSnap.exists
     ? (controlData.createdAt ?? FieldValue.serverTimestamp())
     : FieldValue.serverTimestamp();
@@ -4043,7 +4063,7 @@ export const upsertFederatedLearningRuntimeRolloutControlRecord = onCall(async (
     mode,
     ownerUserId: terminalLifecycleStatus
       ? FieldValue.delete()
-      : (ownerUserId || FieldValue.delete()),
+      : (effectiveOwnerUserId || FieldValue.delete()),
     reason: mode === 'monitor' ? FieldValue.delete() : (reason || FieldValue.delete()),
     reviewByAt: mode === 'monitor' ? FieldValue.delete() : (reviewByAt ?? FieldValue.delete()),
     releasedBy: mode === 'monitor' ? actor.uid : FieldValue.delete(),
@@ -4065,7 +4085,7 @@ export const upsertFederatedLearningRuntimeRolloutControlRecord = onCall(async (
       ...lineage,
       mode,
       requestedMode,
-      ownerUserId,
+      ownerUserId: effectiveOwnerUserId,
       reason,
       reviewByAt,
       terminalLifecycleStatus: terminalLifecycleStatus || '',
