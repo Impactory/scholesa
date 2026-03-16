@@ -250,6 +250,28 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     return 'Observability: $dampedCount of $summaryCount damped · raw weight ${_formatMergeMetric(rawTotalWeight)} · effective weight ${_formatMergeMetric(effectiveTotalWeight)} · norm range $normRange';
   }
 
+  String _formatSummaryFreshnessRollup({
+    required int? oldestSummaryCreatedAtMs,
+    required int? newestSummaryCreatedAtMs,
+    required int? summaryFreshnessSpanSeconds,
+  }) {
+    if (oldestSummaryCreatedAtMs == null &&
+        newestSummaryCreatedAtMs == null &&
+        summaryFreshnessSpanSeconds == null) {
+      return '';
+    }
+    final String oldestLabel = oldestSummaryCreatedAtMs == null
+        ? 'unknown'
+        : DateTime.fromMillisecondsSinceEpoch(oldestSummaryCreatedAtMs)
+            .toIso8601String();
+    final String newestLabel = newestSummaryCreatedAtMs == null
+        ? 'unknown'
+        : DateTime.fromMillisecondsSinceEpoch(newestSummaryCreatedAtMs)
+            .toIso8601String();
+    final int spanSeconds = summaryFreshnessSpanSeconds ?? 0;
+    return 'Freshness: ${spanSeconds}s span · oldest $oldestLabel · newest $newestLabel';
+  }
+
   String _formatSiteContributionSummaryPreview(
     List<FederatedLearningSiteContributionSummaryModel> summaries,
   ) {
@@ -1608,6 +1630,28 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                   ),
                 ),
               ],
+              if (latestRun.oldestSummaryCreatedAtMs != null ||
+                  latestRun.newestSummaryCreatedAtMs != null ||
+                  latestRun.summaryFreshnessSpanSeconds != null) ...<Widget>[
+                const SizedBox(height: 4),
+                Text(
+                  _tHqFeatureFlags(
+                    context,
+                    'Latest aggregation freshness: ${_formatSummaryFreshnessRollup(
+                      oldestSummaryCreatedAtMs:
+                          latestRun.oldestSummaryCreatedAtMs,
+                      newestSummaryCreatedAtMs:
+                          latestRun.newestSummaryCreatedAtMs,
+                      summaryFreshnessSpanSeconds:
+                          latestRun.summaryFreshnessSpanSeconds,
+                    )}',
+                  ),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: ScholesaColors.textSecondary,
+                  ),
+                ),
+              ],
             ],
             if (latestPackage != null) ...<Widget>[
               const SizedBox(height: 4),
@@ -1736,6 +1780,28 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                   _tHqFeatureFlags(
                     context,
                     'Latest package site influence: ${_formatSiteContributionSummaryPreview(latestPackage.siteContributionSummaries)}',
+                  ),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: ScholesaColors.textSecondary,
+                  ),
+                ),
+              ],
+              if (latestPackage.oldestSummaryCreatedAtMs != null ||
+                  latestPackage.newestSummaryCreatedAtMs != null ||
+                  latestPackage.summaryFreshnessSpanSeconds != null) ...<Widget>[
+                const SizedBox(height: 4),
+                Text(
+                  _tHqFeatureFlags(
+                    context,
+                    'Latest package freshness: ${_formatSummaryFreshnessRollup(
+                      oldestSummaryCreatedAtMs:
+                          latestPackage.oldestSummaryCreatedAtMs,
+                      newestSummaryCreatedAtMs:
+                          latestPackage.newestSummaryCreatedAtMs,
+                      summaryFreshnessSpanSeconds:
+                          latestPackage.summaryFreshnessSpanSeconds,
+                    )}',
                   ),
                   style: const TextStyle(
                     fontSize: 12,
@@ -3225,6 +3291,25 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               ),
             ),
           ],
+          if (run.oldestSummaryCreatedAtMs != null ||
+              run.newestSummaryCreatedAtMs != null ||
+              run.summaryFreshnessSpanSeconds != null) ...<Widget>[
+            const SizedBox(height: 4),
+            Text(
+              _tHqFeatureFlags(
+                context,
+                _formatSummaryFreshnessRollup(
+                  oldestSummaryCreatedAtMs: run.oldestSummaryCreatedAtMs,
+                  newestSummaryCreatedAtMs: run.newestSummaryCreatedAtMs,
+                  summaryFreshnessSpanSeconds: run.summaryFreshnessSpanSeconds,
+                ),
+              ),
+              style: const TextStyle(
+                fontSize: 12,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+          ],
           if (packageId.isNotEmpty) ...<Widget>[
             const SizedBox(height: 4),
             Text(
@@ -3630,6 +3715,26 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               icon: const Icon(Icons.account_tree_rounded),
               label: Text(
                 _tHqFeatureFlags(context, 'Open site contribution summaries'),
+              ),
+            ),
+          ],
+          if (package.oldestSummaryCreatedAtMs != null ||
+              package.newestSummaryCreatedAtMs != null ||
+              package.summaryFreshnessSpanSeconds != null) ...<Widget>[
+            const SizedBox(height: 4),
+            Text(
+              _tHqFeatureFlags(
+                context,
+                _formatSummaryFreshnessRollup(
+                  oldestSummaryCreatedAtMs: package.oldestSummaryCreatedAtMs,
+                  newestSummaryCreatedAtMs: package.newestSummaryCreatedAtMs,
+                  summaryFreshnessSpanSeconds:
+                      package.summaryFreshnessSpanSeconds,
+                ),
+              ),
+              style: const TextStyle(
+                fontSize: 12,
+                color: ScholesaColors.textSecondary,
               ),
             ),
           ],

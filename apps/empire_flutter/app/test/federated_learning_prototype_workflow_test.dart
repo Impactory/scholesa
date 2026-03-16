@@ -1672,6 +1672,9 @@ Map<String, dynamic> _aggregationRunRow({
   int dampedSummaryCount = 1,
   double minUpdateNorm = 1.1,
   double maxUpdateNorm = 2.8,
+  int oldestSummaryCreatedAtMs = 1710410400000,
+  int newestSummaryCreatedAtMs = 1710414000000,
+  int summaryFreshnessSpanSeconds = 3600,
   List<String> contributingSiteIds = const <String>['site-1', 'site-2'],
   List<String> optimizerStrategies = const <String>[
     'bounded_runtime_vector_local_finetune_v1',
@@ -1705,6 +1708,9 @@ Map<String, dynamic> _aggregationRunRow({
     'dampedSummaryCount': dampedSummaryCount,
     'minUpdateNorm': minUpdateNorm,
     'maxUpdateNorm': maxUpdateNorm,
+    'oldestSummaryCreatedAtMs': oldestSummaryCreatedAtMs,
+    'newestSummaryCreatedAtMs': newestSummaryCreatedAtMs,
+    'summaryFreshnessSpanSeconds': summaryFreshnessSpanSeconds,
     'boundedDigest': boundedDigest,
     'triggerSummaryId': triggerSummaryId,
     'summaryIds': summaryIds,
@@ -1745,6 +1751,9 @@ Map<String, dynamic> _candidatePackageRow({
   int dampedSummaryCount = 1,
   double minUpdateNorm = 1.1,
   double maxUpdateNorm = 2.8,
+  int oldestSummaryCreatedAtMs = 1710410400000,
+  int newestSummaryCreatedAtMs = 1710414000000,
+  int summaryFreshnessSpanSeconds = 3600,
   String triggerSummaryId = 'update-2',
   List<String> summaryIds = const <String>['update-1', 'update-2'],
   List<String> contributingSiteIds = const <String>['site-1', 'site-2'],
@@ -1785,6 +1794,9 @@ Map<String, dynamic> _candidatePackageRow({
     'dampedSummaryCount': dampedSummaryCount,
     'minUpdateNorm': minUpdateNorm,
     'maxUpdateNorm': maxUpdateNorm,
+    'oldestSummaryCreatedAtMs': oldestSummaryCreatedAtMs,
+    'newestSummaryCreatedAtMs': newestSummaryCreatedAtMs,
+    'summaryFreshnessSpanSeconds': summaryFreshnessSpanSeconds,
     'runtimeVectorLength': 8,
     'runtimeVector': <double>[1.0, 0.4, 0.8, 0.2, 0.1, 0.6, 0.3, 0.05],
     'runtimeVectorDigest':
@@ -2259,6 +2271,9 @@ Map<String, dynamic> _mergeArtifactRow({
   int dampedSummaryCount = 1,
   double minUpdateNorm = 1.1,
   double maxUpdateNorm = 2.8,
+  int oldestSummaryCreatedAtMs = 1710410400000,
+  int newestSummaryCreatedAtMs = 1710414000000,
+  int summaryFreshnessSpanSeconds = 3600,
   String triggerSummaryId = 'update-2',
   List<String> summaryIds = const <String>['update-1', 'update-2'],
   List<String> contributingSiteIds = const <String>['site-1', 'site-2'],
@@ -2275,6 +2290,9 @@ Map<String, dynamic> _mergeArtifactRow({
     'dampedSummaryCount': dampedSummaryCount,
     'minUpdateNorm': minUpdateNorm,
     'maxUpdateNorm': maxUpdateNorm,
+    'oldestSummaryCreatedAtMs': oldestSummaryCreatedAtMs,
+    'newestSummaryCreatedAtMs': newestSummaryCreatedAtMs,
+    'summaryFreshnessSpanSeconds': summaryFreshnessSpanSeconds,
     'triggerSummaryId': triggerSummaryId,
     'summaryIds': summaryIds,
     'boundedDigest': boundedDigest,
@@ -3699,6 +3717,12 @@ void main() {
     );
     expect(
       find.text(
+        'Latest aggregation freshness: Freshness: 3600s span · oldest 2024-03-14T03:00:00.000 · newest 2024-03-14T04:00:00.000',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
         'Latest aggregation training: Local training rollup: bounded_runtime_vector_local_finetune_v1 · 2 summaries · epochs 2 · steps 24 · window 135s · warm start fl_pkg_1',
       ),
       findsOneWidget,
@@ -3724,6 +3748,12 @@ void main() {
     expect(
       find.text(
         'Latest package site influence: site-1 1 summaries · effective 10.400 | site-2 1 summaries · effective 7.200',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Latest package freshness: Freshness: 3600s span · oldest 2024-03-14T03:00:00.000 · newest 2024-03-14T04:00:00.000',
       ),
       findsOneWidget,
     );

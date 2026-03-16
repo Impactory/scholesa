@@ -66,6 +66,7 @@ export interface FederatedLearningUpdateSummary {
 export interface FederatedLearningAggregationCandidate {
   id: string;
   siteId: string;
+  createdAtMs?: number | null;
   sampleCount: number;
   vectorLength: number;
   vectorSketch: number[];
@@ -111,6 +112,9 @@ export interface FederatedLearningSiteContributionSummary {
 export interface FederatedLearningAggregationSelection {
   summaryIds: string[];
   summaryCount: number;
+  oldestSummaryCreatedAtMs?: number;
+  newestSummaryCreatedAtMs?: number;
+  summaryFreshnessSpanSeconds?: number;
   distinctSiteCount: number;
   contributingSiteIds: string[];
   totalSampleCount: number;
@@ -142,6 +146,9 @@ export interface FederatedLearningMergeArtifactSummary {
   dampedSummaryCount: number;
   minUpdateNorm: number;
   maxUpdateNorm: number;
+  oldestSummaryCreatedAtMs?: number;
+  newestSummaryCreatedAtMs?: number;
+  summaryFreshnessSpanSeconds?: number;
   triggerSummaryId: string;
   summaryIds: string[];
   payloadFormat: 'runtime_vector_v1';
@@ -175,6 +182,9 @@ export interface FederatedLearningCandidateModelPackageSummary {
   dampedSummaryCount: number;
   minUpdateNorm: number;
   maxUpdateNorm: number;
+  oldestSummaryCreatedAtMs?: number;
+  newestSummaryCreatedAtMs?: number;
+  summaryFreshnessSpanSeconds?: number;
   triggerSummaryId: string;
   summaryIds: string[];
   packageFormat: 'runtime_vector_v1';
@@ -763,6 +773,7 @@ export function selectFederatedLearningAggregationBatch(
   let totalPayloadBytes = 0;
   let maxVectorLength = 0;
   let updateNormTotal = 0;
+  const createdAtValues: number[] = [];
 
   for (const candidate of selected) {
     siteIds.add(candidate.siteId);
@@ -776,7 +787,21 @@ export function selectFederatedLearningAggregationBatch(
     totalPayloadBytes += candidate.payloadBytes;
     maxVectorLength = Math.max(maxVectorLength, candidate.vectorLength);
     updateNormTotal += candidate.updateNorm;
+    if (typeof candidate.createdAtMs === 'number' && Number.isFinite(candidate.createdAtMs) && candidate.createdAtMs > 0) {
+      createdAtValues.push(candidate.createdAtMs);
+    }
   }
+
+  const oldestSummaryCreatedAtMs = createdAtValues.length > 0
+    ? Math.min(...createdAtValues)
+    : undefined;
+  const newestSummaryCreatedAtMs = createdAtValues.length > 0
+    ? Math.max(...createdAtValues)
+    : undefined;
+  const summaryFreshnessSpanSeconds =
+    oldestSummaryCreatedAtMs != null && newestSummaryCreatedAtMs != null
+      ? Math.max(0, Math.round((newestSummaryCreatedAtMs - oldestSummaryCreatedAtMs) / 1000))
+      : undefined;
 
   const firstSelected = selected[0];
   const warmStartPackageId = typeof firstSelected?.warmStartPackageId === 'string' &&
@@ -791,6 +816,9 @@ export function selectFederatedLearningAggregationBatch(
   return {
     summaryIds: selected.map((candidate) => candidate.id),
     summaryCount: selected.length,
+    oldestSummaryCreatedAtMs,
+    newestSummaryCreatedAtMs,
+    summaryFreshnessSpanSeconds,
     distinctSiteCount: siteIds.size,
     contributingSiteIds: Array.from(siteIds).sort(),
     totalSampleCount,
@@ -998,6 +1026,9 @@ export function buildFederatedLearningMergeArtifactSummary(
       dampedSummaryCount: mergeWeights.dampedSummaryCount,
       minUpdateNorm: mergeWeights.minUpdateNorm,
       maxUpdateNorm: mergeWeights.maxUpdateNorm,
+      oldestSummaryCreatedAtMs: selection.oldestSummaryCreatedAtMs,
+      newestSummaryCreatedAtMs: selection.newestSummaryCreatedAtMs,
+      summaryFreshnessSpanSeconds: selection.summaryFreshnessSpanSeconds,
       totalSampleCount: selection.totalSampleCount,
       summaryCount: selection.summaryCount,
       distinctSiteCount: selection.distinctSiteCount,
@@ -1028,6 +1059,9 @@ export function buildFederatedLearningMergeArtifactSummary(
     dampedSummaryCount: mergeWeights.dampedSummaryCount,
     minUpdateNorm: mergeWeights.minUpdateNorm,
     maxUpdateNorm: mergeWeights.maxUpdateNorm,
+    oldestSummaryCreatedAtMs: selection.oldestSummaryCreatedAtMs,
+    newestSummaryCreatedAtMs: selection.newestSummaryCreatedAtMs,
+    summaryFreshnessSpanSeconds: selection.summaryFreshnessSpanSeconds,
     triggerSummaryId,
     summaryIds: selection.summaryIds,
     payloadFormat,
@@ -1072,6 +1106,9 @@ export function buildFederatedLearningCandidateModelPackageSummary(
       dampedSummaryCount: artifactSummary.dampedSummaryCount,
       minUpdateNorm: artifactSummary.minUpdateNorm,
       maxUpdateNorm: artifactSummary.maxUpdateNorm,
+      oldestSummaryCreatedAtMs: artifactSummary.oldestSummaryCreatedAtMs,
+      newestSummaryCreatedAtMs: artifactSummary.newestSummaryCreatedAtMs,
+      summaryFreshnessSpanSeconds: artifactSummary.summaryFreshnessSpanSeconds,
       triggerSummaryId: artifactSummary.triggerSummaryId,
       summaryIds: artifactSummary.summaryIds,
       packageFormat,
@@ -1107,6 +1144,9 @@ export function buildFederatedLearningCandidateModelPackageSummary(
     dampedSummaryCount: artifactSummary.dampedSummaryCount,
     minUpdateNorm: artifactSummary.minUpdateNorm,
     maxUpdateNorm: artifactSummary.maxUpdateNorm,
+    oldestSummaryCreatedAtMs: artifactSummary.oldestSummaryCreatedAtMs,
+    newestSummaryCreatedAtMs: artifactSummary.newestSummaryCreatedAtMs,
+    summaryFreshnessSpanSeconds: artifactSummary.summaryFreshnessSpanSeconds,
     triggerSummaryId: artifactSummary.triggerSummaryId,
     summaryIds: artifactSummary.summaryIds,
     packageFormat,

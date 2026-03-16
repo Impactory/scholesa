@@ -3259,6 +3259,9 @@ class FederatedLearningAggregationRunModel {
     this.dampedSummaryCount,
     this.minUpdateNorm,
     this.maxUpdateNorm,
+    this.oldestSummaryCreatedAtMs,
+    this.newestSummaryCreatedAtMs,
+    this.summaryFreshnessSpanSeconds,
     this.boundedDigest,
     this.payloadFormat,
     this.modelVersion,
@@ -3303,6 +3306,9 @@ class FederatedLearningAggregationRunModel {
   final int? dampedSummaryCount;
   final double? minUpdateNorm;
   final double? maxUpdateNorm;
+  final int? oldestSummaryCreatedAtMs;
+  final int? newestSummaryCreatedAtMs;
+  final int? summaryFreshnessSpanSeconds;
   final String? boundedDigest;
   final String? payloadFormat;
   final String? modelVersion;
@@ -3363,6 +3369,12 @@ class FederatedLearningAggregationRunModel {
       dampedSummaryCount: (data['dampedSummaryCount'] as num?)?.toInt(),
       minUpdateNorm: (data['minUpdateNorm'] as num?)?.toDouble(),
       maxUpdateNorm: (data['maxUpdateNorm'] as num?)?.toDouble(),
+        oldestSummaryCreatedAtMs:
+          (data['oldestSummaryCreatedAtMs'] as num?)?.toInt(),
+        newestSummaryCreatedAtMs:
+          (data['newestSummaryCreatedAtMs'] as num?)?.toInt(),
+        summaryFreshnessSpanSeconds:
+          (data['summaryFreshnessSpanSeconds'] as num?)?.toInt(),
       boundedDigest: data['boundedDigest'] as String?,
       payloadFormat: data['payloadFormat'] as String?,
       modelVersion: data['modelVersion'] as String?,
@@ -3411,6 +3423,9 @@ class FederatedLearningAggregationRunModel {
         'dampedSummaryCount': dampedSummaryCount,
         'minUpdateNorm': minUpdateNorm,
         'maxUpdateNorm': maxUpdateNorm,
+        'oldestSummaryCreatedAtMs': oldestSummaryCreatedAtMs,
+        'newestSummaryCreatedAtMs': newestSummaryCreatedAtMs,
+        'summaryFreshnessSpanSeconds': summaryFreshnessSpanSeconds,
         'boundedDigest': boundedDigest,
         'payloadFormat': payloadFormat,
         'modelVersion': modelVersion,
@@ -3459,6 +3474,9 @@ class FederatedLearningMergeArtifactModel {
     required this.dampedSummaryCount,
     required this.minUpdateNorm,
     required this.maxUpdateNorm,
+    this.oldestSummaryCreatedAtMs,
+    this.newestSummaryCreatedAtMs,
+    this.summaryFreshnessSpanSeconds,
     required this.triggerSummaryId,
     required this.summaryIds,
     required this.boundedDigest,
@@ -3498,6 +3516,9 @@ class FederatedLearningMergeArtifactModel {
   final int dampedSummaryCount;
   final double minUpdateNorm;
   final double maxUpdateNorm;
+  final int? oldestSummaryCreatedAtMs;
+  final int? newestSummaryCreatedAtMs;
+  final int? summaryFreshnessSpanSeconds;
   final String triggerSummaryId;
   final List<String> summaryIds;
   final String boundedDigest;
@@ -3552,6 +3573,12 @@ class FederatedLearningMergeArtifactModel {
         dampedSummaryCount: (data['dampedSummaryCount'] as num?)?.toInt() ?? 0,
         minUpdateNorm: (data['minUpdateNorm'] as num?)?.toDouble() ?? 0,
         maxUpdateNorm: (data['maxUpdateNorm'] as num?)?.toDouble() ?? 0,
+        oldestSummaryCreatedAtMs:
+          (data['oldestSummaryCreatedAtMs'] as num?)?.toInt(),
+        newestSummaryCreatedAtMs:
+          (data['newestSummaryCreatedAtMs'] as num?)?.toInt(),
+        summaryFreshnessSpanSeconds:
+          (data['summaryFreshnessSpanSeconds'] as num?)?.toInt(),
       triggerSummaryId: data['triggerSummaryId'] as String? ?? '',
       summaryIds: _stringListOrEmpty(data['summaryIds']),
       boundedDigest: data['boundedDigest'] as String? ?? '',
@@ -3595,6 +3622,9 @@ class FederatedLearningMergeArtifactModel {
         'dampedSummaryCount': dampedSummaryCount,
         'minUpdateNorm': minUpdateNorm,
         'maxUpdateNorm': maxUpdateNorm,
+        'oldestSummaryCreatedAtMs': oldestSummaryCreatedAtMs,
+        'newestSummaryCreatedAtMs': newestSummaryCreatedAtMs,
+        'summaryFreshnessSpanSeconds': summaryFreshnessSpanSeconds,
         'triggerSummaryId': triggerSummaryId,
         'summaryIds': summaryIds,
         'boundedDigest': boundedDigest,
@@ -3663,6 +3693,9 @@ class FederatedLearningCandidateModelPackageModel {
     this.dampedSummaryCount,
     this.minUpdateNorm,
     this.maxUpdateNorm,
+    this.oldestSummaryCreatedAtMs,
+    this.newestSummaryCreatedAtMs,
+    this.summaryFreshnessSpanSeconds,
     required this.runtimeVectorLength,
     required this.runtimeVector,
     required this.runtimeVectorDigest,
@@ -3716,6 +3749,9 @@ class FederatedLearningCandidateModelPackageModel {
   final int? dampedSummaryCount;
   final double? minUpdateNorm;
   final double? maxUpdateNorm;
+  final int? oldestSummaryCreatedAtMs;
+  final int? newestSummaryCreatedAtMs;
+  final int? summaryFreshnessSpanSeconds;
   final int runtimeVectorLength;
   final List<double> runtimeVector;
   final String runtimeVectorDigest;
@@ -3789,6 +3825,12 @@ class FederatedLearningCandidateModelPackageModel {
       dampedSummaryCount: (data['dampedSummaryCount'] as num?)?.toInt(),
       minUpdateNorm: (data['minUpdateNorm'] as num?)?.toDouble(),
       maxUpdateNorm: (data['maxUpdateNorm'] as num?)?.toDouble(),
+        oldestSummaryCreatedAtMs:
+          (data['oldestSummaryCreatedAtMs'] as num?)?.toInt(),
+        newestSummaryCreatedAtMs:
+          (data['newestSummaryCreatedAtMs'] as num?)?.toInt(),
+        summaryFreshnessSpanSeconds:
+          (data['summaryFreshnessSpanSeconds'] as num?)?.toInt(),
       runtimeVectorLength: (data['runtimeVectorLength'] as num?)?.toInt() ?? 0,
       runtimeVector: _doubleListOrEmpty(data['runtimeVector']),
       runtimeVectorDigest: data['runtimeVectorDigest'] as String? ?? '',
@@ -3846,6 +3888,9 @@ class FederatedLearningCandidateModelPackageModel {
         'dampedSummaryCount': dampedSummaryCount,
         'minUpdateNorm': minUpdateNorm,
         'maxUpdateNorm': maxUpdateNorm,
+        'oldestSummaryCreatedAtMs': oldestSummaryCreatedAtMs,
+        'newestSummaryCreatedAtMs': newestSummaryCreatedAtMs,
+        'summaryFreshnessSpanSeconds': summaryFreshnessSpanSeconds,
         'runtimeVectorLength': runtimeVectorLength,
         'runtimeVector': runtimeVector,
         'runtimeVectorDigest': runtimeVectorDigest,

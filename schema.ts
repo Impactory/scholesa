@@ -332,6 +332,9 @@ export interface FederatedLearningAggregationRun {
   dampedSummaryCount?: number;
   minUpdateNorm?: number;
   maxUpdateNorm?: number;
+  oldestSummaryCreatedAtMs?: number;
+  newestSummaryCreatedAtMs?: number;
+  summaryFreshnessSpanSeconds?: number;
   boundedDigest?: string;
   payloadFormat?: 'runtime_vector_v1';
   modelVersion?: string;
@@ -367,6 +370,9 @@ export interface FederatedLearningMergeArtifact {
   dampedSummaryCount: number;
   minUpdateNorm: number;
   maxUpdateNorm: number;
+  oldestSummaryCreatedAtMs?: number;
+  newestSummaryCreatedAtMs?: number;
+  summaryFreshnessSpanSeconds?: number;
   triggerSummaryId: string;
   summaryIds: string[];
   boundedDigest: string;
@@ -422,6 +428,9 @@ export interface FederatedLearningCandidateModelPackage {
   dampedSummaryCount?: number;
   minUpdateNorm?: number;
   maxUpdateNorm?: number;
+  oldestSummaryCreatedAtMs?: number;
+  newestSummaryCreatedAtMs?: number;
+  summaryFreshnessSpanSeconds?: number;
   runtimeVectorLength: number;
   runtimeVector: number[];
   runtimeVectorDigest: string;

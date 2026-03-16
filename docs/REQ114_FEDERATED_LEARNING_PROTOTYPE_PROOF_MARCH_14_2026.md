@@ -184,5 +184,5 @@ REQ-114 remains partial until all of the following exist and are approved:
 
 - production-grade on-device training beyond the current bounded warm-start local fine-tune path with experiment-governed epoch, step, and training-window caps
 - production-grade merge semantics beyond the current bounded compatibility-aware, experiment-configurable sample-weighted or summary-balanced norm-capped runtime-vector averaging path
-- richer production-grade aggregation observability beyond the current bounded merge-strategy, norm-cap, effective-weight, contributor-site lineage, and accepted-summary local-training transparency surfaced in prototype records and HQ history
+- richer production-grade aggregation observability beyond the current bounded merge-strategy, norm-cap, effective-weight, accepted-summary freshness window, contributor-site lineage, and accepted-summary local-training transparency surfaced in prototype records and HQ history
 - production-grade rollout orchestration and long-lived model lifecycle management beyond the current bounded site-scoped expiry, supersession, retirement, revocation, paused/restricted control, and fallback path

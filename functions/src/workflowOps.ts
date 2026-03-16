@@ -1677,6 +1677,7 @@ export const upsertFeatureFlag = onCall(async (request: CallableRequest) => {
 interface FederatedPendingSummaryRow {
   id: string;
   siteId: string;
+  createdAtMs?: number;
   sampleCount: number;
   vectorLength: number;
   vectorSketch: number[];
@@ -1708,6 +1709,7 @@ function mapPendingFederatedSummary(
   return {
     id: snapDoc.id,
     siteId: asTrimmedString(data.siteId),
+    createdAtMs: toDateValue(data.createdAt || data.updatedAt)?.getTime(),
     sampleCount: asPositiveInteger(data.sampleCount, 0),
     vectorLength: asPositiveInteger(data.vectorLength, 0),
     vectorSketch: Array.isArray(data.vectorSketch)
@@ -1850,6 +1852,9 @@ async function maybeMaterializeFederatedLearningAggregationRun({
       dampedSummaryCount: mergeWeights.dampedSummaryCount,
       minUpdateNorm: mergeWeights.minUpdateNorm,
       maxUpdateNorm: mergeWeights.maxUpdateNorm,
+      oldestSummaryCreatedAtMs: refreshedSelection.oldestSummaryCreatedAtMs ?? null,
+      newestSummaryCreatedAtMs: refreshedSelection.newestSummaryCreatedAtMs ?? null,
+      summaryFreshnessSpanSeconds: refreshedSelection.summaryFreshnessSpanSeconds ?? null,
       triggerSummaryId,
       summaryIds: refreshedSelection.summaryIds,
       summaryCount: refreshedSelection.summaryCount,
@@ -1884,6 +1889,9 @@ async function maybeMaterializeFederatedLearningAggregationRun({
       dampedSummaryCount: artifactSummary.dampedSummaryCount,
       minUpdateNorm: artifactSummary.minUpdateNorm,
       maxUpdateNorm: artifactSummary.maxUpdateNorm,
+      oldestSummaryCreatedAtMs: artifactSummary.oldestSummaryCreatedAtMs ?? null,
+      newestSummaryCreatedAtMs: artifactSummary.newestSummaryCreatedAtMs ?? null,
+      summaryFreshnessSpanSeconds: artifactSummary.summaryFreshnessSpanSeconds ?? null,
       triggerSummaryId: artifactSummary.triggerSummaryId,
       summaryIds: artifactSummary.summaryIds,
       boundedDigest: artifactSummary.boundedDigest,
@@ -1926,6 +1934,9 @@ async function maybeMaterializeFederatedLearningAggregationRun({
       dampedSummaryCount: packageSummary.dampedSummaryCount,
       minUpdateNorm: packageSummary.minUpdateNorm,
       maxUpdateNorm: packageSummary.maxUpdateNorm,
+      oldestSummaryCreatedAtMs: packageSummary.oldestSummaryCreatedAtMs ?? null,
+      newestSummaryCreatedAtMs: packageSummary.newestSummaryCreatedAtMs ?? null,
+      summaryFreshnessSpanSeconds: packageSummary.summaryFreshnessSpanSeconds ?? null,
       triggerSummaryId: packageSummary.triggerSummaryId,
       summaryIds: packageSummary.summaryIds,
       modelVersion: packageSummary.modelVersion,
