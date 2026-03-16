@@ -1321,10 +1321,6 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                   Icons.balance_rounded,
                 ),
                 _buildExperimentChip(
-                  '${experiment.localEpochCap}e/${experiment.localStepCap}s/${experiment.localTrainingWindowCapSeconds}s',
-                  Icons.tune_rounded,
-                ),
-                _buildExperimentChip(
                   '${experiment.aggregateThreshold} min cohort',
                   Icons.groups_rounded,
                 ),
@@ -1374,17 +1370,6 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               _tHqFeatureFlags(
                 context,
                 'Configured merge policy: ${_formatMergeStrategyLabel(experiment.mergeStrategy)}',
-              ),
-              style: const TextStyle(
-                fontSize: 12,
-                color: ScholesaColors.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              _tHqFeatureFlags(
-                context,
-                'Configured local training budget: up to ${experiment.localEpochCap} epochs, ${experiment.localStepCap} steps, ${experiment.localTrainingWindowCapSeconds}s window',
               ),
               style: const TextStyle(
                 fontSize: 12,
@@ -8340,15 +8325,6 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     final TextEditingController rawBytesController = TextEditingController(
       text: '${existing?.rawUpdateMaxBytes ?? 16384}',
     );
-    final TextEditingController localEpochCapController = TextEditingController(
-      text: '${existing?.localEpochCap ?? 3}',
-    );
-    final TextEditingController localStepCapController = TextEditingController(
-      text: '${existing?.localStepCap ?? 24}',
-    );
-    final TextEditingController localTrainingWindowCapController = TextEditingController(
-      text: '${existing?.localTrainingWindowCapSeconds ?? 86400}',
-    );
     String runtimeTarget = existing?.runtimeTarget ?? 'flutter_mobile';
     String status = existing?.status ?? 'draft';
     String mergeStrategy = existing?.mergeStrategy ??
@@ -8509,41 +8485,6 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                         ],
                       ),
                       const SizedBox(height: 12),
-                      Row(
-                        children: <Widget>[
-                          Expanded(
-                            child: TextFormField(
-                              controller: localEpochCapController,
-                              keyboardType: TextInputType.number,
-                              decoration: InputDecoration(
-                                labelText: _tHqFeatureFlags(
-                                    context, 'Local epoch cap'),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: TextFormField(
-                              controller: localStepCapController,
-                              keyboardType: TextInputType.number,
-                              decoration: InputDecoration(
-                                labelText: _tHqFeatureFlags(
-                                    context, 'Local step cap'),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: localTrainingWindowCapController,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          labelText: _tHqFeatureFlags(
-                              context, 'Training window cap seconds'),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
                       SwitchListTile.adaptive(
                         value: enablePrototypeUploads,
                         contentPadding: EdgeInsets.zero,
@@ -8593,10 +8534,6 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         enabledSiteIds: sitesController.text,
         aggregateThresholdText: thresholdController.text,
         rawUpdateMaxBytesText: rawBytesController.text,
-        localEpochCapText: localEpochCapController.text,
-        localStepCapText: localStepCapController.text,
-        localTrainingWindowCapSecondsText:
-            localTrainingWindowCapController.text,
         enablePrototypeUploads: enablePrototypeUploads,
       );
     }
@@ -8612,21 +8549,12 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     required String enabledSiteIds,
     required String aggregateThresholdText,
     required String rawUpdateMaxBytesText,
-    required String localEpochCapText,
-    required String localStepCapText,
-    required String localTrainingWindowCapSecondsText,
     required bool enablePrototypeUploads,
   }) async {
     final int aggregateThreshold =
         int.tryParse(aggregateThresholdText.trim()) ?? 25;
     final int rawUpdateMaxBytes =
         int.tryParse(rawUpdateMaxBytesText.trim()) ?? 16384;
-    final int localEpochCap =
-      int.tryParse(localEpochCapText.trim()) ?? 3;
-    final int localStepCap =
-      int.tryParse(localStepCapText.trim()) ?? 24;
-    final int localTrainingWindowCapSeconds =
-      int.tryParse(localTrainingWindowCapSecondsText.trim()) ?? 86400;
     final List<String> allowedSiteIds = enabledSiteIds
         .split(',')
         .map((String entry) => entry.trim())
@@ -8641,9 +8569,6 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         'runtimeTarget': runtimeTarget,
         'status': status,
         'mergeStrategy': mergeStrategy,
-        'localEpochCap': localEpochCap,
-        'localStepCap': localStepCap,
-        'localTrainingWindowCapSeconds': localTrainingWindowCapSeconds,
         'allowedSiteIds': allowedSiteIds,
         'aggregateThreshold': aggregateThreshold,
         'rawUpdateMaxBytes': rawUpdateMaxBytes,
