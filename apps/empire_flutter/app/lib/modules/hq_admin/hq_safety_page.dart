@@ -11,7 +11,9 @@ String _tHqSafety(BuildContext context, String input) {
 /// HQ Safety page for monitoring safety incidents across all sites
 /// Based on docs/41_SAFETY_CONSENT_INCIDENTS_SPEC.md
 class HqSafetyPage extends StatefulWidget {
-  const HqSafetyPage({super.key});
+  const HqSafetyPage({super.key, this.incidentsLoader});
+
+  final Future<Map<String, dynamic>> Function()? incidentsLoader;
 
   @override
   State<HqSafetyPage> createState() => _HqSafetyPageState();
@@ -285,49 +287,40 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
                     ? _tHqSafety(context, 'Yes')
                     : _tHqSafety(context, 'No')),
             const SizedBox(height: 24),
-            Row(
-              children: <Widget>[
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () {
-                      TelemetryService.instance.logEvent(
-                        event: 'cta.clicked',
-                        metadata: <String, dynamic>{
-                          'module': 'hq_safety',
-                          'cta_id': 'close_incident_details',
-                          'surface': 'incident_details_sheet',
-                          'incident_id': incident.id,
-                        },
-                      );
-                      Navigator.pop(context);
-                    },
-                    child: Text(_tHqSafety(context, 'Close')),
-                  ),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: Text(
+                _tHqSafety(
+                  context,
+                  'Full incident reports are not available in the app yet.',
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      TelemetryService.instance.logEvent(
-                        event: 'cta.clicked',
-                        metadata: <String, dynamic>{
-                          'module': 'hq_safety',
-                          'cta_id': 'view_full_incident_report',
-                          'surface': 'incident_details_sheet',
-                          'incident_id': incident.id,
-                        },
-                      );
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content: Text(_tHqSafety(
-                                context, 'Opening full incident report...'))),
-                      );
+                style: const TextStyle(color: ScholesaColors.textSecondary),
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () {
+                  TelemetryService.instance.logEvent(
+                    event: 'cta.clicked',
+                    metadata: <String, dynamic>{
+                      'module': 'hq_safety',
+                      'cta_id': 'close_incident_details',
+                      'surface': 'incident_details_sheet',
+                      'incident_id': incident.id,
                     },
-                    child: Text(_tHqSafety(context, 'View Full Report')),
-                  ),
-                ),
-              ],
+                  );
+                  Navigator.pop(context);
+                },
+                child: Text(_tHqSafety(context, 'Close')),
+              ),
             ),
           ],
         ),
@@ -364,11 +357,7 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
     if (!mounted) return;
     setState(() => _isLoading = true);
     try {
-      final HttpsCallable callable =
-          FirebaseFunctions.instance.httpsCallable('listSafetyIncidents');
-      final HttpsCallableResult<dynamic> result =
-          await callable.call(<String, dynamic>{'limit': 150});
-      final Map<String, dynamic> payload = _asMap(result.data);
+      final Map<String, dynamic> payload = await _loadIncidentPayload();
       final List<dynamic> rows =
           payload['incidents'] as List<dynamic>? ?? <dynamic>[];
 
@@ -427,6 +416,18 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  Future<Map<String, dynamic>> _loadIncidentPayload() async {
+    if (widget.incidentsLoader != null) {
+      return widget.incidentsLoader!();
+    }
+
+    final HttpsCallable callable =
+        FirebaseFunctions.instance.httpsCallable('listSafetyIncidents');
+    final HttpsCallableResult<dynamic> result =
+        await callable.call(<String, dynamic>{'limit': 150});
+    return _asMap(result.data);
   }
 
   _Severity _parseSeverity(String? raw) {

@@ -13,7 +13,9 @@ String _tHqBilling(BuildContext context, String input) {
 
 /// HQ Billing Page - Platform-wide billing and revenue management
 class HqBillingPage extends StatefulWidget {
-  const HqBillingPage({super.key});
+  const HqBillingPage({super.key, this.billingLoader});
+
+  final Future<Map<String, dynamic>> Function()? billingLoader;
 
   @override
   State<HqBillingPage> createState() => _HqBillingPageState();
@@ -557,16 +559,7 @@ class _HqBillingPageState extends State<HqBillingPage>
     if (!mounted) return;
     setState(() => _isLoading = true);
     try {
-      final HttpsCallable callable =
-          FirebaseFunctions.instance.httpsCallable('listHqBillingRecords');
-      final HttpsCallableResult<dynamic> response =
-          await callable.call(<String, dynamic>{
-        'siteId': _selectedSite == 'all' ? null : _selectedSite,
-        'period': _selectedPeriod,
-        'limit': 500,
-      });
-
-      final Map<String, dynamic> payload = _asMap(response.data);
+      final Map<String, dynamic> payload = await _loadBillingPayload();
       final List<_SiteFilterOption> callableSiteOptions = <_SiteFilterOption>[
         ..._asMapList(payload['siteOptions']).map(
           (Map<String, dynamic> row) => _SiteFilterOption(
@@ -739,6 +732,23 @@ class _HqBillingPageState extends State<HqBillingPage>
         return 'active';
     }
   }
+
+  Future<Map<String, dynamic>> _loadBillingPayload() async {
+    if (widget.billingLoader != null) {
+      return widget.billingLoader!();
+    }
+
+    final HttpsCallable callable =
+        FirebaseFunctions.instance.httpsCallable('listHqBillingRecords');
+    final HttpsCallableResult<dynamic> response =
+        await callable.call(<String, dynamic>{
+      'siteId': _selectedSite == 'all' ? null : _selectedSite,
+      'period': _selectedPeriod,
+      'limit': 500,
+    });
+
+    return _asMap(response.data);
+  }
 }
 
 class _SiteFilterOption {
@@ -843,25 +853,6 @@ class _InvoiceCard extends StatelessWidget {
     );
   }
 
-  void _sendInvoice(BuildContext context) {
-    TelemetryService.instance.logEvent(
-      event: 'cta.clicked',
-      metadata: <String, dynamic>{
-        'module': 'hq_billing',
-        'cta_id': 'send_invoice',
-        'surface': 'invoice_card',
-        'invoice_id': invoice['id'],
-      },
-    );
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-            '${_tHqBilling(context, 'Invoice')} ${invoice['id']} ${_tHqBilling(context, 'queued for sending')}'),
-        backgroundColor: ScholesaColors.hq,
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -952,14 +943,23 @@ class _InvoiceCard extends StatelessWidget {
                       icon: const Icon(Icons.visibility, size: 20),
                       color: context.schTextSecondary,
                     ),
-                    IconButton(
-                      onPressed: () => _sendInvoice(context),
-                      icon: const Icon(Icons.send, size: 20),
-                      color: ScholesaColors.hq,
-                    ),
                   ],
                 ),
               ],
+            ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                _tHqBilling(
+                  context,
+                  'Invoice sending is not available in the app yet.',
+                ),
+                style: TextStyle(
+                  color: context.schTextSecondary,
+                  fontSize: 12,
+                ),
+              ),
             ),
           ],
         ),
