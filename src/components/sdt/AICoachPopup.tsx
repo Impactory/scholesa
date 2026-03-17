@@ -106,6 +106,7 @@ export function AICoachPopup({
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [voiceInputTraceId, setVoiceInputTraceId] = useState<string | null>(null);
   const [currentLogId, setCurrentLogId] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [sdtProfile, setSdtProfile] = useState<{ autonomy: number; competence: number; belonging: number } | null>(null);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -525,9 +526,7 @@ Guidance: ${
     setExplainBack('');
     setMode(null);
     setCurrentLogId(null);
-    
-    // Show success
-    alert(t('aiCoach.explainBackSuccess'));
+    setStatusMessage('Explain-back completed for this session. This popup does not persist the explanation text yet.');
   };
 
   useEffect(() => {
@@ -542,6 +541,7 @@ Guidance: ${
     setQuestion('');
     setResponse(null);
     setExplainBack('');
+    setStatusMessage(null);
   };
 
   // Minimized button
@@ -581,6 +581,11 @@ Guidance: ${
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4">
+        {statusMessage ? (
+          <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900">
+            {statusMessage}
+          </div>
+        ) : null}
         {/* Teacher guidance notice for K-3 */}
         {policy.aiCoach.requireTeacherGuidance && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4 text-sm">
@@ -739,7 +744,7 @@ Guidance: ${
                     } catch (err) {
                       console.warn('Failed to store helpful feedback', err);
                     }
-                    alert(t('aiCoach.feedbackThanks'));
+                    setStatusMessage(t('aiCoach.feedbackThanks'));
                   }}
                   className="px-3 py-1 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors"
                 >
@@ -752,7 +757,7 @@ Guidance: ${
                     } catch (err) {
                       console.warn('Failed to store not-helpful feedback', err);
                     }
-                    alert(t('aiCoach.feedbackTryDifferent'));
+                    setStatusMessage(t('aiCoach.feedbackTryDifferent'));
                   }}
                   className="px-3 py-1 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
                 >

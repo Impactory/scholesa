@@ -42,6 +42,7 @@ export function AICoachScreen({
   const [explainBack, setExplainBack] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   const handleSubmitQuestion = async () => {
     if (!question.trim() || !mode) return;
@@ -55,6 +56,7 @@ export function AICoachScreen({
     try {
       setLoading(true);
       setError(null);
+      setStatusMessage(null);
 
       const request: AICoachRequest = {
         mode,
@@ -82,23 +84,7 @@ export function AICoachScreen({
       explainLength: explainBack.trim().length,
     });
 
-    try {
-      setLoading(true);
-      // This would be handled by the backend
-      // For now, just clear the form
-      setResponse(null);
-      setQuestion('');
-      setExplainBack('');
-      setMode(null);
-      
-      // Show success message
-      alert('Great explanation! Keep up the good work! 🎉');
-    } catch (err) {
-      console.error('Explain-back error:', err);
-      setError('Failed to submit your explanation');
-    } finally {
-      setLoading(false);
-    }
+    setError('Explain-back submission is not available on this screen yet. Use the AI assistant popup or ask your teacher to review your explanation.');
   };
 
   return (
@@ -229,6 +215,11 @@ export function AICoachScreen({
       {/* AI Response */}
       {response && (
         <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-4">
+          {statusMessage ? (
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900">
+              {statusMessage}
+            </div>
+          ) : null}
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
               <LightbulbIcon className="w-5 h-5 text-purple-600" />

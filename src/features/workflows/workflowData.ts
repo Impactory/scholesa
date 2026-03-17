@@ -123,6 +123,14 @@ function activeSiteId(profile: UserProfile | null): string | null {
   return profile?.activeSiteId || profile?.siteIds?.[0] || null;
 }
 
+function requireActiveSiteWorkflowContext(ctx: WorkflowContext): string {
+  const siteId = activeSiteId(ctx.profile);
+  if (!siteId) {
+    throw new Error('Active site context is required for site workflows.');
+  }
+  return siteId;
+}
+
 function chunkValues<T>(values: T[], size: number): T[][] {
   const chunks: T[][] = [];
   for (let index = 0; index < values.length; index += size) {
@@ -632,6 +640,12 @@ function applyRouteActionLabels(records: WorkflowRecord[], routePath: WorkflowPa
       case '/site/ops':
         primaryActionLabel = record.status === 'resolved' ? 'Reopen event' : 'Resolve event';
         break;
+      case '/site/identity':
+        primaryActionLabel = 'Resolve link';
+        break;
+      case '/site/incidents':
+        primaryActionLabel = 'Resolve incident';
+        break;
       case '/partner/listings':
         primaryActionLabel = record.status === 'published' ? 'Archive listing' : 'Publish listing';
         break;
@@ -655,6 +669,18 @@ function applyRouteActionLabels(records: WorkflowRecord[], routePath: WorkflowPa
         break;
       case '/hq/sites':
         primaryActionLabel = record.status === 'active' ? 'Pause site' : 'Activate site';
+        break;
+      case '/hq/user-admin':
+        primaryActionLabel = record.metadata.isActive === 'false' ? 'Activate user' : 'Deactivate user';
+        break;
+      case '/hq/approvals':
+        primaryActionLabel = 'Approve item';
+        break;
+      case '/hq/safety':
+        primaryActionLabel = 'Resolve incident';
+        break;
+      case '/hq/feature-flags':
+        primaryActionLabel = record.status === 'enabled' ? 'Disable flag' : 'Enable flag';
         break;
       case '/messages':
         primaryActionLabel = record.status === 'archived' ? 'Reopen thread' : 'Archive thread';
@@ -1224,7 +1250,9 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
     return loadE2EWorkflowRecords(ctx);
   }
 
-  const siteId = activeSiteId(ctx.profile);
+  const siteId = ctx.routePath.startsWith('/site/')
+    ? requireActiveSiteWorkflowContext(ctx)
+    : activeSiteId(ctx.profile);
 
   switch (ctx.routePath) {
     case '/learner/today': {
@@ -1637,7 +1665,31 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
     case '/parent/billing':
       return { records: await loadParentBillingRecords(ctx), canCreate: false, canRefresh: true, createLabel: 'Create', createConfig: null };
     case '/site/billing':
-      return { records: await loadSiteBillingRecords(ctx), canCreate: false, canRefresh: true, createLabel: 'Create', createConfig: null };
+      {
+        const siteOptions = await loadSiteSelectorOptions();
+        return {
+          records: await loadSiteBillingRecords(ctx),
+          canCreate: true,
+          canRefresh: true,
+          createLabel: 'Request plan change',
+          createConfig: buildCreateConfig('Request billing plan change', 'Submit request', [
+            {
+              name: 'siteId',
+              label: 'Site',
+              type: 'select',
+              options: siteOptions,
+              defaultValue: activeSiteId(ctx.profile) || siteOptions[0]?.value || '',
+            },
+            {
+              name: 'reason',
+              label: 'Reason',
+              type: 'textarea',
+              required: true,
+              placeholder: 'Describe the requested billing plan change.',
+            },
+          ]),
+        };
+      }
     case '/parent/schedule':
       return {
         records: await loadParentSchedule(ctx),
@@ -1665,7 +1717,7 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
           titleKeys: ['learnerName', 'learnerId'],
           subtitleKeys: ['type', 'notes'],
           statusKeys: ['status'],
-          editable: true,
+          editable: false,
           deletable: false,
           limitSize: 100,
         }), ctx.routePath),
@@ -2023,7 +2075,7 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
       };
     case '/site/incidents':
       return {
-        records: await loadCallableRows({
+        records: applyRouteActionLabels(await loadCallableRows({
           routePath: ctx.routePath,
           callableName: 'listSafetyIncidents',
           args: { siteId: siteId || undefined },
@@ -2032,7 +2084,8 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
           titleKeys: ['title', 'type'],
           subtitleKeys: ['summary', 'location', 'siteId'],
           statusKeys: ['status', 'severity', 'investigationStatus'],
-        }),
+          editable: true,
+        }), ctx.routePath),
         canCreate: true,
         canRefresh: true,
         createLabel: 'Report incident',
@@ -2097,8 +2150,8 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
         ]),
       };
     case '/site/identity':
-      return {
-        records: await loadCallableRows({
+      {
+        const records = await loadCallableRows({
           routePath: ctx.routePath,
           callableName: 'listExternalIdentityLinks',
           args: { siteId: siteId || undefined },
@@ -2107,12 +2160,22 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
           titleKeys: ['providerUserId', 'uid'],
           subtitleKeys: ['provider', 'siteId'],
           statusKeys: ['status'],
-        }),
-        canCreate: false,
-        canRefresh: true,
-        createLabel: 'Create',
-        createConfig: null,
-      };
+          editable: true,
+        });
+        return {
+          records: applyRouteActionLabels(
+            records.map((record) => ({
+              ...record,
+              canEdit: record.status !== 'resolved',
+            })),
+            ctx.routePath,
+          ),
+          canCreate: false,
+          canRefresh: true,
+          createLabel: 'Create',
+          createConfig: null,
+        };
+      }
     case '/site/clever': {
       const cleverRecords = await loadCleverWorkflowRecords(ctx, siteId);
       const connectionRecord = cleverRecords.find((record) => record.collectionName === 'integrationConnections');
@@ -2183,22 +2246,41 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
         ]),
       };
     case '/partner/listings':
-      return {
-        records: applyRouteActionLabels(await queryCollectionRecords({
-          routePath: ctx.routePath,
-          collectionName: 'marketplaceListings',
-          constraints: [where('partnerId', '==', ctx.uid), orderBy('updatedAt', 'desc')],
-          titleKeys: ['title', 'name'],
-          subtitleKeys: ['description', 'category'],
-          statusKeys: ['status'],
-          editable: true,
-          deletable: false,
-          limitSize: 100,
-        }), ctx.routePath),
+      {
+        const listingConstraints = ctx.role === 'hq'
+          ? [orderBy('updatedAt', 'desc')]
+          : [where('partnerId', '==', ctx.uid), orderBy('updatedAt', 'desc')];
+        const [records, partnerOptions] = await Promise.all([
+          queryCollectionRecords({
+            routePath: ctx.routePath,
+            collectionName: 'marketplaceListings',
+            constraints: listingConstraints,
+            titleKeys: ['title', 'name'],
+            subtitleKeys: ['description', 'category'],
+            statusKeys: ['status'],
+            editable: true,
+            deletable: false,
+            limitSize: 100,
+          }),
+          ctx.role === 'hq'
+            ? loadSiteUserOptions({ siteId: null, roles: ['partner'], limitSize: 160 })
+            : Promise.resolve([]),
+        ]);
+        return {
+        records: applyRouteActionLabels(records, ctx.routePath),
         canCreate: true,
         canRefresh: true,
         createLabel: 'Create listing',
         createConfig: buildCreateConfig('Create listing', 'Create listing', [
+          ...(ctx.role === 'hq'
+            ? [{
+                name: 'partnerId',
+                label: 'Partner',
+                type: 'select' as const,
+                options: partnerOptions,
+                helperText: 'Required when creating listings from HQ.',
+              }]
+            : []),
           {
             name: 'title',
             label: 'Listing title',
@@ -2219,13 +2301,17 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
           },
         ]),
       };
+      }
     case '/partner/contracts':
       {
-        const [contractRecords, launchRecords] = await Promise.all([
+        const contractConstraints = ctx.role === 'hq'
+          ? [orderBy('updatedAt', 'desc')]
+          : [where('partnerId', '==', ctx.uid), orderBy('updatedAt', 'desc')];
+        const [contractRecords, launchRecords, partnerOptions] = await Promise.all([
           queryCollectionRecords({
             routePath: ctx.routePath,
             collectionName: 'partnerContracts',
-            constraints: [where('partnerId', '==', ctx.uid), orderBy('updatedAt', 'desc')],
+            constraints: contractConstraints,
             titleKeys: ['title', 'contractNumber', 'name'],
             subtitleKeys: ['summary', 'siteId'],
             statusKeys: ['status'],
@@ -2245,6 +2331,9 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
             editable: true,
             deletable: false,
           }).catch(() => []),
+          ctx.role === 'hq'
+            ? loadSiteUserOptions({ siteId: null, roles: ['partner'], limitSize: 160 })
+            : Promise.resolve([]),
         ]);
         return {
         records: applyRouteActionLabels(sortWorkflowRecords([
@@ -2266,6 +2355,15 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
               { value: 'partnerLaunch', label: 'Partner launch' },
             ],
           },
+          ...(ctx.role === 'hq'
+            ? [{
+                name: 'partnerId',
+                label: 'Partner',
+                type: 'select' as const,
+                options: partnerOptions,
+                helperText: 'Required when creating partner workflows from HQ.',
+              }]
+            : []),
           {
             name: 'title',
             label: 'Contract title',
@@ -2373,7 +2471,7 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
       };
     case '/hq/user-admin':
       return {
-        records: await loadCallableRows({
+        records: applyRouteActionLabels(await loadCallableRows({
           routePath: ctx.routePath,
           callableName: 'listUsers',
           args: { limit: 100 },
@@ -2382,7 +2480,8 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
           titleKeys: ['displayName', 'email', 'uid'],
           subtitleKeys: ['email', 'activeSiteId'],
           statusKeys: ['role'],
-        }),
+          editable: true,
+        }), ctx.routePath),
         canCreate: false,
         canRefresh: true,
         createLabel: 'Create',
@@ -2460,7 +2559,59 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
         };
       }
     case '/hq/billing':
-      return { records: await loadHqBillingRecords(), canCreate: false, canRefresh: true, createLabel: 'Create', createConfig: null };
+      {
+        const [siteOptions, parentOptions, learnerOptions] = await Promise.all([
+          loadSiteSelectorOptions(),
+          loadSiteUserOptions({ siteId: null, roles: ['parent'], limitSize: 160 }),
+          loadSiteUserOptions({ siteId: null, roles: ['learner'], limitSize: 160 }),
+        ]);
+        return {
+          records: await loadHqBillingRecords(),
+          canCreate: true,
+          canRefresh: true,
+          createLabel: 'Create invoice',
+          createConfig: buildCreateConfig('Create HQ invoice', 'Create invoice', [
+            {
+              name: 'siteId',
+              label: 'Site',
+              type: 'select',
+              options: siteOptions,
+            },
+            {
+              name: 'parentId',
+              label: 'Parent',
+              type: 'select',
+              required: true,
+              options: parentOptions,
+            },
+            {
+              name: 'learnerId',
+              label: 'Learner',
+              type: 'select',
+              required: true,
+              options: learnerOptions,
+            },
+            {
+              name: 'amount',
+              label: 'Amount',
+              type: 'number',
+              required: true,
+              placeholder: '0',
+            },
+            {
+              name: 'currency',
+              label: 'Currency',
+              type: 'text',
+              defaultValue: 'USD',
+            },
+            {
+              name: 'description',
+              label: 'Description',
+              type: 'textarea',
+            },
+          ]),
+        };
+      }
     case '/hq/approvals':
       return {
         records: applyRouteActionLabels(await loadCallableRows({
@@ -2472,6 +2623,7 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
           titleKeys: ['title', 'sourceCollection', 'id'],
           subtitleKeys: ['summary', 'siteId'],
           statusKeys: ['status'],
+          editable: true,
         }), ctx.routePath),
         canCreate: false,
         canRefresh: true,
@@ -2579,7 +2731,7 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
       }
     case '/hq/safety':
       return {
-        records: await loadCallableRows({
+        records: applyRouteActionLabels(await loadCallableRows({
           routePath: ctx.routePath,
           callableName: 'listSafetyIncidents',
           args: { limit: 120 },
@@ -2588,7 +2740,8 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
           titleKeys: ['title', 'type'],
           subtitleKeys: ['summary', 'siteId'],
           statusKeys: ['status', 'severity'],
-        }),
+          editable: true,
+        }), ctx.routePath),
         canCreate: false,
         canRefresh: true,
         createLabel: 'Create',
@@ -2756,6 +2909,7 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
           titleKeys: ['name', 'id'],
           subtitleKeys: ['description', 'scope'],
           statusKeys: ['status', 'enabled'],
+          editable: true,
         }), ctx.routePath),
         canCreate: true,
         canRefresh: true,
@@ -3129,7 +3283,9 @@ export async function createWorkflowRecord(
     return;
   }
 
-  const siteId = activeSiteId(ctx.profile);
+  const siteId = ctx.routePath.startsWith('/site/')
+    ? requireActiveSiteWorkflowContext(ctx)
+    : activeSiteId(ctx.profile);
   const payloadBase: Record<string, unknown> = {
     updatedAt: serverTimestamp(),
     createdAt: serverTimestamp(),
@@ -3384,20 +3540,34 @@ export async function createWorkflowRecord(
       });
       return;
     }
+    case '/site/billing': {
+      const callable = httpsCallable(functions, 'requestSiteBillingPlanChange');
+      await callable({
+        siteId: optionalStringValue(input, 'siteId') || siteId || undefined,
+        reason: requireStringValue(input, 'reason', 'Reason'),
+      });
+      return;
+    }
     case '/partner/listings':
+      {
+        const partnerId = ctx.role === 'partner'
+          ? ctx.uid
+          : requireStringValue(input, 'partnerId', 'Partner');
       await addDoc(collection(firestore, 'marketplaceListings'), {
         ...payloadBase,
-        partnerId: ctx.uid,
+        partnerId,
         title: requireStringValue(input, 'title', 'Listing title'),
         description: requireStringValue(input, 'description', 'Description'),
         category: optionalStringValue(input, 'category') || null,
         status: 'draft',
       });
       return;
+      }
     case '/partner/contracts':
       if (optionalStringValue(input, 'action') === 'partnerLaunch') {
         const callable = httpsCallable(functions, 'upsertPartnerLaunch');
         await callable({
+          partnerId: optionalStringValue(input, 'partnerId') || undefined,
           siteId: optionalStringValue(input, 'siteId') || undefined,
           partnerName: requireStringValue(input, 'partnerName', 'Partner name'),
           region: requireStringValue(input, 'region', 'Region'),
@@ -3410,9 +3580,12 @@ export async function createWorkflowRecord(
         });
         return;
       }
+      const partnerId = ctx.role === 'partner'
+        ? ctx.uid
+        : requireStringValue(input, 'partnerId', 'Partner');
       await addDoc(collection(firestore, 'partnerContracts'), {
         ...payloadBase,
-        partnerId: ctx.uid,
+        partnerId,
         title: requireStringValue(input, 'title', 'Contract title'),
         summary: requireStringValue(input, 'summary', 'Summary'),
         siteId: optionalStringValue(input, 'siteId') || null,
@@ -3428,6 +3601,18 @@ export async function createWorkflowRecord(
         status: 'pending',
       });
       return;
+    case '/hq/billing': {
+      const callable = httpsCallable(functions, 'createHqInvoice');
+      await callable({
+        siteId: optionalStringValue(input, 'siteId') || undefined,
+        parentId: requireStringValue(input, 'parentId', 'Parent'),
+        learnerId: requireStringValue(input, 'learnerId', 'Learner'),
+        amount: Number(requireStringValue(input, 'amount', 'Amount')),
+        currency: optionalStringValue(input, 'currency') || 'USD',
+        description: optionalStringValue(input, 'description') || undefined,
+      });
+      return;
+    }
     case '/hq/analytics': {
       const callable = httpsCallable(functions, 'generateKpiPack');
       await callable({
@@ -3589,6 +3774,9 @@ export async function updateWorkflowRecord(
   const ref = doc(collection(firestore, target.collectionName), target.id);
   const existing = await getDoc(ref).catch(() => null);
   const data = (existing?.data() || {}) as Record<string, unknown>;
+  const siteId = ctx.routePath.startsWith('/site/')
+    ? requireActiveSiteWorkflowContext(ctx)
+    : activeSiteId(ctx.profile);
 
   if (target.collectionName === 'approvals') {
     const callable = httpsCallable(functions, 'decideWorkflowApproval');
@@ -3605,7 +3793,7 @@ export async function updateWorkflowRecord(
       mode: 'update',
       id: target.id,
       status: 'resolved',
-      siteId: activeSiteId(ctx.profile) || undefined,
+      siteId: siteId || undefined,
     });
     return;
   }
@@ -3619,8 +3807,25 @@ export async function updateWorkflowRecord(
     return;
   }
 
+  if (ctx.routePath === '/hq/user-admin' && target.collectionName === 'users') {
+    const callable = httpsCallable(functions, 'updateUserRoles');
+    await callable({
+      uid: target.id,
+      isActive: !asBoolean(data.isActive, true),
+    });
+    return;
+  }
+
+  if (target.collectionName === 'externalIdentityLinks') {
+    const callable = httpsCallable(functions, 'resolveExternalIdentityLink');
+    await callable({
+      id: target.id,
+      status: 'resolved',
+    });
+    return;
+  }
+
   if (ctx.routePath === '/site/clever' && target.collectionName === 'integrationConnections') {
-    const siteId = activeSiteId(ctx.profile);
     if (!siteId) {
       throw new Error('Active site context is required for Clever workflows.');
     }
@@ -3711,7 +3916,7 @@ export async function updateWorkflowRecord(
         const currentStatus = asString(data.status, 'planning');
         await callable({
           id: target.id,
-          siteId: activeSiteId(ctx.profile) || undefined,
+          siteId: siteId || undefined,
           cohortName: asString(data.cohortName, target.id),
           ageBand: asString(data.ageBand, ''),
           scheduleLabel: asString(data.scheduleLabel, ''),
@@ -3763,8 +3968,13 @@ export async function updateWorkflowRecord(
       if (target.collectionName === 'partnerLaunches') {
         const callable = httpsCallable(functions, 'upsertPartnerLaunch');
         const currentStatus = asString(data.status, 'planning');
+        const partnerId = asString(data.partnerId, '');
+        if (!partnerId) {
+          throw new Error('Partner launch is missing a partner assignment.');
+        }
         await callable({
           id: target.id,
+          partnerId,
           siteId: asString(data.siteId, '') || undefined,
           partnerName: asString(data.partnerName, target.id),
           region: asString(data.region, 'global'),
