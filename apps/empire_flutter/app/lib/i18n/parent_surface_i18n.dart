@@ -105,11 +105,12 @@ class ParentSurfaceI18n {
     'Share': '分享',
     'Download': '下载',
     'Portfolio downloads are not available in the app yet': '应用内暂不支持作品下载',
+    'We could not open your email app right now. Contact support@scholesa.com with your site ID and portfolio item details.':
+        '目前无法打开你的邮件应用。请附上你的站点 ID 和作品条目详情联系 support@scholesa.com。',
     'activity': '活动',
     'Completed by': '完成者',
     'Getting AI Guidance': '获取 AI 指导',
-    'Get personalized coaching on supporting your child':
-        '获取关于如何支持孩子的个性化指导',
+    'Get personalized coaching on supporting your child': '获取关于如何支持孩子的个性化指导',
     'Hide AI Guidance': '隐藏 AI 指导',
     'Capability Snapshot': '能力快照',
     'Portfolio Snapshot': '作品集快照',
@@ -223,11 +224,12 @@ class ParentSurfaceI18n {
     'Share': '分享',
     'Download': '下載',
     'Portfolio downloads are not available in the app yet': 'App 內暫不支援作品下載',
+    'We could not open your email app right now. Contact support@scholesa.com with your site ID and portfolio item details.':
+        '目前無法開啟你的郵件 App。請附上你的站點 ID 與作品條目詳情聯絡 support@scholesa.com。',
     'activity': '活動',
     'Completed by': '完成者',
     'Getting AI Guidance': '取得 AI 指導',
-    'Get personalized coaching on supporting your child':
-        '取得關於如何支持孩子的個人化指導',
+    'Get personalized coaching on supporting your child': '取得關於如何支持孩子的個人化指導',
     'Hide AI Guidance': '隱藏 AI 指導',
     'Capability Snapshot': '能力快照',
     'Portfolio Snapshot': '作品集快照',

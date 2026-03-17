@@ -587,7 +587,8 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
       builder: (BuildContext dialogContext) => AlertDialog(
         title: Text(_t('Edit Portfolio Profile')),
         content: Text(
-          _t('Update your portfolio bio, goals, and featured highlights.')),
+          '${_t('Update your portfolio bio, goals, and featured highlights.')}\n\n${_t('Portfolio profile editing is not available in the app yet')}',
+        ),
         actions: <Widget>[
           TextButton(
             onPressed: () {
@@ -603,28 +604,6 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
             },
             child: Text(_t('Cancel')),
           ),
-          ElevatedButton(
-            onPressed: () {
-              TelemetryService.instance.logEvent(
-                event: 'cta.clicked',
-                metadata: <String, dynamic>{
-                  'module': 'learner_portfolio',
-                  'cta_id': 'save_profile_changes',
-                  'surface': 'edit_profile_dialog',
-                },
-              );
-              Navigator.pop(dialogContext);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    _t('Portfolio profile editing is not available in the app yet'),
-                  ),
-                  backgroundColor: ScholesaColors.learner,
-                ),
-              );
-            },
-            child: Text(_t('Save')),
-          ),
         ],
       ),
     );
@@ -635,7 +614,9 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
         title: Text(_t('Share Portfolio')),
-        content: Text(_t('Create a secure share link for parents or mentors.')),
+        content: Text(
+          '${_t('Create a secure share link for parents or mentors.')}\n\n${_t('Portfolio share links are not available in the app yet')}',
+        ),
         actions: <Widget>[
           TextButton(
             onPressed: () {
@@ -650,28 +631,6 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
               Navigator.pop(dialogContext);
             },
             child: Text(_t('Cancel')),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              TelemetryService.instance.logEvent(
-                event: 'cta.clicked',
-                metadata: <String, dynamic>{
-                  'module': 'learner_portfolio',
-                  'cta_id': 'generate_share_link',
-                  'surface': 'share_portfolio_dialog',
-                },
-              );
-              Navigator.pop(dialogContext);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    _t('Portfolio share links are not available in the app yet'),
-                  ),
-                  backgroundColor: ScholesaColors.learner,
-                ),
-              );
-            },
-            child: Text(_t('Generate Link')),
           ),
         ],
       ),

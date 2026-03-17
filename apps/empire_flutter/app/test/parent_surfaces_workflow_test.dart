@@ -16,6 +16,8 @@ import 'package:scholesa_app/modules/parent/parent_service.dart';
 import 'package:scholesa_app/modules/parent/parent_summary_page.dart';
 import 'package:scholesa_app/runtime/learning_runtime_provider.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
+import 'package:url_launcher_platform_interface/link.dart';
+import 'package:url_launcher_platform_interface/url_launcher_platform_interface.dart';
 
 final ThemeData _workflowTheme = ThemeData(
   useMaterial3: true,
@@ -23,6 +25,42 @@ final ThemeData _workflowTheme = ThemeData(
 );
 
 class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
+
+class _FakeUrlLauncherPlatform extends UrlLauncherPlatform {
+  final List<String> launchedUrls = <String>[];
+  bool canLaunchResult = true;
+  bool launchResult = true;
+
+  @override
+  LinkDelegate? get linkDelegate => null;
+
+  @override
+  Future<bool> canLaunch(String url) async => canLaunchResult;
+
+  @override
+  Future<void> closeWebView() async {}
+
+  @override
+  Future<bool> launch(
+    String url, {
+    required bool useSafariVC,
+    required bool useWebView,
+    required bool enableJavaScript,
+    required bool enableDomStorage,
+    required bool universalLinksOnly,
+    required Map<String, String> headers,
+    String? webOnlyWindowName,
+  }) async {
+    launchedUrls.add(url);
+    return launchResult;
+  }
+
+  @override
+  Future<bool> supportsCloseForMode(PreferredLaunchMode mode) async => false;
+
+  @override
+  Future<bool> supportsMode(PreferredLaunchMode mode) async => true;
+}
 
 class _StubParentService extends ParentService {
   _StubParentService({
@@ -252,57 +290,95 @@ void main() {
     testWidgets('portfolio page shows explicit unavailable share state',
         (WidgetTester tester) async {
       final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+      final _FakeUrlLauncherPlatform launcherPlatform =
+          _FakeUrlLauncherPlatform();
+      final UrlLauncherPlatform previousLauncherPlatform =
+          UrlLauncherPlatform.instance;
       await _seedParentData(firestore);
 
-      await _pumpPage(
-        tester,
-        firestore: firestore,
-        home: const ParentPortfolioPage(),
-      );
+      UrlLauncherPlatform.instance = launcherPlatform;
+      try {
+        await _pumpPage(
+          tester,
+          firestore: firestore,
+          home: const ParentPortfolioPage(),
+        );
 
-      expect(find.text('Build a Robot'), findsOneWidget);
-      expect(find.text('Hidden Project'), findsNothing);
+        expect(find.text('Build a Robot'), findsOneWidget);
+        expect(find.text('Hidden Project'), findsNothing);
 
-      await tester.ensureVisible(find.text('Build a Robot').first);
-      await tester.tap(find.text('Build a Robot').first);
-      await tester.pumpAndSettle();
+        await tester.ensureVisible(find.text('Build a Robot').first);
+        await tester.tap(find.text('Build a Robot').first);
+        await tester.pumpAndSettle();
 
-      expect(find.widgetWithText(OutlinedButton, 'Share'), findsOneWidget);
-      expect(find.widgetWithText(ElevatedButton, 'Download'), findsOneWidget);
+        expect(find.widgetWithText(OutlinedButton, 'Share'), findsOneWidget);
+        expect(find.widgetWithText(ElevatedButton, 'Download'), findsOneWidget);
 
-      await tester.tap(find.widgetWithText(OutlinedButton, 'Share'));
-      await tester.pumpAndSettle();
+        await tester.tap(find.widgetWithText(OutlinedButton, 'Share'));
+        await tester.pumpAndSettle();
 
-      expect(
-        find.text('Portfolio sharing is not available in the app yet'),
-        findsOneWidget,
-      );
+        expect(
+          launcherPlatform.launchedUrls,
+          contains(
+            predicate<String>(
+              (String value) =>
+                  value.startsWith('mailto:support@scholesa.com?') &&
+                  value.contains('portfolio+share+request'),
+            ),
+          ),
+        );
+        expect(
+          find.text('Portfolio sharing is not available in the app yet'),
+          findsNothing,
+        );
+      } finally {
+        UrlLauncherPlatform.instance = previousLauncherPlatform;
+      }
     });
 
-    testWidgets('portfolio page shows explicit unavailable download state',
+    testWidgets('portfolio page launches support email for download state',
         (WidgetTester tester) async {
       final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+      final _FakeUrlLauncherPlatform launcherPlatform =
+          _FakeUrlLauncherPlatform();
+      final UrlLauncherPlatform previousLauncherPlatform =
+          UrlLauncherPlatform.instance;
       await _seedParentData(firestore);
 
-      await _pumpPage(
-        tester,
-        firestore: firestore,
-        home: const ParentPortfolioPage(),
-      );
+      UrlLauncherPlatform.instance = launcherPlatform;
+      try {
+        await _pumpPage(
+          tester,
+          firestore: firestore,
+          home: const ParentPortfolioPage(),
+        );
 
-      await tester.ensureVisible(find.text('Build a Robot').first);
-      await tester.tap(find.text('Build a Robot').first);
-      await tester.pumpAndSettle();
+        await tester.ensureVisible(find.text('Build a Robot').first);
+        await tester.tap(find.text('Build a Robot').first);
+        await tester.pumpAndSettle();
 
-      expect(find.widgetWithText(ElevatedButton, 'Download'), findsOneWidget);
+        expect(find.widgetWithText(ElevatedButton, 'Download'), findsOneWidget);
 
-      await tester.tap(find.widgetWithText(ElevatedButton, 'Download'));
-      await tester.pumpAndSettle();
+        await tester.tap(find.widgetWithText(ElevatedButton, 'Download'));
+        await tester.pumpAndSettle();
 
-      expect(
-        find.text('Portfolio downloads are not available in the app yet'),
-        findsOneWidget,
-      );
+        expect(
+          launcherPlatform.launchedUrls,
+          contains(
+            predicate<String>(
+              (String value) =>
+                  value.startsWith('mailto:support@scholesa.com?') &&
+                  value.contains('portfolio+download+request'),
+            ),
+          ),
+        );
+        expect(
+          find.text('Portfolio downloads are not available in the app yet'),
+          findsNothing,
+        );
+      } finally {
+        UrlLauncherPlatform.instance = previousLauncherPlatform;
+      }
     });
 
     testWidgets(

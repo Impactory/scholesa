@@ -69,9 +69,10 @@ Widget _buildHarness({
     providers: providers,
     child: MaterialApp.router(
       routerConfig: router,
-      theme: theme ?? ScholesaTheme.light.copyWith(
-        splashFactory: NoSplash.splashFactory,
-      ),
+      theme: theme ??
+          ScholesaTheme.light.copyWith(
+            splashFactory: NoSplash.splashFactory,
+          ),
       locale: locale,
       localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
         GlobalMaterialLocalizations.delegate,
@@ -179,9 +180,11 @@ void main() {
               providers: <SingleChildWidget>[
                 ChangeNotifierProvider<AppState>.value(value: appState),
                 Provider<FirestoreService>.value(value: firestoreService),
-                ChangeNotifierProvider<MissionService>.value(value: missionService),
+                ChangeNotifierProvider<MissionService>.value(
+                    value: missionService),
                 ChangeNotifierProvider<HabitService>.value(value: habitService),
-                ChangeNotifierProvider<MessageService>.value(value: messageService),
+                ChangeNotifierProvider<MessageService>.value(
+                    value: messageService),
                 Provider<dynamic>.value(value: null),
               ],
             ),
@@ -191,7 +194,8 @@ void main() {
           await tester.tap(find.text('Complete setup'));
           await tester.pumpAndSettle();
 
-          await tester.enterText(find.byType(TextField).at(0), 'Robotics, coding');
+          await tester.enterText(
+              find.byType(TextField).at(0), 'Robotics, coding');
           await tester.enterText(
               find.byType(TextField).at(1), 'Build a better robot');
           await tester.enterText(
@@ -211,7 +215,8 @@ void main() {
       expect(snapshot.docs.first.data()['onboardingCompleted'], true);
 
       expect(reminderCalls, hasLength(1));
-      expect(reminderCalls.first['callableName'], 'syncLearnerReminderPreference');
+      expect(
+          reminderCalls.first['callableName'], 'syncLearnerReminderPreference');
       expect(reminderCalls.first['payload']['siteId'], 'site-1');
       expect(reminderCalls.first['payload']['schedule'], 'weekdays');
       expect(reminderCalls.first['payload']['weeklyTargetMinutes'], 90);
@@ -280,7 +285,8 @@ void main() {
       expect(snapshot.docs.first.data()['reflectionType'], 'post_session');
     });
 
-    testWidgets('motivation loop pre-plan action writes learner reflection record',
+    testWidgets(
+        'motivation loop pre-plan action writes learner reflection record',
         (WidgetTester tester) async {
       final Locale locale = const Locale('en');
       final FakeFirebaseFirestore fakeFirestore = FakeFirebaseFirestore();
@@ -305,7 +311,10 @@ void main() {
         userId: 'test-user-1',
       );
 
-      await fakeFirestore.collection('learnerProfiles').doc('site-1_test-user-1').set(
+      await fakeFirestore
+          .collection('learnerProfiles')
+          .doc('site-1_test-user-1')
+          .set(
         <String, dynamic>{
           'learnerId': 'test-user-1',
           'siteId': 'site-1',
@@ -350,7 +359,8 @@ void main() {
       expect(snapshot.docs.first.data()['reflectionType'], 'pre_plan');
     });
 
-    testWidgets('motivation loop shout-out action writes learner reflection record',
+    testWidgets(
+        'motivation loop shout-out action writes learner reflection record',
         (WidgetTester tester) async {
       final Locale locale = const Locale('en');
       final FakeFirebaseFirestore fakeFirestore = FakeFirebaseFirestore();
@@ -375,7 +385,10 @@ void main() {
         userId: 'test-user-1',
       );
 
-      await fakeFirestore.collection('learnerProfiles').doc('site-1_test-user-1').set(
+      await fakeFirestore
+          .collection('learnerProfiles')
+          .doc('site-1_test-user-1')
+          .set(
         <String, dynamic>{
           'learnerId': 'test-user-1',
           'siteId': 'site-1',
@@ -559,13 +572,13 @@ void main() {
       final Map<String, dynamic>? data = assignmentDoc.data();
 
       expect(data?['fsrsLastRating'], 'good');
-    expect(data?['fsrsQueueState'], 'suspended');
-    expect(data?['interleavingMode'], 'scaffoldedMixed');
-    expect(data?['recommendedInterleavingMissionIds'], contains('mission-2'));
+      expect(data?['fsrsQueueState'], 'suspended');
+      expect(data?['interleavingMode'], 'scaffoldedMixed');
+      expect(data?['recommendedInterleavingMissionIds'], contains('mission-2'));
       expect(data?['workedExampleShown'], true);
-    expect(data?['workedExampleFadeStage'], 2);
-    expect(data?['workedExamplePromptLevel'], 'partialSteps');
-    expect(data?.containsKey('nextReviewAt'), isFalse);
+      expect(data?['workedExampleFadeStage'], 2);
+      expect(data?['workedExamplePromptLevel'], 'partialSteps');
+      expect(data?.containsKey('nextReviewAt'), isFalse);
 
       final List<String> emittedEvents = telemetryPayloads
           .map((Map<String, dynamic> payload) => payload['event'] as String?)
@@ -577,7 +590,8 @@ void main() {
       expect(emittedEvents, contains('worked_example.shown'));
     });
 
-    testWidgets('missions surface shows keyboard-only alternatives for study flow',
+    testWidgets(
+        'missions surface shows keyboard-only alternatives for study flow',
         (WidgetTester tester) async {
       final Locale locale = const Locale('en');
       final FakeFirebaseFirestore fakeFirestore = FakeFirebaseFirestore();
@@ -594,7 +608,10 @@ void main() {
         learnerId: 'test-user-1',
       );
 
-      await fakeFirestore.collection('learnerProfiles').doc('site-1_test-user-1').set(
+      await fakeFirestore
+          .collection('learnerProfiles')
+          .doc('site-1_test-user-1')
+          .set(
         <String, dynamic>{
           'learnerId': 'test-user-1',
           'siteId': 'site-1',
@@ -602,7 +619,10 @@ void main() {
           'onboardingCompleted': true,
         },
       );
-      await fakeFirestore.collection('missionAssignments').doc('assignment-1').set(
+      await fakeFirestore
+          .collection('missionAssignments')
+          .doc('assignment-1')
+          .set(
         <String, dynamic>{
           'missionId': 'mission-1',
           'learnerId': 'test-user-1',
@@ -758,13 +778,14 @@ void main() {
 
       await tester.tap(find.byIcon(Icons.edit).first);
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Save').last);
-      await tester.pumpAndSettle();
 
       expect(
-        find.text('Portfolio profile editing is not available in the app yet'),
+        find.textContaining(
+          'Portfolio profile editing is not available in the app yet',
+        ),
         findsOneWidget,
       );
+      expect(find.text('Save'), findsNothing);
     });
 
     testWidgets('learner portfolio shows explicit unavailable share messaging',
@@ -791,13 +812,14 @@ void main() {
       await tester.tap(find.byType(FloatingActionButton));
       await tester.pumpAndSettle();
       expect(find.text('Share Portfolio'), findsOneWidget);
-      await tester.tap(find.text('Generate Link').last);
-      await tester.pumpAndSettle();
 
       expect(
-        find.text('Portfolio share links are not available in the app yet'),
+        find.textContaining(
+          'Portfolio share links are not available in the app yet',
+        ),
         findsOneWidget,
       );
+      expect(find.text('Generate Link'), findsNothing);
     });
 
     testWidgets('site sessions renders zh-CN copy',

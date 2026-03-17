@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../i18n/parent_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
@@ -357,6 +358,7 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
   }
 
   void _showItemDetails(_PortfolioItem item) {
+    final BuildContext rootContext = context;
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
       metadata: <String, dynamic>{
@@ -451,7 +453,7 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
               children: <Widget>[
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () {
+                    onPressed: () async {
                       TelemetryService.instance.logEvent(
                         event: 'cta.clicked',
                         metadata: <String, dynamic>{
@@ -460,12 +462,10 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
                         },
                       );
                       Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            _t('Portfolio sharing is not available in the app yet'),
-                          ),
-                        ),
+                      await _requestPortfolioSupport(
+                        rootContext,
+                        item: item,
+                        requestType: 'share',
                       );
                     },
                     icon: const Icon(Icons.share_rounded),
@@ -475,7 +475,7 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       TelemetryService.instance.logEvent(
                         event: 'cta.clicked',
                         metadata: <String, dynamic>{
@@ -484,12 +484,10 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
                         },
                       );
                       Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            _t('Portfolio downloads are not available in the app yet'),
-                          ),
-                        ),
+                      await _requestPortfolioSupport(
+                        rootContext,
+                        item: item,
+                        requestType: 'download',
                       );
                     },
                     child: Row(
@@ -509,6 +507,59 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
         ),
       ),
     );
+  }
+
+  Future<void> _requestPortfolioSupport(
+    BuildContext context, {
+    required _PortfolioItem item,
+    required String requestType,
+  }) async {
+    final AppState appState = context.read<AppState>();
+    final String siteId = appState.activeSiteId?.trim().isNotEmpty == true
+        ? appState.activeSiteId!.trim()
+        : 'Not set';
+    final String parentId = appState.userId?.trim().isNotEmpty == true
+        ? appState.userId!.trim()
+        : 'Not set';
+    final String parentName = appState.displayName?.trim().isNotEmpty == true
+        ? appState.displayName!.trim()
+        : 'Not set';
+    final String parentEmail = appState.email?.trim().isNotEmpty == true
+        ? appState.email!.trim()
+        : 'Not set';
+    final String requestLabel = requestType == 'share' ? 'Share' : 'Download';
+
+    final Uri emailUri = Uri(
+      scheme: 'mailto',
+      path: 'support@scholesa.com',
+      queryParameters: <String, String>{
+        'subject': 'Parent portfolio $requestType request - $siteId',
+        'body':
+            'Hello Scholesa support.\n\nI need a parent-safe portfolio $requestType for this item.\n\nRequest: $requestLabel\nSite ID: $siteId\nParent ID: $parentId\nParent Name: $parentName\nParent Email: $parentEmail\nPortfolio Item ID: ${item.id}\nPortfolio Item Title: ${item.title}\nPillar: ${item.pillar}\nCompleted At: ${_formatDate(item.completedAt)}\n\nPlease let me know the next step.\n',
+      },
+    );
+
+    final bool launched = await _tryLaunchExternalUri(emailUri);
+    if (!mounted || launched) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          _t('We could not open your email app right now. Contact support@scholesa.com with your site ID and portfolio item details.'),
+        ),
+      ),
+    );
+  }
+
+  Future<bool> _tryLaunchExternalUri(Uri uri) async {
+    final bool canLaunchUri = await canLaunchUrl(uri);
+    if (!canLaunchUri) {
+      return false;
+    }
+
+    return launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
   String _formatDate(DateTime date) {
