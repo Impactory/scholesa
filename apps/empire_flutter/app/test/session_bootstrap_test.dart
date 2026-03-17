@@ -30,6 +30,7 @@ void main() {
     );
 
     when(() => mockAuth.currentUser).thenReturn(mockUser);
+  when(() => mockAuth.signOut()).thenAnswer((_) async {});
     when(() => mockUser.uid).thenReturn('uid-123');
     when(() => mockUser.email).thenReturn('test@example.com');
     when(() => mockUser.displayName).thenReturn('Test User');
@@ -57,29 +58,15 @@ void main() {
       expect(appState.error, isNull);
     });
 
-    test('recovers with fallback profile when profile is missing', () async {
+    test('signs out and surfaces profile error when profile is missing', () async {
       when(() => mockFirestore.getUserProfile()).thenAnswer((_) async => null);
-      when(() => mockFirestore.buildBootstrapFallbackProfile(mockUser))
-          .thenAnswer(
-        (_) async => <String, dynamic>{
-          'userId': 'uid-123',
-          'email': 'test@example.com',
-          'displayName': 'Test User',
-          'role': 'learner',
-          'activeSiteId': null,
-          'siteIds': <String>[],
-          'entitlements': <dynamic>[],
-        },
-      );
 
       await sessionBootstrap.initialize();
 
-      expect(appState.isAuthenticated, isTrue);
-      expect(appState.role, UserRole.learner);
-      expect(appState.error, isNull);
-      verifyNever(() => mockAuth.signOut());
-      verify(() => mockFirestore.buildBootstrapFallbackProfile(mockUser))
-          .called(1);
+      expect(appState.isAuthenticated, isFalse);
+      expect(appState.role, isNull);
+      expect(appState.error, 'Failed to load user profile');
+      verify(() => mockAuth.signOut()).called(1);
     });
   });
 }

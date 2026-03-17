@@ -22,20 +22,11 @@ class FirestoreService {
     final User? user = _auth.currentUser;
     if (user == null) return null;
 
-    DocumentSnapshot<Map<String, dynamic>> doc;
-    try {
-      doc = await _firestore.collection('users').doc(user.uid).get();
-    } on FirebaseException catch (e) {
-      if (e.code == 'permission-denied' ||
-          e.code == 'unavailable' ||
-          e.code == 'unauthenticated') {
-        return buildBootstrapFallbackProfile(user);
-      }
-      rethrow;
-    }
+    final DocumentSnapshot<Map<String, dynamic>> doc =
+        await _firestore.collection('users').doc(user.uid).get();
 
     if (!doc.exists) {
-      return buildBootstrapFallbackProfile(user);
+      throw StateError('User profile does not exist');
     }
 
     final Map<String, dynamic> data = doc.data()!;
@@ -74,37 +65,6 @@ class FirestoreService {
       'biometricEnabled':
           _preferenceBool(data, 'biometricEnabled', fallback: false),
       'entitlements': entitlements,
-    };
-  }
-
-  Future<Map<String, dynamic>> buildBootstrapFallbackProfile(User user) async {
-    String? role;
-    try {
-      final IdTokenResult tokenResult = await user.getIdTokenResult(true);
-      final Object? roleClaim = tokenResult.claims?['role'];
-      if (roleClaim is String && roleClaim.isNotEmpty) {
-        role = roleClaim;
-      }
-    } catch (_) {
-      // Ignore claim refresh failures and fall back to the safest client role.
-    }
-
-    role = (role == null || role.isEmpty) ? 'learner' : role;
-
-    return <String, dynamic>{
-      'userId': user.uid,
-      'email': user.email ?? '',
-      'displayName': user.displayName ?? user.email?.split('@')[0] ?? '',
-      'role': role,
-      'activeSiteId': null,
-      'siteIds': <String>[],
-      'localeCode': 'en',
-      'timeZone': 'auto',
-      'notificationsEnabled': true,
-      'emailNotifications': true,
-      'pushNotifications': true,
-      'biometricEnabled': false,
-      'entitlements': <Map<String, dynamic>>[],
     };
   }
 

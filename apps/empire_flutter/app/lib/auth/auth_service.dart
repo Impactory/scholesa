@@ -200,7 +200,7 @@ class AuthService {
         await _auth.signInWithCredential(credential);
       }
 
-      // Bootstrap session with profile (falls back to Firebase user data if Firestore unavailable)
+      // Bootstrap session with the provisioned Firestore profile.
       await _bootstrapSession();
     } on FirebaseAuthException catch (e) {
       _appState.setError(_mapAuthError(e.code));
@@ -272,15 +272,11 @@ class AuthService {
         throw StateError('Not authenticated');
       }
 
-      final Map<String, dynamic>? profile =
-          await _firestoreService.getUserProfile();
-      if (profile != null) {
-        _appState.updateFromMeResponse(profile);
-      } else {
-        final Map<String, dynamic> fallbackProfile =
-            await _firestoreService.buildBootstrapFallbackProfile(user);
-        _appState.updateFromMeResponse(fallbackProfile);
+      final Map<String, dynamic>? profile = await _firestoreService.getUserProfile();
+      if (profile == null) {
+        throw StateError('User profile does not exist');
       }
+      _appState.updateFromMeResponse(profile);
     } catch (e) {
       debugPrint('Error in _bootstrapSession: $e');
       debugPrintStack(label: '_bootstrapSession error stack');

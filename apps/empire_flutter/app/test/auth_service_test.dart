@@ -79,6 +79,7 @@ void main() {
 
     // Common stubs
     when(() => mockAuth.currentUser).thenReturn(mockUser);
+    when(() => mockAuth.signOut()).thenAnswer((_) async {});
     when(() => mockUser.uid).thenReturn('uid-123');
     when(() => mockUser.email).thenReturn('test@example.com');
     when(() => mockUser.displayName).thenReturn('Test User');
@@ -127,30 +128,19 @@ void main() {
               password: any(named: 'password'),
             )).thenAnswer((_) async => mockCredential);
         when(() => mockFirestore.getUserProfile()).thenAnswer((_) async => null);
-        when(() => mockFirestore.buildBootstrapFallbackProfile(mockUser))
-            .thenAnswer(
-          (_) async => <String, dynamic>{
-            'userId': 'uid-123',
-            'email': 'test@example.com',
-            'displayName': 'Test User',
-            'role': 'learner',
-            'activeSiteId': null,
-            'siteIds': <String>[],
-            'entitlements': <dynamic>[],
-          },
+
+        await expectLater(
+          authService.signInWithEmailAndPassword(
+            email: 'test@example.com',
+            password: 'password123',
+          ),
+          throwsA(isA<StateError>()),
         );
 
-        await authService.signInWithEmailAndPassword(
-          email: 'test@example.com',
-          password: 'password123',
-        );
-
-        expect(appState.isAuthenticated, isTrue);
-        expect(appState.role, UserRole.learner);
-        expect(appState.error, isNull);
-        verifyNever(() => mockAuth.signOut());
-        verify(() => mockFirestore.buildBootstrapFallbackProfile(mockUser))
-            .called(1);
+        expect(appState.isAuthenticated, isFalse);
+        expect(appState.role, isNull);
+        expect(appState.error, 'Failed to load user profile');
+        verify(() => mockAuth.signOut()).called(1);
       });
 
       test('maps user-not-found error to friendly message', () async {
@@ -411,27 +401,13 @@ void main() {
     test('refreshSession signs out when profile is missing', () async {
       when(() => mockAuth.currentUser).thenReturn(mockUser);
       when(() => mockFirestore.getUserProfile()).thenAnswer((_) async => null);
-      when(() => mockFirestore.buildBootstrapFallbackProfile(mockUser))
-          .thenAnswer(
-        (_) async => <String, dynamic>{
-          'userId': 'uid-123',
-          'email': 'test@example.com',
-          'displayName': 'Test User',
-          'role': 'learner',
-          'activeSiteId': null,
-          'siteIds': <String>[],
-          'entitlements': <dynamic>[],
-        },
-      );
 
-      await authService.refreshSession();
+      await expectLater(authService.refreshSession(), throwsA(isA<StateError>()));
 
-      expect(appState.isAuthenticated, isTrue);
-      expect(appState.role, UserRole.learner);
-      expect(appState.error, isNull);
-      verifyNever(() => mockAuth.signOut());
-      verify(() => mockFirestore.buildBootstrapFallbackProfile(mockUser))
-          .called(1);
+      expect(appState.isAuthenticated, isFalse);
+      expect(appState.role, isNull);
+      expect(appState.error, 'Failed to load user profile');
+      verify(() => mockAuth.signOut()).called(1);
     });
 
     test('refreshSession is no-op when no current user', () async {

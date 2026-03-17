@@ -36,13 +36,10 @@ class SessionBootstrap {
           await _firestoreService
               .getUserProfile()
               .timeout(_profileBootstrapTimeout);
-      if (profile != null) {
-        _appState.updateFromMeResponse(profile);
-      } else {
-        final Map<String, dynamic> fallbackProfile =
-            await _firestoreService.buildBootstrapFallbackProfile(user);
-        _appState.updateFromMeResponse(fallbackProfile);
+      if (profile == null) {
+        throw StateError('User profile does not exist');
       }
+      _appState.updateFromMeResponse(profile);
     } on TimeoutException {
       debugPrint('Session bootstrap timed out while loading profile');
       await _failBootstrap();
