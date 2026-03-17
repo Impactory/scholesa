@@ -10,6 +10,7 @@ import 'checkin_service.dart';
 String _tCheckin(BuildContext context, String input) {
   return WorkflowSurfaceI18n.text(context, input);
 }
+
 class CheckinPage extends StatefulWidget {
   const CheckinPage({super.key});
 
@@ -390,7 +391,8 @@ class _CheckinPageState extends State<CheckinPage>
           return _buildEmptyState(
             icon: Icons.history,
             title: _tCheckin(context, 'No records today'),
-            subtitle: _tCheckin(context, 'Check-in/out activity will appear here'),
+            subtitle:
+                _tCheckin(context, 'Check-in/out activity will appear here'),
           );
         }
 
@@ -508,7 +510,8 @@ class _CheckinPageState extends State<CheckinPage>
     );
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('${_tCheckin(context, 'Late pickup flagged for')} ${summary.learnerName}'),
+        content: Text(
+            '${_tCheckin(context, 'Late pickup flagged for')} ${summary.learnerName}'),
         backgroundColor: ScholesaColors.warning,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -1236,11 +1239,12 @@ class _CheckInSheetState extends State<_CheckInSheet> {
                       ),
                       child: Row(
                         children: <Widget>[
-                          const Icon(Icons.warning, color: ScholesaColors.warning),
+                          const Icon(Icons.warning,
+                              color: ScholesaColors.warning),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(_tCheckin(
-                              context, 'No authorized contacts on file')),
+                                context, 'No authorized contacts on file')),
                           ),
                         ],
                       ),

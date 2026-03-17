@@ -279,7 +279,8 @@ void main() {
       expect(find.textContaining('Location: Lab 1'), findsOneWidget);
 
       expect(
-        find.textContaining('Session reminders are not available in the app yet'),
+        find.textContaining(
+            'Session reminders are not available in the app yet'),
         findsOneWidget,
       );
       expect(find.text('Set Reminder'), findsNothing);

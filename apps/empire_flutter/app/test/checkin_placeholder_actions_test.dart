@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -54,7 +53,8 @@ Future<void> _pumpCheckinPage(
 }
 
 void main() {
-  testWidgets('checkin QR dialog shows explicit unavailable copy without fake actions',
+  testWidgets(
+      'checkin QR dialog shows explicit unavailable copy without fake actions',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     await firestore.collection('users').doc('learner-1').set(<String, dynamic>{
@@ -74,7 +74,8 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.textContaining('Manual pickup code entry is not available in the app yet'),
+      find.textContaining(
+          'Manual pickup code entry is not available in the app yet'),
       findsOneWidget,
     );
     expect(find.text('Use Camera'), findsNothing);
