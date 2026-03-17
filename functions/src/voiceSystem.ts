@@ -158,7 +158,7 @@ interface BosPolicyHint {
   type?: 'nudge' | 'scaffold' | 'handoff' | 'revisit' | 'pace';
   salience?: 'low' | 'medium' | 'high';
   triggerMvl: boolean;
-  confidence: number;
+  confidence?: number;
   reasonCodes: string[];
 }
 
@@ -170,7 +170,7 @@ interface VoiceLearningSnapshot {
   lastResponseMode: string;
   lastNeedsScaffold: boolean;
   lastEmotionalState: string;
-  lastUnderstandingConfidence: number;
+  lastUnderstandingConfidence?: number;
   needsScaffoldCount: number;
   frustrationSignalCount: number;
 }
@@ -1512,10 +1512,13 @@ function extractInternalBosPayload(data: unknown): BosPolicyHint | undefined {
   const modeCandidate = normalizeString(intervention.mode)?.toLowerCase();
   const typeCandidate = normalizeString(intervention.type)?.toLowerCase();
   const salienceCandidate = normalizeString(intervention.salience)?.toLowerCase();
-  const confidence = clampProbability(toFiniteNumber(
-    intervention.confidence ?? asRecord(intervention.metadata)?.confidence,
-    0.5,
-  ));
+  const confidenceRaw = firstNumber(
+    intervention.confidence,
+    asRecord(intervention.metadata)?.confidence,
+  );
+  const confidence = confidenceRaw === undefined
+    ? undefined
+    : clampProbability(confidenceRaw);
 
   const mode = modeCandidate === 'hint' || modeCandidate === 'verify' || modeCandidate === 'explain' || modeCandidate === 'debug'
     ? modeCandidate
@@ -1584,7 +1587,7 @@ function buildTtsStyleHints(input: {
   const hasPersistentSupportSignal = Boolean(input.learningSnapshot) && (
     input.learningSnapshot!.lastNeedsScaffold ||
     input.learningSnapshot!.lastEmotionalState === 'frustrated' ||
-    input.learningSnapshot!.lastUnderstandingConfidence < 0.6
+    ((input.learningSnapshot!.lastUnderstandingConfidence ?? 1) < 0.6)
   );
   const speechRate = hasPersistentSupportSignal || input.understanding.needsScaffold
     ? 'slow'
@@ -2087,7 +2090,9 @@ async function recordVoiceTelemetryEvent(payload: {
       audioPresent: (payload.audioBytes ?? 0) > 0,
       textLength: payload.textLength ?? 0,
       understandingIntent: payload.understanding?.intent ?? 'general_support',
-      understandingConfidence: payload.understanding?.confidence ?? 0,
+      ...(payload.understanding?.confidence !== undefined
+        ? { understandingConfidence: payload.understanding.confidence }
+        : {}),
       responseMode: payload.understanding?.responseMode ?? 'hint',
       needsScaffold: payload.understanding?.needsScaffold ?? false,
       emotionalState: payload.understanding?.emotionalState ?? 'neutral',
@@ -2193,7 +2198,9 @@ async function recordBosInteractionEvent(payload: {
       contextMode: bosContext.contextMode,
       conceptTags: bosContext.conceptTags,
       understandingIntent: payload.understanding?.intent ?? 'general_support',
-      understandingConfidence: payload.understanding?.confidence ?? 0,
+      ...(payload.understanding?.confidence !== undefined
+        ? { understandingConfidence: payload.understanding.confidence }
+        : {}),
       responseMode: payload.understanding?.responseMode ?? 'hint',
       needsScaffold: payload.understanding?.needsScaffold ?? false,
       emotionalState: payload.understanding?.emotionalState ?? 'neutral',
@@ -2420,7 +2427,10 @@ async function loadVoiceLearningSnapshot(
     lastResponseMode: normalizeString(learning.lastResponseMode) ?? 'hint',
     lastNeedsScaffold: Boolean(learning.lastNeedsScaffold),
     lastEmotionalState: normalizeString(learning.lastEmotionalState) ?? 'neutral',
-    lastUnderstandingConfidence: clampProbability(toFiniteNumber(learning.lastUnderstandingConfidence, 0)),
+    lastUnderstandingConfidence:
+      firstNumber(learning.lastUnderstandingConfidence) === undefined
+        ? undefined
+        : clampProbability(firstNumber(learning.lastUnderstandingConfidence)!),
     needsScaffoldCount: Math.max(0, Math.floor(toFiniteNumber(metrics.needsScaffoldCount, 0))),
     frustrationSignalCount: Math.max(0, Math.floor(toFiniteNumber(metrics.frustrationSignalCount, 0))),
   };
@@ -2714,7 +2724,10 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
 
       const llmPayload = llmResult.ok ? extractInternalLlmPayload(llmResult.data) : undefined;
       const suggestedText = llmPayload?.text ? normalizeSpeechText(llmPayload.text) : undefined;
-      const certifiedModelConfidence = clampProbability(llmPayload?.understanding?.confidence ?? 0);
+      const certifiedModelConfidenceRaw = firstNumber(llmPayload?.understanding?.confidence);
+      const certifiedModelConfidence = certifiedModelConfidenceRaw === undefined
+        ? undefined
+        : clampProbability(certifiedModelConfidenceRaw);
       if (llmPayload?.modelVersion) {
         llmModelVersion = llmPayload.modelVersion;
       }
@@ -2728,7 +2741,8 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
       if (llmResult.ok && suggestedText) {
         if (
           requiresStrictStudentConfidence(authContext.requesterRole) &&
-          certifiedModelConfidence < MIN_AUTONOMOUS_STUDENT_CONFIDENCE
+          (certifiedModelConfidence === undefined ||
+            certifiedModelConfidence < MIN_AUTONOMOUS_STUDENT_CONFIDENCE)
         ) {
           candidateText = buildStudentConfidenceGuardResponse(locale);
           inferenceMeta = buildInferenceMeta('llm', llmResult, 'child_low_confidence_guard');
@@ -3129,7 +3143,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
             type: bosPolicyHint.type ?? null,
             salience: bosPolicyHint.salience ?? null,
             triggerMvl: bosPolicyHint.triggerMvl,
-            confidence: bosPolicyHint.confidence,
+            confidence: bosPolicyHint.confidence ?? null,
             reasonCodes: bosPolicyHint.reasonCodes,
           }
           : null,
