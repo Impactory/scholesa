@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -1180,7 +1181,8 @@ class _SettingsPageState extends State<SettingsPage> {
     );
 
     final AppState appState = context.read<AppState>();
-    final User? currentUser = FirebaseAuth.instance.currentUser;
+    final User? currentUser =
+        Firebase.apps.isNotEmpty ? FirebaseAuth.instance.currentUser : null;
     final String siteId = appState.activeSiteId?.trim().isNotEmpty == true
         ? appState.activeSiteId!.trim()
         : 'Not set';
