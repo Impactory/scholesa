@@ -1377,7 +1377,9 @@ export const genAiCoach = onCall(async (request) => {
       reliabilityRiskScore: reliabilityRisk.riskScore,
       autonomyRiskScore: autonomyRisk.riskScore,
       mvlGateActive: mvlResult.gateActive,
-      if (responseConfidence != null) responseConfidence: responseConfidence,
+      ...(responseConfidence != null
+        ? {responseConfidence}
+        : {}),
       requiresExplainBack,
       coppaBand,
     },
@@ -1403,7 +1405,9 @@ export const genAiCoach = onCall(async (request) => {
       mvlEpisodeId: mvlResult.episodeId || null,
       coppaBand,
       gradeBandSource,
-      if (responseConfidence != null) responseConfidence: responseConfidence,
+      ...(responseConfidence != null
+        ? {responseConfidence}
+        : {}),
     },
     timestamp: FieldValue.serverTimestamp(),
   });
