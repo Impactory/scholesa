@@ -37,6 +37,15 @@ export interface UnifiedEventPayload {
 // ==================== INTELLIGENCE SERVICE ====================
 
 export class IntelligenceService {
+  private static clampConfidence(value: number): number {
+    return Math.max(0.55, Math.min(0.95, Number(value.toFixed(2))));
+  }
+
+  private static confidenceFromGap(gap: number, scale: number, baseline: number): number {
+    const normalizedGap = Math.max(0, Math.min(gap, scale));
+    return this.clampConfidence(baseline + (normalizedGap / scale) * 0.25);
+  }
+
   /**
    * Track a unified event (both telemetry and analytics)
    * This is the primary method for event tracking across the platform
@@ -248,41 +257,49 @@ export class IntelligenceService {
     const patterns: Array<{ pattern: string; confidence: number; description: string }> = [];
 
     if (profile.sdtScores.autonomy >= 70 && profile.sdtScores.competence < 60) {
+      const challengeGap = (profile.sdtScores.autonomy - 70) + (60 - profile.sdtScores.competence);
       patterns.push({
         pattern: 'Challenge-seeking with uneven mastery',
-        confidence: 0.82,
+        confidence: this.confidenceFromGap(challengeGap, 35, 0.6),
         description: `High agency over the past ${days} days with lower mastery indicators suggests the learner takes on challenge and may need tighter scaffolding.`,
       });
     }
 
     if (profile.sdtScores.competence >= 70 && profile.engagementScore >= 70) {
+      const steadyProgressGap = (profile.sdtScores.competence - 70) + (profile.engagementScore - 70);
       patterns.push({
         pattern: 'Consistent independent progress',
-        confidence: 0.88,
+        confidence: this.confidenceFromGap(steadyProgressGap, 45, 0.62),
         description: `Strong mastery and engagement across the past ${days} days indicate stable self-directed execution.`,
       });
     }
 
     if (profile.sdtScores.belonging >= 75) {
+      const belongingGap = profile.sdtScores.belonging - 75;
       patterns.push({
         pattern: 'Collaborative momentum',
-        confidence: 0.76,
+        confidence: this.confidenceFromGap(belongingGap, 20, 0.58),
         description: `Belonging signals are high, indicating peer interaction likely reinforces progress and persistence.`,
       });
     }
 
     if (profile.engagementScore < 45) {
+      const engagementRiskGap = 45 - profile.engagementScore;
       patterns.push({
         pattern: 'Engagement drop risk',
-        confidence: 0.79,
+        confidence: this.confidenceFromGap(engagementRiskGap, 25, 0.6),
         description: `Recent engagement is low, so shorter cycles and clearer wins are likely needed to sustain attention.`,
       });
     }
 
     if (patterns.length === 0) {
+      const balanceGap = Math.abs(profile.sdtScores.autonomy - 60)
+        + Math.abs(profile.sdtScores.competence - 60)
+        + Math.abs(profile.sdtScores.belonging - 60)
+        + Math.abs(profile.engagementScore - 60);
       patterns.push({
         pattern: 'Developing steady habits',
-        confidence: 0.65,
+        confidence: this.clampConfidence(0.72 - Math.min(balanceGap, 80) / 80 * 0.14),
         description: `Signals over the past ${days} days are balanced without strong extremes; continue structured routines and checkpoint pacing.`,
       });
     }

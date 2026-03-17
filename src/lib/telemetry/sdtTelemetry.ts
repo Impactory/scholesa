@@ -111,6 +111,20 @@ export interface MotivationInsight {
   confidence: number; // 0-1
 }
 
+function clampInsightConfidence(value: number): number {
+  return Math.max(0.55, Math.min(0.95, Number(value.toFixed(2))));
+}
+
+function confidenceAboveThreshold(value: number, threshold: number, scale: number, baseline: number): number {
+  const gap = Math.max(0, value - threshold);
+  return clampInsightConfidence(baseline + Math.min(gap / scale, 1) * 0.25);
+}
+
+function confidenceBelowThreshold(value: number, threshold: number, scale: number, baseline: number): number {
+  const gap = Math.max(0, threshold - value);
+  return clampInsightConfidence(baseline + Math.min(gap / scale, 1) * 0.25);
+}
+
 // ==================== TELEMETRY TRACKING ====================
 
 class SDTTelemetry {
@@ -462,7 +476,7 @@ class SDTTelemetry {
         category: 'autonomy',
         message: 'Learner tends to pick similar missions',
         suggestedAction: 'Suggest exploring different pillars or skill areas',
-        confidence: 0.8
+        confidence: confidenceBelowThreshold(metrics.choiceDiversity, 0.3, 0.3, 0.58)
       });
     }
 
@@ -473,7 +487,7 @@ class SDTTelemetry {
         category: 'competence',
         message: 'High first-time success rate',
         suggestedAction: 'Suggest harder missions for growth',
-        confidence: 0.9
+        confidence: confidenceAboveThreshold(metrics.firstTimeSuccessRate, 0.8, 0.2, 0.62)
       });
     }
 
@@ -483,7 +497,7 @@ class SDTTelemetry {
         category: 'competence',
         message: 'Struggles with checkpoints, but persists',
         suggestedAction: 'Offer scaffolding or AI Coach nudge',
-        confidence: 0.75
+        confidence: confidenceAboveThreshold(metrics.revisionPersistence, 5, 5, 0.58)
       });
     }
 
@@ -494,7 +508,7 @@ class SDTTelemetry {
         category: 'belonging',
         message: 'Not giving peer feedback regularly',
         suggestedAction: 'Prompt to review a teammate\'s work',
-        confidence: 0.7
+        confidence: confidenceBelowThreshold(metrics.feedbackGivingRate, 1, 1, 0.56)
       });
     }
 
@@ -503,7 +517,7 @@ class SDTTelemetry {
         type: 'strength',
         category: 'belonging',
         message: 'Receives lots of recognition from peers',
-        confidence: 0.85
+        confidence: confidenceAboveThreshold(metrics.recognitionReceived, 3, 4, 0.6)
       });
     }
 
@@ -514,7 +528,7 @@ class SDTTelemetry {
         category: 'competence',
         message: 'Skips reflection often',
         suggestedAction: 'Make reflection required or add reward',
-        confidence: 0.65
+        confidence: confidenceBelowThreshold(metrics.reflectionConsistency, 0.5, 0.5, 0.55)
       });
     }
 
