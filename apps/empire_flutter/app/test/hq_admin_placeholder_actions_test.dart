@@ -48,6 +48,7 @@ AppState _buildAppState() {
 void main() {
   testWidgets('HQ safety detail sheets remove the fake full report CTA',
       (WidgetTester tester) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 1800));
     await tester.pumpWidget(
       _buildHarness(
         child: HqSafetyPage(
@@ -69,7 +70,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Minor playground incident'));
+    await tester.tap(find.text('Minor playground incident').first);
     await tester.pumpAndSettle();
 
     expect(
@@ -81,6 +82,7 @@ void main() {
 
   testWidgets('HQ billing invoice cards remove the fake send invoice CTA',
       (WidgetTester tester) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 1800));
     await tester.pumpWidget(
       _buildHarness(
         child: HqBillingPage(
@@ -115,7 +117,9 @@ void main() {
     );
     expect(find.byIcon(Icons.send), findsNothing);
 
-    await tester.tap(find.byIcon(Icons.visibility));
+    final Finder viewInvoiceButton = find.byIcon(Icons.visibility);
+    await tester.ensureVisible(viewInvoiceButton);
+    await tester.tap(viewInvoiceButton, warnIfMissed: false);
     await tester.pumpAndSettle();
 
     expect(find.text('Invoice INV-1001'), findsOneWidget);
