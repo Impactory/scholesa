@@ -405,12 +405,15 @@ void main() {
     });
 
     test('AiCoachResponse ignores malformed risk payloads', () {
-      final AiCoachResponse response = AiCoachResponse.fromMap(<String, dynamic>{
+      final AiCoachResponse response =
+          AiCoachResponse.fromMap(<String, dynamic>{
         'message': 'Try one next step.',
         'mode': 'hint',
         'risk': <String, dynamic>{
           'reliability': <String, dynamic>{'method': 'sep'},
-          'autonomy': <String, dynamic>{'signals': <String>['rapid_submit']},
+          'autonomy': <String, dynamic>{
+            'signals': <String>['rapid_submit']
+          },
         },
       });
 

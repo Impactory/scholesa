@@ -182,7 +182,9 @@ void main() {
         isNull,
       );
       expect(
-        AutonomyRisk.tryFromMap(<String, dynamic>{'signals': <String>['rapid_submit']}),
+        AutonomyRisk.tryFromMap(<String, dynamic>{
+          'signals': <String>['rapid_submit']
+        }),
         isNull,
       );
     });

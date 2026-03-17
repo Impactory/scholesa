@@ -1021,13 +1021,13 @@ class AiCoachResponse {
           : null,
       reliabilityRisk: risk != null && risk['reliability'] != null
           ? ReliabilityRisk.tryFromMap(
-            _asStringDynamicMap(risk['reliability']),
-          )
+              _asStringDynamicMap(risk['reliability']),
+            )
           : null,
       autonomyRisk: risk != null && risk['autonomy'] != null
           ? AutonomyRisk.tryFromMap(
-            _asStringDynamicMap(risk['autonomy']),
-          )
+              _asStringDynamicMap(risk['autonomy']),
+            )
           : null,
       mvlGateActive: mvl?['gateActive'] as bool? ?? false,
       mvlEpisodeId: mvl?['episodeId'] as String?,
