@@ -4,6 +4,52 @@ import 'package:uuid/uuid.dart';
 
 const Uuid _uuid = Uuid();
 
+double? _readFiniteDouble(Map<String, dynamic> source, String key) {
+  final dynamic value = source[key];
+  if (value is! num) {
+    return null;
+  }
+  final double converted = value.toDouble();
+  return converted.isFinite ? converted : null;
+}
+
+List<double>? _readFiniteDoubleList(Map<String, dynamic> source, String key) {
+  final dynamic value = source[key];
+  if (value is! List<dynamic>) {
+    return null;
+  }
+  final List<double> converted = <double>[];
+  for (final dynamic entry in value) {
+    if (entry is! num) {
+      return null;
+    }
+    final double numeric = entry.toDouble();
+    if (!numeric.isFinite) {
+      return null;
+    }
+    converted.add(numeric);
+  }
+  return converted;
+}
+
+Map<String, dynamic>? _asStringDynamicMap(dynamic value) {
+  if (value is! Map<dynamic, dynamic>) {
+    return null;
+  }
+  return value.map(
+    (dynamic key, dynamic val) => MapEntry(key.toString(), val),
+  );
+}
+
+String? _readTrimmedString(Map<String, dynamic> source, String key) {
+  final dynamic value = source[key];
+  if (value is! String) {
+    return null;
+  }
+  final String trimmed = value.trim();
+  return trimmed.isEmpty ? null : trimmed;
+}
+
 // ──────────────────────────────────────────────────────
 // BOS+MIA Core Models
 // Spec: BOS_MIA_MATH_CONTRACT.md §1–§8
@@ -61,11 +107,30 @@ class XHat {
         'integrity': integrity,
       };
 
-  factory XHat.fromMap(Map<String, dynamic> m) => XHat(
-        cognition: (m['cognition'] as num?)?.toDouble() ?? 0.5,
-        engagement: (m['engagement'] as num?)?.toDouble() ?? 0.5,
-        integrity: (m['integrity'] as num?)?.toDouble() ?? 0.5,
-      );
+  factory XHat.fromMap(Map<String, dynamic> m) {
+    final XHat? parsed = XHat.tryFromMap(m);
+    if (parsed == null) {
+      throw const FormatException('Malformed XHat payload.');
+    }
+    return parsed;
+  }
+
+  static XHat? tryFromMap(Map<String, dynamic>? m) {
+    if (m == null) {
+      return null;
+    }
+    final double? cognition = _readFiniteDouble(m, 'cognition');
+    final double? engagement = _readFiniteDouble(m, 'engagement');
+    final double? integrity = _readFiniteDouble(m, 'integrity');
+    if (cognition == null || engagement == null || integrity == null) {
+      return null;
+    }
+    return XHat(
+      cognition: cognition.clamp(0.0, 1.0).toDouble(),
+      engagement: engagement.clamp(0.0, 1.0).toDouble(),
+      integrity: integrity.clamp(0.0, 1.0).toDouble(),
+    );
+  }
 
   List<double> toVec() => <double>[cognition, engagement, integrity];
 }
@@ -96,15 +161,34 @@ class CovarianceSummary {
         'confidence': confidence,
       };
 
-  factory CovarianceSummary.fromMap(Map<String, dynamic> m) =>
-      CovarianceSummary(
-        diag: ((m['diag'] as List<dynamic>?)
-                ?.map((dynamic e) => (e as num).toDouble())
-                .toList()) ??
-            <double>[0.25, 0.25, 0.25],
-        trace: (m['trace'] as num?)?.toDouble() ?? 0.75,
-        confidence: (m['confidence'] as num?)?.toDouble() ?? 0.25,
-      );
+  factory CovarianceSummary.fromMap(Map<String, dynamic> m) {
+    final CovarianceSummary? parsed = CovarianceSummary.tryFromMap(m);
+    if (parsed == null) {
+      throw const FormatException('Malformed covariance summary payload.');
+    }
+    return parsed;
+  }
+
+  static CovarianceSummary? tryFromMap(Map<String, dynamic>? m) {
+    if (m == null) {
+      return null;
+    }
+    final List<double>? diag = _readFiniteDoubleList(m, 'diag');
+    final double? trace = _readFiniteDouble(m, 'trace') ??
+        (diag != null && diag.isNotEmpty
+            ? diag.reduce((double sum, double entry) => sum + entry)
+            : null);
+    final double? confidence = _readFiniteDouble(m, 'confidence') ??
+        (trace != null ? 1 - (trace / 3) : null);
+    if (trace == null || confidence == null) {
+      return null;
+    }
+    return CovarianceSummary(
+      diag: diag ?? const <double>[],
+      trace: trace,
+      confidence: confidence.clamp(0.0, 1.0).toDouble(),
+    );
+  }
 }
 
 // ──── §3.2  Orchestration state composite ────
@@ -143,21 +227,47 @@ class OrchestrationState {
         'lastUpdatedAt': lastUpdatedAt ?? FieldValue.serverTimestamp(),
       };
 
-  factory OrchestrationState.fromMap(Map<String, dynamic> m) =>
-      OrchestrationState(
-        siteId: m['siteId'] as String? ?? '',
-        learnerId: m['learnerId'] as String? ?? '',
-        sessionOccurrenceId: m['sessionOccurrenceId'] as String? ?? '',
-        xHat: XHat.fromMap(
-            m['x_hat'] as Map<String, dynamic>? ?? <String, dynamic>{}),
-        p: CovarianceSummary.fromMap(
-            m['P'] as Map<String, dynamic>? ?? <String, dynamic>{}),
-        model: EstimatorModel.fromMap(
-            m['model'] as Map<String, dynamic>? ?? <String, dynamic>{}),
-        fusion: FusionInfo.fromMap(
-            m['fusion'] as Map<String, dynamic>? ?? <String, dynamic>{}),
-        lastUpdatedAt: m['lastUpdatedAt'] as Timestamp?,
-      );
+  factory OrchestrationState.fromMap(Map<String, dynamic> m) {
+    final OrchestrationState? parsed = OrchestrationState.tryFromMap(m);
+    if (parsed == null) {
+      throw const FormatException('Malformed orchestration state payload.');
+    }
+    return parsed;
+  }
+
+  static OrchestrationState? tryFromMap(Map<String, dynamic>? m) {
+    if (m == null) {
+      return null;
+    }
+    final String? siteId = _readTrimmedString(m, 'siteId');
+    final String? learnerId = _readTrimmedString(m, 'learnerId');
+    final String? sessionOccurrenceId =
+        _readTrimmedString(m, 'sessionOccurrenceId');
+    final XHat? xHat = XHat.tryFromMap(_asStringDynamicMap(m['x_hat']));
+    final CovarianceSummary? p =
+        CovarianceSummary.tryFromMap(_asStringDynamicMap(m['P']));
+    if (siteId == null ||
+        learnerId == null ||
+        sessionOccurrenceId == null ||
+        xHat == null ||
+        p == null) {
+      return null;
+    }
+    return OrchestrationState(
+      siteId: siteId,
+      learnerId: learnerId,
+      sessionOccurrenceId: sessionOccurrenceId,
+      xHat: xHat,
+      p: p,
+      model: EstimatorModel.fromMap(
+        _asStringDynamicMap(m['model']) ?? <String, dynamic>{},
+      ),
+      fusion: FusionInfo.fromMap(
+        _asStringDynamicMap(m['fusion']) ?? <String, dynamic>{},
+      ),
+      lastUpdatedAt: m['lastUpdatedAt'] as Timestamp?,
+    );
+  }
 }
 
 @immutable

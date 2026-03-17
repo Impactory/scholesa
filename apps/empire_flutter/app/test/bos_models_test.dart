@@ -23,6 +23,13 @@ void main() {
       const XHat x = XHat(cognition: 0.1, engagement: 0.2, integrity: 0.3);
       expect(x.toVec(), <double>[0.1, 0.2, 0.3]);
     });
+
+    test('tryFromMap rejects incomplete values', () {
+      expect(
+        XHat.tryFromMap(<String, dynamic>{'cognition': 0.7, 'engagement': 0.4}),
+        isNull,
+      );
+    });
   });
 
   group('CovarianceSummary', () {
@@ -43,6 +50,32 @@ void main() {
           CovarianceSummary.fromMap(original.toMap());
       expect(restored.trace, 0.6);
       expect(restored.confidence, 0.8);
+    });
+
+    test('tryFromMap derives confidence from trace without inventing defaults', () {
+      final CovarianceSummary? restored = CovarianceSummary.tryFromMap(
+        <String, dynamic>{'diag': <double>[0.1, 0.2, 0.3], 'trace': 0.6},
+      );
+      expect(restored, isNotNull);
+      expect(restored!.confidence, closeTo(0.8, 0.0001));
+    });
+  });
+
+  group('OrchestrationState', () {
+    test('tryFromMap rejects malformed state payloads', () {
+      final OrchestrationState? restored = OrchestrationState.tryFromMap(
+        <String, dynamic>{
+          'siteId': 'site-1',
+          'learnerId': 'learner-1',
+          'sessionOccurrenceId': 'occ-1',
+          'x_hat': <String, dynamic>{
+            'cognition': 0.7,
+            'engagement': 0.4,
+          },
+          'P': <String, dynamic>{'trace': 0.5},
+        },
+      );
+      expect(restored, isNull);
     });
   });
 

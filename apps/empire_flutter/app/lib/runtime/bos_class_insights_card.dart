@@ -205,19 +205,51 @@ class _BosClassInsightsCardState extends State<BosClassInsightsCard> {
                 final Map<String, dynamic> averages =
                     (insights['averages'] as Map<String, dynamic>?) ??
                         <String, dynamic>{};
+                final Map<String, dynamic> coverage =
+                    (insights['coverage'] as Map<String, dynamic>?) ??
+                        <String, dynamic>{};
                 final List<_ClassLearnerSignal> watchlist =
                     _watchlistFromPayload(
                       insights['watchlist'] ?? insights['learners'],
                     );
 
                 String pct(dynamic value) {
-                  final double numeric = (value as num?)?.toDouble() ?? 0;
+                  final double? numeric = (value as num?)?.toDouble();
+                  if (numeric == null) {
+                    return BosCoachingI18n.signalUnavailable(context);
+                  }
                   return '${(numeric * 100).toStringAsFixed(0)}%';
+                }
+
+                final bool hasAnyAverage = averages['cognition'] is num ||
+                    averages['engagement'] is num ||
+                    averages['integrity'] is num;
+                final bool partialSignals = learnerCount > 0 &&
+                    (((coverage['cognition'] as num?)?.toInt() ?? 0) != learnerCount ||
+                        ((coverage['engagement'] as num?)?.toInt() ?? 0) != learnerCount ||
+                        ((coverage['integrity'] as num?)?.toInt() ?? 0) != learnerCount);
+
+                if (!hasAnyAverage && watchlist.isEmpty && learnerCount == 0) {
+                  return _buildInfoState(
+                    context,
+                    icon: Icons.sensors_off_outlined,
+                    message: BosCoachingI18n.signalUnavailable(context),
+                    accent: accent,
+                  );
                 }
 
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
+                    if (partialSignals) ...<Widget>[
+                      _buildInfoState(
+                        context,
+                        icon: Icons.info_outline_rounded,
+                        message: BosCoachingI18n.partialSignals(context),
+                        accent: accent,
+                      ),
+                      const SizedBox(height: 8),
+                    ],
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
@@ -468,11 +500,12 @@ class _BosClassInsightsCardState extends State<BosClassInsightsCard> {
           final Map<String, dynamic> map = entry.map(
             (dynamic key, dynamic val) => MapEntry(key.toString(), val),
           );
-          return _ClassLearnerSignal.fromMap(
+          return _ClassLearnerSignal.tryFromMap(
             map,
             widget.learnerNamesById,
           );
         })
+        .whereType<_ClassLearnerSignal>()
         .where(
           (_ClassLearnerSignal learner) => learner.needsAttention,
         )
@@ -544,36 +577,40 @@ class _ClassLearnerSignal {
     required this.integrity,
   });
 
-  factory _ClassLearnerSignal.fromMap(
+  static _ClassLearnerSignal? tryFromMap(
     Map<String, dynamic> map,
     Map<String, String> learnerNamesById,
   ) {
     final String learnerId = (map['learnerId'] as String? ?? '').trim();
+    final Map<String, dynamic>? xHat = map['x_hat'] as Map<String, dynamic>?;
+    final double? cognition = xHat?['cognition'] is num
+        ? ((xHat!['cognition'] as num).toDouble())
+        : null;
+    final double? engagement = xHat?['engagement'] is num
+        ? ((xHat!['engagement'] as num).toDouble())
+        : null;
+    final double? integrity = xHat?['integrity'] is num
+        ? ((xHat!['integrity'] as num).toDouble())
+        : null;
+    if (cognition == null && engagement == null && integrity == null) {
+      return null;
+    }
     return _ClassLearnerSignal(
       learnerId: learnerId,
       displayName: learnerNamesById[learnerId]?.trim().isNotEmpty == true
           ? learnerNamesById[learnerId]!.trim()
           : _fallbackName(learnerId),
-      cognition: (map['x_hat'] as Map<String, dynamic>?)?['cognition'] is num
-          ? ((map['x_hat'] as Map<String, dynamic>)['cognition'] as num)
-              .toDouble()
-          : 0.5,
-      engagement: (map['x_hat'] as Map<String, dynamic>?)?['engagement'] is num
-          ? ((map['x_hat'] as Map<String, dynamic>)['engagement'] as num)
-              .toDouble()
-          : 0.5,
-      integrity: (map['x_hat'] as Map<String, dynamic>?)?['integrity'] is num
-          ? ((map['x_hat'] as Map<String, dynamic>)['integrity'] as num)
-              .toDouble()
-          : 0.5,
+      cognition: cognition,
+      engagement: engagement,
+      integrity: integrity,
     );
   }
 
   final String learnerId;
   final String displayName;
-  final double cognition;
-  final double engagement;
-  final double integrity;
+  final double? cognition;
+  final double? engagement;
+  final double? integrity;
 
   static String _fallbackName(String learnerId) {
     if (learnerId.isEmpty) return 'Learner';
@@ -584,10 +621,23 @@ class _ClassLearnerSignal {
   }
 
   bool get needsAttention =>
-      cognition < 0.45 || engagement < 0.45 || integrity < 0.45;
+      (cognition != null && cognition! < 0.45) ||
+      (engagement != null && engagement! < 0.45) ||
+      (integrity != null && integrity! < 0.45);
 
-  double get riskScore => <double>[cognition, engagement, integrity]
-      .reduce((double left, double right) => left < right ? left : right);
+  double get riskScore {
+    final List<double> values = <double>[
+      if (cognition != null) cognition!,
+      if (engagement != null) engagement!,
+      if (integrity != null) integrity!,
+    ];
+    if (values.isEmpty) {
+      return 1.0;
+    }
+    return values.reduce(
+      (double left, double right) => left < right ? left : right,
+    );
+  }
 
   String get initials {
     final List<String> parts = displayName.split(' ');
@@ -599,7 +649,9 @@ class _ClassLearnerSignal {
   }
 
   String summaryLabel(BuildContext context) {
-    String pct(double value) => '${(value * 100).toStringAsFixed(0)}%';
+    String pct(double? value) => value == null
+        ? BosCoachingI18n.signalUnavailable(context)
+        : '${(value * 100).toStringAsFixed(0)}%';
     return '${BosCoachingI18n.cognition(context)} ${pct(cognition)} • ${BosCoachingI18n.engagement(context)} ${pct(engagement)} • ${BosCoachingI18n.integrity(context)} ${pct(integrity)}';
   }
 }

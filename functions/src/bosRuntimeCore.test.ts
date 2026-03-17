@@ -58,4 +58,22 @@ describe('bosRuntimeCore', () => {
       'watch',
     ]);
   });
+
+  it('skips malformed state values instead of averaging fake neutral scores', () => {
+    const summary = summarizeClassInsights([
+      {
+        learnerId: 'valid',
+        x_hat: { cognition: 0.9, engagement: 0.8, integrity: 0.7 },
+      },
+      {
+        learnerId: 'malformed',
+        x_hat: { cognition: undefined, engagement: undefined, integrity: undefined },
+      },
+    ]);
+
+    expect(summary.learnerCount).toBe(2);
+    expect(summary.averages.cognition).toBeCloseTo(0.9, 6);
+    expect(summary.coverage.cognition).toBe(1);
+    expect(summary.watchlist.map((learner) => learner.learnerId)).toEqual([]);
+  });
 });

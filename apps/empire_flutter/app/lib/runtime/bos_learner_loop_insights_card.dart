@@ -236,21 +236,60 @@ class _BosLearnerLoopInsightsCardState extends State<BosLearnerLoopInsightsCard>
                         <String, dynamic>{};
                 final List<dynamic> goals =
                     (insights['activeGoals'] as List<dynamic>?) ?? <dynamic>[];
+                final Map<String, dynamic> stateAvailability =
+                    (insights['stateAvailability'] as Map<String, dynamic>?) ??
+                        <String, dynamic>{};
 
                 String pct(dynamic value) {
-                  final double v = (value as num?)?.toDouble() ?? 0;
+                  final double? v = (value as num?)?.toDouble();
+                  if (v == null) {
+                    return BosCoachingI18n.signalUnavailable(context);
+                  }
                   return '${(v * 100).toStringAsFixed(0)}%';
                 }
 
                 String delta(dynamic value) {
-                  final double v = (value as num?)?.toDouble() ?? 0;
+                  final double? v = (value as num?)?.toDouble();
+                  if (v == null) {
+                    return BosCoachingI18n.signalUnavailable(context);
+                  }
                   final String sign = v >= 0 ? '+' : '';
                   return '$sign${(v * 100).toStringAsFixed(1)}';
+                }
+
+                final bool hasAnyStateMetric =
+                    state['cognition'] is num ||
+                    state['engagement'] is num ||
+                    state['integrity'] is num;
+                final bool hasAnyTrendMetric =
+                    trend['cognitionDelta'] is num ||
+                    trend['engagementDelta'] is num ||
+                    trend['integrityDelta'] is num;
+                final bool partialSignals =
+                    !((stateAvailability['hasCurrentState'] as bool?) ?? false) ||
+                        !((stateAvailability['hasTrendBaseline'] as bool?) ?? false);
+
+                if (!hasAnyStateMetric && !hasAnyTrendMetric && goals.isEmpty) {
+                  return _buildInfoState(
+                    context,
+                    icon: Icons.sensors_off_outlined,
+                    message: BosCoachingI18n.signalUnavailable(context),
+                    accent: accent,
+                  );
                 }
 
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
+                    if (partialSignals) ...<Widget>[
+                      _buildInfoState(
+                        context,
+                        icon: Icons.info_outline_rounded,
+                        message: BosCoachingI18n.partialSignals(context),
+                        accent: accent,
+                      ),
+                      const SizedBox(height: 8),
+                    ],
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,

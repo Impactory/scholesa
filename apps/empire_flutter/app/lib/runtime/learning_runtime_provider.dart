@@ -18,6 +18,12 @@ import '../services/federated_learning_runtime_adapter.dart';
 /// Provider for active learning runtime context.
 ///
 /// Consumers: LearnerMission screen, AI Chat, MVL Gate UI.
+enum LearningRuntimeStateStatus {
+  unavailable,
+  ready,
+  malformed,
+}
+
 class LearningRuntimeProvider extends ChangeNotifier {
   LearningRuntimeProvider({
     required this.siteId,
@@ -37,6 +43,16 @@ class LearningRuntimeProvider extends ChangeNotifier {
 
   OrchestrationState? _state;
   OrchestrationState? get state => _state;
+
+    LearningRuntimeStateStatus _stateStatus =
+      LearningRuntimeStateStatus.unavailable;
+    LearningRuntimeStateStatus get stateStatus => _stateStatus;
+
+    String? _stateLoadIssue;
+    String? get stateLoadIssue => _stateLoadIssue;
+
+    bool get hasUsableState =>
+      _stateStatus == LearningRuntimeStateStatus.ready && _state != null;
 
   MvlEpisode? _activeMvl;
   MvlEpisode? get activeMvl => _activeMvl;
@@ -64,9 +80,24 @@ class LearningRuntimeProvider extends ChangeNotifier {
         .snapshots()
         .listen((DocumentSnapshot<Map<String, dynamic>> snap) {
       if (snap.exists && snap.data() != null) {
-        _state = OrchestrationState.fromMap(snap.data()!);
+        final OrchestrationState? parsed =
+            OrchestrationState.tryFromMap(snap.data()!);
+        if (parsed != null) {
+          _state = parsed;
+          _stateStatus = LearningRuntimeStateStatus.ready;
+          _stateLoadIssue = null;
+        } else {
+          _state = null;
+          _stateStatus = LearningRuntimeStateStatus.malformed;
+          _stateLoadIssue = 'malformed_orchestration_state';
+          debugPrint(
+            '[BOS] Ignoring malformed orchestration state for $docId.',
+          );
+        }
       } else {
         _state = null;
+        _stateStatus = LearningRuntimeStateStatus.unavailable;
+        _stateLoadIssue = null;
       }
       notifyListeners();
     });

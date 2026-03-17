@@ -2158,13 +2158,28 @@ export const bosGetLearnerLoopInsights = onCall(
         ? ((states[states.length - 1]['x_hat'] as Record<string, unknown> | undefined) ?? latestState)
         : latestState;
 
-      const latestCognition = clamp(Number(latestState['cognition'] ?? 0.5));
-      const latestEngagement = clamp(Number(latestState['engagement'] ?? 0.5));
-      const latestIntegrity = clamp(Number(latestState['integrity'] ?? 0.5));
+      const readStateMetric = (state: Record<string, unknown>, key: string) => {
+        const value = state[key];
+        return typeof value === 'number' && Number.isFinite(value) ? clamp(value) : null;
+      };
 
-      const deltaCognition = latestCognition - clamp(Number(oldestState['cognition'] ?? latestCognition));
-      const deltaEngagement = latestEngagement - clamp(Number(oldestState['engagement'] ?? latestEngagement));
-      const deltaIntegrity = latestIntegrity - clamp(Number(oldestState['integrity'] ?? latestIntegrity));
+      const latestCognition = readStateMetric(latestState, 'cognition');
+      const latestEngagement = readStateMetric(latestState, 'engagement');
+      const latestIntegrity = readStateMetric(latestState, 'integrity');
+
+      const oldestCognition = readStateMetric(oldestState, 'cognition');
+      const oldestEngagement = readStateMetric(oldestState, 'engagement');
+      const oldestIntegrity = readStateMetric(oldestState, 'integrity');
+
+      const deltaCognition = latestCognition != null && oldestCognition != null
+        ? latestCognition - oldestCognition
+        : null;
+      const deltaEngagement = latestEngagement != null && oldestEngagement != null
+        ? latestEngagement - oldestEngagement
+        : null;
+      const deltaIntegrity = latestIntegrity != null && oldestIntegrity != null
+        ? latestIntegrity - oldestIntegrity
+        : null;
 
       const eventCounts: Record<string, number> = {
         ai_help_used: 0,
@@ -2206,22 +2221,33 @@ export const bosGetLearnerLoopInsights = onCall(
       }
 
       const improvementScore =
-        deltaCognition * 0.3 + deltaEngagement * 0.3 + deltaIntegrity * 0.4;
+        deltaCognition != null && deltaEngagement != null && deltaIntegrity != null
+          ? deltaCognition * 0.3 + deltaEngagement * 0.3 + deltaIntegrity * 0.4
+          : null;
 
       return {
         siteId,
         learnerId,
         lookbackDays,
-        state: {
-          cognition: latestCognition,
-          engagement: latestEngagement,
-          integrity: latestIntegrity,
-        },
-        trend: {
-          cognitionDelta: deltaCognition,
-          engagementDelta: deltaEngagement,
-          integrityDelta: deltaIntegrity,
-          improvementScore,
+        state: latestCognition != null || latestEngagement != null || latestIntegrity != null
+          ? {
+              cognition: latestCognition,
+              engagement: latestEngagement,
+              integrity: latestIntegrity,
+            }
+          : null,
+        trend: deltaCognition != null || deltaEngagement != null || deltaIntegrity != null
+          ? {
+              cognitionDelta: deltaCognition,
+              engagementDelta: deltaEngagement,
+              integrityDelta: deltaIntegrity,
+              improvementScore,
+            }
+          : null,
+        stateAvailability: {
+          validSamples: states.length,
+          hasCurrentState: latestCognition != null || latestEngagement != null || latestIntegrity != null,
+          hasTrendBaseline: oldestCognition != null || oldestEngagement != null || oldestIntegrity != null,
         },
         eventCounts,
         mvl: {
@@ -2236,22 +2262,16 @@ export const bosGetLearnerLoopInsights = onCall(
       // Log error for debugging
       console.error(`[BOS] learner loop query error for learnerId=${learnerId}, siteId=${siteId}:`, error);
 
-      // Return graceful degradation with defaults
-      // Client can use this to show a fallback UI or retry
       return {
         siteId,
         learnerId,
         lookbackDays,
-        state: {
-          cognition: 0.5,
-          engagement: 0.5,
-          integrity: 0.5,
-        },
-        trend: {
-          cognitionDelta: 0,
-          engagementDelta: 0,
-          integrityDelta: 0,
-          improvementScore: 0,
+        state: null,
+        trend: null,
+        stateAvailability: {
+          validSamples: 0,
+          hasCurrentState: false,
+          hasTrendBaseline: false,
         },
         eventCounts: {
           ai_help_used: 0,
@@ -2269,7 +2289,7 @@ export const bosGetLearnerLoopInsights = onCall(
         },
         activeGoals: [],
         generatedAt: new Date().toISOString(),
-        error: error instanceof Error ? error.message : 'Query failed; returning defaults',
+        error: error instanceof Error ? error.message : 'Query failed',
       };
     }
   }

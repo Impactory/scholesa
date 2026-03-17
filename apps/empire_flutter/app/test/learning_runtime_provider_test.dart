@@ -69,6 +69,46 @@ void main() {
       expect(provider.hasMvlGate, isTrue);
       expect(provider.activeMvl, isNotNull);
       expect(provider.activeMvl!.triggerReason, 'integrity_threshold');
+      expect(provider.stateStatus, LearningRuntimeStateStatus.ready);
+      expect(provider.stateLoadIssue, isNull);
+    });
+
+    test('marks malformed orchestration state instead of fabricating values', () async {
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+
+      await firestore
+          .collection('orchestrationStates')
+          .doc('learner-1_occ-1')
+          .set(<String, dynamic>{
+        'siteId': 'site-1',
+        'learnerId': 'learner-1',
+        'sessionOccurrenceId': 'occ-1',
+        'x_hat': <String, dynamic>{
+          'cognition': 0.62,
+          'engagement': 0.57,
+        },
+        'P': <String, dynamic>{
+          'trace': 0.57,
+        },
+      });
+
+      final LearningRuntimeProvider provider = LearningRuntimeProvider(
+        siteId: 'site-1',
+        learnerId: 'learner-1',
+        sessionOccurrenceId: 'occ-1',
+        gradeBand: GradeBand.g4_6,
+        firestore: firestore,
+      );
+      addTearDown(provider.dispose);
+
+      provider.startListening();
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+
+      expect(provider.state, isNull);
+      expect(provider.cognition, isNull);
+      expect(provider.confidence, isNull);
+      expect(provider.stateStatus, LearningRuntimeStateStatus.malformed);
+      expect(provider.stateLoadIssue, 'malformed_orchestration_state');
     });
   });
 }

@@ -16,8 +16,37 @@ export interface ClassInsightLearner {
   lastUpdatedAt?: unknown;
 }
 
+interface LearnerMetrics {
+  cognition?: number;
+  engagement?: number;
+  integrity?: number;
+}
+
 function clamp(value: number, min: number = 0, max: number = 1): number {
   return Math.min(max, Math.max(min, value));
+}
+
+function readMetric(value: unknown): number | undefined {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return undefined;
+  }
+  return clamp(value);
+}
+
+function learnerMetrics(learner: ClassInsightLearner): LearnerMetrics {
+  return {
+    cognition: readMetric(learner.x_hat?.cognition),
+    engagement: readMetric(learner.x_hat?.engagement),
+    integrity: readMetric(learner.x_hat?.integrity),
+  };
+}
+
+function averageDefined(values: Array<number | undefined>): number | null {
+  const definedValues = values.filter((value): value is number => typeof value === 'number');
+  if (definedValues.length === 0) {
+    return null;
+  }
+  return definedValues.reduce((sum, value) => sum + value, 0) / definedValues.length;
 }
 
 export function ekfLiteUpdate(
@@ -55,22 +84,34 @@ export function ekfLiteUpdate(
 }
 
 function learnerRiskScore(learner: ClassInsightLearner): number {
-  const xHat = learner.x_hat ?? {};
-  const cognition = clamp(Number(xHat.cognition ?? 0.5));
-  const engagement = clamp(Number(xHat.engagement ?? 0.5));
-  const integrity = clamp(Number(xHat.integrity ?? 0.5));
-  return ((1 - cognition) * 0.4) + ((1 - engagement) * 0.35) + ((1 - integrity) * 0.25);
+  const metrics = learnerMetrics(learner);
+  const weightedSignals = [
+    metrics.cognition == null ? null : (1 - metrics.cognition) * 0.4,
+    metrics.engagement == null ? null : (1 - metrics.engagement) * 0.35,
+    metrics.integrity == null ? null : (1 - metrics.integrity) * 0.25,
+  ].filter((value): value is number => value != null);
+
+  if (weightedSignals.length === 0) {
+    return -1;
+  }
+
+  return weightedSignals.reduce((sum, value) => sum + value, 0);
 }
 
 export function summarizeClassInsights(learners: ClassInsightLearner[]) {
   const learnerCount = learners.length;
-  const averages = learnerCount > 0
-    ? {
-        cognition: learners.reduce((sum, learner) => sum + clamp(Number(learner.x_hat?.cognition ?? 0.5)), 0) / learnerCount,
-        engagement: learners.reduce((sum, learner) => sum + clamp(Number(learner.x_hat?.engagement ?? 0.5)), 0) / learnerCount,
-        integrity: learners.reduce((sum, learner) => sum + clamp(Number(learner.x_hat?.integrity ?? 0.5)), 0) / learnerCount,
-      }
-    : { cognition: 0, engagement: 0, integrity: 0 };
+  const metrics = learners.map((learner) => learnerMetrics(learner));
+  const averages = {
+    cognition: averageDefined(metrics.map((entry) => entry.cognition)),
+    engagement: averageDefined(metrics.map((entry) => entry.engagement)),
+    integrity: averageDefined(metrics.map((entry) => entry.integrity)),
+  };
+
+  const coverage = {
+    cognition: metrics.filter((entry) => entry.cognition != null).length,
+    engagement: metrics.filter((entry) => entry.engagement != null).length,
+    integrity: metrics.filter((entry) => entry.integrity != null).length,
+  };
 
   const watchlist = learners
     .filter((learner) => learnerRiskScore(learner) >= 0.35)
@@ -79,6 +120,7 @@ export function summarizeClassInsights(learners: ClassInsightLearner[]) {
   return {
     learnerCount,
     averages,
+    coverage,
     watchlist,
   };
 }

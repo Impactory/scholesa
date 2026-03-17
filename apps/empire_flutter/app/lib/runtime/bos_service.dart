@@ -58,7 +58,7 @@ class BosService {
     final Map<String, dynamic>? stateData = (result.data
         as Map<String, dynamic>?)?['state'] as Map<String, dynamic>?;
     if (stateData == null) return null;
-    return OrchestrationState.fromMap(stateData);
+    return OrchestrationState.tryFromMap(stateData);
   }
 
   // ── Endpoint 3: Get intervention (runs FDM + Estimator + Policy) ──
