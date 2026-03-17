@@ -926,7 +926,7 @@ async function loadSiteBillingRecords(ctx: WorkflowContext): Promise<WorkflowRec
   const invoices = Array.isArray(payload.invoices) ? payload.invoices : [];
 
   const recordSiteId = asString(payload.siteId, asString(summary?.siteId, activeSiteId(ctx.profile) || ''));
-  const siteSummary = summary == null ? null : {
+  const siteSummary: WorkflowRecord | null = summary == null ? null : {
     id: recordSiteId,
     title: asString(summary.planName, 'Site Billing'),
     subtitle: `${asString(summary.currency, 'USD')} ${String(summary.monthlyAmount || 0)} / month`,
@@ -949,7 +949,7 @@ async function loadSiteBillingRecords(ctx: WorkflowContext): Promise<WorkflowRec
 
   const invoiceRecords: WorkflowRecord[] = invoices
     .filter((entry): entry is Record<string, unknown> => !!entry && typeof entry === 'object' && !Array.isArray(entry))
-    .map((entry) => {
+    .map((entry): WorkflowRecord | null => {
       const id = asString(entry.id, '');
       if (!id) return null;
       return {
