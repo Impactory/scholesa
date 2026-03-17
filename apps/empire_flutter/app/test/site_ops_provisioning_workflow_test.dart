@@ -97,6 +97,13 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
             return targetSiteIds.cast<String>().contains(siteId);
           });
     return scoped
+        .where((Map<String, dynamic> record) {
+          final String status = (record['status'] as String? ?? '').trim();
+          final String terminalLifecycleStatus =
+              (record['terminalLifecycleStatus'] as String? ?? '').trim();
+          return (status == 'assigned' || status == 'active') &&
+              terminalLifecycleStatus.isEmpty;
+        })
         .take(limit)
         .map((Map<String, dynamic> record) => Map<String, dynamic>.from(record))
         .toList();
@@ -107,10 +114,17 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     String? siteId,
     int limit = 20,
   }) async {
-    return listSiteFederatedLearningRuntimeDeliveryRecords(
-      siteId: siteId,
-      limit: limit,
-    );
+    final Iterable<Map<String, dynamic>> scoped = (siteId == null || siteId.isEmpty)
+        ? _runtimeDeliveries
+        : _runtimeDeliveries.where((Map<String, dynamic> record) {
+            final List<dynamic> targetSiteIds =
+                record['targetSiteIds'] as List<dynamic>? ?? <dynamic>[];
+            return targetSiteIds.cast<String>().contains(siteId);
+          });
+    return scoped
+        .take(limit)
+        .map((Map<String, dynamic> record) => Map<String, dynamic>.from(record))
+        .toList();
   }
 
   @override
