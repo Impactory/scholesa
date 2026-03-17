@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
 import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/auth/auth_service.dart';
 import 'package:scholesa_app/modules/profile/profile_page.dart';
+import 'package:scholesa_app/modules/settings/settings_page.dart';
+import 'package:scholesa_app/services/theme_service.dart';
 import 'package:url_launcher_platform_interface/link.dart';
 import 'package:url_launcher_platform_interface/url_launcher_platform_interface.dart';
 
@@ -63,10 +66,14 @@ AppState _buildAppState() {
   return state;
 }
 
-Widget _buildHarness({required List<SingleChildWidget> providers}) {
+Widget _buildHarness({
+  required List<SingleChildWidget> providers,
+  required GoRouter router,
+}) {
   return MultiProvider(
     providers: providers,
-    child: MaterialApp(
+    child: MaterialApp.router(
+      routerConfig: router,
       localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
@@ -77,7 +84,6 @@ Widget _buildHarness({required List<SingleChildWidget> providers}) {
         Locale('zh', 'CN'),
         Locale('zh', 'TW'),
       ],
-      home: const ProfilePage(),
     ),
   );
 }
@@ -97,22 +103,50 @@ void main() {
       (WidgetTester tester) async {
     final AppState state = _buildAppState();
     final _MockAuthService authService = _MockAuthService();
+    final ThemeService themeService = ThemeService();
     final _FakeUrlLauncherPlatform launcherPlatform =
         _FakeUrlLauncherPlatform();
     final UrlLauncherPlatform previousLauncherPlatform =
         UrlLauncherPlatform.instance;
+    final GoRouter router = GoRouter(
+      initialLocation: '/profile',
+      routes: <RouteBase>[
+        GoRoute(
+          path: '/profile',
+          builder: (BuildContext context, GoRouterState state) =>
+              const ProfilePage(),
+        ),
+        GoRoute(
+          path: '/settings',
+          builder: (BuildContext context, GoRouterState state) =>
+              const SettingsPage(),
+        ),
+      ],
+    );
     await tester.binding.setSurfaceSize(const Size(1000, 1800));
     UrlLauncherPlatform.instance = launcherPlatform;
 
     try {
       await tester.pumpWidget(
         _buildHarness(
+          router: router,
           providers: <SingleChildWidget>[
             ChangeNotifierProvider<AppState>.value(value: state),
             Provider<AuthService>.value(value: authService),
+            ChangeNotifierProvider<ThemeService>.value(value: themeService),
           ],
         ),
       );
+      await tester.pumpAndSettle();
+
+      await tester.tap(_tileTapTarget('Notifications'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(SettingsPage), findsOneWidget);
+      expect(find.text('Open notification preferences and delivery channels.'),
+          findsNothing);
+
+      router.go('/profile');
       await tester.pumpAndSettle();
 
       await tester.scrollUntilVisible(

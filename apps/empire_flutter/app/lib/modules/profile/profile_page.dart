@@ -215,12 +215,7 @@ class ProfilePage extends StatelessWidget {
                   'cta': 'profile_open_notifications_settings'
                 },
               );
-              _showFeatureDialog(
-                context,
-                title: _tProfile(context, 'Notifications'),
-                message: _tProfile(context,
-                    'Open notification preferences and delivery channels.'),
-              );
+              context.push('/settings');
             },
           ),
           _SettingsTile(
@@ -234,12 +229,7 @@ class ProfilePage extends StatelessWidget {
                   'cta': 'profile_open_privacy_security_settings'
                 },
               );
-              _showFeatureDialog(
-                context,
-                title: _tProfile(context, 'Privacy & Security'),
-                message: _tProfile(context,
-                    'Review password, MFA, and device session settings.'),
-              );
+              context.push('/settings');
             },
           ),
           _SettingsTile(
@@ -253,12 +243,7 @@ class ProfilePage extends StatelessWidget {
                   'cta': 'profile_open_language_settings'
                 },
               );
-              _showFeatureDialog(
-                context,
-                title: _tProfile(context, 'Language'),
-                message: _tProfile(
-                    context, 'Choose your preferred language for the app.'),
-              );
+              context.push('/settings');
             },
           ),
           _SettingsTile(
@@ -272,12 +257,7 @@ class ProfilePage extends StatelessWidget {
                   'cta': 'profile_open_appearance_settings'
                 },
               );
-              _showFeatureDialog(
-                context,
-                title: _tProfile(context, 'Appearance'),
-                message: _tProfile(
-                    context, 'Switch between light and dark display modes.'),
-              );
+              context.push('/settings');
             },
           ),
           _SettingsTile(
@@ -291,12 +271,7 @@ class ProfilePage extends StatelessWidget {
                   'cta': 'profile_open_sync_data_settings'
                 },
               );
-              _showFeatureDialog(
-                context,
-                title: _tProfile(context, 'Sync & Data'),
-                message: _tProfile(
-                    context, 'Manage sync cadence and data usage options.'),
-              );
+              context.push('/settings');
             },
           ),
         ],
@@ -346,7 +321,7 @@ class ProfilePage extends StatelessWidget {
                   'cta': 'profile_open_version_info'
                 },
               );
-              _showFeatureDialog(
+              _showInfoDialog(
                 context,
                 title: _tProfile(context, 'Version'),
                 message: _tProfile(context, 'App version 1.0.0 (Build 1).'),
@@ -618,52 +593,6 @@ class ProfilePage extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
             child: Text(_tProfile(context, 'Close')),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showFeatureDialog(
-    BuildContext context, {
-    required String title,
-    required String message,
-  }) {
-    showDialog<void>(
-      context: context,
-      builder: (BuildContext dialogContext) => AlertDialog(
-        title: Text(title),
-        content: Text(message),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () {
-              TelemetryService.instance.logEvent(
-                event: 'cta.clicked',
-                metadata: <String, dynamic>{
-                  'cta': 'profile_close_feature_dialog',
-                  'feature': title,
-                },
-              );
-              Navigator.pop(dialogContext);
-            },
-            child: Text(_tProfile(context, 'Close')),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              TelemetryService.instance.logEvent(
-                event: 'cta.clicked',
-                metadata: <String, dynamic>{
-                  'cta': 'profile_open_feature',
-                  'feature': title
-                },
-              );
-              Navigator.pop(dialogContext);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                    content: Text('$title ${_tProfile(context, 'opened')}')),
-              );
-            },
-            child: Text(_tProfile(context, 'Open')),
           ),
         ],
       ),
