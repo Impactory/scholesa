@@ -998,6 +998,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     final List<FederatedLearningExperimentModel> sortedExperiments =
         List<FederatedLearningExperimentModel>.from(_experiments)
           ..sort(_compareExperimentPriority);
+    final Widget rolloutGovernanceQueue =
+        _buildRolloutGovernanceQueue(sortedExperiments);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -1058,9 +1060,242 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
             ),
           )
         else
-          ...sortedExperiments.map(_buildExperimentCard),
+          ...<Widget>[
+            if (rolloutGovernanceQueue is! SizedBox) ...<Widget>[
+              rolloutGovernanceQueue,
+              const SizedBox(height: 12),
+            ],
+            ...sortedExperiments.map(_buildExperimentCard),
+          ],
       ],
     );
+  }
+
+  Widget _buildRolloutGovernanceQueue(
+    List<FederatedLearningExperimentModel> experiments,
+  ) {
+    final List<_RolloutGovernanceQueueEntry> entries = experiments
+        .map(_buildRolloutGovernanceQueueEntry)
+        .whereType<_RolloutGovernanceQueueEntry>()
+        .toList(growable: false)
+      ..sort((a, b) {
+        final int priorityDelta = b.priority.compareTo(a.priority);
+        if (priorityDelta != 0) {
+          return priorityDelta;
+        }
+        final int aMillis = a.experiment.updatedAt?.millisecondsSinceEpoch ?? 0;
+        final int bMillis = b.experiment.updatedAt?.millisecondsSinceEpoch ?? 0;
+        return bMillis.compareTo(aMillis);
+      });
+    if (entries.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: ScholesaColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.black12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            _tHqFeatureFlags(context, 'Rollout governance queue'),
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _tHqFeatureFlags(
+              context,
+              '${entries.length} active operator items',
+            ),
+            style: const TextStyle(
+              fontSize: 13,
+              color: ScholesaColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...entries.take(5).map(
+                (_RolloutGovernanceQueueEntry entry) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: entry.color.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: entry.color.withValues(alpha: 0.25),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          _tHqFeatureFlags(
+                            context,
+                            '${entry.experiment.name} · ${entry.kindLabel}',
+                          ),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _tHqFeatureFlags(context, entry.headline),
+                          style: const TextStyle(
+                            color: ScholesaColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _tHqFeatureFlags(context, entry.detail),
+                          style: const TextStyle(
+                            color: ScholesaColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: <Widget>[
+                            TextButton.icon(
+                              onPressed: () =>
+                                  _showRuntimeRolloutAlertHistoryDialog(
+                                entry.experiment,
+                              ),
+                              icon: const Icon(Icons.notifications_active_rounded),
+                              label: Text(
+                                _tHqFeatureFlags(
+                                    context, 'Open alert history'),
+                              ),
+                            ),
+                            TextButton.icon(
+                              onPressed: () => _showRuntimeRolloutAuditDialog(
+                                entry.experiment,
+                                deliveryRecordId: entry.deliveryRecordId,
+                              ),
+                              icon: const Icon(Icons.receipt_long_rounded),
+                              label: Text(
+                                _tHqFeatureFlags(
+                                    context, 'Open rollout audit'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+        ],
+      ),
+    );
+  }
+
+  _RolloutGovernanceQueueEntry? _buildRolloutGovernanceQueueEntry(
+    FederatedLearningExperimentModel experiment,
+  ) {
+    final List<FederatedLearningAggregationRunModel> runs =
+        _aggregationRunsByExperiment[experiment.id] ??
+            const <FederatedLearningAggregationRunModel>[];
+    if (runs.isEmpty) {
+      return null;
+    }
+    final Map<String, FederatedLearningCandidateModelPackageModel>
+        candidatePackagesByRunId = {
+      for (final FederatedLearningCandidateModelPackageModel package
+          in _candidatePackagesByExperiment[experiment.id] ??
+              const <FederatedLearningCandidateModelPackageModel>[])
+        package.aggregationRunId: package,
+    };
+    final FederatedLearningCandidateModelPackageModel? latestPackage =
+        candidatePackagesByRunId[runs.first.id];
+    if (latestPackage == null) {
+      return null;
+    }
+    final FederatedLearningRuntimeDeliveryRecordModel? latestRuntimeDelivery =
+        _runtimeDeliveryRecordsByPackageId[latestPackage.id];
+    if (latestRuntimeDelivery == null ||
+        _isRuntimeDeliveryTerminalLifecycle(latestRuntimeDelivery)) {
+      return null;
+    }
+    final List<FederatedLearningRuntimeActivationRecordModel>
+        runtimeActivationRecords =
+        _runtimeActivationRecordsByPackageId[latestPackage.id] ??
+            const <FederatedLearningRuntimeActivationRecordModel>[];
+    final _RuntimeRolloutHealthSummary summary =
+        _buildRuntimeRolloutHealthSummary(
+      latestRuntimeDelivery,
+      runtimeActivationRecords,
+    );
+    final FederatedLearningRuntimeRolloutAlertRecordModel? alertRecord =
+        _runtimeRolloutAlertsByDeliveryId[latestRuntimeDelivery.id];
+    final FederatedLearningRuntimeRolloutEscalationRecordModel?
+        escalationRecord =
+        _runtimeRolloutEscalationsByDeliveryId[latestRuntimeDelivery.id];
+    final FederatedLearningRuntimeRolloutControlRecordModel? controlRecord =
+        _runtimeRolloutControlsByDeliveryId[latestRuntimeDelivery.id];
+    final int controlSeverity = _rolloutControlSeverity(controlRecord);
+    final int escalationSeverity =
+        _rolloutEscalationSeverity(summary, escalationRecord);
+    final int acknowledgedAlertSeverity =
+        _acknowledgedAlertSeverity(summary, alertRecord);
+    final String rolloutState =
+        'Site rollout: ${summary.resolvedCount} resolved · ${summary.stagedCount} staged · ${summary.fallbackCount} fallback · ${summary.pendingCount} pending · Delivery ${latestRuntimeDelivery.id}';
+
+    if (controlSeverity > 0 &&
+        controlRecord != null &&
+        controlRecord.mode != 'monitor') {
+      return _RolloutGovernanceQueueEntry(
+        experiment: experiment,
+        deliveryRecordId: latestRuntimeDelivery.id,
+        kindLabel: 'Rollout control',
+        headline: _buildRuntimeRolloutControlSummary(controlRecord),
+        detail: rolloutState,
+        priority: 300 + controlSeverity,
+        color: controlSeverity >= 3 ? Colors.red : Colors.orange,
+      );
+    }
+    if (escalationSeverity > 0 && escalationRecord != null) {
+      return _RolloutGovernanceQueueEntry(
+        experiment: experiment,
+        deliveryRecordId: latestRuntimeDelivery.id,
+        kindLabel: 'Rollout escalation',
+        headline: _buildRuntimeRolloutEscalationSummary(escalationRecord),
+        detail: rolloutState,
+        priority: 200 + escalationSeverity,
+        color: escalationSeverity >= 4 ? Colors.red : Colors.orange,
+      );
+    }
+    if (acknowledgedAlertSeverity > 0 && alertRecord != null) {
+      return _RolloutGovernanceQueueEntry(
+        experiment: experiment,
+        deliveryRecordId: latestRuntimeDelivery.id,
+        kindLabel: 'Alert refresh',
+        headline: _buildAcknowledgedAlertAgeCue(alertRecord),
+        detail: '$rolloutState · ${_buildRuntimeRolloutAlert(summary, alertRecord)}',
+        priority: 100 + acknowledgedAlertSeverity,
+        color: acknowledgedAlertSeverity >= 2 ? Colors.orange : Colors.blueGrey,
+      );
+    }
+    if (!_isRuntimeRolloutAlertAcknowledged(summary, alertRecord) &&
+        (summary.fallbackCount > 0 || summary.pendingCount > 0)) {
+      return _RolloutGovernanceQueueEntry(
+        experiment: experiment,
+        deliveryRecordId: latestRuntimeDelivery.id,
+        kindLabel: 'Active alert',
+        headline: _buildRuntimeRolloutAlert(summary, alertRecord),
+        detail: rolloutState,
+        priority: 50 + (summary.fallbackCount > 0 ? 2 : 1),
+        color: summary.fallbackCount > 0 ? Colors.orange : Colors.blueGrey,
+      );
+    }
+    return null;
   }
 
   Widget _buildInfoCard() {
@@ -7237,6 +7472,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
       builder: (BuildContext dialogContext) {
         String selectedPackageId = '';
         String selectedSiteId = '';
+        String filterQuery = '';
         final List<String> packageOptions = events
             .map((event) => event.candidateModelPackageId)
             .where((value) => value.trim().isNotEmpty)
@@ -7255,6 +7491,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
 
         return StatefulBuilder(
           builder: (BuildContext dialogContext, StateSetter setDialogState) {
+      final String normalizedQuery = filterQuery.trim().toLowerCase();
             final List<FederatedLearningRuntimeRolloutAuditEventModel>
                 filteredEvents = events
                     .where((event) =>
@@ -7263,7 +7500,10 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                                 selectedPackageId) &&
                         (selectedSiteId.isEmpty ||
                             event.siteId == selectedSiteId ||
-                            event.targetSiteIds.contains(selectedSiteId)))
+              event.targetSiteIds.contains(selectedSiteId)) &&
+            (normalizedQuery.isEmpty ||
+              _runtimeRolloutAuditSearchHaystack(event)
+                .contains(normalizedQuery)))
                     .toList(growable: false);
 
             return AlertDialog(
@@ -7349,10 +7589,26 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                       ),
                       const SizedBox(height: 12),
                     ],
+                    TextFormField(
+                      initialValue: filterQuery,
+                      onChanged: (String value) {
+                        setDialogState(() {
+                          filterQuery = value;
+                        });
+                      },
+                      decoration: InputDecoration(
+                        labelText: _tHqFeatureFlags(
+                          dialogContext,
+                          'Filter by delivery ID, site ID, status, digest, owner, optimizer, warm start, or notes',
+                        ),
+                        prefixIcon: const Icon(Icons.search_rounded),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
                     Text(
                       _tHqFeatureFlags(
                         dialogContext,
-                        'Showing ${filteredEvents.length} audit events',
+                        'Showing ${filteredEvents.length} of ${events.length} audit events',
                       ),
                       style: const TextStyle(
                         color: ScholesaColors.textSecondary,
@@ -8141,6 +8397,44 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
       return '$timestamp · Control ${event.deliveryRecordId} · ${event.mode}';
     }
     return '$timestamp · Alert triage ${event.deliveryRecordId} · ${event.status}';
+  }
+
+  String _runtimeRolloutAuditSearchHaystack(
+    FederatedLearningRuntimeRolloutAuditEventModel event,
+  ) {
+    return <String>[
+      event.id,
+      event.action,
+      event.collection,
+      event.documentId,
+      event.experimentId,
+      event.candidateModelPackageId,
+      event.deliveryRecordId,
+      event.siteId,
+      event.status,
+      event.runtimeTarget,
+      event.packageDigest,
+      event.boundedDigest,
+      event.manifestDigest,
+      event.triggerSummaryId,
+      event.summaryIds.join(' '),
+      _summarySearchTokens(event.summaryIds),
+      _summarySearchTokens(<String>[event.triggerSummaryId]),
+      event.schemaVersions.join(' '),
+      event.optimizerStrategies.join(' '),
+      event.compatibilityKey,
+      event.warmStartPackageId,
+      event.warmStartModelVersion,
+      event.notes,
+      event.ownerUserId,
+      event.acknowledgedBy,
+      event.mode,
+      event.reason,
+      event.userId ?? '',
+      event.targetSiteIds.join(' '),
+      _runtimeRolloutAuditTitle(event),
+      _runtimeRolloutAuditDetail(event),
+    ].join(' ').toLowerCase();
   }
 
   String _runtimeRolloutAuditDetail(
@@ -9505,4 +9799,24 @@ class _RuntimeRolloutHealthRow {
   final String status;
   final String statusLabel;
   final String detailLabel;
+}
+
+class _RolloutGovernanceQueueEntry {
+  const _RolloutGovernanceQueueEntry({
+    required this.experiment,
+    required this.deliveryRecordId,
+    required this.kindLabel,
+    required this.headline,
+    required this.detail,
+    required this.priority,
+    required this.color,
+  });
+
+  final FederatedLearningExperimentModel experiment;
+  final String deliveryRecordId;
+  final String kindLabel;
+  final String headline;
+  final String detail;
+  final int priority;
+  final Color color;
 }

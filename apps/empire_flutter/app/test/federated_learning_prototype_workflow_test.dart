@@ -4356,7 +4356,7 @@ void main() {
       find.text(
         'Rollout alert: 1 pending site statuses need review. Use Site rollout for detail.',
       ),
-      findsOneWidget,
+      findsWidgets,
     );
 
     final Finder deliveryHistoryButton = find.widgetWithText(
@@ -5603,7 +5603,7 @@ void main() {
       find.text(
         'Rollout alert: 1 fallback site statuses need review. Use Site rollout for detail.',
       ),
-      findsOneWidget,
+      findsWidgets,
     );
     expect(
       find.text('Site rollout: 1 resolved · 0 staged · 1 fallback · 0 pending'),
@@ -5802,7 +5802,7 @@ void main() {
     );
     expect(
       find.textContaining('Triage age: refresh due since'),
-      findsOneWidget,
+      findsWidgets,
     );
     expect(find.widgetWithText(TextButton, 'Refresh triage'), findsOneWidget);
   });
@@ -6149,7 +6149,7 @@ void main() {
       find.text(
         'Rollout alert: 1 fallback site statuses need review. Use Site rollout for detail.',
       ),
-      findsOneWidget,
+      findsWidgets,
     );
     expect(
         find.widgetWithText(TextButton, 'Acknowledge alert'), findsOneWidget);
@@ -6234,7 +6234,7 @@ void main() {
     );
     expect(
       find.textContaining('Triage age:'),
-      findsOneWidget,
+      findsWidgets,
     );
     expect(find.widgetWithText(TextButton, 'Acknowledge alert'), findsNothing);
   });
@@ -6325,6 +6325,13 @@ void main() {
       findsOneWidget,
     );
     expect(
+      find.widgetWithText(
+        TextField,
+        'Filter by delivery ID, site ID, status, digest, owner, optimizer, warm start, or notes',
+      ),
+      findsOneWidget,
+    );
+    expect(
       find.textContaining('Alert triage fl_delivery_1 · acknowledged'),
       findsOneWidget,
     );
@@ -6340,6 +6347,7 @@ void main() {
       find.textContaining('bounded sha256:digest-1'),
       findsWidgets,
     );
+    expect(find.text('Showing 2 of 2 audit events'), findsOneWidget);
   });
 
   testWidgets('HQ page filters runtime rollout audit by package and site',
@@ -6449,6 +6457,8 @@ void main() {
     tester.widget<TextButton>(auditFeedButton.first).onPressed?.call();
     await tester.pumpAndSettle();
 
+    expect(find.text('Showing 2 of 2 audit events'), findsOneWidget);
+
     final Finder packageFilter = find.widgetWithText(
       DropdownButtonFormField<String>,
       'Package filter',
@@ -6481,6 +6491,184 @@ void main() {
 
     expect(find.textContaining('Alert triage fl_delivery_1'), findsOneWidget);
     expect(find.textContaining('Activation site-2 · fallback'), findsNothing);
+
+    await tester.enterText(
+      find.widgetWithText(
+        TextField,
+        'Filter by delivery ID, site ID, status, digest, owner, optimizer, warm start, or notes',
+      ),
+      'alert triage fl_delivery_1',
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Showing 1 of 2 audit events'), findsOneWidget);
+    expect(find.textContaining('Alert triage fl_delivery_1'), findsOneWidget);
+    expect(find.textContaining('Activation site-2 · fallback'), findsNothing);
+
+    await tester.enterText(
+      find.widgetWithText(
+        TextField,
+        'Filter by delivery ID, site ID, status, digest, owner, optimizer, warm start, or notes',
+      ),
+      '',
+    );
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('HQ page shows compact rollout governance queue',
+      (WidgetTester tester) async {
+    final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
+      experiments: <Map<String, dynamic>>[
+        _experimentRow(
+          id: 'fl_exp_literacy_pilot',
+          name: 'Literacy Pilot',
+          allowedSiteIds: const <String>['site-1'],
+        ),
+        _experimentRow(
+          id: 'fl_exp_numeracy_pilot',
+          name: 'Numeracy Pilot',
+          allowedSiteIds: const <String>['site-1', 'site-2'],
+        ),
+      ],
+      aggregationRuns: <Map<String, dynamic>>[
+        _aggregationRunRow(
+          id: 'fl_agg_1',
+          experimentId: 'fl_exp_literacy_pilot',
+          mergeArtifactId: 'fl_merge_1',
+          boundedDigest: 'sha256:digest-1',
+        ),
+        _aggregationRunRow(
+          id: 'fl_agg_2',
+          experimentId: 'fl_exp_numeracy_pilot',
+          mergeArtifactId: 'fl_merge_2',
+          boundedDigest: 'sha256:digest-2',
+        ),
+      ],
+      mergeArtifacts: <Map<String, dynamic>>[
+        _mergeArtifactRow(
+          id: 'fl_merge_1',
+          experimentId: 'fl_exp_literacy_pilot',
+          aggregationRunId: 'fl_agg_1',
+          boundedDigest: 'sha256:digest-1',
+          summaryIds: const <String>['update-1', 'update-2'],
+        ),
+        _mergeArtifactRow(
+          id: 'fl_merge_2',
+          experimentId: 'fl_exp_numeracy_pilot',
+          aggregationRunId: 'fl_agg_2',
+          boundedDigest: 'sha256:digest-2',
+          summaryIds: const <String>['update-3', 'update-4'],
+        ),
+      ],
+      candidatePackages: <Map<String, dynamic>>[
+        _candidatePackageRow(
+          id: 'fl_pkg_1',
+          experimentId: 'fl_exp_literacy_pilot',
+          aggregationRunId: 'fl_agg_1',
+          mergeArtifactId: 'fl_merge_1',
+          boundedDigest: 'sha256:digest-1',
+          summaryIds: const <String>['update-1', 'update-2'],
+        ),
+        _candidatePackageRow(
+          id: 'fl_pkg_2',
+          experimentId: 'fl_exp_numeracy_pilot',
+          aggregationRunId: 'fl_agg_2',
+          mergeArtifactId: 'fl_merge_2',
+          boundedDigest: 'sha256:digest-2',
+          summaryIds: const <String>['update-3', 'update-4'],
+        ),
+      ],
+      runtimeDeliveryRecords: <Map<String, dynamic>>[
+        _runtimeDeliveryRecordRow(
+          id: 'fl_delivery_1',
+          experimentId: 'fl_exp_literacy_pilot',
+          candidateModelPackageId: 'fl_pkg_1',
+          aggregationRunId: 'fl_agg_1',
+          mergeArtifactId: 'fl_merge_1',
+          status: 'active',
+          targetSiteIds: <String>['site-1'],
+        ),
+        _runtimeDeliveryRecordRow(
+          id: 'fl_delivery_2',
+          experimentId: 'fl_exp_numeracy_pilot',
+          candidateModelPackageId: 'fl_pkg_2',
+          aggregationRunId: 'fl_agg_2',
+          mergeArtifactId: 'fl_merge_2',
+          status: 'active',
+          targetSiteIds: <String>['site-1', 'site-2'],
+        ),
+      ],
+      runtimeActivationRecords: <Map<String, dynamic>>[
+        _runtimeActivationRecordRow(
+          id: 'fl_runtime_activation_1_site-1',
+          deliveryRecordId: 'fl_delivery_1',
+          experimentId: 'fl_exp_literacy_pilot',
+          candidateModelPackageId: 'fl_pkg_1',
+          siteId: 'site-1',
+          status: 'resolved',
+        ),
+        _runtimeActivationRecordRow(
+          id: 'fl_runtime_activation_2_site-1',
+          deliveryRecordId: 'fl_delivery_2',
+          experimentId: 'fl_exp_numeracy_pilot',
+          candidateModelPackageId: 'fl_pkg_2',
+          siteId: 'site-1',
+          status: 'resolved',
+        ),
+        _runtimeActivationRecordRow(
+          id: 'fl_runtime_activation_2_site-2',
+          deliveryRecordId: 'fl_delivery_2',
+          experimentId: 'fl_exp_numeracy_pilot',
+          candidateModelPackageId: 'fl_pkg_2',
+          siteId: 'site-2',
+          status: 'fallback',
+          notes: 'Alert triage still waiting for operator refresh.',
+        ),
+      ],
+      runtimeRolloutControlRecords: <Map<String, dynamic>>[
+        _runtimeRolloutControlRecordRow(
+          id: 'fl_rollout_control_1',
+          experimentId: 'fl_exp_literacy_pilot',
+          candidateModelPackageId: 'fl_pkg_1',
+          deliveryRecordId: 'fl_delivery_1',
+          mode: 'paused',
+          reviewByAt: DateTime(2020, 3, 15, 8),
+        ),
+      ],
+      runtimeRolloutAlertRecords: <Map<String, dynamic>>[
+        _runtimeRolloutAlertRecordRow(
+          id: 'fl_rollout_alert_2',
+          experimentId: 'fl_exp_numeracy_pilot',
+          candidateModelPackageId: 'fl_pkg_2',
+          deliveryRecordId: 'fl_delivery_2',
+          status: 'acknowledged',
+          fallbackCount: 1,
+          pendingCount: 0,
+          notes: 'Reviewed yesterday and due for refresh.',
+          acknowledgedBy: 'hq-1',
+          acknowledgedAt: DateTime(2026, 3, 14, 21),
+          updatedAt: DateTime(2026, 3, 14, 21),
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      _wrapWithMaterial(HqFeatureFlagsPage(workflowBridge: bridge)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Rollout governance queue'), findsOneWidget);
+    expect(find.text('2 active operator items'), findsOneWidget);
+    expect(find.text('Literacy Pilot · Rollout control'), findsOneWidget);
+    expect(find.text('Numeracy Pilot · Alert refresh'), findsOneWidget);
+    expect(find.widgetWithText(TextButton, 'Open alert history'), findsNWidgets(2));
+    expect(find.widgetWithText(TextButton, 'Open rollout audit'), findsNWidgets(2));
+
+    await tester.tap(find.widgetWithText(TextButton, 'Open alert history').first);
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Runtime rollout alert history: Literacy Pilot'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('HQ page saves rollout escalation state',
@@ -6562,7 +6750,7 @@ void main() {
     );
     expect(
       find.textContaining('Escalation: investigating · owner hq-ops-2'),
-      findsOneWidget,
+      findsWidgets,
     );
     expect(
       find.textContaining('Investigating site runtime mismatch.'),
@@ -6958,7 +7146,7 @@ void main() {
       find.text(
         'Rollout alert: 1 fallback site statuses need review. Use Site rollout for detail.',
       ),
-      findsOneWidget,
+      findsWidgets,
     );
   });
 
