@@ -65,7 +65,8 @@ class VoiceRuntimeService {
     }
     final String? idToken = await user.getIdToken();
     if (idToken == null || idToken.isEmpty) {
-      throw Exception('Unable to resolve auth token for voice runtime request.');
+      throw Exception(
+          'Unable to resolve auth token for voice runtime request.');
     }
     return idToken;
   }
@@ -87,7 +88,8 @@ class VoiceRuntimeService {
         .timeout(_timeout);
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception('Voice API error (${response.statusCode}): ${response.body}');
+      throw Exception(
+          'Voice API error (${response.statusCode}): ${response.body}');
     }
 
     final Map<String, dynamic> json =
@@ -99,8 +101,7 @@ class VoiceRuntimeService {
       'suggestedNextSteps': const <String>[],
       'metadata': json['metadata'] as Map<String, dynamic>? ??
           const <String, dynamic>{},
-      'tts': json['tts'] as Map<String, dynamic>? ??
-          const <String, dynamic>{},
+      'tts': json['tts'] as Map<String, dynamic>? ?? const <String, dynamic>{},
       'meta': <String, dynamic>{
         'version': 'voice-api-v1',
       },
@@ -116,13 +117,14 @@ class VoiceRuntimeService {
     final String idToken = await _requiredIdToken();
     final Uri endpoint = _voiceApiUri('/voice/transcribe');
 
-    final http.MultipartRequest request = http.MultipartRequest('POST', endpoint)
-      ..headers.addAll(<String, String>{
-        'Authorization': 'Bearer $idToken',
-        'x-scholesa-locale': locale,
-      })
-      ..fields['locale'] = locale
-      ..fields['partial'] = partial ? 'true' : 'false';
+    final http.MultipartRequest request =
+        http.MultipartRequest('POST', endpoint)
+          ..headers.addAll(<String, String>{
+            'Authorization': 'Bearer $idToken',
+            'x-scholesa-locale': locale,
+          })
+          ..fields['locale'] = locale
+          ..fields['partial'] = partial ? 'true' : 'false';
 
     if (traceId != null && traceId.isNotEmpty) {
       request.fields['traceId'] = traceId;
@@ -134,12 +136,15 @@ class VoiceRuntimeService {
       throw Exception('Audio file missing for transcription.');
     }
 
-    request.files.add(await http.MultipartFile.fromPath('audio', audioFilePath));
+    request.files
+        .add(await http.MultipartFile.fromPath('audio', audioFilePath));
 
-    final http.StreamedResponse streamed = await request.send().timeout(_timeout);
+    final http.StreamedResponse streamed =
+        await request.send().timeout(_timeout);
     final http.Response response = await http.Response.fromStream(streamed);
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception('Voice transcribe error (${response.statusCode}): ${response.body}');
+      throw Exception(
+          'Voice transcribe error (${response.statusCode}): ${response.body}');
     }
 
     final Map<String, dynamic> json =
@@ -149,12 +154,23 @@ class VoiceRuntimeService {
 
     return TranscribeVoiceResponse(
       transcript: (json['transcript'] as String?)?.trim() ?? '',
-      confidence: (json['confidence'] as num?)?.toDouble() ?? 0,
+      confidence: _readFiniteConfidence(json['confidence']),
       traceId: metadata['traceId'] as String?,
       latencyMs: (metadata['latencyMs'] as num?)?.toInt(),
       modelVersion: metadata['modelVersion'] as String?,
       locale: metadata['locale'] as String?,
     );
+  }
+
+  double? _readFiniteConfidence(dynamic value) {
+    if (value is! num) {
+      return null;
+    }
+    final double confidence = value.toDouble();
+    if (!confidence.isFinite) {
+      return null;
+    }
+    return (confidence.clamp(0.0, 1.0) as num).toDouble();
   }
 
   Uri _voiceApiUri(String path) {
@@ -177,7 +193,7 @@ class TranscribeVoiceResponse {
   });
 
   final String transcript;
-  final double confidence;
+  final double? confidence;
   final String? traceId;
   final int? latencyMs;
   final String? modelVersion;

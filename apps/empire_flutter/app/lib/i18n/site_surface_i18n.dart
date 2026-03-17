@@ -22,7 +22,7 @@ class SiteSurfaceI18n {
     'Pending': '待处理',
     'Manage Site Plan': '管理站点方案',
     'Review current usage, upgrade limits, or contact HQ billing support.':
-      '查看当前使用情况、升级额度，或联系 HQ 计费支持。',
+        '查看当前使用情况、升级额度，或联系 HQ 计费支持。',
     'Close': '关闭',
     'Plan management request submitted': '方案管理请求已提交',
     'Plan management request failed': '方案管理请求失败',
@@ -31,14 +31,15 @@ class SiteSurfaceI18n {
     'No invoices yet': '暂无发票',
     'No billing data yet': '暂无计费数据',
     'Billing details will appear once HQ configures an active site billing account.':
-      '一旦 HQ 配置了有效的站点计费账户，计费详情就会显示在这里。',
+        '一旦 HQ 配置了有效的站点计费账户，计费详情就会显示在这里。',
     'Billing plan unavailable': '计费方案不可用',
     'Identity Resolution': '身份匹配处理',
     'Review and confirm matches between local accounts and external provider accounts.':
-      '审核并确认本地账户与外部提供方账户之间的匹配。',
+        '审核并确认本地账户与外部提供方账户之间的匹配。',
     'All Identities Resolved': '所有身份均已处理',
     'No pending identity matches to review': '没有待审核的身份匹配',
     'Match confidence:': '匹配置信度：',
+    'Match confidence unavailable': '匹配置信度不可用',
     'Local Account': '本地账户',
     'External Account': '外部账户',
     'Ignore': '忽略',
@@ -130,7 +131,8 @@ class SiteSurfaceI18n {
     'First-aid bag confirmed': '急救包已确认',
     'Confirm the bag is stocked before doors open': '开门前确认急救包物资齐全',
     'Safety Notes': '安全备注',
-    'Capture handoff changes, medical context, or room risks': '记录交接变更、医疗背景或教室风险',
+    'Capture handoff changes, medical context, or room risks':
+        '记录交接变更、医疗背景或教室风险',
     'Save Safety Note': '保存安全备注',
     'No safety notes logged today': '今天暂无安全备注',
     'Site Team': '站点团队',
@@ -142,11 +144,11 @@ class SiteSurfaceI18n {
     'Safety note saved': '安全备注已保存',
     'Federated Runtime': '联邦运行时',
     'Active bounded runtime package and rollout status for this site':
-      '此站点的受限运行时包与发布状态',
+        '此站点的受限运行时包与发布状态',
     'No bounded runtime package assigned': '尚未分配受限运行时包',
     'Runtime rollout details are unavailable right now': '当前无法获取运行时发布详情',
     'Runtime rollout details are partially unavailable right now':
-      '部分运行时发布详情当前不可用',
+        '部分运行时发布详情当前不可用',
     'Current package': '当前包',
     'Runtime target': '运行时目标',
     'Model version': '模型版本',
@@ -249,7 +251,7 @@ class SiteSurfaceI18n {
     'Pending': '待處理',
     'Manage Site Plan': '管理站點方案',
     'Review current usage, upgrade limits, or contact HQ billing support.':
-      '檢視目前使用情況、升級額度，或聯絡 HQ 計費支援。',
+        '檢視目前使用情況、升級額度，或聯絡 HQ 計費支援。',
     'Close': '關閉',
     'Plan management request submitted': '方案管理請求已提交',
     'Plan management request failed': '方案管理請求失敗',
@@ -258,14 +260,15 @@ class SiteSurfaceI18n {
     'No invoices yet': '目前沒有發票',
     'No billing data yet': '尚無計費資料',
     'Billing details will appear once HQ configures an active site billing account.':
-      '一旦 HQ 設定有效的站點計費帳戶，計費詳情就會顯示在這裡。',
+        '一旦 HQ 設定有效的站點計費帳戶，計費詳情就會顯示在這裡。',
     'Billing plan unavailable': '計費方案不可用',
     'Identity Resolution': '身分匹配處理',
     'Review and confirm matches between local accounts and external provider accounts.':
-      '檢視並確認本地帳戶與外部提供者帳戶之間的匹配。',
+        '檢視並確認本地帳戶與外部提供者帳戶之間的匹配。',
     'All Identities Resolved': '所有身分皆已處理',
     'No pending identity matches to review': '沒有待審核的身分匹配',
     'Match confidence:': '匹配信心：',
+    'Match confidence unavailable': '匹配信心不可用',
     'Local Account': '本地帳戶',
     'External Account': '外部帳戶',
     'Ignore': '忽略',
@@ -357,7 +360,8 @@ class SiteSurfaceI18n {
     'First-aid bag confirmed': '急救包已確認',
     'Confirm the bag is stocked before doors open': '開門前確認急救包物資齊全',
     'Safety Notes': '安全備註',
-    'Capture handoff changes, medical context, or room risks': '記錄交接變更、醫療背景或教室風險',
+    'Capture handoff changes, medical context, or room risks':
+        '記錄交接變更、醫療背景或教室風險',
     'Save Safety Note': '儲存安全備註',
     'No safety notes logged today': '今天尚無安全備註',
     'Site Team': '站點團隊',
@@ -369,11 +373,11 @@ class SiteSurfaceI18n {
     'Safety note saved': '安全備註已儲存',
     'Federated Runtime': '聯邦執行階段',
     'Active bounded runtime package and rollout status for this site':
-      '此站點的受限執行階段套件與發布狀態',
+        '此站點的受限執行階段套件與發布狀態',
     'No bounded runtime package assigned': '尚未指派受限執行階段套件',
     'Runtime rollout details are unavailable right now': '目前無法取得執行階段發布詳情',
     'Runtime rollout details are partially unavailable right now':
-      '部分執行階段發布詳情目前不可用',
+        '部分執行階段發布詳情目前不可用',
     'Current package': '目前套件',
     'Runtime target': '執行階段目標',
     'Model version': '模型版本',

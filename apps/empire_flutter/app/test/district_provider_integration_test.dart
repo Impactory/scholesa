@@ -284,5 +284,35 @@ void main() {
       expect(resolverCalls.last['decision'], 'ignore');
       expect(resolverCalls.last['suggestedUserId'], 'learner-2');
     });
+
+    testWidgets(
+        'site identity page shows unavailable confidence instead of inventing midpoint values',
+        (WidgetTester tester) async {
+      final AppState appState = _buildSiteState();
+
+      await tester.pumpWidget(
+        _buildSiteHarness(
+          appState: appState,
+          child: SiteIdentityPage(
+            identityLoader: (_) async => <Map<String, dynamic>>[
+              <String, dynamic>{
+                'id': 'identity-missing-confidence',
+                'provider': 'google_classroom',
+                'providerUserId': 'external-learner-1',
+                'scholesaUserId': 'learner-1',
+                'scholesaUserName': 'Learner One',
+                'status': 'unmatched',
+              },
+            ],
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Match confidence unavailable'), findsOneWidget);
+      expect(find.text('Match confidence: 50%'), findsNothing);
+    });
   });
 }

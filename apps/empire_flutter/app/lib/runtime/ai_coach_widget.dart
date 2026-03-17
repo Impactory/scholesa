@@ -177,8 +177,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       'mode_${_selectedMode.name}',
       if (widget.missionId != null && widget.missionId!.trim().isNotEmpty)
         'mission_${widget.missionId!}',
-      if (widget.checkpointId != null &&
-          widget.checkpointId!.trim().isNotEmpty)
+      if (widget.checkpointId != null && widget.checkpointId!.trim().isNotEmpty)
         'checkpoint_${widget.checkpointId!}',
       ..._learningGoals.map(
         (String goal) =>
@@ -287,7 +286,8 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         _listenAfterSpeech = false;
       });
 
-      final bool uploadReady = kIsWeb ? false : await _audioRecorder.hasPermission();
+      final bool uploadReady =
+          kIsWeb ? false : await _audioRecorder.hasPermission();
       if (!mounted) return;
       setState(() {
         _speechAvailable = speechReady;
@@ -426,7 +426,8 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
   }
 
   void _startProactiveAssistLoop() {
-    if (!widget.autoAssistOnHesitation || widget.actorRole != UserRole.learner) {
+    if (!widget.autoAssistOnHesitation ||
+        widget.actorRole != UserRole.learner) {
       return;
     }
     _proactiveAssistTimer = Timer.periodic(widget.proactiveScanInterval, (_) {
@@ -442,7 +443,8 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
   String _buildHesitationPrompt(XHat state) {
     final String profile =
         'cognition=${state.cognition.toStringAsFixed(2)}, engagement=${state.engagement.toStringAsFixed(2)}, integrity=${state.integrity.toStringAsFixed(2)}';
-    return _t('ai.autoAssist.hesitationPrompt').replaceFirst('{state}', profile);
+    return _t('ai.autoAssist.hesitationPrompt')
+        .replaceFirst('{state}', profile);
   }
 
   String _buildInterventionPrompt(BosIntervention intervention) {
@@ -542,7 +544,8 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
           if (state != null) 'engagement': state.engagement,
           if (state != null) 'cognition': state.cognition,
           if (intervention != null) 'interventionType': intervention.type.name,
-          if (intervention != null) 'interventionSalience': intervention.salience.name,
+          if (intervention != null)
+            'interventionSalience': intervention.salience.name,
           'reasonCodes': intervention?.reasonCodes ?? const <String>[],
           'autoAssist': true,
         },
@@ -559,7 +562,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         },
       );
 
-        final AiCoachResponse response = widget.onAutoResponseRequest != null
+      final AiCoachResponse response = widget.onAutoResponseRequest != null
           ? await widget.onAutoResponseRequest!(autoPrompt, _selectedMode)
           : await _fetchAndProcessResponse(autoPrompt);
       if (!mounted) return;
@@ -666,7 +669,8 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
           'source': 'voice_api_upload',
           'surface': 'ai_coach_widget',
           'chars': transcribed.transcript.length,
-          'confidence': transcribed.confidence,
+          if (transcribed.confidence != null)
+            'confidence': transcribed.confidence,
           'traceId': transcribed.traceId,
           'latencyMs': transcribed.latencyMs,
           'modelVersion': transcribed.modelVersion,
@@ -727,7 +731,8 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         speechReady = false;
       }
 
-      final bool uploadReady = kIsWeb ? false : await _audioRecorder.hasPermission();
+      final bool uploadReady =
+          kIsWeb ? false : await _audioRecorder.hasPermission();
       if (!mounted) return;
       setState(() {
         _speechAvailable = speechReady;
@@ -925,9 +930,11 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
 
   List<String> _recentConversationTurns({int limit = 6}) {
     if (_messages.isEmpty) return const <String>[];
-    final Iterable<_ChatMessage> window = _messages.reversed.take(limit).toList().reversed;
+    final Iterable<_ChatMessage> window =
+        _messages.reversed.take(limit).toList().reversed;
     return window
-        .map((m) => '${m.isUser ? 'Learner' : 'Coach'}: ${m.text.replaceAll('\n', ' ').trim()}')
+        .map((m) =>
+            '${m.isUser ? 'Learner' : 'Coach'}: ${m.text.replaceAll('\n', ' ').trim()}')
         .toList();
   }
 
@@ -1005,14 +1012,13 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
 
   String _buildConversationalPrompt(String userInput) {
     final List<String> turns = _privacySafeConversationTurns();
-    final String conversation = turns.isEmpty
-        ? 'No prior turns.'
-        : turns.join('\n');
+    final String conversation =
+        turns.isEmpty ? 'No prior turns.' : turns.join('\n');
     final String tags = _bosMiaLoopTags().join(', ');
     final List<String> safeGoals = _privacySafeLearningGoals();
     final String goals = safeGoals.isEmpty
-      ? 'none yet'
-      : safeGoals.map((g) => '- $g').join('\n');
+        ? 'none yet'
+        : safeGoals.map((g) => '- $g').join('\n');
 
     return '''
 You are Scholesa AI Coach in a live conversation.
@@ -1085,9 +1091,8 @@ Response style:
     if (candidate == null) return;
 
     final String candidateKey = candidate.toLowerCase();
-    final bool exists = _learningGoals
-        .map((g) => g.toLowerCase())
-        .contains(candidateKey);
+    final bool exists =
+        _learningGoals.map((g) => g.toLowerCase()).contains(candidateKey);
     if (exists) return;
 
     _learningGoals.insert(0, candidate);
@@ -1107,7 +1112,8 @@ Response style:
   }
 
   bool get _canClearGoals {
-    return widget.actorRole == UserRole.educator || widget.actorRole == UserRole.hq;
+    return widget.actorRole == UserRole.educator ||
+        widget.actorRole == UserRole.hq;
   }
 
   Future<void> _clearLearningGoals() async {
@@ -1294,7 +1300,8 @@ Response style:
           'mvlGateActive': response.mvlGateActive,
           'requiresExplainBack': response.requiresExplainBack,
           'traceId': response.traceId,
-          'source': response.policyVersion == null ? 'bos_callable' : 'voice_api',
+          'source':
+              response.policyVersion == null ? 'bos_callable' : 'voice_api',
         },
       );
     } catch (e) {
@@ -1326,7 +1333,8 @@ Response style:
 
   Future<AiCoachResponse> _fetchAndProcessResponse(String prompt) async {
     final String sanitizedPrompt = _privacySafeText(prompt, maxLength: 320);
-    final AiCoachResponse response = await VoiceRuntimeService.instance.requestCopilot(
+    final AiCoachResponse response =
+        await VoiceRuntimeService.instance.requestCopilot(
       VoiceCopilotRequest(
         message: _buildConversationalPrompt(sanitizedPrompt),
         locale: Localizations.localeOf(context).toLanguageTag(),
@@ -1361,8 +1369,7 @@ Response style:
     );
 
     // MVL Gating Logic (client-side override)
-    if (widget.runtime.hasMvlGate &&
-        response.mvlGateActive) {
+    if (widget.runtime.hasMvlGate && response.mvlGateActive) {
       widget.runtime.trackEvent(
         'mvl_gate_triggered',
         missionId: widget.missionId,
@@ -1379,7 +1386,6 @@ Response style:
 
     return response;
   }
-
 
   void _sendFeedback(bool helpful) {
     TelemetryService.instance.logEvent(
@@ -1404,8 +1410,8 @@ Response style:
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-            helpful ? _t('ai.feedback.thanks') : _t('ai.feedback.noted')),
+        content:
+            Text(helpful ? _t('ai.feedback.thanks') : _t('ai.feedback.noted')),
         duration: const Duration(seconds: 2),
       ),
     );
@@ -1452,8 +1458,8 @@ Response style:
                 Expanded(
                   child: Text(
                     _t('ai.banner.verification'),
-                    style: theme.textTheme.bodySmall
-                        ?.copyWith(color: theme.colorScheme.onTertiaryContainer),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onTertiaryContainer),
                   ),
                 ),
               ],
@@ -1588,7 +1594,8 @@ Response style:
                     _speechAvailable ||
                     _uploadSttAvailable)
                   IconButton(
-                    onPressed: (_loading || _isSpeaking) ? null : _toggleListening,
+                    onPressed:
+                        (_loading || _isSpeaking) ? null : _toggleListening,
                     icon: Icon(
                       _isListening ? Icons.mic : Icons.mic_none,
                     ),
@@ -1600,7 +1607,8 @@ Response style:
                   onPressed: (_loading || _isSpeaking)
                       ? null
                       : () {
-                          setState(() => _voiceOutputEnabled = !_voiceOutputEnabled);
+                          setState(
+                              () => _voiceOutputEnabled = !_voiceOutputEnabled);
                         },
                   icon: Icon(
                     _voiceOutputEnabled
@@ -1636,7 +1644,9 @@ Response style:
                       controller: _inputController,
                       enabled: !_isSpeaking,
                       decoration: InputDecoration(
-                        hintText: _isSpeaking ? _t('ai.voice.speaking') : _modeHint(_selectedMode),
+                        hintText: _isSpeaking
+                            ? _t('ai.voice.speaking')
+                            : _modeHint(_selectedMode),
                         border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(24)),
                         contentPadding: const EdgeInsets.symmetric(

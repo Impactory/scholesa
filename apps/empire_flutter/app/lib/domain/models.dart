@@ -3047,17 +3047,18 @@ class FederatedLearningExperimentModel {
       description: data['description'] as String?,
       runtimeTarget: data['runtimeTarget'] as String? ?? 'flutter_mobile',
       status: data['status'] as String? ?? 'draft',
-        mergeStrategy: data['mergeStrategy'] as String? ??
+      mergeStrategy: data['mergeStrategy'] as String? ??
           'norm_capped_weighted_runtime_vector_average_v2',
-        requireWarmStartForTraining:
+      requireWarmStartForTraining:
           data['requireWarmStartForTraining'] as bool? ?? false,
-        maxLocalEpochs: (data['maxLocalEpochs'] as num?)?.toInt() ?? 3,
-        maxLocalSteps: (data['maxLocalSteps'] as num?)?.toInt() ?? 24,
-        maxTrainingWindowSeconds:
+      maxLocalEpochs: (data['maxLocalEpochs'] as num?)?.toInt() ?? 3,
+      maxLocalSteps: (data['maxLocalSteps'] as num?)?.toInt() ?? 24,
+      maxTrainingWindowSeconds:
           (data['maxTrainingWindowSeconds'] as num?)?.toInt() ?? 1800,
       allowedSiteIds: _stringListOrEmpty(data['allowedSiteIds']),
       aggregateThreshold: (data['aggregateThreshold'] as num?)?.toInt() ?? 25,
-      minDistinctSiteCount: (data['minDistinctSiteCount'] as num?)?.toInt() ?? 2,
+      minDistinctSiteCount:
+          (data['minDistinctSiteCount'] as num?)?.toInt() ?? 2,
       rawUpdateMaxBytes: (data['rawUpdateMaxBytes'] as num?)?.toInt() ?? 16384,
       enablePrototypeUploads: data['enablePrototypeUploads'] as bool? ?? false,
       featureFlagId: data['featureFlagId'] as String?,
@@ -3357,9 +3358,9 @@ class FederatedLearningAggregationRunModel {
   final int? oldestSummaryCreatedAtMs;
   final int? newestSummaryCreatedAtMs;
   final int? summaryFreshnessSpanSeconds;
-    final List<FederatedLearningEnvironmentBreakdownEntryModel>
+  final List<FederatedLearningEnvironmentBreakdownEntryModel>
       batteryStateBreakdown;
-    final List<FederatedLearningEnvironmentBreakdownEntryModel>
+  final List<FederatedLearningEnvironmentBreakdownEntryModel>
       networkTypeBreakdown;
   final String? boundedDigest;
   final String? payloadFormat;
@@ -3421,18 +3422,18 @@ class FederatedLearningAggregationRunModel {
       dampedSummaryCount: (data['dampedSummaryCount'] as num?)?.toInt(),
       minUpdateNorm: (data['minUpdateNorm'] as num?)?.toDouble(),
       maxUpdateNorm: (data['maxUpdateNorm'] as num?)?.toDouble(),
-        oldestSummaryCreatedAtMs:
+      oldestSummaryCreatedAtMs:
           (data['oldestSummaryCreatedAtMs'] as num?)?.toInt(),
-        newestSummaryCreatedAtMs:
+      newestSummaryCreatedAtMs:
           (data['newestSummaryCreatedAtMs'] as num?)?.toInt(),
-        summaryFreshnessSpanSeconds:
+      summaryFreshnessSpanSeconds:
           (data['summaryFreshnessSpanSeconds'] as num?)?.toInt(),
-        batteryStateBreakdown: _environmentBreakdownListOrEmpty(
-          data['batteryStateBreakdown'],
-        ),
-        networkTypeBreakdown: _environmentBreakdownListOrEmpty(
-          data['networkTypeBreakdown'],
-        ),
+      batteryStateBreakdown: _environmentBreakdownListOrEmpty(
+        data['batteryStateBreakdown'],
+      ),
+      networkTypeBreakdown: _environmentBreakdownListOrEmpty(
+        data['networkTypeBreakdown'],
+      ),
       boundedDigest: data['boundedDigest'] as String?,
       payloadFormat: data['payloadFormat'] as String?,
       modelVersion: data['modelVersion'] as String?,
@@ -3485,13 +3486,13 @@ class FederatedLearningAggregationRunModel {
         'newestSummaryCreatedAtMs': newestSummaryCreatedAtMs,
         'summaryFreshnessSpanSeconds': summaryFreshnessSpanSeconds,
         'batteryStateBreakdown': batteryStateBreakdown
-          .map((FederatedLearningEnvironmentBreakdownEntryModel entry) =>
-            entry.toMap())
-          .toList(growable: false),
+            .map((FederatedLearningEnvironmentBreakdownEntryModel entry) =>
+                entry.toMap())
+            .toList(growable: false),
         'networkTypeBreakdown': networkTypeBreakdown
-          .map((FederatedLearningEnvironmentBreakdownEntryModel entry) =>
-            entry.toMap())
-          .toList(growable: false),
+            .map((FederatedLearningEnvironmentBreakdownEntryModel entry) =>
+                entry.toMap())
+            .toList(growable: false),
         'boundedDigest': boundedDigest,
         'payloadFormat': payloadFormat,
         'modelVersion': modelVersion,
@@ -3517,9 +3518,9 @@ class FederatedLearningAggregationRunModel {
                 detail.toMap())
             .toList(growable: false),
         'siteContributionSummaries': siteContributionSummaries
-          .map((FederatedLearningSiteContributionSummaryModel summary) =>
-            summary.toMap())
-          .toList(growable: false),
+            .map((FederatedLearningSiteContributionSummaryModel summary) =>
+                summary.toMap())
+            .toList(growable: false),
         'createdBy': createdBy,
         'createdAt': createdAt ?? Timestamp.now(),
         'updatedAt': updatedAt ?? Timestamp.now(),
@@ -3587,9 +3588,9 @@ class FederatedLearningMergeArtifactModel {
   final int? oldestSummaryCreatedAtMs;
   final int? newestSummaryCreatedAtMs;
   final int? summaryFreshnessSpanSeconds;
-    final List<FederatedLearningEnvironmentBreakdownEntryModel>
+  final List<FederatedLearningEnvironmentBreakdownEntryModel>
       batteryStateBreakdown;
-    final List<FederatedLearningEnvironmentBreakdownEntryModel>
+  final List<FederatedLearningEnvironmentBreakdownEntryModel>
       networkTypeBreakdown;
   final String triggerSummaryId;
   final List<String> summaryIds;
@@ -3641,22 +3642,22 @@ class FederatedLearningMergeArtifactModel {
       normCap: (data['normCap'] as num?)?.toDouble() ?? 0,
       effectiveTotalWeight:
           (data['effectiveTotalWeight'] as num?)?.toDouble() ?? 0,
-        rawTotalWeight: (data['rawTotalWeight'] as num?)?.toDouble() ?? 0,
-        dampedSummaryCount: (data['dampedSummaryCount'] as num?)?.toInt() ?? 0,
-        minUpdateNorm: (data['minUpdateNorm'] as num?)?.toDouble() ?? 0,
-        maxUpdateNorm: (data['maxUpdateNorm'] as num?)?.toDouble() ?? 0,
-        oldestSummaryCreatedAtMs:
+      rawTotalWeight: (data['rawTotalWeight'] as num?)?.toDouble() ?? 0,
+      dampedSummaryCount: (data['dampedSummaryCount'] as num?)?.toInt() ?? 0,
+      minUpdateNorm: (data['minUpdateNorm'] as num?)?.toDouble() ?? 0,
+      maxUpdateNorm: (data['maxUpdateNorm'] as num?)?.toDouble() ?? 0,
+      oldestSummaryCreatedAtMs:
           (data['oldestSummaryCreatedAtMs'] as num?)?.toInt(),
-        newestSummaryCreatedAtMs:
+      newestSummaryCreatedAtMs:
           (data['newestSummaryCreatedAtMs'] as num?)?.toInt(),
-        summaryFreshnessSpanSeconds:
+      summaryFreshnessSpanSeconds:
           (data['summaryFreshnessSpanSeconds'] as num?)?.toInt(),
-        batteryStateBreakdown: _environmentBreakdownListOrEmpty(
-          data['batteryStateBreakdown'],
-        ),
-        networkTypeBreakdown: _environmentBreakdownListOrEmpty(
-          data['networkTypeBreakdown'],
-        ),
+      batteryStateBreakdown: _environmentBreakdownListOrEmpty(
+        data['batteryStateBreakdown'],
+      ),
+      networkTypeBreakdown: _environmentBreakdownListOrEmpty(
+        data['networkTypeBreakdown'],
+      ),
       triggerSummaryId: data['triggerSummaryId'] as String? ?? '',
       summaryIds: _stringListOrEmpty(data['summaryIds']),
       boundedDigest: data['boundedDigest'] as String? ?? '',
@@ -3704,13 +3705,13 @@ class FederatedLearningMergeArtifactModel {
         'newestSummaryCreatedAtMs': newestSummaryCreatedAtMs,
         'summaryFreshnessSpanSeconds': summaryFreshnessSpanSeconds,
         'batteryStateBreakdown': batteryStateBreakdown
-          .map((FederatedLearningEnvironmentBreakdownEntryModel entry) =>
-            entry.toMap())
-          .toList(growable: false),
+            .map((FederatedLearningEnvironmentBreakdownEntryModel entry) =>
+                entry.toMap())
+            .toList(growable: false),
         'networkTypeBreakdown': networkTypeBreakdown
-          .map((FederatedLearningEnvironmentBreakdownEntryModel entry) =>
-            entry.toMap())
-          .toList(growable: false),
+            .map((FederatedLearningEnvironmentBreakdownEntryModel entry) =>
+                entry.toMap())
+            .toList(growable: false),
         'triggerSummaryId': triggerSummaryId,
         'summaryIds': summaryIds,
         'boundedDigest': boundedDigest,
@@ -3737,9 +3738,9 @@ class FederatedLearningMergeArtifactModel {
                 detail.toMap())
             .toList(growable: false),
         'siteContributionSummaries': siteContributionSummaries
-          .map((FederatedLearningSiteContributionSummaryModel summary) =>
-            summary.toMap())
-          .toList(growable: false),
+            .map((FederatedLearningSiteContributionSummaryModel summary) =>
+                summary.toMap())
+            .toList(growable: false),
         'createdBy': createdBy,
         'createdAt': createdAt ?? Timestamp.now(),
         'updatedAt': updatedAt ?? Timestamp.now(),
@@ -3840,9 +3841,9 @@ class FederatedLearningCandidateModelPackageModel {
   final int? oldestSummaryCreatedAtMs;
   final int? newestSummaryCreatedAtMs;
   final int? summaryFreshnessSpanSeconds;
-    final List<FederatedLearningEnvironmentBreakdownEntryModel>
+  final List<FederatedLearningEnvironmentBreakdownEntryModel>
       batteryStateBreakdown;
-    final List<FederatedLearningEnvironmentBreakdownEntryModel>
+  final List<FederatedLearningEnvironmentBreakdownEntryModel>
       networkTypeBreakdown;
   final int runtimeVectorLength;
   final List<double> runtimeVector;
@@ -3917,18 +3918,18 @@ class FederatedLearningCandidateModelPackageModel {
       dampedSummaryCount: (data['dampedSummaryCount'] as num?)?.toInt(),
       minUpdateNorm: (data['minUpdateNorm'] as num?)?.toDouble(),
       maxUpdateNorm: (data['maxUpdateNorm'] as num?)?.toDouble(),
-        oldestSummaryCreatedAtMs:
+      oldestSummaryCreatedAtMs:
           (data['oldestSummaryCreatedAtMs'] as num?)?.toInt(),
-        newestSummaryCreatedAtMs:
+      newestSummaryCreatedAtMs:
           (data['newestSummaryCreatedAtMs'] as num?)?.toInt(),
-        summaryFreshnessSpanSeconds:
+      summaryFreshnessSpanSeconds:
           (data['summaryFreshnessSpanSeconds'] as num?)?.toInt(),
-        batteryStateBreakdown: _environmentBreakdownListOrEmpty(
-          data['batteryStateBreakdown'],
-        ),
-        networkTypeBreakdown: _environmentBreakdownListOrEmpty(
-          data['networkTypeBreakdown'],
-        ),
+      batteryStateBreakdown: _environmentBreakdownListOrEmpty(
+        data['batteryStateBreakdown'],
+      ),
+      networkTypeBreakdown: _environmentBreakdownListOrEmpty(
+        data['networkTypeBreakdown'],
+      ),
       runtimeVectorLength: (data['runtimeVectorLength'] as num?)?.toInt() ?? 0,
       runtimeVector: _doubleListOrEmpty(data['runtimeVector']),
       runtimeVectorDigest: data['runtimeVectorDigest'] as String? ?? '',
@@ -3990,13 +3991,13 @@ class FederatedLearningCandidateModelPackageModel {
         'newestSummaryCreatedAtMs': newestSummaryCreatedAtMs,
         'summaryFreshnessSpanSeconds': summaryFreshnessSpanSeconds,
         'batteryStateBreakdown': batteryStateBreakdown
-          .map((FederatedLearningEnvironmentBreakdownEntryModel entry) =>
-            entry.toMap())
-          .toList(growable: false),
+            .map((FederatedLearningEnvironmentBreakdownEntryModel entry) =>
+                entry.toMap())
+            .toList(growable: false),
         'networkTypeBreakdown': networkTypeBreakdown
-          .map((FederatedLearningEnvironmentBreakdownEntryModel entry) =>
-            entry.toMap())
-          .toList(growable: false),
+            .map((FederatedLearningEnvironmentBreakdownEntryModel entry) =>
+                entry.toMap())
+            .toList(growable: false),
         'runtimeVectorLength': runtimeVectorLength,
         'runtimeVector': runtimeVector,
         'runtimeVectorDigest': runtimeVectorDigest,
@@ -4018,9 +4019,9 @@ class FederatedLearningCandidateModelPackageModel {
                 detail.toMap())
             .toList(growable: false),
         'siteContributionSummaries': siteContributionSummaries
-          .map((FederatedLearningSiteContributionSummaryModel summary) =>
-            summary.toMap())
-          .toList(growable: false),
+            .map((FederatedLearningSiteContributionSummaryModel summary) =>
+                summary.toMap())
+            .toList(growable: false),
         'createdBy': createdBy,
         'createdAt': createdAt ?? Timestamp.now(),
         'updatedAt': updatedAt ?? Timestamp.now(),
@@ -4407,10 +4408,10 @@ class FederatedLearningRuntimeDeliveryRecordModel {
       revokedAt: _timestampOrNull(data['revokedAt']),
       revokedBy: data['revokedBy'] as String?,
       revocationReason: data['revocationReason'] as String?,
-        terminalLifecycleStatus: data['terminalLifecycleStatus'] as String?,
-        rolloutControlMode: data['rolloutControlMode'] as String?,
-        rolloutControlReason: data['rolloutControlReason'] as String?,
-        rolloutControlReviewByAt:
+      terminalLifecycleStatus: data['terminalLifecycleStatus'] as String?,
+      rolloutControlMode: data['rolloutControlMode'] as String?,
+      rolloutControlReason: data['rolloutControlReason'] as String?,
+      rolloutControlReviewByAt:
           _timestampOrNull(data['rolloutControlReviewByAt']),
       notes: data['notes'] as String?,
       assignedBy: data['assignedBy'] as String?,
@@ -6283,10 +6284,10 @@ class MetacognitiveCalibrationRecordModel {
     required this.learnerId,
     required this.sourceType,
     required this.sourceId,
-    required this.confidenceLevel,
-    required this.confidenceScore,
-    required this.accuracyScore,
-    required this.calibrationDelta,
+    this.confidenceLevel,
+    this.confidenceScore,
+    this.accuracyScore,
+    this.calibrationDelta,
     this.instrumentId,
     this.itemId,
     this.createdAt,
@@ -6298,10 +6299,10 @@ class MetacognitiveCalibrationRecordModel {
   final String learnerId;
   final String sourceType;
   final String sourceId;
-  final int confidenceLevel;
-  final double confidenceScore;
-  final double accuracyScore;
-  final double calibrationDelta;
+  final int? confidenceLevel;
+  final double? confidenceScore;
+  final double? accuracyScore;
+  final double? calibrationDelta;
   final String? instrumentId;
   final String? itemId;
   final Timestamp? createdAt;
@@ -6316,10 +6317,10 @@ class MetacognitiveCalibrationRecordModel {
       learnerId: m['learnerId'] as String? ?? '',
       sourceType: m['sourceType'] as String? ?? 'item_response',
       sourceId: m['sourceId'] as String? ?? doc.id,
-      confidenceLevel: m['confidenceLevel'] as int? ?? 0,
-      confidenceScore: (m['confidenceScore'] as num?)?.toDouble() ?? 0,
-      accuracyScore: (m['accuracyScore'] as num?)?.toDouble() ?? 0,
-      calibrationDelta: (m['calibrationDelta'] as num?)?.toDouble() ?? 0,
+      confidenceLevel: _readInt(m['confidenceLevel']),
+      confidenceScore: _readFiniteDouble(m['confidenceScore']),
+      accuracyScore: _readFiniteDouble(m['accuracyScore']),
+      calibrationDelta: _readFiniteDouble(m['calibrationDelta']),
       instrumentId: m['instrumentId'] as String?,
       itemId: m['itemId'] as String?,
       createdAt: m['createdAt'] as Timestamp?,
@@ -6327,15 +6328,37 @@ class MetacognitiveCalibrationRecordModel {
     );
   }
 
+  static int? _readInt(dynamic value) {
+    if (value is! num) {
+      return null;
+    }
+    final double numeric = value.toDouble();
+    if (!numeric.isFinite) {
+      return null;
+    }
+    return value.toInt();
+  }
+
+  static double? _readFiniteDouble(dynamic value) {
+    if (value is! num) {
+      return null;
+    }
+    final double numeric = value.toDouble();
+    if (!numeric.isFinite) {
+      return null;
+    }
+    return numeric;
+  }
+
   Map<String, dynamic> toMap() => <String, dynamic>{
         'siteId': siteId,
         'learnerId': learnerId,
         'sourceType': sourceType,
         'sourceId': sourceId,
-        'confidenceLevel': confidenceLevel,
-        'confidenceScore': confidenceScore,
-        'accuracyScore': accuracyScore,
-        'calibrationDelta': calibrationDelta,
+        if (confidenceLevel != null) 'confidenceLevel': confidenceLevel,
+        if (confidenceScore != null) 'confidenceScore': confidenceScore,
+        if (accuracyScore != null) 'accuracyScore': accuracyScore,
+        if (calibrationDelta != null) 'calibrationDelta': calibrationDelta,
         if (instrumentId != null) 'instrumentId': instrumentId,
         if (itemId != null) 'itemId': itemId,
         'createdAt': createdAt ?? Timestamp.now(),

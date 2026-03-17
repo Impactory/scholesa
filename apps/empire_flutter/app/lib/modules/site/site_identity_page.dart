@@ -169,7 +169,7 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '${_tSiteIdentity(context, 'Match confidence:')} ${(match.confidence * 100).toInt()}%',
+                        _formatConfidenceLabel(context, match.confidence),
                         style: TextStyle(
                           fontSize: 12,
                           color: _getConfidenceColor(match.confidence),
@@ -299,7 +299,37 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
     );
   }
 
-  Widget _buildConfidenceIndicator(double confidence) {
+  String _formatConfidenceLabel(BuildContext context, double? confidence) {
+    if (confidence == null) {
+      return _tSiteIdentity(context, 'Match confidence unavailable');
+    }
+    return '${_tSiteIdentity(context, 'Match confidence:')} ${(confidence * 100).toInt()}%';
+  }
+
+  Widget _buildConfidenceIndicator(double? confidence) {
+    if (confidence == null) {
+      return Container(
+        width: 40,
+        height: 40,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: Colors.grey.withValues(alpha: 0.45),
+            width: 2,
+          ),
+        ),
+        child: const Text(
+          '?',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: Colors.grey,
+          ),
+        ),
+      );
+    }
+
     return Stack(
       alignment: Alignment.center,
       children: <Widget>[
@@ -326,7 +356,8 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
     );
   }
 
-  Color _getConfidenceColor(double confidence) {
+  Color _getConfidenceColor(double? confidence) {
+    if (confidence == null) return Colors.grey;
     if (confidence >= 0.9) return Colors.green;
     if (confidence >= 0.7) return Colors.orange;
     return Colors.red;
@@ -435,8 +466,10 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
             (data['providerUserId'] as String?)?.trim().isNotEmpty == true
                 ? (data['providerUserId'] as String).trim()
                 : _tSiteIdentity(context, 'Unknown external account');
-        final double confidence =
-            ((data['confidence'] as num?) ?? 0.5).toDouble().clamp(0.0, 1.0);
+        final num? rawConfidence = data['confidence'] as num?;
+        final double? confidence = rawConfidence == null
+            ? null
+            : _normalizeConfidence(rawConfidence.toDouble());
         return _IdentityMatch(
           id: (data['id'] as String?) ?? '',
           localName: localName,
@@ -470,6 +503,13 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
     if (provider.contains('clever')) return 'Clever';
     if (provider.contains('classlink')) return 'ClassLink';
     return 'Google Classroom';
+  }
+
+  double? _normalizeConfidence(double value) {
+    if (!value.isFinite) {
+      return null;
+    }
+    return (value.clamp(0.0, 1.0) as num).toDouble();
   }
 
   Future<List<dynamic>> _fetchIdentityRows(String siteId) async {
@@ -549,7 +589,7 @@ class _IdentityMatch {
   final String externalName;
   final String provider;
   final String rawProvider;
-  final double confidence;
+  final double? confidence;
   final _MatchStatus status;
   final String? suggestedUserId;
 }

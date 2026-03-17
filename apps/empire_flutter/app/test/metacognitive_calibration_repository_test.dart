@@ -14,7 +14,8 @@ void main() {
     final List<Map<String, dynamic>> telemetryPayloads =
         <Map<String, dynamic>>[];
 
-    await TelemetryService.runWithDispatcher((Map<String, dynamic> payload) async {
+    await TelemetryService.runWithDispatcher(
+        (Map<String, dynamic> payload) async {
       telemetryPayloads.add(payload);
     }, () async {
       final String responseId = await repository.submit(
@@ -105,6 +106,37 @@ void main() {
       learnerId: 'learner-1',
     );
 
-    expect(records.map((record) => record.id).toList(), <String>['newer', 'older']);
+    expect(records.map((record) => record.id).toList(),
+        <String>['newer', 'older']);
+  });
+
+  test('listByLearner preserves unavailable calibration metrics as null',
+      () async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final MetacognitiveCalibrationRepository repository =
+        MetacognitiveCalibrationRepository(firestore: firestore);
+
+    await firestore
+        .collection('metacognitiveCalibrationRecords')
+        .doc('missing-metrics')
+        .set(<String, dynamic>{
+      'siteId': 'site-1',
+      'learnerId': 'learner-1',
+      'sourceType': 'item_response',
+      'sourceId': 'response-1',
+      'createdAt': Timestamp.fromMillisecondsSinceEpoch(3000),
+    });
+
+    final List<MetacognitiveCalibrationRecordModel> records =
+        await repository.listByLearner(
+      siteId: 'site-1',
+      learnerId: 'learner-1',
+    );
+
+    expect(records, hasLength(1));
+    expect(records.single.confidenceLevel, isNull);
+    expect(records.single.confidenceScore, isNull);
+    expect(records.single.accuracyScore, isNull);
+    expect(records.single.calibrationDelta, isNull);
   });
 }
