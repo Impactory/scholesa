@@ -746,6 +746,19 @@ describe('Federated Learning Prototype Collections', () => {
     );
   });
 
+  test('HQ can query materialized federated aggregation runs', async () => {
+    const db = testEnv.authenticatedContext(hqUser.uid).firestore();
+    await assertSucceeds(
+      getDocs(
+        query(
+          collection(db, 'federatedLearningAggregationRuns'),
+          where('experimentId', '==', 'fl_exp_literacy_pilot'),
+          orderBy('createdAt', 'desc'),
+        ),
+      ),
+    );
+  });
+
   test('site admins cannot read cross-site aggregation runs directly', async () => {
     const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
     await assertFails(
@@ -753,10 +766,28 @@ describe('Federated Learning Prototype Collections', () => {
     );
   });
 
+  test('site admins cannot query aggregation runs directly', async () => {
+    const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
+    await assertFails(getDocs(collection(db, 'federatedLearningAggregationRuns')));
+  });
+
   test('HQ can read bounded merge artifacts', async () => {
     const db = testEnv.authenticatedContext(hqUser.uid).firestore();
     await assertSucceeds(
       getDoc(doc(db, 'federatedLearningMergeArtifacts', 'fl_merge_demo_1')),
+    );
+  });
+
+  test('HQ can query bounded merge artifacts', async () => {
+    const db = testEnv.authenticatedContext(hqUser.uid).firestore();
+    await assertSucceeds(
+      getDocs(
+        query(
+          collection(db, 'federatedLearningMergeArtifacts'),
+          where('experimentId', '==', 'fl_exp_literacy_pilot'),
+          orderBy('createdAt', 'desc'),
+        ),
+      ),
     );
   });
 
@@ -767,10 +798,28 @@ describe('Federated Learning Prototype Collections', () => {
     );
   });
 
+  test('site admins cannot query merge artifacts directly', async () => {
+    const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
+    await assertFails(getDocs(collection(db, 'federatedLearningMergeArtifacts')));
+  });
+
   test('HQ can read bounded candidate model packages', async () => {
     const db = testEnv.authenticatedContext(hqUser.uid).firestore();
     await assertSucceeds(
       getDoc(doc(db, 'federatedLearningCandidateModelPackages', 'fl_pkg_demo_1')),
+    );
+  });
+
+  test('HQ can query bounded candidate model packages', async () => {
+    const db = testEnv.authenticatedContext(hqUser.uid).firestore();
+    await assertSucceeds(
+      getDocs(
+        query(
+          collection(db, 'federatedLearningCandidateModelPackages'),
+          where('experimentId', '==', 'fl_exp_literacy_pilot'),
+          orderBy('createdAt', 'desc'),
+        ),
+      ),
     );
   });
 
@@ -781,10 +830,30 @@ describe('Federated Learning Prototype Collections', () => {
     );
   });
 
+  test('site admins cannot query candidate model packages directly', async () => {
+    const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
+    await assertFails(
+      getDocs(collection(db, 'federatedLearningCandidateModelPackages')),
+    );
+  });
+
   test('HQ can read candidate promotion records', async () => {
     const db = testEnv.authenticatedContext(hqUser.uid).firestore();
     await assertSucceeds(
       getDoc(doc(db, 'federatedLearningCandidatePromotionRecords', 'fl_prom_demo_1')),
+    );
+  });
+
+  test('HQ can query candidate promotion records', async () => {
+    const db = testEnv.authenticatedContext(hqUser.uid).firestore();
+    await assertSucceeds(
+      getDocs(
+        query(
+          collection(db, 'federatedLearningCandidatePromotionRecords'),
+          where('experimentId', '==', 'fl_exp_literacy_pilot'),
+          orderBy('createdAt', 'desc'),
+        ),
+      ),
     );
   });
 
@@ -795,10 +864,30 @@ describe('Federated Learning Prototype Collections', () => {
     );
   });
 
+  test('site admins cannot query candidate promotion records directly', async () => {
+    const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
+    await assertFails(
+      getDocs(collection(db, 'federatedLearningCandidatePromotionRecords')),
+    );
+  });
+
   test('HQ can read candidate promotion revocation records', async () => {
     const db = testEnv.authenticatedContext(hqUser.uid).firestore();
     await assertSucceeds(
       getDoc(doc(db, 'federatedLearningCandidatePromotionRevocationRecords', 'fl_prom_revoke_demo_1')),
+    );
+  });
+
+  test('HQ can query candidate promotion revocation records', async () => {
+    const db = testEnv.authenticatedContext(hqUser.uid).firestore();
+    await assertSucceeds(
+      getDocs(
+        query(
+          collection(db, 'federatedLearningCandidatePromotionRevocationRecords'),
+          where('experimentId', '==', 'fl_exp_literacy_pilot'),
+          orderBy('createdAt', 'desc'),
+        ),
+      ),
     );
   });
 
@@ -809,10 +898,30 @@ describe('Federated Learning Prototype Collections', () => {
     );
   });
 
+  test('site admins cannot query candidate promotion revocation records directly', async () => {
+    const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
+    await assertFails(
+      getDocs(collection(db, 'federatedLearningCandidatePromotionRevocationRecords')),
+    );
+  });
+
   test('HQ can read pilot evidence records', async () => {
     const db = testEnv.authenticatedContext(hqUser.uid).firestore();
     await assertSucceeds(
       getDoc(doc(db, 'federatedLearningPilotEvidenceRecords', 'fl_pilot_demo_1')),
+    );
+  });
+
+  test('HQ can query pilot evidence records', async () => {
+    const db = testEnv.authenticatedContext(hqUser.uid).firestore();
+    await assertSucceeds(
+      getDocs(
+        query(
+          collection(db, 'federatedLearningPilotEvidenceRecords'),
+          where('experimentId', '==', 'fl_exp_literacy_pilot'),
+          orderBy('createdAt', 'desc'),
+        ),
+      ),
     );
   });
 
@@ -823,10 +932,28 @@ describe('Federated Learning Prototype Collections', () => {
     );
   });
 
+  test('site admins cannot query pilot evidence records directly', async () => {
+    const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
+    await assertFails(getDocs(collection(db, 'federatedLearningPilotEvidenceRecords')));
+  });
+
   test('HQ can read pilot approval records', async () => {
     const db = testEnv.authenticatedContext(hqUser.uid).firestore();
     await assertSucceeds(
       getDoc(doc(db, 'federatedLearningPilotApprovalRecords', 'fl_pilot_approval_demo_1')),
+    );
+  });
+
+  test('HQ can query pilot approval records', async () => {
+    const db = testEnv.authenticatedContext(hqUser.uid).firestore();
+    await assertSucceeds(
+      getDocs(
+        query(
+          collection(db, 'federatedLearningPilotApprovalRecords'),
+          where('experimentId', '==', 'fl_exp_literacy_pilot'),
+          orderBy('createdAt', 'desc'),
+        ),
+      ),
     );
   });
 
@@ -837,10 +964,28 @@ describe('Federated Learning Prototype Collections', () => {
     );
   });
 
+  test('site admins cannot query pilot approval records directly', async () => {
+    const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
+    await assertFails(getDocs(collection(db, 'federatedLearningPilotApprovalRecords')));
+  });
+
   test('HQ can read pilot execution records', async () => {
     const db = testEnv.authenticatedContext(hqUser.uid).firestore();
     await assertSucceeds(
       getDoc(doc(db, 'federatedLearningPilotExecutionRecords', 'fl_pilot_execution_demo_1')),
+    );
+  });
+
+  test('HQ can query pilot execution records', async () => {
+    const db = testEnv.authenticatedContext(hqUser.uid).firestore();
+    await assertSucceeds(
+      getDocs(
+        query(
+          collection(db, 'federatedLearningPilotExecutionRecords'),
+          where('experimentId', '==', 'fl_exp_literacy_pilot'),
+          orderBy('createdAt', 'desc'),
+        ),
+      ),
     );
   });
 
@@ -849,6 +994,11 @@ describe('Federated Learning Prototype Collections', () => {
     await assertFails(
       getDoc(doc(db, 'federatedLearningPilotExecutionRecords', 'fl_pilot_execution_demo_1')),
     );
+  });
+
+  test('site admins cannot query pilot execution records directly', async () => {
+    const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
+    await assertFails(getDocs(collection(db, 'federatedLearningPilotExecutionRecords')));
   });
 
   test('HQ can read runtime delivery records', async () => {
@@ -892,11 +1042,29 @@ describe('Federated Learning Prototype Collections', () => {
     );
   });
 
+  test('HQ can query runtime activation records', async () => {
+    const db = testEnv.authenticatedContext(hqUser.uid).firestore();
+    await assertSucceeds(
+      getDocs(
+        query(
+          collection(db, 'federatedLearningRuntimeActivationRecords'),
+          where('experimentId', '==', 'fl_exp_literacy_pilot'),
+          orderBy('updatedAt', 'desc'),
+        ),
+      ),
+    );
+  });
+
   test('site admins cannot read runtime activation records directly', async () => {
     const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
     await assertFails(
       getDoc(doc(db, 'federatedLearningRuntimeActivationRecords', 'fl_activation_demo_1')),
     );
+  });
+
+  test('site admins cannot query runtime activation records directly', async () => {
+    const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
+    await assertFails(getDocs(collection(db, 'federatedLearningRuntimeActivationRecords')));
   });
 });
 

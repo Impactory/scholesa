@@ -6814,4 +6814,138 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets(
+      'HQ page prioritizes overdue rollout controls ahead of fallback-only experiments',
+      (WidgetTester tester) async {
+    final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
+      experiments: <Map<String, dynamic>>[
+        _experimentRow(
+          id: 'fl_exp_literacy_pilot',
+          name: 'Literacy Pilot',
+          allowedSiteIds: const <String>['site-1'],
+        ),
+        _experimentRow(
+          id: 'fl_exp_numeracy_pilot',
+          name: 'Numeracy Pilot',
+          allowedSiteIds: const <String>['site-1', 'site-2'],
+        ),
+      ],
+      aggregationRuns: <Map<String, dynamic>>[
+        _aggregationRunRow(
+          id: 'fl_agg_1',
+          experimentId: 'fl_exp_literacy_pilot',
+          mergeArtifactId: 'fl_merge_1',
+          boundedDigest: 'sha256:digest-1',
+        ),
+        _aggregationRunRow(
+          id: 'fl_agg_2',
+          experimentId: 'fl_exp_numeracy_pilot',
+          mergeArtifactId: 'fl_merge_2',
+          boundedDigest: 'sha256:digest-2',
+        ),
+      ],
+      mergeArtifacts: <Map<String, dynamic>>[
+        _mergeArtifactRow(
+          id: 'fl_merge_1',
+          experimentId: 'fl_exp_literacy_pilot',
+          aggregationRunId: 'fl_agg_1',
+          boundedDigest: 'sha256:digest-1',
+          summaryIds: const <String>['update-1', 'update-2'],
+        ),
+        _mergeArtifactRow(
+          id: 'fl_merge_2',
+          experimentId: 'fl_exp_numeracy_pilot',
+          aggregationRunId: 'fl_agg_2',
+          boundedDigest: 'sha256:digest-2',
+          summaryIds: const <String>['update-3', 'update-4'],
+        ),
+      ],
+      candidatePackages: <Map<String, dynamic>>[
+        _candidatePackageRow(
+          id: 'fl_pkg_1',
+          experimentId: 'fl_exp_literacy_pilot',
+          aggregationRunId: 'fl_agg_1',
+          mergeArtifactId: 'fl_merge_1',
+          boundedDigest: 'sha256:digest-1',
+          summaryIds: const <String>['update-1', 'update-2'],
+        ),
+        _candidatePackageRow(
+          id: 'fl_pkg_2',
+          experimentId: 'fl_exp_numeracy_pilot',
+          aggregationRunId: 'fl_agg_2',
+          mergeArtifactId: 'fl_merge_2',
+          boundedDigest: 'sha256:digest-2',
+          summaryIds: const <String>['update-3', 'update-4'],
+        ),
+      ],
+      runtimeDeliveryRecords: <Map<String, dynamic>>[
+        _runtimeDeliveryRecordRow(
+          id: 'fl_delivery_1',
+          experimentId: 'fl_exp_literacy_pilot',
+          candidateModelPackageId: 'fl_pkg_1',
+          aggregationRunId: 'fl_agg_1',
+          mergeArtifactId: 'fl_merge_1',
+          status: 'active',
+          targetSiteIds: <String>['site-1'],
+        ),
+        _runtimeDeliveryRecordRow(
+          id: 'fl_delivery_2',
+          experimentId: 'fl_exp_numeracy_pilot',
+          candidateModelPackageId: 'fl_pkg_2',
+          aggregationRunId: 'fl_agg_2',
+          mergeArtifactId: 'fl_merge_2',
+          status: 'active',
+          targetSiteIds: <String>['site-1', 'site-2'],
+        ),
+      ],
+      runtimeActivationRecords: <Map<String, dynamic>>[
+        _runtimeActivationRecordRow(
+          id: 'fl_runtime_activation_1_site-1',
+          deliveryRecordId: 'fl_delivery_1',
+          experimentId: 'fl_exp_literacy_pilot',
+          candidateModelPackageId: 'fl_pkg_1',
+          siteId: 'site-1',
+          status: 'resolved',
+        ),
+        _runtimeActivationRecordRow(
+          id: 'fl_runtime_activation_2_site-1',
+          deliveryRecordId: 'fl_delivery_2',
+          experimentId: 'fl_exp_numeracy_pilot',
+          candidateModelPackageId: 'fl_pkg_2',
+          siteId: 'site-1',
+          status: 'resolved',
+        ),
+        _runtimeActivationRecordRow(
+          id: 'fl_runtime_activation_2_site-2',
+          deliveryRecordId: 'fl_delivery_2',
+          experimentId: 'fl_exp_numeracy_pilot',
+          candidateModelPackageId: 'fl_pkg_2',
+          siteId: 'site-2',
+          status: 'fallback',
+          notes: 'Site requested fallback after bounded runtime mismatch.',
+        ),
+      ],
+      runtimeRolloutControlRecords: <Map<String, dynamic>>[
+        _runtimeRolloutControlRecordRow(
+          id: 'fl_rollout_control_1',
+          experimentId: 'fl_exp_literacy_pilot',
+          candidateModelPackageId: 'fl_pkg_1',
+          deliveryRecordId: 'fl_delivery_1',
+          mode: 'paused',
+          reviewByAt: DateTime(2020, 3, 15, 8),
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      _wrapWithMaterial(HqFeatureFlagsPage(workflowBridge: bridge)),
+    );
+    await tester.pumpAndSettle();
+
+    final double literacyY = tester.getTopLeft(find.text('Literacy Pilot')).dy;
+    final double numeracyY = tester.getTopLeft(find.text('Numeracy Pilot')).dy;
+
+    expect(literacyY, lessThan(numeracyY));
+  });
 }

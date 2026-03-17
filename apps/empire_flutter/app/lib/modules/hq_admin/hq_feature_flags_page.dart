@@ -8151,6 +8151,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     if (latestRuntimeDelivery == null) {
       return 0;
     }
+    final FederatedLearningRuntimeRolloutControlRecordModel?
+        latestRuntimeRolloutControl =
+        _runtimeRolloutControlsByDeliveryId[latestRuntimeDelivery.id];
     if (_isRuntimeDeliveryTerminalLifecycle(latestRuntimeDelivery)) {
       return 0;
     }
@@ -8166,12 +8169,29 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     final FederatedLearningRuntimeRolloutAlertRecordModel? alertRecord =
         _runtimeRolloutAlertsByDeliveryId[latestRuntimeDelivery.id];
     if (_isRuntimeRolloutAlertAcknowledged(summary, alertRecord)) {
-      return 0;
+      return _rolloutControlSeverity(latestRuntimeRolloutControl);
     }
     if (summary.fallbackCount > 0) {
-      return 2;
+      return 2 + _rolloutControlSeverity(latestRuntimeRolloutControl);
     }
     if (summary.pendingCount > 0) {
+      return 1 + _rolloutControlSeverity(latestRuntimeRolloutControl);
+    }
+    return _rolloutControlSeverity(latestRuntimeRolloutControl);
+  }
+
+  int _rolloutControlSeverity(
+    FederatedLearningRuntimeRolloutControlRecordModel? record,
+  ) {
+    if (record == null || record.mode == 'monitor' || record.reviewByAt == null) {
+      return 0;
+    }
+    final DateTime reviewByAt = record.reviewByAt!.toDate().toUtc();
+    final DateTime now = DateTime.now().toUtc();
+    if (!reviewByAt.isAfter(now)) {
+      return 3;
+    }
+    if (reviewByAt.difference(now).inHours <= 6) {
       return 1;
     }
     return 0;
