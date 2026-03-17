@@ -1064,7 +1064,7 @@ async function generateCoachResponseWithInference(input: {
   checkpointId?: string;
   learnerState?: { cognition: number; engagement: number; integrity: number } | null;
   coppaBand: string;
-}): Promise<{ message: string; suggestedNextSteps: string[]; requiresExplainBack: boolean; modelVersion: string; confidence: number }> {
+}): Promise<{ message: string; suggestedNextSteps: string[]; requiresExplainBack: boolean; modelVersion: string; confidence?: number }> {
   const applyLearnerConversationalTone = (text: string, locale: string): string => {
     const normalized = text.replace(/\s+/g, ' ').trim();
     if (!normalized) return normalized;
@@ -1294,7 +1294,7 @@ export const genAiCoach = onCall(async (request) => {
   let requiresExplainBack = false;
   let suggestedNextSteps: string[] = [];
   let modelVersion = 'confidence-guard-v1';
-  let responseConfidence = 0;
+  let responseConfidence: number | undefined;
 
   // If MVL gate is active, intercept with verification prompt
   if (mvlResult.gateActive) {
@@ -1344,7 +1344,6 @@ export const genAiCoach = onCall(async (request) => {
       message = buildLearnerInferenceUnavailableMessage(displayName, 'en');
       requiresExplainBack = true;
       suggestedNextSteps = buildLearnerGuardNextSteps('en');
-      responseConfidence = 0;
     }
   }
 
@@ -1378,7 +1377,7 @@ export const genAiCoach = onCall(async (request) => {
       reliabilityRiskScore: reliabilityRisk.riskScore,
       autonomyRiskScore: autonomyRisk.riskScore,
       mvlGateActive: mvlResult.gateActive,
-      responseConfidence,
+      if (responseConfidence != null) responseConfidence: responseConfidence,
       requiresExplainBack,
       coppaBand,
     },
@@ -1404,7 +1403,7 @@ export const genAiCoach = onCall(async (request) => {
       mvlEpisodeId: mvlResult.episodeId || null,
       coppaBand,
       gradeBandSource,
-      responseConfidence,
+      if (responseConfidence != null) responseConfidence: responseConfidence,
     },
     timestamp: FieldValue.serverTimestamp(),
   });

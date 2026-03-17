@@ -311,7 +311,6 @@ export class AIService {
         gradeBand,
         traceId,
         missionAttemptId,
-        confidence: 0,
       };
     }
   }

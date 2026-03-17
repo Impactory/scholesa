@@ -131,7 +131,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
               period: row['period'] as String? ?? 'month',
               recommendation: row['recommendation'] as String? ?? 'stabilize',
               status: row['status'] as String? ?? 'generated',
-              fidelityScore: (row['fidelityScore'] as num?)?.toDouble() ?? 0,
+              fidelityScore: _readFiniteScore(row['fidelityScore']),
               portfolioQualityGrade:
                   row['portfolioQualityGrade'] as String? ?? 'C',
               generatedAt: WorkflowBridgeService.toDateTime(row['updatedAt']) ??
@@ -156,6 +156,17 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
         setState(() => _isLoadingKpiPacks = false);
       }
     }
+  }
+
+  double? _readFiniteScore(dynamic value) {
+    if (value is! num) {
+      return null;
+    }
+    final double numeric = value.toDouble();
+    if (!numeric.isFinite) {
+      return null;
+    }
+    return (numeric.clamp(0.0, 1.0) as num).toDouble();
   }
 
   @override
@@ -417,8 +428,9 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
             runSpacing: 8,
             children: <Widget>[
               _DashboardPill(
-                label:
-                    '${_t('Fidelity Score')}: ${(pack.fidelityScore * 100).toStringAsFixed(0)}%',
+                label: pack.fidelityScore == null
+                    ? _t('Fidelity Score unavailable')
+                    : '${_t('Fidelity Score')}: ${(pack.fidelityScore! * 100).toStringAsFixed(0)}%',
                 color: ScholesaColors.site,
               ),
               _DashboardPill(
@@ -1322,7 +1334,7 @@ class _KpiPackSummary {
   final String period;
   final String recommendation;
   final String status;
-  final double fidelityScore;
+  final double? fidelityScore;
   final String portfolioQualityGrade;
   final DateTime? generatedAt;
 }
