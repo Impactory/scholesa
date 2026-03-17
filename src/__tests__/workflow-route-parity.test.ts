@@ -193,6 +193,45 @@ describe('workflow route parity', () => {
     }))).rejects.toThrow('Active site context is required for site workflows.');
   });
 
+  it('keeps site check-in records read-only even when records are present', async () => {
+    getDocsMock
+      .mockResolvedValueOnce({
+        docs: [{
+          id: 'learner-1',
+          data: () => ({ displayName: 'Learner One', role: 'learner' }),
+        }],
+      })
+      .mockResolvedValueOnce({
+        docs: [{
+          id: 'checkin-1',
+          data: () => ({
+            learnerName: 'Learner One',
+            learnerId: 'learner-1',
+            type: 'checkin',
+            status: 'completed',
+            siteId: 'site-1',
+            timestamp: '2026-03-17T08:00:00.000Z',
+          }),
+        }],
+      });
+
+    const result = await loadWorkflowRecords(makeContext('/site/checkin', {
+      role: 'site',
+      uid: 'site-user-1',
+      profile: {
+        role: 'site',
+        activeSiteId: 'site-1',
+        siteIds: ['site-1'],
+      } as never,
+    }));
+
+    expect(result.records[0]).toEqual(expect.objectContaining({
+      canEdit: false,
+      primaryActionLabel: undefined,
+      collectionName: 'checkins',
+    }));
+  });
+
   it('passes partnerId through HQ partner launch creation', async () => {
     const upsertPartnerLaunch = setCallableHandler('upsertPartnerLaunch');
 
@@ -211,6 +250,51 @@ describe('workflow route parity', () => {
       partnerName: 'Partner One',
       region: 'APAC',
     }));
+  });
+
+  it('passes partnerId through HQ partner listing creation', async () => {
+    await createWorkflowRecord(makeContext('/partner/listings'), {
+      values: {
+        partnerId: 'partner-2',
+        title: 'Robotics Residency',
+        description: 'HQ-created listing',
+        category: 'STEM',
+      },
+    });
+
+    expect(addDocMock).toHaveBeenCalledWith(
+      expect.objectContaining({ collectionName: 'marketplaceListings' }),
+      expect.objectContaining({
+        partnerId: 'partner-2',
+        title: 'Robotics Residency',
+        description: 'HQ-created listing',
+        category: 'STEM',
+      }),
+    );
+  });
+
+  it('routes site billing plan changes through requestSiteBillingPlanChange', async () => {
+    const requestSiteBillingPlanChange = setCallableHandler('requestSiteBillingPlanChange');
+
+    await createWorkflowRecord(makeContext('/site/billing', {
+      role: 'site',
+      uid: 'site-user-1',
+      profile: {
+        role: 'site',
+        activeSiteId: 'site-1',
+        siteIds: ['site-1'],
+      } as never,
+    }), {
+      values: {
+        siteId: 'site-1',
+        reason: 'Need a higher learner cap',
+      },
+    });
+
+    expect(requestSiteBillingPlanChange).toHaveBeenCalledWith({
+      siteId: 'site-1',
+      reason: 'Need a higher learner cap',
+    });
   });
 
   it('routes HQ billing creation through createHqInvoice with a numeric amount', async () => {
@@ -248,5 +332,58 @@ describe('workflow route parity', () => {
       uid: 'user-2',
       isActive: false,
     });
+  });
+
+  it('fails closed for site-scoped create and update mutations without an active site context', async () => {
+    const noSiteContext = makeContext('/site/incidents', {
+      role: 'hq',
+      profile: {
+        role: 'hq',
+        siteIds: [],
+      } as never,
+    });
+
+    await expect(createWorkflowRecord(noSiteContext, {
+      values: {
+        title: 'Incident',
+        summary: 'No site context',
+      },
+    })).rejects.toThrow('Active site context is required for site workflows.');
+
+    await expect(updateWorkflowRecord(noSiteContext, {
+      routePath: '/site/incidents',
+      collectionName: 'incidents',
+      id: 'incident-1',
+    })).rejects.toThrow('Active site context is required for site workflows.');
+  });
+
+  it('keeps partner payout rows read-only', async () => {
+    setCallableHandler('listPartnerPayouts', jest.fn().mockResolvedValue({
+      data: {
+        payouts: [{
+          id: 'payout-1',
+          periodLabel: 'March 2026',
+          currency: 'USD',
+          partnerId: 'partner-1',
+          status: 'pending',
+        }],
+      },
+    }) as CallableHandler);
+
+    const result = await loadWorkflowRecords(makeContext('/partner/payouts', {
+      role: 'partner',
+      uid: 'partner-1',
+      profile: {
+        role: 'partner',
+        activeSiteId: 'site-1',
+        siteIds: ['site-1'],
+      } as never,
+    }));
+
+    expect(result.records[0]).toEqual(expect.objectContaining({
+      canEdit: false,
+      primaryActionLabel: undefined,
+      collectionName: 'payouts',
+    }));
   });
 });
