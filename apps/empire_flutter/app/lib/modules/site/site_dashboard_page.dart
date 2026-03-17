@@ -1034,9 +1034,9 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
           0,
           _SiteActivity(
             icon: Icons.download_done,
-            title: _t('Report generated'),
+            title: _t('Report export requested'),
             subtitle:
-                '${_selectedPeriod[0].toUpperCase()}${_selectedPeriod.substring(1)} ${_t('report ready for download')}',
+                '${_selectedPeriod[0].toUpperCase()}${_selectedPeriod.substring(1)} ${_t('report export request logged')}',
             time: _t('just now'),
             color: ScholesaColors.site,
           ),
@@ -1047,8 +1047,9 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content:
-              Text('$_selectedPeriod ${_t('report prepared for download')}'),
+          content: Text(
+            '$_selectedPeriod ${_t('report export request recorded')}',
+          ),
           backgroundColor: ScholesaColors.site,
         ),
       );
@@ -1073,7 +1074,9 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('$_selectedPeriod ${_t('report prepared for download')}'),
+        content: Text(
+          '$_selectedPeriod ${_t('report export request recorded')}',
+        ),
         backgroundColor: ScholesaColors.site,
       ),
     );
@@ -1170,7 +1173,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
         final ({IconData icon, Color color}) visual =
             _mapActivityVisual(action);
         final String subtitle = action == 'Export Site Report'
-            ? '${_selectedPeriod[0].toUpperCase()}${_selectedPeriod.substring(1)} ${_t('report ready for download')}'
+          ? '${_selectedPeriod[0].toUpperCase()}${_selectedPeriod.substring(1)} ${_t('report export request logged')}'
             : _t('Site operation event');
         feed.add(
           _TimedSiteActivity(

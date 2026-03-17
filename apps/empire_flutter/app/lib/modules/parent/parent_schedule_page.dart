@@ -582,7 +582,9 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(_t('Session reminder set')),
+                  content: Text(
+                    _t('Session reminders are not available in the app yet'),
+                  ),
                   backgroundColor: ScholesaColors.parent,
                 ),
               );

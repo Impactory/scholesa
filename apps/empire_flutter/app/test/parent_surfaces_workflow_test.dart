@@ -199,10 +199,13 @@ void main() {
       await tester.tap(find.text('Set Reminder'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Session reminder set'), findsOneWidget);
+      expect(
+        find.text('Session reminders are not available in the app yet'),
+        findsOneWidget,
+      );
     });
 
-    testWidgets('portfolio page opens linked artifact details only',
+    testWidgets('portfolio page shows explicit unavailable share state',
         (WidgetTester tester) async {
       final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
       await _seedParentData(firestore);
@@ -226,7 +229,36 @@ void main() {
       await tester.tap(find.widgetWithText(OutlinedButton, 'Share'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Sharing...'), findsOneWidget);
+      expect(
+        find.text('Portfolio sharing is not available in the app yet'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('portfolio page shows explicit unavailable download state',
+        (WidgetTester tester) async {
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+      await _seedParentData(firestore);
+
+      await _pumpPage(
+        tester,
+        firestore: firestore,
+        home: const ParentPortfolioPage(),
+      );
+
+      await tester.ensureVisible(find.text('Build a Robot').first);
+      await tester.tap(find.text('Build a Robot').first);
+      await tester.pumpAndSettle();
+
+      expect(find.widgetWithText(ElevatedButton, 'Download'), findsOneWidget);
+
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Download'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Portfolio downloads are not available in the app yet'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('billing page shows explicit unavailable state when no billing data exists',

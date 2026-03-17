@@ -461,7 +461,11 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
                       );
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(_t('Sharing...'))),
+                        SnackBar(
+                          content: Text(
+                            _t('Portfolio sharing is not available in the app yet'),
+                          ),
+                        ),
                       );
                     },
                     icon: const Icon(Icons.share_rounded),
@@ -480,6 +484,13 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
                         },
                       );
                       Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            _t('Portfolio downloads are not available in the app yet'),
+                          ),
+                        ),
+                      );
                     },
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,

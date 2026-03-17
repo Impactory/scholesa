@@ -67,7 +67,8 @@ const Map<String, String> _settingsZhCn = <String, String>{
   'Light': '浅色',
   'Dark': '深色',
   'Select Language': '选择语言',
-  'Data download request submitted': '数据下载请求已提交',
+  'Data export requests are not available in the app yet. Contact support with your site ID to request your data.':
+      '应用内暂不支持数据导出请求。请附上你的站点 ID 联系支持团队以申请数据副本。',
   'Help Center': '帮助中心',
   'Feedback': '反馈',
   'App Rating': '应用评分',
@@ -109,10 +110,12 @@ const Map<String, String> _settingsZhCn = <String, String>{
   'Contact support at support@scholesa.com with your site ID and issue details.':
       '请发送邮件至 support@scholesa.com，并附上站点 ID 和问题详情。',
   'Send': '发送',
-  'Feedback sent': '反馈已发送',
+  'Feedback submission is not available in the app yet. Contact support if you need follow-up.':
+      '应用内暂不支持反馈提交。如需跟进，请联系支持团队。',
   'Thanks for helping improve Scholesa.': '感谢你帮助改进 Scholesa。',
   'Please enter feedback before sending.': '发送前请输入反馈内容。',
-  'Thanks for rating Scholesa!': '感谢你评价 Scholesa！',
+  'In-app rating is not available yet. Please rate Scholesa in your app store when the listing is live.':
+      '应用内暂不支持评分。待应用商店上架后，请在商店中评价 Scholesa。',
   'Delete Account Confirmation': '删除账户确认',
   'Enter current password to confirm account deletion.': '输入当前密码以确认删除账户。',
   'Delete': '删除',
@@ -179,7 +182,8 @@ const Map<String, String> _settingsZhTw = <String, String>{
   'Light': '淺色',
   'Dark': '深色',
   'Select Language': '選擇語言',
-  'Data download request submitted': '資料下載請求已提交',
+  'Data export requests are not available in the app yet. Contact support with your site ID to request your data.':
+      'App 內暫不支援資料匯出請求。請附上你的站點 ID 聯絡支援團隊以申請資料副本。',
   'Help Center': '說明中心',
   'Feedback': '回饋',
   'App Rating': '應用評分',
@@ -221,10 +225,12 @@ const Map<String, String> _settingsZhTw = <String, String>{
   'Contact support at support@scholesa.com with your site ID and issue details.':
       '請寄信至 support@scholesa.com，並附上站點 ID 與問題詳情。',
   'Send': '傳送',
-  'Feedback sent': '回饋已送出',
+  'Feedback submission is not available in the app yet. Contact support if you need follow-up.':
+      'App 內暫不支援回饋提交。如需後續協助，請聯絡支援團隊。',
   'Thanks for helping improve Scholesa.': '感謝你協助改善 Scholesa。',
   'Please enter feedback before sending.': '傳送前請先輸入回饋內容。',
-  'Thanks for rating Scholesa!': '感謝你評價 Scholesa！',
+  'In-app rating is not available yet. Please rate Scholesa in your app store when the listing is live.':
+      'App 內暫不支援評分。待應用商店上架後，請在商店中評價 Scholesa。',
   'Delete Account Confirmation': '刪除帳戶確認',
   'Enter current password to confirm account deletion.': '輸入目前密碼以確認刪除帳戶。',
   'Delete': '刪除',
@@ -1156,10 +1162,11 @@ class _SettingsPageState extends State<SettingsPage> {
       event: 'cta.clicked',
       metadata: const <String, dynamic>{'cta': 'settings_download_my_data'},
     );
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(_tSettings(context, 'Data download request submitted')),
-        backgroundColor: Theme.of(context).colorScheme.primary,
+    _showInfoDialog(
+      title: _tSettings(context, 'Download My Data'),
+      body: _tSettings(
+        context,
+        'Data export requests are not available in the app yet. Contact support with your site ID to request your data.',
       ),
     );
   }
@@ -1218,8 +1225,9 @@ class _SettingsPageState extends State<SettingsPage> {
                       onPressed: () async {
                         final String feedbackRequiredMessage = _tSettings(
                             context, 'Please enter feedback before sending.');
-                        final String feedbackSentMessage =
-                            _tSettings(context, 'Feedback sent');
+                        final String feedbackUnavailableMessage = _tSettings(
+                          context,
+                          'Feedback submission is not available in the app yet. Contact support if you need follow-up.');
                         final String feedback = feedbackController.text.trim();
                         if (feedback.isEmpty) {
                           _showErrorSnackBar(feedbackRequiredMessage);
@@ -1233,7 +1241,10 @@ class _SettingsPageState extends State<SettingsPage> {
                         );
                         if (!context.mounted) return;
                         Navigator.pop(bottomSheetContext);
-                        _showSuccessSnackBar(feedbackSentMessage);
+                        _showInfoDialog(
+                          title: _tSettings(context, 'Send Feedback'),
+                          body: feedbackUnavailableMessage,
+                        );
                       },
                       child: Text(_tSettings(context, 'Send')),
                     ),
@@ -1252,7 +1263,13 @@ class _SettingsPageState extends State<SettingsPage> {
       event: 'cta.clicked',
       metadata: const <String, dynamic>{'cta': 'settings_rate_app'},
     );
-    _showSuccessSnackBar(_tSettings(context, 'Thanks for rating Scholesa!'));
+    _showInfoDialog(
+      title: _tSettings(context, 'Rate the App'),
+      body: _tSettings(
+        context,
+        'In-app rating is not available yet. Please rate Scholesa in your app store when the listing is live.',
+      ),
+    );
   }
 
   void _showAppVersionDetails() {

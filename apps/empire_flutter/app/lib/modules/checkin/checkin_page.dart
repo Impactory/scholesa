@@ -552,7 +552,9 @@ class _CheckinPageState extends State<CheckinPage>
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(_tCheckin(context, 'Camera scanner started')),
+                  content: Text(
+                    _tCheckin(context, 'QR scanning is not available in the app yet'),
+                  ),
                   backgroundColor: const Color(0xFF3B82F6),
                   behavior: SnackBarBehavior.floating,
                   shape: RoundedRectangleBorder(
@@ -575,7 +577,9 @@ class _CheckinPageState extends State<CheckinPage>
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(_tCheckin(context, 'Manual pickup code entry opened')),
+                  content: Text(
+                    _tCheckin(context, 'Manual pickup code entry is not available in the app yet'),
+                  ),
                   backgroundColor: const Color(0xFF3B82F6),
                   behavior: SnackBarBehavior.floating,
                   shape: RoundedRectangleBorder(

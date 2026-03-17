@@ -1212,6 +1212,12 @@ async function loadCleverWorkflowRecords(ctx: WorkflowContext, siteId: string | 
   ]);
 }
 
+function ensureLiveWorkflowResult(payload: Record<string, unknown>, actionLabel: string) {
+  if (payload.stub === true) {
+    throw new Error(`${actionLabel} is not live in this environment yet.`);
+  }
+}
+
 export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<WorkflowLoadResult> {
   if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
     const { loadE2EWorkflowRecords } = await loadE2EWorkflowBackend();
@@ -3346,11 +3352,12 @@ export async function createWorkflowRecord(
       const schoolId = optionalStringValue(input, 'schoolId');
       if (schoolId) {
         const callable = httpsCallable(functions, 'queueCleverRosterSync');
-        await callable({
+        const response = await callable({
           siteId,
           schoolId,
           mode: optionalStringValue(input, 'mode') || 'preview',
         });
+        ensureLiveWorkflowResult((response.data || {}) as Record<string, unknown>, 'Clever roster sync');
         return;
       }
 
@@ -3360,6 +3367,7 @@ export async function createWorkflowRecord(
         returnUrl: typeof window !== 'undefined' ? window.location.href : `/${ctx.locale}/site/clever`,
       });
       const payload = (response.data || {}) as Record<string, unknown>;
+      ensureLiveWorkflowResult(payload, 'Clever connection');
       const url = asString(payload.url, '');
       if (url && typeof window !== 'undefined') {
         window.location.assign(url);
@@ -3630,6 +3638,7 @@ export async function updateWorkflowRecord(
       returnUrl: typeof window !== 'undefined' ? window.location.href : `/${ctx.locale}/site/clever`,
     });
     const payload = (response.data || {}) as Record<string, unknown>;
+    ensureLiveWorkflowResult(payload, 'Clever connection');
     const url = asString(payload.url, '');
     if (url && typeof window !== 'undefined') {
       window.location.assign(url);
