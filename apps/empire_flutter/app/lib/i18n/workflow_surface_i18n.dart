@@ -298,7 +298,8 @@ class WorkflowSurfaceI18n {
     'Escalated': '已升级',
     'Critical': '严重',
     'View Full Report': '查看完整报告',
-    'Full incident reports are not available in the app yet.': '应用内暂不支持查看完整事故报告。',
+    'Full incident reports are not available in the app yet.':
+        '应用内暂不支持查看完整事故报告。',
     'Feature Flags': '功能开关',
     'Approvals': '审批',
     'Reject': '拒绝',
@@ -672,7 +673,8 @@ class WorkflowSurfaceI18n {
     'Red Team Reviews': '紅隊審查',
     'Create Review': '建立審查',
     'No red team reviews yet': '尚無紅隊審查',
-    'Full incident reports are not available in the app yet.': 'App 內暫不支援查看完整事故報告。',
+    'Full incident reports are not available in the app yet.':
+        'App 內暫不支援查看完整事故報告。',
     'Auth': '驗證',
     'Admin': '管理',
     'System': '系統',

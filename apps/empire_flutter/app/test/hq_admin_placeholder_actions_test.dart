@@ -46,8 +46,7 @@ AppState _buildAppState() {
 }
 
 void main() {
-  testWidgets(
-      'HQ safety detail sheets remove the fake full report CTA',
+  testWidgets('HQ safety detail sheets remove the fake full report CTA',
       (WidgetTester tester) async {
     await tester.pumpWidget(
       _buildHarness(
@@ -80,8 +79,7 @@ void main() {
     expect(find.text('View Full Report'), findsNothing);
   });
 
-  testWidgets(
-      'HQ billing invoice cards remove the fake send invoice CTA',
+  testWidgets('HQ billing invoice cards remove the fake send invoice CTA',
       (WidgetTester tester) async {
     await tester.pumpWidget(
       _buildHarness(
