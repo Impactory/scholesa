@@ -64,6 +64,7 @@ Not claimed by this proof:
 - functions/src/federatedLearningPrototype.test.ts
 - functions/src/workflowOps.ts
 - functions/src/workflowOps.experimentSetup.test.ts
+- functions/src/workflowOps.hqLists.test.ts
 - functions/src/workflowOps.prototypeUpdate.test.ts
 - functions/src/workflowOps.pilotLifecycle.test.ts
 - functions/src/workflowOps.readPaths.test.ts
@@ -114,7 +115,7 @@ Additional focused validation passed on 2026-03-15:
 Additional focused validation passed on 2026-03-16:
 
 1. Focused functions workflow lifecycle suites
-   - command: `cd functions && npm test -- --runTestsByPath src/workflowOps.experimentSetup.test.ts src/workflowOps.prototypeUpdate.test.ts src/workflowOps.pilotLifecycle.test.ts src/workflowOps.readPaths.test.ts src/workflowOps.runtimeDelivery.test.ts src/workflowOps.runtimeActivation.test.ts src/workflowOps.runtimeRolloutAlert.test.ts src/workflowOps.runtimeRolloutGovernance.test.ts src/workflowOps.candidatePromotion.test.ts`
+   - command: `cd functions && npm test -- --runTestsByPath src/workflowOps.experimentSetup.test.ts src/workflowOps.hqLists.test.ts src/workflowOps.prototypeUpdate.test.ts src/workflowOps.pilotLifecycle.test.ts src/workflowOps.readPaths.test.ts src/workflowOps.runtimeDelivery.test.ts src/workflowOps.runtimeActivation.test.ts src/workflowOps.runtimeRolloutAlert.test.ts src/workflowOps.runtimeRolloutGovernance.test.ts src/workflowOps.candidatePromotion.test.ts`
 2. Full functions backend suite
    - command: `cd functions && npm test`
 
@@ -126,7 +127,7 @@ Additional focused validation passed on 2026-03-16:
 - Site-admin devices now have a dedicated callable to discover only enrolled, enabled experiment assignments.
 - Prototype update ingestion rejects raw content fields such as prompts, transcripts, raw updates, and artifact bodies.
 - Accepted summaries are now limited to bounded numeric runtime-vector payloads plus safe metadata such as payload size, vector length, sample count, digest, and trace identifier.
-- Focused backend Jest coverage now exercises the callable chain from experiment setup and prototype update ingestion through pilot evidence, approval, and execution, site experiment discovery, site delivery listing, controlled runtime package resolution, rollout-audit filtering, runtime delivery and activation, rollout alerts, escalation/control governance, and candidate promotion or revocation, including threshold-triggered aggregation materialization and cohort or ownership guard enforcement.
+- Focused backend Jest coverage now exercises the callable chain from experiment setup and prototype update ingestion through HQ aggregation, artifact, package, review, promotion, pilot, delivery, activation, and rollout history lists, site experiment discovery, site delivery listing, controlled runtime package resolution, rollout-audit filtering, runtime delivery and activation, rollout alerts, escalation/control governance, and candidate promotion or revocation, including threshold-triggered aggregation materialization and cohort or ownership guard enforcement.
 - Audit logs record both experiment changes and accepted prototype updates.
 - The HQ feature-flags page now exposes a bounded experiment editor instead of leaving prototype configuration backend-only.
 - Flutter repositories and rules expose read-only experiment/update-summary records while keeping writes behind server callables.
