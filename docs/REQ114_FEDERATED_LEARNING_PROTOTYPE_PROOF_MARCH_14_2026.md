@@ -15,6 +15,7 @@ Implemented prototype scope:
 - feature-flag integration for site-scoped experiment gating
 - bounded prototype update-summary ingestion with privacy guardrails
 - audit-log coverage for experiment upserts and accepted prototype update summaries
+- emulator-backed Firestore rules coverage for federated-learning query boundaries and role-scoped collection access
 - schema definitions for experiment and update-summary records
 - Flutter HQ management surface for experiment cohorts inside the existing feature-flags page
 - Flutter domain models/repositories for experiment and summary records
@@ -118,6 +119,10 @@ Additional focused validation passed on 2026-03-16:
    - command: `cd functions && npm test -- --runTestsByPath src/workflowOps.experimentSetup.test.ts src/workflowOps.hqLists.test.ts src/workflowOps.prototypeUpdate.test.ts src/workflowOps.pilotLifecycle.test.ts src/workflowOps.readPaths.test.ts src/workflowOps.runtimeDelivery.test.ts src/workflowOps.runtimeActivation.test.ts src/workflowOps.runtimeRolloutAlert.test.ts src/workflowOps.runtimeRolloutGovernance.test.ts src/workflowOps.candidatePromotion.test.ts`
 2. Full functions backend suite
    - command: `cd functions && npm test`
+3. Emulator-backed rules suite
+   - command: `npm run test:integration:rules`
+4. Focused Flutter prototype workflow test rerun
+   - command: `cd apps/empire_flutter/app && flutter test test/federated_learning_prototype_workflow_test.dart`
 
 ## Evidence summary
 
@@ -128,6 +133,7 @@ Additional focused validation passed on 2026-03-16:
 - Prototype update ingestion rejects raw content fields such as prompts, transcripts, raw updates, and artifact bodies.
 - Accepted summaries are now limited to bounded numeric runtime-vector payloads plus safe metadata such as payload size, vector length, sample count, digest, and trace identifier.
 - Focused backend Jest coverage now exercises the callable chain from experiment setup and prototype update ingestion through HQ aggregation, artifact, package, review, promotion, pilot, delivery, activation, and rollout history lists, site experiment discovery, site delivery listing, controlled runtime package resolution, rollout-audit filtering, runtime delivery and activation, rollout alerts, escalation/control governance, and candidate promotion or revocation, including threshold-triggered aggregation materialization and cohort or ownership guard enforcement.
+- Emulator-backed Firestore rules coverage now also proves the federated-learning query boundary itself, including site-scoped enrolled-experiment and update-summary queries plus denial of direct runtime-delivery queries outside the callable path, so the REQ-114 read posture is no longer validated only by point reads and mocked backend tests.
 - Audit logs record both experiment changes and accepted prototype updates.
 - The HQ feature-flags page now exposes a bounded experiment editor instead of leaving prototype configuration backend-only.
 - Flutter repositories and rules expose read-only experiment/update-summary records while keeping writes behind server callables.
@@ -161,6 +167,7 @@ Additional focused validation passed on 2026-03-16:
 - That rollout-audit feed now also supports direct package and site filtering in the HQ UI, the alert-history surface now shows bounded triage-change history instead of only the latest triage snapshot per delivery, and operators can persist a bounded escalation record with owner, status, notes, and issue-age metadata for unresolved rollout issues on the active delivery.
 - HQ can now inspect immutable escalation-history snapshots per runtime delivery, including due-versus-overdue cues for unresolved fallback or pending rollout issues plus direct delivery-lineage digest and compatibility metadata, instead of only the latest escalation state.
 - HQ can now also persist a bounded rollout-control record per runtime delivery with monitor-versus-restricted-versus-paused operator mode, owner, reason, and immutable delivery-lineage provenance, so delivery handling can be constrained without mutating the underlying runtime-delivery manifest record.
+- The HQ feature-flags surface now also renders due-versus-overdue review cues on active rollout-control records, so paused or restricted bounded deliveries are easier to triage before their review deadline silently passes.
 - Site-scoped runtime package resolution now also honors those bounded rollout-control records, so paused deliveries force fallback for all sites while restricted deliveries remain usable only for sites that already reported resolved activation on that delivery.
 - Aggregation materialization now also applies an experiment-configured bounded norm-capped runtime-vector merge strategy, so high-norm prototype updates are dampened and HQ can choose between sample-weighted or summary-balanced averaging for bounded cohorts instead of relying on one hard-coded path.
 - Aggregation materialization now also persists merge transparency metadata, including the applied norm cap, raw-versus-effective weight rollups, damped-summary count, min/max update-norm range, and contributor-site lineage for each aggregated cohort, and the HQ experiment cards, aggregation-history, candidate-package history, and promotion-history surfaces render that metadata alongside the merge strategy so operators can audit bounded merge behavior and cohort provenance throughout triage, review, and promotion flows instead of treating it as hidden backend state.
