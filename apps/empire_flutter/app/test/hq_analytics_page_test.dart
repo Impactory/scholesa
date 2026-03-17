@@ -249,6 +249,63 @@ void main() {
   });
 
   testWidgets(
+      'hq analytics page does not fabricate zero attendance when rates are missing',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: <SingleChildWidget>[
+          Provider<FirestoreService>.value(value: firestoreService),
+          ChangeNotifierProvider<AppState>.value(value: _buildHqState()),
+        ],
+        child: MaterialApp(
+          home: HqAnalyticsPage(
+            metricsLoader: ({String? siteId, String period = 'month'}) async {
+              return const TelemetryDashboardMetrics(
+                weeklyAccountabilityAdherenceRate: 91.0,
+                educatorReviewTurnaroundHoursAvg: 18.5,
+                educatorReviewWithinSlaRate: 87.0,
+                educatorReviewSlaHours: 48,
+                interventionHelpedRate: 72.0,
+                interventionTotal: 11,
+                attendanceTrend: <AttendanceTrendPoint>[
+                  AttendanceTrendPoint(
+                    date: '2026-03-10',
+                    records: 20,
+                    events: 2,
+                  ),
+                ],
+              );
+            },
+            kpiPacksLoader: ({String? siteId, int limit = 24}) async =>
+                const <Map<String, dynamic>>[],
+            syntheticImportLoader: () async => null,
+          ),
+        ),
+      ),
+    );
+
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Attendance Trend'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Attendance rate unavailable for this period'), findsOneWidget);
+    expect(find.text('Latest attendance: 0.0%'), findsNothing);
+  });
+
+  testWidgets(
       'hq analytics export dialog is notice-only until a real export exists',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();

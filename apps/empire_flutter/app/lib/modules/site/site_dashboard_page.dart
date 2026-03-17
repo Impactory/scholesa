@@ -624,13 +624,20 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
         metrics?.attendanceTrend ?? const <AttendanceTrendPoint>[];
     final List<AttendanceTrendPoint> trend =
         allTrend.length > 7 ? allTrend.sublist(allTrend.length - 7) : allTrend;
-    final double latestRate =
-        trend.isNotEmpty ? (trend.last.presentRate ?? 0) : 0;
-    final double previousRate = trend.length > 1
-        ? (trend[trend.length - 2].presentRate ?? 0)
-        : latestRate;
-    final double delta = latestRate - previousRate;
-    final bool trendUp = delta >= 0;
+    final List<AttendanceTrendPoint> usableTrend = trend
+      .where((AttendanceTrendPoint point) => point.presentRate != null)
+      .toList();
+    final double? latestRate =
+      usableTrend.isNotEmpty ? usableTrend.last.presentRate?.toDouble() : null;
+    final double? previousRate = usableTrend.length > 1
+      ? usableTrend[usableTrend.length - 2].presentRate?.toDouble()
+      : latestRate;
+    final double? delta = latestRate != null && previousRate != null
+      ? latestRate - previousRate
+      : null;
+    final bool trendUp = (delta ?? 0) >= 0;
+    final bool attendanceRateUnavailable =
+      trend.isNotEmpty && usableTrend.isEmpty;
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -647,39 +654,40 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                   _t('Attendance Trend'),
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: (trendUp
-                            ? ScholesaColors.success
-                            : ScholesaColors.error)
-                        .withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    children: <Widget>[
-                      Icon(
-                        trendUp ? Icons.trending_up : Icons.trending_down,
-                        size: 16,
-                        color: trendUp
-                            ? ScholesaColors.success
-                            : ScholesaColors.error,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${delta >= 0 ? '+' : ''}${delta.toStringAsFixed(1)}%',
-                        style: TextStyle(
+                if (delta != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: (trendUp
+                              ? ScholesaColors.success
+                              : ScholesaColors.error)
+                          .withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      children: <Widget>[
+                        Icon(
+                          trendUp ? Icons.trending_up : Icons.trending_down,
+                          size: 16,
                           color: trendUp
                               ? ScholesaColors.success
                               : ScholesaColors.error,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12,
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 4),
+                        Text(
+                          '${delta >= 0 ? '+' : ''}${delta.toStringAsFixed(1)}%',
+                          style: TextStyle(
+                            color: trendUp
+                                ? ScholesaColors.success
+                                : ScholesaColors.error,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
               ],
             ),
             const SizedBox(height: 24),
@@ -710,15 +718,27 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                   ),
                 ),
               ),
-            if (!_isLoadingMetrics && _metricsError == null && trend.isNotEmpty)
+            if (!_isLoadingMetrics &&
+                _metricsError == null &&
+                attendanceRateUnavailable)
+              SizedBox(
+                height: 120,
+                child: Center(
+                  child: Text(
+                    _t('Attendance rate unavailable for this period'),
+                    style: TextStyle(color: context.schTextSecondary),
+                  ),
+                ),
+              ),
+            if (!_isLoadingMetrics && _metricsError == null && usableTrend.isNotEmpty)
               SizedBox(
                 height: 120,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   crossAxisAlignment: CrossAxisAlignment.end,
-                  children: trend.map((AttendanceTrendPoint point) {
+                  children: usableTrend.map((AttendanceTrendPoint point) {
                     final double rate =
-                        ((point.presentRate ?? 0) / 100).clamp(0.0, 1.0);
+                        (point.presentRate!.toDouble() / 100).clamp(0.0, 1.0);
                     return _BarColumn(
                       label: _shortDateLabel(point.date),
                       value: rate,
@@ -726,7 +746,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                   }).toList(),
                 ),
               ),
-            if (!_isLoadingMetrics && _metricsError == null && trend.isNotEmpty)
+            if (!_isLoadingMetrics && _metricsError == null && latestRate != null)
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
