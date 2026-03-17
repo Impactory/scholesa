@@ -17,6 +17,9 @@ export function LearnerMissions() {
   const [selectedMission, setSelectedMission] = useState<Mission | null>(null);
   const [submissionContent, setSubmissionContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
+  const siteId = profile?.activeSiteId?.trim() || profile?.studioId?.trim() || profile?.siteIds?.[0]?.trim() || '';
+  const canSubmitMission = siteId.length > 0;
 
   // 1. Get Enrollments
   const [enrolmentsSnap] = useCollection(
@@ -59,13 +62,18 @@ export function LearnerMissions() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !selectedMission || !profile) return;
+    if (!canSubmitMission) {
+      setSubmissionError('Mission submission is unavailable until your learner profile has an active site assignment.');
+      return;
+    }
 
     setIsSubmitting(true);
+    setSubmissionError(null);
     try {
       const attempt: Omit<MissionAttempt, 'id'> = {
         learnerId: user.uid,
         missionId: selectedMission.id,
-        siteId: profile.studioId || 'default',
+        siteId,
         status: 'submitted',
         content: submissionContent,
         submittedAt: Timestamp.now(),
@@ -86,7 +94,7 @@ export function LearnerMissions() {
       setSubmissionContent('');
     } catch (err) {
       console.error(err);
-      alert('Failed to submit mission');
+      setSubmissionError('Failed to submit mission.');
     } finally {
       setIsSubmitting(false);
     }
@@ -134,6 +142,11 @@ export function LearnerMissions() {
 
       {/* Mission Detail / Submit */}
       <div className="rounded-lg border border-gray-200 bg-white p-6 h-fit sticky top-6">
+        {submissionError ? (
+          <p className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {submissionError}
+          </p>
+        ) : null}
         {selectedMission ? (
           <div className="space-y-6">
             <div>
@@ -143,6 +156,12 @@ export function LearnerMissions() {
               </div>
             </div>
 
+            {!canSubmitMission ? (
+              <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                Mission submission is disabled until your learner profile has an active site assignment.
+              </p>
+            ) : null}
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">Your Submission</label>
@@ -151,6 +170,7 @@ export function LearnerMissions() {
                   rows={6}
                   value={submissionContent}
                   onChange={(e) => setSubmissionContent(e.target.value)}
+                  disabled={!canSubmitMission || isSubmitting}
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                   placeholder="Type your response or paste a link to your artifact..."
                 />
@@ -165,7 +185,7 @@ export function LearnerMissions() {
                 </button>
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || !canSubmitMission}
                   className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:opacity-50"
                 >
                   {isSubmitting ? 'Submitting...' : 'Submit Mission'}
