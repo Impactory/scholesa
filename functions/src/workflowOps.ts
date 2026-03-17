@@ -5523,7 +5523,7 @@ export const upsertRedTeamReview = onCall(async (request: CallableRequest) => {
     kpiPackId: kpiPackId || null,
     period: asTrimmedString(request.data?.period) || 'term',
     title: asTrimmedString(request.data?.title) || `Red Team Review ${id.slice(-6)}`,
-    fidelityScore: fidelityScore ?? 0,
+    ...(fidelityScore !== null ? { fidelityScore } : {}),
     portfolioQualityGrade: portfolioQualityGrade || 'C',
     decision: normalizeLifecycleStatus(request.data?.decision, 'continue'),
     partnerStatus: normalizeLifecycleStatus(request.data?.partnerStatus, 'active'),

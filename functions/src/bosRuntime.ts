@@ -401,7 +401,7 @@ interface BosLearningSnapshot {
   lastResponseMode: string;
   lastNeedsScaffold: boolean;
   lastEmotionalState: string;
-  lastUnderstandingConfidence: number;
+  lastUnderstandingConfidence?: number;
   needsScaffoldCount: number;
   frustrationSignalCount: number;
 }
@@ -563,7 +563,10 @@ async function loadBosLearningSnapshot(siteId: string, learnerId: string): Promi
     lastResponseMode: normalizeString(learning.lastResponseMode) ?? 'hint',
     lastNeedsScaffold: Boolean(learning.lastNeedsScaffold),
     lastEmotionalState: normalizeString(learning.lastEmotionalState) ?? 'neutral',
-    lastUnderstandingConfidence: clamp(toFiniteNumber(learning.lastUnderstandingConfidence, 0)),
+    lastUnderstandingConfidence:
+      firstNumber(learning.lastUnderstandingConfidence) === undefined
+        ? undefined
+        : clamp(firstNumber(learning.lastUnderstandingConfidence)!),
     needsScaffoldCount: Math.max(0, Math.floor(toFiniteNumber(metrics.needsScaffoldCount, 0))),
     frustrationSignalCount: Math.max(0, Math.floor(toFiniteNumber(metrics.frustrationSignalCount, 0))),
   };
@@ -580,7 +583,7 @@ function applyLearningSnapshotToIntervention(
   };
   const persistentSupportNeed = learningSnapshot.lastNeedsScaffold ||
     learningSnapshot.lastEmotionalState === 'frustrated' ||
-    learningSnapshot.lastUnderstandingConfidence < 0.58 ||
+    ((learningSnapshot.lastUnderstandingConfidence ?? 1) < 0.58) ||
     learningSnapshot.frustrationSignalCount > 3;
   const autonomyReady = !learningSnapshot.lastNeedsScaffold &&
     learningSnapshot.lastUnderstandingConfidence >= 0.8 &&
@@ -1490,7 +1493,9 @@ export const bosGetIntervention = onCall(
           lastResponseMode: learningSnapshot.lastResponseMode,
           lastNeedsScaffold: learningSnapshot.lastNeedsScaffold,
           lastEmotionalState: learningSnapshot.lastEmotionalState,
-          lastUnderstandingConfidence: learningSnapshot.lastUnderstandingConfidence,
+          ...(learningSnapshot.lastUnderstandingConfidence !== undefined
+            ? { lastUnderstandingConfidence: learningSnapshot.lastUnderstandingConfidence }
+            : {}),
           needsScaffoldCount: learningSnapshot.needsScaffoldCount,
           frustrationSignalCount: learningSnapshot.frustrationSignalCount,
         } : null,
@@ -1529,11 +1534,16 @@ export const bosGetIntervention = onCall(
         asRecord(inferenceRoot?.recommendation) ??
         inferenceRoot;
       if (candidate) {
-        const modelConfidence = clamp(toFiniteNumber(
-          candidate.confidence ?? asRecord(candidate.metadata)?.confidence,
-          0.5,
-        ));
-        const allowOverride = modelConfidence >= MIN_AUTONOMOUS_POLICY_CONFIDENCE;
+        const modelConfidenceRaw = firstNumber(
+          candidate.confidence,
+          asRecord(candidate.metadata)?.confidence,
+        );
+        const modelConfidence = modelConfidenceRaw === undefined
+          ? undefined
+          : clamp(modelConfidenceRaw);
+        const allowOverride =
+          modelConfidence !== undefined &&
+          modelConfidence >= MIN_AUTONOMOUS_POLICY_CONFIDENCE;
         if (allowOverride) {
           const typeCandidate = normalizeString(candidate.type)?.toLowerCase();
           if (
@@ -1587,7 +1597,7 @@ export const bosGetIntervention = onCall(
           statusCode: bosInference.meta.statusCode ?? null,
           errorCode: bosInference.errorCode ?? null,
           reason: allowOverride ? 'policy_override_applied' : 'policy_override_skipped_low_confidence',
-          modelConfidence,
+          modelConfidence: modelConfidence ?? null,
           endpoint: bosInference.meta.endpoint ?? null,
         };
       } else {
@@ -1698,7 +1708,9 @@ export const bosGetIntervention = onCall(
         lastResponseMode: learningSnapshot.lastResponseMode,
         lastNeedsScaffold: learningSnapshot.lastNeedsScaffold,
         lastEmotionalState: learningSnapshot.lastEmotionalState,
-        lastUnderstandingConfidence: learningSnapshot.lastUnderstandingConfidence,
+        ...(learningSnapshot.lastUnderstandingConfidence !== undefined
+          ? { lastUnderstandingConfidence: learningSnapshot.lastUnderstandingConfidence }
+          : {}),
       } : null,
       roleIntelligenceContext: roleIntelligence,
       logicSpec: BOS_LOGIC_SPEC,
