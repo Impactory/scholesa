@@ -25,6 +25,7 @@ import { useAITracking, useInteractionTracking } from '@/src/hooks/useTelemetry'
 import type { AIServiceResponse } from '@/src/lib/ai/aiService';
 import { recordAIFeedback } from '@/src/lib/ai/interactionLogger';
 import { localizedServiceUnavailable } from '@/src/lib/ai/multilingualGuardrails';
+import { sdtMotivation } from '@/src/lib/motivation/sdtMotivation';
 import { TelemetryService } from '@/src/lib/telemetry/telemetryService';
 import { useI18n } from '@/src/lib/i18n/useI18n';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
@@ -502,31 +503,53 @@ Guidance: ${
   };
 
   const handleSubmitExplainBack = async () => {
-    if (!explainBack.trim()) return;
+    if (!explainBack.trim() || !response) return;
 
-    // Record helpful feedback to analytics-only interaction log
-    if (currentLogId && currentLogId !== 'error') {
-      try {
-        await recordAIFeedback(currentLogId, true, 'Student completed explain-back');
-      } catch (err) {
-        console.warn('Failed to store explain-back feedback', err);
-      }
+    const interactionId = response.traceId?.trim();
+    if (actorRole !== 'learner' || !interactionId) {
+      setStatusMessage('Open AI Coach from the learner workspace to record explain-back for this session.');
+      return;
     }
 
-    // Track explain-back telemetry
-    trackAI('ai_critique_requested', {
-      explainBackLength: explainBack.length,
-      sessionId: sprintSessionId,
-      missionId
-    });
+    try {
+      setLoading(true);
+      setStatusMessage(null);
 
-    // Clear and reset
-    setResponse(null);
-    setQuestion('');
-    setExplainBack('');
-    setMode(null);
-    setCurrentLogId(null);
-    setStatusMessage('Explain-back completed for this session. This popup does not persist the explanation text yet.');
+      if (currentLogId && currentLogId !== 'error') {
+        try {
+          await recordAIFeedback(currentLogId, true, 'Student completed explain-back');
+        } catch (err) {
+          console.warn('Failed to store explain-back feedback', err);
+        }
+      }
+
+      const result = await sdtMotivation.submitExplainBack(
+        actorId,
+        siteId,
+        interactionId,
+        explainBack.trim(),
+      );
+
+      trackAI('ai_critique_requested', {
+        explainBackLength: explainBack.length,
+        sessionId: sprintSessionId,
+        missionId,
+      });
+
+      setResponse(null);
+      setQuestion('');
+      setExplainBack('');
+      setMode(null);
+      setCurrentLogId(null);
+      setStatusMessage(
+        result.feedback?.trim() || 'Explain-back recorded for this AI coach session.',
+      );
+    } catch (err) {
+      console.error('AI coach popup explain-back error:', err);
+      setStatusMessage('Unable to record explain-back right now. Open the learner AI Coach screen or try again later.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -791,7 +814,7 @@ Guidance: ${
             )}
 
             {/* Explain-it-back (if required by policy) */}
-            {policy.aiCoach.explainBackRequired && (
+            {actorRole === 'learner' && policy.aiCoach.explainBackRequired && (
               <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-3 space-y-2">
                 <p className="font-medium text-yellow-900 text-sm">{t('aiCoach.explainBackPrompt')}</p>
                 <textarea
@@ -802,10 +825,10 @@ Guidance: ${
                 />
                 <button
                   onClick={handleSubmitExplainBack}
-                  disabled={!explainBack.trim()}
+                  disabled={!explainBack.trim() || loading}
                   className="w-full rounded-lg bg-yellow-600 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-700 disabled:bg-app-surface-muted disabled:text-app-muted"
                 >
-                  {t('aiCoach.submitExplanation')}
+                  {loading ? 'Submitting...' : t('aiCoach.submitExplanation')}
                 </button>
               </div>
             )}

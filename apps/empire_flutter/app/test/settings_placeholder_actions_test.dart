@@ -163,43 +163,60 @@ void main() {
     }
   });
 
-  testWidgets('settings feedback flow no longer claims feedback was sent',
+  testWidgets('settings feedback launches support email instead of fake submit',
       (WidgetTester tester) async {
     final AppState state = _buildAppState();
     final ThemeService themeService = ThemeService();
+    final _FakeUrlLauncherPlatform launcherPlatform =
+        _FakeUrlLauncherPlatform();
+    final UrlLauncherPlatform previousLauncherPlatform =
+        UrlLauncherPlatform.instance;
     await tester.binding.setSurfaceSize(const Size(1000, 1800));
+    UrlLauncherPlatform.instance = launcherPlatform;
 
-    await tester.pumpWidget(
-      _buildHarness(
-        providers: <SingleChildWidget>[
-          ChangeNotifierProvider<AppState>.value(value: state),
-          ChangeNotifierProvider<ThemeService>.value(value: themeService),
-        ],
-      ),
-    );
-    await tester.pumpAndSettle();
+    try {
+      await tester.pumpWidget(
+        _buildHarness(
+          providers: <SingleChildWidget>[
+            ChangeNotifierProvider<AppState>.value(value: state),
+            ChangeNotifierProvider<ThemeService>.value(value: themeService),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
 
-    await tester.scrollUntilVisible(
-      find.text('Send Feedback'),
-      300,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.drag(find.byType(Scrollable).first, const Offset(0, -120));
-    await tester.pumpAndSettle();
-    await tester.tap(_tileTapTarget('Send Feedback'));
-    await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('Send Feedback'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, -120));
+      await tester.pumpAndSettle();
+      await tester.tap(_tileTapTarget('Send Feedback'));
+      await tester.pumpAndSettle();
 
-    await tester.enterText(
-        find.byType(TextField), 'Please improve the dashboard export flow.');
-    await tester.tap(find.text('Send'));
-    await tester.pumpAndSettle();
+      await tester.enterText(
+          find.byType(TextField), 'Please improve the dashboard export flow.');
+      await tester.tap(find.text('Send'));
+      await tester.pumpAndSettle();
 
-    expect(
-      find.text(
-        'Feedback submission is not available in the app yet. Contact support if you need follow-up.',
-      ),
-      findsOneWidget,
-    );
-    expect(find.text('Feedback sent'), findsNothing);
+      expect(
+        launcherPlatform.launchedUrls,
+        contains(
+          predicate<String>(
+            (String value) => value.startsWith('mailto:support@scholesa.com?'),
+          ),
+        ),
+      );
+      expect(
+        find.text(
+          'Feedback submission is not available in the app yet. Contact support if you need follow-up.',
+        ),
+        findsNothing,
+      );
+      expect(find.text('Feedback sent'), findsNothing);
+    } finally {
+      UrlLauncherPlatform.instance = previousLauncherPlatform;
+    }
   });
 }

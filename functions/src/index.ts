@@ -1475,8 +1475,22 @@ export const submitExplainBack = onCall(async (request) => {
 
   await assertActiveSchoolConsent(siteId);
 
-  const openedRef = admin.firestore().collection('interactionEvents').doc(interactionId);
-  const openedSnap = await openedRef.get();
+  let openedSnap = await admin.firestore().collection('interactionEvents').doc(interactionId).get();
+  let openedEventId = interactionId;
+  if (!openedSnap.exists) {
+    const traceMatchSnap = await admin.firestore()
+      .collection('interactionEvents')
+      .where('eventType', '==', 'ai_help_opened')
+      .where('siteId', '==', siteId)
+      .where('actorId', '==', userId)
+      .where('traceId', '==', interactionId)
+      .limit(1)
+      .get();
+    if (!traceMatchSnap.empty) {
+      openedSnap = traceMatchSnap.docs[0];
+      openedEventId = openedSnap.id;
+    }
+  }
   if (!openedSnap.exists) {
     throw new HttpsError('not-found', 'AI help session not found.');
   }
@@ -1497,7 +1511,7 @@ export const submitExplainBack = onCall(async (request) => {
 
   const explainBackEvent = buildExplainBackSubmittedEvent({
     actorId: userId,
-    aiHelpOpenedEventId: interactionId,
+    aiHelpOpenedEventId: openedEventId,
     explainBack,
     openedEvent: {
       siteId,

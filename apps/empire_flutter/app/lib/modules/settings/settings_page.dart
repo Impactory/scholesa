@@ -120,6 +120,8 @@ const Map<String, String> _settingsZhCn = <String, String>{
   'Help Center Contact': '帮助中心联系方式',
   'Contact support at support@scholesa.com with your site ID and issue details.':
       '请发送邮件至 support@scholesa.com，并附上站点 ID 和问题详情。',
+  'We could not open your email app right now. Contact support@scholesa.com if you need follow-up.':
+      '目前无法打开你的邮件应用。如需后续跟进，请联系 support@scholesa.com。',
   'Send': '发送',
   'Feedback submission is not available in the app yet. Contact support if you need follow-up.':
       '应用内暂不支持反馈提交。如需跟进，请联系支持团队。',
@@ -239,6 +241,8 @@ const Map<String, String> _settingsZhTw = <String, String>{
   'Help Center Contact': '說明中心聯絡方式',
   'Contact support at support@scholesa.com with your site ID and issue details.':
       '請寄信至 support@scholesa.com，並附上站點 ID 與問題詳情。',
+  'We could not open your email app right now. Contact support@scholesa.com if you need follow-up.':
+      '目前無法開啟你的郵件 App。如需後續跟進，請聯絡 support@scholesa.com。',
   'Send': '傳送',
   'Feedback submission is not available in the app yet. Contact support if you need follow-up.':
       'App 內暫不支援回饋提交。如需後續協助，請聯絡支援團隊。',
@@ -1275,26 +1279,62 @@ class _SettingsPageState extends State<SettingsPage> {
                       onPressed: () async {
                         final String feedbackRequiredMessage = _tSettings(
                             context, 'Please enter feedback before sending.');
-                        final String feedbackUnavailableMessage = _tSettings(
-                            context,
-                            'Feedback submission is not available in the app yet. Contact support if you need follow-up.');
                         final String feedback = feedbackController.text.trim();
                         if (feedback.isEmpty) {
                           _showErrorSnackBar(feedbackRequiredMessage);
                           return;
                         }
+
+                        final AppState appState = context.read<AppState>();
+                        final User? currentUser = Firebase.apps.isNotEmpty
+                            ? FirebaseAuth.instance.currentUser
+                            : null;
+                        final String siteId =
+                            appState.activeSiteId?.trim().isNotEmpty == true
+                                ? appState.activeSiteId!.trim()
+                                : 'Not set';
+                        final String userId =
+                            appState.userId?.trim().isNotEmpty == true
+                                ? appState.userId!.trim()
+                                : (currentUser?.uid ?? 'Not set');
+                        final String email =
+                            appState.email?.trim().isNotEmpty == true
+                                ? appState.email!.trim()
+                                : (currentUser?.email ?? 'Not set');
+                        final String displayName =
+                            appState.displayName?.trim().isNotEmpty == true
+                                ? appState.displayName!.trim()
+                                : (currentUser?.displayName ?? 'Not set');
+
                         await TelemetryService.instance.logEvent(
                           event: 'settings.feedback.submitted',
                           metadata: <String, dynamic>{
                             'length': feedback.length
                           },
                         );
+
+                        final Uri emailUri = Uri(
+                          scheme: 'mailto',
+                          path: 'support@scholesa.com',
+                          queryParameters: <String, String>{
+                            'subject': 'App feedback - $siteId',
+                            'body':
+                                'Hello Scholesa support.\n\nI want to share the following app feedback:\n\n$feedback\n\nSite ID: $siteId\nUser ID: $userId\nName: $displayName\nEmail: $email\n',
+                          },
+                        );
+                        final bool launched =
+                            await _tryLaunchExternalUri(emailUri);
                         if (!context.mounted) return;
                         Navigator.pop(bottomSheetContext);
-                        _showInfoDialog(
-                          title: _tSettings(context, 'Send Feedback'),
-                          body: feedbackUnavailableMessage,
-                        );
+                        if (!launched) {
+                          _showInfoDialog(
+                            title: _tSettings(context, 'Send Feedback'),
+                            body: _tSettings(
+                              context,
+                              'We could not open your email app right now. Contact support@scholesa.com if you need follow-up.',
+                            ),
+                          );
+                        }
                       },
                       child: Text(_tSettings(context, 'Send')),
                     ),
