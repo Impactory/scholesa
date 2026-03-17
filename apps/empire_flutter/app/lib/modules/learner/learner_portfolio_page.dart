@@ -616,7 +616,9 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(_t('Portfolio profile update queued')),
+                  content: Text(
+                    _t('Portfolio profile editing is not available in the app yet'),
+                  ),
                   backgroundColor: ScholesaColors.learner,
                 ),
               );
@@ -662,7 +664,9 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(_t('Share link generated')),
+                  content: Text(
+                    _t('Portfolio share links are not available in the app yet'),
+                  ),
                   backgroundColor: ScholesaColors.learner,
                 ),
               );

@@ -391,6 +391,48 @@ class UserAdminService extends ChangeNotifier {
     }
   }
 
+  Future<bool> updateUserDisplayName(String userId, String displayName) async {
+    final String trimmedDisplayName = displayName.trim();
+    if (trimmedDisplayName.isEmpty) {
+      _error = 'Display name cannot be empty';
+      notifyListeners();
+      return false;
+    }
+
+    try {
+      final int index = _users.indexWhere((UserModel u) => u.uid == userId);
+      if (index == -1) return false;
+
+      final String? oldDisplayName = _users[index].displayName;
+
+      await _firestore.collection('users').doc(userId).update(<String, dynamic>{
+        'displayName': trimmedDisplayName,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      await _logAuditAction(
+        action: 'user.display_name_updated',
+        entityType: 'User',
+        entityId: userId,
+        details: <String, dynamic>{
+          'oldDisplayName': oldDisplayName,
+          'newDisplayName': trimmedDisplayName,
+        },
+      );
+
+      _users[index] = _users[index].copyWith(
+        displayName: trimmedDisplayName,
+        updatedAt: DateTime.now(),
+      );
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
   /// Add user to site in Firebase
   Future<bool> addUserToSite(String userId, String siteId) async {
     try {

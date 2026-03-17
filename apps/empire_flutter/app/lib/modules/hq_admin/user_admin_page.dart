@@ -1369,21 +1369,35 @@ class _UserDetailsSheet extends StatelessWidget {
             child: Text(_tUserAdmin(context, 'Cancel')),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
+              final String displayName = nameController.text.trim();
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
                 metadata: <String, dynamic>{
                   'cta': 'user_admin_save_edit_user',
                   'user_id': user.uid,
-                  'has_name': nameController.text.trim().isNotEmpty,
+                  'has_name': displayName.isNotEmpty,
                 },
               );
+              final bool success = await context
+                  .read<UserAdminService>()
+                  .updateUserDisplayName(user.uid, displayName);
+              if (!context.mounted) {
+                return;
+              }
               Navigator.pop(dialogContext);
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                    content: Text(
-                        '${_tUserAdmin(context, 'Profile update requested for')} ${nameController.text.trim()}')),
+                  content: Text(
+                    success
+                        ? 'Profile updated for $displayName'
+                        : 'Profile update failed for ${user.displayName ?? user.email}',
+                  ),
+                  backgroundColor: success
+                      ? ScholesaColors.success
+                      : ScholesaColors.error,
+                ),
               );
             },
             child: Text(_tUserAdmin(context, 'Save')),
