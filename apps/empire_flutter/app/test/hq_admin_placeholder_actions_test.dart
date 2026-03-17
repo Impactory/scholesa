@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:scholesa_app/auth/app_state.dart';
+import 'package:scholesa_app/modules/hq_admin/hq_audit_page.dart';
 import 'package:scholesa_app/modules/hq_admin/hq_billing_page.dart';
 import 'package:scholesa_app/modules/hq_admin/hq_safety_page.dart';
 import 'package:scholesa_app/ui/theme/scholesa_theme.dart';
@@ -123,5 +124,60 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Invoice INV-1001'), findsOneWidget);
+  });
+
+  testWidgets('HQ billing export dialog is notice-only until export exists',
+      (WidgetTester tester) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 1800));
+    await tester.pumpWidget(
+      _buildHarness(
+        child: HqBillingPage(
+          billingLoader: () async => <String, dynamic>{
+            'siteOptions': <Map<String, dynamic>>[
+              <String, dynamic>{'id': 'all', 'label': 'All Sites'},
+            ],
+            'invoices': <Map<String, dynamic>>[],
+            'payments': <Map<String, dynamic>>[],
+            'subscriptions': <Map<String, dynamic>>[],
+          },
+        ),
+        appState: _buildAppState(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Export'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Export Financials'), findsOneWidget);
+    expect(
+      find.textContaining('Financial exports are not available in the app yet.'),
+      findsOneWidget,
+    );
+    expect(find.widgetWithText(ElevatedButton, 'Export'), findsNothing);
+    expect(find.text('Close'), findsOneWidget);
+  });
+
+  testWidgets('HQ audit export action is notice-only until export exists',
+      (WidgetTester tester) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 1800));
+    await tester.pumpWidget(
+      _buildHarness(
+        child: const HqAuditPage(),
+        appState: _buildAppState(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.download_rounded));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Export Audit Logs'), findsOneWidget);
+    expect(
+      find.textContaining('Audit log exports are not available in the app yet.'),
+      findsOneWidget,
+    );
+    expect(find.text('Exporting audit logs...'), findsNothing);
+    expect(find.text('Close'), findsOneWidget);
   });
 }

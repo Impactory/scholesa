@@ -521,34 +521,22 @@ class _HqBillingPageState extends State<HqBillingPage>
       builder: (BuildContext dialogContext) => AlertDialog(
         title: Text(_tHqBilling(context, 'Export Financials')),
         content: Text(
-          _tHqBilling(context,
-              'Generate a consolidated financial report for invoices, payments, and subscriptions.'),
+          '${_tHqBilling(context, 'Generate a consolidated financial report for invoices, payments, and subscriptions.')}\n\n${_tHqBilling(context, 'Financial exports are not available in the app yet.')}',
         ),
         actions: <Widget>[
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: Text(_tHqBilling(context, 'Cancel')),
-          ),
-          ElevatedButton(
             onPressed: () {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
                 metadata: <String, dynamic>{
                   'module': 'hq_billing',
-                  'cta_id': 'confirm_export_financials',
+                  'cta_id': 'close_export_financials_notice',
                   'surface': 'export_financials_dialog',
                 },
               );
               Navigator.pop(dialogContext);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(_tHqBilling(
-                      context, 'Financial report prepared for export')),
-                  backgroundColor: ScholesaColors.hq,
-                ),
-              );
             },
-            child: Text(_tHqBilling(context, 'Export')),
+            child: Text(_tHqBilling(context, 'Close')),
           ),
         ],
       ),

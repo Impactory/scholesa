@@ -167,9 +167,19 @@ class _HqAuditPageState extends State<HqAuditPage> {
             icon: const Icon(Icons.download_rounded),
             onPressed: () {
               _logAuditEvent('hq_audit_export_logs');
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(_tHqAudit(context, 'Exporting audit logs...')),
+              showDialog<void>(
+                context: context,
+                builder: (BuildContext dialogContext) => AlertDialog(
+                  title: Text(_tHqAudit(context, 'Export Audit Logs')),
+                  content: Text(
+                    '${_tHqAudit(context, 'Export the current audit log feed for offline review.')}\n\n${_tHqAudit(context, 'Audit log exports are not available in the app yet.')}',
+                  ),
+                  actions: <Widget>[
+                    TextButton(
+                      onPressed: () => Navigator.pop(dialogContext),
+                      child: Text(_tHqAudit(context, 'Close')),
+                    ),
+                  ],
                 ),
               );
             },
