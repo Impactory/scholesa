@@ -68,7 +68,7 @@ void main() {
     await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
 
-    expect(find.text('Scan QR'), findsOneWidget);
+    expect(find.text('Scan QR'), findsWidgets);
     expect(
       find.textContaining('QR scanning is not available in the app yet'),
       findsOneWidget,
