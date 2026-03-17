@@ -140,6 +140,7 @@ describe('federated learning prototype helpers', () => {
       status: 'pilot_ready',
       allowedSiteIds: ['site-1', 'site-1', 'site-2'],
       aggregateThreshold: 32,
+      minDistinctSiteCount: 2,
       rawUpdateMaxBytes: 8192,
       enablePrototypeUploads: true,
     });
@@ -149,6 +150,7 @@ describe('federated learning prototype helpers', () => {
     expect(config.maxLocalEpochs).toBe(3);
     expect(config.maxLocalSteps).toBe(24);
     expect(config.maxTrainingWindowSeconds).toBe(1800);
+    expect(config.minDistinctSiteCount).toBe(2);
     expect(payload.enabled).toBe(true);
     expect(payload.scope).toBe('site');
     expect(payload.enabledSites).toEqual(['site-1', 'site-2']);
@@ -161,6 +163,14 @@ describe('federated learning prototype helpers', () => {
       status: 'active',
       allowedSiteIds: [],
     })).toThrow('allowedSiteIds are required when status is pilot_ready or active.');
+
+    expect(() => sanitizeFederatedLearningExperimentConfig({
+      name: 'Pilot',
+      runtimeTarget: 'flutter_mobile',
+      status: 'pilot_ready',
+      allowedSiteIds: ['site-1', 'site-2'],
+      minDistinctSiteCount: 3,
+    })).toThrow('minDistinctSiteCount cannot exceed the enabled site cohort size.');
 
     const summary = sanitizeFederatedLearningUpdateSummary({
       siteId: 'site-1',
@@ -636,6 +646,7 @@ describe('federated learning prototype helpers', () => {
         { value: 'unknown', count: 2 },
       ],
       distinctSiteCount: 2,
+      minDistinctSiteCount: 1,
       contributingSiteIds: ['site-1', 'site-3'],
       totalSampleCount: 19,
       maxVectorLength: 3,
@@ -692,5 +703,49 @@ describe('federated learning prototype helpers', () => {
     ], 20);
 
     expect(selection).toBeNull();
+  });
+
+  it('continues scanning until both sample threshold and distinct-site quorum are met', () => {
+    const selection = selectFederatedLearningAggregationBatch([
+      {
+        id: 'sum-1',
+        siteId: 'site-1',
+        sampleCount: 5,
+        vectorLength: 3,
+        vectorSketch: [1, 0.5, 0],
+        payloadBytes: 1024,
+        updateNorm: 1.5,
+        schemaVersion: 'v1',
+      },
+      {
+        id: 'sum-2',
+        siteId: 'site-1',
+        sampleCount: 6,
+        vectorLength: 3,
+        vectorSketch: [0.5, 1, 0.5],
+        payloadBytes: 768,
+        updateNorm: 1.2,
+        schemaVersion: 'v1',
+      },
+      {
+        id: 'sum-3',
+        siteId: 'site-2',
+        sampleCount: 4,
+        vectorLength: 3,
+        vectorSketch: [0.25, 0.5, 0.75],
+        payloadBytes: 512,
+        updateNorm: 0.9,
+        schemaVersion: 'v1',
+      },
+    ], 10, 2);
+
+    expect(selection).toMatchObject({
+      summaryIds: ['sum-1', 'sum-2', 'sum-3'],
+      summaryCount: 3,
+      distinctSiteCount: 2,
+      minDistinctSiteCount: 2,
+      totalSampleCount: 15,
+      contributingSiteIds: ['site-1', 'site-2'],
+    });
   });
 });
