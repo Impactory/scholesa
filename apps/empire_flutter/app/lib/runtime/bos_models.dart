@@ -868,7 +868,8 @@ class AiCoachRequest {
           'recentEventsRef': recentEventsRef,
         },
         if (studentInput != null) 'studentInput': studentInput,
-        if (personaInstructions != null) 'personaInstructions': personaInstructions,
+        if (personaInstructions != null)
+          'personaInstructions': personaInstructions,
       };
 }
 
@@ -964,7 +965,8 @@ class AiCoachResponse {
     final Map<String, dynamic>? risk = m['risk'] as Map<String, dynamic>?;
     final Map<String, dynamic>? mvl = m['mvl'] as Map<String, dynamic>?;
     final Map<String, dynamic>? meta = m['meta'] as Map<String, dynamic>?;
-    final Map<String, dynamic>? metadata = m['metadata'] as Map<String, dynamic>?;
+    final Map<String, dynamic>? metadata =
+        m['metadata'] as Map<String, dynamic>?;
     final Map<String, dynamic>? tts = m['tts'] as Map<String, dynamic>?;
 
     return AiCoachResponse(

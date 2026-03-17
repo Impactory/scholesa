@@ -6,7 +6,8 @@ import 'package:scholesa_app/runtime/learning_runtime_provider.dart';
 
 void main() {
   group('LearningRuntimeProvider', () {
-    test('hydrates orchestration state and active MVL from Firestore', () async {
+    test('hydrates orchestration state and active MVL from Firestore',
+        () async {
       final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
       final DateTime now = DateTime.now();
 
@@ -40,7 +41,10 @@ void main() {
         'lastUpdatedAt': Timestamp.fromDate(now),
       });
 
-      await firestore.collection('mvlEpisodes').doc('mvl-1').set(<String, dynamic>{
+      await firestore
+          .collection('mvlEpisodes')
+          .doc('mvl-1')
+          .set(<String, dynamic>{
         'siteId': 'site-1',
         'learnerId': 'learner-1',
         'sessionOccurrenceId': 'occ-1',
@@ -73,7 +77,8 @@ void main() {
       expect(provider.stateLoadIssue, isNull);
     });
 
-    test('marks malformed orchestration state instead of fabricating values', () async {
+    test('marks malformed orchestration state instead of fabricating values',
+        () async {
       final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
 
       await firestore

@@ -32,7 +32,8 @@ class BosLearnerLoopInsightsCard extends StatefulWidget {
       _BosLearnerLoopInsightsCardState();
 }
 
-class _BosLearnerLoopInsightsCardState extends State<BosLearnerLoopInsightsCard> {
+class _BosLearnerLoopInsightsCardState
+    extends State<BosLearnerLoopInsightsCard> {
   Future<Map<String, dynamic>?>? _futureInsights;
   String? _lastSiteId;
 
@@ -257,17 +258,17 @@ class _BosLearnerLoopInsightsCardState extends State<BosLearnerLoopInsightsCard>
                   return '$sign${(v * 100).toStringAsFixed(1)}';
                 }
 
-                final bool hasAnyStateMetric =
-                    state['cognition'] is num ||
+                final bool hasAnyStateMetric = state['cognition'] is num ||
                     state['engagement'] is num ||
                     state['integrity'] is num;
-                final bool hasAnyTrendMetric =
-                    trend['cognitionDelta'] is num ||
+                final bool hasAnyTrendMetric = trend['cognitionDelta'] is num ||
                     trend['engagementDelta'] is num ||
                     trend['integrityDelta'] is num;
                 final bool partialSignals =
-                    !((stateAvailability['hasCurrentState'] as bool?) ?? false) ||
-                        !((stateAvailability['hasTrendBaseline'] as bool?) ?? false);
+                    !((stateAvailability['hasCurrentState'] as bool?) ??
+                            false) ||
+                        !((stateAvailability['hasTrendBaseline'] as bool?) ??
+                            false);
 
                 if (!hasAnyStateMetric && !hasAnyTrendMetric && goals.isEmpty) {
                   return _buildInfoState(

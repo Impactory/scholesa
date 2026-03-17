@@ -52,9 +52,13 @@ void main() {
       expect(restored.confidence, 0.8);
     });
 
-    test('tryFromMap derives confidence from trace without inventing defaults', () {
+    test('tryFromMap derives confidence from trace without inventing defaults',
+        () {
       final CovarianceSummary? restored = CovarianceSummary.tryFromMap(
-        <String, dynamic>{'diag': <double>[0.1, 0.2, 0.3], 'trace': 0.6},
+        <String, dynamic>{
+          'diag': <double>[0.1, 0.2, 0.3],
+          'trace': 0.6
+        },
       );
       expect(restored, isNotNull);
       expect(restored!.confidence, closeTo(0.8, 0.0001));

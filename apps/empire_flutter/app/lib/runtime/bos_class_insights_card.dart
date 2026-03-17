@@ -210,8 +210,8 @@ class _BosClassInsightsCardState extends State<BosClassInsightsCard> {
                         <String, dynamic>{};
                 final List<_ClassLearnerSignal> watchlist =
                     _watchlistFromPayload(
-                      insights['watchlist'] ?? insights['learners'],
-                    );
+                  insights['watchlist'] ?? insights['learners'],
+                );
 
                 String pct(dynamic value) {
                   final double? numeric = (value as num?)?.toDouble();
@@ -225,9 +225,12 @@ class _BosClassInsightsCardState extends State<BosClassInsightsCard> {
                     averages['engagement'] is num ||
                     averages['integrity'] is num;
                 final bool partialSignals = learnerCount > 0 &&
-                    (((coverage['cognition'] as num?)?.toInt() ?? 0) != learnerCount ||
-                        ((coverage['engagement'] as num?)?.toInt() ?? 0) != learnerCount ||
-                        ((coverage['integrity'] as num?)?.toInt() ?? 0) != learnerCount);
+                    (((coverage['cognition'] as num?)?.toInt() ?? 0) !=
+                            learnerCount ||
+                        ((coverage['engagement'] as num?)?.toInt() ?? 0) !=
+                            learnerCount ||
+                        ((coverage['integrity'] as num?)?.toInt() ?? 0) !=
+                            learnerCount);
 
                 if (!hasAnyAverage && watchlist.isEmpty && learnerCount == 0) {
                   return _buildInfoState(

@@ -50,8 +50,8 @@ class BosCoachingI18n {
     'viewWatchlist': '查看关注名单',
     'watchlistClear': '目前没有需要立即跟进的学习者',
     'supportRecommended': '建议优先提供支持给以下学习者',
-        'signalUnavailable': '暂无可验证信号',
-        'partialSignals': '部分信号缺失，仅显示已验证数据',
+    'signalUnavailable': '暂无可验证信号',
+    'partialSignals': '部分信号缺失，仅显示已验证数据',
   };
 
   static const Map<String, String> _zhTwTranslations = <String, String>{
@@ -92,8 +92,8 @@ class BosCoachingI18n {
     'viewWatchlist': '查看關注名單',
     'watchlistClear': '目前沒有需要立即跟進的學習者',
     'supportRecommended': '建議優先提供支持給以下學習者',
-        'signalUnavailable': '目前沒有可驗證訊號',
-        'partialSignals': '部分訊號缺失，僅顯示已驗證資料',
+    'signalUnavailable': '目前沒有可驗證訊號',
+    'partialSignals': '部分訊號缺失，僅顯示已驗證資料',
   };
 
   static const Map<String, String> _enTranslations = <String, String>{
@@ -138,8 +138,8 @@ class BosCoachingI18n {
     'viewWatchlist': 'View Watchlist',
     'watchlistClear': 'No learners need immediate follow-up right now',
     'supportRecommended': 'Support recommended for these learners',
-        'signalUnavailable': 'Verified signal unavailable',
-        'partialSignals': 'Some signals are missing; showing only verified data',
+    'signalUnavailable': 'Verified signal unavailable',
+    'partialSignals': 'Some signals are missing; showing only verified data',
   };
 
   /// Get a BOS/MIA coaching key in the user's locale

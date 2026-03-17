@@ -44,14 +44,14 @@ class LearningRuntimeProvider extends ChangeNotifier {
   OrchestrationState? _state;
   OrchestrationState? get state => _state;
 
-    LearningRuntimeStateStatus _stateStatus =
+  LearningRuntimeStateStatus _stateStatus =
       LearningRuntimeStateStatus.unavailable;
-    LearningRuntimeStateStatus get stateStatus => _stateStatus;
+  LearningRuntimeStateStatus get stateStatus => _stateStatus;
 
-    String? _stateLoadIssue;
-    String? get stateLoadIssue => _stateLoadIssue;
+  String? _stateLoadIssue;
+  String? get stateLoadIssue => _stateLoadIssue;
 
-    bool get hasUsableState =>
+  bool get hasUsableState =>
       _stateStatus == LearningRuntimeStateStatus.ready && _state != null;
 
   MvlEpisode? _activeMvl;
