@@ -448,7 +448,8 @@ class _HqAuditPageState extends State<HqAuditPage> {
           reviewsRaw.map((Map<String, dynamic> row) {
         return _RedTeamReview(
           id: row['id'] as String? ?? '',
-          title: row['title'] as String? ?? _tHqAudit(context, 'Red Team Review'),
+          title:
+              row['title'] as String? ?? _tHqAudit(context, 'Red Team Review'),
           decision: row['decision'] as String? ?? 'continue',
           partnerStatus: row['partnerStatus'] as String? ?? 'active',
           recommendations: row['recommendations'] as String? ?? '',
@@ -491,10 +492,14 @@ class _HqAuditPageState extends State<HqAuditPage> {
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             _buildFilterOption(_tHqAudit(context, 'All'), null),
-            _buildFilterOption(_categoryLabel(_AuditCategory.auth), _AuditCategory.auth),
-            _buildFilterOption(_categoryLabel(_AuditCategory.data), _AuditCategory.data),
-            _buildFilterOption(_categoryLabel(_AuditCategory.admin), _AuditCategory.admin),
-            _buildFilterOption(_categoryLabel(_AuditCategory.system), _AuditCategory.system),
+            _buildFilterOption(
+                _categoryLabel(_AuditCategory.auth), _AuditCategory.auth),
+            _buildFilterOption(
+                _categoryLabel(_AuditCategory.data), _AuditCategory.data),
+            _buildFilterOption(
+                _categoryLabel(_AuditCategory.admin), _AuditCategory.admin),
+            _buildFilterOption(
+                _categoryLabel(_AuditCategory.system), _AuditCategory.system),
           ],
         ),
       ),
@@ -543,7 +548,8 @@ class _HqAuditPageState extends State<HqAuditPage> {
             ),
             const SizedBox(height: 16),
             _buildDetailRow(_tHqAudit(context, 'Actor'), log.actor),
-            _buildDetailRow(_tHqAudit(context, 'Time'), _formatTime(log.timestamp)),
+            _buildDetailRow(
+                _tHqAudit(context, 'Time'), _formatTime(log.timestamp)),
             const SizedBox(height: 8),
             Text(log.details),
             const SizedBox(height: 24),

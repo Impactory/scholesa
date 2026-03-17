@@ -151,7 +151,8 @@ void main() {
 
     expect(find.text('Export Financials'), findsOneWidget);
     expect(
-      find.textContaining('Financial exports are not available in the app yet.'),
+      find.textContaining(
+          'Financial exports are not available in the app yet.'),
       findsOneWidget,
     );
     expect(find.widgetWithText(ElevatedButton, 'Export'), findsNothing);
@@ -174,7 +175,8 @@ void main() {
 
     expect(find.text('Export Audit Logs'), findsOneWidget);
     expect(
-      find.textContaining('Audit log exports are not available in the app yet.'),
+      find.textContaining(
+          'Audit log exports are not available in the app yet.'),
       findsOneWidget,
     );
     expect(find.text('Exporting audit logs...'), findsNothing);

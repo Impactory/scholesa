@@ -309,7 +309,8 @@ class WorkflowSurfaceI18n {
     'HQ': '总部',
     'Audit Logs': '审计日志',
     'Export Audit Logs': '导出审计日志',
-    'Export the current audit log feed for offline review.': '导出当前审计日志列表以供离线审阅。',
+    'Export the current audit log feed for offline review.':
+        '导出当前审计日志列表以供离线审阅。',
     'Audit log exports are not available in the app yet.': '应用内暂不支持导出审计日志。',
     'No audit logs found': '未找到审计日志',
     'Red Team Reviews': '红队审查',
@@ -673,7 +674,8 @@ class WorkflowSurfaceI18n {
     'Role Impersonation': '角色模擬',
     'Audit Logs': '稽核日誌',
     'Export Audit Logs': '匯出稽核日誌',
-    'Export the current audit log feed for offline review.': '匯出目前的稽核日誌清單以供離線審閱。',
+    'Export the current audit log feed for offline review.':
+        '匯出目前的稽核日誌清單以供離線審閱。',
     'Audit log exports are not available in the app yet.': 'App 內暫不支援匯出稽核日誌。',
     'No audit logs found': '找不到稽核日誌',
     'Red Team Reviews': '紅隊審查',
