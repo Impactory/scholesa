@@ -9,7 +9,8 @@ import { Mission, MissionAttempt } from '@/src/types/schema';
 import { ReflectionForm } from '@/ReflectionForm';
 
 export function MissionList() {
-  const { user } = useAuthContext();
+  const { user, profile } = useAuthContext();
+  const siteId = profile?.activeSiteId?.trim() || profile?.studioId?.trim() || profile?.siteIds?.[0]?.trim() || '';
 
   // 1. Get Enrollments
   const [enrolmentsSnap, loadingEnrolments] = useCollection(
@@ -33,6 +34,7 @@ export function MissionList() {
             key={enrol.id} 
             courseId={enrol.courseId} 
             userId={user!.uid}
+            siteId={siteId}
             attempts={attemptsSnap?.docs.map(d => d.data()) || []}
           />
         );
@@ -41,7 +43,7 @@ export function MissionList() {
   );
 }
 
-function CourseMissions({ courseId, userId, attempts }: { courseId: string, userId: string, attempts: MissionAttempt[] }) {
+function CourseMissions({ courseId, userId, siteId, attempts }: { courseId: string, userId: string, siteId: string, attempts: MissionAttempt[] }) {
   // Fetch missions for this course
   const [missionsSnap, loading] = useCollection(
     query(missionsCollection, where('courseId', '==', courseId), orderBy('order', 'asc'))
@@ -65,6 +67,7 @@ function CourseMissions({ courseId, userId, attempts }: { courseId: string, user
               mission={{ ...mission, id: mDoc.id } as Mission} 
               attempt={attempt}
               userId={userId}
+              siteId={siteId}
             />
           );
         })}
@@ -73,17 +76,25 @@ function CourseMissions({ courseId, userId, attempts }: { courseId: string, user
   );
 }
 
-function MissionItem({ mission, attempt, userId }: { mission: Mission, attempt?: MissionAttempt, userId: string }) {
+function MissionItem({ mission, attempt, userId, siteId }: { mission: Mission, attempt?: MissionAttempt, userId: string, siteId: string }) {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isReflecting, setIsReflecting] = React.useState(false);
+  const [startError, setStartError] = React.useState<string | null>(null);
+  const canStartMission = siteId.length > 0;
 
   const handleStart = async () => {
+    if (!canStartMission) {
+      setStartError('Mission start is unavailable until your learner profile has an active site assignment.');
+      return;
+    }
+
     setIsSubmitting(true);
+    setStartError(null);
     try {
       await addDoc(missionAttemptsCollection, {
         learnerId: userId,
         missionId: mission.id,
-        siteId: 'default-site', // Should come from context/profile
+        siteId,
         status: 'started',
         submittedAt: Timestamp.now(),
       } as any); // Cast for addDoc compatibility with typed collection
@@ -118,6 +129,11 @@ function MissionItem({ mission, attempt, userId }: { mission: Mission, attempt?:
 
   return (
     <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 transition-all hover:border-indigo-100 hover:bg-indigo-50/30">
+      {startError ? (
+        <p className="mb-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {startError}
+        </p>
+      ) : null}
       <div className="flex items-center justify-between">
       <div>
         <h4 className="font-medium text-gray-900">{mission.title}</h4>
@@ -135,7 +151,7 @@ function MissionItem({ mission, attempt, userId }: { mission: Mission, attempt?:
       
       <div>
         {status === 'not-started' && (
-          <button onClick={handleStart} disabled={isSubmitting} className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">Start</button>
+          <button onClick={handleStart} disabled={isSubmitting || !canStartMission} className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50">Start</button>
         )}
         {status === 'started' && (
           <button onClick={() => setIsReflecting(true)} disabled={isSubmitting || isReflecting} className="rounded-md bg-white px-3 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Submit</button>

@@ -12,6 +12,7 @@ export function AttendanceTaker() {
   const [selectedOccurrenceId, setSelectedOccurrenceId] = useState<string>('');
   const [programIdForEnrolment, setProgramIdForEnrolment] = useState<string>('');
   const [selectedSiteId, setSelectedSiteId] = useState<string>('');
+  const [attendanceError, setAttendanceError] = useState<string>('');
 
   // 1. Fetch Occurrences for this educator
   const [occurrencesSnap] = useCollection(
@@ -56,6 +57,10 @@ export function AttendanceTaker() {
 
   const markAttendance = async (learnerId: string, status: 'present' | 'absent' | 'late') => {
     if (!user || !selectedOccurrenceId) return;
+    if (!selectedSiteId) {
+      setAttendanceError('Attendance is unavailable until the selected class has a site assignment.');
+      return;
+    }
 
     const attendanceId = `${selectedOccurrenceId}_${learnerId}`;
     const record: Attendance = {
@@ -63,16 +68,18 @@ export function AttendanceTaker() {
       userId: learnerId,
       learnerId: learnerId,
       sessionOccurrenceId: selectedOccurrenceId,
-      studioId: selectedSiteId || 'default-site',
+      studioId: selectedSiteId,
       date: Timestamp.now(),
       status,
       recordedBy: user.uid,
     };
 
     try {
+      setAttendanceError('');
       await setDoc(doc(attendanceCollection, attendanceId), record);
     } catch (err) {
       console.error('Error marking attendance:', err);
+      setAttendanceError('Failed to record attendance.');
     }
   };
 
@@ -108,6 +115,16 @@ export function AttendanceTaker() {
         <h3 className="mb-4 font-semibold text-gray-900">
           Attendance {selectedOccurrenceId ? '' : '(Select a class)'}
         </h3>
+        {attendanceError ? (
+          <p className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {attendanceError}
+          </p>
+        ) : null}
+        {selectedOccurrenceId && !selectedSiteId ? (
+          <p className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+            Attendance is disabled because this class does not have a site assignment.
+          </p>
+        ) : null}
         
         {!selectedOccurrenceId ? (
           <div className="flex h-32 items-center justify-center text-gray-400">
@@ -117,7 +134,7 @@ export function AttendanceTaker() {
           <div className="space-y-2">
             {enrolmentsSnap?.docs.map((doc) => {
               const enrol = doc.data();
-              return <LearnerRow key={doc.id} enrolment={enrol} onMark={markAttendance} />;
+              return <LearnerRow key={doc.id} enrolment={enrol} onMark={markAttendance} disabled={!selectedSiteId} />;
             })}
             {enrolmentsSnap?.empty && <p className="text-sm text-gray-500">No students enrolled in this program.</p>}
           </div>
@@ -129,10 +146,12 @@ export function AttendanceTaker() {
 
 function LearnerRow({ 
   enrolment, 
-  onMark 
+  onMark,
+  disabled,
 }: { 
   enrolment: Enrolment; 
-  onMark: (id: string, status: 'present' | 'absent' | 'late') => void 
+  onMark: (id: string, status: 'present' | 'absent' | 'late') => void;
+  disabled: boolean;
 }) {
   const [userSnap, loading] = useDocument(doc(usersCollection, enrolment.userId));
   const profile = userSnap?.data();
@@ -154,11 +173,12 @@ function LearnerRow({
           <button
             key={status}
             onClick={() => onMark(enrolment.userId, status)}
+            disabled={disabled}
             className={`rounded px-3 py-1 text-xs font-medium capitalize ring-1 ring-inset ${
               status === 'present' ? 'bg-green-50 text-green-700 ring-green-600/20 hover:bg-green-100' :
               status === 'late' ? 'bg-yellow-50 text-yellow-700 ring-yellow-600/20 hover:bg-yellow-100' :
               'bg-red-50 text-red-700 ring-red-600/20 hover:bg-red-100'
-            }`}
+            } disabled:cursor-not-allowed disabled:opacity-50`}
           >
             {status}
           </button>
