@@ -265,7 +265,7 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.enterText(find.byType(TextField), 'Updated Site Lead');
-    await tester.tap(find.widgetWithText(TextButton, 'Save'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Save'));
     await tester.pumpAndSettle();
 
     expect(find.text('Profile updated for Updated Site Lead'), findsOneWidget);

@@ -2,11 +2,14 @@ import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:scholesa_app/modules/attendance/attendance_models.dart';
+import 'package:scholesa_app/modules/attendance/attendance_service.dart';
 import 'package:scholesa_app/modules/checkin/checkin_service.dart';
 import 'package:scholesa_app/modules/messages/message_service.dart';
 import 'package:scholesa_app/modules/missions/mission_service.dart';
 import 'package:scholesa_app/offline/offline_queue.dart';
 import 'package:scholesa_app/offline/sync_coordinator.dart';
+import 'package:scholesa_app/services/api_client.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
 import 'package:scholesa_app/services/notification_service.dart';
 import 'package:scholesa_app/services/telemetry_service.dart';
@@ -16,6 +19,8 @@ class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
 class _MockOfflineQueue extends Mock implements OfflineQueue {}
 
 class _MockSyncCoordinator extends Mock implements SyncCoordinator {}
+
+class _MockApiClient extends Mock implements ApiClient {}
 
 void main() {
   setUpAll(() {
@@ -28,6 +33,7 @@ void main() {
     late FirestoreService firestoreService;
     late _MockFirebaseAuth auth;
     late _MockSyncCoordinator syncCoordinator;
+    late _MockApiClient apiClient;
 
     setUp(() {
       firestore = FakeFirebaseFirestore();
@@ -36,6 +42,7 @@ void main() {
         firestore: firestore,
         auth: auth,
       );
+      apiClient = _MockApiClient();
       syncCoordinator = _MockSyncCoordinator();
       when(() => syncCoordinator.isOnline).thenReturn(false);
       when(() => syncCoordinator.queueOperation(any(), any())).thenAnswer(
@@ -71,16 +78,21 @@ void main() {
 
       expect(checkedIn, isTrue);
       expect(checkedOut, isTrue);
-      verify(() => syncCoordinator.queueOperation(OpType.presenceCheckin, any()))
+      verify(() =>
+              syncCoordinator.queueOperation(OpType.presenceCheckin, any()))
           .called(1);
-      verify(() => syncCoordinator.queueOperation(OpType.presenceCheckout, any()))
+      verify(() =>
+              syncCoordinator.queueOperation(OpType.presenceCheckout, any()))
           .called(1);
       expect((await firestore.collection('checkins').get()).docs, isEmpty);
       expect(service.todayRecords, hasLength(2));
     });
 
     test('message service queues direct messages when offline', () async {
-      await firestore.collection('users').doc('educator-1').set(<String, dynamic>{
+      await firestore
+          .collection('users')
+          .doc('educator-1')
+          .set(<String, dynamic>{
         'displayName': 'Educator One',
         'role': 'educator',
         'activeSiteId': 'site-1',
@@ -146,12 +158,52 @@ void main() {
 
       expect(bundle, isNotNull);
       expect(bundle!.siteId, 'site-1');
-      verify(() => syncCoordinator.queueOperation(OpType.attemptSaveDraft, any()))
+      verify(() =>
+              syncCoordinator.queueOperation(OpType.attemptSaveDraft, any()))
           .called(1);
       expect(
-        await firestore.collection('proofOfLearningBundles').doc(bundle.id).get(),
+        await firestore
+            .collection('proofOfLearningBundles')
+            .doc(bundle.id)
+            .get(),
         isNot(predicate((dynamic doc) => doc.exists)),
       );
+    });
+
+    test('attendance service queues batch attendance when offline', () async {
+      final AttendanceService service = AttendanceService(
+        apiClient: apiClient,
+        syncCoordinator: syncCoordinator,
+        educatorId: 'educator-1',
+        siteId: 'site-1',
+      );
+
+      final AttendanceBatchSaveResult result =
+          await service.batchRecordAttendance(
+        <AttendanceRecord>[
+          AttendanceRecord(
+            occurrenceId: 'occ-1',
+            learnerId: 'learner-1',
+            status: AttendanceStatus.present,
+            recordedAt: DateTime.now(),
+            recordedBy: 'educator-1',
+          ),
+          AttendanceRecord(
+            occurrenceId: 'occ-1',
+            learnerId: 'learner-2',
+            status: AttendanceStatus.absent,
+            recordedAt: DateTime.now(),
+            recordedBy: 'educator-1',
+          ),
+        ],
+      );
+
+      expect(result, AttendanceBatchSaveResult.queued);
+      verify(() =>
+              syncCoordinator.queueOperation(OpType.attendanceRecord, any()))
+          .called(2);
+      expect((await firestore.collection('attendanceRecords').get()).docs,
+          isEmpty);
     });
 
     test('sync coordinator replays queued message and proof draft ops',

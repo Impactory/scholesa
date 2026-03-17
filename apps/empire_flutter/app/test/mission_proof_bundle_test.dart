@@ -10,10 +10,14 @@ import 'package:provider/provider.dart';
 import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/modules/missions/mission_service.dart';
 import 'package:scholesa_app/modules/missions/missions_page.dart';
+import 'package:scholesa_app/offline/offline_queue.dart';
+import 'package:scholesa_app/offline/sync_coordinator.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
 import 'package:scholesa_app/ui/theme/scholesa_theme.dart';
 
 class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
+
+class _MockSyncCoordinator extends Mock implements SyncCoordinator {}
 
 AppState _buildLearnerState() {
   final AppState appState = AppState();
@@ -91,7 +95,13 @@ Future<void> _seedMission(FakeFirebaseFirestore firestore) async {
 }
 
 void main() {
-  testWidgets('learner mission sheet persists proof bundle and attaches it on submission',
+  setUpAll(() {
+    registerFallbackValue(OpType.attemptSaveDraft);
+    registerFallbackValue(<String, dynamic>{});
+  });
+
+  testWidgets(
+      'learner mission sheet persists proof bundle and attaches it on submission',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     await _seedMission(firestore);
@@ -125,13 +135,19 @@ void main() {
     expect(find.text('Proof of Learning'), findsOneWidget);
 
     final Finder textFields = find.byType(TextField);
-    await tester.enterText(textFields.at(0), 'I can explain the build loop in my own words.');
-    await tester.enterText(textFields.at(1), 'I said the steps out loud and corrected one gap.');
-    await tester.enterText(textFields.at(2), 'I would rebuild the sensor flow, test inputs, then refactor outputs.');
-    await tester.enterText(textFields.at(3), 'Checkpoint after fixing the motor timing.');
-    await tester.enterText(textFields.at(4), 'Attached a note about the final timing tweak.');
+    await tester.enterText(
+        textFields.at(0), 'I can explain the build loop in my own words.');
+    await tester.enterText(
+        textFields.at(1), 'I said the steps out loud and corrected one gap.');
+    await tester.enterText(textFields.at(2),
+        'I would rebuild the sensor flow, test inputs, then refactor outputs.');
+    await tester.enterText(
+        textFields.at(3), 'Checkpoint after fixing the motor timing.');
+    await tester.enterText(
+        textFields.at(4), 'Attached a note about the final timing tweak.');
 
-    await tester.ensureVisible(find.widgetWithText(OutlinedButton, 'Save Checkpoint'));
+    await tester
+        .ensureVisible(find.widgetWithText(OutlinedButton, 'Save Checkpoint'));
     await tester.tap(find.widgetWithText(OutlinedButton, 'Save Checkpoint'));
     await tester.pumpAndSettle();
 
@@ -144,18 +160,21 @@ void main() {
     await tester.tap(find.widgetWithText(ElevatedButton, 'Submit for Review'));
     await tester.pumpAndSettle();
 
-    final DocumentSnapshot<Map<String, dynamic>> proofBundleDoc = await firestore
-        .collection('proofOfLearningBundles')
-        .doc('learner-1_mission-1')
-        .get();
+    final DocumentSnapshot<Map<String, dynamic>> proofBundleDoc =
+        await firestore
+            .collection('proofOfLearningBundles')
+            .doc('learner-1_mission-1')
+            .get();
     expect(proofBundleDoc.exists, isTrue);
     expect(proofBundleDoc.data()?['explainItBack'], contains('build loop'));
-    expect((proofBundleDoc.data()?['versionHistory'] as List<dynamic>).length, 1);
+    expect(
+        (proofBundleDoc.data()?['versionHistory'] as List<dynamic>).length, 1);
 
     final QuerySnapshot<Map<String, dynamic>> submissions =
         await firestore.collection('missionSubmissions').get();
     expect(submissions.docs, hasLength(1));
-    expect(submissions.docs.first.data()['proofBundleId'], 'learner-1_mission-1');
+    expect(
+        submissions.docs.first.data()['proofBundleId'], 'learner-1_mission-1');
     expect(
       submissions.docs.first.data()['proofBundleSummary']['checkpointCount'],
       1,
@@ -164,5 +183,67 @@ void main() {
       submissions.docs.first.data()['proofBundleSummary']['isReady'],
       isTrue,
     );
+  });
+
+  testWidgets(
+      'learner mission sheet reports queued proof bundle drafts when offline',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedMission(firestore);
+
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final _MockSyncCoordinator syncCoordinator = _MockSyncCoordinator();
+    when(() => syncCoordinator.isOnline).thenReturn(false);
+    when(() => syncCoordinator.queueOperation(any(), any())).thenAnswer(
+      (Invocation invocation) async => QueuedOp(
+        type: invocation.positionalArguments[0] as OpType,
+        payload: Map<String, dynamic>.from(
+          invocation.positionalArguments[1] as Map<String, dynamic>,
+        ),
+      ),
+    );
+
+    final MissionService missionService = MissionService(
+      firestoreService: firestoreService,
+      learnerId: 'learner-1',
+      syncCoordinator: syncCoordinator,
+    );
+
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
+    await tester.pumpWidget(
+      _buildHarness(
+        appState: _buildLearnerState(),
+        firestoreService: firestoreService,
+        missionService: missionService,
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('In Progress'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Proof bundle mission').first);
+    await tester.pumpAndSettle();
+
+    final Finder textFields = find.byType(TextField);
+    await tester.enterText(textFields.at(0), 'Explain the offline loop.');
+    await tester.enterText(
+        textFields.at(1), 'Talked through the concept aloud.');
+    await tester.enterText(textFields.at(2), 'Rebuild using a second example.');
+
+    await tester.ensureVisible(
+      find.widgetWithText(ElevatedButton, 'Save Proof Bundle'),
+    );
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Save Proof Bundle'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Proof bundle queued to sync'), findsOneWidget);
+    expect(find.text('Proof bundle saved'), findsNothing);
+    verify(() => syncCoordinator.queueOperation(OpType.attemptSaveDraft, any()))
+        .called(1);
   });
 }

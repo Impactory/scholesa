@@ -771,7 +771,8 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
       TextEditingController();
   final TextEditingController _checkpointArtifactController =
       TextEditingController();
-  List<MissionProofCheckpoint> _versionHistory = const <MissionProofCheckpoint>[];
+  List<MissionProofCheckpoint> _versionHistory =
+      const <MissionProofCheckpoint>[];
 
   bool get _keyboardOnlyEnabled =>
       _learnerProfile?.keyboardOnlyEnabled ?? false;
@@ -812,7 +813,10 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
     final AppState appState = context.read<AppState>();
     final String? learnerId = appState.userId;
     final String? siteId = appState.activeSiteId;
-    if (learnerId == null || learnerId.isEmpty || siteId == null || siteId.isEmpty) {
+    if (learnerId == null ||
+        learnerId.isEmpty ||
+        siteId == null ||
+        siteId.isEmpty) {
       return;
     }
 
@@ -857,7 +861,8 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
   Future<void> _saveProofBundle() async {
     setState(() => _isSavingProofBundle = true);
     final MissionService missionService = context.read<MissionService>();
-    final MissionProofBundle? bundle = await missionService.saveProofBundleDraft(
+    final MissionProofBundle? bundle =
+        await missionService.saveProofBundleDraft(
       missionId: widget.mission.id,
       explainItBack: _explainItBackController.text,
       oralCheckResponse: _oralCheckController.text,
@@ -870,10 +875,19 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
       _isSavingProofBundle = false;
       _versionHistory = bundle?.versionHistory ?? _versionHistory;
     });
+    final String message = bundle == null
+        ? _tMissions(context, 'Unable to save proof bundle right now')
+        : _tMissions(
+            context,
+            missionService.isOnline
+                ? 'Proof bundle saved'
+                : 'Proof bundle queued to sync',
+          );
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(_tMissions(context, 'Proof bundle saved')),
-        backgroundColor: ScholesaColors.success,
+        content: Text(message),
+        backgroundColor:
+            bundle == null ? ScholesaColors.error : ScholesaColors.success,
       ),
     );
   }
@@ -883,14 +897,16 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
     if (summary.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_tMissions(context, 'Add a version checkpoint summary first')),
+          content: Text(
+              _tMissions(context, 'Add a version checkpoint summary first')),
         ),
       );
       return;
     }
     setState(() => _isSavingCheckpoint = true);
     final MissionService missionService = context.read<MissionService>();
-    final MissionProofBundle? bundle = await missionService.addVersionCheckpoint(
+    final MissionProofBundle? bundle =
+        await missionService.addVersionCheckpoint(
       missionId: widget.mission.id,
       summary: summary,
       artifactNote: _checkpointArtifactController.text,
@@ -995,7 +1011,8 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
                 contentPadding: EdgeInsets.zero,
                 leading: Icon(Icons.history_rounded, color: _pillarColor),
                 title: Text(checkpoint.summary),
-                subtitle: Text(_formatCheckpointTimestamp(checkpoint.createdAt)),
+                subtitle:
+                    Text(_formatCheckpointTimestamp(checkpoint.createdAt)),
                 trailing: checkpoint.artifactNote?.isNotEmpty == true
                     ? const Icon(Icons.attach_file_rounded, size: 18)
                     : null,
@@ -1084,7 +1101,8 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
             service.getMissionById(widget.mission.id) ?? widget.mission;
 
         final AppState appState = context.read<AppState>();
-        final FirestoreService firestoreService = context.read<FirestoreService>();
+        final FirestoreService firestoreService =
+            context.read<FirestoreService>();
         final String learnerId = (appState.userId ?? '').trim();
         final String siteId = (appState.activeSiteId ?? '').trim();
 
@@ -1420,54 +1438,57 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
                             onPressed: !_proofBundleReady
                                 ? null
                                 : () async {
-                              await _saveProofBundle();
-                              TelemetryService.instance.logEvent(
-                                event: 'cta.clicked',
-                                metadata: <String, dynamic>{
-                                  'cta': 'missions_submit_for_review',
-                                  'mission_id': mission.id,
-                                },
-                              );
-                              final MissionService missionService =
-                                  context.read<MissionService>();
-                              final String? submissionId = await missionService
-                                  .submitMission(mission.id);
+                                    await _saveProofBundle();
+                                    TelemetryService.instance.logEvent(
+                                      event: 'cta.clicked',
+                                      metadata: <String, dynamic>{
+                                        'cta': 'missions_submit_for_review',
+                                        'mission_id': mission.id,
+                                      },
+                                    );
+                                    final MissionService missionService =
+                                        context.read<MissionService>();
+                                    final String? submissionId =
+                                        await missionService
+                                            .submitMission(mission.id);
 
-                              if (submissionId == null) {
-                                if (!context.mounted) return;
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(_tMissions(context,
-                                        'Unable to submit mission right now')),
-                                    backgroundColor: ScholesaColors.error,
-                                  ),
-                                );
-                                return;
-                              }
+                                    if (submissionId == null) {
+                                      if (!context.mounted) return;
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                          content: Text(_tMissions(context,
+                                              'Unable to submit mission right now')),
+                                          backgroundColor: ScholesaColors.error,
+                                        ),
+                                      );
+                                      return;
+                                    }
 
-                              TelemetryService.instance.logEvent(
-                                event: 'mission.attempt.submitted',
-                                metadata: <String, dynamic>{
-                                  'mission_id': mission.id,
-                                  'submission_id': submissionId,
-                                  'mission_status': mission.status.name,
-                                  'progress': mission.progress,
-                                },
-                              );
-                              if (!context.mounted) return;
-                              Navigator.pop(context);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                      '${_tMissions(context, 'Submitted')}: ${mission.title}'),
-                                  backgroundColor: ScholesaColors.success,
-                                  behavior: SnackBarBehavior.floating,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                              );
-                            },
+                                    TelemetryService.instance.logEvent(
+                                      event: 'mission.attempt.submitted',
+                                      metadata: <String, dynamic>{
+                                        'mission_id': mission.id,
+                                        'submission_id': submissionId,
+                                        'mission_status': mission.status.name,
+                                        'progress': mission.progress,
+                                      },
+                                    );
+                                    if (!context.mounted) return;
+                                    Navigator.pop(context);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                            '${_tMissions(context, 'Submitted')}: ${mission.title}'),
+                                        backgroundColor: ScholesaColors.success,
+                                        behavior: SnackBarBehavior.floating,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                        ),
+                                      ),
+                                    );
+                                  },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: ScholesaColors.success,
                               foregroundColor: Colors.white,
@@ -1516,8 +1537,10 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
 
   Widget _buildStudyFlowSection(BuildContext context, Mission mission) {
     final MissionService missionService = context.read<MissionService>();
-    final List<String> recommendedMissionTitles = mission.recommendedInterleavingMissionIds
-        .map((String missionId) => missionService.getMissionById(missionId)?.title)
+    final List<String> recommendedMissionTitles = mission
+        .recommendedInterleavingMissionIds
+        .map((String missionId) =>
+            missionService.getMissionById(missionId)?.title)
         .whereType<String>()
         .toList();
 
@@ -1594,14 +1617,15 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
                                                   mission.id,
                                                   rating: rating,
                                                 ),
-                                            successMessage:
-                                                _tMissions(context, 'Review saved'),
+                                            successMessage: _tMissions(
+                                                context, 'Review saved'),
                                           ),
                                   style: FilledButton.styleFrom(
                                     backgroundColor: _pillarColor,
                                     foregroundColor: Colors.white,
                                   ),
-                                  child: Text(_tMissions(context, rating.label)),
+                                  child:
+                                      Text(_tMissions(context, rating.label)),
                                 ),
                               ),
                             ),
@@ -1659,8 +1683,8 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
                                     action: () => context
                                         .read<MissionService>()
                                         .rescheduleFsrsQueue(mission.id),
-                                    successMessage:
-                                        _tMissions(context, 'Review rescheduled'),
+                                    successMessage: _tMissions(
+                                        context, 'Review rescheduled'),
                                   ),
                         ),
                         _buildKeyboardActionButton(
@@ -1702,8 +1726,8 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
                                     action: () => context
                                         .read<MissionService>()
                                         .rescheduleFsrsQueue(mission.id),
-                                    successMessage:
-                                        _tMissions(context, 'Review rescheduled'),
+                                    successMessage: _tMissions(
+                                        context, 'Review rescheduled'),
                                   ),
                           icon: const Icon(Icons.event_repeat_rounded),
                           label: Text(_tMissions(context, 'Review in 3 days')),
@@ -1719,7 +1743,8 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
                                         _tMissions(context, 'Review suspended'),
                                   ),
                           icon: const Icon(Icons.pause_circle_outline_rounded),
-                          label: Text(_tMissions(context, 'Suspend review queue')),
+                          label:
+                              Text(_tMissions(context, 'Suspend review queue')),
                         ),
                       ],
                     ),
@@ -1785,14 +1810,15 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
                                             ),
                                           ),
                                   style: OutlinedButton.styleFrom(
-                                    backgroundColor:
-                                        mission.interleavingMode == mode
-                                            ? _pillarColor.withValues(alpha: 0.12)
-                                            : null,
+                                    backgroundColor: mission.interleavingMode ==
+                                            mode
+                                        ? _pillarColor.withValues(alpha: 0.12)
+                                        : null,
                                   ),
                                   child: Align(
                                     alignment: Alignment.centerLeft,
-                                    child: Text(_tMissions(context, mode.label)),
+                                    child:
+                                        Text(_tMissions(context, mode.label)),
                                   ),
                                 ),
                               ),
@@ -1885,7 +1911,8 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
   }
 
   Widget _buildKeyboardOnlyBanner(BuildContext context) {
-    final Color textColor = _highContrastEnabled ? Colors.white : Colors.black87;
+    final Color textColor =
+        _highContrastEnabled ? Colors.white : Colors.black87;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),

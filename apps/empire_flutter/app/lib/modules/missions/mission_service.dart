@@ -75,7 +75,8 @@ class MissionProofBundle {
         versionHistory.isNotEmpty;
   }
 
-  factory MissionProofBundle.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory MissionProofBundle.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
     final Map<String, dynamic> data = doc.data() ?? <String, dynamic>{};
     final List<dynamic> rawHistory =
         data['versionHistory'] as List<dynamic>? ?? <dynamic>[];
@@ -114,6 +115,7 @@ class MissionService extends ChangeNotifier {
   final SyncCoordinator? _syncCoordinator;
   final String learnerId;
   FirebaseFirestore get _firestore => _firestoreService.firestore;
+  bool get isOnline => _syncCoordinator?.isOnline ?? true;
 
   List<Mission> _missions = <Mission>[];
   final Map<String, _MissionConfusabilityProfile> _missionProfiles =
@@ -322,9 +324,12 @@ class MissionService extends ChangeNotifier {
     String? miniRebuildPlan,
   }) async {
     final MissionProofBundle? existing = await loadProofBundle(missionId);
-    final String? siteId = existing?.siteId ?? await _resolveSiteIdForMission(missionId);
-    final DocumentReference<Map<String, dynamic>> ref = _proofBundleRef(missionId);
-    final String explain = explainItBack?.trim() ?? existing?.explainItBack ?? '';
+    final String? siteId =
+        existing?.siteId ?? await _resolveSiteIdForMission(missionId);
+    final DocumentReference<Map<String, dynamic>> ref =
+        _proofBundleRef(missionId);
+    final String explain =
+        explainItBack?.trim() ?? existing?.explainItBack ?? '';
     final String oral =
         oralCheckResponse?.trim() ?? existing?.oralCheckResponse ?? '';
     final String rebuild =
@@ -377,7 +382,8 @@ class MissionService extends ChangeNotifier {
       explainItBack: explain,
       oralCheckResponse: oral,
       miniRebuildPlan: rebuild,
-      versionHistory: existing?.versionHistory ?? const <MissionProofCheckpoint>[],
+      versionHistory:
+          existing?.versionHistory ?? const <MissionProofCheckpoint>[],
       createdAt: existing?.createdAt ?? DateTime.now(),
       updatedAt: DateTime.now(),
     );
@@ -394,16 +400,17 @@ class MissionService extends ChangeNotifier {
     }
 
     final MissionProofBundle? existing = await loadProofBundle(missionId);
-    final String? siteId = existing?.siteId ?? await _resolveSiteIdForMission(missionId);
+    final String? siteId =
+        existing?.siteId ?? await _resolveSiteIdForMission(missionId);
     final MissionProofCheckpoint checkpoint = MissionProofCheckpoint(
       id: '${DateTime.now().millisecondsSinceEpoch}',
       summary: trimmedSummary,
-      artifactNote: artifactNote?.trim().isNotEmpty == true
-          ? artifactNote!.trim()
-          : null,
+      artifactNote:
+          artifactNote?.trim().isNotEmpty == true ? artifactNote!.trim() : null,
       createdAt: DateTime.now(),
     );
-    final List<MissionProofCheckpoint> versionHistory = <MissionProofCheckpoint>[
+    final List<MissionProofCheckpoint> versionHistory =
+        <MissionProofCheckpoint>[
       ...?existing?.versionHistory,
       checkpoint,
     ];
@@ -660,7 +667,8 @@ class MissionService extends ChangeNotifier {
         in snapshotDocs.docs) {
       final Map<String, dynamic> snapshotData = snapshotDoc.data();
       skillIds.addAll(
-        List<String>.from(snapshotData['skillIds'] as List? ?? const <String>[]),
+        List<String>.from(
+            snapshotData['skillIds'] as List? ?? const <String>[]),
       );
       pillarCodes.addAll(
         List<String>.from(
@@ -712,7 +720,8 @@ class MissionService extends ChangeNotifier {
   ) {
     final List<Mission> candidates = _missions
         .where((Mission mission) =>
-            mission.id != source.id && mission.status != MissionStatus.completed)
+            mission.id != source.id &&
+            mission.status != MissionStatus.completed)
         .toList();
 
     candidates.sort(
@@ -736,7 +745,8 @@ class MissionService extends ChangeNotifier {
         .length;
 
     return _InterleavingRecommendation(
-      missionIds: candidates.take(3).map((Mission mission) => mission.id).toList(),
+      missionIds:
+          candidates.take(3).map((Mission mission) => mission.id).toList(),
       confusabilityBand: confusableCount >= 2
           ? 'high'
           : confusableCount == 1
@@ -754,11 +764,13 @@ class MissionService extends ChangeNotifier {
     final bool samePillar = candidate.pillar == source.pillar;
     final int difficultyDistance =
         (candidate.difficulty.index - source.difficulty.index).abs();
-    final int progressDistance = ((candidate.progress - source.progress).abs() * 10)
-        .round();
+    final int progressDistance =
+        ((candidate.progress - source.progress).abs() * 10).round();
     switch (mode) {
       case InterleavingMode.focusOnly:
-        return samePillar ? difficultyDistance + progressDistance : 20 + overlap;
+        return samePillar
+            ? difficultyDistance + progressDistance
+            : 20 + overlap;
       case InterleavingMode.mixed:
         return (samePillar ? 4 : 0) +
             (overlap == 0 ? 0 : 8) +
@@ -789,8 +801,9 @@ class MissionService extends ChangeNotifier {
     final int misconceptionOverlap = sourceProfile.misconceptionTags
         .intersection(candidateProfile.misconceptionTags)
         .length;
-    final int pillarOverlap =
-        sourceProfile.pillarCodes.intersection(candidateProfile.pillarCodes).length;
+    final int pillarOverlap = sourceProfile.pillarCodes
+        .intersection(candidateProfile.pillarCodes)
+        .length;
     return (misconceptionOverlap * 3) + (skillOverlap * 2) + pillarOverlap;
   }
 
@@ -914,7 +927,8 @@ class MissionService extends ChangeNotifier {
       if (index != -1) {
         final Mission mission = _missions[index];
         final String? siteId = await _resolveSiteIdForMission(missionId);
-        final MissionProofBundle? proofBundle = await loadProofBundle(missionId);
+        final MissionProofBundle? proofBundle =
+            await loadProofBundle(missionId);
         final DocumentReference<Map<String, dynamic>> submissionRef =
             _firestore.collection('missionSubmissions').doc();
 
@@ -1456,13 +1470,13 @@ class MissionService extends ChangeNotifier {
               .where('reviewedAt',
                   isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
               .get();
-        _reviewedToday = reviewedSnapshot.docs.where((doc) {
+      _reviewedToday = reviewedSnapshot.docs.where((doc) {
         final String reviewedStatus =
-          doc.data()['status'] as String? ?? 'pending';
+            doc.data()['status'] as String? ?? 'pending';
         return reviewedStatus == 'reviewed' ||
-          reviewedStatus == 'approved' ||
-          reviewedStatus == 'revision';
-        }).length;
+            reviewedStatus == 'approved' ||
+            reviewedStatus == 'revision';
+      }).length;
 
       debugPrint('Loaded ${_pendingReviews.length} pending reviews');
     } catch (e) {
@@ -1533,13 +1547,15 @@ class MissionService extends ChangeNotifier {
         'reviewedBy': reviewerId,
         'reviewedAt': FieldValue.serverTimestamp(),
         if (trimmedAiDraft != null) 'aiFeedbackDraft': trimmedAiDraft,
-        if (trimmedAiDraft != null) 'aiFeedbackEdited': trimmedAiDraft != trimmedFeedback,
+        if (trimmedAiDraft != null)
+          'aiFeedbackEdited': trimmedAiDraft != trimmedFeedback,
         if (resolvedRubricId.isNotEmpty) 'rubricId': resolvedRubricId,
         if (resolvedRubricTitle != null && resolvedRubricTitle.isNotEmpty)
           'rubricTitle': resolvedRubricTitle,
         if (normalizedRubricScores.isNotEmpty)
           'rubricScores': normalizedRubricScores,
-        if (normalizedRubricScores.isNotEmpty) 'rubricTotalScore': rubricTotalScore,
+        if (normalizedRubricScores.isNotEmpty)
+          'rubricTotalScore': rubricTotalScore,
         if (normalizedRubricScores.isNotEmpty) 'rubricMaxScore': rubricMaxScore,
       });
 
@@ -1620,17 +1636,20 @@ class MissionService extends ChangeNotifier {
       if (resolvedRubricId.isNotEmpty && normalizedRubricScores.isNotEmpty) {
         final DocumentReference<Map<String, dynamic>> rubricApplicationRef =
             _firestore.collection('rubricApplications').doc(submissionId);
-        batch.set(rubricApplicationRef, <String, dynamic>{
-          'siteId': reviewSiteId,
-          'missionAttemptId': submissionId,
-          'submissionId': submissionId,
-          'educatorId': reviewerId,
-          'rubricId': resolvedRubricId,
-          'scores': normalizedRubricScores,
-          'overallNote': trimmedFeedback,
-          'createdAt': FieldValue.serverTimestamp(),
-          'updatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
+        batch.set(
+            rubricApplicationRef,
+            <String, dynamic>{
+              'siteId': reviewSiteId,
+              'missionAttemptId': submissionId,
+              'submissionId': submissionId,
+              'educatorId': reviewerId,
+              'rubricId': resolvedRubricId,
+              'scores': normalizedRubricScores,
+              'overallNote': trimmedFeedback,
+              'createdAt': FieldValue.serverTimestamp(),
+              'updatedAt': FieldValue.serverTimestamp(),
+            },
+            SetOptions(merge: true));
       }
 
       await batch.commit();
@@ -1770,5 +1789,6 @@ class MissionSubmission {
     }
   }
 
-  bool get hasRubric => rubricId?.isNotEmpty == true || rubricCriteria.isNotEmpty;
+  bool get hasRubric =>
+      rubricId?.isNotEmpty == true || rubricCriteria.isNotEmpty;
 }

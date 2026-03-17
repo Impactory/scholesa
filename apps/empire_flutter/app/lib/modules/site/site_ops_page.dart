@@ -1139,7 +1139,7 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
         <String, dynamic>{
           'siteId': siteId,
           'action': isDayOpen ? 'Day opened' : 'Day closed',
-          'createdBy': FirebaseAuth.instance.currentUser?.uid,
+          'createdBy': appState.userId,
           'createdAt': FieldValue.serverTimestamp(),
         },
       );

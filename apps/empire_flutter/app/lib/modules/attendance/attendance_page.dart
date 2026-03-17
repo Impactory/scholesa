@@ -163,8 +163,8 @@ class _OccurrenceSelector extends StatelessWidget {
               subtitle: Text(
                   '$timeStr$endTimeStr${occ.roomName != null ? ' • ${occ.roomName}' : ''}'),
               trailing: Chip(
-                label:
-                  Text('${occ.learnerCount ?? occ.roster.length} ${_tAttendance(context, 'students')}'),
+                label: Text(
+                    '${occ.learnerCount ?? occ.roster.length} ${_tAttendance(context, 'students')}'),
               ),
               onTap: () {
                 TelemetryService.instance.logEvent(
@@ -246,7 +246,8 @@ class _AttendanceRosterViewState extends State<_AttendanceRosterView> {
     if (service == null) {
       return Scaffold(
         appBar: AppBar(title: Text(_tAttendance(context, 'Class Roster'))),
-        body: Center(child: Text(_tAttendance(context, 'Service not available'))),
+        body:
+            Center(child: Text(_tAttendance(context, 'Service not available'))),
       );
     }
 
@@ -347,8 +348,8 @@ class _AttendanceRosterViewState extends State<_AttendanceRosterView> {
                 ? EmptyState(
                     icon: Icons.people_outline,
                     title: _tAttendance(context, 'No learners enrolled'),
-                    message: _tAttendance(
-                        context, 'There are no learners enrolled in this class.'),
+                    message: _tAttendance(context,
+                        'There are no learners enrolled in this class.'),
                   )
                 : ListView.builder(
                     padding: const EdgeInsets.all(8),
@@ -383,7 +384,7 @@ class _AttendanceRosterViewState extends State<_AttendanceRosterView> {
                 child: ElevatedButton.icon(
                   icon: const Icon(Icons.save),
                   label: Text(
-                    '${_tAttendance(context, 'Save Attendance')} (${_attendance.length}/${roster.length})'),
+                      '${_tAttendance(context, 'Save Attendance')} (${_attendance.length}/${roster.length})'),
                   onPressed: _attendance.length == roster.length
                       ? () => _saveAttendance(service, appState)
                       : null,
@@ -435,28 +436,60 @@ class _AttendanceRosterViewState extends State<_AttendanceRosterView> {
       );
     }).toList();
 
-    await service.batchRecordAttendance(records);
+    final AttendanceBatchSaveResult result =
+        await service.batchRecordAttendance(records);
     final Map<String, int> statusCounts = <String, int>{};
     for (final AttendanceStatus status in _attendance.values) {
       statusCounts.update(status.name, (int count) => count + 1,
           ifAbsent: () => 1);
     }
-    TelemetryService.instance.logEvent(
-      event: 'attendance.recorded',
-      metadata: <String, dynamic>{
-        'occurrence_id': widget.occurrenceId,
-        'records_count': records.length,
-        'status_counts': statusCounts,
-      },
-    );
+    if (result == AttendanceBatchSaveResult.saved ||
+        result == AttendanceBatchSaveResult.queued) {
+      TelemetryService.instance.logEvent(
+        event: result == AttendanceBatchSaveResult.saved
+            ? 'attendance.recorded'
+            : 'attendance.record_queued',
+        metadata: <String, dynamic>{
+          'occurrence_id': widget.occurrenceId,
+          'records_count': records.length,
+          'status_counts': statusCounts,
+        },
+      );
+    }
 
-    if (mounted) {
+    if (!mounted) {
+      return;
+    }
+
+    if (result == AttendanceBatchSaveResult.failed) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_tAttendance(context, 'Attendance saved successfully')),
-          backgroundColor: Colors.green,
+          content: Text(
+              _tAttendance(context, 'Unable to save attendance right now')),
+          backgroundColor: Colors.red,
         ),
       );
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          _tAttendance(
+            context,
+            result == AttendanceBatchSaveResult.saved
+                ? 'Attendance saved successfully'
+                : 'Attendance queued to sync',
+          ),
+        ),
+        backgroundColor: result == AttendanceBatchSaveResult.saved
+            ? Colors.green
+            : Colors.orange,
+      ),
+    );
+
+    if (result == AttendanceBatchSaveResult.saved ||
+        result == AttendanceBatchSaveResult.queued) {
       Navigator.pop(context);
     }
   }

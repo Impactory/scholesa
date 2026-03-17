@@ -5,6 +5,12 @@ import '../../offline/offline_queue.dart';
 import '../../offline/sync_coordinator.dart';
 import 'attendance_models.dart';
 
+enum AttendanceBatchSaveResult {
+  saved,
+  queued,
+  failed,
+}
+
 /// Service for attendance operations
 class AttendanceService extends ChangeNotifier {
   AttendanceService({
@@ -261,24 +267,44 @@ class AttendanceService extends ChangeNotifier {
   }
 
   /// Batch record attendance for multiple learners
-  Future<void> batchRecordAttendance(List<AttendanceRecord> records) async {
+  Future<AttendanceBatchSaveResult> batchRecordAttendance(
+      List<AttendanceRecord> records) async {
     try {
-      final WriteBatch batch = _firestore.batch();
+      final AttendanceBatchSaveResult result;
+      if (_syncCoordinator.isOnline) {
+        final WriteBatch batch = _firestore.batch();
 
-      for (final AttendanceRecord record in records) {
-        final DocumentReference<Map<String, dynamic>> docRef =
-            _firestore.collection('attendanceRecords').doc();
-        batch.set(docRef, <String, dynamic>{
-          'occurrenceId': record.occurrenceId,
-          'learnerId': record.learnerId,
-          'status': record.status.name,
-          'recordedAt': FieldValue.serverTimestamp(),
-          'recordedBy': record.recordedBy,
-          'notes': record.notes,
-        });
+        for (final AttendanceRecord record in records) {
+          final DocumentReference<Map<String, dynamic>> docRef =
+              _firestore.collection('attendanceRecords').doc();
+          batch.set(docRef, <String, dynamic>{
+            'occurrenceId': record.occurrenceId,
+            'learnerId': record.learnerId,
+            'status': record.status.name,
+            'recordedAt': FieldValue.serverTimestamp(),
+            'recordedBy': record.recordedBy,
+            'notes': record.notes,
+          });
+        }
+
+        await batch.commit();
+        result = AttendanceBatchSaveResult.saved;
+      } else {
+        for (final AttendanceRecord record in records) {
+          await _syncCoordinator.queueOperation(
+            OpType.attendanceRecord,
+            <String, dynamic>{
+              'occurrenceId': record.occurrenceId,
+              'learnerId': record.learnerId,
+              'status': record.status.name,
+              'recordedAtClient': record.recordedAt.millisecondsSinceEpoch,
+              'recordedBy': record.recordedBy,
+              'notes': record.notes,
+            },
+          );
+        }
+        result = AttendanceBatchSaveResult.queued;
       }
-
-      await batch.commit();
 
       // Update local state
       if (_currentOccurrence != null) {
@@ -295,7 +321,9 @@ class AttendanceService extends ChangeNotifier {
               id: learner.id,
               displayName: learner.displayName,
               photoUrl: learner.photoUrl,
-              currentAttendance: record,
+              currentAttendance: record.copyWith(
+                isOffline: result == AttendanceBatchSaveResult.queued,
+              ),
             );
           }
           return learner;
@@ -305,10 +333,13 @@ class AttendanceService extends ChangeNotifier {
             _currentOccurrence!.copyWith(roster: updatedRoster);
         notifyListeners();
       }
+      _error = null;
+      return result;
     } catch (e) {
       debugPrint('Error batch recording attendance: $e');
       _error = 'Failed to save attendance: $e';
       notifyListeners();
+      return AttendanceBatchSaveResult.failed;
     }
   }
 
