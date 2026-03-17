@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../i18n/workflow_surface_i18n.dart';
 import '../../auth/auth_service.dart';
 import '../../auth/app_state.dart';
@@ -322,54 +323,17 @@ class ProfilePage extends StatelessWidget {
           _SettingsTile(
             icon: Icons.help_outline,
             title: _tProfile(context, 'Help & Support'),
-            onTap: () {
-              TelemetryService.instance.logEvent(
-                event: 'cta.clicked',
-                metadata: const <String, dynamic>{
-                  'cta': 'profile_open_help_support'
-                },
-              );
-              _showFeatureDialog(
-                context,
-                title: _tProfile(context, 'Help & Support'),
-                message:
-                    _tProfile(context, 'Open help docs and contact support.'),
-              );
-            },
+            onTap: () => _openHelpSupport(context),
           ),
           _SettingsTile(
             icon: Icons.description_outlined,
             title: _tProfile(context, 'Terms of Service'),
-            onTap: () {
-              TelemetryService.instance.logEvent(
-                event: 'cta.clicked',
-                metadata: const <String, dynamic>{'cta': 'profile_open_terms'},
-              );
-              _showFeatureDialog(
-                context,
-                title: _tProfile(context, 'Terms of Service'),
-                message: _tProfile(
-                    context, 'Review terms and platform usage rules.'),
-              );
-            },
+            onTap: () => _openTermsOfService(context),
           ),
           _SettingsTile(
             icon: Icons.privacy_tip_outlined,
             title: _tProfile(context, 'Privacy Policy'),
-            onTap: () {
-              TelemetryService.instance.logEvent(
-                event: 'cta.clicked',
-                metadata: const <String, dynamic>{
-                  'cta': 'profile_open_privacy_policy'
-                },
-              );
-              _showFeatureDialog(
-                context,
-                title: _tProfile(context, 'Privacy Policy'),
-                message: _tProfile(
-                    context, 'Review data handling and privacy commitments.'),
-              );
-            },
+            onTap: () => _openPrivacyPolicy(context),
           ),
           _SettingsTile(
             icon: Icons.info_outline,
@@ -556,6 +520,104 @@ class ProfilePage extends StatelessWidget {
               }
             },
             child: Text(_tProfile(context, 'Save')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _openHelpSupport(BuildContext context) async {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{'cta': 'profile_open_help_support'},
+    );
+
+    final AppState appState = context.read<AppState>();
+    final String siteId = appState.activeSiteId?.trim().isNotEmpty == true
+        ? appState.activeSiteId!.trim()
+        : 'Not set';
+    final String userId = appState.userId?.trim().isNotEmpty == true
+        ? appState.userId!.trim()
+        : 'Not set';
+    final String email = appState.email?.trim().isNotEmpty == true
+        ? appState.email!.trim()
+        : 'Not set';
+    final String displayName = appState.displayName?.trim().isNotEmpty == true
+        ? appState.displayName!.trim()
+        : 'Not set';
+
+    final Uri emailUri = Uri(
+      scheme: 'mailto',
+      path: 'support@scholesa.com',
+      queryParameters: <String, String>{
+        'subject': 'Profile help request - $siteId',
+        'body':
+            'Hello Scholesa support.\n\nI need help with a profile or account issue.\n\nIssue details:\n- \n\nSite ID: $siteId\nUser ID: $userId\nName: $displayName\nEmail: $email\n',
+      },
+    );
+
+    final bool launched = await _tryLaunchExternalUri(emailUri);
+    if (!context.mounted || launched) {
+      return;
+    }
+
+    _showInfoDialog(
+      context,
+      title: _tProfile(context, 'Help Center Contact'),
+      message: _tProfile(context,
+          'Contact support at support@scholesa.com with your site ID and issue details.'),
+    );
+  }
+
+  void _openTermsOfService(BuildContext context) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{'cta': 'profile_open_terms'},
+    );
+    _showInfoDialog(
+      context,
+      title: _tProfile(context, 'Terms of Service Notice'),
+      message: _tProfile(context,
+          'Use of Scholesa requires compliance with site and platform safety standards.'),
+    );
+  }
+
+  void _openPrivacyPolicy(BuildContext context) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{'cta': 'profile_open_privacy_policy'},
+    );
+    _showInfoDialog(
+      context,
+      title: _tProfile(context, 'Privacy Policy Notice'),
+      message: _tProfile(context,
+          'Your data is processed according to Scholesa privacy standards and your site policies.'),
+    );
+  }
+
+  Future<bool> _tryLaunchExternalUri(Uri uri) async {
+    final bool canLaunchUri = await canLaunchUrl(uri);
+    if (!canLaunchUri) {
+      return false;
+    }
+
+    return launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  void _showInfoDialog(
+    BuildContext context, {
+    required String title,
+    required String message,
+  }) {
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(_tProfile(context, 'Close')),
           ),
         ],
       ),
