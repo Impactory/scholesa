@@ -77,6 +77,8 @@ const Map<String, String> _settingsZhCn = <String, String>{
   'Select Language': '选择语言',
   'Data export requests are not available in the app yet. Contact support with your site ID to request your data.':
       '应用内暂不支持数据导出请求。请附上你的站点 ID 联系支持团队以申请数据副本。',
+    'We could not open your email app right now. Contact support@scholesa.com with your site ID to request your data.':
+      '目前无法打开你的邮件应用。请附上你的站点 ID 联系 support@scholesa.com 申请数据副本。',
   'Help Center': '帮助中心',
   'Feedback': '反馈',
   'App Rating': '应用评分',
@@ -194,6 +196,8 @@ const Map<String, String> _settingsZhTw = <String, String>{
   'Select Language': '選擇語言',
   'Data export requests are not available in the app yet. Contact support with your site ID to request your data.':
       'App 內暫不支援資料匯出請求。請附上你的站點 ID 聯絡支援團隊以申請資料副本。',
+    'We could not open your email app right now. Contact support@scholesa.com with your site ID to request your data.':
+      '目前無法開啟你的郵件 App。請附上你的站點 ID 聯絡 support@scholesa.com 申請資料副本。',
   'Help Center': '說明中心',
   'Feedback': '回饋',
   'App Rating': '應用評分',
@@ -1169,18 +1173,49 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  void _requestDataDownload() {
+  Future<void> _requestDataDownload() async {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
       metadata: const <String, dynamic>{'cta': 'settings_download_my_data'},
     );
-    _showInfoDialog(
-      title: _tSettings(context, 'Download My Data'),
-      body: _tSettings(
-        context,
-        'Data export requests are not available in the app yet. Contact support with your site ID to request your data.',
-      ),
+
+    final AppState appState = context.read<AppState>();
+    final User? currentUser = FirebaseAuth.instance.currentUser;
+    final String siteId = appState.activeSiteId?.trim().isNotEmpty == true
+        ? appState.activeSiteId!.trim()
+        : 'Not set';
+    final String userId = appState.userId?.trim().isNotEmpty == true
+        ? appState.userId!.trim()
+        : (currentUser?.uid ?? 'Not set');
+    final String email = appState.email?.trim().isNotEmpty == true
+        ? appState.email!.trim()
+        : (currentUser?.email ?? 'Not set');
+    final String displayName = appState.displayName?.trim().isNotEmpty == true
+        ? appState.displayName!.trim()
+        : (currentUser?.displayName ?? 'Not set');
+
+    final Uri emailUri = Uri(
+      scheme: 'mailto',
+      path: 'support@scholesa.com',
+      queryParameters: <String, String>{
+        'subject': 'Data export request - $siteId',
+        'body': 'Hello Scholesa support.\n\nI would like to request a copy of my data.\n\nSite ID: $siteId\nUser ID: $userId\nName: $displayName\nEmail: $email\n\nPlease let me know if you need anything else.\n',
+      },
     );
+
+    final bool launched = await _tryLaunchExternalUri(emailUri);
+    if (!mounted) {
+      return;
+    }
+    if (!launched) {
+      _showInfoDialog(
+        title: _tSettings(context, 'Download My Data'),
+        body: _tSettings(
+          context,
+          'We could not open your email app right now. Contact support@scholesa.com with your site ID to request your data.',
+        ),
+      );
+    }
   }
 
   void _openHelpCenter() {

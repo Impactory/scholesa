@@ -91,7 +91,7 @@ Finder _tileTapTarget(String label) {
 
 void main() {
   testWidgets(
-      'settings keeps data export unavailable and launches the store rating flow',
+  'settings launches data export support email and the store rating flow',
       (WidgetTester tester) async {
     final AppState state = _buildAppState();
     final ThemeService themeService = ThemeService();
@@ -124,14 +124,19 @@ void main() {
 
       expect(find.text('Download My Data'), findsWidgets);
       expect(
+        launcherPlatform.launchedUrls,
+        contains(
+          predicate<String>(
+            (String value) => value.startsWith('mailto:support@scholesa.com?'),
+          ),
+        ),
+      );
+      expect(
         find.text(
           'Data export requests are not available in the app yet. Contact support with your site ID to request your data.',
         ),
-        findsOneWidget,
+        findsNothing,
       );
-
-      await tester.tap(find.text('Close').last);
-      await tester.pumpAndSettle();
 
       await tester.scrollUntilVisible(
         find.text('Rate the App'),

@@ -7,6 +7,10 @@ import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import Stripe from 'stripe';
 import { guardedFetch } from './security/egressGuard';
 import {
+  buildExplainBackSubmittedEvent,
+  explainBackRecordedFeedback,
+} from './aiCoachExplainBack';
+import {
   enqueueLearnerGoalReminders,
   sendNotification as sendExternalNotification,
 } from './notificationPipeline';
@@ -1432,6 +1436,87 @@ export const genAiCoach = onCall(async (request) => {
       attachments: normalizedAttachments,
       aiHelpOpenedEventId: aiHelpOpenedRef.id,
     },
+  };
+});
+
+export const submitExplainBack = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Authentication required.');
+  }
+
+  const userId = request.auth.uid;
+  const profile = await getUserProfile(userId);
+  if (!profile || normalizeRoleValue(profile.role) !== 'learner') {
+    throw new HttpsError(
+      'permission-denied',
+      'Learner role required for explain-back submissions.',
+    );
+  }
+
+  const siteId = typeof request.data?.siteId === 'string'
+    ? request.data.siteId.trim()
+    : '';
+  const interactionId = typeof request.data?.interactionId === 'string'
+    ? request.data.interactionId.trim()
+    : '';
+  const explainBack = typeof request.data?.explainBack === 'string'
+    ? request.data.explainBack.trim()
+    : '';
+
+  if (!siteId) {
+    throw new HttpsError('invalid-argument', 'siteId is required.');
+  }
+  if (!interactionId) {
+    throw new HttpsError('invalid-argument', 'interactionId is required.');
+  }
+  if (!explainBack) {
+    throw new HttpsError('invalid-argument', 'explainBack is required.');
+  }
+
+  await assertActiveSchoolConsent(siteId);
+
+  const openedRef = admin.firestore().collection('interactionEvents').doc(interactionId);
+  const openedSnap = await openedRef.get();
+  if (!openedSnap.exists) {
+    throw new HttpsError('not-found', 'AI help session not found.');
+  }
+
+  const openedData = openedSnap.data() as Record<string, unknown>;
+  if (openedData.eventType !== 'ai_help_opened') {
+    throw new HttpsError(
+      'failed-precondition',
+      'interactionId must reference an AI help session.',
+    );
+  }
+  if (openedData.actorId !== userId) {
+    throw new HttpsError('permission-denied', 'AI help session ownership mismatch.');
+  }
+  if (openedData.siteId !== siteId) {
+    throw new HttpsError('permission-denied', 'Site access denied.');
+  }
+
+  const explainBackEvent = buildExplainBackSubmittedEvent({
+    actorId: userId,
+    aiHelpOpenedEventId: interactionId,
+    explainBack,
+    openedEvent: {
+      siteId,
+      gradeBand: openedData.gradeBand,
+      sessionOccurrenceId: openedData.sessionOccurrenceId,
+      missionId: openedData.missionId,
+      checkpointId: openedData.checkpointId,
+      payload: (openedData.payload as Record<string, unknown> | undefined) ?? {},
+    },
+  });
+
+  await admin.firestore().collection('interactionEvents').add({
+    ...explainBackEvent,
+    timestamp: FieldValue.serverTimestamp(),
+  });
+
+  return {
+    approved: true,
+    feedback: explainBackRecordedFeedback,
   };
 });
 

@@ -78,13 +78,55 @@ export function AICoachScreen({
   const handleSubmitExplainBack = async () => {
     if (!explainBack.trim() || !response) return;
 
+    const interactionId = response.meta.aiHelpOpenedEventId?.trim();
+    if (!interactionId) {
+      setError('Unable to submit your explanation right now. Try again or ask your teacher to review it.');
+      return;
+    }
+
     trackInteraction('feature_discovered', {
       cta: 'ai_coach_submit_explain_back',
       mode,
       explainLength: explainBack.trim().length,
     });
 
-    setError('Explain-back submission is not available on this screen yet. Use the AI assistant popup or ask your teacher to review your explanation.');
+    try {
+      setLoading(true);
+      setError(null);
+
+      const result = await sdtMotivation.submitExplainBack(
+        learnerId,
+        siteId,
+        interactionId,
+        explainBack.trim(),
+      );
+
+      setExplainBack('');
+      setStatusMessage(
+        result.feedback?.trim() ||
+          (result.approved
+            ? 'Explain-back submitted. Your reflection is now attached to this AI help session.'
+            : 'Explain-back submitted for review.'),
+      );
+      setResponse((current) =>
+        current
+          ? {
+              ...current,
+              requiresExplainBack: false,
+            }
+          : current,
+      );
+      trackInteraction('help_accessed', {
+        cta: 'ai_coach_explain_back_recorded',
+        mode,
+        approved: result.approved,
+      });
+    } catch (err) {
+      console.error('AI Coach explain-back error:', err);
+      setError('Unable to submit your explanation right now. Try again or ask your teacher to review it.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -263,7 +305,7 @@ export function AICoachScreen({
                     disabled={!explainBack.trim() || loading}
                     className="mt-3 w-full bg-yellow-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-yellow-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
                   >
-                    Submit Explanation
+                    {loading ? 'Submitting...' : 'Submit Explanation'}
                   </button>
                 </div>
               </div>
@@ -277,6 +319,7 @@ export function AICoachScreen({
               setQuestion('');
               setExplainBack('');
               setMode(null);
+              setStatusMessage(null);
             }}
             className="text-sm text-gray-600 hover:text-gray-900"
           >
