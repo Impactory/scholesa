@@ -1,7 +1,12 @@
+import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:http/http.dart' as http;
+import 'package:url_launcher/url_launcher.dart';
 import '../../auth/app_state.dart';
 import '../../auth/auth_service.dart';
 import '../../services/firestore_service.dart';
@@ -9,6 +14,9 @@ import '../../services/theme_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/localization/inline_locale_text.dart';
 import '../../ui/theme/scholesa_theme.dart';
+
+const String _androidStorePackageId = 'com.scholesa.app';
+const String _iosStoreLookupBundleId = 'com.scholesa.app';
 
 const Map<String, String> _settingsZhCn = <String, String>{
   'Settings': '设置',
@@ -116,6 +124,8 @@ const Map<String, String> _settingsZhCn = <String, String>{
   'Please enter feedback before sending.': '发送前请输入反馈内容。',
   'In-app rating is not available yet. Please rate Scholesa in your app store when the listing is live.':
       '应用内暂不支持评分。待应用商店上架后，请在商店中评价 Scholesa。',
+  'We could not open the store rating page right now. Please try again later.':
+      '目前无法打开商店评分页面。请稍后再试。',
   'Delete Account Confirmation': '删除账户确认',
   'Enter current password to confirm account deletion.': '输入当前密码以确认删除账户。',
   'Delete': '删除',
@@ -231,6 +241,8 @@ const Map<String, String> _settingsZhTw = <String, String>{
   'Please enter feedback before sending.': '傳送前請先輸入回饋內容。',
   'In-app rating is not available yet. Please rate Scholesa in your app store when the listing is live.':
       'App 內暫不支援評分。待應用商店上架後，請在商店中評價 Scholesa。',
+  'We could not open the store rating page right now. Please try again later.':
+      '目前無法打開商店評分頁面。請稍後再試。',
   'Delete Account Confirmation': '刪除帳戶確認',
   'Enter current password to confirm account deletion.': '輸入目前密碼以確認刪除帳戶。',
   'Delete': '刪除',
@@ -1226,8 +1238,8 @@ class _SettingsPageState extends State<SettingsPage> {
                         final String feedbackRequiredMessage = _tSettings(
                             context, 'Please enter feedback before sending.');
                         final String feedbackUnavailableMessage = _tSettings(
-                          context,
-                          'Feedback submission is not available in the app yet. Contact support if you need follow-up.');
+                            context,
+                            'Feedback submission is not available in the app yet. Contact support if you need follow-up.');
                         final String feedback = feedbackController.text.trim();
                         if (feedback.isEmpty) {
                           _showErrorSnackBar(feedbackRequiredMessage);
@@ -1258,18 +1270,124 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  void _rateApp() {
+  Future<void> _rateApp() async {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
       metadata: const <String, dynamic>{'cta': 'settings_rate_app'},
     );
-    _showInfoDialog(
-      title: _tSettings(context, 'Rate the App'),
-      body: _tSettings(
-        context,
-        'In-app rating is not available yet. Please rate Scholesa in your app store when the listing is live.',
-      ),
-    );
+
+    final Uri? ratingUri = await _resolveStoreRatingUri();
+    if (!mounted) {
+      return;
+    }
+
+    if (ratingUri == null) {
+      _showInfoDialog(
+        title: _tSettings(context, 'Rate the App'),
+        body: _tSettings(
+          context,
+          'We could not open the store rating page right now. Please try again later.',
+        ),
+      );
+      return;
+    }
+
+    final bool launched = await _launchStoreRatingUri(ratingUri);
+    if (!mounted) {
+      return;
+    }
+    if (!launched) {
+      _showInfoDialog(
+        title: _tSettings(context, 'Rate the App'),
+        body: _tSettings(
+          context,
+          'We could not open the store rating page right now. Please try again later.',
+        ),
+      );
+    }
+  }
+
+  Future<Uri?> _resolveStoreRatingUri() async {
+    if (kIsWeb) {
+      return _fallbackAndroidStoreUri;
+    }
+
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        return Uri.parse('market://details?id=$_androidStorePackageId');
+      case TargetPlatform.iOS:
+        return _lookupIosStoreRatingUri();
+      default:
+        return _fallbackAndroidStoreUri;
+    }
+  }
+
+  Uri get _fallbackAndroidStoreUri => Uri.parse(
+        'https://play.google.com/store/apps/details?id=$_androidStorePackageId',
+      );
+
+  Future<Uri?> _lookupIosStoreRatingUri() async {
+    try {
+      final http.Response response = await http.get(
+        Uri.https('itunes.apple.com', '/lookup', <String, String>{
+          'bundleId': _iosStoreLookupBundleId,
+        }),
+      );
+      if (response.statusCode != 200) {
+        return null;
+      }
+      final Map<String, dynamic>? payload =
+          _asStringDynamicMap(jsonDecode(response.body));
+      final List<dynamic> results =
+          payload?['results'] as List<dynamic>? ?? <dynamic>[];
+      for (final dynamic result in results) {
+        final Map<String, dynamic>? data = _asStringDynamicMap(result);
+        final String trackViewUrl =
+            (data?['trackViewUrl'] as String? ?? '').trim();
+        if (trackViewUrl.isNotEmpty) {
+          return Uri.tryParse(trackViewUrl);
+        }
+      }
+    } catch (error) {
+      debugPrint('Unable to resolve iOS store rating URI: $error');
+    }
+
+    return null;
+  }
+
+  Future<bool> _launchStoreRatingUri(Uri ratingUri) async {
+    final bool launchedPrimary = await _tryLaunchExternalUri(ratingUri);
+    if (launchedPrimary) {
+      return true;
+    }
+
+    if (ratingUri.scheme == 'market') {
+      return _tryLaunchExternalUri(_fallbackAndroidStoreUri);
+    }
+
+    return false;
+  }
+
+  Future<bool> _tryLaunchExternalUri(Uri uri) async {
+    try {
+      return await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (error) {
+      debugPrint('Unable to launch external URI $uri: $error');
+      return false;
+    }
+  }
+
+  Map<String, dynamic>? _asStringDynamicMap(dynamic value) {
+    if (value is Map<String, dynamic>) {
+      return value;
+    }
+    if (value is Map) {
+      return value.map(
+        (dynamic key, dynamic nestedValue) =>
+            MapEntry<String, dynamic>(key.toString(), nestedValue),
+      );
+    }
+    return null;
   }
 
   void _showAppVersionDetails() {

@@ -9,6 +9,7 @@ import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
 import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/modules/parent/parent_billing_page.dart';
+import 'package:scholesa_app/modules/parent/parent_models.dart';
 import 'package:scholesa_app/modules/parent/parent_portfolio_page.dart';
 import 'package:scholesa_app/modules/parent/parent_schedule_page.dart';
 import 'package:scholesa_app/modules/parent/parent_service.dart';
@@ -22,6 +23,30 @@ final ThemeData _workflowTheme = ThemeData(
 );
 
 class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
+
+class _StubParentService extends ParentService {
+  _StubParentService({
+    required super.firestoreService,
+    required super.parentId,
+    required this.stubLearnerSummaries,
+    required this.stubBillingSummary,
+  });
+
+  final List<LearnerSummary> stubLearnerSummaries;
+  final BillingSummary? stubBillingSummary;
+
+  @override
+  List<LearnerSummary> get learnerSummaries => stubLearnerSummaries;
+
+  @override
+  BillingSummary? get billingSummary => stubBillingSummary;
+
+  @override
+  bool get isLoading => false;
+
+  @override
+  Future<void> loadParentData() async {}
+}
 
 AppState _buildParentState() {
   final AppState state = AppState();
@@ -125,6 +150,7 @@ Future<void> _pumpPage(
   WidgetTester tester, {
   required FakeFirebaseFirestore firestore,
   required Widget home,
+  ParentService? parentService,
 }) async {
   tester.view.physicalSize = const Size(1440, 2200);
   tester.view.devicePixelRatio = 1.0;
@@ -137,17 +163,19 @@ Future<void> _pumpPage(
     firestore: firestore,
     auth: _MockFirebaseAuth(),
   );
-  final ParentService parentService = ParentService(
-    firestoreService: firestoreService,
-    parentId: 'parent-1',
-  );
+  final ParentService resolvedParentService = parentService ??
+      ParentService(
+        firestoreService: firestoreService,
+        parentId: 'parent-1',
+      );
 
   await tester.pumpWidget(
     MultiProvider(
       providers: <SingleChildWidget>[
         ChangeNotifierProvider<AppState>.value(value: _buildParentState()),
         Provider<FirestoreService>.value(value: firestoreService),
-        ChangeNotifierProvider<ParentService>.value(value: parentService),
+        ChangeNotifierProvider<ParentService>.value(
+            value: resolvedParentService),
         Provider<LearningRuntimeProvider?>.value(value: null),
       ],
       child: MaterialApp(
@@ -300,6 +328,86 @@ void main() {
       expect(find.text('Billing plan unavailable'), findsOneWidget);
       expect(find.text('All paid'), findsNothing);
       expect(find.text('Active'), findsNothing);
+    });
+
+    testWidgets(
+        'billing page keeps populated invoices and plan controls read-only',
+        (WidgetTester tester) async {
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+      await _seedParentData(firestore);
+
+      final FirestoreService firestoreService = FirestoreService(
+        firestore: firestore,
+        auth: _MockFirebaseAuth(),
+      );
+      final ParentService parentService = _StubParentService(
+        firestoreService: firestoreService,
+        parentId: 'parent-1',
+        stubLearnerSummaries: <LearnerSummary>[
+          LearnerSummary(
+            learnerId: 'learner-1',
+            learnerName: 'Ava Learner',
+            currentLevel: 4,
+            totalXp: 1200,
+            missionsCompleted: 5,
+            currentStreak: 7,
+            attendanceRate: 1.0,
+          ),
+        ],
+        stubBillingSummary: BillingSummary(
+          currentBalance: 199.0,
+          nextPaymentAmount: 199.0,
+          nextPaymentDate: DateTime(2026, 4, 1),
+          subscriptionPlan: 'Family Plan',
+          recentPayments: <PaymentHistory>[
+            PaymentHistory(
+              id: 'INV-2026-03',
+              amount: 199.0,
+              date: DateTime(2026, 3, 1),
+              status: 'due',
+              description: 'Visa ending 4242',
+            ),
+            PaymentHistory(
+              id: 'INV-2026-02',
+              amount: 149.0,
+              date: DateTime(2026, 2, 1),
+              status: 'paid',
+              description: 'Visa ending 4242',
+            ),
+          ],
+        ),
+      );
+
+      await _pumpPage(
+        tester,
+        firestore: firestore,
+        parentService: parentService,
+        home: const ParentBillingPage(),
+      );
+
+      expect(find.text('INV-2026-03'), findsOneWidget);
+      expect(find.text('NEXT-DUE'), findsOneWidget);
+      expect(find.text('Pay Now'), findsNothing);
+      expect(find.text('View'), findsNothing);
+      expect(
+        find.text(
+            'Invoice actions are handled by your site or HQ billing team.'),
+        findsNWidgets(2),
+      );
+
+      await tester.tap(find.text('Plan'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('FAMILY PLAN'), findsOneWidget);
+      expect(
+        find.text('Payment method changes are handled by HQ billing support.'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Plan changes are handled by HQ billing support.'),
+        findsOneWidget,
+      );
+      expect(find.text('Manage Plan'), findsNothing);
     });
   });
 }
