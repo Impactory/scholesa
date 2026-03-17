@@ -6,7 +6,6 @@ import { doc, onSnapshot } from 'firebase/firestore';
 import { auth, createFederatedAuthProvider, firestore } from '@/src/firebase/client-init';
 import { UserProfile } from '@/src/types/user';
 import { clearSessionCookie, syncSessionCookie } from './sessionClient';
-import { signOutE2EUser, subscribeE2EAuthState } from '@/src/testing/e2e/fakeWebBackend';
 
 interface AuthContextType {
   user: FirebaseUser | null;
@@ -30,6 +29,10 @@ export const useAuthContext = () => useContext(AuthContext);
 
 const isE2ETestMode = process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1';
 
+async function loadE2EAuthBackend() {
+  return import('@/src/testing/e2e/fakeWebBackend');
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -37,13 +40,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (isE2ETestMode) {
-      const unsubscribe = subscribeE2EAuthState((currentUser, currentProfile) => {
-        setUser(currentUser);
-        setProfile(currentProfile);
-        setLoading(false);
-      });
+      let unsubscribe: (() => void) | null = null;
+      let cancelled = false;
 
-      return unsubscribe;
+      void loadE2EAuthBackend()
+        .then(({ subscribeE2EAuthState }) => {
+          if (cancelled) return;
+          unsubscribe = subscribeE2EAuthState((currentUser, currentProfile) => {
+            setUser(currentUser);
+            setProfile(currentProfile);
+            setLoading(false);
+          });
+        })
+        .catch((error) => {
+          console.error('Failed to initialize E2E auth backend.', error);
+          if (!cancelled) {
+            setUser(null);
+            setProfile(null);
+            setLoading(false);
+          }
+        });
+
+      return () => {
+        cancelled = true;
+        unsubscribe?.();
+      };
     }
 
     let unsubscribeProfile: (() => void) | null = null;
@@ -110,6 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     if (isE2ETestMode) {
+      const { signOutE2EUser } = await loadE2EAuthBackend();
       await signOutE2EUser();
       setUser(null);
       setProfile(null);

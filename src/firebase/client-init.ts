@@ -15,13 +15,6 @@ import {
 } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { connectFunctionsEmulator, getFunctions } from 'firebase/functions';
-import {
-  currentE2EUid,
-  getE2ECollection,
-  resetE2EState,
-  signInE2EUser,
-  signOutE2EUser,
-} from '@/src/testing/e2e/fakeWebBackend';
 
 const hasFullFirebaseClientConfig = Boolean(
   process.env.NEXT_PUBLIC_FIREBASE_API_KEY &&
@@ -39,6 +32,18 @@ const isBuildPhase =
 
 const isE2ETestMode = process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1';
 const allowPlaceholderClientConfig = typeof window === 'undefined' || isBuildPhase || isE2ETestMode;
+
+type E2EBackendModule = typeof import('@/src/testing/e2e/fakeWebBackend');
+
+let e2eBackendModule: E2EBackendModule | null = null;
+
+async function loadE2EBackend(): Promise<E2EBackendModule> {
+  if (e2eBackendModule) {
+    return e2eBackendModule;
+  }
+  e2eBackendModule = await import('@/src/testing/e2e/fakeWebBackend');
+  return e2eBackendModule;
+}
 
 if (!hasFullFirebaseClientConfig && !allowPlaceholderClientConfig) {
   throw new Error(
@@ -139,6 +144,7 @@ if (functionsEmulatorHost && typeof window !== 'undefined' && !(globalThis as Re
 }
 
 if (typeof window !== 'undefined' && isE2ETestMode) {
+  void loadE2EBackend();
   (window as typeof window & {
     __scholesaE2E?: {
       signInAs: (uid: string, locale?: string) => Promise<{ uid: string | null }>;
@@ -149,15 +155,18 @@ if (typeof window !== 'undefined' && isE2ETestMode) {
     };
   }).__scholesaE2E = {
     signInAs: async (uid: string, locale?: string) => {
+      const { signInE2EUser } = await loadE2EBackend();
       return signInE2EUser(uid, locale);
     },
     reset: async (locale?: string) => {
+      const { resetE2EState } = await loadE2EBackend();
       await resetE2EState(locale);
     },
     signOut: async (locale?: string) => {
+      const { signOutE2EUser } = await loadE2EBackend();
       await signOutE2EUser(locale);
     },
-    currentUid: () => currentE2EUid(),
-    getCollection: (collectionName: string) => getE2ECollection(collectionName),
+    currentUid: () => e2eBackendModule?.currentE2EUid() ?? null,
+    getCollection: (collectionName: string) => e2eBackendModule?.getE2ECollection(collectionName) ?? [],
   };
 }

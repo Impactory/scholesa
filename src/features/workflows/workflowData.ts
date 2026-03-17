@@ -24,12 +24,10 @@ import {
 import { firestore, functions } from '@/src/firebase/client-init';
 import type { UserProfile, UserRole } from '@/src/types/user';
 import type { WorkflowPath } from '@/src/lib/routing/workflowRoutes';
-import {
-  createE2EWorkflowRecord,
-  deleteE2EWorkflowRecord,
-  loadE2EWorkflowRecords,
-  updateE2EWorkflowRecord,
-} from '@/src/testing/e2e/fakeWebBackend';
+
+async function loadE2EWorkflowBackend() {
+  return import('@/src/testing/e2e/fakeWebBackend');
+}
 
 export interface WorkflowContext {
   routePath: WorkflowPath;
@@ -1200,6 +1198,7 @@ async function loadCleverWorkflowRecords(ctx: WorkflowContext, siteId: string | 
 
 export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<WorkflowLoadResult> {
   if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+    const { loadE2EWorkflowRecords } = await loadE2EWorkflowBackend();
     return loadE2EWorkflowRecords(ctx);
   }
 
@@ -3103,6 +3102,7 @@ export async function createWorkflowRecord(
   input: WorkflowCreateInput,
 ): Promise<void> {
   if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+    const { createE2EWorkflowRecord } = await loadE2EWorkflowBackend();
     await createE2EWorkflowRecord(ctx, input);
     return;
   }
@@ -3557,6 +3557,7 @@ export async function updateWorkflowRecord(
   target: WorkflowMutationTarget,
 ): Promise<void> {
   if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+    const { updateE2EWorkflowRecord } = await loadE2EWorkflowBackend();
     await updateE2EWorkflowRecord(ctx, target);
     return;
   }
@@ -3828,6 +3829,7 @@ export async function updateWorkflowRecord(
 
 export async function deleteWorkflowRecord(target: WorkflowMutationTarget): Promise<void> {
   if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+    const { deleteE2EWorkflowRecord } = await loadE2EWorkflowBackend();
     await deleteE2EWorkflowRecord(target);
     return;
   }

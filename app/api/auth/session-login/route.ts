@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAdminAuth, getAdminDb } from '@/src/firebase/admin-init';
 import { resolveRequestLocale } from '@/src/lib/i18n/localeHeaders';
-import { encodeE2ESession } from '@/src/testing/e2e/fakeSession';
 import {
   buildEnterpriseSsoProfileUpdate,
   extractSignInProvider,
@@ -27,6 +26,7 @@ export async function POST(request: Request) {
   const isE2ETestMode = process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1';
 
   if (isE2ETestMode && e2eSession) {
+    const { encodeE2ESession } = await import('@/src/testing/e2e/fakeSession');
     const expiresIn = 60 * 60 * 24 * 5 * 1000;
     const response = NextResponse.json({ status: 'success' }, { status: 200 });
     response.cookies.set({
