@@ -556,7 +556,8 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
           '${nextSession.title}\n'
           '${_t('Location')}: ${nextSession.location}\n'
           '${_t('Starts')}: ${_formatDateTime(nextSession.dateTime)}\n'
-          '${_t('Learner')}: ${nextSession.learnerName}',
+          '${_t('Learner')}: ${nextSession.learnerName}\n\n'
+          '${_t('Session reminders are not available in the app yet')}',
         ),
         actions: <Widget>[
           TextButton(
@@ -570,26 +571,6 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
               Navigator.pop(dialogContext);
             },
             child: Text(_t('Close')),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              TelemetryService.instance.logEvent(
-                event: 'cta.clicked',
-                metadata: const <String, dynamic>{
-                  'cta': 'parent_schedule_set_session_reminder',
-                },
-              );
-              Navigator.pop(dialogContext);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    _t('Session reminders are not available in the app yet'),
-                  ),
-                  backgroundColor: ScholesaColors.parent,
-                ),
-              );
-            },
-            child: Text(_t('Set Reminder')),
           ),
         ],
       ),

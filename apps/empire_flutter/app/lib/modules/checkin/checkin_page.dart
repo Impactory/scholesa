@@ -526,7 +526,9 @@ class _CheckinPageState extends State<CheckinPage>
       builder: (BuildContext dialogContext) => AlertDialog(
         title: Text(_tCheckin(context, 'Scan QR')),
         content: Text(
-          _tCheckin(context, 'Use camera scanner or enter pickup code manually.'),
+          '${_tCheckin(context, 'Use camera scanner or enter pickup code manually.')}\n\n'
+          '${_tCheckin(context, 'QR scanning is not available in the app yet')}\n'
+          '${_tCheckin(context, 'Manual pickup code entry is not available in the app yet')}',
         ),
         actions: <Widget>[
           TextButton(
@@ -540,56 +542,6 @@ class _CheckinPageState extends State<CheckinPage>
               Navigator.pop(dialogContext);
             },
             child: Text(_tCheckin(context, 'Close')),
-          ),
-          OutlinedButton.icon(
-            onPressed: () {
-              TelemetryService.instance.logEvent(
-                event: 'cta.clicked',
-                metadata: const <String, dynamic>{
-                  'cta': 'checkin_qr_use_camera'
-                },
-              );
-              Navigator.pop(dialogContext);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    _tCheckin(context, 'QR scanning is not available in the app yet'),
-                  ),
-                  backgroundColor: const Color(0xFF3B82F6),
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              );
-            },
-            icon: const Icon(Icons.camera_alt_outlined),
-            label: Text(_tCheckin(context, 'Use Camera')),
-          ),
-          ElevatedButton.icon(
-            onPressed: () {
-              TelemetryService.instance.logEvent(
-                event: 'cta.clicked',
-                metadata: const <String, dynamic>{
-                  'cta': 'checkin_qr_enter_code'
-                },
-              );
-              Navigator.pop(dialogContext);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    _tCheckin(context, 'Manual pickup code entry is not available in the app yet'),
-                  ),
-                  backgroundColor: const Color(0xFF3B82F6),
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              );
-            },
-            icon: const Icon(Icons.keyboard_alt_outlined),
-            label: Text(_tCheckin(context, 'Enter Code')),
           ),
         ],
       ),

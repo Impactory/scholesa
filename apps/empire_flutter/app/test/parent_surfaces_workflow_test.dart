@@ -278,13 +278,11 @@ void main() {
           findsOneWidget);
       expect(find.textContaining('Location: Lab 1'), findsOneWidget);
 
-      await tester.tap(find.text('Set Reminder'));
-      await tester.pumpAndSettle();
-
       expect(
-        find.text('Session reminders are not available in the app yet'),
+        find.textContaining('Session reminders are not available in the app yet'),
         findsOneWidget,
       );
+      expect(find.text('Set Reminder'), findsNothing);
     });
 
     testWidgets('portfolio page shows explicit unavailable share state',
