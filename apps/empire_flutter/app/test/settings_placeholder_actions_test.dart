@@ -91,7 +91,7 @@ Finder _tileTapTarget(String label) {
 
 void main() {
   testWidgets(
-  'settings launches data export support email and the store rating flow',
+      'settings launches data export support email and the store rating flow',
       (WidgetTester tester) async {
     final AppState state = _buildAppState();
     final ThemeService themeService = ThemeService();
