@@ -26,6 +26,7 @@ import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { callInternalInferenceJson, isInternalInferenceRequired } from './internalInferenceGateway';
 import { ekfLiteUpdate, summarizeClassInsights, StateEstimate } from './bosRuntimeCore';
+import { BosRuntimeCalibration, resolveBosRuntimeCalibration } from './bosRuntimeCalibration';
 import { readInteractionSignalObservation } from './fdmInteractionSignals';
 import { hasSiteAccess, isCoppaConsentActive } from './coppaGuards';
 
@@ -145,6 +146,10 @@ function normalizeBosGradeBand(value: unknown): 'K_5' | 'G6_8' | 'G9_12' {
   return 'G6_8';
 }
 
+function isSyntheticSiteId(siteId: string | undefined | null): boolean {
+  return typeof siteId === 'string' && siteId.startsWith('synthetic-site-');
+}
+
 function toCanonicalTelemetryRole(actorRole: 'learner' | 'educator' | 'admin'): 'student' | 'teacher' | 'admin' {
   if (actorRole === 'learner') return 'student';
   if (actorRole === 'educator') return 'teacher';
@@ -262,6 +267,25 @@ async function assertUserSiteAccess(uid: string, siteId: string): Promise<void> 
 async function assertCoppaSiteAccess(uid: string, siteId: string): Promise<void> {
   await assertUserSiteAccess(uid, siteId);
   await assertActiveSchoolConsent(siteId);
+}
+
+async function loadBosCalibrationProfile(
+  siteId: string,
+  gradeBand: string,
+): Promise<BosRuntimeCalibration | null> {
+  if (!isSyntheticSiteId(siteId)) {
+    return null;
+  }
+
+  const profileDoc = await db.collection('bosMiaCalibrationProfiles').doc('latest').get();
+  if (!profileDoc.exists) {
+    return null;
+  }
+
+  return resolveBosRuntimeCalibration(
+    profileDoc.data() as Record<string, unknown> | undefined,
+    gradeBand,
+  );
 }
 
 function sanitizeBosPayloadValue(
@@ -754,6 +778,20 @@ function resolveTargetRegion(gradeBand: string): StateTargetRegion {
   return { cognitionTarget: 0.70, engagementTarget: 0.65, integrityFloor: 0.60 };
 }
 
+function resolvePolicyTargetRegion(
+  gradeBand: string,
+  calibration: BosRuntimeCalibration | null,
+): StateTargetRegion {
+  if (calibration) {
+    return {
+      cognitionTarget: calibration.targetRegion.cognitionTarget,
+      engagementTarget: calibration.targetRegion.engagementTarget,
+      integrityFloor: calibration.targetRegion.integrityFloor,
+    };
+  }
+  return resolveTargetRegion(gradeBand);
+}
+
 function interventionLibrary(): InterventionCandidate[] {
   return [
     {
@@ -810,11 +848,15 @@ function interventionLibrary(): InterventionCandidate[] {
 function computeIntervention(
   state: StateEstimate,
   gradeBand: string,
+  calibration: BosRuntimeCalibration | null = null,
   lambda: number = 0.5,
 ): InterventionDecision {
   const x = state.x_hat;
-  const target = resolveTargetRegion(gradeBand);
-  const mDagger = Math.max(M_DAGGER[gradeBand] ?? 0.60, target.integrityFloor);
+  const target = resolvePolicyTargetRegion(gradeBand, calibration);
+  const mDagger = Math.max(
+    calibration?.integrityFloor ?? M_DAGGER[gradeBand] ?? 0.60,
+    target.integrityFloor,
+  );
   const reasonCodes: string[] = ['bos_closed_loop_control'];
   const cognitionDeficit = Math.max(0, target.cognitionTarget - x.cognition);
   const engagementDeficit = Math.max(0, target.engagementTarget - x.engagement);
@@ -927,6 +969,7 @@ function applyRoleIntelligenceToIntervention(
 function computeSemanticEntropyRiskFromEvents(
   state: StateEstimate,
   events: FirebaseFirestore.DocumentData[],
+  calibration: BosRuntimeCalibration | null = null,
 ): ReliabilityRiskFromEvents {
   const voiceEvents = events.filter((event) => {
     const payload = asRecord(event?.payload);
@@ -940,7 +983,7 @@ function computeSemanticEntropyRiskFromEvents(
       M: 0,
       H_sem: 0,
       riskScore: round3((1 - clamp(state.P.confidence)) * 0.35),
-      threshold: 0.6,
+      threshold: calibration?.reliabilityRiskThreshold ?? 0.6,
       signals: [],
     };
   }
@@ -995,7 +1038,7 @@ function computeSemanticEntropyRiskFromEvents(
     M: new Set(responseModes).size,
     H_sem: round3(H_sem),
     riskScore: round3(riskScore),
-    threshold: 0.6,
+    threshold: calibration?.reliabilityRiskThreshold ?? 0.6,
     signals,
   };
 }
@@ -1096,13 +1139,19 @@ function computeAutonomyRiskFromEvents(
   state: StateEstimate,
   gradeBand: string,
   events: FirebaseFirestore.DocumentData[],
+  calibration: BosRuntimeCalibration | null = null,
 ): AutonomyRiskFromEvents {
   const signals: string[] = [];
   let riskScore = 0;
   const totalEvents = events.length;
 
   if (totalEvents < 3) {
-    return { riskType: 'autonomy', signals, riskScore: 0, threshold: 0.5 };
+    return {
+      riskType: 'autonomy',
+      signals,
+      riskScore: 0,
+      threshold: calibration?.autonomyRiskThreshold ?? 0.5,
+    };
   }
 
   // Signal 1: Heavy AI use — >40% of events are ai_help_*
@@ -1141,7 +1190,10 @@ function computeAutonomyRiskFromEvents(
   }
 
   // Signal 5: Low integrity state
-  const mDagger = M_DAGGER[gradeBand] ?? 0.60;
+  const mDagger = Math.max(
+    calibration?.integrityFloor ?? M_DAGGER[gradeBand] ?? 0.60,
+    calibration?.targetRegion.integrityFloor ?? 0,
+  );
   if (state.x_hat.integrity < mDagger) {
     signals.push('low_integrity_state');
     riskScore += 0.15;
@@ -1151,7 +1203,7 @@ function computeAutonomyRiskFromEvents(
     riskType: 'autonomy',
     signals: [...new Set(signals)],
     riskScore: Math.min(1.0, Math.round(riskScore * 1000) / 1000),
-    threshold: 0.5,
+    threshold: calibration?.autonomyRiskThreshold ?? 0.5,
   };
 }
 
@@ -1352,8 +1404,9 @@ export const bosGetIntervention = onCall(
     const priorState: StateEstimate | null = priorDoc.exists
       ? { x_hat: priorDoc.data()!.x_hat, P: priorDoc.data()!.P }
       : null;
-
-    const newState = ekfLiteUpdate(priorState, features);
+    const gBand = gradeBand || 'G4_6';
+    const runtimeCalibration = await loadBosCalibrationProfile(siteId, gBand);
+    const newState = ekfLiteUpdate(priorState, features, runtimeCalibration?.ekfAlpha ?? 0.7);
 
     // Save updated state
     await db.collection('orchestrationStates').doc(stateDocId).set({
@@ -1363,6 +1416,13 @@ export const bosGetIntervention = onCall(
       x_hat: newState.x_hat,
       P: newState.P,
       model: { estimator: 'ekf-lite', version: '0.1.0', Q_version: 'v1', R_version: 'v1' },
+      calibration: runtimeCalibration ? {
+        scope: 'synthetic',
+        gradeBand: runtimeCalibration.gradeBand,
+        modelVersion: runtimeCalibration.modelVersion,
+        trainingRunId: runtimeCalibration.trainingRunId ?? null,
+        ekfAlpha: runtimeCalibration.ekfAlpha,
+      } : null,
       fusion: {
         familiesPresent: features.quality.fusionFamiliesPresent,
         sensorFusionMet: features.quality.fusionFamiliesPresent.length >= 2,
@@ -1371,10 +1431,9 @@ export const bosGetIntervention = onCall(
     }, { merge: true });
 
     // Step 3: Compute intervention (Policy)
-    const gBand = gradeBand || 'G4_6';
     const learningSnapshot = await loadBosLearningSnapshot(siteId, targetLearnerId);
     let intervention = applyLearningSnapshotToIntervention(
-      computeIntervention(newState, gBand),
+      computeIntervention(newState, gBand, runtimeCalibration),
       learningSnapshot,
     );
     const traceId = resolveTraceId(request, requestData);
@@ -1557,8 +1616,13 @@ export const bosGetIntervention = onCall(
       newState,
       gBand,
       recentEvents,
+      runtimeCalibration,
     );
-    const reliabilityRiskResult = computeSemanticEntropyRiskFromEvents(newState, recentEvents);
+    const reliabilityRiskResult = computeSemanticEntropyRiskFromEvents(
+      newState,
+      recentEvents,
+      runtimeCalibration,
+    );
     intervention = applyRiskAwarePolicy({
       intervention,
       autonomyRisk: autonomyRiskResult,
@@ -1567,7 +1631,10 @@ export const bosGetIntervention = onCall(
 
     // Augment intervention with risk data
     const riskSources: string[] = [];
-    const mDaggerVal = M_DAGGER[gBand] ?? 0.60;
+    const mDaggerVal = Math.max(
+      runtimeCalibration?.integrityFloor ?? M_DAGGER[gBand] ?? 0.60,
+      runtimeCalibration?.targetRegion.integrityFloor ?? 0,
+    );
     if (newState.x_hat.integrity < mDaggerVal) riskSources.push('integrity_below_threshold');
     if (autonomyRiskResult.riskScore > autonomyRiskResult.threshold) riskSources.push('high_autonomy_risk');
     if (reliabilityRiskResult.riskScore > reliabilityRiskResult.threshold) riskSources.push('high_reliability_risk');
@@ -1601,6 +1668,16 @@ export const bosGetIntervention = onCall(
       triggerMvl: shouldTriggerMvl,
       mvlReason,
       policyModelVersion: bosModelVersion,
+      calibration: runtimeCalibration ? {
+        scope: 'synthetic',
+        gradeBand: runtimeCalibration.gradeBand,
+        modelVersion: runtimeCalibration.modelVersion,
+        trainingRunId: runtimeCalibration.trainingRunId ?? null,
+        ekfAlpha: runtimeCalibration.ekfAlpha,
+        autonomyRiskThreshold: runtimeCalibration.autonomyRiskThreshold,
+        reliabilityRiskThreshold: runtimeCalibration.reliabilityRiskThreshold,
+        integrityFloor: runtimeCalibration.integrityFloor,
+      } : null,
       inference: bosInferenceMeta,
       learningSignals: learningSnapshot ? {
         profileId: learningSnapshot.profileId,
@@ -1640,6 +1717,8 @@ export const bosGetIntervention = onCall(
         env: resolveTelemetryEnv(),
         eventType: 'bos.intervention.decided',
         modelVersion: bosModelVersion,
+        calibrationModelVersion: runtimeCalibration?.modelVersion ?? null,
+        calibrationTrainingRunId: runtimeCalibration?.trainingRunId ?? null,
         inference: bosInferenceMeta,
         triggerMvl: shouldTriggerMvl,
         autonomyRiskScore: autonomyRiskResult.riskScore,
@@ -1703,6 +1782,12 @@ export const bosGetIntervention = onCall(
     return {
       intervention: { ...intervention, triggerMvl: shouldTriggerMvl, mvlReason },
       state: newState,
+      calibration: runtimeCalibration ? {
+        scope: 'synthetic',
+        gradeBand: runtimeCalibration.gradeBand,
+        modelVersion: runtimeCalibration.modelVersion,
+        trainingRunId: runtimeCalibration.trainingRunId ?? null,
+      } : null,
       risk: {
         reliability: reliabilityRiskResult,
         autonomy: autonomyRiskResult,

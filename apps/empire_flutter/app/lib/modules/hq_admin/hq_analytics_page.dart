@@ -834,6 +834,90 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                 ),
               ],
             ),
+            if (summary.bosMiaTraining != null) ...<Widget>[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: ScholesaColors.hq.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      _t('BOS/MIA synthetic training'),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${_t('Model version')}: ${summary.bosMiaTraining!.modelVersion}',
+                      style: TextStyle(color: Colors.grey[700], fontSize: 12),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${_t('Training run')}: ${summary.bosMiaTraining!.trainingRunId}',
+                      style: TextStyle(color: Colors.grey[700], fontSize: 12),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: _MetricCard(
+                            icon: Icons.tune_rounded,
+                            value: '${summary.bosMiaTraining!.calibratedGradeBands}',
+                            label: _t('Calibrated grade bands'),
+                            trend: '${summary.bosMiaTraining!.trainingRows} ${_t('training rows')}',
+                            trendUp: true,
+                            color: ScholesaColors.hq,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _MetricCard(
+                            icon: Icons.analytics_outlined,
+                            value: '${(summary.bosMiaTraining!.actionAccuracy * 100).toStringAsFixed(1)}%',
+                            label: _t('Action accuracy'),
+                            trend: '${summary.bosMiaTraining!.goldEvalCases} ${_t('gold eval cases')}',
+                            trendUp: true,
+                            color: ScholesaColors.futureSkills,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: _MetricCard(
+                            icon: Icons.rule_folder_outlined,
+                            value: '${(summary.bosMiaTraining!.reviewPrecision * 100).toStringAsFixed(1)}%',
+                            label: _t('Review precision'),
+                            trend: _t('synthetic-only'),
+                            trendUp: true,
+                            color: ScholesaColors.warning,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _MetricCard(
+                            icon: Icons.fact_check_outlined,
+                            value: '${(summary.bosMiaTraining!.reviewRecall * 100).toStringAsFixed(1)}%',
+                            label: _t('Review recall'),
+                            trend: _t('Latest synthetic import manifest'),
+                            trendUp: true,
+                            color: ScholesaColors.impact,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -2230,6 +2314,7 @@ class _SyntheticDatasetImportSummary {
     required this.interactionEvents,
     required this.portfolioArtifacts,
     required this.syntheticUsers,
+    required this.bosMiaTraining,
   });
 
   factory _SyntheticDatasetImportSummary.fromMap(
@@ -2266,6 +2351,12 @@ class _SyntheticDatasetImportSummary {
       portfolioArtifacts:
           _readCount(nativeCounts, <String>['portfolioItems']),
       syntheticUsers: _readCount(nativeCounts, <String>['users']),
+      bosMiaTraining: _BosMiaSyntheticTrainingSummary.fromMap(
+        Map<String, dynamic>.from(
+          (data['bosMiaTraining'] as Map?) ?? <String, dynamic>{},
+        ),
+        dateParser,
+      ),
     );
   }
 
@@ -2279,6 +2370,7 @@ class _SyntheticDatasetImportSummary {
   final int interactionEvents;
   final int portfolioArtifacts;
   final int syntheticUsers;
+  final _BosMiaSyntheticTrainingSummary? bosMiaTraining;
 
   String get importedAtDisplay {
     final DateTime local = importedAt.toLocal();
@@ -2313,6 +2405,65 @@ class _SyntheticDatasetImportSummary {
     }
     return total;
   }
+}
+
+class _BosMiaSyntheticTrainingSummary {
+  const _BosMiaSyntheticTrainingSummary({
+    required this.modelVersion,
+    required this.trainingRunId,
+    required this.trainedAt,
+    required this.calibratedGradeBands,
+    required this.trainingRows,
+    required this.goldEvalCases,
+    required this.actionAccuracy,
+    required this.reviewPrecision,
+    required this.reviewRecall,
+  });
+
+  static _BosMiaSyntheticTrainingSummary? fromMap(
+    Map<String, dynamic> data,
+    DateTime? Function(dynamic value) dateParser,
+  ) {
+    final String modelVersion = (data['modelVersion'] as String?)?.trim() ?? '';
+    final String trainingRunId = (data['trainingRunId'] as String?)?.trim() ?? '';
+    if (modelVersion.isEmpty || trainingRunId.isEmpty) {
+      return null;
+    }
+
+    return _BosMiaSyntheticTrainingSummary(
+      modelVersion: modelVersion,
+      trainingRunId: trainingRunId,
+      trainedAt: dateParser(data['trainedAt']) ?? DateTime.now(),
+      calibratedGradeBands: _readMetricInt(data['calibratedGradeBands']),
+      trainingRows: _readMetricInt(data['trainingRows']),
+      goldEvalCases: _readMetricInt(data['goldEvalCases']),
+      actionAccuracy: _readMetricDouble(data['actionAccuracy']),
+      reviewPrecision: _readMetricDouble(data['reviewPrecision']),
+      reviewRecall: _readMetricDouble(data['reviewRecall']),
+    );
+  }
+
+  final String modelVersion;
+  final String trainingRunId;
+  final DateTime trainedAt;
+  final int calibratedGradeBands;
+  final int trainingRows;
+  final int goldEvalCases;
+  final double actionAccuracy;
+  final double reviewPrecision;
+  final double reviewRecall;
+}
+
+int _readMetricInt(dynamic value) {
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  return 0;
+}
+
+double _readMetricDouble(dynamic value) {
+  if (value is double) return value;
+  if (value is num) return value.toDouble();
+  return 0;
 }
 
 class _MetricCard extends StatelessWidget {
@@ -2354,35 +2505,47 @@ class _MetricCard extends StatelessWidget {
                 ),
                 child: Icon(icon, color: color, size: 20),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: trendUp
-                      ? ScholesaColors.success.withValues(alpha: 0.1)
-                      : ScholesaColors.error.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Icon(
-                      trendUp ? Icons.arrow_upward : Icons.arrow_downward,
-                      size: 10,
+              const SizedBox(width: 8),
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
                       color: trendUp
-                          ? ScholesaColors.success
-                          : ScholesaColors.error,
+                          ? ScholesaColors.success.withValues(alpha: 0.1)
+                          : ScholesaColors.error.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    Text(
-                      trend,
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: trendUp
-                            ? ScholesaColors.success
-                            : ScholesaColors.error,
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Icon(
+                          trendUp ? Icons.arrow_upward : Icons.arrow_downward,
+                          size: 10,
+                          color: trendUp
+                              ? ScholesaColors.success
+                              : ScholesaColors.error,
+                        ),
+                        const SizedBox(width: 2),
+                        Flexible(
+                          child: Text(
+                            trend,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: trendUp
+                                  ? ScholesaColors.success
+                                  : ScholesaColors.error,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ],

@@ -181,6 +181,17 @@ void main() {
                 'syntheticDatasetImports': 2,
                 'missionAttempts': 16800,
               },
+              'bosMiaTraining': <String, dynamic>{
+                'modelVersion': 'synthetic-bos-mia-starter-full-v1',
+                'trainingRunId': 'bos-mia-synthetic-2026-03-15T12-00-00-000Z',
+                'trainedAt': DateTime(2026, 3, 15, 12).toIso8601String(),
+                'calibratedGradeBands': 4,
+                'trainingRows': 17040,
+                'goldEvalCases': 1280,
+                'actionAccuracy': 0.914,
+                'reviewPrecision': 0.882,
+                'reviewRecall': 0.901,
+              },
             },
           ),
         ),
@@ -207,6 +218,12 @@ void main() {
     expect(find.text('Synthetic Data'), findsOneWidget);
     expect(find.text('Starter + full synthetic packs'), findsOneWidget);
     expect(find.text('17040'), findsOneWidget);
+    expect(find.text('BOS/MIA synthetic training'), findsOneWidget);
+    expect(
+      find.textContaining('synthetic-bos-mia-starter-full-v1'),
+      findsOneWidget,
+    );
+    expect(find.text('91.4%'), findsOneWidget);
 
     await tester.scrollUntilVisible(
       find.text('Site Comparison'),
