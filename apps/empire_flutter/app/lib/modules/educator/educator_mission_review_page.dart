@@ -82,9 +82,9 @@ class _EducatorMissionReviewPageState extends State<EducatorMissionReviewPage> {
                 ),
                 SliverToBoxAdapter(
                   child: BosLearnerLoopInsightsCard(
-                  title: BosCoachingI18n.sessionLoopTitle(context),
-                  subtitle: BosCoachingI18n.sessionLoopSubtitle(context),
-                  emptyLabel: BosCoachingI18n.sessionLoopEmpty(context),
+                    title: BosCoachingI18n.sessionLoopTitle(context),
+                    subtitle: BosCoachingI18n.sessionLoopSubtitle(context),
+                    emptyLabel: BosCoachingI18n.sessionLoopEmpty(context),
                     learnerId: loopSubmission?.learnerId,
                     learnerName: loopSubmission?.learnerName,
                     accentColor: ScholesaColors.educator,
@@ -306,7 +306,8 @@ class _EducatorMissionReviewPageState extends State<EducatorMissionReviewPage> {
           ),
           const SizedBox(height: 8),
           Text(
-            _tEducatorMissionReview(context, 'No submissions matching this filter'),
+            _tEducatorMissionReview(
+                context, 'No submissions matching this filter'),
             style: TextStyle(color: Colors.grey[600]),
           ),
         ],
@@ -676,7 +677,8 @@ class _ReviewSheetState extends State<_ReviewSheet> {
     _feedbackController.text = widget.submission.feedback ?? '';
     _aiFeedbackDraft = widget.submission.aiFeedbackDraft;
     _rubricScores = <String, int>{
-      for (final Map<String, dynamic> criterion in widget.submission.rubricCriteria)
+      for (final Map<String, dynamic> criterion
+          in widget.submission.rubricCriteria)
         _criterionId(criterion): _existingScoreForCriterion(criterion),
     };
   }
@@ -698,7 +700,9 @@ class _ReviewSheetState extends State<_ReviewSheet> {
   }
 
   String _criterionId(Map<String, dynamic> criterion) {
-    return criterion['id'] as String? ?? criterion['label'] as String? ?? 'criterion';
+    return criterion['id'] as String? ??
+        criterion['label'] as String? ??
+        'criterion';
   }
 
   int _criterionMaxScore(Map<String, dynamic> criterion) {
@@ -739,13 +743,15 @@ class _ReviewSheetState extends State<_ReviewSheet> {
   }
 
   List<Map<String, dynamic>> _selectedRubricScores() {
-    return widget.submission.rubricCriteria.map((Map<String, dynamic> criterion) {
+    return widget.submission.rubricCriteria
+        .map((Map<String, dynamic> criterion) {
       final String criterionId = _criterionId(criterion);
       final int maxScore = _criterionMaxScore(criterion);
       return <String, dynamic>{
         'criterionId': criterionId,
         'label': criterion['label'] as String? ?? criterionId,
-        'pillarCode': criterion['pillarCode'] as String? ?? widget.submission.pillar,
+        'pillarCode':
+            criterion['pillarCode'] as String? ?? widget.submission.pillar,
         'score': (_rubricScores[criterionId] ?? 0).clamp(0, maxScore),
         'maxScore': maxScore,
       };
@@ -810,9 +816,8 @@ class _ReviewSheetState extends State<_ReviewSheet> {
         'outcome': outcome,
         'rating': effectiveRating,
         'feedback_length': _feedbackController.text.trim().length,
-        'turnaround_minutes': DateTime.now()
-            .difference(widget.submission.submittedAt)
-            .inMinutes,
+        'turnaround_minutes':
+            DateTime.now().difference(widget.submission.submittedAt).inMinutes,
       },
     );
     Navigator.pop(context);
@@ -949,7 +954,8 @@ class _ReviewSheetState extends State<_ReviewSheet> {
                           TelemetryService.instance.logEvent(
                             event: 'cta.clicked',
                             metadata: <String, dynamic>{
-                              'cta': 'educator_mission_review_generate_ai_feedback',
+                              'cta':
+                                  'educator_mission_review_generate_ai_feedback',
                               'submission_id': widget.submission.id,
                             },
                           );
@@ -982,7 +988,8 @@ class _ReviewSheetState extends State<_ReviewSheet> {
                       ),
                     ],
                   ),
-                  if (_aiFeedbackDraft != null && _aiFeedbackDraft!.isNotEmpty) ...<Widget>[
+                  if (_aiFeedbackDraft != null &&
+                      _aiFeedbackDraft!.isNotEmpty) ...<Widget>[
                     const SizedBox(height: 12),
                     Container(
                       width: double.infinity,
@@ -991,7 +998,8 @@ class _ReviewSheetState extends State<_ReviewSheet> {
                         color: ScholesaColors.educator.withValues(alpha: 0.06),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: ScholesaColors.educator.withValues(alpha: 0.18),
+                          color:
+                              ScholesaColors.educator.withValues(alpha: 0.18),
                         ),
                       ),
                       child: Column(
@@ -1039,7 +1047,8 @@ class _ReviewSheetState extends State<_ReviewSheet> {
                     const SizedBox(height: 24),
                     Text(
                       _tEducatorMissionReview(context, 'Rubric'),
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                     if (widget.submission.rubricTitle != null &&
                         widget.submission.rubricTitle!.isNotEmpty) ...<Widget>[
@@ -1050,7 +1059,8 @@ class _ReviewSheetState extends State<_ReviewSheet> {
                       ),
                     ],
                     const SizedBox(height: 12),
-                    ...widget.submission.rubricCriteria.map((Map<String, dynamic> criterion) {
+                    ...widget.submission.rubricCriteria
+                        .map((Map<String, dynamic> criterion) {
                       final String criterionId = _criterionId(criterion);
                       final int maxScore = _criterionMaxScore(criterion);
                       final String label =
@@ -1062,7 +1072,8 @@ class _ReviewSheetState extends State<_ReviewSheet> {
                           children: <Widget>[
                             Text(
                               label,
-                              style: const TextStyle(fontWeight: FontWeight.w600),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w600),
                             ),
                             const SizedBox(height: 8),
                             Wrap(
@@ -1072,10 +1083,11 @@ class _ReviewSheetState extends State<_ReviewSheet> {
                                 maxScore + 1,
                                 (int score) => ChoiceChip(
                                   label: Text('$score/$maxScore'),
-                                  selected:
-                                      (_rubricScores[criterionId] ?? 0) == score,
+                                  selected: (_rubricScores[criterionId] ?? 0) ==
+                                      score,
                                   onSelected: (_) {
-                                    setState(() => _rubricScores[criterionId] = score);
+                                    setState(() =>
+                                        _rubricScores[criterionId] = score);
                                   },
                                 ),
                               ),

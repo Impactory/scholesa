@@ -62,8 +62,7 @@ void main() {
     when(() => educatorService.todayClasses)
         .thenReturn(<TodayClass>[todayClass]);
     when(() => educatorService.currentClass).thenReturn(todayClass);
-    when(() => educatorService.learners)
-        .thenReturn(const <EducatorLearner>[]);
+    when(() => educatorService.learners).thenReturn(const <EducatorLearner>[]);
     when(() => educatorService.dayStats).thenReturn(
       const EducatorDayStats(
         totalClasses: 1,
@@ -122,7 +121,8 @@ void main() {
     expect(find.text('Mission review queue opened'), findsNothing);
   });
 
-  testWidgets('mission review AI draft copy stays honest about local draft state',
+  testWidgets(
+      'mission review AI draft copy stays honest about local draft state',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     final FirestoreService firestoreService = FirestoreService(
