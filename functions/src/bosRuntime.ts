@@ -1360,7 +1360,20 @@ export const bosGetOrchestrationState = onCall(
       await assertCoppaSiteAccess(uid, stateSiteId);
     }
 
-    return { state: doc.data() };
+    const stateData = doc.data() as Record<string, unknown>;
+    const xHat = asRecord(stateData.x_hat);
+    const covariance = asRecord(stateData.P);
+    const hasValidState =
+      typeof xHat?.cognition === 'number' &&
+      typeof xHat?.engagement === 'number' &&
+      typeof xHat?.integrity === 'number' &&
+      (typeof covariance?.confidence === 'number' || typeof covariance?.trace === 'number');
+    if (!hasValidState) {
+      console.warn(`[BOS] Refusing to return malformed orchestration state: ${docId}`);
+      return { state: null, message: 'Orchestration state is malformed' };
+    }
+
+    return { state: stateData };
   }
 );
 
@@ -2060,7 +2073,14 @@ export const bosGetClassInsights = onCall(
       };
     });
 
-    const summary = summarizeClassInsights(learners);
+    const validLearners = learners.filter((learner) => {
+      const xHat = asRecord(learner.x_hat);
+      return typeof xHat?.cognition === 'number' ||
+        typeof xHat?.engagement === 'number' ||
+        typeof xHat?.integrity === 'number';
+    });
+
+    const summary = summarizeClassInsights(validLearners);
 
     // Fetch active MVL episodes
     const activeMvls = await db.collection('mvlEpisodes')
@@ -2074,8 +2094,9 @@ export const bosGetClassInsights = onCall(
       siteId,
       learnerCount: summary.learnerCount,
       averages: summary.averages,
+      coverage: summary.coverage,
       activeMvlCount: activeMvls.size,
-      learners,
+      learners: validLearners,
       watchlist: summary.watchlist,
     };
   }
