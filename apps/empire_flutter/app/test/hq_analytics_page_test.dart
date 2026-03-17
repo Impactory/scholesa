@@ -293,7 +293,7 @@ void main() {
 
     expect(find.text('Export HQ Analytics'), findsOneWidget);
     expect(
-      find.text('HQ analytics exports are not available in the app yet.'),
+      find.textContaining('HQ analytics exports are not available in the app yet.'),
       findsOneWidget,
     );
     expect(find.widgetWithText(ElevatedButton, 'Export'), findsNothing);

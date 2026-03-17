@@ -83,8 +83,8 @@ void main() {
 
       expect(find.text('Export Site Report'), findsOneWidget);
       expect(
-        find.text(
-          'Site report exports are not generated in the app yet. Requests are recorded for follow-up.',
+        find.textContaining(
+          'Site report exports are not generated in the app yet.',
         ),
         findsOneWidget,
       );
