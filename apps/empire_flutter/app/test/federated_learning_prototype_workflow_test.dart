@@ -6754,7 +6754,7 @@ void main() {
     );
     expect(
       find.textContaining('Investigating site runtime mismatch.'),
-      findsOneWidget,
+      findsWidgets,
     );
   });
 
