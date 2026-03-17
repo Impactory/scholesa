@@ -261,7 +261,7 @@ void main() {
               runtime: runtime,
               actorRole: UserRole.learner,
               skipVoiceInitializationForTesting: true,
-              onAutoResponseRequest: (String prompt, AiCoachMode mode) async {
+              onResponseRequest: (String prompt, AiCoachMode mode) async {
                 capturedPrompt = prompt;
                 return AiCoachResponse.fromMap(<String, dynamic>{
                   'message': 'Let us take the next small step.',

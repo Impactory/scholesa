@@ -46,6 +46,7 @@ class AiCoachWidget extends StatefulWidget {
     this.onSpeakOverride,
     this.onInterventionRequest,
     this.onAutoResponseRequest,
+    this.onResponseRequest,
     this.voiceOnlyConversation = false,
     this.missionId,
     this.checkpointId,
@@ -65,6 +66,8 @@ class AiCoachWidget extends StatefulWidget {
   final Future<BosIntervention?> Function()? onInterventionRequest;
   final Future<AiCoachResponse> Function(String prompt, AiCoachMode mode)?
       onAutoResponseRequest;
+    final Future<AiCoachResponse> Function(String prompt, AiCoachMode mode)?
+      onResponseRequest;
   final bool voiceOnlyConversation;
   final String? missionId;
   final String? checkpointId;
@@ -1332,6 +1335,13 @@ Response style:
   }
 
   Future<AiCoachResponse> _fetchAndProcessResponse(String prompt) async {
+    if (widget.onResponseRequest != null) {
+      return widget.onResponseRequest!(
+        _buildConversationalPrompt(_privacySafeText(prompt, maxLength: 320)),
+        _selectedMode,
+      );
+    }
+
     final String sanitizedPrompt = _privacySafeText(prompt, maxLength: 320);
     final AiCoachResponse response =
         await VoiceRuntimeService.instance.requestCopilot(
