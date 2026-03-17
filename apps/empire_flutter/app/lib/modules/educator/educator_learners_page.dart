@@ -1182,62 +1182,21 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () {
-                            TelemetryService.instance.logEvent(
-                              event: 'cta.clicked',
-                              metadata: <String, dynamic>{
-                                'module': 'educator_learners',
-                                'cta_id': 'message_learner',
-                                'surface': 'learner_detail_sheet',
-                                'learner_id': learner.id,
-                              },
-                            );
-                            Navigator.pop(context);
-                          },
-                          icon: const Icon(Icons.message),
-                          label: Text(_tEducatorLearners(context, 'Message')),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: ScholesaColors.educator,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            side: const BorderSide(
-                                color: ScholesaColors.educator),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        ),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[50],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: Text(
+                      _tEducatorLearners(
+                        context,
+                        'Direct learner messaging and full learner profiles are not available from this sheet yet.',
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            TelemetryService.instance.logEvent(
-                              event: 'cta.clicked',
-                              metadata: <String, dynamic>{
-                                'module': 'educator_learners',
-                                'cta_id': 'open_full_profile',
-                                'surface': 'learner_detail_sheet',
-                                'learner_id': learner.id,
-                              },
-                            );
-                            Navigator.pop(context);
-                          },
-                          icon: const Icon(Icons.assignment),
-                          label: Text(_tEducatorLearners(context, 'Full Profile')),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: ScholesaColors.educator,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                      style: TextStyle(color: Colors.grey[700], height: 1.4),
+                    ),
                   ),
                 ],
               ),

@@ -127,6 +127,24 @@ void main() {
     await tester.tap(find.text('Export practice plan'));
     await tester.pump(const Duration(milliseconds: 500));
 
+    await tester.dragUntilVisible(
+      find.text(
+        'Direct learner messaging and full learner profiles are not available from this sheet yet.',
+      ),
+      find.byType(Scrollable).last,
+      const Offset(0, -120),
+    );
+    await tester.pump(const Duration(milliseconds: 200));
+
+    expect(
+      find.text(
+        'Direct learner messaging and full learner profiles are not available from this sheet yet.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Message'), findsNothing);
+    expect(find.text('Full Profile'), findsNothing);
+
     final planDoc = await firestore
         .collection('learnerDifferentiationPlans')
         .doc('learner-1_site-1')

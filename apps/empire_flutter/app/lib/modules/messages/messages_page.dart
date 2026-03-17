@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../i18n/shared_role_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
@@ -328,7 +330,61 @@ class _MessagesPageState extends State<MessagesPage>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (BuildContext context) => _MessageDetailSheet(message: message),
+      builder: (BuildContext context) => _MessageDetailSheet(
+        message: message,
+        onViewDetails: message.actionUrl == null
+            ? null
+            : () => _handleMessageAction(message),
+      ),
+    );
+  }
+
+  Future<void> _handleMessageAction(Message message) async {
+    final String actionUrl = message.actionUrl?.trim() ?? '';
+    if (actionUrl.isEmpty) {
+      return;
+    }
+
+    if (actionUrl.startsWith('/')) {
+      if (!mounted) {
+        return;
+      }
+      context.push(actionUrl);
+      return;
+    }
+
+    final Uri? uri = Uri.tryParse(actionUrl);
+    if (uri == null) {
+      _showMessageLinkUnavailable();
+      return;
+    }
+
+    final bool canLaunchUri = await canLaunchUrl(uri);
+    if (!canLaunchUri) {
+      _showMessageLinkUnavailable();
+      return;
+    }
+
+    final bool launched = await launchUrl(
+      uri,
+      mode: LaunchMode.externalApplication,
+    );
+    if (!launched) {
+      _showMessageLinkUnavailable();
+    }
+  }
+
+  void _showMessageLinkUnavailable() {
+    if (!mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          _tMessages(context, 'We could not open this message link right now.'),
+        ),
+      ),
     );
   }
 
@@ -717,8 +773,12 @@ class _ConversationCard extends StatelessWidget {
 }
 
 class _MessageDetailSheet extends StatelessWidget {
-  const _MessageDetailSheet({required this.message});
+  const _MessageDetailSheet({
+    required this.message,
+    this.onViewDetails,
+  });
   final Message message;
+  final Future<void> Function()? onViewDetails;
 
   @override
   Widget build(BuildContext context) {
@@ -823,7 +883,9 @@ class _MessageDetailSheet extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
+                  onPressed: onViewDetails == null
+                      ? null
+                      : () async {
                     TelemetryService.instance.logEvent(
                       event: 'cta.clicked',
                       metadata: <String, dynamic>{
@@ -832,7 +894,7 @@ class _MessageDetailSheet extends StatelessWidget {
                       },
                     );
                     Navigator.pop(context);
-                    // Navigate to action URL
+                    await onViewDetails!();
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF6366F1),

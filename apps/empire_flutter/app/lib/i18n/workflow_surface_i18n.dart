@@ -119,6 +119,8 @@ class WorkflowSurfaceI18n {
     'Impact': '影响力',
     'Message': '消息',
     'Full Profile': '完整档案',
+    'Direct learner messaging and full learner profiles are not available from this sheet yet.':
+        '此页面暂不支持直接联系学习者或打开完整学习者档案。',
     'Learner Supports': '学习者支持',
     'Active Support Plans': '活跃支持计划',
     'High Priority': '高优先级',
@@ -578,6 +580,8 @@ class WorkflowSurfaceI18n {
     'Exit ticket sent': '退出票已發送',
     'Live session mode saved': '即時課堂模式已儲存',
     'Save Live Mode': '儲存課堂模式',
+    'Direct learner messaging and full learner profiles are not available from this sheet yet.':
+        '此頁面暫不支援直接聯絡學習者或開啟完整學習者檔案。',
     'Future Skills': '未來技能',
     'Leadership': '領導力',
     'Impact': '影響力',
