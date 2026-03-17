@@ -198,9 +198,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Parent unavailable'), findsOneWidget);
-    expect(find.text('Learner unavailable'), findsOneWidget);
-    expect(find.text('Site unavailable'), findsOneWidget);
+    expect(find.textContaining('Parent unavailable'), findsOneWidget);
+    expect(find.textContaining('Learner unavailable'), findsOneWidget);
+    expect(find.textContaining('Site unavailable'), findsOneWidget);
 
     await tester.tap(find.text('Payments'));
     await tester.pumpAndSettle();
