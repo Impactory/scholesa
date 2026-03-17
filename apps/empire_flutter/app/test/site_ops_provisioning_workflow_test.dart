@@ -22,11 +22,28 @@ final ThemeData _testTheme = ThemeData(
 class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
 class _FakeWorkflowBridgeService extends WorkflowBridgeService {
-  _FakeWorkflowBridgeService({List<Map<String, dynamic>>? launches})
+  _FakeWorkflowBridgeService({
+    List<Map<String, dynamic>>? launches,
+    List<Map<String, dynamic>>? runtimeDeliveries,
+    List<Map<String, dynamic>>? runtimeActivations,
+    Map<String, dynamic>? resolvedRuntimePackage,
+  })
       : _launches = List<Map<String, dynamic>>.from(launches ?? <Map<String, dynamic>>[]),
+        _runtimeDeliveries = List<Map<String, dynamic>>.from(
+          runtimeDeliveries ?? <Map<String, dynamic>>[],
+        ),
+        _runtimeActivations = List<Map<String, dynamic>>.from(
+          runtimeActivations ?? <Map<String, dynamic>>[],
+        ),
+        _resolvedRuntimePackage = resolvedRuntimePackage == null
+            ? null
+            : Map<String, dynamic>.from(resolvedRuntimePackage),
         super(functions: null);
 
   final List<Map<String, dynamic>> _launches;
+  final List<Map<String, dynamic>> _runtimeDeliveries;
+  final List<Map<String, dynamic>> _runtimeActivations;
+  final Map<String, dynamic>? _resolvedRuntimePackage;
   int _nextLaunchId = 1;
 
   @override
@@ -65,6 +82,56 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     _launches.removeWhere((Map<String, dynamic> launch) => launch['id'] == id);
     _launches.insert(0, record);
     return id;
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> listSiteFederatedLearningRuntimeDeliveryRecords({
+    String? siteId,
+    int limit = 40,
+  }) async {
+    final Iterable<Map<String, dynamic>> scoped = (siteId == null || siteId.isEmpty)
+        ? _runtimeDeliveries
+        : _runtimeDeliveries.where((Map<String, dynamic> record) {
+            final List<dynamic> targetSiteIds =
+                record['targetSiteIds'] as List<dynamic>? ?? <dynamic>[];
+            return targetSiteIds.cast<String>().contains(siteId);
+          });
+    return scoped
+        .take(limit)
+        .map((Map<String, dynamic> record) => Map<String, dynamic>.from(record))
+        .toList();
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> listSiteFederatedLearningRuntimeActivationRecords({
+    String? siteId,
+    int limit = 40,
+  }) async {
+    final Iterable<Map<String, dynamic>> scoped = (siteId == null || siteId.isEmpty)
+        ? _runtimeActivations
+        : _runtimeActivations.where(
+            (Map<String, dynamic> record) => record['siteId'] == siteId,
+          );
+    return scoped
+        .take(limit)
+        .map((Map<String, dynamic> record) => Map<String, dynamic>.from(record))
+        .toList();
+  }
+
+  @override
+  Future<Map<String, dynamic>?> resolveSiteFederatedLearningRuntimePackage({
+    String? siteId,
+    String? experimentId,
+    String? runtimeTarget,
+    String? deliveryRecordId,
+  }) async {
+    if (_resolvedRuntimePackage == null) {
+      return null;
+    }
+    if ((siteId ?? '').isNotEmpty && _resolvedRuntimePackage['siteId'] != siteId) {
+      return null;
+    }
+    return Map<String, dynamic>.from(_resolvedRuntimePackage);
   }
 }
 
@@ -218,6 +285,7 @@ Future<QueryDocumentSnapshot<Map<String, dynamic>>> _findUserByEmail(
 Future<void> _pumpSiteOpsPage(
   WidgetTester tester, {
   required FakeFirebaseFirestore firestore,
+  _FakeWorkflowBridgeService? workflowBridgeService,
 }) async {
   tester.view.physicalSize = const Size(1440, 2200);
   tester.view.devicePixelRatio = 1.0;
@@ -249,7 +317,7 @@ Future<void> _pumpSiteOpsPage(
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
-        home: SiteOpsPage(),
+        home: SiteOpsPage(workflowBridge: workflowBridgeService),
       ),
     ),
   );
@@ -370,6 +438,78 @@ void main() {
         find.text('Learner allergy reminder shared with Coach Ada'),
         findsOneWidget,
       );
+    });
+
+    testWidgets('site ops shows federated runtime rollout state for the active site',
+        (WidgetTester tester) async {
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+      await _seedSiteOpsData(firestore);
+      final _FakeWorkflowBridgeService workflowBridgeService =
+          _FakeWorkflowBridgeService(
+        runtimeDeliveries: <Map<String, dynamic>>[
+          <String, dynamic>{
+            'id': 'fl_delivery_site_1',
+            'targetSiteIds': <String>['site-1'],
+            'status': 'active',
+            'runtimeTarget': 'flutter_mobile',
+            'candidateModelPackageId': 'fl_pkg_1',
+            'manifestDigest': 'sha256:delivery-1',
+            'updatedAt': DateTime(2026, 3, 16, 8).millisecondsSinceEpoch,
+          },
+          <String, dynamic>{
+            'id': 'fl_delivery_site_2',
+            'targetSiteIds': <String>['site-2'],
+            'status': 'active',
+            'runtimeTarget': 'flutter_mobile',
+            'candidateModelPackageId': 'fl_pkg_2',
+            'manifestDigest': 'sha256:delivery-2',
+            'updatedAt': DateTime(2026, 3, 16, 7).millisecondsSinceEpoch,
+          },
+        ],
+        runtimeActivations: <Map<String, dynamic>>[
+          <String, dynamic>{
+            'id': 'fl_activation_site_1',
+            'deliveryRecordId': 'fl_delivery_site_1',
+            'siteId': 'site-1',
+            'status': 'fallback',
+            'runtimeTarget': 'flutter_mobile',
+            'notes': 'Latest site report requested fallback.',
+            'updatedAt': DateTime(2026, 3, 16, 9).millisecondsSinceEpoch,
+          },
+        ],
+        resolvedRuntimePackage: <String, dynamic>{
+          'packageId': 'fl_pkg_1',
+          'deliveryRecordId': 'fl_delivery_site_1',
+          'experimentId': 'fl_exp_literacy',
+          'candidateModelPackageId': 'fl_pkg_1',
+          'siteId': 'site-1',
+          'runtimeTarget': 'flutter_mobile',
+          'packageDigest': 'sha256:pkg-1',
+          'manifestDigest': 'sha256:delivery-1',
+          'resolutionStatus': 'paused',
+          'modelVersion': 'fl_runtime_model_v1',
+          'runtimeVectorLength': 8,
+          'runtimeVector': <double>[],
+          'runtimeVectorDigest': 'sha256:vector-1',
+          'rolloutStatus': 'active',
+          'rolloutControlMode': 'paused',
+          'rolloutControlReason': 'Paused pending bounded verification.',
+        },
+      );
+
+      await _pumpSiteOpsPage(
+        tester,
+        firestore: firestore,
+        workflowBridgeService: workflowBridgeService,
+      );
+
+      expect(find.text('Federated Runtime'), findsOneWidget);
+      expect(find.textContaining('Current package: fl_pkg_1 · paused'),
+          findsOneWidget);
+      expect(find.textContaining('Site rollout: 0 resolved · 0 staged · 1 fallback · 0 pending'),
+          findsOneWidget);
+      expect(find.textContaining('Latest site report: fallback · Latest site report requested fallback.'),
+          findsOneWidget);
     });
 
     testWidgets('provisioning delete confirmation renders zh-CN guardian link copy',

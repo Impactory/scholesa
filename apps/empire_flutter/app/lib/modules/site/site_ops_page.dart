@@ -3,9 +3,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import '../../auth/app_state.dart';
+import '../../domain/models.dart';
 import '../../i18n/site_surface_i18n.dart';
 import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
+import '../../services/workflow_bridge_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 String _tSiteOps(BuildContext context, String input) {
@@ -15,7 +17,9 @@ String _tSiteOps(BuildContext context, String input) {
 /// Site operations page for daily operations overview
 /// Based on docs/42_PHYSICAL_SITE_CHECKIN_CHECKOUT_SPEC.md
 class SiteOpsPage extends StatefulWidget {
-  const SiteOpsPage({super.key});
+  const SiteOpsPage({super.key, this.workflowBridge});
+
+  final WorkflowBridgeService? workflowBridge;
 
   @override
   State<SiteOpsPage> createState() => _SiteOpsPageState();
@@ -32,6 +36,13 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
   List<_TimetableEntry> _todaySessions = <_TimetableEntry>[];
   List<_KitChecklistItem> _kitChecklist = _defaultKitChecklist;
   List<_SafetyNoteEntry> _safetyNotes = <_SafetyNoteEntry>[];
+  FederatedLearningResolvedRuntimePackageModel? _runtimePackage;
+  List<FederatedLearningRuntimeDeliveryRecordModel> _runtimeDeliveries =
+      <FederatedLearningRuntimeDeliveryRecordModel>[];
+  List<FederatedLearningRuntimeActivationRecordModel> _runtimeActivations =
+      <FederatedLearningRuntimeActivationRecordModel>[];
+  bool _isLoadingRuntimeRollout = false;
+  String? _runtimeRolloutError;
   final TextEditingController _safetyNoteController = TextEditingController();
 
   @override
@@ -93,6 +104,8 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
             _buildStatusBanner(),
             const SizedBox(height: 24),
             _buildQuickStats(),
+            const SizedBox(height: 24),
+            _buildRuntimeRolloutCard(),
             const SizedBox(height: 24),
             _buildTimetableSnapshot(),
             const SizedBox(height: 24),
@@ -356,6 +369,164 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
     );
   }
 
+  Widget _buildRuntimeRolloutCard() {
+    final _SiteRuntimeRolloutSummary summary = _siteRuntimeRolloutSummary();
+    final FederatedLearningResolvedRuntimePackageModel? runtimePackage =
+        _runtimePackage;
+    final FederatedLearningRuntimeActivationRecordModel? latestActivation =
+        _latestRuntimeActivation();
+    final bool hasRolloutData = runtimePackage != null ||
+        _runtimeDeliveries.isNotEmpty ||
+        _runtimeActivations.isNotEmpty;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          _tSiteOps(context, 'Federated Runtime'),
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: ScholesaColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Card(
+          color: ScholesaColors.surface,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: _isLoadingRuntimeRollout
+                ? Text(
+                    _tSiteOps(context, 'Loading...'),
+                    style: const TextStyle(
+                      color: ScholesaColors.textSecondary,
+                    ),
+                  )
+                : _runtimeRolloutError != null && !hasRolloutData
+                    ? Text(
+                        _tSiteOps(
+                          context,
+                          'Runtime rollout details are unavailable right now',
+                        ),
+                        style: const TextStyle(
+                          color: ScholesaColors.textSecondary,
+                        ),
+                      )
+                    : !hasRolloutData
+                        ? Text(
+                            _tSiteOps(
+                              context,
+                              'No bounded runtime package assigned',
+                            ),
+                            style: const TextStyle(
+                              color: ScholesaColors.textSecondary,
+                            ),
+                          )
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text(
+                                _tSiteOps(
+                                  context,
+                                  'Active bounded runtime package and rollout status for this site',
+                                ),
+                                style: const TextStyle(
+                                  color: ScholesaColors.textSecondary,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              if (runtimePackage != null) ...<Widget>[
+                                Text(
+                                  '${_tSiteOps(context, 'Current package')}: ${runtimePackage.packageId} · ${_runtimeStatusLabel(runtimePackage.resolutionStatus)}',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${_tSiteOps(context, 'Runtime target')}: ${runtimePackage.runtimeTarget} · ${_tSiteOps(context, 'Model version')}: ${runtimePackage.modelVersion}',
+                                  style: const TextStyle(
+                                    color: ScholesaColors.textSecondary,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${_tSiteOps(context, 'Vector length')}: ${runtimePackage.runtimeVectorLength} · ${_tSiteOps(context, 'Manifest digest')}: ${runtimePackage.manifestDigest}',
+                                  style: const TextStyle(
+                                    color: ScholesaColors.textSecondary,
+                                  ),
+                                ),
+                                if (_runtimePackageReason(runtimePackage)
+                                    .isNotEmpty) ...<Widget>[
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '${_tSiteOps(context, 'Runtime status')}: ${_runtimePackageReason(runtimePackage)}',
+                                    style: const TextStyle(
+                                      color: ScholesaColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                                if (runtimePackage.rolloutControlMode != null &&
+                                    runtimePackage.rolloutControlMode!
+                                        .trim()
+                                        .isNotEmpty) ...<Widget>[
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '${_tSiteOps(context, 'HQ control')}: ${_runtimeStatusLabel(runtimePackage.rolloutControlMode!)}',
+                                    style: const TextStyle(
+                                      color: ScholesaColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                              if (runtimePackage != null)
+                                const SizedBox(height: 12)
+                              else
+                                const SizedBox(height: 4),
+                              Text(
+                                '${_tSiteOps(context, 'Site rollout')}: ${summary.resolvedCount} ${_tSiteOps(context, 'resolved')} · ${summary.stagedCount} ${_tSiteOps(context, 'staged')} · ${summary.fallbackCount} ${_tSiteOps(context, 'fallback')} · ${summary.pendingCount} ${_tSiteOps(context, 'pending')}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '${_tSiteOps(context, 'Active manifests')}: ${_runtimeDeliveries.length} · ${_tSiteOps(context, 'Activation reports')}: ${_runtimeActivations.length}',
+                                style: const TextStyle(
+                                  color: ScholesaColors.textSecondary,
+                                ),
+                              ),
+                              if (latestActivation != null) ...<Widget>[
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${_tSiteOps(context, 'Latest site report')}: ${_runtimeStatusLabel(latestActivation.status)}${_latestActivationNotes(latestActivation)}',
+                                  style: const TextStyle(
+                                    color: ScholesaColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                              if (_runtimeRolloutError != null) ...<Widget>[
+                                const SizedBox(height: 8),
+                                Text(
+                                  _tSiteOps(
+                                    context,
+                                    'Runtime rollout details are partially unavailable right now',
+                                  ),
+                                  style: const TextStyle(
+                                    color: ScholesaColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildStatCard(
       String label, String value, IconData icon, Color color) {
     return Container(
@@ -584,6 +755,11 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
           _todaySessions = <_TimetableEntry>[];
           _kitChecklist = _defaultKitChecklist;
           _safetyNotes = <_SafetyNoteEntry>[];
+          _runtimePackage = null;
+          _runtimeDeliveries = <FederatedLearningRuntimeDeliveryRecordModel>[];
+          _runtimeActivations =
+              <FederatedLearningRuntimeActivationRecordModel>[];
+          _runtimeRolloutError = null;
         });
         return;
       }
@@ -593,6 +769,8 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
       final DateTime nextDay = dayStart.add(const Duration(days: 1));
       final List<_TimedActivity> activities = <_TimedActivity>[];
       final List<_TimetableEntry> timetable = <_TimetableEntry>[];
+      final _SiteRuntimeRolloutState runtimeRolloutState =
+          await _loadRuntimeRolloutState(resolvedSiteId);
 
       final QuerySnapshot<Map<String, dynamic>> presenceSnap =
           await firestoreService.firestore
@@ -843,12 +1021,201 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
         _todaySessions = timetable;
         _kitChecklist = checklist;
         _safetyNotes = safetyNotes;
+        _runtimePackage = runtimeRolloutState.package;
+        _runtimeDeliveries = runtimeRolloutState.deliveries;
+        _runtimeActivations = runtimeRolloutState.activations;
+        _runtimeRolloutError = runtimeRolloutState.error;
       });
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  Future<_SiteRuntimeRolloutState> _loadRuntimeRolloutState(
+    String siteId,
+  ) async {
+    final WorkflowBridgeService workflowBridge =
+        widget.workflowBridge ?? WorkflowBridgeService.instance;
+    if (mounted) {
+      setState(() => _isLoadingRuntimeRollout = true);
+    }
+    try {
+      final List<dynamic> payload = await Future.wait<dynamic>(<Future<dynamic>>[
+        workflowBridge.listSiteFederatedLearningRuntimeDeliveryRecords(
+          siteId: siteId,
+          limit: 12,
+        ),
+        workflowBridge.listSiteFederatedLearningRuntimeActivationRecords(
+          siteId: siteId,
+          limit: 12,
+        ),
+        workflowBridge.resolveSiteFederatedLearningRuntimePackage(siteId: siteId),
+      ]);
+
+      final List<FederatedLearningRuntimeDeliveryRecordModel> deliveries =
+          (payload[0] as List<dynamic>)
+              .whereType<Map<String, dynamic>>()
+              .map(
+                (Map<String, dynamic> row) =>
+                    FederatedLearningRuntimeDeliveryRecordModel.fromMap(
+                  row['id'] as String? ?? '',
+                  row,
+                ),
+              )
+              .toList(growable: false);
+      final List<FederatedLearningRuntimeActivationRecordModel> activations =
+          (payload[1] as List<dynamic>)
+              .whereType<Map<String, dynamic>>()
+              .map(
+                (Map<String, dynamic> row) =>
+                    FederatedLearningRuntimeActivationRecordModel.fromMap(
+                  row['id'] as String? ?? '',
+                  row,
+                ),
+              )
+              .toList(growable: false);
+      final Map<String, dynamic>? packageRow = payload[2] as Map<String, dynamic>?;
+      final FederatedLearningResolvedRuntimePackageModel? package =
+          packageRow == null
+              ? null
+              : FederatedLearningResolvedRuntimePackageModel.fromMap(packageRow);
+      return _SiteRuntimeRolloutState(
+        package: package,
+        deliveries: deliveries,
+        activations: activations,
+      );
+    } catch (error) {
+      return _SiteRuntimeRolloutState(
+        deliveries: const <FederatedLearningRuntimeDeliveryRecordModel>[],
+        activations: const <FederatedLearningRuntimeActivationRecordModel>[],
+        error: error.toString(),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingRuntimeRollout = false);
+      }
+    }
+  }
+
+  _SiteRuntimeRolloutSummary _siteRuntimeRolloutSummary() {
+    int resolvedCount = 0;
+    int stagedCount = 0;
+    int fallbackCount = 0;
+    final Map<String, FederatedLearningRuntimeActivationRecordModel>
+        latestByDeliveryId = <String, FederatedLearningRuntimeActivationRecordModel>{};
+
+    for (final FederatedLearningRuntimeActivationRecordModel activation
+        in _runtimeActivations) {
+      final FederatedLearningRuntimeActivationRecordModel? current =
+          latestByDeliveryId[activation.deliveryRecordId];
+      if (current == null ||
+          _runtimeActivationTimestamp(activation) >
+              _runtimeActivationTimestamp(current)) {
+        latestByDeliveryId[activation.deliveryRecordId] = activation;
+      }
+    }
+
+    for (final FederatedLearningRuntimeActivationRecordModel activation
+        in latestByDeliveryId.values) {
+      switch (activation.status.trim()) {
+        case 'resolved':
+          resolvedCount += 1;
+          break;
+        case 'staged':
+          stagedCount += 1;
+          break;
+        case 'fallback':
+          fallbackCount += 1;
+          break;
+      }
+    }
+
+    final int pendingCount = _runtimeDeliveries
+        .where(
+          (FederatedLearningRuntimeDeliveryRecordModel delivery) =>
+              !latestByDeliveryId.containsKey(delivery.id),
+        )
+        .length;
+
+    return _SiteRuntimeRolloutSummary(
+      resolvedCount: resolvedCount,
+      stagedCount: stagedCount,
+      fallbackCount: fallbackCount,
+      pendingCount: pendingCount,
+    );
+  }
+
+  FederatedLearningRuntimeActivationRecordModel? _latestRuntimeActivation() {
+    if (_runtimeActivations.isEmpty) {
+      return null;
+    }
+    final List<FederatedLearningRuntimeActivationRecordModel> sorted =
+        List<FederatedLearningRuntimeActivationRecordModel>.from(
+      _runtimeActivations,
+    )..sort(
+            (FederatedLearningRuntimeActivationRecordModel a,
+                    FederatedLearningRuntimeActivationRecordModel b) =>
+                _runtimeActivationTimestamp(b)
+                    .compareTo(_runtimeActivationTimestamp(a)),
+          );
+    return sorted.first;
+  }
+
+  int _runtimeActivationTimestamp(
+    FederatedLearningRuntimeActivationRecordModel activation,
+  ) {
+    return activation.updatedAt?.millisecondsSinceEpoch ??
+        activation.reportedAt?.millisecondsSinceEpoch ??
+        activation.createdAt?.millisecondsSinceEpoch ??
+        0;
+  }
+
+  String _runtimeStatusLabel(String value) {
+    switch (value.trim()) {
+      case 'resolved':
+      case 'staged':
+      case 'fallback':
+      case 'pending':
+      case 'assigned':
+      case 'active':
+      case 'revoked':
+      case 'superseded':
+      case 'expired':
+      case 'restricted':
+      case 'paused':
+      case 'monitor':
+        return _tSiteOps(context, value.trim());
+      default:
+        return value.trim();
+    }
+  }
+
+  String _runtimePackageReason(
+    FederatedLearningResolvedRuntimePackageModel package,
+  ) {
+    switch (package.resolutionStatus.trim()) {
+      case 'paused':
+      case 'restricted':
+        return package.rolloutControlReason?.trim() ?? '';
+      case 'revoked':
+        return package.revocationReason?.trim() ?? '';
+      case 'superseded':
+        return package.supersessionReason?.trim() ?? '';
+      default:
+        return '';
+    }
+  }
+
+  String _latestActivationNotes(
+    FederatedLearningRuntimeActivationRecordModel activation,
+  ) {
+    final String notes = (activation.notes ?? '').trim();
+    if (notes.isEmpty) {
+      return '';
+    }
+    return ' · $notes';
   }
 
   Future<void> _toggleChecklistItem(
@@ -1116,6 +1483,34 @@ class _SafetyNoteEntry {
   final String note;
   final DateTime createdAt;
   final String authorLabel;
+}
+
+class _SiteRuntimeRolloutState {
+  const _SiteRuntimeRolloutState({
+    this.package,
+    required this.deliveries,
+    required this.activations,
+    this.error,
+  });
+
+  final FederatedLearningResolvedRuntimePackageModel? package;
+  final List<FederatedLearningRuntimeDeliveryRecordModel> deliveries;
+  final List<FederatedLearningRuntimeActivationRecordModel> activations;
+  final String? error;
+}
+
+class _SiteRuntimeRolloutSummary {
+  const _SiteRuntimeRolloutSummary({
+    required this.resolvedCount,
+    required this.stagedCount,
+    required this.fallbackCount,
+    required this.pendingCount,
+  });
+
+  final int resolvedCount;
+  final int stagedCount;
+  final int fallbackCount;
+  final int pendingCount;
 }
 
 const List<_KitChecklistItem> _defaultKitChecklist = <_KitChecklistItem>[

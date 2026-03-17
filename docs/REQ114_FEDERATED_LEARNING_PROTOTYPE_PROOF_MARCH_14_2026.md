@@ -38,6 +38,7 @@ Implemented prototype scope:
 - bounded runtime-delivery manifest records for HQ assignment of observed pilot packages to approved sites, plus site-scoped resolver access to those manifests
 - bounded runtime-activation evidence records for site-scoped acknowledgement of assigned runtime-delivery manifests, plus HQ read-only visibility into the latest site reports
 - bounded runtime-vector payload resolution for site devices, including site-scoped callable package resolution, device-side activation reporting on package load, and norm-capped merged runtime vectors staged inside aggregation artifacts and candidate packages
+- site-facing rollout visibility in the Flutter site ops surface, including the active bounded runtime package, rollout summary, latest site activation report, and HQ control or fallback context for the current site
 - bounded runtime-delivery lifecycle control, including expiry windows, explicit revocation reasons, fallback reporting, and device-side invalidation of stale runtime payloads
 - HQ runtime-delivery lifecycle visibility, including recent delivery history with expiry and revocation detail per experiment
 - HQ per-site rollout-health visibility for the latest runtime delivery, including resolved, staged, fallback, and pending site counts plus site-by-site drill-in detail
@@ -80,6 +81,7 @@ Not claimed by this proof:
 - apps/empire_flutter/app/lib/domain/models.dart
 - apps/empire_flutter/app/lib/domain/repositories.dart
 - apps/empire_flutter/app/lib/modules/hq_admin/hq_feature_flags_page.dart
+- apps/empire_flutter/app/lib/modules/site/site_ops_page.dart
 - apps/empire_flutter/app/lib/services/federated_learning_prototype_uploader.dart
 - apps/empire_flutter/app/lib/services/federated_learning_runtime_activation_reporter.dart
 - apps/empire_flutter/app/lib/services/federated_learning_runtime_adapter.dart
@@ -87,6 +89,8 @@ Not claimed by this proof:
 - apps/empire_flutter/app/lib/services/federated_learning_runtime_package_resolver.dart
 - apps/empire_flutter/app/lib/services/workflow_bridge_service.dart
 - apps/empire_flutter/app/test/federated_learning_prototype_workflow_test.dart
+- apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart
+- apps/empire_flutter/app/test/learner_site_surfaces_localization_test.dart
 - test/firestore-rules.test.js
 
 ## Validation
@@ -180,6 +184,7 @@ Additional focused validation passed on 2026-03-17:
 - The HQ feature-flags surface now also lets stale acknowledged rollout-alert triage raise experiment priority above healthy experiments, so long-unfollowed fallback or pending states do not disappear from the bounded operator queue just because they were previously acknowledged.
 - The HQ feature-flags surface now also renders explicit triage-age cues and a `Refresh triage` action for acknowledged rollout alerts whose review is aging, so operators can see when acknowledged fallback or pending states have gone stale instead of relying only on queue position.
 - Site-scoped runtime package resolution now also honors those bounded rollout-control records, so paused deliveries force fallback for all sites while restricted deliveries remain usable only for sites that already reported resolved activation on that delivery.
+- The Flutter site ops surface now also consumes the site-scoped runtime delivery, activation, and runtime-package resolution callables so site operators can see the currently assigned bounded package, rollout status counts, latest site report, and HQ control or fallback reason without depending on the HQ operator console for first-line rollout triage.
 - Aggregation materialization now also applies an experiment-configured bounded norm-capped runtime-vector merge strategy, so high-norm prototype updates are dampened and HQ can choose between sample-weighted or summary-balanced averaging for bounded cohorts instead of relying on one hard-coded path.
 - Aggregation materialization now also persists merge transparency metadata, including the applied norm cap, raw-versus-effective weight rollups, damped-summary count, min/max update-norm range, and contributor-site lineage for each aggregated cohort, and the HQ experiment cards, aggregation-history, candidate-package history, and promotion-history surfaces render that metadata alongside the merge strategy so operators can audit bounded merge behavior and cohort provenance throughout triage, review, and promotion flows instead of treating it as hidden backend state.
 - The HQ aggregation-history, candidate-package history, and promotion-history search surfaces now also index contributor-site lineage, so operators can filter bounded merge and promotion trails directly by site ID instead of scanning digests and record IDs by hand.

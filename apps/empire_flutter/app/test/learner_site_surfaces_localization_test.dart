@@ -790,6 +790,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('今日營運'), findsOneWidget);
+      expect(find.text('聯邦執行階段'), findsOneWidget);
       expect(find.text('快捷操作'), findsOneWidget);
       expect(find.text('最近活動'), findsOneWidget);
     });
