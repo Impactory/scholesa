@@ -51,7 +51,8 @@ class WorkflowSurfaceI18n {
     'Use Camera': '使用相机',
     'Enter Code': '输入代码',
     'QR scanning is not available in the app yet': '应用内暂不支持二维码扫描',
-    'Manual pickup code entry is not available in the app yet': '应用内暂不支持手动输入接送代码',
+    'Manual pickup code entry is not available in the app yet':
+        '应用内暂不支持手动输入接送代码',
     'Check In': '签到',
     'Check Out': '签退',
     'Authorized pickups': '授权接送',
@@ -64,11 +65,11 @@ class WorkflowSurfaceI18n {
     'Core lane': '核心路径',
     'Stretch lane': '拓展路径',
     'Use worked examples, shorter sets, and frequent explain-it-back checks.':
-      '使用示范例题、更短的练习组，并频繁进行讲解复述检核。',
+        '使用示范例题、更短的练习组，并频繁进行讲解复述检核。',
     'Use open-ended extensions, transfer prompts, and learner-led reflection.':
-      '使用开放式拓展、迁移提示和学习者主导的反思。',
+        '使用开放式拓展、迁移提示和学习者主导的反思。',
     'Use on-level practice, targeted feedback, and one concrete next step.':
-      '使用同水平练习、针对性反馈，并给出一个明确的下一步。',
+        '使用同水平练习、针对性反馈，并给出一个明确的下一步。',
     'Review one model example together.': '一起复盘一个示范例题。',
     'Complete two short guided reps.': '完成两组简短的引导练习。',
     'End with a verbal explain-it-back.': '最后进行一次口头讲解复述。',
@@ -141,23 +142,32 @@ class WorkflowSurfaceI18n {
     'Sync': '同步',
     'Sync Now': '立即同步',
     'Settings': '设置',
+    'Help & Support': '帮助与支持',
+    'Help Center Contact': '帮助中心联系信息',
     'Disconnect': '断开连接',
     'Connect': '连接',
+    'Privacy Policy Notice': '隐私政策说明',
+    'Terms of Service Notice': '服务条款说明',
+    'Contact support at support@scholesa.com with your site ID and issue details.':
+        '请发送邮件至 support@scholesa.com，并附上站点 ID 和问题详情。',
+    'Your data is processed according to Scholesa privacy standards and your site policies.':
+        '你的数据会按照 Scholesa 隐私标准和你所属站点的政策进行处理。',
+    'Use of Scholesa requires compliance with site and platform safety standards.':
+        '使用 Scholesa 需要遵守站点和平台的安全标准。',
     'Statements are shared by your site or HQ billing team.':
-      '账单对账单由你的站点或 HQ 计费团队提供。',
+        '账单对账单由你的站点或 HQ 计费团队提供。',
     'Invoice actions are handled by your site or HQ billing team.':
-      '发票操作由你的站点或 HQ 计费团队处理。',
+        '发票操作由你的站点或 HQ 计费团队处理。',
     'Payment method changes are handled by HQ billing support.':
-      '付款方式变更由 HQ 计费支持处理。',
-    'Plan changes are handled by HQ billing support.':
-      '方案变更由 HQ 计费支持处理。',
+        '付款方式变更由 HQ 计费支持处理。',
+    'Plan changes are handled by HQ billing support.': '方案变更由 HQ 计费支持处理。',
     'Billing statements are not available yet': '账单对账单暂不可用',
     'Invoice payments are not available in the app yet': '应用内暂不支持支付发票',
     'Invoice viewing is not available in the app yet': '应用内暂不支持查看发票',
     'Self-service payment method updates are not available yet. Contact HQ billing support for changes.':
-      '暂不支持自助更新付款方式。如需变更，请联系 HQ 计费支持。',
+        '暂不支持自助更新付款方式。如需变更，请联系 HQ 计费支持。',
     'Self-service plan changes are not available yet. Contact HQ billing support for changes.':
-      '暂不支持自助变更方案。如需调整，请联系 HQ 计费支持。',
+        '暂不支持自助变更方案。如需调整，请联系 HQ 计费支持。',
     'New Session': '新建课程',
     'My Sessions': '我的课程',
     'Manage your teaching schedule': '管理你的教学日程',
@@ -175,11 +185,11 @@ class WorkflowSurfaceI18n {
     'Paste CSV content to import a roster': '请粘贴 CSV 内容以导入名单',
     'Unable to import roster right now': '目前无法导入名单',
     'Roster import complete: {importedCount} enrolled, {duplicateCount} already present':
-      '名单导入完成：已报名 {importedCount} 人，{duplicateCount} 人已在班级中',
+        '名单导入完成：已报名 {importedCount} 人，{duplicateCount} 人已在班级中',
     'Roster import complete: {importedCount} enrolled, {queuedCount} queued for provisioning':
-      '名单导入完成：已报名 {importedCount} 人，{queuedCount} 人已加入开通队列',
+        '名单导入完成：已报名 {importedCount} 人，{queuedCount} 人已加入开通队列',
     'Use headers like name, email, or learner_id. Unknown learners will be queued for site provisioning.':
-      '可使用 name、email 或 learner_id 等列名。无法识别的学习者会加入站点开通队列。',
+        '可使用 name、email 或 learner_id 等列名。无法识别的学习者会加入站点开通队列。',
     'Import': '导入',
     'Pillar': '支柱',
     'Create': '创建',
@@ -251,11 +261,11 @@ class WorkflowSurfaceI18n {
     'Solid progress': '进展扎实',
     'Growth opportunity': '仍有提升空间',
     'Reference specific evidence from the submission and keep the next step concrete.':
-      '请引用提交中的具体证据，并让下一步建议保持明确具体。',
+        '请引用提交中的具体证据，并让下一步建议保持明确具体。',
     'Next, push the learner to explain their choices and extend the work independently.':
-      '下一步，让学习者解释自己的选择，并独立扩展这份作品。',
+        '下一步，让学习者解释自己的选择，并独立扩展这份作品。',
     'Next, ask the learner to revise one concrete part and explain the change back to you.':
-      '下一步，让学习者修改一个具体部分，并向你复述修改原因。',
+        '下一步，让学习者修改一个具体部分，并向你复述修改原因。',
     'New Invoice': '新建发票',
     'Billing Management': '账单管理',
     'All Sites': '所有站点',
@@ -277,7 +287,7 @@ class WorkflowSurfaceI18n {
     'Status': '状态',
     'No billing data yet': '尚无账单数据',
     'Billing details will appear once your site or HQ team provisions an active family billing account.':
-      '当你的站点或 HQ 团队配置好有效的家庭账单账户后，账单详情会显示在这里。',
+        '当你的站点或 HQ 团队配置好有效的家庭账单账户后，账单详情会显示在这里。',
     'Billing plan unavailable': '账单方案不可用',
     'Plan': '方案',
     'Safety Overview': '安全概览',
@@ -345,7 +355,7 @@ class WorkflowSurfaceI18n {
     'Steps': '步骤',
     'Proof of Learning': '学习证据包',
     'Capture an explain-it-back, version history, oral check, and mini-rebuild before review.':
-      '在提交审查前，记录讲解复述、版本历史、口头检核和迷你重建。',
+        '在提交审查前，记录讲解复述、版本历史、口头检核和迷你重建。',
     'Explain-it-back summary': '讲解复述摘要',
     'Oral check reflection': '口头检核反思',
     'Mini-rebuild plan': '迷你重建计划',
@@ -359,7 +369,7 @@ class WorkflowSurfaceI18n {
     'Add a version checkpoint summary first': '请先填写版本检查点摘要',
     'Saved just now': '刚刚保存',
     'Complete all four proof items before submitting this mission.':
-      '请先完成四项学习证据，再提交此任务。',
+        '请先完成四项学习证据，再提交此任务。',
     'Start Mission': '开始任务',
     'Submit for Review': '提交审查',
     'Study flow': '学习流程',
@@ -456,7 +466,7 @@ class WorkflowSurfaceI18n {
     'Scheduled': '已安排',
     'Minimum distinct sites': '最少不同站点数',
     'Require aggregation batches to include at least this many different sites.':
-      '要求聚合批次至少包含这么多个不同站点。',
+        '要求聚合批次至少包含这么多个不同站点。',
   };
 
   static const Map<String, String> _zhTw = <String, String>{
@@ -487,25 +497,35 @@ class WorkflowSurfaceI18n {
     'No records today': '今天沒有紀錄',
     'Scan QR': '掃描 QR',
     'Close': '關閉',
+    'Help & Support': '幫助與支援',
+    'Help Center Contact': '幫助中心聯絡資訊',
     'Use Camera': '使用相機',
     'Enter Code': '輸入代碼',
     'QR scanning is not available in the app yet': 'App 內暫不支援 QR 掃描',
-    'Manual pickup code entry is not available in the app yet': 'App 內暫不支援手動輸入接送代碼',
+    'Manual pickup code entry is not available in the app yet':
+        'App 內暫不支援手動輸入接送代碼',
+    'Privacy Policy Notice': '隱私政策說明',
+    'Terms of Service Notice': '服務條款說明',
+    'Contact support at support@scholesa.com with your site ID and issue details.':
+        '請寄信至 support@scholesa.com，並附上站點 ID 與問題詳情。',
+    'Your data is processed according to Scholesa privacy standards and your site policies.':
+        '你的資料會依照 Scholesa 隱私標準與你所屬站點的政策處理。',
+    'Use of Scholesa requires compliance with site and platform safety standards.':
+        '使用 Scholesa 需要遵守站點與平台的安全標準。',
     'Statements are shared by your site or HQ billing team.':
-      '帳單對帳單由你的站點或 HQ 計費團隊提供。',
+        '帳單對帳單由你的站點或 HQ 計費團隊提供。',
     'Invoice actions are handled by your site or HQ billing team.':
-      '發票操作由你的站點或 HQ 計費團隊處理。',
+        '發票操作由你的站點或 HQ 計費團隊處理。',
     'Payment method changes are handled by HQ billing support.':
-      '付款方式變更由 HQ 計費支援處理。',
-    'Plan changes are handled by HQ billing support.':
-      '方案變更由 HQ 計費支援處理。',
+        '付款方式變更由 HQ 計費支援處理。',
+    'Plan changes are handled by HQ billing support.': '方案變更由 HQ 計費支援處理。',
     'Billing statements are not available yet': '帳單對帳單暫時不可用',
     'Invoice payments are not available in the app yet': 'App 內暫不支援支付發票',
     'Invoice viewing is not available in the app yet': 'App 內暫不支援查看發票',
     'Self-service payment method updates are not available yet. Contact HQ billing support for changes.':
-      '暫不支援自助更新付款方式。如需變更，請聯絡 HQ 計費支援。',
+        '暫不支援自助更新付款方式。如需變更，請聯絡 HQ 計費支援。',
     'Self-service plan changes are not available yet. Contact HQ billing support for changes.':
-      '暫不支援自助變更方案。如需調整，請聯絡 HQ 計費支援。',
+        '暫不支援自助變更方案。如需調整，請聯絡 HQ 計費支援。',
     'My Learners': '我的學習者',
     'Track progress and engagement': '追蹤進度與參與度',
     'Differentiation lane': '差異化路徑',
@@ -514,11 +534,11 @@ class WorkflowSurfaceI18n {
     'Core lane': '核心路徑',
     'Stretch lane': '延伸路徑',
     'Use worked examples, shorter sets, and frequent explain-it-back checks.':
-      '使用示範例題、較短的練習組，並頻繁進行講解複述檢核。',
+        '使用示範例題、較短的練習組，並頻繁進行講解複述檢核。',
     'Use open-ended extensions, transfer prompts, and learner-led reflection.':
-      '使用開放式延伸、遷移提示與學習者主導的反思。',
+        '使用開放式延伸、遷移提示與學習者主導的反思。',
     'Use on-level practice, targeted feedback, and one concrete next step.':
-      '使用同程度練習、聚焦回饋，並給出一個明確的下一步。',
+        '使用同程度練習、聚焦回饋，並給出一個明確的下一步。',
     'Review one model example together.': '一起複盤一個示範例題。',
     'Complete two short guided reps.': '完成兩組簡短引導練習。',
     'End with a verbal explain-it-back.': '最後進行一次口頭講解複述。',
@@ -573,11 +593,11 @@ class WorkflowSurfaceI18n {
     'Paste CSV content to import a roster': '請貼上 CSV 內容以匯入名單',
     'Unable to import roster right now': '目前無法匯入名單',
     'Roster import complete: {importedCount} enrolled, {duplicateCount} already present':
-      '名單匯入完成：已報名 {importedCount} 人，{duplicateCount} 人已在班級中',
+        '名單匯入完成：已報名 {importedCount} 人，{duplicateCount} 人已在班級中',
     'Roster import complete: {importedCount} enrolled, {queuedCount} queued for provisioning':
-      '名單匯入完成：已報名 {importedCount} 人，{queuedCount} 人已加入開通佇列',
+        '名單匯入完成：已報名 {importedCount} 人，{queuedCount} 人已加入開通佇列',
     'Use headers like name, email, or learner_id. Unknown learners will be queued for site provisioning.':
-      '可使用 name、email 或 learner_id 等欄位名稱。無法識別的學習者會加入站點開通佇列。',
+        '可使用 name、email 或 learner_id 等欄位名稱。無法識別的學習者會加入站點開通佇列。',
     'Import': '匯入',
     'Title is required': '標題為必填項',
     'Failed to create session': '建立課程失敗',
@@ -621,11 +641,11 @@ class WorkflowSurfaceI18n {
     'Solid progress': '進展穩定',
     'Growth opportunity': '仍有成長空間',
     'Reference specific evidence from the submission and keep the next step concrete.':
-      '請引用提交內容中的具體證據，並讓下一步建議保持明確。',
+        '請引用提交內容中的具體證據，並讓下一步建議保持明確。',
     'Next, push the learner to explain their choices and extend the work independently.':
-      '下一步，讓學習者說明自己的選擇，並獨立延伸這份作品。',
+        '下一步，讓學習者說明自己的選擇，並獨立延伸這份作品。',
     'Next, ask the learner to revise one concrete part and explain the change back to you.':
-      '下一步，請學習者修改一個具體部分，並向你說明改動原因。',
+        '下一步，請學習者修改一個具體部分，並向你說明改動原因。',
     'New Invoice': '新建發票',
     'Billing Management': '帳務管理',
     'All Sites': '所有站點',
@@ -634,7 +654,7 @@ class WorkflowSurfaceI18n {
     'Subscriptions': '訂閱',
     'No billing data yet': '尚無帳單資料',
     'Billing details will appear once your site or HQ team provisions an active family billing account.':
-      '當你的站點或 HQ 團隊配置好有效的家庭帳單帳戶後，帳單詳情會顯示在這裡。',
+        '當你的站點或 HQ 團隊配置好有效的家庭帳單帳戶後，帳單詳情會顯示在這裡。',
     'Billing plan unavailable': '帳單方案不可用',
     'Feature Flags': '功能旗標',
     'Approvals': '審批',
@@ -681,7 +701,7 @@ class WorkflowSurfaceI18n {
     'Steps': '步驟',
     'Proof of Learning': '學習證據包',
     'Capture an explain-it-back, version history, oral check, and mini-rebuild before review.':
-      '在提交審查前，記錄講解複述、版本歷史、口頭檢核與迷你重建。',
+        '在提交審查前，記錄講解複述、版本歷史、口頭檢核與迷你重建。',
     'Explain-it-back summary': '講解複述摘要',
     'Oral check reflection': '口頭檢核反思',
     'Mini-rebuild plan': '迷你重建計畫',
@@ -695,7 +715,7 @@ class WorkflowSurfaceI18n {
     'Add a version checkpoint summary first': '請先填寫版本檢查點摘要',
     'Saved just now': '剛剛儲存',
     'Complete all four proof items before submitting this mission.':
-      '請先完成四項學習證據，再提交此任務。',
+        '請先完成四項學習證據，再提交此任務。',
     'Start Mission': '開始任務',
     'Submit for Review': '提交審查',
     'Study flow': '學習流程',
@@ -715,7 +735,7 @@ class WorkflowSurfaceI18n {
     'Scheduled': '已安排',
     'Minimum distinct sites': '最少不同站點數',
     'Require aggregation batches to include at least this many different sites.':
-      '要求聚合批次至少包含這麼多個不同站點。',
+        '要求聚合批次至少包含這麼多個不同站點。',
     'Snoozed': '已延後',
     'Rescheduled': '已重新安排',
     'Suspended': '已暫停',
