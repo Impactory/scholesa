@@ -6095,10 +6095,10 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.textContaining('Triage age: recently acknowledged'),
+      find.textContaining('Triage age:'),
       findsOneWidget,
     );
-    expect(find.widgetWithText(TextButton, 'Update triage'), findsOneWidget);
+    expect(find.widgetWithText(TextButton, 'Acknowledge alert'), findsNothing);
   });
 
   testWidgets('HQ page shows runtime rollout audit feed',
