@@ -248,6 +248,42 @@ void main() {
       expect(payload['charsAdded'], greaterThan(0));
       expect(payload['textLengthBucket'], isNotEmpty);
     });
+
+    testWidgets('prompt marks missing runtime state as unavailable, not unknown',
+        (WidgetTester tester) async {
+      String? capturedPrompt;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: _testTheme,
+          home: Scaffold(
+            body: AiCoachWidget(
+              runtime: runtime,
+              actorRole: UserRole.learner,
+              skipVoiceInitializationForTesting: true,
+              onAutoResponseRequest: (String prompt, AiCoachMode mode) async {
+                capturedPrompt = prompt;
+                return AiCoachResponse.fromMap(<String, dynamic>{
+                  'message': 'Let us take the next small step.',
+                  'mode': mode.name,
+                  'meta': <String, dynamic>{'version': 'test'},
+                });
+              },
+            ),
+          ),
+        ),
+      );
+
+      await tester.enterText(find.byType(TextField), 'Help me debug this checkpoint');
+      await tester.tap(find.byIcon(Icons.send));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pumpAndSettle();
+
+      expect(capturedPrompt, isNotNull);
+      expect(capturedPrompt, contains('stateEstimate: unavailable'));
+      expect(capturedPrompt, isNot(contains('stateEstimate: unknown')));
+    });
   });
 }
 

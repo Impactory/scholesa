@@ -1006,7 +1006,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
 
   String _stateSnapshot() {
     final XHat? state = widget.runtime.state?.xHat;
-    if (state == null) return 'unknown';
+    if (state == null) return 'unavailable';
     return 'cognition=${state.cognition.toStringAsFixed(2)}, engagement=${state.engagement.toStringAsFixed(2)}, integrity=${state.integrity.toStringAsFixed(2)}';
   }
 
