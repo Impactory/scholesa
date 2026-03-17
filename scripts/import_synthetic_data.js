@@ -1,5 +1,8 @@
 const fs = require('fs');
 const path = require('path');
+const {
+  buildBosMiaSyntheticTrainingArtifacts,
+} = require('./lib/bos_mia_synthetic_training');
 
 const ROOT_DIR = path.resolve(__dirname, '..');
 const FULL_PACK_DIR = path.join(
@@ -352,6 +355,10 @@ function buildImportBundle(options) {
   const sessionById = new Map();
   const rowByRecordId = new Map();
   const expectedByRecordId = new Map();
+  let starterTrainingRows = [];
+  let fullExpectedRows = [];
+  let longitudinalRows = [];
+  let goldEvalRows = [];
 
   if (options.mode === 'starter' || options.mode === 'all') {
     const starterBootstrapRows = readJsonlFile(
@@ -360,6 +367,7 @@ function buildImportBundle(options) {
     const starterChallengeRows = readJsonlFile(
       path.join(STARTER_PACK_DIR, 'scholesa_synthetic_challenge_v1.jsonl'),
     );
+    starterTrainingRows = starterBootstrapRows;
     bundle.sourcePacks.push('starter');
     incrementCount(bundle.sourceCounts, 'starterBootstrapRows', starterBootstrapRows.length);
     incrementCount(bundle.sourceCounts, 'starterChallengeRows', starterChallengeRows.length);
@@ -603,12 +611,13 @@ function buildImportBundle(options) {
     const rawEventRows = readJsonlFile(path.join(FULL_PACK_DIR, 'normalized', 'raw_event_log_v2.jsonl'));
     const dashboardAggregateRows = readCsvFile(path.join(FULL_PACK_DIR, 'suites', 'dashboard_aggregates_v2.csv'));
     const fairnessSuiteRows = readJsonlFile(path.join(FULL_PACK_DIR, 'suites', 'fairness_counterfactual_suite_v2.jsonl'));
-    const goldEvalRows = readJsonlFile(path.join(FULL_PACK_DIR, 'suites', 'gold_eval_suite_v2.jsonl'));
+    goldEvalRows = readJsonlFile(path.join(FULL_PACK_DIR, 'suites', 'gold_eval_suite_v2.jsonl'));
     const integrityRows = readJsonlFile(path.join(FULL_PACK_DIR, 'suites', 'integrity_adversarial_suite_v2.jsonl'));
     const privacyRows = readJsonlFile(path.join(FULL_PACK_DIR, 'suites', 'privacy_safety_suite_v2.jsonl'));
     const schemaEdgeRows = readJsonlFile(path.join(FULL_PACK_DIR, 'suites', 'schema_edgecase_suite_v2.jsonl'));
-    const longitudinalRows = readJsonlFile(path.join(FULL_PACK_DIR, 'suites', 'longitudinal_trajectory_suite_v2.jsonl'));
+    longitudinalRows = readJsonlFile(path.join(FULL_PACK_DIR, 'suites', 'longitudinal_trajectory_suite_v2.jsonl'));
     const loadTestRows = readJsonlFile(path.join(FULL_PACK_DIR, 'suites', 'load_test_requests_v2.jsonl'));
+    fullExpectedRows = expectedRows;
     bundle.sourcePacks.push('full');
 
     incrementCount(bundle.sourceCounts, 'fullCohorts', cohortRows.length);
@@ -1053,6 +1062,21 @@ function buildImportBundle(options) {
     });
   }
 
+  const trainingArtifacts = buildBosMiaSyntheticTrainingArtifacts({
+    importedAt: startedAt,
+    sourcePacks: bundle.sourcePacks,
+    starterTrainingRows,
+    fullExpectedRows,
+    coreRows: Array.from(rowByRecordId.values()),
+    longitudinalRows,
+    goldEvalRows,
+  });
+
+  upsertDoc(bundle, 'bosMiaTrainingRuns', trainingArtifacts.trainingRunId, trainingArtifacts.trainingRunDoc);
+  upsertDoc(bundle, 'bosMiaTrainingRuns', 'latest', trainingArtifacts.trainingRunDoc);
+  upsertDoc(bundle, 'bosMiaCalibrationProfiles', trainingArtifacts.trainingRunId, trainingArtifacts.profileDoc);
+  upsertDoc(bundle, 'bosMiaCalibrationProfiles', 'latest', trainingArtifacts.profileDoc);
+
   bundle.collections.forEach((docs, collectionName) => {
     bundle.nativeCounts[collectionName] = docs.size;
   });
@@ -1075,11 +1099,14 @@ function buildImportBundle(options) {
         ? 'docs/scholesa_synthetic_starter_pack_v1'
         : 'docs/scholesa_synthetic_fulltesting_pack_v2',
     ),
+    bosMiaTraining: trainingArtifacts.summary,
     synthetic: true,
   };
   upsertDoc(bundle, 'syntheticDatasetImports', summary.id, summary);
   upsertDoc(bundle, 'syntheticDatasetImports', 'latest', summary);
   bundle.nativeCounts.syntheticDatasetImports = 2;
+  bundle.nativeCounts.bosMiaTrainingRuns = 2;
+  bundle.nativeCounts.bosMiaCalibrationProfiles = 2;
 
   return {
     collections: bundle.collections,
