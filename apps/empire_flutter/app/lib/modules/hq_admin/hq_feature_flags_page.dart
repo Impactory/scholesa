@@ -8166,18 +8166,48 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
       latestRuntimeDelivery,
       runtimeActivationRecords,
     );
+    final FederatedLearningRuntimeRolloutEscalationRecordModel?
+        latestRuntimeRolloutEscalation =
+        _runtimeRolloutEscalationsByDeliveryId[latestRuntimeDelivery.id];
     final FederatedLearningRuntimeRolloutAlertRecordModel? alertRecord =
         _runtimeRolloutAlertsByDeliveryId[latestRuntimeDelivery.id];
+    final int escalationSeverity = _rolloutEscalationSeverity(
+      summary,
+      latestRuntimeRolloutEscalation,
+    );
+    final int controlSeverity =
+        _rolloutControlSeverity(latestRuntimeRolloutControl);
     if (_isRuntimeRolloutAlertAcknowledged(summary, alertRecord)) {
-      return _rolloutControlSeverity(latestRuntimeRolloutControl);
+      return escalationSeverity + controlSeverity;
     }
     if (summary.fallbackCount > 0) {
-      return 2 + _rolloutControlSeverity(latestRuntimeRolloutControl);
+      return 2 + escalationSeverity + controlSeverity;
     }
     if (summary.pendingCount > 0) {
-      return 1 + _rolloutControlSeverity(latestRuntimeRolloutControl);
+      return 1 + escalationSeverity + controlSeverity;
     }
-    return _rolloutControlSeverity(latestRuntimeRolloutControl);
+    return escalationSeverity + controlSeverity;
+  }
+
+  int _rolloutEscalationSeverity(
+    _RuntimeRolloutHealthSummary summary,
+    FederatedLearningRuntimeRolloutEscalationRecordModel? record,
+  ) {
+    if (!_isRuntimeRolloutEscalationCurrent(summary, record)) {
+      return 0;
+    }
+    if (record!.dueAt == null) {
+      return 1;
+    }
+    final DateTime dueAt = record.dueAt!.toDate().toUtc();
+    final DateTime now = DateTime.now().toUtc();
+    if (!dueAt.isAfter(now)) {
+      return 4;
+    }
+    if (dueAt.difference(now).inHours <= 6) {
+      return 2;
+    }
+    return 1;
   }
 
   int _rolloutControlSeverity(

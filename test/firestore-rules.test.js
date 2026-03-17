@@ -687,10 +687,30 @@ describe('Federated Learning Prototype Collections', () => {
     );
   });
 
+  test('HQ can query federated learning experiment review records', async () => {
+    const db = testEnv.authenticatedContext(hqUser.uid).firestore();
+    await assertSucceeds(
+      getDocs(
+        query(
+          collection(db, 'federatedLearningExperimentReviewRecords'),
+          where('experimentId', '==', 'fl_exp_literacy_pilot'),
+          orderBy('createdAt', 'desc'),
+        ),
+      ),
+    );
+  });
+
   test('site admins cannot read federated learning experiment review records directly', async () => {
     const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
     await assertFails(
       getDoc(doc(db, 'federatedLearningExperimentReviewRecords', 'fl_review_literacy_pilot')),
+    );
+  });
+
+  test('site admins cannot query federated learning experiment review records directly', async () => {
+    const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
+    await assertFails(
+      getDocs(collection(db, 'federatedLearningExperimentReviewRecords')),
     );
   });
 
