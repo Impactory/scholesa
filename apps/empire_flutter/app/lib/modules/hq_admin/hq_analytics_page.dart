@@ -1855,7 +1855,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
           siteId: row['siteId'] as String? ?? 'site',
           period: row['period'] as String? ?? 'month',
           recommendation: row['recommendation'] as String? ?? 'stabilize',
-          fidelityScore: (row['fidelityScore'] as num?)?.toDouble() ?? 0,
+          fidelityScore: _readFiniteScore(row['fidelityScore']),
           portfolioQualityGrade: row['portfolioQualityGrade'] as String? ?? 'C',
           updatedAt: WorkflowBridgeService.toDateTime(row['updatedAt']) ??
               WorkflowBridgeService.toDateTime(row['createdAt']) ??
@@ -1876,6 +1876,17 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
         setState(() => _isLoadingKpiPacks = false);
       }
     }
+  }
+
+  double? _readFiniteScore(dynamic value) {
+    if (value is! num) {
+      return null;
+    }
+    final double numeric = value.toDouble();
+    if (!numeric.isFinite) {
+      return null;
+    }
+    return (numeric.clamp(0.0, 1.0) as num).toDouble();
   }
 
   Future<void> _loadSyntheticImportSummary() async {
@@ -2864,7 +2875,7 @@ class _HqKpiPackSummary {
   final String siteId;
   final String period;
   final String recommendation;
-  final double fidelityScore;
+  final double? fidelityScore;
   final String portfolioQualityGrade;
   final DateTime updatedAt;
 }
@@ -2912,8 +2923,12 @@ class _HqKpiPackCard extends StatelessWidget {
                 color: ScholesaColors.hq,
               ),
               _HqPackPill(
-                label:
-                    'fidelity ${(pack.fidelityScore * 100).toStringAsFixed(0)}%',
+                label: pack.fidelityScore == null
+                    ? SharedRoleSurfaceI18n.text(
+                        context,
+                        'Fidelity unavailable',
+                      )
+                    : 'fidelity ${(pack.fidelityScore! * 100).toStringAsFixed(0)}%',
                 color: ScholesaColors.futureSkills,
               ),
               _HqPackPill(
