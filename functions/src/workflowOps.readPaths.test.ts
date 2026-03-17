@@ -233,6 +233,7 @@ import {
   listFederatedLearningRuntimeRolloutAuditEvents,
   listSiteFederatedLearningExperiments,
   listSiteFederatedLearningRuntimeDeliveryRecords,
+  listSiteFederatedLearningRuntimeDeliveryHistoryRecords,
   resolveSiteFederatedLearningRuntimePackage,
 } from './workflowOps';
 
@@ -240,6 +241,7 @@ type TestCallable = (request: { auth?: { uid?: string }; data?: Record<string, u
 
 const listSiteExperiments = listSiteFederatedLearningExperiments as unknown as TestCallable;
 const listSiteDeliveries = listSiteFederatedLearningRuntimeDeliveryRecords as unknown as TestCallable;
+const listSiteDeliveryHistory = listSiteFederatedLearningRuntimeDeliveryHistoryRecords as unknown as TestCallable;
 const resolvePackage = resolveSiteFederatedLearningRuntimePackage as unknown as TestCallable;
 const listAuditEvents = listFederatedLearningRuntimeRolloutAuditEvents as unknown as TestCallable;
 
@@ -353,6 +355,81 @@ describe('workflowOps read paths', () => {
       records: [
         expect.objectContaining({ id: 'active_new', candidateModelPackageId: 'pkg_new' }),
         expect.objectContaining({ id: 'assigned_old', candidateModelPackageId: 'pkg_old' }),
+      ],
+    });
+  });
+
+  it('returns site delivery lifecycle history including terminal statuses and control review context', async () => {
+    seedCollection('federatedLearningRuntimeDeliveryRecords', {
+      active_new: {
+        experimentId: 'fl_exp_1',
+        candidateModelPackageId: 'pkg_new',
+        targetSiteIds: ['site-1'],
+        runtimeTarget: 'flutter_mobile',
+        status: 'active',
+        manifestDigest: 'manifest-active',
+        updatedAt: 500,
+      },
+      revoked_delivery: {
+        experimentId: 'fl_exp_1',
+        candidateModelPackageId: 'pkg_revoked',
+        targetSiteIds: ['site-1'],
+        runtimeTarget: 'flutter_mobile',
+        status: 'revoked',
+        manifestDigest: 'manifest-revoked',
+        revokedAt: 450,
+        revocationReason: 'Revoked after bounded regression review.',
+        updatedAt: 450,
+      },
+      assigned_review: {
+        experimentId: 'fl_exp_1',
+        candidateModelPackageId: 'pkg_review',
+        targetSiteIds: ['site-1'],
+        runtimeTarget: 'flutter_mobile',
+        status: 'assigned',
+        manifestDigest: 'manifest-review',
+        updatedAt: 425,
+      },
+      other_site: {
+        experimentId: 'fl_exp_1',
+        candidateModelPackageId: 'pkg_other',
+        targetSiteIds: ['site-2'],
+        runtimeTarget: 'flutter_mobile',
+        status: 'active',
+        updatedAt: 600,
+      },
+    });
+    seedCollection('federatedLearningRuntimeRolloutControlRecords', {
+      [buildFederatedLearningRuntimeRolloutControlRecordDocId('assigned_review')]: {
+        deliveryRecordId: 'assigned_review',
+        mode: 'paused',
+        reason: 'Paused pending bounded verification.',
+        reviewByAt: 900,
+      },
+    });
+
+    const result = await listSiteDeliveryHistory(buildRequest('site-actor'));
+
+    expect(result).toEqual({
+      records: [
+        expect.objectContaining({
+          id: 'active_new',
+          candidateModelPackageId: 'pkg_new',
+          terminalLifecycleStatus: null,
+        }),
+        expect.objectContaining({
+          id: 'revoked_delivery',
+          candidateModelPackageId: 'pkg_revoked',
+          terminalLifecycleStatus: 'revoked',
+          revocationReason: 'Revoked after bounded regression review.',
+        }),
+        expect.objectContaining({
+          id: 'assigned_review',
+          candidateModelPackageId: 'pkg_review',
+          rolloutControlMode: 'paused',
+          rolloutControlReason: 'Paused pending bounded verification.',
+          rolloutControlReviewByAt: 900,
+        }),
       ],
     });
   });

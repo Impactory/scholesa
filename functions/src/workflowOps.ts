@@ -2457,6 +2457,84 @@ export const listSiteFederatedLearningRuntimeDeliveryRecords = onCall(async (req
   return { records };
 });
 
+export const listSiteFederatedLearningRuntimeDeliveryHistoryRecords = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (!['site', 'hq'].includes(actor.role)) {
+    throw new HttpsError('permission-denied', 'Site or HQ role required.');
+  }
+
+  const requestedSiteId = asTrimmedString(request.data?.siteId);
+  const targetSiteId = requestedSiteId
+    || asTrimmedString(actor.profile.activeSiteId)
+    || asTrimmedString(actor.profile.siteIds?.[0]);
+  if (!targetSiteId) {
+    throw new HttpsError('failed-precondition', 'No site context provided.');
+  }
+  if (!actorCanAccessSite(actor, targetSiteId)) {
+    throw new HttpsError('permission-denied', 'No access to requested site.');
+  }
+
+  const limitValue = typeof request.data?.limit === 'number' && request.data.limit > 0 && request.data.limit <= 100
+    ? request.data.limit
+    : 20;
+
+  const snap = await admin.firestore()
+    .collection('federatedLearningRuntimeDeliveryRecords')
+    .where('targetSiteIds', 'array-contains', targetSiteId)
+    .limit(Math.max(limitValue * 3, 40))
+    .get()
+    .catch(() => admin.firestore().collection('federatedLearningRuntimeDeliveryRecords').limit(200).get());
+
+  const controlIds = snap.docs.map((snapDoc) => buildFederatedLearningRuntimeRolloutControlRecordDocId(snapDoc.id));
+  const controlRefs = controlIds.map((controlId) => admin.firestore()
+    .collection('federatedLearningRuntimeRolloutControlRecords')
+    .doc(controlId));
+  const controlSnaps = controlRefs.length > 0
+    ? await admin.firestore().getAll(...controlRefs)
+    : [];
+  const controlsByDeliveryId = new Map<string, Record<string, unknown>>();
+  controlSnaps.forEach((controlSnap) => {
+    if (!controlSnap.exists) {
+      return;
+    }
+    const controlData = (controlSnap.data() || {}) as Record<string, unknown>;
+    const deliveryRecordId = asTrimmedString(controlData.deliveryRecordId);
+    if (!deliveryRecordId) {
+      return;
+    }
+    controlsByDeliveryId.set(deliveryRecordId, controlData);
+  });
+
+  const records = snap.docs
+    .map((snapDoc) => {
+      const row = {
+        id: snapDoc.id,
+        ...(snapDoc.data() as Record<string, unknown>),
+      } as Record<string, unknown>;
+      const targetSiteIds = toStringArray(row.targetSiteIds);
+      if (!targetSiteIds.includes(targetSiteId)) {
+        return null;
+      }
+      const terminalLifecycleStatus = getRuntimeDeliveryTerminalLifecycleStatus(row);
+      const controlData = controlsByDeliveryId.get(snapDoc.id) || {};
+      return {
+        ...row,
+        terminalLifecycleStatus: terminalLifecycleStatus || null,
+        rolloutControlMode: normalizeFederatedLearningRuntimeRolloutControlMode(controlData.mode) || null,
+        rolloutControlReason: asTrimmedString(controlData.reason) || null,
+        rolloutControlReviewByAt: asTimestampMillis(controlData.reviewByAt) ?? null,
+      };
+    })
+    .filter((row): row is Record<string, unknown> => row != null)
+    .sort((a, b) => {
+      const aUpdatedAt = typeof a.updatedAt === 'number' ? a.updatedAt : 0;
+      const bUpdatedAt = typeof b.updatedAt === 'number' ? b.updatedAt : 0;
+      return bUpdatedAt - aUpdatedAt;
+    })
+    .slice(0, limitValue);
+  return { records };
+});
+
 export const resolveSiteFederatedLearningRuntimePackage = onCall(async (request: CallableRequest) => {
   const actor = await getActorProfile(request.auth?.uid);
   if (!['site', 'hq'].includes(actor.role)) {

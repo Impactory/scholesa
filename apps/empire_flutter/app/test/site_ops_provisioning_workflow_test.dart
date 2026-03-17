@@ -103,6 +103,17 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   }
 
   @override
+  Future<List<Map<String, dynamic>>> listSiteFederatedLearningRuntimeDeliveryHistoryRecords({
+    String? siteId,
+    int limit = 20,
+  }) async {
+    return listSiteFederatedLearningRuntimeDeliveryRecords(
+      siteId: siteId,
+      limit: limit,
+    );
+  }
+
+  @override
   Future<List<Map<String, dynamic>>> listSiteFederatedLearningRuntimeActivationRecords({
     String? siteId,
     int limit = 40,
@@ -465,6 +476,19 @@ void main() {
             'manifestDigest': 'sha256:delivery-2',
             'updatedAt': DateTime(2026, 3, 16, 7).millisecondsSinceEpoch,
           },
+          <String, dynamic>{
+            'id': 'fl_delivery_site_0',
+            'targetSiteIds': <String>['site-1'],
+            'status': 'revoked',
+            'runtimeTarget': 'flutter_mobile',
+            'candidateModelPackageId': 'fl_pkg_old',
+            'manifestDigest': 'sha256:delivery-0',
+            'updatedAt': DateTime(2026, 3, 16, 6).millisecondsSinceEpoch,
+            'terminalLifecycleStatus': 'revoked',
+            'revocationReason': 'Revoked after bounded regression review.',
+            'rolloutControlMode': 'paused',
+            'rolloutControlReason': 'Paused pending bounded verification.',
+          },
         ],
         runtimeActivations: <Map<String, dynamic>>[
           <String, dynamic>{
@@ -509,6 +533,11 @@ void main() {
       expect(find.textContaining('Site rollout: 0 resolved · 0 staged · 1 fallback · 0 pending'),
           findsOneWidget);
       expect(find.textContaining('Latest site report: fallback · Latest site report requested fallback.'),
+          findsOneWidget);
+        expect(find.text('Recent runtime history'), findsOneWidget);
+        expect(find.textContaining('fl_delivery_site_0 · revoked · flutter_mobile'),
+          findsOneWidget);
+        expect(find.textContaining('Lifecycle reason: Revoked after bounded regression review.'),
           findsOneWidget);
     });
 

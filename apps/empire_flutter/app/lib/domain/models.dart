@@ -4310,6 +4310,10 @@ class FederatedLearningRuntimeDeliveryRecordModel {
     this.revokedAt,
     this.revokedBy,
     this.revocationReason,
+    this.terminalLifecycleStatus,
+    this.rolloutControlMode,
+    this.rolloutControlReason,
+    this.rolloutControlReviewByAt,
     this.notes,
     this.assignedBy,
     this.assignedAt,
@@ -4345,6 +4349,10 @@ class FederatedLearningRuntimeDeliveryRecordModel {
   final Timestamp? revokedAt;
   final String? revokedBy;
   final String? revocationReason;
+  final String? terminalLifecycleStatus;
+  final String? rolloutControlMode;
+  final String? rolloutControlReason;
+  final Timestamp? rolloutControlReviewByAt;
   final String? notes;
   final String? assignedBy;
   final Timestamp? assignedAt;
@@ -4395,6 +4403,11 @@ class FederatedLearningRuntimeDeliveryRecordModel {
       revokedAt: _timestampOrNull(data['revokedAt']),
       revokedBy: data['revokedBy'] as String?,
       revocationReason: data['revocationReason'] as String?,
+        terminalLifecycleStatus: data['terminalLifecycleStatus'] as String?,
+        rolloutControlMode: data['rolloutControlMode'] as String?,
+        rolloutControlReason: data['rolloutControlReason'] as String?,
+        rolloutControlReviewByAt:
+          _timestampOrNull(data['rolloutControlReviewByAt']),
       notes: data['notes'] as String?,
       assignedBy: data['assignedBy'] as String?,
       assignedAt: _timestampOrNull(data['assignedAt']),
@@ -4432,6 +4445,10 @@ class FederatedLearningRuntimeDeliveryRecordModel {
         'revokedAt': revokedAt,
         'revokedBy': revokedBy,
         'revocationReason': revocationReason,
+        'terminalLifecycleStatus': terminalLifecycleStatus,
+        'rolloutControlMode': rolloutControlMode,
+        'rolloutControlReason': rolloutControlReason,
+        'rolloutControlReviewByAt': rolloutControlReviewByAt,
         'notes': notes,
         'assignedBy': assignedBy,
         'assignedAt': assignedAt ?? Timestamp.now(),

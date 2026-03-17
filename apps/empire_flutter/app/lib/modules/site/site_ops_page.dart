@@ -39,6 +39,8 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
   FederatedLearningResolvedRuntimePackageModel? _runtimePackage;
   List<FederatedLearningRuntimeDeliveryRecordModel> _runtimeDeliveries =
       <FederatedLearningRuntimeDeliveryRecordModel>[];
+    List<FederatedLearningRuntimeDeliveryRecordModel> _runtimeDeliveryHistory =
+      <FederatedLearningRuntimeDeliveryRecordModel>[];
   List<FederatedLearningRuntimeActivationRecordModel> _runtimeActivations =
       <FederatedLearningRuntimeActivationRecordModel>[];
   bool _isLoadingRuntimeRollout = false;
@@ -519,11 +521,80 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
                                   ),
                                 ),
                               ],
+                              if (_runtimeDeliveryHistory.isNotEmpty) ...<Widget>[
+                                const SizedBox(height: 12),
+                                Text(
+                                  _tSiteOps(context, 'Recent runtime history'),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                ..._runtimeDeliveryHistory
+                                    .take(3)
+                                    .map(_buildRuntimeHistoryItem),
+                              ],
                             ],
                           ),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildRuntimeHistoryItem(
+    FederatedLearningRuntimeDeliveryRecordModel record,
+  ) {
+    final String lifecycleStatus = _runtimeDeliveryLifecycleStatus(record);
+    final String lifecycleReason = _runtimeDeliveryLifecycleReason(record);
+    final String controlCue = _runtimeDeliveryControlCue(record);
+    final String updatedAt = _formatRuntimeDeliveryUpdatedAt(record);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            '${record.id} · ${_runtimeStatusLabel(lifecycleStatus)} · ${record.runtimeTarget}',
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            '${_tSiteOps(context, 'Package')}: ${record.candidateModelPackageId} · ${_tSiteOps(context, 'Manifest digest')}: ${record.manifestDigest}',
+            style: const TextStyle(
+              color: ScholesaColors.textSecondary,
+            ),
+          ),
+          if (updatedAt.isNotEmpty) ...<Widget>[
+            const SizedBox(height: 2),
+            Text(
+              '${_tSiteOps(context, 'Last updated')}: $updatedAt',
+              style: const TextStyle(
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+          ],
+          if (lifecycleReason.isNotEmpty) ...<Widget>[
+            const SizedBox(height: 2),
+            Text(
+              '${_tSiteOps(context, 'Lifecycle reason')}: $lifecycleReason',
+              style: const TextStyle(
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+          ],
+          if (controlCue.isNotEmpty) ...<Widget>[
+            const SizedBox(height: 2),
+            Text(
+              controlCue,
+              style: const TextStyle(
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 
@@ -757,6 +828,8 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
           _safetyNotes = <_SafetyNoteEntry>[];
           _runtimePackage = null;
           _runtimeDeliveries = <FederatedLearningRuntimeDeliveryRecordModel>[];
+            _runtimeDeliveryHistory =
+              <FederatedLearningRuntimeDeliveryRecordModel>[];
           _runtimeActivations =
               <FederatedLearningRuntimeActivationRecordModel>[];
           _runtimeRolloutError = null;
@@ -1023,6 +1096,7 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
         _safetyNotes = safetyNotes;
         _runtimePackage = runtimeRolloutState.package;
         _runtimeDeliveries = runtimeRolloutState.deliveries;
+        _runtimeDeliveryHistory = runtimeRolloutState.history;
         _runtimeActivations = runtimeRolloutState.activations;
         _runtimeRolloutError = runtimeRolloutState.error;
       });
@@ -1047,6 +1121,10 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
           siteId: siteId,
           limit: 12,
         ),
+        workflowBridge.listSiteFederatedLearningRuntimeDeliveryHistoryRecords(
+          siteId: siteId,
+          limit: 12,
+        ),
         workflowBridge.listSiteFederatedLearningRuntimeActivationRecords(
           siteId: siteId,
           limit: 12,
@@ -1065,8 +1143,19 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
                 ),
               )
               .toList(growable: false);
-      final List<FederatedLearningRuntimeActivationRecordModel> activations =
+      final List<FederatedLearningRuntimeDeliveryRecordModel> history =
           (payload[1] as List<dynamic>)
+              .whereType<Map<String, dynamic>>()
+              .map(
+                (Map<String, dynamic> row) =>
+                    FederatedLearningRuntimeDeliveryRecordModel.fromMap(
+                  row['id'] as String? ?? '',
+                  row,
+                ),
+              )
+              .toList(growable: false);
+      final List<FederatedLearningRuntimeActivationRecordModel> activations =
+          (payload[2] as List<dynamic>)
               .whereType<Map<String, dynamic>>()
               .map(
                 (Map<String, dynamic> row) =>
@@ -1076,7 +1165,7 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
                 ),
               )
               .toList(growable: false);
-      final Map<String, dynamic>? packageRow = payload[2] as Map<String, dynamic>?;
+      final Map<String, dynamic>? packageRow = payload[3] as Map<String, dynamic>?;
       final FederatedLearningResolvedRuntimePackageModel? package =
           packageRow == null
               ? null
@@ -1084,11 +1173,13 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
       return _SiteRuntimeRolloutState(
         package: package,
         deliveries: deliveries,
+        history: history,
         activations: activations,
       );
     } catch (error) {
       return _SiteRuntimeRolloutState(
         deliveries: const <FederatedLearningRuntimeDeliveryRecordModel>[],
+        history: const <FederatedLearningRuntimeDeliveryRecordModel>[],
         activations: const <FederatedLearningRuntimeActivationRecordModel>[],
         error: error.toString(),
       );
@@ -1216,6 +1307,67 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
       return '';
     }
     return ' · $notes';
+  }
+
+  String _runtimeDeliveryLifecycleStatus(
+    FederatedLearningRuntimeDeliveryRecordModel record,
+  ) {
+    final String terminalStatus = (record.terminalLifecycleStatus ?? '').trim();
+    if (terminalStatus.isNotEmpty) {
+      return terminalStatus;
+    }
+    final String status = record.status.trim();
+    if (status.isNotEmpty) {
+      return status;
+    }
+    return 'assigned';
+  }
+
+  String _runtimeDeliveryLifecycleReason(
+    FederatedLearningRuntimeDeliveryRecordModel record,
+  ) {
+    switch (_runtimeDeliveryLifecycleStatus(record)) {
+      case 'revoked':
+        return (record.revocationReason ?? '').trim();
+      case 'superseded':
+        return (record.supersessionReason ?? '').trim();
+      default:
+        return (record.notes ?? '').trim();
+    }
+  }
+
+  String _runtimeDeliveryControlCue(
+    FederatedLearningRuntimeDeliveryRecordModel record,
+  ) {
+    final String controlMode = (record.rolloutControlMode ?? '').trim();
+    final String controlReason = (record.rolloutControlReason ?? '').trim();
+    final DateTime? reviewBy = record.rolloutControlReviewByAt?.toDate();
+    if (controlMode.isEmpty && reviewBy == null) {
+      return '';
+    }
+    final List<String> parts = <String>[];
+    if (controlMode.isNotEmpty) {
+      parts.add('${_tSiteOps(context, 'HQ control')}: ${_runtimeStatusLabel(controlMode)}');
+    }
+    if (controlReason.isNotEmpty) {
+      parts.add(controlReason);
+    }
+    if (reviewBy != null) {
+      parts.add('${_tSiteOps(context, 'Review by')}: ${_formatTime(reviewBy)}');
+    }
+    return parts.join(' · ');
+  }
+
+  String _formatRuntimeDeliveryUpdatedAt(
+    FederatedLearningRuntimeDeliveryRecordModel record,
+  ) {
+    final DateTime? updatedAt = record.updatedAt?.toDate() ??
+        record.assignedAt?.toDate() ??
+        record.createdAt?.toDate();
+    if (updatedAt == null) {
+      return '';
+    }
+    return _formatTime(updatedAt);
   }
 
   Future<void> _toggleChecklistItem(
@@ -1489,12 +1641,14 @@ class _SiteRuntimeRolloutState {
   const _SiteRuntimeRolloutState({
     this.package,
     required this.deliveries,
+    required this.history,
     required this.activations,
     this.error,
   });
 
   final FederatedLearningResolvedRuntimePackageModel? package;
   final List<FederatedLearningRuntimeDeliveryRecordModel> deliveries;
+  final List<FederatedLearningRuntimeDeliveryRecordModel> history;
   final List<FederatedLearningRuntimeActivationRecordModel> activations;
   final String? error;
 }
