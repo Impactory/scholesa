@@ -231,6 +231,7 @@ jest.mock('./districtProviderIntegration', () => ({
 import { buildFederatedLearningRuntimeRolloutControlRecordDocId } from './federatedLearningPrototype';
 import {
   getParentBillingSummary,
+  getSiteBillingSnapshot,
   listFederatedLearningRuntimeRolloutAuditEvents,
   listSiteFederatedLearningExperiments,
   listSiteFederatedLearningRuntimeDeliveryRecords,
@@ -246,6 +247,7 @@ const listSiteDeliveryHistory = listSiteFederatedLearningRuntimeDeliveryHistoryR
 const resolvePackage = resolveSiteFederatedLearningRuntimePackage as unknown as TestCallable;
 const listAuditEvents = listFederatedLearningRuntimeRolloutAuditEvents as unknown as TestCallable;
 const getParentBilling = getParentBillingSummary as unknown as TestCallable;
+const getSiteBilling = getSiteBillingSnapshot as unknown as TestCallable;
 
 function buildRequest(uid: string, data: Record<string, unknown> = {}) {
   return {
@@ -329,6 +331,16 @@ describe('workflowOps read paths', () => {
 
     expect(result).toEqual({
       summary: null,
+    });
+  });
+
+  it('returns no synthetic site billing summary when no site billing config or payouts exist', async () => {
+    const result = await getSiteBilling(buildRequest('site-actor'));
+
+    expect(result).toEqual({
+      siteId: 'site-1',
+      summary: null,
+      invoices: [],
     });
   });
 

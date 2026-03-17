@@ -34,17 +34,19 @@ class SiteBillingPage extends StatefulWidget {
 }
 
 class _SiteBillingPageState extends State<SiteBillingPage> {
-  bool _isLoading = false;
-  String _planName = 'Standard';
-  String _planStatus = 'Active';
-  String _monthlyAmount = '\$0/month';
+  bool _isLoading = true;
+  bool _billingDataLoaded = false;
+  bool _hasBillingSummary = false;
+  String _planName = '';
+  String _planStatus = '';
+  String _monthlyAmount = '-';
   String _nextBillingDate = '-';
   double _activeLearnersUsed = 0;
-  double _activeLearnersTotal = 100;
+  double _activeLearnersTotal = 0;
   double _educatorsUsed = 0;
-  double _educatorsTotal = 15;
+  double _educatorsTotal = 0;
   double _storageUsedGb = 0;
-  double _storageTotalGb = 10;
+  double _storageTotalGb = 0;
   List<_InvoiceItem> _invoices = <_InvoiceItem>[];
 
   @override
@@ -81,18 +83,39 @@ class _SiteBillingPageState extends State<SiteBillingPage> {
                   style: const TextStyle(color: ScholesaColors.textSecondary),
                 ),
               ),
-            _buildSubscriptionCard(context),
+            if (_isLoading && !_billingDataLoaded)
+              _buildLoadingCard(context)
+            else if (_hasBillingSummary)
+              _buildSubscriptionCard(context)
+            else
+              _buildBillingUnavailableCard(context),
             const SizedBox(height: 24),
             SiteMarketplacePanel(
               firestore: widget.firestore,
               createCheckoutIntent: widget.createCheckoutIntent,
               completeCheckout: widget.completeCheckout,
             ),
-            const SizedBox(height: 24),
-            _buildUsageSection(context),
+            if (_hasBillingSummary) ...<Widget>[
+              const SizedBox(height: 24),
+              _buildUsageSection(context),
+            ],
             const SizedBox(height: 24),
             _buildRecentInvoices(context),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingCard(BuildContext context) {
+    return Card(
+      color: ScholesaColors.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Text(
+          _t(context, 'Loading...'),
+          style: const TextStyle(color: ScholesaColors.textSecondary),
         ),
       ),
     );
@@ -239,6 +262,38 @@ class _SiteBillingPageState extends State<SiteBillingPage> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildBillingUnavailableCard(BuildContext context) {
+    return Card(
+      color: ScholesaColors.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              _t(context, 'No billing data yet'),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _t(
+                context,
+                'Billing details will appear once HQ configures an active site billing account.',
+              ),
+              style: const TextStyle(color: ScholesaColors.textSecondary),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _t(context, 'Billing plan unavailable'),
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -509,7 +564,14 @@ class _SiteBillingPageState extends State<SiteBillingPage> {
             await callable.call(<String, dynamic>{'siteId': siteId});
         payload = _asMap(result.data);
       }
-      final DateTime? nextBilling = _toDateTime(payload['nextBillingDate']);
+        final bool hasNestedSummary = payload.containsKey('summary');
+        final Map<String, dynamic> summary = hasNestedSummary
+          ? _asMap(payload['summary'])
+          : payload;
+        final bool hasBillingSummary = hasNestedSummary
+          ? summary.isNotEmpty
+          : _hasFlatBillingSummary(summary);
+        final DateTime? nextBilling = _toDateTime(summary['nextBillingDate']);
 
       final List<_InvoiceItem> invoices = _asMapList(payload['invoices'])
           .map((Map<String, dynamic> row) {
@@ -539,32 +601,23 @@ class _SiteBillingPageState extends State<SiteBillingPage> {
 
       if (!mounted) return;
       setState(() {
-        _planName = (payload['planName'] as String?)?.trim().isNotEmpty == true
-            ? (payload['planName'] as String).trim()
-            : _planName;
-        _planStatus =
-            (payload['planStatus'] as String?)?.trim().isNotEmpty == true
-                ? (payload['planStatus'] as String).trim()
-                : _planStatus;
-        final double monthlyAmount = _asDouble(payload['monthlyAmount']) ?? 0;
-        final String currency =
-            ((payload['currency'] as String?) ?? 'USD').toUpperCase();
-        _monthlyAmount =
-            '${_currencySymbol(currency)}${monthlyAmount.toStringAsFixed(0)}/month';
-        _nextBillingDate =
-            nextBilling != null ? _formatDate(nextBilling) : _nextBillingDate;
-        _activeLearnersUsed =
-            (_asDouble(payload['activeLearnersUsed']) ?? _activeLearnersUsed);
-        _activeLearnersTotal =
-            (_asDouble(payload['activeLearnersTotal']) ?? _activeLearnersTotal);
-        _educatorsUsed =
-            (_asDouble(payload['educatorsUsed']) ?? _educatorsUsed);
-        _educatorsTotal =
-            (_asDouble(payload['educatorsTotal']) ?? _educatorsTotal);
-        _storageUsedGb =
-            (_asDouble(payload['storageUsedGb']) ?? _storageUsedGb);
-        _storageTotalGb =
-            (_asDouble(payload['storageTotalGb']) ?? _storageTotalGb);
+    _billingDataLoaded = true;
+    _hasBillingSummary = hasBillingSummary;
+    _planName = ((summary['planName'] as String?) ?? '').trim();
+    _planStatus = ((summary['planStatus'] as String?) ?? '').trim();
+    final double? monthlyAmount = _asDouble(summary['monthlyAmount']);
+    final String currency =
+      ((summary['currency'] as String?) ?? 'USD').toUpperCase();
+    _monthlyAmount = monthlyAmount == null
+      ? '-'
+      : '${_currencySymbol(currency)}${monthlyAmount.toStringAsFixed(0)}/month';
+    _nextBillingDate = nextBilling != null ? _formatDate(nextBilling) : '-';
+    _activeLearnersUsed = _asDouble(summary['activeLearnersUsed']) ?? 0;
+    _activeLearnersTotal = _asDouble(summary['activeLearnersTotal']) ?? 0;
+    _educatorsUsed = _asDouble(summary['educatorsUsed']) ?? 0;
+    _educatorsTotal = _asDouble(summary['educatorsTotal']) ?? 0;
+    _storageUsedGb = _asDouble(summary['storageUsedGb']) ?? 0;
+    _storageTotalGb = _asDouble(summary['storageTotalGb']) ?? 0;
         _invoices = invoices;
       });
     } finally {
@@ -601,11 +654,22 @@ class _SiteBillingPageState extends State<SiteBillingPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_t(context, 'Plan management request submitted')),
+          content: Text(_t(context, 'Plan management request failed')),
           backgroundColor: ScholesaColors.warning,
         ),
       );
     }
+  }
+
+  bool _hasFlatBillingSummary(Map<String, dynamic> payload) {
+    return ((payload['planName'] as String?) ?? '').trim().isNotEmpty ||
+        ((payload['planStatus'] as String?) ?? '').trim().isNotEmpty ||
+        _asDouble(payload['monthlyAmount']) != null ||
+        ((payload['currency'] as String?) ?? '').trim().isNotEmpty ||
+        _toDateTime(payload['nextBillingDate']) != null ||
+        _asDouble(payload['activeLearnersTotal']) != null ||
+        _asDouble(payload['educatorsTotal']) != null ||
+        _asDouble(payload['storageTotalGb']) != null;
   }
 
   Map<String, dynamic> _asMap(dynamic value) {

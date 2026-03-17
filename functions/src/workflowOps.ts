@@ -4811,19 +4811,47 @@ export const getSiteBillingSnapshot = onCall(async (request: CallableRequest) =>
     })
     .slice(0, 50);
 
+  const planName = asTrimmedString(siteData?.billingPlan);
+  const planStatus = asTrimmedString(siteData?.billingStatus);
+  const monthlyAmount = asNumber(siteData?.monthlyFee);
+  const currency = asTrimmedString(siteData?.currency).toUpperCase();
+  const nextBillingDate = toIsoString(siteData?.nextBillingDate);
+  const activeLearnersUsed = asNumber(siteData?.learnerCount) ??
+    (Array.isArray(siteData?.learnerIds) ? siteData?.learnerIds.length : 0);
+  const activeLearnersTotal = asNumber(siteData?.learnerCap) ?? asNumber(siteData?.billingLearnerLimit);
+  const educatorsUsed = asNumber(siteData?.educatorCount) ??
+    (Array.isArray(siteData?.educatorIds) ? siteData?.educatorIds.length : 0);
+  const educatorsTotal = asNumber(siteData?.educatorCap) ?? asNumber(siteData?.billingEducatorLimit);
+  const storageUsedGb = asNumber(siteData?.storageUsedGb) ?? asNumber(siteData?.storageUsed) ?? 0;
+  const storageTotalGb = asNumber(siteData?.storageCapGb) ?? asNumber(siteData?.storageLimitGb);
+  const hasBillingSummary = Boolean(
+    planName ||
+      planStatus ||
+      monthlyAmount !== null ||
+      currency ||
+      nextBillingDate ||
+      activeLearnersTotal !== null ||
+      educatorsTotal !== null ||
+      storageTotalGb !== null ||
+      invoices.length > 0,
+  );
+
   return {
     siteId: targetSiteId,
-    planName: asTrimmedString(siteData?.billingPlan) || 'Standard',
-    planStatus: asTrimmedString(siteData?.billingStatus) || 'Active',
-    monthlyAmount: asNumber(siteData?.monthlyFee) ?? 0,
-    currency: asTrimmedString(siteData?.currency).toUpperCase() || 'USD',
-    nextBillingDate: toIsoString(siteData?.nextBillingDate),
-    activeLearnersUsed: asNumber(siteData?.learnerCount) ?? (Array.isArray(siteData?.learnerIds) ? siteData?.learnerIds.length : 0),
-    activeLearnersTotal: asNumber(siteData?.learnerCap) ?? asNumber(siteData?.billingLearnerLimit) ?? 100,
-    educatorsUsed: asNumber(siteData?.educatorCount) ?? (Array.isArray(siteData?.educatorIds) ? siteData?.educatorIds.length : 0),
-    educatorsTotal: asNumber(siteData?.educatorCap) ?? asNumber(siteData?.billingEducatorLimit) ?? 15,
-    storageUsedGb: asNumber(siteData?.storageUsedGb) ?? asNumber(siteData?.storageUsed) ?? 0,
-    storageTotalGb: asNumber(siteData?.storageCapGb) ?? asNumber(siteData?.storageLimitGb) ?? 10,
+    summary: hasBillingSummary ? {
+      siteId: targetSiteId,
+      planName,
+      planStatus,
+      monthlyAmount,
+      currency: currency || 'USD',
+      nextBillingDate,
+      activeLearnersUsed,
+      activeLearnersTotal: activeLearnersTotal ?? 100,
+      educatorsUsed,
+      educatorsTotal: educatorsTotal ?? 15,
+      storageUsedGb,
+      storageTotalGb: storageTotalGb ?? 10,
+    } : null,
     invoices,
   };
 });

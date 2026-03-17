@@ -798,7 +798,9 @@ class _ParentBillingPageState extends State<ParentBillingPage>
     );
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(_tParentBilling(context, 'Downloading statements...')),
+        content: Text(
+          _tParentBilling(context, 'Billing statements are not available yet'),
+        ),
         backgroundColor: ScholesaColors.parent,
       ),
     );
@@ -815,7 +817,8 @@ class _ParentBillingPageState extends State<ParentBillingPage>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-            '${_tParentBilling(context, 'Paying invoice')} ${invoice['id']}...'),
+          _tParentBilling(context, 'Invoice payments are not available in the app yet'),
+        ),
         backgroundColor: ScholesaColors.parent,
       ),
     );
@@ -832,7 +835,8 @@ class _ParentBillingPageState extends State<ParentBillingPage>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-            '${_tParentBilling(context, 'Viewing invoice')} ${invoice['id']}...'),
+          _tParentBilling(context, 'Invoice viewing is not available in the app yet'),
+        ),
         backgroundColor: ScholesaColors.parent,
       ),
     );
@@ -851,7 +855,9 @@ class _ParentBillingPageState extends State<ParentBillingPage>
         title: Text(_tParentBilling(context, 'Update Payment Method')),
         content: Text(
           _tParentBilling(
-              context, 'Select your preferred payment method update action.'),
+            context,
+            'Self-service payment method updates are not available yet. Contact HQ billing support for changes.',
+          ),
         ),
         actions: <Widget>[
           TextButton(
@@ -865,25 +871,6 @@ class _ParentBillingPageState extends State<ParentBillingPage>
               Navigator.pop(dialogContext);
             },
             child: Text(_tParentBilling(context, 'Cancel')),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              TelemetryService.instance.logEvent(
-                event: 'cta.clicked',
-                metadata: const <String, dynamic>{
-                  'cta': 'parent_billing_continue_update_payment_method',
-                },
-              );
-              Navigator.pop(dialogContext);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(_tParentBilling(
-                      context, 'Payment method update request submitted')),
-                  backgroundColor: ScholesaColors.parent,
-                ),
-              );
-            },
-            child: Text(_tParentBilling(context, 'Continue')),
           ),
         ],
       ),
@@ -901,7 +888,9 @@ class _ParentBillingPageState extends State<ParentBillingPage>
         title: Text(_tParentBilling(context, 'Manage Plan')),
         content: Text(
           _tParentBilling(
-              context, 'You can review your current subscription and request plan changes.'),
+            context,
+            'Self-service plan changes are not available yet. Contact HQ billing support for changes.',
+          ),
         ),
         actions: <Widget>[
           TextButton(
@@ -915,25 +904,6 @@ class _ParentBillingPageState extends State<ParentBillingPage>
               Navigator.pop(dialogContext);
             },
             child: Text(_tParentBilling(context, 'Close')),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              TelemetryService.instance.logEvent(
-                event: 'cta.clicked',
-                metadata: const <String, dynamic>{
-                  'cta': 'parent_billing_request_plan_change'
-                },
-              );
-              Navigator.pop(dialogContext);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(_tParentBilling(
-                      context, 'Plan review request sent to billing team')),
-                  backgroundColor: ScholesaColors.parent,
-                ),
-              );
-            },
-            child: Text(_tParentBilling(context, 'Request Change')),
           ),
         ],
       ),

@@ -900,27 +900,30 @@ async function loadSiteBillingRecords(ctx: WorkflowContext): Promise<WorkflowRec
   const callable = httpsCallable(functions, 'getSiteBillingSnapshot');
   const response = await callable({ siteId: activeSiteId(ctx.profile) || undefined });
   const payload = (response.data || {}) as Record<string, unknown>;
+  const summary = (payload.summary && typeof payload.summary === 'object' && !Array.isArray(payload.summary))
+    ? (payload.summary as Record<string, unknown>)
+    : null;
   const invoices = Array.isArray(payload.invoices) ? payload.invoices : [];
 
-  const recordSiteId = asString(payload.siteId, activeSiteId(ctx.profile) || '');
-  const siteSummary: WorkflowRecord = {
+  const recordSiteId = asString(payload.siteId, asString(summary?.siteId, activeSiteId(ctx.profile) || ''));
+  const siteSummary = summary == null ? null : {
     id: recordSiteId,
-    title: asString(payload.planName, 'Site Billing'),
-    subtitle: `${asString(payload.currency, 'USD')} ${String(payload.monthlyAmount || 0)} / month`,
-    status: asString(payload.planStatus, 'active'),
-    updatedAt: toIsoDate(payload.nextBillingDate),
+    title: asString(summary.planName, 'Site Billing'),
+    subtitle: `${asString(summary.currency, 'USD')} ${String(summary.monthlyAmount || 0)} / month`,
+    status: asString(summary.planStatus, 'active'),
+    updatedAt: toIsoDate(summary.nextBillingDate),
     siteId: recordSiteId || null,
     collectionName: 'siteBillingSummary',
     routePath: '/site/billing',
     canEdit: false,
     canDelete: false,
     metadata: {
-      activeLearnersUsed: String(payload.activeLearnersUsed || 0),
-      activeLearnersTotal: String(payload.activeLearnersTotal || 0),
-      educatorsUsed: String(payload.educatorsUsed || 0),
-      educatorsTotal: String(payload.educatorsTotal || 0),
-      storageUsedGb: String(payload.storageUsedGb || 0),
-      storageTotalGb: String(payload.storageTotalGb || 0),
+      activeLearnersUsed: String(summary.activeLearnersUsed || 0),
+      activeLearnersTotal: String(summary.activeLearnersTotal || 0),
+      educatorsUsed: String(summary.educatorsUsed || 0),
+      educatorsTotal: String(summary.educatorsTotal || 0),
+      storageUsedGb: String(summary.storageUsedGb || 0),
+      storageTotalGb: String(summary.storageTotalGb || 0),
     },
   };
 
@@ -945,7 +948,7 @@ async function loadSiteBillingRecords(ctx: WorkflowContext): Promise<WorkflowRec
     })
     .filter((record): record is WorkflowRecord => Boolean(record));
 
-  return recordSiteId ? [siteSummary, ...invoiceRecords] : invoiceRecords;
+  return siteSummary == null ? invoiceRecords : [siteSummary, ...invoiceRecords];
 }
 
 async function loadHqBillingRecords(): Promise<WorkflowRecord[]> {

@@ -141,6 +141,20 @@ class WorkflowSurfaceI18n {
     'Settings': '设置',
     'Disconnect': '断开连接',
     'Connect': '连接',
+    'Billing statements are not available yet': '账单对账单暂不可用',
+    'Invoice payments are not available in the app yet': '应用内暂不支持支付发票',
+    'Invoice viewing is not available in the app yet': '应用内暂不支持查看发票',
+    'Self-service payment method updates are not available yet. Contact HQ billing support for changes.':
+      '暂不支持自助更新付款方式。如需变更，请联系 HQ 计费支持。',
+    'Self-service plan changes are not available yet. Contact HQ billing support for changes.':
+      '暂不支持自助变更方案。如需调整，请联系 HQ 计费支持。',
+    'Billing statements are not available yet': '帳單對帳單暫時不可用',
+    'Invoice payments are not available in the app yet': 'App 內暫不支援支付發票',
+    'Invoice viewing is not available in the app yet': 'App 內暫不支援查看發票',
+    'Self-service payment method updates are not available yet. Contact HQ billing support for changes.':
+      '暫不支援自助更新付款方式。如需變更，請聯絡 HQ 計費支援。',
+    'Self-service plan changes are not available yet. Contact HQ billing support for changes.':
+      '暫不支援自助變更方案。如需調整，請聯絡 HQ 計費支援。',
     'New Session': '新建课程',
     'My Sessions': '我的课程',
     'Manage your teaching schedule': '管理你的教学日程',

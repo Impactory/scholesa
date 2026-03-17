@@ -241,6 +241,9 @@ void main() {
       );
 
       expect(find.text('No billing data yet'), findsOneWidget);
+  await tester.tap(find.byIcon(Icons.download).first);
+  await tester.pumpAndSettle();
+  expect(find.text('Billing statements are not available yet'), findsOneWidget);
       await tester.tap(find.text('Plan'));
       await tester.pumpAndSettle();
       expect(find.text('Billing plan unavailable'), findsOneWidget);

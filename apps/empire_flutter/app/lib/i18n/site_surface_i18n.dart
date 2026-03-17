@@ -25,9 +25,14 @@ class SiteSurfaceI18n {
       '查看当前使用情况、升级额度，或联系 HQ 计费支持。',
     'Close': '关闭',
     'Plan management request submitted': '方案管理请求已提交',
+    'Plan management request failed': '方案管理请求失败',
     'Request Change': '申请变更',
     'All Invoices': '全部发票',
     'No invoices yet': '暂无发票',
+    'No billing data yet': '暂无计费数据',
+    'Billing details will appear once HQ configures an active site billing account.':
+      '一旦 HQ 配置了有效的站点计费账户，计费详情就会显示在这里。',
+    'Billing plan unavailable': '计费方案不可用',
     'Identity Resolution': '身份匹配处理',
     'Review and confirm matches between local accounts and external provider accounts.':
       '审核并确认本地账户与外部提供方账户之间的匹配。',
@@ -247,9 +252,14 @@ class SiteSurfaceI18n {
       '檢視目前使用情況、升級額度，或聯絡 HQ 計費支援。',
     'Close': '關閉',
     'Plan management request submitted': '方案管理請求已提交',
+    'Plan management request failed': '方案管理請求失敗',
     'Request Change': '申請變更',
     'All Invoices': '全部發票',
     'No invoices yet': '目前沒有發票',
+    'No billing data yet': '尚無計費資料',
+    'Billing details will appear once HQ configures an active site billing account.':
+      '一旦 HQ 設定有效的站點計費帳戶，計費詳情就會顯示在這裡。',
+    'Billing plan unavailable': '計費方案不可用',
     'Identity Resolution': '身分匹配處理',
     'Review and confirm matches between local accounts and external provider accounts.':
       '檢視並確認本地帳戶與外部提供者帳戶之間的匹配。',

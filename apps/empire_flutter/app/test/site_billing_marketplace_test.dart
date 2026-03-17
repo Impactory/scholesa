@@ -198,4 +198,37 @@ void main() {
     expect(find.text('learner'), findsOneWidget);
     expect(find.text('pending • Awaiting partner fulfillment'), findsOneWidget);
   });
+
+  testWidgets('site billing page shows explicit unavailable state when no billing data exists',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final AppState appState = _buildSiteState();
+
+    Future<Map<String, dynamic>> loadBillingSnapshot(String siteId) async {
+      return <String, dynamic>{
+        'siteId': siteId,
+        'summary': null,
+        'invoices': <Map<String, dynamic>>[],
+      };
+    }
+
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
+    await tester.pumpWidget(
+      _buildHarness(
+        child: SiteBillingPage(
+          firestore: firestore,
+          loadBillingSnapshot: loadBillingSnapshot,
+        ),
+        providers: <SingleChildWidget>[
+          ChangeNotifierProvider<AppState>.value(value: appState),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('No billing data yet'), findsOneWidget);
+    expect(find.text('Billing plan unavailable'), findsOneWidget);
+    expect(find.text('Standard'), findsNothing);
+    expect(find.text('Active'), findsNothing);
+  });
 }
