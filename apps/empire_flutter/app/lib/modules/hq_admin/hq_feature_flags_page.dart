@@ -8171,6 +8171,10 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         _runtimeRolloutEscalationsByDeliveryId[latestRuntimeDelivery.id];
     final FederatedLearningRuntimeRolloutAlertRecordModel? alertRecord =
         _runtimeRolloutAlertsByDeliveryId[latestRuntimeDelivery.id];
+    final int acknowledgedAlertSeverity = _acknowledgedAlertSeverity(
+      summary,
+      alertRecord,
+    );
     final int escalationSeverity = _rolloutEscalationSeverity(
       summary,
       latestRuntimeRolloutEscalation,
@@ -8178,15 +8182,37 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     final int controlSeverity =
         _rolloutControlSeverity(latestRuntimeRolloutControl);
     if (_isRuntimeRolloutAlertAcknowledged(summary, alertRecord)) {
-      return escalationSeverity + controlSeverity;
+      return acknowledgedAlertSeverity + escalationSeverity + controlSeverity;
     }
     if (summary.fallbackCount > 0) {
-      return 2 + escalationSeverity + controlSeverity;
+      return 2 + acknowledgedAlertSeverity + escalationSeverity + controlSeverity;
     }
     if (summary.pendingCount > 0) {
-      return 1 + escalationSeverity + controlSeverity;
+      return 1 + acknowledgedAlertSeverity + escalationSeverity + controlSeverity;
     }
-    return escalationSeverity + controlSeverity;
+    return acknowledgedAlertSeverity + escalationSeverity + controlSeverity;
+  }
+
+  int _acknowledgedAlertSeverity(
+    _RuntimeRolloutHealthSummary summary,
+    FederatedLearningRuntimeRolloutAlertRecordModel? record,
+  ) {
+    if (!_isRuntimeRolloutAlertAcknowledged(summary, record)) {
+      return 0;
+    }
+    final DateTime? acknowledgedAt = record!.acknowledgedAt?.toDate().toUtc() ??
+        record.updatedAt?.toDate().toUtc();
+    if (acknowledgedAt == null) {
+      return 0;
+    }
+    final Duration triageAge = DateTime.now().toUtc().difference(acknowledgedAt);
+    if (triageAge.inHours >= 72) {
+      return 2;
+    }
+    if (triageAge.inHours >= 24) {
+      return 1;
+    }
+    return 0;
   }
 
   int _rolloutEscalationSeverity(

@@ -1,0 +1,385 @@
+session_id,cohort_id,grade_band,unit_family,unit_label,session_index,session_title,planned_objective,scheduled_date,duration_min,delivery_mode
+S_C13_01_01,C13_01,1-3,helpful_invention_studio,My Helpful Invention Studio,1,"Notice Problems, Pick One",Identify a real user problem and choose a helpful invention idea.,2026-02-02,60,blended
+S_C13_01_02,C13_01,1-3,helpful_invention_studio,My Helpful Invention Studio,2,Make a Plan,Sketch a plan and sequence simple steps for a prototype.,2026-02-09,60,blended
+S_C13_01_03,C13_01,1-3,helpful_invention_studio,My Helpful Invention Studio,3,Build Prototype v1,Build a first prototype and test a simple feature.,2026-02-16,60,blended
+S_C13_01_04,C13_01,1-3,helpful_invention_studio,My Helpful Invention Studio,4,Make It Better,Use feedback to improve the prototype.,2026-02-23,60,blended
+S_C13_01_05,C13_01,1-3,helpful_invention_studio,My Helpful Invention Studio,5,Add a Story + Demo,Create a story and demo that explains the invention.,2026-03-02,60,blended
+S_C13_01_06,C13_01,1-3,helpful_invention_studio,My Helpful Invention Studio,6,Optional Coding Boost,Try a simple coding or logic boost to extend the idea.,2026-03-09,60,blended
+S_C13_01_07,C13_01,1-3,helpful_invention_studio,My Helpful Invention Studio,7,Rehearse & Improve,"Rehearse, refine, and prepare for showcasing.",2026-03-16,60,blended
+S_C13_01_08,C13_01,1-3,helpful_invention_studio,My Helpful Invention Studio,8,Showcase Day,Share the final invention and reflect on learning.,2026-03-23,60,blended
+S_C13_02_01,C13_02,1-3,helpful_invention_studio,My Helpful Invention Studio,1,"Notice Problems, Pick One",Identify a real user problem and choose a helpful invention idea.,2026-02-09,60,blended
+S_C13_02_02,C13_02,1-3,helpful_invention_studio,My Helpful Invention Studio,2,Make a Plan,Sketch a plan and sequence simple steps for a prototype.,2026-02-16,60,blended
+S_C13_02_03,C13_02,1-3,helpful_invention_studio,My Helpful Invention Studio,3,Build Prototype v1,Build a first prototype and test a simple feature.,2026-02-23,60,blended
+S_C13_02_04,C13_02,1-3,helpful_invention_studio,My Helpful Invention Studio,4,Make It Better,Use feedback to improve the prototype.,2026-03-02,60,blended
+S_C13_02_05,C13_02,1-3,helpful_invention_studio,My Helpful Invention Studio,5,Add a Story + Demo,Create a story and demo that explains the invention.,2026-03-09,60,blended
+S_C13_02_06,C13_02,1-3,helpful_invention_studio,My Helpful Invention Studio,6,Optional Coding Boost,Try a simple coding or logic boost to extend the idea.,2026-03-16,60,blended
+S_C13_02_07,C13_02,1-3,helpful_invention_studio,My Helpful Invention Studio,7,Rehearse & Improve,"Rehearse, refine, and prepare for showcasing.",2026-03-23,60,blended
+S_C13_02_08,C13_02,1-3,helpful_invention_studio,My Helpful Invention Studio,8,Showcase Day,Share the final invention and reflect on learning.,2026-03-30,60,blended
+S_C13_03_01,C13_03,1-3,helpful_invention_studio,My Helpful Invention Studio,1,"Notice Problems, Pick One",Identify a real user problem and choose a helpful invention idea.,2026-02-16,60,in_person
+S_C13_03_02,C13_03,1-3,helpful_invention_studio,My Helpful Invention Studio,2,Make a Plan,Sketch a plan and sequence simple steps for a prototype.,2026-02-23,60,in_person
+S_C13_03_03,C13_03,1-3,helpful_invention_studio,My Helpful Invention Studio,3,Build Prototype v1,Build a first prototype and test a simple feature.,2026-03-02,60,in_person
+S_C13_03_04,C13_03,1-3,helpful_invention_studio,My Helpful Invention Studio,4,Make It Better,Use feedback to improve the prototype.,2026-03-09,60,in_person
+S_C13_03_05,C13_03,1-3,helpful_invention_studio,My Helpful Invention Studio,5,Add a Story + Demo,Create a story and demo that explains the invention.,2026-03-16,60,in_person
+S_C13_03_06,C13_03,1-3,helpful_invention_studio,My Helpful Invention Studio,6,Optional Coding Boost,Try a simple coding or logic boost to extend the idea.,2026-03-23,60,in_person
+S_C13_03_07,C13_03,1-3,helpful_invention_studio,My Helpful Invention Studio,7,Rehearse & Improve,"Rehearse, refine, and prepare for showcasing.",2026-03-30,60,in_person
+S_C13_03_08,C13_03,1-3,helpful_invention_studio,My Helpful Invention Studio,8,Showcase Day,Share the final invention and reflect on learning.,2026-04-06,60,in_person
+S_C13_04_01,C13_04,1-3,helpful_invention_studio,My Helpful Invention Studio,1,"Notice Problems, Pick One",Identify a real user problem and choose a helpful invention idea.,2026-02-23,60,blended
+S_C13_04_02,C13_04,1-3,helpful_invention_studio,My Helpful Invention Studio,2,Make a Plan,Sketch a plan and sequence simple steps for a prototype.,2026-03-02,60,blended
+S_C13_04_03,C13_04,1-3,helpful_invention_studio,My Helpful Invention Studio,3,Build Prototype v1,Build a first prototype and test a simple feature.,2026-03-09,60,blended
+S_C13_04_04,C13_04,1-3,helpful_invention_studio,My Helpful Invention Studio,4,Make It Better,Use feedback to improve the prototype.,2026-03-16,60,blended
+S_C13_04_05,C13_04,1-3,helpful_invention_studio,My Helpful Invention Studio,5,Add a Story + Demo,Create a story and demo that explains the invention.,2026-03-23,60,blended
+S_C13_04_06,C13_04,1-3,helpful_invention_studio,My Helpful Invention Studio,6,Optional Coding Boost,Try a simple coding or logic boost to extend the idea.,2026-03-30,60,blended
+S_C13_04_07,C13_04,1-3,helpful_invention_studio,My Helpful Invention Studio,7,Rehearse & Improve,"Rehearse, refine, and prepare for showcasing.",2026-04-06,60,blended
+S_C13_04_08,C13_04,1-3,helpful_invention_studio,My Helpful Invention Studio,8,Showcase Day,Share the final invention and reflect on learning.,2026-04-13,60,blended
+S_C13_05_01,C13_05,1-3,helpful_invention_studio,My Helpful Invention Studio,1,"Notice Problems, Pick One",Identify a real user problem and choose a helpful invention idea.,2026-03-02,60,in_person
+S_C13_05_02,C13_05,1-3,helpful_invention_studio,My Helpful Invention Studio,2,Make a Plan,Sketch a plan and sequence simple steps for a prototype.,2026-03-09,60,in_person
+S_C13_05_03,C13_05,1-3,helpful_invention_studio,My Helpful Invention Studio,3,Build Prototype v1,Build a first prototype and test a simple feature.,2026-03-16,60,in_person
+S_C13_05_04,C13_05,1-3,helpful_invention_studio,My Helpful Invention Studio,4,Make It Better,Use feedback to improve the prototype.,2026-03-23,60,in_person
+S_C13_05_05,C13_05,1-3,helpful_invention_studio,My Helpful Invention Studio,5,Add a Story + Demo,Create a story and demo that explains the invention.,2026-03-30,60,in_person
+S_C13_05_06,C13_05,1-3,helpful_invention_studio,My Helpful Invention Studio,6,Optional Coding Boost,Try a simple coding or logic boost to extend the idea.,2026-04-06,60,in_person
+S_C13_05_07,C13_05,1-3,helpful_invention_studio,My Helpful Invention Studio,7,Rehearse & Improve,"Rehearse, refine, and prepare for showcasing.",2026-04-13,60,in_person
+S_C13_05_08,C13_05,1-3,helpful_invention_studio,My Helpful Invention Studio,8,Showcase Day,Share the final invention and reflect on learning.,2026-04-20,60,in_person
+S_C13_06_01,C13_06,1-3,helpful_invention_studio,My Helpful Invention Studio,1,"Notice Problems, Pick One",Identify a real user problem and choose a helpful invention idea.,2026-03-09,60,blended
+S_C13_06_02,C13_06,1-3,helpful_invention_studio,My Helpful Invention Studio,2,Make a Plan,Sketch a plan and sequence simple steps for a prototype.,2026-03-16,60,blended
+S_C13_06_03,C13_06,1-3,helpful_invention_studio,My Helpful Invention Studio,3,Build Prototype v1,Build a first prototype and test a simple feature.,2026-03-23,60,blended
+S_C13_06_04,C13_06,1-3,helpful_invention_studio,My Helpful Invention Studio,4,Make It Better,Use feedback to improve the prototype.,2026-03-30,60,blended
+S_C13_06_05,C13_06,1-3,helpful_invention_studio,My Helpful Invention Studio,5,Add a Story + Demo,Create a story and demo that explains the invention.,2026-04-06,60,blended
+S_C13_06_06,C13_06,1-3,helpful_invention_studio,My Helpful Invention Studio,6,Optional Coding Boost,Try a simple coding or logic boost to extend the idea.,2026-04-13,60,blended
+S_C13_06_07,C13_06,1-3,helpful_invention_studio,My Helpful Invention Studio,7,Rehearse & Improve,"Rehearse, refine, and prepare for showcasing.",2026-04-20,60,blended
+S_C13_06_08,C13_06,1-3,helpful_invention_studio,My Helpful Invention Studio,8,Showcase Day,Share the final invention and reflect on learning.,2026-04-27,60,blended
+S_C13_07_01,C13_07,1-3,helpful_invention_studio,My Helpful Invention Studio,1,"Notice Problems, Pick One",Identify a real user problem and choose a helpful invention idea.,2026-03-16,60,in_person
+S_C13_07_02,C13_07,1-3,helpful_invention_studio,My Helpful Invention Studio,2,Make a Plan,Sketch a plan and sequence simple steps for a prototype.,2026-03-23,60,in_person
+S_C13_07_03,C13_07,1-3,helpful_invention_studio,My Helpful Invention Studio,3,Build Prototype v1,Build a first prototype and test a simple feature.,2026-03-30,60,in_person
+S_C13_07_04,C13_07,1-3,helpful_invention_studio,My Helpful Invention Studio,4,Make It Better,Use feedback to improve the prototype.,2026-04-06,60,in_person
+S_C13_07_05,C13_07,1-3,helpful_invention_studio,My Helpful Invention Studio,5,Add a Story + Demo,Create a story and demo that explains the invention.,2026-04-13,60,in_person
+S_C13_07_06,C13_07,1-3,helpful_invention_studio,My Helpful Invention Studio,6,Optional Coding Boost,Try a simple coding or logic boost to extend the idea.,2026-04-20,60,in_person
+S_C13_07_07,C13_07,1-3,helpful_invention_studio,My Helpful Invention Studio,7,Rehearse & Improve,"Rehearse, refine, and prepare for showcasing.",2026-04-27,60,in_person
+S_C13_07_08,C13_07,1-3,helpful_invention_studio,My Helpful Invention Studio,8,Showcase Day,Share the final invention and reflect on learning.,2026-05-04,60,in_person
+S_C13_08_01,C13_08,1-3,helpful_invention_studio,My Helpful Invention Studio,1,"Notice Problems, Pick One",Identify a real user problem and choose a helpful invention idea.,2026-03-23,60,in_person
+S_C13_08_02,C13_08,1-3,helpful_invention_studio,My Helpful Invention Studio,2,Make a Plan,Sketch a plan and sequence simple steps for a prototype.,2026-03-30,60,in_person
+S_C13_08_03,C13_08,1-3,helpful_invention_studio,My Helpful Invention Studio,3,Build Prototype v1,Build a first prototype and test a simple feature.,2026-04-06,60,in_person
+S_C13_08_04,C13_08,1-3,helpful_invention_studio,My Helpful Invention Studio,4,Make It Better,Use feedback to improve the prototype.,2026-04-13,60,in_person
+S_C13_08_05,C13_08,1-3,helpful_invention_studio,My Helpful Invention Studio,5,Add a Story + Demo,Create a story and demo that explains the invention.,2026-04-20,60,in_person
+S_C13_08_06,C13_08,1-3,helpful_invention_studio,My Helpful Invention Studio,6,Optional Coding Boost,Try a simple coding or logic boost to extend the idea.,2026-04-27,60,in_person
+S_C13_08_07,C13_08,1-3,helpful_invention_studio,My Helpful Invention Studio,7,Rehearse & Improve,"Rehearse, refine, and prepare for showcasing.",2026-05-04,60,in_person
+S_C13_08_08,C13_08,1-3,helpful_invention_studio,My Helpful Invention Studio,8,Showcase Day,Share the final invention and reflect on learning.,2026-05-11,60,in_person
+S_C13_09_01,C13_09,1-3,helpful_invention_studio,My Helpful Invention Studio,1,"Notice Problems, Pick One",Identify a real user problem and choose a helpful invention idea.,2026-03-30,60,blended
+S_C13_09_02,C13_09,1-3,helpful_invention_studio,My Helpful Invention Studio,2,Make a Plan,Sketch a plan and sequence simple steps for a prototype.,2026-04-06,60,blended
+S_C13_09_03,C13_09,1-3,helpful_invention_studio,My Helpful Invention Studio,3,Build Prototype v1,Build a first prototype and test a simple feature.,2026-04-13,60,blended
+S_C13_09_04,C13_09,1-3,helpful_invention_studio,My Helpful Invention Studio,4,Make It Better,Use feedback to improve the prototype.,2026-04-20,60,blended
+S_C13_09_05,C13_09,1-3,helpful_invention_studio,My Helpful Invention Studio,5,Add a Story + Demo,Create a story and demo that explains the invention.,2026-04-27,60,blended
+S_C13_09_06,C13_09,1-3,helpful_invention_studio,My Helpful Invention Studio,6,Optional Coding Boost,Try a simple coding or logic boost to extend the idea.,2026-05-04,60,blended
+S_C13_09_07,C13_09,1-3,helpful_invention_studio,My Helpful Invention Studio,7,Rehearse & Improve,"Rehearse, refine, and prepare for showcasing.",2026-05-11,60,blended
+S_C13_09_08,C13_09,1-3,helpful_invention_studio,My Helpful Invention Studio,8,Showcase Day,Share the final invention and reflect on learning.,2026-05-18,60,blended
+S_C13_10_01,C13_10,1-3,helpful_invention_studio,My Helpful Invention Studio,1,"Notice Problems, Pick One",Identify a real user problem and choose a helpful invention idea.,2026-04-06,60,blended
+S_C13_10_02,C13_10,1-3,helpful_invention_studio,My Helpful Invention Studio,2,Make a Plan,Sketch a plan and sequence simple steps for a prototype.,2026-04-13,60,blended
+S_C13_10_03,C13_10,1-3,helpful_invention_studio,My Helpful Invention Studio,3,Build Prototype v1,Build a first prototype and test a simple feature.,2026-04-20,60,blended
+S_C13_10_04,C13_10,1-3,helpful_invention_studio,My Helpful Invention Studio,4,Make It Better,Use feedback to improve the prototype.,2026-04-27,60,blended
+S_C13_10_05,C13_10,1-3,helpful_invention_studio,My Helpful Invention Studio,5,Add a Story + Demo,Create a story and demo that explains the invention.,2026-05-04,60,blended
+S_C13_10_06,C13_10,1-3,helpful_invention_studio,My Helpful Invention Studio,6,Optional Coding Boost,Try a simple coding or logic boost to extend the idea.,2026-05-11,60,blended
+S_C13_10_07,C13_10,1-3,helpful_invention_studio,My Helpful Invention Studio,7,Rehearse & Improve,"Rehearse, refine, and prepare for showcasing.",2026-05-18,60,blended
+S_C13_10_08,C13_10,1-3,helpful_invention_studio,My Helpful Invention Studio,8,Showcase Day,Share the final invention and reflect on learning.,2026-05-25,60,blended
+S_C13_11_01,C13_11,1-3,helpful_invention_studio,My Helpful Invention Studio,1,"Notice Problems, Pick One",Identify a real user problem and choose a helpful invention idea.,2026-04-13,60,blended
+S_C13_11_02,C13_11,1-3,helpful_invention_studio,My Helpful Invention Studio,2,Make a Plan,Sketch a plan and sequence simple steps for a prototype.,2026-04-20,60,blended
+S_C13_11_03,C13_11,1-3,helpful_invention_studio,My Helpful Invention Studio,3,Build Prototype v1,Build a first prototype and test a simple feature.,2026-04-27,60,blended
+S_C13_11_04,C13_11,1-3,helpful_invention_studio,My Helpful Invention Studio,4,Make It Better,Use feedback to improve the prototype.,2026-05-04,60,blended
+S_C13_11_05,C13_11,1-3,helpful_invention_studio,My Helpful Invention Studio,5,Add a Story + Demo,Create a story and demo that explains the invention.,2026-05-11,60,blended
+S_C13_11_06,C13_11,1-3,helpful_invention_studio,My Helpful Invention Studio,6,Optional Coding Boost,Try a simple coding or logic boost to extend the idea.,2026-05-18,60,blended
+S_C13_11_07,C13_11,1-3,helpful_invention_studio,My Helpful Invention Studio,7,Rehearse & Improve,"Rehearse, refine, and prepare for showcasing.",2026-05-25,60,blended
+S_C13_11_08,C13_11,1-3,helpful_invention_studio,My Helpful Invention Studio,8,Showcase Day,Share the final invention and reflect on learning.,2026-06-01,60,blended
+S_C13_12_01,C13_12,1-3,helpful_invention_studio,My Helpful Invention Studio,1,"Notice Problems, Pick One",Identify a real user problem and choose a helpful invention idea.,2026-04-20,60,in_person
+S_C13_12_02,C13_12,1-3,helpful_invention_studio,My Helpful Invention Studio,2,Make a Plan,Sketch a plan and sequence simple steps for a prototype.,2026-04-27,60,in_person
+S_C13_12_03,C13_12,1-3,helpful_invention_studio,My Helpful Invention Studio,3,Build Prototype v1,Build a first prototype and test a simple feature.,2026-05-04,60,in_person
+S_C13_12_04,C13_12,1-3,helpful_invention_studio,My Helpful Invention Studio,4,Make It Better,Use feedback to improve the prototype.,2026-05-11,60,in_person
+S_C13_12_05,C13_12,1-3,helpful_invention_studio,My Helpful Invention Studio,5,Add a Story + Demo,Create a story and demo that explains the invention.,2026-05-18,60,in_person
+S_C13_12_06,C13_12,1-3,helpful_invention_studio,My Helpful Invention Studio,6,Optional Coding Boost,Try a simple coding or logic boost to extend the idea.,2026-05-25,60,in_person
+S_C13_12_07,C13_12,1-3,helpful_invention_studio,My Helpful Invention Studio,7,Rehearse & Improve,"Rehearse, refine, and prepare for showcasing.",2026-06-01,60,in_person
+S_C13_12_08,C13_12,1-3,helpful_invention_studio,My Helpful Invention Studio,8,Showcase Day,Share the final invention and reflect on learning.,2026-06-08,60,in_person
+S_C46_01_01,C46_01,4-6,eco_smart_design_lab,Eco-Smart City Lab,1,Define a Community Challenge,Define a local community challenge with a user and context.,2026-02-02,75,in_person
+S_C46_01_02,C46_01,4-6,eco_smart_design_lab,Eco-Smart City Lab,2,Collect Simple Data,Collect simple evidence and organize notes or tallies.,2026-02-09,75,in_person
+S_C46_01_03,C46_01,4-6,eco_smart_design_lab,Eco-Smart City Lab,3,Design a Solution,Design a solution that fits the constraints.,2026-02-16,75,in_person
+S_C46_01_04,C46_01,4-6,eco_smart_design_lab,Eco-Smart City Lab,4,Build a Prototype,Build a prototype that addresses the challenge.,2026-02-23,75,in_person
+S_C46_01_05,C46_01,4-6,eco_smart_design_lab,Eco-Smart City Lab,5,Test With Users,Test with users and gather feedback.,2026-03-02,75,in_person
+S_C46_01_06,C46_01,4-6,eco_smart_design_lab,Eco-Smart City Lab,6,Iterate With Evidence,Iterate using evidence from tests and data.,2026-03-09,75,in_person
+S_C46_01_07,C46_01,4-6,eco_smart_design_lab,Eco-Smart City Lab,7,Create a Clear Pitch,Create a clear pitch backed by evidence.,2026-03-16,75,in_person
+S_C46_01_08,C46_01,4-6,eco_smart_design_lab,Eco-Smart City Lab,8,Expo Day,Present the solution and reflect on impact and next steps.,2026-03-23,75,in_person
+S_C46_02_01,C46_02,4-6,eco_smart_design_lab,Eco-Smart City Lab,1,Define a Community Challenge,Define a local community challenge with a user and context.,2026-02-09,75,blended
+S_C46_02_02,C46_02,4-6,eco_smart_design_lab,Eco-Smart City Lab,2,Collect Simple Data,Collect simple evidence and organize notes or tallies.,2026-02-16,75,blended
+S_C46_02_03,C46_02,4-6,eco_smart_design_lab,Eco-Smart City Lab,3,Design a Solution,Design a solution that fits the constraints.,2026-02-23,75,blended
+S_C46_02_04,C46_02,4-6,eco_smart_design_lab,Eco-Smart City Lab,4,Build a Prototype,Build a prototype that addresses the challenge.,2026-03-02,75,blended
+S_C46_02_05,C46_02,4-6,eco_smart_design_lab,Eco-Smart City Lab,5,Test With Users,Test with users and gather feedback.,2026-03-09,75,blended
+S_C46_02_06,C46_02,4-6,eco_smart_design_lab,Eco-Smart City Lab,6,Iterate With Evidence,Iterate using evidence from tests and data.,2026-03-16,75,blended
+S_C46_02_07,C46_02,4-6,eco_smart_design_lab,Eco-Smart City Lab,7,Create a Clear Pitch,Create a clear pitch backed by evidence.,2026-03-23,75,blended
+S_C46_02_08,C46_02,4-6,eco_smart_design_lab,Eco-Smart City Lab,8,Expo Day,Present the solution and reflect on impact and next steps.,2026-03-30,75,blended
+S_C46_03_01,C46_03,4-6,eco_smart_design_lab,Eco-Smart City Lab,1,Define a Community Challenge,Define a local community challenge with a user and context.,2026-02-16,75,blended
+S_C46_03_02,C46_03,4-6,eco_smart_design_lab,Eco-Smart City Lab,2,Collect Simple Data,Collect simple evidence and organize notes or tallies.,2026-02-23,75,blended
+S_C46_03_03,C46_03,4-6,eco_smart_design_lab,Eco-Smart City Lab,3,Design a Solution,Design a solution that fits the constraints.,2026-03-02,75,blended
+S_C46_03_04,C46_03,4-6,eco_smart_design_lab,Eco-Smart City Lab,4,Build a Prototype,Build a prototype that addresses the challenge.,2026-03-09,75,blended
+S_C46_03_05,C46_03,4-6,eco_smart_design_lab,Eco-Smart City Lab,5,Test With Users,Test with users and gather feedback.,2026-03-16,75,blended
+S_C46_03_06,C46_03,4-6,eco_smart_design_lab,Eco-Smart City Lab,6,Iterate With Evidence,Iterate using evidence from tests and data.,2026-03-23,75,blended
+S_C46_03_07,C46_03,4-6,eco_smart_design_lab,Eco-Smart City Lab,7,Create a Clear Pitch,Create a clear pitch backed by evidence.,2026-03-30,75,blended
+S_C46_03_08,C46_03,4-6,eco_smart_design_lab,Eco-Smart City Lab,8,Expo Day,Present the solution and reflect on impact and next steps.,2026-04-06,75,blended
+S_C46_04_01,C46_04,4-6,eco_smart_design_lab,Eco-Smart City Lab,1,Define a Community Challenge,Define a local community challenge with a user and context.,2026-02-23,75,blended
+S_C46_04_02,C46_04,4-6,eco_smart_design_lab,Eco-Smart City Lab,2,Collect Simple Data,Collect simple evidence and organize notes or tallies.,2026-03-02,75,blended
+S_C46_04_03,C46_04,4-6,eco_smart_design_lab,Eco-Smart City Lab,3,Design a Solution,Design a solution that fits the constraints.,2026-03-09,75,blended
+S_C46_04_04,C46_04,4-6,eco_smart_design_lab,Eco-Smart City Lab,4,Build a Prototype,Build a prototype that addresses the challenge.,2026-03-16,75,blended
+S_C46_04_05,C46_04,4-6,eco_smart_design_lab,Eco-Smart City Lab,5,Test With Users,Test with users and gather feedback.,2026-03-23,75,blended
+S_C46_04_06,C46_04,4-6,eco_smart_design_lab,Eco-Smart City Lab,6,Iterate With Evidence,Iterate using evidence from tests and data.,2026-03-30,75,blended
+S_C46_04_07,C46_04,4-6,eco_smart_design_lab,Eco-Smart City Lab,7,Create a Clear Pitch,Create a clear pitch backed by evidence.,2026-04-06,75,blended
+S_C46_04_08,C46_04,4-6,eco_smart_design_lab,Eco-Smart City Lab,8,Expo Day,Present the solution and reflect on impact and next steps.,2026-04-13,75,blended
+S_C46_05_01,C46_05,4-6,eco_smart_design_lab,Eco-Smart City Lab,1,Define a Community Challenge,Define a local community challenge with a user and context.,2026-03-02,75,blended
+S_C46_05_02,C46_05,4-6,eco_smart_design_lab,Eco-Smart City Lab,2,Collect Simple Data,Collect simple evidence and organize notes or tallies.,2026-03-09,75,blended
+S_C46_05_03,C46_05,4-6,eco_smart_design_lab,Eco-Smart City Lab,3,Design a Solution,Design a solution that fits the constraints.,2026-03-16,75,blended
+S_C46_05_04,C46_05,4-6,eco_smart_design_lab,Eco-Smart City Lab,4,Build a Prototype,Build a prototype that addresses the challenge.,2026-03-23,75,blended
+S_C46_05_05,C46_05,4-6,eco_smart_design_lab,Eco-Smart City Lab,5,Test With Users,Test with users and gather feedback.,2026-03-30,75,blended
+S_C46_05_06,C46_05,4-6,eco_smart_design_lab,Eco-Smart City Lab,6,Iterate With Evidence,Iterate using evidence from tests and data.,2026-04-06,75,blended
+S_C46_05_07,C46_05,4-6,eco_smart_design_lab,Eco-Smart City Lab,7,Create a Clear Pitch,Create a clear pitch backed by evidence.,2026-04-13,75,blended
+S_C46_05_08,C46_05,4-6,eco_smart_design_lab,Eco-Smart City Lab,8,Expo Day,Present the solution and reflect on impact and next steps.,2026-04-20,75,blended
+S_C46_06_01,C46_06,4-6,eco_smart_design_lab,Eco-Smart City Lab,1,Define a Community Challenge,Define a local community challenge with a user and context.,2026-03-09,75,in_person
+S_C46_06_02,C46_06,4-6,eco_smart_design_lab,Eco-Smart City Lab,2,Collect Simple Data,Collect simple evidence and organize notes or tallies.,2026-03-16,75,in_person
+S_C46_06_03,C46_06,4-6,eco_smart_design_lab,Eco-Smart City Lab,3,Design a Solution,Design a solution that fits the constraints.,2026-03-23,75,in_person
+S_C46_06_04,C46_06,4-6,eco_smart_design_lab,Eco-Smart City Lab,4,Build a Prototype,Build a prototype that addresses the challenge.,2026-03-30,75,in_person
+S_C46_06_05,C46_06,4-6,eco_smart_design_lab,Eco-Smart City Lab,5,Test With Users,Test with users and gather feedback.,2026-04-06,75,in_person
+S_C46_06_06,C46_06,4-6,eco_smart_design_lab,Eco-Smart City Lab,6,Iterate With Evidence,Iterate using evidence from tests and data.,2026-04-13,75,in_person
+S_C46_06_07,C46_06,4-6,eco_smart_design_lab,Eco-Smart City Lab,7,Create a Clear Pitch,Create a clear pitch backed by evidence.,2026-04-20,75,in_person
+S_C46_06_08,C46_06,4-6,eco_smart_design_lab,Eco-Smart City Lab,8,Expo Day,Present the solution and reflect on impact and next steps.,2026-04-27,75,in_person
+S_C46_07_01,C46_07,4-6,eco_smart_design_lab,Eco-Smart City Lab,1,Define a Community Challenge,Define a local community challenge with a user and context.,2026-03-16,75,in_person
+S_C46_07_02,C46_07,4-6,eco_smart_design_lab,Eco-Smart City Lab,2,Collect Simple Data,Collect simple evidence and organize notes or tallies.,2026-03-23,75,in_person
+S_C46_07_03,C46_07,4-6,eco_smart_design_lab,Eco-Smart City Lab,3,Design a Solution,Design a solution that fits the constraints.,2026-03-30,75,in_person
+S_C46_07_04,C46_07,4-6,eco_smart_design_lab,Eco-Smart City Lab,4,Build a Prototype,Build a prototype that addresses the challenge.,2026-04-06,75,in_person
+S_C46_07_05,C46_07,4-6,eco_smart_design_lab,Eco-Smart City Lab,5,Test With Users,Test with users and gather feedback.,2026-04-13,75,in_person
+S_C46_07_06,C46_07,4-6,eco_smart_design_lab,Eco-Smart City Lab,6,Iterate With Evidence,Iterate using evidence from tests and data.,2026-04-20,75,in_person
+S_C46_07_07,C46_07,4-6,eco_smart_design_lab,Eco-Smart City Lab,7,Create a Clear Pitch,Create a clear pitch backed by evidence.,2026-04-27,75,in_person
+S_C46_07_08,C46_07,4-6,eco_smart_design_lab,Eco-Smart City Lab,8,Expo Day,Present the solution and reflect on impact and next steps.,2026-05-04,75,in_person
+S_C46_08_01,C46_08,4-6,eco_smart_design_lab,Eco-Smart City Lab,1,Define a Community Challenge,Define a local community challenge with a user and context.,2026-03-23,75,in_person
+S_C46_08_02,C46_08,4-6,eco_smart_design_lab,Eco-Smart City Lab,2,Collect Simple Data,Collect simple evidence and organize notes or tallies.,2026-03-30,75,in_person
+S_C46_08_03,C46_08,4-6,eco_smart_design_lab,Eco-Smart City Lab,3,Design a Solution,Design a solution that fits the constraints.,2026-04-06,75,in_person
+S_C46_08_04,C46_08,4-6,eco_smart_design_lab,Eco-Smart City Lab,4,Build a Prototype,Build a prototype that addresses the challenge.,2026-04-13,75,in_person
+S_C46_08_05,C46_08,4-6,eco_smart_design_lab,Eco-Smart City Lab,5,Test With Users,Test with users and gather feedback.,2026-04-20,75,in_person
+S_C46_08_06,C46_08,4-6,eco_smart_design_lab,Eco-Smart City Lab,6,Iterate With Evidence,Iterate using evidence from tests and data.,2026-04-27,75,in_person
+S_C46_08_07,C46_08,4-6,eco_smart_design_lab,Eco-Smart City Lab,7,Create a Clear Pitch,Create a clear pitch backed by evidence.,2026-05-04,75,in_person
+S_C46_08_08,C46_08,4-6,eco_smart_design_lab,Eco-Smart City Lab,8,Expo Day,Present the solution and reflect on impact and next steps.,2026-05-11,75,in_person
+S_C46_09_01,C46_09,4-6,eco_smart_design_lab,Eco-Smart City Lab,1,Define a Community Challenge,Define a local community challenge with a user and context.,2026-03-30,75,in_person
+S_C46_09_02,C46_09,4-6,eco_smart_design_lab,Eco-Smart City Lab,2,Collect Simple Data,Collect simple evidence and organize notes or tallies.,2026-04-06,75,in_person
+S_C46_09_03,C46_09,4-6,eco_smart_design_lab,Eco-Smart City Lab,3,Design a Solution,Design a solution that fits the constraints.,2026-04-13,75,in_person
+S_C46_09_04,C46_09,4-6,eco_smart_design_lab,Eco-Smart City Lab,4,Build a Prototype,Build a prototype that addresses the challenge.,2026-04-20,75,in_person
+S_C46_09_05,C46_09,4-6,eco_smart_design_lab,Eco-Smart City Lab,5,Test With Users,Test with users and gather feedback.,2026-04-27,75,in_person
+S_C46_09_06,C46_09,4-6,eco_smart_design_lab,Eco-Smart City Lab,6,Iterate With Evidence,Iterate using evidence from tests and data.,2026-05-04,75,in_person
+S_C46_09_07,C46_09,4-6,eco_smart_design_lab,Eco-Smart City Lab,7,Create a Clear Pitch,Create a clear pitch backed by evidence.,2026-05-11,75,in_person
+S_C46_09_08,C46_09,4-6,eco_smart_design_lab,Eco-Smart City Lab,8,Expo Day,Present the solution and reflect on impact and next steps.,2026-05-18,75,in_person
+S_C46_10_01,C46_10,4-6,eco_smart_design_lab,Eco-Smart City Lab,1,Define a Community Challenge,Define a local community challenge with a user and context.,2026-04-06,75,blended
+S_C46_10_02,C46_10,4-6,eco_smart_design_lab,Eco-Smart City Lab,2,Collect Simple Data,Collect simple evidence and organize notes or tallies.,2026-04-13,75,blended
+S_C46_10_03,C46_10,4-6,eco_smart_design_lab,Eco-Smart City Lab,3,Design a Solution,Design a solution that fits the constraints.,2026-04-20,75,blended
+S_C46_10_04,C46_10,4-6,eco_smart_design_lab,Eco-Smart City Lab,4,Build a Prototype,Build a prototype that addresses the challenge.,2026-04-27,75,blended
+S_C46_10_05,C46_10,4-6,eco_smart_design_lab,Eco-Smart City Lab,5,Test With Users,Test with users and gather feedback.,2026-05-04,75,blended
+S_C46_10_06,C46_10,4-6,eco_smart_design_lab,Eco-Smart City Lab,6,Iterate With Evidence,Iterate using evidence from tests and data.,2026-05-11,75,blended
+S_C46_10_07,C46_10,4-6,eco_smart_design_lab,Eco-Smart City Lab,7,Create a Clear Pitch,Create a clear pitch backed by evidence.,2026-05-18,75,blended
+S_C46_10_08,C46_10,4-6,eco_smart_design_lab,Eco-Smart City Lab,8,Expo Day,Present the solution and reflect on impact and next steps.,2026-05-25,75,blended
+S_C46_11_01,C46_11,4-6,eco_smart_design_lab,Eco-Smart City Lab,1,Define a Community Challenge,Define a local community challenge with a user and context.,2026-04-13,75,in_person
+S_C46_11_02,C46_11,4-6,eco_smart_design_lab,Eco-Smart City Lab,2,Collect Simple Data,Collect simple evidence and organize notes or tallies.,2026-04-20,75,in_person
+S_C46_11_03,C46_11,4-6,eco_smart_design_lab,Eco-Smart City Lab,3,Design a Solution,Design a solution that fits the constraints.,2026-04-27,75,in_person
+S_C46_11_04,C46_11,4-6,eco_smart_design_lab,Eco-Smart City Lab,4,Build a Prototype,Build a prototype that addresses the challenge.,2026-05-04,75,in_person
+S_C46_11_05,C46_11,4-6,eco_smart_design_lab,Eco-Smart City Lab,5,Test With Users,Test with users and gather feedback.,2026-05-11,75,in_person
+S_C46_11_06,C46_11,4-6,eco_smart_design_lab,Eco-Smart City Lab,6,Iterate With Evidence,Iterate using evidence from tests and data.,2026-05-18,75,in_person
+S_C46_11_07,C46_11,4-6,eco_smart_design_lab,Eco-Smart City Lab,7,Create a Clear Pitch,Create a clear pitch backed by evidence.,2026-05-25,75,in_person
+S_C46_11_08,C46_11,4-6,eco_smart_design_lab,Eco-Smart City Lab,8,Expo Day,Present the solution and reflect on impact and next steps.,2026-06-01,75,in_person
+S_C46_12_01,C46_12,4-6,eco_smart_design_lab,Eco-Smart City Lab,1,Define a Community Challenge,Define a local community challenge with a user and context.,2026-04-20,75,in_person
+S_C46_12_02,C46_12,4-6,eco_smart_design_lab,Eco-Smart City Lab,2,Collect Simple Data,Collect simple evidence and organize notes or tallies.,2026-04-27,75,in_person
+S_C46_12_03,C46_12,4-6,eco_smart_design_lab,Eco-Smart City Lab,3,Design a Solution,Design a solution that fits the constraints.,2026-05-04,75,in_person
+S_C46_12_04,C46_12,4-6,eco_smart_design_lab,Eco-Smart City Lab,4,Build a Prototype,Build a prototype that addresses the challenge.,2026-05-11,75,in_person
+S_C46_12_05,C46_12,4-6,eco_smart_design_lab,Eco-Smart City Lab,5,Test With Users,Test with users and gather feedback.,2026-05-18,75,in_person
+S_C46_12_06,C46_12,4-6,eco_smart_design_lab,Eco-Smart City Lab,6,Iterate With Evidence,Iterate using evidence from tests and data.,2026-05-25,75,in_person
+S_C46_12_07,C46_12,4-6,eco_smart_design_lab,Eco-Smart City Lab,7,Create a Clear Pitch,Create a clear pitch backed by evidence.,2026-06-01,75,in_person
+S_C46_12_08,C46_12,4-6,eco_smart_design_lab,Eco-Smart City Lab,8,Expo Day,Present the solution and reflect on impact and next steps.,2026-06-08,75,in_person
+S_C79_01_01,C79_01,7-9,ai_media_detective_lab,AI Media Detective Lab,1,"Question, Claims, and Evidence",Frame a claim and identify the evidence needed to test it.,2026-02-02,75,blended
+S_C79_01_02,C79_01,7-9,ai_media_detective_lab,AI Media Detective Lab,2,Data + Bias Basics,"Explore datasets, labels, and bias basics.",2026-02-09,75,blended
+S_C79_01_03,C79_01,7-9,ai_media_detective_lab,AI Media Detective Lab,3,Build a Simple Classifier,Build a simple classifier or no-code model.,2026-02-16,75,blended
+S_C79_01_04,C79_01,7-9,ai_media_detective_lab,AI Media Detective Lab,4,Evaluate Model Behavior,Evaluate how the model behaves across cases.,2026-02-23,75,blended
+S_C79_01_05,C79_01,7-9,ai_media_detective_lab,AI Media Detective Lab,5,Create an AI Detector Checklist,Create a practical media checking checklist.,2026-03-02,75,blended
+S_C79_01_06,C79_01,7-9,ai_media_detective_lab,AI Media Detective Lab,6,Communicate Findings,Communicate findings with uncertainty and evidence.,2026-03-09,75,blended
+S_C79_01_07,C79_01,7-9,ai_media_detective_lab,AI Media Detective Lab,7,Policy & Ethics Debate,Debate policy and ethics implications.,2026-03-16,75,blended
+S_C79_01_08,C79_01,7-9,ai_media_detective_lab,AI Media Detective Lab,8,Public Showcase,Present findings and reflect on limitations and impact.,2026-03-23,75,blended
+S_C79_02_01,C79_02,7-9,ai_media_detective_lab,AI Media Detective Lab,1,"Question, Claims, and Evidence",Frame a claim and identify the evidence needed to test it.,2026-02-09,75,blended
+S_C79_02_02,C79_02,7-9,ai_media_detective_lab,AI Media Detective Lab,2,Data + Bias Basics,"Explore datasets, labels, and bias basics.",2026-02-16,75,blended
+S_C79_02_03,C79_02,7-9,ai_media_detective_lab,AI Media Detective Lab,3,Build a Simple Classifier,Build a simple classifier or no-code model.,2026-02-23,75,blended
+S_C79_02_04,C79_02,7-9,ai_media_detective_lab,AI Media Detective Lab,4,Evaluate Model Behavior,Evaluate how the model behaves across cases.,2026-03-02,75,blended
+S_C79_02_05,C79_02,7-9,ai_media_detective_lab,AI Media Detective Lab,5,Create an AI Detector Checklist,Create a practical media checking checklist.,2026-03-09,75,blended
+S_C79_02_06,C79_02,7-9,ai_media_detective_lab,AI Media Detective Lab,6,Communicate Findings,Communicate findings with uncertainty and evidence.,2026-03-16,75,blended
+S_C79_02_07,C79_02,7-9,ai_media_detective_lab,AI Media Detective Lab,7,Policy & Ethics Debate,Debate policy and ethics implications.,2026-03-23,75,blended
+S_C79_02_08,C79_02,7-9,ai_media_detective_lab,AI Media Detective Lab,8,Public Showcase,Present findings and reflect on limitations and impact.,2026-03-30,75,blended
+S_C79_03_01,C79_03,7-9,ai_media_detective_lab,AI Media Detective Lab,1,"Question, Claims, and Evidence",Frame a claim and identify the evidence needed to test it.,2026-02-16,75,in_person
+S_C79_03_02,C79_03,7-9,ai_media_detective_lab,AI Media Detective Lab,2,Data + Bias Basics,"Explore datasets, labels, and bias basics.",2026-02-23,75,in_person
+S_C79_03_03,C79_03,7-9,ai_media_detective_lab,AI Media Detective Lab,3,Build a Simple Classifier,Build a simple classifier or no-code model.,2026-03-02,75,in_person
+S_C79_03_04,C79_03,7-9,ai_media_detective_lab,AI Media Detective Lab,4,Evaluate Model Behavior,Evaluate how the model behaves across cases.,2026-03-09,75,in_person
+S_C79_03_05,C79_03,7-9,ai_media_detective_lab,AI Media Detective Lab,5,Create an AI Detector Checklist,Create a practical media checking checklist.,2026-03-16,75,in_person
+S_C79_03_06,C79_03,7-9,ai_media_detective_lab,AI Media Detective Lab,6,Communicate Findings,Communicate findings with uncertainty and evidence.,2026-03-23,75,in_person
+S_C79_03_07,C79_03,7-9,ai_media_detective_lab,AI Media Detective Lab,7,Policy & Ethics Debate,Debate policy and ethics implications.,2026-03-30,75,in_person
+S_C79_03_08,C79_03,7-9,ai_media_detective_lab,AI Media Detective Lab,8,Public Showcase,Present findings and reflect on limitations and impact.,2026-04-06,75,in_person
+S_C79_04_01,C79_04,7-9,ai_media_detective_lab,AI Media Detective Lab,1,"Question, Claims, and Evidence",Frame a claim and identify the evidence needed to test it.,2026-02-23,75,in_person
+S_C79_04_02,C79_04,7-9,ai_media_detective_lab,AI Media Detective Lab,2,Data + Bias Basics,"Explore datasets, labels, and bias basics.",2026-03-02,75,in_person
+S_C79_04_03,C79_04,7-9,ai_media_detective_lab,AI Media Detective Lab,3,Build a Simple Classifier,Build a simple classifier or no-code model.,2026-03-09,75,in_person
+S_C79_04_04,C79_04,7-9,ai_media_detective_lab,AI Media Detective Lab,4,Evaluate Model Behavior,Evaluate how the model behaves across cases.,2026-03-16,75,in_person
+S_C79_04_05,C79_04,7-9,ai_media_detective_lab,AI Media Detective Lab,5,Create an AI Detector Checklist,Create a practical media checking checklist.,2026-03-23,75,in_person
+S_C79_04_06,C79_04,7-9,ai_media_detective_lab,AI Media Detective Lab,6,Communicate Findings,Communicate findings with uncertainty and evidence.,2026-03-30,75,in_person
+S_C79_04_07,C79_04,7-9,ai_media_detective_lab,AI Media Detective Lab,7,Policy & Ethics Debate,Debate policy and ethics implications.,2026-04-06,75,in_person
+S_C79_04_08,C79_04,7-9,ai_media_detective_lab,AI Media Detective Lab,8,Public Showcase,Present findings and reflect on limitations and impact.,2026-04-13,75,in_person
+S_C79_05_01,C79_05,7-9,ai_media_detective_lab,AI Media Detective Lab,1,"Question, Claims, and Evidence",Frame a claim and identify the evidence needed to test it.,2026-03-02,75,in_person
+S_C79_05_02,C79_05,7-9,ai_media_detective_lab,AI Media Detective Lab,2,Data + Bias Basics,"Explore datasets, labels, and bias basics.",2026-03-09,75,in_person
+S_C79_05_03,C79_05,7-9,ai_media_detective_lab,AI Media Detective Lab,3,Build a Simple Classifier,Build a simple classifier or no-code model.,2026-03-16,75,in_person
+S_C79_05_04,C79_05,7-9,ai_media_detective_lab,AI Media Detective Lab,4,Evaluate Model Behavior,Evaluate how the model behaves across cases.,2026-03-23,75,in_person
+S_C79_05_05,C79_05,7-9,ai_media_detective_lab,AI Media Detective Lab,5,Create an AI Detector Checklist,Create a practical media checking checklist.,2026-03-30,75,in_person
+S_C79_05_06,C79_05,7-9,ai_media_detective_lab,AI Media Detective Lab,6,Communicate Findings,Communicate findings with uncertainty and evidence.,2026-04-06,75,in_person
+S_C79_05_07,C79_05,7-9,ai_media_detective_lab,AI Media Detective Lab,7,Policy & Ethics Debate,Debate policy and ethics implications.,2026-04-13,75,in_person
+S_C79_05_08,C79_05,7-9,ai_media_detective_lab,AI Media Detective Lab,8,Public Showcase,Present findings and reflect on limitations and impact.,2026-04-20,75,in_person
+S_C79_06_01,C79_06,7-9,ai_media_detective_lab,AI Media Detective Lab,1,"Question, Claims, and Evidence",Frame a claim and identify the evidence needed to test it.,2026-03-09,75,in_person
+S_C79_06_02,C79_06,7-9,ai_media_detective_lab,AI Media Detective Lab,2,Data + Bias Basics,"Explore datasets, labels, and bias basics.",2026-03-16,75,in_person
+S_C79_06_03,C79_06,7-9,ai_media_detective_lab,AI Media Detective Lab,3,Build a Simple Classifier,Build a simple classifier or no-code model.,2026-03-23,75,in_person
+S_C79_06_04,C79_06,7-9,ai_media_detective_lab,AI Media Detective Lab,4,Evaluate Model Behavior,Evaluate how the model behaves across cases.,2026-03-30,75,in_person
+S_C79_06_05,C79_06,7-9,ai_media_detective_lab,AI Media Detective Lab,5,Create an AI Detector Checklist,Create a practical media checking checklist.,2026-04-06,75,in_person
+S_C79_06_06,C79_06,7-9,ai_media_detective_lab,AI Media Detective Lab,6,Communicate Findings,Communicate findings with uncertainty and evidence.,2026-04-13,75,in_person
+S_C79_06_07,C79_06,7-9,ai_media_detective_lab,AI Media Detective Lab,7,Policy & Ethics Debate,Debate policy and ethics implications.,2026-04-20,75,in_person
+S_C79_06_08,C79_06,7-9,ai_media_detective_lab,AI Media Detective Lab,8,Public Showcase,Present findings and reflect on limitations and impact.,2026-04-27,75,in_person
+S_C79_07_01,C79_07,7-9,ai_media_detective_lab,AI Media Detective Lab,1,"Question, Claims, and Evidence",Frame a claim and identify the evidence needed to test it.,2026-03-16,75,in_person
+S_C79_07_02,C79_07,7-9,ai_media_detective_lab,AI Media Detective Lab,2,Data + Bias Basics,"Explore datasets, labels, and bias basics.",2026-03-23,75,in_person
+S_C79_07_03,C79_07,7-9,ai_media_detective_lab,AI Media Detective Lab,3,Build a Simple Classifier,Build a simple classifier or no-code model.,2026-03-30,75,in_person
+S_C79_07_04,C79_07,7-9,ai_media_detective_lab,AI Media Detective Lab,4,Evaluate Model Behavior,Evaluate how the model behaves across cases.,2026-04-06,75,in_person
+S_C79_07_05,C79_07,7-9,ai_media_detective_lab,AI Media Detective Lab,5,Create an AI Detector Checklist,Create a practical media checking checklist.,2026-04-13,75,in_person
+S_C79_07_06,C79_07,7-9,ai_media_detective_lab,AI Media Detective Lab,6,Communicate Findings,Communicate findings with uncertainty and evidence.,2026-04-20,75,in_person
+S_C79_07_07,C79_07,7-9,ai_media_detective_lab,AI Media Detective Lab,7,Policy & Ethics Debate,Debate policy and ethics implications.,2026-04-27,75,in_person
+S_C79_07_08,C79_07,7-9,ai_media_detective_lab,AI Media Detective Lab,8,Public Showcase,Present findings and reflect on limitations and impact.,2026-05-04,75,in_person
+S_C79_08_01,C79_08,7-9,ai_media_detective_lab,AI Media Detective Lab,1,"Question, Claims, and Evidence",Frame a claim and identify the evidence needed to test it.,2026-03-23,75,in_person
+S_C79_08_02,C79_08,7-9,ai_media_detective_lab,AI Media Detective Lab,2,Data + Bias Basics,"Explore datasets, labels, and bias basics.",2026-03-30,75,in_person
+S_C79_08_03,C79_08,7-9,ai_media_detective_lab,AI Media Detective Lab,3,Build a Simple Classifier,Build a simple classifier or no-code model.,2026-04-06,75,in_person
+S_C79_08_04,C79_08,7-9,ai_media_detective_lab,AI Media Detective Lab,4,Evaluate Model Behavior,Evaluate how the model behaves across cases.,2026-04-13,75,in_person
+S_C79_08_05,C79_08,7-9,ai_media_detective_lab,AI Media Detective Lab,5,Create an AI Detector Checklist,Create a practical media checking checklist.,2026-04-20,75,in_person
+S_C79_08_06,C79_08,7-9,ai_media_detective_lab,AI Media Detective Lab,6,Communicate Findings,Communicate findings with uncertainty and evidence.,2026-04-27,75,in_person
+S_C79_08_07,C79_08,7-9,ai_media_detective_lab,AI Media Detective Lab,7,Policy & Ethics Debate,Debate policy and ethics implications.,2026-05-04,75,in_person
+S_C79_08_08,C79_08,7-9,ai_media_detective_lab,AI Media Detective Lab,8,Public Showcase,Present findings and reflect on limitations and impact.,2026-05-11,75,in_person
+S_C79_09_01,C79_09,7-9,ai_media_detective_lab,AI Media Detective Lab,1,"Question, Claims, and Evidence",Frame a claim and identify the evidence needed to test it.,2026-03-30,75,in_person
+S_C79_09_02,C79_09,7-9,ai_media_detective_lab,AI Media Detective Lab,2,Data + Bias Basics,"Explore datasets, labels, and bias basics.",2026-04-06,75,in_person
+S_C79_09_03,C79_09,7-9,ai_media_detective_lab,AI Media Detective Lab,3,Build a Simple Classifier,Build a simple classifier or no-code model.,2026-04-13,75,in_person
+S_C79_09_04,C79_09,7-9,ai_media_detective_lab,AI Media Detective Lab,4,Evaluate Model Behavior,Evaluate how the model behaves across cases.,2026-04-20,75,in_person
+S_C79_09_05,C79_09,7-9,ai_media_detective_lab,AI Media Detective Lab,5,Create an AI Detector Checklist,Create a practical media checking checklist.,2026-04-27,75,in_person
+S_C79_09_06,C79_09,7-9,ai_media_detective_lab,AI Media Detective Lab,6,Communicate Findings,Communicate findings with uncertainty and evidence.,2026-05-04,75,in_person
+S_C79_09_07,C79_09,7-9,ai_media_detective_lab,AI Media Detective Lab,7,Policy & Ethics Debate,Debate policy and ethics implications.,2026-05-11,75,in_person
+S_C79_09_08,C79_09,7-9,ai_media_detective_lab,AI Media Detective Lab,8,Public Showcase,Present findings and reflect on limitations and impact.,2026-05-18,75,in_person
+S_C79_10_01,C79_10,7-9,ai_media_detective_lab,AI Media Detective Lab,1,"Question, Claims, and Evidence",Frame a claim and identify the evidence needed to test it.,2026-04-06,75,in_person
+S_C79_10_02,C79_10,7-9,ai_media_detective_lab,AI Media Detective Lab,2,Data + Bias Basics,"Explore datasets, labels, and bias basics.",2026-04-13,75,in_person
+S_C79_10_03,C79_10,7-9,ai_media_detective_lab,AI Media Detective Lab,3,Build a Simple Classifier,Build a simple classifier or no-code model.,2026-04-20,75,in_person
+S_C79_10_04,C79_10,7-9,ai_media_detective_lab,AI Media Detective Lab,4,Evaluate Model Behavior,Evaluate how the model behaves across cases.,2026-04-27,75,in_person
+S_C79_10_05,C79_10,7-9,ai_media_detective_lab,AI Media Detective Lab,5,Create an AI Detector Checklist,Create a practical media checking checklist.,2026-05-04,75,in_person
+S_C79_10_06,C79_10,7-9,ai_media_detective_lab,AI Media Detective Lab,6,Communicate Findings,Communicate findings with uncertainty and evidence.,2026-05-11,75,in_person
+S_C79_10_07,C79_10,7-9,ai_media_detective_lab,AI Media Detective Lab,7,Policy & Ethics Debate,Debate policy and ethics implications.,2026-05-18,75,in_person
+S_C79_10_08,C79_10,7-9,ai_media_detective_lab,AI Media Detective Lab,8,Public Showcase,Present findings and reflect on limitations and impact.,2026-05-25,75,in_person
+S_C79_11_01,C79_11,7-9,ai_media_detective_lab,AI Media Detective Lab,1,"Question, Claims, and Evidence",Frame a claim and identify the evidence needed to test it.,2026-04-13,75,in_person
+S_C79_11_02,C79_11,7-9,ai_media_detective_lab,AI Media Detective Lab,2,Data + Bias Basics,"Explore datasets, labels, and bias basics.",2026-04-20,75,in_person
+S_C79_11_03,C79_11,7-9,ai_media_detective_lab,AI Media Detective Lab,3,Build a Simple Classifier,Build a simple classifier or no-code model.,2026-04-27,75,in_person
+S_C79_11_04,C79_11,7-9,ai_media_detective_lab,AI Media Detective Lab,4,Evaluate Model Behavior,Evaluate how the model behaves across cases.,2026-05-04,75,in_person
+S_C79_11_05,C79_11,7-9,ai_media_detective_lab,AI Media Detective Lab,5,Create an AI Detector Checklist,Create a practical media checking checklist.,2026-05-11,75,in_person
+S_C79_11_06,C79_11,7-9,ai_media_detective_lab,AI Media Detective Lab,6,Communicate Findings,Communicate findings with uncertainty and evidence.,2026-05-18,75,in_person
+S_C79_11_07,C79_11,7-9,ai_media_detective_lab,AI Media Detective Lab,7,Policy & Ethics Debate,Debate policy and ethics implications.,2026-05-25,75,in_person
+S_C79_11_08,C79_11,7-9,ai_media_detective_lab,AI Media Detective Lab,8,Public Showcase,Present findings and reflect on limitations and impact.,2026-06-01,75,in_person
+S_C79_12_01,C79_12,7-9,ai_media_detective_lab,AI Media Detective Lab,1,"Question, Claims, and Evidence",Frame a claim and identify the evidence needed to test it.,2026-04-20,75,in_person
+S_C79_12_02,C79_12,7-9,ai_media_detective_lab,AI Media Detective Lab,2,Data + Bias Basics,"Explore datasets, labels, and bias basics.",2026-04-27,75,in_person
+S_C79_12_03,C79_12,7-9,ai_media_detective_lab,AI Media Detective Lab,3,Build a Simple Classifier,Build a simple classifier or no-code model.,2026-05-04,75,in_person
+S_C79_12_04,C79_12,7-9,ai_media_detective_lab,AI Media Detective Lab,4,Evaluate Model Behavior,Evaluate how the model behaves across cases.,2026-05-11,75,in_person
+S_C79_12_05,C79_12,7-9,ai_media_detective_lab,AI Media Detective Lab,5,Create an AI Detector Checklist,Create a practical media checking checklist.,2026-05-18,75,in_person
+S_C79_12_06,C79_12,7-9,ai_media_detective_lab,AI Media Detective Lab,6,Communicate Findings,Communicate findings with uncertainty and evidence.,2026-05-25,75,in_person
+S_C79_12_07,C79_12,7-9,ai_media_detective_lab,AI Media Detective Lab,7,Policy & Ethics Debate,Debate policy and ethics implications.,2026-06-01,75,in_person
+S_C79_12_08,C79_12,7-9,ai_media_detective_lab,AI Media Detective Lab,8,Public Showcase,Present findings and reflect on limitations and impact.,2026-06-08,75,in_person
+S_C1012_01_01,C1012_01,10-12,venture_sprint,Venture Sprint,1,Choose a Problem Worth Solving,Choose a problem with a real user and evidence of need.,2026-02-02,75,blended
+S_C1012_01_02,C1012_01,10-12,venture_sprint,Venture Sprint,2,Value Proposition + Risks,Craft a value proposition and identify key risks.,2026-02-09,75,blended
+S_C1012_01_03,C1012_01,10-12,venture_sprint,Venture Sprint,3,Prototype + Test Fast,Prototype quickly and test with target users.,2026-02-16,75,blended
+S_C1012_01_04,C1012_01,10-12,venture_sprint,Venture Sprint,4,Metrics + Experiments,Define metrics and design experiments.,2026-02-23,75,blended
+S_C1012_01_05,C1012_01,10-12,venture_sprint,Venture Sprint,5,Business Model Basics,Explore business model basics and unit economics.,2026-03-02,75,blended
+S_C1012_01_06,C1012_01,10-12,venture_sprint,Venture Sprint,6,Responsible AI & Trust,"Address trust, privacy, bias, and safety.",2026-03-09,75,blended
+S_C1012_01_07,C1012_01,10-12,venture_sprint,Venture Sprint,7,Pitch Deck Sprint,Assemble a pitch deck supported by evidence.,2026-03-16,75,blended
+S_C1012_01_08,C1012_01,10-12,venture_sprint,Venture Sprint,8,Investor Demo Day,Present the venture and reflect on next experiments.,2026-03-23,75,blended
+S_C1012_02_01,C1012_02,10-12,venture_sprint,Venture Sprint,1,Choose a Problem Worth Solving,Choose a problem with a real user and evidence of need.,2026-02-09,75,blended
+S_C1012_02_02,C1012_02,10-12,venture_sprint,Venture Sprint,2,Value Proposition + Risks,Craft a value proposition and identify key risks.,2026-02-16,75,blended
+S_C1012_02_03,C1012_02,10-12,venture_sprint,Venture Sprint,3,Prototype + Test Fast,Prototype quickly and test with target users.,2026-02-23,75,blended
+S_C1012_02_04,C1012_02,10-12,venture_sprint,Venture Sprint,4,Metrics + Experiments,Define metrics and design experiments.,2026-03-02,75,blended
+S_C1012_02_05,C1012_02,10-12,venture_sprint,Venture Sprint,5,Business Model Basics,Explore business model basics and unit economics.,2026-03-09,75,blended
+S_C1012_02_06,C1012_02,10-12,venture_sprint,Venture Sprint,6,Responsible AI & Trust,"Address trust, privacy, bias, and safety.",2026-03-16,75,blended
+S_C1012_02_07,C1012_02,10-12,venture_sprint,Venture Sprint,7,Pitch Deck Sprint,Assemble a pitch deck supported by evidence.,2026-03-23,75,blended
+S_C1012_02_08,C1012_02,10-12,venture_sprint,Venture Sprint,8,Investor Demo Day,Present the venture and reflect on next experiments.,2026-03-30,75,blended
+S_C1012_03_01,C1012_03,10-12,venture_sprint,Venture Sprint,1,Choose a Problem Worth Solving,Choose a problem with a real user and evidence of need.,2026-02-16,75,in_person
+S_C1012_03_02,C1012_03,10-12,venture_sprint,Venture Sprint,2,Value Proposition + Risks,Craft a value proposition and identify key risks.,2026-02-23,75,in_person
+S_C1012_03_03,C1012_03,10-12,venture_sprint,Venture Sprint,3,Prototype + Test Fast,Prototype quickly and test with target users.,2026-03-02,75,in_person
+S_C1012_03_04,C1012_03,10-12,venture_sprint,Venture Sprint,4,Metrics + Experiments,Define metrics and design experiments.,2026-03-09,75,in_person
+S_C1012_03_05,C1012_03,10-12,venture_sprint,Venture Sprint,5,Business Model Basics,Explore business model basics and unit economics.,2026-03-16,75,in_person
+S_C1012_03_06,C1012_03,10-12,venture_sprint,Venture Sprint,6,Responsible AI & Trust,"Address trust, privacy, bias, and safety.",2026-03-23,75,in_person
+S_C1012_03_07,C1012_03,10-12,venture_sprint,Venture Sprint,7,Pitch Deck Sprint,Assemble a pitch deck supported by evidence.,2026-03-30,75,in_person
+S_C1012_03_08,C1012_03,10-12,venture_sprint,Venture Sprint,8,Investor Demo Day,Present the venture and reflect on next experiments.,2026-04-06,75,in_person
+S_C1012_04_01,C1012_04,10-12,venture_sprint,Venture Sprint,1,Choose a Problem Worth Solving,Choose a problem with a real user and evidence of need.,2026-02-23,75,blended
+S_C1012_04_02,C1012_04,10-12,venture_sprint,Venture Sprint,2,Value Proposition + Risks,Craft a value proposition and identify key risks.,2026-03-02,75,blended
+S_C1012_04_03,C1012_04,10-12,venture_sprint,Venture Sprint,3,Prototype + Test Fast,Prototype quickly and test with target users.,2026-03-09,75,blended
+S_C1012_04_04,C1012_04,10-12,venture_sprint,Venture Sprint,4,Metrics + Experiments,Define metrics and design experiments.,2026-03-16,75,blended
+S_C1012_04_05,C1012_04,10-12,venture_sprint,Venture Sprint,5,Business Model Basics,Explore business model basics and unit economics.,2026-03-23,75,blended
+S_C1012_04_06,C1012_04,10-12,venture_sprint,Venture Sprint,6,Responsible AI & Trust,"Address trust, privacy, bias, and safety.",2026-03-30,75,blended
+S_C1012_04_07,C1012_04,10-12,venture_sprint,Venture Sprint,7,Pitch Deck Sprint,Assemble a pitch deck supported by evidence.,2026-04-06,75,blended
+S_C1012_04_08,C1012_04,10-12,venture_sprint,Venture Sprint,8,Investor Demo Day,Present the venture and reflect on next experiments.,2026-04-13,75,blended
+S_C1012_05_01,C1012_05,10-12,venture_sprint,Venture Sprint,1,Choose a Problem Worth Solving,Choose a problem with a real user and evidence of need.,2026-03-02,75,blended
+S_C1012_05_02,C1012_05,10-12,venture_sprint,Venture Sprint,2,Value Proposition + Risks,Craft a value proposition and identify key risks.,2026-03-09,75,blended
+S_C1012_05_03,C1012_05,10-12,venture_sprint,Venture Sprint,3,Prototype + Test Fast,Prototype quickly and test with target users.,2026-03-16,75,blended
+S_C1012_05_04,C1012_05,10-12,venture_sprint,Venture Sprint,4,Metrics + Experiments,Define metrics and design experiments.,2026-03-23,75,blended
+S_C1012_05_05,C1012_05,10-12,venture_sprint,Venture Sprint,5,Business Model Basics,Explore business model basics and unit economics.,2026-03-30,75,blended
+S_C1012_05_06,C1012_05,10-12,venture_sprint,Venture Sprint,6,Responsible AI & Trust,"Address trust, privacy, bias, and safety.",2026-04-06,75,blended
+S_C1012_05_07,C1012_05,10-12,venture_sprint,Venture Sprint,7,Pitch Deck Sprint,Assemble a pitch deck supported by evidence.,2026-04-13,75,blended
+S_C1012_05_08,C1012_05,10-12,venture_sprint,Venture Sprint,8,Investor Demo Day,Present the venture and reflect on next experiments.,2026-04-20,75,blended
+S_C1012_06_01,C1012_06,10-12,venture_sprint,Venture Sprint,1,Choose a Problem Worth Solving,Choose a problem with a real user and evidence of need.,2026-03-09,75,in_person
+S_C1012_06_02,C1012_06,10-12,venture_sprint,Venture Sprint,2,Value Proposition + Risks,Craft a value proposition and identify key risks.,2026-03-16,75,in_person
+S_C1012_06_03,C1012_06,10-12,venture_sprint,Venture Sprint,3,Prototype + Test Fast,Prototype quickly and test with target users.,2026-03-23,75,in_person
+S_C1012_06_04,C1012_06,10-12,venture_sprint,Venture Sprint,4,Metrics + Experiments,Define metrics and design experiments.,2026-03-30,75,in_person
+S_C1012_06_05,C1012_06,10-12,venture_sprint,Venture Sprint,5,Business Model Basics,Explore business model basics and unit economics.,2026-04-06,75,in_person
+S_C1012_06_06,C1012_06,10-12,venture_sprint,Venture Sprint,6,Responsible AI & Trust,"Address trust, privacy, bias, and safety.",2026-04-13,75,in_person
+S_C1012_06_07,C1012_06,10-12,venture_sprint,Venture Sprint,7,Pitch Deck Sprint,Assemble a pitch deck supported by evidence.,2026-04-20,75,in_person
+S_C1012_06_08,C1012_06,10-12,venture_sprint,Venture Sprint,8,Investor Demo Day,Present the venture and reflect on next experiments.,2026-04-27,75,in_person
+S_C1012_07_01,C1012_07,10-12,venture_sprint,Venture Sprint,1,Choose a Problem Worth Solving,Choose a problem with a real user and evidence of need.,2026-03-16,75,blended
+S_C1012_07_02,C1012_07,10-12,venture_sprint,Venture Sprint,2,Value Proposition + Risks,Craft a value proposition and identify key risks.,2026-03-23,75,blended
+S_C1012_07_03,C1012_07,10-12,venture_sprint,Venture Sprint,3,Prototype + Test Fast,Prototype quickly and test with target users.,2026-03-30,75,blended
+S_C1012_07_04,C1012_07,10-12,venture_sprint,Venture Sprint,4,Metrics + Experiments,Define metrics and design experiments.,2026-04-06,75,blended
+S_C1012_07_05,C1012_07,10-12,venture_sprint,Venture Sprint,5,Business Model Basics,Explore business model basics and unit economics.,2026-04-13,75,blended
+S_C1012_07_06,C1012_07,10-12,venture_sprint,Venture Sprint,6,Responsible AI & Trust,"Address trust, privacy, bias, and safety.",2026-04-20,75,blended
+S_C1012_07_07,C1012_07,10-12,venture_sprint,Venture Sprint,7,Pitch Deck Sprint,Assemble a pitch deck supported by evidence.,2026-04-27,75,blended
+S_C1012_07_08,C1012_07,10-12,venture_sprint,Venture Sprint,8,Investor Demo Day,Present the venture and reflect on next experiments.,2026-05-04,75,blended
+S_C1012_08_01,C1012_08,10-12,venture_sprint,Venture Sprint,1,Choose a Problem Worth Solving,Choose a problem with a real user and evidence of need.,2026-03-23,75,in_person
+S_C1012_08_02,C1012_08,10-12,venture_sprint,Venture Sprint,2,Value Proposition + Risks,Craft a value proposition and identify key risks.,2026-03-30,75,in_person
+S_C1012_08_03,C1012_08,10-12,venture_sprint,Venture Sprint,3,Prototype + Test Fast,Prototype quickly and test with target users.,2026-04-06,75,in_person
+S_C1012_08_04,C1012_08,10-12,venture_sprint,Venture Sprint,4,Metrics + Experiments,Define metrics and design experiments.,2026-04-13,75,in_person
+S_C1012_08_05,C1012_08,10-12,venture_sprint,Venture Sprint,5,Business Model Basics,Explore business model basics and unit economics.,2026-04-20,75,in_person
+S_C1012_08_06,C1012_08,10-12,venture_sprint,Venture Sprint,6,Responsible AI & Trust,"Address trust, privacy, bias, and safety.",2026-04-27,75,in_person
+S_C1012_08_07,C1012_08,10-12,venture_sprint,Venture Sprint,7,Pitch Deck Sprint,Assemble a pitch deck supported by evidence.,2026-05-04,75,in_person
+S_C1012_08_08,C1012_08,10-12,venture_sprint,Venture Sprint,8,Investor Demo Day,Present the venture and reflect on next experiments.,2026-05-11,75,in_person
+S_C1012_09_01,C1012_09,10-12,venture_sprint,Venture Sprint,1,Choose a Problem Worth Solving,Choose a problem with a real user and evidence of need.,2026-03-30,75,blended
+S_C1012_09_02,C1012_09,10-12,venture_sprint,Venture Sprint,2,Value Proposition + Risks,Craft a value proposition and identify key risks.,2026-04-06,75,blended
+S_C1012_09_03,C1012_09,10-12,venture_sprint,Venture Sprint,3,Prototype + Test Fast,Prototype quickly and test with target users.,2026-04-13,75,blended
+S_C1012_09_04,C1012_09,10-12,venture_sprint,Venture Sprint,4,Metrics + Experiments,Define metrics and design experiments.,2026-04-20,75,blended
+S_C1012_09_05,C1012_09,10-12,venture_sprint,Venture Sprint,5,Business Model Basics,Explore business model basics and unit economics.,2026-04-27,75,blended
+S_C1012_09_06,C1012_09,10-12,venture_sprint,Venture Sprint,6,Responsible AI & Trust,"Address trust, privacy, bias, and safety.",2026-05-04,75,blended
+S_C1012_09_07,C1012_09,10-12,venture_sprint,Venture Sprint,7,Pitch Deck Sprint,Assemble a pitch deck supported by evidence.,2026-05-11,75,blended
+S_C1012_09_08,C1012_09,10-12,venture_sprint,Venture Sprint,8,Investor Demo Day,Present the venture and reflect on next experiments.,2026-05-18,75,blended
+S_C1012_10_01,C1012_10,10-12,venture_sprint,Venture Sprint,1,Choose a Problem Worth Solving,Choose a problem with a real user and evidence of need.,2026-04-06,75,in_person
+S_C1012_10_02,C1012_10,10-12,venture_sprint,Venture Sprint,2,Value Proposition + Risks,Craft a value proposition and identify key risks.,2026-04-13,75,in_person
+S_C1012_10_03,C1012_10,10-12,venture_sprint,Venture Sprint,3,Prototype + Test Fast,Prototype quickly and test with target users.,2026-04-20,75,in_person
+S_C1012_10_04,C1012_10,10-12,venture_sprint,Venture Sprint,4,Metrics + Experiments,Define metrics and design experiments.,2026-04-27,75,in_person
+S_C1012_10_05,C1012_10,10-12,venture_sprint,Venture Sprint,5,Business Model Basics,Explore business model basics and unit economics.,2026-05-04,75,in_person
+S_C1012_10_06,C1012_10,10-12,venture_sprint,Venture Sprint,6,Responsible AI & Trust,"Address trust, privacy, bias, and safety.",2026-05-11,75,in_person
+S_C1012_10_07,C1012_10,10-12,venture_sprint,Venture Sprint,7,Pitch Deck Sprint,Assemble a pitch deck supported by evidence.,2026-05-18,75,in_person
+S_C1012_10_08,C1012_10,10-12,venture_sprint,Venture Sprint,8,Investor Demo Day,Present the venture and reflect on next experiments.,2026-05-25,75,in_person
+S_C1012_11_01,C1012_11,10-12,venture_sprint,Venture Sprint,1,Choose a Problem Worth Solving,Choose a problem with a real user and evidence of need.,2026-04-13,75,in_person
+S_C1012_11_02,C1012_11,10-12,venture_sprint,Venture Sprint,2,Value Proposition + Risks,Craft a value proposition and identify key risks.,2026-04-20,75,in_person
+S_C1012_11_03,C1012_11,10-12,venture_sprint,Venture Sprint,3,Prototype + Test Fast,Prototype quickly and test with target users.,2026-04-27,75,in_person
+S_C1012_11_04,C1012_11,10-12,venture_sprint,Venture Sprint,4,Metrics + Experiments,Define metrics and design experiments.,2026-05-04,75,in_person
+S_C1012_11_05,C1012_11,10-12,venture_sprint,Venture Sprint,5,Business Model Basics,Explore business model basics and unit economics.,2026-05-11,75,in_person
+S_C1012_11_06,C1012_11,10-12,venture_sprint,Venture Sprint,6,Responsible AI & Trust,"Address trust, privacy, bias, and safety.",2026-05-18,75,in_person
+S_C1012_11_07,C1012_11,10-12,venture_sprint,Venture Sprint,7,Pitch Deck Sprint,Assemble a pitch deck supported by evidence.,2026-05-25,75,in_person
+S_C1012_11_08,C1012_11,10-12,venture_sprint,Venture Sprint,8,Investor Demo Day,Present the venture and reflect on next experiments.,2026-06-01,75,in_person
+S_C1012_12_01,C1012_12,10-12,venture_sprint,Venture Sprint,1,Choose a Problem Worth Solving,Choose a problem with a real user and evidence of need.,2026-04-20,75,in_person
+S_C1012_12_02,C1012_12,10-12,venture_sprint,Venture Sprint,2,Value Proposition + Risks,Craft a value proposition and identify key risks.,2026-04-27,75,in_person
+S_C1012_12_03,C1012_12,10-12,venture_sprint,Venture Sprint,3,Prototype + Test Fast,Prototype quickly and test with target users.,2026-05-04,75,in_person
+S_C1012_12_04,C1012_12,10-12,venture_sprint,Venture Sprint,4,Metrics + Experiments,Define metrics and design experiments.,2026-05-11,75,in_person
+S_C1012_12_05,C1012_12,10-12,venture_sprint,Venture Sprint,5,Business Model Basics,Explore business model basics and unit economics.,2026-05-18,75,in_person
+S_C1012_12_06,C1012_12,10-12,venture_sprint,Venture Sprint,6,Responsible AI & Trust,"Address trust, privacy, bias, and safety.",2026-05-25,75,in_person
+S_C1012_12_07,C1012_12,10-12,venture_sprint,Venture Sprint,7,Pitch Deck Sprint,Assemble a pitch deck supported by evidence.,2026-06-01,75,in_person
+S_C1012_12_08,C1012_12,10-12,venture_sprint,Venture Sprint,8,Investor Demo Day,Present the venture and reflect on next experiments.,2026-06-08,75,in_person

@@ -1,0 +1,30 @@
+file_path,format,row_count,size_bytes,description
+README.md,md,,2528,Top-level pack overview and usage notes.
+docs/data_dictionary_v2.md,md,,3593,Field descriptions and usage notes.
+docs/file_manifest_v2.csv,csv,25,2292,
+docs/file_manifest_v2.json,json,,4852,
+docs/scenario_catalog_v2.csv,csv,29,2044,Counts by scenario type across suites.
+normalized/ai_trace_records_v2.csv,csv,2365,844127,AI-use trace logs.
+normalized/artifact_metadata_v2.csv,csv,13165,2931136,Artifact/proof-of-work metadata.
+normalized/cohorts_v2.csv,csv,48,8540,Synthetic cohort metadata.
+normalized/core_evidence_records_v2.csv,csv,14400,14741764,Main wide evidence bundles for core synthetic classroom activity.
+normalized/core_evidence_records_v2.jsonl,jsonl,14400,34421804,Main wide evidence bundles for core synthetic classroom activity.
+normalized/expected_model_outputs_v2.csv,csv,14400,2185771,Expected BOS/MIA targets by record.
+normalized/learners_v2.csv,csv,2880,390634,Synthetic learner metadata.
+normalized/peer_feedback_v2.csv,csv,10344,1680432,Peer feedback rows.
+normalized/raw_event_log_v2.jsonl,jsonl,91245,25787300,Streaming/ingestion event log.
+normalized/sessions_v2.csv,csv,384,62475,Synthetic session catalog.
+normalized/teacher_observations_v2.csv,csv,14400,3725607,Teacher checkpoint observations.
+schema/bos_mia_target_mapping_v2.csv,csv,22,636,Category-to-score mapping used for expected targets.
+schema/generation_config_v2.json,json,,1171,Synthetic generation settings and counts.
+schema/qc_report_v2.json,json,,1394,Quality-control and integrity report.
+schema/scholesa_evidence_record_schema_v2.json,json,,3724,Core evidence record JSON schema.
+suites/dashboard_aggregates_v2.csv,csv,388,48273,Teacher/admin dashboard metrics.
+suites/fairness_counterfactual_suite_v2.jsonl,jsonl,1536,4095590,Paired counterfactual records for fairness/regression testing.
+suites/gold_eval_suite_v2.jsonl,jsonl,1280,2146500,Human-like benchmark/adjudication set for evaluation.
+suites/integrity_adversarial_suite_v2.jsonl,jsonl,1536,3708187,High-risk integrity and ownership mismatch cases.
+suites/load_test_requests_v2.jsonl,jsonl,40000,46282487,High-volume inference/load-testing requests.
+suites/longitudinal_trajectory_suite_v2.jsonl,jsonl,3072,7954807,Sequential learner/session records for progress testing.
+suites/privacy_safety_suite_v2.jsonl,jsonl,768,751477,Policy and safety edge cases.
+suites/schema_edgecase_suite_v2.jsonl,jsonl,512,1362885,Validation fail/warn cases with nested payloads.
+workbook/scholesa_synthetic_fulltesting_bundle_v2.xlsx,xlsx,,17545,"Summary workbook with counts, manifest, labels, samples, and QC."
