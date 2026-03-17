@@ -39,6 +39,7 @@ export interface FederatedLearningExperimentConfig {
   maxTrainingWindowSeconds: number;
   allowedSiteIds: string[];
   aggregateThreshold: number;
+  minDistinctSiteCount: number;
   rawUpdateMaxBytes: number;
   enablePrototypeUploads: boolean;
 }
@@ -126,6 +127,7 @@ export interface FederatedLearningAggregationSelection {
   batteryStateBreakdown: FederatedLearningEnvironmentBreakdownEntry[];
   networkTypeBreakdown: FederatedLearningEnvironmentBreakdownEntry[];
   distinctSiteCount: number;
+  minDistinctSiteCount: number;
   contributingSiteIds: string[];
   totalSampleCount: number;
   maxVectorLength: number;
@@ -637,11 +639,15 @@ export function sanitizeFederatedLearningExperimentConfig(
   );
   const allowedSiteIds = normalizeFederatedLearningSiteIds(input.allowedSiteIds);
   const aggregateThreshold = asIntegerInRange(input.aggregateThreshold, 'aggregateThreshold', 5, 10000, 25);
+  const minDistinctSiteCount = asIntegerInRange(input.minDistinctSiteCount, 'minDistinctSiteCount', 1, 1000, 2);
   const rawUpdateMaxBytes = asIntegerInRange(input.rawUpdateMaxBytes, 'rawUpdateMaxBytes', 256, 262144, 16384);
   const enablePrototypeUploads = input.enablePrototypeUploads === true;
 
   if ((status === 'pilot_ready' || status === 'active') && allowedSiteIds.length === 0) {
     throw new Error('allowedSiteIds are required when status is pilot_ready or active.');
+  }
+  if (allowedSiteIds.length > 0 && minDistinctSiteCount > allowedSiteIds.length) {
+    throw new Error('minDistinctSiteCount cannot exceed the enabled site cohort size.');
   }
 
   return {
@@ -656,6 +662,7 @@ export function sanitizeFederatedLearningExperimentConfig(
     maxTrainingWindowSeconds,
     allowedSiteIds,
     aggregateThreshold,
+    minDistinctSiteCount,
     rawUpdateMaxBytes,
     enablePrototypeUploads,
   };
@@ -752,6 +759,7 @@ export function sanitizeFederatedLearningUpdateSummary(
 export function selectFederatedLearningAggregationBatch(
   candidates: FederatedLearningAggregationCandidate[],
   aggregateThreshold: number,
+  minDistinctSiteCount = 1,
 ): FederatedLearningAggregationSelection | null {
   const threshold = asIntegerInRange(
     aggregateThreshold,
@@ -760,9 +768,17 @@ export function selectFederatedLearningAggregationBatch(
     1000000,
     1,
   );
+  const siteThreshold = asIntegerInRange(
+    minDistinctSiteCount,
+    'minDistinctSiteCount',
+    1,
+    1000000,
+    1,
+  );
   const selected: FederatedLearningAggregationCandidate[] = [];
   let totalSampleCount = 0;
   let compatibilityKey = '';
+  const selectedSiteIds = new Set<string>();
   for (const candidate of candidates) {
     if (candidate.sampleCount <= 0) continue;
     const candidateCompatibilityKey = buildFederatedLearningAggregationCompatibilityKey(candidate);
@@ -774,11 +790,12 @@ export function selectFederatedLearningAggregationBatch(
     }
     selected.push(candidate);
     totalSampleCount += candidate.sampleCount;
-    if (totalSampleCount >= threshold) {
+    selectedSiteIds.add(candidate.siteId);
+    if (totalSampleCount >= threshold && selectedSiteIds.size >= siteThreshold) {
       break;
     }
   }
-  if (totalSampleCount < threshold || selected.length === 0) {
+  if (totalSampleCount < threshold || selected.length === 0 || selectedSiteIds.size < siteThreshold) {
     return null;
   }
 
@@ -860,6 +877,7 @@ export function selectFederatedLearningAggregationBatch(
     batteryStateBreakdown,
     networkTypeBreakdown,
     distinctSiteCount: siteIds.size,
+    minDistinctSiteCount: siteThreshold,
     contributingSiteIds: Array.from(siteIds).sort(),
     totalSampleCount,
     maxVectorLength,
