@@ -403,6 +403,20 @@ void main() {
       expect(restored.riskScore, equals(original.riskScore));
       expect(restored.threshold, equals(original.threshold));
     });
+
+    test('AiCoachResponse ignores malformed risk payloads', () {
+      final AiCoachResponse response = AiCoachResponse.fromMap(<String, dynamic>{
+        'message': 'Try one next step.',
+        'mode': 'hint',
+        'risk': <String, dynamic>{
+          'reliability': <String, dynamic>{'method': 'sep'},
+          'autonomy': <String, dynamic>{'signals': <String>['rapid_submit']},
+        },
+      });
+
+      expect(response.reliabilityRisk, isNull);
+      expect(response.autonomyRisk, isNull);
+    });
   });
 
   // ════════════════════════════════════════════════════

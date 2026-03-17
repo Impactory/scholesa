@@ -175,6 +175,17 @@ void main() {
       expect(risk.riskScore, 0.0);
       expect(risk.threshold, 0.5);
     });
+
+    test('tryFromMap rejects missing inferential fields', () {
+      expect(
+        ReliabilityRisk.tryFromMap(<String, dynamic>{'method': 'sep'}),
+        isNull,
+      );
+      expect(
+        AutonomyRisk.tryFromMap(<String, dynamic>{'signals': <String>['rapid_submit']}),
+        isNull,
+      );
+    });
   });
 
   group('AiCoachRequest', () {

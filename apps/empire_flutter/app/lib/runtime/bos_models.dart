@@ -547,14 +547,31 @@ class ReliabilityRisk {
         'threshold': threshold,
       };
 
-  factory ReliabilityRisk.fromMap(Map<String, dynamic> m2) => ReliabilityRisk(
-        method: m2['method'] as String? ?? 'sep',
-        k: m2['K'] as int? ?? 0,
-        m: m2['M'] as int? ?? 0,
-        hSem: (m2['H_sem'] as num?)?.toDouble() ?? 0.0,
-        riskScore: (m2['riskScore'] as num?)?.toDouble() ?? 0.0,
-        threshold: (m2['threshold'] as num?)?.toDouble() ?? 0.5,
-      );
+  factory ReliabilityRisk.fromMap(Map<String, dynamic> m2) {
+    final ReliabilityRisk? parsed = ReliabilityRisk.tryFromMap(m2);
+    return parsed ?? const ReliabilityRisk();
+  }
+
+  static ReliabilityRisk? tryFromMap(Map<String, dynamic>? m) {
+    if (m == null) {
+      return null;
+    }
+
+    final double? riskScore = _readFiniteDouble(m, 'riskScore');
+    final double? threshold = _readFiniteDouble(m, 'threshold');
+    if (riskScore == null || threshold == null) {
+      return null;
+    }
+
+    return ReliabilityRisk(
+      method: m['method'] as String? ?? 'sep',
+      k: (m['K'] as num?)?.toInt() ?? 0,
+      m: (m['M'] as num?)?.toInt() ?? 0,
+      hSem: _readFiniteDouble(m, 'H_sem') ?? 0.0,
+      riskScore: riskScore,
+      threshold: threshold,
+    );
+  }
 }
 
 // ──── §7  Autonomy risk ────
@@ -577,12 +594,28 @@ class AutonomyRisk {
         'threshold': threshold,
       };
 
-  factory AutonomyRisk.fromMap(Map<String, dynamic> m) => AutonomyRisk(
-        signals:
-            ((m['signals'] as List<dynamic>?)?.cast<String>()) ?? <String>[],
-        riskScore: (m['riskScore'] as num?)?.toDouble() ?? 0.0,
-        threshold: (m['threshold'] as num?)?.toDouble() ?? 0.5,
-      );
+  factory AutonomyRisk.fromMap(Map<String, dynamic> m) {
+    final AutonomyRisk? parsed = AutonomyRisk.tryFromMap(m);
+    return parsed ?? const AutonomyRisk();
+  }
+
+  static AutonomyRisk? tryFromMap(Map<String, dynamic>? m) {
+    if (m == null) {
+      return null;
+    }
+
+    final double? riskScore = _readFiniteDouble(m, 'riskScore');
+    final double? threshold = _readFiniteDouble(m, 'threshold');
+    if (riskScore == null || threshold == null) {
+      return null;
+    }
+
+    return AutonomyRisk(
+      signals: ((m['signals'] as List<dynamic>?)?.cast<String>()) ?? <String>[],
+      riskScore: riskScore,
+      threshold: threshold,
+    );
+  }
 }
 
 // ──── §8  MVL Episode ────
@@ -638,10 +671,14 @@ class MvlEpisode {
       sessionOccurrenceId: m['sessionOccurrenceId'] as String? ?? '',
       triggerReason: m['triggerReason'] as String? ?? '',
       reliabilityRisk: m['reliability'] != null
-          ? ReliabilityRisk.fromMap(m['reliability'] as Map<String, dynamic>)
+          ? ReliabilityRisk.tryFromMap(
+              _asStringDynamicMap(m['reliability']),
+            )
           : null,
       autonomyRisk: m['autonomy'] != null
-          ? AutonomyRisk.fromMap(m['autonomy'] as Map<String, dynamic>)
+          ? AutonomyRisk.tryFromMap(
+              _asStringDynamicMap(m['autonomy']),
+            )
           : null,
       evidenceEventIds:
           ((m['evidenceEventIds'] as List<dynamic>?)?.cast<String>()) ??
@@ -983,10 +1020,14 @@ class AiCoachResponse {
           ? XHat.fromMap(m['learnerState'] as Map<String, dynamic>)
           : null,
       reliabilityRisk: risk != null && risk['reliability'] != null
-          ? ReliabilityRisk.fromMap(risk['reliability'] as Map<String, dynamic>)
+          ? ReliabilityRisk.tryFromMap(
+            _asStringDynamicMap(risk['reliability']),
+          )
           : null,
       autonomyRisk: risk != null && risk['autonomy'] != null
-          ? AutonomyRisk.fromMap(risk['autonomy'] as Map<String, dynamic>)
+          ? AutonomyRisk.tryFromMap(
+            _asStringDynamicMap(risk['autonomy']),
+          )
           : null,
       mvlGateActive: mvl?['gateActive'] as bool? ?? false,
       mvlEpisodeId: mvl?['episodeId'] as String?,
