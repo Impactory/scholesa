@@ -1263,14 +1263,27 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
           runtimeRolloutHealth,
           latestRuntimeRolloutAlert,
         );
+    final bool rolloutAlertRefreshDue = rolloutAlertAcknowledged &&
+      latestRuntimeRolloutAlert != null &&
+      _acknowledgedAlertSeverity(
+              runtimeRolloutHealth,
+          latestRuntimeRolloutAlert,
+        ) >
+        0;
     final Color rolloutAlertColor =
-        rolloutAlertAcknowledged ? Colors.blueGrey : Colors.orange;
+      rolloutAlertAcknowledged && !rolloutAlertRefreshDue
+        ? Colors.blueGrey
+        : Colors.orange;
     final String rolloutAlertNotes =
         (latestRuntimeRolloutAlert?.notes ?? '').trim();
     final String rolloutAlertAcknowledgement = rolloutAlertAcknowledged &&
             latestRuntimeRolloutAlert != null
         ? 'Acknowledged ${_formatTimestamp(latestRuntimeRolloutAlert.acknowledgedAt)} by ${latestRuntimeRolloutAlert.acknowledgedBy ?? "hq"}'
         : '';
+    final String rolloutAlertAgeCue = rolloutAlertAcknowledged &&
+        latestRuntimeRolloutAlert != null
+      ? _buildAcknowledgedAlertAgeCue(latestRuntimeRolloutAlert)
+      : '';
     final bool rolloutEscalationCurrent = !runtimeDeliveryTerminal &&
         runtimeRolloutHealth != null &&
         _isRuntimeRolloutEscalationCurrent(
@@ -2043,6 +2056,19 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                         ),
                       ),
                     ],
+                    if (rolloutAlertAgeCue.isNotEmpty) ...<Widget>[
+                      const SizedBox(height: 4),
+                      Text(
+                        _tHqFeatureFlags(
+                          context,
+                          rolloutAlertAgeCue,
+                        ),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: ScholesaColors.textSecondary,
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 8),
                     Align(
                       alignment: Alignment.centerLeft,
@@ -2068,7 +2094,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                               _tHqFeatureFlags(
                                 context,
                                 rolloutAlertAcknowledged
-                                    ? 'Update triage'
+                                    ? rolloutAlertRefreshDue
+                                        ? 'Refresh triage'
+                                        : 'Update triage'
                                     : 'Acknowledge alert',
                               ),
                             ),
@@ -8213,6 +8241,24 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
       return 1;
     }
     return 0;
+  }
+
+  String _buildAcknowledgedAlertAgeCue(
+    FederatedLearningRuntimeRolloutAlertRecordModel record,
+  ) {
+    final DateTime? acknowledgedAt = record.acknowledgedAt?.toDate().toUtc() ??
+        record.updatedAt?.toDate().toUtc();
+    if (acknowledgedAt == null) {
+      return '';
+    }
+    final Duration triageAge = DateTime.now().toUtc().difference(acknowledgedAt);
+    if (triageAge.inHours >= 72) {
+      return 'Triage age: overdue refresh since ${acknowledgedAt.toIso8601String()}';
+    }
+    if (triageAge.inHours >= 24) {
+      return 'Triage age: refresh due since ${acknowledgedAt.toIso8601String()}';
+    }
+    return 'Triage age: recently acknowledged ${acknowledgedAt.toIso8601String()}';
   }
 
   int _rolloutEscalationSeverity(

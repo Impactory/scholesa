@@ -5790,7 +5790,11 @@ void main() {
       find.text('HQ notes: Reviewed with site ops and monitoring in place.'),
       findsOneWidget,
     );
-    expect(find.widgetWithText(TextButton, 'Update triage'), findsOneWidget);
+    expect(
+      find.textContaining('Triage age: refresh due since'),
+      findsOneWidget,
+    );
+    expect(find.widgetWithText(TextButton, 'Refresh triage'), findsOneWidget);
   });
 
   testWidgets('HQ page shows runtime rollout alert history',
@@ -6090,6 +6094,11 @@ void main() {
       ),
       findsOneWidget,
     );
+    expect(
+      find.textContaining('Triage age: recently acknowledged'),
+      findsOneWidget,
+    );
+    expect(find.widgetWithText(TextButton, 'Update triage'), findsOneWidget);
   });
 
   testWidgets('HQ page shows runtime rollout audit feed',
