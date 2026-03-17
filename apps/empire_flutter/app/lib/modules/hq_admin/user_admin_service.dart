@@ -7,11 +7,12 @@ import 'user_models.dart';
 /// Service for HQ user administration - wired to Firebase
 class UserAdminService extends ChangeNotifier {
   UserAdminService({required FirestoreService firestoreService})
-      : _firestoreService = firestoreService;
+      : _firestoreService = firestoreService,
+        _firestore = firestoreService.firestore;
 
   // ignore: unused_field
   final FirestoreService _firestoreService;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseFirestore _firestore;
 
   List<UserModel> _users = <UserModel>[];
   List<SiteModel> _sites = <SiteModel>[];

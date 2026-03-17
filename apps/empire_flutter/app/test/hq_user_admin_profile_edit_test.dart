@@ -121,7 +121,7 @@ void main() {
     await tester.tap(find.text('Ava Learner'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.widgetWithText(Container, 'Edit').first);
+    await tester.tap(find.text('Edit').first);
     await tester.pumpAndSettle();
 
     await tester.enterText(find.byType(TextField), 'Ava Innovator');

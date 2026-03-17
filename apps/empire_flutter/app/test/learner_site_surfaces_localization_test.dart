@@ -766,7 +766,7 @@ void main() {
         findsOneWidget,
       );
 
-      await tester.tap(find.widgetWithText(ElevatedButton, 'Share'));
+      await tester.tap(find.text('Share').first);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Generate Link').last);
       await tester.pumpAndSettle();
