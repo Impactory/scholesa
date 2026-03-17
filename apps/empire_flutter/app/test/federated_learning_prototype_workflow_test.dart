@@ -5827,6 +5827,13 @@ void main() {
           status: 'active',
           targetSiteIds: <String>['site-1', 'site-2'],
         ),
+        _runtimeDeliveryRecordRow(
+          id: 'fl_delivery_2',
+          candidateModelPackageId: 'fl_pkg_2',
+          status: 'active',
+          targetSiteIds: <String>['site-3', 'site-4'],
+          notes: 'Second bounded rollout delivery pending operator follow-up.',
+        ),
       ],
       runtimeRolloutAlertRecords: <Map<String, dynamic>>[
         _runtimeRolloutAlertRecordRow(
@@ -5834,6 +5841,15 @@ void main() {
           notes: 'Reviewed with site ops and monitoring in place.',
           acknowledgedBy: 'hq-1',
           acknowledgedAt: DateTime(2026, 3, 14, 21),
+        ),
+        _runtimeRolloutAlertRecordRow(
+          id: 'fl_rollout_alert_2',
+          candidateModelPackageId: 'fl_pkg_2',
+          deliveryRecordId: 'fl_delivery_2',
+          status: 'active',
+          pendingCount: 1,
+          notes: 'Awaiting site-3 activation confirmation.',
+          updatedAt: DateTime(2026, 3, 14, 22),
         ),
       ],
       runtimeRolloutEscalationRecords: <Map<String, dynamic>>[
@@ -5843,6 +5859,18 @@ void main() {
           notes: 'Investigating bounded runtime mismatch.',
           openedAt: DateTime(2020, 3, 15, 2),
           dueAt: DateTime(2020, 3, 15, 9),
+        ),
+        _runtimeRolloutEscalationRecordRow(
+          id: 'fl_rollout_escalation_2',
+          candidateModelPackageId: 'fl_pkg_2',
+          deliveryRecordId: 'fl_delivery_2',
+          status: 'open',
+          pendingCount: 1,
+          ownerUserId: 'hq-ops-9',
+          notes: 'Pending site activation requires field follow-up.',
+          openedAt: DateTime(2020, 3, 15, 3),
+          dueAt: DateTime(2020, 3, 15, 7),
+          updatedAt: DateTime(2026, 3, 14, 22),
         ),
       ],
       runtimeRolloutEscalationHistoryRecords: <Map<String, dynamic>>[
@@ -5862,10 +5890,33 @@ void main() {
           dueAt: DateTime(2020, 3, 15, 5),
           recordedAt: DateTime(2020, 3, 15, 1, 15),
         ),
+        _runtimeRolloutEscalationHistoryRecordRow(
+          id: 'fl_rollout_escalation_history_3',
+          escalationRecordId: 'fl_rollout_escalation_2',
+          candidateModelPackageId: 'fl_pkg_2',
+          deliveryRecordId: 'fl_delivery_2',
+          status: 'open',
+          pendingCount: 1,
+          ownerUserId: 'hq-ops-9',
+          notes: 'Site-3 activation still pending.',
+          openedAt: DateTime(2020, 3, 15, 3),
+          dueAt: DateTime(2020, 3, 15, 7),
+          recordedAt: DateTime(2020, 3, 15, 3, 10),
+        ),
       ],
       runtimeRolloutControlRecords: <Map<String, dynamic>>[
         _runtimeRolloutControlRecordRow(
           reviewByAt: DateTime(2020, 3, 15, 8),
+        ),
+        _runtimeRolloutControlRecordRow(
+          id: 'fl_rollout_control_2',
+          candidateModelPackageId: 'fl_pkg_2',
+          deliveryRecordId: 'fl_delivery_2',
+          mode: 'restricted',
+          ownerUserId: 'hq-ops-8',
+          reason: 'Restrict until site-3 confirms install health.',
+          reviewByAt: DateTime(2020, 3, 15, 6),
+          updatedAt: DateTime(2026, 3, 14, 22),
         ),
       ],
       runtimeRolloutAuditEvents: <Map<String, dynamic>>[
@@ -5897,6 +5948,21 @@ void main() {
             'notes': 'Initial fallback alert raised.',
           },
         ),
+        _runtimeRolloutAuditEventRow(
+          id: 'audit-triage-3',
+          timestamp: 1773522600000,
+          documentId: 'fl_rollout_alert_2',
+          details: <String, dynamic>{
+            'experimentId': 'fl_exp_literacy_pilot',
+            'candidateModelPackageId': 'fl_pkg_2',
+            'deliveryRecordId': 'fl_delivery_2',
+            ..._runtimeRolloutLineageFields(),
+            'status': 'active',
+            'fallbackCount': 0,
+            'pendingCount': 1,
+            'notes': 'Awaiting site-3 activation confirmation.',
+          },
+        ),
       ],
     );
 
@@ -5921,14 +5987,30 @@ void main() {
       findsOneWidget,
     );
     expect(
+      find.widgetWithText(
+        TextField,
+        'Filter by delivery ID, package ID, status, digest, site ID, owner, optimizer, warm start, or notes',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Showing 2 of 2'), findsOneWidget);
+    expect(
       find.text('fl_delivery_1 · acknowledged · 1 fallback · 0 pending'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('fl_delivery_2 · active · 1 fallback · 1 pending'),
       findsOneWidget,
     );
     expect(
       find.text('HQ notes: Reviewed with site ops and monitoring in place.'),
       findsOneWidget,
     );
-    expect(find.text('Triage history'), findsOneWidget);
+    expect(
+      find.text('HQ notes: Awaiting site-3 activation confirmation.'),
+      findsOneWidget,
+    );
+    expect(find.text('Triage history'), findsWidgets);
     expect(
       find.textContaining('acknowledged by hq-1 · Reviewed with site ops.'),
       findsOneWidget,
@@ -5941,7 +6023,7 @@ void main() {
       find.textContaining('overdue 2020-03-15T09:00:00.000'),
       findsWidgets,
     );
-    expect(find.text('Escalation history'), findsOneWidget);
+    expect(find.text('Escalation history'), findsWidgets);
     expect(
       find.textContaining('investigating by hq-1 · owner hq-ops-1'),
       findsOneWidget,
@@ -5950,7 +6032,7 @@ void main() {
       find.text(
         'Digests: package sha256:pkg-1 · bounded sha256:digest-1 · manifest sha256:delivery-1',
       ),
-      findsOneWidget,
+      findsWidgets,
     );
     expect(
       find.textContaining(
@@ -5967,6 +6049,52 @@ void main() {
       findsWidgets,
     );
     expect(find.widgetWithText(TextButton, 'View audit feed'), findsWidgets);
+
+    await tester.enterText(
+      find.widgetWithText(
+        TextField,
+        'Filter by delivery ID, package ID, status, digest, site ID, owner, optimizer, warm start, or notes',
+      ),
+      'hq-ops-1',
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Showing 1 of 2'), findsOneWidget);
+    expect(
+      find.text('fl_delivery_1 · acknowledged · 1 fallback · 0 pending'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('fl_delivery_2 · active · 1 fallback · 1 pending'),
+      findsNothing,
+    );
+
+    await tester.enterText(
+      find.widgetWithText(
+        TextField,
+        'Filter by delivery ID, package ID, status, digest, site ID, owner, optimizer, warm start, or notes',
+      ),
+      'site-3 activation',
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Showing 1 of 2'), findsOneWidget);
+    expect(
+      find.text('fl_delivery_1 · acknowledged · 1 fallback · 0 pending'),
+      findsNothing,
+    );
+    expect(
+      find.text('fl_delivery_2 · active · 1 fallback · 1 pending'),
+      findsOneWidget,
+    );
+
+    await tester.enterText(
+      find.widgetWithText(
+        TextField,
+        'Filter by delivery ID, package ID, status, digest, site ID, owner, optimizer, warm start, or notes',
+      ),
+      '',
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Showing 2 of 2'), findsOneWidget);
   });
 
   testWidgets('HQ page re-raises rollout alerts when acknowledged counts drift',

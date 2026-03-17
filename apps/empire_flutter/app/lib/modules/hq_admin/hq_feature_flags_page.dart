@@ -6800,256 +6800,414 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                   )))
         record.deliveryRecordId: record,
     };
+    String filterQuery = '';
     if (!mounted) return;
 
     await showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: Text(
-            _tHqFeatureFlags(
-              dialogContext,
-              'Runtime rollout alert history: ${experiment.name}',
-            ),
-          ),
-          content: SizedBox(
-            width: 700,
-            child: records.isEmpty
-                ? Text(
-                    _tHqFeatureFlags(
-                      dialogContext,
-                      'No rollout alert triage records recorded for this experiment yet.',
-                    ),
-                  )
-                : SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: records.map(
-                          (FederatedLearningRuntimeRolloutAlertRecordModel
-                              record) {
-                        final FederatedLearningRuntimeDeliveryRecordModel?
-                            delivery = deliveriesById[record.deliveryRecordId];
-                        final FederatedLearningRuntimeRolloutEscalationRecordModel?
-                            escalation =
-                            escalationByDeliveryId[record.deliveryRecordId];
-                        final FederatedLearningRuntimeRolloutControlRecordModel?
-                            rolloutControl = rolloutControlsByDeliveryId[
-                                record.deliveryRecordId];
-                        final List<
-                                FederatedLearningRuntimeRolloutEscalationHistoryRecordModel>
-                            escalationHistory = escalationHistoryByDeliveryId[
-                                    record.deliveryRecordId] ??
-                                const <FederatedLearningRuntimeRolloutEscalationHistoryRecordModel>[];
-                        final List<
-                                FederatedLearningRuntimeRolloutAuditEventModel>
-                            triageEvents =
-                            triageEventsByDeliveryId[record.deliveryRecordId] ??
-                                const <FederatedLearningRuntimeRolloutAuditEventModel>[];
-                        final String digestRollup =
-                            _formatRuntimeRolloutDigestRollup(
-                          packageDigest: record.packageDigest,
-                          boundedDigest: record.boundedDigest,
-                          manifestDigest: record.manifestDigest,
-                        );
-                        final String compatibilityRollup =
-                            _formatRuntimeRolloutCompatibilityRollup(
-                          runtimeTarget: record.runtimeTarget,
-                          schemaVersions: record.schemaVersions,
-                          optimizerStrategies: record.optimizerStrategies,
-                          warmStartPackageId: record.warmStartPackageId,
-                          warmStartModelVersion: record.warmStartModelVersion,
-                        );
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 14),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
+        return StatefulBuilder(
+          builder: (BuildContext dialogContext, StateSetter setDialogState) {
+            final String normalizedQuery = filterQuery.trim().toLowerCase();
+            final List<FederatedLearningRuntimeRolloutAlertRecordModel>
+                filteredRecords = records.where(
+              (FederatedLearningRuntimeRolloutAlertRecordModel record) {
+                if (normalizedQuery.isEmpty) {
+                  return true;
+                }
+                final FederatedLearningRuntimeDeliveryRecordModel? delivery =
+                    deliveriesById[record.deliveryRecordId];
+                final FederatedLearningRuntimeRolloutEscalationRecordModel?
+                    escalation = escalationByDeliveryId[record.deliveryRecordId];
+                final FederatedLearningRuntimeRolloutControlRecordModel?
+                    rolloutControl =
+                    rolloutControlsByDeliveryId[record.deliveryRecordId];
+                final List<
+                        FederatedLearningRuntimeRolloutEscalationHistoryRecordModel>
+                    escalationHistory = escalationHistoryByDeliveryId[
+                            record.deliveryRecordId] ??
+                        const <FederatedLearningRuntimeRolloutEscalationHistoryRecordModel>[];
+                final List<FederatedLearningRuntimeRolloutAuditEventModel>
+                    triageEvents =
+                    triageEventsByDeliveryId[record.deliveryRecordId] ??
+                        const <FederatedLearningRuntimeRolloutAuditEventModel>[];
+                final String digestRollup = _formatRuntimeRolloutDigestRollup(
+                  packageDigest: record.packageDigest,
+                  boundedDigest: record.boundedDigest,
+                  manifestDigest: record.manifestDigest,
+                );
+                final String compatibilityRollup =
+                    _formatRuntimeRolloutCompatibilityRollup(
+                  runtimeTarget: record.runtimeTarget,
+                  schemaVersions: record.schemaVersions,
+                  optimizerStrategies: record.optimizerStrategies,
+                  warmStartPackageId: record.warmStartPackageId,
+                  warmStartModelVersion: record.warmStartModelVersion,
+                );
+                final String escalationSummary = escalation == null
+                    ? ''
+                    : _buildRuntimeRolloutEscalationSummary(escalation);
+                final String controlSummary = rolloutControl == null
+                    ? ''
+                    : _buildRuntimeRolloutControlSummary(rolloutControl);
+                final String escalationHistoryLines = escalationHistory
+                    .take(4)
+                    .map(_buildRuntimeRolloutEscalationHistoryLine)
+                    .join(' ');
+                final String triageHistoryLines =
+                    triageEvents.take(4).map(_runtimeRolloutTriageHistoryLine).join(' ');
+                final String haystack = <String>[
+                  record.id,
+                  record.deliveryRecordId,
+                  record.status,
+                  record.candidateModelPackageId,
+                  record.runtimeTarget,
+                  record.targetSiteIds.join(' '),
+                  record.packageDigest,
+                  record.boundedDigest,
+                  record.manifestDigest,
+                  record.triggerSummaryId,
+                  record.summaryIds.join(' '),
+                  _summarySearchTokens(record.summaryIds),
+                  _summarySearchTokens(<String>[record.triggerSummaryId]),
+                  record.schemaVersions.join(' '),
+                  record.optimizerStrategies.join(' '),
+                  record.compatibilityKey,
+                  record.warmStartPackageId ?? '',
+                  record.warmStartModelVersion ?? '',
+                  record.notes ?? '',
+                  record.acknowledgedBy ?? '',
+                  delivery?.status ?? '',
+                  delivery?.runtimeTarget ?? '',
+                  delivery?.targetSiteIds.join(' ') ?? '',
+                  escalationSummary,
+                  escalation?.ownerUserId ?? '',
+                  escalation?.notes ?? '',
+                  controlSummary,
+                  rolloutControl?.ownerUserId ?? '',
+                  rolloutControl?.reason ?? '',
+                  digestRollup,
+                  compatibilityRollup,
+                  escalationHistoryLines,
+                  triageHistoryLines,
+                ].join(' ').toLowerCase();
+                return haystack.contains(normalizedQuery);
+              },
+            ).toList(growable: false);
+
+            return AlertDialog(
+              title: Text(
+                _tHqFeatureFlags(
+                  dialogContext,
+                  'Runtime rollout alert history: ${experiment.name}',
+                ),
+              ),
+              content: SizedBox(
+                width: 700,
+                child: records.isEmpty
+                    ? Text(
+                        _tHqFeatureFlags(
+                          dialogContext,
+                          'No rollout alert triage records recorded for this experiment yet.',
+                        ),
+                      )
+                    : SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            TextFormField(
+                              initialValue: filterQuery,
+                              onChanged: (String value) {
+                                setDialogState(() {
+                                  filterQuery = value;
+                                });
+                              },
+                              decoration: InputDecoration(
+                                labelText: _tHqFeatureFlags(
+                                  dialogContext,
+                                  'Filter by delivery ID, package ID, status, digest, site ID, owner, optimizer, warm start, or notes',
+                                ),
+                                prefixIcon:
+                                    const Icon(Icons.search_rounded),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              _tHqFeatureFlags(
+                                dialogContext,
+                                'Showing ${filteredRecords.length} of ${records.length}',
+                              ),
+                              style: const TextStyle(
+                                color: ScholesaColors.textSecondary,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            if (filteredRecords.isEmpty)
                               Text(
                                 _tHqFeatureFlags(
                                   dialogContext,
-                                  '${record.deliveryRecordId} · ${record.status} · ${record.fallbackCount} fallback · ${record.pendingCount} pending',
+                                  'No rollout alert triage records match current filter.',
                                 ),
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.w700),
-                              ),
-                              if (delivery != null) ...<Widget>[
-                                const SizedBox(height: 4),
-                                Text(
-                                  _tHqFeatureFlags(
-                                    dialogContext,
-                                    'Delivery: ${delivery.status} · ${delivery.targetSiteIds.length} sites · ${delivery.runtimeTarget}',
-                                  ),
-                                  style: const TextStyle(
-                                    color: ScholesaColors.textSecondary,
-                                  ),
-                                ),
-                              ],
-                              if (digestRollup.isNotEmpty) ...<Widget>[
-                                const SizedBox(height: 4),
-                                Text(
-                                  _tHqFeatureFlags(dialogContext, digestRollup),
-                                  style: const TextStyle(
-                                    color: ScholesaColors.textSecondary,
-                                  ),
-                                ),
-                              ],
-                              if (compatibilityRollup.isNotEmpty) ...<Widget>[
-                                const SizedBox(height: 4),
-                                Text(
-                                  _tHqFeatureFlags(
-                                      dialogContext, compatibilityRollup),
-                                  style: const TextStyle(
-                                    color: ScholesaColors.textSecondary,
-                                  ),
-                                ),
-                              ],
-                              if ((record.notes ?? '')
-                                  .trim()
-                                  .isNotEmpty) ...<Widget>[
-                                const SizedBox(height: 4),
-                                Text(
-                                  _tHqFeatureFlags(
-                                    dialogContext,
-                                    'HQ notes: ${record.notes!.trim()}',
-                                  ),
-                                  style: const TextStyle(
-                                    color: ScholesaColors.textSecondary,
-                                  ),
-                                ),
-                              ],
-                              if (record.status == 'acknowledged') ...<Widget>[
-                                const SizedBox(height: 4),
-                                Text(
-                                  _tHqFeatureFlags(
-                                    dialogContext,
-                                    'Acknowledged ${_formatTimestamp(record.acknowledgedAt)} by ${record.acknowledgedBy ?? 'hq'}',
-                                  ),
-                                  style: const TextStyle(
-                                    color: ScholesaColors.textSecondary,
-                                  ),
-                                ),
-                              ],
-                              if (escalation != null) ...<Widget>[
-                                const SizedBox(height: 4),
-                                Text(
-                                  _tHqFeatureFlags(
-                                    dialogContext,
-                                    _buildRuntimeRolloutEscalationSummary(
-                                        escalation),
-                                  ),
-                                  style: const TextStyle(
-                                    color: ScholesaColors.textSecondary,
-                                  ),
-                                ),
-                              ],
-                              if (rolloutControl != null &&
-                                  rolloutControl.mode != 'monitor') ...<Widget>[
-                                const SizedBox(height: 4),
-                                Text(
-                                  _tHqFeatureFlags(
-                                    dialogContext,
-                                    _buildRuntimeRolloutControlSummary(
-                                        rolloutControl),
-                                  ),
-                                  style: const TextStyle(
-                                    color: ScholesaColors.textSecondary,
-                                  ),
-                                ),
-                              ],
-                              if (escalationHistory.isNotEmpty) ...<Widget>[
-                                const SizedBox(height: 8),
-                                Text(
-                                  _tHqFeatureFlags(
-                                    dialogContext,
-                                    'Escalation history',
-                                  ),
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w700),
-                                ),
-                                const SizedBox(height: 4),
-                                ...escalationHistory.take(4).map(
-                                      (FederatedLearningRuntimeRolloutEscalationHistoryRecordModel
-                                              historyRecord) =>
-                                          Padding(
-                                        padding:
-                                            const EdgeInsets.only(bottom: 4),
-                                        child: Text(
+                              )
+                            else
+                              ...filteredRecords.map(
+                                (FederatedLearningRuntimeRolloutAlertRecordModel
+                                    record) {
+                                  final FederatedLearningRuntimeDeliveryRecordModel?
+                                      delivery =
+                                      deliveriesById[record.deliveryRecordId];
+                                  final FederatedLearningRuntimeRolloutEscalationRecordModel?
+                                      escalation = escalationByDeliveryId[
+                                          record.deliveryRecordId];
+                                  final FederatedLearningRuntimeRolloutControlRecordModel?
+                                      rolloutControl =
+                                      rolloutControlsByDeliveryId[
+                                          record.deliveryRecordId];
+                                  final List<
+                                          FederatedLearningRuntimeRolloutEscalationHistoryRecordModel>
+                                      escalationHistory =
+                                      escalationHistoryByDeliveryId[
+                                              record.deliveryRecordId] ??
+                                          const <FederatedLearningRuntimeRolloutEscalationHistoryRecordModel>[];
+                                  final List<
+                                          FederatedLearningRuntimeRolloutAuditEventModel>
+                                      triageEvents =
+                                      triageEventsByDeliveryId[
+                                              record.deliveryRecordId] ??
+                                          const <FederatedLearningRuntimeRolloutAuditEventModel>[];
+                                  final String digestRollup =
+                                      _formatRuntimeRolloutDigestRollup(
+                                    packageDigest: record.packageDigest,
+                                    boundedDigest: record.boundedDigest,
+                                    manifestDigest: record.manifestDigest,
+                                  );
+                                  final String compatibilityRollup =
+                                      _formatRuntimeRolloutCompatibilityRollup(
+                                    runtimeTarget: record.runtimeTarget,
+                                    schemaVersions: record.schemaVersions,
+                                    optimizerStrategies:
+                                        record.optimizerStrategies,
+                                    warmStartPackageId:
+                                        record.warmStartPackageId,
+                                    warmStartModelVersion:
+                                        record.warmStartModelVersion,
+                                  );
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 14),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: <Widget>[
+                                        Text(
                                           _tHqFeatureFlags(
                                             dialogContext,
-                                            _buildRuntimeRolloutEscalationHistoryLine(
-                                                historyRecord),
+                                            '${record.deliveryRecordId} · ${record.status} · ${record.fallbackCount} fallback · ${record.pendingCount} pending',
                                           ),
                                           style: const TextStyle(
-                                            color: ScholesaColors.textSecondary,
+                                              fontWeight: FontWeight.w700),
+                                        ),
+                                        if (delivery != null) ...<Widget>[
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            _tHqFeatureFlags(
+                                              dialogContext,
+                                              'Delivery: ${delivery.status} · ${delivery.targetSiteIds.length} sites · ${delivery.runtimeTarget}',
+                                            ),
+                                            style: const TextStyle(
+                                              color: ScholesaColors
+                                                  .textSecondary,
+                                            ),
+                                          ),
+                                        ],
+                                        if (digestRollup.isNotEmpty) ...<Widget>[
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            _tHqFeatureFlags(
+                                                dialogContext, digestRollup),
+                                            style: const TextStyle(
+                                              color: ScholesaColors
+                                                  .textSecondary,
+                                            ),
+                                          ),
+                                        ],
+                                        if (compatibilityRollup
+                                            .isNotEmpty) ...<Widget>[
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            _tHqFeatureFlags(dialogContext,
+                                                compatibilityRollup),
+                                            style: const TextStyle(
+                                              color: ScholesaColors
+                                                  .textSecondary,
+                                            ),
+                                          ),
+                                        ],
+                                        if ((record.notes ?? '')
+                                            .trim()
+                                            .isNotEmpty) ...<Widget>[
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            _tHqFeatureFlags(
+                                              dialogContext,
+                                              'HQ notes: ${record.notes!.trim()}',
+                                            ),
+                                            style: const TextStyle(
+                                              color: ScholesaColors
+                                                  .textSecondary,
+                                            ),
+                                          ),
+                                        ],
+                                        if (record.status ==
+                                            'acknowledged') ...<Widget>[
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            _tHqFeatureFlags(
+                                              dialogContext,
+                                              'Acknowledged ${_formatTimestamp(record.acknowledgedAt)} by ${record.acknowledgedBy ?? 'hq'}',
+                                            ),
+                                            style: const TextStyle(
+                                              color: ScholesaColors
+                                                  .textSecondary,
+                                            ),
+                                          ),
+                                        ],
+                                        if (escalation != null) ...<Widget>[
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            _tHqFeatureFlags(
+                                              dialogContext,
+                                              _buildRuntimeRolloutEscalationSummary(
+                                                  escalation),
+                                            ),
+                                            style: const TextStyle(
+                                              color: ScholesaColors
+                                                  .textSecondary,
+                                            ),
+                                          ),
+                                        ],
+                                        if (rolloutControl != null &&
+                                            rolloutControl.mode !=
+                                                'monitor') ...<Widget>[
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            _tHqFeatureFlags(
+                                              dialogContext,
+                                              _buildRuntimeRolloutControlSummary(
+                                                  rolloutControl),
+                                            ),
+                                            style: const TextStyle(
+                                              color: ScholesaColors
+                                                  .textSecondary,
+                                            ),
+                                          ),
+                                        ],
+                                        if (escalationHistory
+                                            .isNotEmpty) ...<Widget>[
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            _tHqFeatureFlags(
+                                              dialogContext,
+                                              'Escalation history',
+                                            ),
+                                            style: const TextStyle(
+                                                fontWeight: FontWeight.w700),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          ...escalationHistory.take(4).map(
+                                                (FederatedLearningRuntimeRolloutEscalationHistoryRecordModel
+                                                        historyRecord) =>
+                                                    Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          bottom: 4),
+                                                  child: Text(
+                                                    _tHqFeatureFlags(
+                                                      dialogContext,
+                                                      _buildRuntimeRolloutEscalationHistoryLine(
+                                                          historyRecord),
+                                                    ),
+                                                    style: const TextStyle(
+                                                      color: ScholesaColors
+                                                          .textSecondary,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                        ],
+                                        if (triageEvents.isNotEmpty) ...<Widget>[
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            _tHqFeatureFlags(
+                                              dialogContext,
+                                              'Triage history',
+                                            ),
+                                            style: const TextStyle(
+                                                fontWeight: FontWeight.w700),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          ...triageEvents.take(4).map(
+                                                (FederatedLearningRuntimeRolloutAuditEventModel
+                                                        event) =>
+                                                    Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          bottom: 4),
+                                                  child: Text(
+                                                    _tHqFeatureFlags(
+                                                      dialogContext,
+                                                      _runtimeRolloutTriageHistoryLine(
+                                                          event),
+                                                    ),
+                                                    style: const TextStyle(
+                                                      color: ScholesaColors
+                                                          .textSecondary,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                        ],
+                                        const SizedBox(height: 6),
+                                        TextButton.icon(
+                                          onPressed: () =>
+                                              _showRuntimeRolloutAuditDialog(
+                                            experiment,
+                                            deliveryRecordId:
+                                                record.deliveryRecordId,
+                                          ),
+                                          icon: const Icon(
+                                              Icons.receipt_long_rounded),
+                                          label: Text(
+                                            _tHqFeatureFlags(
+                                              dialogContext,
+                                              'View audit feed',
+                                            ),
                                           ),
                                         ),
-                                      ),
+                                      ],
                                     ),
-                              ],
-                              if (triageEvents.isNotEmpty) ...<Widget>[
-                                const SizedBox(height: 8),
-                                Text(
-                                  _tHqFeatureFlags(
-                                    dialogContext,
-                                    'Triage history',
-                                  ),
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w700),
-                                ),
-                                const SizedBox(height: 4),
-                                ...triageEvents.take(4).map(
-                                      (FederatedLearningRuntimeRolloutAuditEventModel
-                                              event) =>
-                                          Padding(
-                                        padding:
-                                            const EdgeInsets.only(bottom: 4),
-                                        child: Text(
-                                          _tHqFeatureFlags(
-                                            dialogContext,
-                                            _runtimeRolloutTriageHistoryLine(
-                                                event),
-                                          ),
-                                          style: const TextStyle(
-                                            color: ScholesaColors.textSecondary,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                              ],
-                              const SizedBox(height: 6),
-                              TextButton.icon(
-                                onPressed: () => _showRuntimeRolloutAuditDialog(
-                                  experiment,
-                                  deliveryRecordId: record.deliveryRecordId,
-                                ),
-                                icon: const Icon(Icons.receipt_long_rounded),
-                                label: Text(
-                                  _tHqFeatureFlags(
-                                    dialogContext,
-                                    'View audit feed',
-                                  ),
-                                ),
+                                  );
+                                },
                               ),
-                            ],
-                          ),
-                        );
-                      }).toList(growable: false),
-                    ),
+                          ],
+                        ),
+                      ),
+              ),
+              actions: <Widget>[
+                TextButton.icon(
+                  onPressed: () => _showRuntimeRolloutAuditDialog(experiment),
+                  icon: const Icon(Icons.receipt_long_rounded),
+                  label: Text(
+                    _tHqFeatureFlags(dialogContext, 'View rollout audit'),
                   ),
-          ),
-          actions: <Widget>[
-            TextButton.icon(
-              onPressed: () => _showRuntimeRolloutAuditDialog(experiment),
-              icon: const Icon(Icons.receipt_long_rounded),
-              label:
-                  Text(_tHqFeatureFlags(dialogContext, 'View rollout audit')),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: Text(_tHqFeatureFlags(dialogContext, 'Close')),
-            ),
-          ],
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: Text(_tHqFeatureFlags(dialogContext, 'Close')),
+                ),
+              ],
+            );
+          },
         );
       },
     );
