@@ -148,13 +148,6 @@ class WorkflowSurfaceI18n {
       '暂不支持自助更新付款方式。如需变更，请联系 HQ 计费支持。',
     'Self-service plan changes are not available yet. Contact HQ billing support for changes.':
       '暂不支持自助变更方案。如需调整，请联系 HQ 计费支持。',
-    'Billing statements are not available yet': '帳單對帳單暫時不可用',
-    'Invoice payments are not available in the app yet': 'App 內暫不支援支付發票',
-    'Invoice viewing is not available in the app yet': 'App 內暫不支援查看發票',
-    'Self-service payment method updates are not available yet. Contact HQ billing support for changes.':
-      '暫不支援自助更新付款方式。如需變更，請聯絡 HQ 計費支援。',
-    'Self-service plan changes are not available yet. Contact HQ billing support for changes.':
-      '暫不支援自助變更方案。如需調整，請聯絡 HQ 計費支援。',
     'New Session': '新建课程',
     'My Sessions': '我的课程',
     'Manage your teaching schedule': '管理你的教学日程',
@@ -486,6 +479,13 @@ class WorkflowSurfaceI18n {
     'Close': '關閉',
     'Use Camera': '使用相機',
     'Enter Code': '輸入代碼',
+    'Billing statements are not available yet': '帳單對帳單暫時不可用',
+    'Invoice payments are not available in the app yet': 'App 內暫不支援支付發票',
+    'Invoice viewing is not available in the app yet': 'App 內暫不支援查看發票',
+    'Self-service payment method updates are not available yet. Contact HQ billing support for changes.':
+      '暫不支援自助更新付款方式。如需變更，請聯絡 HQ 計費支援。',
+    'Self-service plan changes are not available yet. Contact HQ billing support for changes.':
+      '暫不支援自助變更方案。如需調整，請聯絡 HQ 計費支援。',
     'My Learners': '我的學習者',
     'Track progress and engagement': '追蹤進度與參與度',
     'Differentiation lane': '差異化路徑',
