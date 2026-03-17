@@ -82,7 +82,8 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
                 SliverToBoxAdapter(child: _buildLearnerLoopCard()),
                 SliverToBoxAdapter(
                   child: AiContextCoachSection(
-                    title: _tEducatorLearnersPageSpecific(context, 'Learner AI Coach'),
+                    title: _tEducatorLearnersPageSpecific(
+                        context, 'Learner AI Coach'),
                     subtitle: _tEducatorLearnersPageSpecific(
                         context, 'Keep BOS/MIA loop active for each learner'),
                     module: 'educator_learners',
@@ -172,14 +173,11 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
     final ThemeData theme = Theme.of(context);
     final Map<String, dynamic>? insights = _learnerLoopInsights;
     final Map<String, dynamic> trend =
-        (insights?['trend'] as Map<String, dynamic>?) ??
-            <String, dynamic>{};
+        (insights?['trend'] as Map<String, dynamic>?) ?? <String, dynamic>{};
     final Map<String, dynamic> state =
-        (insights?['state'] as Map<String, dynamic>?) ??
-            <String, dynamic>{};
+        (insights?['state'] as Map<String, dynamic>?) ?? <String, dynamic>{};
     final Map<String, dynamic> mvl =
-        (insights?['mvl'] as Map<String, dynamic>?) ??
-            <String, dynamic>{};
+        (insights?['mvl'] as Map<String, dynamic>?) ?? <String, dynamic>{};
     final List<dynamic> goals =
         (insights?['activeGoals'] as List<dynamic>?) ?? <dynamic>[];
 
@@ -201,7 +199,8 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: ScholesaColors.educator.withValues(alpha: 0.2)),
+          border:
+              Border.all(color: ScholesaColors.educator.withValues(alpha: 0.2)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -322,7 +321,8 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
                         ),
                   ),
                   Text(
-                    _tEducatorLearners(context, 'Track progress and engagement'),
+                    _tEducatorLearners(
+                        context, 'Track progress and engagement'),
                     style: TextStyle(color: Colors.grey[600], fontSize: 14),
                   ),
                 ],
@@ -783,11 +783,10 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
   }
 
   String _resolveRecommendedLane() {
-    final double averageProgress =
-        (learner.futureSkillsProgress +
-                learner.leadershipProgress +
-                learner.impactProgress) /
-            3;
+    final double averageProgress = (learner.futureSkillsProgress +
+            learner.leadershipProgress +
+            learner.impactProgress) /
+        3;
     if (learner.attendanceRate < 75 || averageProgress < 0.45) {
       return 'scaffolded';
     }
@@ -838,14 +837,17 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
         ];
       case 'stretch':
         return <String>[
-          _tEducatorLearners(context, 'Solve one transfer challenge without hints.'),
+          _tEducatorLearners(
+              context, 'Solve one transfer challenge without hints.'),
           _tEducatorLearners(context, 'Document an alternative strategy.'),
-          _tEducatorLearners(context, 'Reflect on tradeoffs and next iteration.'),
+          _tEducatorLearners(
+              context, 'Reflect on tradeoffs and next iteration.'),
         ];
       default:
         return <String>[
           _tEducatorLearners(context, 'Complete one on-level practice set.'),
-          _tEducatorLearners(context, 'Check one misconception and correct it.'),
+          _tEducatorLearners(
+              context, 'Check one misconception and correct it.'),
           _tEducatorLearners(context, 'Write one concrete next-step note.'),
         ];
     }
@@ -872,12 +874,16 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
     final AppState? appState = context.read<AppState?>();
     final String? siteId = appState?.activeSiteId;
     final String? educatorId = appState?.userId;
-    if (siteId == null || siteId.isEmpty || educatorId == null || educatorId.isEmpty) {
+    if (siteId == null ||
+        siteId.isEmpty ||
+        educatorId == null ||
+        educatorId.isEmpty) {
       return;
     }
     setState(() => _isSavingOverride = true);
     try {
-      final FirestoreService firestoreService = context.read<FirestoreService>();
+      final FirestoreService firestoreService =
+          context.read<FirestoreService>();
       await firestoreService.firestore
           .collection('learnerDifferentiationPlans')
           .doc('${learner.id}_$siteId')
@@ -925,12 +931,16 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
     final AppState? appState = context.read<AppState?>();
     final String? siteId = appState?.activeSiteId;
     final String? educatorId = appState?.userId;
-    if (siteId == null || siteId.isEmpty || educatorId == null || educatorId.isEmpty) {
+    if (siteId == null ||
+        siteId.isEmpty ||
+        educatorId == null ||
+        educatorId.isEmpty) {
       return;
     }
     setState(() => _isExporting = true);
     try {
-      final FirestoreService firestoreService = context.read<FirestoreService>();
+      final FirestoreService firestoreService =
+          context.read<FirestoreService>();
       final String printablePlan = _buildPrintablePracticePlan();
       await firestoreService.firestore.collection('practiceExports').add(
         <String, dynamic>{
@@ -1055,7 +1065,8 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
                   const SizedBox(height: 24),
                   Text(
                     _tEducatorLearners(context, 'Differentiation lane'),
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   const SizedBox(height: 8),
                   Container(
@@ -1112,7 +1123,8 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
                             fillColor: Colors.white,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Colors.grey.shade200),
+                              borderSide:
+                                  BorderSide(color: Colors.grey.shade200),
                             ),
                           ),
                         ),
@@ -1120,12 +1132,14 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton.icon(
-                            onPressed: _isSavingOverride ? null : _saveLaneOverride,
+                            onPressed:
+                                _isSavingOverride ? null : _saveLaneOverride,
                             icon: _isSavingOverride
                                 ? const SizedBox(
                                     width: 16,
                                     height: 16,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2),
                                   )
                                 : const Icon(Icons.tune),
                             label: Text(
@@ -1143,7 +1157,8 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
                   const SizedBox(height: 24),
                   Text(
                     _tEducatorLearners(context, 'Printable practice export'),
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   const SizedBox(height: 8),
                   Container(

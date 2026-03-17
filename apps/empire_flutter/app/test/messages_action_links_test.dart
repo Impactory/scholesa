@@ -123,7 +123,8 @@ void main() {
           GoRoute(
             path: '/profile',
             builder: (BuildContext context, GoRouterState state) =>
-                const Scaffold(body: Center(child: Text('Profile Destination'))),
+                const Scaffold(
+                    body: Center(child: Text('Profile Destination'))),
           ),
         ],
       );
@@ -186,7 +187,8 @@ void main() {
             router: router,
             providers: <SingleChildWidget>[
               Provider<FirestoreService>.value(value: firestoreService),
-              ChangeNotifierProvider<MessageService>.value(value: messageService),
+              ChangeNotifierProvider<MessageService>.value(
+                  value: messageService),
             ],
           ),
         );

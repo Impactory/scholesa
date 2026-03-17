@@ -886,16 +886,16 @@ class _MessageDetailSheet extends StatelessWidget {
                   onPressed: onViewDetails == null
                       ? null
                       : () async {
-                    TelemetryService.instance.logEvent(
-                      event: 'cta.clicked',
-                      metadata: <String, dynamic>{
-                        'cta': 'messages_view_details',
-                        'message_id': message.id,
-                      },
-                    );
-                    Navigator.pop(context);
-                    await onViewDetails!();
-                  },
+                          TelemetryService.instance.logEvent(
+                            event: 'cta.clicked',
+                            metadata: <String, dynamic>{
+                              'cta': 'messages_view_details',
+                              'message_id': message.id,
+                            },
+                          );
+                          Navigator.pop(context);
+                          await onViewDetails!();
+                        },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF6366F1),
                     foregroundColor: Colors.white,

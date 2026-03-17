@@ -65,7 +65,10 @@ Future<void> _seedLearner(FakeFirebaseFirestore firestore) async {
     'impactProgress': 0.41,
     'enrolledSessionIds': <String>['session-1'],
   });
-  await firestore.collection('enrollments').doc('enrollment-1').set(<String, dynamic>{
+  await firestore
+      .collection('enrollments')
+      .doc('enrollment-1')
+      .set(<String, dynamic>{
     'siteId': 'site-1',
     'learnerId': 'learner-1',
     'educatorId': 'educator-1',
@@ -154,8 +157,7 @@ void main() {
     expect(planDoc.data()?['selectedLane'], 'core');
     expect(planDoc.data()?['teacherOverride'], isTrue);
 
-    final practiceExports =
-        await firestore.collection('practiceExports').get();
+    final practiceExports = await firestore.collection('practiceExports').get();
     expect(practiceExports.docs.length, 1);
     expect(practiceExports.docs.first.data()['lane'], 'core');
     expect(
