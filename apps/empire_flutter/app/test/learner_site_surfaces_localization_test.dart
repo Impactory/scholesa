@@ -735,6 +735,48 @@ void main() {
       expect(find.text('徽章'), findsOneWidget);
     });
 
+    testWidgets('learner portfolio shows explicit unavailable edit and share messaging',
+        (WidgetTester tester) async {
+      final Locale locale = const Locale('en');
+      final AppState appState = _buildAppState(
+        role: UserRole.learner,
+        locale: locale,
+      );
+
+      await tester.binding.setSurfaceSize(const Size(1280, 1800));
+      await tester.pumpWidget(
+        _buildHarness(
+          locale: locale,
+          child: const LearnerPortfolioPage(),
+          providers: <SingleChildWidget>[
+            ChangeNotifierProvider<AppState>.value(value: appState),
+            Provider<dynamic>.value(value: null),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.edit).first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Save').last);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Portfolio profile editing is not available in the app yet'),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Share'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Generate Link').last);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Portfolio share links are not available in the app yet'),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('site sessions renders zh-CN copy',
         (WidgetTester tester) async {
       final Locale locale = const Locale('zh', 'CN');
