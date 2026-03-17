@@ -2813,7 +2813,9 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         const policyHint = extractInternalBosPayload(bosResult.data);
         if (policyHint) {
           bosPolicyHint = policyHint;
-          const applyPolicyHint = policyHint.confidence >= MIN_AUTONOMOUS_POLICY_CONFIDENCE;
+          const applyPolicyHint =
+            policyHint.confidence !== undefined &&
+            policyHint.confidence >= MIN_AUTONOMOUS_POLICY_CONFIDENCE;
           if (applyPolicyHint) {
             const bosModeToolHints = deriveBosModeToolHints(authContext.requesterRole, policyHint);
             modelToolHints = dedupeStrings([...modelToolHints, ...bosModeToolHints]).slice(0, 6);
