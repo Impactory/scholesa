@@ -213,6 +213,7 @@ void main() {
       expect(snapshot.docs.first.data()['learnerId'], 'test-user-1');
       expect(snapshot.docs.first.data()['siteId'], 'site-1');
       expect(snapshot.docs.first.data()['onboardingCompleted'], true);
+        expect(snapshot.docs.first.data()['diagnosticConfidenceBand'], isNull);
 
       expect(reminderCalls, hasLength(1));
       expect(

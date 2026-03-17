@@ -1025,8 +1025,7 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
         TextEditingController(text: currentProfile?.valuePrompt ?? '');
 
     String readingLevel = currentProfile?.readingLevelSelfCheck ?? 'just_right';
-    String diagnosticBand =
-        currentProfile?.diagnosticConfidenceBand ?? 'developing';
+    String? diagnosticBand = currentProfile?.diagnosticConfidenceBand;
     double weeklyTargetMinutes =
         (currentProfile?.weeklyTargetMinutes ?? 90).toDouble();
     String reminderSchedule = currentProfile?.reminderSchedule ?? 'weekdays';
@@ -1100,7 +1099,9 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                       DropdownButtonFormField<String>(
                         initialValue: diagnosticBand,
                         decoration: InputDecoration(
-                            labelText: _t('Mastery confidence')),
+                          labelText: _t('Mastery confidence'),
+                          helperText: _t('Leave blank until you know'),
+                        ),
                         items: <DropdownMenuItem<String>>[
                           DropdownMenuItem(
                               value: 'emerging', child: Text(_t('Emerging'))),
@@ -1273,7 +1274,7 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                                         goals: _splitCsv(goalsController.text),
                                         readingLevelSelfCheck: readingLevel,
                                         diagnosticConfidenceBand:
-                                            diagnosticBand,
+                                          diagnosticBand,
                                         weeklyTargetMinutes:
                                             weeklyTargetMinutes.round(),
                                         reminderSchedule: reminderSchedule,
@@ -1409,8 +1410,9 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
         role: 'learner',
         siteId: siteId,
         metadata: <String, dynamic>{
-          'confidenceBand': current.diagnosticConfidenceBand,
           'readingLevel': current.readingLevelSelfCheck,
+          if (current.diagnosticConfidenceBand != null)
+            'confidenceBand': current.diagnosticConfidenceBand,
         },
       );
     }

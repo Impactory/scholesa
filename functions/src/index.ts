@@ -6973,6 +6973,30 @@ function extractEffectiveStrategies(
     .slice(0, 10);
 }
 
+function clampInsightConfidence(value: number): number {
+  return Math.max(0.55, Math.min(0.95, Number(value.toFixed(2))));
+}
+
+function confidenceAboveThreshold(
+  value: number,
+  threshold: number,
+  scale: number,
+  baseline: number,
+): number {
+  const gap = Math.max(0, value - threshold);
+  return clampInsightConfidence(baseline + Math.min(gap / scale, 1) * 0.25);
+}
+
+function confidenceBelowThreshold(
+  value: number,
+  threshold: number,
+  scale: number,
+  baseline: number,
+): number {
+  const gap = Math.max(0, threshold - value);
+  return clampInsightConfidence(baseline + Math.min(gap / scale, 1) * 0.25);
+}
+
 function generateInsights(
   patterns: Record<string, any>,
   feedbackData: any[],
@@ -7006,7 +7030,7 @@ function generateInsights(
       type: 'celebration',
       title: 'Exceptional engagement!',
       description: 'This learner is thriving and highly engaged.',
-      confidence: 0.9,
+      confidence: confidenceAboveThreshold(feedbackData.length + 1, 1, 4, 0.7),
       basedOn: ['interaction patterns', 'educator feedback'],
       suggestedActions: ['Consider leadership opportunities', 'Encourage peer mentoring'],
       createdAt: now,
@@ -7015,12 +7039,13 @@ function generateInsights(
 
   // Warning insights
   if (engagementLevel === 'at-risk' || engagementLevel === 'struggling') {
+    const engagementRiskScore = engagementLevel === 'at-risk' ? 1 : 0.6;
     insights.push({
       id: 'warning-engagement',
       type: 'warning',
       title: 'Needs extra support',
       description: `Engagement is ${engagementLevel}. Consider checking in.`,
-      confidence: 0.8,
+      confidence: clampInsightConfidence(0.58 + engagementRiskScore * 0.18),
       basedOn: ['interaction patterns', 'engagement metrics'],
       suggestedActions: ['Schedule 1:1 check-in', 'Try different motivation approach'],
       createdAt: now,
@@ -7034,7 +7059,7 @@ function generateInsights(
       type: 'opportunity',
       title: 'Reflection opportunity',
       description: 'Low reflection completion. Could benefit from guided prompts.',
-      confidence: 0.7,
+      confidence: confidenceBelowThreshold(patterns.reflectionResponseRate || 0, 0.3, 0.3, 0.56),
       basedOn: ['reflection submission rate'],
       suggestedActions: ['Use simpler reflection prompts', 'Try voice/video reflections'],
       createdAt: now,
