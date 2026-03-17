@@ -673,14 +673,8 @@ function applyRouteActionLabels(records: WorkflowRecord[], routePath: WorkflowPa
       case '/hq/user-admin':
         primaryActionLabel = record.metadata.isActive === 'false' ? 'Activate user' : 'Deactivate user';
         break;
-      case '/hq/approvals':
-        primaryActionLabel = 'Approve item';
-        break;
       case '/hq/safety':
         primaryActionLabel = 'Resolve incident';
-        break;
-      case '/hq/feature-flags':
-        primaryActionLabel = record.status === 'enabled' ? 'Disable flag' : 'Enable flag';
         break;
       case '/messages':
         primaryActionLabel = record.status === 'archived' ? 'Reopen thread' : 'Archive thread';
