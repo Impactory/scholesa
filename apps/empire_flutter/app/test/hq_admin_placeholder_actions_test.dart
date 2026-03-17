@@ -146,7 +146,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Export'));
+    await tester.tap(find.byIcon(Icons.download));
     await tester.pumpAndSettle();
 
     expect(find.text('Export Financials'), findsOneWidget);
