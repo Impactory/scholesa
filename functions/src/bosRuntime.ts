@@ -97,6 +97,14 @@ function normalizeStringArray(value: unknown): string[] {
     .map((entry) => entry.trim());
 }
 
+function firstNumber(...values: unknown[]): number | undefined {
+  for (const value of values) {
+    const numeric = typeof value === 'number' ? value : Number(value);
+    if (Number.isFinite(numeric)) return numeric;
+  }
+  return undefined;
+}
+
 function dedupeStrings(values: string[]): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
@@ -586,6 +594,7 @@ function applyLearningSnapshotToIntervention(
     ((learningSnapshot.lastUnderstandingConfidence ?? 1) < 0.58) ||
     learningSnapshot.frustrationSignalCount > 3;
   const autonomyReady = !learningSnapshot.lastNeedsScaffold &&
+    learningSnapshot.lastUnderstandingConfidence !== undefined &&
     learningSnapshot.lastUnderstandingConfidence >= 0.8 &&
     learningSnapshot.lastResponseMode === 'explain';
 
