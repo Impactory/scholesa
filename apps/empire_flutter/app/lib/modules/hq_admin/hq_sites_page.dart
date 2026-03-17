@@ -953,11 +953,10 @@ class _CreateSiteSheetState extends State<_CreateSiteSheet> {
     if (firestoreService == null) {
       if (!mounted) return;
       Navigator.pop(context);
-      widget.onCreated();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_tHqSites(context, 'Site created successfully')),
-          backgroundColor: ScholesaColors.success,
+          content: Text(_tHqSites(context, 'Create site failed')),
+          backgroundColor: ScholesaColors.error,
         ),
       );
       return;

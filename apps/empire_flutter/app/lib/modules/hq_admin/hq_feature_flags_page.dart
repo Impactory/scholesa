@@ -944,8 +944,13 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               );
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                    content: Text(_tHqFeatureFlags(
-                        context, 'Opening change history...'))),
+                  content: Text(
+                    _tHqFeatureFlags(
+                      context,
+                      'Use the experiment history actions below to review change history.',
+                    ),
+                  ),
+                ),
               );
             },
           ),

@@ -9,20 +9,13 @@ import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import { useI18n } from '@/src/lib/i18n/useI18n';
 
 export function LoginForm() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const { signInWithGoogle } = useAuthContext();
   const router = useRouter();
   const params = useParams();
   const { t } = useI18n();
   const locale = params ? ((params as any).locale as string) || 'en' : 'en';
   const trackInteraction = useInteractionTracking();
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    trackInteraction('help_accessed', { cta: 'legacy_login_email_submit' });
-    console.log(t('auth.legacyLogin.emailPasswordNotReady'));
-  };
+  const emailPasswordUnavailableMessage = t('auth.legacyLogin.emailPasswordNotReady');
 
   const handleGoogleSignIn = async () => {
     try {
@@ -43,30 +36,43 @@ export function LoginForm() {
 
       <div className='mt-8 sm:mx-auto sm:w-full sm:max-w-md'>
         <div className='bg-app-surface py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-app'>
-          <form className='space-y-6' onSubmit={handleSubmit}>
+          <div className='space-y-6'>
             <Input
               id='email'
               label={t('auth.login.emailLabel')}
               type='email'
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
+              value=''
+              onChange={() => {}}
+              disabled
             />
             <Input
               id='password'
               label={t('auth.login.passwordLabel')}
               type='password'
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
+              value=''
+              onChange={() => {}}
+              disabled
             />
 
+            <div className='rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800'>
+              {emailPasswordUnavailableMessage}
+            </div>
+
             <div>
-              <Button type='submit' className='w-full'>
+              <Button
+                type='button'
+                className='w-full'
+                disabled
+                onClick={() => {
+                  trackInteraction('help_accessed', {
+                    cta: 'legacy_login_email_disabled',
+                  });
+                }}
+              >
                 {t('auth.legacyLogin.submit')}
               </Button>
             </div>
-          </form>
+          </div>
 
           <div className='mt-6'>
             <div className='relative'>
