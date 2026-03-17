@@ -5309,6 +5309,10 @@ void main() {
       '30',
     );
     await tester.enterText(
+      find.widgetWithText(TextFormField, 'Minimum distinct sites'),
+      '3',
+    );
+    await tester.enterText(
       find.widgetWithText(TextFormField, 'Raw update max bytes'),
       '8192',
     );
@@ -5364,6 +5368,12 @@ void main() {
         (Map<String, dynamic> row) => row['name'] == 'Math Pilot',
       )['maxTrainingWindowSeconds'],
       900,
+    );
+    expect(
+      bridge._experiments.firstWhere(
+        (Map<String, dynamic> row) => row['name'] == 'Math Pilot',
+      )['minDistinctSiteCount'],
+      3,
     );
     expect(
       bridge._experiments.firstWhere(

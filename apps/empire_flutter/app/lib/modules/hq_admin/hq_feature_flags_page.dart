@@ -1490,6 +1490,10 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                   Icons.groups_rounded,
                 ),
                 _buildExperimentChip(
+                  '${experiment.minDistinctSiteCount} site quorum',
+                  Icons.hub_rounded,
+                ),
+                _buildExperimentChip(
                   '${experiment.rawUpdateMaxBytes} byte cap',
                   Icons.data_object_rounded,
                 ),
@@ -8917,6 +8921,10 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     final TextEditingController thresholdController = TextEditingController(
       text: '${existing?.aggregateThreshold ?? 25}',
     );
+    final TextEditingController minDistinctSiteCountController =
+        TextEditingController(
+      text: '${existing?.minDistinctSiteCount ?? 2}',
+    );
     final TextEditingController rawBytesController = TextEditingController(
       text: '${existing?.rawUpdateMaxBytes ?? 16384}',
     );
@@ -9113,6 +9121,19 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                         ],
                       ),
                       const SizedBox(height: 12),
+                      TextFormField(
+                        controller: minDistinctSiteCountController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: _tHqFeatureFlags(
+                              context, 'Minimum distinct sites'),
+                          helperText: _tHqFeatureFlags(
+                            context,
+                            'Require aggregation batches to include at least this many different sites.',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
                       Row(
                         children: <Widget>[
                           Expanded(
@@ -9197,6 +9218,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         requireWarmStartForTraining: requireWarmStartForTraining,
         enabledSiteIds: sitesController.text,
         aggregateThresholdText: thresholdController.text,
+        minDistinctSiteCountText: minDistinctSiteCountController.text,
         rawUpdateMaxBytesText: rawBytesController.text,
         maxLocalEpochsText: maxLocalEpochsController.text,
         maxLocalStepsText: maxLocalStepsController.text,
@@ -9216,6 +9238,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     required bool requireWarmStartForTraining,
     required String enabledSiteIds,
     required String aggregateThresholdText,
+    required String minDistinctSiteCountText,
     required String rawUpdateMaxBytesText,
     required String maxLocalEpochsText,
     required String maxLocalStepsText,
@@ -9224,6 +9247,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
   }) async {
     final int aggregateThreshold =
         int.tryParse(aggregateThresholdText.trim()) ?? 25;
+    final int minDistinctSiteCount =
+      int.tryParse(minDistinctSiteCountText.trim()) ?? 2;
     final int rawUpdateMaxBytes =
         int.tryParse(rawUpdateMaxBytesText.trim()) ?? 16384;
     final int maxLocalEpochs = int.tryParse(maxLocalEpochsText.trim()) ?? 3;
@@ -9250,6 +9275,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         'maxTrainingWindowSeconds': maxTrainingWindowSeconds,
         'allowedSiteIds': allowedSiteIds,
         'aggregateThreshold': aggregateThreshold,
+        'minDistinctSiteCount': minDistinctSiteCount,
         'rawUpdateMaxBytes': rawUpdateMaxBytes,
         'enablePrototypeUploads': enablePrototypeUploads,
       });

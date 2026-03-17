@@ -1758,6 +1758,7 @@ async function maybeMaterializeFederatedLearningAggregationRun({
   triggerSummaryId: string;
 }): Promise<{ runId: string; artifactId: string; packageId: string; created: boolean } | null> {
   const aggregateThreshold = asPositiveInteger(experiment.aggregateThreshold, 25);
+  const minDistinctSiteCount = asPositiveInteger(experiment.minDistinctSiteCount, 2);
   const mergeStrategy = normalizeFederatedLearningMergeStrategy(experiment.mergeStrategy) ??
     FEDERATED_LEARNING_MERGE_STRATEGY;
   const pendingSnap = await admin.firestore()
@@ -1771,7 +1772,11 @@ async function maybeMaterializeFederatedLearningAggregationRun({
   const pendingRows = pendingSnap.docs
     .map(mapPendingFederatedSummary)
     .filter((row) => row.aggregationStatus !== 'materialized' && !row.aggregationRunId);
-  const selection = selectFederatedLearningAggregationBatch(pendingRows, aggregateThreshold);
+  const selection = selectFederatedLearningAggregationBatch(
+    pendingRows,
+    aggregateThreshold,
+    minDistinctSiteCount,
+  );
   if (!selection) {
     return null;
   }
@@ -1811,7 +1816,11 @@ async function maybeMaterializeFederatedLearningAggregationRun({
       return;
     }
 
-    const refreshedSelection = selectFederatedLearningAggregationBatch(refreshedRows, aggregateThreshold);
+    const refreshedSelection = selectFederatedLearningAggregationBatch(
+      refreshedRows,
+      aggregateThreshold,
+      minDistinctSiteCount,
+    );
     if (!refreshedSelection || refreshedSelection.summaryIds.join('|') !== selection.summaryIds.join('|')) {
       return;
     }
@@ -1848,6 +1857,8 @@ async function maybeMaterializeFederatedLearningAggregationRun({
       status: 'materialized',
       threshold: aggregateThreshold,
       thresholdMet: true,
+      minDistinctSiteCount,
+      distinctSiteThresholdMet: refreshedSelection.distinctSiteCount >= minDistinctSiteCount,
       mergeArtifactId: artifactId,
       mergeArtifactStatus: 'generated',
       candidateModelPackageId: packageId,
@@ -4420,6 +4431,7 @@ export const upsertFederatedLearningExperiment = onCall(async (request: Callable
       maxTrainingWindowSeconds: config.maxTrainingWindowSeconds,
       allowedSiteIds: config.allowedSiteIds,
       aggregateThreshold: config.aggregateThreshold,
+      minDistinctSiteCount: config.minDistinctSiteCount,
       rawUpdateMaxBytes: config.rawUpdateMaxBytes,
       featureFlagId,
     },

@@ -433,6 +433,9 @@ class WorkflowSurfaceI18n {
     'Create Cohort Launch': '创建群组启动',
     'Learner Count': '学习者数量',
     'Scheduled': '已安排',
+    'Minimum distinct sites': '最少不同站点数',
+    'Require aggregation batches to include at least this many different sites.':
+      '要求聚合批次至少包含这么多个不同站点。',
   };
 
   static const Map<String, String> _zhTw = <String, String>{
@@ -668,6 +671,9 @@ class WorkflowSurfaceI18n {
     'Review rescheduled': '複習已重新安排',
     'Queue state': '佇列狀態',
     'Scheduled': '已安排',
+    'Minimum distinct sites': '最少不同站點數',
+    'Require aggregation batches to include at least this many different sites.':
+      '要求聚合批次至少包含這麼多個不同站點。',
     'Snoozed': '已延後',
     'Rescheduled': '已重新安排',
     'Suspended': '已暫停',

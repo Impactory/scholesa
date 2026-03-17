@@ -2995,6 +2995,7 @@ class FederatedLearningExperimentModel {
     required this.maxTrainingWindowSeconds,
     required this.allowedSiteIds,
     required this.aggregateThreshold,
+    required this.minDistinctSiteCount,
     required this.rawUpdateMaxBytes,
     required this.enablePrototypeUploads,
     this.description,
@@ -3016,6 +3017,7 @@ class FederatedLearningExperimentModel {
   final int maxTrainingWindowSeconds;
   final List<String> allowedSiteIds;
   final int aggregateThreshold;
+  final int minDistinctSiteCount;
   final int rawUpdateMaxBytes;
   final bool enablePrototypeUploads;
   final String? description;
@@ -3055,6 +3057,7 @@ class FederatedLearningExperimentModel {
           (data['maxTrainingWindowSeconds'] as num?)?.toInt() ?? 1800,
       allowedSiteIds: _stringListOrEmpty(data['allowedSiteIds']),
       aggregateThreshold: (data['aggregateThreshold'] as num?)?.toInt() ?? 25,
+      minDistinctSiteCount: (data['minDistinctSiteCount'] as num?)?.toInt() ?? 2,
       rawUpdateMaxBytes: (data['rawUpdateMaxBytes'] as num?)?.toInt() ?? 16384,
       enablePrototypeUploads: data['enablePrototypeUploads'] as bool? ?? false,
       featureFlagId: data['featureFlagId'] as String?,
@@ -3077,6 +3080,7 @@ class FederatedLearningExperimentModel {
         'maxTrainingWindowSeconds': maxTrainingWindowSeconds,
         'allowedSiteIds': allowedSiteIds,
         'aggregateThreshold': aggregateThreshold,
+        'minDistinctSiteCount': minDistinctSiteCount,
         'rawUpdateMaxBytes': rawUpdateMaxBytes,
         'enablePrototypeUploads': enablePrototypeUploads,
         'featureFlagId': featureFlagId,
