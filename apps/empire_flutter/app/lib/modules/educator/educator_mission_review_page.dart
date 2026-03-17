@@ -998,7 +998,10 @@ class _ReviewSheetState extends State<_ReviewSheet> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           Text(
-                            _tEducatorMissionReview(context, 'AI draft saved'),
+                            _tEducatorMissionReview(
+                              context,
+                              'AI draft ready to edit',
+                            ),
                             style: const TextStyle(
                               fontWeight: FontWeight.w700,
                               color: ScholesaColors.educator,

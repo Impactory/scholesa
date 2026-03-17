@@ -695,11 +695,7 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
                 },
               );
               Navigator.pop(dialogContext);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                    content: Text(_tEducatorToday(
-                        context, 'Mission review queue opened'))),
-              );
+              context.push('/educator/missions/review');
             },
             child: Text(_tEducatorToday(context, 'Open Queue')),
           ),
