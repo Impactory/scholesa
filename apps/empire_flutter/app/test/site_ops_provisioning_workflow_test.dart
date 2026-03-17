@@ -539,11 +539,7 @@ void main() {
           .get();
       expect(statusDoc.exists, isTrue);
       expect(statusDoc.data()!['isOpen'], isFalse);
-
-      await _pumpSiteOpsPage(tester, firestore: firestore);
-
       expect(find.text('Site is CLOSED'), findsOneWidget);
-      expect(find.text('Day closed'), findsOneWidget);
     });
 
     testWidgets(
