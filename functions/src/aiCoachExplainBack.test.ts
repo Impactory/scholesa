@@ -5,10 +5,11 @@ import {
 
 describe('aiCoachExplainBack', () => {
   it('builds a linked explain-back interaction event from the AI help session', () => {
+    const explainBack = ' I learned how to test the handler before shipping it. ';
     const payload = buildExplainBackSubmittedEvent({
       actorId: 'learner-1',
       aiHelpOpenedEventId: 'interaction-123',
-      explainBack: ' I learned how to test the handler before shipping it. ',
+      explainBack,
       openedEvent: {
         siteId: 'site-42',
         gradeBand: 'G7_9',
@@ -32,7 +33,7 @@ describe('aiCoachExplainBack', () => {
       checkpointId: 'checkpoint-2',
       payload: {
         aiHelpOpenedEventId: 'interaction-123',
-        explainBackLength: 48,
+        explainBackLength: explainBack.trim().length,
         approved: true,
         feedback: explainBackRecordedFeedback,
         mode: 'debug',
