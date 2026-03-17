@@ -33,6 +33,77 @@ async function loadE2EAuthBackend() {
   return import('@/src/testing/e2e/fakeWebBackend');
 }
 
+type AuthLogger = Pick<typeof console, 'error'>;
+
+export async function finalizeFederatedSignInSession(
+  signedInUser: FirebaseUser,
+  options: {
+    authInstance?: typeof auth;
+    locale?: string;
+    syncSessionCookieFn?: typeof syncSessionCookie;
+    firebaseSignOutFn?: typeof firebaseSignOut;
+    logger?: AuthLogger;
+  } = {},
+): Promise<void> {
+  const {
+    authInstance = auth,
+    locale,
+    syncSessionCookieFn = syncSessionCookie,
+    firebaseSignOutFn = firebaseSignOut,
+    logger = console,
+  } = options;
+
+  try {
+    await syncSessionCookieFn(signedInUser, locale);
+  } catch (error) {
+    try {
+      await firebaseSignOutFn(authInstance);
+    } catch (signOutError) {
+      logger.error('Failed to clear Firebase Auth state after federated session setup failure.', signOutError);
+    }
+    throw error;
+  }
+}
+
+export async function performSignOutCleanup(
+  options: {
+    authInstance?: typeof auth;
+    clearSessionCookieFn?: typeof clearSessionCookie;
+    firebaseSignOutFn?: typeof firebaseSignOut;
+    logger?: AuthLogger;
+    onLocalStateCleared?: () => void;
+  } = {},
+): Promise<void> {
+  const {
+    authInstance = auth,
+    clearSessionCookieFn = clearSessionCookie,
+    firebaseSignOutFn = firebaseSignOut,
+    logger = console,
+    onLocalStateCleared,
+  } = options;
+
+  let firebaseError: unknown = null;
+
+  try {
+    await clearSessionCookieFn();
+  } catch (error) {
+    logger.error('Failed to clear session cookie before sign-out.', error);
+  }
+
+  try {
+    await firebaseSignOutFn(authInstance);
+  } catch (error) {
+    logger.error('Failed to sign out from Firebase auth.', error);
+    firebaseError = error;
+  } finally {
+    onLocalStateCleared?.();
+  }
+
+  if (firebaseError) {
+    throw firebaseError;
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -126,17 +197,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const provider = createFederatedAuthProvider(providerId);
     const credential = await signInWithPopup(auth, provider);
-
-    try {
-      await syncSessionCookie(credential.user, locale);
-    } catch (error) {
-      try {
-        await firebaseSignOut(auth);
-      } catch (signOutError) {
-        console.error('Failed to clear Firebase Auth state after federated session setup failure.', signOutError);
-      }
-      throw error;
-    }
+    await finalizeFederatedSignInSession(credential.user, { locale });
   };
 
   const signOut = async () => {
@@ -148,27 +209,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    let firebaseError: unknown = null;
-
-    try {
-      await clearSessionCookie();
-    } catch (error) {
-      console.error('Failed to clear session cookie before sign-out.', error);
-    }
-
-    try {
-      await firebaseSignOut(auth);
-    } catch (error) {
-      console.error('Failed to sign out from Firebase auth.', error);
-      firebaseError = error;
-    } finally {
-      setUser(null);
-      setProfile(null);
-    }
-
-    if (firebaseError) {
-      throw firebaseError;
-    }
+    await performSignOutCleanup({
+      onLocalStateCleared: () => {
+        setUser(null);
+        setProfile(null);
+      },
+    });
   };
 
   return (
