@@ -868,9 +868,11 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                         Expanded(
                           child: _MetricCard(
                             icon: Icons.tune_rounded,
-                            value: '${summary.bosMiaTraining!.calibratedGradeBands}',
+                            value:
+                                '${summary.bosMiaTraining!.calibratedGradeBands}',
                             label: _t('Calibrated grade bands'),
-                            trend: '${summary.bosMiaTraining!.trainingRows} ${_t('training rows')}',
+                            trend:
+                                '${summary.bosMiaTraining!.trainingRows} ${_t('training rows')}',
                             trendUp: true,
                             color: ScholesaColors.hq,
                           ),
@@ -879,9 +881,11 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                         Expanded(
                           child: _MetricCard(
                             icon: Icons.analytics_outlined,
-                            value: '${(summary.bosMiaTraining!.actionAccuracy * 100).toStringAsFixed(1)}%',
+                            value:
+                                '${(summary.bosMiaTraining!.actionAccuracy * 100).toStringAsFixed(1)}%',
                             label: _t('Action accuracy'),
-                            trend: '${summary.bosMiaTraining!.goldEvalCases} ${_t('gold eval cases')}',
+                            trend:
+                                '${summary.bosMiaTraining!.goldEvalCases} ${_t('gold eval cases')}',
                             trendUp: true,
                             color: ScholesaColors.futureSkills,
                           ),
@@ -894,7 +898,8 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                         Expanded(
                           child: _MetricCard(
                             icon: Icons.rule_folder_outlined,
-                            value: '${(summary.bosMiaTraining!.reviewPrecision * 100).toStringAsFixed(1)}%',
+                            value:
+                                '${(summary.bosMiaTraining!.reviewPrecision * 100).toStringAsFixed(1)}%',
                             label: _t('Review precision'),
                             trend: _t('synthetic-only'),
                             trendUp: true,
@@ -905,7 +910,8 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                         Expanded(
                           child: _MetricCard(
                             icon: Icons.fact_check_outlined,
-                            value: '${(summary.bosMiaTraining!.reviewRecall * 100).toStringAsFixed(1)}%',
+                            value:
+                                '${(summary.bosMiaTraining!.reviewRecall * 100).toStringAsFixed(1)}%',
                             label: _t('Review recall'),
                             trend: _t('Latest synthetic import manifest'),
                             trendUp: true,
@@ -2300,14 +2306,14 @@ class _SyntheticDatasetImportSummary {
     final Map<String, dynamic> nativeCounts = Map<String, dynamic>.from(
       (data['nativeCounts'] as Map?) ?? <String, dynamic>{},
     );
-    final List<String> sourcePacks = ((data['sourcePacks'] as List?) ?? <dynamic>[])
-        .map((dynamic value) => value.toString())
-        .toList(growable: false);
+    final List<String> sourcePacks =
+        ((data['sourcePacks'] as List?) ?? <dynamic>[])
+            .map((dynamic value) => value.toString())
+            .toList(growable: false);
     return _SyntheticDatasetImportSummary(
-      summaryLabel:
-          (data['summaryLabel'] as String?)?.trim().isNotEmpty == true
-              ? data['summaryLabel'] as String
-              : 'Synthetic import',
+      summaryLabel: (data['summaryLabel'] as String?)?.trim().isNotEmpty == true
+          ? data['summaryLabel'] as String
+          : 'Synthetic import',
       mode: (data['mode'] as String?)?.trim() ?? 'all',
       sourcePacks: sourcePacks,
       importedAt: dateParser(data['importedAt']) ?? DateTime.now(),
@@ -2320,9 +2326,9 @@ class _SyntheticDatasetImportSummary {
         'fullSuiteRows',
       ]),
       importedCollections: nativeCounts.length,
-      interactionEvents: _readCount(nativeCounts, <String>['interactionEvents']),
-      portfolioArtifacts:
-          _readCount(nativeCounts, <String>['portfolioItems']),
+      interactionEvents:
+          _readCount(nativeCounts, <String>['interactionEvents']),
+      portfolioArtifacts: _readCount(nativeCounts, <String>['portfolioItems']),
       syntheticUsers: _readCount(nativeCounts, <String>['users']),
       bosMiaTraining: _BosMiaSyntheticTrainingSummary.fromMap(
         Map<String, dynamic>.from(
@@ -2398,7 +2404,8 @@ class _BosMiaSyntheticTrainingSummary {
     DateTime? Function(dynamic value) dateParser,
   ) {
     final String modelVersion = (data['modelVersion'] as String?)?.trim() ?? '';
-    final String trainingRunId = (data['trainingRunId'] as String?)?.trim() ?? '';
+    final String trainingRunId =
+        (data['trainingRunId'] as String?)?.trim() ?? '';
     if (modelVersion.isEmpty || trainingRunId.isEmpty) {
       return null;
     }

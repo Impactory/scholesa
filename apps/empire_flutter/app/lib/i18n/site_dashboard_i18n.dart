@@ -11,7 +11,8 @@ class SiteDashboardI18n {
     'Mission completed': '任务已完成',
     'Liam Chen completed "Build a Robot"': 'Liam Chen 完成了“Build a Robot”',
     'Achievement unlocked': '成就已解锁',
-    'Sofia Martinez earned "Code Master" badge': 'Sofia Martinez 获得了“Code Master”徽章',
+    'Sofia Martinez earned "Code Master" badge':
+        'Sofia Martinez 获得了“Code Master”徽章',
     '2 hours ago': '2 小时前',
     '4 hours ago': '4 小时前',
     '6 hours ago': '6 小时前',
@@ -53,7 +54,7 @@ class SiteDashboardI18n {
     'Generate a': '生成一个',
     'summary report for this site dashboard.': '用于此站点仪表板的摘要报告。',
     'Site report exports are not generated in the app yet. Requests are recorded for follow-up.':
-      '应用内暂不会生成站点报告导出文件；导出请求会被记录以供后续处理。',
+        '应用内暂不会生成站点报告导出文件；导出请求会被记录以供后续处理。',
     'Cancel': '取消',
     'Report export requested': '已请求导出报告',
     'report export request logged': '报告导出请求已记录',
@@ -74,7 +75,8 @@ class SiteDashboardI18n {
     'Mission completed': '任務已完成',
     'Liam Chen completed "Build a Robot"': 'Liam Chen 完成了「Build a Robot」',
     'Achievement unlocked': '成就已解鎖',
-    'Sofia Martinez earned "Code Master" badge': 'Sofia Martinez 獲得了「Code Master」徽章',
+    'Sofia Martinez earned "Code Master" badge':
+        'Sofia Martinez 獲得了「Code Master」徽章',
     '2 hours ago': '2 小時前',
     '4 hours ago': '4 小時前',
     '6 hours ago': '6 小時前',
@@ -116,7 +118,7 @@ class SiteDashboardI18n {
     'Generate a': '產生一份',
     'summary report for this site dashboard.': '供此站點儀表板使用的摘要報告。',
     'Site report exports are not generated in the app yet. Requests are recorded for follow-up.':
-      'App 內暫時不會產生站點報告匯出檔；匯出請求會被記錄以供後續處理。',
+        'App 內暫時不會產生站點報告匯出檔；匯出請求會被記錄以供後續處理。',
     'Cancel': '取消',
     'Report export requested': '已請求匯出報告',
     'report export request logged': '報告匯出請求已記錄',

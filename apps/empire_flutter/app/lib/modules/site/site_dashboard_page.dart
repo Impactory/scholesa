@@ -231,7 +231,8 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                   ),
                   Text(
                     _t('Pilot Studio Overview'),
-                    style: TextStyle(color: context.schTextSecondary, fontSize: 14),
+                    style: TextStyle(
+                        color: context.schTextSecondary, fontSize: 14),
                   ),
                 ],
               ),
@@ -1173,7 +1174,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
         final ({IconData icon, Color color}) visual =
             _mapActivityVisual(action);
         final String subtitle = action == 'Export Site Report'
-          ? '${_selectedPeriod[0].toUpperCase()}${_selectedPeriod.substring(1)} ${_t('report export request logged')}'
+            ? '${_selectedPeriod[0].toUpperCase()}${_selectedPeriod.substring(1)} ${_t('report export request logged')}'
             : _t('Site operation event');
         feed.add(
           _TimedSiteActivity(
@@ -1633,7 +1634,8 @@ class _ActivityItem extends StatelessWidget {
                   ),
                   Text(
                     subtitle,
-                    style: TextStyle(color: context.schTextSecondary, fontSize: 12),
+                    style: TextStyle(
+                        color: context.schTextSecondary, fontSize: 12),
                   ),
                 ],
               ),

@@ -96,7 +96,8 @@ Future<void> _seedAnalyticsData(FakeFirebaseFirestore firestore) async {
       .set(<String, dynamic>{
     'eventType': 'bos_mia.usability.feedback',
     'siteId': 'site-1',
-    'timestamp': Timestamp.fromDate(DateTime.now().subtract(const Duration(days: 1))),
+    'timestamp':
+        Timestamp.fromDate(DateTime.now().subtract(const Duration(days: 1))),
     'metadata': <String, dynamic>{
       'usability_score': 5,
       'usefulness_score': 4,
@@ -245,5 +246,57 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('HQ BOS-MIA Usability'), findsOneWidget);
+  });
+
+  testWidgets(
+      'hq analytics export dialog is notice-only until a real export exists',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: <SingleChildWidget>[
+          Provider<FirestoreService>.value(value: firestoreService),
+          ChangeNotifierProvider<AppState>.value(value: _buildHqState()),
+        ],
+        child: MaterialApp(
+          home: HqAnalyticsPage(
+            metricsLoader: ({String? siteId, String period = 'month'}) async {
+              return const TelemetryDashboardMetrics(
+                weeklyAccountabilityAdherenceRate: 91.0,
+                educatorReviewTurnaroundHoursAvg: 18.5,
+                educatorReviewWithinSlaRate: 87.0,
+                educatorReviewSlaHours: 48,
+                interventionHelpedRate: 72.0,
+                interventionTotal: 11,
+                attendanceTrend: <AttendanceTrendPoint>[],
+              );
+            },
+            kpiPacksLoader: ({String? siteId, int limit = 24}) async =>
+                <Map<String, dynamic>>[],
+            syntheticImportLoader: () async => null,
+          ),
+        ),
+      ),
+    );
+
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.download));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Export HQ Analytics'), findsOneWidget);
+    expect(
+      find.text('HQ analytics exports are not available in the app yet.'),
+      findsOneWidget,
+    );
+    expect(find.widgetWithText(ElevatedButton, 'Export'), findsNothing);
+    expect(find.widgetWithText(TextButton, 'Close'), findsOneWidget);
   });
 }

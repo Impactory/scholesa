@@ -67,7 +67,7 @@ void main() {
       expect(find.byType(ListTile), findsWidgets);
     });
 
-    testWidgets('site dashboard export CTA runs dialog flow',
+    testWidgets('site dashboard export CTA records a request honestly',
         (WidgetTester tester) async {
       await tester.binding.setSurfaceSize(const Size(1280, 1800));
       await tester.pumpWidget(
@@ -82,11 +82,17 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Export Site Report'), findsOneWidget);
-      await tester.tap(find.widgetWithText(ElevatedButton, 'Generate'));
+      expect(
+        find.text(
+          'Site report exports are not generated in the app yet. Requests are recorded for follow-up.',
+        ),
+        findsOneWidget,
+      );
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Record Request'));
       await tester.pumpAndSettle();
 
       expect(
-        find.textContaining('report prepared for download'),
+        find.textContaining('report export request recorded'),
         findsOneWidget,
       );
     });

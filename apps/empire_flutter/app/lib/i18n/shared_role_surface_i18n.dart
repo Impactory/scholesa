@@ -96,7 +96,8 @@ class SharedRoleSurfaceI18n {
     'Export HQ Analytics': '导出 HQ 分析',
     'Generate and export the current HQ analytics summary for cross-site review.':
         '生成并导出当前 HQ 分析摘要供跨站点审核。',
-    'HQ analytics exports are not available in the app yet.': '应用内暂不支持导出 HQ 分析。',
+    'HQ analytics exports are not available in the app yet.':
+        '应用内暂不支持导出 HQ 分析。',
     'Loading...': '加载中...',
     'No comparison data available': '暂无对比数据',
     'No top performers available': '暂无最佳表现者',
@@ -317,7 +318,8 @@ class SharedRoleSurfaceI18n {
     'Export HQ Analytics': '匯出 HQ 分析',
     'Generate and export the current HQ analytics summary for cross-site review.':
         '產生並匯出目前 HQ 分析摘要供跨站點審查。',
-    'HQ analytics exports are not available in the app yet.': 'App 內暫不支援匯出 HQ 分析。',
+    'HQ analytics exports are not available in the app yet.':
+        'App 內暫不支援匯出 HQ 分析。',
     'Loading...': '載入中...',
     'No comparison data available': '目前沒有比較資料',
     'No top performers available': '目前沒有最佳表現者',
