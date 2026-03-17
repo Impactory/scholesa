@@ -159,6 +159,58 @@ void main() {
     expect(find.text('Close'), findsOneWidget);
   });
 
+  testWidgets('HQ billing shows precise unavailable labels for missing identity fields',
+      (WidgetTester tester) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 1800));
+    await tester.pumpWidget(
+      _buildHarness(
+        child: HqBillingPage(
+          billingLoader: () async => <String, dynamic>{
+            'siteOptions': <Map<String, dynamic>>[
+              <String, dynamic>{'id': 'all', 'label': 'All Sites'},
+            ],
+            'invoices': <Map<String, dynamic>>[
+              <String, dynamic>{
+                'id': 'INV-2001',
+                'amount': 85.0,
+                'status': 'pending',
+                'date': '2026-03-17T10:00:00.000Z',
+              },
+            ],
+            'payments': <Map<String, dynamic>>[
+              <String, dynamic>{
+                'id': 'PAY-1',
+                'amount': 85.0,
+                'date': '2026-03-17T10:00:00.000Z',
+              },
+            ],
+            'subscriptions': <Map<String, dynamic>>[
+              <String, dynamic>{
+                'learners': 1,
+                'amount': 85.0,
+                'status': 'active',
+              },
+            ],
+          },
+        ),
+        appState: _buildAppState(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Parent unavailable'), findsOneWidget);
+    expect(find.text('Learner unavailable'), findsOneWidget);
+    expect(find.text('Site unavailable'), findsOneWidget);
+
+    await tester.tap(find.text('Payments'));
+    await tester.pumpAndSettle();
+    expect(find.text('Payment source unavailable'), findsOneWidget);
+
+    await tester.tap(find.text('Subscriptions'));
+    await tester.pumpAndSettle();
+    expect(find.text('Subscription owner unavailable'), findsOneWidget);
+  });
+
   testWidgets('HQ audit export action is notice-only until export exists',
       (WidgetTester tester) async {
     await tester.binding.setSurfaceSize(const Size(1200, 1800));

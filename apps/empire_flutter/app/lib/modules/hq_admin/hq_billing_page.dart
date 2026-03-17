@@ -573,9 +573,15 @@ class _HqBillingPageState extends State<HqBillingPage>
             final DateTime date = _toDateTime(row['date']) ?? now;
             return <String, dynamic>{
               'id': id,
-              'parent': (row['parent'] as String?) ?? 'Unknown',
-              'learner': (row['learner'] as String?) ?? '-',
-              'site': (row['site'] as String?) ?? 'Unknown',
+              'parent': ((row['parent'] as String?)?.trim().isNotEmpty == true)
+                ? (row['parent'] as String).trim()
+                : _tHqBilling(context, 'Parent unavailable'),
+              'learner': ((row['learner'] as String?)?.trim().isNotEmpty == true)
+                ? (row['learner'] as String).trim()
+                : _tHqBilling(context, 'Learner unavailable'),
+              'site': ((row['site'] as String?)?.trim().isNotEmpty == true)
+                ? (row['site'] as String).trim()
+                : _tHqBilling(context, 'Site unavailable'),
               'amount': _asDouble(row['amount']) ?? 0,
               'status': _invoiceStatusFromPayoutStatus(
                 (row['status'] as String?) ?? 'pending',
@@ -597,7 +603,9 @@ class _HqBillingPageState extends State<HqBillingPage>
             final DateTime date = _toDateTime(row['date']) ?? now;
             return <String, dynamic>{
               'id': id,
-              'from': (row['from'] as String?) ?? 'Unknown',
+              'from': ((row['from'] as String?)?.trim().isNotEmpty == true)
+                  ? (row['from'] as String).trim()
+                  : _tHqBilling(context, 'Payment source unavailable'),
               'method': (row['method'] as String?) ?? 'Transfer',
               'amount': _asDouble(row['amount']) ?? 0,
               'date': _formatDate(date),
@@ -611,7 +619,9 @@ class _HqBillingPageState extends State<HqBillingPage>
           _asMapList(payload['subscriptions']).map((Map<String, dynamic> row) {
         final DateTime? nextBilling = _toDateTime(row['nextBilling']);
         return <String, dynamic>{
-          'parent': (row['parent'] as String?) ?? 'Unknown Site',
+            'parent': ((row['parent'] as String?)?.trim().isNotEmpty == true)
+              ? (row['parent'] as String).trim()
+              : _tHqBilling(context, 'Subscription owner unavailable'),
           'learners': _asInt(row['learners']) ?? 0,
           'plan': (row['plan'] as String?) ?? 'Standard',
           'amount': _asDouble(row['amount']) ?? 0,

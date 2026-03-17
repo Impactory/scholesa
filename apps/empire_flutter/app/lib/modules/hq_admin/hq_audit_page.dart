@@ -421,15 +421,18 @@ class _HqAuditPageState extends State<HqAuditPage> {
               .toList(growable: false);
       final List<_AuditLog> loadedLogs = rows
           .map((Map<String, dynamic> row) {
-            final String actionRaw =
-                (row['action'] as String? ?? 'unknown').trim();
+            final String actionRaw = (row['action'] as String? ?? '').trim();
             return _AuditLog(
               id: row['id'] as String? ?? '',
-              action: _titleFromAction(actionRaw),
+              action: actionRaw.isEmpty
+                  ? _tHqAudit(context, 'Audit action unavailable')
+                  : _titleFromAction(actionRaw),
               category: _categoryFromAction(actionRaw),
               actor: (row['actorEmail'] as String?)?.trim().isNotEmpty == true
                   ? (row['actorEmail'] as String).trim()
-                  : (row['actorId'] as String? ?? 'system'),
+                  : ((row['actorId'] as String?)?.trim().isNotEmpty == true
+                      ? (row['actorId'] as String).trim()
+                      : _tHqAudit(context, 'Actor unavailable')),
               timestamp: WorkflowBridgeService.toDateTime(
                     row['createdAt'] ?? row['timestamp'] ?? row['updatedAt'],
                   ) ??
@@ -845,6 +848,9 @@ class _HqAuditPageState extends State<HqAuditPage> {
   }
 
   String _titleFromAction(String action) {
+    if (action.trim().isEmpty) {
+      return _tHqAudit(context, 'Audit action unavailable');
+    }
     final List<String> parts = action
         .replaceAll('_', ' ')
         .replaceAll('.', ' ')
