@@ -6,7 +6,19 @@
  */
 
 const { initializeTestEnvironment, assertFails, assertSucceeds } = require('@firebase/rules-unit-testing');
-const { deleteDoc, doc, getDoc, setDoc, updateDoc, setLogLevel } = require('firebase/firestore');
+const {
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  orderBy,
+  query,
+  setDoc,
+  setLogLevel,
+  updateDoc,
+  where,
+} = require('firebase/firestore');
 const fs = require('fs');
 const path = require('path');
 
@@ -642,6 +654,25 @@ describe('Federated Learning Prototype Collections', () => {
     );
   });
 
+  test('site admin can query enrolled federated learning experiments by cohort', async () => {
+    const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
+    await assertSucceeds(
+      getDocs(
+        query(
+          collection(db, 'federatedLearningExperiments'),
+          where('allowedSiteIds', 'array-contains', 'site1'),
+        ),
+      ),
+    );
+  });
+
+  test('site admin cannot query all federated learning experiments across sites', async () => {
+    const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
+    await assertFails(
+      getDocs(collection(db, 'federatedLearningExperiments')),
+    );
+  });
+
   test('site admin cannot read other site federated learning experiments', async () => {
     const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
     await assertFails(
@@ -667,6 +698,18 @@ describe('Federated Learning Prototype Collections', () => {
     const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
     await assertSucceeds(
       getDoc(doc(db, 'federatedLearningUpdateSummaries', 'fl_update_1')),
+    );
+  });
+
+  test('site admin can query prototype update summaries for their site', async () => {
+    const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
+    await assertSucceeds(
+      getDocs(
+        query(
+          collection(db, 'federatedLearningUpdateSummaries'),
+          where('siteId', '==', 'site1'),
+        ),
+      ),
     );
   });
 
@@ -815,10 +858,30 @@ describe('Federated Learning Prototype Collections', () => {
     );
   });
 
+  test('HQ can query runtime delivery records newest-first', async () => {
+    const db = testEnv.authenticatedContext(hqUser.uid).firestore();
+    await assertSucceeds(
+      getDocs(
+        query(
+          collection(db, 'federatedLearningRuntimeDeliveryRecords'),
+          where('experimentId', '==', 'fl_exp_literacy_pilot'),
+          orderBy('updatedAt', 'desc'),
+        ),
+      ),
+    );
+  });
+
   test('site admins cannot read runtime delivery records directly', async () => {
     const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
     await assertFails(
       getDoc(doc(db, 'federatedLearningRuntimeDeliveryRecords', 'fl_delivery_demo_1')),
+    );
+  });
+
+  test('site admins cannot query runtime delivery records directly', async () => {
+    const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
+    await assertFails(
+      getDocs(collection(db, 'federatedLearningRuntimeDeliveryRecords')),
     );
   });
 

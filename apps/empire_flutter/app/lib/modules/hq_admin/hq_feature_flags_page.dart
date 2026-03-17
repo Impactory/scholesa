@@ -8050,9 +8050,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     final String reason = (record.reason ?? '').trim().isEmpty
         ? ''
         : ' · ${(record.reason ?? '').trim()}';
-    final String reviewBy = record.reviewByAt == null
-        ? ''
-        : ' · review by ${_formatTimestamp(record.reviewByAt)}';
+    final String reviewBy = _buildRuntimeRolloutControlReviewSegment(record);
     final String released =
         record.mode == 'monitor' && record.releasedAt != null
             ? ' · released ${_formatTimestamp(record.releasedAt)}'
@@ -8060,6 +8058,23 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     final String digest =
         _buildRuntimeRolloutBoundedDigestSuffix(record.boundedDigest);
     return 'Control: ${record.mode} · owner $owner$reviewBy$released$digest$reason';
+  }
+
+  String _buildRuntimeRolloutControlReviewSegment(
+    FederatedLearningRuntimeRolloutControlRecordModel record,
+  ) {
+    if (record.reviewByAt == null || record.mode == 'monitor') {
+      return '';
+    }
+    final DateTime reviewByAt = record.reviewByAt!.toDate().toUtc();
+    final DateTime now = DateTime.now().toUtc();
+    if (!reviewByAt.isAfter(now)) {
+      return ' · overdue ${_formatTimestamp(record.reviewByAt)}';
+    }
+    if (reviewByAt.difference(now).inHours <= 6) {
+      return ' · due ${_formatTimestamp(record.reviewByAt)}';
+    }
+    return ' · review by ${_formatTimestamp(record.reviewByAt)}';
   }
 
   String _buildRuntimeRolloutEscalationDueSegment(

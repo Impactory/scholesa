@@ -5850,7 +5850,9 @@ void main() {
         ),
       ],
       runtimeRolloutControlRecords: <Map<String, dynamic>>[
-        _runtimeRolloutControlRecordRow(),
+        _runtimeRolloutControlRecordRow(
+          reviewByAt: DateTime(2020, 3, 15, 8),
+        ),
       ],
       runtimeRolloutAuditEvents: <Map<String, dynamic>>[
         _runtimeRolloutAuditEventRow(
@@ -5944,6 +5946,10 @@ void main() {
     );
     expect(
       find.textContaining('Control: paused · owner hq-ops-3'),
+      findsWidgets,
+    );
+    expect(
+      find.textContaining('overdue 2020-03-15T08:00:00.000'),
       findsWidgets,
     );
     expect(find.widgetWithText(TextButton, 'View audit feed'), findsWidgets);
