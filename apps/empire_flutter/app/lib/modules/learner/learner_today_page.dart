@@ -474,7 +474,8 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                 const SizedBox(height: 4),
                 Text(
                   _t('Set up a habit to start your daily streak.'),
-                  style: TextStyle(color: context.schTextSecondary, fontSize: 12),
+                  style:
+                      TextStyle(color: context.schTextSecondary, fontSize: 12),
                 ),
               ],
             ),
@@ -539,7 +540,8 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                 const SizedBox(height: 4),
                 Text(
                   _t('Start a mission to activate your learning loop.'),
-                  style: TextStyle(color: context.schTextSecondary, fontSize: 12),
+                  style:
+                      TextStyle(color: context.schTextSecondary, fontSize: 12),
                 ),
               ],
             ),
@@ -604,7 +606,8 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
       return;
     }
 
-    final FirebaseFirestore firestore = context.read<FirestoreService>().firestore;
+    final FirebaseFirestore firestore =
+        context.read<FirestoreService>().firestore;
     final LearnerProfileRepository repository =
         LearnerProfileRepository(firestore: firestore);
 
@@ -714,9 +717,10 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                     children: <Widget>[
                       Text(
                         _t('Learner Setup'),
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -741,10 +745,10 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                 spacing: 8,
                 runSpacing: 8,
                 children: chips
-                  .map(
-                    (_SummaryChipData chip) =>
-                    _SummaryChip(label: chip.label, color: chip.color),
-                  )
+                    .map(
+                      (_SummaryChipData chip) =>
+                          _SummaryChip(label: chip.label, color: chip.color),
+                    )
                     .toList(),
               ),
             const SizedBox(height: 16),
@@ -833,15 +837,18 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                     children: <Widget>[
                       Text(
                         _t('Motivation loop'),
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         isOnboardingSurface
-                            ? _t('Start with a plan, reflect after each session, and save a weekly review rhythm.')
-                            : _t('Keep a simple plan-reflect-review rhythm tied to your goals and reminders.'),
+                            ? _t(
+                                'Start with a plan, reflect after each session, and save a weekly review rhythm.')
+                            : _t(
+                                'Keep a simple plan-reflect-review rhythm tied to your goals and reminders.'),
                         style: TextStyle(
                           color: scheme.onSurfaceVariant,
                           fontSize: 13,
@@ -976,10 +983,12 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
     required int weeklyTargetMinutes,
   }) {
     if (totalStreak >= 3) {
-      return _t('You kept showing up for your goals. That consistency matters.');
+      return _t(
+          'You kept showing up for your goals. That consistency matters.');
     }
     if (activeMissionCount > 0) {
-      return _t('You are carrying active missions forward. That momentum counts.');
+      return _t(
+          'You are carrying active missions forward. That momentum counts.');
     }
     if (weeklyTargetMinutes > 0) {
       return _t('You set a clear goal for your week. That is real progress.');
@@ -1042,7 +1051,8 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                 left: 16,
                 right: 16,
                 top: 16,
-                bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom + 16,
+                bottom:
+                    MediaQuery.of(bottomSheetContext).viewInsets.bottom + 16,
               ),
               child: SafeArea(
                 child: SingleChildScrollView(
@@ -1059,16 +1069,25 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                       const SizedBox(height: 8),
                       Text(
                         _t('Tell us about your goals, supports, and study rhythm.'),
-                        style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        style: TextStyle(
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant),
                       ),
                       const SizedBox(height: 16),
                       DropdownButtonFormField<String>(
                         initialValue: readingLevel,
-                        decoration: InputDecoration(labelText: _t('Reading check')),
+                        decoration:
+                            InputDecoration(labelText: _t('Reading check')),
                         items: <DropdownMenuItem<String>>[
-                          DropdownMenuItem(value: 'need_support', child: Text(_t('Need support'))),
-                          DropdownMenuItem(value: 'just_right', child: Text(_t('Just right'))),
-                          DropdownMenuItem(value: 'challenge_me', child: Text(_t('Ready for a challenge'))),
+                          DropdownMenuItem(
+                              value: 'need_support',
+                              child: Text(_t('Need support'))),
+                          DropdownMenuItem(
+                              value: 'just_right',
+                              child: Text(_t('Just right'))),
+                          DropdownMenuItem(
+                              value: 'challenge_me',
+                              child: Text(_t('Ready for a challenge'))),
                         ],
                         onChanged: isSaving
                             ? null
@@ -1080,11 +1099,16 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                       const SizedBox(height: 12),
                       DropdownButtonFormField<String>(
                         initialValue: diagnosticBand,
-                        decoration: InputDecoration(labelText: _t('Mastery confidence')),
+                        decoration: InputDecoration(
+                            labelText: _t('Mastery confidence')),
                         items: <DropdownMenuItem<String>>[
-                          DropdownMenuItem(value: 'emerging', child: Text(_t('Emerging'))),
-                          DropdownMenuItem(value: 'developing', child: Text(_t('Developing'))),
-                          DropdownMenuItem(value: 'confident', child: Text(_t('Confident'))),
+                          DropdownMenuItem(
+                              value: 'emerging', child: Text(_t('Emerging'))),
+                          DropdownMenuItem(
+                              value: 'developing',
+                              child: Text(_t('Developing'))),
+                          DropdownMenuItem(
+                              value: 'confident', child: Text(_t('Confident'))),
                         ],
                         onChanged: isSaving
                             ? null
@@ -1123,18 +1147,24 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                         onChanged: isSaving
                             ? null
                             : (double value) {
-                                modalSetState(() => weeklyTargetMinutes = value);
+                                modalSetState(
+                                    () => weeklyTargetMinutes = value);
                               },
                       ),
                       const SizedBox(height: 12),
                       DropdownButtonFormField<String>(
                         initialValue: reminderSchedule,
-                        decoration: InputDecoration(labelText: _t('Reminder schedule')),
+                        decoration:
+                            InputDecoration(labelText: _t('Reminder schedule')),
                         items: <DropdownMenuItem<String>>[
-                          DropdownMenuItem(value: 'off', child: Text(_t('Off'))),
-                          DropdownMenuItem(value: 'daily', child: Text(_t('Daily'))),
-                          DropdownMenuItem(value: 'weekdays', child: Text(_t('Weekdays'))),
-                          DropdownMenuItem(value: 'weekends', child: Text(_t('Weekends'))),
+                          DropdownMenuItem(
+                              value: 'off', child: Text(_t('Off'))),
+                          DropdownMenuItem(
+                              value: 'daily', child: Text(_t('Daily'))),
+                          DropdownMenuItem(
+                              value: 'weekdays', child: Text(_t('Weekdays'))),
+                          DropdownMenuItem(
+                              value: 'weekends', child: Text(_t('Weekends'))),
                         ],
                         onChanged: isSaving
                             ? null
@@ -1162,7 +1192,8 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                         onChanged: isSaving
                             ? null
                             : (bool? value) {
-                                modalSetState(() => ttsEnabled = value ?? false);
+                                modalSetState(
+                                    () => ttsEnabled = value ?? false);
                               },
                         title: Text(_t('Text-to-Speech')),
                         controlAffinity: ListTileControlAffinity.leading,
@@ -1173,7 +1204,8 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                         onChanged: isSaving
                             ? null
                             : (bool? value) {
-                                modalSetState(() => reducedDistractionEnabled = value ?? false);
+                                modalSetState(() =>
+                                    reducedDistractionEnabled = value ?? false);
                               },
                         title: Text(_t('Reduced distraction')),
                         controlAffinity: ListTileControlAffinity.leading,
@@ -1184,7 +1216,8 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                         onChanged: isSaving
                             ? null
                             : (bool? value) {
-                                modalSetState(() => keyboardOnlyEnabled = value ?? false);
+                                modalSetState(
+                                    () => keyboardOnlyEnabled = value ?? false);
                               },
                         title: Text(_t('Keyboard only')),
                         controlAffinity: ListTileControlAffinity.leading,
@@ -1195,7 +1228,8 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                         onChanged: isSaving
                             ? null
                             : (bool? value) {
-                                modalSetState(() => highContrastEnabled = value ?? false);
+                                modalSetState(
+                                    () => highContrastEnabled = value ?? false);
                               },
                         title: Text(_t('High contrast')),
                         controlAffinity: ListTileControlAffinity.leading,
@@ -1219,43 +1253,60 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                                   ? null
                                   : () async {
                                       modalSetState(() => isSaving = true);
-                                      final LearnerProfileModel updatedProfile = LearnerProfileModel(
-                                        id: currentProfile?.id ?? '${siteId}_$learnerId',
+                                      final LearnerProfileModel updatedProfile =
+                                          LearnerProfileModel(
+                                        id: currentProfile?.id ??
+                                            '${siteId}_$learnerId',
                                         learnerId: learnerId,
                                         siteId: siteId,
                                         legalName: currentProfile?.legalName,
-                                        preferredName: currentProfile?.preferredName,
-                                        dateOfBirth: currentProfile?.dateOfBirth,
+                                        preferredName:
+                                            currentProfile?.preferredName,
+                                        dateOfBirth:
+                                            currentProfile?.dateOfBirth,
                                         gradeLevel: currentProfile?.gradeLevel,
-                                        strengths: currentProfile?.strengths ?? const <String>[],
+                                        strengths: currentProfile?.strengths ??
+                                            const <String>[],
                                         learningNeeds: selectedSupports,
-                                        interests: _splitCsv(interestsController.text),
+                                        interests:
+                                            _splitCsv(interestsController.text),
                                         goals: _splitCsv(goalsController.text),
                                         readingLevelSelfCheck: readingLevel,
-                                        diagnosticConfidenceBand: diagnosticBand,
-                                        weeklyTargetMinutes: weeklyTargetMinutes.round(),
+                                        diagnosticConfidenceBand:
+                                            diagnosticBand,
+                                        weeklyTargetMinutes:
+                                            weeklyTargetMinutes.round(),
                                         reminderSchedule: reminderSchedule,
-                                        valuePrompt: valuePromptController.text.trim(),
+                                        valuePrompt:
+                                            valuePromptController.text.trim(),
                                         ttsEnabled: ttsEnabled,
-                                        reducedDistractionEnabled: reducedDistractionEnabled,
-                                        keyboardOnlyEnabled: keyboardOnlyEnabled,
-                                        highContrastEnabled: highContrastEnabled,
+                                        reducedDistractionEnabled:
+                                            reducedDistractionEnabled,
+                                        keyboardOnlyEnabled:
+                                            keyboardOnlyEnabled,
+                                        highContrastEnabled:
+                                            highContrastEnabled,
                                         onboardingCompleted: true,
                                         lastSetupAt: Timestamp.now(),
-                                        emergencyContact: currentProfile?.emergencyContact,
+                                        emergencyContact:
+                                            currentProfile?.emergencyContact,
                                         createdAt: currentProfile?.createdAt,
                                         updatedAt: Timestamp.now(),
                                       );
 
-                                        final NavigatorState sheetNavigator =
+                                      final NavigatorState sheetNavigator =
                                           Navigator.of(bottomSheetContext);
-                                        final ScaffoldMessengerState messenger =
+                                      final ScaffoldMessengerState messenger =
                                           ScaffoldMessenger.of(context);
-                                        final GoRouter router = GoRouter.of(context);
-                                        final FirebaseFirestore firestore =
-                                          context.read<FirestoreService>().firestore;
-                                      final LearnerProfileRepository repository =
-                                          LearnerProfileRepository(firestore: firestore);
+                                      final GoRouter router =
+                                          GoRouter.of(context);
+                                      final FirebaseFirestore firestore =
+                                          context
+                                              .read<FirestoreService>()
+                                              .firestore;
+                                      final LearnerProfileRepository
+                                          repository = LearnerProfileRepository(
+                                              firestore: firestore);
 
                                       try {
                                         await repository.upsert(updatedProfile);
@@ -1277,10 +1328,12 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                                           siteId: siteId,
                                         );
                                         if (!mounted) return;
-                                        setState(() => _learnerProfile = updatedProfile);
+                                        setState(() =>
+                                            _learnerProfile = updatedProfile);
                                         sheetNavigator.pop();
                                         messenger.showSnackBar(
-                                          SnackBar(content: Text(_t('Setup saved'))),
+                                          SnackBar(
+                                              content: Text(_t('Setup saved'))),
                                         );
                                         if (widget.forceSetupMode) {
                                           router.go('/learner/today');
@@ -1349,7 +1402,8 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
       );
     }
 
-    if (previous?.diagnosticConfidenceBand != current.diagnosticConfidenceBand) {
+    if (previous?.diagnosticConfidenceBand !=
+        current.diagnosticConfidenceBand) {
       await TelemetryService.instance.logEvent(
         event: 'diagnostic.submitted',
         role: 'learner',
@@ -1412,7 +1466,8 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
       case 'pre_plan':
         return _t('What is your plan for this session?');
       case 'weekly_review':
-        return _t('What pattern do you notice from this week, and what will you adjust next?');
+        return _t(
+            'What pattern do you notice from this week, and what will you adjust next?');
       case 'post_session':
       default:
         return _t('What worked? What is your next step?');
@@ -1479,7 +1534,8 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                 left: 16,
                 right: 16,
                 top: 16,
-                bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom + 16,
+                bottom:
+                    MediaQuery.of(bottomSheetContext).viewInsets.bottom + 16,
               ),
               child: SafeArea(
                 child: Column(
@@ -1495,11 +1551,17 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
                       initialValue: reflectionType,
-                      decoration: InputDecoration(labelText: _t('Reflection type')),
+                      decoration:
+                          InputDecoration(labelText: _t('Reflection type')),
                       items: <DropdownMenuItem<String>>[
-                        DropdownMenuItem(value: 'pre_plan', child: Text(_t('Pre-plan'))),
-                        DropdownMenuItem(value: 'post_session', child: Text(_t('Post-session'))),
-                        DropdownMenuItem(value: 'weekly_review', child: Text(_t('Weekly review'))),
+                        DropdownMenuItem(
+                            value: 'pre_plan', child: Text(_t('Pre-plan'))),
+                        DropdownMenuItem(
+                            value: 'post_session',
+                            child: Text(_t('Post-session'))),
+                        DropdownMenuItem(
+                            value: 'weekly_review',
+                            child: Text(_t('Weekly review'))),
                       ],
                       onChanged: isSaving
                           ? null
@@ -1533,29 +1595,36 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                             onPressed: isSaving
                                 ? null
                                 : () async {
-                                    final String response = reflectionController.text.trim();
+                                    final String response =
+                                        reflectionController.text.trim();
                                     if (response.isEmpty) return;
-                                final NavigatorState sheetNavigator =
-                                  Navigator.of(bottomSheetContext);
-                                final ScaffoldMessengerState messenger =
-                                  ScaffoldMessenger.of(context);
+                                    final NavigatorState sheetNavigator =
+                                        Navigator.of(bottomSheetContext);
+                                    final ScaffoldMessengerState messenger =
+                                        ScaffoldMessenger.of(context);
                                     modalSetState(() => isSaving = true);
-                                    final FirebaseFirestore firestore =
-                                        context.read<FirestoreService>().firestore;
-                                    final LearnerReflectionRepository repository =
-                                        LearnerReflectionRepository(firestore: firestore);
+                                    final FirebaseFirestore firestore = context
+                                        .read<FirestoreService>()
+                                        .firestore;
+                                    final LearnerReflectionRepository
+                                        repository =
+                                        LearnerReflectionRepository(
+                                            firestore: firestore);
                                     try {
                                       await repository.create(
                                         learnerId: learnerId,
                                         siteId: siteId,
                                         reflectionType: reflectionType,
                                         response: response,
-                                        prompt: _promptForReflectionType(reflectionType),
+                                        prompt: _promptForReflectionType(
+                                            reflectionType),
                                       );
                                       if (!mounted) return;
                                       sheetNavigator.pop();
                                       messenger.showSnackBar(
-                                        SnackBar(content: Text(_t('Reflection saved'))),
+                                        SnackBar(
+                                            content:
+                                                Text(_t('Reflection saved'))),
                                       );
                                     } finally {
                                       if (bottomSheetContext.mounted) {
@@ -1689,7 +1758,6 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
       accentColor: ScholesaColors.learner,
     );
   }
-
 }
 
 class _SummaryChipData {
@@ -1742,14 +1810,14 @@ class _DashboardInfoCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: context.schSurfaceStrong,
+        color: scheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: scheme.outline.withValues(alpha: 0.18)),
+        border: Border.all(color: scheme.outline.withValues(alpha: 0.22)),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -1759,12 +1827,12 @@ class _DashboardInfoCard extends StatelessWidget {
           Text(
             title,
             style: TextStyle(
-              fontSize: compactTitle ? 16 : 18,
-              fontWeight: FontWeight.bold,
-              color: context.schTextPrimary,
+              fontSize: compactTitle ? 17 : 19,
+              fontWeight: FontWeight.w800,
+              color: scheme.onSurface,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           ...body,
         ],
       ),
@@ -1885,11 +1953,13 @@ class _QuickActionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final ColorScheme scheme = Theme.of(context).colorScheme;
     return Material(
-      color: scheme.surfaceContainerHigh,
+      color: scheme.surfaceContainer,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: scheme.outline.withValues(alpha: 0.16)),
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(color: scheme.outline.withValues(alpha: 0.22)),
       ),
+      elevation: 1,
+      shadowColor: Colors.black.withValues(alpha: 0.14),
       child: InkWell(
         onTap: () {
           TelemetryService.instance.logEvent(
@@ -1901,20 +1971,30 @@ class _QuickActionCard extends StatelessWidget {
           );
           onTap();
         },
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 20),
+          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
           child: Column(
             children: <Widget>[
-              Icon(icon, color: color, size: 28),
-              const SizedBox(height: 8),
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(icon, color: color, size: 24),
+              ),
+              const SizedBox(height: 10),
               Text(
                 label,
                 style: TextStyle(
-                  color: color,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
+                  color: scheme.onSurface,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                  letterSpacing: 0.1,
                 ),
+                textAlign: TextAlign.center,
               ),
             ],
           ),
@@ -2079,4 +2159,3 @@ class _MissionTile extends StatelessWidget {
     );
   }
 }
-
