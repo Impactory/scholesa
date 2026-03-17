@@ -483,7 +483,7 @@ class ProfilePage extends StatelessWidget {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
-                      '${_tProfile(context, 'Profile update request saved for')} $nextName',
+                      '${_tProfile(context, 'Profile updated for')} $nextName',
                     ),
                   ),
                 );

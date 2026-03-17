@@ -148,6 +148,7 @@ class WorkflowSurfaceI18n {
     'Help Center Contact': '帮助中心联系信息',
     'Disconnect': '断开连接',
     'Connect': '连接',
+    'Profile updated for': '个人资料已更新：',
     'Privacy Policy Notice': '隐私政策说明',
     'Terms of Service Notice': '服务条款说明',
     'Contact support at support@scholesa.com with your site ID and issue details.':
@@ -508,6 +509,7 @@ class WorkflowSurfaceI18n {
     'Close': '關閉',
     'Help & Support': '幫助與支援',
     'Help Center Contact': '幫助中心聯絡資訊',
+    'Profile updated for': '個人資料已更新：',
     'Use Camera': '使用相機',
     'Enter Code': '輸入代碼',
     'QR scanning is not available in the app yet': 'App 內暫不支援 QR 掃描',

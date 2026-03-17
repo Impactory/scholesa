@@ -1,3 +1,5 @@
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,6 +11,7 @@ import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/auth/auth_service.dart';
 import 'package:scholesa_app/modules/profile/profile_page.dart';
 import 'package:scholesa_app/modules/settings/settings_page.dart';
+import 'package:scholesa_app/services/firestore_service.dart';
 import 'package:scholesa_app/services/theme_service.dart';
 import 'package:url_launcher_platform_interface/link.dart';
 import 'package:url_launcher_platform_interface/url_launcher_platform_interface.dart';
@@ -50,6 +53,10 @@ class _FakeUrlLauncherPlatform extends UrlLauncherPlatform {
 }
 
 class _MockAuthService extends Mock implements AuthService {}
+
+class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
+
+class _MockUser extends Mock implements User {}
 
 AppState _buildAppState() {
   final AppState state = AppState();
@@ -198,5 +205,75 @@ void main() {
     } finally {
       UrlLauncherPlatform.instance = previousLauncherPlatform;
     }
+  });
+
+  testWidgets(
+      'profile edit confirms the live update instead of a saved request',
+      (WidgetTester tester) async {
+    final AppState state = _buildAppState();
+    final _MockAuthService authService = _MockAuthService();
+    final ThemeService themeService = ThemeService();
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final _MockFirebaseAuth auth = _MockFirebaseAuth();
+    final _MockUser user = _MockUser();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: auth,
+    );
+    final GoRouter router = GoRouter(
+      initialLocation: '/profile',
+      routes: <RouteBase>[
+        GoRoute(
+          path: '/profile',
+          builder: (BuildContext context, GoRouterState state) =>
+              const ProfilePage(),
+        ),
+      ],
+    );
+
+    when(() => auth.currentUser).thenReturn(user);
+    when(() => user.uid).thenReturn('site-user-1');
+    when(() => user.email).thenReturn('site-user-1@scholesa.test');
+    when(() => user.displayName).thenReturn('Site Lead');
+
+    await firestore
+        .collection('users')
+        .doc('site-user-1')
+        .set(<String, dynamic>{
+      'displayName': 'Site Lead',
+      'email': 'site-user-1@scholesa.test',
+      'role': 'site',
+      'activeSiteId': 'site-1',
+      'siteIds': <String>['site-1'],
+    });
+
+    await tester.pumpWidget(
+      _buildHarness(
+        router: router,
+        providers: <SingleChildWidget>[
+          ChangeNotifierProvider<AppState>.value(value: state),
+          Provider<AuthService>.value(value: authService),
+          ChangeNotifierProvider<ThemeService>.value(value: themeService),
+          Provider<FirestoreService>.value(value: firestoreService),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.edit));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'Updated Site Lead');
+    await tester.tap(find.widgetWithText(TextButton, 'Save'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Profile updated for Updated Site Lead'), findsOneWidget);
+    expect(find.text('Profile update request saved for Updated Site Lead'),
+        findsNothing);
+    expect(find.text('Updated Site Lead'), findsWidgets);
+
+    final DocumentSnapshot<Map<String, dynamic>> userDoc =
+        await firestore.collection('users').doc('site-user-1').get();
+    expect(userDoc.data()!['displayName'], 'Updated Site Lead');
   });
 }

@@ -39,7 +39,7 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
   FederatedLearningResolvedRuntimePackageModel? _runtimePackage;
   List<FederatedLearningRuntimeDeliveryRecordModel> _runtimeDeliveries =
       <FederatedLearningRuntimeDeliveryRecordModel>[];
-    List<FederatedLearningRuntimeDeliveryRecordModel> _runtimeDeliveryHistory =
+  List<FederatedLearningRuntimeDeliveryRecordModel> _runtimeDeliveryHistory =
       <FederatedLearningRuntimeDeliveryRecordModel>[];
   List<FederatedLearningRuntimeActivationRecordModel> _runtimeActivations =
       <FederatedLearningRuntimeActivationRecordModel>[];
@@ -72,26 +72,7 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
         actions: <Widget>[
           Switch(
             value: _isDayOpen,
-            onChanged: (bool value) {
-              TelemetryService.instance.logEvent(
-                event: 'cta.clicked',
-                metadata: <String, dynamic>{
-                  'module': 'site_ops',
-                  'cta_id': 'toggle_day_open',
-                  'surface': 'appbar_switch',
-                  'is_day_open': value,
-                },
-              );
-              setState(() => _isDayOpen = value);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(value
-                      ? _tSiteOps(context, 'Day opened')
-                      : _tSiteOps(context, 'Day closed')),
-                  backgroundColor: value ? Colors.green : Colors.orange,
-                ),
-              );
-            },
+            onChanged: _isLoading ? null : _setDayOpenStatus,
             activeThumbColor: Colors.white,
             activeTrackColor: Colors.green.withValues(alpha: 0.6),
           ),
@@ -139,7 +120,8 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
         const SizedBox(height: 12),
         Card(
           color: ScholesaColors.surface,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: _todaySessions.isEmpty
               ? Padding(
                   padding: const EdgeInsets.all(20),
@@ -197,7 +179,8 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
         const SizedBox(height: 12),
         Card(
           color: ScholesaColors.surface,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Column(
             children: _kitChecklist
                 .map((_KitChecklistItem item) => CheckboxListTile(
@@ -233,7 +216,8 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
         const SizedBox(height: 12),
         Card(
           color: ScholesaColors.surface,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -244,7 +228,8 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
                   minLines: 2,
                   maxLines: 4,
                   decoration: InputDecoration(
-                    hintText: _tSiteOps(context, 'Capture handoff changes, medical context, or room risks'),
+                    hintText: _tSiteOps(context,
+                        'Capture handoff changes, medical context, or room risks'),
                     border: const OutlineInputBorder(),
                   ),
                 ),
@@ -357,16 +342,22 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
     return Row(
       children: <Widget>[
         Expanded(
-          child: _buildStatCard(_tSiteOps(context, 'Present'), _presentCount.toString(),
-                Icons.people_rounded, Colors.green)),
+            child: _buildStatCard(_tSiteOps(context, 'Present'),
+                _presentCount.toString(), Icons.people_rounded, Colors.green)),
         const SizedBox(width: 12),
         Expanded(
-          child: _buildStatCard(_tSiteOps(context, 'Pickups'), _pendingPickups.toString(),
-                Icons.directions_walk_rounded, Colors.blue)),
+            child: _buildStatCard(
+                _tSiteOps(context, 'Pickups'),
+                _pendingPickups.toString(),
+                Icons.directions_walk_rounded,
+                Colors.blue)),
         const SizedBox(width: 12),
         Expanded(
-          child: _buildStatCard(_tSiteOps(context, 'Incidents'), _openIncidents.toString(),
-                Icons.warning_rounded, Colors.orange)),
+            child: _buildStatCard(
+                _tSiteOps(context, 'Incidents'),
+                _openIncidents.toString(),
+                Icons.warning_rounded,
+                Colors.orange)),
       ],
     );
   }
@@ -521,7 +512,8 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
                                   ),
                                 ),
                               ],
-                              if (_runtimeDeliveryHistory.isNotEmpty) ...<Widget>[
+                              if (_runtimeDeliveryHistory
+                                  .isNotEmpty) ...<Widget>[
                                 const SizedBox(height: 12),
                                 Text(
                                   _tSiteOps(context, 'Recent runtime history'),
@@ -653,13 +645,13 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
           childAspectRatio: 2.5,
           children: <Widget>[
             _buildActionButton(
-              'Check-in', Icons.login_rounded, '/site/checkin'),
+                'Check-in', Icons.login_rounded, '/site/checkin'),
             _buildActionButton(
-              'Check-out', Icons.logout_rounded, '/site/checkin'),
+                'Check-out', Icons.logout_rounded, '/site/checkin'),
             _buildActionButton(
-              'New Incident', Icons.add_alert_rounded, '/site/incidents'),
+                'New Incident', Icons.add_alert_rounded, '/site/incidents'),
             _buildActionButton(
-              'View Roster', Icons.list_alt_rounded, '/site/sessions'),
+                'View Roster', Icons.list_alt_rounded, '/site/sessions'),
           ],
         ),
       ],
@@ -777,7 +769,8 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
     }
 
     try {
-      final FirestoreService firestoreService = context.read<FirestoreService>();
+      final FirestoreService firestoreService =
+          context.read<FirestoreService>();
       final String siteId = _siteId ?? '';
       if (siteId.isNotEmpty) {
         await firestoreService.firestore.collection('siteOpsEvents').add(
@@ -828,7 +821,7 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
           _safetyNotes = <_SafetyNoteEntry>[];
           _runtimePackage = null;
           _runtimeDeliveries = <FederatedLearningRuntimeDeliveryRecordModel>[];
-            _runtimeDeliveryHistory =
+          _runtimeDeliveryHistory =
               <FederatedLearningRuntimeDeliveryRecordModel>[];
           _runtimeActivations =
               <FederatedLearningRuntimeActivationRecordModel>[];
@@ -840,10 +833,16 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
       final DateTime now = DateTime.now();
       final DateTime dayStart = DateTime(now.year, now.month, now.day);
       final DateTime nextDay = dayStart.add(const Duration(days: 1));
+      final String dayKey = _dayKey(dayStart);
       final List<_TimedActivity> activities = <_TimedActivity>[];
       final List<_TimetableEntry> timetable = <_TimetableEntry>[];
       final _SiteRuntimeRolloutState runtimeRolloutState =
           await _loadRuntimeRolloutState(resolvedSiteId);
+      final DocumentSnapshot<Map<String, dynamic>> dayStatusSnap =
+          await firestoreService.firestore
+              .collection('siteOpsDailyStatus')
+              .doc('$resolvedSiteId-$dayKey')
+              .get();
 
       final QuerySnapshot<Map<String, dynamic>> presenceSnap =
           await firestoreService.firestore
@@ -851,7 +850,7 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
               .where('siteId', isEqualTo: resolvedSiteId)
               .limit(250)
               .get();
-        if (!mounted) return;
+      if (!mounted) return;
 
       final Set<String> presentLearners = <String>{};
       int pickupSignals = 0;
@@ -952,7 +951,7 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
         if (at == null || at.isBefore(dayStart)) continue;
         final String action = (data['action'] as String?) ?? '';
         final ({String title, IconData icon, Color color}) mapped =
-          _mapActionToDisplay(action, context);
+            _mapActionToDisplay(action, context);
         activities.add(
           _TimedActivity(
             title: mapped.title,
@@ -984,7 +983,9 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
           in sessionsSnap.docs) {
         final Map<String, dynamic> data = doc.data();
         final DateTime? startAt = _toDateTime(data['startTime']);
-        if (startAt == null || startAt.isBefore(dayStart) || !startAt.isBefore(nextDay)) {
+        if (startAt == null ||
+            startAt.isBefore(dayStart) ||
+            !startAt.isBefore(nextDay)) {
           continue;
         }
         timetable.add(
@@ -993,9 +994,10 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
                 ? (data['title'] as String).trim()
                 : doc.id,
             timeLabel: _formatTime(startAt),
-            educator: ((data['educatorName'] as String?) ?? '').trim().isNotEmpty
-                ? (data['educatorName'] as String).trim()
-                : _tSiteOps(context, 'Unassigned'),
+            educator:
+                ((data['educatorName'] as String?) ?? '').trim().isNotEmpty
+                    ? (data['educatorName'] as String).trim()
+                    : _tSiteOps(context, 'Unassigned'),
             room: ((data['room'] as String?) ?? '').trim().isNotEmpty
                 ? (data['room'] as String).trim()
                 : _tSiteOps(context, 'Unassigned'),
@@ -1009,7 +1011,7 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
         checklistSnap = await firestoreService.firestore
             .collection('siteOpsKitChecklist')
             .where('siteId', isEqualTo: resolvedSiteId)
-            .where('dayKey', isEqualTo: _dayKey(dayStart))
+            .where('dayKey', isEqualTo: dayKey)
             .orderBy('order')
             .limit(20)
             .get();
@@ -1017,7 +1019,7 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
         checklistSnap = await firestoreService.firestore
             .collection('siteOpsKitChecklist')
             .where('siteId', isEqualTo: resolvedSiteId)
-            .where('dayKey', isEqualTo: _dayKey(dayStart))
+            .where('dayKey', isEqualTo: dayKey)
             .limit(20)
             .get();
       }
@@ -1025,25 +1027,23 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
 
       final List<_KitChecklistItem> checklist = checklistSnap.docs.isEmpty
           ? _defaultKitChecklist
-          : checklistSnap.docs
-              .map((doc) {
-                final Map<String, dynamic> data = doc.data();
-                return _KitChecklistItem(
-                  id: doc.id,
-                  label: (data['label'] as String?) ?? 'Checklist item',
-                  completed: data['completed'] == true,
-                  order: (data['order'] as num?)?.toInt() ?? 0,
-                  note: data['note'] as String?,
-                );
-              })
-              .toList(growable: false);
+          : checklistSnap.docs.map((doc) {
+              final Map<String, dynamic> data = doc.data();
+              return _KitChecklistItem(
+                id: doc.id,
+                label: (data['label'] as String?) ?? 'Checklist item',
+                completed: data['completed'] == true,
+                order: (data['order'] as num?)?.toInt() ?? 0,
+                note: data['note'] as String?,
+              );
+            }).toList(growable: false);
 
       QuerySnapshot<Map<String, dynamic>> safetyNotesSnap;
       try {
         safetyNotesSnap = await firestoreService.firestore
             .collection('siteSafetyNotes')
             .where('siteId', isEqualTo: resolvedSiteId)
-            .where('dayKey', isEqualTo: _dayKey(dayStart))
+            .where('dayKey', isEqualTo: dayKey)
             .orderBy('createdAt', descending: true)
             .limit(10)
             .get();
@@ -1051,7 +1051,7 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
         safetyNotesSnap = await firestoreService.firestore
             .collection('siteSafetyNotes')
             .where('siteId', isEqualTo: resolvedSiteId)
-            .where('dayKey', isEqualTo: _dayKey(dayStart))
+            .where('dayKey', isEqualTo: dayKey)
             .limit(10)
             .get();
       }
@@ -1063,15 +1063,18 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
             return _SafetyNoteEntry(
               note: (data['note'] as String?) ?? '',
               createdAt: _toDateTime(data['createdAt']) ?? dayStart,
-              authorLabel: ((data['createdByName'] as String?) ?? '').trim().isNotEmpty
-                  ? (data['createdByName'] as String).trim()
-                  : _tSiteOps(context, 'Site Team'),
+              authorLabel:
+                  ((data['createdByName'] as String?) ?? '').trim().isNotEmpty
+                      ? (data['createdByName'] as String).trim()
+                      : _tSiteOps(context, 'Site Team'),
             );
           })
           .where((_SafetyNoteEntry note) => note.note.trim().isNotEmpty)
           .toList(growable: false);
 
-      activities.sort((_TimedActivity a, _TimedActivity b) => b.at.compareTo(a.at));
+      activities
+          .sort((_TimedActivity a, _TimedActivity b) => b.at.compareTo(a.at));
+      final bool? persistedDayOpen = dayStatusSnap.data()?['isOpen'] as bool?;
       final List<_ActivityEntry> recent = activities
           .take(8)
           .map(
@@ -1089,7 +1092,7 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
         _presentCount = presentLearners.length;
         _pendingPickups = pickupSignals;
         _openIncidents = openIncidents;
-        _isDayOpen = _presentCount > 0;
+        _isDayOpen = persistedDayOpen ?? (_presentCount > 0);
         _recentActivity = recent;
         _todaySessions = timetable;
         _kitChecklist = checklist;
@@ -1107,6 +1110,66 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
     }
   }
 
+  Future<void> _setDayOpenStatus(bool isDayOpen) async {
+    final FirestoreService firestoreService = context.read<FirestoreService>();
+    final AppState appState = context.read<AppState>();
+    final String siteId = (_siteId ?? '').trim();
+    if (siteId.isEmpty) {
+      return;
+    }
+
+    final DateTime now = DateTime.now();
+    final String dayKey = _dayKey(now);
+
+    try {
+      await firestoreService.firestore
+          .collection('siteOpsDailyStatus')
+          .doc('$siteId-$dayKey')
+          .set(
+        <String, dynamic>{
+          'siteId': siteId,
+          'dayKey': dayKey,
+          'isOpen': isDayOpen,
+          'updatedAt': FieldValue.serverTimestamp(),
+          'updatedBy': appState.userId,
+        },
+        SetOptions(merge: true),
+      );
+      await firestoreService.firestore.collection('siteOpsEvents').add(
+        <String, dynamic>{
+          'siteId': siteId,
+          'action': isDayOpen ? 'Day opened' : 'Day closed',
+          'createdBy': FirebaseAuth.instance.currentUser?.uid,
+          'createdAt': FieldValue.serverTimestamp(),
+        },
+      );
+      TelemetryService.instance.logEvent(
+        event: 'cta.clicked',
+        metadata: <String, dynamic>{
+          'module': 'site_ops',
+          'cta_id': 'toggle_day_open',
+          'surface': 'appbar_switch',
+          'is_day_open': isDayOpen,
+        },
+      );
+      if (!mounted) return;
+      setState(() => _isDayOpen = isDayOpen);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(isDayOpen
+              ? _tSiteOps(context, 'Day opened')
+              : _tSiteOps(context, 'Day closed')),
+          backgroundColor: isDayOpen ? Colors.green : Colors.orange,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_tSiteOps(context, 'Action failed'))),
+      );
+    }
+  }
+
   Future<_SiteRuntimeRolloutState> _loadRuntimeRolloutState(
     String siteId,
   ) async {
@@ -1116,7 +1179,8 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
       setState(() => _isLoadingRuntimeRollout = true);
     }
     try {
-      final List<dynamic> payload = await Future.wait<dynamic>(<Future<dynamic>>[
+      final List<dynamic> payload =
+          await Future.wait<dynamic>(<Future<dynamic>>[
         workflowBridge.listSiteFederatedLearningRuntimeDeliveryRecords(
           siteId: siteId,
           limit: 12,
@@ -1129,7 +1193,8 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
           siteId: siteId,
           limit: 12,
         ),
-        workflowBridge.resolveSiteFederatedLearningRuntimePackage(siteId: siteId),
+        workflowBridge.resolveSiteFederatedLearningRuntimePackage(
+            siteId: siteId),
       ]);
 
       final List<FederatedLearningRuntimeDeliveryRecordModel> deliveries =
@@ -1165,11 +1230,13 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
                 ),
               )
               .toList(growable: false);
-      final Map<String, dynamic>? packageRow = payload[3] as Map<String, dynamic>?;
+      final Map<String, dynamic>? packageRow =
+          payload[3] as Map<String, dynamic>?;
       final FederatedLearningResolvedRuntimePackageModel? package =
           packageRow == null
               ? null
-              : FederatedLearningResolvedRuntimePackageModel.fromMap(packageRow);
+              : FederatedLearningResolvedRuntimePackageModel.fromMap(
+                  packageRow);
       return _SiteRuntimeRolloutState(
         package: package,
         deliveries: deliveries,
@@ -1195,7 +1262,8 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
     int stagedCount = 0;
     int fallbackCount = 0;
     final Map<String, FederatedLearningRuntimeActivationRecordModel>
-        latestByDeliveryId = <String, FederatedLearningRuntimeActivationRecordModel>{};
+        latestByDeliveryId =
+        <String, FederatedLearningRuntimeActivationRecordModel>{};
 
     for (final FederatedLearningRuntimeActivationRecordModel activation
         in _runtimeActivations) {
@@ -1347,7 +1415,8 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
     }
     final List<String> parts = <String>[];
     if (controlMode.isNotEmpty) {
-      parts.add('${_tSiteOps(context, 'HQ control')}: ${_runtimeStatusLabel(controlMode)}');
+      parts.add(
+          '${_tSiteOps(context, 'HQ control')}: ${_runtimeStatusLabel(controlMode)}');
     }
     if (controlReason.isNotEmpty) {
       parts.add(controlReason);
@@ -1382,7 +1451,8 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
     final _KitChecklistItem updated = item.copyWith(completed: completed);
     setState(() {
       _kitChecklist = _kitChecklist
-          .map((_KitChecklistItem current) => current.id == item.id ? updated : current)
+          .map((_KitChecklistItem current) =>
+              current.id == item.id ? updated : current)
           .toList(growable: false);
     });
     try {
@@ -1527,6 +1597,18 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
           title: _tSiteOps(context, 'Safety note saved'),
           icon: Icons.shield_outlined,
           color: Colors.redAccent,
+        );
+      case 'Day opened':
+        return (
+          title: _tSiteOps(context, 'Day opened'),
+          icon: Icons.lock_open_rounded,
+          color: Colors.green,
+        );
+      case 'Day closed':
+        return (
+          title: _tSiteOps(context, 'Day closed'),
+          icon: Icons.lock_outline_rounded,
+          color: Colors.orange,
         );
       default:
         return (

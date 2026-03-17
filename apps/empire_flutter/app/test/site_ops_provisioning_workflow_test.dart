@@ -27,8 +27,8 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     List<Map<String, dynamic>>? runtimeDeliveries,
     List<Map<String, dynamic>>? runtimeActivations,
     Map<String, dynamic>? resolvedRuntimePackage,
-  })
-      : _launches = List<Map<String, dynamic>>.from(launches ?? <Map<String, dynamic>>[]),
+  })  : _launches = List<Map<String, dynamic>>.from(
+            launches ?? <Map<String, dynamic>>[]),
         _runtimeDeliveries = List<Map<String, dynamic>>.from(
           runtimeDeliveries ?? <Map<String, dynamic>>[],
         ),
@@ -51,10 +51,15 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     String? siteId,
     int limit = 80,
   }) async {
-    final Iterable<Map<String, dynamic>> scoped = (siteId == null || siteId.isEmpty)
+    final Iterable<Map<String, dynamic>> scoped = (siteId == null ||
+            siteId.isEmpty)
         ? _launches
-        : _launches.where((Map<String, dynamic> launch) => launch['siteId'] == siteId);
-    return scoped.take(limit).map((Map<String, dynamic> launch) => Map<String, dynamic>.from(launch)).toList();
+        : _launches
+            .where((Map<String, dynamic> launch) => launch['siteId'] == siteId);
+    return scoped
+        .take(limit)
+        .map((Map<String, dynamic> launch) => Map<String, dynamic>.from(launch))
+        .toList();
   }
 
   @override
@@ -85,17 +90,19 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> listSiteFederatedLearningRuntimeDeliveryRecords({
+  Future<List<Map<String, dynamic>>>
+      listSiteFederatedLearningRuntimeDeliveryRecords({
     String? siteId,
     int limit = 40,
   }) async {
-    final Iterable<Map<String, dynamic>> scoped = (siteId == null || siteId.isEmpty)
-        ? _runtimeDeliveries
-        : _runtimeDeliveries.where((Map<String, dynamic> record) {
-            final List<dynamic> targetSiteIds =
-                record['targetSiteIds'] as List<dynamic>? ?? <dynamic>[];
-            return targetSiteIds.cast<String>().contains(siteId);
-          });
+    final Iterable<Map<String, dynamic>> scoped =
+        (siteId == null || siteId.isEmpty)
+            ? _runtimeDeliveries
+            : _runtimeDeliveries.where((Map<String, dynamic> record) {
+                final List<dynamic> targetSiteIds =
+                    record['targetSiteIds'] as List<dynamic>? ?? <dynamic>[];
+                return targetSiteIds.cast<String>().contains(siteId);
+              });
     return scoped
         .where((Map<String, dynamic> record) {
           final String status = (record['status'] as String? ?? '').trim();
@@ -110,17 +117,19 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> listSiteFederatedLearningRuntimeDeliveryHistoryRecords({
+  Future<List<Map<String, dynamic>>>
+      listSiteFederatedLearningRuntimeDeliveryHistoryRecords({
     String? siteId,
     int limit = 20,
   }) async {
-    final Iterable<Map<String, dynamic>> scoped = (siteId == null || siteId.isEmpty)
-        ? _runtimeDeliveries
-        : _runtimeDeliveries.where((Map<String, dynamic> record) {
-            final List<dynamic> targetSiteIds =
-                record['targetSiteIds'] as List<dynamic>? ?? <dynamic>[];
-            return targetSiteIds.cast<String>().contains(siteId);
-          });
+    final Iterable<Map<String, dynamic>> scoped =
+        (siteId == null || siteId.isEmpty)
+            ? _runtimeDeliveries
+            : _runtimeDeliveries.where((Map<String, dynamic> record) {
+                final List<dynamic> targetSiteIds =
+                    record['targetSiteIds'] as List<dynamic>? ?? <dynamic>[];
+                return targetSiteIds.cast<String>().contains(siteId);
+              });
     return scoped
         .take(limit)
         .map((Map<String, dynamic> record) => Map<String, dynamic>.from(record))
@@ -128,15 +137,17 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> listSiteFederatedLearningRuntimeActivationRecords({
+  Future<List<Map<String, dynamic>>>
+      listSiteFederatedLearningRuntimeActivationRecords({
     String? siteId,
     int limit = 40,
   }) async {
-    final Iterable<Map<String, dynamic>> scoped = (siteId == null || siteId.isEmpty)
-        ? _runtimeActivations
-        : _runtimeActivations.where(
-            (Map<String, dynamic> record) => record['siteId'] == siteId,
-          );
+    final Iterable<Map<String, dynamic>> scoped =
+        (siteId == null || siteId.isEmpty)
+            ? _runtimeActivations
+            : _runtimeActivations.where(
+                (Map<String, dynamic> record) => record['siteId'] == siteId,
+              );
     return scoped
         .take(limit)
         .map((Map<String, dynamic> record) => Map<String, dynamic>.from(record))
@@ -153,7 +164,8 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     if (_resolvedRuntimePackage == null) {
       return null;
     }
-    if ((siteId ?? '').isNotEmpty && _resolvedRuntimePackage['siteId'] != siteId) {
+    if ((siteId ?? '').isNotEmpty &&
+        _resolvedRuntimePackage['siteId'] != siteId) {
       return null;
     }
     return Map<String, dynamic>.from(_resolvedRuntimePackage);
@@ -186,34 +198,52 @@ Future<void> _seedSiteOpsData(FakeFirebaseFirestore firestore) async {
     'type': 'checkin',
     'timestamp': Timestamp.fromDate(now.subtract(const Duration(hours: 1))),
   });
-  await firestore.collection('checkins').doc('checkout-1').set(<String, dynamic>{
+  await firestore
+      .collection('checkins')
+      .doc('checkout-1')
+      .set(<String, dynamic>{
     'siteId': 'site-1',
     'learnerId': 'learner-2',
     'type': 'checkout',
     'timestamp': Timestamp.fromDate(now.subtract(const Duration(minutes: 45))),
   });
-  await firestore.collection('checkins').doc('other-site').set(<String, dynamic>{
+  await firestore
+      .collection('checkins')
+      .doc('other-site')
+      .set(<String, dynamic>{
     'siteId': 'site-2',
     'learnerId': 'learner-3',
     'type': 'checkin',
     'timestamp': Timestamp.fromDate(now.subtract(const Duration(minutes: 30))),
   });
-  await firestore.collection('incidents').doc('incident-1').set(<String, dynamic>{
+  await firestore
+      .collection('incidents')
+      .doc('incident-1')
+      .set(<String, dynamic>{
     'siteId': 'site-1',
     'status': 'open',
     'reportedAt': Timestamp.fromDate(now.subtract(const Duration(minutes: 25))),
   });
-  await firestore.collection('incidents').doc('incident-2').set(<String, dynamic>{
+  await firestore
+      .collection('incidents')
+      .doc('incident-2')
+      .set(<String, dynamic>{
     'siteId': 'site-2',
     'status': 'open',
     'reportedAt': Timestamp.fromDate(now.subtract(const Duration(minutes: 15))),
   });
-  await firestore.collection('siteOpsEvents').doc('ops-1').set(<String, dynamic>{
+  await firestore
+      .collection('siteOpsEvents')
+      .doc('ops-1')
+      .set(<String, dynamic>{
     'siteId': 'site-1',
     'action': 'View Roster',
     'createdAt': Timestamp.fromDate(now.subtract(const Duration(minutes: 10))),
   });
-  await firestore.collection('siteOpsEvents').doc('ops-2').set(<String, dynamic>{
+  await firestore
+      .collection('siteOpsEvents')
+      .doc('ops-2')
+      .set(<String, dynamic>{
     'siteId': 'site-2',
     'action': 'Check-in',
     'createdAt': Timestamp.fromDate(now.subtract(const Duration(minutes: 5))),
@@ -236,7 +266,10 @@ Future<void> _seedSiteOpsData(FakeFirebaseFirestore firestore) async {
     'learnerCount': 10,
     'startTime': Timestamp.fromDate(dayStart.add(const Duration(hours: 11))),
   });
-  await firestore.collection('siteOpsKitChecklist').doc('arrival-tablets').set(<String, dynamic>{
+  await firestore
+      .collection('siteOpsKitChecklist')
+      .doc('arrival-tablets')
+      .set(<String, dynamic>{
     'siteId': 'site-1',
     'dayKey': dayKey,
     'label': 'Tablets charged',
@@ -244,7 +277,10 @@ Future<void> _seedSiteOpsData(FakeFirebaseFirestore firestore) async {
     'order': 1,
     'note': 'Verify every learner device is above 70%',
   });
-  await firestore.collection('siteSafetyNotes').doc('note-1').set(<String, dynamic>{
+  await firestore
+      .collection('siteSafetyNotes')
+      .doc('note-1')
+      .set(<String, dynamic>{
     'siteId': 'site-1',
     'dayKey': dayKey,
     'note': 'Guardian pickup change confirmed',
@@ -273,7 +309,10 @@ Future<void> _seedProvisioningData(
     'parentIds': includeParentIds ? <String>['parent-1'] : <String>[],
   });
   if (includeGuardianLinks) {
-    await firestore.collection('guardianLinks').doc('link-1').set(<String, dynamic>{
+    await firestore
+        .collection('guardianLinks')
+        .doc('link-1')
+        .set(<String, dynamic>{
       'siteId': 'site-1',
       'parentId': 'parent-1',
       'learnerId': 'learner-1',
@@ -282,7 +321,10 @@ Future<void> _seedProvisioningData(
       'createdAt': Timestamp.fromDate(now),
       'createdBy': 'site-admin-1',
     });
-    await firestore.collection('guardianLinks').doc('link-2').set(<String, dynamic>{
+    await firestore
+        .collection('guardianLinks')
+        .doc('link-2')
+        .set(<String, dynamic>{
       'siteId': 'site-2',
       'parentId': 'parent-2',
       'learnerId': 'learner-2',
@@ -370,7 +412,8 @@ Future<void> _pumpProvisioningPage(
     apiClient: ApiClient(auth: auth, baseUrl: 'http://localhost'),
     firestore: firestore,
     auth: auth,
-    workflowBridgeService: workflowBridgeService ?? _FakeWorkflowBridgeService(),
+    workflowBridgeService:
+        workflowBridgeService ?? _FakeWorkflowBridgeService(),
     useProvisioningApi: false,
   );
 
@@ -378,7 +421,12 @@ Future<void> _pumpProvisioningPage(
     MultiProvider(
       providers: [
         ChangeNotifierProvider<AppState>.value(
-          value: _buildSiteState(localeCode: locale.countryCode == 'TW' ? 'zh-TW' : locale.countryCode == 'CN' ? 'zh-CN' : 'en'),
+          value: _buildSiteState(
+              localeCode: locale.countryCode == 'TW'
+                  ? 'zh-TW'
+                  : locale.countryCode == 'CN'
+                      ? 'zh-CN'
+                      : 'en'),
         ),
         ChangeNotifierProvider<ProvisioningService>.value(value: service),
       ],
@@ -407,7 +455,8 @@ Future<void> _pumpProvisioningPage(
 
 void main() {
   group('Site ops and provisioning workflows', () {
-    testWidgets('site ops shows only active-site activity and opens day when learners are present',
+    testWidgets(
+        'site ops shows only active-site activity and opens day when learners are present',
         (WidgetTester tester) async {
       final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
       await _seedSiteOpsData(firestore);
@@ -428,7 +477,8 @@ void main() {
       expect(find.text('No recent activity yet'), findsNothing);
     });
 
-    testWidgets('site ops persists checklist toggles and safety notes for the active site',
+    testWidgets(
+        'site ops persists checklist toggles and safety notes for the active site',
         (WidgetTester tester) async {
       final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
       await _seedSiteOpsData(firestore);
@@ -446,7 +496,10 @@ void main() {
       await tester.pumpAndSettle();
 
       final DocumentSnapshot<Map<String, dynamic>> checklistDoc =
-          await firestore.collection('siteOpsKitChecklist').doc('arrival-tablets').get();
+          await firestore
+              .collection('siteOpsKitChecklist')
+              .doc('arrival-tablets')
+              .get();
       expect(checklistDoc.exists, isTrue);
       expect(checklistDoc.data()!['completed'], isTrue);
 
@@ -465,7 +518,36 @@ void main() {
       );
     });
 
-    testWidgets('site ops shows federated runtime rollout state for the active site',
+    testWidgets('site ops day status toggle persists for the active site',
+        (WidgetTester tester) async {
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+      await _seedSiteOpsData(firestore);
+
+      await _pumpSiteOpsPage(tester, firestore: firestore);
+
+      expect(find.text('Site is OPEN'), findsOneWidget);
+
+      await tester.tap(find.byType(Switch));
+      await tester.pumpAndSettle();
+
+      final DateTime now = DateTime.now();
+      final String dayKey =
+          '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+      final DocumentSnapshot<Map<String, dynamic>> statusDoc = await firestore
+          .collection('siteOpsDailyStatus')
+          .doc('site-1-$dayKey')
+          .get();
+      expect(statusDoc.exists, isTrue);
+      expect(statusDoc.data()!['isOpen'], isFalse);
+
+      await _pumpSiteOpsPage(tester, firestore: firestore);
+
+      expect(find.text('Site is CLOSED'), findsOneWidget);
+      expect(find.text('Day closed'), findsOneWidget);
+    });
+
+    testWidgets(
+        'site ops shows federated runtime rollout state for the active site',
         (WidgetTester tester) async {
       final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
       await _seedSiteOpsData(firestore);
@@ -544,18 +626,26 @@ void main() {
       expect(find.text('Federated Runtime'), findsOneWidget);
       expect(find.textContaining('Current package: fl_pkg_1 · paused'),
           findsOneWidget);
-      expect(find.textContaining('Site rollout: 0 resolved · 0 staged · 1 fallback · 0 pending'),
+      expect(
+          find.textContaining(
+              'Site rollout: 0 resolved · 0 staged · 1 fallback · 0 pending'),
           findsOneWidget);
-      expect(find.textContaining('Latest site report: fallback · Latest site report requested fallback.'),
+      expect(
+          find.textContaining(
+              'Latest site report: fallback · Latest site report requested fallback.'),
           findsOneWidget);
-        expect(find.text('Recent runtime history'), findsOneWidget);
-        expect(find.textContaining('fl_delivery_site_0 · revoked · flutter_mobile'),
+      expect(find.text('Recent runtime history'), findsOneWidget);
+      expect(
+          find.textContaining('fl_delivery_site_0 · revoked · flutter_mobile'),
           findsOneWidget);
-        expect(find.textContaining('Lifecycle reason: Revoked after bounded regression review.'),
+      expect(
+          find.textContaining(
+              'Lifecycle reason: Revoked after bounded regression review.'),
           findsOneWidget);
     });
 
-    testWidgets('provisioning delete confirmation renders zh-CN guardian link copy',
+    testWidgets(
+        'provisioning delete confirmation renders zh-CN guardian link copy',
         (WidgetTester tester) async {
       final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
       await _seedProvisioningData(firestore);
@@ -580,7 +670,8 @@ void main() {
       );
     });
 
-    testWidgets('provisioning delete confirmation renders zh-TW guardian link copy',
+    testWidgets(
+        'provisioning delete confirmation renders zh-TW guardian link copy',
         (WidgetTester tester) async {
       final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
       await _seedProvisioningData(firestore);
@@ -605,7 +696,8 @@ void main() {
       );
     });
 
-    testWidgets('provisioning deletes active-site guardian links and updates the UI',
+    testWidgets(
+        'provisioning deletes active-site guardian links and updates the UI',
         (WidgetTester tester) async {
       final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
       await _seedProvisioningData(firestore);
@@ -627,8 +719,14 @@ void main() {
 
       expect(find.text('Link removed'), findsOneWidget);
       expect(find.text('Parent One → Learner One'), findsNothing);
-      expect((await firestore.collection('guardianLinks').doc('link-1').get()).exists, isFalse);
-      expect((await firestore.collection('guardianLinks').doc('link-2').get()).exists, isTrue);
+      expect(
+          (await firestore.collection('guardianLinks').doc('link-1').get())
+              .exists,
+          isFalse);
+      expect(
+          (await firestore.collection('guardianLinks').doc('link-2').get())
+              .exists,
+          isTrue);
     });
 
     testWidgets('provisioning creates a learner from the add learner dialog',
@@ -645,7 +743,8 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byType(TextFormField).at(0), 'Ava Maker');
-      await tester.enterText(find.byType(TextFormField).at(1), 'ava@example.com');
+      await tester.enterText(
+          find.byType(TextFormField).at(1), 'ava@example.com');
       await tester.tap(find.widgetWithText(ElevatedButton, 'Create'));
       await tester.pumpAndSettle();
 
@@ -679,8 +778,10 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byType(TextFormField).at(0), 'Mina Parent');
-      await tester.enterText(find.byType(TextFormField).at(1), 'mina.parent@example.com');
-      await tester.enterText(find.byType(TextFormField).at(2), '+61 400 555 121');
+      await tester.enterText(
+          find.byType(TextFormField).at(1), 'mina.parent@example.com');
+      await tester.enterText(
+          find.byType(TextFormField).at(2), '+61 400 555 121');
       await tester.tap(find.widgetWithText(ElevatedButton, 'Create'));
       await tester.pumpAndSettle();
 
@@ -698,7 +799,8 @@ void main() {
       expect(profileDoc.data()!['phone'], '+61 400 555 121');
     });
 
-    testWidgets('provisioning creates a guardian link from the create link dialog',
+    testWidgets(
+        'provisioning creates a guardian link from the create link dialog',
         (WidgetTester tester) async {
       final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
       await _seedProvisioningData(
@@ -767,9 +869,11 @@ void main() {
       await tester.tap(find.byType(FloatingActionButton));
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byType(TextFormField).at(0), 'Launch Cohort Alpha');
+      await tester.enterText(
+          find.byType(TextFormField).at(0), 'Launch Cohort Alpha');
       await tester.enterText(find.byType(TextFormField).at(3), '24');
-      await tester.enterText(find.byType(TextFormField).at(4), 'Parent kickoff scheduled.');
+      await tester.enterText(
+          find.byType(TextFormField).at(4), 'Parent kickoff scheduled.');
       await tester.tap(find.widgetWithText(ElevatedButton, 'Create'));
       await tester.pumpAndSettle();
 
