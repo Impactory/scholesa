@@ -2505,7 +2505,14 @@ export const listSiteFederatedLearningRuntimeDeliveryHistoryRecords = onCall(asy
     controlsByDeliveryId.set(deliveryRecordId, controlData);
   });
 
-  const records = snap.docs
+  type SiteRuntimeDeliveryHistoryRow = Record<string, unknown> & {
+    terminalLifecycleStatus: 'expired' | 'revoked' | 'superseded' | null;
+    rolloutControlMode: string | null;
+    rolloutControlReason: string | null;
+    rolloutControlReviewByAt: number | null;
+  };
+
+  const records: SiteRuntimeDeliveryHistoryRow[] = snap.docs
     .map((snapDoc) => {
       const row = {
         id: snapDoc.id,
@@ -2523,9 +2530,9 @@ export const listSiteFederatedLearningRuntimeDeliveryHistoryRecords = onCall(asy
         rolloutControlMode: normalizeFederatedLearningRuntimeRolloutControlMode(controlData.mode) || null,
         rolloutControlReason: asTrimmedString(controlData.reason) || null,
         rolloutControlReviewByAt: asTimestampMillis(controlData.reviewByAt) ?? null,
-      };
+      } as SiteRuntimeDeliveryHistoryRow;
     })
-    .filter((row): row is Record<string, unknown> => row != null)
+    .filter((row): row is SiteRuntimeDeliveryHistoryRow => row != null)
     .sort((a, b) => {
       const aUpdatedAt = typeof a.updatedAt === 'number' ? a.updatedAt : 0;
       const bUpdatedAt = typeof b.updatedAt === 'number' ? b.updatedAt : 0;

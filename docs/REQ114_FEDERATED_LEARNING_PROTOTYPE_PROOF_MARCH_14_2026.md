@@ -39,6 +39,7 @@ Implemented prototype scope:
 - bounded runtime-activation evidence records for site-scoped acknowledgement of assigned runtime-delivery manifests, plus HQ read-only visibility into the latest site reports
 - bounded runtime-vector payload resolution for site devices, including site-scoped callable package resolution, device-side activation reporting on package load, and norm-capped merged runtime vectors staged inside aggregation artifacts and candidate packages
 - site-facing rollout visibility in the Flutter site ops surface, including the active bounded runtime package, rollout summary, latest site activation report, and HQ control or fallback context for the current site
+- site-facing runtime lifecycle history in the Flutter site ops surface, including recent bounded deliveries for the current site with terminal lifecycle status, lifecycle reason, and rollout-control review context
 - bounded runtime-delivery lifecycle control, including expiry windows, explicit revocation reasons, fallback reporting, and device-side invalidation of stale runtime payloads
 - HQ runtime-delivery lifecycle visibility, including recent delivery history with expiry and revocation detail per experiment
 - HQ per-site rollout-health visibility for the latest runtime delivery, including resolved, staged, fallback, and pending site counts plus site-by-site drill-in detail
@@ -135,6 +136,13 @@ Additional focused validation passed on 2026-03-17:
 2. Focused Flutter prototype workflow test rerun
    - command: `cd apps/empire_flutter/app && flutter test test/federated_learning_prototype_workflow_test.dart`
 
+Additional focused validation passed on 2026-03-17 for the site rollout lifecycle extension:
+
+1. Focused functions read-path suite
+   - command: `cd functions && npm test -- --runTestsByPath src/workflowOps.readPaths.test.ts`
+2. Focused site Flutter workflow slice
+   - command: `cd apps/empire_flutter/app && flutter test test/site_ops_provisioning_workflow_test.dart test/learner_site_surfaces_localization_test.dart`
+
 ## Evidence summary
 
 - Prototype experiments are now first-class backend records instead of draft-only concepts.
@@ -185,6 +193,7 @@ Additional focused validation passed on 2026-03-17:
 - The HQ feature-flags surface now also renders explicit triage-age cues and a `Refresh triage` action for acknowledged rollout alerts whose review is aging, so operators can see when acknowledged fallback or pending states have gone stale instead of relying only on queue position.
 - Site-scoped runtime package resolution now also honors those bounded rollout-control records, so paused deliveries force fallback for all sites while restricted deliveries remain usable only for sites that already reported resolved activation on that delivery.
 - The Flutter site ops surface now also consumes the site-scoped runtime delivery, activation, and runtime-package resolution callables so site operators can see the currently assigned bounded package, rollout status counts, latest site report, and HQ control or fallback reason without depending on the HQ operator console for first-line rollout triage.
+- The Flutter site ops surface now also consumes a site-scoped runtime delivery history callable so site operators can inspect recent bounded manifests for their own site, including revoked, superseded, or otherwise terminal lifecycle context plus paused or restricted control-review cues, without depending on the HQ operator console for recent rollout history.
 - Aggregation materialization now also applies an experiment-configured bounded norm-capped runtime-vector merge strategy, so high-norm prototype updates are dampened and HQ can choose between sample-weighted or summary-balanced averaging for bounded cohorts instead of relying on one hard-coded path.
 - Aggregation materialization now also persists merge transparency metadata, including the applied norm cap, raw-versus-effective weight rollups, damped-summary count, min/max update-norm range, and contributor-site lineage for each aggregated cohort, and the HQ experiment cards, aggregation-history, candidate-package history, and promotion-history surfaces render that metadata alongside the merge strategy so operators can audit bounded merge behavior and cohort provenance throughout triage, review, and promotion flows instead of treating it as hidden backend state.
 - The HQ aggregation-history, candidate-package history, and promotion-history search surfaces now also index contributor-site lineage, so operators can filter bounded merge and promotion trails directly by site ID instead of scanning digests and record IDs by hand.
@@ -223,7 +232,7 @@ Additional focused validation passed on 2026-03-17:
 
 REQ-114 remains partial until all of the following exist and are approved:
 
-- production-grade on-device training beyond the current bounded warm-start local fine-tune path with experiment-governed warm-start requirement, epoch, step, and training-window caps
-- production-grade merge semantics beyond the current bounded compatibility-aware, experiment-configurable sample-weighted or summary-balanced norm-capped runtime-vector averaging path
-- richer production-grade aggregation observability beyond the current bounded merge-strategy, norm-cap, effective-weight, accepted-summary freshness window, accepted-summary battery/network environment mix, contributor-site lineage, and accepted-summary local-training transparency surfaced in prototype records and HQ history
-- production-grade rollout orchestration and long-lived model lifecycle management beyond the current bounded site-scoped expiry, supersession, retirement, revocation, owner-assigned unresolved escalation, owner-assigned paused/restricted control, and fallback path
+- a real device-side training runtime that produces durable model deltas or weights for deployment rather than the current bounded runtime-vector fine-tune summaries
+- a production aggregation and model-packaging pipeline for those device-side updates, including secure or robust merge semantics beyond the current compatibility-aware norm-capped runtime-vector averaging path
+- fleet-scale aggregation and rollout observability outside the bounded operator history surfaces, including operational metrics, alerting, and retention suitable for a production model system rather than prototype review workflows
+- a production rollout control plane that can distribute, activate, retry, roll back, and retire model packages across devices and sites beyond the current bounded manifest, resolver, activation evidence, site-history, and manual HQ governance flows
