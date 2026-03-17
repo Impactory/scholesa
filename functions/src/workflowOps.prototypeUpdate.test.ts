@@ -293,6 +293,7 @@ function seedBaseExperiment(overrides: Record<string, unknown> = {}): void {
       featureFlagId: 'feature_fl_exp_1',
       allowedSiteIds: ['site-1', 'site-2'],
       aggregateThreshold: 10,
+      minDistinctSiteCount: 1,
       rawUpdateMaxBytes: 4096,
       ...overrides,
     },
@@ -399,7 +400,7 @@ describe('workflowOps prototype update', () => {
   });
 
   it('materializes aggregation outputs once accepted summaries cross the threshold', async () => {
-    seedBaseExperiment({ aggregateThreshold: 8 });
+    seedBaseExperiment({ aggregateThreshold: 8, minDistinctSiteCount: 1 });
     seedCollection('federatedLearningUpdateSummaries', {
       seed_summary_1: {
         experimentId: 'fl_exp_1',
@@ -469,5 +470,47 @@ describe('workflowOps prototype update', () => {
     expect(experiment).toMatchObject({
       latestAggregationRunId: runId,
     });
+  });
+
+  it('waits for a second site before materializing when the quorum requires distinct sites', async () => {
+    seedBaseExperiment({ aggregateThreshold: 8, minDistinctSiteCount: 2 });
+    seedCollection('federatedLearningUpdateSummaries', {
+      seed_summary_1: {
+        experimentId: 'fl_exp_1',
+        runtimeTarget: 'flutter_mobile',
+        requestedBy: 'site-admin-1',
+        status: 'accepted',
+        aggregationStatus: 'pending',
+        siteId: 'site-1',
+        traceId: 'trace-seed',
+        schemaVersion: 'v1',
+        sampleCount: 5,
+        vectorLength: 2,
+        vectorSketch: [0.1, 0.3],
+        payloadBytes: 400,
+        updateNorm: 0.5,
+        payloadDigest: 'digest-seed',
+        batteryState: 'ok',
+        networkType: 'wifi',
+        optimizerStrategy: 'adamw',
+        createdAt: 100,
+        updatedAt: 100,
+      },
+    });
+
+    const result = await recordUpdate(buildRequest({
+      ...baseSummary({
+        traceId: 'trace-same-site',
+        payloadDigest: 'digest-same-site',
+      }),
+    }));
+
+    expect(result).toMatchObject({
+      aggregationMaterialized: false,
+      aggregationRunId: null,
+      mergeArtifactId: null,
+      candidateModelPackageId: null,
+    });
+    expect(ensureCollection('federatedLearningAggregationRuns').size).toBe(0);
   });
 });

@@ -22,6 +22,7 @@ Implemented prototype scope:
 - Flutter device-side uploader service that resolves active site context and submits bounded update summaries through the callable boundary
 - Flutter runtime adapter that converts BOS event windows into bounded prototype summaries on real mission/session triggers
 - backend aggregation-run materialization once accepted summary windows cross the configured threshold
+- experiment-configurable minimum distinct-site quorum for aggregation materialization so accepted summaries must cross both sample threshold and cohort-diversity threshold before a bounded merge run is created
 - experiment-configurable bounded merge policy selection for prototype aggregations
 - experiment-configurable bounded local training budgets for prototype runtime fine-tuning
 - Firestore rules for experiment and summary reads without exposing feature flags beyond HQ
@@ -143,6 +144,13 @@ Additional focused validation passed on 2026-03-17 for the site rollout lifecycl
 2. Focused site Flutter workflow slice
    - command: `cd apps/empire_flutter/app && flutter test test/site_ops_provisioning_workflow_test.dart test/learner_site_surfaces_localization_test.dart`
 
+Additional focused validation passed on 2026-03-17 for the aggregation quorum extension:
+
+1. Focused functions federated quorum suites
+   - command: `cd functions && npm test -- --runTestsByPath src/federatedLearningPrototype.test.ts src/workflowOps.experimentSetup.test.ts src/workflowOps.prototypeUpdate.test.ts`
+2. Focused Flutter federated experiment workflow slice
+   - command: `cd apps/empire_flutter/app && flutter test test/federated_learning_prototype_workflow_test.dart`
+
 ## Evidence summary
 
 - Prototype experiments are now first-class backend records instead of draft-only concepts.
@@ -159,7 +167,9 @@ Additional focused validation passed on 2026-03-17 for the site rollout lifecycl
 - Runtime BOS signals now feed a bounded warm-start local fine-tune step in the Flutter adapter, which uses the currently resolved runtime package as a local starting point, nudges a bounded runtime vector toward event-derived targets across a small epoch budget, and uploads the resulting bounded local model payload on mission/checkpoint/session triggers without sending raw learner content.
 - That bounded local fine-tune path is now also governed by experiment-level training policy, including maximum local epochs, maximum local steps, and maximum training-window duration, so prototype cohorts can tighten or relax local adaptation budgets without editing the runtime adapter between pilots.
 - When accepted summaries cumulatively hit the experiment threshold, the backend now materializes a bounded aggregation-run record, marks the source summaries as consumed, and merges the uploaded bounded local runtime vectors into a runtime payload instead of only emitting metadata.
+- Aggregation materialization now also requires an experiment-configured minimum distinct-site quorum, so one high-volume site cannot satisfy the bounded merge gate by itself when HQ configured a broader cohort-diversity requirement for that pilot.
 - Each prototype experiment now also carries an explicit bounded merge policy, so aggregation materialization can use either the default sample-weighted norm-capped average or a stricter summary-balanced norm-capped average without editing backend code between cohorts.
+- The HQ experiment editor and experiment cards now expose that distinct-site quorum directly, so operators can configure and audit both the sample threshold and the minimum cross-site cohort required before a bounded aggregation run materializes.
 - Aggregation selection now also skips accepted summaries whose runtime target, schema version, optimizer strategy, vector length, or warm-start package/model lineage do not match the active batch, so prototype merge runs no longer average incompatible bounded local models together just because they arrived in the same threshold window.
 - That compatibility-aware merge lineage is now also visible on the HQ experiment card plus aggregation, package, promotion, and runtime-delivery history surfaces, so operators can audit which runtime target, schema version, optimizer, and warm-start lineage defined a bounded merge batch instead of inferring it only from accepted-summary drill-through.
 - Those same HQ history filters now also match compatibility-lineage fields such as runtime target, schema version, optimizer, warm-start package, warm-start model version, and the stored compatibility key, so operators can isolate bounded merge batches by batch-level lineage instead of relying only on summary-level provenance tokens.

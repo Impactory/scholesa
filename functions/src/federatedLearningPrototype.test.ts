@@ -282,6 +282,7 @@ describe('federated learning prototype helpers', () => {
         { value: 'wifi', count: 1 },
       ],
       distinctSiteCount: 2,
+      minDistinctSiteCount: 1,
       contributingSiteIds: ['site-1', 'site-2'],
       totalSampleCount: 18,
       maxVectorLength: 3,

@@ -232,6 +232,7 @@ describe('workflowOps experiment setup', () => {
       maxLocalSteps: 30,
       maxTrainingWindowSeconds: 2400,
       aggregateThreshold: 12,
+      minDistinctSiteCount: 2,
       rawUpdateMaxBytes: 32768,
     }));
 
@@ -249,6 +250,7 @@ describe('workflowOps experiment setup', () => {
       status: 'pilot_ready',
       runtimeTarget: 'flutter_mobile',
       allowedSiteIds: ['site-1', 'site-2'],
+      minDistinctSiteCount: 2,
       featureFlagId,
       updatedBy: 'hq-1',
     });
@@ -260,6 +262,22 @@ describe('workflowOps experiment setup', () => {
       scope: 'site',
       enabledSites: ['site-1', 'site-2'],
       updatedBy: 'hq-1',
+    });
+  });
+
+  it('rejects experiment configs when site quorum exceeds the enabled cohort', async () => {
+    await expect(
+      upsertExperiment(buildRequest({
+        name: 'My Pilot',
+        runtimeTarget: 'flutter_mobile',
+        status: 'pilot_ready',
+        enablePrototypeUploads: true,
+        allowedSiteIds: ['site-1', 'site-2'],
+        minDistinctSiteCount: 3,
+      })),
+    ).rejects.toMatchObject({
+      code: 'invalid-argument',
+      message: 'minDistinctSiteCount cannot exceed the enabled site cohort size.',
     });
   });
 
