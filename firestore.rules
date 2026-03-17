@@ -829,6 +829,26 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
+    match /syntheticDatasetImports/{id} {
+      allow read: if isHQ() || isAdminOrHQ();
+      allow create, update, delete: if false;
+    }
+
+    match /syntheticEvidenceRecords/{id} {
+      allow read: if isHQ() || isAdminOrHQ();
+      allow create, update, delete: if false;
+    }
+
+    match /syntheticExpectedModelOutputs/{id} {
+      allow read: if isHQ() || isAdminOrHQ();
+      allow create, update, delete: if false;
+    }
+
+    match /syntheticEvaluationSuites/{id} {
+      allow read: if isHQ() || isAdminOrHQ();
+      allow create, update, delete: if false;
+    }
+
     match /rosterImports/{id} {
       allow read: if isAuthenticated() && (isEducator() || isHQ() || isAdminOrHQ());
       allow create, update: if (isEducator() || isHQ() || isAdminOrHQ())

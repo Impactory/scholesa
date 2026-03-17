@@ -25,6 +25,8 @@
     "test:flutter:full": "bash -lc 'cd apps/empire_flutter/app && flutter test'",
     "deploy:clean:full": "bash -lc 'cd apps/empire_flutter/app && flutter clean && flutter pub get' && bash ./scripts/deploy.sh all",
     "flow:platform:full": "bash ./scripts/full_platform_flow.sh",
+    "seed:synthetic-data": "node scripts/import_synthetic_data.js --mode all --apply",
+    "seed:synthetic-data:dry-run": "node scripts/import_synthetic_data.js --mode all --dry-run",
     "flow:platform:gates": "FLUTTER_TEST_SCRIPT=test:flutter:ci bash ./scripts/full_platform_flow.sh --no-deploy",
     "qa:telemetry-smoke": "node scripts/telemetry_smoke_check.js --mode=full --strict",
     "qa:telemetry-live-audit": "node scripts/telemetry_live_regression_audit.js --strict",

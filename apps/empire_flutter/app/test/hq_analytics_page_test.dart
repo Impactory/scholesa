@@ -163,6 +163,25 @@ void main() {
                 'updatedAt': DateTime(2026, 3, 14).toIso8601String(),
               },
             ],
+            syntheticImportLoader: () async => <String, dynamic>{
+              'summaryLabel': 'Starter + full synthetic packs',
+              'mode': 'all',
+              'sourcePacks': <String>['starter', 'full'],
+              'importedAt': DateTime(2026, 3, 15, 12).toIso8601String(),
+              'sourceCounts': <String, dynamic>{
+                'starterBootstrapRows': 2400,
+                'starterChallengeRows': 240,
+                'fullCoreEvidenceRows': 14400,
+                'fullSuiteRows': 46672,
+              },
+              'nativeCounts': <String, dynamic>{
+                'users': 2900,
+                'interactionEvents': 93610,
+                'portfolioItems': 13165,
+                'syntheticDatasetImports': 2,
+                'missionAttempts': 16800,
+              },
+            },
           ),
         ),
       ),
@@ -177,6 +196,17 @@ void main() {
     expect(find.text('91.0%'), findsOneWidget);
     expect(find.text('KPI Packs'), findsOneWidget);
     expect(find.text('North Hub Pack'), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.text('Synthetic Data'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Synthetic Data'), findsOneWidget);
+    expect(find.text('Starter + full synthetic packs'), findsOneWidget);
+    expect(find.text('17040'), findsOneWidget);
 
     await tester.scrollUntilVisible(
       find.text('Site Comparison'),

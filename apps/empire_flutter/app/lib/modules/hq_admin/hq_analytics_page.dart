@@ -16,6 +16,7 @@ class HqAnalyticsPage extends StatefulWidget {
     super.key,
     this.metricsLoader,
     this.kpiPacksLoader,
+    this.syntheticImportLoader,
   });
 
   final Future<TelemetryDashboardMetrics> Function({
@@ -26,6 +27,7 @@ class HqAnalyticsPage extends StatefulWidget {
     String? siteId,
     int limit,
   })? kpiPacksLoader;
+  final Future<Map<String, dynamic>?> Function()? syntheticImportLoader;
 
   @override
   State<HqAnalyticsPage> createState() => _HqAnalyticsPageState();
@@ -41,6 +43,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
   bool _isLoadingMetrics = true;
   bool _isLoadingSupplemental = true;
   bool _isLoadingKpiPacks = true;
+  bool _isLoadingSyntheticImport = true;
   String? _metricsError;
   List<_SiteFilterOption> _siteOptions = <_SiteFilterOption>[
     const _SiteFilterOption(id: 'all', name: 'All Sites'),
@@ -50,6 +53,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
   List<_TopPerformerData> _topPerformersData = <_TopPerformerData>[];
   List<_HqKpiPackSummary> _kpiPacks = <_HqKpiPackSummary>[];
   _BosMiaFeedbackSummary? _bosMiaFeedbackSummary;
+  _SyntheticDatasetImportSummary? _syntheticImportSummary;
   int _usabilityScore = 4;
   int _usefulnessScore = 4;
   int _reliabilityScore = 4;
@@ -74,6 +78,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
     _loadMetrics();
     _loadSupplementalData();
     _loadKpiPacks();
+    _loadSyntheticImportSummary();
   }
 
   Future<void> _loadMetrics() async {
@@ -147,6 +152,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
             SliverToBoxAdapter(child: _buildFilters()),
             SliverToBoxAdapter(child: _buildKeyMetrics()),
             SliverToBoxAdapter(child: _buildKpiPackSection()),
+            SliverToBoxAdapter(child: _buildSyntheticImportSummaryCard()),
             SliverToBoxAdapter(child: _buildBosMiaFeedbackSummaryCard()),
             SliverToBoxAdapter(child: _buildGrowthChart()),
             SliverToBoxAdapter(child: _buildPillarAnalytics()),
@@ -675,6 +681,159 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                   fontSize: 12,
                 ),
               ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSyntheticImportSummaryCard() {
+    if (_isLoadingSyntheticImport) {
+      return const Padding(
+        padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
+        child:
+            Center(child: CircularProgressIndicator(color: ScholesaColors.hq)),
+      );
+    }
+
+    final _SyntheticDatasetImportSummary? summary = _syntheticImportSummary;
+    if (summary == null) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                _t('Synthetic Data'),
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                _t('Latest synthetic import manifest'),
+                style: TextStyle(color: Colors.grey[600], fontSize: 12),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                _t('No synthetic import metadata yet'),
+                style: TextStyle(color: Colors.grey[700]),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              _t('Synthetic Data'),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              _t('Latest synthetic import manifest'),
+              style: TextStyle(color: Colors.grey[600], fontSize: 12),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: ScholesaColors.futureSkills.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    summary.summaryLabel,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${_t('Source packs')}: ${summary.sourcePacks.join(', ')}',
+                    style: TextStyle(color: Colors.grey[700], fontSize: 12),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${_t('Last import')}: ${summary.importedAtDisplay}',
+                    style: TextStyle(color: Colors.grey[700], fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: _MetricCard(
+                    icon: Icons.source_outlined,
+                    value: '${summary.evidenceRows}',
+                    label: _t('Evidence rows'),
+                    trend: summary.modeLabel,
+                    trendUp: true,
+                    color: ScholesaColors.futureSkills,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _MetricCard(
+                    icon: Icons.fact_check_outlined,
+                    value: '${summary.evaluationFixtures}',
+                    label: _t('Evaluation fixtures'),
+                    trend: _t('synthetic-only'),
+                    trendUp: true,
+                    color: ScholesaColors.warning,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: _MetricCard(
+                    icon: Icons.storage_rounded,
+                    value: '${summary.importedCollections}',
+                    label: _t('Imported collections'),
+                    trend: '${summary.interactionEvents} ${_t('events')}',
+                    trendUp: true,
+                    color: ScholesaColors.hq,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _MetricCard(
+                    icon: Icons.inventory_2_outlined,
+                    value: '${summary.portfolioArtifacts}',
+                    label: _t('Portfolio artifacts'),
+                    trend: '${summary.syntheticUsers} ${_t('learners')}',
+                    trendUp: true,
+                    color: ScholesaColors.impact,
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -1656,6 +1815,43 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
     }
   }
 
+  Future<void> _loadSyntheticImportSummary() async {
+    if (!mounted) return;
+    setState(() => _isLoadingSyntheticImport = true);
+    try {
+      Map<String, dynamic>? payload = widget.syntheticImportLoader != null
+          ? await widget.syntheticImportLoader!()
+          : null;
+
+      if (payload == null) {
+        final FirestoreService? firestoreService = _maybeFirestoreService();
+        if (firestoreService != null) {
+          final DocumentSnapshot<Map<String, dynamic>> latestDoc =
+              await firestoreService.firestore
+                  .collection('syntheticDatasetImports')
+                  .doc('latest')
+                  .get();
+          if (latestDoc.exists) {
+            payload = latestDoc.data();
+          }
+        }
+      }
+
+      final _SyntheticDatasetImportSummary? summary = payload == null
+          ? null
+          : _SyntheticDatasetImportSummary.fromMap(payload, _toDateTime);
+      if (!mounted) return;
+      setState(() => _syntheticImportSummary = summary);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _syntheticImportSummary = null);
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingSyntheticImport = false);
+      }
+    }
+  }
+
   _BosMiaFeedbackSummary _summarizeBosMiaFeedback(
     List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
   ) {
@@ -2019,6 +2215,103 @@ class _BosMiaFeedbackSummary {
       default:
         return 'Telemetry gaps';
     }
+  }
+}
+
+class _SyntheticDatasetImportSummary {
+  const _SyntheticDatasetImportSummary({
+    required this.summaryLabel,
+    required this.mode,
+    required this.sourcePacks,
+    required this.importedAt,
+    required this.evidenceRows,
+    required this.evaluationFixtures,
+    required this.importedCollections,
+    required this.interactionEvents,
+    required this.portfolioArtifacts,
+    required this.syntheticUsers,
+  });
+
+  factory _SyntheticDatasetImportSummary.fromMap(
+    Map<String, dynamic> data,
+    DateTime? Function(dynamic value) dateParser,
+  ) {
+    final Map<String, dynamic> sourceCounts = Map<String, dynamic>.from(
+      (data['sourceCounts'] as Map?) ?? <String, dynamic>{},
+    );
+    final Map<String, dynamic> nativeCounts = Map<String, dynamic>.from(
+      (data['nativeCounts'] as Map?) ?? <String, dynamic>{},
+    );
+    final List<String> sourcePacks = ((data['sourcePacks'] as List?) ?? <dynamic>[])
+        .map((dynamic value) => value.toString())
+        .toList(growable: false);
+    return _SyntheticDatasetImportSummary(
+      summaryLabel:
+          (data['summaryLabel'] as String?)?.trim().isNotEmpty == true
+              ? data['summaryLabel'] as String
+              : 'Synthetic import',
+      mode: (data['mode'] as String?)?.trim() ?? 'all',
+      sourcePacks: sourcePacks,
+      importedAt: dateParser(data['importedAt']) ?? DateTime.now(),
+      evidenceRows: _readCount(sourceCounts, <String>[
+        'fullCoreEvidenceRows',
+        'starterBootstrapRows',
+        'starterChallengeRows',
+      ]),
+      evaluationFixtures: _readCount(sourceCounts, <String>[
+        'fullSuiteRows',
+      ]),
+      importedCollections: nativeCounts.length,
+      interactionEvents: _readCount(nativeCounts, <String>['interactionEvents']),
+      portfolioArtifacts:
+          _readCount(nativeCounts, <String>['portfolioItems']),
+      syntheticUsers: _readCount(nativeCounts, <String>['users']),
+    );
+  }
+
+  final String summaryLabel;
+  final String mode;
+  final List<String> sourcePacks;
+  final DateTime importedAt;
+  final int evidenceRows;
+  final int evaluationFixtures;
+  final int importedCollections;
+  final int interactionEvents;
+  final int portfolioArtifacts;
+  final int syntheticUsers;
+
+  String get importedAtDisplay {
+    final DateTime local = importedAt.toLocal();
+    final String month = local.month.toString().padLeft(2, '0');
+    final String day = local.day.toString().padLeft(2, '0');
+    final String hour = local.hour.toString().padLeft(2, '0');
+    final String minute = local.minute.toString().padLeft(2, '0');
+    return '${local.year}-$month-$day $hour:$minute';
+  }
+
+  String get modeLabel {
+    switch (mode) {
+      case 'starter':
+        return 'starter';
+      case 'full':
+        return 'full';
+      case 'all':
+      default:
+        return 'starter + full';
+    }
+  }
+
+  static int _readCount(Map<String, dynamic> values, List<String> keys) {
+    int total = 0;
+    for (final String key in keys) {
+      final dynamic value = values[key];
+      if (value is int) {
+        total += value;
+      } else if (value is num) {
+        total += value.toInt();
+      }
+    }
+    return total;
   }
 }
 
