@@ -583,7 +583,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                   ),
                   onPressed: () async {
                     TelemetryService.instance.logEvent(
-                      event: 'rubric.shared_to_parent_summary',
+                      event: 'rubric.marked_parent_summary_ready',
                       metadata: <String, dynamic>{
                         'module': 'hq_curriculum',
                         'curriculum_id': curriculum.id,
@@ -591,10 +591,12 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                       },
                     );
                     Navigator.pop(context);
-                    await _shareParentSummary(curriculum);
+                    await _markParentSummaryReady(curriculum);
                   },
                   icon: const Icon(Icons.share_rounded),
-                  label: Text(_tHqCurriculum(context, 'Share Parent Summary')),
+                  label: Text(
+                    _tHqCurriculum(context, 'Mark Parent Summary Ready'),
+                  ),
                 ),
               ),
             ],
@@ -2120,7 +2122,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     }
   }
 
-  Future<void> _shareParentSummary(_Curriculum curriculum) async {
+  Future<void> _markParentSummaryReady(_Curriculum curriculum) async {
     final FirestoreService? firestoreService = _maybeFirestoreService();
     final AppState? appState = _maybeAppState();
     if (firestoreService == null) {
@@ -2147,7 +2149,13 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text(_tHqCurriculum(context, 'Parent summary shared'))),
+          content: Text(
+            _tHqCurriculum(
+              context,
+              'Parent summary marked ready for sharing',
+            ),
+          ),
+        ),
       );
       await _loadCurricula();
     } catch (_) {

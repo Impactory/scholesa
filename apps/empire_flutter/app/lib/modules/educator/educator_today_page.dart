@@ -528,7 +528,8 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
                   onPressed: () => _openLiveSessionMode(currentClass, service),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.white,
-                    side: BorderSide(color: Colors.white.withValues(alpha: 0.5)),
+                    side:
+                        BorderSide(color: Colors.white.withValues(alpha: 0.5)),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -1362,18 +1363,17 @@ class _LiveSessionModeSheetState extends State<_LiveSessionModeSheet> {
 
   List<String> _extractMisconceptionAlerts(Map<String, dynamic> insights) {
     final Set<String> alerts = <String>{};
-    final List<dynamic> learners = insights['learners'] as List<dynamic>? ??
-        const <dynamic>[];
+    final List<dynamic> learners =
+        insights['learners'] as List<dynamic>? ?? const <dynamic>[];
     for (final dynamic entry in learners) {
       if (entry is! Map) {
         continue;
       }
-      final Map<String, dynamic> learner =
-          Map<String, dynamic>.from(entry);
-      final String learnerName = widget.learnerNamesById[
-              learner['learnerId'] as String? ?? ''] ??
-          learner['learnerId'] as String? ??
-          _tEducatorToday(context, 'Learner');
+      final Map<String, dynamic> learner = Map<String, dynamic>.from(entry);
+      final String learnerName =
+          widget.learnerNamesById[learner['learnerId'] as String? ?? ''] ??
+              learner['learnerId'] as String? ??
+              _tEducatorToday(context, 'Learner');
       final List<String> tags = (learner['misconceptionTags'] as List?)
               ?.whereType<String>()
               .map((String value) => value.trim())
@@ -1432,7 +1432,8 @@ class _LiveSessionModeSheetState extends State<_LiveSessionModeSheet> {
         'sessionTitle': widget.todayClass.title,
         'pacingMode': _pacingMode,
         'coldCallLearnerId': _selectedColdCallLearnerId,
-        'coldCallLearnerName': widget.learnerNamesById[_selectedColdCallLearnerId],
+        'coldCallLearnerName':
+            widget.learnerNamesById[_selectedColdCallLearnerId],
         'pollPrompt': _pollController.text.trim(),
         'exitTicketPrompt': _exitTicketController.text.trim(),
         'misconceptionAlerts': _misconceptionAlerts,
@@ -1496,7 +1497,7 @@ class _LiveSessionModeSheetState extends State<_LiveSessionModeSheet> {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
       metadata: <String, dynamic>{
-        'cta': 'educator_live_session_launch_poll',
+        'cta': 'educator_live_session_save_poll_prompt',
         'class_id': widget.todayClass.id,
       },
     );
@@ -1506,7 +1507,7 @@ class _LiveSessionModeSheetState extends State<_LiveSessionModeSheet> {
         'prompt': _pollController.text.trim(),
         'options': const <String>['Need help', 'Ready', 'Can teach it'],
       },
-      successMessage: 'Quick poll launched',
+      successMessage: 'Quick poll saved to live mode',
     );
   }
 
@@ -1514,7 +1515,7 @@ class _LiveSessionModeSheetState extends State<_LiveSessionModeSheet> {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
       metadata: <String, dynamic>{
-        'cta': 'educator_live_session_send_exit_ticket',
+        'cta': 'educator_live_session_save_exit_ticket_prompt',
         'class_id': widget.todayClass.id,
       },
     );
@@ -1523,7 +1524,7 @@ class _LiveSessionModeSheetState extends State<_LiveSessionModeSheet> {
       eventData: <String, dynamic>{
         'prompt': _exitTicketController.text.trim(),
       },
-      successMessage: 'Exit ticket sent',
+      successMessage: 'Exit ticket saved to live mode',
     );
   }
 
@@ -1603,7 +1604,8 @@ class _LiveSessionModeSheetState extends State<_LiveSessionModeSheet> {
                 initialValue: _selectedColdCallLearnerId,
                 items: widget.learnerNamesById.entries
                     .map(
-                      (MapEntry<String, String> entry) => DropdownMenuItem<String>(
+                      (MapEntry<String, String> entry) =>
+                          DropdownMenuItem<String>(
                         value: entry.key,
                         child: Text(entry.value),
                       ),
@@ -1645,7 +1647,9 @@ class _LiveSessionModeSheetState extends State<_LiveSessionModeSheet> {
               child: OutlinedButton.icon(
                 onPressed: _isSaving ? null : _launchQuickPoll,
                 icon: const Icon(Icons.poll_outlined),
-                label: Text(_tEducatorToday(context, 'Launch Quick Poll')),
+                label: Text(
+                  _tEducatorToday(context, 'Save Quick Poll Prompt'),
+                ),
               ),
             ),
             const SizedBox(height: 20),
@@ -1667,7 +1671,9 @@ class _LiveSessionModeSheetState extends State<_LiveSessionModeSheet> {
               child: OutlinedButton.icon(
                 onPressed: _isSaving ? null : _sendExitTicket,
                 icon: const Icon(Icons.assignment_turned_in_outlined),
-                label: Text(_tEducatorToday(context, 'Send Exit Ticket')),
+                label: Text(
+                  _tEducatorToday(context, 'Save Exit Ticket Prompt'),
+                ),
               ),
             ),
             const SizedBox(height: 20),
@@ -1699,7 +1705,8 @@ class _LiveSessionModeSheetState extends State<_LiveSessionModeSheet> {
                     .map(
                       (String alert) => Chip(
                         label: Text(alert),
-                        avatar: const Icon(Icons.warning_amber_rounded, size: 16),
+                        avatar:
+                            const Icon(Icons.warning_amber_rounded, size: 16),
                       ),
                     )
                     .toList(growable: false),

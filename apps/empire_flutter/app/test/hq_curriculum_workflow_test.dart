@@ -187,6 +187,33 @@ void main() {
       expect(missions.docs.first.data()['rubricApplied'], true);
     });
 
+    testWidgets('mark parent summary ready only records readiness metadata',
+        (WidgetTester tester) async {
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+      final AppState appState = _buildHqState();
+      await _pumpPage(tester, firestore: firestore, appState: appState);
+
+      await _createDraftCurriculum(
+          tester, 'Parent Summary Readiness Curriculum');
+
+      await tester.tap(find.text('Drafts'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Parent Summary Readiness Curriculum').first);
+      await tester.pumpAndSettle();
+
+      await _tapVisible(
+        tester,
+        find.widgetWithText(ElevatedButton, 'Mark Parent Summary Ready'),
+      );
+
+      final QuerySnapshot<Map<String, dynamic>> missions =
+          await firestore.collection('missions').get();
+      expect(missions.docs.length, 1);
+      expect(missions.docs.first.data()['parentSummaryShared'], true);
+      expect(missions.docs.first.data()['parentSummarySharedBy'], 'hq-user-1');
+      expect(missions.docs.first.data()['parentSummarySharedAt'], isNotNull);
+    });
+
     testWidgets('curriculum create persists content authoring metadata',
         (WidgetTester tester) async {
       final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();

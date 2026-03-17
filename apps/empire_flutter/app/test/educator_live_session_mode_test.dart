@@ -90,11 +90,11 @@ void main() {
       ),
     ];
 
-    when(() => educatorService.loadTodaySchedule())
-        .thenAnswer((_) async {});
+    when(() => educatorService.loadTodaySchedule()).thenAnswer((_) async {});
     when(() => educatorService.loadLearners()).thenAnswer((_) async {});
     when(() => educatorService.isLoading).thenReturn(false);
-    when(() => educatorService.todayClasses).thenReturn(<TodayClass>[currentClass]);
+    when(() => educatorService.todayClasses)
+        .thenReturn(<TodayClass>[currentClass]);
     when(() => educatorService.currentClass).thenReturn(currentClass);
     when(() => educatorService.learners).thenReturn(learners);
     when(() => educatorService.dayStats).thenReturn(
@@ -123,7 +123,8 @@ void main() {
             classInsightsLoader: ({
               required String sessionOccurrenceId,
               required String siteId,
-            }) async => <String, dynamic>{
+            }) async =>
+                <String, dynamic>{
               'sessionOccurrenceId': sessionOccurrenceId,
               'siteId': siteId,
               'learners': <Map<String, dynamic>>[
@@ -166,15 +167,15 @@ void main() {
     await tester.pump(const Duration(milliseconds: 200));
     await tester.tap(find.text('Queue Cold-Call'));
     await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.text('Launch Quick Poll'));
+    await tester.tap(find.text('Save Quick Poll Prompt'));
     await tester.pump(const Duration(milliseconds: 300));
     await tester.dragUntilVisible(
-      find.text('Send Exit Ticket'),
+      find.text('Save Exit Ticket Prompt'),
       find.byType(Scrollable).last,
       const Offset(0, -200),
     );
     await tester.pump(const Duration(milliseconds: 200));
-    await tester.tap(find.text('Send Exit Ticket'));
+    await tester.tap(find.text('Save Exit Ticket Prompt'));
     await tester.pump(const Duration(milliseconds: 300));
     await tester.ensureVisible(find.text('Save Live Mode'));
     await tester.tap(find.text('Save Live Mode'));
@@ -188,7 +189,8 @@ void main() {
     expect(modeDoc.data()?['pacingMode'], 'accelerate');
     expect(modeDoc.data()?['sessionOccurrenceId'], 'occ-1');
     expect(modeDoc.data()?['coldCallLearnerId'], 'learner-1');
-    expect(modeDoc.data()?['pollPrompt'], 'How confident are you with this step?');
+    expect(
+        modeDoc.data()?['pollPrompt'], 'How confident are you with this step?');
     expect(
       modeDoc.data()?['misconceptionAlerts'] as List<dynamic>,
       contains('Avery Chen: loops'),
@@ -197,8 +199,8 @@ void main() {
     final events = await firestore.collection('liveSessionEvents').get();
     expect(events.docs.length, 3);
     final List<String> eventTypes = events.docs
-      .map((doc) => doc.data()['eventType'] as String? ?? '')
-      .toList(growable: false);
+        .map((doc) => doc.data()['eventType'] as String? ?? '')
+        .toList(growable: false);
     expect(eventTypes, contains('cold_call'));
     expect(eventTypes, contains('poll'));
     expect(eventTypes, contains('exit_ticket'));
