@@ -126,7 +126,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const provider = createFederatedAuthProvider(providerId);
     const credential = await signInWithPopup(auth, provider);
-    await syncSessionCookie(credential.user, locale);
+
+    try {
+      await syncSessionCookie(credential.user, locale);
+    } catch (error) {
+      try {
+        await firebaseSignOut(auth);
+      } catch (signOutError) {
+        console.error('Failed to clear Firebase Auth state after federated session setup failure.', signOutError);
+      }
+      throw error;
+    }
   };
 
   const signOut = async () => {

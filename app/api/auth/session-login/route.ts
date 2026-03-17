@@ -80,6 +80,8 @@ export async function POST(request: Request) {
     const userRef = db.collection('users').doc(uid);
     const userDoc = await userRef.get();
     const existingUser = userDoc.exists ? (userDoc.data() as Record<string, unknown>) : null;
+    const existingRole =
+      typeof existingUser?.role === 'string' ? existingUser.role.trim() : '';
 
     if (enterpriseSsoProvider) {
       const nextProfile = buildEnterpriseSsoProfileUpdate({
@@ -116,14 +118,17 @@ export async function POST(request: Request) {
       });
     }
 
-    if (!userDoc.exists && !enterpriseSsoProvider) {
-      await userRef.set({
-        email: decodedToken.email,
-        displayName: decodedToken.name || decodedToken.email || 'User',
-        preferredLocale: resolvedLocale,
-        createdAt: new Date(),
-      });
-    } else if (!enterpriseSsoProvider) {
+    if (!enterpriseSsoProvider && (!userDoc.exists || !existingRole)) {
+      return NextResponse.json(
+        {
+          error:
+              'Your account is not provisioned for this sign-in method. Contact your site or HQ admin.',
+        },
+        { status: 403 },
+      );
+    }
+
+    if (!enterpriseSsoProvider) {
       await userRef.set(
         {
           email: decodedToken.email,

@@ -2,9 +2,15 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import {
+  createUserWithEmailAndPassword,
+  deleteUser,
+  signOut,
+  type User,
+  updateProfile,
+} from 'firebase/auth';
 import { auth } from '@/src/firebase/client-init';
-import { createUserDocument } from '@/src/lib/auth/createUser';
+import { createUserDocument, deleteUserDocument } from '@/src/lib/auth/createUser';
 import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import type { Role } from '@/schema';
 import { useI18n } from '@/src/lib/i18n/useI18n';
@@ -31,7 +37,34 @@ export default function RegisterPage() {
       }
     }
 
-    return 'Firebase account was created, but Firebase session setup failed. Check Firebase Admin credentials.';
+    return 'Registration could not be completed. Your account was not saved.';
+  };
+
+  const rollbackRegistration = async ({
+    user,
+    createdUserDocument,
+  }: {
+    user: User;
+    createdUserDocument: boolean;
+  }) => {
+    if (createdUserDocument) {
+      try {
+        await deleteUserDocument(user.uid);
+      } catch (rollbackError) {
+        console.error('Failed to roll back user document after registration error.', rollbackError);
+      }
+    }
+
+    try {
+      await deleteUser(user);
+    } catch (rollbackError) {
+      console.error('Failed to delete Firebase Auth user after registration error.', rollbackError);
+      try {
+        await signOut(auth);
+      } catch (signOutError) {
+        console.error('Failed to clear Firebase Auth session after registration error.', signOutError);
+      }
+    }
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -39,10 +72,14 @@ export default function RegisterPage() {
     setLoading(true);
     setError('');
 
+    let createdUser: User | null = null;
+    let createdUserDocument = false;
+
     try {
       // 1. Create Auth User
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
+      createdUser = user;
 
       // 2. Update Profile
       if (displayName) {
@@ -57,6 +94,7 @@ export default function RegisterPage() {
         displayName,
         photoURL: user.photoURL || undefined,
       });
+      createdUserDocument = true;
 
       await syncSessionCookie(user, locale);
 
@@ -65,6 +103,12 @@ export default function RegisterPage() {
       router.refresh();
     } catch (err: unknown) {
       console.error('Registration error:', err);
+      if (createdUser) {
+        await rollbackRegistration({
+          user: createdUser,
+          createdUserDocument,
+        });
+      }
       setError(resolveRegisterError(err));
     } finally {
       setLoading(false);

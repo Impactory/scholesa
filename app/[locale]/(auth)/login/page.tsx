@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, signOut as signOutFromFirebase } from 'firebase/auth';
 import { auth } from '@/src/firebase/client-init';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { useInteractionTracking } from '@/src/hooks/useTelemetry';
@@ -39,7 +39,7 @@ export default function LoginPage() {
       }
     }
 
-    return 'Firebase login succeeded, but Firebase session setup failed. Check Firebase Admin credentials.';
+    return 'Login could not be completed. Please try again or contact your site or HQ admin.';
   };
 
   useEffect(() => {
@@ -95,7 +95,16 @@ export default function LoginPage() {
 
     try {
       const credential = await signInWithEmailAndPassword(auth, email, password);
-      await syncSessionCookie(credential.user, locale);
+      try {
+        await syncSessionCookie(credential.user, locale);
+      } catch (sessionError) {
+        try {
+          await signOutFromFirebase(auth);
+        } catch (signOutError) {
+          console.error('Failed to clear Firebase Auth session after login setup error.', signOutError);
+        }
+        throw sessionError;
+      }
       // Redirect to Dashboard (Redirector will handle role routing)
       router.replace(`/${locale}/dashboard`);
       router.refresh();

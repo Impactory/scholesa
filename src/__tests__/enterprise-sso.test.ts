@@ -197,4 +197,99 @@ describe('enterprise SSO auth routes', () => {
     expect(response.status).toBe(403);
     expect(body.error).toBe('Enterprise SSO provider is not configured.');
   });
+
+  it('rejects non-enterprise sign-in when the user is not provisioned', async () => {
+    mockedGetAdminAuth.mockReturnValue({
+      verifyIdToken: jest.fn().mockResolvedValue({
+        uid: 'user-3',
+        email: 'teacher@scholesa.dev',
+        name: 'Teacher Three',
+        firebase: {
+          sign_in_provider: 'google.com',
+        },
+      }),
+      createSessionCookie: jest.fn(),
+    } as never);
+
+    mockedGetAdminDb.mockReturnValue({
+      collection: jest.fn((name: string) => {
+        if (name === 'enterpriseSsoProviders') return buildQueryMock([]);
+        if (name === 'users') {
+          return {
+            doc: jest.fn(() => ({
+              get: jest.fn().mockResolvedValue({ exists: false }),
+              set: jest.fn(),
+            })),
+          };
+        }
+        throw new Error(`Unexpected collection ${name}`);
+      }),
+    } as never);
+
+    const response = await postSessionLogin(new Request('https://scholesa.test/api/auth/session-login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ idToken: 'firebase-token' }),
+    }));
+    const body = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(body.error).toBe(
+      'Your account is not provisioned for this sign-in method. Contact your site or HQ admin.',
+    );
+  });
+
+  it('rejects non-enterprise sign-in when the existing user profile has no role', async () => {
+    const userSet = jest.fn();
+    mockedGetAdminAuth.mockReturnValue({
+      verifyIdToken: jest.fn().mockResolvedValue({
+        uid: 'user-4',
+        email: 'parent@scholesa.dev',
+        name: 'Parent Four',
+        firebase: {
+          sign_in_provider: 'google.com',
+        },
+      }),
+      createSessionCookie: jest.fn(),
+    } as never);
+
+    mockedGetAdminDb.mockReturnValue({
+      collection: jest.fn((name: string) => {
+        if (name === 'enterpriseSsoProviders') return buildQueryMock([]);
+        if (name === 'users') {
+          return {
+            doc: jest.fn(() => ({
+              get: jest.fn().mockResolvedValue({
+                exists: true,
+                data: () => ({
+                  uid: 'user-4',
+                  email: 'parent@scholesa.dev',
+                  displayName: 'Parent Four',
+                }),
+              }),
+              set: userSet,
+            })),
+          };
+        }
+        throw new Error(`Unexpected collection ${name}`);
+      }),
+    } as never);
+
+    const response = await postSessionLogin(new Request('https://scholesa.test/api/auth/session-login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ idToken: 'firebase-token' }),
+    }));
+    const body = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(body.error).toBe(
+      'Your account is not provisioned for this sign-in method. Contact your site or HQ admin.',
+    );
+    expect(userSet).not.toHaveBeenCalled();
+  });
 });

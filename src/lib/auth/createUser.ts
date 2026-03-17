@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { deleteDoc, doc, getDoc, setDoc } from 'firebase/firestore';
 import { firestore } from '@/src/firebase/client-init';
 import type { User, Role } from '@/schema';
 
@@ -56,6 +56,17 @@ export async function createUserDocument({
     await setDoc(userRef, newUser);
   } catch (error) {
     console.error('Error creating user document:', error);
+    throw error;
+  }
+}
+
+export async function deleteUserDocument(uid: string): Promise<void> {
+  if (!uid) return;
+
+  try {
+    await deleteDoc(doc(firestore, 'users', uid));
+  } catch (error) {
+    console.error('Error deleting user document:', error);
     throw error;
   }
 }
