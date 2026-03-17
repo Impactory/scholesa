@@ -86,7 +86,8 @@ class _ParentBillingPageState extends State<ParentBillingPage>
                   if (service.learnerSummaries.isNotEmpty)
                     SliverToBoxAdapter(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
                         child: _buildBillingLearnerLoopCard(service),
                       ),
                     ),
@@ -150,15 +151,23 @@ class _ParentBillingPageState extends State<ParentBillingPage>
                 ],
               ),
             ),
-            IconButton(
-              onPressed: _downloadStatements,
-              icon: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: ScholesaColors.parent.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: ScholesaColors.parent.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                _tParentBilling(
+                  context,
+                  'Statements are shared by your site or HQ billing team.',
                 ),
-                child: const Icon(Icons.download, color: ScholesaColors.parent),
+                textAlign: TextAlign.right,
+                style: TextStyle(
+                  color: ScholesaColors.parent,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ],
@@ -170,7 +179,8 @@ class _ParentBillingPageState extends State<ParentBillingPage>
   Widget _buildLearnerFilter(ParentService service) {
     final List<LearnerSummary> learners = service.learnerSummaries;
     if (_selectedLearner != 'all' &&
-        learners.every((LearnerSummary learner) => learner.learnerId != _selectedLearner)) {
+        learners.every((LearnerSummary learner) =>
+            learner.learnerId != _selectedLearner)) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           setState(() => _selectedLearner = 'all');
@@ -236,14 +246,17 @@ class _ParentBillingPageState extends State<ParentBillingPage>
     final List<PaymentHistory> payments = billing.recentPayments;
     final DateTime now = DateTime.now();
     final double thisMonthPaid = payments
-      .where((PaymentHistory payment) =>
-        payment.status.toLowerCase() == 'paid' &&
-        payment.date.year == now.year &&
-        payment.date.month == now.month)
-      .fold(0.0, (double sum, PaymentHistory payment) => sum + payment.amount);
+        .where((PaymentHistory payment) =>
+            payment.status.toLowerCase() == 'paid' &&
+            payment.date.year == now.year &&
+            payment.date.month == now.month)
+        .fold(
+            0.0, (double sum, PaymentHistory payment) => sum + payment.amount);
     final double totalPaid = payments
-      .where((PaymentHistory payment) => payment.status.toLowerCase() == 'paid')
-      .fold(0.0, (double sum, PaymentHistory payment) => sum + payment.amount);
+        .where(
+            (PaymentHistory payment) => payment.status.toLowerCase() == 'paid')
+        .fold(
+            0.0, (double sum, PaymentHistory payment) => sum + payment.amount);
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -399,17 +412,21 @@ class _ParentBillingPageState extends State<ParentBillingPage>
   Widget _buildBillingLearnerLoopCard(ParentService service) {
     LearnerSummary? selectedLearner;
     if (_selectedLearner == 'all') {
-      selectedLearner = service.learnerSummaries.isNotEmpty ? service.learnerSummaries.first : null;
+      selectedLearner = service.learnerSummaries.isNotEmpty
+          ? service.learnerSummaries.first
+          : null;
     } else {
       try {
         selectedLearner = service.learnerSummaries.firstWhere(
           (LearnerSummary l) => l.learnerId == _selectedLearner,
         );
       } catch (e) {
-        selectedLearner = service.learnerSummaries.isNotEmpty ? service.learnerSummaries.first : null;
+        selectedLearner = service.learnerSummaries.isNotEmpty
+            ? service.learnerSummaries.first
+            : null;
       }
     }
-    
+
     if (selectedLearner == null) {
       return const SizedBox.shrink();
     }
@@ -443,11 +460,7 @@ class _ParentBillingPageState extends State<ParentBillingPage>
       itemCount: invoices.length,
       itemBuilder: (BuildContext context, int index) {
         final Map<String, dynamic> invoice = invoices[index];
-        return _InvoiceCard(
-          invoice: invoice,
-          onPay: () => _payInvoice(invoice),
-          onView: () => _viewInvoice(invoice),
-        );
+        return _InvoiceCard(invoice: invoice);
       },
     );
   }
@@ -492,15 +505,14 @@ class _ParentBillingPageState extends State<ParentBillingPage>
       );
     }
     final List<PaymentHistory> payments = billing.recentPayments;
-    final String planName =
-      billing.subscriptionPlan.trim().isNotEmpty
+    final String planName = billing.subscriptionPlan.trim().isNotEmpty
         ? billing.subscriptionPlan.toUpperCase()
         : _tParentBilling(context, 'STANDARD PLAN');
     final String learnerLabel = _selectedLearnerName(service);
     final String paymentMethod =
-      payments.isNotEmpty && payments.first.description.isNotEmpty
-        ? payments.first.description
-        : _tParentBilling(context, 'On file');
+        payments.isNotEmpty && payments.first.description.isNotEmpty
+            ? payments.first.description
+            : _tParentBilling(context, 'On file');
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -629,27 +641,43 @@ class _ParentBillingPageState extends State<ParentBillingPage>
                     ],
                   ),
                 ),
-                TextButton(
-                  onPressed: _updatePaymentMethod,
-                  child: Text(_tParentBilling(context, 'Update')),
+                Flexible(
+                  child: Text(
+                    _tParentBilling(
+                      context,
+                      'Payment method changes are handled by HQ billing support.',
+                    ),
+                    textAlign: TextAlign.right,
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 16),
-          SizedBox(
+          Container(
             width: double.infinity,
-            child: OutlinedButton(
-              onPressed: _managePlan,
-              style: OutlinedButton.styleFrom(
-                foregroundColor: ScholesaColors.parent,
-                side: const BorderSide(color: ScholesaColors.parent),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: ScholesaColors.parent.withValues(alpha: 0.06),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: ScholesaColors.parent.withValues(alpha: 0.18),
               ),
-              child: Text(_tParentBilling(context, 'Manage Plan')),
+            ),
+            child: Text(
+              _tParentBilling(
+                context,
+                'Plan changes are handled by HQ billing support.',
+              ),
+              style: TextStyle(
+                color: Colors.grey[700],
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
@@ -659,7 +687,8 @@ class _ParentBillingPageState extends State<ParentBillingPage>
 
   List<Map<String, dynamic>> _buildPaymentRows(ParentService service) {
     final BillingSummary? billing = service.billingSummary;
-    final List<PaymentHistory> payments = billing?.recentPayments ?? <PaymentHistory>[];
+    final List<PaymentHistory> payments =
+        billing?.recentPayments ?? <PaymentHistory>[];
     return payments.map((PaymentHistory payment) {
       return <String, dynamic>{
         'id': payment.id,
@@ -675,10 +704,12 @@ class _ParentBillingPageState extends State<ParentBillingPage>
 
   List<Map<String, dynamic>> _buildInvoiceRows(ParentService service) {
     final BillingSummary? billing = service.billingSummary;
-    final List<PaymentHistory> payments = billing?.recentPayments ?? <PaymentHistory>[];
+    final List<PaymentHistory> payments =
+        billing?.recentPayments ?? <PaymentHistory>[];
     final String learnerLabel = _selectedLearnerName(service);
 
-    final List<Map<String, dynamic>> rows = payments.map((PaymentHistory payment) {
+    final List<Map<String, dynamic>> rows =
+        payments.map((PaymentHistory payment) {
       return <String, dynamic>{
         'id': payment.id,
         'learner': learnerLabel,
@@ -709,7 +740,8 @@ class _ParentBillingPageState extends State<ParentBillingPage>
       return _tParentBilling(context, 'All Learners');
     }
     final LearnerSummary? selected = service.learnerSummaries
-        .where((LearnerSummary learner) => learner.learnerId == _selectedLearner)
+        .where(
+            (LearnerSummary learner) => learner.learnerId == _selectedLearner)
         .firstOrNull;
     return selected?.learnerName ?? _tParentBilling(context, 'All Learners');
   }
@@ -788,127 +820,6 @@ class _ParentBillingPageState extends State<ParentBillingPage>
     ];
     return '${months[value.month - 1]} ${value.year}';
   }
-
-  void _downloadStatements() {
-    TelemetryService.instance.logEvent(
-      event: 'cta.clicked',
-      metadata: const <String, dynamic>{
-        'cta': 'parent_billing_download_statements'
-      },
-    );
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          _tParentBilling(context, 'Billing statements are not available yet'),
-        ),
-        backgroundColor: ScholesaColors.parent,
-      ),
-    );
-  }
-
-  void _payInvoice(Map<String, dynamic> invoice) {
-    TelemetryService.instance.logEvent(
-      event: 'cta.clicked',
-      metadata: <String, dynamic>{
-        'cta': 'parent_billing_pay_invoice',
-        'invoice_id': invoice['id']
-      },
-    );
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          _tParentBilling(context, 'Invoice payments are not available in the app yet'),
-        ),
-        backgroundColor: ScholesaColors.parent,
-      ),
-    );
-  }
-
-  void _viewInvoice(Map<String, dynamic> invoice) {
-    TelemetryService.instance.logEvent(
-      event: 'cta.clicked',
-      metadata: <String, dynamic>{
-        'cta': 'parent_billing_view_invoice',
-        'invoice_id': invoice['id']
-      },
-    );
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          _tParentBilling(context, 'Invoice viewing is not available in the app yet'),
-        ),
-        backgroundColor: ScholesaColors.parent,
-      ),
-    );
-  }
-
-  void _updatePaymentMethod() {
-    TelemetryService.instance.logEvent(
-      event: 'cta.clicked',
-      metadata: const <String, dynamic>{
-        'cta': 'parent_billing_update_payment_method'
-      },
-    );
-    showDialog<void>(
-      context: context,
-      builder: (BuildContext dialogContext) => AlertDialog(
-        title: Text(_tParentBilling(context, 'Update Payment Method')),
-        content: Text(
-          _tParentBilling(
-            context,
-            'Self-service payment method updates are not available yet. Contact HQ billing support for changes.',
-          ),
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () {
-              TelemetryService.instance.logEvent(
-                event: 'cta.clicked',
-                metadata: const <String, dynamic>{
-                  'cta': 'parent_billing_cancel_update_payment_method',
-                },
-              );
-              Navigator.pop(dialogContext);
-            },
-            child: Text(_tParentBilling(context, 'Cancel')),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _managePlan() {
-    TelemetryService.instance.logEvent(
-      event: 'cta.clicked',
-      metadata: const <String, dynamic>{'cta': 'parent_billing_manage_plan'},
-    );
-    showDialog<void>(
-      context: context,
-      builder: (BuildContext dialogContext) => AlertDialog(
-        title: Text(_tParentBilling(context, 'Manage Plan')),
-        content: Text(
-          _tParentBilling(
-            context,
-            'Self-service plan changes are not available yet. Contact HQ billing support for changes.',
-          ),
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () {
-              TelemetryService.instance.logEvent(
-                event: 'cta.clicked',
-                metadata: const <String, dynamic>{
-                  'cta': 'parent_billing_close_manage_plan_dialog'
-                },
-              );
-              Navigator.pop(dialogContext);
-            },
-            child: Text(_tParentBilling(context, 'Close')),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _BalanceStatCard extends StatelessWidget {
@@ -954,13 +865,9 @@ class _BalanceStatCard extends StatelessWidget {
 
 class _InvoiceCard extends StatelessWidget {
   final Map<String, dynamic> invoice;
-  final VoidCallback onPay;
-  final VoidCallback onView;
 
   const _InvoiceCard({
     required this.invoice,
-    required this.onPay,
-    required this.onView,
   });
 
   bool get _isPaid => invoice['status'] == 'paid';
@@ -1057,49 +964,23 @@ class _InvoiceCard extends StatelessWidget {
             ),
             if (!_isPaid) ...<Widget>[
               const SizedBox(height: 12),
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () {
-                        TelemetryService.instance.logEvent(
-                          event: 'cta.clicked',
-                          metadata: <String, dynamic>{
-                            'cta': 'parent_billing_invoice_view',
-                            'invoice_id': invoice['id'],
-                          },
-                        );
-                        onView();
-                      },
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: ScholesaColors.parent,
-                      ),
-                      child: Text(_tParentBilling(context, 'View')),
-                    ),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: ScholesaColors.parent.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  _tParentBilling(
+                    context,
+                    'Invoice actions are handled by your site or HQ billing team.',
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        TelemetryService.instance.logEvent(
-                          event: 'cta.clicked',
-                          metadata: <String, dynamic>{
-                            'cta': 'parent_billing_invoice_pay',
-                            'invoice_id': invoice['id'],
-                          },
-                        );
-                        onPay();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: ScholesaColors.parent,
-                      ),
-                      child: Text(
-                        _tParentBilling(context, 'Pay Now'),
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
+                  style: TextStyle(
+                    color: Colors.grey[700],
+                    fontWeight: FontWeight.w600,
                   ),
-                ],
+                ),
               ),
             ],
           ],

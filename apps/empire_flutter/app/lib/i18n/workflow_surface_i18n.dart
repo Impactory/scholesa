@@ -143,6 +143,14 @@ class WorkflowSurfaceI18n {
     'Settings': '设置',
     'Disconnect': '断开连接',
     'Connect': '连接',
+    'Statements are shared by your site or HQ billing team.':
+      '账单对账单由你的站点或 HQ 计费团队提供。',
+    'Invoice actions are handled by your site or HQ billing team.':
+      '发票操作由你的站点或 HQ 计费团队处理。',
+    'Payment method changes are handled by HQ billing support.':
+      '付款方式变更由 HQ 计费支持处理。',
+    'Plan changes are handled by HQ billing support.':
+      '方案变更由 HQ 计费支持处理。',
     'Billing statements are not available yet': '账单对账单暂不可用',
     'Invoice payments are not available in the app yet': '应用内暂不支持支付发票',
     'Invoice viewing is not available in the app yet': '应用内暂不支持查看发票',
@@ -483,6 +491,14 @@ class WorkflowSurfaceI18n {
     'Enter Code': '輸入代碼',
     'QR scanning is not available in the app yet': 'App 內暫不支援 QR 掃描',
     'Manual pickup code entry is not available in the app yet': 'App 內暫不支援手動輸入接送代碼',
+    'Statements are shared by your site or HQ billing team.':
+      '帳單對帳單由你的站點或 HQ 計費團隊提供。',
+    'Invoice actions are handled by your site or HQ billing team.':
+      '發票操作由你的站點或 HQ 計費團隊處理。',
+    'Payment method changes are handled by HQ billing support.':
+      '付款方式變更由 HQ 計費支援處理。',
+    'Plan changes are handled by HQ billing support.':
+      '方案變更由 HQ 計費支援處理。',
     'Billing statements are not available yet': '帳單對帳單暫時不可用',
     'Invoice payments are not available in the app yet': 'App 內暫不支援支付發票',
     'Invoice viewing is not available in the app yet': 'App 內暫不支援查看發票',

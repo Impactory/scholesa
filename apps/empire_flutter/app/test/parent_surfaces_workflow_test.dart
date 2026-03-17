@@ -45,7 +45,10 @@ Future<void> _seedParentData(FakeFirebaseFirestore firestore) async {
     'displayName': 'Parent One',
     'learnerIds': <String>['learner-1'],
   });
-  await firestore.collection('guardianLinks').doc('link-1').set(<String, dynamic>{
+  await firestore
+      .collection('guardianLinks')
+      .doc('link-1')
+      .set(<String, dynamic>{
     'parentId': 'parent-1',
     'learnerId': 'learner-1',
   });
@@ -58,7 +61,10 @@ Future<void> _seedParentData(FakeFirebaseFirestore firestore) async {
     'displayName': 'Unaffiliated Learner',
     'parentIds': <String>['other-parent'],
   });
-  await firestore.collection('learnerProgress').doc('learner-1').set(<String, dynamic>{
+  await firestore
+      .collection('learnerProgress')
+      .doc('learner-1')
+      .set(<String, dynamic>{
     'level': 4,
     'totalXp': 1200,
     'missionsCompleted': 5,
@@ -67,7 +73,10 @@ Future<void> _seedParentData(FakeFirebaseFirestore firestore) async {
     'leadershipProgress': 0.6,
     'impactProgress': 0.4,
   });
-  await firestore.collection('activities').doc('activity-1').set(<String, dynamic>{
+  await firestore
+      .collection('activities')
+      .doc('activity-1')
+      .set(<String, dynamic>{
     'learnerId': 'learner-1',
     'title': 'Build a Robot',
     'description': 'Linked Update',
@@ -75,7 +84,10 @@ Future<void> _seedParentData(FakeFirebaseFirestore firestore) async {
     'emoji': '🤖',
     'timestamp': Timestamp.fromDate(anchor.subtract(const Duration(hours: 2))),
   });
-  await firestore.collection('activities').doc('activity-2').set(<String, dynamic>{
+  await firestore
+      .collection('activities')
+      .doc('activity-2')
+      .set(<String, dynamic>{
     'learnerId': 'learner-2',
     'title': 'Hidden Project',
     'description': 'Hidden Update',
@@ -99,7 +111,10 @@ Future<void> _seedParentData(FakeFirebaseFirestore firestore) async {
     'type': 'future_skills',
     'location': 'Hidden Lab',
   });
-  await firestore.collection('attendanceRecords').doc('attendance-1').set(<String, dynamic>{
+  await firestore
+      .collection('attendanceRecords')
+      .doc('attendance-1')
+      .set(<String, dynamic>{
     'learnerId': 'learner-1',
     'status': 'present',
     'recordedAt': Timestamp.fromDate(anchor.subtract(const Duration(days: 1))),
@@ -193,7 +208,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Next Session Details'), findsOneWidget);
-      expect(find.textContaining('Robotics Studio\nLocation: Lab 1'), findsOneWidget);
+      expect(find.textContaining('Robotics Studio\nLocation: Lab 1'),
+          findsOneWidget);
       expect(find.textContaining('Location: Lab 1'), findsOneWidget);
 
       await tester.tap(find.text('Set Reminder'));
@@ -261,7 +277,8 @@ void main() {
       );
     });
 
-    testWidgets('billing page shows explicit unavailable state when no billing data exists',
+    testWidgets(
+        'billing page shows explicit unavailable state when no billing data exists',
         (WidgetTester tester) async {
       final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
       await _seedParentData(firestore);
@@ -273,9 +290,11 @@ void main() {
       );
 
       expect(find.text('No billing data yet'), findsOneWidget);
-  await tester.tap(find.byIcon(Icons.download).first);
-  await tester.pumpAndSettle();
-  expect(find.text('Billing statements are not available yet'), findsOneWidget);
+      expect(find.byIcon(Icons.download), findsNothing);
+      expect(
+        find.text('Statements are shared by your site or HQ billing team.'),
+        findsOneWidget,
+      );
       await tester.tap(find.text('Plan'));
       await tester.pumpAndSettle();
       expect(find.text('Billing plan unavailable'), findsOneWidget);
