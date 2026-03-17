@@ -30,7 +30,7 @@ void main() {
     );
 
     when(() => mockAuth.currentUser).thenReturn(mockUser);
-  when(() => mockAuth.signOut()).thenAnswer((_) async {});
+    when(() => mockAuth.signOut()).thenAnswer((_) async {});
     when(() => mockUser.uid).thenReturn('uid-123');
     when(() => mockUser.email).thenReturn('test@example.com');
     when(() => mockUser.displayName).thenReturn('Test User');

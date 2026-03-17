@@ -250,7 +250,7 @@ class AuthService {
         await _auth.signInWithProvider(microsoftProvider);
       }
 
-      // Bootstrap session with profile (falls back to Firebase user data if Firestore unavailable)
+      // Bootstrap session with the provisioned Firestore profile.
       await _bootstrapSession();
     } on FirebaseAuthException catch (e) {
       _appState.setError(_mapAuthError(e.code));
@@ -272,7 +272,8 @@ class AuthService {
         throw StateError('Not authenticated');
       }
 
-      final Map<String, dynamic>? profile = await _firestoreService.getUserProfile();
+        final Map<String, dynamic>? profile =
+          await _firestoreService.getUserProfile();
       if (profile == null) {
         throw StateError('User profile does not exist');
       }
