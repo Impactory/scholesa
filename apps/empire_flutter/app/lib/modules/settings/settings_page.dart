@@ -1225,16 +1225,49 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
-  void _openHelpCenter() {
+  Future<void> _openHelpCenter() async {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
       metadata: const <String, dynamic>{'cta': 'settings_open_help_center'},
     );
-    _showInfoDialog(
-      title: _tSettings(context, 'Help Center Contact'),
-      body: _tSettings(context,
-          'Contact support at support@scholesa.com with your site ID and issue details.'),
+
+    final AppState appState = context.read<AppState>();
+    final User? currentUser =
+        Firebase.apps.isNotEmpty ? FirebaseAuth.instance.currentUser : null;
+    final String siteId = appState.activeSiteId?.trim().isNotEmpty == true
+        ? appState.activeSiteId!.trim()
+        : 'Not set';
+    final String userId = appState.userId?.trim().isNotEmpty == true
+        ? appState.userId!.trim()
+        : (currentUser?.uid ?? 'Not set');
+    final String email = appState.email?.trim().isNotEmpty == true
+        ? appState.email!.trim()
+        : (currentUser?.email ?? 'Not set');
+    final String displayName = appState.displayName?.trim().isNotEmpty == true
+        ? appState.displayName!.trim()
+        : (currentUser?.displayName ?? 'Not set');
+
+    final Uri emailUri = Uri(
+      scheme: 'mailto',
+      path: 'support@scholesa.com',
+      queryParameters: <String, String>{
+        'subject': 'Help request - $siteId',
+        'body':
+            'Hello Scholesa support.\n\nI need help with the app.\n\nIssue details:\n- \n\nSite ID: $siteId\nUser ID: $userId\nName: $displayName\nEmail: $email\n',
+      },
     );
+
+    final bool launched = await _tryLaunchExternalUri(emailUri);
+    if (!mounted) {
+      return;
+    }
+    if (!launched) {
+      _showInfoDialog(
+        title: _tSettings(context, 'Help Center Contact'),
+        body: _tSettings(context,
+            'Contact support at support@scholesa.com with your site ID and issue details.'),
+      );
+    }
   }
 
   void _showFeedbackSheet() {

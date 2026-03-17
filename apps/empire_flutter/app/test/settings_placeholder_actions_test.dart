@@ -139,6 +139,24 @@ void main() {
       );
 
       await tester.scrollUntilVisible(
+        find.text('Help & Support'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(_tileTapTarget('Help & Support'));
+      await tester.pumpAndSettle();
+
+      expect(
+        launcherPlatform.launchedUrls
+            .where(
+              (String value) =>
+                  value.startsWith('mailto:support@scholesa.com?'),
+            )
+            .length,
+        greaterThanOrEqualTo(2),
+      );
+
+      await tester.scrollUntilVisible(
         find.text('Rate the App'),
         300,
         scrollable: find.byType(Scrollable).first,
