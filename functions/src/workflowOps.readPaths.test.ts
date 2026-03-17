@@ -230,6 +230,7 @@ jest.mock('./districtProviderIntegration', () => ({
 
 import { buildFederatedLearningRuntimeRolloutControlRecordDocId } from './federatedLearningPrototype';
 import {
+  getParentBillingSummary,
   listFederatedLearningRuntimeRolloutAuditEvents,
   listSiteFederatedLearningExperiments,
   listSiteFederatedLearningRuntimeDeliveryRecords,
@@ -244,6 +245,7 @@ const listSiteDeliveries = listSiteFederatedLearningRuntimeDeliveryRecords as un
 const listSiteDeliveryHistory = listSiteFederatedLearningRuntimeDeliveryHistoryRecords as unknown as TestCallable;
 const resolvePackage = resolveSiteFederatedLearningRuntimePackage as unknown as TestCallable;
 const listAuditEvents = listFederatedLearningRuntimeRolloutAuditEvents as unknown as TestCallable;
+const getParentBilling = getParentBillingSummary as unknown as TestCallable;
 
 function buildRequest(uid: string, data: Record<string, unknown> = {}) {
   return {
@@ -256,6 +258,11 @@ describe('workflowOps read paths', () => {
   beforeEach(() => {
     clearDatabase();
     seedCollection('users', {
+      'parent-actor': {
+        role: 'parent',
+        siteIds: ['site-1'],
+        activeSiteId: 'site-1',
+      },
       'site-actor': {
         role: 'site',
         siteIds: ['site-1'],
@@ -314,6 +321,14 @@ describe('workflowOps read paths', () => {
           featureFlag: expect.objectContaining({ id: 'flag_live', enabled: true }),
         }),
       ],
+    });
+  });
+
+  it('returns no synthetic parent billing summary when no billing account or payments exist', async () => {
+    const result = await getParentBilling(buildRequest('parent-actor'));
+
+    expect(result).toEqual({
+      summary: null,
     });
   });
 

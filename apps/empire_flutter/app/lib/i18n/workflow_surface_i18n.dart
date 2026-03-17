@@ -258,6 +258,10 @@ class WorkflowSurfaceI18n {
     'Date': '日期',
     'Amount': '金额',
     'Status': '状态',
+    'No billing data yet': '尚无账单数据',
+    'Billing details will appear once your site or HQ team provisions an active family billing account.':
+      '当你的站点或 HQ 团队配置好有效的家庭账单账户后，账单详情会显示在这里。',
+    'Billing plan unavailable': '账单方案不可用',
     'Plan': '方案',
     'Safety Overview': '安全概览',
     'Open': '打开',
@@ -594,6 +598,10 @@ class WorkflowSurfaceI18n {
     'Invoices': '發票',
     'Payments': '付款',
     'Subscriptions': '訂閱',
+    'No billing data yet': '尚無帳單資料',
+    'Billing details will appear once your site or HQ team provisions an active family billing account.':
+      '當你的站點或 HQ 團隊配置好有效的家庭帳單帳戶後，帳單詳情會顯示在這裡。',
+    'Billing plan unavailable': '帳單方案不可用',
     'Feature Flags': '功能旗標',
     'Approvals': '審批',
     'Role Impersonation': '角色模擬',

@@ -838,26 +838,39 @@ async function loadParentSummary(ctx: WorkflowContext): Promise<WorkflowRecord[]
 async function loadParentBillingRecords(ctx: WorkflowContext): Promise<WorkflowRecord[]> {
   const callable = httpsCallable(functions, 'getParentBillingSummary');
   const response = await callable({ parentId: ctx.uid });
-  const summary = (((response.data || {}) as Record<string, unknown>).summary || {}) as Record<string, unknown>;
-  const recentPayments = Array.isArray(summary.recentPayments) ? summary.recentPayments : [];
+  const payload = (response.data || {}) as Record<string, unknown>;
+  const summary = payload.summary && typeof payload.summary === 'object' && !Array.isArray(payload.summary)
+    ? payload.summary as Record<string, unknown>
+    : null;
+  const recentPayments = Array.isArray(summary?.recentPayments) ? summary.recentPayments : [];
 
-  const summaryId = asString(summary.parentId, ctx.uid);
-  const summaryRecord: WorkflowRecord = {
-    id: summaryId,
-    title: asString(summary.subscriptionPlan, 'Parent Billing'),
-    subtitle: `Current balance ${String(summary.currentBalance || 0)} • Next ${String(summary.nextPaymentAmount || 0)}`,
-    status: 'active',
-    updatedAt: toIsoDate(summary.nextPaymentDate),
-    siteId: activeSiteId(ctx.profile),
-    collectionName: 'parentBillingSummary',
-    routePath: '/parent/billing',
-    canEdit: false,
-    canDelete: false,
-    metadata: {
-      nextPaymentDate: asString(summary.nextPaymentDate, ''),
-      parentId: asString(summary.parentId, ctx.uid),
-    },
-  };
+  let summaryRecord: WorkflowRecord | null = null;
+  if (summary != null) {
+    const subscriptionPlan = asString(summary.subscriptionPlan, '');
+    const nextPaymentDate = asString(summary.nextPaymentDate, '');
+    const hasUpcomingCharge = nextPaymentDate.length > 0 || summary.nextPaymentAmount != null;
+
+    summaryRecord = {
+      id: asString(summary.parentId, ctx.uid),
+      title: subscriptionPlan || 'Billing Summary',
+      subtitle: hasUpcomingCharge
+        ? `Current balance ${String(summary.currentBalance || 0)} • Next ${String(summary.nextPaymentAmount || 0)}`
+        : recentPayments.length > 0
+          ? `${recentPayments.length} recent payments`
+          : `Current balance ${String(summary.currentBalance || 0)}`,
+      status: 'active',
+      updatedAt: toIsoDate(summary.nextPaymentDate),
+      siteId: activeSiteId(ctx.profile),
+      collectionName: 'parentBillingSummary',
+      routePath: '/parent/billing',
+      canEdit: false,
+      canDelete: false,
+      metadata: {
+        nextPaymentDate,
+        parentId: asString(summary.parentId, ctx.uid),
+      },
+    };
+  }
 
   const paymentRecords: WorkflowRecord[] = recentPayments
     .filter((entry): entry is Record<string, unknown> => !!entry && typeof entry === 'object' && !Array.isArray(entry))
@@ -880,7 +893,7 @@ async function loadParentBillingRecords(ctx: WorkflowContext): Promise<WorkflowR
     })
     .filter((record): record is WorkflowRecord => Boolean(record));
 
-  return [summaryRecord, ...paymentRecords];
+  return summaryRecord == null ? paymentRecords : [summaryRecord, ...paymentRecords];
 }
 
 async function loadSiteBillingRecords(ctx: WorkflowContext): Promise<WorkflowRecord[]> {

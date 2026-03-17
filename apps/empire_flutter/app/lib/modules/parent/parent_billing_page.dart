@@ -223,7 +223,17 @@ class _ParentBillingPageState extends State<ParentBillingPage>
 
   Widget _buildBalanceSummary(ParentService service) {
     final BillingSummary? billing = service.billingSummary;
-    final List<PaymentHistory> payments = billing?.recentPayments ?? <PaymentHistory>[];
+    if (billing == null) {
+      return _buildBillingUnavailableCard(
+        title: _tParentBilling(context, 'No billing data yet'),
+        body: _tParentBilling(
+          context,
+          'Billing details will appear once your site or HQ team provisions an active family billing account.',
+        ),
+        icon: Icons.receipt_long_outlined,
+      );
+    }
+    final List<PaymentHistory> payments = billing.recentPayments;
     final DateTime now = DateTime.now();
     final double thisMonthPaid = payments
       .where((PaymentHistory payment) =>
@@ -272,7 +282,7 @@ class _ParentBillingPageState extends State<ParentBillingPage>
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      _formatCurrency(billing?.currentBalance ?? 0),
+                      _formatCurrency(billing.currentBalance),
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 32,
@@ -332,7 +342,7 @@ class _ParentBillingPageState extends State<ParentBillingPage>
                 Expanded(
                   child: _BalanceStatCard(
                     label: _tParentBilling(context, 'Next Due'),
-                    value: _formatDate(billing?.nextPaymentDate),
+                    value: _formatDate(billing.nextPaymentDate),
                     icon: Icons.event,
                   ),
                 ),
@@ -468,10 +478,23 @@ class _ParentBillingPageState extends State<ParentBillingPage>
 
   Widget _buildSubscriptionInfo(ParentService service) {
     final BillingSummary? billing = service.billingSummary;
-    final List<PaymentHistory> payments = billing?.recentPayments ?? <PaymentHistory>[];
+    if (billing == null) {
+      return SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: _buildBillingUnavailableCard(
+          title: _tParentBilling(context, 'Billing plan unavailable'),
+          body: _tParentBilling(
+            context,
+            'Billing details will appear once your site or HQ team provisions an active family billing account.',
+          ),
+          icon: Icons.account_balance_wallet_outlined,
+        ),
+      );
+    }
+    final List<PaymentHistory> payments = billing.recentPayments;
     final String planName =
-        (billing?.subscriptionPlan.trim().isNotEmpty ?? false)
-            ? billing!.subscriptionPlan.toUpperCase()
+      billing.subscriptionPlan.trim().isNotEmpty
+        ? billing.subscriptionPlan.toUpperCase()
         : _tParentBilling(context, 'STANDARD PLAN');
     final String learnerLabel = _selectedLearnerName(service);
     final String paymentMethod =
@@ -530,7 +553,7 @@ class _ParentBillingPageState extends State<ParentBillingPage>
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  '${_formatCurrency(billing?.nextPaymentAmount ?? 0)}/${_tParentBilling(context, 'month')}',
+                  '${_formatCurrency(billing.nextPaymentAmount)}/${_tParentBilling(context, 'month')}',
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -693,6 +716,51 @@ class _ParentBillingPageState extends State<ParentBillingPage>
 
   String _formatCurrency(double amount) {
     return '\$${amount.toStringAsFixed(2)}';
+  }
+
+  Widget _buildBillingUnavailableCard({
+    required String title,
+    required String body,
+    required IconData icon,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: ScholesaColors.parent.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(icon, color: ScholesaColors.parent),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              body,
+              style: TextStyle(color: Colors.grey[700], height: 1.4),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   String _formatDate(DateTime? value) {

@@ -300,35 +300,34 @@ class ParentService extends ChangeNotifier {
       final Map<String, dynamic>? payload = _asStringDynamicMap(result.data);
       final Map<String, dynamic>? summary =
           _asStringDynamicMap(payload?['summary']);
-      if (summary != null) {
-        final List<dynamic> paymentsRaw =
-            summary['recentPayments'] as List<dynamic>? ?? <dynamic>[];
-        final List<PaymentHistory> payments = paymentsRaw
-            .map(_asStringDynamicMap)
-            .whereType<Map<String, dynamic>>()
-            .map((Map<String, dynamic> payData) => PaymentHistory(
-                  id: _asTrimmedString(payData['id']),
-                  amount: _toDouble(payData['amount']) ?? 0.0,
-                  date: _parseTimestamp(payData['date']) ?? DateTime.now(),
-                  status: _asTrimmedString(payData['status']).isEmpty
-                      ? 'unknown'
-                      : _asTrimmedString(payData['status']),
-                  description: _asTrimmedString(payData['description']),
-                ))
-            .toList();
-
-        _billingSummary = BillingSummary(
-          currentBalance: _toDouble(summary['currentBalance']) ?? 0.0,
-          nextPaymentAmount: _toDouble(summary['nextPaymentAmount']) ?? 0.0,
-          nextPaymentDate: _parseTimestamp(summary['nextPaymentDate']),
-          subscriptionPlan:
-              _asTrimmedString(summary['subscriptionPlan']).isEmpty
-                  ? 'Basic'
-                  : _asTrimmedString(summary['subscriptionPlan']),
-          recentPayments: payments,
-        );
+      if (summary == null) {
+        _billingSummary = null;
         return;
       }
+      final List<dynamic> paymentsRaw =
+          summary['recentPayments'] as List<dynamic>? ?? <dynamic>[];
+      final List<PaymentHistory> payments = paymentsRaw
+          .map(_asStringDynamicMap)
+          .whereType<Map<String, dynamic>>()
+          .map((Map<String, dynamic> payData) => PaymentHistory(
+                id: _asTrimmedString(payData['id']),
+                amount: _toDouble(payData['amount']) ?? 0.0,
+                date: _parseTimestamp(payData['date']) ?? DateTime.now(),
+                status: _asTrimmedString(payData['status']).isEmpty
+                    ? 'unknown'
+                    : _asTrimmedString(payData['status']),
+                description: _asTrimmedString(payData['description']),
+              ))
+          .toList();
+
+      _billingSummary = BillingSummary(
+        currentBalance: _toDouble(summary['currentBalance']) ?? 0.0,
+        nextPaymentAmount: _toDouble(summary['nextPaymentAmount']) ?? 0.0,
+        nextPaymentDate: _parseTimestamp(summary['nextPaymentDate']),
+        subscriptionPlan: _asTrimmedString(summary['subscriptionPlan']),
+        recentPayments: payments,
+      );
+      return;
     } catch (error) {
       if (!_isMissingFirebaseAppError(error)) {
         debugPrint('Parent billing callable request failed: $error');

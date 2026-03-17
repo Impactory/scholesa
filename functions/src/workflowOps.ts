@@ -4744,13 +4744,19 @@ export const getParentBillingSummary = onCall(async (request: CallableRequest) =
     })
     .slice(0, 10);
 
+  if (!accountSnap.exists && recentPayments.length === 0) {
+    return {
+      summary: null,
+    };
+  }
+
   return {
     summary: {
       parentId: targetParentId,
       currentBalance: asNumber(accountData?.currentBalance) ?? 0,
       nextPaymentAmount: asNumber(accountData?.nextPaymentAmount) ?? 0,
       nextPaymentDate: toIsoString(accountData?.nextPaymentDate),
-      subscriptionPlan: asTrimmedString(accountData?.subscriptionPlan) || 'Basic',
+      subscriptionPlan: asTrimmedString(accountData?.subscriptionPlan),
       recentPayments,
     },
   };

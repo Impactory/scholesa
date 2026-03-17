@@ -8,6 +8,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
 import 'package:scholesa_app/auth/app_state.dart';
+import 'package:scholesa_app/modules/parent/parent_billing_page.dart';
 import 'package:scholesa_app/modules/parent/parent_portfolio_page.dart';
 import 'package:scholesa_app/modules/parent/parent_schedule_page.dart';
 import 'package:scholesa_app/modules/parent/parent_service.dart';
@@ -226,6 +227,25 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Sharing...'), findsOneWidget);
+    });
+
+    testWidgets('billing page shows explicit unavailable state when no billing data exists',
+        (WidgetTester tester) async {
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+      await _seedParentData(firestore);
+
+      await _pumpPage(
+        tester,
+        firestore: firestore,
+        home: const ParentBillingPage(),
+      );
+
+      expect(find.text('No billing data yet'), findsOneWidget);
+      await tester.tap(find.text('Plan'));
+      await tester.pumpAndSettle();
+      expect(find.text('Billing plan unavailable'), findsOneWidget);
+      expect(find.text('All paid'), findsNothing);
+      expect(find.text('Active'), findsNothing);
     });
   });
 }
