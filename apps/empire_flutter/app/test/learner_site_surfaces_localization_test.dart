@@ -735,7 +735,7 @@ void main() {
       expect(find.text('徽章'), findsOneWidget);
     });
 
-    testWidgets('learner portfolio shows explicit unavailable edit and share messaging',
+    testWidgets('learner portfolio shows explicit unavailable edit messaging',
         (WidgetTester tester) async {
       final Locale locale = const Locale('en');
       final AppState appState = _buildAppState(
@@ -765,9 +765,32 @@ void main() {
         find.text('Portfolio profile editing is not available in the app yet'),
         findsOneWidget,
       );
+    });
 
-      await tester.tap(find.text('Share').first);
+    testWidgets('learner portfolio shows explicit unavailable share messaging',
+        (WidgetTester tester) async {
+      final Locale locale = const Locale('en');
+      final AppState appState = _buildAppState(
+        role: UserRole.learner,
+        locale: locale,
+      );
+
+      await tester.binding.setSurfaceSize(const Size(1280, 1800));
+      await tester.pumpWidget(
+        _buildHarness(
+          locale: locale,
+          child: const LearnerPortfolioPage(),
+          providers: <SingleChildWidget>[
+            ChangeNotifierProvider<AppState>.value(value: appState),
+            Provider<dynamic>.value(value: null),
+          ],
+        ),
+      );
       await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+      expect(find.text('Share Portfolio'), findsOneWidget);
       await tester.tap(find.text('Generate Link').last);
       await tester.pumpAndSettle();
 

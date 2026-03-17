@@ -124,7 +124,7 @@ void main() {
     await tester.tap(find.text('Edit').first);
     await tester.pumpAndSettle();
 
-    await tester.enterText(find.byType(TextField), 'Ava Innovator');
+    await tester.enterText(find.byType(TextField).last, 'Ava Innovator');
     await tester.tap(find.text('Save').last);
     await tester.pumpAndSettle();
 
