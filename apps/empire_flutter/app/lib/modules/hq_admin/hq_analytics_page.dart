@@ -1222,7 +1222,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
       builder: (BuildContext dialogContext) => AlertDialog(
         title: Text(_t('Export HQ Analytics')),
         content: Text(
-          _t('Generate and export the current HQ analytics summary for cross-site review.'),
+          '${_t('Generate and export the current HQ analytics summary for cross-site review.')}\n\n${_t('HQ analytics exports are not available in the app yet.')}',
         ),
         actions: <Widget>[
           TextButton(
@@ -1230,7 +1230,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
                 metadata: const <String, dynamic>{
-                  'cta': 'hq_analytics_cancel_export',
+                  'cta': 'hq_analytics_close_export_notice',
                   'surface': 'export_report_dialog',
                 },
               );
@@ -1243,34 +1243,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
               );
               Navigator.pop(dialogContext);
             },
-            child: Text(_t('Cancel')),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              TelemetryService.instance.logEvent(
-                event: 'cta.clicked',
-                metadata: const <String, dynamic>{
-                  'cta': 'hq_analytics_confirm_export',
-                  'surface': 'export_report_dialog',
-                },
-              );
-              TelemetryService.instance.logEvent(
-                event: 'popup.completed',
-                metadata: const <String, dynamic>{
-                  'popup_id': 'hq_analytics_export_report',
-                  'surface': 'export_report_dialog',
-                  'completion_action': 'export',
-                },
-              );
-              Navigator.pop(dialogContext);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(_t('HQ analytics report prepared for export')),
-                  backgroundColor: ScholesaColors.hq,
-                ),
-              );
-            },
-            child: Text(_t('Export')),
+            child: Text(_t('Close')),
           ),
         ],
       ),

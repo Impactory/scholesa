@@ -886,7 +886,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
       builder: (BuildContext dialogContext) => AlertDialog(
         title: Text(_t('Export Site Report')),
         content: Text(
-          '${_t('Generate a')} $_selectedPeriod ${_t('summary report for this site dashboard.')}',
+          '${_t('Generate a')} $_selectedPeriod ${_t('summary report for this site dashboard.')}\n\n${_t('Site report exports are not generated in the app yet. Requests are recorded for follow-up.')}',
         ),
         actions: <Widget>[
           TextButton(
@@ -914,7 +914,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
                 metadata: <String, dynamic>{
-                  'cta': 'site_dashboard_generate_report',
+                  'cta': 'site_dashboard_record_export_request',
                   'period': _selectedPeriod,
                 },
               );
@@ -923,7 +923,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                 metadata: <String, dynamic>{
                   'popup_id': 'site_dashboard_export_report',
                   'surface': 'site_dashboard',
-                  'completion_action': 'generate_report',
+                  'completion_action': 'record_request',
                   'period': _selectedPeriod,
                 },
               );
@@ -931,7 +931,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
               Navigator.pop(dialogContext);
               _persistReportGeneratedEvent();
             },
-            child: Text(_t('Generate')),
+            child: Text(_t('Record Request')),
           ),
         ],
       ),
