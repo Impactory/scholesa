@@ -7,6 +7,8 @@ import '../../services/notification_service.dart';
 import '../../services/telemetry_service.dart';
 import 'message_models.dart';
 
+const String _fallbackSenderName = 'Sender unavailable';
+
 /// Service for messages and notifications
 class MessageService extends ChangeNotifier {
   MessageService({
@@ -253,7 +255,10 @@ class MessageService extends ChangeNotifier {
       final Map<String, dynamic> senderData =
           senderDoc.data() ?? <String, dynamic>{};
       final String senderName =
-          senderData['displayName'] as String? ?? 'Unknown';
+          _nonEmptyOrFallback(
+            senderData['displayName'] as String?,
+            _fallbackSenderName,
+          );
       final String senderRole =
           (senderData['role'] as String? ?? '').trim().toLowerCase();
       final List<String> senderSiteIds =
@@ -481,5 +486,10 @@ class MessageService extends ChangeNotifier {
     final int index = participantIds.indexOf(lastSenderId);
     if (index == -1 || index >= participantNames.length) return null;
     return participantNames[index];
+  }
+
+  String _nonEmptyOrFallback(String? value, String fallback) {
+    final String trimmed = (value ?? '').trim();
+    return trimmed.isEmpty ? fallback : trimmed;
   }
 }

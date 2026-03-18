@@ -11,6 +11,8 @@ enum AttendanceBatchSaveResult {
   failed,
 }
 
+const String _fallbackLearnerName = 'Learner unavailable';
+
 /// Service for attendance operations
 class AttendanceService extends ChangeNotifier {
   AttendanceService({
@@ -177,7 +179,10 @@ class AttendanceService extends ChangeNotifier {
 
           return RosterLearner(
             id: learnerId,
-            displayName: learnerData?['displayName'] as String? ?? 'Unknown',
+            displayName: _nonEmptyOrFallback(
+              learnerData?['displayName'] as String?,
+              _fallbackLearnerName,
+            ),
             photoUrl: learnerData?['photoUrl'] as String?,
             currentAttendance: currentAttendance,
           );
@@ -369,6 +374,11 @@ class AttendanceService extends ChangeNotifier {
       return fallback.trim();
     }
     return fallbackText;
+  }
+
+  String _nonEmptyOrFallback(String? value, String fallback) {
+    final String trimmed = (value ?? '').trim();
+    return trimmed.isEmpty ? fallback : trimmed;
   }
 
   Iterable<String> _asStringIterable(dynamic value) {

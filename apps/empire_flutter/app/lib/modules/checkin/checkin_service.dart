@@ -5,6 +5,8 @@ import '../../offline/sync_coordinator.dart';
 import '../../services/firestore_service.dart';
 import 'checkin_models.dart';
 
+const String _fallbackLearnerName = 'Learner unavailable';
+
 /// Service for site check-in/check-out operations - wired to Firebase
 class CheckinService extends ChangeNotifier {
   CheckinService({
@@ -111,7 +113,10 @@ class CheckinService extends ChangeNotifier {
         return CheckRecord(
           id: doc.id,
           learnerId: data['learnerId'] as String? ?? '',
-          learnerName: data['learnerName'] as String? ?? 'Unknown',
+          learnerName: _nonEmptyOrFallback(
+            data['learnerName'] as String?,
+            _fallbackLearnerName,
+          ),
           siteId: siteId,
           status: type == 'checkin'
               ? CheckStatus.checkedIn
@@ -196,7 +201,10 @@ class CheckinService extends ChangeNotifier {
 
         return LearnerDaySummary(
           learnerId: doc.id,
-          learnerName: data['displayName'] as String? ?? 'Unknown',
+          learnerName: _nonEmptyOrFallback(
+            data['displayName'] as String?,
+            _fallbackLearnerName,
+          ),
           currentStatus: currentStatus,
           checkedInAt: latestCheckin?.timestamp,
           checkedInBy: latestCheckin?.visitorName,
@@ -224,6 +232,11 @@ class CheckinService extends ChangeNotifier {
     if (value is Timestamp) return value.toDate();
     if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
     return null;
+  }
+
+  String _nonEmptyOrFallback(String? value, String fallback) {
+    final String trimmed = (value ?? '').trim();
+    return trimmed.isEmpty ? fallback : trimmed;
   }
 
   /// Check in a learner
