@@ -461,59 +461,65 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
             const SizedBox(height: 16),
             Text(item.description, style: const TextStyle(fontSize: 15)),
             const SizedBox(height: 24),
-            Row(
-              children: <Widget>[
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () async {
-                      TelemetryService.instance.logEvent(
-                        event: 'cta.clicked',
-                        metadata: <String, dynamic>{
-                          'cta': 'parent_portfolio_share_item',
-                          'item_id': item.id
-                        },
-                      );
-                      Navigator.pop(context);
-                      await _requestPortfolioSupport(
-                        rootContext,
-                        item: item,
-                        requestType: 'share',
-                      );
-                    },
-                    icon: const Icon(Icons.share_rounded),
-                    label: Text(_t('Request Share')),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      TelemetryService.instance.logEvent(
-                        event: 'cta.clicked',
-                        metadata: <String, dynamic>{
-                          'cta': 'parent_portfolio_download_item',
-                          'item_id': item.id
-                        },
-                      );
-                      Navigator.pop(context);
-                      await _requestPortfolioSupport(
-                        rootContext,
-                        item: item,
-                        requestType: 'download',
-                      );
-                    },
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        const Icon(Icons.download_rounded),
-                        const SizedBox(width: 8),
-                        Text(_t('Download Summary')),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+            LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints constraints) {
+                final Widget shareButton = OutlinedButton.icon(
+                  onPressed: () async {
+                    TelemetryService.instance.logEvent(
+                      event: 'cta.clicked',
+                      metadata: <String, dynamic>{
+                        'cta': 'parent_portfolio_share_item',
+                        'item_id': item.id,
+                      },
+                    );
+                    Navigator.pop(context);
+                    await _requestPortfolioSupport(
+                      rootContext,
+                      item: item,
+                      requestType: 'share',
+                    );
+                  },
+                  icon: const Icon(Icons.share_rounded),
+                  label: Text(_t('Request Share')),
+                );
+                final Widget downloadButton = ElevatedButton.icon(
+                  onPressed: () async {
+                    TelemetryService.instance.logEvent(
+                      event: 'cta.clicked',
+                      metadata: <String, dynamic>{
+                        'cta': 'parent_portfolio_download_item',
+                        'item_id': item.id,
+                      },
+                    );
+                    Navigator.pop(context);
+                    await _requestPortfolioSupport(
+                      rootContext,
+                      item: item,
+                      requestType: 'download',
+                    );
+                  },
+                  icon: const Icon(Icons.download_rounded),
+                  label: Text(_t('Download Summary')),
+                );
+
+                if (constraints.maxWidth < 560) {
+                  return Column(
+                    children: <Widget>[
+                      SizedBox(width: double.infinity, child: shareButton),
+                      const SizedBox(height: 12),
+                      SizedBox(width: double.infinity, child: downloadButton),
+                    ],
+                  );
+                }
+
+                return Row(
+                  children: <Widget>[
+                    Expanded(child: shareButton),
+                    const SizedBox(width: 12),
+                    Expanded(child: downloadButton),
+                  ],
+                );
+              },
             ),
           ],
         ),

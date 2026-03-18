@@ -165,7 +165,7 @@ void main() {
 
     await tester.ensureVisible(find.text('Export practice plan'));
     await tester.tap(find.text('Export practice plan'));
-    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pumpAndSettle();
 
     expect(find.text('Practice plan downloaded.'), findsOneWidget);
     expect(savedFileName, 'practice-plan-learner-1-core.txt');

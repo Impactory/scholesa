@@ -272,21 +272,23 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-        Text(_tHqSafety(bottomSheetContext, incident.title),
+            Text(_tHqSafety(bottomSheetContext, incident.title),
                 style:
                     const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
-        _buildDetailRow(_tHqSafety(bottomSheetContext, 'Site'),
-          _tHqSafety(bottomSheetContext, incident.site)),
-        _buildDetailRow(_tHqSafety(bottomSheetContext, 'Severity'),
-          _tHqSafety(bottomSheetContext, incident.severity.name).toUpperCase()),
-        _buildDetailRow(_tHqSafety(bottomSheetContext, 'Reported'),
+            _buildDetailRow(_tHqSafety(bottomSheetContext, 'Site'),
+                _tHqSafety(bottomSheetContext, incident.site)),
+            _buildDetailRow(
+                _tHqSafety(bottomSheetContext, 'Severity'),
+                _tHqSafety(bottomSheetContext, incident.severity.name)
+                    .toUpperCase()),
+            _buildDetailRow(_tHqSafety(bottomSheetContext, 'Reported'),
                 _formatTime(incident.reportedAt)),
             _buildDetailRow(
-          _tHqSafety(bottomSheetContext, 'Escalated'),
+                _tHqSafety(bottomSheetContext, 'Escalated'),
                 incident.isEscalated
-            ? _tHqSafety(bottomSheetContext, 'Yes')
-            : _tHqSafety(bottomSheetContext, 'No')),
+                    ? _tHqSafety(bottomSheetContext, 'Yes')
+                    : _tHqSafety(bottomSheetContext, 'No')),
             const SizedBox(height: 24),
             Container(
               width: double.infinity,
@@ -464,7 +466,7 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
                     ? (data['siteName'] as String).trim()
                     : (data['siteId'] as String?)?.trim().isNotEmpty == true
                         ? (data['siteId'] as String).trim()
-                  : _tHqSafety(context, 'Site unavailable');
+                        : _tHqSafety(context, 'Site unavailable');
             final String status =
                 ((data['status'] as String?) ?? '').toLowerCase();
             final bool escalated = (data['isEscalated'] as bool?) ??
