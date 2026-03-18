@@ -411,13 +411,41 @@ class _UserAdminPageState extends State<UserAdminPage>
   Widget _buildAuditLog() {
     return Consumer<UserAdminService>(
       builder: (BuildContext context, UserAdminService service, _) {
-        if (service.auditLogs.isEmpty) {
+        if (!service.hasLoadedAuditLogs && !service.isLoadingAuditLogs) {
           // Load audit logs when tab is viewed
           WidgetsBinding.instance.addPostFrameCallback((_) {
             service.loadAuditLogs();
           });
           return const Center(
             child: CircularProgressIndicator(color: ScholesaColors.hq),
+          );
+        }
+
+        if (service.isLoadingAuditLogs && service.auditLogs.isEmpty) {
+          return const Center(
+            child: CircularProgressIndicator(color: ScholesaColors.hq),
+          );
+        }
+
+        if (service.auditLogError != null && service.auditLogs.isEmpty) {
+          return _buildEmptyState(
+            icon: Icons.error_outline,
+            title: _tUserAdmin(context, 'Unable to load audit logs right now'),
+            subtitle: _tUserAdmin(
+              context,
+              'Try again in a moment or refresh after your connection stabilizes.',
+            ),
+          );
+        }
+
+        if (service.auditLogs.isEmpty) {
+          return _buildEmptyState(
+            icon: Icons.history_toggle_off,
+            title: _tUserAdmin(context, 'No audit logs found'),
+            subtitle: _tUserAdmin(
+              context,
+              'Audit activity will appear here after user administration actions are recorded.',
+            ),
           );
         }
 

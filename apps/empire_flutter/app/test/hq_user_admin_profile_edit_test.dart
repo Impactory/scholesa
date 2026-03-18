@@ -18,6 +18,9 @@ class _FakeUserAdminService extends UserAdminService {
   _FakeUserAdminService({
     List<UserModel>? users,
     List<AuditLogEntry>? auditLogs,
+    this.hasLoadedAuditLogs = true,
+    this.isLoadingAuditLogs = false,
+    this.auditLogError,
   })  : _fakeAuditLogs =
             List<AuditLogEntry>.from(auditLogs ?? const <AuditLogEntry>[]),
         _fakeUsers = List<UserModel>.from(
@@ -44,6 +47,13 @@ class _FakeUserAdminService extends UserAdminService {
   bool loadUsersCalled = false;
   String? lastUpdatedUserId;
   String? lastUpdatedDisplayName;
+  int loadAuditLogsCallCount = 0;
+  @override
+  final String? auditLogError;
+  @override
+  final bool hasLoadedAuditLogs;
+  @override
+  final bool isLoadingAuditLogs;
 
   final List<UserModel> _fakeUsers;
   final List<AuditLogEntry> _fakeAuditLogs;
@@ -79,6 +89,9 @@ class _FakeUserAdminService extends UserAdminService {
 
   @override
   Future<void> loadAuditLogs({String? userId}) async {}
+  Future<void> loadAuditLogs({String? userId}) async {
+    loadAuditLogsCallCount += 1;
+  }
 
   @override
   Future<bool> updateUserDisplayName(String userId, String displayName) async {
@@ -243,5 +256,35 @@ void main() {
     expect(find.text('by Actor unavailable'), findsOneWidget);
     expect(find.text('Unknown'), findsNothing);
     expect(find.text('by null'), findsNothing);
+  });
+
+  testWidgets('hq user admin audit log shows honest empty state after empty load completes',
+      (WidgetTester tester) async {
+    final _FakeUserAdminService service = _FakeUserAdminService(
+      auditLogs: const <AuditLogEntry>[],
+      hasLoadedAuditLogs: true,
+    );
+
+    await tester.binding.setSurfaceSize(const Size(1440, 2000));
+    await tester.pumpWidget(
+      _buildHarness(
+        providers: <SingleChildWidget>[
+          ChangeNotifierProvider<UserAdminService>.value(value: service),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Audit Log'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('No audit logs found'), findsOneWidget);
+    expect(
+      find.text(
+        'Audit activity will appear here after user administration actions are recorded.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.byType(CircularProgressIndicator), findsNothing);
   });
 }

@@ -326,6 +326,11 @@ class WorkflowSurfaceI18n {
     'Actor unavailable': '操作者信息不可用',
     'Mission unavailable': '任务不可用',
     'No audit logs found': '未找到审计日志',
+    'Unable to load audit logs right now': '目前无法加载审计日志',
+    'Try again in a moment or refresh after your connection stabilizes.':
+        '请稍后重试，或在网络稳定后刷新。',
+    'Audit activity will appear here after user administration actions are recorded.':
+        '用户管理操作记录后，审计活动会显示在这里。',
     'Red Team Reviews': '红队审查',
     'Create Review': '创建审查',
     'No red team reviews yet': '暂无红队审查',
@@ -707,6 +712,11 @@ class WorkflowSurfaceI18n {
     'Actor unavailable': '操作者資訊不可用',
     'Mission unavailable': '任務不可用',
     'No audit logs found': '找不到稽核日誌',
+    'Unable to load audit logs right now': '目前無法載入稽核日誌',
+    'Try again in a moment or refresh after your connection stabilizes.':
+        '請稍後再試，或在連線穩定後重新整理。',
+    'Audit activity will appear here after user administration actions are recorded.':
+        '使用者管理操作記錄後，稽核活動會顯示在這裡。',
     'Red Team Reviews': '紅隊審查',
     'Create Review': '建立審查',
     'No red team reviews yet': '尚無紅隊審查',

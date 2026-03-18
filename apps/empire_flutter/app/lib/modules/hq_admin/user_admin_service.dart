@@ -18,7 +18,10 @@ class UserAdminService extends ChangeNotifier {
   List<SiteModel> _sites = <SiteModel>[];
   List<AuditLogEntry> _auditLogs = <AuditLogEntry>[];
   bool _isLoading = false;
+  bool _isLoadingAuditLogs = false;
+  bool _hasLoadedAuditLogs = false;
   String? _error;
+  String? _auditLogError;
 
   // Filters
   UserRole? _roleFilter;
@@ -31,7 +34,10 @@ class UserAdminService extends ChangeNotifier {
   List<SiteModel> get sites => _sites;
   List<AuditLogEntry> get auditLogs => _auditLogs;
   bool get isLoading => _isLoading;
+  bool get isLoadingAuditLogs => _isLoadingAuditLogs;
+  bool get hasLoadedAuditLogs => _hasLoadedAuditLogs;
   String? get error => _error;
+  String? get auditLogError => _auditLogError;
   UserRole? get roleFilter => _roleFilter;
   UserStatus? get statusFilter => _statusFilter;
   String? get siteFilter => _siteFilter;
@@ -213,6 +219,10 @@ class UserAdminService extends ChangeNotifier {
 
   /// Load audit logs from Firebase
   Future<void> loadAuditLogs({String? userId}) async {
+    _isLoadingAuditLogs = true;
+    _auditLogError = null;
+    notifyListeners();
+
     try {
       Query<Map<String, dynamic>> query = _firestore
           .collection('auditLogs')
@@ -228,28 +238,31 @@ class UserAdminService extends ChangeNotifier {
       _auditLogs =
           snapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
         final Map<String, dynamic> data = doc.data();
-          final String? rawAction = (data['action'] as String?)?.trim();
-          final String? rawEntityType = (data['entityType'] as String?)?.trim();
+        final String? rawAction = (data['action'] as String?)?.trim();
+        final String? rawEntityType = (data['entityType'] as String?)?.trim();
         return AuditLogEntry(
           id: doc.id,
           actorId: data['actorId'] as String? ?? '',
           actorEmail: data['actorEmail'] as String?,
-            action: rawAction == null || rawAction.isEmpty
-                ? 'audit_action_unavailable'
-                : rawAction,
-            entityType: rawEntityType == null || rawEntityType.isEmpty
-                ? 'unavailable'
-                : rawEntityType,
+          action: rawAction == null || rawAction.isEmpty
+              ? 'audit_action_unavailable'
+              : rawAction,
+          entityType: rawEntityType == null || rawEntityType.isEmpty
+              ? 'unavailable'
+              : rawEntityType,
           entityId: data['entityId'] as String? ?? '',
           siteId: data['siteId'] as String?,
           details: data['details'] as Map<String, dynamic>?,
           timestamp: _parseTimestamp(data['timestamp']) ?? DateTime.now(),
         );
       }).toList();
-
-      notifyListeners();
     } catch (e) {
       debugPrint('Failed to load audit logs: $e');
+      _auditLogError = 'Unable to load audit logs right now';
+    } finally {
+      _isLoadingAuditLogs = false;
+      _hasLoadedAuditLogs = true;
+      notifyListeners();
     }
   }
 
