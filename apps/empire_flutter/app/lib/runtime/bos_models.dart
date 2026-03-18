@@ -141,9 +141,9 @@ class XHat {
 @immutable
 class CovarianceSummary {
   const CovarianceSummary({
-    this.diag = const <double>[0.25, 0.25, 0.25],
-    this.trace = 0.75,
-    this.confidence = 0.25,
+    this.diag = const <double>[1.0, 1.0, 1.0],
+    this.trace = 3.0,
+    this.confidence = 0.0,
   });
 
   /// Diagonal elements of P matrix

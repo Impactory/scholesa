@@ -96,6 +96,40 @@ void main() {
       );
     });
 
+    testWidgets('Login page - shared device recent accounts',
+        (WidgetTester tester) async {
+      await _pumpSized(
+        tester,
+        size: const Size(390, 844),
+        child: _buildLoginPageHarness(
+          recentLoginStore: _GoldenRecentLoginStore(
+            <RecentLoginAccount>[
+              RecentLoginAccount(
+                userId: 'parent-1',
+                email: 'family@example.com',
+                displayName: 'Family Account',
+                provider: RecentLoginProvider.email,
+                lastUsedAt: DateTime(2026, 3, 17, 9),
+              ),
+              RecentLoginAccount(
+                userId: 'parent-2',
+                email: 'guardian@example.com',
+                displayName: 'Guardian Account',
+                provider: RecentLoginProvider.google,
+                lastUsedAt: DateTime(2026, 3, 17, 10),
+              ),
+            ],
+            activeUserId: 'parent-2',
+          ),
+        ),
+      );
+
+      await expectLater(
+        find.byType(LoginPage),
+        matchesGoldenFile('goldens/login_recent_accounts_mobile.png'),
+      );
+    });
+
     testWidgets('Login page - validation error state',
         (WidgetTester tester) async {
       await _pumpSized(
@@ -226,15 +260,18 @@ AppState _buildStateForRole(UserRole role) {
   return appState;
 }
 
-Widget _buildLoginPageHarness({AuthService? authService}) {
+Widget _buildLoginPageHarness({
+  AuthService? authService,
+  RecentLoginStore? recentLoginStore,
+}) {
   return MultiProvider(
     providers: <SingleChildWidget>[
       Provider<AuthService>.value(
         value: authService ?? _PendingAuthService(),
       ),
       ChangeNotifierProvider<AppState>(create: (_) => AppState()),
-      ChangeNotifierProvider<RecentLoginStore>(
-        create: (_) => RecentLoginStore(),
+      ChangeNotifierProvider<RecentLoginStore>.value(
+        value: recentLoginStore ?? RecentLoginStore(),
       ),
     ],
     child: const LoginPage(),
@@ -251,6 +288,22 @@ MessageService _buildMessageService(String userId) {
 class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
 class _MockFirestoreService extends Mock implements FirestoreService {}
+
+class _GoldenRecentLoginStore extends RecentLoginStore {
+  _GoldenRecentLoginStore(
+    this._accounts, {
+    this.activeUserId,
+  });
+
+  final List<RecentLoginAccount> _accounts;
+
+  @override
+  final String? activeUserId;
+
+  @override
+  List<RecentLoginAccount> get recentAccounts =>
+      List<RecentLoginAccount>.unmodifiable(_accounts);
+}
 
 class _PendingAuthService extends AuthService {
   _PendingAuthService()

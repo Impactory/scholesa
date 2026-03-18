@@ -33,11 +33,12 @@ void main() {
   });
 
   group('CovarianceSummary', () {
-    test('default confidence is 0.25', () {
+    test('default posture resets to zero confidence', () {
       const CovarianceSummary p = CovarianceSummary();
-      expect(p.confidence, 0.25);
-      expect(p.trace, 0.75);
+      expect(p.confidence, 0.0);
+      expect(p.trace, 3.0);
       expect(p.diag.length, 3);
+      expect(p.diag, const <double>[1.0, 1.0, 1.0]);
     });
 
     test('toMap / fromMap round-trip', () {
