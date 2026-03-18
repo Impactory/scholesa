@@ -127,27 +127,6 @@ AppState _buildSiteState() {
   return state;
 }
 
-Map<String, dynamic> _runtimePackageRow() {
-  return <String, dynamic>{
-    'packageId': 'fl_pkg_1',
-    'deliveryRecordId': 'fl_delivery_1',
-    'experimentId': 'fl_exp_1',
-    'candidateModelPackageId': 'fl_pkg_1',
-    'siteId': 'site-1',
-    'runtimeTarget': 'flutter_mobile',
-    'packageDigest': 'sha256:pkg-1',
-    'manifestDigest': 'sha256:manifest-1',
-    'resolutionStatus': 'resolved',
-    'modelVersion': 'fl_runtime_model_v1',
-    'runtimeVectorLength': 8,
-    'runtimeVector': const <double>[0.1, 0.2, 0.3, 0.4],
-    'runtimeVectorDigest': 'sha256:runtime-digest-1',
-    'rolloutStatus': 'distributed',
-    'rolloutControlMode': 'monitor',
-    'resolvedAt': Timestamp.fromDate(DateTime(2026, 3, 17, 9)),
-  };
-}
-
 Map<String, dynamic> _runtimeDeliveryRow() {
   return <String, dynamic>{
     'id': 'fl_delivery_1',
@@ -243,7 +222,7 @@ void main() {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     final _SequencedRuntimeWorkflowBridgeService workflowBridge =
         _SequencedRuntimeWorkflowBridgeService(
-      snapshots: const <_RuntimeLoadSnapshot>[
+      snapshots: <_RuntimeLoadSnapshot>[
         _RuntimeLoadSnapshot(error: StateError('runtime rollout unavailable')),
       ],
     );
