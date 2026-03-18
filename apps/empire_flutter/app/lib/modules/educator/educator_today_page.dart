@@ -466,23 +466,39 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
             ),
           ),
           const SizedBox(height: 8),
-          Row(
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Icon(Icons.location_on,
-                  size: 16, color: Colors.white.withValues(alpha: 0.8)),
-              const SizedBox(width: 4),
-              Text(
-                currentClass.location ??
-                    _tEducatorToday(context, 'No location'),
-                style: TextStyle(color: Colors.white.withValues(alpha: 0.8)),
+              Row(
+                children: <Widget>[
+                  Icon(Icons.location_on,
+                      size: 16, color: Colors.white.withValues(alpha: 0.8)),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      currentClass.location ??
+                          _tEducatorToday(context, 'No location'),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style:
+                          TextStyle(color: Colors.white.withValues(alpha: 0.8)),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 16),
-              Icon(Icons.people,
-                  size: 16, color: Colors.white.withValues(alpha: 0.8)),
-              const SizedBox(width: 4),
-              Text(
-                '${currentClass.presentCount}/${currentClass.enrolledCount} ${_tEducatorToday(context, 'present')}',
-                style: TextStyle(color: Colors.white.withValues(alpha: 0.8)),
+              const SizedBox(height: 6),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Icon(Icons.people,
+                      size: 16, color: Colors.white.withValues(alpha: 0.8)),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${currentClass.presentCount}/${currentClass.enrolledCount} ${_tEducatorToday(context, 'present')}',
+                    style:
+                        TextStyle(color: Colors.white.withValues(alpha: 0.8)),
+                  ),
+                ],
               ),
             ],
           ),
@@ -514,9 +530,13 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
                     children: <Widget>[
                       const Icon(Icons.how_to_reg, size: 20),
                       const SizedBox(width: 8),
-                      Text(
-                        _tEducatorToday(context, 'Manage Attendance'),
-                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      Flexible(
+                        child: Text(
+                          _tEducatorToday(context, 'Manage Attendance'),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
                       ),
                     ],
                   ),
@@ -562,25 +582,55 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
   Widget _buildScheduleHeader() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: <Widget>[
-          Text(
-            _tEducatorToday(context, 'Full Schedule'),
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          TextButton.icon(
-            onPressed: _showWeekViewSummary,
-            icon: const Icon(Icons.calendar_month, size: 18),
-            label: Text(_tEducatorToday(context, 'Week View')),
-            style: TextButton.styleFrom(
-              foregroundColor: ScholesaColors.educator,
-            ),
-          ),
-        ],
+      child: LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+          final bool compact = constraints.maxWidth < 420;
+          if (compact) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  _tEducatorToday(context, 'Full Schedule'),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                TextButton.icon(
+                  onPressed: _showWeekViewSummary,
+                  icon: const Icon(Icons.calendar_month, size: 18),
+                  label: Text(_tEducatorToday(context, 'Week View')),
+                  style: TextButton.styleFrom(
+                    foregroundColor: ScholesaColors.educator,
+                    padding: EdgeInsets.zero,
+                  ),
+                ),
+              ],
+            );
+          }
+
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              Text(
+                _tEducatorToday(context, 'Full Schedule'),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              TextButton.icon(
+                onPressed: _showWeekViewSummary,
+                icon: const Icon(Icons.calendar_month, size: 18),
+                label: Text(_tEducatorToday(context, 'Week View')),
+                style: TextButton.styleFrom(
+                  foregroundColor: ScholesaColors.educator,
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -1034,33 +1084,47 @@ class _ClassCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Row(
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
-                        Icon(Icons.location_on,
-                            size: 14,
-                            color: context.schTextSecondary
-                                .withValues(alpha: 0.74)),
-                        const SizedBox(width: 4),
-                        Text(
-                          todayClass.location ??
-                              _tEducatorToday(context, 'No location'),
-                          style: TextStyle(
-                              color: context.schTextSecondary
-                                  .withValues(alpha: 0.88),
-                              fontSize: 12),
+                        Row(
+                          children: <Widget>[
+                            Icon(Icons.location_on,
+                                size: 14,
+                                color: context.schTextSecondary
+                                    .withValues(alpha: 0.74)),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                todayClass.location ??
+                                    _tEducatorToday(context, 'No location'),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                    color: context.schTextSecondary
+                                        .withValues(alpha: 0.88),
+                                    fontSize: 12),
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 12),
-                        Icon(Icons.people,
-                            size: 14,
-                            color: context.schTextSecondary
-                                .withValues(alpha: 0.74)),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${todayClass.enrolledCount}',
-                          style: TextStyle(
-                              color: context.schTextSecondary
-                                  .withValues(alpha: 0.88),
-                              fontSize: 12),
+                        const SizedBox(height: 4),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: <Widget>[
+                            Icon(Icons.people,
+                                size: 14,
+                                color: context.schTextSecondary
+                                    .withValues(alpha: 0.74)),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${todayClass.enrolledCount}',
+                              style: TextStyle(
+                                  color: context.schTextSecondary
+                                      .withValues(alpha: 0.88),
+                                  fontSize: 12),
+                            ),
+                          ],
                         ),
                       ],
                     ),

@@ -11,6 +11,7 @@ import 'package:scholesa_app/modules/educator/educator_models.dart';
 import 'package:scholesa_app/modules/educator/educator_service.dart';
 import 'package:scholesa_app/modules/educator/educator_today_page.dart';
 import 'package:scholesa_app/modules/messages/message_service.dart';
+import 'package:scholesa_app/runtime/bos_class_insights_card.dart';
 import 'package:scholesa_app/modules/site/site_dashboard_page.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
 import 'package:scholesa_app/ui/theme/scholesa_theme.dart';
@@ -288,8 +289,7 @@ void main() {
       expect(find.text('Avery Chen'), findsWidgets);
     });
 
-    testWidgets(
-        'educator today class insights uses learner unavailable when identity is missing',
+    testWidgets('educator today page renders on mobile without overflow',
         (WidgetTester tester) async {
       final _MockEducatorService educatorService = _MockEducatorService();
       final AppState appState = AppState()
@@ -307,6 +307,7 @@ void main() {
         id: 'occ-1',
         sessionId: 'session-1',
         title: 'Future Skills Studio',
+        location: 'Room A - Robotics Wing',
         startTime: DateTime(2026, 3, 13, 9),
         endTime: DateTime(2026, 3, 13, 10),
         enrolledCount: 12,
@@ -315,9 +316,9 @@ void main() {
       );
       final List<EducatorLearner> learners = <EducatorLearner>[
         const EducatorLearner(
-          id: 'anon-7f9c',
-          name: ' ',
-          email: 'anon@scholesa.test',
+          id: 'learner-1',
+          name: 'Avery Chen',
+          email: 'avery@scholesa.test',
           attendanceRate: 92,
           missionsCompleted: 7,
           pillarProgress: <String, double>{},
@@ -371,7 +372,7 @@ void main() {
                 },
                 'learners': <Map<String, dynamic>>[
                   <String, dynamic>{
-                    'learnerId': 'anon-7f9c',
+                    'learnerId': 'learner-1',
                     'x_hat': <String, double>{
                       'cognition': 0.32,
                       'engagement': 0.41,
@@ -385,17 +386,69 @@ void main() {
         ),
       );
       await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Future Skills Studio'), findsWidgets);
+      expect(find.text('Manage Attendance'), findsOneWidget);
+      expect(find.text('Full Schedule'), findsOneWidget);
+      expect(find.text('Week View'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets(
+        'class insights uses learner unavailable when identity is missing',
+        (WidgetTester tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: _testTheme,
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: BosClassInsightsCard(
+                title: 'MiloOS Class Insights',
+                subtitle:
+                    'FDM state estimate, BAE watchlist, and active MVL gates for this class',
+                emptyLabel: 'No class insights yet',
+                sessionOccurrenceId: 'occ-1',
+                siteId: 'site-1',
+                learnerNamesById: const <String, String>{},
+                insightsLoader: ({
+                  required String sessionOccurrenceId,
+                  required String siteId,
+                }) async =>
+                    <String, dynamic>{
+                  'sessionOccurrenceId': sessionOccurrenceId,
+                  'siteId': siteId,
+                  'learnerCount': 1,
+                  'activeMvlCount': 0,
+                  'averages': <String, double>{
+                    'cognition': 0.41,
+                    'engagement': 0.52,
+                    'integrity': 0.63,
+                  },
+                  'learners': <Map<String, dynamic>>[
+                    <String, dynamic>{
+                      'learnerId': 'anon-7f9c',
+                      'x_hat': <String, double>{
+                        'cognition': 0.32,
+                        'engagement': 0.41,
+                        'integrity': 0.62,
+                      },
+                    },
+                  ],
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
       await tester.pumpAndSettle();
 
       expect(find.textContaining('Learner unavailable'), findsOneWidget);
       expect(find.text('Learner 7f9c'), findsNothing);
-
-      await tester.scrollUntilVisible(
-        find.text('View Watchlist'),
-        200,
-        scrollable: find.byType(Scrollable).first,
-      );
       await tester.tap(find.text('View Watchlist'));
       await tester.pumpAndSettle();
 
