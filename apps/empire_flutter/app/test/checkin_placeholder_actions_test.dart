@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -56,32 +57,77 @@ Future<void> _pumpCheckinPage(
 
 void main() {
   testWidgets(
-      'checkin QR dialog shows explicit unavailable copy without fake actions',
+      'quick pickup resolves a configured pickup code into the real checkout flow',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final DateTime now = DateTime.now();
     await firestore.collection('users').doc('learner-1').set(<String, dynamic>{
       'role': 'learner',
       'displayName': 'Ava Learner',
       'siteIds': <String>['site-1'],
     });
+    await firestore.collection('checkins').doc('checkin-1').set(
+      <String, dynamic>{
+        'siteId': 'site-1',
+        'learnerId': 'learner-1',
+        'learnerName': 'Ava Learner',
+        'type': 'checkin',
+        'timestamp': Timestamp.fromDate(now.subtract(const Duration(minutes: 5))),
+        'recordedBy': 'pickup-1',
+        'recorderName': 'Parent One',
+      },
+    );
+    await firestore.collection('pickupAuthorizations').doc('auth-1').set(
+      <String, dynamic>{
+        'siteId': 'site-1',
+        'learnerId': 'learner-1',
+        'authorizedPickup': <Map<String, dynamic>>[
+          <String, dynamic>{
+            'id': 'pickup-1',
+            'name': 'Parent One',
+            'relationship': 'Parent',
+            'phone': '+1 555 123 4567',
+            'verificationCode': 'AVA123',
+            'isPrimaryContact': true,
+          },
+        ],
+      },
+    );
 
     await _pumpCheckinPage(tester, firestore: firestore);
 
     await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
 
-    expect(find.text('Scan QR'), findsWidgets);
-    expect(
-      find.textContaining('QR scanning is not available in the app yet'),
-      findsOneWidget,
+    expect(find.text('Quick Pickup'), findsWidgets);
+    final Finder dialog = find.byType(AlertDialog);
+    await tester.enterText(
+      find.descendant(of: dialog, matching: find.byType(TextField)),
+      'AVA123',
     );
-    expect(
-      find.textContaining(
-          'Manual pickup code entry is not available in the app yet'),
-      findsOneWidget,
-    );
-    expect(find.text('Use Camera'), findsNothing);
-    expect(find.text('Enter Code'), findsNothing);
+    await tester.tap(find.descendant(of: dialog, matching: find.text('Find pickup')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Check Out'), findsWidgets);
+    expect(find.text('Ava Learner'), findsWidgets);
+    expect(find.text('Parent One'), findsWidgets);
+    final Finder confirmButton =
+        find.widgetWithText(ElevatedButton, 'Confirm Check Out');
+    expect(confirmButton, findsOneWidget);
+
+    await tester.ensureVisible(confirmButton);
+    await tester.tap(confirmButton);
+    await tester.pumpAndSettle();
+
+    final QuerySnapshot<Map<String, dynamic>> records =
+        await firestore.collection('checkins').get();
+    expect(records.docs.length, 2);
+    final Iterable<Map<String, dynamic>> checkoutRecords = records.docs
+        .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) => doc.data())
+        .where((Map<String, dynamic> data) => data['type'] == 'checkout');
+    expect(checkoutRecords, hasLength(1));
+    expect(checkoutRecords.first['learnerId'], 'learner-1');
+    expect(checkoutRecords.first['recordedBy'], 'pickup-1');
   });
 
   testWidgets('checkin page labels missing learner names as unavailable',
@@ -101,5 +147,69 @@ void main() {
     expect(find.textContaining('学习者信息不可用'), findsWidgets);
     expect(find.text('Learner unavailable'), findsNothing);
     expect(find.text('Unknown'), findsNothing);
+  });
+
+  test('checkin service loads guardian-link pickups when pickup auth docs are absent',
+      () async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final DateTime now = DateTime.now();
+    await firestore.collection('users').doc('learner-1').set(<String, dynamic>{
+      'role': 'learner',
+      'displayName': 'Ava Learner',
+      'siteIds': <String>['site-1'],
+    });
+    await firestore.collection('users').doc('parent-1').set(<String, dynamic>{
+      'role': 'parent',
+      'displayName': 'Parent One',
+      'email': 'parent1@example.com',
+      'siteIds': <String>['site-1'],
+    });
+    await firestore.collection('parentProfiles').doc('parent-1').set(
+      <String, dynamic>{
+        'siteId': 'site-1',
+        'userId': 'parent-1',
+        'displayName': 'Parent One',
+        'phone': '+1 555 000 1212',
+        'email': 'parent1@example.com',
+      },
+    );
+    await firestore.collection('guardianLinks').doc('link-1').set(
+      <String, dynamic>{
+        'siteId': 'site-1',
+        'parentId': 'parent-1',
+        'learnerId': 'learner-1',
+        'relationship': 'Parent',
+        'isPrimary': true,
+        'createdAt': Timestamp.fromDate(now),
+        'createdBy': 'site-admin-1',
+      },
+    );
+    await firestore.collection('checkins').doc('checkin-1').set(
+      <String, dynamic>{
+        'siteId': 'site-1',
+        'learnerId': 'learner-1',
+        'learnerName': 'Ava Learner',
+        'type': 'checkin',
+        'timestamp': Timestamp.fromDate(now.subtract(const Duration(minutes: 10))),
+      },
+    );
+
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final CheckinService service = CheckinService(
+      firestoreService: firestoreService,
+      siteId: 'site-1',
+    );
+
+    await service.loadTodayData();
+
+    expect(service.learnerSummaries, hasLength(1));
+    final pickup = service.learnerSummaries.first.authorizedPickups.single;
+    expect(pickup.name, 'Parent One');
+    expect(pickup.phone, '+1 555 000 1212');
+    expect(pickup.email, 'parent1@example.com');
+    expect(service.findPickupMatches('1212').single.pickup.id, 'link-1');
   });
 }

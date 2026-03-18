@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../auth/app_state.dart';
 import '../../i18n/shared_role_surface_i18n.dart';
 import '../../services/analytics_service.dart';
+import '../../services/export_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../services/workflow_bridge_service.dart';
@@ -1380,7 +1380,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
     );
   }
 
-  void _exportReport() {
+  Future<void> _exportReport() async {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
       metadata: <String, dynamic>{
@@ -1397,13 +1397,46 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
       );
       return;
     }
+    final String fileName = _analyticsExportFileName();
+    try {
+      final String? savedLocation = await ExportService.instance.saveTextFile(
+        fileName: fileName,
+        content: _buildAnalyticsExport(),
+      );
+      if (savedLocation == null || !mounted) {
+        return;
+      }
+      TelemetryService.instance.logEvent(
+        event: 'export.downloaded',
+        metadata: <String, dynamic>{
+          'surface': 'hq_analytics',
+          'site': _selectedSite,
+          'period': _selectedPeriod,
+          'file_name': fileName,
+        },
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_t('HQ analytics export downloaded.')),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_t('Unable to export HQ analytics right now.')),
+        ),
+      );
+    }
+  }
 
-    Clipboard.setData(ClipboardData(text: _buildAnalyticsExport()));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(_t('HQ analytics export copied to clipboard.')),
-      ),
-    );
+  String _analyticsExportFileName() {
+    final String siteSegment = _selectedSite == 'all'
+        ? 'all-sites'
+        : _selectedSite.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '-');
+    final String dateSegment =
+        DateTime.now().toIso8601String().split('T').first;
+    return 'hq-analytics-$siteSegment-$_selectedPeriod-$dateSegment.txt';
   }
 
   Future<void> _generateKpiPack() async {

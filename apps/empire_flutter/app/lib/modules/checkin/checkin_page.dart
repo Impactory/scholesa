@@ -447,17 +447,25 @@ class _CheckinPageState extends State<CheckinPage>
   }
 
   Widget _buildFab() {
-    return FloatingActionButton.extended(
-      onPressed: () {
-        TelemetryService.instance.logEvent(
-          event: 'cta.clicked',
-          metadata: const <String, dynamic>{'cta': 'checkin_open_qr_scan'},
+    return Consumer<CheckinService>(
+      builder: (BuildContext context, CheckinService service, _) {
+        return FloatingActionButton.extended(
+          onPressed: service.isLoading
+              ? null
+              : () {
+                  TelemetryService.instance.logEvent(
+                    event: 'cta.clicked',
+                    metadata: const <String, dynamic>{
+                      'cta': 'checkin_open_quick_pickup',
+                    },
+                  );
+                  _showQrScanDialog();
+                },
+          backgroundColor: const Color(0xFF3B82F6),
+          icon: const Icon(Icons.qr_code_scanner),
+          label: Text(_tCheckin(context, 'Quick Pickup')),
         );
-        _showQrScanDialog();
       },
-      backgroundColor: const Color(0xFF3B82F6),
-      icon: const Icon(Icons.qr_code_scanner),
-      label: Text(_tCheckin(context, 'Scan QR')),
     );
   }
 
@@ -478,12 +486,17 @@ class _CheckinPageState extends State<CheckinPage>
     );
   }
 
-  void _showCheckOutDialog(LearnerDaySummary summary) {
+  void _showCheckOutDialog(
+    LearnerDaySummary summary, {
+    AuthorizedPickup? initialPickup,
+    String source = 'checkin_card',
+  }) {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
       metadata: <String, dynamic>{
         'cta': 'checkin_open_check_out',
-        'learner_id': summary.learnerId
+        'learner_id': summary.learnerId,
+        'source': source,
       },
     );
     showModalBottomSheet(
@@ -491,7 +504,11 @@ class _CheckinPageState extends State<CheckinPage>
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (BuildContext context) =>
-          _CheckInSheet(summary: summary, isCheckOut: true),
+          _CheckInSheet(
+            summary: summary,
+            isCheckOut: true,
+            initialPickup: initialPickup,
+          ),
     );
   }
 
@@ -531,35 +548,22 @@ class _CheckinPageState extends State<CheckinPage>
     );
   }
 
-  void _showQrScanDialog() {
+  Future<void> _showQrScanDialog() async {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
-      metadata: const <String, dynamic>{'cta': 'checkin_qr_dialog_opened'},
+      metadata: const <String, dynamic>{'cta': 'checkin_quick_pickup_opened'},
     );
-    showDialog<void>(
+    final PickupLookupMatch? match = await showDialog<PickupLookupMatch>(
       context: context,
-      builder: (BuildContext dialogContext) => AlertDialog(
-        title: Text(_tCheckin(context, 'Scan QR')),
-        content: Text(
-          '${_tCheckin(context, 'Use camera scanner or enter pickup code manually.')}\n\n'
-          '${_tCheckin(context, 'QR scanning is not available in the app yet')}\n'
-          '${_tCheckin(context, 'Manual pickup code entry is not available in the app yet')}',
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () {
-              TelemetryService.instance.logEvent(
-                event: 'cta.clicked',
-                metadata: const <String, dynamic>{
-                  'cta': 'checkin_qr_dialog_close'
-                },
-              );
-              Navigator.pop(dialogContext);
-            },
-            child: Text(_tCheckin(context, 'Close')),
-          ),
-        ],
-      ),
+      builder: (BuildContext dialogContext) => const _QuickPickupLookupDialog(),
+    );
+    if (!mounted || match == null) {
+      return;
+    }
+    _showCheckOutDialog(
+      match.summary,
+      initialPickup: match.pickup,
+      source: 'quick_pickup_lookup',
     );
   }
 }
@@ -1147,9 +1151,14 @@ class _CheckRecordCard extends StatelessWidget {
 }
 
 class _CheckInSheet extends StatefulWidget {
-  const _CheckInSheet({required this.summary, required this.isCheckOut});
+  const _CheckInSheet({
+    required this.summary,
+    required this.isCheckOut,
+    this.initialPickup,
+  });
   final LearnerDaySummary summary;
   final bool isCheckOut;
+  final AuthorizedPickup? initialPickup;
 
   @override
   State<_CheckInSheet> createState() => _CheckInSheetState();
@@ -1163,7 +1172,12 @@ class _CheckInSheetState extends State<_CheckInSheet> {
   @override
   void initState() {
     super.initState();
-    if (widget.summary.authorizedPickups.isNotEmpty) {
+    if (widget.initialPickup != null) {
+      _selectedPickup = widget.summary.authorizedPickups.firstWhere(
+        (AuthorizedPickup pickup) => pickup.id == widget.initialPickup!.id,
+        orElse: () => widget.initialPickup!,
+      );
+    } else if (widget.summary.authorizedPickups.isNotEmpty) {
       _selectedPickup = widget.summary.authorizedPickups.first;
     }
   }
@@ -1402,6 +1416,192 @@ class _CheckInSheetState extends State<_CheckInSheet> {
         ),
       );
     }
+  }
+}
+
+class _QuickPickupLookupDialog extends StatefulWidget {
+  const _QuickPickupLookupDialog();
+
+  @override
+  State<_QuickPickupLookupDialog> createState() =>
+      _QuickPickupLookupDialogState();
+}
+
+class _QuickPickupLookupDialogState extends State<_QuickPickupLookupDialog> {
+  final TextEditingController _queryController = TextEditingController();
+  List<PickupLookupMatch> _matches = const <PickupLookupMatch>[];
+  String? _error;
+
+  @override
+  void dispose() {
+    _queryController.dispose();
+    super.dispose();
+  }
+
+  void _resolve() {
+    final CheckinService service = context.read<CheckinService>();
+    final String query = _queryController.text.trim();
+    if (query.isEmpty) {
+      setState(() {
+        _matches = const <PickupLookupMatch>[];
+        _error = _tCheckin(
+          context,
+          'Enter a pickup code, learner name, or pickup phone',
+        );
+      });
+      return;
+    }
+    final List<PickupLookupMatch> matches = service.findPickupMatches(query);
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'cta': 'checkin_quick_pickup_search',
+        'query_length': query.length,
+        'match_count': matches.length,
+      },
+    );
+    if (matches.length == 1) {
+      TelemetryService.instance.logEvent(
+        event: 'cta.clicked',
+        metadata: <String, dynamic>{
+          'cta': 'checkin_quick_pickup_resolved',
+          'learner_id': matches.first.summary.learnerId,
+          'pickup_id': matches.first.pickup.id,
+          'source': matches.first.matchSource,
+        },
+      );
+      Navigator.of(context).pop(matches.first);
+      return;
+    }
+    setState(() {
+      _matches = matches;
+      _error = matches.isEmpty
+          ? _tCheckin(
+              context,
+              'No active pickup match found',
+            )
+          : null;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(_tCheckin(context, 'Quick Pickup')),
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 460),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                _tCheckin(context, 'Scan or enter pickup code'),
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _tCheckin(
+                  context,
+                  'Connected scanners can type directly into this field. You can also search by learner name or pickup phone.',
+                ),
+                style: TextStyle(color: context.schTextSecondary, height: 1.4),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _queryController,
+                autofocus: true,
+                onSubmitted: (_) => _resolve(),
+                decoration: InputDecoration(
+                  labelText:
+                      _tCheckin(context, 'Pickup code, learner, or phone'),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              if (_error != null) ...<Widget>[
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: ScholesaColors.warning.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: ScholesaColors.warning.withValues(alpha: 0.25),
+                    ),
+                  ),
+                  child: Text(
+                    _error!,
+                    style: TextStyle(color: context.schTextSecondary),
+                  ),
+                ),
+              ],
+              if (_matches.isNotEmpty) ...<Widget>[
+                const SizedBox(height: 16),
+                Text(
+                  _tCheckin(context, 'Continue with check-out'),
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                ..._matches.map(
+                  (PickupLookupMatch match) => ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(
+                      _displayLearnerName(context, match.summary.learnerName),
+                    ),
+                    subtitle: Text(
+                      [
+                        match.pickup.name,
+                        match.pickup.relationship,
+                        if ((match.pickup.phone ?? '').trim().isNotEmpty)
+                          match.pickup.phone!,
+                      ].join(' • '),
+                    ),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () {
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: <String, dynamic>{
+                          'cta': 'checkin_quick_pickup_select_match',
+                          'learner_id': match.summary.learnerId,
+                          'pickup_id': match.pickup.id,
+                          'source': match.matchSource,
+                        },
+                      );
+                      Navigator.of(context).pop(match);
+                    },
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () {
+            TelemetryService.instance.logEvent(
+              event: 'cta.clicked',
+              metadata: const <String, dynamic>{
+                'cta': 'checkin_quick_pickup_close',
+              },
+            );
+            Navigator.of(context).pop();
+          },
+          child: Text(_tCheckin(context, 'Close')),
+        ),
+        FilledButton(
+          onPressed: _resolve,
+          child: Text(_tCheckin(context, 'Find pickup')),
+        ),
+      ],
+    );
   }
 }
 

@@ -5,6 +5,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:provider/provider.dart';
 import '../../i18n/workflow_surface_i18n.dart';
 import '../../auth/app_state.dart';
+import '../../services/export_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
@@ -508,7 +509,7 @@ class _HqBillingPageState extends State<HqBillingPage>
     await _loadBillingData();
   }
 
-  void _exportFinancials() {
+  Future<void> _exportFinancials() async {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
       metadata: <String, dynamic>{
@@ -525,13 +526,48 @@ class _HqBillingPageState extends State<HqBillingPage>
       );
       return;
     }
+    final String fileName = _financialExportFileName();
+    try {
+      final String? savedLocation = await ExportService.instance.saveTextFile(
+        fileName: fileName,
+        content: _buildFinancialExport(),
+      );
+      if (savedLocation == null || !mounted) {
+        return;
+      }
+      TelemetryService.instance.logEvent(
+        event: 'export.downloaded',
+        metadata: <String, dynamic>{
+          'module': 'hq_billing',
+          'surface': 'header',
+          'site': _selectedSite,
+          'period': _selectedPeriod,
+          'file_name': fileName,
+        },
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_tHqBilling(context, 'Financial export downloaded.')),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content:
+              Text(_tHqBilling(context, 'Unable to export financials right now.')),
+        ),
+      );
+    }
+  }
 
-    Clipboard.setData(ClipboardData(text: _buildFinancialExport()));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(_tHqBilling(context, 'Financial export copied to clipboard.')),
-      ),
-    );
+  String _financialExportFileName() {
+    final String siteSegment = _selectedSite == 'all'
+        ? 'all-sites'
+        : _selectedSite.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '-');
+    final String dateSegment =
+        DateTime.now().toIso8601String().split('T').first;
+    return 'hq-financials-$siteSegment-$_selectedPeriod-$dateSegment.txt';
   }
 
   String _selectedSiteLabel() {

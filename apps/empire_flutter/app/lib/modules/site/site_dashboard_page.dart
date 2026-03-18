@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import '../../auth/app_state.dart';
 import '../../services/analytics_service.dart';
+import '../../services/export_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../services/workflow_bridge_service.dart';
@@ -905,8 +906,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
     return '${date.month}/${date.day}';
   }
 
-  void _exportReport() {
-    bool popupCompleted = false;
+  Future<void> _exportReport() async {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
       metadata: <String, dynamic>{
@@ -914,80 +914,134 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
         'period': _selectedPeriod,
       },
     );
-    TelemetryService.instance.logEvent(
-      event: 'popup.shown',
-      metadata: <String, dynamic>{
-        'popup_id': 'site_dashboard_export_report',
-        'surface': 'site_dashboard',
-      },
-    );
-    showDialog<void>(
-      context: context,
-      builder: (BuildContext dialogContext) => AlertDialog(
-        title: Text(_t('Export Site Report')),
-        content: Text(
-          '${_t('Generate a')} $_selectedPeriod ${_t('summary report for this site dashboard.')}\n\n${_t('Site report exports are not generated in the app yet. Requests are recorded for follow-up.')}',
+    if (!_hasExportableReportData()) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_t('No site dashboard data to export yet.')),
         ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () {
-              TelemetryService.instance.logEvent(
-                event: 'cta.clicked',
-                metadata: const <String, dynamic>{
-                  'cta': 'site_dashboard_export_cancel',
-                },
-              );
-              TelemetryService.instance.logEvent(
-                event: 'popup.dismissed',
-                metadata: const <String, dynamic>{
-                  'popup_id': 'site_dashboard_export_report',
-                  'surface': 'site_dashboard',
-                },
-              );
-              popupCompleted = true;
-              Navigator.pop(dialogContext);
-            },
-            child: Text(_t('Cancel')),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              TelemetryService.instance.logEvent(
-                event: 'cta.clicked',
-                metadata: <String, dynamic>{
-                  'cta': 'site_dashboard_record_export_request',
-                  'period': _selectedPeriod,
-                },
-              );
-              TelemetryService.instance.logEvent(
-                event: 'popup.completed',
-                metadata: <String, dynamic>{
-                  'popup_id': 'site_dashboard_export_report',
-                  'surface': 'site_dashboard',
-                  'completion_action': 'record_request',
-                  'period': _selectedPeriod,
-                },
-              );
-              popupCompleted = true;
-              Navigator.pop(dialogContext);
-              _persistReportGeneratedEvent();
-            },
-            child: Text(_t('Record Request')),
-          ),
-        ],
-      ),
-    ).then((_) {
-      if (popupCompleted) {
+      );
+      return;
+    }
+    final String fileName = _siteReportFileName();
+    try {
+      final String? savedLocation = await ExportService.instance.saveTextFile(
+        fileName: fileName,
+        content: _buildSiteReportExport(),
+      );
+      if (savedLocation == null || !mounted) {
         return;
       }
       TelemetryService.instance.logEvent(
-        event: 'popup.dismissed',
-        metadata: const <String, dynamic>{
-          'popup_id': 'site_dashboard_export_report',
+        event: 'export.downloaded',
+        metadata: <String, dynamic>{
           'surface': 'site_dashboard',
-          'reason': 'closed_without_action',
+          'period': _selectedPeriod,
+          'file_name': fileName,
         },
       );
-    });
+      await _persistReportGeneratedEvent(fileName: fileName);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_t('Unable to export site report right now.')),
+          backgroundColor: ScholesaColors.error,
+        ),
+      );
+    }
+  }
+
+  bool _hasExportableReportData() {
+    return _metrics != null || _kpiPacks.isNotEmpty || _activities.isNotEmpty;
+  }
+
+  String _siteReportFileName() {
+    final String siteSegment =
+        (_maybeAppState()?.activeSiteId ?? 'site-dashboard').trim();
+    final String normalizedSite =
+        siteSegment.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '-');
+    final String dateSegment =
+        DateTime.now().toIso8601String().split('T').first;
+    return '$normalizedSite-site-dashboard-$_selectedPeriod-$dateSegment.txt';
+  }
+
+  String _buildSiteReportExport() {
+    final AppState? appState = _maybeAppState();
+    final String siteId =
+        (appState?.activeSiteId ?? '').trim().isNotEmpty ? appState!.activeSiteId!.trim() : _t('Site unavailable');
+    final StringBuffer buffer = StringBuffer()
+      ..writeln(_t('Export Site Report'))
+      ..writeln('Generated: ${DateTime.now().toIso8601String()}')
+      ..writeln('Site: $siteId')
+      ..writeln('Period: $_selectedPeriod')
+      ..writeln('')
+      ..writeln('Telemetry Metrics')
+      ..writeln('----------------');
+
+    final TelemetryDashboardMetrics? metrics = _metrics;
+    if (metrics == null) {
+      buffer.writeln(_metricsError ?? _t('No site dashboard data to export yet.'));
+    } else {
+      buffer.writeln(
+        'Weekly accountability adherence: '
+        '${metrics.weeklyAccountabilityAdherenceRate.toStringAsFixed(1)}%',
+      );
+      buffer.writeln(
+        'Educator review turnaround: '
+        '${metrics.educatorReviewTurnaroundHoursAvg?.toStringAsFixed(1) ?? 'n/a'} hours',
+      );
+      buffer.writeln(
+        'Educator SLA within rate: '
+        '${metrics.educatorReviewWithinSlaRate?.toStringAsFixed(1) ?? 'n/a'}%',
+      );
+      buffer.writeln(
+        'Intervention helped rate: '
+        '${metrics.interventionHelpedRate?.toStringAsFixed(1) ?? 'n/a'}%',
+      );
+      buffer.writeln('Intervention total: ${metrics.interventionTotal}');
+      if (metrics.attendanceTrend.isNotEmpty) {
+        buffer
+          ..writeln('')
+          ..writeln('Attendance Trend')
+          ..writeln('----------------');
+        for (final AttendanceTrendPoint point in metrics.attendanceTrend) {
+          buffer.writeln(
+            '${point.date} | records=${point.records} | events=${point.events} | presentRate=${point.presentRate?.toStringAsFixed(1) ?? 'n/a'}',
+          );
+        }
+      }
+    }
+
+    buffer
+      ..writeln('')
+      ..writeln('KPI Packs')
+      ..writeln('---------');
+    if (_kpiPacks.isEmpty) {
+      buffer.writeln(_t('No KPI packs yet.'));
+    } else {
+      for (final _KpiPackSummary pack in _kpiPacks) {
+        buffer.writeln(
+          '${pack.title} | period=${pack.period ?? '-'} | status=${pack.status ?? '-'} | recommendation=${pack.recommendation ?? '-'} | fidelity=${pack.fidelityScore?.toStringAsFixed(2) ?? '-'} | generatedAt=${pack.generatedAt?.toIso8601String() ?? '-'}',
+        );
+      }
+    }
+
+    buffer
+      ..writeln('')
+      ..writeln('Recent Activity')
+      ..writeln('---------------');
+    if (_activities.isEmpty) {
+      buffer.writeln(_t('No recent activity yet'));
+    } else {
+      for (final _SiteActivity activity in _activities) {
+        buffer.writeln(
+          '${activity.time} | ${activity.title} | ${activity.subtitle}',
+        );
+      }
+    }
+
+    return buffer.toString().trim();
   }
 
   Future<void> _showAllRecentActivity() async {
@@ -1071,7 +1125,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
     );
   }
 
-  Future<void> _persistReportGeneratedEvent() async {
+  Future<void> _persistReportGeneratedEvent({required String fileName}) async {
     final AppState? appState = _maybeAppState();
     final FirestoreService? firestoreService = _maybeFirestoreService();
 
@@ -1082,9 +1136,9 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
           0,
           _SiteActivity(
             icon: Icons.download_done,
-            title: _t('Report export requested'),
+            title: _t('Site report exported'),
             subtitle:
-                '${_selectedPeriod[0].toUpperCase()}${_selectedPeriod.substring(1)} ${_t('report export request logged')}',
+                '${_selectedPeriod[0].toUpperCase()}${_selectedPeriod.substring(1)} ${_t('report export downloaded')}',
             time: _t('just now'),
             color: ScholesaColors.site,
           ),
@@ -1096,7 +1150,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            '$_selectedPeriod ${_t('report export request recorded')}',
+            _t('Site report exported.'),
           ),
           backgroundColor: ScholesaColors.site,
         ),
@@ -1114,6 +1168,8 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
           'siteId': siteId,
           'action': 'Export Site Report',
           'period': _selectedPeriod,
+          'status': 'downloaded',
+          'fileName': fileName,
           'createdAt': FieldValue.serverTimestamp(),
         },
       );
@@ -1123,7 +1179,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          '$_selectedPeriod ${_t('report export request recorded')}',
+          _t('Site report exported.'),
         ),
         backgroundColor: ScholesaColors.site,
       ),
@@ -1218,10 +1274,11 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
         if (at == null) continue;
         final String action =
             (data['action'] as String?)?.trim() ?? _t('Site operation event');
+        final String status = (data['status'] as String?)?.trim() ?? '';
         final ({IconData icon, Color color}) visual =
             _mapActivityVisual(action);
         final String subtitle = action == 'Export Site Report'
-            ? '${_selectedPeriod[0].toUpperCase()}${_selectedPeriod.substring(1)} ${_t('report export request logged')}'
+            ? '${_selectedPeriod[0].toUpperCase()}${_selectedPeriod.substring(1)} ${status == 'downloaded' ? _t('report export downloaded') : _t('report export request logged')}'
             : _t('Site operation event');
         feed.add(
           _TimedSiteActivity(

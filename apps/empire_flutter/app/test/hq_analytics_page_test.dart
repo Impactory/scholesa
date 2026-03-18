@@ -10,11 +10,14 @@ import 'package:provider/provider.dart';
 import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/modules/hq_admin/hq_analytics_page.dart';
 import 'package:scholesa_app/services/analytics_service.dart';
+import 'package:scholesa_app/services/export_service.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
 
 class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
 String? _clipboardText;
+String? _savedFileName;
+String? _savedFileContent;
 
 AppState _buildHqState() {
   final AppState state = AppState();
@@ -136,6 +139,9 @@ void main() {
 
   setUp(() {
     _clipboardText = null;
+    _savedFileName = null;
+    _savedFileContent = null;
+    ExportService.instance.debugSaveTextFile = null;
   });
 
   testWidgets('hq analytics page consumes KPI metrics and supplemental data',
@@ -335,8 +341,17 @@ void main() {
   });
 
   testWidgets(
-      'hq analytics export copies the live dashboard snapshot to clipboard',
+      'hq analytics export downloads the live dashboard snapshot',
       (WidgetTester tester) async {
+    ExportService.instance.debugSaveTextFile = ({
+      required String fileName,
+      required String content,
+      required String mimeType,
+    }) async {
+      _savedFileName = fileName;
+      _savedFileContent = content;
+      return '/tmp/$fileName';
+    };
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     final FirestoreService firestoreService = FirestoreService(
       firestore: firestore,
@@ -378,10 +393,13 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Export HQ Analytics'), findsNothing);
+    expect(find.text('HQ analytics export downloaded.'), findsOneWidget);
+    expect(_savedFileName, contains('hq-analytics'));
+    expect(_savedFileContent, isNotNull);
+    expect(_savedFileContent, contains('Export HQ Analytics'));
     expect(
-        find.text('HQ analytics export copied to clipboard.'), findsOneWidget);
-    expect(_clipboardText, isNotNull);
-    expect(_clipboardText, contains('Export HQ Analytics'));
-    expect(_clipboardText, contains('Weekly accountability adherence: 91.0%'));
+      _savedFileContent,
+      contains('Weekly accountability adherence: 91.0%'),
+    );
   });
 }

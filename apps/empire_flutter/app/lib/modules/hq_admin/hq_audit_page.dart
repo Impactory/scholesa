@@ -1,8 +1,8 @@
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../../i18n/workflow_surface_i18n.dart';
+import '../../services/export_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../services/workflow_bridge_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
@@ -522,15 +522,47 @@ class _HqAuditPageState extends State<HqAuditPage> {
         ..writeln('');
     }
 
-    await Clipboard.setData(ClipboardData(text: export.toString().trim()));
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          _tHqAudit(context, 'Audit export copied to clipboard.'),
+    final String fileName = _auditExportFileName();
+    try {
+      final String? savedLocation = await ExportService.instance.saveTextFile(
+        fileName: fileName,
+        content: export.toString().trim(),
+      );
+      if (savedLocation == null || !mounted) {
+        return;
+      }
+      TelemetryService.instance.logEvent(
+        event: 'export.downloaded',
+        metadata: <String, dynamic>{
+          'module': 'hq_audit',
+          'filter': _filterCategory?.name ?? 'all',
+          'file_name': fileName,
+        },
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tHqAudit(context, 'Audit export downloaded.'),
+          ),
         ),
-      ),
-    );
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tHqAudit(context, 'Unable to export audit logs right now.'),
+          ),
+        ),
+      );
+    }
+  }
+
+  String _auditExportFileName() {
+    final String filterSegment = _filterCategory?.name ?? 'all';
+    final String dateSegment =
+        DateTime.now().toIso8601String().split('T').first;
+    return 'hq-audit-$filterSegment-$dateSegment.txt';
   }
 
   void _showFilterDialog() {

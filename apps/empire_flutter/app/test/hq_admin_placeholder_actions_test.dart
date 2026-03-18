@@ -8,9 +8,12 @@ import 'package:scholesa_app/modules/hq_admin/hq_audit_page.dart';
 import 'package:scholesa_app/modules/hq_admin/hq_billing_page.dart';
 import 'package:scholesa_app/modules/hq_admin/hq_integrations_health_page.dart';
 import 'package:scholesa_app/modules/hq_admin/hq_safety_page.dart';
+import 'package:scholesa_app/services/export_service.dart';
 import 'package:scholesa_app/ui/theme/scholesa_theme.dart';
 
 String? _clipboardText;
+String? _savedFileName;
+String? _savedFileContent;
 
 Widget _buildHarness({required Widget child, required AppState appState}) {
   return MultiProvider(
@@ -64,6 +67,9 @@ void main() {
 
   setUp(() {
     _clipboardText = null;
+    _savedFileName = null;
+    _savedFileContent = null;
+    ExportService.instance.debugSaveTextFile = null;
   });
 
   testWidgets('HQ safety detail sheets remove the fake full report CTA',
@@ -217,8 +223,17 @@ void main() {
     expect(find.text('Invoice INV-1001'), findsOneWidget);
   });
 
-  testWidgets('HQ billing export copies live financial data to clipboard',
+  testWidgets('HQ billing export downloads live financial data',
       (WidgetTester tester) async {
+    ExportService.instance.debugSaveTextFile = ({
+      required String fileName,
+      required String content,
+      required String mimeType,
+    }) async {
+      _savedFileName = fileName;
+      _savedFileContent = content;
+      return '/tmp/$fileName';
+    };
     await tester.binding.setSurfaceSize(const Size(1200, 1800));
     await tester.pumpWidget(
       _buildHarness(
@@ -269,12 +284,13 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Export Financials'), findsNothing);
-    expect(find.text('Financial export copied to clipboard.'), findsOneWidget);
-    expect(_clipboardText, isNotNull);
-    expect(_clipboardText, contains('Export Financials'));
-    expect(_clipboardText, contains('INV-3001'));
-    expect(_clipboardText, contains('PAY-3001'));
-    expect(_clipboardText, contains('SUB-3001'));
+    expect(find.text('Financial export downloaded.'), findsOneWidget);
+    expect(_savedFileName, contains('hq-financials'));
+    expect(_savedFileContent, isNotNull);
+    expect(_savedFileContent, contains('Export Financials'));
+    expect(_savedFileContent, contains('INV-3001'));
+    expect(_savedFileContent, contains('PAY-3001'));
+    expect(_savedFileContent, contains('SUB-3001'));
   });
 
   testWidgets('HQ billing shows precise unavailable labels for missing identity fields',

@@ -171,6 +171,7 @@ class AuthorizedPickup extends Equatable {
     this.photoUrl,
     this.isPrimaryContact = false,
     this.expiresAt,
+    this.verificationCode,
   });
 
   factory AuthorizedPickup.fromJson(Map<String, dynamic> json) {
@@ -186,6 +187,7 @@ class AuthorizedPickup extends Equatable {
       expiresAt: json['expiresAt'] != null
           ? DateTime.parse(json['expiresAt'] as String)
           : null,
+      verificationCode: json['verificationCode'] as String?,
     );
   }
   final String id;
@@ -197,6 +199,7 @@ class AuthorizedPickup extends Equatable {
   final String? photoUrl;
   final bool isPrimaryContact;
   final DateTime? expiresAt;
+  final String? verificationCode;
 
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
@@ -209,6 +212,7 @@ class AuthorizedPickup extends Equatable {
       'photoUrl': photoUrl,
       'isPrimaryContact': isPrimaryContact,
       'expiresAt': expiresAt?.toIso8601String(),
+      'verificationCode': verificationCode,
     };
   }
 
@@ -223,6 +227,7 @@ class AuthorizedPickup extends Equatable {
         photoUrl,
         isPrimaryContact,
         expiresAt,
+        verificationCode,
       ];
 }
 
@@ -265,4 +270,19 @@ class LearnerDaySummary extends Equatable {
         checkedOutBy,
         authorizedPickups,
       ];
+}
+
+class PickupLookupMatch extends Equatable {
+  const PickupLookupMatch({
+    required this.summary,
+    required this.pickup,
+    required this.matchSource,
+  });
+
+  final LearnerDaySummary summary;
+  final AuthorizedPickup pickup;
+  final String matchSource;
+
+  @override
+  List<Object?> get props => <Object?>[summary, pickup, matchSource];
 }
