@@ -22,6 +22,74 @@ void _logProvisioningCta(String ctaId, {Map<String, dynamic>? metadata}) {
   );
 }
 
+bool _isUnavailableProvisioningValue(String value) {
+  final String normalized = value.trim().toLowerCase();
+  return normalized.isEmpty ||
+      normalized == 'tbd' ||
+      normalized == 'unknown' ||
+      normalized == 'n/a' ||
+      normalized == 'na';
+}
+
+String _localizedProvisioningValue(
+  BuildContext context,
+  String value, {
+  required String unavailableLabel,
+  bool localizeKnownEnums = false,
+}) {
+  final String normalized = value.trim();
+  if (_isUnavailableProvisioningValue(normalized)) {
+    return _tProvisioning(context, unavailableLabel);
+  }
+  if (!localizeKnownEnums) {
+    return normalized;
+  }
+  const Map<String, String> knownLabels = <String, String>{
+    'draft': 'Draft',
+    'ready': 'Ready',
+    'active': 'Active',
+    'planning': 'Planning',
+    'pending': 'Pending',
+    'sent': 'Sent',
+    'confirmed': 'Confirmed',
+    'completed': 'Completed',
+    'scheduled': 'Scheduled',
+    'mixed ages': 'Mixed Ages',
+    'k-5': 'K-5',
+    'middle school': 'Middle School',
+    'high school': 'High School',
+    'gold': 'Gold',
+    'silver': 'Silver',
+    'pilot': 'Pilot',
+  };
+  final String? localizedKey = knownLabels[normalized.toLowerCase()];
+  if (localizedKey == null) {
+    return normalized;
+  }
+  return _tProvisioning(context, localizedKey);
+}
+
+String _cohortScheduleSummary(BuildContext context, CohortLaunch launch) {
+  final String schedule = _localizedProvisioningValue(
+    context,
+    launch.scheduleLabel,
+    unavailableLabel: 'Schedule unavailable',
+  );
+  final String term = _localizedProvisioningValue(
+    context,
+    launch.curriculumTerm,
+    unavailableLabel: 'Curriculum term unavailable',
+  );
+  return '$schedule • $term';
+}
+
+String _cohortLearnerCountLabel(BuildContext context, int? learnerCount) {
+  final String value = learnerCount == null
+      ? _tProvisioning(context, 'Unavailable')
+      : '$learnerCount';
+  return '${_tProvisioning(context, 'Learner Count')}: $value';
+}
+
 String _deleteGuardianLinkCopy(
   BuildContext context,
   GuardianLink link,
@@ -722,7 +790,11 @@ class _CohortsTab extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: <Widget>[
                                 Text(
-                                  launch.cohortName,
+                                  _localizedProvisioningValue(
+                                    context,
+                                    launch.cohortName,
+                                    unavailableLabel: 'Cohort unavailable',
+                                  ),
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w700,
@@ -730,7 +802,7 @@ class _CohortsTab extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  '${launch.scheduleLabel} • ${launch.curriculumTerm}',
+                                  _cohortScheduleSummary(context, launch),
                                   style: const TextStyle(
                                     color: Colors.black54,
                                   ),
@@ -739,7 +811,12 @@ class _CohortsTab extends StatelessWidget {
                             ),
                           ),
                           _StatusPill(
-                            label: launch.status,
+                            label: _localizedProvisioningValue(
+                              context,
+                              launch.status,
+                              unavailableLabel: 'Unavailable',
+                              localizeKnownEnums: true,
+                            ),
                             color: _cohortStatusColor(launch.status),
                           ),
                         ],
@@ -751,24 +828,44 @@ class _CohortsTab extends StatelessWidget {
                         children: <Widget>[
                           _StatusPill(
                             label:
-                                '${_tProvisioning(context, 'Roster Status')}: ${launch.rosterStatus}',
+                                '${_tProvisioning(context, 'Roster Status')}: ${_localizedProvisioningValue(
+                              context,
+                              launch.rosterStatus,
+                              unavailableLabel: 'Unavailable',
+                              localizeKnownEnums: true,
+                            )}',
                             color: _cohortStatusColor(launch.rosterStatus),
                           ),
                           _StatusPill(
                             label:
-                                '${_tProvisioning(context, 'Parent Comms')}: ${launch.parentCommunicationStatus}',
+                                '${_tProvisioning(context, 'Parent Comms')}: ${_localizedProvisioningValue(
+                              context,
+                              launch.parentCommunicationStatus,
+                              unavailableLabel: 'Unavailable',
+                              localizeKnownEnums: true,
+                            )}',
                             color: _cohortStatusColor(
                                 launch.parentCommunicationStatus),
                           ),
                           _StatusPill(
                             label:
-                                '${_tProvisioning(context, 'Baseline Survey')}: ${launch.baselineSurveyStatus}',
+                                '${_tProvisioning(context, 'Baseline Survey')}: ${_localizedProvisioningValue(
+                              context,
+                              launch.baselineSurveyStatus,
+                              unavailableLabel: 'Unavailable',
+                              localizeKnownEnums: true,
+                            )}',
                             color:
                                 _cohortStatusColor(launch.baselineSurveyStatus),
                           ),
                           _StatusPill(
                             label:
-                                '${_tProvisioning(context, 'Kickoff')}: ${launch.kickoffStatus}',
+                                '${_tProvisioning(context, 'Kickoff')}: ${_localizedProvisioningValue(
+                              context,
+                              launch.kickoffStatus,
+                              unavailableLabel: 'Unavailable',
+                              localizeKnownEnums: true,
+                            )}',
                             color: _cohortStatusColor(launch.kickoffStatus),
                           ),
                         ],
@@ -778,12 +875,20 @@ class _CohortsTab extends StatelessWidget {
                         children: <Widget>[
                           Expanded(
                             child: Text(
-                              '${_tProvisioning(context, 'Age Band')}: ${launch.ageBand}',
+                              '${_tProvisioning(context, 'Age Band')}: ${_localizedProvisioningValue(
+                                context,
+                                launch.ageBand,
+                                unavailableLabel: 'Unavailable',
+                                localizeKnownEnums: true,
+                              )}',
                               style: const TextStyle(color: Colors.black87),
                             ),
                           ),
                           Text(
-                            '${_tProvisioning(context, 'Learner Count')}: ${launch.learnerCount ?? 0}',
+                            _cohortLearnerCountLabel(
+                              context,
+                              launch.learnerCount,
+                            ),
                             style: const TextStyle(
                               fontWeight: FontWeight.w600,
                             ),
@@ -1621,9 +1726,9 @@ class _CreateCohortDialogState extends State<_CreateCohortDialog> {
                   controller: _notesController,
                   minLines: 2,
                   maxLines: 4,
-                  decoration: const InputDecoration(
-                    labelText: 'Notes',
-                    prefixIcon: Icon(Icons.notes_rounded),
+                  decoration: InputDecoration(
+                    labelText: _tProvisioning(context, 'Notes'),
+                    prefixIcon: const Icon(Icons.notes_rounded),
                   ),
                 ),
               ],

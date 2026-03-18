@@ -1018,7 +1018,9 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                   orderedSteps: orderedSteps,
                 );
                 if (!mounted || !dialogContext.mounted) return;
-                Navigator.pop(dialogContext);
+                if (created) {
+                  Navigator.pop(dialogContext);
+                }
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(created ? createdText : createFailedText),
@@ -1185,11 +1187,7 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
       await _loadMissionPlans();
       return true;
     } catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Create mission failed: $error')),
-        );
-      }
+      debugPrint('Failed to create mission: $error');
       return false;
     }
   }

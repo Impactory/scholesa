@@ -2,7 +2,9 @@ import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mock_exceptions/mock_exceptions.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
@@ -28,9 +30,13 @@ class _MissionPlansHarness {
   final EducatorService educatorService;
 }
 
-Future<_MissionPlansHarness> _pumpMissionPlansPage(WidgetTester tester) async {
+Future<_MissionPlansHarness> _pumpMissionPlansPage(
+  WidgetTester tester, {
+  FakeFirebaseFirestore? firestore,
+  Locale locale = const Locale('en'),
+}) async {
   final FirestoreService firestoreService = FirestoreService(
-    firestore: FakeFirebaseFirestore(),
+    firestore: firestore ?? FakeFirebaseFirestore(),
     auth: _MockFirebaseAuth(),
   );
   final EducatorService educatorService = EducatorService(
@@ -46,6 +52,17 @@ Future<_MissionPlansHarness> _pumpMissionPlansPage(WidgetTester tester) async {
       ],
       child: MaterialApp(
         theme: _testTheme,
+        locale: locale,
+        supportedLocales: const <Locale>[
+          Locale('en'),
+          Locale('zh', 'CN'),
+          Locale('zh', 'TW'),
+        ],
+        localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
         home: const EducatorMissionPlansPage(),
       ),
     ),
@@ -170,6 +187,48 @@ void main() {
             .toList(),
         <String>['Guided practice', 'Launch challenge', 'Evidence capture'],
       );
+    });
+
+    testWidgets(
+        'mission plans keep the dialog open and localize failure copy when persistence fails',
+        (WidgetTester tester) async {
+      await tester.binding.setSurfaceSize(const Size(1200, 1800));
+
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore(
+        securityRules: '''
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /missions/{document=**} {
+      allow read;
+      allow write: if false;
+    }
+    match /{document=**} {
+      allow read, write;
+    }
+  }
+}
+''',
+      );
+
+      await _pumpMissionPlansPage(
+        tester,
+        firestore: firestore,
+        locale: const Locale('zh', 'CN'),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('新建任务'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('创建新任务'), findsOneWidget);
+      expect(find.text('任务标题'), findsOneWidget);
+
+      await tester.enterText(find.byType(TextField).first, '持久化失败任务');
+      await tester.tap(find.widgetWithText(ElevatedButton, '创建'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('创建任务失败'), findsOneWidget);
+      expect(find.text('创建新任务'), findsOneWidget);
     });
   });
 }

@@ -883,5 +883,51 @@ void main() {
       expect(find.text('Learner Count: 24'), findsOneWidget);
       expect(find.text('Parent kickoff scheduled.'), findsOneWidget);
     });
+
+    testWidgets(
+        'provisioning cohort dialog localizes labels and cohort cards show honest unavailable fallbacks',
+        (WidgetTester tester) async {
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+      final _FakeWorkflowBridgeService workflowBridgeService =
+          _FakeWorkflowBridgeService(
+        launches: <Map<String, dynamic>>[
+          <String, dynamic>{
+            'id': 'launch-honesty-1',
+            'siteId': 'site-1',
+            'cohortName': 'Launch Cohort Beta',
+            'scheduleLabel': 'TBD',
+            'curriculumTerm': '',
+            'ageBand': '',
+            'status': '',
+            'rosterStatus': '',
+            'parentCommunicationStatus': '',
+            'baselineSurveyStatus': '',
+            'kickoffStatus': '',
+            'updatedAt': DateTime(2026, 3, 17, 12).toIso8601String(),
+          },
+        ],
+      );
+
+      await _pumpProvisioningPage(
+        tester,
+        firestore: firestore,
+        locale: const Locale('zh', 'CN'),
+        workflowBridgeService: workflowBridgeService,
+      );
+
+      await tester.tap(find.text('群组'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Launch Cohort Beta'), findsOneWidget);
+      expect(find.text('日程不可用 • 课程周期不可用'), findsOneWidget);
+      expect(find.text('学习者数量: 不可用'), findsOneWidget);
+      expect(find.text('TBD'), findsNothing);
+
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+
+      expect(find.text('创建群组启动'), findsOneWidget);
+      expect(find.text('备注'), findsOneWidget);
+    });
   });
 }

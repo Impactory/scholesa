@@ -23,6 +23,16 @@ DateTime? _coerceDateTime(dynamic value) {
   return null;
 }
 
+String _coerceString(dynamic value) {
+  if (value is String) {
+    return value.trim();
+  }
+  if (value == null) {
+    return '';
+  }
+  return value.toString().trim();
+}
+
 /// User profile types
 class UserProfile extends Equatable {
   const UserProfile({
@@ -222,20 +232,19 @@ class CohortLaunch extends Equatable {
   });
 
   factory CohortLaunch.fromJson(Map<String, dynamic> json) => CohortLaunch(
-        id: json['id'] as String,
-        siteId: json['siteId'] as String? ?? '',
-        cohortName: json['cohortName'] as String? ?? 'Cohort',
-        ageBand: json['ageBand'] as String? ?? 'mixed',
-        scheduleLabel: json['scheduleLabel'] as String? ?? 'TBD',
-        programFormat: json['programFormat'] as String? ?? 'gold',
-        curriculumTerm: json['curriculumTerm'] as String? ?? 'Term 1',
-        rosterStatus: json['rosterStatus'] as String? ?? 'draft',
+        id: _coerceString(json['id']),
+        siteId: _coerceString(json['siteId']),
+        cohortName: _coerceString(json['cohortName']),
+        ageBand: _coerceString(json['ageBand']),
+        scheduleLabel: _coerceString(json['scheduleLabel']),
+        programFormat: _coerceString(json['programFormat']),
+        curriculumTerm: _coerceString(json['curriculumTerm']),
+        rosterStatus: _coerceString(json['rosterStatus']),
         parentCommunicationStatus:
-            json['parentCommunicationStatus'] as String? ?? 'pending',
-        baselineSurveyStatus:
-            json['baselineSurveyStatus'] as String? ?? 'pending',
-        kickoffStatus: json['kickoffStatus'] as String? ?? 'pending',
-        status: json['status'] as String? ?? 'planning',
+            _coerceString(json['parentCommunicationStatus']),
+        baselineSurveyStatus: _coerceString(json['baselineSurveyStatus']),
+        kickoffStatus: _coerceString(json['kickoffStatus']),
+        status: _coerceString(json['status']),
         instructorId: json['instructorId'] as String?,
         welcomePackStatus: json['welcomePackStatus'] as String?,
         deviceReadinessStatus: json['deviceReadinessStatus'] as String?,
