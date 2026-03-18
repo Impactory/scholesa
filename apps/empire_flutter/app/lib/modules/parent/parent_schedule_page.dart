@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'parent_models.dart';
 import 'parent_service.dart';
+import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
@@ -44,6 +44,58 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ParentService>().loadParentData();
     });
+  }
+
+  FirestoreService? _maybeFirestoreService() {
+    try {
+      return context.read<FirestoreService>();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<String> _submitSessionReminderRequest(
+    _ParentScheduleEntry entry,
+  ) async {
+    final FirestoreService? firestoreService = _maybeFirestoreService();
+    if (firestoreService == null) {
+      throw StateError(_t('Support requests are unavailable right now.'));
+    }
+    final AppState appState = context.read<AppState>();
+    final String learnerName = _displayLearnerName(entry.learnerName);
+    return firestoreService.submitSupportRequest(
+      requestType: 'session_reminder',
+      source: 'parent_schedule_request_session_reminder',
+      siteId: appState.activeSiteId?.trim().isNotEmpty == true
+          ? appState.activeSiteId!.trim()
+          : 'Not set',
+      userId: appState.userId?.trim().isNotEmpty == true
+          ? appState.userId!.trim()
+          : 'Not set',
+      userEmail: appState.email?.trim().isNotEmpty == true
+          ? appState.email!.trim()
+          : 'Not set',
+      userName: appState.displayName?.trim().isNotEmpty == true
+          ? appState.displayName!.trim()
+          : 'Not set',
+      role: appState.role?.name ?? 'unknown',
+      subject: 'Parent session reminder request',
+      message: <String>[
+        'Please send a reminder for the upcoming learner session.',
+        '',
+        'Session: ${entry.title}',
+        'Location: ${entry.location}',
+        'Starts: ${entry.dateTime.toIso8601String()}',
+        'Learner: $learnerName',
+      ].join('\n'),
+      metadata: <String, dynamic>{
+        'sessionTitle': entry.title,
+        'location': entry.location,
+        'startsAt': entry.dateTime.toIso8601String(),
+        'learnerName': learnerName,
+        'viewMode': _viewMode,
+      },
+    );
   }
 
   @override
@@ -572,27 +624,58 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
         ),
         actions: <Widget>[
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
                 metadata: const <String, dynamic>{
-                  'cta': 'parent_schedule_copy_session_reminder',
+                  'cta': 'parent_schedule_request_session_reminder',
                 },
               );
-              final String reminderText =
-                  '${_t('Session Reminder')}: ${nextSession.title}\n'
-                  '${_t('Location')}: ${nextSession.location}\n'
-                  '${_t('Starts')}: ${_formatDateTime(nextSession.dateTime)}\n'
-                  '${_t('Learner')}: ${nextSession.learnerName}';
-              Clipboard.setData(ClipboardData(text: reminderText));
-              Navigator.pop(dialogContext);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(_t('Session reminder copied for sharing.')),
-                ),
-              );
+              try {
+                final String requestId =
+                    await _submitSessionReminderRequest(nextSession);
+                TelemetryService.instance.logEvent(
+                  event: 'parent.schedule_reminder_request.submitted',
+                  metadata: <String, dynamic>{
+                    'request_id': requestId,
+                    'session_title': nextSession.title,
+                    'learner_name':
+                        _displayLearnerName(nextSession.learnerName),
+                  },
+                );
+                if (!mounted) return;
+                Navigator.pop(dialogContext);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      _t('Session reminder request submitted.'),
+                    ),
+                  ),
+                );
+              } catch (error) {
+                debugPrint(
+                  'Failed to submit session reminder request: $error',
+                );
+                TelemetryService.instance.logEvent(
+                  event: 'parent.schedule_reminder_request.failed',
+                  metadata: <String, dynamic>{
+                    'session_title': nextSession.title,
+                    'error': error.toString(),
+                  },
+                );
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      _t(
+                        'Unable to submit session reminder request right now.',
+                      ),
+                    ),
+                  ),
+                );
+              }
             },
-            child: Text(_t('Set Reminder')),
+            child: Text(_t('Request Reminder')),
           ),
           TextButton(
             onPressed: () {

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -11,7 +10,6 @@ import 'package:scholesa_app/modules/hq_admin/hq_safety_page.dart';
 import 'package:scholesa_app/services/export_service.dart';
 import 'package:scholesa_app/ui/theme/scholesa_theme.dart';
 
-String? _clipboardText;
 String? _savedFileName;
 String? _savedFileContent;
 
@@ -54,19 +52,7 @@ AppState _buildAppState() {
 }
 
 void main() {
-  TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-      .setMockMethodCallHandler(SystemChannels.platform, (MethodCall methodCall) async {
-    if (methodCall.method == 'Clipboard.setData') {
-      final Map<Object?, Object?>? arguments =
-          methodCall.arguments as Map<Object?, Object?>?;
-      _clipboardText = arguments?['text']?.toString();
-      return null;
-    }
-    return null;
-  });
-
   setUp(() {
-    _clipboardText = null;
     _savedFileName = null;
     _savedFileContent = null;
     ExportService.instance.debugSaveTextFile = null;
@@ -74,6 +60,15 @@ void main() {
 
   testWidgets('HQ safety detail sheets remove the fake full report CTA',
       (WidgetTester tester) async {
+    ExportService.instance.debugSaveTextFile = ({
+      required String fileName,
+      required String content,
+      required String mimeType,
+    }) async {
+      _savedFileName = fileName;
+      _savedFileContent = content;
+      return '/tmp/$fileName';
+    };
     await tester.binding.setSurfaceSize(const Size(1200, 1800));
     await tester.pumpWidget(
       _buildHarness(
@@ -101,23 +96,25 @@ void main() {
 
     expect(
       find.text(
-        'Copy the current incident summary for offline review or escalation.',
+        'Download the current incident summary for offline review or escalation.',
       ),
       findsOneWidget,
     );
-    await tester.tap(find.text('Copy Incident Summary'));
+    await tester.tap(find.text('Download Incident Summary'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Incident summary copied to clipboard.'), findsOneWidget);
-    expect(_clipboardText, isNotNull);
-    expect(_clipboardText, contains('Incident Summary'));
-    expect(_clipboardText, contains('ID: incident-1'));
-    expect(_clipboardText, contains('Title: Minor playground incident'));
-    expect(_clipboardText, contains('Site: Site One'));
-    expect(_clipboardText, contains('Severity: MAJOR'));
+    expect(find.text('Incident summary downloaded.'), findsOneWidget);
+    expect(_savedFileName, 'incident-summary-incident-1.txt');
+    expect(_savedFileContent, isNotNull);
+    expect(_savedFileContent, contains('Incident Summary'));
+    expect(_savedFileContent, contains('ID: incident-1'));
+    expect(_savedFileContent, contains('Title: Minor playground incident'));
+    expect(_savedFileContent, contains('Site: Site One'));
+    expect(_savedFileContent, contains('Severity: MAJOR'));
   });
 
-  testWidgets('HQ safety shows site unavailable when incident site identity is missing',
+  testWidgets(
+      'HQ safety shows site unavailable when incident site identity is missing',
       (WidgetTester tester) async {
     await tester.binding.setSurfaceSize(const Size(1200, 1800));
     await tester.pumpWidget(
@@ -143,7 +140,8 @@ void main() {
     expect(find.text('Unknown Site'), findsNothing);
   });
 
-  testWidgets('HQ integrations health shows site unavailable when site identity is missing',
+  testWidgets(
+      'HQ integrations health shows site unavailable when site identity is missing',
       (WidgetTester tester) async {
     await tester.binding.setSurfaceSize(const Size(1200, 1800));
     await tester.pumpWidget(
@@ -172,6 +170,15 @@ void main() {
 
   testWidgets('HQ billing invoice cards remove the fake send invoice CTA',
       (WidgetTester tester) async {
+    ExportService.instance.debugSaveTextFile = ({
+      required String fileName,
+      required String content,
+      required String mimeType,
+    }) async {
+      _savedFileName = fileName;
+      _savedFileContent = content;
+      return '/tmp/$fileName';
+    };
     await tester.binding.setSurfaceSize(const Size(1200, 1800));
     await tester.pumpWidget(
       _buildHarness(
@@ -201,19 +208,22 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('INV-1001'), findsOneWidget);
-    expect(find.text('Invoice sending is not available in the app yet.'), findsNothing);
+    expect(find.text('Invoice sending is not available in the app yet.'),
+        findsNothing);
 
-    final Finder sendReminderButton = find.byIcon(Icons.send_rounded);
+    final Finder sendReminderButton =
+        find.byTooltip('Download Invoice Reminder');
     await tester.ensureVisible(sendReminderButton);
     await tester.tap(sendReminderButton, warnIfMissed: false);
     await tester.pumpAndSettle();
 
-    expect(find.text('Invoice reminder copied to clipboard.'), findsOneWidget);
-    expect(_clipboardText, isNotNull);
-    expect(_clipboardText, contains('Invoice Reminder'));
-    expect(_clipboardText, contains('ID: INV-1001'));
-    expect(_clipboardText, contains('Parent: Parent One'));
-    expect(_clipboardText, contains('Learner: Learner One'));
+    expect(find.text('Invoice reminder downloaded.'), findsOneWidget);
+    expect(_savedFileName, 'invoice-reminder-INV-1001.txt');
+    expect(_savedFileContent, isNotNull);
+    expect(_savedFileContent, contains('Invoice Reminder'));
+    expect(_savedFileContent, contains('ID: INV-1001'));
+    expect(_savedFileContent, contains('Parent: Parent One'));
+    expect(_savedFileContent, contains('Learner: Learner One'));
 
     final Finder viewInvoiceButton = find.byIcon(Icons.visibility);
     await tester.ensureVisible(viewInvoiceButton);
@@ -293,7 +303,8 @@ void main() {
     expect(_savedFileContent, contains('SUB-3001'));
   });
 
-  testWidgets('HQ billing shows precise unavailable labels for missing identity fields',
+  testWidgets(
+      'HQ billing shows precise unavailable labels for missing identity fields',
       (WidgetTester tester) async {
     await tester.binding.setSurfaceSize(const Size(1200, 1800));
     await tester.pumpWidget(

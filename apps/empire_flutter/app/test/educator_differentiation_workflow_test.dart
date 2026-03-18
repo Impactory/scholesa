@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/modules/educator/educator_learners_page.dart';
 import 'package:scholesa_app/modules/educator/educator_service.dart';
+import 'package:scholesa_app/services/export_service.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
 import 'package:scholesa_app/ui/theme/scholesa_theme.dart';
 
@@ -104,6 +105,18 @@ void main() {
   testWidgets(
       'educator learner detail saves lane override and printable practice export',
       (WidgetTester tester) async {
+    String? savedFileName;
+    String? savedFileContent;
+    ExportService.instance.debugSaveTextFile = ({
+      required String fileName,
+      required String content,
+      required String mimeType,
+    }) async {
+      savedFileName = fileName;
+      savedFileContent = content;
+      return '/tmp/$fileName';
+    };
+    addTearDown(() => ExportService.instance.debugSaveTextFile = null);
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     await _seedLearner(firestore);
     final FirestoreService firestoreService = FirestoreService(
@@ -154,6 +167,11 @@ void main() {
     await tester.tap(find.text('Export practice plan'));
     await tester.pump(const Duration(milliseconds: 500));
 
+    expect(find.text('Practice plan downloaded.'), findsOneWidget);
+    expect(savedFileName, 'practice-plan-learner-1-core.txt');
+    expect(savedFileContent, isNotNull);
+    expect(savedFileContent, contains('Learner: Learner One'));
+
     await tester.dragUntilVisible(
       find.text(
         'Direct learner messaging and full learner profiles are not available from this sheet yet.',
@@ -188,6 +206,7 @@ void main() {
       practiceExports.docs.first.data()['content'] as String,
       contains('Learner: Learner One'),
     );
+    expect(savedFileContent, contains('Recommended lane: Scaffolded'));
   });
 
   testWidgets('educator learners page shows honest learner unavailable label',

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../i18n/parent_surface_i18n.dart';
+import '../../services/export_service.dart';
+import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
@@ -480,7 +481,7 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
                       );
                     },
                     icon: const Icon(Icons.share_rounded),
-                    label: Text(_t('Share')),
+                    label: Text(_t('Request Share')),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -507,7 +508,7 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
                       children: <Widget>[
                         const Icon(Icons.download_rounded),
                         const SizedBox(width: 8),
-                        Text(_t('Download')),
+                        Text(_t('Download Summary')),
                       ],
                     ),
                   ),
@@ -525,54 +526,144 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
     required _PortfolioItem item,
     required String requestType,
   }) async {
-    final AppState appState = context.read<AppState>();
-    final String siteId = appState.activeSiteId?.trim().isNotEmpty == true
-        ? appState.activeSiteId!.trim()
-        : 'Not set';
-    final String parentId = appState.userId?.trim().isNotEmpty == true
-        ? appState.userId!.trim()
-        : 'Not set';
-    final String parentName = appState.displayName?.trim().isNotEmpty == true
-        ? appState.displayName!.trim()
-        : 'Not set';
-    final String parentEmail = appState.email?.trim().isNotEmpty == true
-        ? appState.email!.trim()
-        : 'Not set';
-    final String requestLabel = requestType == 'share' ? 'Share' : 'Download';
     final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
-    final String launchFailureMessage = _t(
-      'We could not open your email app right now. Contact support@scholesa.com with your site ID and portfolio item details.',
-    );
+    try {
+      if (requestType == 'share') {
+        final String requestId = await _submitPortfolioShareRequest(
+          context,
+          item: item,
+        );
+        TelemetryService.instance.logEvent(
+          event: 'parent.portfolio_share_request.submitted',
+          metadata: <String, dynamic>{
+            'request_id': requestId,
+            'item_id': item.id,
+          },
+        );
+        if (!mounted) return;
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(_t('Portfolio share request submitted.')),
+          ),
+        );
+        return;
+      }
 
-    final Uri emailUri = Uri(
-      scheme: 'mailto',
-      path: 'support@scholesa.com',
-      queryParameters: <String, String>{
-        'subject': 'Parent portfolio $requestType request - $siteId',
-        'body':
-            'Hello Scholesa support.\n\nI need a parent-safe portfolio $requestType for this item.\n\nRequest: $requestLabel\nSite ID: $siteId\nParent ID: $parentId\nParent Name: $parentName\nParent Email: $parentEmail\nPortfolio Item ID: ${item.id}\nPortfolio Item Title: ${item.title}\nPillar: ${item.pillar}\nCompleted At: ${_formatDate(item.completedAt)}\n\nPlease let me know the next step.\n',
-      },
-    );
-
-    final bool launched = await _tryLaunchExternalUri(emailUri);
-    if (!mounted || launched) {
-      return;
+      final String? savedLocation = await ExportService.instance.saveTextFile(
+        fileName: _portfolioSummaryFileName(item),
+        content: _buildPortfolioSummary(context, item),
+      );
+      if (savedLocation == null || !mounted) {
+        return;
+      }
+      TelemetryService.instance.logEvent(
+        event: 'export.downloaded',
+        metadata: <String, dynamic>{
+          'module': 'parent_portfolio',
+          'surface': 'portfolio_detail_sheet',
+          'item_id': item.id,
+          'file_name': _portfolioSummaryFileName(item),
+        },
+      );
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(_t('Portfolio summary downloaded.')),
+        ),
+      );
+    } catch (error) {
+      debugPrint(
+          'Failed to process parent portfolio $requestType request: $error');
+      final String failureEvent = requestType == 'share'
+          ? 'parent.portfolio_share_request.failed'
+          : 'parent.portfolio_download.failed';
+      TelemetryService.instance.logEvent(
+        event: failureEvent,
+        metadata: <String, dynamic>{
+          'item_id': item.id,
+          'error': error.toString(),
+        },
+      );
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            _t(
+              requestType == 'share'
+                  ? 'Unable to submit portfolio share request right now.'
+                  : 'Unable to download portfolio summary right now.',
+            ),
+          ),
+        ),
+      );
     }
+  }
 
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(launchFailureMessage),
-      ),
+  FirestoreService? _maybeFirestoreService(BuildContext context) {
+    try {
+      return context.read<FirestoreService>();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<String> _submitPortfolioShareRequest(
+    BuildContext context, {
+    required _PortfolioItem item,
+  }) async {
+    final FirestoreService? firestoreService = _maybeFirestoreService(context);
+    if (firestoreService == null) {
+      throw StateError(_t('Support requests are unavailable right now.'));
+    }
+    final AppState appState = context.read<AppState>();
+    return firestoreService.submitSupportRequest(
+      requestType: 'portfolio_share',
+      source: 'parent_portfolio_request_share',
+      siteId: appState.activeSiteId?.trim().isNotEmpty == true
+          ? appState.activeSiteId!.trim()
+          : 'Not set',
+      userId: appState.userId?.trim().isNotEmpty == true
+          ? appState.userId!.trim()
+          : 'Not set',
+      userEmail: appState.email?.trim().isNotEmpty == true
+          ? appState.email!.trim()
+          : 'Not set',
+      userName: appState.displayName?.trim().isNotEmpty == true
+          ? appState.displayName!.trim()
+          : 'Not set',
+      role: appState.role?.name ?? 'unknown',
+      subject: 'Parent portfolio share request',
+      message: <String>[
+        'Please review and share this portfolio item through the approved parent-safe process.',
+        '',
+        'Portfolio Item ID: ${item.id}',
+        'Title: ${item.title}',
+        'Pillar: ${item.pillar}',
+        'Completed At: ${item.completedAt.toIso8601String()}',
+      ].join('\n'),
+      metadata: <String, dynamic>{
+        'itemId': item.id,
+        'itemTitle': item.title,
+        'pillar': item.pillar,
+        'itemType': item.type.name,
+        'completedAt': item.completedAt.toIso8601String(),
+      },
     );
   }
 
-  Future<bool> _tryLaunchExternalUri(Uri uri) async {
-    final bool canLaunchUri = await canLaunchUrl(uri);
-    if (!canLaunchUri) {
-      return false;
-    }
+  String _portfolioSummaryFileName(_PortfolioItem item) {
+    return 'portfolio-summary-${item.id}.txt';
+  }
 
-    return launchUrl(uri, mode: LaunchMode.externalApplication);
+  String _buildPortfolioSummary(BuildContext context, _PortfolioItem item) {
+    return <String>[
+      _t('Portfolio'),
+      '${_t('Portfolio Item ID')}: ${item.id}',
+      '${_t('Completed')}: ${item.completedAt.toIso8601String()}',
+      '${_t('Type')}: ${item.type == _ItemType.project ? _t('Project') : _t('Badge')}',
+      '${_t('Pillar')}: ${item.pillar}',
+      '${_t('Title')}: ${item.title}',
+      '${_t('Description')}: ${item.description}',
+    ].join('\n');
   }
 
   String _formatDate(DateTime date) {
@@ -590,14 +681,14 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
           _PortfolioItem(
             id: '${learner.learnerId}-${activity.id}',
             title: activity.title.isEmpty
-              ? '${_displayLearnerName(learner.learnerName)} ${_t('activity')}'
+                ? '${_displayLearnerName(learner.learnerName)} ${_t('activity')}'
                 : activity.title,
             pillar: pillar,
             type: itemType,
             completedAt: activity.timestamp,
             imageUrl: null,
             description: activity.description.isEmpty
-              ? '${_t('Completed by')} ${_displayLearnerName(learner.learnerName)}'
+                ? '${_t('Completed by')} ${_displayLearnerName(learner.learnerName)}'
                 : activity.description,
           ),
         );

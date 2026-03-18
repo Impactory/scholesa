@@ -1,7 +1,6 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../i18n/workflow_surface_i18n.dart';
 import '../../auth/app_state.dart';
@@ -521,7 +520,8 @@ class _HqBillingPageState extends State<HqBillingPage>
     if (_invoices.isEmpty && _payments.isEmpty && _subscriptions.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_tHqBilling(context, 'No financial records to export yet.')),
+          content:
+              Text(_tHqBilling(context, 'No financial records to export yet.')),
         ),
       );
       return;
@@ -554,8 +554,8 @@ class _HqBillingPageState extends State<HqBillingPage>
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content:
-              Text(_tHqBilling(context, 'Unable to export financials right now.')),
+          content: Text(
+              _tHqBilling(context, 'Unable to export financials right now.')),
         ),
       );
     }
@@ -655,14 +655,15 @@ class _HqBillingPageState extends State<HqBillingPage>
             return <String, dynamic>{
               'id': id,
               'parent': ((row['parent'] as String?)?.trim().isNotEmpty == true)
-                ? (row['parent'] as String).trim()
-                : _tHqBilling(context, 'Parent unavailable'),
-              'learner': ((row['learner'] as String?)?.trim().isNotEmpty == true)
-                ? (row['learner'] as String).trim()
-                : _tHqBilling(context, 'Learner unavailable'),
+                  ? (row['parent'] as String).trim()
+                  : _tHqBilling(context, 'Parent unavailable'),
+              'learner':
+                  ((row['learner'] as String?)?.trim().isNotEmpty == true)
+                      ? (row['learner'] as String).trim()
+                      : _tHqBilling(context, 'Learner unavailable'),
               'site': ((row['site'] as String?)?.trim().isNotEmpty == true)
-                ? (row['site'] as String).trim()
-                : _tHqBilling(context, 'Site unavailable'),
+                  ? (row['site'] as String).trim()
+                  : _tHqBilling(context, 'Site unavailable'),
               'amount': _asDouble(row['amount']) ?? 0,
               'status': _invoiceStatusFromPayoutStatus(
                 (row['status'] as String?) ?? 'pending',
@@ -686,9 +687,9 @@ class _HqBillingPageState extends State<HqBillingPage>
               'id': id,
               'from': ((row['from'] as String?)?.trim().isNotEmpty == true)
                   ? (row['from'] as String).trim()
-                : ((row['source'] as String?)?.trim().isNotEmpty == true)
-                  ? (row['source'] as String).trim()
-                  : _tHqBilling(context, 'Payment source unavailable'),
+                  : ((row['source'] as String?)?.trim().isNotEmpty == true)
+                      ? (row['source'] as String).trim()
+                      : _tHqBilling(context, 'Payment source unavailable'),
               'method': (row['method'] as String?) ?? 'Transfer',
               'amount': _asDouble(row['amount']) ?? 0,
               'date': _formatDate(date),
@@ -703,13 +704,13 @@ class _HqBillingPageState extends State<HqBillingPage>
         final DateTime? nextBilling = _toDateTime(row['nextBilling']);
         return <String, dynamic>{
           'id': ((row['id'] as String?)?.trim().isNotEmpty == true)
-            ? (row['id'] as String).trim()
-            : 'subscription-${row.hashCode}',
-            'parent': ((row['parent'] as String?)?.trim().isNotEmpty == true)
+              ? (row['id'] as String).trim()
+              : 'subscription-${row.hashCode}',
+          'parent': ((row['parent'] as String?)?.trim().isNotEmpty == true)
               ? (row['parent'] as String).trim()
-            : ((row['owner'] as String?)?.trim().isNotEmpty == true)
-              ? (row['owner'] as String).trim()
-              : _tHqBilling(context, 'Subscription owner unavailable'),
+              : ((row['owner'] as String?)?.trim().isNotEmpty == true)
+                  ? (row['owner'] as String).trim()
+                  : _tHqBilling(context, 'Subscription owner unavailable'),
           'learners': _asInt(row['learners']) ?? 0,
           'plan': (row['plan'] as String?) ?? 'Standard',
           'amount': _asDouble(row['amount']) ?? 0,
@@ -939,28 +940,50 @@ class _InvoiceCard extends StatelessWidget {
     );
   }
 
-  void _copyInvoiceReminder(BuildContext context) {
+  Future<void> _downloadInvoiceReminder(BuildContext context) async {
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
     final String reminder = _buildInvoiceReminder(context);
-    Clipboard.setData(ClipboardData(text: reminder));
+    final String fileName = _invoiceReminderFileName();
+    try {
+      final String? savedLocation = await ExportService.instance.saveTextFile(
+        fileName: fileName,
+        content: reminder,
+      );
+      if (savedLocation == null || !context.mounted) {
+        return;
+      }
 
-    TelemetryService.instance.logEvent(
-      event: 'cta.clicked',
-      metadata: <String, dynamic>{
-        'module': 'hq_billing',
-        'cta_id': 'copy_invoice_reminder',
-        'surface': 'invoice_card',
-        'invoice_id': invoice['id'],
-        'status': invoice['status'],
-      },
-    );
+      TelemetryService.instance.logEvent(
+        event: 'export.downloaded',
+        metadata: <String, dynamic>{
+          'module': 'hq_billing',
+          'surface': 'invoice_card',
+          'invoice_id': invoice['id'],
+          'status': invoice['status'],
+          'file_name': fileName,
+        },
+      );
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          _tHqBilling(context, 'Invoice reminder copied to clipboard.'),
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            _tHqBilling(context, 'Invoice reminder downloaded.'),
+          ),
         ),
-      ),
-    );
+      );
+    } catch (_) {
+      if (!context.mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            _tHqBilling(
+              context,
+              'Unable to download invoice reminder right now.',
+            ),
+          ),
+        ),
+      );
+    }
   }
 
   String _buildInvoiceReminder(BuildContext context) {
@@ -976,6 +999,10 @@ class _InvoiceCard extends StatelessWidget {
       '${_tHqBilling(context, 'Status')}: '
           '${_tHqBilling(context, invoice['status'] as String).toUpperCase()}',
     ].join('\n');
+  }
+
+  String _invoiceReminderFileName() {
+    return 'invoice-reminder-${invoice['id']}.txt';
   }
 
   @override
@@ -1064,10 +1091,11 @@ class _InvoiceCard extends StatelessWidget {
                 Row(
                   children: <Widget>[
                     IconButton(
-                      onPressed: () => _copyInvoiceReminder(context),
-                      icon: const Icon(Icons.send_rounded, size: 20),
+                      onPressed: () => _downloadInvoiceReminder(context),
+                      icon: const Icon(Icons.download_rounded, size: 20),
                       color: context.schTextSecondary,
-                      tooltip: _tHqBilling(context, 'Copy Invoice Reminder'),
+                      tooltip:
+                          _tHqBilling(context, 'Download Invoice Reminder'),
                     ),
                     IconButton(
                       onPressed: () => _viewInvoice(context),

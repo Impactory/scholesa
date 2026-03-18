@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../services/firestore_service.dart';
+import '../../services/export_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
@@ -965,20 +965,41 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
           'createdAt': DateTime.now().toIso8601String(),
         },
       );
-      await Clipboard.setData(ClipboardData(text: printablePlan));
+      final String fileName =
+          'practice-plan-${learner.id}-${_selectedLane}.txt';
+      final String? savedLocation = await ExportService.instance.saveTextFile(
+        fileName: fileName,
+        content: printablePlan,
+      );
+      if (savedLocation == null || !mounted) {
+        return;
+      }
       TelemetryService.instance.logEvent(
-        event: 'export.requested',
+        event: 'export.downloaded',
         metadata: <String, dynamic>{
           'learner_id': learner.id,
           'lane': _selectedLane,
           'export_type': 'printable_practice',
+          'file_name': fileName,
         },
       );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tEducatorLearners(context, 'Practice plan downloaded.'),
+          ),
+          backgroundColor: ScholesaColors.educator,
+        ),
+      );
+    } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            _tEducatorLearners(context, 'Practice plan exported to clipboard'),
+            _tEducatorLearners(
+              context,
+              'Unable to download practice plan right now.',
+            ),
           ),
           backgroundColor: ScholesaColors.educator,
         ),

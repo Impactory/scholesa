@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -16,9 +15,8 @@ import 'package:scholesa_app/modules/parent/parent_schedule_page.dart';
 import 'package:scholesa_app/modules/parent/parent_service.dart';
 import 'package:scholesa_app/modules/parent/parent_summary_page.dart';
 import 'package:scholesa_app/runtime/learning_runtime_provider.dart';
+import 'package:scholesa_app/services/export_service.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
-import 'package:url_launcher_platform_interface/link.dart';
-import 'package:url_launcher_platform_interface/url_launcher_platform_interface.dart';
 
 final ThemeData _workflowTheme = ThemeData(
   useMaterial3: true,
@@ -27,43 +25,8 @@ final ThemeData _workflowTheme = ThemeData(
 
 class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
-String? _parentScheduleClipboardText;
-
-class _FakeUrlLauncherPlatform extends UrlLauncherPlatform {
-  final List<String> launchedUrls = <String>[];
-  bool canLaunchResult = true;
-  bool launchResult = true;
-
-  @override
-  LinkDelegate? get linkDelegate => null;
-
-  @override
-  Future<bool> canLaunch(String url) async => canLaunchResult;
-
-  @override
-  Future<void> closeWebView() async {}
-
-  @override
-  Future<bool> launch(
-    String url, {
-    required bool useSafariVC,
-    required bool useWebView,
-    required bool enableJavaScript,
-    required bool enableDomStorage,
-    required bool universalLinksOnly,
-    required Map<String, String> headers,
-    String? webOnlyWindowName,
-  }) async {
-    launchedUrls.add(url);
-    return launchResult;
-  }
-
-  @override
-  Future<bool> supportsCloseForMode(PreferredLaunchMode mode) async => false;
-
-  @override
-  Future<bool> supportsMode(PreferredLaunchMode mode) async => true;
-}
+String? _savedFileName;
+String? _savedFileContent;
 
 class _StubParentService extends ParentService {
   _StubParentService({
@@ -244,27 +207,10 @@ Future<void> _pumpPage(
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  setUpAll(() {
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(SystemChannels.platform, (
-      MethodCall methodCall,
-    ) async {
-      if (methodCall.method == 'Clipboard.setData') {
-        final Map<Object?, Object?>? arguments =
-            methodCall.arguments as Map<Object?, Object?>?;
-        _parentScheduleClipboardText = arguments?['text']?.toString();
-      }
-      return null;
-    });
-  });
-
-  tearDownAll(() {
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(SystemChannels.platform, null);
-  });
-
   setUp(() {
-    _parentScheduleClipboardText = null;
+    _savedFileName = null;
+    _savedFileContent = null;
+    ExportService.instance.debugSaveTextFile = null;
   });
 
   group('Parent surface workflows', () {
@@ -306,109 +252,112 @@ void main() {
           findsOneWidget);
       expect(find.textContaining('Location: Lab 1'), findsOneWidget);
 
-      expect(find.widgetWithText(TextButton, 'Set Reminder'), findsOneWidget);
+      expect(
+          find.widgetWithText(TextButton, 'Request Reminder'), findsOneWidget);
 
-      await tester.tap(find.widgetWithText(TextButton, 'Set Reminder'));
+      await tester.tap(find.widgetWithText(TextButton, 'Request Reminder'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Session reminder copied for sharing.'), findsOneWidget);
-      expect(_parentScheduleClipboardText, isNotNull);
-      expect(_parentScheduleClipboardText, contains('Session Reminder'));
-      expect(_parentScheduleClipboardText, contains('Robotics Studio'));
+      expect(find.text('Session reminder request submitted.'), findsOneWidget);
+
+      final List<Map<String, dynamic>> supportRequests = (await firestore
+              .collection('supportRequests')
+              .get())
+          .docs
+          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) => doc.data())
+          .toList();
+      expect(
+        supportRequests.any(
+          (Map<String, dynamic> request) =>
+              request['requestType'] == 'session_reminder' &&
+              request['source'] == 'parent_schedule_request_session_reminder' &&
+              request['metadata']?['sessionTitle'] == 'Robotics Studio',
+        ),
+        isTrue,
+      );
     });
 
-    testWidgets('portfolio page shows explicit unavailable share state',
+    testWidgets('portfolio page persists portfolio share requests in app',
         (WidgetTester tester) async {
       final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
-      final _FakeUrlLauncherPlatform launcherPlatform =
-          _FakeUrlLauncherPlatform();
-      final UrlLauncherPlatform previousLauncherPlatform =
-          UrlLauncherPlatform.instance;
       await _seedParentData(firestore);
 
-      UrlLauncherPlatform.instance = launcherPlatform;
-      try {
-        await _pumpPage(
-          tester,
-          firestore: firestore,
-          home: const ParentPortfolioPage(),
-        );
+      await _pumpPage(
+        tester,
+        firestore: firestore,
+        home: const ParentPortfolioPage(),
+      );
 
-        expect(find.text('Build a Robot'), findsOneWidget);
-        expect(find.text('Hidden Project'), findsNothing);
+      expect(find.text('Build a Robot'), findsOneWidget);
+      expect(find.text('Hidden Project'), findsNothing);
 
-        await tester.ensureVisible(find.text('Build a Robot').first);
-        await tester.tap(find.text('Build a Robot').first);
-        await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Build a Robot').first);
+      await tester.tap(find.text('Build a Robot').first);
+      await tester.pumpAndSettle();
 
-        expect(find.widgetWithText(OutlinedButton, 'Share'), findsOneWidget);
-        expect(find.widgetWithText(ElevatedButton, 'Download'), findsOneWidget);
+      expect(
+          find.widgetWithText(OutlinedButton, 'Request Share'), findsOneWidget);
+      expect(find.widgetWithText(ElevatedButton, 'Download Summary'),
+          findsOneWidget);
 
-        await tester.tap(find.widgetWithText(OutlinedButton, 'Share'));
-        await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(OutlinedButton, 'Request Share'));
+      await tester.pumpAndSettle();
 
-        expect(
-          launcherPlatform.launchedUrls,
-          contains(
-            predicate<String>(
-              (String value) =>
-                  value.startsWith('mailto:support@scholesa.com?') &&
-                  value.contains('portfolio+share+request'),
-            ),
-          ),
-        );
-        expect(
-          find.text('Portfolio sharing is not available in the app yet'),
-          findsNothing,
-        );
-      } finally {
-        UrlLauncherPlatform.instance = previousLauncherPlatform;
-      }
+      expect(find.text('Portfolio share request submitted.'), findsOneWidget);
+
+      final List<Map<String, dynamic>> supportRequests = (await firestore
+              .collection('supportRequests')
+              .get())
+          .docs
+          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) => doc.data())
+          .toList();
+      expect(
+        supportRequests.any(
+          (Map<String, dynamic> request) =>
+              request['requestType'] == 'portfolio_share' &&
+              request['source'] == 'parent_portfolio_request_share' &&
+              request['metadata']?['itemTitle'] == 'Build a Robot',
+        ),
+        isTrue,
+      );
     });
 
-    testWidgets('portfolio page launches support email for download state',
+    testWidgets('portfolio page downloads a real summary file',
         (WidgetTester tester) async {
+      ExportService.instance.debugSaveTextFile = ({
+        required String fileName,
+        required String content,
+        required String mimeType,
+      }) async {
+        _savedFileName = fileName;
+        _savedFileContent = content;
+        return '/tmp/$fileName';
+      };
       final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
-      final _FakeUrlLauncherPlatform launcherPlatform =
-          _FakeUrlLauncherPlatform();
-      final UrlLauncherPlatform previousLauncherPlatform =
-          UrlLauncherPlatform.instance;
       await _seedParentData(firestore);
 
-      UrlLauncherPlatform.instance = launcherPlatform;
-      try {
-        await _pumpPage(
-          tester,
-          firestore: firestore,
-          home: const ParentPortfolioPage(),
-        );
+      await _pumpPage(
+        tester,
+        firestore: firestore,
+        home: const ParentPortfolioPage(),
+      );
 
-        await tester.ensureVisible(find.text('Build a Robot').first);
-        await tester.tap(find.text('Build a Robot').first);
-        await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Build a Robot').first);
+      await tester.tap(find.text('Build a Robot').first);
+      await tester.pumpAndSettle();
 
-        expect(find.widgetWithText(ElevatedButton, 'Download'), findsOneWidget);
+      expect(find.widgetWithText(ElevatedButton, 'Download Summary'),
+          findsOneWidget);
 
-        await tester.tap(find.widgetWithText(ElevatedButton, 'Download'));
-        await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Download Summary'));
+      await tester.pumpAndSettle();
 
-        expect(
-          launcherPlatform.launchedUrls,
-          contains(
-            predicate<String>(
-              (String value) =>
-                  value.startsWith('mailto:support@scholesa.com?') &&
-                  value.contains('portfolio+download+request'),
-            ),
-          ),
-        );
-        expect(
-          find.text('Portfolio downloads are not available in the app yet'),
-          findsNothing,
-        );
-      } finally {
-        UrlLauncherPlatform.instance = previousLauncherPlatform;
-      }
+      expect(find.text('Portfolio summary downloaded.'), findsOneWidget);
+      expect(_savedFileName, 'portfolio-summary-learner-1-activity-1.txt');
+      expect(_savedFileContent,
+          contains('Portfolio Item ID: learner-1-activity-1'));
+      expect(_savedFileContent, contains('Title: Build a Robot'));
+      expect(_savedFileContent, contains('Description: Linked Update'));
     });
 
     testWidgets(
