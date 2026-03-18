@@ -118,7 +118,8 @@ const Map<String, String> _roleDashboardZhCn = <String, String>{
   'within SLA': 'SLA 内',
   'hours': '小时',
   'Sign Out': '退出登录',
-  'Are you sure you want to sign out?': '确定要退出登录吗？',
+  'Sign out so another family member can switch accounts on this device?':
+      '要退出登录，让其他家庭成员在这台设备上切换账户吗？',
   'learner': '学习者',
   'educator': '教育者',
   'parent': '家长',
@@ -235,7 +236,8 @@ const Map<String, String> _roleDashboardZhTw = <String, String>{
   'within SLA': 'SLA 內',
   'hours': '小時',
   'Sign Out': '登出',
-  'Are you sure you want to sign out?': '確定要登出嗎？',
+  'Sign out so another family member can switch accounts on this device?':
+      '要登出，讓其他家庭成員在這台裝置上切換帳戶嗎？',
   'learner': '學習者',
   'educator': '教育者',
   'parent': '家長',
@@ -1375,7 +1377,12 @@ class RoleDashboard extends StatelessWidget {
             Text(_t(dialogContext, 'Sign Out')),
           ],
         ),
-        content: Text(_t(dialogContext, 'Are you sure you want to sign out?')),
+        content: Text(
+          _t(
+            dialogContext,
+            'Sign out so another family member can switch accounts on this device?',
+          ),
+        ),
         actions: <Widget>[
           TextButton(
             onPressed: () {

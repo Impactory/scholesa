@@ -346,7 +346,11 @@ class ProfilePage extends StatelessWidget {
               builder: (BuildContext context) => AlertDialog(
                 title: Text(_tProfile(context, 'Sign Out')),
                 content: Text(
-                    _tProfile(context, 'Are you sure you want to sign out?')),
+                  _tProfile(
+                    context,
+                    'Sign out so another family member can switch accounts on this device?',
+                  ),
+                ),
                 actions: <Widget>[
                   TextButton(
                     onPressed: () {

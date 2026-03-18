@@ -475,6 +475,8 @@ class WorkflowSurfaceI18n {
     'Language': '语言',
     'Appearance': '外观',
     'Sign Out': '退出登录',
+    'Sign out so another family member can switch accounts on this device?':
+        '要退出登录，让其他家庭成员在这台设备上切换账户吗？',
     'Provisioning': '开通配置',
     'Parents': '家长',
     'Links': '关联',
@@ -523,6 +525,9 @@ class WorkflowSurfaceI18n {
     'Check-in / Check-out': '簽到 / 簽退',
     'Manage arrivals and pickups': '管理到達與接送',
     'Total': '總計',
+    'Sign Out': '登出',
+    'Sign out so another family member can switch accounts on this device?':
+        '要登出，讓其他家庭成員在這台裝置上切換帳戶嗎？',
     'Left': '已離開',
     'Search learners...': '搜尋學習者...',
     'All': '全部',

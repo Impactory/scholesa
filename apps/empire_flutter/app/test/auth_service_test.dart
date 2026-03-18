@@ -247,6 +247,7 @@ void main() {
               nonce: any(named: 'nonce'),
               hostedDomain: any(named: 'hostedDomain'),
             )).thenAnswer((_) async {});
+        when(() => mockGoogleSignIn.signOut()).thenAnswer((_) async {});
         when(() => mockGoogleSignIn.authenticate(
               scopeHint: any(named: 'scopeHint'),
             )).thenAnswer((_) async => mockGoogleAccount);
@@ -274,6 +275,7 @@ void main() {
               nonce: null,
               hostedDomain: null,
             )).called(1);
+        verify(() => mockGoogleSignIn.signOut()).called(1);
         verify(() => mockGoogleSignIn.authenticate(
               scopeHint: <String>['email', 'profile'],
             )).called(1);
