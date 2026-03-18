@@ -6,8 +6,8 @@ Source of Truth: `apps/empire_flutter/app/lib/router/app_router.dart` (`kKnownRo
 
 ## Status Summary
 
-- Total routes in registry: **52**
-- Enabled routes: **52**
+- Total routes in registry: **54**
+- Enabled routes: **54**
 - Disabled routes: **0**
 - Redirect-only routes outside registry: **1** (`/register` → `/login`)
 - Placeholder/coming-soon on enabled routes: **under active audit**
@@ -20,11 +20,11 @@ Source of Truth: `apps/empire_flutter/app/lib/router/app_router.dart` (`kKnownRo
 | Learner | 6 | 0 | 6 |
 | Educator | 9 | 0 | 9 |
 | Parent | 6 | 0 | 6 |
-| Site | 10 | 0 | 10 |
+| Site | 12 | 0 | 12 |
 | Partner | 3 | 0 | 3 |
 | HQ | 11 | 0 | 11 |
 | Cross-role | 4 | 0 | 4 |
-| **Total** | **52** | **0** | **52** |
+| **Total** | **54** | **0** | **54** |
 
 ## Enabled Route Registry
 
@@ -69,8 +69,10 @@ Source of Truth: `apps/empire_flutter/app/lib/router/app_router.dart` (`kKnownRo
 - `/site/ops`
 - `/site/incidents`
 - `/site/identity`
+- `/site/pickup-auth`
 - `/site/integrations-health`
 - `/site/billing`
+- `/site/audit`
 
 ### Partner
 - `/partner/listings`
@@ -112,6 +114,7 @@ Source of Truth: `apps/empire_flutter/app/lib/router/app_router.dart` (`kKnownRo
 | 2026-02-23 | Full registry | Reconciled tracker to live `kKnownRoutes`; all 46 routes enabled |
 | 2026-03-17 | Router registry + audit posture | Corrected live route count to 47 known routes, noted `/register` redirect route, and removed unsupported blanket route-compliance claims pending the current release audit |
 | 2026-03-18 | Inventory-aligned aliases | Added 5 documented alias routes with honest equivalent screens: learner settings, educator review queue, parent messages, parent settings, and site scheduling |
+| 2026-03-18 | Site admin dedicated routes | Added dedicated `/site/pickup-auth` and `/site/audit` routes backed by live pickup authorization and audit-log data |
 
 <!-- TELEMETRY_WIRING:START -->
 ## Telemetry & End-to-End Wiring

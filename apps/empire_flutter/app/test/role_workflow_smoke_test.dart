@@ -44,15 +44,17 @@ void main() {
       }
     });
 
-    test('inventory-aligned alias routes are enabled', () {
-      const List<String> inventoryAliasRoutes = <String>[
+    test('inventory-aligned routes are enabled', () {
+      const List<String> inventoryAlignedRoutes = <String>[
         '/learner/settings',
         '/educator/review-queue',
         '/parent/messages',
         '/parent/settings',
         '/site/scheduling',
+        '/site/pickup-auth',
+        '/site/audit',
       ];
-      for (final String route in inventoryAliasRoutes) {
+      for (final String route in inventoryAlignedRoutes) {
         expect(isRouteEnabled(route), isTrue,
             reason: '$route should be enabled');
       }
