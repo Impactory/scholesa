@@ -4714,15 +4714,7 @@ void main() {
     await tester.tap(find.widgetWithText(TextButton, 'Close').last);
     await tester.pumpAndSettle();
 
-    final Finder viewPackagesButton = find.widgetWithText(
-      TextButton,
-      'View packages',
-    );
-    await tester.ensureVisible(viewPackagesButton.first);
-    final TextButton viewPackagesControl = tester.widget<TextButton>(
-      viewPackagesButton.first,
-    );
-    viewPackagesControl.onPressed?.call();
+    await _tapMainViewText(tester, 'View packages');
     await tester.pumpAndSettle();
 
     expect(find.text('Candidate packages: Literacy Pilot'), findsOneWidget);
@@ -4946,15 +4938,7 @@ void main() {
     await tester.tap(find.widgetWithText(TextButton, 'Close').last);
     await tester.pumpAndSettle();
 
-    final Finder viewPromotionsButton = find.widgetWithText(
-      TextButton,
-      'View promotions',
-    );
-    await tester.ensureVisible(viewPromotionsButton.first);
-    final TextButton viewPromotionsControl = tester.widget<TextButton>(
-      viewPromotionsButton.first,
-    );
-    viewPromotionsControl.onPressed?.call();
+    await _tapMainViewText(tester, 'View promotions');
     await tester.pumpAndSettle();
 
     expect(find.text('Promotion history: Literacy Pilot'), findsOneWidget);
@@ -5220,15 +5204,7 @@ void main() {
     await tester.tap(find.widgetWithText(TextButton, 'Close').last);
     await tester.pumpAndSettle();
 
-    final Finder createExperimentButton = find.widgetWithText(
-      FilledButton,
-      'Create experiment',
-    );
-    await tester.ensureVisible(createExperimentButton);
-    final FilledButton createExperimentControl = tester.widget<FilledButton>(
-      createExperimentButton,
-    );
-    createExperimentControl.onPressed?.call();
+    await _tapMainViewText(tester, 'Create experiment');
     await tester.pumpAndSettle();
 
     await tester.enterText(
@@ -5275,7 +5251,11 @@ void main() {
       SwitchListTile,
       'Require warm start for training',
     );
-    await tester.ensureVisible(requireWarmStartTile);
+    await tester.scrollUntilVisible(
+      requireWarmStartTile,
+      200,
+      scrollable: find.byType(Scrollable).last,
+    );
     await tester.tap(requireWarmStartTile);
     await tester.pumpAndSettle();
 
