@@ -141,7 +141,7 @@ void main() {
       expect(spoken, isNotEmpty);
       expect(
         spoken.first.toLowerCase(),
-        contains('ai coach'),
+        contains('miloos'),
       );
     });
 
@@ -211,7 +211,7 @@ void main() {
       expect(find.byType(TextField), findsNothing);
       expect(find.byIcon(Icons.send), findsNothing);
       expect(find.byIcon(Icons.mic_none), findsOneWidget);
-      expect(find.textContaining('BOS-MIA'), findsOneWidget);
+      expect(find.textContaining('MiloOS will reply by voice.'), findsOneWidget);
     });
 
     testWidgets('captures privacy-safe keystroke summaries for learner typing',
