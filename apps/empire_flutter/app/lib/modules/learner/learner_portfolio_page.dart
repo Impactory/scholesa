@@ -778,162 +778,72 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
   }
 
   Widget _buildBadgesList() {
-    final List<Map<String, dynamic>> badges = <Map<String, dynamic>>[
-      <String, dynamic>{
-        'name': _t('First Mission'),
-        'description': _t('Completed your first mission'),
-        'icon': Icons.rocket_launch,
-        'color': ScholesaColors.futureSkills,
-        'earned': true,
-        'date': 'Oct 15, 2024',
-      },
-      <String, dynamic>{
-        'name': _t('Week Warrior'),
-        'description': _t('7-day streak achievement'),
-        'icon': Icons.local_fire_department,
-        'color': Colors.orange,
-        'earned': true,
-        'date': 'Nov 22, 2024',
-      },
-      <String, dynamic>{
-        'name': _t('Code Master'),
-        'description': _t('Complete 10 coding missions'),
-        'icon': Icons.code,
-        'color': ScholesaColors.futureSkills,
-        'earned': true,
-        'date': 'Dec 5, 2024',
-      },
-      <String, dynamic>{
-        'name': _t('Team Leader'),
-        'description': _t('Lead a group project'),
-        'icon': Icons.groups,
-        'color': ScholesaColors.leadership,
-        'earned': true,
-        'date': 'Dec 12, 2024',
-      },
-      <String, dynamic>{
-        'name': _t('Eco Champion'),
-        'description': _t('Complete 5 sustainability missions'),
-        'icon': Icons.eco,
-        'color': ScholesaColors.impact,
-        'earned': false,
-        'progress': 3,
-        'total': 5,
-      },
-      <String, dynamic>{
-        'name': _t('Perfect Month'),
-        'description': _t('30-day streak achievement'),
-        'icon': Icons.calendar_month,
-        'color': Colors.amber,
-        'earned': false,
-        'progress': 15,
-        'total': 30,
-      },
-    ];
+    if (_isPortfolioLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
-    return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childAspectRatio: 0.9,
+    return _buildEmptyTabState(
+      icon: Icons.workspace_premium_outlined,
+      title: _t('No badges earned yet'),
+      message: _t(
+        'Badges will appear here after your educator or site publishes earned credentials.',
       ),
-      itemCount: badges.length,
-      itemBuilder: (BuildContext context, int index) {
-        final Map<String, dynamic> badge = badges[index];
-        return _BadgeCard(badge: badge);
-      },
     );
   }
 
   Widget _buildSkillsList() {
-    final List<Map<String, dynamic>> skills = <Map<String, dynamic>>[
-      <String, dynamic>{
-        'name': _t('Python Programming'),
-        'pillar': _t('Future Skills'),
-        'level': 3,
-        'maxLevel': 5,
-        'progress': 0.65,
-        'color': ScholesaColors.futureSkills,
-      },
-      <String, dynamic>{
-        'name': _t('Creative Thinking'),
-        'pillar': _t('Leadership'),
-        'level': 4,
-        'maxLevel': 5,
-        'progress': 0.82,
-        'color': ScholesaColors.leadership,
-      },
-      <String, dynamic>{
-        'name': _t('Public Speaking'),
-        'pillar': _t('Leadership'),
-        'level': 2,
-        'maxLevel': 5,
-        'progress': 0.45,
-        'color': ScholesaColors.leadership,
-      },
-      <String, dynamic>{
-        'name': _t('Environmental Awareness'),
-        'pillar': _t('Impact'),
-        'level': 3,
-        'maxLevel': 5,
-        'progress': 0.58,
-        'color': ScholesaColors.impact,
-      },
-      <String, dynamic>{
-        'name': _t('Robotics'),
-        'pillar': _t('Future Skills'),
-        'level': 2,
-        'maxLevel': 5,
-        'progress': 0.35,
-        'color': ScholesaColors.futureSkills,
-      },
-    ];
+    final List<_PortfolioSignal> signals = _portfolioSignals();
+    if (_isPortfolioLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (signals.isEmpty) {
+      return _buildEmptyTabState(
+        icon: Icons.auto_awesome_outlined,
+        title: _t('No skills or interests saved yet'),
+        message: _t(
+          'Complete learner setup or add strengths and interests to show real learner signals here.',
+        ),
+      );
+    }
 
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: skills.length,
+      itemCount: signals.length,
       itemBuilder: (BuildContext context, int index) {
-        final Map<String, dynamic> skill = skills[index];
-        return _SkillCard(skill: skill);
+        return _PortfolioSignalCard(signal: signals[index]);
       },
     );
   }
 
   Widget _buildProjectsList() {
-    final List<Map<String, dynamic>> projects = <Map<String, dynamic>>[
-      <String, dynamic>{
-        'title': _t('Weather Station App'),
-        'description': _t('Built a Python app to display local weather data'),
-        'pillar': _t('Future Skills'),
-        'date': 'Dec 10, 2024',
-        'image': null,
-        'color': ScholesaColors.futureSkills,
-      },
-      <String, dynamic>{
-        'title': _t('School Recycling Campaign'),
-        'description': _t('Led initiative to increase recycling by 40%'),
-        'pillar': _t('Impact'),
-        'date': 'Nov 28, 2024',
-        'image': null,
-        'color': ScholesaColors.impact,
-      },
-      <String, dynamic>{
-        'title': _t('Team Presentation'),
-        'description': _t('Presented AI research to parents and community'),
-        'pillar': _t('Leadership'),
-        'date': 'Nov 15, 2024',
-        'image': null,
-        'color': ScholesaColors.leadership,
-      },
-    ];
+    if (_isPortfolioLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_portfolioItems.isEmpty) {
+      return _buildEmptyTabState(
+        icon: Icons.folder_open_outlined,
+        title: _t('No projects added yet'),
+        message: _t(
+          'Projects you complete or share will appear here once they are saved to your portfolio.',
+        ),
+      );
+    }
 
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: projects.length,
+      itemCount: _portfolioItems.length,
       itemBuilder: (BuildContext context, int index) {
-        final Map<String, dynamic> project = projects[index];
+        final PortfolioItemModel item = _portfolioItems[index];
+        final Map<String, dynamic> project = <String, dynamic>{
+          'title': item.title.trim(),
+          'description': (item.description?.trim().isNotEmpty ?? false)
+              ? item.description!.trim()
+              : _t('Saved to your portfolio.'),
+          'pillar': _primaryPillarLabel(item),
+          'date': _formatProjectDate(item),
+          'image': null,
+          'color': _projectColor(item),
+        };
         return _ProjectCard(project: project);
       },
     );
@@ -941,6 +851,8 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
 
   void _editProfile() {
     final AppState appState = context.read<AppState>();
+    final String learnerId = appState.userId?.trim() ?? '';
+    final String siteId = _activeSiteId(appState);
     final TextEditingController headlineController = TextEditingController(
       text: _effectiveHeadline(appState),
     );
@@ -1005,25 +917,97 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
               child: Text(_t('Cancel')),
             ),
             FilledButton(
-              onPressed: () {
-                setState(() {
-                  _headline = headlineController.text.trim();
-                  _goal = goalController.text.trim();
-                  _featuredHighlight = highlightController.text.trim();
-                });
-                TelemetryService.instance.logEvent(
-                  event: 'learner.portfolio.profile.updated',
-                  metadata: <String, dynamic>{
-                    'module': 'learner_portfolio',
-                    'surface': 'edit_profile_dialog',
-                  },
+              onPressed: () async {
+                final FirestoreService? firestoreService =
+                    _maybeFirestoreService();
+                if (firestoreService == null ||
+                    learnerId.isEmpty ||
+                    siteId.isEmpty) {
+                  Navigator.pop(dialogContext);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content:
+                          Text(_t('Profile storage unavailable right now.')),
+                    ),
+                  );
+                  return;
+                }
+
+                final LearnerProfileModel currentProfile = _learnerProfile ??
+                    LearnerProfileModel(
+                      id: learnerId,
+                      learnerId: learnerId,
+                      siteId: siteId,
+                      createdAt: Timestamp.now(),
+                      updatedAt: Timestamp.now(),
+                    );
+                final LearnerProfileModel updatedProfile = LearnerProfileModel(
+                  id: currentProfile.id,
+                  learnerId: currentProfile.learnerId,
+                  siteId: currentProfile.siteId,
+                  legalName: currentProfile.legalName,
+                  preferredName: currentProfile.preferredName,
+                  dateOfBirth: currentProfile.dateOfBirth,
+                  gradeLevel: currentProfile.gradeLevel,
+                  strengths: currentProfile.strengths,
+                  learningNeeds: currentProfile.learningNeeds,
+                  interests: currentProfile.interests,
+                  goals: currentProfile.goals,
+                  readingLevelSelfCheck: currentProfile.readingLevelSelfCheck,
+                  diagnosticConfidenceBand:
+                      currentProfile.diagnosticConfidenceBand,
+                  weeklyTargetMinutes: currentProfile.weeklyTargetMinutes,
+                  reminderSchedule: currentProfile.reminderSchedule,
+                  valuePrompt: currentProfile.valuePrompt,
+                  portfolioHeadline: headlineController.text.trim(),
+                  portfolioGoal: goalController.text.trim(),
+                  portfolioHighlight: highlightController.text.trim(),
+                  ttsEnabled: currentProfile.ttsEnabled,
+                  reducedDistractionEnabled:
+                      currentProfile.reducedDistractionEnabled,
+                  keyboardOnlyEnabled: currentProfile.keyboardOnlyEnabled,
+                  highContrastEnabled: currentProfile.highContrastEnabled,
+                  onboardingCompleted: currentProfile.onboardingCompleted,
+                  lastSetupAt: currentProfile.lastSetupAt,
+                  emergencyContact: currentProfile.emergencyContact,
+                  createdAt: currentProfile.createdAt,
+                  updatedAt: Timestamp.now(),
                 );
-                Navigator.pop(dialogContext);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(_t('Portfolio profile updated.')),
-                  ),
+                final LearnerProfileRepository repository =
+                    LearnerProfileRepository(
+                  firestore: firestoreService.firestore,
                 );
+
+                try {
+                  await repository.upsert(updatedProfile);
+                  if (!mounted) return;
+                  setState(() => _learnerProfile = updatedProfile);
+                  TelemetryService.instance.logEvent(
+                    event: 'learner.portfolio.profile.updated',
+                    metadata: <String, dynamic>{
+                      'module': 'learner_portfolio',
+                      'surface': 'edit_profile_dialog',
+                    },
+                  );
+                  Navigator.pop(dialogContext);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(_t('Portfolio profile updated.')),
+                    ),
+                  );
+                } catch (_) {
+                  if (dialogContext.mounted) {
+                    Navigator.pop(dialogContext);
+                  }
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        _t('Could not save portfolio profile right now.'),
+                      ),
+                    ),
+                  );
+                }
               },
               child: Text(_t('Save')),
             ),
