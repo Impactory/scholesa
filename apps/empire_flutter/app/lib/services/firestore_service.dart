@@ -313,6 +313,38 @@ class FirestoreService {
     return docRef.id;
   }
 
+  /// Submit an in-app support or account request.
+  Future<String> submitSupportRequest({
+    required String requestType,
+    required String source,
+    required String siteId,
+    required String userId,
+    required String userEmail,
+    required String userName,
+    required String role,
+    required String subject,
+    String? message,
+    Map<String, dynamic>? metadata,
+  }) async {
+    final DocumentReference<Map<String, dynamic>> docRef =
+        await _firestore.collection('supportRequests').add(<String, dynamic>{
+      'requestType': requestType,
+      'source': source,
+      'siteId': siteId,
+      'userId': userId,
+      'userEmail': userEmail,
+      'userName': userName,
+      'role': role,
+      'subject': subject,
+      'message': message,
+      'metadata': metadata ?? <String, dynamic>{},
+      'status': 'open',
+      'submittedAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+    return docRef.id;
+  }
+
   // ==================== MESSAGE OPERATIONS ====================
 
   /// Send a message
