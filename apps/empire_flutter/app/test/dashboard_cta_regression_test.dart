@@ -13,6 +13,7 @@ import 'package:scholesa_app/modules/educator/educator_today_page.dart';
 import 'package:scholesa_app/modules/messages/message_service.dart';
 import 'package:scholesa_app/runtime/bos_class_insights_card.dart';
 import 'package:scholesa_app/modules/site/site_dashboard_page.dart';
+import 'package:scholesa_app/services/export_service.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
 import 'package:scholesa_app/ui/theme/scholesa_theme.dart';
 
@@ -22,8 +23,17 @@ class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
 class _MockEducatorService extends Mock implements EducatorService {}
 
+String? _savedFileName;
+String? _savedFileContent;
+
 void main() {
   group('Dashboard CTA regressions', () {
+    setUp(() {
+      _savedFileName = null;
+      _savedFileContent = null;
+      ExportService.instance.debugSaveTextFile = null;
+    });
+
     testWidgets('role dashboard View All opens quick actions sheet',
         (WidgetTester tester) async {
       final AppState appState = AppState()
@@ -68,13 +78,50 @@ void main() {
       expect(find.byType(ListTile), findsWidgets);
     });
 
-    testWidgets('site dashboard export CTA records a request honestly',
+    testWidgets('site dashboard export CTA downloads a real report when data exists',
         (WidgetTester tester) async {
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+      await firestore.collection('siteOpsEvents').doc('event-1').set(
+        <String, dynamic>{
+          'siteId': 'site-1',
+          'action': 'Check-in',
+          'createdAt': DateTime(2026, 3, 18, 10).millisecondsSinceEpoch,
+        },
+      );
+      final FirestoreService firestoreService = FirestoreService(
+        firestore: firestore,
+        auth: _MockFirebaseAuth(),
+      );
+      final AppState appState = AppState()
+        ..updateFromMeResponse(<String, dynamic>{
+          'userId': 'site-1-admin',
+          'email': 'site@scholesa.dev',
+          'displayName': 'Site Admin',
+          'role': 'site',
+          'activeSiteId': 'site-1',
+          'siteIds': <String>['site-1'],
+          'entitlements': <Map<String, dynamic>>[],
+        });
+      ExportService.instance.debugSaveTextFile = ({
+        required String fileName,
+        required String content,
+        required String mimeType,
+      }) async {
+        _savedFileName = fileName;
+        _savedFileContent = content;
+        return '/tmp/$fileName';
+      };
       await tester.binding.setSurfaceSize(const Size(1280, 1800));
       await tester.pumpWidget(
-        MaterialApp(
-          theme: _testTheme,
-          home: SiteDashboardPage(),
+        MultiProvider(
+          providers: <SingleChildWidget>[
+            Provider<FirestoreService>.value(value: firestoreService),
+            ChangeNotifierProvider<AppState>.value(value: appState),
+          ],
+          child: MaterialApp(
+            theme: _testTheme,
+            home: SiteDashboardPage(),
+          ),
         ),
       );
       await tester.pumpAndSettle();
@@ -82,20 +129,12 @@ void main() {
       await tester.tap(find.byIcon(Icons.download));
       await tester.pumpAndSettle();
 
-      expect(find.text('Export Site Report'), findsOneWidget);
-      expect(
-        find.textContaining(
-          'Site report exports are not generated in the app yet.',
-        ),
-        findsOneWidget,
-      );
-      await tester.tap(find.widgetWithText(ElevatedButton, 'Record Request'));
-      await tester.pumpAndSettle();
-
-      expect(
-        find.textContaining('report export request recorded'),
-        findsOneWidget,
-      );
+      expect(find.text('Site report exported.'), findsOneWidget);
+      expect(_savedFileName, contains('site-dashboard'));
+      expect(_savedFileContent, isNotNull);
+      expect(_savedFileContent, contains('Export Site Report'));
+      expect(_savedFileContent, contains('Recent Activity'));
+      expect(_savedFileContent, contains('Check-in'));
     });
 
     testWidgets('site dashboard activity View All opens bottom sheet',

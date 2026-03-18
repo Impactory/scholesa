@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:nested/nested.dart';
@@ -15,7 +14,6 @@ import 'package:scholesa_app/services/firestore_service.dart';
 
 class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
-String? _clipboardText;
 String? _savedFileName;
 String? _savedFileContent;
 
@@ -118,27 +116,7 @@ Future<void> _seedAnalyticsData(FakeFirebaseFirestore firestore) async {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  setUpAll(() {
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(SystemChannels.platform, (
-      MethodCall methodCall,
-    ) async {
-      if (methodCall.method == 'Clipboard.setData') {
-        final Map<Object?, Object?>? arguments =
-            methodCall.arguments as Map<Object?, Object?>?;
-        _clipboardText = arguments?['text']?.toString();
-      }
-      return null;
-    });
-  });
-
-  tearDownAll(() {
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(SystemChannels.platform, null);
-  });
-
   setUp(() {
-    _clipboardText = null;
     _savedFileName = null;
     _savedFileContent = null;
     ExportService.instance.debugSaveTextFile = null;

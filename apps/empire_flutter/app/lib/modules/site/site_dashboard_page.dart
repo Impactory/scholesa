@@ -1018,7 +1018,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
       ..writeln('KPI Packs')
       ..writeln('---------');
     if (_kpiPacks.isEmpty) {
-      buffer.writeln(_t('No KPI packs yet.'));
+      buffer.writeln(_t('No KPI packs yet'));
     } else {
       for (final _KpiPackSummary pack in _kpiPacks) {
         buffer.writeln(
