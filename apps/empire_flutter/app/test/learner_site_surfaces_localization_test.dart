@@ -784,7 +784,7 @@ void main() {
       expect(find.text('徽章'), findsOneWidget);
     });
 
-    testWidgets('learner portfolio shows explicit unavailable edit messaging',
+    testWidgets('learner portfolio edit updates the live profile card',
         (WidgetTester tester) async {
       final Locale locale = const Locale('en');
       final AppState appState = _buildAppState(
@@ -808,13 +808,30 @@ void main() {
       await tester.tap(find.byIcon(Icons.edit).first);
       await tester.pumpAndSettle();
 
-      expect(
-        find.textContaining(
-          'Portfolio profile editing is not available in the app yet',
-        ),
-        findsOneWidget,
+      expect(find.text('Portfolio Headline'), findsOneWidget);
+      expect(find.text('Current Goal'), findsOneWidget);
+      expect(find.text('Featured Highlight'), findsOneWidget);
+      expect(find.text('Emma Johnson'), findsNothing);
+
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Portfolio Headline'),
+        'MiloOS Builder • site-1',
       );
-      expect(find.text('Save'), findsNothing);
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Current Goal'),
+        'Ship one Future Skills prototype this week.',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Featured Highlight'),
+        'Latest highlight: Weather Station App',
+      );
+      await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Portfolio profile updated.'), findsOneWidget);
+      expect(find.text('MiloOS Builder • site-1'), findsOneWidget);
+      expect(find.text('Ship one Future Skills prototype this week.'), findsOneWidget);
+      expect(find.text('Latest highlight: Weather Station App'), findsOneWidget);
     });
 
     testWidgets('learner portfolio share copies a real summary to clipboard',
