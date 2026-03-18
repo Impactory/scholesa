@@ -228,12 +228,18 @@ class UserAdminService extends ChangeNotifier {
       _auditLogs =
           snapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
         final Map<String, dynamic> data = doc.data();
+          final String? rawAction = (data['action'] as String?)?.trim();
+          final String? rawEntityType = (data['entityType'] as String?)?.trim();
         return AuditLogEntry(
           id: doc.id,
           actorId: data['actorId'] as String? ?? '',
           actorEmail: data['actorEmail'] as String?,
-          action: data['action'] as String? ?? 'unknown',
-          entityType: data['entityType'] as String? ?? 'Unknown',
+            action: rawAction == null || rawAction.isEmpty
+                ? 'audit_action_unavailable'
+                : rawAction,
+            entityType: rawEntityType == null || rawEntityType.isEmpty
+                ? 'unavailable'
+                : rawEntityType,
           entityId: data['entityId'] as String? ?? '',
           siteId: data['siteId'] as String?,
           details: data['details'] as Map<String, dynamic>?,

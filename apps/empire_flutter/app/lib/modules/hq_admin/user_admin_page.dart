@@ -946,6 +946,12 @@ class _AuditLogCard extends StatelessWidget {
   const _AuditLogCard({required this.log});
   final AuditLogEntry log;
 
+  static const Set<String> _unavailableAuditActions = <String>{
+    'unknown',
+    'audit_action_unavailable',
+    'unavailable',
+  };
+
   IconData get _actionIcon {
     if (log.action.contains('created')) return Icons.add_circle;
     if (log.action.contains('suspended')) return Icons.block;
@@ -989,11 +995,11 @@ class _AuditLogCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    _formatAction(log.action),
+                    _displayAction(context),
                     style: const TextStyle(fontWeight: FontWeight.w500),
                   ),
                   Text(
-                    '${_tUserAdmin(context, 'by')} ${log.actorEmail}',
+                    '${_tUserAdmin(context, 'by')} ${_displayActor(context)}',
                     style: TextStyle(
                         color: context.schTextSecondary, fontSize: 12),
                   ),
@@ -1010,6 +1016,22 @@ class _AuditLogCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _displayAction(BuildContext context) {
+    final String normalized = log.action.trim().toLowerCase();
+    if (normalized.isEmpty || _unavailableAuditActions.contains(normalized)) {
+      return _tUserAdmin(context, 'Audit action unavailable');
+    }
+    return _formatAction(log.action);
+  }
+
+  String _displayActor(BuildContext context) {
+    final String normalized = (log.actorEmail ?? '').trim();
+    if (normalized.isEmpty || normalized.toLowerCase() == 'null') {
+      return _tUserAdmin(context, 'Actor unavailable');
+    }
+    return normalized;
   }
 
   String _formatAction(String action) {

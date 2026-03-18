@@ -15,8 +15,12 @@ import 'package:scholesa_app/services/firestore_service.dart';
 class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
 class _FakeUserAdminService extends UserAdminService {
-  _FakeUserAdminService({List<UserModel>? users})
-      : _fakeUsers = List<UserModel>.from(
+  _FakeUserAdminService({
+    List<UserModel>? users,
+    List<AuditLogEntry>? auditLogs,
+  })  : _fakeAuditLogs =
+            List<AuditLogEntry>.from(auditLogs ?? const <AuditLogEntry>[]),
+        _fakeUsers = List<UserModel>.from(
           users ??
               <UserModel>[
                 UserModel(
@@ -42,6 +46,7 @@ class _FakeUserAdminService extends UserAdminService {
   String? lastUpdatedDisplayName;
 
   final List<UserModel> _fakeUsers;
+  final List<AuditLogEntry> _fakeAuditLogs;
 
   @override
   List<UserModel> get users => List<UserModel>.unmodifiable(_fakeUsers);
@@ -50,7 +55,7 @@ class _FakeUserAdminService extends UserAdminService {
   List<SiteModel> get sites => const <SiteModel>[];
 
   @override
-  List<AuditLogEntry> get auditLogs => const <AuditLogEntry>[];
+  List<AuditLogEntry> get auditLogs => List<AuditLogEntry>.unmodifiable(_fakeAuditLogs);
 
   @override
   bool get isLoading => false;
@@ -204,5 +209,39 @@ void main() {
 
     expect(find.text('Name unavailable'), findsOneWidget);
     expect(find.text('No Name'), findsNothing);
+  });
+
+  testWidgets('hq user admin audit log shows honest unavailable labels for missing action and actor',
+      (WidgetTester tester) async {
+    final _FakeUserAdminService service = _FakeUserAdminService(
+      auditLogs: <AuditLogEntry>[
+        AuditLogEntry(
+          id: 'audit-1',
+          actorId: 'actor-1',
+          action: 'audit_action_unavailable',
+          entityType: 'user',
+          entityId: 'user-1',
+          timestamp: DateTime.now().subtract(const Duration(minutes: 5)),
+        ),
+      ],
+    );
+
+    await tester.binding.setSurfaceSize(const Size(1440, 2000));
+    await tester.pumpWidget(
+      _buildHarness(
+        providers: <SingleChildWidget>[
+          ChangeNotifierProvider<UserAdminService>.value(value: service),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Audit Log'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Audit action unavailable'), findsOneWidget);
+    expect(find.text('by Actor unavailable'), findsOneWidget);
+    expect(find.text('Unknown'), findsNothing);
+    expect(find.text('by null'), findsNothing);
   });
 }
