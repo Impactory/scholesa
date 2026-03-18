@@ -195,11 +195,19 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('INV-1001'), findsOneWidget);
-    expect(
-      find.text('Invoice sending is not available in the app yet.'),
-      findsOneWidget,
-    );
-    expect(find.byIcon(Icons.send), findsNothing);
+    expect(find.text('Invoice sending is not available in the app yet.'), findsNothing);
+
+    final Finder sendReminderButton = find.byIcon(Icons.send_rounded);
+    await tester.ensureVisible(sendReminderButton);
+    await tester.tap(sendReminderButton, warnIfMissed: false);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Invoice reminder copied to clipboard.'), findsOneWidget);
+    expect(_clipboardText, isNotNull);
+    expect(_clipboardText, contains('Invoice Reminder'));
+    expect(_clipboardText, contains('ID: INV-1001'));
+    expect(_clipboardText, contains('Parent: Parent One'));
+    expect(_clipboardText, contains('Learner: Learner One'));
 
     final Finder viewInvoiceButton = find.byIcon(Icons.visibility);
     await tester.ensureVisible(viewInvoiceButton);

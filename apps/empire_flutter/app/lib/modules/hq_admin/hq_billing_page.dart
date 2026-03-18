@@ -903,6 +903,45 @@ class _InvoiceCard extends StatelessWidget {
     );
   }
 
+  void _copyInvoiceReminder(BuildContext context) {
+    final String reminder = _buildInvoiceReminder(context);
+    Clipboard.setData(ClipboardData(text: reminder));
+
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'module': 'hq_billing',
+        'cta_id': 'copy_invoice_reminder',
+        'surface': 'invoice_card',
+        'invoice_id': invoice['id'],
+        'status': invoice['status'],
+      },
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          _tHqBilling(context, 'Invoice reminder copied to clipboard.'),
+        ),
+      ),
+    );
+  }
+
+  String _buildInvoiceReminder(BuildContext context) {
+    return <String>[
+      _tHqBilling(context, 'Invoice Reminder'),
+      'ID: ${invoice['id']}',
+      '${_tHqBilling(context, 'Parent')}: ${invoice['parent']}',
+      '${_tHqBilling(context, 'Learner')}: ${invoice['learner']}',
+      '${_tHqBilling(context, 'Site')}: ${invoice['site']}',
+      '${_tHqBilling(context, 'Date')}: ${invoice['date']}',
+      '${_tHqBilling(context, 'Amount')}: '
+          '\$${(invoice['amount'] as double).toStringAsFixed(2)}',
+      '${_tHqBilling(context, 'Status')}: '
+          '${_tHqBilling(context, invoice['status'] as String).toUpperCase()}',
+    ].join('\n');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -989,6 +1028,12 @@ class _InvoiceCard extends StatelessWidget {
                 Row(
                   children: <Widget>[
                     IconButton(
+                      onPressed: () => _copyInvoiceReminder(context),
+                      icon: const Icon(Icons.send_rounded, size: 20),
+                      color: context.schTextSecondary,
+                      tooltip: _tHqBilling(context, 'Copy Invoice Reminder'),
+                    ),
+                    IconButton(
                       onPressed: () => _viewInvoice(context),
                       icon: const Icon(Icons.visibility, size: 20),
                       color: context.schTextSecondary,
@@ -996,20 +1041,6 @@ class _InvoiceCard extends StatelessWidget {
                   ],
                 ),
               ],
-            ),
-            const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                _tHqBilling(
-                  context,
-                  'Invoice sending is not available in the app yet.',
-                ),
-                style: TextStyle(
-                  color: context.schTextSecondary,
-                  fontSize: 12,
-                ),
-              ),
             ),
           ],
         ),
