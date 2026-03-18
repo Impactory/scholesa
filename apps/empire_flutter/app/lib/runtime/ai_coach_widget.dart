@@ -66,7 +66,7 @@ class AiCoachWidget extends StatefulWidget {
   final Future<BosIntervention?> Function()? onInterventionRequest;
   final Future<AiCoachResponse> Function(String prompt, AiCoachMode mode)?
       onAutoResponseRequest;
-    final Future<AiCoachResponse> Function(String prompt, AiCoachMode mode)?
+  final Future<AiCoachResponse> Function(String prompt, AiCoachMode mode)?
       onResponseRequest;
   final bool voiceOnlyConversation;
   final String? missionId;
@@ -1465,8 +1465,7 @@ Response style:
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final bool hasMvl = widget.runtime.hasMvlGate;
-    final _RuntimeHonestyStatus? runtimeHonestyStatus =
-        _runtimeHonestyStatus();
+    final _RuntimeHonestyStatus? runtimeHonestyStatus = _runtimeHonestyStatus();
 
     return Column(
       children: <Widget>[

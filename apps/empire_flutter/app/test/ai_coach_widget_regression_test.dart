@@ -167,8 +167,7 @@ void main() {
               onSpeakOverride: (String text) async {
                 spoken.add(text);
               },
-              onAutoResponseRequest:
-                  (String prompt, AiCoachMode mode) async {
+              onAutoResponseRequest: (String prompt, AiCoachMode mode) async {
                 return AiCoachResponse.fromMap(<String, dynamic>{
                   'message': 'Try one tiny next step now.',
                   'mode': mode.name,
@@ -183,11 +182,15 @@ void main() {
       fakeRuntime.setHesitatingState();
       await tester.pump(const Duration(milliseconds: 220));
 
-      expect(spoken.any((String text) => text.contains('Try one tiny next step now.')), isTrue);
+      expect(
+          spoken.any(
+              (String text) => text.contains('Try one tiny next step now.')),
+          isTrue);
       expect(fakeRuntime.trackedEvents, contains('idle_detected'));
       expect(fakeRuntime.trackedEvents, contains('ai_help_opened'));
       expect(fakeRuntime.trackedEvents, contains('ai_help_used'));
-      expect(find.textContaining('Try one tiny next step now.'), findsOneWidget);
+      expect(
+          find.textContaining('Try one tiny next step now.'), findsOneWidget);
     });
 
     testWidgets('voice-only mode hides text input and send button',
@@ -211,10 +214,12 @@ void main() {
       expect(find.byType(TextField), findsNothing);
       expect(find.byIcon(Icons.send), findsNothing);
       expect(find.byIcon(Icons.mic_none), findsOneWidget);
-      expect(find.textContaining('MiloOS will reply by voice.'), findsOneWidget);
+      expect(
+          find.textContaining('MiloOS will reply by voice.'), findsOneWidget);
     });
 
-    testWidgets('shows zero-confidence MiloOS banner when runtime state is unavailable',
+    testWidgets(
+        'shows zero-confidence MiloOS banner when runtime state is unavailable',
         (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
@@ -237,9 +242,11 @@ void main() {
       );
     });
 
-    testWidgets('shows guarded MiloOS banner when learner confidence is below threshold',
+    testWidgets(
+        'shows guarded MiloOS banner when learner confidence is below threshold',
         (WidgetTester tester) async {
-      final _FakeRuntime fakeRuntime = _FakeRuntime()..setReadyState(confidence: 0.81);
+      final _FakeRuntime fakeRuntime = _FakeRuntime()
+        ..setReadyState(confidence: 0.81);
 
       addTearDown(fakeRuntime.dispose);
 
@@ -281,14 +288,17 @@ void main() {
         ),
       );
 
-      await tester.enterText(find.byType(TextField), 'Need help with fractions');
+      await tester.enterText(
+          find.byType(TextField), 'Need help with fractions');
       await tester.pump();
       await tester.pump(const Duration(seconds: 5));
 
-      expect(fakeRuntime.trackedEvents, contains('interaction_signal_observed'));
+      expect(
+          fakeRuntime.trackedEvents, contains('interaction_signal_observed'));
 
       final Map<String, dynamic> payload = fakeRuntime.eventPayloads.lastWhere(
-        (Map<String, dynamic> entry) => entry['eventType'] == 'interaction_signal_observed',
+        (Map<String, dynamic> entry) =>
+            entry['eventType'] == 'interaction_signal_observed',
       )['payload'] as Map<String, dynamic>;
 
       expect(payload['signalFamily'], equals('keystroke'));
@@ -297,7 +307,8 @@ void main() {
       expect(payload['textLengthBucket'], isNotEmpty);
     });
 
-    testWidgets('prompt marks missing runtime state as unavailable, not unknown',
+    testWidgets(
+        'prompt marks missing runtime state as unavailable, not unknown',
         (WidgetTester tester) async {
       String? capturedPrompt;
 
@@ -322,7 +333,8 @@ void main() {
         ),
       );
 
-      await tester.enterText(find.byType(TextField), 'Help me debug this checkpoint');
+      await tester.enterText(
+          find.byType(TextField), 'Help me debug this checkpoint');
       await tester.tap(find.byIcon(Icons.send));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));

@@ -243,8 +243,7 @@ class AppStrings {
       'ai.banner.verification': '验证模式已开启，请先展示你的理解。',
       'ai.banner.runtimeUnavailable':
           'MiloOS 的数学状态当前不可用。在实时会话证据到达前，置信度保持为 0%，因此辅导会保持谨慎。',
-      'ai.banner.runtimeMalformed':
-          'MiloOS 的数学状态当前不可信。在修复实时会话状态前，置信度保持为 0%。',
+      'ai.banner.runtimeMalformed': 'MiloOS 的数学状态当前不可信。在修复实时会话状态前，置信度保持为 0%。',
       'ai.banner.learnerGuarded':
           '当前运行时置信度为 {percent}%。MiloOS 使用数学学习者状态模型和合成训练基线，但在低于 97% 时会保持受控。',
       'ai.chat.verificationRequired': '需要验证',
@@ -363,8 +362,7 @@ class AppStrings {
       'ai.banner.verification': '驗證模式已啟用，請先展示你的理解。',
       'ai.banner.runtimeUnavailable':
           'MiloOS 的數學狀態目前不可用。在即時會話證據到達前，信心維持在 0%，因此輔導會保持謹慎。',
-      'ai.banner.runtimeMalformed':
-          'MiloOS 的數學狀態目前不可信。在修復即時會話狀態前，信心維持在 0%。',
+      'ai.banner.runtimeMalformed': 'MiloOS 的數學狀態目前不可信。在修復即時會話狀態前，信心維持在 0%。',
       'ai.banner.learnerGuarded':
           '目前執行階段信心為 {percent}%。MiloOS 使用數學學習者狀態模型與合成訓練基線，但在低於 97% 時會保持受控。',
       'ai.chat.verificationRequired': '需要驗證',

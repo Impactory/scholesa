@@ -82,8 +82,8 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
                 SliverToBoxAdapter(
                   child: AiContextCoachSection(
                     title: _t('Family AI Coach'),
-                    subtitle: _t(
-                        'Keep MiloOS loop active for each child’s progress'),
+                    subtitle:
+                        _t('Keep MiloOS loop active for each child’s progress'),
                     module: 'parent_summary',
                     surface: 'family_dashboard',
                     actorRole: UserRole.parent,
@@ -94,9 +94,11 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
                       'learner_${selectedLearner.learnerId}',
                     ],
                   ),
-                ),                SliverToBoxAdapter(
+                ),
+                SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
                     child: BosLearnerLoopInsightsCard(
                       title: BosCoachingI18n.familyLearningTitle(context),
                       subtitle: BosCoachingI18n.familyLearningSubtitle(context),
@@ -107,7 +109,8 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
                       accentColor: ScholesaColors.parent,
                     ),
                   ),
-                ),                SliverToBoxAdapter(
+                ),
+                SliverToBoxAdapter(
                     child: _buildPillarProgress(selectedLearner)),
                 SliverToBoxAdapter(
                     child: _buildRecentActivity(selectedLearner)),
@@ -451,7 +454,8 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
             children: <Widget>[
               Text(
                 _t('Recent Activity'),
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               Text(
@@ -517,7 +521,8 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
             children: <Widget>[
               Text(
                 _t('Upcoming'),
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               Text(

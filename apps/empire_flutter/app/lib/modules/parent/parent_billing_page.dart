@@ -755,8 +755,8 @@ class _ParentBillingPageState extends State<ParentBillingPage>
             (LearnerSummary learner) => learner.learnerId == _selectedLearner)
         .firstOrNull;
     return selected != null
-      ? _displayLearnerName(selected.learnerName)
-      : _tParentBilling(context, 'All Learners');
+        ? _displayLearnerName(selected.learnerName)
+        : _tParentBilling(context, 'All Learners');
   }
 
   String _formatCurrency(double amount) {

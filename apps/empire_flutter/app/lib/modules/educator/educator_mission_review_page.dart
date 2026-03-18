@@ -415,7 +415,8 @@ class _SubmissionCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           Text(
-                            _displayLearnerName(context, submission.learnerName),
+                            _displayLearnerName(
+                                context, submission.learnerName),
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 14,

@@ -124,8 +124,9 @@ class _EducatorLearnerSupportsPageState
   }
 
   Widget _buildSummaryCards(List<_LearnerSupport> supports) {
-    final int highPriorityCount =
-        supports.where((_LearnerSupport s) => s.priority == _Priority.high).length;
+    final int highPriorityCount = supports
+        .where((_LearnerSupport s) => s.priority == _Priority.high)
+        .length;
     final DateTime now = DateTime.now();
     final int reviewsDue = supports
         .where((_LearnerSupport support) =>
@@ -242,7 +243,8 @@ class _EducatorLearnerSupportsPageState
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          _tEducatorLearnerSupports(context, support.supportType),
+                          _tEducatorLearnerSupports(
+                              context, support.supportType),
                           style: const TextStyle(
                             fontSize: 13,
                             color: ScholesaColors.textSecondary,
@@ -738,7 +740,8 @@ class _EducatorLearnerSupportsPageState
           supportType: supportType,
           accommodations: _accommodationsForPriority(priority),
           notes: _supportNoteForPriority(priority),
-          lastUpdated: DateTime.now().subtract(Duration(days: (index % 10) + 1)),
+          lastUpdated:
+              DateTime.now().subtract(Duration(days: (index % 10) + 1)),
           priority: priority,
         ),
       );

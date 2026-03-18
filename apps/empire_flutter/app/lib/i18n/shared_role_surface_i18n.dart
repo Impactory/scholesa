@@ -18,7 +18,7 @@ class SharedRoleSurfaceI18n {
     'Start a conversation with your educators': '与教育者开始一段对话',
     'Unable to load messages right now': '目前无法加载消息',
     'Try again in a moment or refresh after your connection stabilizes.':
-      '请稍后重试，或在网络稳定后刷新。',
+        '请稍后重试，或在网络稳定后刷新。',
     'Unknown': '未知',
     'Conversation participant unavailable': '对话参与者信息不可用',
     'Sender unavailable': '发送者信息不可用',
@@ -249,7 +249,7 @@ class SharedRoleSurfaceI18n {
     'Start a conversation with your educators': '與教育者開始一段對話',
     'Unable to load messages right now': '目前無法載入訊息',
     'Try again in a moment or refresh after your connection stabilizes.':
-      '請稍後再試，或在連線穩定後重新整理。',
+        '請稍後再試，或在連線穩定後重新整理。',
     'Unknown': '未知',
     'Conversation participant unavailable': '對話參與者資訊不可用',
     'Sender unavailable': '發送者資訊不可用',

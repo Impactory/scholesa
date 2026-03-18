@@ -120,7 +120,8 @@ void main() {
 
   group('Runtime localization', () {
     for (final _LocaleCase localeCase in cases) {
-      testWidgets('resolves auth, MiloOS, and role-gate copy for ${localeCase.locale}',
+      testWidgets(
+          'resolves auth, MiloOS, and role-gate copy for ${localeCase.locale}',
           (WidgetTester tester) async {
         final AppState appState = AppState()
           ..updateFromMeResponse(<String, dynamic>{
@@ -139,8 +140,8 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text(localeCase.signInLabel), findsOneWidget);
-  expect(find.text(localeCase.learnerLoopTitle), findsOneWidget);
-  expect(find.text(localeCase.learnerLoopSubtitle), findsOneWidget);
+        expect(find.text(localeCase.learnerLoopTitle), findsOneWidget);
+        expect(find.text(localeCase.learnerLoopSubtitle), findsOneWidget);
         expect(find.text(localeCase.sessionLoopTitle), findsOneWidget);
         expect(find.text(localeCase.sessionLoopSubtitle), findsOneWidget);
 

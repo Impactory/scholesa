@@ -1092,7 +1092,8 @@ class _ImportRosterDialogState extends State<_ImportRosterDialog> {
         SnackBar(
           content: Text(
             service.error ??
-                _tEducatorSessions(context, 'Unable to import roster right now'),
+                _tEducatorSessions(
+                    context, 'Unable to import roster right now'),
           ),
           backgroundColor: ScholesaColors.error,
         ),
@@ -1172,7 +1173,7 @@ class _ImportRosterDialogState extends State<_ImportRosterDialog> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               : const Icon(Icons.upload_file_rounded),
-          label: Text(_tEducatorSessions(context, 'Import')), 
+          label: Text(_tEducatorSessions(context, 'Import')),
         ),
       ],
     );

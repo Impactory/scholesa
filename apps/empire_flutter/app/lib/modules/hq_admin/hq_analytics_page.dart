@@ -701,19 +701,20 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
     final List<AttendanceTrendPoint> trend =
         allTrend.length > 7 ? allTrend.sublist(allTrend.length - 7) : allTrend;
     final List<AttendanceTrendPoint> usableTrend = trend
-      .where((AttendanceTrendPoint point) => point.presentRate != null)
-      .toList();
-    final double? latestRate =
-      usableTrend.isNotEmpty ? usableTrend.last.presentRate?.toDouble() : null;
+        .where((AttendanceTrendPoint point) => point.presentRate != null)
+        .toList();
+    final double? latestRate = usableTrend.isNotEmpty
+        ? usableTrend.last.presentRate?.toDouble()
+        : null;
     final double? previousRate = usableTrend.length > 1
-      ? usableTrend[usableTrend.length - 2].presentRate?.toDouble()
-      : latestRate;
+        ? usableTrend[usableTrend.length - 2].presentRate?.toDouble()
+        : latestRate;
     final double? delta = latestRate != null && previousRate != null
-      ? latestRate - previousRate
-      : null;
+        ? latestRate - previousRate
+        : null;
     final bool trendUp = (delta ?? 0) >= 0;
     final bool attendanceRateUnavailable =
-      trend.isNotEmpty && usableTrend.isEmpty;
+        trend.isNotEmpty && usableTrend.isEmpty;
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -736,8 +737,8 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                 ),
                 if (delta != null)
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: (trendUp
                               ? ScholesaColors.success

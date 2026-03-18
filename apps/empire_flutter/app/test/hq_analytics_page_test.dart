@@ -329,11 +329,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Attendance rate unavailable for this period'), findsOneWidget);
+    expect(find.text('Attendance rate unavailable for this period'),
+        findsOneWidget);
     expect(find.text('Latest attendance: 0.0%'), findsNothing);
   });
 
-    testWidgets(
+  testWidgets(
       'hq analytics export copies the live dashboard snapshot to clipboard',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
@@ -377,7 +378,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Export HQ Analytics'), findsNothing);
-    expect(find.text('HQ analytics export copied to clipboard.'), findsOneWidget);
+    expect(
+        find.text('HQ analytics export copied to clipboard.'), findsOneWidget);
     expect(_clipboardText, isNotNull);
     expect(_clipboardText, contains('Export HQ Analytics'));
     expect(_clipboardText, contains('Weekly accountability adherence: 91.0%'));
