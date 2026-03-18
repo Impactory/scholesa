@@ -4,7 +4,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mock_exceptions/mock_exceptions.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
@@ -198,12 +197,9 @@ void main() {
         securityRules: '''
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /missions/{document=**} {
+    match /{document=**} {
       allow read;
       allow write: if false;
-    }
-    match /{document=**} {
-      allow read, write;
     }
   }
 }
