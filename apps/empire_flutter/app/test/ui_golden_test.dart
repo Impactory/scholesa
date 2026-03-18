@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:nested/nested.dart';
@@ -10,6 +11,9 @@ import 'package:scholesa_app/auth/auth_service.dart';
 import 'package:scholesa_app/auth/recent_login_store.dart';
 import 'package:scholesa_app/dashboards/role_dashboard.dart';
 import 'package:scholesa_app/modules/messages/message_service.dart';
+import 'package:scholesa_app/runtime/ai_coach_widget.dart';
+import 'package:scholesa_app/runtime/bos_models.dart';
+import 'package:scholesa_app/runtime/learning_runtime_provider.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
 import 'package:scholesa_app/ui/auth/login_page.dart';
 import 'package:scholesa_app/ui/landing/landing_page.dart';
@@ -175,6 +179,62 @@ void main() {
       );
     });
 
+    testWidgets('MiloOS coach - unavailable runtime honesty',
+        (WidgetTester tester) async {
+      await _pumpSized(
+        tester,
+        size: const Size(390, 844),
+        child: _buildAiCoachHarness(
+          runtime: _GoldenLearningRuntime.unavailable(),
+          role: UserRole.learner,
+          voiceOnlyConversation: true,
+        ),
+      );
+
+      await expectLater(
+        find.byType(AiCoachWidget),
+        matchesGoldenFile('goldens/miloos_coach_unavailable_mobile.png'),
+      );
+    });
+
+    testWidgets('MiloOS coach - guarded learner runtime',
+        (WidgetTester tester) async {
+      await _pumpSized(
+        tester,
+        size: const Size(390, 844),
+        child: _buildAiCoachHarness(
+          runtime: _GoldenLearningRuntime.ready(confidence: 0.81),
+          role: UserRole.learner,
+          voiceOnlyConversation: true,
+        ),
+      );
+
+      await expectLater(
+        find.byType(AiCoachWidget),
+        matchesGoldenFile('goldens/miloos_coach_guarded_mobile.png'),
+      );
+    });
+
+    testWidgets('MiloOS coach - verification gate',
+        (WidgetTester tester) async {
+      await _pumpSized(
+        tester,
+        size: const Size(1280, 800),
+        child: _buildAiCoachHarness(
+          runtime: _GoldenLearningRuntime.ready(
+            confidence: 0.98,
+            hasMvlGate: true,
+          ),
+          role: UserRole.learner,
+        ),
+      );
+
+      await expectLater(
+        find.byType(AiCoachWidget),
+        matchesGoldenFile('goldens/miloos_coach_verification_desktop.png'),
+      );
+    });
+
     testWidgets('Role dashboard - learner', (WidgetTester tester) async {
       final AppState appState = _buildStateForRole(UserRole.learner);
 
@@ -278,6 +338,22 @@ Widget _buildLoginPageHarness({
   );
 }
 
+Widget _buildAiCoachHarness({
+  required LearningRuntimeProvider runtime,
+  required UserRole role,
+  bool voiceOnlyConversation = false,
+}) {
+  return Scaffold(
+    body: AiCoachWidget(
+      runtime: runtime,
+      actorRole: role,
+      voiceOnlyConversation: voiceOnlyConversation,
+      skipVoiceInitializationForTesting: true,
+      conceptTags: const <String>['golden-test', 'miloos'],
+    ),
+  );
+}
+
 MessageService _buildMessageService(String userId) {
   return MessageService(
     firestoreService: _MockFirestoreService(),
@@ -332,4 +408,79 @@ class _PendingAuthService extends AuthService {
   Future<void> signInWithMicrosoft() async {
     await _pending.future;
   }
+}
+
+class _GoldenLearningRuntime extends LearningRuntimeProvider {
+  _GoldenLearningRuntime._({
+    required OrchestrationState? state,
+    required LearningRuntimeStateStatus status,
+    required bool hasMvlGate,
+  })  : _state = state,
+        _status = status,
+        _hasMvlGate = hasMvlGate,
+        super(
+          siteId: 'site-1',
+          learnerId: 'learner-golden',
+          gradeBand: GradeBand.g4_6,
+          sessionOccurrenceId: 'occ-golden',
+          firestore: FakeFirebaseFirestore(),
+        );
+
+  factory _GoldenLearningRuntime.unavailable() {
+    return _GoldenLearningRuntime._(
+      state: null,
+      status: LearningRuntimeStateStatus.unavailable,
+      hasMvlGate: false,
+    );
+  }
+
+  factory _GoldenLearningRuntime.ready({
+    required double confidence,
+    bool hasMvlGate = false,
+  }) {
+    return _GoldenLearningRuntime._(
+      state: OrchestrationState(
+        siteId: 'site-1',
+        learnerId: 'learner-golden',
+        sessionOccurrenceId: 'occ-golden',
+        xHat: const XHat(cognition: 0.61, engagement: 0.57, integrity: 0.84),
+        p: CovarianceSummary(
+          diag: const <double>[0.21, 0.18, 0.15],
+          trace: 0.54,
+          confidence: confidence,
+        ),
+        model: const EstimatorModel(),
+        fusion: const FusionInfo(),
+      ),
+      status: LearningRuntimeStateStatus.ready,
+      hasMvlGate: hasMvlGate,
+    );
+  }
+
+  final OrchestrationState? _state;
+  final LearningRuntimeStateStatus _status;
+  final bool _hasMvlGate;
+
+  @override
+  OrchestrationState? get state => _state;
+
+  @override
+  LearningRuntimeStateStatus get stateStatus => _status;
+
+  @override
+  bool get hasMvlGate => _hasMvlGate;
+
+  @override
+  double? get confidence => _state?.p.confidence;
+
+  @override
+  void startListening() {}
+
+  @override
+  void trackEvent(
+    String eventType, {
+    String? missionId,
+    String? checkpointId,
+    Map<String, dynamic> payload = const <String, dynamic>{},
+  }) {}
 }

@@ -214,6 +214,54 @@ void main() {
       expect(find.textContaining('MiloOS will reply by voice.'), findsOneWidget);
     });
 
+    testWidgets('shows zero-confidence MiloOS banner when runtime state is unavailable',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: _testTheme,
+          home: Scaffold(
+            body: AiCoachWidget(
+              runtime: runtime,
+              actorRole: UserRole.learner,
+              skipVoiceInitializationForTesting: true,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(
+        find.textContaining('Confidence stays at 0%'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('shows guarded MiloOS banner when learner confidence is below threshold',
+        (WidgetTester tester) async {
+      final _FakeRuntime fakeRuntime = _FakeRuntime()..setReadyState(confidence: 0.81);
+
+      addTearDown(fakeRuntime.dispose);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: _testTheme,
+          home: Scaffold(
+            body: AiCoachWidget(
+              runtime: fakeRuntime,
+              actorRole: UserRole.learner,
+              skipVoiceInitializationForTesting: true,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Runtime confidence 81%'), findsOneWidget);
+      expect(find.textContaining('below 97%'), findsOneWidget);
+    });
+
     testWidgets('captures privacy-safe keystroke summaries for learner typing',
         (WidgetTester tester) async {
       final _FakeRuntime fakeRuntime = _FakeRuntime();
@@ -283,6 +331,11 @@ void main() {
       expect(capturedPrompt, isNotNull);
       expect(capturedPrompt, contains('stateEstimate: unavailable'));
       expect(capturedPrompt, isNot(contains('stateEstimate: unknown')));
+      expect(capturedPrompt, contains('miloosLoop:'));
+      expect(
+        capturedPrompt,
+        contains('synthetic-trained runtime baseline'),
+      );
     });
   });
 }
@@ -297,19 +350,46 @@ class _FakeRuntime extends LearningRuntimeProvider {
         );
 
   OrchestrationState? _fakeState;
+  LearningRuntimeStateStatus _fakeStateStatus =
+      LearningRuntimeStateStatus.unavailable;
   final List<String> trackedEvents = <String>[];
   final List<Map<String, dynamic>> eventPayloads = <Map<String, dynamic>>[];
 
   @override
   OrchestrationState? get state => _fakeState;
 
+  @override
+  LearningRuntimeStateStatus get stateStatus => _fakeStateStatus;
+
+  @override
+  double? get confidence => _fakeState?.p.confidence;
+
   void setHesitatingState() {
+    _fakeStateStatus = LearningRuntimeStateStatus.ready;
     _fakeState = OrchestrationState(
       siteId: siteId,
       learnerId: learnerId,
       sessionOccurrenceId: 'occ_test',
       xHat: const XHat(cognition: 0.32, engagement: 0.29, integrity: 0.71),
       p: const CovarianceSummary(),
+      model: const EstimatorModel(),
+      fusion: const FusionInfo(),
+    );
+    notifyListeners();
+  }
+
+  void setReadyState({required double confidence}) {
+    _fakeStateStatus = LearningRuntimeStateStatus.ready;
+    _fakeState = OrchestrationState(
+      siteId: siteId,
+      learnerId: learnerId,
+      sessionOccurrenceId: 'occ_test',
+      xHat: const XHat(cognition: 0.58, engagement: 0.54, integrity: 0.83),
+      p: CovarianceSummary(
+        diag: const <double>[0.24, 0.19, 0.17],
+        trace: 0.6,
+        confidence: confidence,
+      ),
       model: const EstimatorModel(),
       fusion: const FusionInfo(),
     );
