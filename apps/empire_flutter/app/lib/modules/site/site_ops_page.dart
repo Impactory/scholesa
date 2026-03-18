@@ -47,6 +47,20 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
   String? _runtimeRolloutError;
   final TextEditingController _safetyNoteController = TextEditingController();
 
+  bool _hasRuntimeRolloutData(_SiteRuntimeRolloutState state) {
+    return state.package != null ||
+        state.deliveries.isNotEmpty ||
+        state.history.isNotEmpty ||
+        state.activations.isNotEmpty;
+  }
+
+  bool _hasPersistedRuntimeRolloutData() {
+    return _runtimePackage != null ||
+        _runtimeDeliveries.isNotEmpty ||
+        _runtimeDeliveryHistory.isNotEmpty ||
+        _runtimeActivations.isNotEmpty;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -1086,6 +1100,10 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
             ),
           )
           .toList();
+      final bool preserveExistingRuntimeRolloutData =
+          runtimeRolloutState.error != null &&
+              !_hasRuntimeRolloutData(runtimeRolloutState) &&
+              _hasPersistedRuntimeRolloutData();
 
       if (!mounted) return;
       setState(() {
@@ -1097,10 +1115,18 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
         _todaySessions = timetable;
         _kitChecklist = checklist;
         _safetyNotes = safetyNotes;
-        _runtimePackage = runtimeRolloutState.package;
-        _runtimeDeliveries = runtimeRolloutState.deliveries;
-        _runtimeDeliveryHistory = runtimeRolloutState.history;
-        _runtimeActivations = runtimeRolloutState.activations;
+        _runtimePackage = preserveExistingRuntimeRolloutData
+            ? _runtimePackage
+            : runtimeRolloutState.package;
+        _runtimeDeliveries = preserveExistingRuntimeRolloutData
+            ? _runtimeDeliveries
+            : runtimeRolloutState.deliveries;
+        _runtimeDeliveryHistory = preserveExistingRuntimeRolloutData
+            ? _runtimeDeliveryHistory
+            : runtimeRolloutState.history;
+        _runtimeActivations = preserveExistingRuntimeRolloutData
+            ? _runtimeActivations
+            : runtimeRolloutState.activations;
         _runtimeRolloutError = runtimeRolloutState.error;
       });
     } finally {
