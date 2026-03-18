@@ -16,9 +16,8 @@ Future<String?> saveExportFile({
   final web.HTMLAnchorElement anchor = web.HTMLAnchorElement()
     ..href = url
     ..download = fileName
-    ..download = fileName
     ..style.display = 'none';
-  final web.HTMLBodyElement? body = web.document.body;
+  final web.HTMLElement? body = web.document.body;
   if (body == null) {
     web.URL.revokeObjectURL(url);
     return null;

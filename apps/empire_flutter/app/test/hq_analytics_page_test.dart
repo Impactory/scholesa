@@ -318,8 +318,7 @@ void main() {
     expect(find.text('Latest attendance: 0.0%'), findsNothing);
   });
 
-  testWidgets(
-      'hq analytics export downloads the live dashboard snapshot',
+  testWidgets('hq analytics export downloads the live dashboard snapshot',
       (WidgetTester tester) async {
     ExportService.instance.debugSaveTextFile = ({
       required String fileName,
