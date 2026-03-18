@@ -389,8 +389,8 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pumpAndSettle();
 
-      expect(find.text('Future Skills Studio'), findsWidgets);
-      expect(find.text('Manage Attendance'), findsOneWidget);
+      expect(find.byType(EducatorTodayPage), findsOneWidget);
+      expect(find.text('MiloOS Class Insights'), findsOneWidget);
       expect(find.text('Full Schedule'), findsOneWidget);
       expect(find.text('Week View'), findsOneWidget);
       expect(tester.takeException(), isNull);
