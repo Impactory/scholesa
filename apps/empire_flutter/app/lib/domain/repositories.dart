@@ -1190,12 +1190,12 @@ class FederatedLearningUpdateSummaryRepository {
     final List<FederatedLearningUpdateSummaryModel> rows =
         <FederatedLearningUpdateSummaryModel>[];
     for (int start = 0; start < normalizedIds.length; start += 10) {
-      final int end =
-          (start + 10 > normalizedIds.length) ? normalizedIds.length : start + 10;
+      final int end = (start + 10 > normalizedIds.length)
+          ? normalizedIds.length
+          : start + 10;
       final List<String> batch = normalizedIds.sublist(start, end);
-      final QuerySnapshot<Map<String, dynamic>> snap = await _col
-          .where(FieldPath.documentId, whereIn: batch)
-          .get();
+      final QuerySnapshot<Map<String, dynamic>> snap =
+          await _col.where(FieldPath.documentId, whereIn: batch).get();
       rows.addAll(
         snap.docs.map(FederatedLearningUpdateSummaryModel.fromDoc),
       );
@@ -1294,9 +1294,8 @@ class FederatedLearningMergeArtifactRepository {
         .where('experimentId', isEqualTo: experimentId)
         .limit(limit)
         .get();
-    final List<FederatedLearningMergeArtifactModel> rows = snap.docs
-        .map(FederatedLearningMergeArtifactModel.fromDoc)
-        .toList();
+    final List<FederatedLearningMergeArtifactModel> rows =
+        snap.docs.map(FederatedLearningMergeArtifactModel.fromDoc).toList();
     rows.sort((a, b) {
       final int aMillis = a.createdAt?.millisecondsSinceEpoch ?? 0;
       final int bMillis = b.createdAt?.millisecondsSinceEpoch ?? 0;
@@ -1307,7 +1306,8 @@ class FederatedLearningMergeArtifactRepository {
 }
 
 class FederatedLearningCandidateModelPackageRepository {
-  FederatedLearningCandidateModelPackageRepository({FirebaseFirestore? firestore})
+  FederatedLearningCandidateModelPackageRepository(
+      {FirebaseFirestore? firestore})
       : _firestore = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseFirestore _firestore;
@@ -1336,7 +1336,8 @@ class FederatedLearningCandidateModelPackageRepository {
 }
 
 class FederatedLearningExperimentReviewRecordRepository {
-  FederatedLearningExperimentReviewRecordRepository({FirebaseFirestore? firestore})
+  FederatedLearningExperimentReviewRecordRepository(
+      {FirebaseFirestore? firestore})
       : _firestore = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseFirestore _firestore;
@@ -1423,7 +1424,8 @@ class FederatedLearningPilotApprovalRecordRepository {
 }
 
 class FederatedLearningPilotExecutionRecordRepository {
-  FederatedLearningPilotExecutionRecordRepository({FirebaseFirestore? firestore})
+  FederatedLearningPilotExecutionRecordRepository(
+      {FirebaseFirestore? firestore})
       : _firestore = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseFirestore _firestore;
@@ -1452,7 +1454,8 @@ class FederatedLearningPilotExecutionRecordRepository {
 }
 
 class FederatedLearningRuntimeDeliveryRecordRepository {
-  FederatedLearningRuntimeDeliveryRecordRepository({FirebaseFirestore? firestore})
+  FederatedLearningRuntimeDeliveryRecordRepository(
+      {FirebaseFirestore? firestore})
       : _firestore = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseFirestore _firestore;
@@ -1481,7 +1484,8 @@ class FederatedLearningRuntimeDeliveryRecordRepository {
 }
 
 class FederatedLearningRuntimeActivationRecordRepository {
-  FederatedLearningRuntimeActivationRecordRepository({FirebaseFirestore? firestore})
+  FederatedLearningRuntimeActivationRecordRepository(
+      {FirebaseFirestore? firestore})
       : _firestore = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseFirestore _firestore;
@@ -1510,7 +1514,8 @@ class FederatedLearningRuntimeActivationRecordRepository {
 }
 
 class FederatedLearningCandidatePromotionRecordRepository {
-  FederatedLearningCandidatePromotionRecordRepository({FirebaseFirestore? firestore})
+  FederatedLearningCandidatePromotionRecordRepository(
+      {FirebaseFirestore? firestore})
       : _firestore = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseFirestore _firestore;
@@ -1539,15 +1544,17 @@ class FederatedLearningCandidatePromotionRecordRepository {
 }
 
 class FederatedLearningCandidatePromotionRevocationRecordRepository {
-  FederatedLearningCandidatePromotionRevocationRecordRepository({FirebaseFirestore? firestore})
+  FederatedLearningCandidatePromotionRevocationRecordRepository(
+      {FirebaseFirestore? firestore})
       : _firestore = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseFirestore _firestore;
 
-  CollectionReference<Map<String, dynamic>> get _col =>
-      _firestore.collection('federatedLearningCandidatePromotionRevocationRecords');
+  CollectionReference<Map<String, dynamic>> get _col => _firestore
+      .collection('federatedLearningCandidatePromotionRevocationRecords');
 
-  Future<List<FederatedLearningCandidatePromotionRevocationRecordModel>> listByExperiment(
+  Future<List<FederatedLearningCandidatePromotionRevocationRecordModel>>
+      listByExperiment(
     String experimentId, {
     int limit = 20,
   }) async {
@@ -1557,7 +1564,8 @@ class FederatedLearningCandidatePromotionRevocationRecordRepository {
         .get();
     final List<FederatedLearningCandidatePromotionRevocationRecordModel> rows =
         snap.docs
-            .map(FederatedLearningCandidatePromotionRevocationRecordModel.fromDoc)
+            .map(FederatedLearningCandidatePromotionRevocationRecordModel
+                .fromDoc)
             .toList();
     rows.sort((a, b) {
       final int aMillis = a.updatedAt?.millisecondsSinceEpoch ?? 0;

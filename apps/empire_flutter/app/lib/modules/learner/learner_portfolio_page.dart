@@ -60,7 +60,8 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
   String _effectiveGoal() {
     final String goal = _learnerProfile?.portfolioGoal?.trim() ?? '';
     if (goal.isNotEmpty) return goal;
-    return _t('Build a confident weekly shipping rhythm across Future Skills missions.');
+    return _t(
+        'Build a confident weekly shipping rhythm across Future Skills missions.');
   }
 
   String _effectiveHighlight() {
@@ -146,7 +147,8 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
         PortfolioItemRepository(firestore: firestore);
 
     try {
-      final List<Object?> results = await Future.wait<Object?>(<Future<Object?>>[
+      final List<Object?> results =
+          await Future.wait<Object?>(<Future<Object?>>[
         profileRepository.getByLearnerAndSite(
           learnerId: learnerId,
           siteId: siteId,
@@ -155,17 +157,17 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
       ]);
       final LearnerProfileModel? profile =
           results.first as LearnerProfileModel?;
-      final List<PortfolioItemModel> items =
-          (results.last as List<PortfolioItemModel>)
-              .where((PortfolioItemModel item) => item.siteId.trim() == siteId)
-              .toList(growable: false)
-            ..sort((PortfolioItemModel a, PortfolioItemModel b) {
-              final int aMillis =
-                  (a.updatedAt ?? a.createdAt)?.millisecondsSinceEpoch ?? 0;
-              final int bMillis =
-                  (b.updatedAt ?? b.createdAt)?.millisecondsSinceEpoch ?? 0;
-              return bMillis.compareTo(aMillis);
-            });
+      final List<PortfolioItemModel> items = (results.last
+              as List<PortfolioItemModel>)
+          .where((PortfolioItemModel item) => item.siteId.trim() == siteId)
+          .toList(growable: false)
+        ..sort((PortfolioItemModel a, PortfolioItemModel b) {
+          final int aMillis =
+              (a.updatedAt ?? a.createdAt)?.millisecondsSinceEpoch ?? 0;
+          final int bMillis =
+              (b.updatedAt ?? b.createdAt)?.millisecondsSinceEpoch ?? 0;
+          return bMillis.compareTo(aMillis);
+        });
       if (!mounted) return;
       setState(() {
         _learnerProfile = profile;
@@ -197,7 +199,8 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
 
   String _portfolioReadinessMessage() {
     if (!(_learnerProfile?.onboardingCompleted ?? false)) {
-      return _t('Complete learner setup to unlock a stronger portfolio summary.');
+      return _t(
+          'Complete learner setup to unlock a stronger portfolio summary.');
     }
     if ((_learnerProfile?.portfolioHeadline?.trim() ?? '').isEmpty ||
         (_learnerProfile?.portfolioGoal?.trim() ?? '').isEmpty ||
@@ -291,9 +294,7 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
     }
 
     final List<_PortfolioSignal> signals = <_PortfolioSignal>[
-      ...profile.strengths
-          .where((String value) => value.trim().isNotEmpty)
-          .map(
+      ...profile.strengths.where((String value) => value.trim().isNotEmpty).map(
             (String value) => _PortfolioSignal(
               label: value.trim(),
               category: _t('Strength'),
@@ -301,9 +302,7 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
               color: ScholesaColors.futureSkills,
             ),
           ),
-      ...profile.interests
-          .where((String value) => value.trim().isNotEmpty)
-          .map(
+      ...profile.interests.where((String value) => value.trim().isNotEmpty).map(
             (String value) => _PortfolioSignal(
               label: value.trim(),
               category: _t('Interest'),
@@ -311,9 +310,7 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
               color: ScholesaColors.leadership,
             ),
           ),
-      ...profile.goals
-          .where((String value) => value.trim().isNotEmpty)
-          .map(
+      ...profile.goals.where((String value) => value.trim().isNotEmpty).map(
             (String value) => _PortfolioSignal(
               label: value.trim(),
               category: _t('Goal'),
@@ -1120,14 +1117,14 @@ class _PillarStatCard extends StatelessWidget {
   const _PillarStatCard({
     required this.icon,
     required this.label,
-    required this.missions,
-    required this.skills,
+    required this.count,
+    required this.caption,
     required this.color,
   });
   final IconData icon;
   final String label;
-  final int missions;
-  final int skills;
+  final int count;
+  final String caption;
   final Color color;
 
   @override
@@ -1151,7 +1148,17 @@ class _PillarStatCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            '$missions',
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: context.schTextSecondary,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '$count',
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 18,
@@ -1159,7 +1166,7 @@ class _PillarStatCard extends StatelessWidget {
             ),
           ),
           Text(
-            _tLearnerPortfolio(context, 'missions'),
+            caption,
             style: TextStyle(
                 color: context.schTextSecondary.withValues(alpha: 0.88),
                 fontSize: 10),
@@ -1170,89 +1177,23 @@ class _PillarStatCard extends StatelessWidget {
   }
 }
 
-class _BadgeCard extends StatelessWidget {
-  const _BadgeCard({required this.badge});
-  final Map<String, dynamic> badge;
+class _PortfolioSignal {
+  const _PortfolioSignal({
+    required this.label,
+    required this.category,
+    required this.icon,
+    required this.color,
+  });
 
-  @override
-  Widget build(BuildContext context) {
-    final bool earned = badge['earned'] as bool;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: earned
-              ? (badge['color'] as Color).withValues(alpha: 0.3)
-              : context.schBorder,
-        ),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              color: earned
-                  ? (badge['color'] as Color).withValues(alpha: 0.15)
-                  : context.schSurfaceMuted,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              badge['icon'] as IconData,
-              color: earned ? badge['color'] as Color : Colors.grey,
-              size: 32,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            badge['name'] as String,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: earned ? Colors.black : Colors.grey,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 4),
-          if (earned)
-            Text(
-              badge['date'] as String,
-              style: TextStyle(color: context.schTextSecondary, fontSize: 10),
-            )
-          else
-            Column(
-              children: <Widget>[
-                Text(
-                  '${badge['progress']}/${badge['total']}',
-                  style:
-                      TextStyle(color: context.schTextSecondary, fontSize: 10),
-                ),
-                const SizedBox(height: 4),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: (badge['progress'] as int) / (badge['total'] as int),
-                    backgroundColor: context.schBorder,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      badge['color'] as Color,
-                    ),
-                    minHeight: 4,
-                  ),
-                ),
-              ],
-            ),
-        ],
-      ),
-    );
-  }
+  final String label;
+  final String category;
+  final IconData icon;
+  final Color color;
 }
 
-class _SkillCard extends StatelessWidget {
-  const _SkillCard({required this.skill});
-  final Map<String, dynamic> skill;
+class _PortfolioSignalCard extends StatelessWidget {
+  const _PortfolioSignalCard({required this.signal});
+  final _PortfolioSignal signal;
 
   @override
   Widget build(BuildContext context) {
@@ -1270,82 +1211,36 @@ class _SkillCard extends StatelessWidget {
           children: <Widget>[
             Row(
               children: <Widget>[
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: signal.color.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(signal.icon, color: signal.color),
+                ),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Text(
-                        skill['name'] as String,
+                        signal.label,
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                         ),
                       ),
+                      const SizedBox(height: 4),
                       Text(
-                        skill['pillar'] as String,
+                        signal.category,
                         style: TextStyle(
-                          color: skill['color'] as Color,
+                          color: signal.color,
                           fontSize: 12,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: (skill['color'] as Color).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    '${_tLearnerPortfolio(context, 'Level')} ${skill['level']}/${skill['maxLevel']}',
-                    style: TextStyle(
-                      color: skill['color'] as Color,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(6),
-              child: LinearProgressIndicator(
-                value: skill['progress'] as double,
-                backgroundColor:
-                    (skill['color'] as Color).withValues(alpha: 0.2),
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  skill['color'] as Color,
-                ),
-                minHeight: 8,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                Text(
-                  '${((skill['progress'] as double) * 100).toInt()}% ${_tLearnerPortfolio(context, 'to next level')}',
-                  style:
-                      TextStyle(color: context.schTextSecondary, fontSize: 12),
-                ),
-                Row(
-                  children: List<Widget>.generate(
-                    skill['maxLevel'] as int,
-                    (int index) => Padding(
-                      padding: const EdgeInsets.only(left: 4),
-                      child: Icon(
-                        Icons.star,
-                        size: 16,
-                        color: index < (skill['level'] as int)
-                            ? skill['color'] as Color
-                            : Colors.grey.shade300,
-                      ),
-                    ),
                   ),
                 ),
               ],

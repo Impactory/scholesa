@@ -32,9 +32,9 @@ class AuthService {
         _googleSignIn = googleSignIn ?? GoogleSignIn.instance,
         _googleClientId = googleClientId,
         _googleServerClientId = googleServerClientId,
-      _googleSignInPlatformOverride = googleSignInPlatformOverride,
-      _logoutAuditService = logoutAuditService ?? LogoutAuditService.instance,
-      _recentLoginStore = recentLoginStore ?? RecentLoginStore();
+        _googleSignInPlatformOverride = googleSignInPlatformOverride,
+        _logoutAuditService = logoutAuditService ?? LogoutAuditService.instance,
+        _recentLoginStore = recentLoginStore ?? RecentLoginStore();
   final FirebaseAuth _auth;
   final FirestoreService _firestoreService;
   final AppState _appState;

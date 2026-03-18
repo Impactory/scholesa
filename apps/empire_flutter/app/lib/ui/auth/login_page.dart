@@ -36,7 +36,8 @@ const Map<String, String> _loginZhTw = <String, String>{
 };
 
 String _tLogin(BuildContext context, String input) {
-  return InlineLocaleText.of(context, input, zhCn: _loginZhCn, zhTw: _loginZhTw);
+  return InlineLocaleText.of(context, input,
+      zhCn: _loginZhCn, zhTw: _loginZhTw);
 }
 
 class LoginPage extends StatefulWidget {
@@ -203,8 +204,9 @@ class _LoginPageState extends State<LoginPage>
             const SizedBox(height: 16),
             ...store.recentAccounts.map((RecentLoginAccount account) {
               final bool isActive = store.activeUserId == account.userId;
-              final String initial =
-                  account.displayName.trim().isEmpty ? account.email[0] : account.displayName.trim()[0];
+              final String initial = account.displayName.trim().isEmpty
+                  ? account.email[0]
+                  : account.displayName.trim()[0];
               return Container(
                 margin: const EdgeInsets.only(bottom: 12),
                 decoration: BoxDecoration(
@@ -244,7 +246,8 @@ class _LoginPageState extends State<LoginPage>
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
                       TextButton(
-                        onPressed: () => _continueWithRememberedAccount(account),
+                        onPressed: () =>
+                            _continueWithRememberedAccount(account),
                         child: Text(_providerLabel(context, account.provider)),
                       ),
                       IconButton(
@@ -578,29 +581,24 @@ class _LoginPageState extends State<LoginPage>
                         const SizedBox(height: 48),
                         // Feature highlights
                         _buildFeatureRow(Icons.rocket_launch_rounded,
-                          _tLogin(context, 'Mission-based learning')),
+                            _tLogin(context, 'Mission-based learning')),
                         const SizedBox(height: 16),
-                        _buildFeatureRow(
-                          Icons.psychology_rounded,
-                          _tLogin(context, 'Habit coaching')),
+                        _buildFeatureRow(Icons.psychology_rounded,
+                            _tLogin(context, 'Habit coaching')),
                         const SizedBox(height: 16),
-                        _buildFeatureRow(
-                          Icons.folder_special_rounded,
-                          _tLogin(context, 'Portfolio showcase')),
+                        _buildFeatureRow(Icons.folder_special_rounded,
+                            _tLogin(context, 'Portfolio showcase')),
                         const Spacer(),
                         // Bottom pillars
                         Row(
                           children: <Widget>[
-                            _buildPillarChip(
-                                _tLogin(context, 'Future Skills'),
+                            _buildPillarChip(_tLogin(context, 'Future Skills'),
                                 ScholesaColors.futureSkills),
                             const SizedBox(width: 8),
-                            _buildPillarChip(
-                                _tLogin(context, 'Leadership'),
+                            _buildPillarChip(_tLogin(context, 'Leadership'),
                                 ScholesaColors.leadership),
                             const SizedBox(width: 8),
-                            _buildPillarChip(
-                                _tLogin(context, 'Impact'),
+                            _buildPillarChip(_tLogin(context, 'Impact'),
                                 ScholesaColors.impact),
                           ],
                         ),

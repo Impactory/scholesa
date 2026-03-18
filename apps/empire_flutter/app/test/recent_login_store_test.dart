@@ -35,8 +35,7 @@ void main() {
     test('clearActiveSession keeps remembered accounts for shared devices',
         () async {
       final SharedPreferences prefs = await SharedPreferences.getInstance();
-      final RecentLoginStore store =
-          RecentLoginStore(sharedPreferences: prefs);
+      final RecentLoginStore store = RecentLoginStore(sharedPreferences: prefs);
 
       await store.rememberSession(
         profile: <String, dynamic>{
@@ -71,10 +70,13 @@ void main() {
       await store.clearActiveSession();
 
       expect(store.activeUserId, isNull);
-      expect(store.recentAccounts.map((RecentLoginAccount account) => account.userId), <String>[
-        'parent-2',
-        'parent-1',
-      ]);
+      expect(
+          store.recentAccounts
+              .map((RecentLoginAccount account) => account.userId),
+          <String>[
+            'parent-2',
+            'parent-1',
+          ]);
       expect(
         prefs.getString('scholesa.auth.active_user_id.v1'),
         isNull,
@@ -95,8 +97,7 @@ void main() {
         'scholesa.auth.active_user_id.v1': 'missing-parent',
       });
       final SharedPreferences prefs = await SharedPreferences.getInstance();
-      final RecentLoginStore store =
-          RecentLoginStore(sharedPreferences: prefs);
+      final RecentLoginStore store = RecentLoginStore(sharedPreferences: prefs);
 
       await store.initialize();
 

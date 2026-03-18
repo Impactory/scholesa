@@ -21,7 +21,8 @@ class _FakeRecentLoginStore extends RecentLoginStore {
 
   @override
   Future<void> forgetAccount(String userId) async {
-    _accounts.removeWhere((RecentLoginAccount account) => account.userId == userId);
+    _accounts
+        .removeWhere((RecentLoginAccount account) => account.userId == userId);
     notifyListeners();
   }
 }

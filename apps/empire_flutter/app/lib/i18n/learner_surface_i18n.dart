@@ -84,15 +84,18 @@ class LearnerSurfaceI18n {
     'Environmental Awareness': '环境意识',
     'Robotics': '机器人',
     'Weather Station App': '气象站应用',
-    'Built a Python app to display local weather data': '构建了一个显示本地天气数据的 Python 应用',
+    'Built a Python app to display local weather data':
+        '构建了一个显示本地天气数据的 Python 应用',
     'School Recycling Campaign': '校园回收活动',
     'Led initiative to increase recycling by 40%': '主导了使回收率提升 40% 的倡议',
     'Team Presentation': '团队展示',
     'Presented AI research to parents and community': '向家长和社区展示了 AI 研究成果',
     'Edit Portfolio Profile': '编辑作品集资料',
-    'Update your portfolio bio, goals, and featured highlights.': '更新你的作品集简介、目标和精选亮点。',
+    'Update your portfolio bio, goals, and featured highlights.':
+        '更新你的作品集简介、目标和精选亮点。',
     'Cancel': '取消',
-    'Portfolio profile editing is not available in the app yet': '应用内暂不支持编辑作品集资料',
+    'Portfolio profile editing is not available in the app yet':
+        '应用内暂不支持编辑作品集资料',
     'Portfolio Headline': '作品集标题',
     'Current Goal': '当前目标',
     'Featured Highlight': '精选亮点',
@@ -102,10 +105,12 @@ class LearnerSurfaceI18n {
     'Save': '保存',
     'Share Portfolio': '分享作品集',
     'Create a secure share link for parents or mentors.': '为家长或导师创建一个安全的分享链接。',
-    'Portfolio share links are not available in the app yet': '应用内暂不支持生成作品集分享链接',
+    'Portfolio share links are not available in the app yet':
+        '应用内暂不支持生成作品集分享链接',
     'Portfolio summary copied for sharing.': '作品集摘要已复制，可直接分享。',
     'Generate Link': '生成链接',
-    'Build a confident weekly shipping rhythm across Future Skills missions.': '围绕未来技能任务建立稳定而自信的每周产出节奏。',
+    'Build a confident weekly shipping rhythm across Future Skills missions.':
+        '围绕未来技能任务建立稳定而自信的每周产出节奏。',
     'Latest highlight: Team Presentation': '最新亮点：团队展示',
     'missions': '任务',
     'Level': '等级',
@@ -114,7 +119,7 @@ class LearnerSurfaceI18n {
     'Get AI insights on your achievements': '获取关于你成就的 AI 洞察',
     'Learner Setup': '学习者设置',
     'Complete your setup to personalize goals, reminders, and accessibility supports.':
-      '完成你的设置，以个性化目标、提醒和无障碍支持。',
+        '完成你的设置，以个性化目标、提醒和无障碍支持。',
     'Complete setup': '完成设置',
     'Update setup': '更新设置',
     'Quick reflection': '快速反思',
@@ -150,37 +155,38 @@ class LearnerSurfaceI18n {
     'Post-session': '课后回顾',
     'Weekly review': '每周回顾',
     'What worked? What is your next step?': '什么有效？你的下一步是什么？',
-    'Tell us about your goals, supports, and study rhythm.': '告诉我们你的目标、支持需求和学习节奏。',
+    'Tell us about your goals, supports, and study rhythm.':
+        '告诉我们你的目标、支持需求和学习节奏。',
     'Comma separated': '用逗号分隔',
     'Learner onboarding': '学习者入门设置',
     'Build your goals, reminders, and reflection rhythm before you jump into missions.':
-      '在进入任务之前，先建立你的目标、提醒和反思节奏。',
+        '在进入任务之前，先建立你的目标、提醒和反思节奏。',
     'You will unlock the learner dashboard after this setup is saved.':
-      '保存此设置后，你将解锁学习者仪表板。',
+        '保存此设置后，你将解锁学习者仪表板。',
     'Motivation loop': '动力循环',
     'Start with a plan, reflect after each session, and save a weekly review rhythm.':
-      '先做计划，在每次学习后反思，并建立每周回顾节奏。',
+        '先做计划，在每次学习后反思，并建立每周回顾节奏。',
     'Keep a simple plan-reflect-review rhythm tied to your goals and reminders.':
-      '保持与目标和提醒相连的计划-反思-回顾节奏。',
+        '保持与目标和提醒相连的计划-反思-回顾节奏。',
     'Reminder': '提醒',
     'Shout-out': '鼓励时刻',
     'Save shout-out': '保存鼓励',
     'Shout-out saved': '鼓励已保存',
     'You kept showing up for your goals. That consistency matters.':
-      '你一直在为目标持续投入，这份稳定很重要。',
+        '你一直在为目标持续投入，这份稳定很重要。',
     'You are carrying active missions forward. That momentum counts.':
-      '你正在持续推进进行中的任务，这份势头很有价值。',
+        '你正在持续推进进行中的任务，这份势头很有价值。',
     'You set a clear goal for your week. That is real progress.':
-      '你为这周设定了清晰目标，这就是真实的进步。',
+        '你为这周设定了清晰目标，这就是真实的进步。',
     'You checked in and kept your learning loop moving today.':
-      '你今天完成了签到，也让自己的学习循环继续前进。',
+        '你今天完成了签到，也让自己的学习循环继续前进。',
     'What win are you proud of today?': '你今天最为自己骄傲的收获是什么？',
     'Pre-plan reflection': '课前计划反思',
     'Post-session reflection': '课后回顾反思',
     'Weekly review reflection': '每周回顾反思',
     'What is your plan for this session?': '你这次学习的计划是什么？',
     'What pattern do you notice from this week, and what will you adjust next?':
-      '你从这周看到了什么模式，接下来会调整什么？',
+        '你从这周看到了什么模式，接下来会调整什么？',
   };
 
   static const Map<String, String> _zhTw = <String, String>{
@@ -262,15 +268,18 @@ class LearnerSurfaceI18n {
     'Environmental Awareness': '環境意識',
     'Robotics': '機器人',
     'Weather Station App': '氣象站應用',
-    'Built a Python app to display local weather data': '打造了一個顯示本地天氣資料的 Python 應用',
+    'Built a Python app to display local weather data':
+        '打造了一個顯示本地天氣資料的 Python 應用',
     'School Recycling Campaign': '校園回收活動',
     'Led initiative to increase recycling by 40%': '主導了讓回收率提升 40% 的倡議',
     'Team Presentation': '團隊簡報',
     'Presented AI research to parents and community': '向家長與社群展示了 AI 研究成果',
     'Edit Portfolio Profile': '編輯作品集資料',
-    'Update your portfolio bio, goals, and featured highlights.': '更新你的作品集簡介、目標與精選亮點。',
+    'Update your portfolio bio, goals, and featured highlights.':
+        '更新你的作品集簡介、目標與精選亮點。',
     'Cancel': '取消',
-    'Portfolio profile editing is not available in the app yet': 'App 內暫不支援編輯作品集資料',
+    'Portfolio profile editing is not available in the app yet':
+        'App 內暫不支援編輯作品集資料',
     'Portfolio Headline': '作品集標題',
     'Current Goal': '目前目標',
     'Featured Highlight': '精選亮點',
@@ -280,10 +289,12 @@ class LearnerSurfaceI18n {
     'Save': '儲存',
     'Share Portfolio': '分享作品集',
     'Create a secure share link for parents or mentors.': '為家長或導師建立安全的分享連結。',
-    'Portfolio share links are not available in the app yet': 'App 內暫不支援產生作品集分享連結',
+    'Portfolio share links are not available in the app yet':
+        'App 內暫不支援產生作品集分享連結',
     'Portfolio summary copied for sharing.': '作品集摘要已複製，可直接分享。',
     'Generate Link': '產生連結',
-    'Build a confident weekly shipping rhythm across Future Skills missions.': '圍繞未來技能任務建立穩定而有信心的每週產出節奏。',
+    'Build a confident weekly shipping rhythm across Future Skills missions.':
+        '圍繞未來技能任務建立穩定而有信心的每週產出節奏。',
     'Latest highlight: Team Presentation': '最新亮點：團隊簡報',
     'missions': '任務',
     'Level': '等級',
@@ -292,7 +303,7 @@ class LearnerSurfaceI18n {
     'Get AI insights on your achievements': '取得關於你成就的 AI 洞察',
     'Learner Setup': '學習者設定',
     'Complete your setup to personalize goals, reminders, and accessibility supports.':
-      '完成你的設定，以個人化目標、提醒與無障礙支援。',
+        '完成你的設定，以個人化目標、提醒與無障礙支援。',
     'Complete setup': '完成設定',
     'Update setup': '更新設定',
     'Quick reflection': '快速反思',
@@ -328,37 +339,38 @@ class LearnerSurfaceI18n {
     'Post-session': '課後回顧',
     'Weekly review': '每週回顧',
     'What worked? What is your next step?': '什麼有效？你的下一步是什麼？',
-    'Tell us about your goals, supports, and study rhythm.': '告訴我們你的目標、支援需求與學習節奏。',
+    'Tell us about your goals, supports, and study rhythm.':
+        '告訴我們你的目標、支援需求與學習節奏。',
     'Comma separated': '以逗號分隔',
     'Learner onboarding': '學習者入門設定',
     'Build your goals, reminders, and reflection rhythm before you jump into missions.':
-      '在進入任務之前，先建立你的目標、提醒與反思節奏。',
+        '在進入任務之前，先建立你的目標、提醒與反思節奏。',
     'You will unlock the learner dashboard after this setup is saved.':
-      '儲存此設定後，你將解鎖學習者儀表板。',
+        '儲存此設定後，你將解鎖學習者儀表板。',
     'Motivation loop': '動力循環',
     'Start with a plan, reflect after each session, and save a weekly review rhythm.':
-      '先做計畫，在每次學習後反思，並建立每週回顧節奏。',
+        '先做計畫，在每次學習後反思，並建立每週回顧節奏。',
     'Keep a simple plan-reflect-review rhythm tied to your goals and reminders.':
-      '保持與目標和提醒連結的計畫-反思-回顧節奏。',
+        '保持與目標和提醒連結的計畫-反思-回顧節奏。',
     'Reminder': '提醒',
     'Shout-out': '鼓勵時刻',
     'Save shout-out': '保存鼓勵',
     'Shout-out saved': '鼓勵已保存',
     'You kept showing up for your goals. That consistency matters.':
-      '你一直持續為目標投入，這份穩定很重要。',
+        '你一直持續為目標投入，這份穩定很重要。',
     'You are carrying active missions forward. That momentum counts.':
-      '你正持續推進進行中的任務，這份動能很有價值。',
+        '你正持續推進進行中的任務，這份動能很有價值。',
     'You set a clear goal for your week. That is real progress.':
-      '你為這週設下了清楚目標，這就是真實的進步。',
+        '你為這週設下了清楚目標，這就是真實的進步。',
     'You checked in and kept your learning loop moving today.':
-      '你今天完成了簽到，也讓自己的學習循環持續前進。',
+        '你今天完成了簽到，也讓自己的學習循環持續前進。',
     'What win are you proud of today?': '你今天最為自己驕傲的收穫是什麼？',
     'Pre-plan reflection': '課前計畫反思',
     'Post-session reflection': '課後回顧反思',
     'Weekly review reflection': '每週回顧反思',
     'What is your plan for this session?': '你這次學習的計畫是什麼？',
     'What pattern do you notice from this week, and what will you adjust next?':
-      '你從這週看到了什麼模式，接下來會調整什麼？',
+        '你從這週看到了什麼模式，接下來會調整什麼？',
   };
 
   static String text(BuildContext context, String input) {

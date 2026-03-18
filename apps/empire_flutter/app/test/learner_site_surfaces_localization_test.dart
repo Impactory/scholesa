@@ -241,7 +241,7 @@ void main() {
       expect(snapshot.docs.first.data()['learnerId'], 'test-user-1');
       expect(snapshot.docs.first.data()['siteId'], 'site-1');
       expect(snapshot.docs.first.data()['onboardingCompleted'], true);
-        expect(snapshot.docs.first.data()['diagnosticConfidenceBand'], isNull);
+      expect(snapshot.docs.first.data()['diagnosticConfidenceBand'], isNull);
 
       expect(reminderCalls, hasLength(1));
       expect(
@@ -761,6 +761,10 @@ void main() {
     testWidgets('learner portfolio renders zh-TW copy',
         (WidgetTester tester) async {
       final Locale locale = const Locale('zh', 'TW');
+      final FirestoreService firestoreService = FirestoreService(
+        firestore: FakeFirebaseFirestore(),
+        auth: _MockFirebaseAuth(),
+      );
       final AppState appState = _buildAppState(
         role: UserRole.learner,
         locale: locale,
@@ -773,6 +777,7 @@ void main() {
           child: const LearnerPortfolioPage(),
           providers: <SingleChildWidget>[
             ChangeNotifierProvider<AppState>.value(value: appState),
+            Provider<FirestoreService>.value(value: firestoreService),
             Provider<dynamic>.value(value: null),
           ],
         ),
@@ -787,6 +792,11 @@ void main() {
     testWidgets('learner portfolio edit updates the live profile card',
         (WidgetTester tester) async {
       final Locale locale = const Locale('en');
+      final FakeFirebaseFirestore fakeFirestore = FakeFirebaseFirestore();
+      final FirestoreService firestoreService = FirestoreService(
+        firestore: fakeFirestore,
+        auth: _MockFirebaseAuth(),
+      );
       final AppState appState = _buildAppState(
         role: UserRole.learner,
         locale: locale,
@@ -799,6 +809,7 @@ void main() {
           child: const LearnerPortfolioPage(),
           providers: <SingleChildWidget>[
             ChangeNotifierProvider<AppState>.value(value: appState),
+            Provider<FirestoreService>.value(value: firestoreService),
             Provider<dynamic>.value(value: null),
           ],
         ),
@@ -830,13 +841,49 @@ void main() {
 
       expect(find.text('Portfolio profile updated.'), findsOneWidget);
       expect(find.text('MiloOS Builder • site-1'), findsOneWidget);
-      expect(find.text('Ship one Future Skills prototype this week.'), findsOneWidget);
-      expect(find.text('Latest highlight: Weather Station App'), findsOneWidget);
+      expect(find.text('Ship one Future Skills prototype this week.'),
+          findsOneWidget);
+      expect(
+          find.text('Latest highlight: Weather Station App'), findsOneWidget);
+
+      final DocumentSnapshot<Map<String, dynamic>> profileDoc =
+          await fakeFirestore
+              .collection('learnerProfiles')
+              .doc('test-user-1')
+              .get();
+      expect(profileDoc.exists, isTrue);
+      expect(
+          profileDoc.data()?['portfolioHeadline'], 'MiloOS Builder • site-1');
+      expect(
+        profileDoc.data()?['portfolioGoal'],
+        'Ship one Future Skills prototype this week.',
+      );
+      expect(
+        profileDoc.data()?['portfolioHighlight'],
+        'Latest highlight: Weather Station App',
+      );
     });
 
-    testWidgets('learner portfolio share copies a real summary to clipboard',
+    testWidgets(
+        'learner portfolio shows saved project artifacts instead of sample projects',
         (WidgetTester tester) async {
       final Locale locale = const Locale('en');
+      final FakeFirebaseFirestore fakeFirestore = FakeFirebaseFirestore();
+      await fakeFirestore.collection('portfolioItems').doc('artifact-1').set(
+        <String, dynamic>{
+          'learnerId': 'test-user-1',
+          'siteId': 'site-1',
+          'title': 'Solar Oven Prototype',
+          'description': 'Built and tested a solar cooker.',
+          'pillarCodes': <String>['impact'],
+          'createdAt': Timestamp.fromDate(DateTime(2026, 3, 17, 9)),
+          'updatedAt': Timestamp.fromDate(DateTime(2026, 3, 17, 10)),
+        },
+      );
+      final FirestoreService firestoreService = FirestoreService(
+        firestore: fakeFirestore,
+        auth: _MockFirebaseAuth(),
+      );
       final AppState appState = _buildAppState(
         role: UserRole.learner,
         locale: locale,
@@ -849,6 +896,41 @@ void main() {
           child: const LearnerPortfolioPage(),
           providers: <SingleChildWidget>[
             ChangeNotifierProvider<AppState>.value(value: appState),
+            Provider<FirestoreService>.value(value: firestoreService),
+            Provider<dynamic>.value(value: null),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Projects'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Solar Oven Prototype'), findsOneWidget);
+      expect(find.text('Built and tested a solar cooker.'), findsOneWidget);
+      expect(find.text('Weather Station App'), findsNothing);
+    });
+
+    testWidgets('learner portfolio share copies a real summary to clipboard',
+        (WidgetTester tester) async {
+      final Locale locale = const Locale('en');
+      final FirestoreService firestoreService = FirestoreService(
+        firestore: FakeFirebaseFirestore(),
+        auth: _MockFirebaseAuth(),
+      );
+      final AppState appState = _buildAppState(
+        role: UserRole.learner,
+        locale: locale,
+      );
+
+      await tester.binding.setSurfaceSize(const Size(1280, 1800));
+      await tester.pumpWidget(
+        _buildHarness(
+          locale: locale,
+          child: const LearnerPortfolioPage(),
+          providers: <SingleChildWidget>[
+            ChangeNotifierProvider<AppState>.value(value: appState),
+            Provider<FirestoreService>.value(value: firestoreService),
             Provider<dynamic>.value(value: null),
           ],
         ),
@@ -857,7 +939,8 @@ void main() {
 
       await tester.tap(find.byType(FloatingActionButton));
       await tester.pumpAndSettle();
-      expect(find.text('Portfolio summary copied for sharing.'), findsOneWidget);
+      expect(
+          find.text('Portfolio summary copied for sharing.'), findsOneWidget);
       expect(_portfolioClipboardText, isNotNull);
       expect(_portfolioClipboardText, contains('Share Portfolio'));
       expect(_portfolioClipboardText, contains('Test User'));

@@ -65,8 +65,7 @@ class RecentLoginStore extends ChangeNotifier {
   RecentLoginStore({SharedPreferences? sharedPreferences})
       : _sharedPreferences = sharedPreferences;
 
-  static const String _recentAccountsKey =
-      'scholesa.auth.recent_accounts.v1';
+  static const String _recentAccountsKey = 'scholesa.auth.recent_accounts.v1';
   static const String _activeUserIdKey = 'scholesa.auth.active_user_id.v1';
   static const int _maxRecentAccounts = 6;
 
@@ -102,16 +101,18 @@ class RecentLoginStore extends ChangeNotifier {
     required User firebaseUser,
   }) async {
     final SharedPreferences prefs = await _ensurePrefs();
-    final String userId = (profile['userId'] as String? ?? firebaseUser.uid).trim();
+    final String userId =
+        (profile['userId'] as String? ?? firebaseUser.uid).trim();
     final String email =
         ((profile['email'] as String?) ?? firebaseUser.email ?? '').trim();
     if (userId.isEmpty || email.isEmpty) {
       return;
     }
 
-    final String displayName =
-        ((profile['displayName'] as String?) ?? firebaseUser.displayName ?? email)
-            .trim();
+    final String displayName = ((profile['displayName'] as String?) ??
+            firebaseUser.displayName ??
+            email)
+        .trim();
     final RecentLoginAccount nextAccount = RecentLoginAccount(
       userId: userId,
       email: email,
@@ -149,11 +150,13 @@ class RecentLoginStore extends ChangeNotifier {
       _activeUserId = null;
       await prefs.remove(_activeUserIdKey);
     }
-    await prefs.setString(_recentAccountsKey, jsonEncode(
-      _recentAccounts
-          .map((RecentLoginAccount account) => account.toJson())
-          .toList(growable: false),
-    ));
+    await prefs.setString(
+        _recentAccountsKey,
+        jsonEncode(
+          _recentAccounts
+              .map((RecentLoginAccount account) => account.toJson())
+              .toList(growable: false),
+        ));
     _isInitialized = true;
     notifyListeners();
   }
@@ -177,8 +180,8 @@ class RecentLoginStore extends ChangeNotifier {
   }
 
   Future<SharedPreferences> _ensurePrefs() async {
-    final SharedPreferences prefs = _prefs ?? _sharedPreferences ??
-        await SharedPreferences.getInstance();
+    final SharedPreferences prefs =
+        _prefs ?? _sharedPreferences ?? await SharedPreferences.getInstance();
     _prefs = prefs;
     return prefs;
   }
@@ -198,7 +201,8 @@ class RecentLoginStore extends ChangeNotifier {
             ),
           )
           .where((RecentLoginAccount account) =>
-              account.userId.trim().isNotEmpty && account.email.trim().isNotEmpty)
+              account.userId.trim().isNotEmpty &&
+              account.email.trim().isNotEmpty)
           .toList(growable: false);
     } catch (e) {
       debugPrint('Failed to decode recent login accounts: $e');
