@@ -361,6 +361,51 @@ class WorkflowSurfaceI18n {
     'Audit export copied to clipboard.': '审计导出内容已复制到剪贴板。',
     'Audit export downloaded.': '审计导出文件已下载。',
     'Unable to export audit logs right now.': '目前无法导出审计日志。',
+    'HQ Exports': 'HQ 导出',
+    'Download live HQ bundles for analytics, billing, audit, and safety from one place.':
+        '在一个页面中下载分析、账单、审计和安全的实时 HQ 导出包。',
+    'Some export bundles are unavailable right now. Ready bundles can still be downloaded.':
+        '部分导出包当前不可用，但仍可下载已就绪的导出包。',
+    'Download Full Bundle': '下载完整导出包',
+    'Analytics Bundle': '分析导出包',
+    'Billing Bundle': '账单导出包',
+    'Audit Bundle': '审计导出包',
+    'Safety Bundle': '安全导出包',
+    'Exports the current HQ analytics metrics used by the dashboard.':
+        '导出仪表板当前使用的 HQ 分析指标。',
+    'Exports the live invoices, payments, and subscriptions returned by HQ billing records.':
+        '导出 HQ 账单记录返回的实时发票、付款和订阅。',
+    'Exports recent audit log entries for offline review and incident follow-up.':
+        '导出最近的审计日志条目，用于离线审阅和事件跟进。',
+    'Exports recent safety incidents exactly as the HQ safety surface receives them.':
+        '按 HQ 安全面板接收的原样导出最近的安全事件。',
+    'trend points': '趋势点',
+    'entries': '条目',
+    'incidents': '事件',
+    'Empty': '空',
+    'Download Export': '下载导出',
+    'Unable to load the analytics export bundle right now.':
+        '当前无法加载分析导出包。',
+    'Unable to load the billing export bundle right now.':
+        '当前无法加载账单导出包。',
+    'Unable to load the audit export bundle right now.':
+        '当前无法加载审计导出包。',
+    'Unable to load the safety export bundle right now.':
+        '当前无法加载安全导出包。',
+    'Analytics export downloaded.': '分析导出已下载。',
+    'Unable to download the analytics export right now.':
+        '当前无法下载分析导出。',
+    'Billing export downloaded.': '账单导出已下载。',
+    'Unable to download the billing export right now.':
+        '当前无法下载账单导出。',
+    'Safety export downloaded.': '安全导出已下载。',
+    'Unable to download the safety export right now.':
+        '当前无法下载安全导出。',
+    'Unable to download the audit export right now.':
+        '当前无法下载审计导出。',
+    'Full export bundle downloaded.': '完整导出包已下载。',
+    'Unable to download the full export bundle right now.':
+        '当前无法下载完整导出包。',
     'Audit action unavailable': '审计动作不可用',
     'Actor unavailable': '操作者信息不可用',
     'Mission unavailable': '任务不可用',
@@ -813,6 +858,51 @@ class WorkflowSurfaceI18n {
     'Audit export copied to clipboard.': '稽核匯出內容已複製到剪貼簿。',
     'Audit export downloaded.': '稽核匯出檔已下載。',
     'Unable to export audit logs right now.': '目前無法匯出稽核日誌。',
+    'HQ Exports': 'HQ 匯出',
+    'Download live HQ bundles for analytics, billing, audit, and safety from one place.':
+        '在同一頁下載分析、帳單、稽核與安全的即時 HQ 匯出包。',
+    'Some export bundles are unavailable right now. Ready bundles can still be downloaded.':
+        '部分匯出包目前不可用，但仍可下載已就緒的匯出包。',
+    'Download Full Bundle': '下載完整匯出包',
+    'Analytics Bundle': '分析匯出包',
+    'Billing Bundle': '帳單匯出包',
+    'Audit Bundle': '稽核匯出包',
+    'Safety Bundle': '安全匯出包',
+    'Exports the current HQ analytics metrics used by the dashboard.':
+        '匯出儀表板目前使用的 HQ 分析指標。',
+    'Exports the live invoices, payments, and subscriptions returned by HQ billing records.':
+        '匯出 HQ 帳單記錄返回的即時發票、付款與訂閱。',
+    'Exports recent audit log entries for offline review and incident follow-up.':
+        '匯出最近的稽核日誌項目，供離線審閱與事件追蹤。',
+    'Exports recent safety incidents exactly as the HQ safety surface receives them.':
+        '依 HQ 安全面板接收的原樣匯出最近的安全事件。',
+    'trend points': '趨勢點',
+    'entries': '項目',
+    'incidents': '事件',
+    'Empty': '空',
+    'Download Export': '下載匯出',
+    'Unable to load the analytics export bundle right now.':
+        '目前無法載入分析匯出包。',
+    'Unable to load the billing export bundle right now.':
+        '目前無法載入帳單匯出包。',
+    'Unable to load the audit export bundle right now.':
+        '目前無法載入稽核匯出包。',
+    'Unable to load the safety export bundle right now.':
+        '目前無法載入安全匯出包。',
+    'Analytics export downloaded.': '分析匯出已下載。',
+    'Unable to download the analytics export right now.':
+        '目前無法下載分析匯出。',
+    'Billing export downloaded.': '帳單匯出已下載。',
+    'Unable to download the billing export right now.':
+        '目前無法下載帳單匯出。',
+    'Safety export downloaded.': '安全匯出已下載。',
+    'Unable to download the safety export right now.':
+        '目前無法下載安全匯出。',
+    'Unable to download the audit export right now.':
+        '目前無法下載稽核匯出。',
+    'Full export bundle downloaded.': '完整匯出包已下載。',
+    'Unable to download the full export bundle right now.':
+        '目前無法下載完整匯出包。',
     'Audit action unavailable': '稽核動作不可用',
     'Actor unavailable': '操作者資訊不可用',
     'Mission unavailable': '任務不可用',

@@ -52,7 +52,9 @@ void main() {
         '/parent/settings',
         '/site/scheduling',
         '/site/pickup-auth',
+        '/site/consent',
         '/site/audit',
+        '/hq/exports',
       ];
       for (final String route in inventoryAlignedRoutes) {
         expect(isRouteEnabled(route), isTrue,

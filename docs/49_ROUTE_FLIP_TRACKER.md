@@ -6,8 +6,8 @@ Source of Truth: `apps/empire_flutter/app/lib/router/app_router.dart` (`kKnownRo
 
 ## Status Summary
 
-- Total routes in registry: **54**
-- Enabled routes: **54**
+- Total routes in registry: **56**
+- Enabled routes: **56**
 - Disabled routes: **0**
 - Redirect-only routes outside registry: **1** (`/register` → `/login`)
 - Placeholder/coming-soon on enabled routes: **under active audit**
@@ -20,11 +20,11 @@ Source of Truth: `apps/empire_flutter/app/lib/router/app_router.dart` (`kKnownRo
 | Learner | 6 | 0 | 6 |
 | Educator | 9 | 0 | 9 |
 | Parent | 6 | 0 | 6 |
-| Site | 12 | 0 | 12 |
+| Site | 13 | 0 | 13 |
 | Partner | 3 | 0 | 3 |
-| HQ | 11 | 0 | 11 |
+| HQ | 12 | 0 | 12 |
 | Cross-role | 4 | 0 | 4 |
-| **Total** | **54** | **0** | **54** |
+| **Total** | **56** | **0** | **56** |
 
 ## Enabled Route Registry
 
@@ -70,6 +70,7 @@ Source of Truth: `apps/empire_flutter/app/lib/router/app_router.dart` (`kKnownRo
 - `/site/incidents`
 - `/site/identity`
 - `/site/pickup-auth`
+- `/site/consent`
 - `/site/integrations-health`
 - `/site/billing`
 - `/site/audit`
@@ -88,6 +89,7 @@ Source of Truth: `apps/empire_flutter/app/lib/router/app_router.dart` (`kKnownRo
 - `/hq/approvals`
 - `/hq/audit`
 - `/hq/safety`
+- `/hq/exports`
 - `/hq/integrations-health`
 - `/hq/curriculum`
 - `/hq/feature-flags`
@@ -115,6 +117,7 @@ Source of Truth: `apps/empire_flutter/app/lib/router/app_router.dart` (`kKnownRo
 | 2026-03-17 | Router registry + audit posture | Corrected live route count to 47 known routes, noted `/register` redirect route, and removed unsupported blanket route-compliance claims pending the current release audit |
 | 2026-03-18 | Inventory-aligned aliases | Added 5 documented alias routes with honest equivalent screens: learner settings, educator review queue, parent messages, parent settings, and site scheduling |
 | 2026-03-18 | Site admin dedicated routes | Added dedicated `/site/pickup-auth` and `/site/audit` routes backed by live pickup authorization and audit-log data |
+| 2026-03-18 | Consent + HQ export routes | Added dedicated `/site/consent` and `/hq/exports` routes backed by live consent management and downloadable HQ bundle data |
 
 <!-- TELEMETRY_WIRING:START -->
 ## Telemetry & End-to-End Wiring

@@ -525,6 +525,18 @@ class AuditLogRepository {
     });
     return logs;
   }
+
+  Future<List<AuditLogModel>> listRecent({int limit = 200}) async {
+    final QuerySnapshot<Map<String, dynamic>> snap = await _col.limit(limit).get();
+    final List<AuditLogModel> logs =
+        snap.docs.map(AuditLogModel.fromDoc).toList();
+    logs.sort((AuditLogModel a, AuditLogModel b) {
+      final int aMillis = a.createdAt?.millisecondsSinceEpoch ?? 0;
+      final int bMillis = b.createdAt?.millisecondsSinceEpoch ?? 0;
+      return bMillis.compareTo(aMillis);
+    });
+    return logs;
+  }
 }
 
 class AnnouncementRepository {

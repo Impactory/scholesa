@@ -12,6 +12,7 @@ export 'hq_role_switcher_page.dart';
 export 'hq_approvals_page.dart';
 export 'hq_audit_page.dart';
 export 'hq_safety_page.dart';
+export 'hq_exports_page.dart';
 export 'hq_integrations_health_page.dart';
 export 'hq_curriculum_page.dart';
 export 'hq_feature_flags_page.dart';
