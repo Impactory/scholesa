@@ -129,6 +129,9 @@ class _LoginPageState extends State<LoginPage>
     RecentLoginStore store,
     RecentLoginAccount account,
   ) async {
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+    final String removedMessage =
+        AppStrings.of(context, 'auth.rememberedAccountRemoved');
     try {
       await TelemetryService.instance.logEvent(
         event: 'cta.clicked',
@@ -155,9 +158,9 @@ class _LoginPageState extends State<LoginPage>
       });
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    messenger.showSnackBar(
       SnackBar(
-        content: Text(AppStrings.of(context, 'auth.rememberedAccountRemoved')),
+        content: Text(removedMessage),
         behavior: SnackBarBehavior.floating,
       ),
     );

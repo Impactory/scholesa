@@ -859,9 +859,11 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
     final TextEditingController highlightController = TextEditingController(
       text: _effectiveHighlight(),
     );
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
     showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) {
+        final NavigatorState dialogNavigator = Navigator.of(dialogContext);
         return AlertDialog(
           title: Text(_t('Edit Portfolio Profile')),
           content: SingleChildScrollView(
@@ -920,8 +922,8 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
                 if (firestoreService == null ||
                     learnerId.isEmpty ||
                     siteId.isEmpty) {
-                  Navigator.pop(dialogContext);
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  dialogNavigator.pop();
+                  messenger.showSnackBar(
                     SnackBar(
                       content:
                           Text(_t('Profile storage unavailable right now.')),
@@ -977,7 +979,7 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
 
                 try {
                   await repository.upsert(updatedProfile);
-                  if (!mounted) return;
+                  if (!mounted || !dialogNavigator.mounted) return;
                   setState(() => _learnerProfile = updatedProfile);
                   TelemetryService.instance.logEvent(
                     event: 'learner.portfolio.profile.updated',
@@ -986,18 +988,18 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
                       'surface': 'edit_profile_dialog',
                     },
                   );
-                  Navigator.pop(dialogContext);
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  dialogNavigator.pop();
+                  messenger.showSnackBar(
                     SnackBar(
                       content: Text(_t('Portfolio profile updated.')),
                     ),
                   );
                 } catch (_) {
-                  if (dialogContext.mounted) {
-                    Navigator.pop(dialogContext);
+                  if (dialogNavigator.mounted) {
+                    dialogNavigator.pop();
                   }
                   if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  messenger.showSnackBar(
                     SnackBar(
                       content: Text(
                         _t('Could not save portfolio profile right now.'),
