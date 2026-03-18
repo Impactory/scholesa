@@ -7574,4 +7574,56 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets('HQ feature flags show unavailable instead of unknown for null package timing and metrics',
+      (WidgetTester tester) async {
+    final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
+      experiments: <Map<String, dynamic>>[
+        _experimentRow(),
+      ],
+      aggregationRuns: <Map<String, dynamic>>[
+        _aggregationRunRow(),
+      ],
+      candidatePackages: <Map<String, dynamic>>[
+        <String, dynamic>{
+          ..._candidatePackageRow(),
+          'normCap': null,
+          'effectiveTotalWeight': null,
+          'rawTotalWeight': null,
+          'minUpdateNorm': null,
+          'maxUpdateNorm': null,
+          'oldestSummaryCreatedAtMs': null,
+          'newestSummaryCreatedAtMs': null,
+        },
+      ],
+      runtimeDeliveryRecords: <Map<String, dynamic>>[
+        _runtimeDeliveryRecordRow(status: 'assigned'),
+      ],
+      runtimeActivationRecords: <Map<String, dynamic>>[
+        _runtimeActivationRecordRow(status: 'resolved'),
+      ],
+      promotionRecords: <Map<String, dynamic>>[
+        _promotionRecordRow(),
+      ],
+    );
+
+    await tester.pumpWidget(
+      _wrapWithMaterial(HqFeatureFlagsPage(workflowBridge: bridge)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Latest package merge: norm_capped_weighted_runtime_vector_average_v2 · norm cap Unavailable · effective weight Unavailable',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Latest package freshness: Freshness: 3600s span · oldest Unavailable · newest Unavailable',
+      ),
+      findsOneWidget,
+    );
+    expect(find.textContaining('unknown'), findsNothing);
+  });
 }

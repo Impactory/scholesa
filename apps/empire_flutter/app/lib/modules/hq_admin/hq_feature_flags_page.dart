@@ -11,6 +11,8 @@ String _tHqFeatureFlags(BuildContext context, String input) {
   return WorkflowSurfaceI18n.text(context, input);
 }
 
+const String _canonicalUnavailableLabel = 'Unavailable';
+
 /// HQ Feature Flags page for managing feature toggles
 /// Based on docs/49_ROUTE_FLIP_TRACKER.md
 class HqFeatureFlagsPage extends StatefulWidget {
@@ -261,11 +263,11 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
       return '';
     }
     final String oldestLabel = oldestSummaryCreatedAtMs == null
-        ? 'unknown'
+      ? _tHqFeatureFlags(context, _canonicalUnavailableLabel)
         : DateTime.fromMillisecondsSinceEpoch(oldestSummaryCreatedAtMs)
             .toIso8601String();
     final String newestLabel = newestSummaryCreatedAtMs == null
-        ? 'unknown'
+      ? _tHqFeatureFlags(context, _canonicalUnavailableLabel)
         : DateTime.fromMillisecondsSinceEpoch(newestSummaryCreatedAtMs)
             .toIso8601String();
     final int spanSeconds = summaryFreshnessSpanSeconds ?? 0;
@@ -8264,12 +8266,16 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
   }
 
   String _formatTimestamp(Timestamp? value) {
-    if (value == null) return _tHqFeatureFlags(context, 'unknown');
+    if (value == null) {
+      return _tHqFeatureFlags(context, _canonicalUnavailableLabel);
+    }
     return value.toDate().toIso8601String();
   }
 
   String _formatMergeMetric(double? value) {
-    if (value == null) return _tHqFeatureFlags(context, 'unknown');
+    if (value == null) {
+      return _tHqFeatureFlags(context, _canonicalUnavailableLabel);
+    }
     if (value == value.roundToDouble()) {
       return value.toStringAsFixed(0);
     }
