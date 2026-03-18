@@ -348,51 +348,55 @@ class _BosClassInsightsCardState extends State<BosClassInsightsCard> {
       );
     }
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: accent.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(
-            BosCoachingI18n.baeWatchlist(context),
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: scheme.onSurface,
-              fontWeight: FontWeight.w700,
-            ),
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: accent.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(12),
           ),
-          const SizedBox(height: 6),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: watchlist
-                .take(3)
-                .map(
-                  (_ClassLearnerSignal learner) =>
-                      _watchlistChip(
-                    context,
-                    accent,
-                    learner,
-                    constraints.maxWidth,
-                  ),
-                )
-                .toList(growable: false),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                BosCoachingI18n.baeWatchlist(context),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: scheme.onSurface,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: watchlist
+                    .take(3)
+                    .map(
+                      (_ClassLearnerSignal learner) => _watchlistChip(
+                        context,
+                        accent,
+                        learner,
+                        constraints.maxWidth,
+                      ),
+                    )
+                    .toList(growable: false),
+              ),
+              const SizedBox(height: 6),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  onPressed: () =>
+                      _showWatchlistSheet(context, accent, watchlist),
+                  icon: const Icon(Icons.open_in_new_rounded, size: 18),
+                  label: Text(BosCoachingI18n.viewWatchlist(context)),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 6),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              onPressed: () => _showWatchlistSheet(context, accent, watchlist),
-              icon: const Icon(Icons.open_in_new_rounded, size: 18),
-              label: Text(BosCoachingI18n.viewWatchlist(context)),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 

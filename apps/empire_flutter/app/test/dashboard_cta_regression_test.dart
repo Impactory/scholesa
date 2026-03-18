@@ -388,13 +388,18 @@ void main() {
       await tester.pump(const Duration(milliseconds: 50));
       await tester.pumpAndSettle();
 
-      expect(find.text('Learner unavailable'), findsOneWidget);
+      expect(find.textContaining('Learner unavailable'), findsOneWidget);
       expect(find.text('Learner 7f9c'), findsNothing);
 
+      await tester.scrollUntilVisible(
+        find.text('View Watchlist'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.tap(find.text('View Watchlist'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Learner unavailable'), findsWidgets);
+      expect(find.textContaining('Learner unavailable'), findsWidgets);
       expect(find.text('Learner 7f9c'), findsNothing);
     });
   });
