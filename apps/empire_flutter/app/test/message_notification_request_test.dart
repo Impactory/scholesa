@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -132,5 +133,59 @@ void main() {
     );
 
     expect(notificationCalls, isEmpty);
+  });
+
+  test('direct message stores explicit unavailable sender labels when missing',
+      () async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final MessageService service = MessageService(
+      firestoreService: firestoreService,
+      userId: 'educator-1',
+    );
+
+    await firestore.collection('users').doc('educator-1').set(<String, dynamic>{
+      'role': 'educator',
+      'activeSiteId': 'site-1',
+      'siteIds': <String>['site-1'],
+    });
+    await firestore.collection('users').doc('parent-1').set(<String, dynamic>{
+      'displayName': 'Parent One',
+      'role': 'parent',
+      'activeSiteId': 'site-1',
+      'siteIds': <String>['site-1'],
+    });
+
+    await NotificationService.runWithCallableInvoker(
+      (_, __) async {},
+      () async {
+        await TelemetryService.runWithDispatcher(
+          (_) async {},
+          () async {
+            final bool sent = await service.sendMessage(
+              recipientId: 'parent-1',
+              body: 'Identity fallback check.',
+            );
+            expect(sent, isTrue);
+          },
+        );
+      },
+    );
+
+    final QuerySnapshot<Map<String, dynamic>> messages =
+        await firestore.collection('messages').get();
+    expect(messages.docs, hasLength(1));
+    expect(messages.docs.first.data()['senderName'], 'Sender unavailable');
+
+    final QuerySnapshot<Map<String, dynamic>> threads =
+        await firestore.collection('messageThreads').get();
+    expect(threads.docs, hasLength(1));
+    expect(
+      (threads.docs.first.data()['participantNames'] as List<dynamic>).first,
+      'Sender unavailable',
+    );
   });
 }

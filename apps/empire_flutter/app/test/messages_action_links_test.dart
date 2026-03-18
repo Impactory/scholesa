@@ -79,6 +79,7 @@ Future<void> _seedMessage(
   required String id,
   required String title,
   required String actionUrl,
+  String? senderName = 'Scholesa Team',
 }) async {
   await firestore.collection('messages').doc(id).set(<String, dynamic>{
     'title': title,
@@ -86,10 +87,25 @@ Future<void> _seedMessage(
     'type': 'announcement',
     'priority': 'normal',
     'recipientId': 'test-user-1',
-    'senderName': 'Scholesa Team',
+    if (senderName != null) 'senderName': senderName,
     'createdAt': Timestamp.fromDate(DateTime(2026, 3, 17, 9)),
     'isRead': false,
     'actionUrl': actionUrl,
+  });
+}
+
+Future<void> _seedConversation(
+  FakeFirebaseFirestore firestore, {
+  required String id,
+  required List<String> participantNames,
+}) async {
+  await firestore.collection('messageThreads').doc(id).set(<String, dynamic>{
+    'participantIds': <String>['test-user-1', 'educator-1'],
+    'participantNames': participantNames,
+    'updatedAt': Timestamp.fromDate(DateTime(2026, 3, 17, 10)),
+    'lastMessagePreview': 'Latest thread update.',
+    'lastMessageSenderId': 'educator-1',
+    'title': 'Direct conversation',
   });
 }
 
@@ -206,6 +222,69 @@ void main() {
       } finally {
         UrlLauncherPlatform.instance = previousLauncherPlatform;
       }
+    });
+
+    testWidgets('messages page shows explicit unavailable identity labels',
+        (WidgetTester tester) async {
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+      await _seedMessage(
+        firestore,
+        id: 'message-missing-sender',
+        title: 'Sender label regression',
+        actionUrl: '/profile',
+        senderName: null,
+      );
+      await _seedConversation(
+        firestore,
+        id: 'thread-missing-participant',
+        participantNames: <String>['Test User'],
+      );
+      final FirestoreService firestoreService = FirestoreService(
+        firestore: firestore,
+        auth: _MockFirebaseAuth(),
+      );
+      final MessageService messageService = MessageService(
+        firestoreService: firestoreService,
+        userId: 'test-user-1',
+      );
+      final GoRouter router = GoRouter(
+        initialLocation: '/messages',
+        routes: <RouteBase>[
+          GoRoute(
+            path: '/messages',
+            builder: (BuildContext context, GoRouterState state) =>
+                const MessagesPage(),
+          ),
+          GoRoute(
+            path: '/profile',
+            builder: (BuildContext context, GoRouterState state) =>
+                const Scaffold(body: SizedBox.shrink()),
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        _buildHarness(
+          router: router,
+          providers: <SingleChildWidget>[
+            Provider<FirestoreService>.value(value: firestoreService),
+            ChangeNotifierProvider<MessageService>.value(value: messageService),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Sender label regression'), findsOneWidget);
+      expect(find.textContaining('Sender unavailable'), findsWidgets);
+
+      await tester.tap(find.text('Conversations'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.textContaining('Conversation participant unavailable'),
+        findsOneWidget,
+      );
+      expect(find.text('Unknown'), findsNothing);
     });
   });
 }

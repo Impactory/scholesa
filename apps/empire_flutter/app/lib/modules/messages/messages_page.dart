@@ -13,6 +13,27 @@ String _tMessages(BuildContext context, String input) {
   return SharedRoleSurfaceI18n.text(context, input);
 }
 
+String _conversationParticipantLabel(
+  BuildContext context,
+  List<String> participantNames,
+) {
+  if (participantNames.length > 1) {
+    final String otherParticipant = participantNames[1].trim();
+    if (otherParticipant.isNotEmpty) {
+      return otherParticipant;
+    }
+  }
+  return _tMessages(context, 'Conversation participant unavailable');
+}
+
+String _messageSenderLabel(BuildContext context, String? senderName) {
+  final String trimmed = (senderName ?? '').trim();
+  if (trimmed.isNotEmpty) {
+    return trimmed;
+  }
+  return _tMessages(context, 'Sender unavailable');
+}
+
 /// Messages and Notifications Page
 class MessagesPage extends StatefulWidget {
   const MessagesPage({super.key});
@@ -571,21 +592,19 @@ class _NotificationCard extends StatelessWidget {
                       const SizedBox(height: 8),
                       Row(
                         children: <Widget>[
-                          if (message.senderName != null) ...<Widget>[
-                            Icon(Icons.person_outline,
-                                size: 14,
+                          Icon(Icons.person_outline,
+                              size: 14,
+                              color: context.schTextSecondary
+                                  .withValues(alpha: 0.74)),
+                          const SizedBox(width: 4),
+                          Text(
+                            _messageSenderLabel(context, message.senderName),
+                            style: TextStyle(
                                 color: context.schTextSecondary
-                                    .withValues(alpha: 0.74)),
-                            const SizedBox(width: 4),
-                            Text(
-                              message.senderName!,
-                              style: TextStyle(
-                                  color: context.schTextSecondary
-                                      .withValues(alpha: 0.88),
-                                  fontSize: 12),
-                            ),
-                            const SizedBox(width: 12),
-                          ],
+                                    .withValues(alpha: 0.88),
+                                fontSize: 12),
+                          ),
+                          const SizedBox(width: 12),
                           Icon(Icons.access_time,
                               size: 14,
                               color: context.schTextSecondary
@@ -662,9 +681,10 @@ class _ConversationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String otherParticipant = conversation.participantNames.length > 1
-        ? conversation.participantNames[1]
-        : _tMessages(context, 'Unknown');
+    final String otherParticipant = _conversationParticipantLabel(
+      context,
+      conversation.participantNames,
+    );
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -847,20 +867,18 @@ class _MessageDetailSheet extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 20),
-            if (message.senderName != null) ...<Widget>[
-              Row(
-                children: <Widget>[
-                  const Icon(Icons.person_outline,
-                      size: 16, color: Colors.grey),
-                  const SizedBox(width: 8),
-                  Text(
-                    '${_tMessages(context, 'From:')} ${message.senderName}',
-                    style: TextStyle(color: context.schTextSecondary),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-            ],
+            Row(
+              children: <Widget>[
+                const Icon(Icons.person_outline,
+                    size: 16, color: Colors.grey),
+                const SizedBox(width: 8),
+                Text(
+                  '${_tMessages(context, 'From:')} ${_messageSenderLabel(context, message.senderName)}',
+                  style: TextStyle(color: context.schTextSecondary),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
             Row(
               children: <Widget>[
                 const Icon(Icons.access_time, size: 16, color: Colors.grey),

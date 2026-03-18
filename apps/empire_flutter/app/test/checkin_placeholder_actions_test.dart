@@ -81,4 +81,18 @@ void main() {
     expect(find.text('Use Camera'), findsNothing);
     expect(find.text('Enter Code'), findsNothing);
   });
+
+  testWidgets('checkin page labels missing learner names as unavailable',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await firestore.collection('users').doc('learner-1').set(<String, dynamic>{
+      'role': 'learner',
+      'siteIds': <String>['site-1'],
+    });
+
+    await _pumpCheckinPage(tester, firestore: firestore);
+
+    expect(find.textContaining('Learner unavailable'), findsWidgets);
+    expect(find.text('Unknown'), findsNothing);
+  });
 }
