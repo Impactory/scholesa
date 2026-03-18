@@ -527,123 +527,127 @@ class ProfilePage extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       builder: (BuildContext bottomSheetContext) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            top: 16,
-            bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom + 16,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                _tProfile(context, 'Help Center Contact'),
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: controller,
-                maxLines: 4,
-                decoration: InputDecoration(
-                  labelText: _tProfile(context, 'Issue details'),
+        return SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: 16,
+              right: 16,
+              top: 16,
+              bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom + 16,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  _tProfile(context, 'Help Center Contact'),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(bottomSheetContext),
-                      child: Text(_tProfile(context, 'Cancel')),
-                    ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: controller,
+                  maxLines: 4,
+                  decoration: InputDecoration(
+                    labelText: _tProfile(context, 'Issue details'),
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        final String details = controller.text.trim();
-                        if (details.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                _tProfile(
-                                  context,
-                                  'Please enter issue details before sending.',
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(bottomSheetContext),
+                        child: Text(_tProfile(context, 'Cancel')),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          final String details = controller.text.trim();
+                          if (details.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  _tProfile(
+                                    context,
+                                    'Please enter issue details before sending.',
+                                  ),
                                 ),
                               ),
-                            ),
-                          );
-                          return;
-                        }
+                            );
+                            return;
+                          }
 
-                        final NavigatorState navigator =
-                            Navigator.of(bottomSheetContext);
-                        try {
-                          final String requestId = await _submitSupportRequest(
-                            context,
-                            source: 'profile_open_help_support',
-                            subject: 'Profile help request',
-                            message: details,
-                          );
-                          await TelemetryService.instance.logEvent(
-                            event: 'profile.help_request.submitted',
-                            metadata: <String, dynamic>{
-                              'request_id': requestId,
-                            },
-                          );
-                          if (!context.mounted) {
-                            return;
-                          }
-                          navigator.pop();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                _tProfile(
-                                  context,
-                                  'Support request submitted.',
+                          final NavigatorState navigator =
+                              Navigator.of(bottomSheetContext);
+                          try {
+                            final String requestId =
+                                await _submitSupportRequest(
+                              context,
+                              source: 'profile_open_help_support',
+                              subject: 'Profile help request',
+                              message: details,
+                            );
+                            await TelemetryService.instance.logEvent(
+                              event: 'profile.help_request.submitted',
+                              metadata: <String, dynamic>{
+                                'request_id': requestId,
+                              },
+                            );
+                            if (!context.mounted) {
+                              return;
+                            }
+                            navigator.pop();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  _tProfile(
+                                    context,
+                                    'Support request submitted.',
+                                  ),
                                 ),
                               ),
-                            ),
-                          );
-                        } catch (error) {
-                          debugPrint(
-                            'Failed to submit profile support request: $error',
-                          );
-                          await TelemetryService.instance.logEvent(
-                            event: 'profile.help_request.failed',
-                            metadata: <String, dynamic>{
-                              'error': error.toString(),
-                            },
-                          );
-                          if (!context.mounted) {
-                            return;
-                          }
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                _tProfile(
-                                  context,
-                                  'Unable to submit support request right now.',
+                            );
+                          } catch (error) {
+                            debugPrint(
+                              'Failed to submit profile support request: $error',
+                            );
+                            await TelemetryService.instance.logEvent(
+                              event: 'profile.help_request.failed',
+                              metadata: <String, dynamic>{
+                                'error': error.toString(),
+                              },
+                            );
+                            if (!context.mounted) {
+                              return;
+                            }
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  _tProfile(
+                                    context,
+                                    'Unable to submit support request right now.',
+                                  ),
                                 ),
                               ),
-                            ),
-                          );
-                        }
-                      },
-                      child: Text(_tProfile(context, 'Send')),
+                            );
+                          }
+                        },
+                        child: Text(_tProfile(context, 'Send')),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
         );
       },
     );
-    controller.dispose();
   }
 
   void _openTermsOfService(BuildContext context) {

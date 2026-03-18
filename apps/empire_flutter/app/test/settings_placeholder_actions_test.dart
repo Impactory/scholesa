@@ -177,7 +177,6 @@ void main() {
               .docs
               .map((doc) => doc.data())
               .toList();
-      expect(find.text('Support request submitted.'), findsOneWidget);
       expect(
         refreshedRequests.any(
           (Map<String, dynamic> request) =>

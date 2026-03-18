@@ -1493,99 +1493,103 @@ class _SettingsPageState extends State<SettingsPage> {
       context: context,
       isScrollControlled: true,
       builder: (BuildContext bottomSheetContext) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            top: 16,
-            bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom + 16,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                title,
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: controller,
-                maxLines: 4,
-                decoration: InputDecoration(labelText: labelText),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(bottomSheetContext),
-                      child: Text(_tSettings(context, 'Cancel')),
-                    ),
+        return SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: 16,
+              right: 16,
+              top: 16,
+              bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom + 16,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        final String body = controller.text.trim();
-                        if (body.isEmpty) {
-                          _showErrorSnackBar(emptyMessage);
-                          return;
-                        }
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: controller,
+                  maxLines: 4,
+                  decoration: InputDecoration(labelText: labelText),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(bottomSheetContext),
+                        child: Text(_tSettings(context, 'Cancel')),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          final String body = controller.text.trim();
+                          if (body.isEmpty) {
+                            _showErrorSnackBar(emptyMessage);
+                            return;
+                          }
 
-                        final NavigatorState navigator =
-                            Navigator.of(bottomSheetContext);
-                        final Map<String, dynamic> metadata =
-                            metadataBuilder?.call(body) ??
-                                const <String, dynamic>{};
-                        try {
-                          final String requestId = await _submitSupportRequest(
-                            requestType: requestType,
-                            source: source,
-                            subject: subject,
-                            message: body,
-                            metadata: metadata,
-                          );
-                          await TelemetryService.instance.logEvent(
-                            event: successEvent,
-                            metadata: <String, dynamic>{
-                              'request_id': requestId,
-                              ...metadata,
-                            },
-                          );
-                          if (!mounted) {
-                            return;
+                          final NavigatorState navigator =
+                              Navigator.of(bottomSheetContext);
+                          final Map<String, dynamic> metadata =
+                              metadataBuilder?.call(body) ??
+                                  const <String, dynamic>{};
+                          try {
+                            final String requestId =
+                                await _submitSupportRequest(
+                              requestType: requestType,
+                              source: source,
+                              subject: subject,
+                              message: body,
+                              metadata: metadata,
+                            );
+                            await TelemetryService.instance.logEvent(
+                              event: successEvent,
+                              metadata: <String, dynamic>{
+                                'request_id': requestId,
+                                ...metadata,
+                              },
+                            );
+                            if (!mounted) {
+                              return;
+                            }
+                            navigator.pop();
+                            _showSuccessSnackBar(successMessage);
+                          } catch (error) {
+                            debugPrint(
+                              'Failed to submit $requestType support request: $error',
+                            );
+                            await TelemetryService.instance.logEvent(
+                              event: failureEvent,
+                              metadata: <String, dynamic>{
+                                'error': error.toString(),
+                              },
+                            );
+                            if (!mounted) {
+                              return;
+                            }
+                            _showErrorSnackBar(errorMessage);
                           }
-                          navigator.pop();
-                          _showSuccessSnackBar(successMessage);
-                        } catch (error) {
-                          debugPrint(
-                            'Failed to submit $requestType support request: $error',
-                          );
-                          await TelemetryService.instance.logEvent(
-                            event: failureEvent,
-                            metadata: <String, dynamic>{
-                              'error': error.toString(),
-                            },
-                          );
-                          if (!mounted) {
-                            return;
-                          }
-                          _showErrorSnackBar(errorMessage);
-                        }
-                      },
-                      child: Text(_tSettings(context, 'Send')),
+                        },
+                        child: Text(_tSettings(context, 'Send')),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
         );
       },
     );
-    controller.dispose();
   }
 
   Future<bool> _tryLaunchExternalUri(Uri uri) async {
