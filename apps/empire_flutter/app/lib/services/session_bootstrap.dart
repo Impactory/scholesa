@@ -12,15 +12,15 @@ class SessionBootstrap {
     required FirebaseAuth auth,
     required FirestoreService firestoreService,
     required AppState appState,
-      required RecentLoginStore recentLoginStore,
+    required RecentLoginStore recentLoginStore,
   })  : _auth = auth,
         _firestoreService = firestoreService,
-      _appState = appState,
-      _recentLoginStore = recentLoginStore;
+        _appState = appState,
+        _recentLoginStore = recentLoginStore;
   final FirebaseAuth _auth;
   final FirestoreService _firestoreService;
   final AppState _appState;
-    final RecentLoginStore _recentLoginStore;
+  final RecentLoginStore _recentLoginStore;
   static const Duration _profileBootstrapTimeout = Duration(seconds: 8);
 
   /// Initialize session - call after Firebase.initializeApp()
@@ -30,7 +30,7 @@ class SessionBootstrap {
     // Check if user is already signed in
     final User? user = _auth.currentUser;
     if (user == null) {
-      _appState.setLoading(false);
+      await _clearSignedOutSessionState();
       return;
     }
 
@@ -65,21 +65,24 @@ class SessionBootstrap {
     } catch (_) {
       // Best effort sign-out only.
     }
+    await _clearSignedOutSessionState();
+    _appState.setError('Failed to load user profile');
+  }
+
+  Future<void> _clearSignedOutSessionState() async {
     try {
       await _recentLoginStore.clearActiveSession();
     } catch (_) {
       // Best effort recent-account cleanup only.
     }
     _appState.clear();
-    _appState.setError('Failed to load user profile');
   }
 
   /// Listen to auth state changes and bootstrap/clear accordingly
   void listenToAuthChanges() {
     _auth.authStateChanges().listen((User? user) async {
       if (user == null) {
-        await _recentLoginStore.clearActiveSession();
-        _appState.clear();
+        await _clearSignedOutSessionState();
       } else {
         await initialize();
       }
