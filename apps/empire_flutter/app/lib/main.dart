@@ -23,6 +23,7 @@ import 'services/session_bootstrap.dart';
 import 'services/federated_learning_runtime_adapter.dart';
 import 'services/telemetry_service.dart';
 import 'services/theme_service.dart';
+import 'services/app_resilience.dart';
 import 'offline/offline_queue.dart';
 import 'offline/sync_coordinator.dart';
 import 'runtime/global_ai_assistant_overlay.dart';
@@ -42,7 +43,15 @@ import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  final AppResilience appResilience = AppResilience();
+  appResilience.installGlobalHandlers();
+  await appResilience.runGuardedStartup(
+    initialize: _bootstrapRuntime,
+    launch: () => runApp(const ScholesaApp()),
+  );
+}
 
+Future<void> _bootstrapRuntime() async {
   // Initialize Hive for offline storage
   await Hive.initFlutter();
 
@@ -70,13 +79,12 @@ void main() async {
     } catch (e) {
       debugPrint('Failed to connect to auth emulator: $e');
     }
-  } else {
-    debugPrint(
-      'Firebase mode: LIVE (project=${AppConfig.firebaseProjectId}, env=${AppConfig.environment})',
-    );
+    return;
   }
 
-  runApp(const ScholesaApp());
+  debugPrint(
+    'Firebase mode: LIVE (project=${AppConfig.firebaseProjectId}, env=${AppConfig.environment})',
+  );
 }
 
 class ScholesaApp extends StatefulWidget {
