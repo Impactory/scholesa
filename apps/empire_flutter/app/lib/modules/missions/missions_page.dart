@@ -1438,6 +1438,12 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
                             onPressed: !_proofBundleReady
                                 ? null
                                 : () async {
+                                    final MissionService missionService =
+                                        context.read<MissionService>();
+                                    final NavigatorState navigator =
+                                        Navigator.of(context);
+                                    final ScaffoldMessengerState messenger =
+                                        ScaffoldMessenger.of(context);
                                     await _saveProofBundle();
                                     TelemetryService.instance.logEvent(
                                       event: 'cta.clicked',
@@ -1446,16 +1452,13 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
                                         'mission_id': mission.id,
                                       },
                                     );
-                                    final MissionService missionService =
-                                        context.read<MissionService>();
                                     final String? submissionId =
                                         await missionService
                                             .submitMission(mission.id);
 
                                     if (submissionId == null) {
                                       if (!context.mounted) return;
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
+                                      messenger.showSnackBar(
                                         SnackBar(
                                           content: Text(_tMissions(context,
                                               'Unable to submit mission right now')),
@@ -1475,8 +1478,8 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
                                       },
                                     );
                                     if (!context.mounted) return;
-                                    Navigator.pop(context);
-                                    ScaffoldMessenger.of(context).showSnackBar(
+                                    navigator.pop();
+                                    messenger.showSnackBar(
                                       SnackBar(
                                         content: Text(
                                             '${_tMissions(context, 'Submitted')}: ${mission.title}'),

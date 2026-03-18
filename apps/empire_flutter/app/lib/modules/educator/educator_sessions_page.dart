@@ -471,6 +471,22 @@ class _CreateSessionDialogState extends State<_CreateSessionDialog> {
     }
 
     final AppState appState = context.read<AppState>();
+    final NavigatorState navigator = Navigator.of(context);
+    final ScaffoldMessengerState scaffoldMessenger =
+        ScaffoldMessenger.of(context);
+    final String successMessage =
+        created.joinCode == null || created.joinCode!.isEmpty
+            ? _tEducatorSessions(
+                context,
+                'Session created and added to your list',
+              )
+            : _tEducatorSessions(
+                context,
+                'Session created with join code {joinCode}',
+                placeholders: <String, String>{
+                  'joinCode': created.joinCode!,
+                },
+              );
     final String? activeSiteId = service.siteId?.trim().isNotEmpty == true
         ? service.siteId!.trim()
         : appState.activeSiteId?.trim();
@@ -497,23 +513,12 @@ class _CreateSessionDialogState extends State<_CreateSessionDialog> {
       );
     }
 
-    Navigator.pop(context);
-    ScaffoldMessenger.of(context).showSnackBar(
+    if (!mounted) return;
+
+    navigator.pop();
+    scaffoldMessenger.showSnackBar(
       SnackBar(
-        content: Text(
-          created.joinCode == null || created.joinCode!.isEmpty
-              ? _tEducatorSessions(
-                  context,
-                  'Session created and added to your list',
-                )
-              : _tEducatorSessions(
-                  context,
-                  'Session created with join code {joinCode}',
-                  placeholders: <String, String>{
-                    'joinCode': created.joinCode!,
-                  },
-                ),
-        ),
+        content: Text(successMessage),
         backgroundColor: ScholesaColors.success,
       ),
     );

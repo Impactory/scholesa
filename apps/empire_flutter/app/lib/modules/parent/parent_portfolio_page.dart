@@ -539,6 +539,10 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
         ? appState.email!.trim()
         : 'Not set';
     final String requestLabel = requestType == 'share' ? 'Share' : 'Download';
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+    final String launchFailureMessage = _t(
+      'We could not open your email app right now. Contact support@scholesa.com with your site ID and portfolio item details.',
+    );
 
     final Uri emailUri = Uri(
       scheme: 'mailto',
@@ -555,11 +559,9 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    messenger.showSnackBar(
       SnackBar(
-        content: Text(
-          _t('We could not open your email app right now. Contact support@scholesa.com with your site ID and portfolio item details.'),
-        ),
+        content: Text(launchFailureMessage),
       ),
     );
   }

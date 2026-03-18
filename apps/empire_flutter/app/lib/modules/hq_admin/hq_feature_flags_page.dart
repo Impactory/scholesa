@@ -126,6 +126,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         summary.id: summary,
     };
 
+    if (!mounted) return;
+
     await showDialog<void>(
       context: context,
       builder: (BuildContext context) {

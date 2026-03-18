@@ -1343,6 +1343,14 @@ class _SettingsPageState extends State<SettingsPage> {
                             appState.displayName?.trim().isNotEmpty == true
                                 ? appState.displayName!.trim()
                                 : (currentUser?.displayName ?? 'Not set');
+                        final NavigatorState navigator =
+                            Navigator.of(bottomSheetContext);
+                        final String feedbackTitle =
+                            _tSettings(context, 'Send Feedback');
+                        final String feedbackFollowUpBody = _tSettings(
+                          context,
+                          'We could not open your email app right now. Contact support@scholesa.com if you need follow-up.',
+                        );
 
                         await TelemetryService.instance.logEvent(
                           event: 'settings.feedback.submitted',
@@ -1362,15 +1370,12 @@ class _SettingsPageState extends State<SettingsPage> {
                         );
                         final bool launched =
                             await _tryLaunchExternalUri(emailUri);
-                        if (!context.mounted) return;
-                        Navigator.pop(bottomSheetContext);
+                        if (!mounted) return;
+                        navigator.pop();
                         if (!launched) {
                           _showInfoDialog(
-                            title: _tSettings(context, 'Send Feedback'),
-                            body: _tSettings(
-                              context,
-                              'We could not open your email app right now. Contact support@scholesa.com if you need follow-up.',
-                            ),
+                            title: feedbackTitle,
+                            body: feedbackFollowUpBody,
                           );
                         }
                       },
