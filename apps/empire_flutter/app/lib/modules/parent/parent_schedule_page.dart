@@ -92,7 +92,7 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
                   child: AiContextCoachSection(
                     title: _t('Schedule AI Coach'),
                     subtitle: _t(
-                        'Keep BOS/MIA loop active for each learner schedule'),
+                        'Keep MiloOS loop active for each learner schedule'),
                     module: 'parent_schedule',
                     surface: 'schedule_overview',
                     actorRole: UserRole.parent,

@@ -140,7 +140,7 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                     context, 'Mission Planning AI Coach'),
                 subtitle: _tEducatorMissionPlans(
                   context,
-                  'Keep BOS/MIA loop active while designing missions for each learner',
+                  'Keep MiloOS loop active while designing missions for each learner',
                 ),
                 module: 'educator_mission_plans',
                 surface: 'mission_planning',

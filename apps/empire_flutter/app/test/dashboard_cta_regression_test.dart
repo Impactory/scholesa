@@ -153,7 +153,7 @@ void main() {
 
       expect(find.text('Telemetry KPIs'), findsOneWidget);
       expect(
-        find.text('Waiting for first data sync from BOS-MIA telemetry.'),
+        find.text('Waiting for first data sync from MiloOS telemetry.'),
         findsOneWidget,
       );
       expect(find.text('KPI Packs'), findsOneWidget);
@@ -275,7 +275,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 50));
       await tester.pumpAndSettle();
 
-      expect(find.text('BOS/MIA Class Insights'), findsOneWidget);
+      expect(find.text('MiloOS Class Insights'), findsOneWidget);
       expect(find.text('BAE Watchlist'), findsOneWidget);
       expect(find.textContaining('Avery Chen'), findsOneWidget);
       expect(find.text('View Watchlist'), findsOneWidget);

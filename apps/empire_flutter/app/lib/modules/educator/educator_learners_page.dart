@@ -97,7 +97,7 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
                     title: _tEducatorLearnersPageSpecific(
                         context, 'Learner AI Coach'),
                     subtitle: _tEducatorLearnersPageSpecific(
-                        context, 'Keep BOS/MIA loop active for each learner'),
+                        context, 'Keep MiloOS loop active for each learner'),
                     module: 'educator_learners',
                     surface: 'learners_roster',
                     actorRole: UserRole.educator,

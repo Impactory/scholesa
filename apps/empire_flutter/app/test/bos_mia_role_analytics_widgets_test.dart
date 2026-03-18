@@ -41,8 +41,8 @@ AppState _buildAppState({
 }
 
 void main() {
-  group('BOS-MIA role analytics regressions', () {
-    testWidgets('learner today renders BOS-MIA learning loop card',
+  group('MiloOS role analytics regressions', () {
+    testWidgets('learner today renders MiloOS learning loop card',
         (WidgetTester tester) async {
       final FirestoreService firestoreService = FirestoreService(
         firestore: FakeFirebaseFirestore(),
@@ -86,12 +86,12 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 200));
 
-      expect(find.text('BOS/MIA Learning Loop'), findsOneWidget);
+      expect(find.text('MiloOS Learning Loop'), findsOneWidget);
       expect(find.textContaining('Latest individual improvement signal'),
           findsOneWidget);
     });
 
-    testWidgets('educator today renders BOS-MIA learner loop card',
+    testWidgets('educator today renders MiloOS learner loop card',
         (WidgetTester tester) async {
       final FakeFirebaseFirestore fakeFirestore = FakeFirebaseFirestore();
       await fakeFirestore.collection('users').doc('educator-test-1').set(
@@ -141,7 +141,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 
-        expect(find.text('BOS/MIA Session Loop'), findsOneWidget);
+        expect(find.text('MiloOS Session Loop'), findsOneWidget);
       expect(find.textContaining('Latest individual improvement signal'),
           findsOneWidget);
     });

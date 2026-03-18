@@ -90,7 +90,7 @@ class _EducatorMissionReviewPageState extends State<EducatorMissionReviewPage> {
                     title: _tEducatorMissionReview(context, 'Review AI Coach'),
                     subtitle: _tEducatorMissionReview(
                       context,
-                      'Keep BOS/MIA loop active while reviewing learner submissions',
+                      'Keep MiloOS loop active while reviewing learner submissions',
                     ),
                     module: 'educator_mission_review',
                     surface: 'mission_review_queue',

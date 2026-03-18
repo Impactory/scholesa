@@ -113,7 +113,7 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
                     title: _tEducatorSessions(context, 'Session AI Coach'),
                     subtitle: _tEducatorSessions(
                       context,
-                      'Keep BOS/MIA loop active for each session and learner',
+                      'Keep MiloOS loop active for each session and learner',
                     ),
                     module: 'educator_sessions',
                     surface: 'sessions_schedule',

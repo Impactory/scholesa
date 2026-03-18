@@ -88,9 +88,9 @@ void main() {
     const _LocaleCase(
       locale: Locale('en'),
       signInLabel: 'Sign In',
-      learnerLoopTitle: 'BOS/MIA Learning Loop',
+      learnerLoopTitle: 'MiloOS Learning Loop',
       learnerLoopSubtitle: 'Latest individual improvement signal',
-      sessionLoopTitle: 'BOS/MIA Session Loop',
+      sessionLoopTitle: 'MiloOS Session Loop',
       sessionLoopSubtitle:
           'Latest individual improvement signal for this session',
       accessDeniedTitle: 'Access Denied',
@@ -99,9 +99,9 @@ void main() {
     const _LocaleCase(
       locale: Locale('zh', 'CN'),
       signInLabel: '登录',
-      learnerLoopTitle: 'BOS/MIA 学习循环',
+      learnerLoopTitle: 'MiloOS 学习循环',
       learnerLoopSubtitle: '最新的个人成长信号',
-      sessionLoopTitle: 'BOS/MIA 课堂循环',
+      sessionLoopTitle: 'MiloOS 课堂循环',
       sessionLoopSubtitle: '本次课堂最新的个人成长信号',
       accessDeniedTitle: '拒绝访问',
       accessDeniedBody: '你没有权限访问此页面。',
@@ -109,9 +109,9 @@ void main() {
     const _LocaleCase(
       locale: Locale('zh', 'TW'),
       signInLabel: '登入',
-      learnerLoopTitle: 'BOS/MIA 學習循環',
+      learnerLoopTitle: 'MiloOS 學習循環',
       learnerLoopSubtitle: '最新的個人成長訊號',
-      sessionLoopTitle: 'BOS/MIA 課堂循環',
+      sessionLoopTitle: 'MiloOS 課堂循環',
       sessionLoopSubtitle: '本次課堂最新的個人成長訊號',
       accessDeniedTitle: '拒絕存取',
       accessDeniedBody: '你沒有權限存取此頁面。',
@@ -120,7 +120,7 @@ void main() {
 
   group('Runtime localization', () {
     for (final _LocaleCase localeCase in cases) {
-      testWidgets('resolves auth, BOS, and role-gate copy for ${localeCase.locale}',
+      testWidgets('resolves auth, MiloOS, and role-gate copy for ${localeCase.locale}',
           (WidgetTester tester) async {
         final AppState appState = AppState()
           ..updateFromMeResponse(<String, dynamic>{

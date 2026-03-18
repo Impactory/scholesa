@@ -65,7 +65,7 @@ class _EducatorIntegrationsPageState extends State<EducatorIntegrationsPage> {
                 title: _tEducatorIntegrations(context, 'Integrations AI Coach'),
                 subtitle: _tEducatorIntegrations(
                   context,
-                  'Keep BOS/MIA loop active while syncing learner systems',
+                  'Keep MiloOS loop active while syncing learner systems',
                 ),
                 module: 'educator_integrations',
                 surface: 'integrations_management',

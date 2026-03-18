@@ -513,7 +513,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
               ),
               const SizedBox(height: 8),
               Text(
-                _t('Waiting for first data sync from BOS-MIA telemetry.'),
+                _t('Waiting for first data sync from MiloOS telemetry.'),
                 style: TextStyle(color: context.schTextSecondary),
               ),
               const SizedBox(height: 12),

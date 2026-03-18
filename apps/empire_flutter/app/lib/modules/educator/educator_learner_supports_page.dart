@@ -83,7 +83,7 @@ class _EducatorLearnerSupportsPageState
                 title: _tEducatorLearnerSupports(context, 'Support AI Coach'),
                 subtitle: _tEducatorLearnerSupports(
                   context,
-                  'Keep BOS/MIA loop active for each learner support plan',
+                  'Keep MiloOS loop active for each learner support plan',
                 ),
                 module: 'educator_learner_supports',
                 surface: 'support_plans',

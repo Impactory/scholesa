@@ -81,7 +81,7 @@ class _ParentBillingPageState extends State<ParentBillingPage>
                       title: _tParentBilling(context, 'Billing AI Coach'),
                       subtitle: _tParentBilling(
                         context,
-                        'Keep BOS/MIA loop active around family billing and learner continuity',
+                        'Keep MiloOS loop active around family billing and learner continuity',
                       ),
                       module: 'parent_billing',
                       surface: 'billing_dashboard',

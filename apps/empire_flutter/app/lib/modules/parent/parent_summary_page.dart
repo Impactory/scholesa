@@ -83,7 +83,7 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
                   child: AiContextCoachSection(
                     title: _t('Family AI Coach'),
                     subtitle: _t(
-                        'Keep BOS/MIA loop active for each child’s progress'),
+                        'Keep MiloOS loop active for each child’s progress'),
                     module: 'parent_summary',
                     surface: 'family_dashboard',
                     actorRole: UserRole.parent,

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// BOS/MIA coaching internationalization keys
+/// MiloOS coaching internationalization keys
 ///
-/// Centralized i18n keys for BOS/MIA coaching surfaces.
+/// Centralized i18n keys for MiloOS coaching surfaces.
 /// Shared by all educator and parent pages to ensure consistency.
 ///
 /// **Usage**:
@@ -13,13 +13,13 @@ import 'package:flutter/material.dart';
 /// ```
 class BosCoachingI18n {
   static const Map<String, String> _zhCnTranslations = <String, String>{
-    'learnerLoopTitle': 'BOS/MIA 学习循环',
+    'learnerLoopTitle': 'MiloOS 学习循环',
     'learnerLoopSubtitle': '最新的个人成长信号',
     'learnerLoopEmpty': '暂无学习循环数据',
-    'sessionLoopTitle': 'BOS/MIA 课堂循环',
+    'sessionLoopTitle': 'MiloOS 课堂循环',
     'sessionLoopSubtitle': '本次课堂最新的个人成长信号',
     'sessionLoopEmpty': '暂无课堂循环数据',
-    'classInsightsTitle': 'BOS/MIA 课堂洞察',
+    'classInsightsTitle': 'MiloOS 课堂洞察',
     'classInsightsSubtitle': '本课堂的 FDM 状态估计、BAE 关注名单与进行中的 MVL 闸门',
     'classInsightsEmpty': '暂无课堂洞察数据',
     'familyLearningTitle': '家庭学习循环',
@@ -55,13 +55,13 @@ class BosCoachingI18n {
   };
 
   static const Map<String, String> _zhTwTranslations = <String, String>{
-    'learnerLoopTitle': 'BOS/MIA 學習循環',
+    'learnerLoopTitle': 'MiloOS 學習循環',
     'learnerLoopSubtitle': '最新的個人成長訊號',
     'learnerLoopEmpty': '目前沒有學習循環資料',
-    'sessionLoopTitle': 'BOS/MIA 課堂循環',
+    'sessionLoopTitle': 'MiloOS 課堂循環',
     'sessionLoopSubtitle': '本次課堂最新的個人成長訊號',
     'sessionLoopEmpty': '目前沒有課堂循環資料',
-    'classInsightsTitle': 'BOS/MIA 課堂洞察',
+    'classInsightsTitle': 'MiloOS 課堂洞察',
     'classInsightsSubtitle': '本課堂的 FDM 狀態估計、BAE 關注名單與進行中的 MVL 閘門',
     'classInsightsEmpty': '目前沒有課堂洞察資料',
     'familyLearningTitle': '家庭學習循環',
@@ -97,14 +97,14 @@ class BosCoachingI18n {
   };
 
   static const Map<String, String> _enTranslations = <String, String>{
-    'learnerLoopTitle': 'BOS/MIA Learning Loop',
+    'learnerLoopTitle': 'MiloOS Learning Loop',
     'learnerLoopSubtitle': 'Latest individual improvement signal',
     'learnerLoopEmpty': 'No learner loop data yet',
-    'sessionLoopTitle': 'BOS/MIA Session Loop',
+    'sessionLoopTitle': 'MiloOS Session Loop',
     'sessionLoopSubtitle':
         'Latest individual improvement signal for this session',
     'sessionLoopEmpty': 'No session loop data yet',
-    'classInsightsTitle': 'BOS/MIA Class Insights',
+    'classInsightsTitle': 'MiloOS Class Insights',
     'classInsightsSubtitle':
         'FDM state estimate, BAE watchlist, and active MVL gates for this class',
     'classInsightsEmpty': 'No class insights yet',
@@ -142,7 +142,7 @@ class BosCoachingI18n {
     'partialSignals': 'Some signals are missing; showing only verified data',
   };
 
-  /// Get a BOS/MIA coaching key in the user's locale
+  /// Get a MiloOS coaching key in the user's locale
   /// Returns English default if locale not supported
   static String get(BuildContext context, String key) {
     final Locale locale = Localizations.localeOf(context);

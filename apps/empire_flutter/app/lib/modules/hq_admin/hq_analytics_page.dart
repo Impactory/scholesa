@@ -255,7 +255,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
     if (_bosMiaFeedbackSummary != null) {
       final _BosMiaFeedbackSummary feedback = _bosMiaFeedbackSummary!;
       buffer
-        ..writeln('BOS / MIA Feedback')
+        ..writeln('MiloOS Feedback')
         ..writeln('------------------')
         ..writeln('Submissions: ${feedback.submissionCount}')
         ..writeln('Average overall: ${feedback.avgOverall.toStringAsFixed(1)}')
@@ -527,7 +527,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
               ),
               const SizedBox(height: 8),
               Text(
-                _t('Waiting for first data sync from BOS-MIA telemetry.'),
+                _t('Waiting for first data sync from MiloOS telemetry.'),
                 style: TextStyle(color: Colors.grey[700]),
               ),
               const SizedBox(height: 12),
@@ -1018,7 +1018,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      _t('BOS/MIA synthetic training'),
+                      _t('MiloOS synthetic training'),
                       style: const TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 14,
@@ -1126,7 +1126,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(
-                _t('HQ BOS-MIA Usability'),
+                _t('HQ MiloOS Usability'),
                 style:
                     const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
@@ -1159,7 +1159,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              _t('HQ BOS-MIA Usability'),
+              _t('HQ MiloOS Usability'),
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 4),
@@ -1458,7 +1458,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
           builder: (BuildContext context,
               void Function(void Function()) setDialogState) {
             return AlertDialog(
-              title: Text(_t('BOS-MIA Feedback')),
+              title: Text(_t('MiloOS Feedback')),
               content: SizedBox(
                 width: 420,
                 child: SingleChildScrollView(
@@ -1467,7 +1467,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
                       Text(
-                        _t('Rate real-world BOS-MIA usability'),
+                        _t('Rate real-world MiloOS usability'),
                         style: TextStyle(color: Colors.grey[700]),
                       ),
                       const SizedBox(height: 16),
