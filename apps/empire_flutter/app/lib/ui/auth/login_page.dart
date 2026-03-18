@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../auth/auth_service.dart';
 import '../../auth/app_state.dart';
+import '../../auth/recent_login_store.dart';
 import '../../services/telemetry_service.dart';
 import '../localization/app_strings.dart';
 import '../localization/inline_locale_text.dart';
@@ -85,6 +86,133 @@ class _LoginPageState extends State<LoginPage>
     } else {
       context.go('/');
     }
+  }
+
+  void _prefillRememberedAccount(RecentLoginAccount account) {
+    _emailController.text = account.email;
+    _passwordController.clear();
+    setState(() {
+      _errorMessage = null;
+    });
+  }
+
+  Future<void> _continueWithRememberedAccount(
+    RecentLoginAccount account,
+  ) async {
+    _prefillRememberedAccount(account);
+    await TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'module': 'login',
+        'cta_id': 'continue_recent_account',
+        'surface': 'recent_accounts',
+        'provider': account.provider.name,
+      },
+    );
+
+    switch (account.provider) {
+      case RecentLoginProvider.google:
+        await _handleGoogleSignIn();
+        return;
+      case RecentLoginProvider.microsoft:
+        await _handleMicrosoftSignIn();
+        return;
+      case RecentLoginProvider.email:
+      case RecentLoginProvider.unknown:
+        return;
+    }
+  }
+
+  String _providerLabel(BuildContext context, RecentLoginProvider provider) {
+    switch (provider) {
+      case RecentLoginProvider.google:
+        return AppStrings.of(context, 'auth.google');
+      case RecentLoginProvider.microsoft:
+        return AppStrings.of(context, 'auth.microsoft');
+      case RecentLoginProvider.email:
+        return AppStrings.of(context, 'auth.useEmail');
+      case RecentLoginProvider.unknown:
+        return AppStrings.of(context, 'auth.savedAccount');
+    }
+  }
+
+  Widget _buildRecentAccounts(BuildContext context) {
+    return Consumer<RecentLoginStore>(
+      builder: (BuildContext context, RecentLoginStore store, _) {
+        if (store.recentAccounts.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Text(
+              AppStrings.of(context, 'auth.recentAccountsTitle'),
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: ScholesaColors.textPrimary,
+                  ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              AppStrings.of(context, 'auth.recentAccountsSubtitle'),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: ScholesaColors.textSecondary,
+                    height: 1.4,
+                  ),
+            ),
+            const SizedBox(height: 16),
+            ...store.recentAccounts.map((RecentLoginAccount account) {
+              final bool isActive = store.activeUserId == account.userId;
+              final String initial =
+                  account.displayName.trim().isEmpty ? account.email[0] : account.displayName.trim()[0];
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: isActive
+                        ? ScholesaColors.primary.withValues(alpha: 0.35)
+                        : ScholesaColors.border,
+                  ),
+                ),
+                child: ListTile(
+                  onTap: () {
+                    TelemetryService.instance.logEvent(
+                      event: 'cta.clicked',
+                      metadata: <String, dynamic>{
+                        'module': 'login',
+                        'cta_id': 'prefill_recent_account',
+                        'surface': 'recent_accounts',
+                        'provider': account.provider.name,
+                      },
+                    );
+                    _prefillRememberedAccount(account);
+                  },
+                  leading: CircleAvatar(
+                    backgroundColor:
+                        ScholesaColors.primary.withValues(alpha: 0.12),
+                    foregroundColor: ScholesaColors.primaryDark,
+                    child: Text(initial.toUpperCase()),
+                  ),
+                  title: Text(
+                    account.displayName,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: Text(account.email),
+                  trailing: TextButton(
+                    onPressed: () => _continueWithRememberedAccount(account),
+                    child: Text(_providerLabel(context, account.provider)),
+                  ),
+                ),
+              );
+            }),
+            const SizedBox(height: 8),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _handleLogin() async {
@@ -472,6 +600,8 @@ class _LoginPageState extends State<LoginPage>
                             textAlign:
                                 isWide ? TextAlign.left : TextAlign.center,
                           ),
+                          const SizedBox(height: 24),
+                          _buildRecentAccounts(context),
                           const SizedBox(height: 40),
 
                           // Error message

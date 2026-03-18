@@ -331,6 +331,9 @@ class WorkflowSurfaceI18n {
         '请稍后重试，或在网络稳定后刷新。',
     'Audit activity will appear here after user administration actions are recorded.':
         '用户管理操作记录后，审计活动会显示在这里。',
+    'No invoices found': '未找到发票',
+    'No payments found': '未找到付款记录',
+    'No subscriptions found': '未找到订阅记录',
     'Red Team Reviews': '红队审查',
     'Create Review': '创建审查',
     'No red team reviews yet': '暂无红队审查',
@@ -717,6 +720,9 @@ class WorkflowSurfaceI18n {
         '請稍後再試，或在連線穩定後重新整理。',
     'Audit activity will appear here after user administration actions are recorded.':
         '使用者管理操作記錄後，稽核活動會顯示在這裡。',
+    'No invoices found': '找不到發票',
+    'No payments found': '找不到付款紀錄',
+    'No subscriptions found': '找不到訂閱紀錄',
     'Red Team Reviews': '紅隊審查',
     'Create Review': '建立審查',
     'No red team reviews yet': '尚無紅隊審查',

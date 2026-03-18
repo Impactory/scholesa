@@ -265,6 +265,38 @@ void main() {
     expect(find.text('Subscription owner unavailable'), findsOneWidget);
   });
 
+  testWidgets('HQ billing empty tabs use section-specific empty states',
+      (WidgetTester tester) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 1800));
+    await tester.pumpWidget(
+      _buildHarness(
+        child: HqBillingPage(
+          billingLoader: () async => <String, dynamic>{
+            'siteOptions': <Map<String, dynamic>>[
+              <String, dynamic>{'id': 'all', 'label': 'All Sites'},
+            ],
+            'invoices': <Map<String, dynamic>>[],
+            'payments': <Map<String, dynamic>>[],
+            'subscriptions': <Map<String, dynamic>>[],
+          },
+        ),
+        appState: _buildAppState(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('No invoices found'), findsOneWidget);
+    expect(find.text('No records found'), findsNothing);
+
+    await tester.tap(find.text('Payments'));
+    await tester.pumpAndSettle();
+    expect(find.text('No payments found'), findsOneWidget);
+
+    await tester.tap(find.text('Subscriptions'));
+    await tester.pumpAndSettle();
+    expect(find.text('No subscriptions found'), findsOneWidget);
+  });
+
   testWidgets('HQ audit export action is notice-only until export exists',
       (WidgetTester tester) async {
     await tester.binding.setSurfaceSize(const Size(1200, 1800));

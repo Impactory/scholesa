@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import '../auth/app_state.dart';
+import '../auth/recent_login_store.dart';
 import 'firestore_service.dart';
 
 /// Bootstraps the app session after Firebase init using Firestore directly
@@ -11,12 +12,15 @@ class SessionBootstrap {
     required FirebaseAuth auth,
     required FirestoreService firestoreService,
     required AppState appState,
+      required RecentLoginStore recentLoginStore,
   })  : _auth = auth,
         _firestoreService = firestoreService,
-        _appState = appState;
+      _appState = appState,
+      _recentLoginStore = recentLoginStore;
   final FirebaseAuth _auth;
   final FirestoreService _firestoreService;
   final AppState _appState;
+    final RecentLoginStore _recentLoginStore;
   static const Duration _profileBootstrapTimeout = Duration(seconds: 8);
 
   /// Initialize session - call after Firebase.initializeApp()
@@ -40,6 +44,10 @@ class SessionBootstrap {
         throw StateError('User profile does not exist');
       }
       _appState.updateFromMeResponse(profile);
+      await _recentLoginStore.rememberSession(
+        profile: profile,
+        firebaseUser: user,
+      );
     } on TimeoutException {
       debugPrint('Session bootstrap timed out while loading profile');
       await _failBootstrap();
@@ -57,6 +65,11 @@ class SessionBootstrap {
     } catch (_) {
       // Best effort sign-out only.
     }
+    try {
+      await _recentLoginStore.clearActiveSession();
+    } catch (_) {
+      // Best effort recent-account cleanup only.
+    }
     _appState.clear();
     _appState.setError('Failed to load user profile');
   }
@@ -65,6 +78,7 @@ class SessionBootstrap {
   void listenToAuthChanges() {
     _auth.authStateChanges().listen((User? user) async {
       if (user == null) {
+        await _recentLoginStore.clearActiveSession();
         _appState.clear();
       } else {
         await initialize();

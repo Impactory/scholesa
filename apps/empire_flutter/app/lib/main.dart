@@ -13,6 +13,7 @@ import 'package:provider/provider.dart';
 import 'app_config.dart';
 import 'auth/app_state.dart';
 import 'auth/auth_service.dart';
+import 'auth/recent_login_store.dart';
 import 'ui/theme/scholesa_theme.dart';
 import 'ui/splash/splash_screen.dart';
 import 'services/firestore_service.dart';
@@ -106,6 +107,7 @@ class _ScholesaAppState extends State<ScholesaApp> {
   late final OfflineQueue _offlineQueue;
   late final SyncCoordinator _syncCoordinator;
   late final AuthService _authService;
+  late final RecentLoginStore _recentLoginStore;
   late final SessionBootstrap _sessionBootstrap;
   late final ThemeService _themeService;
   final GlobalKey<NavigatorState> _rootNavigatorKey =
@@ -133,6 +135,7 @@ class _ScholesaAppState extends State<ScholesaApp> {
       );
 
       _appState = AppState();
+      _recentLoginStore = RecentLoginStore();
       _firestoreService = FirestoreService();
       _storageService = StorageService.instance;
       _offlineQueue = OfflineQueue();
@@ -151,16 +154,23 @@ class _ScholesaAppState extends State<ScholesaApp> {
         future: _syncCoordinator.init(),
       );
 
+      await _runInitStep(
+        label: 'recent_login_store.initialize',
+        future: _recentLoginStore.initialize(),
+      );
+
       _authService = AuthService(
         auth: FirebaseAuth.instance,
         firestoreService: _firestoreService,
         appState: _appState,
+        recentLoginStore: _recentLoginStore,
       );
 
       _sessionBootstrap = SessionBootstrap(
         auth: FirebaseAuth.instance,
         firestoreService: _firestoreService,
         appState: _appState,
+        recentLoginStore: _recentLoginStore,
       );
 
       FederatedLearningRuntimeAdapter.instance.configure(
@@ -268,6 +278,7 @@ class _ScholesaAppState extends State<ScholesaApp> {
         Provider.value(value: _firestoreService),
         Provider.value(value: _storageService),
         Provider.value(value: _authService),
+        ChangeNotifierProvider.value(value: _recentLoginStore),
         ChangeNotifierProvider.value(value: _themeService),
         // HQ Admin services
         ChangeNotifierProvider(

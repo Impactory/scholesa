@@ -5,6 +5,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/auth/auth_service.dart';
+import 'package:scholesa_app/auth/recent_login_store.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
 import 'package:scholesa_app/services/logout_audit_service.dart';
 import 'package:scholesa_app/services/telemetry_service.dart';
@@ -26,6 +27,30 @@ class MockGoogleSignInAuthentication extends Mock
   implements GoogleSignInAuthentication {}
 
 class MockLogoutAuditService extends Mock implements LogoutAuditService {}
+
+class FakeRecentLoginStore extends Fake implements RecentLoginStore {
+  RecentLoginAccount? rememberedAccount;
+  bool clearedActiveSession = false;
+
+  @override
+  Future<void> rememberSession({
+    required Map<String, dynamic> profile,
+    required User firebaseUser,
+  }) async {
+    rememberedAccount = RecentLoginAccount(
+      userId: profile['userId'] as String,
+      email: profile['email'] as String,
+      displayName: profile['displayName'] as String,
+      provider: RecentLoginProvider.email,
+      lastUsedAt: DateTime(2026, 3, 17),
+    );
+  }
+
+  @override
+  Future<void> clearActiveSession() async {
+    clearedActiveSession = true;
+  }
+}
 
 class FakeAuthCredential extends Fake implements AuthCredential {}
 
@@ -49,6 +74,7 @@ void main() {
   late MockGoogleSignInAccount mockGoogleAccount;
   late MockGoogleSignInAuthentication mockGoogleAuth;
   late MockLogoutAuditService mockLogoutAuditService;
+  late FakeRecentLoginStore recentLoginStore;
 
   setUp(() {
     mockAuth = MockFirebaseAuth();
@@ -60,6 +86,7 @@ void main() {
     mockGoogleAccount = MockGoogleSignInAccount();
     mockGoogleAuth = MockGoogleSignInAuthentication();
     mockLogoutAuditService = MockLogoutAuditService();
+    recentLoginStore = FakeRecentLoginStore();
 
     when(() => mockLogoutAuditService.recordLogout(
           source: any(named: 'source'),
@@ -75,6 +102,7 @@ void main() {
       googleSignIn: mockGoogleSignIn,
       googleSignInPlatformOverride: TargetPlatform.iOS,
       logoutAuditService: mockLogoutAuditService,
+      recentLoginStore: recentLoginStore,
     );
 
     // Common stubs
@@ -115,6 +143,7 @@ void main() {
         expect(appState.isAuthenticated, isTrue);
         expect(appState.role, UserRole.educator);
         expect(appState.userId, 'uid-123');
+          expect(recentLoginStore.rememberedAccount?.email, 'test@example.com');
         verify(() => mockAuth.signInWithEmailAndPassword(
               email: 'test@example.com',
               password: 'password123',
@@ -209,6 +238,7 @@ void main() {
           googleClientId: 'apple-client-id.apps.googleusercontent.com',
           googleServerClientId:
               'server-client-id.apps.googleusercontent.com',
+          recentLoginStore: recentLoginStore,
         );
 
         when(() => mockGoogleSignIn.initialize(
@@ -304,6 +334,7 @@ void main() {
 
         expect(appState.isAuthenticated, isFalse);
         expect(appState.userId, isNull);
+        expect(recentLoginStore.clearedActiveSession, isTrue);
       });
 
       test('records a durable logout audit before signing out', () async {
@@ -331,6 +362,7 @@ void main() {
               impersonatingRole: null,
             )).called(1);
         verify(() => mockAuth.signOut()).called(1);
+        expect(recentLoginStore.clearedActiveSession, isTrue);
       });
     });
 

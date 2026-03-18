@@ -1,11 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../services/firestore_service.dart';
 import '../services/logout_audit_service.dart';
 import '../services/telemetry_service.dart';
 import 'app_state.dart';
+import 'recent_login_store.dart';
 
 const String _defaultGoogleServerClientId = String.fromEnvironment(
   'GOOGLE_SIGN_IN_SERVER_CLIENT_ID',
@@ -25,6 +25,7 @@ class AuthService {
     String? googleServerClientId,
     TargetPlatform? googleSignInPlatformOverride,
     LogoutAuditService? logoutAuditService,
+    RecentLoginStore? recentLoginStore,
   })  : _auth = auth,
         _firestoreService = firestoreService,
         _appState = appState,
@@ -32,7 +33,8 @@ class AuthService {
         _googleClientId = googleClientId,
         _googleServerClientId = googleServerClientId,
       _googleSignInPlatformOverride = googleSignInPlatformOverride,
-      _logoutAuditService = logoutAuditService ?? LogoutAuditService.instance;
+      _logoutAuditService = logoutAuditService ?? LogoutAuditService.instance,
+      _recentLoginStore = recentLoginStore ?? RecentLoginStore();
   final FirebaseAuth _auth;
   final FirestoreService _firestoreService;
   final AppState _appState;
@@ -41,6 +43,7 @@ class AuthService {
   final String? _googleServerClientId;
   final TargetPlatform? _googleSignInPlatformOverride;
   final LogoutAuditService _logoutAuditService;
+  final RecentLoginStore _recentLoginStore;
   Future<void>? _googleInitialization;
 
   Future<void> _ensureGoogleInitialized() {
@@ -156,12 +159,10 @@ class AuthService {
       // Best-effort durable audit logging
     }
     await _auth.signOut();
-    // Clear SharedPreferences (all keys)
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.clear();
+      await _recentLoginStore.clearActiveSession();
     } catch (_) {
-      // Ignore errors clearing prefs
+      // Ignore recent-account persistence errors
     }
     _appState.clear();
   }
@@ -272,12 +273,16 @@ class AuthService {
         throw StateError('Not authenticated');
       }
 
-        final Map<String, dynamic>? profile =
+      final Map<String, dynamic>? profile =
           await _firestoreService.getUserProfile();
       if (profile == null) {
         throw StateError('User profile does not exist');
       }
       _appState.updateFromMeResponse(profile);
+      await _recentLoginStore.rememberSession(
+        profile: profile,
+        firebaseUser: user,
+      );
     } catch (e) {
       debugPrint('Error in _bootstrapSession: $e');
       debugPrintStack(label: '_bootstrapSession error stack');
@@ -288,6 +293,11 @@ class AuthService {
         } catch (_) {
           // Best effort sign-out only.
         }
+      }
+      try {
+        await _recentLoginStore.clearActiveSession();
+      } catch (_) {
+        // Best effort recent-account cleanup only.
       }
       _appState.clear();
       _appState.setError('Failed to load user profile');

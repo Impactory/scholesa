@@ -418,7 +418,7 @@ class _HqBillingPageState extends State<HqBillingPage>
     if (_invoices.isEmpty) {
       return Center(
         child: Text(
-          _tHqBilling(context, 'No records found'),
+          _tHqBilling(context, 'No invoices found'),
           style: const TextStyle(color: ScholesaColors.textSecondary),
         ),
       );
@@ -445,7 +445,7 @@ class _HqBillingPageState extends State<HqBillingPage>
     if (_payments.isEmpty) {
       return Center(
         child: Text(
-          _tHqBilling(context, 'No records found'),
+          _tHqBilling(context, 'No payments found'),
           style: const TextStyle(color: ScholesaColors.textSecondary),
         ),
       );
@@ -472,7 +472,7 @@ class _HqBillingPageState extends State<HqBillingPage>
     if (_subscriptions.isEmpty) {
       return Center(
         child: Text(
-          _tHqBilling(context, 'No records found'),
+          _tHqBilling(context, 'No subscriptions found'),
           style: const TextStyle(color: ScholesaColors.textSecondary),
         ),
       );
