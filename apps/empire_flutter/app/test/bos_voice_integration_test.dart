@@ -1,3 +1,4 @@
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -14,6 +15,7 @@ void main() {
         siteId: 'site_test',
         learnerId: 'learner_test',
         gradeBand: GradeBand.g4_6,
+        firestore: FakeFirebaseFirestore(),
       );
 
       addTearDown(runtime.dispose);
@@ -25,6 +27,7 @@ void main() {
               runtime: runtime,
               actorRole: UserRole.learner,
               conceptTags: const <String>['integration-test'],
+              skipVoiceInitializationForTesting: true,
             ),
           ),
         ),

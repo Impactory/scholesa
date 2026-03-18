@@ -492,7 +492,12 @@ void main() {
         find.byType(TextField),
         'Learner allergy reminder shared with Coach Ada',
       );
-      await tester.tap(find.widgetWithText(FilledButton, 'Save Safety Note'));
+      await tester.scrollUntilVisible(
+        find.text('Save Safety Note'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.text('Save Safety Note'));
       await tester.pumpAndSettle();
 
       final DocumentSnapshot<Map<String, dynamic>> checklistDoc =

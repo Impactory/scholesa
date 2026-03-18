@@ -1500,17 +1500,17 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
                 ? reopenedStatus
                 : requestedStatus;
     final String requestedOwnerUserId =
-      (data['ownerUserId'] as String? ?? '').trim();
+        (data['ownerUserId'] as String? ?? '').trim();
     final String existingOwnerUserId =
-      (existingEscalation['ownerUserId'] as String? ?? '').trim();
+        (existingEscalation['ownerUserId'] as String? ?? '').trim();
     final String effectiveOwnerUserId = status == 'resolved'
-      ? ''
-      : (requestedOwnerUserId.isNotEmpty
-        ? requestedOwnerUserId
-        : existingOwnerUserId);
+        ? ''
+        : (requestedOwnerUserId.isNotEmpty
+            ? requestedOwnerUserId
+            : existingOwnerUserId);
     if (status != 'resolved' && effectiveOwnerUserId.isEmpty) {
       throw StateError(
-      'Open or investigating rollout escalation requires ownerUserId.',
+        'Open or investigating rollout escalation requires ownerUserId.',
       );
     }
     final DateTime openedAt = DateTime(2026, 3, 15, 6, 0);
@@ -1661,9 +1661,8 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
       'deliveryRecordId': deliveryRecordId,
       ...lineage,
       'mode': mode,
-      'ownerUserId': terminalLifecycleStatus.isNotEmpty
-          ? null
-          : effectiveOwnerUserId,
+      'ownerUserId':
+          terminalLifecycleStatus.isNotEmpty ? null : effectiveOwnerUserId,
       'reason':
           mode == 'monitor' ? null : (data['reason'] as String? ?? '').trim(),
       'releasedBy': mode == 'monitor' ? 'hq-1' : null,
@@ -2498,6 +2497,32 @@ Widget _wrapWithMaterial(Widget child) {
     ],
     home: child,
   );
+}
+
+Future<void> _scrollMainViewUntilVisible(
+  WidgetTester tester,
+  Finder finder,
+) async {
+  await tester.scrollUntilVisible(
+    finder,
+    300,
+    scrollable: find.byType(Scrollable).first,
+  );
+  await tester.pumpAndSettle();
+}
+
+Future<void> _tapMainViewText(
+  WidgetTester tester,
+  String text, {
+  bool last = false,
+}) async {
+  final Finder finder = find.text(text);
+  await _scrollMainViewUntilVisible(
+    tester,
+    last ? finder.last : finder.first,
+  );
+  await tester.tap(last ? finder.last : finder.first);
+  await tester.pumpAndSettle();
 }
 
 void main() {
@@ -3548,16 +3573,7 @@ void main() {
         bridge.recordedUpdates.single['schemaVersion'], 'fl-prototype-bos-v1');
     expect(
       bridge.recordedUpdates.single['vectorSketch'],
-      <double>[
-        0.7375,
-        0.435,
-        0.695,
-        0.13,
-        0.065,
-        0.565,
-        0.37,
-        0.16375
-      ],
+      <double>[0.7375, 0.435, 0.695, 0.13, 0.065, 0.565, 0.37, 0.16375],
     );
     expect(
       bridge.recordedUpdates.single['optimizerStrategy'],
@@ -3990,16 +4006,7 @@ void main() {
             'Runtime activation: resolved · 1 site reports · flutter_mobile'),
         findsOneWidget);
 
-    final Finder activationHistoryButton = find.widgetWithText(
-      TextButton,
-      'Activation history',
-    );
-    await tester.ensureVisible(activationHistoryButton.first);
-    final TextButton activationHistoryControl = tester.widget<TextButton>(
-      activationHistoryButton.first,
-    );
-    activationHistoryControl.onPressed?.call();
-    await tester.pumpAndSettle();
+    await _tapMainViewText(tester, 'Activation history');
 
     expect(
       find.text('Runtime activation history: Literacy Pilot'),
@@ -5433,13 +5440,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final Finder deliveryHistoryButton = find.widgetWithText(
-      TextButton,
-      'Delivery history',
-    );
-    await tester.ensureVisible(deliveryHistoryButton.first);
-    tester.widget<TextButton>(deliveryHistoryButton.first).onPressed?.call();
-    await tester.pumpAndSettle();
+    await _tapMainViewText(tester, 'Delivery history');
 
     expect(
       find.text('Runtime delivery history: Literacy Pilot'),
@@ -5490,13 +5491,7 @@ void main() {
       findsOneWidget,
     );
 
-    final Finder deliveryHistoryButton = find.widgetWithText(
-      TextButton,
-      'Delivery history',
-    );
-    await tester.ensureVisible(deliveryHistoryButton.first);
-    tester.widget<TextButton>(deliveryHistoryButton.first).onPressed?.call();
-    await tester.pumpAndSettle();
+    await _tapMainViewText(tester, 'Delivery history');
 
     expect(
       find.textContaining('Lifecycle: expired 2024-03-14T20:15:00.000'),
@@ -5542,13 +5537,7 @@ void main() {
       findsWidgets,
     );
 
-    final Finder deliveryHistoryButton = find.widgetWithText(
-      TextButton,
-      'Delivery history',
-    );
-    await tester.ensureVisible(deliveryHistoryButton.first);
-    tester.widget<TextButton>(deliveryHistoryButton.first).onPressed?.call();
-    await tester.pumpAndSettle();
+    await _tapMainViewText(tester, 'Delivery history');
 
     expect(
       find.textContaining('Lifecycle: revoked 2026-03-14T20:45:00.000'),
@@ -5610,16 +5599,7 @@ void main() {
       findsOneWidget,
     );
 
-    final Finder siteRolloutButton = find.widgetWithText(
-      TextButton,
-      'Site rollout',
-    );
-    await tester.ensureVisible(siteRolloutButton.first);
-    final TextButton siteRolloutControl = tester.widget<TextButton>(
-      siteRolloutButton.first,
-    );
-    siteRolloutControl.onPressed?.call();
-    await tester.pumpAndSettle();
+    await _tapMainViewText(tester, 'Site rollout');
 
     expect(
       find.text('Summary: 1 resolved · 0 staged · 1 fallback · 0 pending'),
@@ -5690,9 +5670,9 @@ void main() {
       find.text('Site rollout: 0 resolved · 0 staged · 2 fallback · 0 pending'),
       findsOneWidget,
     );
-    expect(find.widgetWithText(TextButton, 'Acknowledge alert'), findsNothing);
-    expect(find.widgetWithText(TextButton, 'Update triage'), findsNothing);
-    expect(find.widgetWithText(TextButton, 'Escalate alert'), findsNothing);
+    expect(find.text('Acknowledge alert'), findsNothing);
+    expect(find.text('Update triage'), findsNothing);
+    expect(find.text('Escalate alert'), findsNothing);
     expect(
       find.textContaining(
           'Superseded by fl_delivery_2 for overlapping site cohort.'),
@@ -5804,7 +5784,7 @@ void main() {
       find.textContaining('Triage age: refresh due since'),
       findsWidgets,
     );
-    expect(find.widgetWithText(TextButton, 'Refresh triage'), findsOneWidget);
+    expect(find.text('Refresh triage'), findsOneWidget);
   });
 
   testWidgets('HQ page shows runtime rollout alert history',
@@ -5971,16 +5951,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final Finder alertHistoryButton = find.widgetWithText(
-      TextButton,
-      'Alert history',
-    );
-    await tester.ensureVisible(alertHistoryButton.first);
-    final TextButton alertHistoryControl = tester.widget<TextButton>(
-      alertHistoryButton.first,
-    );
-    alertHistoryControl.onPressed?.call();
-    await tester.pumpAndSettle();
+    await _tapMainViewText(tester, 'Alert history');
 
     expect(
       find.text('Runtime rollout alert history: Literacy Pilot'),
@@ -6048,7 +6019,7 @@ void main() {
       find.textContaining('overdue 2020-03-15T08:00:00.000'),
       findsWidgets,
     );
-    expect(find.widgetWithText(TextButton, 'View audit feed'), findsWidgets);
+    expect(find.text('View audit feed'), findsWidgets);
 
     await tester.enterText(
       find.widgetWithText(
@@ -6151,8 +6122,7 @@ void main() {
       ),
       findsWidgets,
     );
-    expect(
-        find.widgetWithText(TextButton, 'Acknowledge alert'), findsOneWidget);
+    expect(find.text('Acknowledge alert'), findsOneWidget);
     expect(
       find.text('HQ notes: Previously reviewed pending site.'),
       findsNothing,
@@ -6195,16 +6165,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final Finder acknowledgeAlertButton = find.widgetWithText(
-      TextButton,
-      'Acknowledge alert',
-    );
-    await tester.ensureVisible(acknowledgeAlertButton.first);
-    final TextButton acknowledgeAlertControl = tester.widget<TextButton>(
-      acknowledgeAlertButton.first,
-    );
-    acknowledgeAlertControl.onPressed?.call();
-    await tester.pumpAndSettle();
+    await _tapMainViewText(tester, 'Acknowledge alert');
 
     await tester.enterText(
       find.widgetWithText(TextFormField, 'HQ notes'),
@@ -6236,7 +6197,7 @@ void main() {
       find.textContaining('Triage age:'),
       findsWidgets,
     );
-    expect(find.widgetWithText(TextButton, 'Acknowledge alert'), findsNothing);
+    expect(find.text('Acknowledge alert'), findsNothing);
   });
 
   testWidgets('HQ page shows runtime rollout audit feed',
@@ -6305,19 +6266,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final Finder alertHistoryButton = find.widgetWithText(
-      TextButton,
-      'Alert history',
-    );
-    await tester.ensureVisible(alertHistoryButton.first);
-    tester.widget<TextButton>(alertHistoryButton.first).onPressed?.call();
-    await tester.pumpAndSettle();
-
-    final Finder auditFeedButton = find.widgetWithText(
-      TextButton,
-      'View rollout audit',
-    );
-    tester.widget<TextButton>(auditFeedButton.first).onPressed?.call();
+    await _tapMainViewText(tester, 'Alert history');
+    await tester.tap(find.text('View rollout audit').first);
     await tester.pumpAndSettle();
 
     expect(
@@ -6442,19 +6392,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final Finder alertHistoryButton = find.widgetWithText(
-      TextButton,
-      'Alert history',
-    );
-    await tester.ensureVisible(alertHistoryButton.first);
-    tester.widget<TextButton>(alertHistoryButton.first).onPressed?.call();
-    await tester.pumpAndSettle();
-
-    final Finder auditFeedButton = find.widgetWithText(
-      TextButton,
-      'View rollout audit',
-    );
-    tester.widget<TextButton>(auditFeedButton.first).onPressed?.call();
+    await _tapMainViewText(tester, 'Alert history');
+    await tester.tap(find.text('View rollout audit').first);
     await tester.pumpAndSettle();
 
     expect(find.text('Showing 2 of 2 audit events'), findsOneWidget);
@@ -6660,10 +6599,10 @@ void main() {
     expect(find.text('2 active operator items'), findsOneWidget);
     expect(find.text('Literacy Pilot · Rollout control'), findsOneWidget);
     expect(find.text('Numeracy Pilot · Alert refresh'), findsOneWidget);
-    expect(find.widgetWithText(TextButton, 'Open alert history'), findsNWidgets(2));
-    expect(find.widgetWithText(TextButton, 'Open rollout audit'), findsNWidgets(2));
+    expect(find.text('Open alert history'), findsNWidgets(2));
+    expect(find.text('Open rollout audit'), findsNWidgets(2));
 
-    await tester.tap(find.widgetWithText(TextButton, 'Open alert history').first);
+    await tester.tap(find.text('Open alert history').first);
     await tester.pumpAndSettle();
     expect(
       find.text('Runtime rollout alert history: Literacy Pilot'),
@@ -6707,13 +6646,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final Finder escalationButton = find.widgetWithText(
-      TextButton,
-      'Escalate alert',
-    );
-    await tester.ensureVisible(escalationButton.first);
-    tester.widget<TextButton>(escalationButton.first).onPressed?.call();
-    await tester.pumpAndSettle();
+    await _tapMainViewText(tester, 'Escalate alert');
 
     final Finder escalationStatusDropdown = find.widgetWithText(
       DropdownButtonFormField<String>,
@@ -6794,13 +6727,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final Finder escalationButton = find.widgetWithText(
-      TextButton,
-      'Escalate alert',
-    );
-    await tester.ensureVisible(escalationButton.first);
-    tester.widget<TextButton>(escalationButton.first).onPressed?.call();
-    await tester.pumpAndSettle();
+    await _tapMainViewText(tester, 'Escalate alert');
 
     final Finder escalationStatusDropdown = find.widgetWithText(
       DropdownButtonFormField<String>,
@@ -6869,8 +6796,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.widgetWithText(TextButton, 'Escalate alert'), findsOneWidget);
-    expect(find.widgetWithText(TextButton, 'Update escalation'), findsNothing);
+    expect(find.text('Escalate alert'), findsOneWidget);
+    expect(find.text('Update escalation'), findsNothing);
   });
 
   testWidgets('HQ page saves rollout control state',
@@ -6909,13 +6836,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final Finder controlButton = find.widgetWithText(
-      TextButton,
-      'Rollout control',
-    );
-    await tester.ensureVisible(controlButton.first);
-    tester.widget<TextButton>(controlButton.first).onPressed?.call();
-    await tester.pumpAndSettle();
+    await _tapMainViewText(tester, 'Rollout control');
 
     final Finder controlModeDropdown = find.widgetWithText(
       DropdownButtonFormField<String>,
@@ -6988,13 +6909,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final Finder controlButton = find.widgetWithText(
-      TextButton,
-      'Rollout control',
-    );
-    await tester.ensureVisible(controlButton.first);
-    tester.widget<TextButton>(controlButton.first).onPressed?.call();
-    await tester.pumpAndSettle();
+    await _tapMainViewText(tester, 'Rollout control');
 
     final Finder controlModeDropdown = find.widgetWithText(
       DropdownButtonFormField<String>,
@@ -7575,7 +7490,8 @@ void main() {
     );
   });
 
-  testWidgets('HQ feature flags show unavailable instead of unknown for null package timing and metrics',
+  testWidgets(
+      'HQ feature flags show unavailable instead of unknown for null package timing and metrics',
       (WidgetTester tester) async {
     final _FakeWorkflowBridgeService bridge = _FakeWorkflowBridgeService(
       experiments: <Map<String, dynamic>>[

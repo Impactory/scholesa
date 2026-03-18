@@ -146,18 +146,28 @@ void main() {
     await tester.enterText(
         textFields.at(4), 'Attached a note about the final timing tweak.');
 
-    await tester
-        .ensureVisible(find.widgetWithText(OutlinedButton, 'Save Checkpoint'));
-    await tester.tap(find.widgetWithText(OutlinedButton, 'Save Checkpoint'));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.widgetWithText(ElevatedButton, 'Save Proof Bundle'));
-    await tester.pumpAndSettle();
-
-    await tester.ensureVisible(
-      find.widgetWithText(ElevatedButton, 'Submit for Review'),
+    await tester.scrollUntilVisible(
+      find.text('Save Checkpoint'),
+      250,
+      scrollable: find.byType(Scrollable).last,
     );
-    await tester.tap(find.widgetWithText(ElevatedButton, 'Submit for Review'));
+    await tester.tap(find.text('Save Checkpoint'));
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Save Proof Bundle'),
+      250,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.text('Save Proof Bundle'));
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Submit for Review'),
+      250,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.text('Submit for Review'));
     await tester.pumpAndSettle();
 
     final DocumentSnapshot<Map<String, dynamic>> proofBundleDoc =
@@ -235,10 +245,12 @@ void main() {
         textFields.at(1), 'Talked through the concept aloud.');
     await tester.enterText(textFields.at(2), 'Rebuild using a second example.');
 
-    await tester.ensureVisible(
-      find.widgetWithText(ElevatedButton, 'Save Proof Bundle'),
+    await tester.scrollUntilVisible(
+      find.text('Save Proof Bundle'),
+      250,
+      scrollable: find.byType(Scrollable).last,
     );
-    await tester.tap(find.widgetWithText(ElevatedButton, 'Save Proof Bundle'));
+    await tester.tap(find.text('Save Proof Bundle'));
     await tester.pumpAndSettle();
 
     expect(find.text('Proof bundle queued to sync'), findsOneWidget);

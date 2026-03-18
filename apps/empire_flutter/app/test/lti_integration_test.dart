@@ -104,9 +104,23 @@ void main() {
       await tester.pump();
       await tester.pumpAndSettle();
 
+      await tester.scrollUntilVisible(
+        find.text('LTI 1.3 / Grade Passback'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
       expect(find.text('LTI 1.3 / Grade Passback'), findsOneWidget);
 
-      await tester.tap(find.byIcon(Icons.more_vert_rounded).first);
+      final Finder ltiCard = find.ancestor(
+        of: find.text('LTI 1.3 / Grade Passback'),
+        matching: find.byType(Card),
+      );
+      await tester.tap(
+        find.descendant(
+          of: ltiCard,
+          matching: find.byIcon(Icons.more_vert_rounded),
+        ),
+      );
       await tester.pumpAndSettle();
       await tester.tap(find.text('Sync Now'));
       await tester.pumpAndSettle();

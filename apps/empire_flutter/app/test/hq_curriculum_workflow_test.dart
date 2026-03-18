@@ -203,7 +203,7 @@ void main() {
 
       await _tapVisible(
         tester,
-        find.widgetWithText(ElevatedButton, 'Mark Parent Summary Ready'),
+        find.text('Mark Parent Summary Ready').first,
       );
 
       final QuerySnapshot<Map<String, dynamic>> missions =
