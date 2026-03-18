@@ -12,6 +12,8 @@ import 'package:scholesa_app/auth/recent_login_store.dart';
 import 'package:scholesa_app/dashboards/role_dashboard.dart';
 import 'package:scholesa_app/modules/messages/message_service.dart';
 import 'package:scholesa_app/runtime/ai_coach_widget.dart';
+import 'package:scholesa_app/runtime/bos_class_insights_card.dart';
+import 'package:scholesa_app/runtime/bos_learner_loop_insights_card.dart';
 import 'package:scholesa_app/runtime/bos_models.dart';
 import 'package:scholesa_app/runtime/learning_runtime_provider.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
@@ -235,6 +237,34 @@ void main() {
       );
     });
 
+    testWidgets('MiloOS learner loop - honest empty state',
+        (WidgetTester tester) async {
+      await _pumpSized(
+        tester,
+        size: const Size(390, 844),
+        child: _buildLearnerLoopHarness(),
+      );
+
+      await expectLater(
+        find.byType(BosLearnerLoopInsightsCard),
+        matchesGoldenFile('goldens/miloos_learner_loop_empty_mobile.png'),
+      );
+    });
+
+    testWidgets('MiloOS class insights - partial verified data',
+        (WidgetTester tester) async {
+      await _pumpSized(
+        tester,
+        size: const Size(1280, 800),
+        child: _buildClassInsightsHarness(),
+      );
+
+      await expectLater(
+        find.byType(BosClassInsightsCard),
+        matchesGoldenFile('goldens/miloos_class_insights_partial_desktop.png'),
+      );
+    });
+
     testWidgets('Role dashboard - learner', (WidgetTester tester) async {
       final AppState appState = _buildStateForRole(UserRole.learner);
 
@@ -352,6 +382,90 @@ Widget _buildAiCoachHarness({
       conceptTags: const <String>['golden-test', 'miloos'],
     ),
   );
+}
+
+Widget _buildLearnerLoopHarness() {
+  return ChangeNotifierProvider<AppState>(
+    create: (_) => AppState(),
+    child: const Scaffold(
+      body: SingleChildScrollView(
+        child: BosLearnerLoopInsightsCard(
+          title: 'MiloOS Learning Loop',
+          subtitle: 'Latest individual improvement signal',
+          emptyLabel: 'No learner loop data yet',
+          learnerId: null,
+          learnerName: 'Learner Golden',
+        ),
+      ),
+    ),
+  );
+}
+
+Widget _buildClassInsightsHarness() {
+  return Scaffold(
+    body: SingleChildScrollView(
+      child: BosClassInsightsCard(
+        title: 'MiloOS Class Insights',
+        subtitle:
+            'FDM state estimate, BAE watchlist, and active MVL gates for this class',
+        emptyLabel: 'No class insights yet',
+        sessionOccurrenceId: 'occ-golden',
+        siteId: 'site-1',
+        learnerNamesById: const <String, String>{
+          'learner-1': 'Avery Chen',
+          'learner-2': 'Nia Patel',
+          'learner-3': 'Kai Gomez',
+        },
+        insightsLoader: _loadGoldenClassInsights,
+      ),
+    ),
+  );
+}
+
+Future<Map<String, dynamic>> _loadGoldenClassInsights({
+  required String sessionOccurrenceId,
+  required String siteId,
+}) async {
+  return <String, dynamic>{
+    'learnerCount': 3,
+    'activeMvlCount': 1,
+    'averages': <String, double>{
+      'cognition': 0.44,
+      'engagement': 0.61,
+      'integrity': 0.72,
+    },
+    'coverage': <String, int>{
+      'cognition': 2,
+      'engagement': 3,
+      'integrity': 2,
+    },
+    'watchlist': <Map<String, dynamic>>[
+      <String, dynamic>{
+        'learnerId': 'learner-1',
+        'x_hat': <String, double>{
+          'cognition': 0.32,
+          'engagement': 0.41,
+          'integrity': 0.62,
+        },
+      },
+      <String, dynamic>{
+        'learnerId': 'learner-2',
+        'x_hat': <String, double>{
+          'cognition': 0.58,
+          'engagement': 0.39,
+          'integrity': 0.71,
+        },
+      },
+      <String, dynamic>{
+        'learnerId': 'learner-3',
+        'x_hat': <String, double>{
+          'cognition': 0.74,
+          'engagement': 0.77,
+          'integrity': 0.84,
+        },
+      },
+    ],
+  };
 }
 
 MessageService _buildMessageService(String userId) {
