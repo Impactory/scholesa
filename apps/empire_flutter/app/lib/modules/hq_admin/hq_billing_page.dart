@@ -570,7 +570,7 @@ class _HqBillingPageState extends State<HqBillingPage>
 
     for (final Map<String, dynamic> payment in _payments) {
       buffer.writeln(
-        '${payment['id']} | source=${payment['source']} | site=${payment['site']} | amount=${payment['amount']} | status=${payment['status']} | date=${payment['date']}',
+        '${payment['id']} | from=${payment['from']} | method=${payment['method']} | amount=${payment['amount']} | invoice=${payment['invoice']} | date=${payment['date']}',
       );
     }
 
@@ -581,7 +581,7 @@ class _HqBillingPageState extends State<HqBillingPage>
 
     for (final Map<String, dynamic> subscription in _subscriptions) {
       buffer.writeln(
-        '${subscription['id']} | owner=${subscription['owner']} | site=${subscription['site']} | plan=${subscription['plan']} | amount=${subscription['amount']} | status=${subscription['status']}',
+        '${subscription['id']} | owner=${subscription['parent']} | learners=${subscription['learners']} | plan=${subscription['plan']} | amount=${subscription['amount']} | status=${subscription['status']} | nextBilling=${subscription['nextBilling']}',
       );
     }
 
@@ -650,6 +650,8 @@ class _HqBillingPageState extends State<HqBillingPage>
               'id': id,
               'from': ((row['from'] as String?)?.trim().isNotEmpty == true)
                   ? (row['from'] as String).trim()
+                : ((row['source'] as String?)?.trim().isNotEmpty == true)
+                  ? (row['source'] as String).trim()
                   : _tHqBilling(context, 'Payment source unavailable'),
               'method': (row['method'] as String?) ?? 'Transfer',
               'amount': _asDouble(row['amount']) ?? 0,
@@ -664,8 +666,13 @@ class _HqBillingPageState extends State<HqBillingPage>
           _asMapList(payload['subscriptions']).map((Map<String, dynamic> row) {
         final DateTime? nextBilling = _toDateTime(row['nextBilling']);
         return <String, dynamic>{
+          'id': ((row['id'] as String?)?.trim().isNotEmpty == true)
+            ? (row['id'] as String).trim()
+            : 'subscription-${row.hashCode}',
             'parent': ((row['parent'] as String?)?.trim().isNotEmpty == true)
               ? (row['parent'] as String).trim()
+            : ((row['owner'] as String?)?.trim().isNotEmpty == true)
+              ? (row['owner'] as String).trim()
               : _tHqBilling(context, 'Subscription owner unavailable'),
           'learners': _asInt(row['learners']) ?? 0,
           'plan': (row['plan'] as String?) ?? 'Standard',
