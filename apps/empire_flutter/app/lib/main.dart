@@ -14,6 +14,7 @@ import 'app_config.dart';
 import 'auth/app_state.dart';
 import 'auth/auth_service.dart';
 import 'auth/recent_login_store.dart';
+import 'ui/error/startup_issue_banner.dart';
 import 'ui/theme/scholesa_theme.dart';
 import 'ui/splash/splash_screen.dart';
 import 'services/firestore_service.dart';
@@ -45,27 +46,75 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final AppResilience appResilience = AppResilience();
   appResilience.installGlobalHandlers();
+  List<AppStartupIssue> startupIssues = <AppStartupIssue>[];
   await appResilience.runGuardedStartup(
-    initialize: _bootstrapRuntime,
-    launch: () => runApp(const ScholesaApp()),
+    initialize: () async {
+      startupIssues = await _bootstrapRuntime(appResilience);
+    },
+    launch: () => runApp(ScholesaApp(startupIssues: startupIssues)),
   );
 }
 
-Future<void> _bootstrapRuntime() async {
-  // Initialize Hive for offline storage
-  await Hive.initFlutter();
+Future<List<AppStartupIssue>> _bootstrapRuntime(
+  AppResilience appResilience,
+) async {
+  final List<AppStartupIssue> issues = <AppStartupIssue>[];
 
-  // Initialize Firebase with proper options
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
+  Future<void> captureStartupIssue({
+    required String serviceKey,
+    required String context,
+    required String message,
+    required Object error,
+    required StackTrace stackTrace,
+  }) async {
+    issues.add(
+      AppStartupIssue(
+        serviceKey: serviceKey,
+        message: message,
+        context: context,
+      ),
     );
-    debugPrint('Firebase initialized successfully');
-  } catch (e) {
-    debugPrint('Firebase init failed: $e');
+    await appResilience.captureFailure(
+      source: 'startup',
+      error: error,
+      stackTrace: stackTrace,
+      context: context,
+    );
   }
 
-  // Configure emulators if enabled
+  try {
+    await Hive.initFlutter();
+  } catch (error, stackTrace) {
+    debugPrint('Hive init failed: $error');
+    await captureStartupIssue(
+      serviceKey: 'localStorage',
+      context: 'Hive.initFlutter',
+      message: 'Local storage was unavailable during startup.',
+      error: error,
+      stackTrace: stackTrace,
+    );
+  }
+
+  try {
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+      debugPrint('Firebase initialized successfully');
+    } else {
+      debugPrint('Firebase already initialized');
+    }
+  } catch (error, stackTrace) {
+    debugPrint('Firebase init failed: $error');
+    await captureStartupIssue(
+      serviceKey: 'firebase',
+      context: 'Firebase.initializeApp',
+      message: 'Firebase services were unavailable during startup.',
+      error: error,
+      stackTrace: stackTrace,
+    );
+  }
+
   if (AppConfig.shouldUseEmulators) {
     try {
       final List<String> authParts = AppConfig.authEmulatorHost.split(':');
@@ -76,19 +125,32 @@ Future<void> _bootstrapRuntime() async {
       debugPrint(
         'Firebase mode: EMULATOR (auth=${AppConfig.authEmulatorHost}, firestore=${AppConfig.firestoreEmulatorHost})',
       );
-    } catch (e) {
-      debugPrint('Failed to connect to auth emulator: $e');
+    } catch (error, stackTrace) {
+      debugPrint('Failed to connect to auth emulator: $error');
+      await captureStartupIssue(
+        serviceKey: 'authEmulator',
+        context: 'FirebaseAuth.useAuthEmulator',
+        message: 'The auth emulator connection failed during startup.',
+        error: error,
+        stackTrace: stackTrace,
+      );
     }
-    return;
+    return issues;
   }
 
   debugPrint(
     'Firebase mode: LIVE (project=${AppConfig.firebaseProjectId}, env=${AppConfig.environment})',
   );
+  return issues;
 }
 
 class ScholesaApp extends StatefulWidget {
-  const ScholesaApp({super.key});
+  const ScholesaApp({
+    super.key,
+    this.startupIssues = const <AppStartupIssue>[],
+  });
+
+  final List<AppStartupIssue> startupIssues;
 
   @override
   State<ScholesaApp> createState() => _ScholesaAppState();
@@ -123,11 +185,14 @@ class _ScholesaAppState extends State<ScholesaApp> {
   GoRouter? _router;
 
   bool _isInitialized = false;
+  bool _showStartupIssues = true;
   String? _initError;
+  late final List<AppStartupIssue> _startupIssues;
 
   @override
   void initState() {
     super.initState();
+    _startupIssues = List<AppStartupIssue>.unmodifiable(widget.startupIssues);
     _initializeApp();
   }
 
@@ -508,6 +573,23 @@ class _ScholesaAppState extends State<ScholesaApp> {
               return Stack(
                 children: <Widget>[
                   if (child != null) child,
+                  if (_showStartupIssues && _startupIssues.isNotEmpty)
+                    StartupIssueBanner(
+                      issues: _startupIssues,
+                      onDismiss: () {
+                        TelemetryService.instance.logEvent(
+                          event: 'cta.clicked',
+                          metadata: <String, dynamic>{
+                            'cta': 'dismiss_startup_issues',
+                            'surface': 'startup_issue_banner',
+                            'issueCount': _startupIssues.length,
+                          },
+                        );
+                        setState(() {
+                          _showStartupIssues = false;
+                        });
+                      },
+                    ),
                   GlobalAiAssistantOverlay(
                     navigatorKey: _rootNavigatorKey,
                   ),
