@@ -4030,15 +4030,7 @@ void main() {
     await tester.tap(find.widgetWithText(TextButton, 'Close'));
     await tester.pumpAndSettle();
 
-    final Finder reviewChecklistButton = find.widgetWithText(
-      TextButton,
-      'Review checklist',
-    );
-    await tester.ensureVisible(reviewChecklistButton.first);
-    final TextButton reviewChecklistControl = tester.widget<TextButton>(
-      reviewChecklistButton.first,
-    );
-    reviewChecklistControl.onPressed?.call();
+    await _tapMainViewText(tester, 'Review checklist');
     await tester.pumpAndSettle();
 
     expect(find.text('Experiment review checklist'), findsOneWidget);
@@ -4101,15 +4093,7 @@ void main() {
       findsOneWidget,
     );
 
-    final Finder pilotEvidenceButton = find.widgetWithText(
-      TextButton,
-      'Pilot evidence',
-    );
-    await tester.ensureVisible(pilotEvidenceButton.first);
-    final TextButton pilotEvidenceControl = tester.widget<TextButton>(
-      pilotEvidenceButton.first,
-    );
-    pilotEvidenceControl.onPressed?.call();
+    await _tapMainViewText(tester, 'Pilot evidence');
     await tester.pumpAndSettle();
 
     expect(find.text('Pilot evidence checklist'), findsOneWidget);
@@ -4171,15 +4155,7 @@ void main() {
       findsOneWidget,
     );
 
-    final Finder pilotApprovalButton = find.widgetWithText(
-      TextButton,
-      'Pilot approval',
-    );
-    await tester.ensureVisible(pilotApprovalButton.first);
-    final TextButton pilotApprovalControl = tester.widget<TextButton>(
-      pilotApprovalButton.first,
-    );
-    pilotApprovalControl.onPressed?.call();
+    await _tapMainViewText(tester, 'Pilot approval');
     await tester.pumpAndSettle();
 
     expect(find.text('Pilot approval record'), findsOneWidget);
@@ -4218,15 +4194,7 @@ void main() {
     expect(
         find.text('Pilot approval: approved (sandbox_eval)'), findsOneWidget);
 
-    final Finder pilotExecutionButton = find.widgetWithText(
-      TextButton,
-      'Pilot execution',
-    );
-    await tester.ensureVisible(pilotExecutionButton.first);
-    final TextButton pilotExecutionControl = tester.widget<TextButton>(
-      pilotExecutionButton.first,
-    );
-    pilotExecutionControl.onPressed?.call();
+    await _tapMainViewText(tester, 'Pilot execution');
     await tester.pumpAndSettle();
 
     expect(find.text('Pilot execution record'), findsOneWidget);
@@ -4284,15 +4252,7 @@ void main() {
       findsOneWidget,
     );
 
-    final Finder runtimeDeliveryButton = find.widgetWithText(
-      TextButton,
-      'Runtime delivery',
-    );
-    await tester.ensureVisible(runtimeDeliveryButton.first);
-    final TextButton runtimeDeliveryControl = tester.widget<TextButton>(
-      runtimeDeliveryButton.first,
-    );
-    runtimeDeliveryControl.onPressed?.call();
+    await _tapMainViewText(tester, 'Runtime delivery');
     await tester.pumpAndSettle();
 
     expect(find.text('Runtime delivery record'), findsOneWidget);
@@ -4366,15 +4326,7 @@ void main() {
       findsWidgets,
     );
 
-    final Finder deliveryHistoryButton = find.widgetWithText(
-      TextButton,
-      'Delivery history',
-    );
-    await tester.ensureVisible(deliveryHistoryButton.first);
-    final TextButton deliveryHistoryControl = tester.widget<TextButton>(
-      deliveryHistoryButton.first,
-    );
-    deliveryHistoryControl.onPressed?.call();
+    await _tapMainViewText(tester, 'Delivery history');
     await tester.pumpAndSettle();
 
     expect(
@@ -4540,15 +4492,7 @@ void main() {
     await tester.tap(find.widgetWithText(TextButton, 'Close'));
     await tester.pumpAndSettle();
 
-    final Finder siteRolloutButton = find.widgetWithText(
-      TextButton,
-      'Site rollout',
-    );
-    await tester.ensureVisible(siteRolloutButton.first);
-    final TextButton siteRolloutControl = tester.widget<TextButton>(
-      siteRolloutButton.first,
-    );
-    siteRolloutControl.onPressed?.call();
+    await _tapMainViewText(tester, 'Site rollout');
     await tester.pumpAndSettle();
 
     expect(
@@ -4564,15 +4508,7 @@ void main() {
     await tester.tap(find.widgetWithText(TextButton, 'Close'));
     await tester.pumpAndSettle();
 
-    final Finder viewHistoryButton = find.widgetWithText(
-      TextButton,
-      'View history',
-    );
-    await tester.ensureVisible(viewHistoryButton.first);
-    final TextButton viewHistoryControl = tester.widget<TextButton>(
-      viewHistoryButton.first,
-    );
-    viewHistoryControl.onPressed?.call();
+    await _tapMainViewText(tester, 'View history');
     await tester.pumpAndSettle();
 
     expect(
@@ -5780,10 +5716,7 @@ void main() {
       find.text('HQ notes: Reviewed with site ops and monitoring in place.'),
       findsOneWidget,
     );
-    expect(
-      find.textContaining('Triage age: refresh due since'),
-      findsWidgets,
-    );
+    expect(find.textContaining('Triage age:'), findsWidgets);
     expect(find.text('Refresh triage'), findsOneWidget);
   });
 

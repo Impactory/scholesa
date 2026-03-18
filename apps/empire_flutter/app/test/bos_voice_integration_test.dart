@@ -35,11 +35,11 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      expect(find.text('AI Coach'), findsOneWidget);
       expect(find.text('Hint'), findsOneWidget);
       expect(find.text('Verify'), findsOneWidget);
       expect(find.text('Explain'), findsOneWidget);
       expect(find.text('Debug'), findsOneWidget);
+      expect(find.byType(TextField), findsOneWidget);
       expect(find.byIcon(Icons.send), findsOneWidget);
     });
   });
