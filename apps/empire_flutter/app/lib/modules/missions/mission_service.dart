@@ -1434,7 +1434,10 @@ class MissionService extends ChangeNotifier {
           return MissionSubmission(
             id: doc.id,
             missionId: missionId,
-            missionTitle: missionData?['title'] as String? ?? 'Unknown Mission',
+            missionTitle:
+              (missionData?['title'] as String?)?.trim().isNotEmpty == true
+                ? (missionData?['title'] as String).trim()
+                : 'Mission unavailable',
             learnerId: learnerId,
             learnerName:
                 (learnerData?['displayName'] as String?)?.trim().isNotEmpty ==

@@ -247,4 +247,66 @@ void main() {
     expect(find.textContaining('Learner unavailable showed'), findsWidgets);
     expect(find.textContaining('Unknown showed'), findsNothing);
   });
+
+  testWidgets('mission review uses mission unavailable when mission title is missing',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final MissionService missionService = MissionService(
+      firestoreService: firestoreService,
+      learnerId: 'educator-1',
+    );
+
+    await firestore.collection('users').doc('learner-1').set(<String, dynamic>{
+      'displayName': 'Avery Chen',
+    });
+    await firestore.collection('missions').doc('mission-1').set(<String, dynamic>{
+      'pillarCode': 'future_skills',
+    });
+    await firestore
+        .collection('missionSubmissions')
+        .doc('submission-1')
+        .set(<String, dynamic>{
+      'missionId': 'mission-1',
+      'learnerId': 'learner-1',
+      'siteId': 'site-1',
+      'status': 'pending',
+      'submittedAt': Timestamp.fromDate(DateTime(2026, 3, 17, 9, 30)),
+      'submissionText': 'I built a loop that reads the sensor twice.',
+    });
+
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: <SingleChildWidget>[
+          ChangeNotifierProvider<AppState>.value(value: _buildAppState()),
+          Provider<FirestoreService>.value(value: firestoreService),
+          ChangeNotifierProvider<MissionService>.value(value: missionService),
+        ],
+        child: MaterialApp(
+          theme: _testTheme,
+          home: const EducatorMissionReviewPage(),
+        ),
+      ),
+    );
+
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Mission unavailable'), findsWidgets);
+    expect(find.text('Unknown Mission'), findsNothing);
+
+    await tester.tap(find.text('Mission unavailable').first);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Generate AI draft'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('growth in Mission unavailable.'), findsWidgets);
+    expect(find.textContaining('growth in Unknown Mission.'), findsNothing);
+  });
 }

@@ -14,6 +14,7 @@ String _tEducatorMissionReview(BuildContext context, String input) {
 }
 
 const String _canonicalLearnerUnavailableLabel = 'Learner unavailable';
+const String _canonicalMissionUnavailableLabel = 'Mission unavailable';
 
 String _displayLearnerName(BuildContext context, String learnerName) {
   final String normalized = learnerName.trim();
@@ -21,6 +22,16 @@ String _displayLearnerName(BuildContext context, String learnerName) {
       normalized == 'Unknown' ||
       normalized == _canonicalLearnerUnavailableLabel) {
     return _tEducatorMissionReview(context, 'Learner unavailable');
+  }
+  return normalized;
+}
+
+String _displayMissionTitle(BuildContext context, String missionTitle) {
+  final String normalized = missionTitle.trim();
+  if (normalized.isEmpty ||
+      normalized == 'Unknown Mission' ||
+      normalized == _canonicalMissionUnavailableLabel) {
+    return _tEducatorMissionReview(context, 'Mission unavailable');
   }
   return normalized;
 }
@@ -411,7 +422,10 @@ class _SubmissionCard extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            submission.missionTitle,
+                            _displayMissionTitle(
+                              context,
+                              submission.missionTitle,
+                            ),
                             style: TextStyle(
                                 color: Colors.grey[600], fontSize: 12),
                           ),
@@ -751,7 +765,7 @@ class _ReviewSheetState extends State<_ReviewSheet> {
             'Next, push the learner to explain their choices and extend the work independently.')
         : _tEducatorMissionReview(context,
             'Next, ask the learner to revise one concrete part and explain the change back to you.');
-    return '${_displayLearnerName(context, widget.submission.learnerName)} showed ${_pillarLabel(widget.submission.pillar).toLowerCase()} growth in ${widget.submission.missionTitle}. $tone. ${_tEducatorMissionReview(context, 'Reference specific evidence from the submission and keep the next step concrete.')} $nextStep';
+    return '${_displayLearnerName(context, widget.submission.learnerName)} showed ${_pillarLabel(widget.submission.pillar).toLowerCase()} growth in ${_displayMissionTitle(context, widget.submission.missionTitle)}. $tone. ${_tEducatorMissionReview(context, 'Reference specific evidence from the submission and keep the next step concrete.')} $nextStep';
   }
 
   List<Map<String, dynamic>> _selectedRubricScores() {
@@ -896,7 +910,10 @@ class _ReviewSheetState extends State<_ReviewSheet> {
                               ),
                             ),
                             Text(
-                              widget.submission.missionTitle,
+                              _displayMissionTitle(
+                                context,
+                                widget.submission.missionTitle,
+                              ),
                               style: TextStyle(color: Colors.grey[600]),
                             ),
                           ],
