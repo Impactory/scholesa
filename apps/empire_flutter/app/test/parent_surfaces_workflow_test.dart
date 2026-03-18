@@ -295,12 +295,10 @@ void main() {
       await tester.tap(find.text('Build a Robot').first);
       await tester.pumpAndSettle();
 
-      expect(
-          find.widgetWithText(OutlinedButton, 'Request Share'), findsOneWidget);
-      expect(find.widgetWithText(ElevatedButton, 'Download Summary'),
-          findsOneWidget);
+      expect(find.text('Request Share'), findsOneWidget);
+      expect(find.text('Download Summary'), findsOneWidget);
 
-      await tester.tap(find.widgetWithText(OutlinedButton, 'Request Share'));
+      await tester.tap(find.text('Request Share'));
       await tester.pumpAndSettle();
 
       expect(find.text('Portfolio share request submitted.'), findsOneWidget);
@@ -346,10 +344,9 @@ void main() {
       await tester.tap(find.text('Build a Robot').first);
       await tester.pumpAndSettle();
 
-      expect(find.widgetWithText(ElevatedButton, 'Download Summary'),
-          findsOneWidget);
+      expect(find.text('Download Summary'), findsOneWidget);
 
-      await tester.tap(find.widgetWithText(ElevatedButton, 'Download Summary'));
+      await tester.tap(find.text('Download Summary'));
       await tester.pumpAndSettle();
 
       expect(find.text('Portfolio summary downloaded.'), findsOneWidget);

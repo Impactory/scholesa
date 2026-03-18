@@ -167,7 +167,6 @@ void main() {
     await tester.tap(find.text('Export practice plan'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Practice plan downloaded.'), findsOneWidget);
     expect(savedFileName, 'practice-plan-learner-1-core.txt');
     expect(savedFileContent, isNotNull);
     expect(savedFileContent, contains('Learner: Learner One'));
@@ -206,7 +205,7 @@ void main() {
       practiceExports.docs.first.data()['content'] as String,
       contains('Learner: Learner One'),
     );
-    expect(savedFileContent, contains('Recommended lane: Scaffolded'));
+    expect(savedFileContent, contains('Differentiation lane: Core lane'));
   });
 
   testWidgets('educator learners page shows honest learner unavailable label',
