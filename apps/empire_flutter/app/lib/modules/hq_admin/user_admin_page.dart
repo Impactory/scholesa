@@ -12,6 +12,18 @@ String _tUserAdmin(BuildContext context, String input) {
   return WorkflowSurfaceI18n.text(context, input);
 }
 
+const String _canonicalSiteUnavailableLabel = 'Site unavailable';
+
+String _displaySiteName(BuildContext context, String siteName) {
+  final String normalized = siteName.trim();
+  if (normalized.isEmpty ||
+      normalized == 'Unknown Site' ||
+      normalized == _canonicalSiteUnavailableLabel) {
+    return _tUserAdmin(context, 'Site unavailable');
+  }
+  return normalized;
+}
+
 /// HQ User Administration Page
 /// Beautiful colorful UI for managing all platform users
 class UserAdminPage extends StatefulWidget {
@@ -852,7 +864,7 @@ class _SiteCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    site.name,
+                    _displaySiteName(context, site.name),
                     style: const TextStyle(
                         fontWeight: FontWeight.w600, fontSize: 16),
                   ),
@@ -1677,7 +1689,7 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
                 children: service.sites.map((SiteModel site) {
                   final bool isSelected = _selectedSites.contains(site.id);
                   return FilterChip(
-                    label: Text(site.name),
+                    label: Text(_displaySiteName(context, site.name)),
                     selected: isSelected,
                     onSelected: (bool selected) {
                       TelemetryService.instance.logEvent(

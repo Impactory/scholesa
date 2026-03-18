@@ -141,9 +141,10 @@ class UserAdminService extends ChangeNotifier {
       _sites = sitesSnapshot.docs
           .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
         final Map<String, dynamic> data = doc.data();
+        final String siteName = ((data['name'] as String?) ?? '').trim();
         return SiteModel(
           id: doc.id,
-          name: data['name'] as String? ?? 'Unknown Site',
+          name: siteName.isNotEmpty ? siteName : doc.id,
           location: data['location'] as String?,
           siteLeadIds: List<String>.from(
               data['siteLeadIds'] as List<dynamic>? ?? <dynamic>[]),

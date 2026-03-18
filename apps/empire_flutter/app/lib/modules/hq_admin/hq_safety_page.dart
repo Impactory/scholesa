@@ -383,7 +383,7 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
                     ? (data['siteName'] as String).trim()
                     : (data['siteId'] as String?)?.trim().isNotEmpty == true
                         ? (data['siteId'] as String).trim()
-                        : _tHqSafety(context, 'Unknown Site');
+                  : _tHqSafety(context, 'Site unavailable');
             final String status =
                 ((data['status'] as String?) ?? '').toLowerCase();
             final bool escalated = (data['isEscalated'] as bool?) ??

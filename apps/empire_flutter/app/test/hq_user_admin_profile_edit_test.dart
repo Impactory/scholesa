@@ -132,4 +132,44 @@ void main() {
     expect(service.lastUpdatedDisplayName, 'Ava Innovator');
     expect(find.text('Profile updated for Ava Innovator'), findsOneWidget);
   });
+
+  testWidgets('hq user admin shows site id when site name is missing',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await firestore.collection('users').doc('user-1').set(<String, dynamic>{
+      'email': 'ava@scholesa.test',
+      'displayName': 'Ava Learner',
+      'role': 'learner',
+      'status': 'active',
+      'siteIds': <String>['site-1'],
+      'createdAt': DateTime(2026, 1, 1).millisecondsSinceEpoch,
+    });
+    await firestore.collection('sites').doc('site-1').set(<String, dynamic>{
+      'location': 'Studio A',
+      'createdAt': DateTime(2026, 1, 1).millisecondsSinceEpoch,
+    });
+
+    final UserAdminService service = UserAdminService(
+      firestoreService: FirestoreService(
+        firestore: firestore,
+        auth: _MockFirebaseAuth(),
+      ),
+    );
+
+    await tester.binding.setSurfaceSize(const Size(1440, 2000));
+    await tester.pumpWidget(
+      _buildHarness(
+        providers: <SingleChildWidget>[
+          ChangeNotifierProvider<UserAdminService>.value(value: service),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Sites'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('site-1'), findsOneWidget);
+    expect(find.text('Unknown Site'), findsNothing);
+  });
 }

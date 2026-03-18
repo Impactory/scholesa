@@ -11,7 +11,9 @@ String _tHqIntegrations(BuildContext context, String input) {
 /// HQ Integrations Health page for monitoring all site integrations
 /// Based on docs/31_GOOGLE_CLASSROOM_SYNC_JOBS.md and docs/37_GITHUB_WEBHOOKS_EVENTS_AND_SYNC.md
 class HqIntegrationsHealthPage extends StatefulWidget {
-  const HqIntegrationsHealthPage({super.key});
+  const HqIntegrationsHealthPage({super.key, this.integrationsLoader});
+
+  final Future<Map<String, dynamic>> Function()? integrationsLoader;
 
   @override
   State<HqIntegrationsHealthPage> createState() =>
@@ -294,11 +296,16 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
     if (!mounted) return;
     setState(() => _isLoading = true);
     try {
-      final HttpsCallable callable =
-          FirebaseFunctions.instance.httpsCallable('getIntegrationsHealth');
-      final HttpsCallableResult<dynamic> result =
-          await callable.call(<String, dynamic>{'scope': 'hq'});
-      final Map<String, dynamic> payload = _asMap(result.data);
+      final Map<String, dynamic> payload;
+      if (widget.integrationsLoader != null) {
+        payload = await widget.integrationsLoader!();
+      } else {
+        final HttpsCallable callable =
+            FirebaseFunctions.instance.httpsCallable('getIntegrationsHealth');
+        final HttpsCallableResult<dynamic> result =
+            await callable.call(<String, dynamic>{'scope': 'hq'});
+        payload = _asMap(result.data);
+      }
       final List<dynamic> syncRows =
           payload['syncJobs'] as List<dynamic>? ?? <dynamic>[];
       final List<dynamic> connectionRows =
@@ -388,7 +395,7 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
           .map((entry) => _SiteIntegration(
                 siteId: entry.key,
                 siteName: siteNames[entry.key] ??
-                    _tHqIntegrations(context, 'Unknown Site'),
+                _tHqIntegrations(context, 'Site unavailable'),
                 integrations: entry.value.values.toList()
                   ..sort((_Integration a, _Integration b) =>
                       a.name.compareTo(b.name)),

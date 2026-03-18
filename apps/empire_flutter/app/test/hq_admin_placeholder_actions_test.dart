@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/modules/hq_admin/hq_audit_page.dart';
 import 'package:scholesa_app/modules/hq_admin/hq_billing_page.dart';
+import 'package:scholesa_app/modules/hq_admin/hq_integrations_health_page.dart';
 import 'package:scholesa_app/modules/hq_admin/hq_safety_page.dart';
 import 'package:scholesa_app/ui/theme/scholesa_theme.dart';
 
@@ -79,6 +80,59 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('View Full Report'), findsNothing);
+  });
+
+  testWidgets('HQ safety shows site unavailable when incident site identity is missing',
+      (WidgetTester tester) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 1800));
+    await tester.pumpWidget(
+      _buildHarness(
+        child: HqSafetyPage(
+          incidentsLoader: () async => <String, dynamic>{
+            'incidents': <Map<String, dynamic>>[
+              <String, dynamic>{
+                'id': 'incident-2',
+                'title': 'Escort review',
+                'severity': 'minor',
+                'updatedAt': '2026-03-17T10:00:00.000Z',
+              },
+            ],
+          },
+        ),
+        appState: _buildAppState(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Site unavailable'), findsOneWidget);
+    expect(find.text('Unknown Site'), findsNothing);
+  });
+
+  testWidgets('HQ integrations health shows site unavailable when site identity is missing',
+      (WidgetTester tester) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 1800));
+    await tester.pumpWidget(
+      _buildHarness(
+        child: HqIntegrationsHealthPage(
+          integrationsLoader: () async => <String, dynamic>{
+            'syncJobs': <Map<String, dynamic>>[
+              <String, dynamic>{
+                'siteId': 'site-unknown',
+                'provider': 'github',
+                'status': 'healthy',
+                'updatedAt': '2026-03-17T10:00:00.000Z',
+              },
+            ],
+            'connections': const <Map<String, dynamic>>[],
+          },
+        ),
+        appState: _buildAppState(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('site-unknown'), findsOneWidget);
+    expect(find.text('Unknown Site'), findsNothing);
   });
 
   testWidgets('HQ billing invoice cards remove the fake send invoice CTA',
