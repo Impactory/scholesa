@@ -127,6 +127,9 @@ class LearnerProfileModel {
     this.weeklyTargetMinutes,
     this.reminderSchedule,
     this.valuePrompt,
+    this.portfolioHeadline,
+    this.portfolioGoal,
+    this.portfolioHighlight,
     this.ttsEnabled = false,
     this.reducedDistractionEnabled = false,
     this.keyboardOnlyEnabled = false,
@@ -154,6 +157,9 @@ class LearnerProfileModel {
   final int? weeklyTargetMinutes;
   final String? reminderSchedule;
   final String? valuePrompt;
+  final String? portfolioHeadline;
+  final String? portfolioGoal;
+  final String? portfolioHighlight;
   final bool ttsEnabled;
   final bool reducedDistractionEnabled;
   final bool keyboardOnlyEnabled;
@@ -187,6 +193,9 @@ class LearnerProfileModel {
       weeklyTargetMinutes: data['weeklyTargetMinutes'] as int?,
       reminderSchedule: data['reminderSchedule'] as String?,
       valuePrompt: data['valuePrompt'] as String?,
+      portfolioHeadline: data['portfolioHeadline'] as String?,
+      portfolioGoal: data['portfolioGoal'] as String?,
+      portfolioHighlight: data['portfolioHighlight'] as String?,
       ttsEnabled: data['ttsEnabled'] as bool? ?? false,
       reducedDistractionEnabled:
           data['reducedDistractionEnabled'] as bool? ?? false,
@@ -216,6 +225,9 @@ class LearnerProfileModel {
         'weeklyTargetMinutes': weeklyTargetMinutes,
         'reminderSchedule': reminderSchedule,
         'valuePrompt': valuePrompt,
+        'portfolioHeadline': portfolioHeadline,
+        'portfolioGoal': portfolioGoal,
+        'portfolioHighlight': portfolioHighlight,
         'ttsEnabled': ttsEnabled,
         'reducedDistractionEnabled': reducedDistractionEnabled,
         'keyboardOnlyEnabled': keyboardOnlyEnabled,

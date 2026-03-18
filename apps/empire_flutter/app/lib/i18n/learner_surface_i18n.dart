@@ -33,7 +33,16 @@ class LearnerSurfaceI18n {
     'Runtime context is syncing. Try again in a moment.': '运行时上下文正在同步。请稍后再试。',
     'My Portfolio': '我的作品集',
     'Showcase your achievements': '展示你的成就',
+    'Future Innovator': '未来创新者',
     'Future Innovator • Singapore': '未来创新者 • 新加坡',
+    'Portfolio readiness': '作品集准备度',
+    'Profile signals live': '个资料信号已就绪',
+    'Complete learner setup to unlock a stronger portfolio summary.':
+        '完成学习者设置后，才能显示更完整的作品集摘要。',
+    'Add a headline, a goal, and at least one project artifact to finish this summary.':
+        '添加标题、目标，以及至少一个项目作品，完成这份真实摘要。',
+    'Your portfolio summary reflects saved profile details and real artifacts.':
+        '你的作品集摘要现在反映了已保存的资料信息和真实作品。',
     'Level 12': '等级 12',
     'Rising Explorer': '成长中的探索者',
     '250 XP to Level 13 - Aspiring Trailblazer': '距离等级 13 还差 250 XP - 有志开拓者',
@@ -43,6 +52,20 @@ class LearnerSurfaceI18n {
     'Badges': '徽章',
     'Skills': '技能',
     'Projects': '项目',
+    'No badges earned yet': '还没有已获得的徽章',
+    'Badges will appear here after your educator or site publishes earned credentials.':
+        '当教育者或站点发布你已获得的凭证后，徽章会显示在这里。',
+    'No skills or interests saved yet': '还没有保存的技能或兴趣',
+    'Complete learner setup or add strengths and interests to show real learner signals here.':
+        '完成学习者设置，或添加优势与兴趣后，这里才会显示真实的学习者信号。',
+    'No projects added yet': '还没有添加项目',
+    'Projects you complete or share will appear here once they are saved to your portfolio.':
+        '你完成或分享的项目在保存到作品集后，会显示在这里。',
+    'Strength': '优势',
+    'Interest': '兴趣',
+    'Goal': '目标',
+    'Saved recently': '最近已保存',
+    'Saved to your portfolio.': '已保存到你的作品集。',
     'First Mission': '第一个任务',
     'Completed your first mission': '完成了你的第一个任务',
     'Week Warrior': '每周达人',
@@ -74,6 +97,8 @@ class LearnerSurfaceI18n {
     'Current Goal': '当前目标',
     'Featured Highlight': '精选亮点',
     'Portfolio profile updated.': '作品集资料已更新。',
+    'Profile storage unavailable right now.': '目前无法访问作品集资料存储。',
+    'Could not save portfolio profile right now.': '暂时无法保存作品集资料。',
     'Save': '保存',
     'Share Portfolio': '分享作品集',
     'Create a secure share link for parents or mentors.': '为家长或导师创建一个安全的分享链接。',
@@ -186,7 +211,16 @@ class LearnerSurfaceI18n {
     'Runtime context is syncing. Try again in a moment.': '執行階段內容正在同步。請稍後再試。',
     'My Portfolio': '我的作品集',
     'Showcase your achievements': '展示你的成就',
+    'Future Innovator': '未來創新者',
     'Future Innovator • Singapore': '未來創新者 • 新加坡',
+    'Portfolio readiness': '作品集準備度',
+    'Profile signals live': '個資料信號已就緒',
+    'Complete learner setup to unlock a stronger portfolio summary.':
+        '完成學習者設定後，才能顯示更完整的作品集摘要。',
+    'Add a headline, a goal, and at least one project artifact to finish this summary.':
+        '加入標題、目標，以及至少一個專案作品，完成這份真實摘要。',
+    'Your portfolio summary reflects saved profile details and real artifacts.':
+        '你的作品集摘要現在反映了已儲存的資料資訊與真實作品。',
     'Level 12': '等級 12',
     'Rising Explorer': '成長中的探索者',
     '250 XP to Level 13 - Aspiring Trailblazer': '距離等級 13 還差 250 XP - 有志開拓者',
@@ -196,6 +230,20 @@ class LearnerSurfaceI18n {
     'Badges': '徽章',
     'Skills': '技能',
     'Projects': '專案',
+    'No badges earned yet': '還沒有已獲得的徽章',
+    'Badges will appear here after your educator or site publishes earned credentials.':
+        '當教育者或站點發布你已獲得的憑證後，徽章會顯示在這裡。',
+    'No skills or interests saved yet': '還沒有已儲存的技能或興趣',
+    'Complete learner setup or add strengths and interests to show real learner signals here.':
+        '完成學習者設定，或加入優勢與興趣後，這裡才會顯示真實的學習者信號。',
+    'No projects added yet': '還沒有加入專案',
+    'Projects you complete or share will appear here once they are saved to your portfolio.':
+        '你完成或分享的專案在儲存到作品集後，會顯示在這裡。',
+    'Strength': '優勢',
+    'Interest': '興趣',
+    'Goal': '目標',
+    'Saved recently': '最近已儲存',
+    'Saved to your portfolio.': '已儲存到你的作品集。',
     'First Mission': '第一個任務',
     'Completed your first mission': '完成了你的第一個任務',
     'Week Warrior': '每週達人',
@@ -227,6 +275,8 @@ class LearnerSurfaceI18n {
     'Current Goal': '目前目標',
     'Featured Highlight': '精選亮點',
     'Portfolio profile updated.': '作品集資料已更新。',
+    'Profile storage unavailable right now.': '目前無法存取作品集資料儲存。',
+    'Could not save portfolio profile right now.': '暫時無法儲存作品集資料。',
     'Save': '儲存',
     'Share Portfolio': '分享作品集',
     'Create a secure share link for parents or mentors.': '為家長或導師建立安全的分享連結。',

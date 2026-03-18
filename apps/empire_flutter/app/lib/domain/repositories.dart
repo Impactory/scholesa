@@ -400,16 +400,26 @@ class MissionAttemptRepository {
 }
 
 class PortfolioRepository {
+  PortfolioRepository({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
+
+  final FirebaseFirestore _firestore;
+
   CollectionReference<Map<String, dynamic>> get _col =>
-      FirebaseFirestore.instance.collection('portfolios');
+      _firestore.collection('portfolios');
 
   Future<void> upsert(PortfolioModel model) =>
       _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
 }
 
 class PortfolioItemRepository {
+  PortfolioItemRepository({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
+
+  final FirebaseFirestore _firestore;
+
   CollectionReference<Map<String, dynamic>> get _col =>
-      FirebaseFirestore.instance.collection('portfolioItems');
+      _firestore.collection('portfolioItems');
 
   Future<void> upsert(PortfolioItemModel model) =>
       _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));

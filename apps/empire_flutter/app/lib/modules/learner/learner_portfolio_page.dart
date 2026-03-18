@@ -1,6 +1,12 @@
+import 'dart:async';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import '../../domain/models.dart';
+import '../../domain/repositories.dart';
+import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
@@ -23,9 +29,9 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _showAiCoach = false;
-  String? _headline;
-  String? _goal;
-  String? _featuredHighlight;
+  LearnerProfileModel? _learnerProfile;
+  List<PortfolioItemModel> _portfolioItems = const <PortfolioItemModel>[];
+  bool _isPortfolioLoading = false;
 
   String _t(String input) => _tLearnerPortfolio(context, input);
 
@@ -46,19 +52,19 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
   }
 
   String _effectiveHeadline(AppState appState) {
-    final String headline = _headline?.trim() ?? '';
+    final String headline = _learnerProfile?.portfolioHeadline?.trim() ?? '';
     if (headline.isNotEmpty) return headline;
     return '${_t('Future Innovator')} • ${_siteLabel(appState)}';
   }
 
   String _effectiveGoal() {
-    final String goal = _goal?.trim() ?? '';
+    final String goal = _learnerProfile?.portfolioGoal?.trim() ?? '';
     if (goal.isNotEmpty) return goal;
     return _t('Build a confident weekly shipping rhythm across Future Skills missions.');
   }
 
   String _effectiveHighlight() {
-    final String highlight = _featuredHighlight?.trim() ?? '';
+    final String highlight = _learnerProfile?.portfolioHighlight?.trim() ?? '';
     if (highlight.isNotEmpty) return highlight;
     return _t('Latest highlight: Team Presentation');
   }
@@ -87,12 +93,287 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
         },
       );
     });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(_loadPortfolioState());
+    });
   }
 
   @override
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  FirestoreService? _maybeFirestoreService() {
+    try {
+      return context.read<FirestoreService>();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  String _activeSiteId(AppState appState) {
+    final String activeSiteId = appState.activeSiteId?.trim() ?? '';
+    if (activeSiteId.isNotEmpty) return activeSiteId;
+    if (appState.siteIds.isNotEmpty) {
+      return appState.siteIds.first.trim();
+    }
+    return '';
+  }
+
+  Future<void> _loadPortfolioState() async {
+    final AppState appState = context.read<AppState>();
+    final FirestoreService? firestoreService = _maybeFirestoreService();
+    final String learnerId = appState.userId?.trim() ?? '';
+    final String siteId = _activeSiteId(appState);
+
+    if (firestoreService == null || learnerId.isEmpty || siteId.isEmpty) {
+      if (!mounted) return;
+      setState(() {
+        _learnerProfile = null;
+        _portfolioItems = const <PortfolioItemModel>[];
+        _isPortfolioLoading = false;
+      });
+      return;
+    }
+
+    setState(() => _isPortfolioLoading = true);
+    final FirebaseFirestore firestore = firestoreService.firestore;
+    final LearnerProfileRepository profileRepository =
+        LearnerProfileRepository(firestore: firestore);
+    final PortfolioItemRepository portfolioItemRepository =
+        PortfolioItemRepository(firestore: firestore);
+
+    try {
+      final List<Object?> results = await Future.wait<Object?>(<Future<Object?>>[
+        profileRepository.getByLearnerAndSite(
+          learnerId: learnerId,
+          siteId: siteId,
+        ),
+        portfolioItemRepository.listByLearner(learnerId),
+      ]);
+      final LearnerProfileModel? profile =
+          results.first as LearnerProfileModel?;
+      final List<PortfolioItemModel> items =
+          (results.last as List<PortfolioItemModel>)
+              .where((PortfolioItemModel item) => item.siteId.trim() == siteId)
+              .toList(growable: false)
+            ..sort((PortfolioItemModel a, PortfolioItemModel b) {
+              final int aMillis =
+                  (a.updatedAt ?? a.createdAt)?.millisecondsSinceEpoch ?? 0;
+              final int bMillis =
+                  (b.updatedAt ?? b.createdAt)?.millisecondsSinceEpoch ?? 0;
+              return bMillis.compareTo(aMillis);
+            });
+      if (!mounted) return;
+      setState(() {
+        _learnerProfile = profile;
+        _portfolioItems = items;
+        _isPortfolioLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isPortfolioLoading = false);
+    }
+  }
+
+  int _savedPortfolioSignalCount() {
+    int count = 0;
+    if (_learnerProfile?.onboardingCompleted ?? false) {
+      count += 1;
+    }
+    if ((_learnerProfile?.portfolioHeadline?.trim() ?? '').isNotEmpty) {
+      count += 1;
+    }
+    if ((_learnerProfile?.portfolioGoal?.trim() ?? '').isNotEmpty) {
+      count += 1;
+    }
+    if (_portfolioItems.isNotEmpty) {
+      count += 1;
+    }
+    return count;
+  }
+
+  String _portfolioReadinessMessage() {
+    if (!(_learnerProfile?.onboardingCompleted ?? false)) {
+      return _t('Complete learner setup to unlock a stronger portfolio summary.');
+    }
+    if ((_learnerProfile?.portfolioHeadline?.trim() ?? '').isEmpty ||
+        (_learnerProfile?.portfolioGoal?.trim() ?? '').isEmpty ||
+        _portfolioItems.isEmpty) {
+      return _t(
+        'Add a headline, a goal, and at least one project artifact to finish this summary.',
+      );
+    }
+    return _t(
+      'Your portfolio summary reflects saved profile details and real artifacts.',
+    );
+  }
+
+  int _goalCount() {
+    return _learnerProfile?.goals
+            .where((String goal) => goal.trim().isNotEmpty)
+            .length ??
+        0;
+  }
+
+  String _normalizePillarKey(String raw) {
+    final String normalized = raw.trim().toLowerCase();
+    switch (normalized) {
+      case 'future skills':
+      case 'future-skills':
+      case 'future_skills':
+        return 'future_skills';
+      case 'leadership':
+      case 'leadership & agency':
+      case 'leadership-agency':
+      case 'leadership_agency':
+        return 'leadership';
+      case 'impact':
+      case 'impact & innovation':
+      case 'impact-innovation':
+      case 'impact_innovation':
+        return 'impact';
+      default:
+        return normalized;
+    }
+  }
+
+  int _projectsForPillar(String pillarKey) {
+    return _portfolioItems.where((PortfolioItemModel item) {
+      return item.pillarCodes
+          .map(_normalizePillarKey)
+          .contains(_normalizePillarKey(pillarKey));
+    }).length;
+  }
+
+  String _primaryPillarLabel(PortfolioItemModel item) {
+    for (final String code in item.pillarCodes) {
+      switch (_normalizePillarKey(code)) {
+        case 'future_skills':
+          return _t('Future Skills');
+        case 'leadership':
+          return _t('Leadership');
+        case 'impact':
+          return _t('Impact');
+      }
+    }
+    return _t('Projects');
+  }
+
+  Color _projectColor(PortfolioItemModel item) {
+    for (final String code in item.pillarCodes) {
+      switch (_normalizePillarKey(code)) {
+        case 'future_skills':
+          return ScholesaColors.futureSkills;
+        case 'leadership':
+          return ScholesaColors.leadership;
+        case 'impact':
+          return ScholesaColors.impact;
+      }
+    }
+    return ScholesaColors.learner;
+  }
+
+  String _formatProjectDate(PortfolioItemModel item) {
+    final DateTime? date = (item.updatedAt ?? item.createdAt)?.toDate();
+    if (date == null) {
+      return _t('Saved recently');
+    }
+    return '${date.month}/${date.day}/${date.year}';
+  }
+
+  List<_PortfolioSignal> _portfolioSignals() {
+    final LearnerProfileModel? profile = _learnerProfile;
+    if (profile == null) {
+      return const <_PortfolioSignal>[];
+    }
+
+    final List<_PortfolioSignal> signals = <_PortfolioSignal>[
+      ...profile.strengths
+          .where((String value) => value.trim().isNotEmpty)
+          .map(
+            (String value) => _PortfolioSignal(
+              label: value.trim(),
+              category: _t('Strength'),
+              icon: Icons.bolt_rounded,
+              color: ScholesaColors.futureSkills,
+            ),
+          ),
+      ...profile.interests
+          .where((String value) => value.trim().isNotEmpty)
+          .map(
+            (String value) => _PortfolioSignal(
+              label: value.trim(),
+              category: _t('Interest'),
+              icon: Icons.interests_rounded,
+              color: ScholesaColors.leadership,
+            ),
+          ),
+      ...profile.goals
+          .where((String value) => value.trim().isNotEmpty)
+          .map(
+            (String value) => _PortfolioSignal(
+              label: value.trim(),
+              category: _t('Goal'),
+              icon: Icons.flag_rounded,
+              color: ScholesaColors.impact,
+            ),
+          ),
+    ];
+
+    return signals;
+  }
+
+  Widget _buildEmptyTabState({
+    required IconData icon,
+    required String title,
+    required String message,
+  }) {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: <Widget>[
+        Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: context.schBorder),
+          ),
+          child: Column(
+            children: <Widget>[
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: ScholesaColors.learner.withValues(alpha: 0.08),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: ScholesaColors.learner, size: 28),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: context.schTextSecondary,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   @override
@@ -302,14 +583,14 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
                           color: Colors.orange, size: 18),
                       SizedBox(width: 4),
                       Text(
-                        '15 ${_t('day streak')}',
+                        '${_t('Goals')}: ${_goalCount()}',
                         style: TextStyle(color: Colors.white, fontSize: 12),
                       ),
                       SizedBox(width: 16),
                       Icon(Icons.star, color: Colors.amber, size: 18),
                       SizedBox(width: 4),
                       Text(
-                        '1,250 XP',
+                        '${_t('Projects')}: ${_portfolioItems.length}',
                         style: TextStyle(color: Colors.white, fontSize: 12),
                       ),
                     ],
@@ -334,6 +615,8 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
   }
 
   Widget _buildLevelProgress() {
+    final int savedSignals = _savedPortfolioSignalCount();
+    final double progress = savedSignals / 4;
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Container(
@@ -366,14 +649,14 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                          _t('Level 12'),
+                          _t('Portfolio readiness'),
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 18,
                           ),
                         ),
                         Text(
-                          _t('Rising Explorer'),
+                          _t('Profile signals live'),
                           style: TextStyle(color: Colors.grey, fontSize: 12),
                         ),
                       ],
@@ -387,8 +670,8 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
                     color: ScholesaColors.futureSkills.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Text(
-                    '750 / 1000 XP',
+                  child: Text(
+                    '$savedSignals / 4',
                     style: TextStyle(
                       color: ScholesaColors.futureSkills,
                       fontWeight: FontWeight.bold,
@@ -402,7 +685,7 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: LinearProgressIndicator(
-                value: 0.75,
+                value: progress,
                 backgroundColor:
                     ScholesaColors.futureSkills.withValues(alpha: 0.2),
                 valueColor: const AlwaysStoppedAnimation<Color>(
@@ -413,7 +696,16 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
             ),
             const SizedBox(height: 8),
             Text(
-              _t('250 XP to Level 13 - Aspiring Trailblazer'),
+              '$savedSignals / 4 ${_t('Profile signals live')}',
+              style: const TextStyle(
+                color: ScholesaColors.futureSkills,
+                fontWeight: FontWeight.w700,
+                fontSize: 12,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _portfolioReadinessMessage(),
               style: TextStyle(color: context.schTextSecondary, fontSize: 12),
             ),
           ],
@@ -431,8 +723,8 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
             child: _PillarStatCard(
               icon: Icons.code,
               label: _t('Future Skills'),
-              missions: 28,
-              skills: 12,
+              count: _projectsForPillar('future_skills'),
+              caption: _t('Projects'),
               color: ScholesaColors.futureSkills,
             ),
           ),
@@ -441,8 +733,8 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
             child: _PillarStatCard(
               icon: Icons.emoji_events,
               label: _t('Leadership'),
-              missions: 18,
-              skills: 8,
+              count: _projectsForPillar('leadership'),
+              caption: _t('Projects'),
               color: ScholesaColors.leadership,
             ),
           ),
@@ -451,8 +743,8 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
             child: _PillarStatCard(
               icon: Icons.eco,
               label: _t('Impact'),
-              missions: 14,
-              skills: 6,
+              count: _projectsForPillar('impact'),
+              caption: _t('Projects'),
               color: ScholesaColors.impact,
             ),
           ),
