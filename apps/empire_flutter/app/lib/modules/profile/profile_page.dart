@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../i18n/workflow_surface_i18n.dart';
 import '../../auth/auth_service.dart';
 import '../../auth/app_state.dart';
@@ -523,41 +522,129 @@ class ProfilePage extends StatelessWidget {
       metadata: const <String, dynamic>{'cta': 'profile_open_help_support'},
     );
 
-    final AppState appState = context.read<AppState>();
-    final String siteId = appState.activeSiteId?.trim().isNotEmpty == true
-        ? appState.activeSiteId!.trim()
-        : 'Not set';
-    final String userId = appState.userId?.trim().isNotEmpty == true
-        ? appState.userId!.trim()
-        : 'Not set';
-    final String email = appState.email?.trim().isNotEmpty == true
-        ? appState.email!.trim()
-        : 'Not set';
-    final String displayName = appState.displayName?.trim().isNotEmpty == true
-        ? appState.displayName!.trim()
-        : 'Not set';
+    final TextEditingController controller = TextEditingController();
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext bottomSheetContext) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 16,
+            bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom + 16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                _tProfile(context, 'Help Center Contact'),
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                maxLines: 4,
+                decoration: InputDecoration(
+                  labelText: _tProfile(context, 'Issue details'),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(bottomSheetContext),
+                      child: Text(_tProfile(context, 'Cancel')),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        final String details = controller.text.trim();
+                        if (details.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                _tProfile(
+                                  context,
+                                  'Please enter issue details before sending.',
+                                ),
+                              ),
+                            ),
+                          );
+                          return;
+                        }
 
-    final Uri emailUri = Uri(
-      scheme: 'mailto',
-      path: 'support@scholesa.com',
-      queryParameters: <String, String>{
-        'subject': 'Profile help request - $siteId',
-        'body':
-            'Hello Scholesa support.\n\nI need help with a profile or account issue.\n\nIssue details:\n- \n\nSite ID: $siteId\nUser ID: $userId\nName: $displayName\nEmail: $email\n',
+                        final NavigatorState navigator =
+                            Navigator.of(bottomSheetContext);
+                        try {
+                          final String requestId =
+                              await _submitSupportRequest(
+                            context,
+                            source: 'profile_open_help_support',
+                            subject: 'Profile help request',
+                            message: details,
+                          );
+                          await TelemetryService.instance.logEvent(
+                            event: 'profile.help_request.submitted',
+                            metadata: <String, dynamic>{
+                              'request_id': requestId,
+                            },
+                          );
+                          if (!context.mounted) {
+                            return;
+                          }
+                          navigator.pop();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                _tProfile(
+                                  context,
+                                  'Support request submitted.',
+                                ),
+                              ),
+                            ),
+                          );
+                        } catch (error) {
+                          debugPrint(
+                            'Failed to submit profile support request: $error',
+                          );
+                          await TelemetryService.instance.logEvent(
+                            event: 'profile.help_request.failed',
+                            metadata: <String, dynamic>{
+                              'error': error.toString(),
+                            },
+                          );
+                          if (!context.mounted) {
+                            return;
+                          }
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                _tProfile(
+                                  context,
+                                  'Unable to submit support request right now.',
+                                ),
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                      child: Text(_tProfile(context, 'Send')),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
       },
     );
-
-    final bool launched = await _tryLaunchExternalUri(emailUri);
-    if (!context.mounted || launched) {
-      return;
-    }
-
-    _showInfoDialog(
-      context,
-      title: _tProfile(context, 'Help Center Contact'),
-      message: _tProfile(context,
-          'Contact support at support@scholesa.com with your site ID and issue details.'),
-    );
+    controller.dispose();
   }
 
   void _openTermsOfService(BuildContext context) {
@@ -586,13 +673,47 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Future<bool> _tryLaunchExternalUri(Uri uri) async {
-    final bool canLaunchUri = await canLaunchUrl(uri);
-    if (!canLaunchUri) {
-      return false;
+  FirestoreService? _maybeFirestoreService(BuildContext context) {
+    try {
+      return context.read<FirestoreService>();
+    } catch (_) {
+      return null;
     }
+  }
 
-    return launchUrl(uri, mode: LaunchMode.externalApplication);
+  Future<String> _submitSupportRequest(
+    BuildContext context, {
+    required String source,
+    required String subject,
+    required String message,
+  }) async {
+    final FirestoreService? firestoreService = _maybeFirestoreService(context);
+    if (firestoreService == null) {
+      throw StateError(
+        _tProfile(context, 'Support requests are unavailable right now.'),
+      );
+    }
+    final AppState appState = context.read<AppState>();
+    return firestoreService.submitSupportRequest(
+      requestType: 'help',
+      source: source,
+      siteId: appState.activeSiteId?.trim().isNotEmpty == true
+          ? appState.activeSiteId!.trim()
+          : 'Not set',
+      userId: appState.userId?.trim().isNotEmpty == true
+          ? appState.userId!.trim()
+          : 'Not set',
+      userEmail: appState.email?.trim().isNotEmpty == true
+          ? appState.email!.trim()
+          : 'Not set',
+      userName: appState.displayName?.trim().isNotEmpty == true
+          ? appState.displayName!.trim()
+          : 'Not set',
+      role: appState.role?.name ?? 'unknown',
+      subject: subject,
+      message: message,
+      metadata: const <String, dynamic>{'entryPoint': 'profile'},
+    );
   }
 
   void _showInfoDialog(
