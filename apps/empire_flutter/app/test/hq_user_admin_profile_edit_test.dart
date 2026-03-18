@@ -88,7 +88,6 @@ class _FakeUserAdminService extends UserAdminService {
   }
 
   @override
-  Future<void> loadAuditLogs({String? userId}) async {}
   Future<void> loadAuditLogs({String? userId}) async {
     loadAuditLogsCallCount += 1;
   }
@@ -282,6 +281,64 @@ void main() {
     expect(
       find.text(
         'Audit activity will appear here after user administration actions are recorded.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+  });
+
+  testWidgets('hq user admin audit log keeps spinner while audit logs are loading',
+      (WidgetTester tester) async {
+    final _FakeUserAdminService service = _FakeUserAdminService(
+      auditLogs: const <AuditLogEntry>[],
+      hasLoadedAuditLogs: false,
+      isLoadingAuditLogs: true,
+    );
+
+    await tester.binding.setSurfaceSize(const Size(1440, 2000));
+    await tester.pumpWidget(
+      _buildHarness(
+        providers: <SingleChildWidget>[
+          ChangeNotifierProvider<UserAdminService>.value(value: service),
+        ],
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    await tester.tap(find.text('Audit Log'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.text('No audit logs found'), findsNothing);
+  });
+
+  testWidgets('hq user admin audit log shows honest error state after load failure',
+      (WidgetTester tester) async {
+    final _FakeUserAdminService service = _FakeUserAdminService(
+      auditLogs: const <AuditLogEntry>[],
+      hasLoadedAuditLogs: true,
+      auditLogError: 'Unable to load audit logs right now',
+    );
+
+    await tester.binding.setSurfaceSize(const Size(1440, 2000));
+    await tester.pumpWidget(
+      _buildHarness(
+        providers: <SingleChildWidget>[
+          ChangeNotifierProvider<UserAdminService>.value(value: service),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Audit Log'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Unable to load audit logs right now'), findsOneWidget);
+    expect(
+      find.text(
+        'Try again in a moment or refresh after your connection stabilizes.',
       ),
       findsOneWidget,
     );
