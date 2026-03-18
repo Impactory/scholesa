@@ -1,11 +1,15 @@
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
 import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/modules/settings/settings_page.dart';
+import 'package:scholesa_app/services/firestore_service.dart';
 import 'package:scholesa_app/services/theme_service.dart';
 import 'package:url_launcher_platform_interface/link.dart';
 import 'package:url_launcher_platform_interface/url_launcher_platform_interface.dart';
@@ -45,6 +49,8 @@ class _FakeUrlLauncherPlatform extends UrlLauncherPlatform {
   @override
   Future<bool> supportsMode(PreferredLaunchMode mode) async => true;
 }
+
+class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
 AppState _buildAppState() {
   final AppState state = AppState();
@@ -91,10 +97,15 @@ Finder _tileTapTarget(String label) {
 
 void main() {
   testWidgets(
-      'settings launches data export support email and the store rating flow',
+      'settings submits support requests in-app and still opens the store rating flow',
       (WidgetTester tester) async {
     final AppState state = _buildAppState();
     final ThemeService themeService = ThemeService();
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
     final _FakeUrlLauncherPlatform launcherPlatform =
         _FakeUrlLauncherPlatform();
     final UrlLauncherPlatform previousLauncherPlatform =
@@ -109,6 +120,7 @@ void main() {
           providers: <SingleChildWidget>[
             ChangeNotifierProvider<AppState>.value(value: state),
             ChangeNotifierProvider<ThemeService>.value(value: themeService),
+            Provider<FirestoreService>.value(value: firestoreService),
           ],
         ),
       );
@@ -121,15 +133,24 @@ void main() {
       );
       await tester.tap(_tileTapTarget('Download My Data'));
       await tester.pumpAndSettle();
+      await tester.tap(find.text('Submit'));
+      await tester.pumpAndSettle();
 
-      expect(find.text('Download My Data'), findsWidgets);
+      final List<Map<String, dynamic>> supportRequests = (await firestore
+              .collection('supportRequests')
+              .get())
+          .docs
+          .map((doc) => doc.data())
+          .toList();
+      expect(find.text('Data export request submitted.'), findsOneWidget);
       expect(
-        launcherPlatform.launchedUrls,
-        contains(
-          predicate<String>(
-            (String value) => value.startsWith('mailto:support@scholesa.com?'),
-          ),
+        supportRequests.any(
+          (Map<String, dynamic> request) =>
+              request['requestType'] == 'data_export' &&
+              request['source'] == 'settings_download_my_data' &&
+              request['siteId'] == 'site-1',
         ),
+        isTrue,
       );
       expect(
         find.text(
@@ -145,15 +166,29 @@ void main() {
       );
       await tester.tap(_tileTapTarget('Help & Support'));
       await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byType(TextField),
+        'Need help updating our notification preferences.',
+      );
+      await tester.tap(find.text('Send'));
+      await tester.pumpAndSettle();
 
+      final List<Map<String, dynamic>> refreshedRequests = (await firestore
+              .collection('supportRequests')
+              .get())
+          .docs
+          .map((doc) => doc.data())
+          .toList();
+      expect(find.text('Support request submitted.'), findsOneWidget);
       expect(
-        launcherPlatform.launchedUrls
-            .where(
-              (String value) =>
-                  value.startsWith('mailto:support@scholesa.com?'),
-            )
-            .length,
-        greaterThanOrEqualTo(2),
+        refreshedRequests.any(
+          (Map<String, dynamic> request) =>
+              request['requestType'] == 'help' &&
+              request['source'] == 'settings_open_help_center' &&
+              request['message'] ==
+                  'Need help updating our notification preferences.',
+        ),
+        isTrue,
       );
 
       await tester.scrollUntilVisible(
@@ -170,6 +205,12 @@ void main() {
         contains('market://details?id=com.scholesa.app'),
       );
       expect(
+        launcherPlatform.launchedUrls.any(
+          (String value) => value.startsWith('mailto:support@scholesa.com?'),
+        ),
+        isFalse,
+      );
+      expect(
         find.text(
           'In-app rating is not available yet. Please rate Scholesa in your app store when the listing is live.',
         ),
@@ -181,10 +222,15 @@ void main() {
     }
   });
 
-  testWidgets('settings feedback launches support email instead of fake submit',
+  testWidgets('settings feedback persists in-app instead of launching email',
       (WidgetTester tester) async {
     final AppState state = _buildAppState();
     final ThemeService themeService = ThemeService();
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
     final _FakeUrlLauncherPlatform launcherPlatform =
         _FakeUrlLauncherPlatform();
     final UrlLauncherPlatform previousLauncherPlatform =
@@ -198,6 +244,7 @@ void main() {
           providers: <SingleChildWidget>[
             ChangeNotifierProvider<AppState>.value(value: state),
             ChangeNotifierProvider<ThemeService>.value(value: themeService),
+            Provider<FirestoreService>.value(value: firestoreService),
           ],
         ),
       );
@@ -218,21 +265,30 @@ void main() {
       await tester.tap(find.text('Send'));
       await tester.pumpAndSettle();
 
+      final List<Map<String, dynamic>> supportRequests = (await firestore
+              .collection('supportRequests')
+              .get())
+          .docs
+          .map((doc) => doc.data())
+          .toList();
       expect(
-        launcherPlatform.launchedUrls,
-        contains(
-          predicate<String>(
-            (String value) => value.startsWith('mailto:support@scholesa.com?'),
-          ),
+        supportRequests.any(
+          (Map<String, dynamic> request) =>
+              request['requestType'] == 'feedback' &&
+              request['source'] == 'settings_open_feedback' &&
+              request['message'] ==
+                  'Please improve the dashboard export flow.',
         ),
+        isTrue,
       );
+      expect(find.text('Feedback submitted.'), findsOneWidget);
       expect(
         find.text(
           'Feedback submission is not available in the app yet. Contact support if you need follow-up.',
         ),
         findsNothing,
       );
-      expect(find.text('Feedback sent'), findsNothing);
+      expect(launcherPlatform.launchedUrls, isEmpty);
     } finally {
       UrlLauncherPlatform.instance = previousLauncherPlatform;
     }
