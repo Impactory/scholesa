@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:provider/provider.dart';
@@ -516,31 +517,75 @@ class _HqBillingPageState extends State<HqBillingPage>
         'surface': 'header',
       },
     );
-    showDialog<void>(
-      context: context,
-      builder: (BuildContext dialogContext) => AlertDialog(
-        title: Text(_tHqBilling(context, 'Export Financials')),
-        content: Text(
-          '${_tHqBilling(context, 'Generate a consolidated financial report for invoices, payments, and subscriptions.')}\n\n${_tHqBilling(context, 'Financial exports are not available in the app yet.')}',
+    if (_invoices.isEmpty && _payments.isEmpty && _subscriptions.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_tHqBilling(context, 'No financial records to export yet.')),
         ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () {
-              TelemetryService.instance.logEvent(
-                event: 'cta.clicked',
-                metadata: <String, dynamic>{
-                  'module': 'hq_billing',
-                  'cta_id': 'close_export_financials_notice',
-                  'surface': 'export_financials_dialog',
-                },
-              );
-              Navigator.pop(dialogContext);
-            },
-            child: Text(_tHqBilling(context, 'Close')),
-          ),
-        ],
+      );
+      return;
+    }
+
+    Clipboard.setData(ClipboardData(text: _buildFinancialExport()));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(_tHqBilling(context, 'Financial export copied to clipboard.')),
       ),
     );
+  }
+
+  String _selectedSiteLabel() {
+    for (final _SiteFilterOption option in _siteOptions) {
+      if (option.id == _selectedSite) {
+        return option.label == 'All Sites'
+            ? _tHqBilling(context, 'All Sites')
+            : option.label;
+      }
+    }
+    return _selectedSite == 'all'
+        ? _tHqBilling(context, 'All Sites')
+        : _selectedSite;
+  }
+
+  String _buildFinancialExport() {
+    final StringBuffer buffer = StringBuffer()
+      ..writeln(_tHqBilling(context, 'Export Financials'))
+      ..writeln('Generated: ${DateTime.now().toIso8601String()}')
+      ..writeln('Site: ${_selectedSiteLabel()}')
+      ..writeln('Period: $_selectedPeriod')
+      ..writeln('')
+      ..writeln('Invoices')
+      ..writeln('--------');
+
+    for (final Map<String, dynamic> invoice in _invoices) {
+      buffer.writeln(
+        '${invoice['id']} | parent=${invoice['parent']} | learner=${invoice['learner']} | site=${invoice['site']} | amount=${invoice['amount']} | status=${invoice['status']} | date=${invoice['date']}',
+      );
+    }
+
+    buffer
+      ..writeln('')
+      ..writeln('Payments')
+      ..writeln('--------');
+
+    for (final Map<String, dynamic> payment in _payments) {
+      buffer.writeln(
+        '${payment['id']} | source=${payment['source']} | site=${payment['site']} | amount=${payment['amount']} | status=${payment['status']} | date=${payment['date']}',
+      );
+    }
+
+    buffer
+      ..writeln('')
+      ..writeln('Subscriptions')
+      ..writeln('-------------');
+
+    for (final Map<String, dynamic> subscription in _subscriptions) {
+      buffer.writeln(
+        '${subscription['id']} | owner=${subscription['owner']} | site=${subscription['site']} | plan=${subscription['plan']} | amount=${subscription['amount']} | status=${subscription['status']}',
+      );
+    }
+
+    return buffer.toString().trim();
   }
 
   Future<void> _loadBillingData() async {

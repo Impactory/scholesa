@@ -10,6 +10,8 @@ import 'package:scholesa_app/modules/hq_admin/hq_integrations_health_page.dart';
 import 'package:scholesa_app/modules/hq_admin/hq_safety_page.dart';
 import 'package:scholesa_app/ui/theme/scholesa_theme.dart';
 
+String? _clipboardText;
+
 Widget _buildHarness({required Widget child, required AppState appState}) {
   return MultiProvider(
     providers: <ChangeNotifierProvider<dynamic>>[
@@ -52,9 +54,16 @@ void main() {
   TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
       .setMockMethodCallHandler(SystemChannels.platform, (MethodCall methodCall) async {
     if (methodCall.method == 'Clipboard.setData') {
+      final Map<Object?, Object?>? arguments =
+          methodCall.arguments as Map<Object?, Object?>?;
+      _clipboardText = arguments?['text']?.toString();
       return null;
     }
     return null;
+  });
+
+  setUp(() {
+    _clipboardText = null;
   });
 
   testWidgets('HQ safety detail sheets remove the fake full report CTA',
@@ -189,7 +198,7 @@ void main() {
     expect(find.text('Invoice INV-1001'), findsOneWidget);
   });
 
-  testWidgets('HQ billing export dialog is notice-only until export exists',
+  testWidgets('HQ billing export copies live financial data to clipboard',
       (WidgetTester tester) async {
     await tester.binding.setSurfaceSize(const Size(1200, 1800));
     await tester.pumpWidget(
@@ -199,9 +208,37 @@ void main() {
             'siteOptions': <Map<String, dynamic>>[
               <String, dynamic>{'id': 'all', 'label': 'All Sites'},
             ],
-            'invoices': <Map<String, dynamic>>[],
-            'payments': <Map<String, dynamic>>[],
-            'subscriptions': <Map<String, dynamic>>[],
+            'invoices': <Map<String, dynamic>>[
+              <String, dynamic>{
+                'id': 'INV-3001',
+                'parent': 'Parent Export',
+                'learner': 'Learner Export',
+                'site': 'Site One',
+                'amount': 95.0,
+                'status': 'pending',
+                'date': '2026-03-17T10:00:00.000Z',
+              },
+            ],
+            'payments': <Map<String, dynamic>>[
+              <String, dynamic>{
+                'id': 'PAY-3001',
+                'source': 'Card ending 4242',
+                'site': 'Site One',
+                'amount': 95.0,
+                'status': 'completed',
+                'date': '2026-03-17T10:00:00.000Z',
+              },
+            ],
+            'subscriptions': <Map<String, dynamic>>[
+              <String, dynamic>{
+                'id': 'SUB-3001',
+                'owner': 'Parent Export',
+                'site': 'Site One',
+                'plan': 'Studio Core',
+                'amount': 95.0,
+                'status': 'active',
+              },
+            ],
           },
         ),
         appState: _buildAppState(),
@@ -212,14 +249,13 @@ void main() {
     await tester.tap(find.byIcon(Icons.download));
     await tester.pumpAndSettle();
 
-    expect(find.text('Export Financials'), findsOneWidget);
-    expect(
-      find.textContaining(
-          'Financial exports are not available in the app yet.'),
-      findsOneWidget,
-    );
-    expect(find.widgetWithText(ElevatedButton, 'Export'), findsNothing);
-    expect(find.text('Close'), findsOneWidget);
+    expect(find.text('Export Financials'), findsNothing);
+    expect(find.text('Financial export copied to clipboard.'), findsOneWidget);
+    expect(_clipboardText, isNotNull);
+    expect(_clipboardText, contains('Export Financials'));
+    expect(_clipboardText, contains('INV-3001'));
+    expect(_clipboardText, contains('PAY-3001'));
+    expect(_clipboardText, contains('SUB-3001'));
   });
 
   testWidgets('HQ billing shows precise unavailable labels for missing identity fields',
