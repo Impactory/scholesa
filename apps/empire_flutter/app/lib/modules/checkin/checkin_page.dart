@@ -11,6 +11,18 @@ String _tCheckin(BuildContext context, String input) {
   return WorkflowSurfaceI18n.text(context, input);
 }
 
+const String _canonicalLearnerUnavailableLabel = 'Learner unavailable';
+
+String _displayLearnerName(BuildContext context, String learnerName) {
+  final String normalized = learnerName.trim();
+  if (normalized.isEmpty ||
+      normalized == 'Unknown' ||
+      normalized == _canonicalLearnerUnavailableLabel) {
+    return _tCheckin(context, 'Learner unavailable');
+  }
+  return normalized;
+}
+
 class CheckinPage extends StatefulWidget {
   const CheckinPage({super.key});
 
@@ -511,7 +523,7 @@ class _CheckinPageState extends State<CheckinPage>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-            '${_tCheckin(context, 'Late pickup flagged for')} ${summary.learnerName}'),
+            '${_tCheckin(context, 'Late pickup flagged for')} ${_displayLearnerName(context, summary.learnerName)}'),
         backgroundColor: ScholesaColors.warning,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -680,6 +692,7 @@ class _LearnerCheckinCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final String learnerName = _displayLearnerName(context, summary.learnerName);
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 0,
@@ -715,7 +728,7 @@ class _LearnerCheckinCard extends StatelessWidget {
                   ),
                   child: Center(
                     child: Text(
-                      _getInitials(summary.learnerName),
+                      _getInitials(learnerName),
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -734,7 +747,7 @@ class _LearnerCheckinCard extends StatelessWidget {
                         children: <Widget>[
                           Expanded(
                             child: Text(
-                              summary.learnerName,
+                              learnerName,
                               style: const TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 16,
@@ -852,11 +865,15 @@ class _LearnerCheckinCard extends StatelessWidget {
   }
 
   String _getInitials(String name) {
-    final List<String> parts = name.split(' ');
+    final String safeName = name.trim();
+    if (safeName.isEmpty) {
+      return '?';
+    }
+    final List<String> parts = safeName.split(' ');
     if (parts.length >= 2) {
       return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
     }
-    return name.substring(0, 2).toUpperCase();
+    return safeName.substring(0, safeName.length >= 2 ? 2 : 1).toUpperCase();
   }
 
   String _formatTime(DateTime time) {
@@ -885,7 +902,7 @@ class _LearnerCheckinCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              '${_tCheckin(context, 'For')} ${summary.learnerName}',
+              '${_tCheckin(context, 'For')} ${_displayLearnerName(context, summary.learnerName)}',
               style: TextStyle(color: context.schTextSecondary),
             ),
             const SizedBox(height: 16),
@@ -1070,7 +1087,7 @@ class _CheckRecordCard extends StatelessWidget {
                   Row(
                     children: <Widget>[
                       Text(
-                        record.learnerName,
+                        _displayLearnerName(context, record.learnerName),
                         style: const TextStyle(fontWeight: FontWeight.w500),
                       ),
                       const SizedBox(width: 8),
@@ -1214,7 +1231,10 @@ class _CheckInSheetState extends State<_CheckInSheet> {
                                 ),
                           ),
                           Text(
-                            widget.summary.learnerName,
+                            _displayLearnerName(
+                              context,
+                              widget.summary.learnerName,
+                            ),
                             style: TextStyle(color: context.schTextSecondary),
                           ),
                         ],
@@ -1371,7 +1391,7 @@ class _CheckInSheetState extends State<_CheckInSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            '${widget.summary.learnerName} ${widget.isCheckOut ? 'checked out' : 'checked in'} successfully',
+            '${_displayLearnerName(context, widget.summary.learnerName)} ${widget.isCheckOut ? 'checked out' : 'checked in'} successfully',
           ),
           backgroundColor: widget.isCheckOut
               ? const Color(0xFF3B82F6)

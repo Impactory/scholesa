@@ -55,10 +55,12 @@ class _FakeUrlLauncherPlatform extends UrlLauncherPlatform {
 Widget _buildHarness({
   required GoRouter router,
   required List<SingleChildWidget> providers,
+  Locale locale = const Locale('en'),
 }) {
   return MultiProvider(
     providers: providers,
     child: MaterialApp.router(
+      locale: locale,
       routerConfig: router,
       localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
         GlobalMaterialLocalizations.delegate,
@@ -237,7 +239,7 @@ void main() {
       await _seedConversation(
         firestore,
         id: 'thread-missing-participant',
-        participantNames: <String>['Test User'],
+        participantNames: <String>['Test User', 'Unknown'],
       );
       final FirestoreService firestoreService = FirestoreService(
         firestore: firestore,
@@ -266,6 +268,7 @@ void main() {
       await tester.pumpWidget(
         _buildHarness(
           router: router,
+          locale: const Locale('zh', 'CN'),
           providers: <SingleChildWidget>[
             Provider<FirestoreService>.value(value: firestoreService),
             ChangeNotifierProvider<MessageService>.value(value: messageService),
@@ -275,13 +278,14 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Sender label regression'), findsOneWidget);
-      expect(find.textContaining('Sender unavailable'), findsWidgets);
+      expect(find.textContaining('发送者信息不可用'), findsWidgets);
+      expect(find.text('Sender unavailable'), findsNothing);
 
-      await tester.tap(find.text('Conversations'));
+      await tester.tap(find.text('对话'));
       await tester.pumpAndSettle();
 
       expect(
-        find.textContaining('Conversation participant unavailable'),
+        find.textContaining('对话参与者信息不可用'),
         findsOneWidget,
       );
       expect(find.text('Unknown'), findsNothing);

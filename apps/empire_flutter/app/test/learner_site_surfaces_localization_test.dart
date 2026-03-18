@@ -886,8 +886,18 @@ void main() {
     testWidgets('site incidents renders zh-CN copy',
         (WidgetTester tester) async {
       final Locale locale = const Locale('zh', 'CN');
+      final FakeFirebaseFirestore fakeFirestore = FakeFirebaseFirestore();
+      await fakeFirestore.collection('incidents').doc('incident-1').set(
+        <String, dynamic>{
+          'siteId': 'site-1',
+          'title': 'Playground incident',
+          'severity': 'minor',
+          'status': 'submitted',
+          'reportedAt': DateTime(2026, 3, 17, 9).millisecondsSinceEpoch,
+        },
+      );
       final FirestoreService firestoreService = FirestoreService(
-        firestore: FakeFirebaseFirestore(),
+        firestore: fakeFirestore,
         auth: _MockFirebaseAuth(),
       );
       final AppState appState = _buildAppState(
@@ -910,7 +920,10 @@ void main() {
 
       expect(find.text('安全与事件'), findsOneWidget);
       expect(find.text('报告事件'), findsOneWidget);
-      expect(find.text('暂无事件 已提交'), findsOneWidget);
+      expect(find.text('Playground incident'), findsOneWidget);
+      expect(find.textContaining('学习者信息不可用'), findsOneWidget);
+      expect(find.textContaining('报告人信息不可用'), findsOneWidget);
+      expect(find.text('未知'), findsNothing);
     });
   });
 }

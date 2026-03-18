@@ -19,7 +19,7 @@ String _conversationParticipantLabel(
 ) {
   if (participantNames.length > 1) {
     final String otherParticipant = participantNames[1].trim();
-    if (otherParticipant.isNotEmpty) {
+    if (otherParticipant.isNotEmpty && otherParticipant != 'Unknown') {
       return otherParticipant;
     }
   }
@@ -28,7 +28,9 @@ String _conversationParticipantLabel(
 
 String _messageSenderLabel(BuildContext context, String? senderName) {
   final String trimmed = (senderName ?? '').trim();
-  if (trimmed.isNotEmpty) {
+  if (trimmed.isNotEmpty &&
+      trimmed != 'Unknown' &&
+      trimmed != 'Sender unavailable') {
     return trimmed;
   }
   return _tMessages(context, 'Sender unavailable');

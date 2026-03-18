@@ -15,6 +15,21 @@ String _tSiteIncidents(BuildContext context, String input) {
   return SiteSurfaceI18n.text(context, input);
 }
 
+const String _canonicalLearnerUnavailableLabel = 'Learner unavailable';
+const String _canonicalReporterUnavailableLabel = 'Reporter unavailable';
+
+String _displayIncidentIdentity(
+  BuildContext context, {
+  required String? value,
+  required String unavailableLabel,
+}) {
+  final String normalized = (value ?? '').trim();
+  if (normalized.isEmpty || normalized == 'Unknown') {
+    return _tSiteIncidents(context, unavailableLabel);
+  }
+  return normalized;
+}
+
 /// Site incidents management page
 /// Based on docs/41_SAFETY_CONSENT_INCIDENTS_SPEC.md
 class SiteIncidentsPage extends StatefulWidget {
@@ -566,10 +581,11 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage>
               (data['severity'] as String?) ?? (data['type'] as String?),
             );
             final _Status status = _parseStatus(data['status'] as String?);
-            final String learnerName =
-                (data['learnerName'] as String?)?.trim().isNotEmpty == true
-                    ? (data['learnerName'] as String).trim()
-                    : _tSiteIncidents(context, 'Unknown');
+            final String learnerName = _displayIncidentIdentity(
+              context,
+              value: data['learnerName'] as String?,
+              unavailableLabel: _canonicalLearnerUnavailableLabel,
+            );
 
             return _Incident(
               id: doc.id,
@@ -578,9 +594,12 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage>
                   : (data['description'] as String? ?? 'Incident'),
               severity: severity,
               status: status,
-              reportedBy: (data['reportedByName'] as String?) ??
-                  (data['reportedBy'] as String?) ??
-                  _tSiteIncidents(context, 'Unknown'),
+                reportedBy: _displayIncidentIdentity(
+                context,
+                value: (data['reportedByName'] as String?) ??
+                  (data['reportedBy'] as String?),
+                unavailableLabel: _canonicalReporterUnavailableLabel,
+                ),
               reportedAt: _parseDateTime(data['reportedAt']) ??
                   _parseDateTime(data['createdAt']) ??
                   DateTime.now(),

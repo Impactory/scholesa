@@ -15,6 +15,7 @@ class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
 Future<void> _pumpCheckinPage(
   WidgetTester tester, {
   required FakeFirebaseFirestore firestore,
+  Locale locale = const Locale('en'),
 }) async {
   final FirestoreService firestoreService = FirestoreService(
     firestore: firestore,
@@ -32,6 +33,7 @@ Future<void> _pumpCheckinPage(
         ChangeNotifierProvider<CheckinService>.value(value: checkinService),
       ],
       child: MaterialApp(
+        locale: locale,
         supportedLocales: const <Locale>[
           Locale('en'),
           Locale('zh', 'CN'),
@@ -90,9 +92,14 @@ void main() {
       'siteIds': <String>['site-1'],
     });
 
-    await _pumpCheckinPage(tester, firestore: firestore);
+    await _pumpCheckinPage(
+      tester,
+      firestore: firestore,
+      locale: const Locale('zh', 'CN'),
+    );
 
-    expect(find.textContaining('Learner unavailable'), findsWidgets);
+    expect(find.textContaining('学习者信息不可用'), findsWidgets);
+    expect(find.text('Learner unavailable'), findsNothing);
     expect(find.text('Unknown'), findsNothing);
   });
 }

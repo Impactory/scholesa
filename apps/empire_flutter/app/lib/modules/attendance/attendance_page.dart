@@ -15,6 +15,18 @@ String _tAttendance(BuildContext context, String input) {
   return WorkflowSurfaceI18n.text(context, input);
 }
 
+const String _canonicalLearnerUnavailableLabel = 'Learner unavailable';
+
+String _displayLearnerName(BuildContext context, String learnerName) {
+  final String normalized = learnerName.trim();
+  if (normalized.isEmpty ||
+      normalized == 'Unknown' ||
+      normalized == _canonicalLearnerUnavailableLabel) {
+    return _tAttendance(context, 'Learner unavailable');
+  }
+  return normalized;
+}
+
 /// Attendance taking page
 class AttendancePage extends StatefulWidget {
   const AttendancePage({super.key});
@@ -203,6 +215,13 @@ class _AttendanceRosterViewState extends State<_AttendanceRosterView> {
   final Map<String, AttendanceStatus> _attendance =
       <String, AttendanceStatus>{};
   final Map<String, String> _notes = <String, String>{};
+  AttendanceService? _attendanceService;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _attendanceService ??= context.read<AttendanceService?>();
+  }
 
   @override
   void initState() {
@@ -234,7 +253,7 @@ class _AttendanceRosterViewState extends State<_AttendanceRosterView> {
 
   @override
   void dispose() {
-    context.read<AttendanceService?>()?.clearCurrentOccurrence();
+    _attendanceService?.clearCurrentOccurrence();
     super.dispose();
   }
 
@@ -513,6 +532,7 @@ class _StudentAttendanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final String learnerName = _displayLearnerName(context, learner.displayName);
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: Padding(
@@ -527,8 +547,8 @@ class _StudentAttendanceCard extends StatelessWidget {
                       ? NetworkImage(learner.photoUrl!)
                       : null,
                   child: learner.photoUrl == null
-                      ? Text(learner.displayName.isNotEmpty
-                          ? learner.displayName[0]
+                      ? Text(learnerName.isNotEmpty
+                        ? learnerName[0]
                           : '?')
                       : null,
                 ),
@@ -538,7 +558,7 @@ class _StudentAttendanceCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Text(
-                        learner.displayName,
+                        learnerName,
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       if (learner.currentAttendance?.isOffline == true)
