@@ -15,6 +15,7 @@ class _LocaleCase {
     required this.learnerLoopSubtitle,
     required this.sessionLoopTitle,
     required this.sessionLoopSubtitle,
+    required this.learnerUnavailable,
     required this.accessDeniedTitle,
     required this.accessDeniedBody,
   });
@@ -25,6 +26,7 @@ class _LocaleCase {
   final String learnerLoopSubtitle;
   final String sessionLoopTitle;
   final String sessionLoopSubtitle;
+  final String learnerUnavailable;
   final String accessDeniedTitle;
   final String accessDeniedBody;
 }
@@ -52,6 +54,7 @@ Widget _buildLocaleHarness(Locale locale) {
               Text(BosCoachingI18n.learnerLoopSubtitle(context)),
               Text(BosCoachingI18n.sessionLoopTitle(context)),
               Text(BosCoachingI18n.sessionLoopSubtitle(context)),
+              Text(BosCoachingI18n.learnerUnavailable(context)),
             ],
           ),
         );
@@ -93,6 +96,7 @@ void main() {
       sessionLoopTitle: 'MiloOS Session Loop',
       sessionLoopSubtitle:
           'Latest individual improvement signal for this session',
+      learnerUnavailable: 'Learner unavailable',
       accessDeniedTitle: 'Access Denied',
       accessDeniedBody: "You don't have permission to access this page.",
     ),
@@ -103,6 +107,7 @@ void main() {
       learnerLoopSubtitle: '最新的个人成长信号',
       sessionLoopTitle: 'MiloOS 课堂循环',
       sessionLoopSubtitle: '本次课堂最新的个人成长信号',
+      learnerUnavailable: '学习者信息不可用',
       accessDeniedTitle: '拒绝访问',
       accessDeniedBody: '你没有权限访问此页面。',
     ),
@@ -113,6 +118,7 @@ void main() {
       learnerLoopSubtitle: '最新的個人成長訊號',
       sessionLoopTitle: 'MiloOS 課堂循環',
       sessionLoopSubtitle: '本次課堂最新的個人成長訊號',
+      learnerUnavailable: '學習者資訊不可用',
       accessDeniedTitle: '拒絕存取',
       accessDeniedBody: '你沒有權限存取此頁面。',
     ),
@@ -144,6 +150,7 @@ void main() {
         expect(find.text(localeCase.learnerLoopSubtitle), findsOneWidget);
         expect(find.text(localeCase.sessionLoopTitle), findsOneWidget);
         expect(find.text(localeCase.sessionLoopSubtitle), findsOneWidget);
+        expect(find.text(localeCase.learnerUnavailable), findsOneWidget);
 
         await tester.pumpWidget(
           _buildRoleGateHarness(localeCase.locale, appState),

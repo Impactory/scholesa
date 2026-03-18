@@ -373,7 +373,12 @@ class _BosClassInsightsCardState extends State<BosClassInsightsCard> {
                 .take(3)
                 .map(
                   (_ClassLearnerSignal learner) =>
-                      _watchlistChip(context, accent, learner),
+                      _watchlistChip(
+                    context,
+                    accent,
+                    learner,
+                    constraints.maxWidth,
+                  ),
                 )
                 .toList(growable: false),
           ),
@@ -395,6 +400,7 @@ class _BosClassInsightsCardState extends State<BosClassInsightsCard> {
     BuildContext context,
     Color accent,
     _ClassLearnerSignal learner,
+    double maxWidth,
   ) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -403,12 +409,17 @@ class _BosClassInsightsCardState extends State<BosClassInsightsCard> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: accent.withValues(alpha: 0.12)),
       ),
-      child: Text(
-        '${learner.displayName} ${learner.summaryLabel(context)}',
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: maxWidth > 20 ? maxWidth - 20 : maxWidth,
+        ),
+        child: Text(
+          '${learner.displayName} ${learner.summaryLabel(context)}',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+        ),
       ),
     );
   }
@@ -506,6 +517,7 @@ class _BosClassInsightsCardState extends State<BosClassInsightsCard> {
           return _ClassLearnerSignal.tryFromMap(
             map,
             widget.learnerNamesById,
+            context,
           );
         })
         .whereType<_ClassLearnerSignal>()
@@ -583,6 +595,7 @@ class _ClassLearnerSignal {
   static _ClassLearnerSignal? tryFromMap(
     Map<String, dynamic> map,
     Map<String, String> learnerNamesById,
+    BuildContext context,
   ) {
     final String learnerId = (map['learnerId'] as String? ?? '').trim();
     final Map<String, dynamic>? xHat = map['x_hat'] as Map<String, dynamic>?;
@@ -602,7 +615,7 @@ class _ClassLearnerSignal {
       learnerId: learnerId,
       displayName: learnerNamesById[learnerId]?.trim().isNotEmpty == true
           ? learnerNamesById[learnerId]!.trim()
-          : _fallbackName(learnerId),
+          : BosCoachingI18n.learnerUnavailable(context),
       cognition: cognition,
       engagement: engagement,
       integrity: integrity,
@@ -614,14 +627,6 @@ class _ClassLearnerSignal {
   final double? cognition;
   final double? engagement;
   final double? integrity;
-
-  static String _fallbackName(String learnerId) {
-    if (learnerId.isEmpty) return 'Learner';
-    final String suffix = learnerId.length > 4
-        ? learnerId.substring(learnerId.length - 4)
-        : learnerId;
-    return 'Learner $suffix';
-  }
 
   bool get needsAttention =>
       (cognition != null && cognition! < 0.45) ||

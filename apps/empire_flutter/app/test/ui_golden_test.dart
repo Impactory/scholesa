@@ -265,6 +265,22 @@ void main() {
       );
     });
 
+    testWidgets('MiloOS class insights - missing learner identity',
+        (WidgetTester tester) async {
+      await _pumpSized(
+        tester,
+        size: const Size(390, 844),
+        child: _buildClassInsightsMissingIdentityHarness(),
+      );
+
+      await expectLater(
+        find.byType(BosClassInsightsCard),
+        matchesGoldenFile(
+          'goldens/miloos_class_insights_missing_identity_mobile.png',
+        ),
+      );
+    });
+
     testWidgets('Role dashboard - learner', (WidgetTester tester) async {
       final AppState appState = _buildStateForRole(UserRole.learner);
 
@@ -422,6 +438,25 @@ Widget _buildClassInsightsHarness() {
   );
 }
 
+Widget _buildClassInsightsMissingIdentityHarness() {
+  return Scaffold(
+    body: SingleChildScrollView(
+      child: BosClassInsightsCard(
+        title: 'MiloOS Class Insights',
+        subtitle:
+            'FDM state estimate, BAE watchlist, and active MVL gates for this class',
+        emptyLabel: 'No class insights yet',
+        sessionOccurrenceId: 'occ-golden',
+        siteId: 'site-1',
+        learnerNamesById: const <String, String>{
+          'learner-2': 'Nia Patel',
+        },
+        insightsLoader: _loadGoldenMissingIdentityInsights,
+      ),
+    ),
+  );
+}
+
 Future<Map<String, dynamic>> _loadGoldenClassInsights({
   required String sessionOccurrenceId,
   required String siteId,
@@ -462,6 +497,44 @@ Future<Map<String, dynamic>> _loadGoldenClassInsights({
           'cognition': 0.74,
           'engagement': 0.77,
           'integrity': 0.84,
+        },
+      },
+    ],
+  };
+}
+
+Future<Map<String, dynamic>> _loadGoldenMissingIdentityInsights({
+  required String sessionOccurrenceId,
+  required String siteId,
+}) async {
+  return <String, dynamic>{
+    'learnerCount': 2,
+    'activeMvlCount': 0,
+    'averages': <String, double>{
+      'cognition': 0.41,
+      'engagement': 0.52,
+      'integrity': 0.63,
+    },
+    'coverage': <String, int>{
+      'cognition': 2,
+      'engagement': 2,
+      'integrity': 2,
+    },
+    'watchlist': <Map<String, dynamic>>[
+      <String, dynamic>{
+        'learnerId': 'anon-7f9c',
+        'x_hat': <String, double>{
+          'cognition': 0.32,
+          'engagement': 0.41,
+          'integrity': 0.62,
+        },
+      },
+      <String, dynamic>{
+        'learnerId': 'learner-2',
+        'x_hat': <String, double>{
+          'cognition': 0.58,
+          'engagement': 0.39,
+          'integrity': 0.71,
         },
       },
     ],

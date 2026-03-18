@@ -287,5 +287,115 @@ void main() {
           find.text('Support recommended for these learners'), findsOneWidget);
       expect(find.text('Avery Chen'), findsWidgets);
     });
+
+    testWidgets(
+        'educator today class insights uses learner unavailable when identity is missing',
+        (WidgetTester tester) async {
+      final _MockEducatorService educatorService = _MockEducatorService();
+      final AppState appState = AppState()
+        ..updateFromMeResponse(<String, dynamic>{
+          'userId': 'educator-1',
+          'email': 'educator@scholesa.dev',
+          'displayName': 'Educator',
+          'role': 'educator',
+          'activeSiteId': 'site-1',
+          'siteIds': <String>['site-1'],
+          'entitlements': <Map<String, dynamic>>[],
+        });
+
+      final TodayClass todayClass = TodayClass(
+        id: 'occ-1',
+        sessionId: 'session-1',
+        title: 'Future Skills Studio',
+        startTime: DateTime(2026, 3, 13, 9),
+        endTime: DateTime(2026, 3, 13, 10),
+        enrolledCount: 12,
+        presentCount: 10,
+        status: 'in_progress',
+      );
+      final List<EducatorLearner> learners = <EducatorLearner>[
+        const EducatorLearner(
+          id: 'anon-7f9c',
+          name: ' ',
+          email: 'anon@scholesa.test',
+          attendanceRate: 92,
+          missionsCompleted: 7,
+          pillarProgress: <String, double>{},
+          enrolledSessionIds: <String>['session-1'],
+        ),
+      ];
+
+      when(() => educatorService.loadTodaySchedule()).thenAnswer((_) async {});
+      when(() => educatorService.loadLearners()).thenAnswer((_) async {});
+      when(() => educatorService.isLoading).thenReturn(false);
+      when(() => educatorService.todayClasses)
+          .thenReturn(<TodayClass>[todayClass]);
+      when(() => educatorService.currentClass).thenReturn(todayClass);
+      when(() => educatorService.learners).thenReturn(learners);
+      when(() => educatorService.dayStats).thenReturn(
+        const EducatorDayStats(
+          totalClasses: 1,
+          completedClasses: 0,
+          totalLearners: 12,
+          presentLearners: 10,
+          missionsToReview: 3,
+          unreadMessages: 1,
+        ),
+      );
+      when(() => educatorService.siteId).thenReturn('site-1');
+
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: <SingleChildWidget>[
+            ChangeNotifierProvider<AppState>.value(value: appState),
+            ChangeNotifierProvider<EducatorService>.value(
+                value: educatorService),
+          ],
+          child: MaterialApp(
+            theme: _testTheme,
+            home: EducatorTodayPage(
+              classInsightsLoader: ({
+                required String sessionOccurrenceId,
+                required String siteId,
+              }) async =>
+                  <String, dynamic>{
+                'sessionOccurrenceId': sessionOccurrenceId,
+                'siteId': siteId,
+                'learnerCount': 1,
+                'activeMvlCount': 0,
+                'averages': <String, double>{
+                  'cognition': 0.41,
+                  'engagement': 0.52,
+                  'integrity': 0.63,
+                },
+                'learners': <Map<String, dynamic>>[
+                  <String, dynamic>{
+                    'learnerId': 'anon-7f9c',
+                    'x_hat': <String, double>{
+                      'cognition': 0.32,
+                      'engagement': 0.41,
+                      'integrity': 0.62,
+                    },
+                  },
+                ],
+              },
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Learner unavailable'), findsOneWidget);
+      expect(find.text('Learner 7f9c'), findsNothing);
+
+      await tester.tap(find.text('View Watchlist'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Learner unavailable'), findsWidgets);
+      expect(find.text('Learner 7f9c'), findsNothing);
+    });
   });
 }
