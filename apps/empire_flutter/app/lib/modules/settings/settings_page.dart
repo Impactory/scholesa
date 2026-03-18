@@ -85,7 +85,8 @@ const Map<String, String> _settingsZhCn = <String, String>{
   'App Rating': '应用评分',
   'Scholesa version 1.0.0 (Build 1).': 'Scholesa 版本 1.0.0（Build 1）。',
   'Close': '关闭',
-  'Are you sure you want to sign out?': '确定要退出登录吗？',
+  'Sign out so another family member can switch accounts on this device?':
+      '要退出登录，让其他家庭成员在这台设备上切换账户吗？',
   'Cancel': '取消',
   'This action cannot be undone. All your data will be permanently deleted.':
       '此操作无法撤销。你的所有数据都将被永久删除。',
@@ -206,7 +207,8 @@ const Map<String, String> _settingsZhTw = <String, String>{
   'App Rating': '應用評分',
   'Scholesa version 1.0.0 (Build 1).': 'Scholesa 版本 1.0.0（Build 1）。',
   'Close': '關閉',
-  'Are you sure you want to sign out?': '確定要登出嗎？',
+  'Sign out so another family member can switch accounts on this device?':
+      '要登出，讓其他家庭成員在這台裝置上切換帳戶嗎？',
   'Cancel': '取消',
   'This action cannot be undone. All your data will be permanently deleted.':
       '此操作無法復原。你的所有資料都將被永久刪除。',
@@ -614,7 +616,10 @@ class _SettingsPageState extends State<SettingsPage> {
                 _SettingsTile(
                   icon: Icons.logout,
                   title: _tSettings(context, 'Sign Out'),
-                  subtitle: _tSettings(context, 'Sign out of your account'),
+                  subtitle: _tSettings(
+                    context,
+                    'Sign out so another family member can switch accounts on this device?',
+                  ),
                   iconColor: ScholesaColors.error,
                   onTap: () => _confirmSignOut(),
                 ),
@@ -1541,7 +1546,11 @@ class _SettingsPageState extends State<SettingsPage> {
         return AlertDialog(
           title: Text(_tSettings(dialogContext, 'Sign Out')),
           content: Text(
-              _tSettings(dialogContext, 'Are you sure you want to sign out?')),
+            _tSettings(
+              dialogContext,
+              'Sign out so another family member can switch accounts on this device?',
+            ),
+          ),
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),

@@ -183,6 +183,11 @@ class AuthService {
       } else {
         // Mobile: Use native Google Sign-In
         await _ensureGoogleInitialized();
+        try {
+          await _googleSignIn.signOut();
+        } catch (_) {
+          // Best effort: still continue to the account chooser if no session exists.
+        }
         final GoogleSignInAccount googleUser = await _googleSignIn.authenticate(
           scopeHint: <String>['email', 'profile'],
         );
