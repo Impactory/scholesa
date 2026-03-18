@@ -965,8 +965,7 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
           'createdAt': DateTime.now().toIso8601String(),
         },
       );
-      final String fileName =
-          'practice-plan-${learner.id}-${_selectedLane}.txt';
+      final String fileName = 'practice-plan-${learner.id}-$_selectedLane.txt';
       final String? savedLocation = await ExportService.instance.saveTextFile(
         fileName: fileName,
         content: printablePlan,

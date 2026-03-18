@@ -625,6 +625,13 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
         actions: <Widget>[
           TextButton(
             onPressed: () async {
+              final NavigatorState navigator = Navigator.of(dialogContext);
+              final ScaffoldMessengerState messenger =
+                  ScaffoldMessenger.of(context);
+              final String successMessage =
+                  _t('Session reminder request submitted.');
+              final String failureMessage =
+                  _t('Unable to submit session reminder request right now.');
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
                 metadata: const <String, dynamic>{
@@ -644,12 +651,10 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
                   },
                 );
                 if (!mounted) return;
-                Navigator.pop(dialogContext);
-                ScaffoldMessenger.of(context).showSnackBar(
+                navigator.pop();
+                messenger.showSnackBar(
                   SnackBar(
-                    content: Text(
-                      _t('Session reminder request submitted.'),
-                    ),
+                    content: Text(successMessage),
                   ),
                 );
               } catch (error) {
@@ -664,13 +669,9 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
                   },
                 );
                 if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
+                messenger.showSnackBar(
                   SnackBar(
-                    content: Text(
-                      _t(
-                        'Unable to submit session reminder request right now.',
-                      ),
-                    ),
+                    content: Text(failureMessage),
                   ),
                 );
               }

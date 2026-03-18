@@ -350,6 +350,10 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
     final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
     final String summary = _buildIncidentSummary(context, incident);
     final String fileName = _incidentSummaryFileName(incident);
+    final String successMessage =
+        _tHqSafety(context, 'Incident summary downloaded.');
+    final String failureMessage =
+        _tHqSafety(context, 'Unable to download incident summary right now.');
     try {
       final String? savedLocation = await ExportService.instance.saveTextFile(
         fileName: fileName,
@@ -370,16 +374,14 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
 
       messenger.showSnackBar(
         SnackBar(
-          content: Text(_tHqSafety(context, 'Incident summary downloaded.')),
+          content: Text(successMessage),
         ),
       );
     } catch (_) {
       if (!mounted) return;
       messenger.showSnackBar(
         SnackBar(
-          content: Text(
-            _tHqSafety(context, 'Unable to download incident summary right now.'),
-          ),
+          content: Text(failureMessage),
         ),
       );
     }
