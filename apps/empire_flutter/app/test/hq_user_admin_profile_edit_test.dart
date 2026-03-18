@@ -15,29 +15,33 @@ import 'package:scholesa_app/services/firestore_service.dart';
 class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
 class _FakeUserAdminService extends UserAdminService {
-  _FakeUserAdminService()
+  _FakeUserAdminService({List<UserModel>? users})
       : super(
           firestoreService: FirestoreService(
             firestore: FakeFirebaseFirestore(),
             auth: _MockFirebaseAuth(),
           ),
+        ),
+        _fakeUsers = List<UserModel>.from(
+          users ??
+              <UserModel>[
+                UserModel(
+                  uid: 'user-1',
+                  email: 'ava@scholesa.test',
+                  displayName: 'Ava Learner',
+                  role: UserRole.learner,
+                  status: UserStatus.active,
+                  siteIds: const <String>['site-1'],
+                  createdAt: DateTime(2026, 1, 1),
+                ),
+              ],
         );
 
   bool loadUsersCalled = false;
   String? lastUpdatedUserId;
   String? lastUpdatedDisplayName;
 
-  final List<UserModel> _fakeUsers = <UserModel>[
-    UserModel(
-      uid: 'user-1',
-      email: 'ava@scholesa.test',
-      displayName: 'Ava Learner',
-      role: UserRole.learner,
-      status: UserStatus.active,
-      siteIds: const <String>['site-1'],
-      createdAt: DateTime(2026, 1, 1),
-    ),
-  ];
+  final List<UserModel> _fakeUsers;
 
   @override
   List<UserModel> get users => List<UserModel>.unmodifiable(_fakeUsers);
@@ -171,5 +175,34 @@ void main() {
 
     expect(find.text('site-1'), findsOneWidget);
     expect(find.text('Unknown Site'), findsNothing);
+  });
+
+  testWidgets('hq user admin shows honest unavailable name label when display name is missing',
+      (WidgetTester tester) async {
+    final _FakeUserAdminService service = _FakeUserAdminService(
+      users: <UserModel>[
+        UserModel(
+          uid: 'user-1',
+          email: 'ava@scholesa.test',
+          role: UserRole.learner,
+          status: UserStatus.active,
+          siteIds: const <String>['site-1'],
+          createdAt: DateTime(2026, 1, 1),
+        ),
+      ],
+    );
+
+    await tester.binding.setSurfaceSize(const Size(1440, 2000));
+    await tester.pumpWidget(
+      _buildHarness(
+        providers: <SingleChildWidget>[
+          ChangeNotifierProvider<UserAdminService>.value(value: service),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Name unavailable'), findsOneWidget);
+    expect(find.text('No Name'), findsNothing);
   });
 }

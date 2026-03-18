@@ -13,6 +13,7 @@ String _tUserAdmin(BuildContext context, String input) {
 }
 
 const String _canonicalSiteUnavailableLabel = 'Site unavailable';
+const String _canonicalNameUnavailableLabel = 'Name unavailable';
 
 String _displaySiteName(BuildContext context, String siteName) {
   final String normalized = siteName.trim();
@@ -20,6 +21,14 @@ String _displaySiteName(BuildContext context, String siteName) {
       normalized == 'Unknown Site' ||
       normalized == _canonicalSiteUnavailableLabel) {
     return _tUserAdmin(context, 'Site unavailable');
+  }
+  return normalized;
+}
+
+String _displayUserName(BuildContext context, String? displayName) {
+  final String normalized = (displayName ?? '').trim();
+  if (normalized.isEmpty || normalized == 'No Name') {
+    return _tUserAdmin(context, _canonicalNameUnavailableLabel);
   }
   return normalized;
 }
@@ -724,7 +733,7 @@ class _UserCard extends StatelessWidget {
                       children: <Widget>[
                         Expanded(
                           child: Text(
-                            user.displayName ?? 'No Name',
+                            _displayUserName(context, user.displayName),
                             style: const TextStyle(
                               fontWeight: FontWeight.w600,
                               fontSize: 16,
@@ -1112,7 +1121,7 @@ class _UserDetailsSheet extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
                             Text(
-                              user.displayName ?? _tUserAdmin(context, 'No Name'),
+                              _displayUserName(context, user.displayName),
                               style: const TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
