@@ -37,9 +37,24 @@ void main() {
     test('every role maps to an enabled default route', () {
       for (final UserRole role in UserRole.values) {
         final String route = roleDefaultWorkflowRoute(role);
-        expect(route, isNotEmpty, reason: 'route should exist for ${role.name}');
+        expect(route, isNotEmpty,
+            reason: 'route should exist for ${role.name}');
         expect(isRouteEnabled(route), isTrue,
             reason: 'default route should be enabled for ${role.name}');
+      }
+    });
+
+    test('inventory-aligned alias routes are enabled', () {
+      const List<String> inventoryAliasRoutes = <String>[
+        '/learner/settings',
+        '/educator/review-queue',
+        '/parent/messages',
+        '/parent/settings',
+        '/site/scheduling',
+      ];
+      for (final String route in inventoryAliasRoutes) {
+        expect(isRouteEnabled(route), isTrue,
+            reason: '$route should be enabled');
       }
     });
 
@@ -66,7 +81,8 @@ void main() {
             providers: <SingleChildWidget>[
               Provider<FirestoreService>.value(value: firestoreService),
               ChangeNotifierProvider<AppState>.value(value: appState),
-              ChangeNotifierProvider<MessageService>.value(value: messageService),
+              ChangeNotifierProvider<MessageService>.value(
+                  value: messageService),
             ],
             child: MaterialApp(
               theme: _testTheme,

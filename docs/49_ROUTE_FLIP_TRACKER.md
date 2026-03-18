@@ -1,13 +1,13 @@
 # 49_ROUTE_FLIP_TRACKER.md
 Route Flip Tracker - Enabled Features Registry
 
-Last Updated: 2026-03-17
+Last Updated: 2026-03-18
 Source of Truth: `apps/empire_flutter/app/lib/router/app_router.dart` (`kKnownRoutes`)
 
 ## Status Summary
 
-- Total routes in registry: **47**
-- Enabled routes: **47**
+- Total routes in registry: **52**
+- Enabled routes: **52**
 - Disabled routes: **0**
 - Redirect-only routes outside registry: **1** (`/register` → `/login`)
 - Placeholder/coming-soon on enabled routes: **under active audit**
@@ -17,14 +17,14 @@ Source of Truth: `apps/empire_flutter/app/lib/router/app_router.dart` (`kKnownRo
 | Category | Enabled | Disabled | Total |
 |---|---:|---:|---:|
 | Public/Auth/Dashboard | 3 | 0 | 3 |
-| Learner | 5 | 0 | 5 |
-| Educator | 8 | 0 | 8 |
-| Parent | 4 | 0 | 4 |
-| Site | 9 | 0 | 9 |
+| Learner | 6 | 0 | 6 |
+| Educator | 9 | 0 | 9 |
+| Parent | 6 | 0 | 6 |
+| Site | 10 | 0 | 10 |
 | Partner | 3 | 0 | 3 |
 | HQ | 11 | 0 | 11 |
 | Cross-role | 4 | 0 | 4 |
-| **Total** | **47** | **0** | **47** |
+| **Total** | **52** | **0** | **52** |
 
 ## Enabled Route Registry
 
@@ -39,6 +39,7 @@ Source of Truth: `apps/empire_flutter/app/lib/router/app_router.dart` (`kKnownRo
 - `/learner/missions`
 - `/learner/habits`
 - `/learner/portfolio`
+- `/learner/settings`
 
 ### Educator
 - `/educator/today`
@@ -46,6 +47,7 @@ Source of Truth: `apps/empire_flutter/app/lib/router/app_router.dart` (`kKnownRo
 - `/educator/sessions`
 - `/educator/learners`
 - `/educator/missions/review`
+- `/educator/review-queue`
 - `/educator/mission-plans`
 - `/educator/learner-supports`
 - `/educator/integrations`
@@ -55,12 +57,15 @@ Source of Truth: `apps/empire_flutter/app/lib/router/app_router.dart` (`kKnownRo
 - `/parent/billing`
 - `/parent/schedule`
 - `/parent/portfolio`
+- `/parent/messages`
+- `/parent/settings`
 
 ### Site
 - `/site/checkin`
 - `/site/provisioning`
 - `/site/dashboard`
 - `/site/sessions`
+- `/site/scheduling`
 - `/site/ops`
 - `/site/incidents`
 - `/site/identity`
@@ -106,6 +111,7 @@ Source of Truth: `apps/empire_flutter/app/lib/router/app_router.dart` (`kKnownRo
 |---|---|---|
 | 2026-02-23 | Full registry | Reconciled tracker to live `kKnownRoutes`; all 46 routes enabled |
 | 2026-03-17 | Router registry + audit posture | Corrected live route count to 47 known routes, noted `/register` redirect route, and removed unsupported blanket route-compliance claims pending the current release audit |
+| 2026-03-18 | Inventory-aligned aliases | Added 5 documented alias routes with honest equivalent screens: learner settings, educator review queue, parent messages, parent settings, and site scheduling |
 
 <!-- TELEMETRY_WIRING:START -->
 ## Telemetry & End-to-End Wiring
