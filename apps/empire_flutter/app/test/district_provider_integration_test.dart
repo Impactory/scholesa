@@ -314,5 +314,35 @@ void main() {
       expect(find.text('Match confidence unavailable'), findsOneWidget);
       expect(find.text('Match confidence: 50%'), findsNothing);
     });
+
+    testWidgets(
+        'site identity page shows unavailable account labels instead of unknown identities',
+        (WidgetTester tester) async {
+      final AppState appState = _buildSiteState();
+
+      await tester.pumpWidget(
+        _buildSiteHarness(
+          appState: appState,
+          child: SiteIdentityPage(
+            identityLoader: (_) async => <Map<String, dynamic>>[
+              <String, dynamic>{
+                'id': 'identity-missing-accounts',
+                'provider': 'google_classroom',
+                'scholesaUserId': 'learner-1',
+                'status': 'unmatched',
+              },
+            ],
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Local account unavailable'), findsOneWidget);
+      expect(find.text('External account unavailable'), findsOneWidget);
+      expect(find.text('Unknown local account'), findsNothing);
+      expect(find.text('Unknown external account'), findsNothing);
+    });
   });
 }

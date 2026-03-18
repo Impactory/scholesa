@@ -461,11 +461,11 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
         final String localName =
             (data['scholesaUserName'] as String?)?.trim().isNotEmpty == true
                 ? (data['scholesaUserName'] as String).trim()
-                : _tSiteIdentity(context, 'Unknown local account');
+            : _tSiteIdentity(context, 'Local account unavailable');
         final String externalName =
             (data['providerUserId'] as String?)?.trim().isNotEmpty == true
                 ? (data['providerUserId'] as String).trim()
-                : _tSiteIdentity(context, 'Unknown external account');
+            : _tSiteIdentity(context, 'External account unavailable');
         final num? rawConfidence = data['confidence'] as num?;
         final double? confidence = rawConfidence == null
             ? null
