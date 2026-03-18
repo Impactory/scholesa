@@ -37,6 +37,7 @@ class ParentSurfaceI18n {
     'NOV': '11月',
     'DEC': '12月',
     'No learners linked': '尚未关联学习者',
+    'Learner unavailable': '学习者信息不可用',
     'Contact your school to link your children': '请联系学校关联你的孩子账户',
     'Family AI Coach': '家庭 AI 教练',
     'Keep BOS/MIA loop active for each child’s progress':
@@ -156,6 +157,7 @@ class ParentSurfaceI18n {
     'NOV': '11月',
     'DEC': '12月',
     'No learners linked': '尚未關聯學習者',
+    'Learner unavailable': '學習者資訊不可用',
     'Contact your school to link your children': '請聯絡學校關聯你的孩子帳戶',
     'Family AI Coach': '家庭 AI 教練',
     'Keep BOS/MIA loop active for each child’s progress':

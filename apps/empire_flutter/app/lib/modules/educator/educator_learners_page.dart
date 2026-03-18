@@ -21,6 +21,18 @@ String _tEducatorLearners(BuildContext context, String input) {
   return _tEducatorLearnersPageSpecific(context, input);
 }
 
+const String _canonicalLearnerUnavailableLabel = 'Learner unavailable';
+
+String _displayLearnerName(BuildContext context, String learnerName) {
+  final String normalized = learnerName.trim();
+  if (normalized.isEmpty ||
+      normalized == 'Unknown' ||
+      normalized == _canonicalLearnerUnavailableLabel) {
+    return _tEducatorLearners(context, 'Learner unavailable');
+  }
+  return normalized;
+}
+
 /// Educator Learners Page - View and manage learner roster
 class EducatorLearnersPage extends StatefulWidget {
   const EducatorLearnersPage({super.key});
@@ -141,7 +153,7 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
 
     setState(() {
       _loopInsightsLoading = true;
-      _loopLearnerName = learner.name;
+      _loopLearnerName = _displayLearnerName(context, learner.name);
     });
 
     try {
@@ -555,7 +567,7 @@ class _LearnerCard extends StatelessWidget {
                       Row(
                         children: <Widget>[
                           Text(
-                            learner.name,
+                            _displayLearnerName(context, learner.name),
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 15,
@@ -856,7 +868,7 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
   String _buildPrintablePracticePlan() {
     final List<String> tasks = _practiceTasksForLane(_selectedLane);
     return <String>[
-      '${_tEducatorLearners(context, 'Learner')}: ${learner.name}',
+      '${_tEducatorLearners(context, 'Learner')}: ${_displayLearnerName(context, learner.name)}',
       '${_tEducatorLearners(context, 'Differentiation lane')}: ${_laneLabel(_selectedLane)}',
       '${_tEducatorLearners(context, 'Attendance')}: ${learner.attendanceRate}%',
       '${_tEducatorLearners(context, 'Missions')}: ${learner.missionsCompleted}',
@@ -1024,7 +1036,7 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
                             Text(
-                              learner.name,
+                              _displayLearnerName(context, learner.name),
                               style: Theme.of(context)
                                   .textTheme
                                   .titleLarge

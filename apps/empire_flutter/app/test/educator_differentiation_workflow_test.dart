@@ -76,6 +76,30 @@ Future<void> _seedLearner(FakeFirebaseFirestore firestore) async {
   });
 }
 
+Future<void> _seedLearnerWithoutDisplayName(
+  FakeFirebaseFirestore firestore,
+) async {
+  await firestore.collection('users').doc('learner-1').set(<String, dynamic>{
+    'email': 'learner-1@scholesa.test',
+    'siteId': 'site-1',
+    'attendanceRate': 68,
+    'missionsCompleted': 3,
+    'futureSkillsProgress': 0.32,
+    'leadershipProgress': 0.48,
+    'impactProgress': 0.41,
+    'enrolledSessionIds': <String>['session-1'],
+  });
+  await firestore
+      .collection('enrollments')
+      .doc('enrollment-1')
+      .set(<String, dynamic>{
+    'siteId': 'site-1',
+    'learnerId': 'learner-1',
+    'educatorId': 'educator-1',
+    'sessionId': 'session-1',
+  });
+}
+
 void main() {
   testWidgets(
       'educator learner detail saves lane override and printable practice export',
@@ -164,5 +188,37 @@ void main() {
       practiceExports.docs.first.data()['content'] as String,
       contains('Learner: Learner One'),
     );
+  });
+
+  testWidgets('educator learners page shows honest learner unavailable label',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedLearnerWithoutDisplayName(firestore);
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final EducatorService educatorService = EducatorService(
+      firestoreService: firestoreService,
+      educatorId: 'educator-1',
+      siteId: 'site-1',
+    );
+
+    await tester.pumpWidget(
+      _buildHarness(
+        child: const EducatorLearnersPage(),
+        providers: <SingleChildWidget>[
+          Provider<FirestoreService>.value(value: firestoreService),
+          ChangeNotifierProvider<AppState>.value(value: _buildEducatorState()),
+          ChangeNotifierProvider<EducatorService>.value(value: educatorService),
+        ],
+      ),
+    );
+
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('Learner unavailable'), findsWidgets);
+    expect(find.text('Unknown'), findsNothing);
   });
 }

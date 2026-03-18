@@ -6,6 +6,8 @@ import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import 'educator_models.dart';
 
+const String _fallbackLearnerName = 'Learner unavailable';
+
 /// Service for educator-specific features - wired to Firebase
 class EducatorService extends ChangeNotifier {
   EducatorService({
@@ -799,7 +801,9 @@ class EducatorService extends ChangeNotifier {
           }
           loadedLearners.add(EducatorLearner(
             id: doc.id,
-            name: data['displayName'] as String? ?? 'Unknown',
+            name: (data['displayName'] as String?)?.trim().isNotEmpty == true
+                ? (data['displayName'] as String).trim()
+                : _fallbackLearnerName,
             email: data['email'] as String? ?? '',
             attendanceRate: (data['attendanceRate'] as num?)?.toInt() ?? 0,
             missionsCompleted: data['missionsCompleted'] as int? ?? 0,

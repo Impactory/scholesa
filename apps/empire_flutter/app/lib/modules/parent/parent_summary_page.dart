@@ -19,9 +19,20 @@ class ParentSummaryPage extends StatefulWidget {
 
 class _ParentSummaryPageState extends State<ParentSummaryPage> {
   int _selectedLearnerIndex = 0;
+  static const String _canonicalLearnerUnavailableLabel = 'Learner unavailable';
 
   String _t(String input) {
     return ParentSurfaceI18n.text(context, input);
+  }
+
+  String _displayLearnerName(String learnerName) {
+    final String normalized = learnerName.trim();
+    if (normalized.isEmpty ||
+        normalized == 'Unknown' ||
+        normalized == _canonicalLearnerUnavailableLabel) {
+      return _t('Learner unavailable');
+    }
+    return normalized;
   }
 
   @override
@@ -91,7 +102,8 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
                       subtitle: BosCoachingI18n.familyLearningSubtitle(context),
                       emptyLabel: BosCoachingI18n.familyLearningEmpty(context),
                       learnerId: selectedLearner.learnerId,
-                      learnerName: selectedLearner.learnerName,
+                      learnerName:
+                          _displayLearnerName(selectedLearner.learnerName),
                       accentColor: ScholesaColors.parent,
                     ),
                   ),
@@ -237,7 +249,7 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
                     ),
                     child: Center(
                       child: Text(
-                        _getInitials(learner.learnerName),
+                        _getInitials(_displayLearnerName(learner.learnerName)),
                         style: TextStyle(
                           color: isSelected ? Colors.white : Colors.white,
                           fontWeight: FontWeight.bold,
@@ -252,7 +264,7 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Text(
-                        learner.learnerName,
+                        _displayLearnerName(learner.learnerName),
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
                           color: isSelected ? Colors.white : Colors.grey[800],
@@ -338,7 +350,7 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      learner.learnerName,
+                      _displayLearnerName(learner.learnerName),
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -548,7 +560,7 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
       event: 'cta.clicked',
       metadata: <String, dynamic>{
         'cta': 'parent_summary_view_all_activities',
-        'learner': learner.learnerName
+        'learner': _displayLearnerName(learner.learnerName)
       },
     );
     showModalBottomSheet<void>(
@@ -615,11 +627,15 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
   }
 
   String _getInitials(String name) {
-    final List<String> parts = name.split(' ');
+    final String safeName = name.trim();
+    if (safeName.isEmpty) {
+      return '?';
+    }
+    final List<String> parts = safeName.split(' ');
     if (parts.length >= 2) {
       return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
     }
-    return name.substring(0, 2).toUpperCase();
+    return safeName.substring(0, safeName.length >= 2 ? 2 : 1).toUpperCase();
   }
 }
 

@@ -59,11 +59,11 @@ AppState _buildParentState() {
   return state;
 }
 
-LearnerSummary _sampleLearner() {
+LearnerSummary _sampleLearner({String learnerName = 'Ava Learner'}) {
   final DateTime now = DateTime(2026, 3, 8, 9);
   return LearnerSummary(
     learnerId: 'learner-1',
-    learnerName: 'Ava Learner',
+    learnerName: learnerName,
     currentLevel: 4,
     totalXp: 1200,
     missionsCompleted: 5,
@@ -112,6 +112,7 @@ Future<void> _pumpPage(
   WidgetTester tester, {
   required Locale locale,
   required Widget home,
+  List<LearnerSummary>? learnerSummaries,
 }) async {
   tester.view.physicalSize = const Size(1440, 2200);
   tester.view.devicePixelRatio = 1.0;
@@ -122,7 +123,7 @@ Future<void> _pumpPage(
 
   final _FakeParentService service = _FakeParentService(
     parentId: 'parent-test-1',
-    learnerSummaries: <LearnerSummary>[_sampleLearner()],
+    learnerSummaries: learnerSummaries ?? <LearnerSummary>[_sampleLearner()],
   );
 
   await tester.pumpWidget(
@@ -167,6 +168,22 @@ void main() {
       expect(find.text('家庭仪表板'), findsOneWidget);
       expect(find.text('学习支柱'), findsOneWidget);
       expect(find.text('家庭学习循环'), findsOneWidget);
+    });
+
+    testWidgets('parent summary localizes unavailable learner labels in zh-CN',
+        (WidgetTester tester) async {
+      await _pumpPage(
+        tester,
+        locale: const Locale('zh', 'CN'),
+        home: const ParentSummaryPage(),
+        learnerSummaries: <LearnerSummary>[
+          _sampleLearner(learnerName: 'Learner unavailable'),
+        ],
+      );
+
+      expect(find.text('学习者信息不可用'), findsWidgets);
+      expect(find.text('Learner unavailable'), findsNothing);
+      expect(find.text('Unknown'), findsNothing);
     });
 
     testWidgets('parent schedule renders zh-TW strings',

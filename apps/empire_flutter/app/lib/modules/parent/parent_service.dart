@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import '../../services/firestore_service.dart';
 import 'parent_models.dart';
 
+const String _fallbackLearnerName = 'Learner unavailable';
+
 bool _isMissingFirebaseAppError(Object error) {
   final String message = error.toString();
   return message.contains("No Firebase App '[DEFAULT]' has been created") ||
@@ -273,7 +275,10 @@ class ParentService extends ChangeNotifier {
 
     return LearnerSummary(
       learnerId: learnerId,
-      learnerName: learnerData['displayName'] as String? ?? 'Unknown',
+      learnerName: (learnerData['displayName'] as String?)?.trim().isNotEmpty ==
+          true
+          ? (learnerData['displayName'] as String).trim()
+          : _fallbackLearnerName,
       photoUrl: learnerData['photoUrl'] as String?,
       currentLevel: _toInt(progressData?['level']) ?? 1,
       totalXp: _toInt(progressData?['totalXp']) ?? 0,

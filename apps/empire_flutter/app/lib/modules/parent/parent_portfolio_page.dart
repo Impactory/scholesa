@@ -22,9 +22,20 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _showAiCoach = false;
+  static const String _canonicalLearnerUnavailableLabel = 'Learner unavailable';
 
   String _t(String input) {
     return ParentSurfaceI18n.text(context, input);
+  }
+
+  String _displayLearnerName(String learnerName) {
+    final String normalized = learnerName.trim();
+    if (normalized.isEmpty ||
+        normalized == 'Unknown' ||
+        normalized == _canonicalLearnerUnavailableLabel) {
+      return _t('Learner unavailable');
+    }
+    return normalized;
   }
 
   @override
@@ -123,7 +134,7 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            learner.learnerName,
+            _displayLearnerName(learner.learnerName),
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
@@ -577,14 +588,14 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
           _PortfolioItem(
             id: '${learner.learnerId}-${activity.id}',
             title: activity.title.isEmpty
-                ? '${learner.learnerName} ${_t('activity')}'
+              ? '${_displayLearnerName(learner.learnerName)} ${_t('activity')}'
                 : activity.title,
             pillar: pillar,
             type: itemType,
             completedAt: activity.timestamp,
             imageUrl: null,
             description: activity.description.isEmpty
-                ? '${_t('Completed by')} ${learner.learnerName}'
+              ? '${_t('Completed by')} ${_displayLearnerName(learner.learnerName)}'
                 : activity.description,
           ),
         );

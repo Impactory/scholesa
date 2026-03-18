@@ -25,6 +25,17 @@ class _ParentBillingPageState extends State<ParentBillingPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   String _selectedLearner = 'all';
+  static const String _canonicalLearnerUnavailableLabel = 'Learner unavailable';
+
+  String _displayLearnerName(String learnerName) {
+    final String normalized = learnerName.trim();
+    if (normalized.isEmpty ||
+        normalized == 'Unknown' ||
+        normalized == _canonicalLearnerUnavailableLabel) {
+      return _tParentBilling(context, 'Learner unavailable');
+    }
+    return normalized;
+  }
 
   @override
   void initState() {
@@ -210,7 +221,7 @@ class _ParentBillingPageState extends State<ParentBillingPage>
             ...learners.map(
               (LearnerSummary learner) => DropdownMenuItem<String>(
                 value: learner.learnerId,
-                child: Text(learner.learnerName),
+                child: Text(_displayLearnerName(learner.learnerName)),
               ),
             ),
           ],
@@ -743,7 +754,9 @@ class _ParentBillingPageState extends State<ParentBillingPage>
         .where(
             (LearnerSummary learner) => learner.learnerId == _selectedLearner)
         .firstOrNull;
-    return selected?.learnerName ?? _tParentBilling(context, 'All Learners');
+    return selected != null
+      ? _displayLearnerName(selected.learnerName)
+      : _tParentBilling(context, 'All Learners');
   }
 
   String _formatCurrency(double amount) {

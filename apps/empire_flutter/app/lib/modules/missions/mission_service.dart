@@ -6,6 +6,8 @@ import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import 'mission_models.dart';
 
+const String _fallbackLearnerName = 'Learner unavailable';
+
 @immutable
 class MissionProofCheckpoint {
   const MissionProofCheckpoint({
@@ -1434,7 +1436,11 @@ class MissionService extends ChangeNotifier {
             missionId: missionId,
             missionTitle: missionData?['title'] as String? ?? 'Unknown Mission',
             learnerId: learnerId,
-            learnerName: learnerData?['displayName'] as String? ?? 'Unknown',
+            learnerName:
+                (learnerData?['displayName'] as String?)?.trim().isNotEmpty ==
+                        true
+                    ? (learnerData?['displayName'] as String).trim()
+                    : _fallbackLearnerName,
             learnerPhotoUrl: learnerData?['photoUrl'] as String?,
             siteId: data['siteId'] as String?,
             pillar: missionData?['pillarCode'] as String? ?? 'future_skills',

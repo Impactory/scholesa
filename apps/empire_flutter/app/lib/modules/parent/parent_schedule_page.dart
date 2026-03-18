@@ -21,9 +21,20 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
   String _selectedLearner = 'all';
   DateTime _selectedDate = DateTime.now();
   String _viewMode = 'week'; // day, week, month
+  static const String _canonicalLearnerUnavailableLabel = 'Learner unavailable';
 
   String _t(String input) {
     return ParentSurfaceI18n.text(context, input);
+  }
+
+  String _displayLearnerName(String learnerName) {
+    final String normalized = learnerName.trim();
+    if (normalized.isEmpty ||
+        normalized == 'Unknown' ||
+        normalized == _canonicalLearnerUnavailableLabel) {
+      return _t('Learner unavailable');
+    }
+    return normalized;
   }
 
   @override
@@ -260,7 +271,7 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
             ...service.learnerSummaries.map(
               (LearnerSummary learner) => DropdownMenuItem<String>(
                 value: learner.learnerId,
-                child: Text(learner.learnerName),
+                child: Text(_displayLearnerName(learner.learnerName)),
               ),
             ),
           ],
@@ -308,7 +319,7 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
       subtitle: BosCoachingI18n.familyScheduleSubtitle(context),
       emptyLabel: BosCoachingI18n.familyScheduleEmpty(context),
       learnerId: selectedLearner.learnerId,
-      learnerName: selectedLearner.learnerName,
+      learnerName: _displayLearnerName(selectedLearner.learnerName),
       accentColor: ScholesaColors.parent,
     );
   }

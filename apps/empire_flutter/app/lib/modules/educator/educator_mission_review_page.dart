@@ -13,6 +13,18 @@ String _tEducatorMissionReview(BuildContext context, String input) {
   return WorkflowSurfaceI18n.text(context, input);
 }
 
+const String _canonicalLearnerUnavailableLabel = 'Learner unavailable';
+
+String _displayLearnerName(BuildContext context, String learnerName) {
+  final String normalized = learnerName.trim();
+  if (normalized.isEmpty ||
+      normalized == 'Unknown' ||
+      normalized == _canonicalLearnerUnavailableLabel) {
+    return _tEducatorMissionReview(context, 'Learner unavailable');
+  }
+  return normalized;
+}
+
 /// Educator Mission Review Page - Review and assess learner submissions
 class EducatorMissionReviewPage extends StatefulWidget {
   const EducatorMissionReviewPage({super.key});
@@ -392,7 +404,7 @@ class _SubmissionCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           Text(
-                            submission.learnerName,
+                            _displayLearnerName(context, submission.learnerName),
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 14,
@@ -739,7 +751,7 @@ class _ReviewSheetState extends State<_ReviewSheet> {
             'Next, push the learner to explain their choices and extend the work independently.')
         : _tEducatorMissionReview(context,
             'Next, ask the learner to revise one concrete part and explain the change back to you.');
-    return '${widget.submission.learnerName} showed ${_pillarLabel(widget.submission.pillar).toLowerCase()} growth in ${widget.submission.missionTitle}. $tone. ${_tEducatorMissionReview(context, 'Reference specific evidence from the submission and keep the next step concrete.')} $nextStep';
+    return '${_displayLearnerName(context, widget.submission.learnerName)} showed ${_pillarLabel(widget.submission.pillar).toLowerCase()} growth in ${widget.submission.missionTitle}. $tone. ${_tEducatorMissionReview(context, 'Reference specific evidence from the submission and keep the next step concrete.')} $nextStep';
   }
 
   List<Map<String, dynamic>> _selectedRubricScores() {
@@ -874,7 +886,10 @@ class _ReviewSheetState extends State<_ReviewSheet> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
                             Text(
-                              widget.submission.learnerName,
+                              _displayLearnerName(
+                                context,
+                                widget.submission.learnerName,
+                              ),
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
