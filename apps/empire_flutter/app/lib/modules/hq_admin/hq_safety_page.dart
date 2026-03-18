@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import '../../i18n/workflow_surface_i18n.dart';
+import '../../services/export_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
@@ -299,7 +299,7 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
               child: Text(
                 _tHqSafety(
                   bottomSheetContext,
-                  'Copy the current incident summary for offline review or escalation.',
+                  'Download the current incident summary for offline review or escalation.',
                 ),
                 style: const TextStyle(color: ScholesaColors.textSecondary),
               ),
@@ -308,13 +308,13 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
-                onPressed: () => _copyIncidentSummary(
+                onPressed: () => _downloadIncidentSummary(
                   bottomSheetContext,
                   incident,
                 ),
-                icon: const Icon(Icons.content_copy_rounded),
+                icon: const Icon(Icons.download_rounded),
                 label: Text(
-                  _tHqSafety(bottomSheetContext, 'Copy Incident Summary'),
+                  _tHqSafety(bottomSheetContext, 'Download Incident Summary'),
                 ),
               ),
             ),
@@ -343,33 +343,50 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
     );
   }
 
-  Future<void> _copyIncidentSummary(
+  Future<void> _downloadIncidentSummary(
     BuildContext context,
     _SafetyIncident incident,
   ) async {
     final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
     final String summary = _buildIncidentSummary(context, incident);
-    final String copiedMessage =
-        _tHqSafety(context, 'Incident summary copied to clipboard.');
-    await Clipboard.setData(ClipboardData(text: summary));
-    if (!mounted) return;
+    final String fileName = _incidentSummaryFileName(incident);
+    try {
+      final String? savedLocation = await ExportService.instance.saveTextFile(
+        fileName: fileName,
+        content: summary,
+      );
+      if (savedLocation == null || !mounted) return;
 
-    TelemetryService.instance.logEvent(
-      event: 'cta.clicked',
-      metadata: <String, dynamic>{
-        'module': 'hq_safety',
-        'cta_id': 'copy_incident_summary',
-        'surface': 'incident_details_sheet',
-        'incident_id': incident.id,
-        'severity': incident.severity.name,
-      },
-    );
+      TelemetryService.instance.logEvent(
+        event: 'export.downloaded',
+        metadata: <String, dynamic>{
+          'module': 'hq_safety',
+          'surface': 'incident_details_sheet',
+          'incident_id': incident.id,
+          'severity': incident.severity.name,
+          'file_name': fileName,
+        },
+      );
 
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(copiedMessage),
-      ),
-    );
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(_tHqSafety(context, 'Incident summary downloaded.')),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            _tHqSafety(context, 'Unable to download incident summary right now.'),
+          ),
+        ),
+      );
+    }
+  }
+
+  String _incidentSummaryFileName(_SafetyIncident incident) {
+    return 'incident-summary-${incident.id}.txt';
   }
 
   String _buildIncidentSummary(BuildContext context, _SafetyIncident incident) {
