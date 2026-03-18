@@ -86,6 +86,13 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 200));
 
+      await tester.scrollUntilVisible(
+        find.text('MiloOS Learning Loop'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
       expect(find.text('MiloOS Learning Loop'), findsOneWidget);
       expect(find.textContaining('Latest individual improvement signal'),
           findsOneWidget);
@@ -141,9 +148,18 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 
-      expect(find.text('MiloOS Session Loop'), findsOneWidget);
-      expect(find.textContaining('Latest individual improvement signal'),
-          findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('MiloOS Class Insights'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('MiloOS Class Insights'), findsOneWidget);
+      expect(
+        find.textContaining('FDM state estimate, BAE watchlist'),
+        findsOneWidget,
+      );
     });
   });
 }
