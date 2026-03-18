@@ -67,8 +67,10 @@ class ParentSurfaceI18n {
     'Close': '关闭',
     'Session reminders are not available in the app yet': '应用内暂不支持课程提醒',
     'Session Reminder': '课程提醒',
-    'Session reminder copied for sharing.': '课程提醒已复制，可直接分享。',
-    'Set Reminder': '设置提醒',
+    'Session reminder request submitted.': '课程提醒请求已提交。',
+    'Unable to submit session reminder request right now.':
+        '目前无法提交课程提醒请求。',
+    'Request Reminder': '请求提醒',
     'This Week': '本周',
     'Monday': '星期一',
     'Tuesday': '星期二',
@@ -105,9 +107,17 @@ class ParentSurfaceI18n {
     'Project': '项目',
     'Completed': '已完成',
     'Portfolio sharing is not available in the app yet': '应用内暂不支持作品分享',
-    'Share': '分享',
+    'Request Share': '请求分享',
     'Download': '下载',
+    'Download Summary': '下载摘要',
     'Portfolio downloads are not available in the app yet': '应用内暂不支持作品下载',
+    'Portfolio share request submitted.': '作品分享请求已提交。',
+    'Unable to submit portfolio share request right now.':
+        '目前无法提交作品分享请求。',
+    'Portfolio summary downloaded.': '作品摘要已下载。',
+    'Unable to download portfolio summary right now.':
+        '目前无法下载作品摘要。',
+    'Support requests are unavailable right now.': '目前暂时无法提交支持请求。',
     'We could not open your email app right now. Contact support@scholesa.com with your site ID and portfolio item details.':
         '目前无法打开你的邮件应用。请附上你的站点 ID 和作品条目详情联系 support@scholesa.com。',
     'activity': '活动',
@@ -189,8 +199,10 @@ class ParentSurfaceI18n {
     'Close': '關閉',
     'Session reminders are not available in the app yet': 'App 內暫不支援課程提醒',
     'Session Reminder': '課程提醒',
-    'Session reminder copied for sharing.': '課程提醒已複製，可直接分享。',
-    'Set Reminder': '設定提醒',
+    'Session reminder request submitted.': '課程提醒請求已提交。',
+    'Unable to submit session reminder request right now.':
+        '目前無法提交課程提醒請求。',
+    'Request Reminder': '請求提醒',
     'This Week': '本週',
     'Monday': '星期一',
     'Tuesday': '星期二',
@@ -227,9 +239,17 @@ class ParentSurfaceI18n {
     'Project': '專案',
     'Completed': '已完成',
     'Portfolio sharing is not available in the app yet': 'App 內暫不支援作品分享',
-    'Share': '分享',
+    'Request Share': '請求分享',
     'Download': '下載',
+    'Download Summary': '下載摘要',
     'Portfolio downloads are not available in the app yet': 'App 內暫不支援作品下載',
+    'Portfolio share request submitted.': '作品分享請求已提交。',
+    'Unable to submit portfolio share request right now.':
+        '目前無法提交作品分享請求。',
+    'Portfolio summary downloaded.': '作品摘要已下載。',
+    'Unable to download portfolio summary right now.':
+        '目前無法下載作品摘要。',
+    'Support requests are unavailable right now.': '目前暫時無法提交支援請求。',
     'We could not open your email app right now. Contact support@scholesa.com with your site ID and portfolio item details.':
         '目前無法開啟你的郵件 App。請附上你的站點 ID 與作品條目詳情聯絡 support@scholesa.com。',
     'activity': '活動',
