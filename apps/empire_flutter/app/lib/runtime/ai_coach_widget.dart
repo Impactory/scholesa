@@ -82,8 +82,8 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
   final List<_ChatMessage> _messages = <_ChatMessage>[];
   final SpeechToText _speechToText = SpeechToText();
   final FlutterTts _flutterTts = FlutterTts();
-  final AudioPlayer _audioPlayer = AudioPlayer();
-  final AudioRecorder _audioRecorder = AudioRecorder();
+  AudioPlayer? _audioPlayer;
+  AudioRecorder? _audioRecorder;
   StreamSubscription<void>? _playerCompleteSub;
   StreamSubscription<PlayerState>? _playerStateSub;
   Timer? _proactiveAssistTimer;
@@ -138,6 +138,14 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
 
   String get _learningGoalsKey {
     return 'bos_mia.learning_goals.${widget.runtime.siteId}.${widget.runtime.learnerId}';
+  }
+
+  AudioPlayer _ensureAudioPlayer() {
+    return _audioPlayer ??= AudioPlayer();
+  }
+
+  AudioRecorder _ensureAudioRecorder() {
+    return _audioRecorder ??= AudioRecorder();
   }
 
   Future<void> _restoreLearningGoals() async {
@@ -242,7 +250,10 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         );
       }
 
-      await _audioPlayer.setAudioContext(
+      final AudioPlayer audioPlayer = _ensureAudioPlayer();
+      final AudioRecorder audioRecorder = _ensureAudioRecorder();
+
+      await audioPlayer.setAudioContext(
         AudioContextConfig(
           route: AudioContextConfigRoute.system,
           focus: AudioContextConfigFocus.duckOthers,
@@ -251,7 +262,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       );
 
       _playerCompleteSub?.cancel();
-      _playerCompleteSub = _audioPlayer.onPlayerComplete.listen((_) {
+      _playerCompleteSub = audioPlayer.onPlayerComplete.listen((_) {
         if (!mounted) return;
         setState(() => _isSpeaking = false);
         if (_listenAfterSpeech) {
@@ -261,7 +272,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       });
 
       _playerStateSub?.cancel();
-      _playerStateSub = _audioPlayer.onPlayerStateChanged.listen((state) {
+      _playerStateSub = audioPlayer.onPlayerStateChanged.listen((state) {
         if (!mounted) return;
         if (state == PlayerState.stopped || state == PlayerState.completed) {
           setState(() => _isSpeaking = false);
@@ -291,7 +302,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       });
 
       final bool uploadReady =
-          kIsWeb ? false : await _audioRecorder.hasPermission();
+          kIsWeb ? false : await audioRecorder.hasPermission();
       if (!mounted) return;
       setState(() {
         _speechAvailable = speechReady;
@@ -609,9 +620,13 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     _interactionSignalTimer?.cancel();
     unawaited(_speechToText.stop());
     unawaited(_flutterTts.stop());
-    unawaited(_audioPlayer.stop());
-    unawaited(_audioPlayer.dispose());
-    unawaited(_audioRecorder.dispose());
+    if (_audioPlayer != null) {
+      unawaited(_audioPlayer!.stop());
+      unawaited(_audioPlayer!.dispose());
+    }
+    if (_audioRecorder != null) {
+      unawaited(_audioRecorder!.dispose());
+    }
     _playerCompleteSub?.cancel();
     _playerStateSub?.cancel();
     _inputController.dispose();
@@ -620,14 +635,14 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
 
   Future<void> _startUploadRecording() async {
     if (_isSpeaking) {
-      await _audioPlayer.stop();
+      await _audioPlayer?.stop();
       await _flutterTts.stop();
       if (mounted) setState(() => _isSpeaking = false);
     }
 
     final String path =
         '${Directory.systemTemp.path}/ai-coach-${DateTime.now().millisecondsSinceEpoch}.m4a';
-    await _audioRecorder.start(
+    await _ensureAudioRecorder().start(
       const RecordConfig(
         encoder: AudioEncoder.aacLc,
         bitRate: 64000,
@@ -643,7 +658,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
   }
 
   Future<void> _stopUploadRecordingAndTranscribe() async {
-    final String? path = await _audioRecorder.stop();
+    final String? path = await _audioRecorder?.stop();
     if (!mounted) return;
     setState(() {
       _isListening = false;
@@ -736,7 +751,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       }
 
       final bool uploadReady =
-          kIsWeb ? false : await _audioRecorder.hasPermission();
+          kIsWeb ? false : await _ensureAudioRecorder().hasPermission();
       if (!mounted) return;
       setState(() {
         _speechAvailable = speechReady;
@@ -841,7 +856,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     _listenAfterSpeech = widget.voiceOnlyConversation;
 
     if (_isSpeaking) {
-      await _audioPlayer.stop();
+      await _audioPlayer?.stop();
       await _flutterTts.stop();
       if (mounted) setState(() => _isSpeaking = false);
     }
@@ -850,11 +865,12 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     if (_lastResponse?.voiceAvailable == true &&
         _lastResponse?.voiceAudioUrl != null &&
         _lastResponse!.voiceAudioUrl!.isNotEmpty) {
+      final AudioPlayer audioPlayer = _ensureAudioPlayer();
       try {
         await _flutterTts.stop();
-        await _audioPlayer.stop();
+        await audioPlayer.stop();
         if (mounted) setState(() => _isSpeaking = true);
-        await _audioPlayer.play(UrlSource(_lastResponse!.voiceAudioUrl!));
+        await audioPlayer.play(UrlSource(_lastResponse!.voiceAudioUrl!));
         played = true;
         await TelemetryService.instance.logEvent(
           event: 'voice.tts',
@@ -873,7 +889,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
 
     if (!played) {
       try {
-        await _audioPlayer.stop();
+        await _audioPlayer?.stop();
         await _flutterTts.stop();
         if (mounted) setState(() => _isSpeaking = true);
         await _flutterTts.speak(text);
@@ -1226,7 +1242,7 @@ Response style:
       // Best-effort cue only.
     }
 
-    await _audioPlayer.stop();
+    await _audioPlayer?.stop();
     await _flutterTts.stop();
     _listenAfterSpeech = false;
     if (!mounted) return;
@@ -1882,18 +1898,17 @@ class _ModeSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Row(
+      child: Wrap(
+        spacing: 6,
+        runSpacing: 6,
         children: AiCoachMode.values.map((AiCoachMode mode) {
           final bool isSelected = mode == selected;
-          return Padding(
-            padding: const EdgeInsets.only(right: 6),
-            child: ChoiceChip(
-              label: Text(_modeLabel(context, mode)),
-              selected: isSelected,
-              onSelected: (_) => onChanged(mode),
-              avatar: Icon(_modeIcon(mode), size: 16),
-              visualDensity: VisualDensity.compact,
-            ),
+          return ChoiceChip(
+            label: Text(_modeLabel(context, mode)),
+            selected: isSelected,
+            onSelected: (_) => onChanged(mode),
+            avatar: Icon(_modeIcon(mode), size: 16),
+            visualDensity: VisualDensity.compact,
           );
         }).toList(),
       ),
