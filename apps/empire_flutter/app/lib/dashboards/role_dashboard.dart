@@ -290,7 +290,6 @@ final Map<UserRole, List<DashboardCard>> _cardRegistry =
       icon: Icons.rocket_launch_rounded,
       route: '/learner/missions',
       gradient: ScholesaColors.missionGradient,
-      badgeText: '3 Active',
     ),
     const DashboardCard(
       id: 'learner_habits',
@@ -329,7 +328,6 @@ final Map<UserRole, List<DashboardCard>> _cardRegistry =
       icon: Icons.calendar_today_rounded,
       route: '/educator/today',
       gradient: ScholesaColors.scheduleGradient,
-      badgeText: '4 Classes',
     ),
     const DashboardCard(
       id: 'educator_attendance',
@@ -362,7 +360,6 @@ final Map<UserRole, List<DashboardCard>> _cardRegistry =
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       ),
-      badgeText: '12 Pending',
     ),
     const DashboardCard(
       id: 'educator_supports',
@@ -475,7 +472,6 @@ final Map<UserRole, List<DashboardCard>> _cardRegistry =
       icon: Icons.warning_rounded,
       route: '/site/incidents',
       gradient: ScholesaColors.safetyGradient,
-      badgeText: '2 Open',
     ),
     const DashboardCard(
       id: 'site_identity_resolution',
@@ -568,7 +564,6 @@ final Map<UserRole, List<DashboardCard>> _cardRegistry =
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       ),
-      badgeText: '5 Pending',
     ),
     const DashboardCard(
       id: 'hq_audit_logs',
@@ -698,7 +693,6 @@ final List<DashboardCard> _sharedCards = <DashboardCard>[
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
     ),
-    badgeText: '5 New',
   ),
 ];
 
