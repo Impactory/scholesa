@@ -487,6 +487,9 @@ class _SiteConsentPageState extends State<SiteConsentPage> {
     if (draft == null || _siteId == null) {
       return;
     }
+    if (!mounted) {
+      return;
+    }
     final AppState appState = context.read<AppState>();
     setState(() {
       _isSaving = true;
@@ -551,6 +554,9 @@ class _SiteConsentPageState extends State<SiteConsentPage> {
       builder: (BuildContext context) => _ResearchConsentDialog(record: record),
     );
     if (draft == null || _siteId == null) {
+      return;
+    }
+    if (!mounted) {
       return;
     }
     final AppState appState = context.read<AppState>();

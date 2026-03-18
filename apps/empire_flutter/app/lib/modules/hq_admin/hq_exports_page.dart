@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 
@@ -136,7 +135,7 @@ class _HqExportsPageState extends State<HqExportsPage> {
               ),
               isLoading: _isLoadingBilling,
               error: _billingError,
-              countLabel: '$ _billingRecordCount'.replaceFirst(' ', ''),
+              countLabel: '$_billingRecordCount',
               statusLabel: _billingRecordCount == 0
                   ? _tHqExports(context, 'Empty')
                   : _tHqExports(context, 'Ready'),
