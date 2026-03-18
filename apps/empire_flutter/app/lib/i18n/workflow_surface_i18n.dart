@@ -313,6 +313,12 @@ class WorkflowSurfaceI18n {
     'View Full Report': '查看完整报告',
     'Full incident reports are not available in the app yet.':
         '应用内暂不支持查看完整事故报告。',
+    'Copy the current incident summary for offline review or escalation.':
+        '复制当前事故摘要，用于离线审阅或升级处理。',
+    'Copy Incident Summary': '复制事故摘要',
+    'Incident summary copied to clipboard.': '事故摘要已复制到剪贴板。',
+    'Incident Summary': '事故摘要',
+    'Title': '标题',
     'Feature Flags': '功能开关',
     'Approvals': '审批',
     'Reject': '拒绝',
@@ -741,6 +747,12 @@ class WorkflowSurfaceI18n {
     'No red team reviews yet': '尚無紅隊審查',
     'Full incident reports are not available in the app yet.':
         'App 內暫不支援查看完整事故報告。',
+    'Copy the current incident summary for offline review or escalation.':
+        '複製目前的事故摘要，供離線審閱或升級處理。',
+    'Copy Incident Summary': '複製事故摘要',
+    'Incident summary copied to clipboard.': '事故摘要已複製到剪貼簿。',
+    'Incident Summary': '事故摘要',
+    'Title': '標題',
     'Auth': '驗證',
     'Admin': '管理',
     'System': '系統',

@@ -94,10 +94,21 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('Full incident reports are not available in the app yet.'),
+      find.text(
+        'Copy the current incident summary for offline review or escalation.',
+      ),
       findsOneWidget,
     );
-    expect(find.text('View Full Report'), findsNothing);
+    await tester.tap(find.text('Copy Incident Summary'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Incident summary copied to clipboard.'), findsOneWidget);
+    expect(_clipboardText, isNotNull);
+    expect(_clipboardText, contains('Incident Summary'));
+    expect(_clipboardText, contains('ID: incident-1'));
+    expect(_clipboardText, contains('Title: Minor playground incident'));
+    expect(_clipboardText, contains('Site: Site One'));
+    expect(_clipboardText, contains('Severity: MAJOR'));
   });
 
   testWidgets('HQ safety shows site unavailable when incident site identity is missing',

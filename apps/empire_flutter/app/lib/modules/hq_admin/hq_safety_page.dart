@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
@@ -265,27 +266,27 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
       backgroundColor: ScholesaColors.surface,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (BuildContext context) => Padding(
+      builder: (BuildContext bottomSheetContext) => Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text(_tHqSafety(context, incident.title),
+        Text(_tHqSafety(bottomSheetContext, incident.title),
                 style:
                     const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
-            _buildDetailRow(_tHqSafety(context, 'Site'),
-                _tHqSafety(context, incident.site)),
-            _buildDetailRow(_tHqSafety(context, 'Severity'),
-                _tHqSafety(context, incident.severity.name).toUpperCase()),
-            _buildDetailRow(_tHqSafety(context, 'Reported'),
+        _buildDetailRow(_tHqSafety(bottomSheetContext, 'Site'),
+          _tHqSafety(bottomSheetContext, incident.site)),
+        _buildDetailRow(_tHqSafety(bottomSheetContext, 'Severity'),
+          _tHqSafety(bottomSheetContext, incident.severity.name).toUpperCase()),
+        _buildDetailRow(_tHqSafety(bottomSheetContext, 'Reported'),
                 _formatTime(incident.reportedAt)),
             _buildDetailRow(
-                _tHqSafety(context, 'Escalated'),
+          _tHqSafety(bottomSheetContext, 'Escalated'),
                 incident.isEscalated
-                    ? _tHqSafety(context, 'Yes')
-                    : _tHqSafety(context, 'No')),
+            ? _tHqSafety(bottomSheetContext, 'Yes')
+            : _tHqSafety(bottomSheetContext, 'No')),
             const SizedBox(height: 24),
             Container(
               width: double.infinity,
@@ -297,13 +298,27 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
               ),
               child: Text(
                 _tHqSafety(
-                  context,
-                  'Full incident reports are not available in the app yet.',
+                  bottomSheetContext,
+                  'Copy the current incident summary for offline review or escalation.',
                 ),
                 style: const TextStyle(color: ScholesaColors.textSecondary),
               ),
             ),
             const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: () => _copyIncidentSummary(
+                  bottomSheetContext,
+                  incident,
+                ),
+                icon: const Icon(Icons.content_copy_rounded),
+                label: Text(
+                  _tHqSafety(bottomSheetContext, 'Copy Incident Summary'),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton(
@@ -317,15 +332,61 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
                       'incident_id': incident.id,
                     },
                   );
-                  Navigator.pop(context);
+                  Navigator.pop(bottomSheetContext);
                 },
-                child: Text(_tHqSafety(context, 'Close')),
+                child: Text(_tHqSafety(bottomSheetContext, 'Close')),
               ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _copyIncidentSummary(
+    BuildContext context,
+    _SafetyIncident incident,
+  ) async {
+    final String summary = _buildIncidentSummary(context, incident);
+    await Clipboard.setData(ClipboardData(text: summary));
+    if (!mounted) return;
+
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'module': 'hq_safety',
+        'cta_id': 'copy_incident_summary',
+        'surface': 'incident_details_sheet',
+        'incident_id': incident.id,
+        'severity': incident.severity.name,
+      },
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          _tHqSafety(context, 'Incident summary copied to clipboard.'),
+        ),
+      ),
+    );
+  }
+
+  String _buildIncidentSummary(BuildContext context, _SafetyIncident incident) {
+    final String severity =
+        _tHqSafety(context, incident.severity.name).toUpperCase();
+    final String escalated = incident.isEscalated
+        ? _tHqSafety(context, 'Yes')
+        : _tHqSafety(context, 'No');
+
+    return <String>[
+      _tHqSafety(context, 'Incident Summary'),
+      'ID: ${incident.id}',
+      '${_tHqSafety(context, 'Title')}: ${incident.title}',
+      '${_tHqSafety(context, 'Site')}: ${incident.site}',
+      '${_tHqSafety(context, 'Severity')}: $severity',
+      '${_tHqSafety(context, 'Reported')}: ${_formatTime(incident.reportedAt)}',
+      '${_tHqSafety(context, 'Escalated')}: $escalated',
+    ].join('\n');
   }
 
   Widget _buildDetailRow(String label, String value) {
