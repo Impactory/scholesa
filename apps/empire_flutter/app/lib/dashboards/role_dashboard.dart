@@ -7,6 +7,7 @@ import '../auth/app_state.dart';
 import '../router/app_router.dart';
 import '../modules/messages/message_service.dart';
 import '../services/telemetry_service.dart';
+import '../ui/localization/app_strings.dart';
 import '../ui/localization/inline_locale_text.dart';
 import '../ui/theme/scholesa_theme.dart';
 import '../ui/widgets/cards.dart';
@@ -1407,9 +1408,20 @@ class RoleDashboard extends StatelessWidget {
               );
               Navigator.pop(dialogContext);
               final AuthService authService = context.read<AuthService>();
-              await authService.signOut(source: 'role_dashboard');
-              if (context.mounted) {
-                context.go('/welcome');
+              try {
+                await authService.signOut(source: 'role_dashboard');
+                if (context.mounted) {
+                  context.go('/welcome');
+                }
+              } catch (_) {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      AppStrings.of(context, 'auth.error.signOutFailed'),
+                    ),
+                  ),
+                );
               }
             },
             style: ElevatedButton.styleFrom(

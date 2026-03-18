@@ -86,6 +86,13 @@ class RecentLoginStore extends ChangeNotifier {
     final SharedPreferences prefs = await _ensurePrefs();
     _recentAccounts = _readAccounts(prefs);
     _activeUserId = _normalizedOrNull(prefs.getString(_activeUserIdKey));
+    if (_activeUserId != null &&
+        !_recentAccounts.any(
+          (RecentLoginAccount account) => account.userId == _activeUserId,
+        )) {
+      _activeUserId = null;
+      await prefs.remove(_activeUserIdKey);
+    }
     _isInitialized = true;
     notifyListeners();
   }

@@ -13,6 +13,7 @@ import '../../auth/auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/theme_service.dart';
 import '../../services/telemetry_service.dart';
+import '../../ui/localization/app_strings.dart';
 import '../../ui/localization/inline_locale_text.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
@@ -1570,9 +1571,20 @@ class _SettingsPageState extends State<SettingsPage> {
                   },
                 );
                 Navigator.pop(dialogContext);
-                await authService.signOut(source: 'settings_page');
-                if (!mounted) return;
-                context.go('/login');
+                try {
+                  await authService.signOut(source: 'settings_page');
+                  if (!mounted) return;
+                  context.go('/login');
+                } catch (_) {
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        AppStrings.of(context, 'auth.error.signOutFailed'),
+                      ),
+                    ),
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: ScholesaColors.error,

@@ -7,6 +7,7 @@ import '../../auth/auth_service.dart';
 import '../../auth/app_state.dart';
 import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
+import '../../ui/localization/app_strings.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 String _tProfile(BuildContext context, String input) {
@@ -390,9 +391,20 @@ class ProfilePage extends StatelessWidget {
                   'cta': 'profile_sign_out_execute'
                 },
               );
-              await authService.signOut(source: 'profile_page');
-              if (context.mounted) {
-                context.go('/login');
+              try {
+                await authService.signOut(source: 'profile_page');
+                if (context.mounted) {
+                  context.go('/login');
+                }
+              } catch (_) {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      AppStrings.of(context, 'auth.error.signOutFailed'),
+                    ),
+                  ),
+                );
               }
             }
           },

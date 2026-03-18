@@ -18,6 +18,12 @@ class _FakeRecentLoginStore extends RecentLoginStore {
   @override
   List<RecentLoginAccount> get recentAccounts =>
       List<RecentLoginAccount>.unmodifiable(_accounts);
+
+  @override
+  Future<void> forgetAccount(String userId) async {
+    _accounts.removeWhere((RecentLoginAccount account) => account.userId == userId);
+    notifyListeners();
+  }
 }
 
 void main() {
@@ -71,5 +77,63 @@ void main() {
     final TextFormField emailField =
         tester.widget<TextFormField>(find.byType(TextFormField).first);
     expect(emailField.controller?.text, 'family@example.com');
+  });
+
+  testWidgets('login page lets users forget a remembered account',
+      (WidgetTester tester) async {
+    final _FakeRecentLoginStore recentLoginStore = _FakeRecentLoginStore(
+      <RecentLoginAccount>[
+        RecentLoginAccount(
+          userId: 'parent-1',
+          email: 'family@example.com',
+          displayName: 'Family Account',
+          provider: RecentLoginProvider.email,
+          lastUsedAt: DateTime(2026, 3, 17, 9),
+        ),
+        RecentLoginAccount(
+          userId: 'parent-2',
+          email: 'guardian@example.com',
+          displayName: 'Guardian Account',
+          provider: RecentLoginProvider.google,
+          lastUsedAt: DateTime(2026, 3, 17, 10),
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: <SingleChildWidget>[
+          Provider<AuthService>.value(value: _FakeAuthService()),
+          ChangeNotifierProvider<AppState>(create: (_) => AppState()),
+          ChangeNotifierProvider<RecentLoginStore>.value(
+            value: recentLoginStore,
+          ),
+        ],
+        child: const MaterialApp(
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: <Locale>[
+            Locale('en'),
+            Locale('zh', 'CN'),
+            Locale('zh', 'TW'),
+          ],
+          home: LoginPage(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Family Account'), findsOneWidget);
+    expect(find.text('Guardian Account'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Remove').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Family Account'), findsNothing);
+    expect(find.text('Guardian Account'), findsOneWidget);
+    expect(find.text('Account removed from this device.'), findsOneWidget);
   });
 }

@@ -123,6 +123,45 @@ class _LoginPageState extends State<LoginPage>
     }
   }
 
+  Future<void> _forgetRememberedAccount(
+    BuildContext context,
+    RecentLoginStore store,
+    RecentLoginAccount account,
+  ) async {
+    try {
+      await TelemetryService.instance.logEvent(
+        event: 'cta.clicked',
+        metadata: <String, dynamic>{
+          'module': 'login',
+          'cta_id': 'forget_recent_account',
+          'surface': 'recent_accounts',
+          'provider': account.provider.name,
+        },
+      );
+    } catch (_) {
+      // Best effort telemetry only.
+    }
+
+    await store.forgetAccount(account.userId);
+    if (!mounted) return;
+
+    if (_emailController.text.trim().toLowerCase() ==
+        account.email.trim().toLowerCase()) {
+      _emailController.clear();
+      _passwordController.clear();
+      setState(() {
+        _errorMessage = null;
+      });
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(AppStrings.of(context, 'auth.rememberedAccountRemoved')),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   String _providerLabel(BuildContext context, RecentLoginProvider provider) {
     switch (provider) {
       case RecentLoginProvider.google:
@@ -201,9 +240,26 @@ class _LoginPageState extends State<LoginPage>
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                   subtitle: Text(account.email),
-                  trailing: TextButton(
-                    onPressed: () => _continueWithRememberedAccount(account),
-                    child: Text(_providerLabel(context, account.provider)),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      TextButton(
+                        onPressed: () => _continueWithRememberedAccount(account),
+                        child: Text(_providerLabel(context, account.provider)),
+                      ),
+                      IconButton(
+                        tooltip: AppStrings.of(
+                          context,
+                          'auth.removeRememberedAccount',
+                        ),
+                        onPressed: () => _forgetRememberedAccount(
+                          context,
+                          store,
+                          account,
+                        ),
+                        icon: const Icon(Icons.close_rounded),
+                      ),
+                    ],
                   ),
                 ),
               );
