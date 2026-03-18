@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
@@ -22,8 +23,45 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _showAiCoach = false;
+  String? _headline;
+  String? _goal;
+  String? _featuredHighlight;
 
   String _t(String input) => _tLearnerPortfolio(context, input);
+
+  String _learnerName(AppState appState) {
+    final String displayName = appState.displayName?.trim() ?? '';
+    if (displayName.isNotEmpty) return displayName;
+    final String email = appState.email?.trim() ?? '';
+    if (email.isNotEmpty) return email;
+    return _t('Learner');
+  }
+
+  String _siteLabel(AppState appState) {
+    final String siteId = appState.activeSiteId?.trim() ?? '';
+    if (siteId.isEmpty) {
+      return _t('Site unavailable');
+    }
+    return siteId;
+  }
+
+  String _effectiveHeadline(AppState appState) {
+    final String headline = _headline?.trim() ?? '';
+    if (headline.isNotEmpty) return headline;
+    return '${_t('Future Innovator')} • ${_siteLabel(appState)}';
+  }
+
+  String _effectiveGoal() {
+    final String goal = _goal?.trim() ?? '';
+    if (goal.isNotEmpty) return goal;
+    return _t('Build a confident weekly shipping rhythm across Future Skills missions.');
+  }
+
+  String _effectiveHighlight() {
+    final String highlight = _featuredHighlight?.trim() ?? '';
+    if (highlight.isNotEmpty) return highlight;
+    return _t('Latest highlight: Team Presentation');
+  }
 
   @override
   void initState() {
@@ -183,6 +221,7 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
   }
 
   Widget _buildProfileCard() {
+    final AppState appState = context.watch<AppState>();
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
@@ -216,15 +255,22 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
                 border: Border.all(
                     color: Colors.white.withValues(alpha: 0.3), width: 2),
               ),
-              child: const Icon(Icons.person, color: Colors.white, size: 48),
+              child: Text(
+                _learnerName(appState).characters.first.toUpperCase(),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  const Text(
-                    'Emma Johnson',
+                  Text(
+                    _learnerName(appState),
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 22,
@@ -233,10 +279,20 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    _t('Future Innovator • Singapore'),
+                    _effectiveHeadline(appState),
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.8),
                       fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _effectiveGoal(),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.92),
+                      fontSize: 12,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -257,6 +313,16 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
                         style: TextStyle(color: Colors.white, fontSize: 12),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _effectiveHighlight(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.8),
+                      fontSize: 12,
+                    ),
                   ),
                 ],
               ),
@@ -582,57 +648,113 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
   }
 
   void _editProfile() {
+    final AppState appState = context.read<AppState>();
+    final TextEditingController headlineController = TextEditingController(
+      text: _effectiveHeadline(appState),
+    );
+    final TextEditingController goalController = TextEditingController(
+      text: _effectiveGoal(),
+    );
+    final TextEditingController highlightController = TextEditingController(
+      text: _effectiveHighlight(),
+    );
     showDialog<void>(
       context: context,
-      builder: (BuildContext dialogContext) => AlertDialog(
-        title: Text(_t('Edit Portfolio Profile')),
-        content: Text(
-          '${_t('Update your portfolio bio, goals, and featured highlights.')}\n\n${_t('Portfolio profile editing is not available in the app yet')}',
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () {
-              TelemetryService.instance.logEvent(
-                event: 'cta.clicked',
-                metadata: <String, dynamic>{
-                  'module': 'learner_portfolio',
-                  'cta_id': 'cancel_edit_profile',
-                  'surface': 'edit_profile_dialog',
-                },
-              );
-              Navigator.pop(dialogContext);
-            },
-            child: Text(_t('Cancel')),
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: Text(_t('Edit Portfolio Profile')),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  _t('Update your portfolio bio, goals, and featured highlights.'),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: headlineController,
+                  decoration: InputDecoration(
+                    labelText: _t('Portfolio Headline'),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: goalController,
+                  maxLines: 2,
+                  decoration: InputDecoration(
+                    labelText: _t('Current Goal'),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: highlightController,
+                  maxLines: 2,
+                  decoration: InputDecoration(
+                    labelText: _t('Featured Highlight'),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ],
-      ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: <String, dynamic>{
+                    'module': 'learner_portfolio',
+                    'cta_id': 'cancel_edit_profile',
+                    'surface': 'edit_profile_dialog',
+                  },
+                );
+                Navigator.pop(dialogContext);
+              },
+              child: Text(_t('Cancel')),
+            ),
+            FilledButton(
+              onPressed: () {
+                setState(() {
+                  _headline = headlineController.text.trim();
+                  _goal = goalController.text.trim();
+                  _featuredHighlight = highlightController.text.trim();
+                });
+                TelemetryService.instance.logEvent(
+                  event: 'learner.portfolio.profile.updated',
+                  metadata: <String, dynamic>{
+                    'module': 'learner_portfolio',
+                    'surface': 'edit_profile_dialog',
+                  },
+                );
+                Navigator.pop(dialogContext);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(_t('Portfolio profile updated.')),
+                  ),
+                );
+              },
+              child: Text(_t('Save')),
+            ),
+          ],
+        );
+      },
     );
   }
 
-  void _sharePortfolio() {
-    showDialog<void>(
-      context: context,
-      builder: (BuildContext dialogContext) => AlertDialog(
-        title: Text(_t('Share Portfolio')),
-        content: Text(
-          '${_t('Create a secure share link for parents or mentors.')}\n\n${_t('Portfolio share links are not available in the app yet')}',
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () {
-              TelemetryService.instance.logEvent(
-                event: 'cta.clicked',
-                metadata: <String, dynamic>{
-                  'module': 'learner_portfolio',
-                  'cta_id': 'cancel_share_portfolio',
-                  'surface': 'share_portfolio_dialog',
-                },
-              );
-              Navigator.pop(dialogContext);
-            },
-            child: Text(_t('Cancel')),
-          ),
-        ],
+  Future<void> _sharePortfolio() async {
+    final AppState appState = context.read<AppState>();
+    final String shareText = <String>[
+      _t('Share Portfolio'),
+      '${_learnerName(appState)} • ${_effectiveHeadline(appState)}',
+      _effectiveGoal(),
+      _effectiveHighlight(),
+    ].join('\n');
+
+    await Clipboard.setData(ClipboardData(text: shareText));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(_t('Portfolio summary copied for sharing.')),
       ),
     );
   }

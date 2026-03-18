@@ -2,6 +2,7 @@ import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -25,6 +26,8 @@ import 'package:scholesa_app/services/telemetry_service.dart';
 import 'package:scholesa_app/ui/theme/scholesa_theme.dart';
 
 class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
+
+String? _portfolioClipboardText;
 
 AppState _buildAppState({
   required UserRole role,
@@ -89,6 +92,31 @@ Widget _buildHarness({
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUpAll(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, (
+      MethodCall methodCall,
+    ) async {
+      if (methodCall.method == 'Clipboard.setData') {
+        final Map<Object?, Object?>? arguments =
+            methodCall.arguments as Map<Object?, Object?>?;
+        _portfolioClipboardText = arguments?['text']?.toString();
+      }
+      return null;
+    });
+  });
+
+  tearDownAll(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, null);
+  });
+
+  setUp(() {
+    _portfolioClipboardText = null;
+  });
+
   group('Learner and site tri-locale surfaces', () {
     testWidgets('learner today renders zh-CN copy',
         (WidgetTester tester) async {
@@ -789,7 +817,7 @@ void main() {
       expect(find.text('Save'), findsNothing);
     });
 
-    testWidgets('learner portfolio shows explicit unavailable share messaging',
+    testWidgets('learner portfolio share copies a real summary to clipboard',
         (WidgetTester tester) async {
       final Locale locale = const Locale('en');
       final AppState appState = _buildAppState(
@@ -812,15 +840,10 @@ void main() {
 
       await tester.tap(find.byType(FloatingActionButton));
       await tester.pumpAndSettle();
-      expect(find.text('Share Portfolio'), findsOneWidget);
-
-      expect(
-        find.textContaining(
-          'Portfolio share links are not available in the app yet',
-        ),
-        findsOneWidget,
-      );
-      expect(find.text('Generate Link'), findsNothing);
+      expect(find.text('Portfolio summary copied for sharing.'), findsOneWidget);
+      expect(_portfolioClipboardText, isNotNull);
+      expect(_portfolioClipboardText, contains('Share Portfolio'));
+      expect(_portfolioClipboardText, contains('Test User'));
     });
 
     testWidgets('site sessions renders zh-CN copy',
