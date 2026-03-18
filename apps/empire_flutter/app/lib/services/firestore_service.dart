@@ -30,7 +30,7 @@ class FirestoreService {
     }
 
     final Map<String, dynamic> data = doc.data()!;
-    
+
     // Parse entitlements safely
     List<Map<String, dynamic>> entitlements = <Map<String, dynamic>>[];
     try {
@@ -45,7 +45,7 @@ class FirestoreService {
     } catch (e) {
       debugPrint('Warning: Failed to parse entitlements: $e');
     }
-    
+
     return <String, dynamic>{
       'userId': user.uid,
       'email': data['email'] ?? user.email,
@@ -359,8 +359,7 @@ class FirestoreService {
     final DocumentSnapshot<Map<String, dynamic>> senderDoc =
         await _firestore.collection('users').doc(user.uid).get();
     final Map<String, dynamic>? senderData = senderDoc.data();
-    final String senderName =
-        senderData?['displayName'] as String? ??
+    final String senderName = senderData?['displayName'] as String? ??
         user.displayName ??
         user.email ??
         user.uid;

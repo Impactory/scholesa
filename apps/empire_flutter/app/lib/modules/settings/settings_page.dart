@@ -129,8 +129,7 @@ const Map<String, String> _settingsZhCn = <String, String>{
   'We will review this request and follow up using your saved account details.':
       '我们会审核此请求，并使用你已保存的账户信息跟进。',
   'Data export request submitted.': '数据导出请求已提交。',
-  'Unable to submit your data export request right now.':
-      '目前无法提交你的数据导出请求。',
+  'Unable to submit your data export request right now.': '目前无法提交你的数据导出请求。',
   'Describe what you need help with.': '请描述你需要帮助的内容。',
   'Issue details': '问题详情',
   'Please enter issue details before sending.': '发送前请输入问题详情。',
@@ -266,8 +265,7 @@ const Map<String, String> _settingsZhTw = <String, String>{
   'We will review this request and follow up using your saved account details.':
       '我們會審核此請求，並使用你已儲存的帳戶資訊跟進。',
   'Data export request submitted.': '資料匯出請求已提交。',
-  'Unable to submit your data export request right now.':
-      '目前無法提交你的資料匯出請求。',
+  'Unable to submit your data export request right now.': '目前無法提交你的資料匯出請求。',
   'Describe what you need help with.': '請描述你需要協助的內容。',
   'Issue details': '問題詳情',
   'Please enter issue details before sending.': '傳送前請先輸入問題詳情。',
@@ -1272,7 +1270,8 @@ class _SettingsPageState extends State<SettingsPage> {
         return;
       }
       _showErrorSnackBar(
-        _tSettings(context, 'Unable to submit your data export request right now.'),
+        _tSettings(
+            context, 'Unable to submit your data export request right now.'),
       );
     }
   }
@@ -1313,8 +1312,7 @@ class _SettingsPageState extends State<SettingsPage> {
       emptyMessage:
           _tSettings(context, 'Please enter feedback before sending.'),
       successMessage: _tSettings(context, 'Feedback submitted.'),
-      errorMessage:
-          _tSettings(context, 'Unable to submit feedback right now.'),
+      errorMessage: _tSettings(context, 'Unable to submit feedback right now.'),
       successEvent: 'settings.feedback.submitted',
       failureEvent: 'settings.feedback.failed',
       metadataBuilder: (String feedback) =>

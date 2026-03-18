@@ -582,8 +582,7 @@ class ProfilePage extends StatelessWidget {
                         final NavigatorState navigator =
                             Navigator.of(bottomSheetContext);
                         try {
-                          final String requestId =
-                              await _submitSupportRequest(
+                          final String requestId = await _submitSupportRequest(
                             context,
                             source: 'profile_open_help_support',
                             subject: 'Profile help request',

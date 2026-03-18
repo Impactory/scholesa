@@ -133,19 +133,19 @@ void main() {
     await tester.tap(find.text('Send'));
     await tester.pumpAndSettle();
 
-    final List<Map<String, dynamic>> supportRequests = (await firestore
-            .collection('supportRequests')
-            .get())
-        .docs
-        .map((doc) => doc.data())
-        .toList();
+    final List<Map<String, dynamic>> supportRequests =
+        (await firestore.collection('supportRequests').get())
+            .docs
+            .map((doc) => doc.data())
+            .toList();
     expect(find.text('Support request submitted.'), findsOneWidget);
     expect(
       supportRequests.any(
         (Map<String, dynamic> request) =>
             request['requestType'] == 'help' &&
             request['source'] == 'profile_open_help_support' &&
-            request['message'] == 'Need help fixing a profile and account issue.',
+            request['message'] ==
+                'Need help fixing a profile and account issue.',
       ),
       isTrue,
     );

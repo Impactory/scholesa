@@ -56,8 +56,7 @@ class WorkflowSurfaceI18n {
     'Pickup code, learner, or phone': '接送代码、学习者或电话',
     'Find pickup': '查找接送',
     'Continue with check-out': '继续办理签退',
-    'Enter a pickup code, learner name, or pickup phone':
-        '请输入接送代码、学习者姓名或接送电话',
+    'Enter a pickup code, learner name, or pickup phone': '请输入接送代码、学习者姓名或接送电话',
     'No active pickup match found': '未找到可用的接送匹配',
     'Close': '关闭',
     'Use Camera': '使用相机',
@@ -605,8 +604,7 @@ class WorkflowSurfaceI18n {
     'Pickup code, learner, or phone': '接送代碼、學習者或電話',
     'Find pickup': '查找接送',
     'Continue with check-out': '繼續辦理簽退',
-    'Enter a pickup code, learner name, or pickup phone':
-        '請輸入接送代碼、學習者姓名或接送電話',
+    'Enter a pickup code, learner name, or pickup phone': '請輸入接送代碼、學習者姓名或接送電話',
     'No active pickup match found': '找不到可用的接送匹配',
     'Close': '關閉',
     'Help & Support': '幫助與支援',

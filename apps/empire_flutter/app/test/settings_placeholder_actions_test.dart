@@ -136,12 +136,11 @@ void main() {
       await tester.tap(find.text('Submit'));
       await tester.pumpAndSettle();
 
-      final List<Map<String, dynamic>> supportRequests = (await firestore
-              .collection('supportRequests')
-              .get())
-          .docs
-          .map((doc) => doc.data())
-          .toList();
+      final List<Map<String, dynamic>> supportRequests =
+          (await firestore.collection('supportRequests').get())
+              .docs
+              .map((doc) => doc.data())
+              .toList();
       expect(find.text('Data export request submitted.'), findsOneWidget);
       expect(
         supportRequests.any(
@@ -173,12 +172,11 @@ void main() {
       await tester.tap(find.text('Send'));
       await tester.pumpAndSettle();
 
-      final List<Map<String, dynamic>> refreshedRequests = (await firestore
-              .collection('supportRequests')
-              .get())
-          .docs
-          .map((doc) => doc.data())
-          .toList();
+      final List<Map<String, dynamic>> refreshedRequests =
+          (await firestore.collection('supportRequests').get())
+              .docs
+              .map((doc) => doc.data())
+              .toList();
       expect(find.text('Support request submitted.'), findsOneWidget);
       expect(
         refreshedRequests.any(
@@ -265,19 +263,17 @@ void main() {
       await tester.tap(find.text('Send'));
       await tester.pumpAndSettle();
 
-      final List<Map<String, dynamic>> supportRequests = (await firestore
-              .collection('supportRequests')
-              .get())
-          .docs
-          .map((doc) => doc.data())
-          .toList();
+      final List<Map<String, dynamic>> supportRequests =
+          (await firestore.collection('supportRequests').get())
+              .docs
+              .map((doc) => doc.data())
+              .toList();
       expect(
         supportRequests.any(
           (Map<String, dynamic> request) =>
               request['requestType'] == 'feedback' &&
               request['source'] == 'settings_open_feedback' &&
-              request['message'] ==
-                  'Please improve the dashboard export flow.',
+              request['message'] == 'Please improve the dashboard export flow.',
         ),
         isTrue,
       );
