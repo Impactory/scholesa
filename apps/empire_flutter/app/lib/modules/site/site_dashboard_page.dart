@@ -123,17 +123,18 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
         siteId: siteId,
         limit: 12,
       );
+      if (!mounted) return;
       final List<_KpiPackSummary> packs = rows
           .map(
             (Map<String, dynamic> row) => _KpiPackSummary(
-              id: row['id'] as String? ?? '',
-              title: row['title'] as String? ?? 'KPI Pack',
-              period: row['period'] as String? ?? 'month',
-              recommendation: row['recommendation'] as String? ?? 'stabilize',
-              status: row['status'] as String? ?? 'generated',
+              id: _trimmedOrNull(row['id']) ?? '',
+              title: _trimmedOrNull(row['title']) ?? _t('KPI Pack'),
+              period: _trimmedOrNull(row['period']),
+              recommendation: _trimmedOrNull(row['recommendation']),
+              status: _trimmedOrNull(row['status']),
               fidelityScore: _readFiniteScore(row['fidelityScore']),
               portfolioQualityGrade:
-                  row['portfolioQualityGrade'] as String? ?? 'C',
+                  _trimmedOrNull(row['portfolioQualityGrade']),
               generatedAt: WorkflowBridgeService.toDateTime(row['updatedAt']) ??
                   WorkflowBridgeService.toDateTime(row['createdAt']),
             ),
@@ -146,7 +147,6 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
               b.generatedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
           return bTime.compareTo(aTime);
         });
-      if (!mounted) return;
       setState(() => _kpiPacks = packs);
     } catch (_) {
       if (!mounted) return;
@@ -391,6 +391,17 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
   }
 
   Widget _buildKpiPackCard(_KpiPackSummary pack) {
+    final String statusLabel = pack.status ?? _t('Status unavailable');
+    final String fidelityLabel = pack.fidelityScore == null
+        ? _t('Fidelity Score unavailable')
+        : '${_t('Fidelity Score')}: ${(pack.fidelityScore! * 100).toStringAsFixed(0)}%';
+    final String portfolioGradeLabel = pack.portfolioQualityGrade == null
+        ? _t('Portfolio Grade unavailable')
+        : '${_t('Portfolio Grade')}: ${pack.portfolioQualityGrade}';
+    final String recommendationLabel = pack.recommendation == null
+        ? _t('Recommendation unavailable')
+        : '${_t('Recommendation')}: ${pack.recommendation}';
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -415,7 +426,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                 ),
               ),
               _DashboardPill(
-                label: pack.status,
+                label: statusLabel,
                 color: pack.status == 'generated'
                     ? ScholesaColors.success
                     : ScholesaColors.warning,
@@ -428,18 +439,15 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
             runSpacing: 8,
             children: <Widget>[
               _DashboardPill(
-                label: pack.fidelityScore == null
-                    ? _t('Fidelity Score unavailable')
-                    : '${_t('Fidelity Score')}: ${(pack.fidelityScore! * 100).toStringAsFixed(0)}%',
+                label: fidelityLabel,
                 color: ScholesaColors.site,
               ),
               _DashboardPill(
-                label:
-                    '${_t('Portfolio Grade')}: ${pack.portfolioQualityGrade}',
+                label: portfolioGradeLabel,
                 color: ScholesaColors.futureSkills,
               ),
               _DashboardPill(
-                label: '${_t('Recommendation')}: ${pack.recommendation}',
+                label: recommendationLabel,
                 color: ScholesaColors.warning,
               ),
             ],
@@ -447,7 +455,9 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
           if (pack.generatedAt != null) ...<Widget>[
             const SizedBox(height: 12),
             Text(
-              '${pack.period} • ${_formatShortDateTime(pack.generatedAt!)}',
+              pack.period == null
+                  ? _formatShortDateTime(pack.generatedAt!)
+                  : '${pack.period} • ${_formatShortDateTime(pack.generatedAt!)}',
               style: TextStyle(color: context.schTextSecondary),
             ),
           ],
@@ -625,19 +635,20 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
     final List<AttendanceTrendPoint> trend =
         allTrend.length > 7 ? allTrend.sublist(allTrend.length - 7) : allTrend;
     final List<AttendanceTrendPoint> usableTrend = trend
-      .where((AttendanceTrendPoint point) => point.presentRate != null)
-      .toList();
-    final double? latestRate =
-      usableTrend.isNotEmpty ? usableTrend.last.presentRate?.toDouble() : null;
+        .where((AttendanceTrendPoint point) => point.presentRate != null)
+        .toList();
+    final double? latestRate = usableTrend.isNotEmpty
+        ? usableTrend.last.presentRate?.toDouble()
+        : null;
     final double? previousRate = usableTrend.length > 1
-      ? usableTrend[usableTrend.length - 2].presentRate?.toDouble()
-      : latestRate;
+        ? usableTrend[usableTrend.length - 2].presentRate?.toDouble()
+        : latestRate;
     final double? delta = latestRate != null && previousRate != null
-      ? latestRate - previousRate
-      : null;
+        ? latestRate - previousRate
+        : null;
     final bool trendUp = (delta ?? 0) >= 0;
     final bool attendanceRateUnavailable =
-      trend.isNotEmpty && usableTrend.isEmpty;
+        trend.isNotEmpty && usableTrend.isEmpty;
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -656,8 +667,8 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                 ),
                 if (delta != null)
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: (trendUp
                               ? ScholesaColors.success
@@ -730,7 +741,9 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                   ),
                 ),
               ),
-            if (!_isLoadingMetrics && _metricsError == null && usableTrend.isNotEmpty)
+            if (!_isLoadingMetrics &&
+                _metricsError == null &&
+                usableTrend.isNotEmpty)
               SizedBox(
                 height: 120,
                 child: Row(
@@ -746,7 +759,9 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                   }).toList(),
                 ),
               ),
-            if (!_isLoadingMetrics && _metricsError == null && latestRate != null)
+            if (!_isLoadingMetrics &&
+                _metricsError == null &&
+                latestRate != null)
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
@@ -776,26 +791,18 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
               _t('Pillar Progress (Site Average)'),
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
-            const SizedBox(height: 20),
-            _PillarProgressRow(
-              icon: Icons.code,
-              label: _t('Future Skills'),
-              progress: 0.72,
-              color: ScholesaColors.futureSkills,
+            const SizedBox(height: 12),
+            Text(
+              _t('Pillar progress telemetry is not available for this site yet.'),
+              style: TextStyle(color: context.schTextSecondary),
             ),
-            const SizedBox(height: 16),
-            _PillarProgressRow(
-              icon: Icons.emoji_events,
-              label: _t('Leadership'),
-              progress: 0.65,
-              color: ScholesaColors.leadership,
-            ),
-            const SizedBox(height: 16),
-            _PillarProgressRow(
-              icon: Icons.eco,
-              label: _t('Impact'),
-              progress: 0.58,
-              color: ScholesaColors.impact,
+            const SizedBox(height: 8),
+            Text(
+              _t('This breakdown will appear after learner progress telemetry is connected.'),
+              style: TextStyle(
+                color: context.schTextSecondary,
+                fontSize: 12,
+              ),
             ),
           ],
         ),
@@ -1014,6 +1021,14 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
+            if (_activities.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Text(
+                  _t('No recent activity yet'),
+                  style: TextStyle(color: context.schTextSecondary),
+                ),
+              ),
             ..._activities.map(
               (_SiteActivity activity) => _ActivityItem(
                 icon: activity.icon,
@@ -1123,7 +1138,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
       if (!mounted) return;
       setState(() {
         _isLoadingActivities = false;
-        _activities = _defaultFallbackActivities();
+        _activities = <_SiteActivity>[];
       });
       return;
     }
@@ -1290,34 +1305,16 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
     }
   }
 
-  List<_SiteActivity> _defaultFallbackActivities() {
-    return <_SiteActivity>[
-      _SiteActivity(
-        icon: Icons.person_add,
-        title: 'New enrollment',
-        subtitle: 'Emma Johnson joined AI Explorers',
-        time: '2 hours ago',
-        color: ScholesaColors.learner,
-      ),
-      _SiteActivity(
-        icon: Icons.check_circle,
-        title: 'Mission completed',
-        subtitle: 'Liam Chen completed "Build a Robot"',
-        time: '4 hours ago',
-        color: ScholesaColors.success,
-      ),
-      _SiteActivity(
-        icon: Icons.star,
-        title: 'Achievement unlocked',
-        subtitle: 'Sofia Martinez earned "Code Master" badge',
-        time: '6 hours ago',
-        color: ScholesaColors.warning,
-      ),
-    ];
-  }
-
   String _formatShortDateTime(DateTime value) {
     return '${value.month}/${value.day}/${value.year}';
+  }
+
+  String? _trimmedOrNull(dynamic value) {
+    if (value is! String) {
+      return null;
+    }
+    final String trimmed = value.trim();
+    return trimmed.isEmpty ? null : trimmed;
   }
 }
 
@@ -1351,11 +1348,11 @@ class _KpiPackSummary {
 
   final String id;
   final String title;
-  final String period;
-  final String recommendation;
-  final String status;
+  final String? period;
+  final String? recommendation;
+  final String? status;
   final double? fidelityScore;
-  final String portfolioQualityGrade;
+  final String? portfolioQualityGrade;
   final DateTime? generatedAt;
 }
 
@@ -1555,64 +1552,6 @@ class _BarColumn extends StatelessWidget {
         Text(
           label,
           style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12),
-        ),
-      ],
-    );
-  }
-}
-
-class _PillarProgressRow extends StatelessWidget {
-  const _PillarProgressRow({
-    required this.icon,
-    required this.label,
-    required this.progress,
-    required this.color,
-  });
-  final IconData icon;
-  final String label;
-  final double progress;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: <Widget>[
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(icon, color: color, size: 20),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  Text(label,
-                      style: const TextStyle(fontWeight: FontWeight.w500)),
-                  Text(
-                    '${(progress * 100).toInt()}%',
-                    style: TextStyle(color: color, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: LinearProgressIndicator(
-                  value: progress,
-                  backgroundColor: color.withValues(alpha: 0.2),
-                  valueColor: AlwaysStoppedAnimation<Color>(color),
-                  minHeight: 6,
-                ),
-              ),
-            ],
-          ),
         ),
       ],
     );

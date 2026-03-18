@@ -112,7 +112,32 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('All Recent Activity'), findsOneWidget);
-      expect(find.text('New enrollment'), findsWidgets);
+      expect(find.text('No recent activity yet'), findsNWidgets(2));
+    });
+
+    testWidgets('site dashboard shows honest pillar telemetry empty state',
+        (WidgetTester tester) async {
+      await tester.binding.setSurfaceSize(const Size(1280, 1800));
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: _testTheme,
+          home: SiteDashboardPage(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Pillar Progress (Site Average)'), findsOneWidget);
+      expect(
+        find.text(
+            'Pillar progress telemetry is not available for this site yet.'),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          'This breakdown will appear after learner progress telemetry is connected.',
+        ),
+        findsOneWidget,
+      );
     });
 
     testWidgets('site dashboard empty analytics cards render in dark theme',

@@ -95,7 +95,8 @@ void main() {
       expect(recentLoginStore.rememberedAccount?.email, 'test@example.com');
     });
 
-    test('signs out and surfaces profile error when profile is missing', () async {
+    test('signs out and surfaces profile error when profile is missing',
+        () async {
       when(() => mockFirestore.getUserProfile()).thenAnswer((_) async => null);
 
       await sessionBootstrap.initialize();
@@ -147,10 +148,10 @@ void main() {
       expect(appState.error, isNull);
     });
 
-    test('auth-state sign-out event clears app state even if recent-session cleanup fails',
+    test(
+        'auth-state sign-out event clears app state even if recent-session cleanup fails',
         () async {
-      final StreamController<User?> authController =
-          StreamController<User?>();
+      final StreamController<User?> authController = StreamController<User?>();
       addTearDown(authController.close);
       when(() => mockAuth.authStateChanges())
           .thenAnswer((_) => authController.stream);

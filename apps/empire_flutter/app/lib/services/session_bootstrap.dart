@@ -36,10 +36,9 @@ class SessionBootstrap {
 
     try {
       // Fetch user profile directly from Firestore
-      final Map<String, dynamic>? profile =
-          await _firestoreService
-              .getUserProfile()
-              .timeout(_profileBootstrapTimeout);
+      final Map<String, dynamic>? profile = await _firestoreService
+          .getUserProfile()
+          .timeout(_profileBootstrapTimeout);
       if (profile == null) {
         throw StateError('User profile does not exist');
       }
