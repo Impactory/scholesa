@@ -347,7 +347,10 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
     BuildContext context,
     _SafetyIncident incident,
   ) async {
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
     final String summary = _buildIncidentSummary(context, incident);
+    final String copiedMessage =
+        _tHqSafety(context, 'Incident summary copied to clipboard.');
     await Clipboard.setData(ClipboardData(text: summary));
     if (!mounted) return;
 
@@ -362,11 +365,9 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
       },
     );
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    messenger.showSnackBar(
       SnackBar(
-        content: Text(
-          _tHqSafety(context, 'Incident summary copied to clipboard.'),
-        ),
+        content: Text(copiedMessage),
       ),
     );
   }
