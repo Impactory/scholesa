@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto';
 import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import * as admin from 'firebase-admin';
+import './gen2Runtime';
 
 type Role = 'learner' | 'educator' | 'parent' | 'site' | 'partner' | 'hq';
 type ParentRequestType = 'export' | 'delete' | 'correction';

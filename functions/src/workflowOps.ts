@@ -1,6 +1,7 @@
 import * as admin from 'firebase-admin';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { CallableRequest, HttpsError, onCall } from 'firebase-functions/v2/https';
+import './gen2Runtime';
 import {
   buildLtiGradePassbackAuditLog,
   buildLtiGradePassbackJob,

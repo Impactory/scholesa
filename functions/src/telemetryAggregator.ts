@@ -8,6 +8,7 @@
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { onRequest } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
+import './gen2Runtime';
 
 // Initialize only if not already initialized
 if (!admin.apps.length) {

@@ -35,7 +35,7 @@ class HqExportsPage extends StatefulWidget {
 
 class _HqExportsPageState extends State<HqExportsPage> {
   final AnalyticsService _analyticsService = AnalyticsService.instance;
-  final AuditLogRepository _auditLogRepository = AuditLogRepository();
+  AuditLogRepository? _auditLogRepository;
 
   TelemetryDashboardMetrics? _analyticsMetrics;
   Map<String, dynamic>? _billingPayload;
@@ -400,7 +400,7 @@ class _HqExportsPageState extends State<HqExportsPage> {
     try {
       final List<AuditLogModel> logs = widget.auditLoader != null
           ? await widget.auditLoader!()
-          : await _auditLogRepository.listRecent();
+          : await (_auditLogRepository ??= AuditLogRepository()).listRecent();
       if (!mounted) {
         return;
       }

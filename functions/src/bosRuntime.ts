@@ -24,6 +24,7 @@
 import * as admin from 'firebase-admin';
 import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
+import { SCHOLESA_GEN2_REGION } from './gen2Runtime';
 import { callInternalInferenceJson, isInternalInferenceRequired } from './internalInferenceGateway';
 import { ekfLiteUpdate, summarizeClassInsights, StateEstimate } from './bosRuntimeCore';
 import { BosRuntimeCalibration, resolveBosRuntimeCalibration } from './bosRuntimeCalibration';
@@ -1227,7 +1228,7 @@ function computeAutonomyRiskFromEvents(
  * Endpoint 1: Ingest BOS interaction event
  */
 export const bosIngestEvent = onCall(
-  { region: 'us-central1' },
+  { region: SCHOLESA_GEN2_REGION },
   async (request: CallableRequest) => {
     const uid = request.auth?.uid;
     if (!uid) throw new HttpsError('unauthenticated', 'Auth required');
@@ -1353,7 +1354,7 @@ export const bosIngestEvent = onCall(
  * Endpoint 2: Get current orchestration state for a learner session
  */
 export const bosGetOrchestrationState = onCall(
-  { region: 'us-central1' },
+  { region: SCHOLESA_GEN2_REGION },
   async (request: CallableRequest) => {
     const uid = request.auth?.uid;
     if (!uid) throw new HttpsError('unauthenticated', 'Auth required');
@@ -1393,7 +1394,7 @@ export const bosGetOrchestrationState = onCall(
  * Endpoint 3: Run FDM + Estimator + Policy → return intervention
  */
 export const bosGetIntervention = onCall(
-  { region: 'us-central1' },
+  { region: SCHOLESA_GEN2_REGION },
   async (request: CallableRequest) => {
     const uid = request.auth?.uid;
     if (!uid) throw new HttpsError('unauthenticated', 'Auth required');
@@ -1855,7 +1856,7 @@ export const bosWeeklyFairnessAudit = onSchedule(
   {
     schedule: '0 4 * * 1',
     timeZone: 'UTC',
-    region: 'us-central1',
+    region: SCHOLESA_GEN2_REGION,
   },
   async () => {
     const now = new Date();
@@ -1970,7 +1971,7 @@ export const bosWeeklyFairnessAudit = onSchedule(
  * Endpoint 4: Score an MVL episode
  */
 export const bosScoreMvl = onCall(
-  { region: 'us-central1' },
+  { region: SCHOLESA_GEN2_REGION },
   async (request: CallableRequest) => {
     const uid = request.auth?.uid;
     if (!uid) throw new HttpsError('unauthenticated', 'Auth required');
@@ -1997,7 +1998,7 @@ export const bosScoreMvl = onCall(
  * Endpoint 5: Submit evidence to an MVL episode
  */
 export const bosSubmitMvlEvidence = onCall(
-  { region: 'us-central1' },
+  { region: SCHOLESA_GEN2_REGION },
   async (request: CallableRequest) => {
     const uid = request.auth?.uid;
     if (!uid) throw new HttpsError('unauthenticated', 'Auth required');
@@ -2029,7 +2030,7 @@ export const bosSubmitMvlEvidence = onCall(
  * Endpoint 6: Teacher override MVL
  */
 export const bosTeacherOverrideMvl = onCall(
-  { region: 'us-central1' },
+  { region: SCHOLESA_GEN2_REGION },
   async (request: CallableRequest) => {
     const uid = request.auth?.uid;
     if (!uid) throw new HttpsError('unauthenticated', 'Auth required');
@@ -2067,7 +2068,7 @@ export const bosTeacherOverrideMvl = onCall(
  * Endpoint 7: Get class insights for an educator
  */
 export const bosGetClassInsights = onCall(
-  { region: 'us-central1' },
+  { region: SCHOLESA_GEN2_REGION },
   async (request: CallableRequest) => {
     const uid = request.auth?.uid;
     if (!uid) throw new HttpsError('unauthenticated', 'Auth required');
@@ -2128,7 +2129,7 @@ export const bosGetClassInsights = onCall(
  * Enhanced with timeout handling and graceful error degradation
  */
 export const bosGetLearnerLoopInsights = onCall(
-  { region: 'us-central1' },
+  { region: SCHOLESA_GEN2_REGION },
   async (request: CallableRequest) => {
     const uid = request.auth?.uid;
     if (!uid) throw new HttpsError('unauthenticated', 'Auth required');
@@ -2341,7 +2342,7 @@ export const bosGetLearnerLoopInsights = onCall(
  * Endpoint 8: Contestability — request + resolve
  */
 export const bosContestability = onCall(
-  { region: 'us-central1' },
+  { region: SCHOLESA_GEN2_REGION },
   async (request: CallableRequest) => {
     const uid = request.auth?.uid;
     if (!uid) throw new HttpsError('unauthenticated', 'Auth required');

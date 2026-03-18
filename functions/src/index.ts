@@ -5,6 +5,7 @@ import { defineSecret, defineString } from 'firebase-functions/params';
 import * as admin from 'firebase-admin';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import Stripe from 'stripe';
+import { SCHOLESA_GEN2_REGION } from './gen2Runtime';
 import { guardedFetch } from './security/egressGuard';
 import {
   buildExplainBackSubmittedEvent,
@@ -383,7 +384,7 @@ const TELEMETRY_CALLABLE_CORS: Array<string | RegExp> = [
   /^http:\/\/127\.0\.0\.1(?::\d+)?$/,
 ];
 const TELEMETRY_CALLABLE_OPTIONS = {
-  region: 'us-central1' as const,
+  region: SCHOLESA_GEN2_REGION,
   cors: TELEMETRY_CALLABLE_CORS,
 };
 const TELEMETRY_PII_KEY_BLOCKLIST = new Set<string>([
