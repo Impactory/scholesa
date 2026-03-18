@@ -16,13 +16,7 @@ class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
 class _FakeUserAdminService extends UserAdminService {
   _FakeUserAdminService({List<UserModel>? users})
-      : super(
-          firestoreService: FirestoreService(
-            firestore: FakeFirebaseFirestore(),
-            auth: _MockFirebaseAuth(),
-          ),
-        ),
-        _fakeUsers = List<UserModel>.from(
+      : _fakeUsers = List<UserModel>.from(
           users ??
               <UserModel>[
                 UserModel(
@@ -35,6 +29,12 @@ class _FakeUserAdminService extends UserAdminService {
                   createdAt: DateTime(2026, 1, 1),
                 ),
               ],
+        ),
+        super(
+          firestoreService: FirestoreService(
+            firestore: FakeFirebaseFirestore(),
+            auth: _MockFirebaseAuth(),
+          ),
         );
 
   bool loadUsersCalled = false;
