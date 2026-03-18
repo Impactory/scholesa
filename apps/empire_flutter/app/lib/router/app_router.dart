@@ -70,8 +70,10 @@ final Map<String, bool> kKnownRoutes = <String, bool>{
   '/site/ops': true,
   '/site/incidents': true,
   '/site/identity': true,
+  '/site/pickup-auth': true,
   '/site/integrations-health': true,
   '/site/billing': true,
+  '/site/audit': true,
 
   // Partner
   '/partner/listings': true,
@@ -535,6 +537,13 @@ GoRouter createAppRouter(
         ),
       ),
       GoRoute(
+        path: '/site/pickup-auth',
+        builder: (BuildContext context, GoRouterState state) => const RoleGate(
+          allowedRoles: <UserRole>[UserRole.site, UserRole.hq],
+          child: SitePickupAuthPage(),
+        ),
+      ),
+      GoRoute(
         path: '/site/integrations-health',
         builder: (BuildContext context, GoRouterState state) => const RoleGate(
           allowedRoles: <UserRole>[UserRole.site, UserRole.hq],
@@ -546,6 +555,13 @@ GoRouter createAppRouter(
         builder: (BuildContext context, GoRouterState state) => const RoleGate(
           allowedRoles: <UserRole>[UserRole.site, UserRole.hq],
           child: SiteBillingPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/site/audit',
+        builder: (BuildContext context, GoRouterState state) => const RoleGate(
+          allowedRoles: <UserRole>[UserRole.site, UserRole.hq],
+          child: SiteAuditPage(),
         ),
       ),
 
