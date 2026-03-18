@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:scholesa_app/services/app_resilience.dart';
 
@@ -77,6 +78,31 @@ void main() {
       expect(reports.single.error.toString(), contains('zone boom'));
     });
 
+    test('runGuardedStartup still launches after initialization failure',
+        () async {
+      final List<AppFailureReport> reports = <AppFailureReport>[];
+      bool launched = false;
+      final AppResilience resilience = AppResilience(
+        sink: (AppFailureReport report) async {
+          reports.add(report);
+        },
+      );
+
+      await resilience.runGuardedStartup(
+        initialize: () async {
+          throw StateError('bootstrap boom');
+        },
+        launch: () {
+          launched = true;
+        },
+      );
+
+      expect(launched, isTrue);
+      expect(reports, hasLength(1));
+      expect(reports.single.source, 'zone');
+      expect(reports.single.error.toString(), contains('bootstrap boom'));
+    });
+
     test('sink failures are swallowed so reporting never crashes the app',
         () async {
       final AppResilience resilience = AppResilience(
@@ -88,6 +114,31 @@ void main() {
       await resilience.captureZoneError(
         StateError('original boom'),
         StackTrace.current,
+      );
+    });
+
+    testWidgets('buildErrorWidget renders honest fallback copy',
+        (WidgetTester tester) async {
+      final AppResilience resilience = AppResilience(
+        sink: (_) async {},
+      );
+
+      await tester.pumpWidget(
+        Directionality(
+          textDirection: TextDirection.ltr,
+          child: resilience.buildErrorWidget(
+            FlutterErrorDetails(
+              exception: StateError('build boom'),
+              stack: StackTrace.current,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('This section could not load'), findsOneWidget);
+      expect(
+        find.text('Scholesa kept running, but this part of the screen failed.'),
+        findsOneWidget,
       );
     });
   });
