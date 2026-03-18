@@ -124,11 +124,26 @@ const Map<String, String> _settingsZhCn = <String, String>{
       '请发送邮件至 support@scholesa.com，并附上站点 ID 和问题详情。',
   'We could not open your email app right now. Contact support@scholesa.com if you need follow-up.':
       '目前无法打开你的邮件应用。如需后续跟进，请联系 support@scholesa.com。',
+  'Submit a secure request for a copy of your account data?':
+      '要安全提交获取账户数据副本的请求吗？',
+  'We will review this request and follow up using your saved account details.':
+      '我们会审核此请求，并使用你已保存的账户信息跟进。',
+  'Data export request submitted.': '数据导出请求已提交。',
+  'Unable to submit your data export request right now.':
+      '目前无法提交你的数据导出请求。',
+  'Describe what you need help with.': '请描述你需要帮助的内容。',
+  'Issue details': '问题详情',
+  'Please enter issue details before sending.': '发送前请输入问题详情。',
+  'Support request submitted.': '支持请求已提交。',
+  'Unable to submit support request right now.': '目前无法提交支持请求。',
   'Send': '发送',
   'Feedback submission is not available in the app yet. Contact support if you need follow-up.':
       '应用内暂不支持反馈提交。如需跟进，请联系支持团队。',
+  'Feedback submitted.': '反馈已提交。',
+  'Unable to submit feedback right now.': '目前无法提交反馈。',
   'Thanks for helping improve Scholesa.': '感谢你帮助改进 Scholesa。',
   'Please enter feedback before sending.': '发送前请输入反馈内容。',
+  'Support requests are unavailable right now.': '目前暂时无法提交支持请求。',
   'In-app rating is not available yet. Please rate Scholesa in your app store when the listing is live.':
       '应用内暂不支持评分。待应用商店上架后，请在商店中评价 Scholesa。',
   'We could not open the store rating page right now. Please try again later.':
@@ -246,11 +261,26 @@ const Map<String, String> _settingsZhTw = <String, String>{
       '請寄信至 support@scholesa.com，並附上站點 ID 與問題詳情。',
   'We could not open your email app right now. Contact support@scholesa.com if you need follow-up.':
       '目前無法開啟你的郵件 App。如需後續跟進，請聯絡 support@scholesa.com。',
+  'Submit a secure request for a copy of your account data?':
+      '要安全送出取得帳戶資料副本的請求嗎？',
+  'We will review this request and follow up using your saved account details.':
+      '我們會審核此請求，並使用你已儲存的帳戶資訊跟進。',
+  'Data export request submitted.': '資料匯出請求已提交。',
+  'Unable to submit your data export request right now.':
+      '目前無法提交你的資料匯出請求。',
+  'Describe what you need help with.': '請描述你需要協助的內容。',
+  'Issue details': '問題詳情',
+  'Please enter issue details before sending.': '傳送前請先輸入問題詳情。',
+  'Support request submitted.': '支援請求已提交。',
+  'Unable to submit support request right now.': '目前無法提交支援請求。',
   'Send': '傳送',
   'Feedback submission is not available in the app yet. Contact support if you need follow-up.':
       'App 內暫不支援回饋提交。如需後續協助，請聯絡支援團隊。',
+  'Feedback submitted.': '回饋已提交。',
+  'Unable to submit feedback right now.': '目前無法提交回饋。',
   'Thanks for helping improve Scholesa.': '感謝你協助改善 Scholesa。',
   'Please enter feedback before sending.': '傳送前請先輸入回饋內容。',
+  'Support requests are unavailable right now.': '目前暫時無法提交支援請求。',
   'In-app rating is not available yet. Please rate Scholesa in your app store when the listing is live.':
       'App 內暫不支援評分。待應用商店上架後，請在商店中評價 Scholesa。',
   'We could not open the store rating page right now. Please try again later.':
@@ -1190,43 +1220,59 @@ class _SettingsPageState extends State<SettingsPage> {
       metadata: const <String, dynamic>{'cta': 'settings_download_my_data'},
     );
 
-    final AppState appState = context.read<AppState>();
-    final User? currentUser =
-        Firebase.apps.isNotEmpty ? FirebaseAuth.instance.currentUser : null;
-    final String siteId = appState.activeSiteId?.trim().isNotEmpty == true
-        ? appState.activeSiteId!.trim()
-        : 'Not set';
-    final String userId = appState.userId?.trim().isNotEmpty == true
-        ? appState.userId!.trim()
-        : (currentUser?.uid ?? 'Not set');
-    final String email = appState.email?.trim().isNotEmpty == true
-        ? appState.email!.trim()
-        : (currentUser?.email ?? 'Not set');
-    final String displayName = appState.displayName?.trim().isNotEmpty == true
-        ? appState.displayName!.trim()
-        : (currentUser?.displayName ?? 'Not set');
-
-    final Uri emailUri = Uri(
-      scheme: 'mailto',
-      path: 'support@scholesa.com',
-      queryParameters: <String, String>{
-        'subject': 'Data export request - $siteId',
-        'body':
-            'Hello Scholesa support.\n\nI would like to request a copy of my data.\n\nSite ID: $siteId\nUser ID: $userId\nName: $displayName\nEmail: $email\n\nPlease let me know if you need anything else.\n',
-      },
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: Text(_tSettings(context, 'Download My Data')),
+        content: Text(
+          '${_tSettings(context, 'Submit a secure request for a copy of your account data?')}\n\n'
+          '${_tSettings(context, 'We will review this request and follow up using your saved account details.')}',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(_tSettings(context, 'Cancel')),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(_tSettings(context, 'Submit')),
+          ),
+        ],
+      ),
     );
-
-    final bool launched = await _tryLaunchExternalUri(emailUri);
-    if (!mounted) {
+    if (confirmed != true || !mounted) {
       return;
     }
-    if (!launched) {
-      _showInfoDialog(
-        title: _tSettings(context, 'Download My Data'),
-        body: _tSettings(
-          context,
-          'We could not open your email app right now. Contact support@scholesa.com with your site ID to request your data.',
-        ),
+
+    try {
+      final String requestId = await _submitSupportRequest(
+        requestType: 'data_export',
+        source: 'settings_download_my_data',
+        subject: 'Data export request',
+        message: 'User requested a copy of their account data from settings.',
+        metadata: const <String, dynamic>{'entryPoint': 'settings'},
+      );
+      await TelemetryService.instance.logEvent(
+        event: 'settings.data_export_request.submitted',
+        metadata: <String, dynamic>{'request_id': requestId},
+      );
+      if (!mounted) {
+        return;
+      }
+      _showSuccessSnackBar(
+        _tSettings(context, 'Data export request submitted.'),
+      );
+    } catch (error) {
+      debugPrint('Failed to submit data export request: $error');
+      await TelemetryService.instance.logEvent(
+        event: 'settings.data_export_request.failed',
+        metadata: <String, dynamic>{'error': error.toString()},
+      );
+      if (!mounted) {
+        return;
+      }
+      _showErrorSnackBar(
+        _tSettings(context, 'Unable to submit your data export request right now.'),
       );
     }
   }
@@ -1237,158 +1283,42 @@ class _SettingsPageState extends State<SettingsPage> {
       metadata: const <String, dynamic>{'cta': 'settings_open_help_center'},
     );
 
-    final AppState appState = context.read<AppState>();
-    final User? currentUser =
-        Firebase.apps.isNotEmpty ? FirebaseAuth.instance.currentUser : null;
-    final String siteId = appState.activeSiteId?.trim().isNotEmpty == true
-        ? appState.activeSiteId!.trim()
-        : 'Not set';
-    final String userId = appState.userId?.trim().isNotEmpty == true
-        ? appState.userId!.trim()
-        : (currentUser?.uid ?? 'Not set');
-    final String email = appState.email?.trim().isNotEmpty == true
-        ? appState.email!.trim()
-        : (currentUser?.email ?? 'Not set');
-    final String displayName = appState.displayName?.trim().isNotEmpty == true
-        ? appState.displayName!.trim()
-        : (currentUser?.displayName ?? 'Not set');
-
-    final Uri emailUri = Uri(
-      scheme: 'mailto',
-      path: 'support@scholesa.com',
-      queryParameters: <String, String>{
-        'subject': 'Help request - $siteId',
-        'body':
-            'Hello Scholesa support.\n\nI need help with the app.\n\nIssue details:\n- \n\nSite ID: $siteId\nUser ID: $userId\nName: $displayName\nEmail: $email\n',
-      },
+    await _showSupportRequestSheet(
+      title: _tSettings(context, 'Help Center Contact'),
+      labelText: _tSettings(context, 'Issue details'),
+      requestType: 'help',
+      source: 'settings_open_help_center',
+      subject: 'Help request',
+      emptyMessage:
+          _tSettings(context, 'Please enter issue details before sending.'),
+      successMessage: _tSettings(context, 'Support request submitted.'),
+      errorMessage:
+          _tSettings(context, 'Unable to submit support request right now.'),
+      successEvent: 'settings.help_request.submitted',
+      failureEvent: 'settings.help_request.failed',
     );
-
-    final bool launched = await _tryLaunchExternalUri(emailUri);
-    if (!mounted) {
-      return;
-    }
-    if (!launched) {
-      _showInfoDialog(
-        title: _tSettings(context, 'Help Center Contact'),
-        body: _tSettings(context,
-            'Contact support at support@scholesa.com with your site ID and issue details.'),
-      );
-    }
   }
 
-  void _showFeedbackSheet() {
+  Future<void> _showFeedbackSheet() async {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
       metadata: const <String, dynamic>{'cta': 'settings_open_feedback'},
     );
-    final TextEditingController feedbackController = TextEditingController();
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      builder: (BuildContext bottomSheetContext) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            top: 16,
-            bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom + 16,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              TextField(
-                controller: feedbackController,
-                maxLines: 4,
-                decoration: InputDecoration(
-                  labelText: _tSettings(context, 'Feedback'),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(bottomSheetContext),
-                      child: Text(_tSettings(context, 'Cancel')),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        final String feedbackRequiredMessage = _tSettings(
-                            context, 'Please enter feedback before sending.');
-                        final String feedback = feedbackController.text.trim();
-                        if (feedback.isEmpty) {
-                          _showErrorSnackBar(feedbackRequiredMessage);
-                          return;
-                        }
-
-                        final AppState appState = context.read<AppState>();
-                        final User? currentUser = Firebase.apps.isNotEmpty
-                            ? FirebaseAuth.instance.currentUser
-                            : null;
-                        final String siteId =
-                            appState.activeSiteId?.trim().isNotEmpty == true
-                                ? appState.activeSiteId!.trim()
-                                : 'Not set';
-                        final String userId =
-                            appState.userId?.trim().isNotEmpty == true
-                                ? appState.userId!.trim()
-                                : (currentUser?.uid ?? 'Not set');
-                        final String email =
-                            appState.email?.trim().isNotEmpty == true
-                                ? appState.email!.trim()
-                                : (currentUser?.email ?? 'Not set');
-                        final String displayName =
-                            appState.displayName?.trim().isNotEmpty == true
-                                ? appState.displayName!.trim()
-                                : (currentUser?.displayName ?? 'Not set');
-                        final NavigatorState navigator =
-                            Navigator.of(bottomSheetContext);
-                        final String feedbackTitle =
-                            _tSettings(context, 'Send Feedback');
-                        final String feedbackFollowUpBody = _tSettings(
-                          context,
-                          'We could not open your email app right now. Contact support@scholesa.com if you need follow-up.',
-                        );
-
-                        await TelemetryService.instance.logEvent(
-                          event: 'settings.feedback.submitted',
-                          metadata: <String, dynamic>{
-                            'length': feedback.length
-                          },
-                        );
-
-                        final Uri emailUri = Uri(
-                          scheme: 'mailto',
-                          path: 'support@scholesa.com',
-                          queryParameters: <String, String>{
-                            'subject': 'App feedback - $siteId',
-                            'body':
-                                'Hello Scholesa support.\n\nI want to share the following app feedback:\n\n$feedback\n\nSite ID: $siteId\nUser ID: $userId\nName: $displayName\nEmail: $email\n',
-                          },
-                        );
-                        final bool launched =
-                            await _tryLaunchExternalUri(emailUri);
-                        if (!mounted) return;
-                        navigator.pop();
-                        if (!launched) {
-                          _showInfoDialog(
-                            title: feedbackTitle,
-                            body: feedbackFollowUpBody,
-                          );
-                        }
-                      },
-                      child: Text(_tSettings(context, 'Send')),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
+    await _showSupportRequestSheet(
+      title: _tSettings(context, 'Send Feedback'),
+      labelText: _tSettings(context, 'Feedback'),
+      requestType: 'feedback',
+      source: 'settings_open_feedback',
+      subject: 'App feedback',
+      emptyMessage:
+          _tSettings(context, 'Please enter feedback before sending.'),
+      successMessage: _tSettings(context, 'Feedback submitted.'),
+      errorMessage:
+          _tSettings(context, 'Unable to submit feedback right now.'),
+      successEvent: 'settings.feedback.submitted',
+      failureEvent: 'settings.feedback.failed',
+      metadataBuilder: (String feedback) =>
+          <String, dynamic>{'length': feedback.length},
     );
   }
 
@@ -1488,6 +1418,176 @@ class _SettingsPageState extends State<SettingsPage> {
     }
 
     return false;
+  }
+
+  FirestoreService? _maybeFirestoreService() {
+    try {
+      return context.read<FirestoreService>();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  _SupportRequestIdentity _supportRequestIdentity() {
+    final AppState appState = context.read<AppState>();
+    final User? currentUser =
+        Firebase.apps.isNotEmpty ? FirebaseAuth.instance.currentUser : null;
+    return _SupportRequestIdentity(
+      siteId: appState.activeSiteId?.trim().isNotEmpty == true
+          ? appState.activeSiteId!.trim()
+          : 'Not set',
+      userId: appState.userId?.trim().isNotEmpty == true
+          ? appState.userId!.trim()
+          : (currentUser?.uid ?? 'Not set'),
+      email: appState.email?.trim().isNotEmpty == true
+          ? appState.email!.trim()
+          : (currentUser?.email ?? 'Not set'),
+      displayName: appState.displayName?.trim().isNotEmpty == true
+          ? appState.displayName!.trim()
+          : (currentUser?.displayName ?? 'Not set'),
+      role: appState.role?.name ?? 'unknown',
+    );
+  }
+
+  Future<String> _submitSupportRequest({
+    required String requestType,
+    required String source,
+    required String subject,
+    String? message,
+    Map<String, dynamic> metadata = const <String, dynamic>{},
+  }) async {
+    final FirestoreService? firestoreService = _maybeFirestoreService();
+    if (firestoreService == null) {
+      throw StateError(
+        _tSettings(context, 'Support requests are unavailable right now.'),
+      );
+    }
+    final _SupportRequestIdentity identity = _supportRequestIdentity();
+    return firestoreService.submitSupportRequest(
+      requestType: requestType,
+      source: source,
+      siteId: identity.siteId,
+      userId: identity.userId,
+      userEmail: identity.email,
+      userName: identity.displayName,
+      role: identity.role,
+      subject: subject,
+      message: message,
+      metadata: metadata,
+    );
+  }
+
+  Future<void> _showSupportRequestSheet({
+    required String title,
+    required String labelText,
+    required String requestType,
+    required String source,
+    required String subject,
+    required String emptyMessage,
+    required String successMessage,
+    required String errorMessage,
+    required String successEvent,
+    required String failureEvent,
+    Map<String, dynamic> Function(String body)? metadataBuilder,
+  }) async {
+    final TextEditingController controller = TextEditingController();
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext bottomSheetContext) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 16,
+            bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom + 16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                title,
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                maxLines: 4,
+                decoration: InputDecoration(labelText: labelText),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(bottomSheetContext),
+                      child: Text(_tSettings(context, 'Cancel')),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        final String body = controller.text.trim();
+                        if (body.isEmpty) {
+                          _showErrorSnackBar(emptyMessage);
+                          return;
+                        }
+
+                        final NavigatorState navigator =
+                            Navigator.of(bottomSheetContext);
+                        final Map<String, dynamic> metadata =
+                            metadataBuilder?.call(body) ??
+                                const <String, dynamic>{};
+                        try {
+                          final String requestId = await _submitSupportRequest(
+                            requestType: requestType,
+                            source: source,
+                            subject: subject,
+                            message: body,
+                            metadata: metadata,
+                          );
+                          await TelemetryService.instance.logEvent(
+                            event: successEvent,
+                            metadata: <String, dynamic>{
+                              'request_id': requestId,
+                              ...metadata,
+                            },
+                          );
+                          if (!mounted) {
+                            return;
+                          }
+                          navigator.pop();
+                          _showSuccessSnackBar(successMessage);
+                        } catch (error) {
+                          debugPrint(
+                            'Failed to submit $requestType support request: $error',
+                          );
+                          await TelemetryService.instance.logEvent(
+                            event: failureEvent,
+                            metadata: <String, dynamic>{
+                              'error': error.toString(),
+                            },
+                          );
+                          if (!mounted) {
+                            return;
+                          }
+                          _showErrorSnackBar(errorMessage);
+                        }
+                      },
+                      child: Text(_tSettings(context, 'Send')),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    controller.dispose();
   }
 
   Future<bool> _tryLaunchExternalUri(Uri uri) async {
@@ -1773,6 +1873,22 @@ class _SettingsPageState extends State<SettingsPage> {
     if (!mounted || profile == null) return;
     context.read<AppState>().updateFromMeResponse(profile);
   }
+}
+
+class _SupportRequestIdentity {
+  const _SupportRequestIdentity({
+    required this.siteId,
+    required this.userId,
+    required this.email,
+    required this.displayName,
+    required this.role,
+  });
+
+  final String siteId;
+  final String userId;
+  final String email;
+  final String displayName;
+  final String role;
 }
 
 class _SettingsSection extends StatelessWidget {
