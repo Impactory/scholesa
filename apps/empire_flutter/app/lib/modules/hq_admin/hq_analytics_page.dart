@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -129,6 +130,159 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
       return selectedSite;
     }
     return appState.activeSiteId;
+  }
+
+  String _selectedSiteLabel() {
+    if (_selectedSite == 'all') {
+      return _t('All Sites');
+    }
+    for (final _SiteFilterOption option in _siteOptions) {
+      if (option.id == _selectedSite) {
+        return option.name;
+      }
+    }
+    return _selectedSite;
+  }
+
+  bool _hasExportableAnalyticsData() {
+    return _metrics != null ||
+        _pillarAnalyticsData.isNotEmpty ||
+        _siteComparisonData.isNotEmpty ||
+        _topPerformersData.isNotEmpty ||
+        _kpiPacks.isNotEmpty ||
+        _bosMiaFeedbackSummary != null ||
+        _syntheticImportSummary != null;
+  }
+
+  String _buildAnalyticsExport() {
+    final StringBuffer buffer = StringBuffer()
+      ..writeln(_t('Export HQ Analytics'))
+      ..writeln('Generated: ${DateTime.now().toIso8601String()}')
+      ..writeln('Site: ${_selectedSiteLabel()}')
+      ..writeln('Period: $_selectedPeriod')
+      ..writeln('');
+
+    if (_metrics != null) {
+      final TelemetryDashboardMetrics metrics = _metrics!;
+      buffer
+        ..writeln('Key Metrics')
+        ..writeln('-----------')
+        ..writeln(
+          'Weekly accountability adherence: ${metrics.weeklyAccountabilityAdherenceRate.toStringAsFixed(1)}%',
+        )
+        ..writeln(
+          'Educator review turnaround: ${metrics.educatorReviewTurnaroundHoursAvg?.toStringAsFixed(1) ?? 'n/a'}h',
+        )
+        ..writeln(
+          'Educator review within SLA: ${metrics.educatorReviewWithinSlaRate?.toStringAsFixed(1) ?? 'n/a'}%',
+        )
+        ..writeln(
+          'Intervention helped rate: ${metrics.interventionHelpedRate?.toStringAsFixed(1) ?? 'n/a'}%',
+        )
+        ..writeln('Intervention total: ${metrics.interventionTotal}')
+        ..writeln('Review SLA hours: ${metrics.educatorReviewSlaHours}')
+        ..writeln('');
+
+      if (metrics.attendanceTrend.isNotEmpty) {
+        buffer
+          ..writeln('Attendance Trend')
+          ..writeln('----------------');
+        for (final AttendanceTrendPoint point in metrics.attendanceTrend) {
+          buffer.writeln(
+            '${point.date}: records=${point.records}, events=${point.events}, presentRate=${point.presentRate?.toStringAsFixed(1) ?? 'n/a'}%',
+          );
+        }
+        buffer.writeln('');
+      }
+    }
+
+    if (_metricsError != null && _metricsError!.trim().isNotEmpty) {
+      buffer
+        ..writeln('Metrics Error')
+        ..writeln('-------------')
+        ..writeln(_metricsError!.trim())
+        ..writeln('');
+    }
+
+    if (_pillarAnalyticsData.isNotEmpty) {
+      buffer
+        ..writeln('Pillar Performance')
+        ..writeln('------------------');
+      for (final _PillarAnalyticsData item in _pillarAnalyticsData) {
+        buffer.writeln(
+          '${item.pillar}: progress=${(item.progress * 100).toStringAsFixed(1)}%, learners=${item.learners}, missions=${item.missions}',
+        );
+      }
+      buffer.writeln('');
+    }
+
+    if (_siteComparisonData.isNotEmpty) {
+      buffer
+        ..writeln('Site Comparison')
+        ..writeln('---------------');
+      for (final _SiteComparisonData item in _siteComparisonData) {
+        buffer.writeln(
+          '${item.name} (${item.siteId}): learners=${item.learners}, attendance=${item.attendance}%, engagement=${item.engagement}%',
+        );
+      }
+      buffer.writeln('');
+    }
+
+    if (_topPerformersData.isNotEmpty) {
+      buffer
+        ..writeln('Top Performers')
+        ..writeln('--------------');
+      for (final _TopPerformerData item in _topPerformersData) {
+        buffer.writeln(
+          '#${item.rank} ${item.name} | ${item.site} | missions=${item.missionsCompleted} | streak=${item.streak}',
+        );
+      }
+      buffer.writeln('');
+    }
+
+    if (_kpiPacks.isNotEmpty) {
+      buffer
+        ..writeln('KPI Packs')
+        ..writeln('---------');
+      for (final _HqKpiPackSummary item in _kpiPacks) {
+        buffer.writeln(
+          '${item.title} | site=${item.siteId} | period=${item.period} | recommendation=${item.recommendation} | fidelity=${item.fidelityScore?.toStringAsFixed(1) ?? 'n/a'} | portfolio=${item.portfolioQualityGrade}',
+        );
+      }
+      buffer.writeln('');
+    }
+
+    if (_bosMiaFeedbackSummary != null) {
+      final _BosMiaFeedbackSummary feedback = _bosMiaFeedbackSummary!;
+      buffer
+        ..writeln('BOS / MIA Feedback')
+        ..writeln('------------------')
+        ..writeln('Submissions: ${feedback.submissionCount}')
+        ..writeln('Average overall: ${feedback.avgOverall.toStringAsFixed(1)}')
+        ..writeln('Top recommendation: ${feedback.topRecommendationLabel}')
+        ..writeln('Top issue: ${feedback.topIssueLabel}')
+        ..writeln('');
+    }
+
+    if (_syntheticImportSummary != null) {
+      final _SyntheticDatasetImportSummary summary = _syntheticImportSummary!;
+      buffer
+        ..writeln('Synthetic Dataset Import')
+        ..writeln('------------------------')
+        ..writeln('Summary: ${summary.summaryLabel}')
+        ..writeln('Mode: ${summary.modeLabel}')
+        ..writeln('Imported at: ${summary.importedAt.toIso8601String()}')
+        ..writeln('Source packs: ${summary.sourcePacks.join(', ')}')
+        ..writeln('Evidence rows: ${summary.evidenceRows}')
+        ..writeln('Evaluation fixtures: ${summary.evaluationFixtures}')
+        ..writeln('Imported collections: ${summary.importedCollections}')
+        ..writeln('Interaction events: ${summary.interactionEvents}')
+        ..writeln('Portfolio artifacts: ${summary.portfolioArtifacts}')
+        ..writeln('Synthetic users: ${summary.syntheticUsers}')
+        ..writeln('');
+    }
+
+    return buffer.toString().trim();
   }
 
   @override
@@ -1234,42 +1388,19 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
         'period': _selectedPeriod,
       },
     );
-    TelemetryService.instance.logEvent(
-      event: 'popup.shown',
-      metadata: <String, dynamic>{
-        'popup_id': 'hq_analytics_export_report',
-        'surface': 'hq_analytics_page',
-      },
-    );
-    showDialog<void>(
-      context: context,
-      builder: (BuildContext dialogContext) => AlertDialog(
-        title: Text(_t('Export HQ Analytics')),
-        content: Text(
-          '${_t('Generate and export the current HQ analytics summary for cross-site review.')}\n\n${_t('HQ analytics exports are not available in the app yet.')}',
+    if (!_hasExportableAnalyticsData()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_t('No HQ analytics data to export yet.')),
         ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () {
-              TelemetryService.instance.logEvent(
-                event: 'cta.clicked',
-                metadata: const <String, dynamic>{
-                  'cta': 'hq_analytics_close_export_notice',
-                  'surface': 'export_report_dialog',
-                },
-              );
-              TelemetryService.instance.logEvent(
-                event: 'popup.dismissed',
-                metadata: const <String, dynamic>{
-                  'popup_id': 'hq_analytics_export_report',
-                  'surface': 'export_report_dialog',
-                },
-              );
-              Navigator.pop(dialogContext);
-            },
-            child: Text(_t('Close')),
-          ),
-        ],
+      );
+      return;
+    }
+
+    Clipboard.setData(ClipboardData(text: _buildAnalyticsExport()));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(_t('HQ analytics export copied to clipboard.')),
       ),
     );
   }

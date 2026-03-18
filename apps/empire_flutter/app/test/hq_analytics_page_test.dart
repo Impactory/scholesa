@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:nested/nested.dart';
@@ -12,6 +13,8 @@ import 'package:scholesa_app/services/analytics_service.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
 
 class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
+
+String? _clipboardText;
 
 AppState _buildHqState() {
   final AppState state = AppState();
@@ -110,6 +113,31 @@ Future<void> _seedAnalyticsData(FakeFirebaseFirestore firestore) async {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUpAll(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, (
+      MethodCall methodCall,
+    ) async {
+      if (methodCall.method == 'Clipboard.setData') {
+        final Map<Object?, Object?>? arguments =
+            methodCall.arguments as Map<Object?, Object?>?;
+        _clipboardText = arguments?['text']?.toString();
+      }
+      return null;
+    });
+  });
+
+  tearDownAll(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, null);
+  });
+
+  setUp(() {
+    _clipboardText = null;
+  });
+
   testWidgets('hq analytics page consumes KPI metrics and supplemental data',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
@@ -305,8 +333,8 @@ void main() {
     expect(find.text('Latest attendance: 0.0%'), findsNothing);
   });
 
-  testWidgets(
-      'hq analytics export dialog is notice-only until a real export exists',
+    testWidgets(
+      'hq analytics export copies the live dashboard snapshot to clipboard',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     final FirestoreService firestoreService = FirestoreService(
@@ -348,13 +376,10 @@ void main() {
     await tester.tap(find.byIcon(Icons.download));
     await tester.pumpAndSettle();
 
-    expect(find.text('Export HQ Analytics'), findsOneWidget);
-    expect(
-      find.textContaining(
-          'HQ analytics exports are not available in the app yet.'),
-      findsOneWidget,
-    );
-    expect(find.widgetWithText(ElevatedButton, 'Export'), findsNothing);
-    expect(find.widgetWithText(TextButton, 'Close'), findsOneWidget);
+    expect(find.text('Export HQ Analytics'), findsNothing);
+    expect(find.text('HQ analytics export copied to clipboard.'), findsOneWidget);
+    expect(_clipboardText, isNotNull);
+    expect(_clipboardText, contains('Export HQ Analytics'));
+    expect(_clipboardText, contains('Weekly accountability adherence: 91.0%'));
   });
 }
