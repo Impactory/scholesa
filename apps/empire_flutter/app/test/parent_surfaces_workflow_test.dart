@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -25,6 +26,8 @@ final ThemeData _workflowTheme = ThemeData(
 );
 
 class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
+
+String? _parentScheduleClipboardText;
 
 class _FakeUrlLauncherPlatform extends UrlLauncherPlatform {
   final List<String> launchedUrls = <String>[];
@@ -239,6 +242,31 @@ Future<void> _pumpPage(
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUpAll(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, (
+      MethodCall methodCall,
+    ) async {
+      if (methodCall.method == 'Clipboard.setData') {
+        final Map<Object?, Object?>? arguments =
+            methodCall.arguments as Map<Object?, Object?>?;
+        _parentScheduleClipboardText = arguments?['text']?.toString();
+      }
+      return null;
+    });
+  });
+
+  tearDownAll(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, null);
+  });
+
+  setUp(() {
+    _parentScheduleClipboardText = null;
+  });
+
   group('Parent surface workflows', () {
     testWidgets('summary page only renders linked learner activity',
         (WidgetTester tester) async {
@@ -278,12 +306,15 @@ void main() {
           findsOneWidget);
       expect(find.textContaining('Location: Lab 1'), findsOneWidget);
 
-      expect(
-        find.textContaining(
-            'Session reminders are not available in the app yet'),
-        findsOneWidget,
-      );
-      expect(find.text('Set Reminder'), findsNothing);
+      expect(find.widgetWithText(TextButton, 'Set Reminder'), findsOneWidget);
+
+      await tester.tap(find.widgetWithText(TextButton, 'Set Reminder'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Session reminder copied for sharing.'), findsOneWidget);
+      expect(_parentScheduleClipboardText, isNotNull);
+      expect(_parentScheduleClipboardText, contains('Session Reminder'));
+      expect(_parentScheduleClipboardText, contains('Robotics Studio'));
     });
 
     testWidgets('portfolio page shows explicit unavailable share state',

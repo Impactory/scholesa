@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'parent_models.dart';
 import 'parent_service.dart';
@@ -567,10 +568,32 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
           '${nextSession.title}\n'
           '${_t('Location')}: ${nextSession.location}\n'
           '${_t('Starts')}: ${_formatDateTime(nextSession.dateTime)}\n'
-          '${_t('Learner')}: ${nextSession.learnerName}\n\n'
-          '${_t('Session reminders are not available in the app yet')}',
+          '${_t('Learner')}: ${nextSession.learnerName}',
         ),
         actions: <Widget>[
+          TextButton(
+            onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{
+                  'cta': 'parent_schedule_copy_session_reminder',
+                },
+              );
+              final String reminderText =
+                  '${_t('Session Reminder')}: ${nextSession.title}\n'
+                  '${_t('Location')}: ${nextSession.location}\n'
+                  '${_t('Starts')}: ${_formatDateTime(nextSession.dateTime)}\n'
+                  '${_t('Learner')}: ${nextSession.learnerName}';
+              Clipboard.setData(ClipboardData(text: reminderText));
+              Navigator.pop(dialogContext);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(_t('Session reminder copied for sharing.')),
+                ),
+              );
+            },
+            child: Text(_t('Set Reminder')),
+          ),
           TextButton(
             onPressed: () {
               TelemetryService.instance.logEvent(
