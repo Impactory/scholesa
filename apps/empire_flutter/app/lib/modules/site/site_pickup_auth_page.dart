@@ -533,6 +533,7 @@ class _SitePickupAuthPageState extends State<SitePickupAuthPage> {
     if (_siteId == null) {
       return;
     }
+    final AppState appState = context.read<AppState>();
     final _PickupAuthorizationEditorResult? result =
         await showDialog<_PickupAuthorizationEditorResult>(
       context: context,
@@ -545,7 +546,6 @@ class _SitePickupAuthPageState extends State<SitePickupAuthPage> {
       return;
     }
 
-    final AppState appState = context.read<AppState>();
     setState(() {
       _isSaving = true;
     });
@@ -688,7 +688,7 @@ class _PickupAuthorizationEditorDialogState
                 _buildLockedLearnerField()
               else
                 DropdownButtonFormField<String>(
-                  value: _selectedLearnerId,
+                  initialValue: _selectedLearnerId,
                   decoration: InputDecoration(
                     labelText: _tSitePickupAuth(context, 'Learner'),
                     border: const OutlineInputBorder(),
@@ -832,97 +832,49 @@ class _PickupAuthorizationEditorDialogState
               ),
             ),
             const SizedBox(height: 12),
-            LayoutBuilder(
-              builder: (BuildContext context, BoxConstraints constraints) {
-                final bool compact = constraints.maxWidth < 560;
-                final List<Widget> fields = <Widget>[
-                  Expanded(
-                    child: TextFormField(
-                      controller: pickup.phoneController,
-                      keyboardType: TextInputType.phone,
-                      decoration: InputDecoration(
-                        labelText: _tSitePickupAuth(context, 'Phone'),
-                        border: const OutlineInputBorder(),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: TextFormField(
-                      controller: pickup.emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: InputDecoration(
-                        labelText: _tSitePickupAuth(context, 'Email'),
-                        border: const OutlineInputBorder(),
-                      ),
-                    ),
-                  ),
-                ];
-                return compact
-                    ? Column(
-                        children: <Widget>[
-                          fields[0],
-                          const SizedBox(height: 12),
-                          fields[1],
-                        ],
-                      )
-                    : Row(
-                        children: <Widget>[
-                          fields[0],
-                          const SizedBox(width: 12),
-                          fields[1],
-                        ],
-                      );
-              },
+            TextFormField(
+              controller: pickup.phoneController,
+              keyboardType: TextInputType.phone,
+              decoration: InputDecoration(
+                labelText: _tSitePickupAuth(context, 'Phone'),
+                border: const OutlineInputBorder(),
+              ),
             ),
             const SizedBox(height: 12),
-            LayoutBuilder(
-              builder: (BuildContext context, BoxConstraints constraints) {
-                final bool compact = constraints.maxWidth < 560;
-                final Widget codeField = Expanded(
-                  child: TextFormField(
-                    controller: pickup.codeController,
-                    decoration: InputDecoration(
-                      labelText: _tSitePickupAuth(context, 'Verification code'),
-                      border: const OutlineInputBorder(),
-                    ),
-                  ),
-                );
-                final Widget expiryField = Expanded(
-                  child: TextFormField(
-                    controller: pickup.expiryController,
-                    decoration: InputDecoration(
-                      labelText: _tSitePickupAuth(context, 'Expires (YYYY-MM-DD)'),
-                      border: const OutlineInputBorder(),
-                    ),
-                    validator: (String? value) {
-                      final String trimmed = (value ?? '').trim();
-                      if (trimmed.isEmpty) {
-                        return null;
-                      }
-                      return DateTime.tryParse(trimmed) == null
-                          ? _tSitePickupAuth(
-                              context,
-                              'Expiration must use YYYY-MM-DD',
-                            )
-                          : null;
-                    },
-                  ),
-                );
-                return compact
-                    ? Column(
-                        children: <Widget>[
-                          codeField,
-                          const SizedBox(height: 12),
-                          expiryField,
-                        ],
+            TextFormField(
+              controller: pickup.emailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: InputDecoration(
+                labelText: _tSitePickupAuth(context, 'Email'),
+                border: const OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: pickup.codeController,
+              decoration: InputDecoration(
+                labelText: _tSitePickupAuth(context, 'Verification code'),
+                border: const OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: pickup.expiryController,
+              decoration: InputDecoration(
+                labelText: _tSitePickupAuth(context, 'Expires (YYYY-MM-DD)'),
+                border: const OutlineInputBorder(),
+              ),
+              validator: (String? value) {
+                final String trimmed = (value ?? '').trim();
+                if (trimmed.isEmpty) {
+                  return null;
+                }
+                return DateTime.tryParse(trimmed) == null
+                    ? _tSitePickupAuth(
+                        context,
+                        'Expiration must use YYYY-MM-DD',
                       )
-                    : Row(
-                        children: <Widget>[
-                          codeField,
-                          const SizedBox(width: 12),
-                          expiryField,
-                        ],
-                      );
+                    : null;
               },
             ),
             SwitchListTile.adaptive(

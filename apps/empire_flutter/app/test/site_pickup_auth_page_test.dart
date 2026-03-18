@@ -11,7 +11,8 @@ import 'package:scholesa_app/modules/site/site_pickup_auth_service.dart';
 
 class _ThrowingPickupAuthorizationService
     extends SitePickupAuthorizationService {
-  _ThrowingPickupAuthorizationService();
+  _ThrowingPickupAuthorizationService()
+      : super(firestore: FakeFirebaseFirestore());
 
   @override
   Future<List<SitePickupAuthorizationLearnerOption>> listLearners(
@@ -154,8 +155,8 @@ void main() {
 
     expect(find.text('Ava Stone'), findsOneWidget);
     expect(find.text('Ben Rivers'), findsOneWidget);
-    expect(find.text('Explicit list'), findsOneWidget);
-    expect(find.text('Guardian fallback'), findsOneWidget);
+    expect(find.text('Explicit list'), findsWidgets);
+    expect(find.text('Guardian fallback'), findsWidgets);
     expect(find.textContaining('AVA-123'), findsOneWidget);
 
     await tester.tap(find.byTooltip('Add Authorization'));

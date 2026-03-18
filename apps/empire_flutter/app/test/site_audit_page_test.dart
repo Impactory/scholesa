@@ -6,7 +6,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
 import 'package:scholesa_app/auth/app_state.dart';
-import 'package:scholesa_app/domain/models.dart';
 import 'package:scholesa_app/domain/repositories.dart';
 import 'package:scholesa_app/modules/site/site_audit_page.dart';
 import 'package:scholesa_app/services/export_service.dart';
