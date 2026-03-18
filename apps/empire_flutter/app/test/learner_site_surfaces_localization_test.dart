@@ -903,7 +903,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Projects'));
+      await tester.tap(find.widgetWithText(Tab, 'Projects'));
       await tester.pumpAndSettle();
 
       expect(find.text('Solar Oven Prototype'), findsOneWidget);
