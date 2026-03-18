@@ -1,5 +1,6 @@
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
@@ -126,6 +127,15 @@ class _HqAuditPageState extends State<HqAuditPage> {
     return trimmed;
   }
 
+  List<_AuditLog> _filteredLogs() {
+    if (_filterCategory == null) {
+      return _auditLogs;
+    }
+    return _auditLogs
+        .where((_AuditLog log) => log.category == _filterCategory)
+        .toList(growable: false);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -136,11 +146,7 @@ class _HqAuditPageState extends State<HqAuditPage> {
 
   @override
   Widget build(BuildContext context) {
-    final List<_AuditLog> filteredLogs = _filterCategory == null
-        ? _auditLogs
-        : _auditLogs
-            .where((_AuditLog log) => log.category == _filterCategory)
-            .toList();
+    final List<_AuditLog> filteredLogs = _filteredLogs();
 
     return Scaffold(
       backgroundColor: ScholesaColors.background,
@@ -167,21 +173,7 @@ class _HqAuditPageState extends State<HqAuditPage> {
             icon: const Icon(Icons.download_rounded),
             onPressed: () {
               _logAuditEvent('hq_audit_export_logs');
-              showDialog<void>(
-                context: context,
-                builder: (BuildContext dialogContext) => AlertDialog(
-                  title: Text(_tHqAudit(context, 'Export Audit Logs')),
-                  content: Text(
-                    '${_tHqAudit(context, 'Export the current audit log feed for offline review.')}\n\n${_tHqAudit(context, 'Audit log exports are not available in the app yet.')}',
-                  ),
-                  actions: <Widget>[
-                    TextButton(
-                      onPressed: () => Navigator.pop(dialogContext),
-                      child: Text(_tHqAudit(context, 'Close')),
-                    ),
-                  ],
-                ),
-              );
+              _exportAuditLogs();
             },
           ),
         ],
@@ -484,6 +476,61 @@ class _HqAuditPageState extends State<HqAuditPage> {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  Future<void> _exportAuditLogs() async {
+    final List<_AuditLog> filteredLogs = _filteredLogs();
+    if (filteredLogs.isEmpty && _redTeamReviews.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_tHqAudit(context, 'No audit records to export yet.')),
+        ),
+      );
+      return;
+    }
+
+    final StringBuffer export = StringBuffer()
+      ..writeln(_tHqAudit(context, 'Export Audit Logs'))
+      ..writeln('Generated: ${DateTime.now().toIso8601String()}')
+      ..writeln('Filter: ${_filterCategory?.name ?? 'all'}')
+      ..writeln('')
+      ..writeln('Audit Logs')
+      ..writeln('----------');
+
+    for (final _AuditLog log in filteredLogs) {
+      export
+        ..writeln('[${log.timestamp.toIso8601String()}] ${log.action}')
+        ..writeln('Category: ${log.category.name}')
+        ..writeln('Actor: ${log.actor}')
+        ..writeln('Details: ${log.details}')
+        ..writeln('');
+    }
+
+    export
+      ..writeln('Red Team Reviews')
+      ..writeln('----------------');
+
+    for (final _RedTeamReview review in _redTeamReviews) {
+      export
+        ..writeln('[${review.updatedAt.toIso8601String()}] ${review.title}')
+        ..writeln('Decision: ${review.decision}')
+        ..writeln('Partner Status: ${review.partnerStatus}')
+        ..writeln('Scope: ${_siteScopeLabel(review.siteId)}')
+        ..writeln('Recommendations: ${review.recommendations}')
+        ..writeln('Next Action: ${review.nextAction}')
+        ..writeln('');
+    }
+
+    await Clipboard.setData(ClipboardData(text: export.toString().trim()));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          _tHqAudit(context, 'Audit export copied to clipboard.'),
+        ),
+      ),
+    );
   }
 
   void _showFilterDialog() {

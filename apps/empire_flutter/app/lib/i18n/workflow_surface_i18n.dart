@@ -322,6 +322,8 @@ class WorkflowSurfaceI18n {
     'Export the current audit log feed for offline review.':
         '导出当前审计日志列表以供离线审阅。',
     'Audit log exports are not available in the app yet.': '应用内暂不支持导出审计日志。',
+    'No audit records to export yet.': '暂时没有可导出的审计记录。',
+    'Audit export copied to clipboard.': '审计导出内容已复制到剪贴板。',
     'Audit action unavailable': '审计动作不可用',
     'Actor unavailable': '操作者信息不可用',
     'Mission unavailable': '任务不可用',
@@ -716,6 +718,8 @@ class WorkflowSurfaceI18n {
     'Export the current audit log feed for offline review.':
         '匯出目前的稽核日誌清單以供離線審閱。',
     'Audit log exports are not available in the app yet.': 'App 內暫不支援匯出稽核日誌。',
+    'No audit records to export yet.': '目前沒有可匯出的稽核記錄。',
+    'Audit export copied to clipboard.': '稽核匯出內容已複製到剪貼簿。',
     'Audit action unavailable': '稽核動作不可用',
     'Actor unavailable': '操作者資訊不可用',
     'Mission unavailable': '任務不可用',

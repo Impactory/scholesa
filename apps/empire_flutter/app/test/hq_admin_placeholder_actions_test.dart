@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -48,6 +49,14 @@ AppState _buildAppState() {
 }
 
 void main() {
+  TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+      .setMockMethodCallHandler(SystemChannels.platform, (MethodCall methodCall) async {
+    if (methodCall.method == 'Clipboard.setData') {
+      return null;
+    }
+    return null;
+  });
+
   testWidgets('HQ safety detail sheets remove the fake full report CTA',
       (WidgetTester tester) async {
     await tester.binding.setSurfaceSize(const Size(1200, 1800));
@@ -297,7 +306,7 @@ void main() {
     expect(find.text('No subscriptions found'), findsOneWidget);
   });
 
-  testWidgets('HQ audit export action is notice-only until export exists',
+  testWidgets('HQ audit export action shows an honest empty-export message',
       (WidgetTester tester) async {
     await tester.binding.setSurfaceSize(const Size(1200, 1800));
     await tester.pumpWidget(
@@ -311,13 +320,9 @@ void main() {
     await tester.tap(find.byIcon(Icons.download_rounded));
     await tester.pumpAndSettle();
 
-    expect(find.text('Export Audit Logs'), findsOneWidget);
-    expect(
-      find.textContaining(
-          'Audit log exports are not available in the app yet.'),
-      findsOneWidget,
-    );
-    expect(find.text('Exporting audit logs...'), findsNothing);
-    expect(find.text('Close'), findsOneWidget);
+    expect(find.text('Export Audit Logs'), findsNothing);
+    expect(find.text('No audit records to export yet.'), findsOneWidget);
+    expect(find.textContaining('Audit log exports are not available'),
+        findsNothing);
   });
 }
