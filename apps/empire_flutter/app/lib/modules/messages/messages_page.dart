@@ -206,6 +206,17 @@ class _MessagesPageState extends State<MessagesPage>
 
         final List<Message> notifications = service.notificationMessages;
 
+        if (service.error != null && notifications.isEmpty) {
+          return _buildEmptyState(
+            icon: Icons.error_outline,
+            title: _tMessages(context, 'Unable to load messages right now'),
+            subtitle: _tMessages(
+              context,
+              'Try again in a moment or refresh after your connection stabilizes.',
+            ),
+          );
+        }
+
         if (notifications.isEmpty) {
           return _buildEmptyState(
             icon: Icons.notifications_none,
@@ -296,6 +307,23 @@ class _MessagesPageState extends State<MessagesPage>
   Widget _buildConversationsList() {
     return Consumer<MessageService>(
       builder: (BuildContext context, MessageService service, _) {
+        if (service.isLoading && service.conversations.isEmpty) {
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFF6366F1)),
+          );
+        }
+
+        if (service.error != null && service.conversations.isEmpty) {
+          return _buildEmptyState(
+            icon: Icons.error_outline,
+            title: _tMessages(context, 'Unable to load messages right now'),
+            subtitle: _tMessages(
+              context,
+              'Try again in a moment or refresh after your connection stabilizes.',
+            ),
+          );
+        }
+
         if (service.conversations.isEmpty) {
           return _buildEmptyState(
             icon: Icons.chat_bubble_outline,

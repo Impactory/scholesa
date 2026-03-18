@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
+import 'package:scholesa_app/modules/messages/message_models.dart';
 import 'package:scholesa_app/modules/messages/message_service.dart';
 import 'package:scholesa_app/modules/messages/messages_page.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
@@ -15,6 +16,43 @@ import 'package:url_launcher_platform_interface/link.dart';
 import 'package:url_launcher_platform_interface/url_launcher_platform_interface.dart';
 
 class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
+
+class _FakeMessageService extends MessageService {
+  _FakeMessageService({
+    List<Message>? notifications,
+    List<Conversation>? conversations,
+    this.loading = false,
+    this.loadError,
+  })  : _notifications = List<Message>.from(notifications ?? const <Message>[]),
+        _conversations = List<Conversation>.from(conversations ?? const <Conversation>[]),
+        super(
+          firestoreService: FirestoreService(
+            firestore: FakeFirebaseFirestore(),
+            auth: _MockFirebaseAuth(),
+          ),
+          userId: 'test-user-1',
+        );
+
+  final List<Message> _notifications;
+  final List<Conversation> _conversations;
+  final bool loading;
+  final String? loadError;
+
+  @override
+  List<Message> get notificationMessages => List<Message>.unmodifiable(_notifications);
+
+  @override
+  List<Conversation> get conversations => List<Conversation>.unmodifiable(_conversations);
+
+  @override
+  bool get isLoading => loading;
+
+  @override
+  String? get error => loadError;
+
+  @override
+  Future<void> loadMessages() async {}
+}
 
 class _FakeUrlLauncherPlatform extends UrlLauncherPlatform {
   final List<String> launchedUrls = <String>[];
@@ -290,6 +328,73 @@ void main() {
       );
       expect(find.text('Unknown'), findsNothing);
       expect(find.text('unknown'), findsNothing);
+    });
+
+    testWidgets('messages page shows honest error state when notifications fail to load',
+        (WidgetTester tester) async {
+      final _FakeMessageService messageService = _FakeMessageService(
+        loadError: 'Failed to load messages: boom',
+      );
+      final GoRouter router = GoRouter(
+        initialLocation: '/messages',
+        routes: <RouteBase>[
+          GoRoute(
+            path: '/messages',
+            builder: (BuildContext context, GoRouterState state) =>
+                const MessagesPage(),
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        _buildHarness(
+          router: router,
+          locale: const Locale('zh', 'CN'),
+          providers: <SingleChildWidget>[
+            ChangeNotifierProvider<MessageService>.value(value: messageService),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('目前无法加载消息'), findsOneWidget);
+      expect(find.textContaining('请稍后重试'), findsOneWidget);
+      expect(find.text('暂无通知'), findsNothing);
+    });
+
+    testWidgets('messages conversations tab keeps spinner while shared load is still in flight',
+        (WidgetTester tester) async {
+      final _FakeMessageService messageService = _FakeMessageService(
+        loading: true,
+      );
+      final GoRouter router = GoRouter(
+        initialLocation: '/messages',
+        routes: <RouteBase>[
+          GoRoute(
+            path: '/messages',
+            builder: (BuildContext context, GoRouterState state) =>
+                const MessagesPage(),
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        _buildHarness(
+          router: router,
+          providers: <SingleChildWidget>[
+            ChangeNotifierProvider<MessageService>.value(value: messageService),
+          ],
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      await tester.tap(find.text('Conversations'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.text('No conversations'), findsNothing);
     });
   });
 }
