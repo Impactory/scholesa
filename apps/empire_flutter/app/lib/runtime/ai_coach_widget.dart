@@ -172,6 +172,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
   List<String> _bosMiaLoopTags() {
     final Set<String> tags = <String>{
       ...widget.conceptTags.where((String tag) => tag.trim().isNotEmpty),
+      'miloos_loop',
       'bos_mia_loop',
       'continuous_improvement',
       'learner_${widget.runtime.learnerId}',
@@ -986,8 +987,11 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         'sessionOccurrenceId': widget.runtime.sessionOccurrenceId,
       'mode': _selectedMode.name,
       'role': widget.actorRole.name,
+      'miloosLoop': true,
       'bosMiaLoop': true,
       'loopTags': _bosMiaLoopTags(),
+      'loopLineage':
+          'mathematical_learner_state_model + synthetic_training_baseline + live_session_updates',
       'personaInstructions':
           'Kid-friendly, conversational coaching voice. Keep it warm, simple, and spoken. Never give final answers; guide step-by-step.',
     };
@@ -1013,6 +1017,35 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     return 'cognition=${state.cognition.toStringAsFixed(2)}, engagement=${state.engagement.toStringAsFixed(2)}, integrity=${state.integrity.toStringAsFixed(2)}';
   }
 
+  _RuntimeHonestyStatus? _runtimeHonestyStatus() {
+    if (widget.runtime.stateStatus == LearningRuntimeStateStatus.malformed) {
+      return _RuntimeHonestyStatus.malformed;
+    }
+    final double? confidence = widget.runtime.confidence;
+    if (widget.runtime.stateStatus == LearningRuntimeStateStatus.unavailable ||
+        confidence == null) {
+      return _RuntimeHonestyStatus.unavailable;
+    }
+    if (widget.actorRole == UserRole.learner && confidence < 0.97) {
+      return _RuntimeHonestyStatus.guarded;
+    }
+    return null;
+  }
+
+  String _runtimeHonestyText(_RuntimeHonestyStatus status) {
+    switch (status) {
+      case _RuntimeHonestyStatus.unavailable:
+        return _t('ai.banner.runtimeUnavailable');
+      case _RuntimeHonestyStatus.malformed:
+        return _t('ai.banner.runtimeMalformed');
+      case _RuntimeHonestyStatus.guarded:
+        final String percent =
+            ((widget.runtime.confidence ?? 0.0) * 100).toStringAsFixed(0);
+        return _t('ai.banner.learnerGuarded')
+            .replaceFirst('{percent}', percent);
+    }
+  }
+
   String _buildConversationalPrompt(String userInput) {
     final List<String> turns = _privacySafeConversationTurns();
     final String conversation =
@@ -1035,7 +1068,8 @@ Context:
 - sessionContextAvailable: ${(widget.runtime.sessionOccurrenceId ?? '').trim().isEmpty ? 'no' : 'yes'}
 - conceptTags: ${tags.isEmpty ? 'none' : tags}
 - stateEstimate: ${_stateSnapshot()}
-- bosMiaLoop: Always stay in BOS/MIA closed-loop coaching and improve this specific learner over time.
+- miloosLoop: Always stay in the MiloOS closed-loop coaching runtime and improve this specific learner over time.
+- loopLineage: Use the mathematical learner-state model, control policy, and synthetic-trained runtime baseline before adapting to this live session.
 
 Session learning goals:
 $goals
@@ -1431,6 +1465,8 @@ Response style:
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final bool hasMvl = widget.runtime.hasMvlGate;
+    final _RuntimeHonestyStatus? runtimeHonestyStatus =
+        _runtimeHonestyStatus();
 
     return Column(
       children: <Widget>[
@@ -1474,6 +1510,12 @@ Response style:
                 ),
               ],
             ),
+          ),
+
+        if (runtimeHonestyStatus != null)
+          _RuntimeHonestyBanner(
+            status: runtimeHonestyStatus,
+            text: _runtimeHonestyText(runtimeHonestyStatus),
           ),
 
         if (_learningGoals.isNotEmpty)
@@ -1748,6 +1790,88 @@ Response style:
 }
 
 // ──── Mode selector chip bar ────
+
+enum _RuntimeHonestyStatus {
+  unavailable,
+  malformed,
+  guarded,
+}
+
+class _RuntimeHonestyBanner extends StatelessWidget {
+  const _RuntimeHonestyBanner({
+    required this.status,
+    required this.text,
+  });
+
+  final _RuntimeHonestyStatus status;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final _RuntimeHonestyTone tone = switch (status) {
+      _RuntimeHonestyStatus.unavailable => _RuntimeHonestyTone(
+          icon: Icons.analytics_outlined,
+          background: theme.colorScheme.secondaryContainer,
+          foreground: theme.colorScheme.onSecondaryContainer,
+          border: theme.colorScheme.secondary,
+        ),
+      _RuntimeHonestyStatus.malformed => _RuntimeHonestyTone(
+          icon: Icons.warning_amber_rounded,
+          background: theme.colorScheme.errorContainer,
+          foreground: theme.colorScheme.onErrorContainer,
+          border: theme.colorScheme.error,
+        ),
+      _RuntimeHonestyStatus.guarded => _RuntimeHonestyTone(
+          icon: Icons.shield_outlined,
+          background: theme.colorScheme.tertiaryContainer,
+          foreground: theme.colorScheme.onTertiaryContainer,
+          border: theme.colorScheme.tertiary,
+        ),
+    };
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        color: tone.background,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: tone.border),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Icon(tone.icon, color: tone.foreground, size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: tone.foreground,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RuntimeHonestyTone {
+  const _RuntimeHonestyTone({
+    required this.icon,
+    required this.background,
+    required this.foreground,
+    required this.border,
+  });
+
+  final IconData icon;
+  final Color background;
+  final Color foreground;
+  final Color border;
+}
 
 class _ModeSelector extends StatelessWidget {
   const _ModeSelector({required this.selected, required this.onChanged});
