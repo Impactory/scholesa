@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
 import 'dart:async';
 import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/auth/auth_service.dart';
+import 'package:scholesa_app/auth/recent_login_store.dart';
 import 'package:scholesa_app/dashboards/role_dashboard.dart';
 import 'package:scholesa_app/modules/messages/message_service.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
@@ -72,7 +74,7 @@ void main() {
       await _pumpSized(
         tester,
         size: const Size(390, 844),
-        child: const LoginPage(),
+        child: _buildLoginPageHarness(),
       );
 
       await expectLater(
@@ -85,7 +87,7 @@ void main() {
       await _pumpSized(
         tester,
         size: const Size(1280, 800),
-        child: const LoginPage(),
+        child: _buildLoginPageHarness(),
       );
 
       await expectLater(
@@ -99,7 +101,7 @@ void main() {
       await _pumpSized(
         tester,
         size: const Size(390, 844),
-        child: const LoginPage(),
+        child: _buildLoginPageHarness(),
       );
 
       await tester.tap(find.widgetWithText(ElevatedButton, 'Sign In'));
@@ -120,12 +122,9 @@ void main() {
       });
 
       await tester.pumpWidget(
-        Provider<AuthService>.value(
-          value: pendingAuthService,
-          child: MaterialApp(
-            theme: _testTheme,
-            home: const LoginPage(),
-          ),
+        MaterialApp(
+          theme: _testTheme,
+          home: _buildLoginPageHarness(authService: pendingAuthService),
         ),
       );
 
@@ -225,6 +224,21 @@ AppState _buildStateForRole(UserRole role) {
     'entitlements': <dynamic>[],
   });
   return appState;
+}
+
+Widget _buildLoginPageHarness({AuthService? authService}) {
+  return MultiProvider(
+    providers: <SingleChildWidget>[
+      Provider<AuthService>.value(
+        value: authService ?? _PendingAuthService(),
+      ),
+      ChangeNotifierProvider<AppState>(create: (_) => AppState()),
+      ChangeNotifierProvider<RecentLoginStore>(
+        create: (_) => RecentLoginStore(),
+      ),
+    ],
+    child: const LoginPage(),
+  );
 }
 
 MessageService _buildMessageService(String userId) {
