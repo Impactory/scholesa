@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import '../../auth/app_state.dart';
 import '../../domain/models.dart';
@@ -785,13 +784,14 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
     try {
       final FirestoreService firestoreService =
           context.read<FirestoreService>();
+      final AppState appState = context.read<AppState>();
       final String siteId = _siteId ?? '';
       if (siteId.isNotEmpty) {
         await firestoreService.firestore.collection('siteOpsEvents').add(
           <String, dynamic>{
             'siteId': siteId,
             'action': label,
-            'createdBy': FirebaseAuth.instance.currentUser?.uid,
+            'createdBy': appState.userId,
             'createdAt': FieldValue.serverTimestamp(),
           },
         );
@@ -1499,7 +1499,7 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
         <String, dynamic>{
           'siteId': siteId,
           'action': 'Kit checklist updated',
-          'createdBy': FirebaseAuth.instance.currentUser?.uid,
+          'createdBy': appState.userId,
           'createdAt': FieldValue.serverTimestamp(),
         },
       );
@@ -1549,7 +1549,7 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
         <String, dynamic>{
           'siteId': siteId,
           'action': 'Safety note saved',
-          'createdBy': FirebaseAuth.instance.currentUser?.uid,
+          'createdBy': appState.userId,
           'createdAt': FieldValue.serverTimestamp(),
         },
       );
