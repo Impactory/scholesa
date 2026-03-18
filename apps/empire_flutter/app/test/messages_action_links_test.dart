@@ -234,12 +234,12 @@ void main() {
         id: 'message-missing-sender',
         title: 'Sender label regression',
         actionUrl: '/profile',
-        senderName: null,
+        senderName: ' unknown ',
       );
       await _seedConversation(
         firestore,
         id: 'thread-missing-participant',
-        participantNames: <String>['Test User', 'Unknown'],
+        participantNames: <String>['Test User', ' unknown '],
       );
       final FirestoreService firestoreService = FirestoreService(
         firestore: firestore,
@@ -289,6 +289,7 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Unknown'), findsNothing);
+      expect(find.text('unknown'), findsNothing);
     });
   });
 }

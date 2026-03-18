@@ -1134,7 +1134,7 @@ class _ImportRosterDialogState extends State<_ImportRosterDialog> {
             Text(
               _tEducatorSessions(
                 context,
-                'Use headers like name, email, or learner_id. Unknown learners will be queued for site provisioning.',
+                'Use headers like name, email, or learner_id. Unmatched learners will be queued for site provisioning.',
               ),
               style: TextStyle(color: Colors.grey[700], height: 1.4),
             ),

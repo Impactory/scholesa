@@ -193,8 +193,8 @@ class WorkflowSurfaceI18n {
         '名单导入完成：已报名 {importedCount} 人，{duplicateCount} 人已在班级中',
     'Roster import complete: {importedCount} enrolled, {queuedCount} queued for provisioning':
         '名单导入完成：已报名 {importedCount} 人，{queuedCount} 人已加入开通队列',
-    'Use headers like name, email, or learner_id. Unknown learners will be queued for site provisioning.':
-        '可使用 name、email 或 learner_id 等列名。无法识别的学习者会加入站点开通队列。',
+    'Use headers like name, email, or learner_id. Unmatched learners will be queued for site provisioning.':
+        '可使用 name、email 或 learner_id 等列名。未匹配的学习者会加入站点开通队列。',
     'Import': '导入',
     'Pillar': '支柱',
     'Create': '创建',
@@ -626,8 +626,8 @@ class WorkflowSurfaceI18n {
         '名單匯入完成：已報名 {importedCount} 人，{duplicateCount} 人已在班級中',
     'Roster import complete: {importedCount} enrolled, {queuedCount} queued for provisioning':
         '名單匯入完成：已報名 {importedCount} 人，{queuedCount} 人已加入開通佇列',
-    'Use headers like name, email, or learner_id. Unknown learners will be queued for site provisioning.':
-        '可使用 name、email 或 learner_id 等欄位名稱。無法識別的學習者會加入站點開通佇列。',
+    'Use headers like name, email, or learner_id. Unmatched learners will be queued for site provisioning.':
+        '可使用 name、email 或 learner_id 等欄位名稱。未配對的學習者會加入站點開通佇列。',
     'Import': '匯入',
     'Title is required': '標題為必填項',
     'Failed to create session': '建立課程失敗',
