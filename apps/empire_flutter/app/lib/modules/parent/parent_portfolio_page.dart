@@ -76,6 +76,17 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
       ),
       body: Consumer<ParentService>(
         builder: (BuildContext context, ParentService service, _) {
+          if (service.isLoading) {
+            return const Center(
+              child: CircularProgressIndicator(color: ScholesaColors.parent),
+            );
+          }
+          if (service.error != null) {
+            return _buildLoadErrorState(
+              message: _t('Unable to load portfolio right now'),
+              onRetry: service.loadParentData,
+            );
+          }
           final List<_PortfolioItem> portfolioItems =
               _portfolioItemsFromService(service);
           return Column(
@@ -96,6 +107,52 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
             ],
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildLoadErrorState({
+    required String message,
+    required Future<void> Function() onRetry,
+  }) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: scheme.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: scheme.outlineVariant),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Icon(
+                  Icons.error_outline_rounded,
+                  color: scheme.error,
+                  size: 40,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+                const SizedBox(height: 12),
+                FilledButton.tonal(
+                  onPressed: () => onRetry(),
+                  child: Text(_t('Retry')),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
