@@ -40,9 +40,10 @@ log()  { echo -e "${GREEN}[deploy]${NC} $*"; }
 warn() { echo -e "${YELLOW}[deploy]${NC} $*"; }
 fail() { echo -e "${RED}[deploy]${NC} $*"; exit 1; }
 
-cloud_run_no_traffic_args() {
+append_no_traffic_arg() {
+  local array_name="$1"
   if [[ "$NO_TRAFFIC_DEPLOY" == "1" || "$NO_TRAFFIC_DEPLOY" == "true" ]]; then
-    printf '%s\n' '--no-traffic'
+    eval "$array_name+=(--no-traffic)"
   fi
 }
 
@@ -270,8 +271,6 @@ deploy_primary_web() {
   docker push "$image" || fail "Primary web Docker push failed"
 
   local -a deploy_args
-  local -a no_traffic_args
-  mapfile -t no_traffic_args < <(cloud_run_no_traffic_args)
   deploy_args=(
     gcloud run deploy "$service"
     --image "$image"
@@ -279,9 +278,9 @@ deploy_primary_web() {
     --project "$project_id"
     --region "$region"
     --platform managed
-    "${no_traffic_args[@]}"
     --allow-unauthenticated
   )
+  append_no_traffic_arg deploy_args
 
   local env_arg=""
   local env_keys=(
@@ -349,21 +348,24 @@ deploy_compliance_operator() {
   local root_redirect_url
   root_redirect_url="${COMPLIANCE_ROOT_REDIRECT_URL:-https://www.scholesa.com/en}"
   image_tag="${IMAGE_TAG:-$(date +%Y%m%d-%H%M%S)}"
-  local -a no_traffic_args
-  mapfile -t no_traffic_args < <(cloud_run_no_traffic_args)
 
   log "Building compliance operator image with Cloud Build..."
   (cd "$REPO_ROOT" && gcloud builds submit --project "$project_id" --config cloudbuild.compliance.yaml --substitutions "_TAG=$image_tag")
 
-  log "Deploying compliance operator to Cloud Run (service=$service region=$region)..."
-  (cd "$REPO_ROOT" && gcloud run deploy "$service" \
+  local -a compliance_deploy_args
+  compliance_deploy_args=(
+    gcloud run deploy "$service"
     --image "gcr.io/${project_id}/scholesa-compliance:${image_tag}" \
-    --project "$project_id" \
-    --region "$region" \
-    --platform managed \
-    "${no_traffic_args[@]}" \
-    --no-allow-unauthenticated \
-    --set-env-vars "COMPLIANCE_ALLOW_UNAUTH=0,COMPLIANCE_ROOT_REDIRECT_URL=${root_redirect_url}")
+    --project "$project_id"
+    --region "$region"
+    --platform managed
+    --no-allow-unauthenticated
+    --set-env-vars "COMPLIANCE_ALLOW_UNAUTH=0,COMPLIANCE_ROOT_REDIRECT_URL=${root_redirect_url}"
+  )
+  append_no_traffic_arg compliance_deploy_args
+
+  log "Deploying compliance operator to Cloud Run (service=$service region=$region)..."
+  (cd "$REPO_ROOT" && "${compliance_deploy_args[@]}")
 
   log "Compliance operator deployed ✓"
 }
