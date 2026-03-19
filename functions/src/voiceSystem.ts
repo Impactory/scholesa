@@ -3305,6 +3305,39 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
     }
     const transcript = cleanTranscript(transcriptCandidate ?? '');
     if (!transcript) {
+      const latencyMs = Date.now() - startedAt;
+      await Promise.all([
+        recordVoiceAuditEvent({
+          eventType: 'voice.escalated',
+          endpoint: 'voice_transcribe',
+          requestId,
+          traceId,
+          authContext,
+          locale,
+          safetyOutcome: 'escalated',
+          latencyMs,
+        }),
+        recordVoiceTelemetryEvent({
+          event: 'voice.escalated',
+          endpoint: 'voice_transcribe',
+          requestId,
+          traceId,
+          authContext,
+          locale,
+          latencyMs,
+          transcriptProvided: Boolean(transcriptRaw),
+          transcriptLength: 0,
+          partial,
+          audioBytes: uploadedAudioLength,
+          safetyOutcome: 'escalated',
+          modelVersionOverride: sttModelVersion,
+          inference: inferenceMeta,
+          understandingSource,
+          personalizationContextUsed,
+          roleIntelligenceSignals,
+          roleIntelligenceRole: roleIntelligence.requesterRole,
+        }),
+      ]);
       throw new VoiceHttpError(
         422,
         'failed_precondition',
