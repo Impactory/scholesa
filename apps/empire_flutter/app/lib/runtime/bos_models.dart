@@ -580,15 +580,33 @@ class FeatureWindow {
         if (quality != null) 'quality': quality!.toMap(),
       };
 
-    factory FeatureWindow.fromMap(Map<String, dynamic> m) => FeatureWindow(
-      window: _readTrimmedString(m, 'window') ?? 'session',
-      features: _asStringDynamicMap(m['features']) ?? <String, dynamic>{},
-      yVec: (m['y_vec'] as List<dynamic>?)
-        ?.whereType<num>()
-        .map((num e) => e.toDouble())
-        .toList(),
+  factory FeatureWindow.fromMap(Map<String, dynamic> m) {
+    final FeatureWindow? parsed = FeatureWindow.tryFromMap(m);
+    if (parsed == null) {
+      throw const FormatException('Malformed feature window payload.');
+    }
+    return parsed;
+  }
+
+  static FeatureWindow? tryFromMap(Map<String, dynamic>? m) {
+    if (m == null) {
+      return null;
+    }
+    final String? window = _readTrimmedString(m, 'window');
+    final Map<String, dynamic>? features = _asStringDynamicMap(m['features']);
+    final List<double>? yVec = m['y_vec'] == null
+        ? null
+        : _readFiniteDoubleList(m, 'y_vec');
+    if (window == null || features == null || (m['y_vec'] != null && yVec == null)) {
+      return null;
+    }
+    return FeatureWindow(
+      window: window,
+      features: features,
+      yVec: yVec,
       quality: FeatureQuality.tryFromMap(_asStringDynamicMap(m['quality'])),
-      );
+    );
+  }
 }
 
 @immutable
@@ -824,6 +842,19 @@ class MvlEpisode {
         triggerReason == null) {
       return null;
     }
+    final dynamic rawEvidenceEventIds = m['evidenceEventIds'];
+    final List<String>? evidenceEventIds = rawEvidenceEventIds == null
+        ? <String>[]
+        : rawEvidenceEventIds is List<dynamic>
+            ? rawEvidenceEventIds
+                .whereType<String>()
+                .map((String eventId) => eventId.trim())
+                .where((String eventId) => eventId.isNotEmpty)
+                .toList(growable: false)
+            : null;
+    if (evidenceEventIds == null) {
+      return null;
+    }
     return MvlEpisode(
       id: doc.id,
       siteId: siteId,
@@ -836,9 +867,7 @@ class MvlEpisode {
       autonomyRisk: AutonomyRisk.tryFromMap(
         _asStringDynamicMap(m['autonomy']),
       ),
-      evidenceEventIds:
-          ((m['evidenceEventIds'] as List<dynamic>?)?.cast<String>()) ??
-              <String>[],
+      evidenceEventIds: evidenceEventIds,
       resolution: m['resolution'] as String?,
       resolvedAt: m['resolvedAt'] as Timestamp?,
       createdAt: m['createdAt'] as Timestamp?,

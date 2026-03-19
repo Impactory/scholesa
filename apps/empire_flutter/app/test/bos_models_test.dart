@@ -446,6 +446,26 @@ void main() {
   });
 
   group('FeatureQuality', () {
+    test('FeatureWindow fromMap throws on missing window metadata', () {
+      expect(
+        () => FeatureWindow.fromMap(<String, dynamic>{
+          'features': <String, dynamic>{'attempts': 2},
+        }),
+        throwsFormatException,
+      );
+    });
+
+    test('FeatureWindow tryFromMap rejects malformed y_vec payloads', () {
+      expect(
+        FeatureWindow.tryFromMap(<String, dynamic>{
+          'window': 'session',
+          'features': <String, dynamic>{},
+          'y_vec': <dynamic>[0.2, 'bad'],
+        }),
+        isNull,
+      );
+    });
+
     test('fromMap throws on malformed quality payloads', () {
       expect(
         () => FeatureQuality.fromMap(<String, dynamic>{'missingness': 0.2}),
