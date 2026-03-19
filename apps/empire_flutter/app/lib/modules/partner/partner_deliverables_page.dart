@@ -320,6 +320,29 @@ class _PartnerDeliverablesPageState extends State<PartnerDeliverablesPage> {
     }
   }
 
+  String _statusLabel(String status) {
+    switch (status.trim().toLowerCase()) {
+      case 'accepted':
+        return _t('Accepted');
+      case 'rejected':
+        return _t('Rejected');
+      case 'submitted':
+        return _t('Submitted');
+      case 'approved':
+        return _t('Approved');
+      case 'pending':
+        return _t('Pending');
+      case 'active':
+        return _t('Active');
+      case 'draft':
+      case 'planned':
+        return _t('Draft');
+      default:
+        final String normalized = status.trim();
+        return normalized.isEmpty ? _t('Unknown') : normalized;
+    }
+  }
+
   Widget _buildContractSection(_PartnerContractDeliverables contract) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -359,7 +382,7 @@ class _PartnerDeliverablesPageState extends State<PartnerDeliverablesPage> {
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
-                    contract.status.trim().isEmpty ? _t('Unknown') : contract.status,
+                    _statusLabel(contract.status),
                     style: TextStyle(
                       color: _statusColor(contract.status),
                       fontWeight: FontWeight.w600,
@@ -401,9 +424,7 @@ class _PartnerDeliverablesPageState extends State<PartnerDeliverablesPage> {
                               ),
                             ),
                             Text(
-                              deliverable.status.trim().isEmpty
-                                  ? _t('Unknown')
-                                  : deliverable.status,
+                              _statusLabel(deliverable.status),
                               style: TextStyle(
                                 color: _statusColor(deliverable.status),
                                 fontWeight: FontWeight.w600,
@@ -418,7 +439,7 @@ class _PartnerDeliverablesPageState extends State<PartnerDeliverablesPage> {
                         ],
                         const SizedBox(height: 6),
                         Text(
-                          '${_t('Submitted')}: ${_formatDate(deliverable.submittedAt)}',
+                          '${_t('Submitted on')}: ${_formatDate(deliverable.submittedAt)}',
                           style: TextStyle(color: context.schTextSecondary),
                         ),
                         if ((deliverable.evidenceUrl ?? '').trim().isNotEmpty)

@@ -136,6 +136,23 @@ class _PartnerIntegrationsPageState extends State<PartnerIntegrationsPage> {
     }
   }
 
+  String _statusLabel(String status) {
+    switch (status.trim().toLowerCase()) {
+      case 'active':
+      case 'connected':
+        return _t('Connected');
+      case 'error':
+        return _t('Error');
+      case 'revoked':
+        return _t('Revoked');
+      case 'pending':
+        return _t('Pending');
+      default:
+        final String normalized = status.trim();
+        return normalized.isEmpty ? _t('Unknown') : normalized;
+    }
+  }
+
   String _formatDate(Timestamp? timestamp) {
     if (timestamp == null) return _t('Not scheduled');
     final DateTime value = timestamp.toDate();
@@ -181,9 +198,7 @@ class _PartnerIntegrationsPageState extends State<PartnerIntegrationsPage> {
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
-                    connection.status.trim().isEmpty
-                        ? _t('Unknown')
-                        : connection.status,
+                    _statusLabel(connection.status),
                     style: TextStyle(color: color, fontWeight: FontWeight.w600),
                   ),
                 ),
