@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../domain/models.dart';
 import '../../domain/repositories.dart';
@@ -31,6 +32,7 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
   bool _showAiCoach = false;
   LearnerProfileModel? _learnerProfile;
   List<PortfolioItemModel> _portfolioItems = const <PortfolioItemModel>[];
+  List<CredentialModel> _credentials = const <CredentialModel>[];
   bool _isPortfolioLoading = false;
 
   String _t(String input) => _tLearnerPortfolio(context, input);
@@ -134,6 +136,7 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
       setState(() {
         _learnerProfile = null;
         _portfolioItems = const <PortfolioItemModel>[];
+        _credentials = const <CredentialModel>[];
         _isPortfolioLoading = false;
       });
       return;
@@ -145,6 +148,8 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
         LearnerProfileRepository(firestore: firestore);
     final PortfolioItemRepository portfolioItemRepository =
         PortfolioItemRepository(firestore: firestore);
+    final CredentialRepository credentialRepository =
+        CredentialRepository(firestore: firestore);
 
     try {
       final List<Object?> results =
@@ -154,10 +159,15 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
           siteId: siteId,
         ),
         portfolioItemRepository.listByLearner(learnerId),
+        credentialRepository.listByLearner(
+          learnerId,
+          siteId: siteId,
+          limit: 50,
+        ),
       ]);
       final LearnerProfileModel? profile =
           results.first as LearnerProfileModel?;
-      final List<PortfolioItemModel> items = (results.last
+      final List<PortfolioItemModel> items = (results[1]
               as List<PortfolioItemModel>)
           .where((PortfolioItemModel item) => item.siteId.trim() == siteId)
           .toList(growable: false)
@@ -168,15 +178,21 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
               (b.updatedAt ?? b.createdAt)?.millisecondsSinceEpoch ?? 0;
           return bMillis.compareTo(aMillis);
         });
+      final List<CredentialModel> credentials =
+          (results.last as List<CredentialModel>).toList(growable: false);
       if (!mounted) return;
       setState(() {
         _learnerProfile = profile;
         _portfolioItems = items;
+        _credentials = credentials;
         _isPortfolioLoading = false;
       });
     } catch (_) {
       if (!mounted) return;
-      setState(() => _isPortfolioLoading = false);
+      setState(() {
+        _credentials = const <CredentialModel>[];
+        _isPortfolioLoading = false;
+      });
     }
   }
 

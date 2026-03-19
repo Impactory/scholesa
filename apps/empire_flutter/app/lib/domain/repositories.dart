@@ -443,8 +443,13 @@ class PortfolioItemRepository {
 }
 
 class CredentialRepository {
+  CredentialRepository({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
+
+  final FirebaseFirestore _firestore;
+
   CollectionReference<Map<String, dynamic>> get _col =>
-      FirebaseFirestore.instance.collection('credentials');
+      _firestore.collection('credentials');
 
   Future<void> upsert(CredentialModel model) =>
       _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
