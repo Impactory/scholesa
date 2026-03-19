@@ -297,6 +297,29 @@ void main() {
           reason: 'firebase.json runtime ($runtime) must be nodejs$nvmrc');
     });
 
+    test('firebase.json functions predeploy runs build and Gen 2 verification',
+        () {
+      final Map<String, dynamic> firebaseJson =
+          jsonDecode(File('$root/firebase.json').readAsStringSync())
+              as Map<String, dynamic>;
+      final Map<String, dynamic> functions =
+          firebaseJson['functions'] as Map<String, dynamic>;
+      final List<dynamic> predeploy =
+          functions['predeploy'] as List<dynamic>? ?? <dynamic>[];
+
+      expect(
+        predeploy.contains('npm --prefix "\$RESOURCE_DIR" run build'),
+        isTrue,
+        reason: 'Functions predeploy must compile TypeScript before deploy',
+      );
+      expect(
+        predeploy.contains('npm --prefix "\$RESOURCE_DIR" run verify:gen2'),
+        isTrue,
+        reason:
+            'Functions predeploy must verify the shared Gen 2 deployment baseline',
+      );
+    });
+
     // ── 2.6 Functions defineSecret/defineString have safe defaults ──
     test('Cloud Functions define safe defaults for non-secret params', () {
       final String funcSrc =
@@ -452,6 +475,8 @@ void main() {
       expect(scripts.containsKey('build'), isTrue);
       expect(scripts['build'], equals('tsc'),
           reason: 'Functions build must compile TypeScript');
+      expect(scripts['verify:gen2'], equals('node scripts/verify-gen2-runtime.js'),
+          reason: 'Functions must expose a Gen 2 verification script');
       expect(scripts.containsKey('deploy'), isTrue);
       expect((scripts['deploy'] as String).contains('firebase deploy'), isTrue);
     });
@@ -642,6 +667,10 @@ void main() {
           File('$root/functions/src/telemetryAggregator.ts').readAsStringSync();
       final String bosSrc =
           File('$root/functions/src/bosRuntime.ts').readAsStringSync();
+      final String workflowSrc =
+          File('$root/functions/src/workflowOps.ts').readAsStringSync();
+      final String coppaSrc =
+          File('$root/functions/src/coppaOps.ts').readAsStringSync();
 
       // Index must import from v2
       expect(indexSrc.contains("from 'firebase-functions/v2/https'"), isTrue,
@@ -659,18 +688,55 @@ void main() {
       // BOS runtime must import from v2
       expect(bosSrc.contains("from 'firebase-functions/v2/https'"), isTrue,
           reason: 'bosRuntime must use v2 https');
+      expect(workflowSrc.contains("from 'firebase-functions/v2/https'"), isTrue,
+          reason: 'workflowOps must use v2 https');
+      expect(coppaSrc.contains("from 'firebase-functions/v2/https'"), isTrue,
+          reason: 'coppaOps must use v2 https');
 
       // No v1 imports in any source file
       for (final MapEntry<String, String> entry in <String, String>{
         'index.ts': indexSrc,
         'telemetryAggregator.ts': aggSrc,
         'bosRuntime.ts': bosSrc,
+        'workflowOps.ts': workflowSrc,
+        'coppaOps.ts': coppaSrc,
       }.entries) {
         expect(
           RegExp(r"from\s+'firebase-functions'(?!/v2)").hasMatch(entry.value),
           isFalse,
           reason:
               '${entry.key} must not import from firebase-functions v1 (use /v2/)',
+        );
+      }
+    });
+
+    test('Shared Gen 2 runtime bootstrap is applied to every v2 entry module',
+        () {
+      final String gen2Runtime =
+          File('$root/functions/src/gen2Runtime.ts').readAsStringSync();
+      expect(gen2Runtime.contains('setGlobalOptions'), isTrue,
+          reason: 'gen2Runtime.ts must define shared Gen 2 runtime options');
+      expect(gen2Runtime.contains("SCHOLESA_GEN2_REGION = 'us-central1'"), isTrue,
+          reason: 'Gen 2 runtime bootstrap must pin the shared region');
+
+      final Map<String, String> entryModules = <String, String>{
+        'index.ts': File('$root/functions/src/index.ts').readAsStringSync(),
+        'workflowOps.ts':
+            File('$root/functions/src/workflowOps.ts').readAsStringSync(),
+        'bosRuntime.ts':
+            File('$root/functions/src/bosRuntime.ts').readAsStringSync(),
+        'coppaOps.ts':
+            File('$root/functions/src/coppaOps.ts').readAsStringSync(),
+        'telemetryAggregator.ts':
+            File('$root/functions/src/telemetryAggregator.ts').readAsStringSync(),
+      };
+
+      for (final MapEntry<String, String> entry in entryModules.entries) {
+        expect(
+          entry.value.contains('./gen2Runtime'),
+          isTrue,
+          reason:
+              '${entry.key} must import the shared Gen 2 runtime bootstrap',
         );
       }
     });

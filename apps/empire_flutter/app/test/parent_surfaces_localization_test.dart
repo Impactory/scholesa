@@ -4,6 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
 import 'package:scholesa_app/auth/app_state.dart';
+import 'package:scholesa_app/modules/parent/parent_child_page.dart';
+import 'package:scholesa_app/modules/parent/parent_consent_page.dart';
+import 'package:scholesa_app/modules/parent/parent_consent_service.dart';
 import 'package:scholesa_app/modules/parent/parent_models.dart';
 import 'package:scholesa_app/modules/parent/parent_portfolio_page.dart';
 import 'package:scholesa_app/modules/parent/parent_schedule_page.dart';
@@ -42,6 +45,17 @@ class _FakeParentService extends ChangeNotifier implements ParentService {
   @override
   Future<void> loadParentData() async {
     notifyListeners();
+  }
+}
+
+class _FakeParentConsentService extends ParentConsentService {
+  _FakeParentConsentService({required this.records});
+
+  final List<ParentConsentRecord> records;
+
+  @override
+  Future<List<ParentConsentRecord>> listRecords(String parentId) async {
+    return records;
   }
 }
 
@@ -210,6 +224,44 @@ void main() {
       expect(find.text('作品集'), findsOneWidget);
       expect(find.text('项目'), findsOneWidget);
       expect(find.text('能力快照'), findsOneWidget);
+    });
+
+    testWidgets('parent child detail renders zh-CN strings',
+        (WidgetTester tester) async {
+      await _pumpPage(
+        tester,
+        locale: const Locale('zh', 'CN'),
+        home: const ParentChildPage(learnerId: 'learner-1'),
+      );
+
+      expect(find.text('孩子详情'), findsOneWidget);
+      expect(find.text('查看同意记录'), findsOneWidget);
+      expect(find.text('学习支柱'), findsOneWidget);
+    });
+
+    testWidgets('parent consent renders zh-TW strings',
+        (WidgetTester tester) async {
+      await _pumpPage(
+        tester,
+        locale: const Locale('zh', 'TW'),
+        home: ParentConsentPage(
+          service: _FakeParentConsentService(
+            records: const <ParentConsentRecord>[
+              ParentConsentRecord(
+                learnerId: 'learner-1',
+                learnerName: 'Ava Learner',
+                siteId: 'site-1',
+              ),
+            ],
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(find.text('同意紀錄'), findsOneWidget);
+      expect(find.text('媒體同意'), findsOneWidget);
+      expect(find.text('研究同意'), findsOneWidget);
     });
   });
 }
