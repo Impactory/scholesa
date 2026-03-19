@@ -4,6 +4,8 @@ Last updated: 2026-03-18
 
 This matrix maps the currently implemented route surfaces to their entry files and backing modules.
 
+For current Flutter route proof status and remaining blind spots, see `docs/FLUTTER_ROUTE_PROOF_MATRIX_2026-03-19.md`.
+
 ## Web Routing Model
 
 - Public and auth pages are dedicated App Router pages under `app/[locale]/`.

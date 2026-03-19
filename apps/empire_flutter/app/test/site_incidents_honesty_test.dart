@@ -66,12 +66,6 @@ void main() {
     );
 
     await tester.pumpWidget(
-      _buildHarness(
-        appState: _buildSiteState(),
-        firestoreService: firestoreService,
-      ),
-    );
-    await tester.pumpWidget(
       MultiProvider(
         providers: <SingleChildWidget>[
           ChangeNotifierProvider<AppState>.value(value: _buildSiteState()),

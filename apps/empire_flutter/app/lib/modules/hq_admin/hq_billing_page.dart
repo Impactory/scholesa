@@ -431,14 +431,14 @@ class _HqBillingPageState extends State<HqBillingPage>
       );
     }
     if (_loadError != null && _invoices.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: _buildLoadErrorCard(
+      return ListView(
+        padding: const EdgeInsets.all(16),
+        children: <Widget>[
+          _buildLoadErrorCard(
             _tHqBilling(context, 'Invoices are temporarily unavailable'),
             _loadError!,
           ),
-        ),
+        ],
       );
     }
     if (_invoices.isEmpty) {
@@ -473,14 +473,14 @@ class _HqBillingPageState extends State<HqBillingPage>
       );
     }
     if (_loadError != null && _payments.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: _buildLoadErrorCard(
+      return ListView(
+        padding: const EdgeInsets.all(16),
+        children: <Widget>[
+          _buildLoadErrorCard(
             _tHqBilling(context, 'Payments are temporarily unavailable'),
             _loadError!,
           ),
-        ),
+        ],
       );
     }
     if (_payments.isEmpty) {
@@ -515,14 +515,14 @@ class _HqBillingPageState extends State<HqBillingPage>
       );
     }
     if (_loadError != null && _subscriptions.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: _buildLoadErrorCard(
+      return ListView(
+        padding: const EdgeInsets.all(16),
+        children: <Widget>[
+          _buildLoadErrorCard(
             _tHqBilling(context, 'Subscriptions are temporarily unavailable'),
             _loadError!,
           ),
-        ),
+        ],
       );
     }
     if (_subscriptions.isEmpty) {

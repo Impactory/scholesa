@@ -169,14 +169,14 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage>
     }
 
     if (_loadError != null && _incidents.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: _buildLoadErrorCard(
+      return ListView(
+        padding: const EdgeInsets.all(16),
+        children: <Widget>[
+          _buildLoadErrorCard(
             _tSiteIncidents(context, 'Incidents are temporarily unavailable'),
             _loadError!,
           ),
-        ),
+        ],
       );
     }
 

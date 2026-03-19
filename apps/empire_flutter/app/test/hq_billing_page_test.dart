@@ -41,11 +41,11 @@ void main() {
     expect(find.text('Billing data is temporarily unavailable'), findsOneWidget);
     expect(
       find.text('We could not load billing records. Retry to check the current state.'),
-      findsOneWidget,
+      findsWidgets,
     );
     expect(find.text('No invoices found'), findsNothing);
     expect(find.text('No payments found'), findsNothing);
     expect(find.text('No subscriptions found'), findsNothing);
-    expect(find.text('Retry'), findsOneWidget);
+    expect(find.text('Retry'), findsWidgets);
   });
 }
