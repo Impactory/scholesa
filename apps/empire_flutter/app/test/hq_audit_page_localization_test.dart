@@ -8,7 +8,11 @@ final ThemeData _testTheme = ThemeData(
   splashFactory: InkRipple.splashFactory,
 );
 
-Widget _buildHarness(Locale locale) {
+Widget _buildHarness(
+  Locale locale, {
+  Future<List<Map<String, dynamic>>> Function()? auditLogsLoader,
+  Future<List<Map<String, dynamic>>> Function()? redTeamReviewsLoader,
+}) {
   return MaterialApp(
     theme: _testTheme,
     locale: locale,
@@ -22,7 +26,10 @@ Widget _buildHarness(Locale locale) {
       Locale('zh', 'CN'),
       Locale('zh', 'TW'),
     ],
-    home: const HqAuditPage(),
+    home: HqAuditPage(
+      auditLogsLoader: auditLogsLoader,
+      redTeamReviewsLoader: redTeamReviewsLoader,
+    ),
   );
 }
 
@@ -33,7 +40,13 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(1280, 1800));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      await tester.pumpWidget(_buildHarness(const Locale('zh', 'CN')));
+      await tester.pumpWidget(
+        _buildHarness(
+          const Locale('zh', 'CN'),
+          auditLogsLoader: () async => <Map<String, dynamic>>[],
+          redTeamReviewsLoader: () async => <Map<String, dynamic>>[],
+        ),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('审计日志'), findsAtLeastNWidgets(1));
@@ -56,7 +69,13 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(1280, 1800));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      await tester.pumpWidget(_buildHarness(const Locale('zh', 'TW')));
+      await tester.pumpWidget(
+        _buildHarness(
+          const Locale('zh', 'TW'),
+          auditLogsLoader: () async => <Map<String, dynamic>>[],
+          redTeamReviewsLoader: () async => <Map<String, dynamic>>[],
+        ),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('稽核日誌'), findsAtLeastNWidgets(1));

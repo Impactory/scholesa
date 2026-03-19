@@ -214,6 +214,7 @@ class SiteSurfaceI18n {
     'December': '十二月',
     'Conflict detected: room or educator already assigned in this time slot':
         '检测到冲突：该时间段的教室或教育者已被分配',
+    'Unable to create session right now': '当前无法创建课程',
     'Session created successfully': '课程创建成功',
     'Future Skills': '未来技能',
     'Leadership': '领导力',
@@ -560,6 +561,7 @@ class SiteSurfaceI18n {
     'December': '十二月',
     'Conflict detected: room or educator already assigned in this time slot':
         '偵測到衝突：此時段的教室或教育者已被指派',
+    'Unable to create session right now': '目前無法建立課程',
     'Session created successfully': '課程建立成功',
     'Future Skills': '未來技能',
     'Leadership': '領導力',

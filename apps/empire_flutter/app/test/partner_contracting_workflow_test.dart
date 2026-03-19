@@ -47,7 +47,7 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
 
 class _FakePartnerService extends PartnerService {
   _FakePartnerService({
-    required FirestoreService firestoreService,
+    required super.firestoreService,
     required this.failContracts,
     required this.failLaunches,
     List<PartnerContract>? contracts,
@@ -57,7 +57,6 @@ class _FakePartnerService extends PartnerService {
         ),
         _launchesValue = List<PartnerLaunch>.from(launches ?? <PartnerLaunch>[]),
         super(
-          firestoreService: firestoreService,
           partnerId: 'partner-1',
           workflowBridgeService: _FakeWorkflowBridgeService(),
         );

@@ -9,9 +9,23 @@ import 'package:scholesa_app/services/workflow_bridge_service.dart';
 import 'package:scholesa_app/ui/theme/scholesa_theme.dart';
 
 class _FakeWorkflowBridgeService extends WorkflowBridgeService {
+  _FakeWorkflowBridgeService({
+    List<Map<String, dynamic>>? flags,
+    this.failOnUpsertFeatureFlag = false,
+  }) : _flags =
+            List<Map<String, dynamic>>.from(flags ?? <Map<String, dynamic>>[]);
+
+  final List<Map<String, dynamic>> _flags;
+  final bool failOnUpsertFeatureFlag;
+  final List<Map<String, dynamic>> recordedFlagUpdates =
+      <Map<String, dynamic>>[];
+
   @override
   Future<List<Map<String, dynamic>>> listFeatureFlags({int limit = 300}) async =>
-      <Map<String, dynamic>>[];
+      _flags
+          .take(limit)
+          .map((Map<String, dynamic> row) => Map<String, dynamic>.from(row))
+          .toList();
 
   @override
   Future<List<Map<String, dynamic>>> listFederatedLearningExperiments({
@@ -144,6 +158,28 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     int limit = 60,
   }) async =>
           <Map<String, dynamic>>[];
+
+  @override
+  Future<String?> upsertFeatureFlag(Map<String, dynamic> data) async {
+    if (failOnUpsertFeatureFlag) {
+      throw Exception('feature flag save failed');
+    }
+    final Map<String, dynamic> normalized = Map<String, dynamic>.from(data);
+    recordedFlagUpdates.add(normalized);
+    final String id = normalized['id'] as String? ?? 'flag-${_flags.length + 1}';
+    final int existingIndex =
+        _flags.indexWhere((Map<String, dynamic> row) => row['id'] == id);
+    final Map<String, dynamic> persisted = <String, dynamic>{
+      ...normalized,
+      'id': id,
+    };
+    if (existingIndex >= 0) {
+      _flags[existingIndex] = persisted;
+    } else {
+      _flags.add(persisted);
+    }
+    return id;
+  }
 }
 
 class _FakeUpdateSummaryRepository
@@ -158,27 +194,33 @@ class _FakeUpdateSummaryRepository
 }
 
 void main() {
+  Widget buildHarness({
+    required _FakeWorkflowBridgeService workflowBridge,
+  }) {
+    return MaterialApp(
+      theme: ScholesaTheme.light,
+      locale: const Locale('en'),
+      localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const <Locale>[
+        Locale('en'),
+        Locale('zh', 'CN'),
+        Locale('zh', 'TW'),
+      ],
+      home: HqFeatureFlagsPage(
+        workflowBridge: workflowBridge,
+        updateSummaryRepository: _FakeUpdateSummaryRepository(),
+      ),
+    );
+  }
+
   testWidgets('hq feature flags page shows honest empty states',
       (WidgetTester tester) async {
     await tester.pumpWidget(
-      MaterialApp(
-        theme: ScholesaTheme.light,
-        locale: const Locale('en'),
-        localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: const <Locale>[
-          Locale('en'),
-          Locale('zh', 'CN'),
-          Locale('zh', 'TW'),
-        ],
-        home: HqFeatureFlagsPage(
-          workflowBridge: _FakeWorkflowBridgeService(),
-          updateSummaryRepository: _FakeUpdateSummaryRepository(),
-        ),
-      ),
+      buildHarness(workflowBridge: _FakeWorkflowBridgeService()),
     );
     await tester.pump();
     await tester.pumpAndSettle();
@@ -189,5 +231,64 @@ void main() {
       find.text('No federated-learning experiments are configured yet.'),
       findsOneWidget,
     );
+  });
+
+  testWidgets('hq feature flags page persists a toggle change',
+      (WidgetTester tester) async {
+    final _FakeWorkflowBridgeService workflowBridge =
+        _FakeWorkflowBridgeService(
+      flags: <Map<String, dynamic>>[
+        <String, dynamic>{
+          'id': 'flag-1',
+          'name': 'miloos_loop',
+          'description': 'Enable MiloOS loop runtime',
+          'enabled': false,
+          'scope': 'global',
+        },
+      ],
+    );
+
+    await tester.pumpWidget(buildHarness(workflowBridge: workflowBridge));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(tester.widget<Switch>(find.byType(Switch)).value, isFalse);
+
+    await tester.tap(find.byType(Switch));
+    await tester.pumpAndSettle();
+
+    expect(workflowBridge.recordedFlagUpdates, hasLength(1));
+    expect(workflowBridge.recordedFlagUpdates.single['enabled'], isTrue);
+    expect(find.text('miloos_loop enabled'), findsOneWidget);
+    expect(tester.widget<Switch>(find.byType(Switch)).value, isTrue);
+  });
+
+  testWidgets(
+      'hq feature flags page keeps the prior toggle state when save fails',
+      (WidgetTester tester) async {
+    final _FakeWorkflowBridgeService workflowBridge =
+        _FakeWorkflowBridgeService(
+      flags: <Map<String, dynamic>>[
+        <String, dynamic>{
+          'id': 'flag-1',
+          'name': 'miloos_loop',
+          'description': 'Enable MiloOS loop runtime',
+          'enabled': false,
+          'scope': 'global',
+        },
+      ],
+      failOnUpsertFeatureFlag: true,
+    );
+
+    await tester.pumpWidget(buildHarness(workflowBridge: workflowBridge));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(Switch));
+    await tester.pumpAndSettle();
+
+    expect(workflowBridge.recordedFlagUpdates, isEmpty);
+    expect(find.text('Feature flag update failed'), findsOneWidget);
+    expect(tester.widget<Switch>(find.byType(Switch)).value, isFalse);
   });
 }

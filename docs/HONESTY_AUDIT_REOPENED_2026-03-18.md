@@ -26,6 +26,9 @@ This is the reopened honesty pass after blocker remediation, clean builds, live 
   - Alias routes now normalize via redirects instead of competing canonical destinations.
 - Shared-device logout safety: verified.
   - Logout already existed in the app; regression coverage now proves Settings sign-out clears session state and returns to an unauthenticated route.
+- Global authenticated logout availability: fixed.
+  - Flutter now exposes a shared account/logout entrypoint from the routed app shell instead of relying on Settings, Profile, or specific dashboards.
+  - Root web protected routes continue to mount shared navigation with sign-out available from the common shell.
 
 ### Coverage status
 
@@ -58,6 +61,8 @@ This is the reopened honesty pass after blocker remediation, clean builds, live 
 4. Consolidated duplicated Firestore session-occurrence lookup logic in the AI overlay.
 5. Added regression proof for shared-device logout from Settings.
 6. Verified parent billing as honest view-only billing summary behavior.
+7. Added a navigator-key-driven global Flutter session menu so every authenticated routed screen has Profile, Settings, and Sign Out available from the shell.
+8. Added web regression proof that the protected layout still mounts the shared Navigation sign-out control.
 
 ### Release and operations fixes
 
@@ -74,15 +79,20 @@ This is the reopened honesty pass after blocker remediation, clean builds, live 
 - Focused educator follow-up regressions passed: 10 passed, 0 failed.
 - Priority blocker page batch passed: 16 passed, 0 failed.
 - Settings logout and auth coverage passed: 26 passed, 0 failed.
+- Global session menu regressions passed: 2 passed, 0 failed.
+- Protected web logout shell regression passed: 2 passed, 0 failed.
 
 ### Full Flutter gate verification
 
 - `flutter analyze` passed.
 - `flutter test` passed in the release validation run used by `flutter-android`.
+- `flutter test` passed after the global logout shell change: 496 passed, 0 failed.
 
 ### Build verification
 
 - Root web production build succeeded.
+- Flutter web production build succeeded.
+- Flutter Android debug build succeeded.
 - Flutter Android release App Bundle build succeeded.
 - Flutter Android release APK build succeeded.
 - Flutter iOS release build without codesigning succeeded.

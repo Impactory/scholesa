@@ -59,7 +59,10 @@ Widget _buildHarness({required ParentService parentService}) {
       ChangeNotifierProvider<ParentService>.value(value: parentService),
     ],
     child: MaterialApp(
-      theme: ThemeData(useMaterial3: true),
+      theme: ThemeData(
+        useMaterial3: true,
+        splashFactory: NoSplash.splashFactory,
+      ),
       localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,

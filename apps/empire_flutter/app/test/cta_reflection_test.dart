@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
+import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/modules/educator/educator_mission_plans_page.dart';
 import 'package:scholesa_app/modules/educator/educator_service.dart';
 import 'package:scholesa_app/modules/site/site_sessions_page.dart';
@@ -27,6 +28,21 @@ class _MissionPlansHarness {
 
   final FirestoreService firestoreService;
   final EducatorService educatorService;
+}
+
+AppState _buildSiteState() {
+  final AppState state = AppState();
+  state.updateFromMeResponse(<String, dynamic>{
+    'userId': 'site-admin-1',
+    'email': 'site-admin@scholesa.test',
+    'displayName': 'Site Admin',
+    'role': 'site',
+    'activeSiteId': 'site-1',
+    'siteIds': <String>['site-1'],
+    'localeCode': 'en',
+    'entitlements': const <Map<String, dynamic>>[],
+  });
+  return state;
 }
 
 Future<_MissionPlansHarness> _pumpMissionPlansPage(
@@ -73,18 +89,37 @@ Future<_MissionPlansHarness> _pumpMissionPlansPage(
   );
 }
 
+Future<void> _pumpSiteSessionsPage(
+  WidgetTester tester, {
+  FakeFirebaseFirestore? firestore,
+}) async {
+  final FirestoreService firestoreService = FirestoreService(
+    firestore: firestore ?? FakeFirebaseFirestore(),
+    auth: _MockFirebaseAuth(),
+  );
+
+  await tester.pumpWidget(
+    MultiProvider(
+      providers: <SingleChildWidget>[
+        Provider<FirestoreService>.value(value: firestoreService),
+        ChangeNotifierProvider<AppState>.value(value: _buildSiteState()),
+      ],
+      child: MaterialApp(
+        theme: _testTheme,
+        home: const SiteSessionsPage(),
+      ),
+    ),
+  );
+}
+
 void main() {
   group('CTA reflection regressions', () {
     testWidgets('site sessions create reflects immediately in list',
         (WidgetTester tester) async {
       await tester.binding.setSurfaceSize(const Size(1200, 1600));
 
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: _testTheme,
-          home: SiteSessionsPage(),
-        ),
-      );
+      await _pumpSiteSessionsPage(tester);
+      await tester.pumpAndSettle();
 
       await tester.tap(find.text('New Session'));
       await tester.pumpAndSettle();

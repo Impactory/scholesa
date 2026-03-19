@@ -11,7 +11,7 @@ String _tSiteSessions(BuildContext context, String input) {
   return SiteSurfaceI18n.text(context, input);
 }
 
-typedef SiteSessionsLoader = Future<Map<String, List<_SessionData>>> Function(
+typedef SiteSessionsLoader = Future<Map<String, List<SiteSessionData>>> Function(
   BuildContext context,
   DateTime selectedDate,
 );
@@ -32,8 +32,8 @@ class SiteSessionsPage extends StatefulWidget {
 class _SiteSessionsPageState extends State<SiteSessionsPage> {
   DateTime _selectedDate = DateTime.now();
   String _viewMode = 'week';
-  final Map<String, List<_SessionData>> _sessionsByTime =
-      <String, List<_SessionData>>{};
+  final Map<String, List<SiteSessionData>> _sessionsByTime =
+      <String, List<SiteSessionData>>{};
   bool _isLoading = false;
   String? _loadError;
 
@@ -62,10 +62,21 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
     );
   }
 
+  Future<void> _updateSelectedDate(
+    DateTime nextDate, {
+    required String trigger,
+  }) async {
+    setState(() {
+      _selectedDate = nextDate;
+    });
+    _logScheduleViewed(trigger: trigger);
+    await _loadSessions();
+  }
+
   _SessionConflict? _findSessionConflict(_NewSessionResult result) {
-    final List<_SessionData> sameSlotSessions =
-        _sessionsByTime[result.time] ?? const <_SessionData>[];
-    for (final _SessionData existing in sameSlotSessions) {
+    final List<SiteSessionData> sameSlotSessions =
+        _sessionsByTime[result.time] ?? const <SiteSessionData>[];
+    for (final SiteSessionData existing in sameSlotSessions) {
       if (existing.room == result.session.room) {
         return const _SessionConflict(type: 'room_double_booked');
       }
@@ -83,10 +94,10 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final List<MapEntry<String, List<_SessionData>>> timeSlots =
+    final List<MapEntry<String, List<SiteSessionData>>> timeSlots =
         _sessionsByTime.entries.toList(growable: false);
-    timeSlots.sort((MapEntry<String, List<_SessionData>> a,
-        MapEntry<String, List<_SessionData>> b) {
+    timeSlots.sort((MapEntry<String, List<SiteSessionData>> a,
+        MapEntry<String, List<SiteSessionData>> b) {
       return _timeSortKey(a.key).compareTo(_timeSortKey(b.key));
     });
 
@@ -157,7 +168,7 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
                       return null;
                     }
 
-                    final MapEntry<String, List<_SessionData>> slot =
+                    final MapEntry<String, List<SiteSessionData>> slot =
                         timeSlots[index];
                     return _SessionTimeSlot(
                       time: slot.key,
@@ -316,7 +327,7 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
       child: Row(
         children: <Widget>[
           IconButton(
-            onPressed: () {
+            onPressed: () async {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
                 metadata: <String, dynamic>{
@@ -325,10 +336,10 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
                   'surface': 'calendar_strip',
                 },
               );
-              setState(() {
-                _selectedDate = _selectedDate.subtract(const Duration(days: 7));
-              });
-              _logScheduleViewed(trigger: 'navigate_previous_week');
+              await _updateSelectedDate(
+                _selectedDate.subtract(const Duration(days: 7)),
+                trigger: 'navigate_previous_week',
+              );
             },
             icon: const Icon(Icons.chevron_left),
           ),
@@ -341,7 +352,7 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
                 final bool isToday =
                     date.day == today.day && date.month == today.month;
                 return GestureDetector(
-                  onTap: () {
+                  onTap: () async {
                     TelemetryService.instance.logEvent(
                       event: 'cta.clicked',
                       metadata: <String, dynamic>{
@@ -351,8 +362,10 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
                         'date': date.toIso8601String(),
                       },
                     );
-                    setState(() => _selectedDate = date);
-                    _logScheduleViewed(trigger: 'select_date');
+                    await _updateSelectedDate(
+                      date,
+                      trigger: 'select_date',
+                    );
                   },
                   child: Container(
                     padding:
@@ -399,7 +412,7 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
             ),
           ),
           IconButton(
-            onPressed: () {
+            onPressed: () async {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
                 metadata: <String, dynamic>{
@@ -408,10 +421,10 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
                   'surface': 'calendar_strip',
                 },
               );
-              setState(() {
-                _selectedDate = _selectedDate.add(const Duration(days: 7));
-              });
-              _logScheduleViewed(trigger: 'navigate_next_week');
+              await _updateSelectedDate(
+                _selectedDate.add(const Duration(days: 7)),
+                trigger: 'navigate_next_week',
+              );
             },
             icon: const Icon(Icons.chevron_right),
           ),
@@ -597,12 +610,23 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
     }
 
     final bool persisted = await _persistSession(result);
-    if (!persisted && !mounted) {
+    if (!mounted) {
+      return;
+    }
+    if (!persisted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tSiteSessions(context, 'Unable to create session right now'),
+          ),
+          backgroundColor: ScholesaColors.error,
+        ),
+      );
       return;
     }
 
     setState(() {
-      _sessionsByTime.putIfAbsent(result.time, () => <_SessionData>[]);
+      _sessionsByTime.putIfAbsent(result.time, () => <SiteSessionData>[]);
       _sessionsByTime[result.time]!.add(result.session);
     });
 
@@ -635,7 +659,7 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
       _loadError = null;
     });
     try {
-      final Map<String, List<_SessionData>> grouped =
+      final Map<String, List<SiteSessionData>> grouped =
           await (widget.sessionsLoader ?? _loadSessionsFromFirestore)(
         context,
         _selectedDate,
@@ -659,21 +683,21 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
     }
   }
 
-  Future<Map<String, List<_SessionData>>> _loadSessionsFromFirestore(
+  Future<Map<String, List<SiteSessionData>>> _loadSessionsFromFirestore(
     BuildContext context,
     DateTime selectedDate,
   ) async {
     final FirestoreService? firestoreService = _maybeFirestoreService();
     final AppState? appState = _maybeAppState();
     if (firestoreService == null || appState == null) {
-      return <String, List<_SessionData>>{};
+      return <String, List<SiteSessionData>>{};
     }
 
     final String siteId = (appState.activeSiteId ??
             (appState.siteIds.isNotEmpty ? appState.siteIds.first : ''))
         .trim();
     if (siteId.isEmpty) {
-      return <String, List<_SessionData>>{};
+      return <String, List<SiteSessionData>>{};
     }
 
     Query<Map<String, dynamic>> query =
@@ -696,19 +720,26 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
       }
     }
 
-    final Map<String, List<_SessionData>> grouped =
-        <String, List<_SessionData>>{};
+    final Map<String, List<SiteSessionData>> grouped =
+        <String, List<SiteSessionData>>{};
     for (final QueryDocumentSnapshot<Map<String, dynamic>> doc in snapshot.docs) {
       final Map<String, dynamic> data = doc.data();
+      final DateTime? sessionDate = _toDateTime(data['startTime']) ??
+          _toDateTime(data['startDate']) ??
+          _toDateTime(data['date']);
+      if (sessionDate == null ||
+          !_isSameCalendarDate(sessionDate, selectedDate)) {
+        continue;
+      }
       final String slot = _sessionTimeSlot(data);
-      final _SessionData session = _SessionData(
+      final SiteSessionData session = SiteSessionData(
         title: _sessionTitle(data, doc.id),
         educator: _sessionEducator(data),
         room: _sessionRoom(data),
         learnerCount: _sessionLearnerCount(data),
         pillar: _sessionPillar(data),
       );
-      grouped.putIfAbsent(slot, () => <_SessionData>[]).add(session);
+      grouped.putIfAbsent(slot, () => <SiteSessionData>[]).add(session);
     }
     return grouped;
   }
@@ -921,6 +952,12 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
     return null;
   }
 
+  bool _isSameCalendarDate(DateTime left, DateTime right) {
+    return left.year == right.year &&
+        left.month == right.month &&
+        left.day == right.day;
+  }
+
   int _timeSortKey(String label) {
     final DateTime? parsed = _dateWithTimeLabel(DateTime.now(), label);
     if (parsed == null) return 24 * 60;
@@ -969,7 +1006,7 @@ class _NewSessionResult {
   const _NewSessionResult({required this.time, required this.session});
 
   final String time;
-  final _SessionData session;
+  final SiteSessionData session;
 }
 
 class _SessionConflict {
@@ -1012,8 +1049,8 @@ class _ViewToggleButton extends StatelessWidget {
   }
 }
 
-class _SessionData {
-  const _SessionData({
+class SiteSessionData {
+  const SiteSessionData({
     required this.title,
     required this.educator,
     required this.room,
@@ -1030,7 +1067,7 @@ class _SessionData {
 class _SessionTimeSlot extends StatelessWidget {
   const _SessionTimeSlot({required this.time, required this.sessions});
   final String time;
-  final List<_SessionData> sessions;
+  final List<SiteSessionData> sessions;
 
   @override
   Widget build(BuildContext context) {
@@ -1056,7 +1093,7 @@ class _SessionTimeSlot extends StatelessWidget {
           Expanded(
             child: Column(
               children: sessions
-                  .map((_SessionData session) => _SessionCard(session: session))
+                  .map((SiteSessionData session) => _SessionCard(session: session))
                   .toList(),
             ),
           ),
@@ -1068,7 +1105,7 @@ class _SessionTimeSlot extends StatelessWidget {
 
 class _SessionCard extends StatelessWidget {
   const _SessionCard({required this.session});
-  final _SessionData session;
+  final SiteSessionData session;
 
   Color get _pillarColor {
     switch (session.pillar.toLowerCase()) {
@@ -1544,7 +1581,7 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                           context,
                           _NewSessionResult(
                             time: _selectedTime,
-                            session: _SessionData(
+                            session: SiteSessionData(
                               title: title,
                               educator: educatorName.isEmpty
                                   ? _tSiteSessions(context, 'Unassigned')

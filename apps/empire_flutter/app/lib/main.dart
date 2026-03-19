@@ -15,6 +15,7 @@ import 'auth/app_state.dart';
 import 'auth/auth_service.dart';
 import 'auth/recent_login_store.dart';
 import 'ui/error/startup_issue_banner.dart';
+import 'ui/auth/global_session_menu.dart';
 import 'ui/theme/scholesa_theme.dart';
 import 'ui/splash/splash_screen.dart';
 import 'services/firestore_service.dart';
@@ -573,6 +574,9 @@ class _ScholesaAppState extends State<ScholesaApp> {
               return Stack(
                 children: <Widget>[
                   if (child != null) child,
+                  GlobalSessionMenu(
+                    navigatorKey: _rootNavigatorKey,
+                  ),
                   if (_showStartupIssues && _startupIssues.isNotEmpty)
                     StartupIssueBanner(
                       issues: _startupIssues,

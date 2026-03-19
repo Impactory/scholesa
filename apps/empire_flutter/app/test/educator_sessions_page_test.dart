@@ -16,9 +16,8 @@ import 'package:scholesa_app/ui/theme/scholesa_theme.dart';
 class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
 class _FakeEducatorService extends EducatorService {
-  _FakeEducatorService({required FirestoreService firestoreService})
+  _FakeEducatorService({required super.firestoreService})
       : super(
-          firestoreService: firestoreService,
           educatorId: 'educator-1',
           siteId: 'site-1',
         );

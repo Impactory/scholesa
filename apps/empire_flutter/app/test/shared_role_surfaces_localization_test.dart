@@ -16,6 +16,26 @@ import 'package:scholesa_app/services/firestore_service.dart';
 
 class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
+class _EmptyPartnerService extends PartnerService {
+  _EmptyPartnerService()
+      : super(
+          firestoreService: FirestoreService(
+            firestore: FakeFirebaseFirestore(),
+            auth: _MockFirebaseAuth(),
+          ),
+          partnerId: 'partner-1',
+        );
+
+  @override
+  bool get isLoading => false;
+
+  @override
+  String? get error => null;
+
+  @override
+  Future<void> loadPayouts() async {}
+}
+
 AppState _buildAppState({
   required UserRole role,
   required Locale locale,
@@ -129,14 +149,7 @@ void main() {
     testWidgets('partner payouts page renders zh-CN copy',
         (WidgetTester tester) async {
       final Locale locale = const Locale('zh', 'CN');
-      final FirestoreService firestoreService = FirestoreService(
-        firestore: FakeFirebaseFirestore(),
-        auth: _MockFirebaseAuth(),
-      );
-      final PartnerService partnerService = PartnerService(
-        firestoreService: firestoreService,
-        partnerId: 'partner-1',
-      );
+      final PartnerService partnerService = _EmptyPartnerService();
 
       await tester.binding.setSurfaceSize(const Size(1280, 1800));
       await tester.pumpWidget(
@@ -144,7 +157,6 @@ void main() {
           locale: locale,
           child: const PartnerPayoutsPage(),
           providers: <SingleChildWidget>[
-            Provider<FirestoreService>.value(value: firestoreService),
             ChangeNotifierProvider<PartnerService>.value(value: partnerService),
           ],
         ),

@@ -29,7 +29,10 @@ Widget _buildHarness({required Widget child}) {
       ChangeNotifierProvider<AppState>.value(value: _buildSiteState()),
     ],
     child: MaterialApp(
-      theme: ThemeData(useMaterial3: true),
+      theme: ThemeData(
+        useMaterial3: true,
+        splashFactory: NoSplash.splashFactory,
+      ),
       localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
