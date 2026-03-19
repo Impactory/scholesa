@@ -130,6 +130,10 @@ function asPercentFromUnit(value: unknown): string {
   return numeric != null ? `${Math.round(numeric * 100)}%` : 'unavailable';
 }
 
+function asTextAvailability(value: unknown): string {
+  return typeof value === 'string' && value.trim().length > 0 ? value : 'unavailable';
+}
+
 function asBoolean(value: unknown, fallback = false): boolean {
   if (typeof value === 'boolean') return value;
   if (typeof value === 'string') {
@@ -936,15 +940,17 @@ async function loadParentBillingRecords(ctx: WorkflowContext): Promise<WorkflowR
     const subscriptionPlan = asString(summary.subscriptionPlan, '');
     const nextPaymentDate = asString(summary.nextPaymentDate, '');
     const hasUpcomingCharge = nextPaymentDate.length > 0 || summary.nextPaymentAmount != null;
+    const currentBalance = asAvailabilityString(summary.currentBalance);
+    const nextPaymentAmount = asAvailabilityString(summary.nextPaymentAmount);
 
     summaryRecord = {
       id: asString(summary.parentId, ctx.uid),
       title: subscriptionPlan || 'Billing Summary',
       subtitle: hasUpcomingCharge
-        ? `Current balance ${String(summary.currentBalance || 0)} • Next ${String(summary.nextPaymentAmount || 0)}`
+        ? `Current balance ${currentBalance} • Next ${nextPaymentAmount}`
         : recentPayments.length > 0
           ? `${recentPayments.length} recent payments`
-          : `Current balance ${String(summary.currentBalance || 0)}`,
+          : `Current balance ${currentBalance}`,
       status: 'active',
       updatedAt: toIsoDate(summary.nextPaymentDate),
       siteId: activeSiteId(ctx.profile),
@@ -967,8 +973,8 @@ async function loadParentBillingRecords(ctx: WorkflowContext): Promise<WorkflowR
       return {
         id,
         title: asString(entry.description, 'Payment'),
-        subtitle: `Amount ${String(entry.amount || 0)} • ${asString(entry.status, 'unknown')}`,
-        status: asString(entry.status, 'unknown'),
+        subtitle: `Amount ${asAvailabilityString(entry.amount)} • ${asTextAvailability(entry.status)}`,
+        status: asTextAvailability(entry.status),
         updatedAt: toIsoDate(entry.date),
         siteId: activeSiteId(ctx.profile),
         collectionName: 'payments',
@@ -996,8 +1002,8 @@ async function loadSiteBillingRecords(ctx: WorkflowContext): Promise<WorkflowRec
   const siteSummary: WorkflowRecord | null = summary == null ? null : {
     id: recordSiteId,
     title: asString(summary.planName, 'Site Billing'),
-    subtitle: `${asString(summary.currency, 'USD')} ${String(summary.monthlyAmount || 0)} / month`,
-    status: asString(summary.planStatus, 'active'),
+    subtitle: `${asTextAvailability(summary.currency)} ${asAvailabilityString(summary.monthlyAmount)} / month`,
+    status: asTextAvailability(summary.planStatus),
     updatedAt: toIsoDate(summary.nextBillingDate),
     siteId: recordSiteId || null,
     collectionName: 'siteBillingSummary',
@@ -1005,12 +1011,12 @@ async function loadSiteBillingRecords(ctx: WorkflowContext): Promise<WorkflowRec
     canEdit: false,
     canDelete: false,
     metadata: {
-      activeLearnersUsed: String(summary.activeLearnersUsed || 0),
-      activeLearnersTotal: String(summary.activeLearnersTotal || 0),
-      educatorsUsed: String(summary.educatorsUsed || 0),
-      educatorsTotal: String(summary.educatorsTotal || 0),
-      storageUsedGb: String(summary.storageUsedGb || 0),
-      storageTotalGb: String(summary.storageTotalGb || 0),
+      activeLearnersUsed: asAvailabilityString(summary.activeLearnersUsed),
+      activeLearnersTotal: asAvailabilityString(summary.activeLearnersTotal),
+      educatorsUsed: asAvailabilityString(summary.educatorsUsed),
+      educatorsTotal: asAvailabilityString(summary.educatorsTotal),
+      storageUsedGb: asAvailabilityString(summary.storageUsedGb),
+      storageTotalGb: asAvailabilityString(summary.storageTotalGb),
     },
   };
 
@@ -1022,8 +1028,8 @@ async function loadSiteBillingRecords(ctx: WorkflowContext): Promise<WorkflowRec
       return {
         id,
         title: `Invoice ${id}`,
-        subtitle: `${asString(entry.currency, 'USD').toUpperCase()} ${String(entry.amount || 0)}`,
-        status: asString(entry.status, 'pending'),
+        subtitle: `${asTextAvailability(entry.currency).toUpperCase()} ${asAvailabilityString(entry.amount)}`,
+        status: asTextAvailability(entry.status),
         updatedAt: toIsoDate(entry.date),
         siteId: recordSiteId || null,
         collectionName: 'siteInvoices',
@@ -1056,7 +1062,7 @@ async function loadHqBillingRecords(): Promise<WorkflowRecord[]> {
       id,
       title: `Invoice ${id}`,
       subtitle: `${asString(entry.site, 'Site unavailable')} • ${asAvailabilityString(entry.amount)}`,
-      status: asString(entry.status, 'pending'),
+      status: asTextAvailability(entry.status),
       updatedAt: toIsoDate(entry.date),
       siteId: null,
       collectionName: 'hqInvoices',
@@ -1094,7 +1100,7 @@ async function loadHqAnalyticsRecords(ctx: WorkflowContext): Promise<WorkflowRec
     trendRecords.push({
       id: dateId,
       title: `Attendance ${dateId}`,
-      subtitle: `Records ${String(entry.records || 0)} • Present ${String(entry.presentRate ?? 'n/a')}%`,
+      subtitle: `Records ${asAvailabilityString(entry.records)} • Present ${asAvailabilityString(entry.presentRate)}%`,
       status: 'active',
       updatedAt: toIsoDate(entry.date),
       siteId: activeSiteId(ctx.profile),
@@ -1103,10 +1109,10 @@ async function loadHqAnalyticsRecords(ctx: WorkflowContext): Promise<WorkflowRec
       canEdit: false,
       canDelete: false,
       metadata: {
-        events: String(entry.events || 0),
-        weeklyAccountabilityAdherenceRate: String(metrics.weeklyAccountabilityAdherenceRate || 0),
-        educatorReviewWithinSlaRate: String(metrics.educatorReviewWithinSlaRate || 0),
-        interventionHelpedRate: String(metrics.interventionHelpedRate || 0),
+        events: asAvailabilityString(entry.events),
+        weeklyAccountabilityAdherenceRate: asAvailabilityString(metrics.weeklyAccountabilityAdherenceRate),
+        educatorReviewWithinSlaRate: asAvailabilityString(metrics.educatorReviewWithinSlaRate),
+        interventionHelpedRate: asAvailabilityString(metrics.interventionHelpedRate),
       },
     });
   }
