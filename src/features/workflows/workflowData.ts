@@ -109,6 +109,17 @@ function asString(value: unknown, fallback: string): string {
   return typeof value === 'string' && value.trim().length > 0 ? value : fallback;
 }
 
+function asFiniteNumber(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === 'string' && value.trim().length > 0) {
+    const numeric = Number(value);
+    return Number.isFinite(numeric) ? numeric : null;
+  }
+  return null;
+}
+
 function asBoolean(value: unknown, fallback = false): boolean {
   if (typeof value === 'boolean') return value;
   if (typeof value === 'string') {
@@ -851,10 +862,21 @@ async function loadParentSummary(ctx: WorkflowContext): Promise<WorkflowRecord[]
     .map((learner) => {
       const learnerId = asString(learner.learnerId, '');
       if (!learnerId) return null;
+      const currentLevel = asFiniteNumber(learner.currentLevel);
+      const totalXp = asFiniteNumber(learner.totalXp);
+      const missionsCompleted = asFiniteNumber(learner.missionsCompleted);
+      const currentStreak = asFiniteNumber(learner.currentStreak);
+      const attendanceRate = asFiniteNumber(learner.attendanceRate);
+      const capabilityBand = typeof (learner.capabilitySnapshot as Record<string, unknown> | undefined)?.band === 'string'
+        ? ((learner.capabilitySnapshot as Record<string, unknown>).band as string)
+        : null;
+      const artifactCount = asFiniteNumber((learner.portfolioSnapshot as Record<string, unknown> | undefined)?.artifactCount);
+      const reflectionsSubmitted = asFiniteNumber((learner.ideationPassport as Record<string, unknown> | undefined)?.reflectionsSubmitted);
+
       return {
         id: learnerId,
         title: asString(learner.learnerName, learnerId),
-        subtitle: `Level ${String(learner.currentLevel || 0)} • XP ${String(learner.totalXp || 0)}`,
+        subtitle: `Level ${currentLevel ?? 'unavailable'} • XP ${totalXp ?? 'unavailable'}`,
         status: 'active',
         updatedAt: toIsoDate(learner.updatedAt || learner.lastActivityAt),
         siteId: activeSiteId(ctx.profile),
@@ -863,12 +885,12 @@ async function loadParentSummary(ctx: WorkflowContext): Promise<WorkflowRecord[]
         canEdit: false,
         canDelete: false,
         metadata: {
-          missionsCompleted: String(learner.missionsCompleted || 0),
-          currentStreak: String(learner.currentStreak || 0),
-          attendanceRate: String(learner.attendanceRate || 0),
-          capabilityBand: asString((learner.capabilitySnapshot as Record<string, unknown> | undefined)?.band, 'emerging'),
-          artifactCount: String((learner.portfolioSnapshot as Record<string, unknown> | undefined)?.artifactCount || 0),
-          reflectionsSubmitted: String((learner.ideationPassport as Record<string, unknown> | undefined)?.reflectionsSubmitted || 0),
+          missionsCompleted: missionsCompleted != null ? String(missionsCompleted) : 'unavailable',
+          currentStreak: currentStreak != null ? String(currentStreak) : 'unavailable',
+          attendanceRate: attendanceRate != null ? String(attendanceRate) : 'unavailable',
+          capabilityBand: capabilityBand && capabilityBand.trim().length > 0 ? capabilityBand : 'unavailable',
+          artifactCount: artifactCount != null ? String(artifactCount) : 'unavailable',
+          reflectionsSubmitted: reflectionsSubmitted != null ? String(reflectionsSubmitted) : 'unavailable',
         },
       } as WorkflowRecord;
     })
