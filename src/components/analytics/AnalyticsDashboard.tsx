@@ -45,6 +45,7 @@ interface SiteVoiceMetrics {
   avgCaptureSuccess: number | null;
   escalationCount: number;
   captureAttempts: number;
+  trendPoints: TrendPoint[];
 }
 
 export function AnalyticsDashboard() {
@@ -55,6 +56,7 @@ export function AnalyticsDashboard() {
     avgCaptureSuccess: null,
     escalationCount: 0,
     captureAttempts: 0,
+    trendPoints: [],
   });
   const trackInteraction = useInteractionTracking();
   
@@ -73,7 +75,7 @@ export function AnalyticsDashboard() {
     const loadSiteVoiceMetrics = async () => {
       if (!siteId) {
         if (!cancelled) {
-          setSiteVoiceMetrics({ avgCaptureSuccess: null, escalationCount: 0, captureAttempts: 0 });
+          setSiteVoiceMetrics({ avgCaptureSuccess: null, escalationCount: 0, captureAttempts: 0, trendPoints: [] });
         }
         return;
       }
@@ -94,6 +96,7 @@ export function AnalyticsDashboard() {
         let successCount = 0;
         let escalationCount = 0;
         let captureAttempts = 0;
+        const voiceTrendEntries: Array<{ date: Date; captureSuccessRate: number | null }> = [];
 
         aggregatesSnapshot.docs.forEach((doc) => {
           const data = doc.data();
@@ -114,6 +117,14 @@ export function AnalyticsDashboard() {
           if (typeof voiceMetrics?.captureAttemptCount === 'number' && Number.isFinite(voiceMetrics.captureAttemptCount)) {
             captureAttempts += voiceMetrics.captureAttemptCount;
           }
+
+          voiceTrendEntries.push({
+            date,
+            captureSuccessRate:
+              typeof voiceMetrics?.captureSuccessRate === 'number' && Number.isFinite(voiceMetrics.captureSuccessRate)
+                ? voiceMetrics.captureSuccessRate * 100
+                : null,
+          });
         });
 
         if (!cancelled) {
@@ -121,11 +132,12 @@ export function AnalyticsDashboard() {
             avgCaptureSuccess: successCount > 0 ? Math.round((successTotal / successCount) * 100) : null,
             escalationCount,
             captureAttempts,
+            trendPoints: buildVoiceTrendPoints(voiceTrendEntries, timeRange, locale),
           });
         }
       } catch {
         if (!cancelled) {
-          setSiteVoiceMetrics({ avgCaptureSuccess: null, escalationCount: 0, captureAttempts: 0 });
+          setSiteVoiceMetrics({ avgCaptureSuccess: null, escalationCount: 0, captureAttempts: 0, trendPoints: [] });
         }
       }
     };
@@ -135,7 +147,7 @@ export function AnalyticsDashboard() {
     return () => {
       cancelled = true;
     };
-  }, [siteId, timeRange]);
+  }, [locale, siteId, timeRange]);
   
   // Transform real-time data to match LearnerEngagement interface
   const learners: LearnerEngagement[] = realtimeLearners.map(s => ({
@@ -185,6 +197,7 @@ export function AnalyticsDashboard() {
     : t('analytics.educator.period.month');
   const trendPoints = buildTrendPoints(learners, timeRange, locale);
   const trendMax = Math.max(100, ...trendPoints.map((point) => point.value));
+  const voiceTrendMax = Math.max(100, ...siteVoiceMetrics.trendPoints.map((point) => point.value ?? 0));
   
   const handleExportCSV = () => {
     trackInteraction('help_accessed', { cta: 'analytics_export_csv', timeRange, siteId });
@@ -337,6 +350,37 @@ export function AnalyticsDashboard() {
               <div className="text-xs text-gray-500">Capture attempts</div>
             </div>
           </div>
+        </div>
+        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+          <h3 className="text-sm font-medium text-gray-700">Voice Capture Trend</h3>
+          <p className="mt-1 text-xs text-gray-500">Recent capture success across the selected {timeRange} window.</p>
+          {siteVoiceMetrics.trendPoints.length === 0 || siteVoiceMetrics.trendPoints.every((point) => point.value == null) ? (
+            <div className="mt-4 h-32 flex items-center justify-center text-sm text-gray-500 border border-gray-200 rounded-lg">
+              Unavailable
+            </div>
+          ) : (
+            <div className="mt-4 grid grid-cols-7 gap-2 items-end h-32 rounded-lg border border-gray-200 p-3">
+              {siteVoiceMetrics.trendPoints.map((point) => {
+                const heightPercent = point.value != null
+                  ? Math.max(6, Math.round((point.value / voiceTrendMax) * 100))
+                  : 0;
+                return (
+                  <div key={point.key} className="flex flex-col items-center justify-end gap-2 h-full">
+                    <div className="text-[10px] text-gray-500">{point.value != null ? `${Math.round(point.value)}%` : 'N/A'}</div>
+                    <div className="w-full max-w-10 h-full flex items-end">
+                      <div
+                        className={`w-full rounded-sm ${point.value != null && point.value < 50 ? 'bg-red-500' : point.value != null && point.value < 80 ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                        style={{ height: `${heightPercent}%` }}
+                        aria-label={point.value != null ? `${point.label} ${Math.round(point.value)}%` : `${point.label} unavailable`}
+                        title={point.value != null ? `${point.label}: ${Math.round(point.value)}%` : `${point.label}: unavailable`}
+                      />
+                    </div>
+                    <div className="text-[10px] text-gray-600 text-center leading-tight">{point.label}</div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
       
@@ -652,4 +696,54 @@ function buildTrendPoints(
       value: bucket.count > 0 ? bucket.total / bucket.count : null,
     };
   });
+}
+
+function buildVoiceTrendPoints(
+  entries: Array<{ date: Date; captureSuccessRate: number | null }>,
+  timeRange: 'week' | 'month',
+  locale: string,
+): TrendPoint[] {
+  const today = new Date();
+  const dayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const bucketCount = 7;
+  const bucketSizeDays = timeRange === 'week' ? 1 : 4;
+
+  const buckets = Array.from({ length: bucketCount }, (_v, idx) => {
+    const daysAgo = (bucketCount - 1 - idx) * bucketSizeDays;
+    const start = new Date(dayStart);
+    start.setDate(dayStart.getDate() - daysAgo);
+    const end = new Date(start);
+    end.setDate(start.getDate() + bucketSizeDays);
+
+    return {
+      key: `${start.toISOString()}_${idx}`,
+      start,
+      end,
+      total: 0,
+      count: 0,
+    };
+  });
+
+  entries.forEach((entry) => {
+    if (!(entry.date instanceof Date) || entry.captureSuccessRate == null) return;
+    const captureTime = entry.date.getTime();
+
+    for (const bucket of buckets) {
+      if (captureTime >= bucket.start.getTime() && captureTime < bucket.end.getTime()) {
+        bucket.total += entry.captureSuccessRate;
+        bucket.count += 1;
+        break;
+      }
+    }
+  });
+
+  const dayLabelFmt = new Intl.DateTimeFormat(locale, { weekday: 'short' });
+
+  return buckets.map((bucket) => ({
+    key: bucket.key,
+    label: timeRange === 'week'
+      ? dayLabelFmt.format(bucket.start)
+      : `${bucket.start.getMonth() + 1}/${bucket.start.getDate()}`,
+    value: bucket.count > 0 ? bucket.total / bucket.count : null,
+  }));
 }
