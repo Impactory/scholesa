@@ -88,8 +88,9 @@ Only active product code paths were considered. A workflow is not "verified" unl
 - `functions/src/index.ts` now computes parent bundle evidence and growth summaries from `evidenceRecords`, `capabilityMastery`, `capabilityGrowthEvents`, `portfolioItems`, `learnerReflections`, and proof-ready mission attempts.
 - The same callable now generates `ideationPassport.claims` directly from capability mastery, linked evidence, growth records, and verified portfolio artifacts.
 - `apps/empire_flutter/app/lib/modules/parent/parent_child_page.dart` now renders an `Ideation Passport` section from those evidence-backed claims.
+- `apps/empire_flutter/app/lib/modules/parent/parent_child_page.dart` now exports an `Ideation Passport` text report with claim-by-claim evidence counts, verification status, and direct evidence/portfolio item IDs.
 - `apps/empire_flutter/app/lib/modules/parent/parent_portfolio_page.dart` exports portfolio summaries with evidence-linked and verification status included.
-- Remaining gap: there is still no full exportable Passport/report workflow with complete claim-by-claim provenance presentation, family-safe publishing flow, and AI disclosure attached to each claim.
+- Remaining gap: there is still no polished family-safe publishing flow, no richer formatted Passport document, and no AI disclosure attached to each claim.
 - Current judgment: partial.
 
 ### 9. Visible AI-use disclosure

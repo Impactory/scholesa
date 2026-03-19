@@ -614,6 +614,12 @@ class ParentService extends ChangeNotifier {
               latestLevel: _toInt(item['latestLevel']) ?? 0,
               evidenceCount: _toInt(item['evidenceCount']) ?? 0,
               verifiedArtifactCount: _toInt(item['verifiedArtifactCount']) ?? 0,
+              evidenceRecordIds: List<String>.from(
+                item['evidenceRecordIds'] as List? ?? const <String>[],
+              ),
+              portfolioItemIds: List<String>.from(
+                item['portfolioItemIds'] as List? ?? const <String>[],
+              ),
               latestEvidenceAt: _parseTimestamp(item['latestEvidenceAt']),
               verificationStatus: _asTrimmedString(item['verificationStatus'])
                       .isEmpty
@@ -901,6 +907,14 @@ class ParentService extends ChangeNotifier {
           latestLevel: _toInt(mastery['latestLevel']) ?? 0,
           evidenceCount: matchingEvidence.length,
           verifiedArtifactCount: verifiedArtifactCount,
+          evidenceRecordIds: matchingEvidence
+              .map((Map<String, dynamic> row) => _asTrimmedString(row['id']))
+              .where((String value) => value.isNotEmpty)
+              .toList(growable: false),
+          portfolioItemIds: matchingPortfolio
+              .map((Map<String, dynamic> row) => _asTrimmedString(row['id']))
+              .where((String value) => value.isNotEmpty)
+              .toList(growable: false),
           latestEvidenceAt: evidenceDates.isEmpty ? null : evidenceDates.first,
           verificationStatus: verifiedArtifactCount > 0
               ? 'reviewed'

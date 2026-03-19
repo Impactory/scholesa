@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../services/export_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../i18n/parent_surface_i18n.dart';
@@ -56,6 +57,14 @@ class _ParentChildPageState extends State<ParentChildPage> {
             backgroundColor: ScholesaColors.parent,
             foregroundColor: Colors.white,
             actions: <Widget>[
+              TextButton.icon(
+                onPressed: learner == null
+                    ? null
+                    : () => _exportPassport(learner),
+                icon: const Icon(Icons.download_rounded),
+                label: Text(_t('Export Passport')),
+                style: TextButton.styleFrom(foregroundColor: Colors.white),
+              ),
               TextButton.icon(
                 onPressed: () {
                   TelemetryService.instance.logEvent(
@@ -412,6 +421,17 @@ class _ParentChildPageState extends State<ParentChildPage> {
                     '${claim.evidenceCount} ${_t('evidence records')} • ${claim.verifiedArtifactCount} ${_t('verified artifacts')}',
                     style: const TextStyle(color: ScholesaColors.textSecondary),
                   ),
+                  if (claim.evidenceRecordIds.isNotEmpty ||
+                      claim.portfolioItemIds.isNotEmpty) ...<Widget>[
+                    const SizedBox(height: 8),
+                    Text(
+                      '${_t('Evidence IDs')}: ${claim.evidenceRecordIds.take(2).join(', ')}${claim.evidenceRecordIds.length > 2 ? '…' : ''}',
+                      style: const TextStyle(
+                        color: ScholesaColors.textSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -419,6 +439,80 @@ class _ParentChildPageState extends State<ParentChildPage> {
         ],
       ),
     );
+  }
+
+  Future<void> _exportPassport(LearnerSummary learner) async {
+    final String content = _buildPassportExport(learner);
+    final String? savedLocation = await ExportService.instance.saveTextFile(
+      fileName: 'ideation-passport-${learner.learnerId}.txt',
+      content: content,
+    );
+    if (!mounted || savedLocation == null) {
+      return;
+    }
+    TelemetryService.instance.logEvent(
+      event: 'export.downloaded',
+      metadata: <String, dynamic>{
+        'module': 'parent_child',
+        'surface': 'passport_export',
+        'learner_id': learner.learnerId,
+        'file_name': 'ideation-passport-${learner.learnerId}.txt',
+      },
+    );
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(_t('Ideation Passport downloaded.')),
+      ),
+    );
+  }
+
+  String _buildPassportExport(LearnerSummary learner) {
+    final IdeationPassport passport = learner.ideationPassport;
+    final List<String> lines = <String>[
+      _t('Ideation Passport'),
+      '${_t('Learner')}: ${_safeLearnerName(learner.learnerName)}',
+      '${_t('Generated')}: ${(passport.generatedAt ?? DateTime.now()).toIso8601String()}',
+      '${_t('Summary')}: ${passport.summary ?? _t('No passport summary yet.')}',
+      '${_t('Reviewed Evidence')}: ${learner.evidenceSummary.reviewedCount}',
+      '${_t('Verified Artifacts')}: ${learner.portfolioSnapshot.verifiedArtifactCount}',
+      '${_t('Reflections')}: ${passport.reflectionsSubmitted}',
+      '',
+      _t('Claims'),
+    ];
+
+    if (passport.claims.isEmpty) {
+      lines.add(_t('No capability claims are ready for export yet.'));
+      return lines.join('\n');
+    }
+
+    for (final PassportClaim claim in passport.claims) {
+      lines.add('- ${claim.title}');
+      lines.add('  ${_t('Pillar')}: ${_t(claim.pillar)}');
+      lines.add('  ${_t('Level')}: ${claim.latestLevel}/4');
+      lines.add('  ${_t('Evidence Count')}: ${claim.evidenceCount}');
+      lines.add('  ${_t('Verified Artifacts')}: ${claim.verifiedArtifactCount}');
+      lines.add(
+        '  ${_t('Verification Status')}: ${claim.verificationStatus?.trim().isNotEmpty == true ? _titleCase(claim.verificationStatus!) : _t('Pending')}',
+      );
+      if (claim.latestEvidenceAt != null) {
+        lines.add(
+          '  ${_t('Latest Evidence At')}: ${claim.latestEvidenceAt!.toIso8601String()}',
+        );
+      }
+      if (claim.evidenceRecordIds.isNotEmpty) {
+        lines.add(
+          '  ${_t('Evidence IDs')}: ${claim.evidenceRecordIds.join(', ')}',
+        );
+      }
+      if (claim.portfolioItemIds.isNotEmpty) {
+        lines.add(
+          '  ${_t('Portfolio Item IDs')}: ${claim.portfolioItemIds.join(', ')}',
+        );
+      }
+      lines.add('');
+    }
+
+    return lines.join('\n');
   }
 
   Widget _buildPillarRow({

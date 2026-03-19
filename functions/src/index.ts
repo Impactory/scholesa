@@ -2657,6 +2657,12 @@ async function buildParentLearnerSummary(params: {
         latestLevel,
         evidenceCount: matchingEvidence.length,
         verifiedArtifactCount,
+        evidenceRecordIds: matchingEvidence
+          .map((entry) => (typeof entry.id === 'string' ? entry.id : ''))
+          .filter(Boolean),
+        portfolioItemIds: matchingPortfolio
+          .map((entry) => (typeof entry.id === 'string' ? entry.id : ''))
+          .filter(Boolean),
         latestEvidenceAt: latestEvidenceAt?.toISOString() ?? null,
         verificationStatus: verifiedArtifactCount > 0 ? 'reviewed' : matchingEvidence.length > 0 ? 'captured' : null,
       };
