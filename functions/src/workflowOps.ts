@@ -4694,12 +4694,12 @@ export const listWorkflowContacts = onCall(async (request: CallableRequest) => {
   const contacts = Array.from(candidates.values())
     .map((row) => ({
       id: row.id,
-      displayName: asTrimmedString(row.data.displayName) || asTrimmedString(row.data.email) || row.id,
-      role: normalizeRoleValue(row.data.role)?.toString() || asTrimmedString(row.data.role) || 'unknown',
+      displayName: asTrimmedString(row.data.displayName) || asTrimmedString(row.data.email) || null,
+      role: normalizeRoleValue(row.data.role)?.toString() || asTrimmedString(row.data.role) || null,
       siteId: asTrimmedString(row.data.activeSiteId) || null,
       email: asTrimmedString(row.data.email) || null,
     }))
-    .sort((left, right) => left.displayName.localeCompare(right.displayName))
+    .sort((left, right) => (left.displayName || left.email || left.id).localeCompare(right.displayName || right.email || right.id))
     .slice(0, limitValue);
 
   return { contacts };

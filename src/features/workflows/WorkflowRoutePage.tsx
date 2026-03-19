@@ -47,7 +47,7 @@ export function WorkflowRoutePage({ routePath }: WorkflowRoutePageProps) {
 
   usePageViewTracking(`workflow${routePath.replace(/\//g, '_')}`, {
     routePath,
-    role: normalizedRole || 'unknown',
+    ...(normalizedRole ? { role: normalizedRole } : {}),
   });
 
   const [data, setData] = useState<WorkflowLoadResult>({

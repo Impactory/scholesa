@@ -671,7 +671,7 @@ async function loadWorkflowContacts(ctx: WorkflowContext): Promise<WorkflowField
     .filter((entry): entry is Record<string, unknown> => !!entry && typeof entry === 'object' && !Array.isArray(entry))
     .map((entry) => {
       const id = asString(entry.id, '');
-      const displayName = asString(entry.displayName, id);
+      const displayName = asString(entry.displayName, asString(entry.email, 'User name unavailable'));
       const role = asString(entry.role, '');
       return {
         value: id,
@@ -4021,7 +4021,7 @@ export async function createWorkflowRecord(
           : [ctx.uid, recipientId],
         participantNames: existingThread
           ? existingThread.data().participantNames
-          : [ctx.profile?.displayName || ctx.uid, recipient?.label || recipientId],
+          : [ctx.profile?.displayName || 'User name unavailable', recipient?.label || 'User name unavailable'],
         status: 'open',
         lastMessagePreview: body,
         lastMessageSenderId: ctx.uid,
@@ -4036,7 +4036,7 @@ export async function createWorkflowRecord(
         type: 'direct',
         priority: 'normal',
         senderId: ctx.uid,
-        senderName: ctx.profile?.displayName || ctx.uid,
+        senderName: ctx.profile?.displayName || 'User name unavailable',
         recipientId,
         siteId: siteId || null,
         isRead: false,
