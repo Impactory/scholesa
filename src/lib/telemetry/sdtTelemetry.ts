@@ -77,30 +77,30 @@ export type TelemetryEventType =
 
 export interface MotivationMetrics {
   // Autonomy metrics
-  choiceDiversity: number; // 0-1, how varied are their choices
-  missionSwitchRate: number; // switches per session
-  goalAlignmentScore: number; // % missions aligned with stated goals
+  choiceDiversity: number | null; // 0-1, how varied are their choices
+  missionSwitchRate: number | null; // switches per session
+  goalAlignmentScore: number | null; // % missions aligned with stated goals
   
   // Competence metrics
-  proofSubmissionRate: number; // submissions per week
-  firstTimeSuccessRate: number; // % checkpoints passed without revision
-  revisionPersistence: number; // avg attempts before passing
-  skillMasteryRate: number; // skills proven per week
+  proofSubmissionRate: number | null; // submissions per week
+  firstTimeSuccessRate: number | null; // % checkpoints passed without revision
+  revisionPersistence: number | null; // avg attempts before passing
+  skillMasteryRate: number | null; // skills proven per week
   
   // Belonging metrics
-  feedbackGivingRate: number; // peer feedbacks per week
-  recognitionReceived: number; // shout-outs received
-  crewParticipation: number; // % of crew sessions attended
+  feedbackGivingRate: number | null; // peer feedbacks per week
+  recognitionReceived: number | null; // shout-outs received
+  crewParticipation: number | null; // % of crew sessions attended
   
   // Reflection metrics
-  reflectionConsistency: number; // % sessions with reflection
-  effortTrend: number; // avg change in effort rating over time
-  enjoymentTrend: number; // avg change in enjoyment rating
+  reflectionConsistency: number | null; // % sessions with reflection
+  effortTrend: number | null; // avg change in effort rating over time
+  enjoymentTrend: number | null; // avg change in enjoyment rating
   
   // Time metrics
-  avgSessionDuration: number; // minutes
-  sessionCompletionRate: number; // % started sessions completed
-  optimalTimeOfDay: string; // when they're most engaged
+  avgSessionDuration: number | null; // minutes
+  sessionCompletionRate: number | null; // % started sessions completed
+  optimalTimeOfDay: string | null; // when they're most engaged
 }
 
 export interface MotivationInsight {
@@ -279,22 +279,22 @@ class SDTTelemetry {
    */
   async computeMetrics(learnerId: string, siteId: string): Promise<MotivationMetrics> {
     const defaultMetrics: MotivationMetrics = {
-      choiceDiversity: 0,
-      missionSwitchRate: 0,
-      goalAlignmentScore: 0,
-      proofSubmissionRate: 0,
-      firstTimeSuccessRate: 0,
-      revisionPersistence: 0,
-      skillMasteryRate: 0,
-      feedbackGivingRate: 0,
-      recognitionReceived: 0,
-      crewParticipation: 0,
-      reflectionConsistency: 0,
-      effortTrend: 0,
-      enjoymentTrend: 0,
-      avgSessionDuration: 0,
-      sessionCompletionRate: 0,
-      optimalTimeOfDay: 'morning'
+      choiceDiversity: null,
+      missionSwitchRate: null,
+      goalAlignmentScore: null,
+      proofSubmissionRate: null,
+      firstTimeSuccessRate: null,
+      revisionPersistence: null,
+      skillMasteryRate: null,
+      feedbackGivingRate: null,
+      recognitionReceived: null,
+      crewParticipation: null,
+      reflectionConsistency: null,
+      effortTrend: null,
+      enjoymentTrend: null,
+      avgSessionDuration: null,
+      sessionCompletionRate: null,
+      optimalTimeOfDay: null,
     };
 
     try {
@@ -427,33 +427,33 @@ class SDTTelemetry {
         }
       }
 
-      const avg = (values: number[]): number => {
-        if (values.length === 0) return 0;
+      const avg = (values: number[]): number | null => {
+        if (values.length === 0) return null;
         return values.reduce((sum, current) => sum + current, 0) / values.length;
       };
 
       const sortedHours = Array.from(hourCounts.entries()).sort((a, b) => b[1] - a[1]);
-      const topHour = sortedHours.length > 0 ? sortedHours[0][0] : 9;
-      const optimalTimeOfDay = topHour < 12 ? 'morning' : topHour < 17 ? 'afternoon' : 'evening';
+      const topHour = sortedHours.length > 0 ? sortedHours[0][0] : null;
+      const optimalTimeOfDay = topHour == null ? null : topHour < 12 ? 'morning' : topHour < 17 ? 'afternoon' : 'evening';
 
       return {
-        choiceDiversity: Math.min(1, missionIds.size / 5),
-        missionSwitchRate: sessionStarted > 0 ? missionSwitches / sessionStarted : missionSwitches,
-        goalAlignmentScore: missionIds.size > 0 ? Math.min(1, goalsSet / missionIds.size) : 0,
+        choiceDiversity: missionIds.size > 0 ? Math.min(1, missionIds.size / 5) : null,
+        missionSwitchRate: sessionStarted > 0 ? missionSwitches / sessionStarted : null,
+        goalAlignmentScore: missionIds.size > 0 ? Math.min(1, goalsSet / missionIds.size) : null,
         proofSubmissionRate: evidenceSubmitted / 4,
-        firstTimeSuccessRate: checkpointAttempts > 0 ? checkpointPasses / checkpointAttempts : 0,
+        firstTimeSuccessRate: checkpointAttempts > 0 ? checkpointPasses / checkpointAttempts : null,
         revisionPersistence: checkpointPasses > 0
           ? (checkpointAttempts - checkpointPasses) / checkpointPasses
-          : 0,
+          : null,
         skillMasteryRate: skillProven / 4,
         feedbackGivingRate: feedbackGiven / 4,
         recognitionReceived,
-        crewParticipation: sessionStarted > 0 ? Math.min(1, crewJoined / sessionStarted) : 0,
-        reflectionConsistency: sessionStarted > 0 ? sessionsWithReflection.size / sessionStarted : 0,
+        crewParticipation: sessionStarted > 0 ? Math.min(1, crewJoined / sessionStarted) : null,
+        reflectionConsistency: sessionStarted > 0 ? sessionsWithReflection.size / sessionStarted : null,
         effortTrend: avg(effortRatings),
         enjoymentTrend: avg(enjoymentRatings),
         avgSessionDuration: avg(completionDurationsMinutes),
-        sessionCompletionRate: sessionStarted > 0 ? sessionCompleted / sessionStarted : 0,
+        sessionCompletionRate: sessionStarted > 0 ? sessionCompleted / sessionStarted : null,
         optimalTimeOfDay,
       };
     } catch (error) {
@@ -470,7 +470,7 @@ class SDTTelemetry {
     const insights: MotivationInsight[] = [];
 
     // Autonomy insights
-    if (metrics.choiceDiversity < 0.3) {
+    if (metrics.choiceDiversity != null && metrics.choiceDiversity < 0.3) {
       insights.push({
         type: 'opportunity',
         category: 'autonomy',
@@ -481,7 +481,7 @@ class SDTTelemetry {
     }
 
     // Competence insights
-    if (metrics.firstTimeSuccessRate > 0.8) {
+    if (metrics.firstTimeSuccessRate != null && metrics.firstTimeSuccessRate > 0.8) {
       insights.push({
         type: 'strength',
         category: 'competence',
@@ -491,7 +491,7 @@ class SDTTelemetry {
       });
     }
 
-    if (metrics.revisionPersistence > 5) {
+    if (metrics.revisionPersistence != null && metrics.revisionPersistence > 5) {
       insights.push({
         type: 'opportunity',
         category: 'competence',
@@ -502,7 +502,7 @@ class SDTTelemetry {
     }
 
     // Belonging insights
-    if (metrics.feedbackGivingRate < 1 && ageBand !== 'grades_1_3') {
+    if (metrics.feedbackGivingRate != null && metrics.feedbackGivingRate < 1 && ageBand !== 'grades_1_3') {
       insights.push({
         type: 'nudge',
         category: 'belonging',
@@ -512,7 +512,7 @@ class SDTTelemetry {
       });
     }
 
-    if (metrics.recognitionReceived > 3) {
+    if (metrics.recognitionReceived != null && metrics.recognitionReceived > 3) {
       insights.push({
         type: 'strength',
         category: 'belonging',
@@ -522,7 +522,7 @@ class SDTTelemetry {
     }
 
     // Reflection insights
-    if (metrics.reflectionConsistency < 0.5) {
+    if (metrics.reflectionConsistency != null && metrics.reflectionConsistency < 0.5) {
       insights.push({
         type: 'opportunity',
         category: 'competence',
