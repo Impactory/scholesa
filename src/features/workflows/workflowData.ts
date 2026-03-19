@@ -1314,6 +1314,60 @@ function buildKpiPackMetadata(row: Record<string, unknown>): Record<string, stri
   });
 }
 
+function buildAnalyticsBackfillAuditMetadata(row: Record<string, unknown>): Record<string, string> {
+  const details = row.details && typeof row.details === 'object' && !Array.isArray(row.details)
+    ? row.details as Record<string, unknown>
+    : null;
+  const startDate = typeof details?.startDate === 'string' && details.startDate.trim().length > 0
+    ? details.startDate
+    : null;
+  const endDate = typeof details?.endDate === 'string' && details.endDate.trim().length > 0
+    ? details.endDate
+    : null;
+
+  return metadataWithAvailableValues({
+    siteId: typeof row.siteId === 'string' ? row.siteId : null,
+    processed: asAvailabilityLabel(details?.processed),
+    updated: asAvailabilityLabel(details?.updated),
+    skipped: asAvailabilityLabel(details?.skipped),
+    aggregationType: typeof details?.aggregationType === 'string' ? details.aggregationType : null,
+    period: typeof details?.period === 'string' ? details.period : null,
+    force: typeof details?.force === 'boolean' ? String(details.force) : null,
+    backfillWindow: joinAvailableParts([startDate, endDate]) || null,
+  });
+}
+
+async function loadAnalyticsBackfillAuditRecords(ctx: WorkflowContext): Promise<WorkflowRecord[]> {
+  const auditLogRecords = await loadCallableRows({
+    routePath: ctx.routePath,
+    callableName: 'listAuditLogs',
+    args: { limit: 120 },
+    rowArrayField: 'logs',
+    collectionName: 'auditLogs',
+    titleKeys: ['action', 'entityType', 'id'],
+    subtitleKeys: ['entityId', 'actorId'],
+    statusKeys: ['actorRole'],
+    metadataBuilder: buildAnalyticsBackfillAuditMetadata,
+    editable: false,
+    deletable: false,
+  }).catch(() => []);
+
+  return auditLogRecords
+    .filter((record) => record.title === 'telemetry_aggregate.backfilled' || record.title === 'kpi_pack.voice_reliability_backfilled')
+    .map((record) => ({
+      ...record,
+      title: record.title === 'telemetry_aggregate.backfilled'
+        ? 'Telemetry aggregate backfill'
+        : 'KPI voice backfill',
+      subtitle: joinAvailableParts([
+        record.metadata.updated ? `${record.metadata.updated} updated` : null,
+        record.metadata.processed ? `${record.metadata.processed} processed` : null,
+        record.metadata.backfillWindow,
+      ]) || 'Backfill run recorded',
+      status: 'completed',
+    }));
+}
+
 async function loadPartnerDeliverableRecords(ctx: WorkflowContext): Promise<WorkflowRecord[]> {
   const contractConstraints: QueryConstraint[] = ctx.role === 'hq'
     ? [orderBy('updatedAt', 'desc'), limit(100)]
