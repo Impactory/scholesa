@@ -755,7 +755,7 @@ describe('workflow route parity', () => {
             createdAt: '2026-03-19T11:00:00.000Z',
             details: {
               processed: 4,
-              updated: 4,
+              updated: 0,
               period: 'quarter',
               force: true,
             },
@@ -792,10 +792,10 @@ describe('workflow route parity', () => {
       }),
       expect.objectContaining({
         title: 'KPI voice backfill',
-        status: 'completed',
+        status: 'no-op',
         metadata: expect.objectContaining({
           processed: '4',
-          updated: '4',
+          updated: '0',
           period: 'quarter',
           force: 'true',
         }),

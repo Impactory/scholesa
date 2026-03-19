@@ -1339,6 +1339,14 @@ function buildAnalyticsBackfillAuditMetadata(row: Record<string, unknown>): Reco
   });
 }
 
+function analyticsBackfillRunStatus(metadata: Record<string, string>): string {
+  const updated = asFiniteNumber(metadata.updated);
+  if (updated === 0) {
+    return 'no-op';
+  }
+  return 'completed';
+}
+
 async function loadAnalyticsBackfillAuditRecords(ctx: WorkflowContext): Promise<WorkflowRecord[]> {
   const auditLogRecords = await loadCallableRows({
     routePath: ctx.routePath,
@@ -1372,7 +1380,7 @@ async function loadAnalyticsBackfillAuditRecords(ctx: WorkflowContext): Promise<
         record.metadata.processed ? `${record.metadata.processed} processed` : null,
         record.metadata.backfillWindow,
       ]) || 'Backfill run recorded',
-      status: 'completed',
+      status: analyticsBackfillRunStatus(record.metadata),
     }));
 }
 
