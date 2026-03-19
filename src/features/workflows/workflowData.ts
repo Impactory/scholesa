@@ -3835,7 +3835,7 @@ export async function createWorkflowRecord(
         parentId: requireStringValue(input, 'parentId', 'Parent'),
         learnerId: requireStringValue(input, 'learnerId', 'Learner'),
         amount: Number(requireStringValue(input, 'amount', 'Amount')),
-        currency: optionalStringValue(input, 'currency') || 'USD',
+        currency: optionalStringValue(input, 'currency') || undefined,
         description: optionalStringValue(input, 'description') || undefined,
       });
       return;

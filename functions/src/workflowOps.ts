@@ -474,12 +474,16 @@ export const listWorkflowApprovals = onCall(async (request: CallableRequest) => 
     }),
     ...payoutsSnap.docs.map((snapDoc) => {
       const data = snapDoc.data() as Record<string, unknown>;
+      const amount = asNumber(data.amount);
+      const currency = asTrimmedString(data.currency).toUpperCase();
+      const amountSummary = amount === null ? 'Amount unavailable' : `Amount ${String(amount)}`;
+      const currencySummary = currency.length > 0 ? ` ${currency}` : '';
       return {
         id: `payouts:${snapDoc.id}`,
         sourceCollection: 'payouts',
         sourceId: snapDoc.id,
         title: `Payout ${snapDoc.id}`,
-        summary: `Amount ${String(data.amount || 0)} ${String(data.currency || 'USD').toUpperCase()}`,
+        summary: `${amountSummary}${currencySummary}`,
         siteId: typeof data.siteId === 'string' ? data.siteId : null,
         status: typeof data.status === 'string' ? data.status : 'pending',
       };
@@ -4794,7 +4798,7 @@ export const getSiteBillingSnapshot = onCall(async (request: CallableRequest) =>
       const row = docSnap.data() as Record<string, unknown>;
       const rowSiteId = asTrimmedString(row.siteId);
       if (rowSiteId.length > 0 && rowSiteId !== targetSiteId) return null;
-      const amount = asNumber(row.amount) ?? 0;
+      const amount = asNumber(row.amount);
       const currency = asTrimmedString(row.currency).toUpperCase();
       return {
         id: docSnap.id,
@@ -4963,11 +4967,11 @@ export const listHqBillingRecords = onCall(async (request: CallableRequest) => {
     const createdAt = toDateValue(data.createdAt) || toDateValue(data.updatedAt) || now;
     if (createdAt < start || createdAt > now) continue;
 
-    const amount = asNumber(data.amount) ?? 0;
+    const amount = asNumber(data.amount);
     const status = normalizeInvoiceStatus(data.status);
-    const siteLabel = siteNames[rowSiteId] || (rowSiteId.length > 0 ? rowSiteId : 'Unknown');
-    const parentName = asTrimmedString(data.parentName) || asTrimmedString(data.requestedBy) || asTrimmedString(data.createdBy) || 'Unknown';
-    const learnerName = asTrimmedString(data.learnerName) || asTrimmedString(data.learnerId) || '-';
+    const siteLabel = siteNames[rowSiteId] || (rowSiteId.length > 0 ? rowSiteId : 'Site unavailable');
+    const parentName = asTrimmedString(data.parentName) || asTrimmedString(data.requestedBy) || asTrimmedString(data.createdBy) || 'Unavailable';
+    const learnerName = asTrimmedString(data.learnerName) || asTrimmedString(data.learnerId) || 'Unavailable';
     const invoiceId = asTrimmedString(data.invoiceId) || docSnap.id;
     const dateIso = createdAt.toISOString();
 
@@ -4985,7 +4989,7 @@ export const listHqBillingRecords = onCall(async (request: CallableRequest) => {
       payments.push({
         id: docSnap.id,
         from: parentName,
-        method: asTrimmedString(data.paymentMethod) || asTrimmedString(data.method) || 'Transfer',
+        method: asTrimmedString(data.paymentMethod) || asTrimmedString(data.method) || 'Unavailable',
         amount,
         date: dateIso,
         invoice: invoiceId,
@@ -4997,9 +5001,9 @@ export const listHqBillingRecords = onCall(async (request: CallableRequest) => {
     .filter((row) => selectedSiteId.length === 0 || row.id === selectedSiteId)
     .map((row) => ({
       parent: row.label,
-      learners: asNumber(row.data.learnerCount) ?? (Array.isArray(row.data.learnerIds) ? row.data.learnerIds.length : 0),
-      plan: asTrimmedString(row.data.billingPlan) || 'Standard',
-      amount: asNumber(row.data.monthlyFee) ?? 0,
+      learners: asNumber(row.data.learnerCount) ?? (Array.isArray(row.data.learnerIds) ? row.data.learnerIds.length : null),
+      plan: asTrimmedString(row.data.billingPlan),
+      amount: asNumber(row.data.monthlyFee),
       status: normalizeSubscriptionStatus(row.data.billingStatus),
       nextBilling: toIsoString(row.data.nextBillingDate),
     }));
@@ -5032,7 +5036,7 @@ export const createHqInvoice = onCall(async (request: CallableRequest) => {
   const parentName = asTrimmedString(request.data?.parentName) || parentId;
   const learnerName = asTrimmedString(request.data?.learnerName) || learnerId;
   const description = asTrimmedString(request.data?.description);
-  const currency = asTrimmedString(request.data?.currency).toUpperCase() || 'USD';
+  const currency = asTrimmedString(request.data?.currency).toUpperCase() || null;
   const payoutRef = admin.firestore().collection('payouts').doc();
   const invoiceId = payoutRef.id;
 
@@ -5376,16 +5380,22 @@ export const generateKpiPack = onCall(async (request: CallableRequest) => {
   });
   const completedAssignments = filteredAssignments.filter((docSnap) => asTrimmedString((docSnap.data() as Record<string, unknown>).status) === 'completed').length;
 
-  let avgFuture = 0;
-  let avgLeadership = 0;
-  let avgImpact = 0;
+  let avgFuture: number | null = null;
+  let avgLeadership: number | null = null;
+  let avgImpact: number | null = null;
   if (progressSnap.docs.length > 0) {
-    const futureScores = progressSnap.docs.map((docSnap) => asNumber((docSnap.data() as Record<string, unknown>).futureSkillsProgress) ?? 0);
-    const leadershipScores = progressSnap.docs.map((docSnap) => asNumber((docSnap.data() as Record<string, unknown>).leadershipProgress) ?? 0);
-    const impactScores = progressSnap.docs.map((docSnap) => asNumber((docSnap.data() as Record<string, unknown>).impactProgress) ?? 0);
-    avgFuture = futureScores.reduce((sum, value) => sum + value, 0) / Math.max(futureScores.length, 1);
-    avgLeadership = leadershipScores.reduce((sum, value) => sum + value, 0) / Math.max(leadershipScores.length, 1);
-    avgImpact = impactScores.reduce((sum, value) => sum + value, 0) / Math.max(impactScores.length, 1);
+    const futureScores = progressSnap.docs
+      .map((docSnap) => asNumber((docSnap.data() as Record<string, unknown>).futureSkillsProgress))
+      .filter((value): value is number => value !== null);
+    const leadershipScores = progressSnap.docs
+      .map((docSnap) => asNumber((docSnap.data() as Record<string, unknown>).leadershipProgress))
+      .filter((value): value is number => value !== null);
+    const impactScores = progressSnap.docs
+      .map((docSnap) => asNumber((docSnap.data() as Record<string, unknown>).impactProgress))
+      .filter((value): value is number => value !== null);
+    avgFuture = futureScores.length > 0 ? futureScores.reduce((sum, value) => sum + value, 0) / futureScores.length : null;
+    avgLeadership = leadershipScores.length > 0 ? leadershipScores.reduce((sum, value) => sum + value, 0) / leadershipScores.length : null;
+    avgImpact = impactScores.length > 0 ? impactScores.reduce((sum, value) => sum + value, 0) / impactScores.length : null;
   }
 
   const filteredTelemetry = telemetrySnap.docs.filter((docSnap) => {
@@ -5421,9 +5431,25 @@ export const generateKpiPack = onCall(async (request: CallableRequest) => {
   const artifactCompletionRate = learnerCount > 0 ? Math.min(1, artifactCount / learnerCount) : 0;
   const reflectionQuality = artifactCount > 0 ? Math.min(1, reflectionCount / artifactCount) : 0;
   const aiCollaborationQuality = completedAssignments > 0 ? Math.min(1, aiCollabCount / completedAssignments) : Math.min(1, aiCollabCount / Math.max(artifactCount, 1));
-  const capabilityGrowth = (avgFuture + avgLeadership + avgImpact) / 3;
-  const tripleHelixCoverage = [avgFuture, avgLeadership, avgImpact].filter((value) => value > 0.2).length / 3;
-  const fidelityScore = (attendanceRate * 0.25) + (artifactCompletionRate * 0.2) + (reflectionQuality * 0.15) + (capabilityGrowth * 0.2) + (tripleHelixCoverage * 0.1) + (aiCollaborationQuality * 0.1);
+  const availablePillarValues = [avgFuture, avgLeadership, avgImpact].filter((value): value is number => value !== null);
+  const capabilityGrowth = availablePillarValues.length > 0
+    ? availablePillarValues.reduce((sum, value) => sum + value, 0) / availablePillarValues.length
+    : null;
+  const tripleHelixCoverage = availablePillarValues.length > 0
+    ? availablePillarValues.filter((value) => value > 0.2).length / availablePillarValues.length
+    : null;
+  const fidelityFactors = [
+    { value: attendanceRate, weight: 0.25 },
+    { value: artifactCompletionRate, weight: 0.2 },
+    { value: reflectionQuality, weight: 0.15 },
+    { value: capabilityGrowth, weight: 0.2 },
+    { value: tripleHelixCoverage, weight: 0.1 },
+    { value: aiCollaborationQuality, weight: 0.1 },
+  ].filter((factor): factor is { value: number; weight: number } => factor.value !== null);
+  const fidelityWeightTotal = fidelityFactors.reduce((sum, factor) => sum + factor.weight, 0);
+  const fidelityScore = fidelityWeightTotal > 0
+    ? fidelityFactors.reduce((sum, factor) => sum + (factor.value * factor.weight), 0) / fidelityWeightTotal
+    : 0;
   const portfolioQualityGrade = fidelityScore >= 0.8 ? 'A' : fidelityScore >= 0.65 ? 'B' : fidelityScore >= 0.5 ? 'C' : 'D';
 
   const ref = admin.firestore().collection('kpiPacks').doc();
