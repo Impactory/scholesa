@@ -191,6 +191,16 @@ function optionLabelFromRecord(data: Record<string, unknown>, fallbackId: string
   return fallbackId;
 }
 
+function userLabelFromRecord(data: Record<string, unknown>, fallbackLabel = 'User name unavailable'): string {
+  const displayName = asString(data.displayName, '');
+  if (displayName) return displayName;
+  const name = asString(data.name, '');
+  if (name) return name;
+  const email = asString(data.email, '');
+  if (email) return email;
+  return fallbackLabel;
+}
+
 async function loadMissionOptions(): Promise<WorkflowFieldOption[]> {
   const snap = await getDocs(
     query(
@@ -233,7 +243,7 @@ async function loadSiteUserOptions(params: {
     })
     .map((userDoc) => {
       const data = (userDoc.data() || {}) as Record<string, unknown>;
-      const label = optionLabelFromRecord(data, userDoc.id);
+      const label = userLabelFromRecord(data);
       const role = asString(data.role, '').toLowerCase();
       return {
         value: userDoc.id,
@@ -329,7 +339,7 @@ async function loadLearnerOptionsForActor(ctx: WorkflowContext, siteId: string |
           const data = (learnerDoc.data() || {}) as Record<string, unknown>;
           options.push({
             value: learnerDoc.id,
-            label: optionLabelFromRecord(data, learnerDoc.id),
+            label: userLabelFromRecord(data, 'Learner name unavailable'),
           });
         });
       }
@@ -394,9 +404,19 @@ async function loadParentLinkRecords(ctx: WorkflowContext): Promise<Array<{ lear
     : [];
   explicitLearnerIds.forEach((learnerId) => learnerIds.add(learnerId));
 
+  const unresolvedLearnerIds = Array.from(learnerIds.values()).filter((learnerId) => !names.has(learnerId));
+  await Promise.all(unresolvedLearnerIds.map(async (learnerId) => {
+    const userSnap = await getDoc(doc(collection(firestore, 'users'), learnerId)).catch(() => null);
+    if (!userSnap?.exists()) return;
+    const label = optionLabelFromRecord((userSnap.data() || {}) as Record<string, unknown>, '');
+    if (label) {
+      names.set(learnerId, label);
+    }
+  }));
+
   return Array.from(learnerIds.values()).map((learnerId) => ({
     learnerId,
-    learnerName: names.get(learnerId) || learnerId,
+    learnerName: names.get(learnerId) || 'Learner name unavailable',
   }));
 }
 
@@ -511,7 +531,7 @@ async function loadParentPortfolioWorkflowRecords(ctx: WorkflowContext): Promise
     if (!rawLearner || typeof rawLearner !== 'object' || Array.isArray(rawLearner)) continue;
     const learner = rawLearner as Record<string, unknown>;
     const learnerId = asString(learner.learnerId, '');
-    const learnerName = asString(learner.learnerName, learnerId);
+    const learnerName = asString(learner.learnerName, '') || 'Learner name unavailable';
     if (!learnerId) continue;
     learnerIds.push(learnerId);
 
@@ -901,10 +921,11 @@ async function loadParentSummary(ctx: WorkflowContext): Promise<WorkflowRecord[]
         : null;
       const artifactCount = asFiniteNumber((learner.portfolioSnapshot as Record<string, unknown> | undefined)?.artifactCount);
       const reflectionsSubmitted = asFiniteNumber((learner.ideationPassport as Record<string, unknown> | undefined)?.reflectionsSubmitted);
+      const learnerName = asString(learner.learnerName, '') || 'Learner name unavailable';
 
       return {
         id: learnerId,
-        title: asString(learner.learnerName, learnerId),
+        title: learnerName,
         subtitle: `Level ${currentLevel ?? 'unavailable'} • XP ${totalXp ?? 'unavailable'}`,
         status: 'active',
         updatedAt: toIsoDate(learner.updatedAt || learner.lastActivityAt),
@@ -3329,8 +3350,8 @@ function booleanValue(input: WorkflowCreateInput, key: string, fallback = false)
 
 async function loadUserDisplayName(userId: string): Promise<string> {
   const userSnap = await getDoc(doc(collection(firestore, 'users'), userId));
-  if (!userSnap.exists()) return userId;
-  return optionLabelFromRecord((userSnap.data() || {}) as Record<string, unknown>, userId);
+  if (!userSnap.exists()) return 'User name unavailable';
+  return userLabelFromRecord((userSnap.data() || {}) as Record<string, unknown>);
 }
 
 async function findUserByEmail(email: string): Promise<{ id: string; data: Record<string, unknown> } | null> {
