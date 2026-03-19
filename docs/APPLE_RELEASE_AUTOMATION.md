@@ -22,7 +22,15 @@ This document describes the local and GitHub Actions setup for App Store Connect
 ./scripts/apple_release_local.sh verify_api_key
 ```
 
-4. Upload a signed iOS build to TestFlight once signing is configured locally in Xcode:
+4. Verify local TestFlight signing prerequisites without uploading anything:
+
+```bash
+./scripts/apple_release_local.sh verify_local_release
+```
+
+This checks for both a local Apple Distribution identity and at least one installed `.mobileprovision` profile, then reuses the same App Store Connect API key validation path.
+
+5. Upload a signed iOS build to TestFlight once signing is configured locally in Xcode:
 
 ```bash
 ./scripts/apple_release_local.sh upload_testflight
@@ -70,4 +78,5 @@ If VS Code shows `Context access might be invalid` on the workflow secret refere
 ## Notes
 
 - The App Store Connect API key alone is not enough to upload builds. iOS upload still requires signing certificates and a provisioning profile.
+- `verify_local_release` is the honest local preflight for TestFlight readiness. It does not upload a build.
 - The current automation targets iOS TestFlight. macOS notarization remains a separate Apple signing/notary flow.
