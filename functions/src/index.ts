@@ -2376,10 +2376,15 @@ async function fetchUsersByIds(userIds: string[]): Promise<Array<{ id: string; d
 }
 
 function toRosterItem(id: string, data: UserRecord): Record<string, unknown> {
+  const displayName = typeof data.displayName === 'string' && data.displayName.trim().length > 0
+    ? data.displayName.trim()
+    : typeof data.email === 'string' && data.email.trim().length > 0
+    ? data.email.trim()
+    : null;
   return {
     id,
     uid: id,
-    displayName: data.displayName ?? data.email ?? id,
+    displayName,
     email: data.email ?? null,
     role: normalizeRoleValue(data.role),
     siteIds: data.siteIds ?? [],
@@ -2932,7 +2937,7 @@ async function buildParentLearnerSummary(params: {
       ? ideationPassport.completedMissions
       : typeof progressData.missionsCompleted === 'number' && Number.isFinite(progressData.missionsCompleted)
       ? Math.round(progressData.missionsCompleted)
-      : 0;
+      : null;
   const currentStreak =
     typeof progressData.currentStreak === 'number' && Number.isFinite(progressData.currentStreak)
       ? Math.round(progressData.currentStreak)
@@ -2940,7 +2945,12 @@ async function buildParentLearnerSummary(params: {
 
   return {
     learnerId,
-    learnerName: learnerData.displayName ?? learnerData.email ?? learnerId,
+    learnerName:
+      typeof learnerData.displayName === 'string' && learnerData.displayName.trim().length > 0
+        ? learnerData.displayName.trim()
+        : typeof learnerData.email === 'string' && learnerData.email.trim().length > 0
+        ? learnerData.email.trim()
+        : null,
     photoUrl: null,
     currentLevel,
     totalXp,
