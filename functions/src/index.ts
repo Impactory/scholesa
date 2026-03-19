@@ -1270,7 +1270,6 @@ export const genAiCoach = onCall(async (request) => {
 
   const tags: string[] = Array.isArray(conceptTags) ? conceptTags : [];
   const displayName = profile.displayName ?? 'learner';
-  const traceId = randomUUID();
   const policyVersion = AI_COACH_POLICY_VERSION;
 
   // ── A0) Sense: Load orchestration state (x_hat, P) ──
@@ -1299,6 +1298,7 @@ export const genAiCoach = onCall(async (request) => {
     payload: { mode: coachMode, conceptTags: tags, coppaBand, gradeBandSource },
     timestamp: FieldValue.serverTimestamp(),
   });
+  const traceId = aiHelpOpenedRef.id;
 
   // ── A0) Detect: Compute reliability risk (SEP v1 heuristic) ──
   const reliabilityRisk = computeReliabilityRisk(coachMode, xHat, pSummary);
