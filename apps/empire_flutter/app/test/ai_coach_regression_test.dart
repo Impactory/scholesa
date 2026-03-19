@@ -175,6 +175,7 @@ void main() {
       expect(response.autonomyRisk, isNull);
       expect(response.mvlGateActive, isFalse);
       expect(response.mvlEpisodeId, isNull);
+      expect(response.version, isNull);
     });
   });
 
@@ -542,6 +543,17 @@ void main() {
       });
 
       expect(v1.version, equals('1.0.0'));
+    });
+
+    test('AiCoachResponse leaves version absent when meta omits it', () {
+      final AiCoachResponse response =
+          AiCoachResponse.fromMap(const <String, dynamic>{
+        'message': 'test',
+        'mode': 'hint',
+        'meta': <String, dynamic>{},
+      });
+
+      expect(response.version, isNull);
     });
 
     test('EstimatorModel tracks version + Q/R versions', () {

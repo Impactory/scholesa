@@ -82,6 +82,30 @@ void main() {
       );
       expect(restored, isNull);
     });
+
+    test('tryFromMap leaves estimator and fusion provenance absent when missing', () {
+      final OrchestrationState? restored = OrchestrationState.tryFromMap(
+        <String, dynamic>{
+          'siteId': 'site-1',
+          'learnerId': 'learner-1',
+          'sessionOccurrenceId': 'occ-1',
+          'x_hat': <String, dynamic>{
+            'cognition': 0.7,
+            'engagement': 0.4,
+            'integrity': 0.8,
+          },
+          'P': <String, dynamic>{
+            'diag': <double>[0.1, 0.1, 0.1],
+            'trace': 0.3,
+            'confidence': 0.9,
+          },
+        },
+      );
+
+      expect(restored, isNotNull);
+      expect(restored!.model, isNull);
+      expect(restored.fusion, isNull);
+    });
   });
 
   group('GradeBand', () {
@@ -249,6 +273,48 @@ void main() {
       expect(map['gradeBand'], 'G4_6');
       expect((map['context'] as Map<String, dynamic>)['conceptTags'],
           <String>['algebra', 'equations']);
+    });
+  });
+
+  group('EstimatorModel', () {
+    test('tryFromMap rejects incomplete provenance payloads', () {
+      expect(
+        EstimatorModel.tryFromMap(<String, dynamic>{
+          'estimator': 'ekf-lite',
+          'version': '0.1.0',
+        }),
+        isNull,
+      );
+    });
+
+    test('fromMap throws on incomplete provenance payloads', () {
+      expect(
+        () => EstimatorModel.fromMap(<String, dynamic>{
+          'estimator': 'ekf-lite',
+          'version': '0.1.0',
+        }),
+        throwsFormatException,
+      );
+    });
+  });
+
+  group('FusionInfo', () {
+    test('tryFromMap rejects incomplete fusion payloads', () {
+      expect(
+        FusionInfo.tryFromMap(<String, dynamic>{
+          'familiesPresent': <String>['clickstream'],
+        }),
+        isNull,
+      );
+    });
+
+    test('fromMap throws on incomplete fusion payloads', () {
+      expect(
+        () => FusionInfo.fromMap(<String, dynamic>{
+          'sensorFusionMet': false,
+        }),
+        throwsFormatException,
+      );
     });
   });
 

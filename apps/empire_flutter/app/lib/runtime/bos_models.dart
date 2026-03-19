@@ -202,8 +202,8 @@ class OrchestrationState {
     required this.sessionOccurrenceId,
     required this.xHat,
     required this.p,
-    required this.model,
-    required this.fusion,
+    this.model,
+    this.fusion,
     this.lastUpdatedAt,
   });
 
@@ -212,8 +212,8 @@ class OrchestrationState {
   final String sessionOccurrenceId;
   final XHat xHat;
   final CovarianceSummary p;
-  final EstimatorModel model;
-  final FusionInfo fusion;
+  final EstimatorModel? model;
+  final FusionInfo? fusion;
   final Timestamp? lastUpdatedAt;
 
   Map<String, dynamic> toMap() => <String, dynamic>{
@@ -222,8 +222,8 @@ class OrchestrationState {
         'sessionOccurrenceId': sessionOccurrenceId,
         'x_hat': xHat.toMap(),
         'P': p.toMap(),
-        'model': model.toMap(),
-        'fusion': fusion.toMap(),
+        if (model != null) 'model': model!.toMap(),
+        if (fusion != null) 'fusion': fusion!.toMap(),
         'lastUpdatedAt': lastUpdatedAt ?? FieldValue.serverTimestamp(),
       };
 
@@ -259,11 +259,11 @@ class OrchestrationState {
       sessionOccurrenceId: sessionOccurrenceId,
       xHat: xHat,
       p: p,
-      model: EstimatorModel.fromMap(
-        _asStringDynamicMap(m['model']) ?? <String, dynamic>{},
+      model: EstimatorModel.tryFromMap(
+        _asStringDynamicMap(m['model']),
       ),
-      fusion: FusionInfo.fromMap(
-        _asStringDynamicMap(m['fusion']) ?? <String, dynamic>{},
+      fusion: FusionInfo.tryFromMap(
+        _asStringDynamicMap(m['fusion']),
       ),
       lastUpdatedAt: m['lastUpdatedAt'] as Timestamp?,
     );
@@ -291,12 +291,32 @@ class EstimatorModel {
         'R_version': rVersion,
       };
 
-  factory EstimatorModel.fromMap(Map<String, dynamic> m) => EstimatorModel(
-        estimator: m['estimator'] as String? ?? 'ekf-lite',
-        version: m['version'] as String? ?? '0.1.0',
-        qVersion: m['Q_version'] as String? ?? 'v1',
-        rVersion: m['R_version'] as String? ?? 'v1',
-      );
+  factory EstimatorModel.fromMap(Map<String, dynamic> m) {
+    final EstimatorModel? parsed = EstimatorModel.tryFromMap(m);
+    if (parsed == null) {
+      throw const FormatException('Malformed estimator model payload.');
+    }
+    return parsed;
+  }
+
+  static EstimatorModel? tryFromMap(Map<String, dynamic>? m) {
+    if (m == null) {
+      return null;
+    }
+    final String? estimator = _readTrimmedString(m, 'estimator');
+    final String? version = _readTrimmedString(m, 'version');
+    final String? qVersion = _readTrimmedString(m, 'Q_version');
+    final String? rVersion = _readTrimmedString(m, 'R_version');
+    if (estimator == null || version == null || qVersion == null || rVersion == null) {
+      return null;
+    }
+    return EstimatorModel(
+      estimator: estimator,
+      version: version,
+      qVersion: qVersion,
+      rVersion: rVersion,
+    );
+  }
 }
 
 @immutable
@@ -314,12 +334,32 @@ class FusionInfo {
         'sensorFusionMet': sensorFusionMet,
       };
 
-  factory FusionInfo.fromMap(Map<String, dynamic> m) => FusionInfo(
-        familiesPresent:
-            ((m['familiesPresent'] as List<dynamic>?)?.cast<String>()) ??
-                <String>[],
-        sensorFusionMet: m['sensorFusionMet'] as bool? ?? false,
-      );
+  factory FusionInfo.fromMap(Map<String, dynamic> m) {
+    final FusionInfo? parsed = FusionInfo.tryFromMap(m);
+    if (parsed == null) {
+      throw const FormatException('Malformed fusion info payload.');
+    }
+    return parsed;
+  }
+
+  static FusionInfo? tryFromMap(Map<String, dynamic>? m) {
+    if (m == null) {
+      return null;
+    }
+    final List<String>? familiesPresent = (m['familiesPresent'] as List<dynamic>?)
+        ?.whereType<String>()
+        .map((String family) => family.trim())
+        .where((String family) => family.isNotEmpty)
+        .toList();
+    final bool? sensorFusionMet = m['sensorFusionMet'] as bool?;
+    if (familiesPresent == null || sensorFusionMet == null) {
+      return null;
+    }
+    return FusionInfo(
+      familiesPresent: familiesPresent,
+      sensorFusionMet: sensorFusionMet,
+    );
+  }
 }
 
 // ──── §1.2  Control input u_t / Intervention ────
@@ -1000,7 +1040,7 @@ class AiCoachResponse {
     this.mvlGateActive = false,
     this.mvlEpisodeId,
     this.mvlReason,
-    this.version = '1.0.0',
+    this.version,
     this.aiHelpOpenedEventId,
     this.traceId,
     this.policyVersion,
@@ -1021,7 +1061,7 @@ class AiCoachResponse {
   final bool mvlGateActive;
   final String? mvlEpisodeId;
   final String? mvlReason;
-  final String version;
+  final String? version;
   final String? aiHelpOpenedEventId;
   final String? traceId;
   final String? policyVersion;
@@ -1109,7 +1149,7 @@ class AiCoachResponse {
       mvlGateActive: mvl?['gateActive'] as bool? ?? false,
       mvlEpisodeId: mvl?['episodeId'] as String?,
       mvlReason: mvl?['reason'] as String?,
-      version: meta?['version'] as String? ?? '1.0.0',
+      version: _readTrimmedString(meta, 'version'),
       aiHelpOpenedEventId: meta?['aiHelpOpenedEventId'] as String?,
       traceId: (metadata?['traceId'] ?? meta?['traceId']) as String?,
       policyVersion: metadata?['policyVersion'] as String?,
