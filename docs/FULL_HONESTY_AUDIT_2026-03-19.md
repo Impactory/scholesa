@@ -29,7 +29,7 @@ This is a fresh whole-app honesty pass after the earlier blocker remediation, we
 - Current audit verification run:
   - `flutter analyze`: passed
   - Focused audit suite: passed
-  - Total in the current broad audit run: 238 tests passed, 0 failed
+  - Total in the current broad audit run: 242 tests passed, 0 failed
 
 ### Surface classification
 
@@ -38,6 +38,7 @@ This is a fresh whole-app honesty pass after the earlier blocker remediation, we
 - Authentication and shared-device sign-out
 - Learner missions and habits core study paths
 - Educator learner differentiation and follow-up request flow
+- Cross-role messages and notifications unread-state and dismiss flows
 - Parent billing as honest view-only summary
 - Parent schedule and portfolio support-request flows
 - Site dashboard primary path after misleading pillar telemetry removal
@@ -78,7 +79,7 @@ This is a fresh whole-app honesty pass after the earlier blocker remediation, we
 - `flutter analyze` completed with no issues.
 - The focused audit command completed successfully:
   - `flutter test test/*honesty* test/*placeholder* test/*regression* test/*workflow* test/missions_page_test.dart test/habits_page_test.dart`
-- Result: 238 tests passed, 0 failed.
+- Result: 242 tests passed, 0 failed.
 
 ### Notable verified behaviors
 
@@ -91,6 +92,7 @@ This is a fresh whole-app honesty pass after the earlier blocker remediation, we
 - AI coach widget regressions pass even when Firebase is unavailable, which confirms safe failure handling rather than crash behavior.
 - Missions and habits now provide degraded-mode guidance and a concrete continue action when AI runtime is unavailable.
 - Attendance now renders a recoverable unavailable state instead of a bare provider-missing text failure.
+- Messages and notifications now have direct page coverage for unread transitions, dismiss, and mark-all-read behavior.
 
 ## D. Remaining Blockers
 
@@ -113,6 +115,7 @@ Why it matters:
 
 - The core audited routes are much stronger.
 - Missions, habits, and attendance now have direct degraded-mode coverage in addition to the broader honesty, placeholder, regression, and workflow suites.
+- Messages and notifications now have direct page coverage instead of relying only on shared regressions.
 - Secondary role surfaces still rely on a mix of direct page tests, workflow tests, placeholder-action tests, and regression coverage rather than comprehensive route-by-route end-to-end coverage.
 - That is acceptable for beta.
 - It is still short of gold for a role-dense admin app.
