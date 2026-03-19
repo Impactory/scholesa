@@ -2613,7 +2613,12 @@ async function buildParentLearnerSummary(params: {
       const hasMiniRebuild = proofBundleSummary?.hasMiniRebuild === true;
       const hasLearnerAiDisclosure = proofBundleSummary?.hasLearnerAiDisclosure === true;
       const learnerAiDeclaredUsed = proofBundleSummary?.aiAssistanceUsed === true;
-      const proofOfLearningStatus = !matchingMissionAttempt
+      const directProofOfLearningStatus = typeof row.proofOfLearningStatus === 'string'
+        ? row.proofOfLearningStatus.trim()
+        : '';
+      const proofOfLearningStatus = directProofOfLearningStatus
+        ? directProofOfLearningStatus
+        : !matchingMissionAttempt
         ? 'not-available'
         : hasExplainItBack && hasOralCheck && hasMiniRebuild
         ? 'verified'
@@ -2630,7 +2635,12 @@ async function buildParentLearnerSummary(params: {
       });
       const hasAiFeedbackSignal = typeof matchingMissionAttempt?.aiFeedbackDraft === 'string'
         && matchingMissionAttempt.aiFeedbackDraft.trim().length > 0;
-      const aiDisclosureStatus = hasLearnerAiDisclosure
+      const directAiDisclosureStatus = typeof row.aiDisclosureStatus === 'string'
+        ? row.aiDisclosureStatus.trim()
+        : '';
+      const aiDisclosureStatus = directAiDisclosureStatus
+        ? directAiDisclosureStatus
+        : hasLearnerAiDisclosure
         ? learnerAiDeclaredUsed
           ? hasExplainItBack
             ? 'learner-ai-verified'

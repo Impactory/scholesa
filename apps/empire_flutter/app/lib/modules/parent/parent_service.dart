@@ -853,13 +853,17 @@ class ParentService extends ChangeNotifier {
             proofBundleSummary?['hasLearnerAiDisclosure'] == true;
         final bool learnerAiDeclaredUsed =
             proofBundleSummary?['aiAssistanceUsed'] == true;
-        final String proofOfLearningStatus = matchingMissionAttempt == null
-          ? 'not-available'
-          : hasExplainItBack && hasOralCheck && hasMiniRebuild
-            ? 'verified'
-            : hasExplainItBack || hasOralCheck || hasMiniRebuild
-              ? 'partial'
-              : 'missing';
+        final String directProofOfLearningStatus =
+            _asTrimmedString(row['proofOfLearningStatus']);
+        final String proofOfLearningStatus = directProofOfLearningStatus.isNotEmpty
+          ? directProofOfLearningStatus
+          : matchingMissionAttempt == null
+            ? 'not-available'
+            : hasExplainItBack && hasOralCheck && hasMiniRebuild
+              ? 'verified'
+              : hasExplainItBack || hasOralCheck || hasMiniRebuild
+                ? 'partial'
+                : 'missing';
         final int learnerAiEventCount = matchingInteractionEvents.where(
         (Map<String, dynamic> event) {
           final String eventType =
@@ -875,7 +879,11 @@ class ParentService extends ChangeNotifier {
         final bool hasAiFeedbackSignal = matchingMissionAttempt != null &&
           _asTrimmedString(matchingMissionAttempt['aiFeedbackDraft'])
             .isNotEmpty;
-        final String aiDisclosureStatus = hasLearnerAiDisclosure
+        final String directAiDisclosureStatus =
+            _asTrimmedString(row['aiDisclosureStatus']);
+        final String aiDisclosureStatus = directAiDisclosureStatus.isNotEmpty
+          ? directAiDisclosureStatus
+          : hasLearnerAiDisclosure
           ? learnerAiDeclaredUsed
             ? hasExplainItBack
               ? 'learner-ai-verified'

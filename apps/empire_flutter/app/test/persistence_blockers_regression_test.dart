@@ -169,6 +169,38 @@ void main() {
           'learnerId': 'learner-1',
           'siteId': 'site-1',
           'status': 'submitted',
+          'proofBundleId': 'learner-1_mission-1',
+          'proofBundleSummary': <String, dynamic>{
+            'isReady': true,
+            'checkpointCount': 1,
+            'hasExplainItBack': true,
+            'hasOralCheck': true,
+            'hasMiniRebuild': true,
+            'hasLearnerAiDisclosure': true,
+            'aiAssistanceUsed': true,
+            'hasAiAssistanceDetails': true,
+          },
+        },
+      );
+
+      await firestore.collection('proofOfLearningBundles').doc('learner-1_mission-1').set(
+        <String, dynamic>{
+          'missionId': 'mission-1',
+          'learnerId': 'learner-1',
+          'siteId': 'site-1',
+          'explainItBack': 'I can explain why I chose this prototype path.',
+          'oralCheckResponse': 'I can talk through the reasoning aloud.',
+          'miniRebuildPlan': 'I would rebuild the tradeoff test with a second example.',
+          'aiAssistanceUsed': true,
+          'aiAssistanceDetails':
+              'AI helped brainstorm alternatives, but I chose and explained the final design.',
+          'versionHistory': <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 'checkpoint-1',
+              'summary': 'Prototype checkpoint',
+              'createdAt': Timestamp.now(),
+            },
+          ],
         },
       );
 
@@ -258,6 +290,19 @@ void main() {
         (rubricApplicationDoc.data()?['scores'] as List?)?.length,
         2,
       );
+
+      final DocumentSnapshot<Map<String, dynamic>> portfolioDoc = await firestore
+          .collection('portfolioItems')
+          .doc('evidence-1')
+          .get();
+      expect(portfolioDoc.exists, isTrue);
+      expect(portfolioDoc.data()?['proofOfLearningStatus'], 'verified');
+      expect(portfolioDoc.data()?['aiAssistanceUsed'], isTrue);
+      expect(
+        portfolioDoc.data()?['aiAssistanceDetails'],
+        contains('brainstorm alternatives'),
+      );
+      expect(portfolioDoc.data()?['aiDisclosureStatus'], 'learner-ai-verified');
     });
 
     test(
