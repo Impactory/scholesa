@@ -325,6 +325,7 @@ export function AnalyticsDashboard() {
           value={siteVoiceMetrics.avgCaptureSuccess != null ? `${siteVoiceMetrics.avgCaptureSuccess}%` : 'Unavailable'}
           icon={ActivityIcon}
           color="purple"
+          helperText="Unavailable means Scholesa does not yet have enough verified voice capture evidence for this period."
           trend={criticalVoiceCapture ? 'down' : siteVoiceMetrics.avgCaptureSuccess != null && siteVoiceMetrics.avgCaptureSuccess >= 90 ? 'up' : undefined}
           trendLabel={periodLabel}
           t={t}
@@ -553,12 +554,13 @@ interface SummaryCardProps {
   value: string | number;
   icon: React.ComponentType<{ className?: string }>;
   color: 'blue' | 'green' | 'purple' | 'red';
+  helperText?: string;
   trend?: 'up' | 'down';
   trendLabel: string;
   t: (key: string, interpolation?: Record<string, string | number>) => string;
 }
 
-function SummaryCard({ title, value, icon: Icon, color, trend, trendLabel, t }: SummaryCardProps) {
+function SummaryCard({ title, value, icon: Icon, color, helperText, trend, trendLabel, t }: SummaryCardProps) {
   const colorClasses = {
     blue: 'bg-blue-100 text-blue-800',
     green: 'bg-green-100 text-green-800',
@@ -572,6 +574,7 @@ function SummaryCard({ title, value, icon: Icon, color, trend, trendLabel, t }: 
         <div>
           <p className="text-sm font-medium text-gray-600">{title}</p>
           <p className="mt-2 text-3xl font-semibold text-gray-900">{value}</p>
+          {helperText ? <p className="mt-2 max-w-xs text-xs text-gray-500">{helperText}</p> : null}
         </div>
         <div className={`rounded-full p-3 ${colorClasses[color]}`}>
           <Icon className="h-6 w-6" />
