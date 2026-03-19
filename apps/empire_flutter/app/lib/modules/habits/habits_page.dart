@@ -1244,10 +1244,69 @@ class _HabitDetailSheetState extends State<_HabitDetailSheet> {
     final LearningRuntimeProvider? runtime =
         context.read<LearningRuntimeProvider?>();
     if (runtime == null) {
-      return Center(
-        child: Text(
-          'AI Coach not available',
-          style: TextStyle(color: context.schTextSecondary),
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: ScholesaColors.learner.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: ScholesaColors.learner.withValues(alpha: 0.18),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                const Icon(
+                  Icons.wifi_tethering_error_rounded,
+                  color: ScholesaColors.learner,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    _tHabits(context, 'AI Coach is temporarily unavailable'),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: context.schTextPrimary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              _tHabits(
+                context,
+                'Keep your streak moving while AI reconnects.',
+              ),
+              style: TextStyle(color: context.schTextSecondary),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _tHabits(
+                context,
+                'Log your next habit check-in and reopen reflection in a moment.',
+              ),
+              style: TextStyle(color: context.schTextSecondary),
+            ),
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+              onPressed: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: <String, dynamic>{
+                    'cta': 'habit_ai_continue_without_ai',
+                    'habit_id': widget.habit.id,
+                    'surface': 'habit_detail_sheet',
+                  },
+                );
+                setState(() => _showAiReflection = false);
+              },
+              icon: const Icon(Icons.arrow_forward_rounded),
+              label: Text(_tHabits(context, 'Continue this habit')),
+            ),
+          ],
         ),
       );
     }

@@ -2119,13 +2119,73 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
   }
 
   Widget _buildAiCoachPanel(BuildContext context, UserRole role) {
+    final Color accentColor = ScholesaColors.learner;
     final LearningRuntimeProvider? runtime =
         context.read<LearningRuntimeProvider?>();
     if (runtime == null) {
-      return Center(
-        child: Text(
-          'AI Coach not available',
-          style: TextStyle(color: context.schTextSecondary),
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: accentColor.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: accentColor.withValues(alpha: 0.18),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                Icon(
+                  Icons.wifi_tethering_error_rounded,
+                  color: accentColor,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    _tMissions(context, 'AI Coach is temporarily unavailable'),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: context.schTextPrimary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              _tMissions(
+                context,
+                'Keep working on this mission while AI reconnects.',
+              ),
+              style: TextStyle(color: context.schTextSecondary),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _tMissions(
+                context,
+                'Try the next step below or reopen AI Coach in a moment.',
+              ),
+              style: TextStyle(color: context.schTextSecondary),
+            ),
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+              onPressed: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: <String, dynamic>{
+                    'cta': 'mission_ai_continue_without_ai',
+                    'mission_id': widget.mission.id,
+                    'surface': 'mission_detail_sheet',
+                  },
+                );
+                setState(() => _showAiCoach = false);
+              },
+              icon: const Icon(Icons.arrow_forward_rounded),
+              label: Text(_tMissions(context, 'Continue this mission')),
+            ),
+          ],
         ),
       );
     }

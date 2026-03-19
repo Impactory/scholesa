@@ -76,8 +76,28 @@ class _AttendancePageState extends State<AttendancePage> {
     final AttendanceService? service = context.watch<AttendanceService?>();
 
     if (service == null) {
-      return Center(
-        child: Text(_tAttendance(context, 'Attendance service not available')),
+      return EmptyState(
+        icon: Icons.wifi_tethering_error_rounded,
+        title: _tAttendance(context, 'Attendance is temporarily unavailable'),
+        message: _tAttendance(
+          context,
+          'Reopen attendance from your dashboard or refresh after the app reconnects.',
+        ),
+        action: TextButton.icon(
+          onPressed: () async {
+            TelemetryService.instance.logEvent(
+              event: 'cta.clicked',
+              metadata: const <String, dynamic>{
+                'cta': 'attendance_refresh_missing_service',
+                'surface': 'attendance_missing_service_state',
+              },
+            );
+            setState(() {});
+            await _loadOccurrences();
+          },
+          icon: const Icon(Icons.refresh),
+          label: Text(_tAttendance(context, 'Refresh')),
+        ),
       );
     }
 
@@ -265,8 +285,28 @@ class _AttendanceRosterViewState extends State<_AttendanceRosterView> {
     if (service == null) {
       return Scaffold(
         appBar: AppBar(title: Text(_tAttendance(context, 'Class Roster'))),
-        body:
-            Center(child: Text(_tAttendance(context, 'Service not available'))),
+        body: EmptyState(
+          icon: Icons.wifi_tethering_error_rounded,
+          title: _tAttendance(context, 'Attendance is temporarily unavailable'),
+          message: _tAttendance(
+            context,
+            'Return to attendance and reopen this class after the app reconnects.',
+          ),
+          action: TextButton.icon(
+            onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{
+                  'cta': 'attendance_roster_back_missing_service',
+                  'surface': 'attendance_roster_missing_service_state',
+                },
+              );
+              Navigator.of(context).maybePop();
+            },
+            icon: const Icon(Icons.arrow_back_rounded),
+            label: Text(_tAttendance(context, 'Back to attendance')),
+          ),
+        ),
       );
     }
 

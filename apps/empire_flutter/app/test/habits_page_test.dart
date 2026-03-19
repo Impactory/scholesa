@@ -36,7 +36,10 @@ Widget _buildHarness({required FirestoreService firestoreService, required Habit
       ChangeNotifierProvider<HabitService>.value(value: habitService),
     ],
     child: MaterialApp(
-      theme: ThemeData(useMaterial3: true),
+      theme: ThemeData(
+        useMaterial3: true,
+        splashFactory: NoSplash.splashFactory,
+      ),
       localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
@@ -126,5 +129,49 @@ void main() {
     final QuerySnapshot<Map<String, dynamic>> logs = await firestore.collection('habitLogs').get();
     expect(logs.docs.length, 1);
     expect(logs.docs.first.data()['habitId'], 'habit-1');
+  });
+
+  testWidgets('habits AI fallback offers degraded-mode guidance',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedHabit(firestore);
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final HabitService habitService = HabitService(
+      firestoreService: firestoreService,
+      learnerId: 'learner-1',
+    );
+
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
+    await tester.pumpWidget(
+      _buildHarness(
+        firestoreService: firestoreService,
+        habitService: habitService,
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Read for 10 minutes'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Reflect with AI'));
+    await tester.tap(find.byIcon(Icons.expand_more).last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('AI Coach is temporarily unavailable'), findsOneWidget);
+    expect(
+      find.text('Keep your streak moving while AI reconnects.'),
+      findsOneWidget,
+    );
+    expect(find.text('Continue this habit'), findsOneWidget);
+
+    await tester.tap(find.text('Continue this habit'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('AI Coach is temporarily unavailable'), findsNothing);
+    expect(find.text('Get coaching on your progress'), findsOneWidget);
   });
 }

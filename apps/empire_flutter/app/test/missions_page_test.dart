@@ -155,4 +155,53 @@ void main() {
     expect(find.text('Show Your Understanding'), findsOneWidget);
     expect(find.text('Submit Evidence'), findsOneWidget);
   });
+
+  testWidgets('missions AI fallback offers degraded-mode guidance',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedMissionAndGate(firestore);
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final MissionService missionService = MissionService(
+      firestoreService: firestoreService,
+      learnerId: 'learner-1',
+    );
+
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
+    await tester.pumpWidget(
+      _buildHarness(
+        firestoreService: firestoreService,
+        missionService: missionService,
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('In Progress'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Mission with verification gate').first);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Get AI Help'));
+    await tester.tap(find.byIcon(Icons.expand_more).last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('AI Coach is temporarily unavailable'), findsOneWidget);
+    expect(
+      find.text('Keep working on this mission while AI reconnects.'),
+      findsOneWidget,
+    );
+    expect(find.text('Continue this mission'), findsOneWidget);
+
+    await tester.tap(find.text('Continue this mission'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('AI Coach is temporarily unavailable'), findsNothing);
+    expect(
+      find.text('Ask for hints, explanations, or debugging help'),
+      findsOneWidget,
+    );
+  });
 }

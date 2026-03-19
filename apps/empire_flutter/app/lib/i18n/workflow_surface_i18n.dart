@@ -19,11 +19,17 @@ class WorkflowSurfaceI18n {
   static const Map<String, String> _zhCn = <String, String>{
     'Take Attendance': '记录出勤',
     'Attendance service not available': '出勤服务不可用',
+    'Attendance is temporarily unavailable': '出勤功能暂时不可用',
     'No classes today': '今天没有课程',
     'Refresh': '刷新',
     'students': '学生',
     'Class Roster': '班级名单',
     'Service not available': '服务不可用',
+    'Reopen attendance from your dashboard or refresh after the app reconnects.':
+        '请从仪表板重新打开出勤页面，或在应用重新连接后刷新。',
+    'Return to attendance and reopen this class after the app reconnects.':
+        '请返回出勤页面，并在应用重新连接后重新打开该课程。',
+    'Back to attendance': '返回出勤',
     'No roster found': '未找到名单',
     'All Present': '全部到场',
     'All Absent': '全部缺席',
@@ -118,6 +124,17 @@ class WorkflowSurfaceI18n {
     'No misconception alerts yet for this session.': '本节课暂时没有误区提醒。',
     'Cold-call queued': '点名提问已加入队列',
     'Quick poll saved to live mode': '快速投票题目已保存到课堂模式',
+    'AI Coach is temporarily unavailable': 'AI 教练暂时不可用',
+    'Keep working on this mission while AI reconnects.':
+        '在 AI 重新连接期间，请继续完成这个任务。',
+    'Try the next step below or reopen AI Coach in a moment.':
+        '请先继续下面的下一步，或稍后重新打开 AI 教练。',
+    'Continue this mission': '继续这个任务',
+    'Keep your streak moving while AI reconnects.':
+        '在 AI 重新连接期间，继续保持你的习惯连胜。',
+    'Log your next habit check-in and reopen reflection in a moment.':
+        '先记录下一次习惯打卡，稍后再重新打开 AI 反思。',
+    'Continue this habit': '继续这个习惯',
     'Exit ticket saved to live mode': '退出票题目已保存到课堂模式',
     'Live session mode saved': '实时课堂模式已保存',
     'Save Live Mode': '保存课堂模式',
@@ -656,11 +673,17 @@ class WorkflowSurfaceI18n {
   static const Map<String, String> _zhTw = <String, String>{
     'Take Attendance': '記錄出勤',
     'Attendance service not available': '出勤服務不可用',
+    'Attendance is temporarily unavailable': '出勤功能暫時不可用',
     'No classes today': '今天沒有課程',
     'Refresh': '重新整理',
     'students': '學生',
     'Class Roster': '班級名單',
     'Service not available': '服務不可用',
+    'Reopen attendance from your dashboard or refresh after the app reconnects.':
+        '請從儀表板重新開啟出勤頁面，或在應用重新連線後重新整理。',
+    'Return to attendance and reopen this class after the app reconnects.':
+        '請返回出勤頁面，並在應用重新連線後重新開啟該課程。',
+    'Back to attendance': '返回出勤',
     'No roster found': '找不到名單',
     'All Present': '全部到場',
     'All Absent': '全部缺席',
@@ -782,6 +805,17 @@ class WorkflowSurfaceI18n {
     'No misconception alerts yet for this session.': '本節課暫時沒有迷思提醒。',
     'Cold-call queued': '點名提問已加入隊列',
     'Quick poll saved to live mode': '快速投票題目已儲存到課堂模式',
+    'AI Coach is temporarily unavailable': 'AI 教練暫時不可用',
+    'Keep working on this mission while AI reconnects.':
+        '在 AI 重新連線期間，請繼續完成這個任務。',
+    'Try the next step below or reopen AI Coach in a moment.':
+        '請先繼續下面的下一步，或稍後重新開啟 AI 教練。',
+    'Continue this mission': '繼續這個任務',
+    'Keep your streak moving while AI reconnects.':
+        '在 AI 重新連線期間，繼續維持你的習慣連勝。',
+    'Log your next habit check-in and reopen reflection in a moment.':
+        '先記錄下一次習慣打卡，稍後再重新開啟 AI 反思。',
+    'Continue this habit': '繼續這個習慣',
     'Exit ticket saved to live mode': '退出票題目已儲存到課堂模式',
     'Live session mode saved': '即時課堂模式已儲存',
     'Save Live Mode': '儲存課堂模式',

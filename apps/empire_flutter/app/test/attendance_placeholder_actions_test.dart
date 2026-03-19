@@ -86,6 +86,54 @@ AppState _buildAppState() {
 }
 
 void main() {
+  testWidgets('attendance page shows a recoverable missing-service state',
+      (WidgetTester tester) async {
+    final _MockSyncCoordinator syncCoordinator = _MockSyncCoordinator();
+    when(() => syncCoordinator.isOnline).thenReturn(true);
+    when(() => syncCoordinator.pendingCount).thenReturn(0);
+    when(() => syncCoordinator.isSyncing).thenReturn(false);
+    when(() => syncCoordinator.retryFailed()).thenAnswer((_) async {});
+    final AppState appState = _buildAppState();
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: <SingleChildWidget>[
+          ChangeNotifierProvider<AppState>.value(value: appState),
+          ChangeNotifierProvider<SyncCoordinator>.value(value: syncCoordinator),
+        ],
+        child: MaterialApp(
+          theme: ThemeData(
+            useMaterial3: true,
+            splashFactory: NoSplash.splashFactory,
+          ),
+          locale: const Locale('en'),
+          supportedLocales: const <Locale>[
+            Locale('en'),
+            Locale('zh', 'CN'),
+            Locale('zh', 'TW'),
+          ],
+          localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: const AttendancePage(),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Attendance is temporarily unavailable'), findsOneWidget);
+    expect(
+      find.text(
+        'Reopen attendance from your dashboard or refresh after the app reconnects.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Refresh'), findsOneWidget);
+  });
+
   testWidgets('attendance roster localizes unavailable learner identities',
       (WidgetTester tester) async {
     final _FakeAttendanceService attendanceService = _FakeAttendanceService(
