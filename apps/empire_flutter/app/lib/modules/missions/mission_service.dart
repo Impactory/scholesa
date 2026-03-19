@@ -55,6 +55,8 @@ class MissionProofBundle {
     this.explainItBack,
     this.oralCheckResponse,
     this.miniRebuildPlan,
+    this.aiAssistanceUsed,
+    this.aiAssistanceDetails,
     this.versionHistory = const <MissionProofCheckpoint>[],
     this.createdAt,
     this.updatedAt,
@@ -67,6 +69,8 @@ class MissionProofBundle {
   final String? explainItBack;
   final String? oralCheckResponse;
   final String? miniRebuildPlan;
+  final bool? aiAssistanceUsed;
+  final String? aiAssistanceDetails;
   final List<MissionProofCheckpoint> versionHistory;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -91,6 +95,8 @@ class MissionProofBundle {
       explainItBack: data['explainItBack'] as String?,
       oralCheckResponse: data['oralCheckResponse'] as String?,
       miniRebuildPlan: data['miniRebuildPlan'] as String?,
+        aiAssistanceUsed: data['aiAssistanceUsed'] as bool?,
+        aiAssistanceDetails: data['aiAssistanceDetails'] as String?,
       versionHistory: rawHistory
           .whereType<Map<dynamic, dynamic>>()
           .map((Map<dynamic, dynamic> entry) =>
@@ -325,6 +331,8 @@ class MissionService extends ChangeNotifier {
     String? explainItBack,
     String? oralCheckResponse,
     String? miniRebuildPlan,
+    bool? aiAssistanceUsed,
+    String? aiAssistanceDetails,
   }) async {
     final MissionProofBundle? existing = await loadProofBundle(missionId);
     final String? siteId =
@@ -337,6 +345,14 @@ class MissionService extends ChangeNotifier {
         oralCheckResponse?.trim() ?? existing?.oralCheckResponse ?? '';
     final String rebuild =
         miniRebuildPlan?.trim() ?? existing?.miniRebuildPlan ?? '';
+    final bool? resolvedAiAssistanceUsed =
+      aiAssistanceUsed ?? existing?.aiAssistanceUsed;
+    final String? resolvedAiAssistanceDetails =
+      aiAssistanceDetails != null
+        ? (aiAssistanceDetails.trim().isEmpty
+          ? null
+          : aiAssistanceDetails.trim())
+        : existing?.aiAssistanceDetails;
     final List<Map<String, dynamic>> versionHistory = existing == null
         ? <Map<String, dynamic>>[]
         : existing.versionHistory
@@ -351,6 +367,10 @@ class MissionService extends ChangeNotifier {
         'explainItBack': explain,
         'oralCheckResponse': oral,
         'miniRebuildPlan': rebuild,
+        if (resolvedAiAssistanceUsed != null)
+          'aiAssistanceUsed': resolvedAiAssistanceUsed,
+        if (resolvedAiAssistanceDetails != null)
+          'aiAssistanceDetails': resolvedAiAssistanceDetails,
         if (existing != null) 'versionHistory': versionHistory,
         'updatedAt': FieldValue.serverTimestamp(),
         'createdAt': existing == null
@@ -372,6 +392,10 @@ class MissionService extends ChangeNotifier {
         'explainItBack': explain,
         'oralCheckResponse': oral,
         'miniRebuildPlan': rebuild,
+        if (resolvedAiAssistanceUsed != null)
+          'aiAssistanceUsed': resolvedAiAssistanceUsed,
+        if (resolvedAiAssistanceDetails != null)
+          'aiAssistanceDetails': resolvedAiAssistanceDetails,
         'versionHistory': versionHistory,
         'createdAtClient': DateTime.now().millisecondsSinceEpoch,
       },
@@ -385,6 +409,8 @@ class MissionService extends ChangeNotifier {
       explainItBack: explain,
       oralCheckResponse: oral,
       miniRebuildPlan: rebuild,
+        aiAssistanceUsed: resolvedAiAssistanceUsed,
+        aiAssistanceDetails: resolvedAiAssistanceDetails,
       versionHistory:
           existing?.versionHistory ?? const <MissionProofCheckpoint>[],
       createdAt: existing?.createdAt ?? DateTime.now(),
@@ -425,6 +451,10 @@ class MissionService extends ChangeNotifier {
       'explainItBack': existing?.explainItBack ?? '',
       'oralCheckResponse': existing?.oralCheckResponse ?? '',
       'miniRebuildPlan': existing?.miniRebuildPlan ?? '',
+      if (existing?.aiAssistanceUsed != null)
+        'aiAssistanceUsed': existing!.aiAssistanceUsed,
+      if (existing?.aiAssistanceDetails?.trim().isNotEmpty == true)
+        'aiAssistanceDetails': existing!.aiAssistanceDetails!.trim(),
       'versionHistory': versionHistory
           .map((MissionProofCheckpoint entry) => entry.toMap())
           .toList(),
@@ -969,6 +999,10 @@ class MissionService extends ChangeNotifier {
                   proofBundle.oralCheckResponse?.trim().isNotEmpty ?? false,
               'hasMiniRebuild':
                   proofBundle.miniRebuildPlan?.trim().isNotEmpty ?? false,
+              'hasLearnerAiDisclosure': proofBundle.aiAssistanceUsed != null,
+              'aiAssistanceUsed': proofBundle.aiAssistanceUsed == true,
+              'hasAiAssistanceDetails':
+                proofBundle.aiAssistanceDetails?.trim().isNotEmpty ?? false,
             },
         };
 

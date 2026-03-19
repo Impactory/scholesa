@@ -767,12 +767,14 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
       TextEditingController();
   final TextEditingController _oralCheckController = TextEditingController();
   final TextEditingController _miniRebuildController = TextEditingController();
+    final TextEditingController _aiDisclosureController = TextEditingController();
   final TextEditingController _checkpointSummaryController =
       TextEditingController();
   final TextEditingController _checkpointArtifactController =
       TextEditingController();
   List<MissionProofCheckpoint> _versionHistory =
       const <MissionProofCheckpoint>[];
+    bool? _aiAssistanceUsed;
 
   bool get _keyboardOnlyEnabled =>
       _learnerProfile?.keyboardOnlyEnabled ?? false;
@@ -793,6 +795,7 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
     _explainItBackController.dispose();
     _oralCheckController.dispose();
     _miniRebuildController.dispose();
+    _aiDisclosureController.dispose();
     _checkpointSummaryController.dispose();
     _checkpointArtifactController.dispose();
     super.dispose();
@@ -840,6 +843,9 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
     return _explainItBackController.text.trim().isNotEmpty &&
         _oralCheckController.text.trim().isNotEmpty &&
         _miniRebuildController.text.trim().isNotEmpty &&
+        _aiAssistanceUsed != null &&
+        (_aiAssistanceUsed != true ||
+            _aiDisclosureController.text.trim().isNotEmpty) &&
         _versionHistory.isNotEmpty;
   }
 
@@ -854,6 +860,8 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
       _explainItBackController.text = bundle.explainItBack ?? '';
       _oralCheckController.text = bundle.oralCheckResponse ?? '';
       _miniRebuildController.text = bundle.miniRebuildPlan ?? '';
+      _aiAssistanceUsed = bundle.aiAssistanceUsed;
+      _aiDisclosureController.text = bundle.aiAssistanceDetails ?? '';
       _versionHistory = bundle.versionHistory;
     });
   }
@@ -867,6 +875,8 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
       explainItBack: _explainItBackController.text,
       oralCheckResponse: _oralCheckController.text,
       miniRebuildPlan: _miniRebuildController.text,
+      aiAssistanceUsed: _aiAssistanceUsed,
+      aiAssistanceDetails: _aiDisclosureController.text,
     );
     if (!mounted) {
       return;
@@ -957,10 +967,72 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
           Text(
             _tMissions(
               context,
-              'Capture an explain-it-back, version history, oral check, and mini-rebuild before review.',
+              'Capture an explain-it-back, version history, oral check, mini-rebuild, and AI-use disclosure before review.',
             ),
             style: TextStyle(color: context.schTextSecondary, height: 1.4),
           ),
+          const SizedBox(height: 16),
+          Text(
+            _tMissions(context, 'AI Use Disclosure'),
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[800],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _tMissions(
+              context,
+              'Declare whether AI supported this mission so your review and portfolio stay trustworthy.',
+            ),
+            style: TextStyle(color: context.schTextSecondary, height: 1.4),
+          ),
+          const SizedBox(height: 8),
+          RadioListTile<bool>(
+            value: false,
+            groupValue: _aiAssistanceUsed,
+            onChanged: (bool? value) {
+              setState(() {
+                _aiAssistanceUsed = value;
+                _aiDisclosureController.clear();
+              });
+            },
+            title: Text(_tMissions(context, 'No AI support used for this mission')),
+            contentPadding: EdgeInsets.zero,
+          ),
+          RadioListTile<bool>(
+            value: true,
+            groupValue: _aiAssistanceUsed,
+            onChanged: (bool? value) {
+              setState(() {
+                _aiAssistanceUsed = value;
+              });
+            },
+            title: Text(_tMissions(context, 'AI supported part of this mission')),
+            subtitle: Text(
+              _tMissions(
+                context,
+                'Describe what AI helped with and what remained your own reasoning.',
+              ),
+            ),
+            contentPadding: EdgeInsets.zero,
+          ),
+          if (_aiAssistanceUsed == true) ...<Widget>[
+            const SizedBox(height: 8),
+            TextField(
+              controller: _aiDisclosureController,
+              maxLines: 3,
+              onChanged: (_) => setState(() {}),
+              decoration: InputDecoration(
+                labelText: _tMissions(context, 'AI support details'),
+                helperText: _tMissions(
+                  context,
+                  'Example: AI helped me brainstorm, but I wrote the final explanation and tested the solution myself.',
+                ),
+                border: const OutlineInputBorder(),
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
           TextField(
             controller: _explainItBackController,
@@ -1080,7 +1152,7 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
             Text(
               _tMissions(
                 context,
-                'Complete all four proof items before submitting this mission.',
+                'Complete the proof bundle, version history, and AI-use disclosure before submitting this mission.',
               ),
               style: TextStyle(
                 color: ScholesaColors.warning,
