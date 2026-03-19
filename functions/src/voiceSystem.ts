@@ -166,10 +166,10 @@ interface VoiceLearningSnapshot {
   profileId: string;
   actorId: string;
   actorRole: 'learner' | 'educator' | 'admin';
-  lastIntent: string;
-  lastResponseMode: string;
+  lastIntent: string | null;
+  lastResponseMode: string | null;
   lastNeedsScaffold: boolean;
-  lastEmotionalState: string;
+  lastEmotionalState: string | null;
   lastUnderstandingConfidence?: number;
   needsScaffoldCount: number;
   frustrationSignalCount: number;
@@ -2423,10 +2423,10 @@ async function loadVoiceLearningSnapshot(
     profileId,
     actorId: bosContext.actorId,
     actorRole: bosContext.actorRole,
-    lastIntent: normalizeString(learning.lastIntent) ?? 'general_support',
-    lastResponseMode: normalizeString(learning.lastResponseMode) ?? 'hint',
+    lastIntent: normalizeString(learning.lastIntent) ?? null,
+    lastResponseMode: normalizeString(learning.lastResponseMode) ?? null,
     lastNeedsScaffold: Boolean(learning.lastNeedsScaffold),
-    lastEmotionalState: normalizeString(learning.lastEmotionalState) ?? 'neutral',
+    lastEmotionalState: normalizeString(learning.lastEmotionalState) ?? null,
     lastUnderstandingConfidence:
       firstNumber(learning.lastUnderstandingConfidence) === undefined
         ? undefined

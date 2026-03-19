@@ -469,10 +469,10 @@ interface VoiceUnderstandingObservation {
 
 interface BosLearningSnapshot {
   profileId: string;
-  lastIntent: string;
-  lastResponseMode: string;
+  lastIntent: string | null;
+  lastResponseMode: string | null;
   lastNeedsScaffold: boolean;
-  lastEmotionalState: string;
+  lastEmotionalState: string | null;
   lastUnderstandingConfidence?: number;
   needsScaffoldCount: number;
   frustrationSignalCount: number;
@@ -631,10 +631,10 @@ async function loadBosLearningSnapshot(siteId: string, learnerId: string): Promi
   const metrics = asRecord(data.metrics) ?? {};
   return {
     profileId,
-    lastIntent: normalizeString(learning.lastIntent) ?? 'general_support',
-    lastResponseMode: normalizeString(learning.lastResponseMode) ?? 'hint',
+    lastIntent: normalizeString(learning.lastIntent) ?? null,
+    lastResponseMode: normalizeString(learning.lastResponseMode) ?? null,
     lastNeedsScaffold: Boolean(learning.lastNeedsScaffold),
-    lastEmotionalState: normalizeString(learning.lastEmotionalState) ?? 'neutral',
+    lastEmotionalState: normalizeString(learning.lastEmotionalState) ?? null,
     lastUnderstandingConfidence:
       firstNumber(learning.lastUnderstandingConfidence) === undefined
         ? undefined
