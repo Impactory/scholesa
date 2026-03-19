@@ -115,7 +115,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
+    expect(find.bySemanticsLabel('帳戶選單'), findsOneWidget);
     expect(find.text('合作夥伴整合'), findsOneWidget);
     expect(find.text('尚未連接合作夥伴整合'), findsOneWidget);
     expect(
