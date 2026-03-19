@@ -215,6 +215,22 @@ void main() {
         },
       );
 
+      await firestore.collection('evidenceRecords').doc('evidence-1').set(
+        <String, dynamic>{
+          'learnerId': 'learner-1',
+          'siteId': 'site-1',
+          'capabilityId': 'cap-prototype-evidence',
+          'capabilityLabel': 'Prototype evidence',
+          'capabilityPillarCode': 'future_skills',
+          'observationNote': 'Learner connected prototype choices to observed tradeoffs.',
+          'artifactUrls': const <String>['https://example.com/prototype.png'],
+          'nextVerificationPrompt': 'Explain why this prototype path best matched the evidence.',
+          'portfolioCandidate': true,
+          'growthStatus': 'captured',
+          'observedAt': Timestamp.now(),
+        },
+      );
+
       final bool reviewed = await service.submitReview(
         submissionId: 'submission-1',
         rating: 4,
@@ -230,12 +246,18 @@ void main() {
           <String, dynamic>{
             'criterionId': 'evidence',
             'label': 'Evidence',
+            'capabilityId': 'cap-prototype-evidence',
+            'capabilityTitle': 'Prototype evidence',
+            'pillarCode': 'future_skills',
             'score': 4,
             'maxScore': 4,
           },
           <String, dynamic>{
             'criterionId': 'reflection',
             'label': 'Reflection',
+            'capabilityId': 'cap-prototype-evidence',
+            'capabilityTitle': 'Prototype evidence',
+            'pillarCode': 'future_skills',
             'score': 3,
             'maxScore': 4,
           },
