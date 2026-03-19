@@ -393,6 +393,27 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
                       ),
                     ],
                   ),
+                  if (item.evidenceLinked ||
+                      (item.verificationStatus?.trim().isNotEmpty ?? false))
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: <Widget>[
+                          if (item.evidenceLinked)
+                            _buildMetaChip(
+                              _t('Evidence linked'),
+                              _getPillarColor(item.pillar),
+                            ),
+                          if (item.verificationStatus?.trim().isNotEmpty ?? false)
+                            _buildMetaChip(
+                              _titleCaseBand(item.verificationStatus!),
+                              Colors.teal,
+                            ),
+                        ],
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -409,6 +430,24 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
       decoration: BoxDecoration(
         color: _getPillarColor(pillar),
         shape: BoxShape.circle,
+      ),
+    );
+  }
+
+  Widget _buildMetaChip(String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
       ),
     );
   }
@@ -517,6 +556,26 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
             ),
             const SizedBox(height: 16),
             Text(item.description, style: const TextStyle(fontSize: 15)),
+            if (item.evidenceLinked ||
+                (item.verificationStatus?.trim().isNotEmpty ?? false)) ...<Widget>[
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: <Widget>[
+                  if (item.evidenceLinked)
+                    _buildMetaChip(
+                      _t('Evidence linked'),
+                      _getPillarColor(item.pillar),
+                    ),
+                  if (item.verificationStatus?.trim().isNotEmpty ?? false)
+                    _buildMetaChip(
+                      _titleCaseBand(item.verificationStatus!),
+                      Colors.teal,
+                    ),
+                ],
+              ),
+            ],
             const SizedBox(height: 24),
             LayoutBuilder(
               builder: (BuildContext context, BoxConstraints constraints) {
@@ -765,6 +824,10 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
         return 'Strong';
       case 'developing':
         return 'Developing';
+      case 'reviewed':
+        return 'Reviewed';
+      case 'verified':
+        return 'Verified';
       default:
         return 'Emerging';
     }
