@@ -274,6 +274,12 @@ void main() {
     await tester.tap(find.text('Eco Build Sprint').first);
     await tester.pumpAndSettle();
 
+    await tester.scrollUntilVisible(
+      find.text('Edit'),
+      250,
+      scrollable: find.byType(Scrollable).last,
+    );
+
     await tester.tap(find.text('Edit'));
     await tester.pumpAndSettle();
 
@@ -339,6 +345,12 @@ void main() {
     await tester.tap(find.text('Eco Build Sprint').first);
     await tester.pumpAndSettle();
 
+    await tester.scrollUntilVisible(
+      find.text('Archive').first,
+      250,
+      scrollable: find.byType(Scrollable).last,
+    );
+
     await tester.tap(find.text('Archive').first);
     await tester.pumpAndSettle();
 
@@ -389,6 +401,12 @@ void main() {
 
     await tester.tap(find.text('Eco Build Sprint').first);
     await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Archive').first,
+      250,
+      scrollable: find.byType(Scrollable).last,
+    );
 
     await tester.tap(find.text('Archive').first);
     await tester.pumpAndSettle();
