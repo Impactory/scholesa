@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+SOURCE_KEY_PATH="${1:-}"
+LOCAL_SECRET_DIR="$REPO_ROOT/.secrets/google_play"
+LOCAL_ENV_FILE="$REPO_ROOT/.env.google_play.local"
+DEFAULT_ANDROID_APP_IDENTIFIER="com.scholesa.app"
+DEFAULT_PLAY_TRACK="internal"
+DEFAULT_FLUTTER_BIN="$REPO_ROOT/apps/empire_flutter/app/.fvm/flutter_sdk/bin/flutter"
+
+fail() {
+  echo "[google-play] $*" >&2
+  exit 1
+}
+
+[[ -n "$SOURCE_KEY_PATH" ]] || fail "Usage: ./scripts/setup_google_play_key.sh /absolute/path/to/google-play-service-account.json"
+[[ -f "$SOURCE_KEY_PATH" ]] || fail "File not found: $SOURCE_KEY_PATH"
+
+mkdir -p "$LOCAL_SECRET_DIR"
+DEST_KEY_PATH="$LOCAL_SECRET_DIR/$(basename "$SOURCE_KEY_PATH")"
+cp "$SOURCE_KEY_PATH" "$DEST_KEY_PATH"
+chmod 600 "$DEST_KEY_PATH"
+
+cat > "$LOCAL_ENV_FILE" <<EOF
+GOOGLE_PLAY_JSON_KEY_PATH=$DEST_KEY_PATH
+ANDROID_APP_IDENTIFIER=$DEFAULT_ANDROID_APP_IDENTIFIER
+PLAY_TRACK=$DEFAULT_PLAY_TRACK
+FLUTTER_BIN=$DEFAULT_FLUTTER_BIN
+EOF
+
+cat <<EOF
+[google-play] Installed key at: $DEST_KEY_PATH
+[google-play] Wrote local env file: $LOCAL_ENV_FILE
+[google-play] Ready to run ./scripts/android_release_local.sh verify_play_key
+EOF

@@ -1,0 +1,87 @@
+name: Android Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      upload_to_internal:
+        description: Upload the signed Android App Bundle to Google Play internal testing
+        required: true
+        default: false
+        type: boolean
+
+concurrency:
+  group: android-release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  ANDROID_APP_IDENTIFIER: com.scholesa.app
+  PLAY_TRACK: internal
+  GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64 }}
+  ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+  ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+  ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+  ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+
+jobs:
+  verify-google-play:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate Google Play secrets
+        run: ./scripts/android_release_ci.sh validate-play-store
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+          working-directory: apps/empire_flutter/app/android
+
+      - name: Materialize Google Play service account key
+        run: ./scripts/android_release_ci.sh materialize-play-store-key "$RUNNER_TEMP"
+
+      - name: Verify Google Play service account key
+        run: |
+          cd apps/empire_flutter/app/android
+          bundle exec fastlane android verify_play_key
+
+  android-internal:
+    needs: verify-google-play
+    if: ${{ inputs.upload_to_internal }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate Android release secrets
+        run: ./scripts/android_release_ci.sh validate-android-release
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+          working-directory: apps/empire_flutter/app/android
+
+      - name: Materialize Google Play service account key
+        run: ./scripts/android_release_ci.sh materialize-play-store-key "$RUNNER_TEMP"
+
+      - name: Materialize Android signing
+        run: ./scripts/android_release_ci.sh materialize-android-signing "$RUNNER_TEMP"
+
+      - name: Upload to Google Play internal testing
+        run: |
+          cd apps/empire_flutter/app/android
+          bundle exec fastlane android upload_internal

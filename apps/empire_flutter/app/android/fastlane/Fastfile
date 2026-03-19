@@ -1,0 +1,66 @@
+default_platform(:android)
+opt_out_usage
+
+def require_env_values!(keys)
+  missing = keys.select { |key| ENV[key].to_s.strip.empty? }
+  return if missing.empty?
+
+  UI.user_error!("Missing required environment values: #{missing.join(', ')}")
+end
+
+def app_root
+  File.expand_path('..', __dir__)
+end
+
+def flutter_binary
+  configured = ENV['FLUTTER_BIN'].to_s.strip
+  return configured unless configured.empty?
+
+  fvm_binary = File.join(app_root, '.fvm', 'flutter_sdk', 'bin', 'flutter')
+  return fvm_binary if File.exist?(fvm_binary)
+
+  'flutter'
+end
+
+def google_play_json_key_path
+  json_key_path = ENV['GOOGLE_PLAY_JSON_KEY_PATH'].to_s.strip
+  UI.user_error!('Set GOOGLE_PLAY_JSON_KEY_PATH before running Fastlane.') if json_key_path.empty?
+  UI.user_error!("Google Play service account key file not found: #{json_key_path}") unless File.exist?(json_key_path)
+  json_key_path
+end
+
+platform :android do
+  desc 'Validate local or CI Google Play service account configuration'
+  lane :verify_play_key do
+    require_env_values!(%w[ANDROID_APP_IDENTIFIER])
+    validate_play_store_json_key(
+      json_key: google_play_json_key_path,
+      package_name: ENV['ANDROID_APP_IDENTIFIER']
+    )
+    UI.success("Loaded Google Play service account key for #{ENV['ANDROID_APP_IDENTIFIER']}")
+  end
+
+  desc 'Build a signed Android App Bundle and upload it to Google Play internal testing'
+  lane :upload_internal do
+    require_env_values!(%w[ANDROID_APP_IDENTIFIER])
+
+    Dir.chdir(app_root) do
+      sh("#{flutter_binary} pub get")
+      sh("#{flutter_binary} build appbundle --release")
+    end
+
+    aab_path = File.join(app_root, 'build', 'app', 'outputs', 'bundle', 'release', 'app-release.aab')
+    UI.user_error!("Expected Android App Bundle not found: #{aab_path}") unless File.exist?(aab_path)
+
+    upload_to_play_store(
+      json_key: google_play_json_key_path,
+      package_name: ENV['ANDROID_APP_IDENTIFIER'],
+      aab: aab_path,
+      track: ENV['PLAY_TRACK'].to_s.strip.empty? ? 'internal' : ENV['PLAY_TRACK'],
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+      release_status: 'completed'
+    )
+  end
+end

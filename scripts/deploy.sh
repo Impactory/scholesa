@@ -13,7 +13,7 @@
 #   ./scripts/deploy.sh flutter-web  # Build Flutter web & deploy to Flutter Cloud Run
 #   ./scripts/deploy.sh flutter-ios  # Build Flutter iOS (release)
 #   ./scripts/deploy.sh flutter-macos # Build Flutter macOS app (release)
-#   ./scripts/deploy.sh flutter-android # Build Flutter Android (release APK)
+#   ./scripts/deploy.sh flutter-android # Build Flutter Android release bundle + APK
 # ──────────────────────────────────────────────────────────────
 set -euo pipefail
 
@@ -426,6 +426,10 @@ deploy_flutter_macos() {
 
 deploy_flutter_android() {
   ensure_flutter_gate
+  log "Building Flutter Android App Bundle (release)..."
+  (cd "$FLUTTER_APP" && flutter_cmd build appbundle --release)
+  log "Android App Bundle: $FLUTTER_APP/build/app/outputs/bundle/release/app-release.aab"
+
   log "Building Flutter Android APK (release)..."
   (cd "$FLUTTER_APP" && flutter_cmd build apk --release)
   log "Android APK: $FLUTTER_APP/build/app/outputs/flutter-apk/app-release.apk"
