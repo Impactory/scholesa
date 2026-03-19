@@ -3657,17 +3657,51 @@ export const resetUserPassword = onCall(async (request: CallableRequest) => {
 export const listAuditLogs = onCall(async (request: CallableRequest) => {
   await requireHq(request.auth?.uid);
   const limit = typeof request.data?.limit === 'number' && request.data.limit > 0 && request.data.limit <= 100 ? request.data.limit : 50;
-  let query: FirebaseFirestore.Query = admin.firestore().collection(AUDIT_COLLECTION).orderBy('createdAt', 'desc').limit(limit);
+  const entityId = typeof request.data?.entityId === 'string' ? request.data.entityId.trim() : '';
+  const entityType = typeof request.data?.entityType === 'string' ? request.data.entityType.trim() : '';
+  const action = typeof request.data?.action === 'string' ? request.data.action.trim() : '';
+  const actions = Array.isArray(request.data?.actions)
+    ? request.data.actions
+        .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+        .map((value) => value.trim())
+        .slice(0, 10)
+    : [];
+  const actionFilters = action ? [action] : actions;
 
-  if (typeof request.data?.entityId === 'string') {
-    query = query.where('entityId', '==', request.data.entityId);
-  }
-  if (typeof request.data?.entityType === 'string') {
-    query = query.where('entityType', '==', request.data.entityType);
+  const applyFilters = (baseQuery: FirebaseFirestore.Query): FirebaseFirestore.Query => {
+    let nextQuery = baseQuery;
+    if (entityId) {
+      nextQuery = nextQuery.where('entityId', '==', entityId);
+    }
+    if (entityType) {
+      nextQuery = nextQuery.where('entityType', '==', entityType);
+    }
+    if (actionFilters.length === 1) {
+      nextQuery = nextQuery.where('action', '==', actionFilters[0]);
+    } else if (actionFilters.length > 1) {
+      nextQuery = nextQuery.where('action', 'in', actionFilters);
+    }
+    return nextQuery;
+  };
+
+  const orderedQuery = admin.firestore().collection(AUDIT_COLLECTION).orderBy('createdAt', 'desc');
+  let logs: Array<Record<string, unknown>>;
+  try {
+    const snap = await applyFilters(orderedQuery).limit(limit).get();
+    logs = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  } catch {
+    const fallbackSnap = await orderedQuery.limit(Math.min(limit * 5, 500)).get();
+    logs = fallbackSnap.docs
+      .map((doc) => ({ id: doc.id, ...doc.data() }))
+      .filter((entry) => {
+        if (entityId && entry.entityId !== entityId) return false;
+        if (entityType && entry.entityType !== entityType) return false;
+        if (actionFilters.length > 0 && !actionFilters.includes(typeof entry.action === 'string' ? entry.action : '')) return false;
+        return true;
+      })
+      .slice(0, limit);
   }
 
-  const snap = await query.get();
-  const logs = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   return { logs };
 });
 

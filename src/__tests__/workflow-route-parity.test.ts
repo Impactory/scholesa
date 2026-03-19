@@ -729,7 +729,7 @@ describe('workflow route parity', () => {
         packs: [],
       },
     }) as CallableHandler);
-    setCallableHandler('listAuditLogs', jest.fn().mockResolvedValue({
+    const listAuditLogs = setCallableHandler('listAuditLogs', jest.fn().mockResolvedValue({
       data: {
         logs: [
           {
@@ -771,6 +771,14 @@ describe('workflow route parity', () => {
     }) as CallableHandler);
 
     const result = await loadWorkflowRecords(makeContext('/hq/analytics'));
+
+    expect(listAuditLogs).toHaveBeenCalledWith({
+      limit: 120,
+      actions: [
+        'telemetry_aggregate.backfilled',
+        'kpi_pack.voice_reliability_backfilled',
+      ],
+    });
 
     expect(result.records).toEqual(expect.arrayContaining([
       expect.objectContaining({

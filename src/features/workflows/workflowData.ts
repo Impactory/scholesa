@@ -1343,7 +1343,13 @@ async function loadAnalyticsBackfillAuditRecords(ctx: WorkflowContext): Promise<
   const auditLogRecords = await loadCallableRows({
     routePath: ctx.routePath,
     callableName: 'listAuditLogs',
-    args: { limit: 120 },
+    args: {
+      limit: 120,
+      actions: [
+        'telemetry_aggregate.backfilled',
+        'kpi_pack.voice_reliability_backfilled',
+      ],
+    },
     rowArrayField: 'logs',
     collectionName: 'auditLogs',
     titleKeys: ['action', 'entityType', 'id'],
