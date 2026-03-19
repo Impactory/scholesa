@@ -77,8 +77,8 @@ const Map<String, String> _settingsZhCn = <String, String>{
   'Light': '浅色',
   'Dark': '深色',
   'Select Language': '选择语言',
-  'Data export requests are not available in the app yet. Contact support with your site ID to request your data.':
-      '应用内暂不支持数据导出请求。请附上你的站点 ID 联系支持团队以申请数据副本。',
+    'Data export requests open your email app with your site ID and account details.':
+      '数据导出请求会打开你的邮件应用，并附上站点 ID 与账户详情。',
   'We could not open your email app right now. Contact support@scholesa.com with your site ID to request your data.':
       '目前无法打开你的邮件应用。请附上你的站点 ID 联系 support@scholesa.com 申请数据副本。',
   'Help Center': '帮助中心',
@@ -136,15 +136,14 @@ const Map<String, String> _settingsZhCn = <String, String>{
   'Support request submitted.': '支持请求已提交。',
   'Unable to submit support request right now.': '目前无法提交支持请求。',
   'Send': '发送',
-  'Feedback submission is not available in the app yet. Contact support if you need follow-up.':
-      '应用内暂不支持反馈提交。如需跟进，请联系支持团队。',
+    'Feedback sends through your email app so support can follow up with context.':
+      '反馈会通过你的邮件应用发送，以便支持团队结合上下文跟进。',
   'Feedback submitted.': '反馈已提交。',
   'Unable to submit feedback right now.': '目前无法提交反馈。',
   'Thanks for helping improve Scholesa.': '感谢你帮助改进 Scholesa。',
   'Please enter feedback before sending.': '发送前请输入反馈内容。',
   'Support requests are unavailable right now.': '目前暂时无法提交支持请求。',
-  'In-app rating is not available yet. Please rate Scholesa in your app store when the listing is live.':
-      '应用内暂不支持评分。待应用商店上架后，请在商店中评价 Scholesa。',
+  'Rate the app in your device app store.': '请在你的设备应用商店中为应用评分。',
   'We could not open the store rating page right now. Please try again later.':
       '目前无法打开商店评分页面。请稍后再试。',
   'Delete Account Confirmation': '删除账户确认',
@@ -213,8 +212,8 @@ const Map<String, String> _settingsZhTw = <String, String>{
   'Light': '淺色',
   'Dark': '深色',
   'Select Language': '選擇語言',
-  'Data export requests are not available in the app yet. Contact support with your site ID to request your data.':
-      'App 內暫不支援資料匯出請求。請附上你的站點 ID 聯絡支援團隊以申請資料副本。',
+    'Data export requests open your email app with your site ID and account details.':
+      '資料匯出請求會開啟你的郵件 App，並附上站點 ID 與帳戶詳情。',
   'We could not open your email app right now. Contact support@scholesa.com with your site ID to request your data.':
       '目前無法開啟你的郵件 App。請附上你的站點 ID 聯絡 support@scholesa.com 申請資料副本。',
   'Help Center': '說明中心',
@@ -272,15 +271,14 @@ const Map<String, String> _settingsZhTw = <String, String>{
   'Support request submitted.': '支援請求已提交。',
   'Unable to submit support request right now.': '目前無法提交支援請求。',
   'Send': '傳送',
-  'Feedback submission is not available in the app yet. Contact support if you need follow-up.':
-      'App 內暫不支援回饋提交。如需後續協助，請聯絡支援團隊。',
+    'Feedback sends through your email app so support can follow up with context.':
+      '回饋會透過你的郵件 App 傳送，讓支援團隊能結合情境跟進。',
   'Feedback submitted.': '回饋已提交。',
   'Unable to submit feedback right now.': '目前無法提交回饋。',
   'Thanks for helping improve Scholesa.': '感謝你協助改善 Scholesa。',
   'Please enter feedback before sending.': '傳送前請先輸入回饋內容。',
   'Support requests are unavailable right now.': '目前暫時無法提交支援請求。',
-  'In-app rating is not available yet. Please rate Scholesa in your app store when the listing is live.':
-      'App 內暫不支援評分。待應用商店上架後，請在商店中評價 Scholesa。',
+  'Rate the app in your device app store.': '請在你的裝置應用商店中為應用評分。',
   'We could not open the store rating page right now. Please try again later.':
       '目前無法打開商店評分頁面。請稍後再試。',
   'Delete Account Confirmation': '刪除帳戶確認',
