@@ -225,6 +225,7 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Feature Flags'), findsOneWidget);
     expect(find.text('No feature flags found'), findsOneWidget);
     expect(
@@ -252,6 +253,7 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(tester.widget<Switch>(find.byType(Switch)).value, isFalse);
 
     await tester.tap(find.byType(Switch));

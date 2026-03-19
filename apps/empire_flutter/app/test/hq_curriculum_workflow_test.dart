@@ -81,6 +81,8 @@ void main() {
       final AppState appState = _buildHqState();
       await _pumpPage(tester, firestore: firestore, appState: appState);
 
+      expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
+
       await _createDraftCurriculum(tester, 'Status Progression Curriculum');
 
       await tester.tap(find.text('Drafts'));

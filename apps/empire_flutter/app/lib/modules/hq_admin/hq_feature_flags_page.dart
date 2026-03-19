@@ -948,6 +948,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               );
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
+          const SessionMenuButton(
+            foregroundColor: Colors.white,
+          ),
                   content: Text(
                     _tHqFeatureFlags(
                       context,

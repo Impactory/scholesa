@@ -141,6 +141,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      expect(find.bySemanticsLabel('帳戶選單'), findsOneWidget);
       expect(find.text('課程管理'), findsOneWidget);
       expect(find.text('已發佈'), findsOneWidget);
       expect(find.text('新課程'), findsOneWidget);

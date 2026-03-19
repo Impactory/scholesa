@@ -161,6 +161,9 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
             onPressed: _showTrainingCyclesSheet,
             icon: const Icon(Icons.school_rounded),
           ),
+          const SessionMenuButton(
+            foregroundColor: Colors.white,
+          ),
         ],
         bottom: TabBar(
           controller: _tabController,
