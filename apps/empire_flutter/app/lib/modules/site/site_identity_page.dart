@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../auth/app_state.dart';
 import '../../i18n/site_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
+import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 String _tSiteIdentity(BuildContext context, String input) {

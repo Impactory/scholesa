@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
+import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 String _tHqIntegrations(BuildContext context, String input) {

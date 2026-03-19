@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../i18n/shared_role_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
+import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import 'partner_models.dart';
 import 'partner_service.dart';

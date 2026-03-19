@@ -5,6 +5,7 @@ import '../../auth/app_state.dart';
 import '../../i18n/site_surface_i18n.dart';
 import '../../modules/checkin/checkin_models.dart';
 import '../../services/telemetry_service.dart';
+import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import 'site_pickup_auth_service.dart';
 

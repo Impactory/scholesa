@@ -9,6 +9,7 @@ import '../../domain/repositories.dart';
 import '../../i18n/site_surface_i18n.dart';
 import '../../services/export_service.dart';
 import '../../services/telemetry_service.dart';
+import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 String _tSiteAudit(BuildContext context, String input) {

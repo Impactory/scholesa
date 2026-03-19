@@ -9,6 +9,7 @@ import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/analytics_service.dart';
 import '../../services/export_service.dart';
 import '../../services/telemetry_service.dart';
+import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 String _tHqExports(BuildContext context, String input) {

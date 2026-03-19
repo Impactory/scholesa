@@ -8,6 +8,7 @@ import '../../domain/repositories.dart';
 import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
+import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 String _tPartnerIntegrations(BuildContext context, String input) {
@@ -164,21 +165,15 @@ class _PartnerIntegrationsPageState extends State<PartnerIntegrationsPage> {
     final Color color = _statusColor(connection.status);
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      appBar: AppBar(
-        title: Text(_t('Partner Integrations')),
-        backgroundColor: ScholesaColors.partnerGradient.colors.first,
-        foregroundColor: Colors.white,
-        actions: const <Widget>[
-          SessionMenuButton(
-            foregroundColor: Colors.white,
-          ),
-        ],
-      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
+            Row(
+              children: <Widget>[
+                CircleAvatar(
+                  backgroundColor: color.withValues(alpha: 0.12),
                   child: Icon(Icons.hub_rounded, color: color),
                 ),
                 const SizedBox(width: 12),
@@ -252,6 +247,9 @@ class _PartnerIntegrationsPageState extends State<PartnerIntegrationsPage> {
               _loadConnections();
             },
             icon: const Icon(Icons.refresh_rounded),
+          ),
+          const SessionMenuButton(
+            foregroundColor: Colors.white,
           ),
         ],
       ),
