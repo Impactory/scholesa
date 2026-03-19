@@ -33,6 +33,8 @@ interface SiteMetrics {
   totalLearners: number;
   totalEducators: number;
   avgEngagement: number | null;
+  avgVoiceCaptureSuccess: number | null;
+  voiceEscalationsThisWeek: number;
   activeThisWeek: number;
   healthStatus: 'healthy' | 'warning' | 'critical' | 'unavailable';
   lastActivity: Date | null;
@@ -95,6 +97,9 @@ export function HQAnalyticsDashboard() {
           
           let totalEngagementScore = 0;
           let engagementCount = 0;
+          let totalVoiceCaptureSuccess = 0;
+          let voiceCaptureCount = 0;
+          let voiceEscalationsThisWeek = 0;
           let activeThisWeek = 0;
           let lastActivityDate: Date | null = null;
           
@@ -106,6 +111,16 @@ export function HQAnalyticsDashboard() {
               if (typeof data.engagementScore === 'number' && Number.isFinite(data.engagementScore)) {
                 totalEngagementScore += data.engagementScore;
                 engagementCount++;
+              }
+              const voiceMetrics = data.voiceMetrics && typeof data.voiceMetrics === 'object'
+                ? data.voiceMetrics as Record<string, unknown>
+                : null;
+              if (typeof voiceMetrics?.captureSuccessRate === 'number' && Number.isFinite(voiceMetrics.captureSuccessRate)) {
+                totalVoiceCaptureSuccess += voiceMetrics.captureSuccessRate;
+                voiceCaptureCount++;
+              }
+              if (typeof voiceMetrics?.escalatedCount === 'number' && Number.isFinite(voiceMetrics.escalatedCount)) {
+                voiceEscalationsThisWeek += voiceMetrics.escalatedCount;
               }
               if (typeof data.activeUsers === 'number' && Number.isFinite(data.activeUsers)) {
                 activeThisWeek = Math.max(activeThisWeek, data.activeUsers);
@@ -120,18 +135,31 @@ export function HQAnalyticsDashboard() {
           const avgEngagement = engagementCount > 0 
             ? Math.round(totalEngagementScore / engagementCount)
             : null;
+          const avgVoiceCaptureSuccess = voiceCaptureCount > 0
+            ? Math.round((totalVoiceCaptureSuccess / voiceCaptureCount) * 100)
+            : null;
           
           // Determine health status
           let healthStatus: 'healthy' | 'warning' | 'critical' | 'unavailable' = 'unavailable';
           const daysSinceActivity = lastActivityDate
             ? Math.floor((new Date().getTime() - lastActivityDate.getTime()) / 86400000)
             : null;
+          const voiceCaptureCritical = avgVoiceCaptureSuccess !== null && avgVoiceCaptureSuccess < 50;
+          const voiceCaptureWarning = avgVoiceCaptureSuccess !== null && avgVoiceCaptureSuccess < 80;
           
-          if (avgEngagement !== null && daysSinceActivity !== null && (avgEngagement < 30 || daysSinceActivity > 7)) {
+          if (
+            avgEngagement !== null &&
+            daysSinceActivity !== null &&
+            (avgEngagement < 30 || daysSinceActivity > 7 || voiceCaptureCritical)
+          ) {
             healthStatus = 'critical';
-          } else if (avgEngagement !== null && daysSinceActivity !== null && (avgEngagement < 50 || daysSinceActivity > 3)) {
+          } else if (
+            avgEngagement !== null &&
+            daysSinceActivity !== null &&
+            (avgEngagement < 50 || daysSinceActivity > 3 || voiceCaptureWarning)
+          ) {
             healthStatus = 'warning';
-          } else if (avgEngagement !== null && daysSinceActivity !== null) {
+          } else if ((avgEngagement !== null || avgVoiceCaptureSuccess !== null) && daysSinceActivity !== null) {
             healthStatus = 'healthy';
           }
           
@@ -141,6 +169,8 @@ export function HQAnalyticsDashboard() {
             totalLearners,
             totalEducators,
             avgEngagement,
+            avgVoiceCaptureSuccess,
+            voiceEscalationsThisWeek,
             activeThisWeek,
             healthStatus,
             lastActivity: lastActivityDate
@@ -179,12 +209,14 @@ export function HQAnalyticsDashboard() {
   
   // Export to CSV
   const exportToCSV = () => {
-    const headers = ['Site Name', 'Learners', 'Educators', 'Avg Engagement', 'Active This Week', 'Health Status', 'Last Activity'];
+    const headers = ['Site Name', 'Learners', 'Educators', 'Avg Engagement', 'Voice Capture Success', 'Voice Escalations', 'Active This Week', 'Health Status', 'Last Activity'];
     const rows = sites.map(site => [
       site.siteName,
       site.totalLearners.toString(),
       site.totalEducators.toString(),
       site.avgEngagement != null ? `${site.avgEngagement}%` : 'Unavailable',
+      site.avgVoiceCaptureSuccess != null ? `${site.avgVoiceCaptureSuccess}%` : 'Unavailable',
+      site.voiceEscalationsThisWeek.toString(),
       site.activeThisWeek.toString(),
       site.healthStatus,
       site.lastActivity ? site.lastActivity.toLocaleDateString() : 'Unavailable'
@@ -237,7 +269,7 @@ export function HQAnalyticsDashboard() {
       
       {/* Platform Stats */}
       {platformStats && (
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
           <StatCard
             title="Total Sites"
             value={platformStatsLoading || platformStats.totalSites == null ? 'Unavailable' : platformStats.totalSites}
@@ -267,6 +299,12 @@ export function HQAnalyticsDashboard() {
             value={platformStatsLoading || platformStats.avgEngagement == null ? 'Unavailable' : `${platformStats.avgEngagement}%`}
             icon={SparklesIcon}
             color="indigo"
+          />
+          <StatCard
+            title="Voice Capture"
+            value={platformStatsLoading || platformStats.avgVoiceCaptureSuccess == null ? 'Unavailable' : `${platformStats.avgVoiceCaptureSuccess}%`}
+            icon={SparklesIcon}
+            color="purple"
           />
         </div>
       )}
@@ -327,6 +365,8 @@ export function HQAnalyticsDashboard() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Learners</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Educators</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Avg Engagement</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Voice Capture</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Escalations</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Active This Week</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Health</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Activity</th>
@@ -351,6 +391,10 @@ export function HQAnalyticsDashboard() {
                       ) : null}
                     </div>
                   </td>
+                  <td className="px-6 py-4 text-gray-700">
+                    {site.avgVoiceCaptureSuccess != null ? `${site.avgVoiceCaptureSuccess}%` : 'Unavailable'}
+                  </td>
+                  <td className="px-6 py-4 text-gray-700">{site.voiceEscalationsThisWeek}</td>
                   <td className="px-6 py-4 text-gray-700">{site.activeThisWeek}</td>
                   <td className="px-6 py-4">
                     <HealthBadge status={site.healthStatus} />

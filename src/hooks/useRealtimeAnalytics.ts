@@ -31,6 +31,7 @@ interface PlatformStats {
   totalLearners: number | null;
   totalEducators: number | null;
   avgEngagement: number | null;
+  avgVoiceCaptureSuccess: number | null;
   activeSites: number | null;
 }
 
@@ -143,6 +144,7 @@ export function usePlatformStats() {
     totalLearners: null,
     totalEducators: null,
     avgEngagement: null,
+    avgVoiceCaptureSuccess: null,
     activeSites: null,
   });
   const [loading, setLoading] = useState(true);
@@ -156,8 +158,10 @@ export function usePlatformStats() {
         let totalLearners = 0;
         let totalEducators = 0;
         let totalEngagement = 0;
+        let totalVoiceCaptureSuccess = 0;
         let activeSites = 0;
         let sitesWithEngagement = 0;
+        let sitesWithVoiceCapture = 0;
 
         for (const siteDoc of snapshot.docs) {
           const siteId = siteDoc.id;
@@ -195,21 +199,37 @@ export function usePlatformStats() {
           );
 
           let siteEngagement = 0;
+          let siteVoiceCaptureSuccess = 0;
           let count = 0;
+          let voiceCount = 0;
 
           aggregatesSnapshot.docs.forEach(doc => {
             const data = doc.data();
             const date = data.date?.toDate();
-            if (date && date >= weekAgo && typeof data.engagementScore === 'number' && Number.isFinite(data.engagementScore)) {
-              siteEngagement += data.engagementScore;
-              count++;
+            if (date && date >= weekAgo) {
+              if (typeof data.engagementScore === 'number' && Number.isFinite(data.engagementScore)) {
+                siteEngagement += data.engagementScore;
+                count++;
+              }
+              const voiceMetrics = data.voiceMetrics && typeof data.voiceMetrics === 'object'
+                ? data.voiceMetrics as Record<string, unknown>
+                : null;
+              if (typeof voiceMetrics?.captureSuccessRate === 'number' && Number.isFinite(voiceMetrics.captureSuccessRate)) {
+                siteVoiceCaptureSuccess += voiceMetrics.captureSuccessRate;
+                voiceCount++;
+              }
             }
           });
 
           const avgSiteEngagement = count > 0 ? siteEngagement / count : null;
+          const avgSiteVoiceCaptureSuccess = voiceCount > 0 ? siteVoiceCaptureSuccess / voiceCount : null;
           if (avgSiteEngagement !== null) {
             totalEngagement += avgSiteEngagement;
             sitesWithEngagement++;
+          }
+          if (avgSiteVoiceCaptureSuccess !== null) {
+            totalVoiceCaptureSuccess += avgSiteVoiceCaptureSuccess;
+            sitesWithVoiceCapture++;
           }
 
           if (avgSiteEngagement !== null && avgSiteEngagement > 40) {
@@ -222,6 +242,9 @@ export function usePlatformStats() {
           totalLearners,
           totalEducators,
           avgEngagement: sitesWithEngagement > 0 ? Math.round(totalEngagement / sitesWithEngagement) : null,
+          avgVoiceCaptureSuccess: sitesWithVoiceCapture > 0
+            ? Math.round((totalVoiceCaptureSuccess / sitesWithVoiceCapture) * 100)
+            : null,
           activeSites,
         });
         setLoading(false);
