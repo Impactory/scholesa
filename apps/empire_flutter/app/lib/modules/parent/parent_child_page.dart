@@ -119,6 +119,8 @@ class _ParentChildPageState extends State<ParentChildPage> {
         const SizedBox(height: 16),
         _buildSnapshotGrid(learner),
         const SizedBox(height: 16),
+        _buildPassportSection(learner),
+        const SizedBox(height: 16),
         _buildPillarSection(learner),
         const SizedBox(height: 16),
         _buildActivitySection(learner),
@@ -351,6 +353,68 @@ class _ParentChildPageState extends State<ParentChildPage> {
             label: _t('Impact & Innovation'),
             value: learner.pillarProgress['impact'] ?? 0,
             color: const Color(0xFF10B981),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPassportSection(LearnerSummary learner) {
+    final IdeationPassport passport = learner.ideationPassport;
+    if (passport.claims.isEmpty) {
+      return _buildSectionCard(
+        title: _t('Ideation Passport'),
+        child: Text(
+          _t('No capability claims are ready for Passport view yet.'),
+          style: const TextStyle(color: ScholesaColors.textSecondary),
+        ),
+      );
+    }
+
+    return _buildSectionCard(
+      title: _t('Ideation Passport'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            passport.summary ?? _t('Capability claims backed by evidence.'),
+            style: const TextStyle(color: ScholesaColors.textSecondary),
+          ),
+          const SizedBox(height: 12),
+          ...passport.claims.take(3).map(
+            (PassportClaim claim) => Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: ScholesaColors.background,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: ScholesaColors.parent.withValues(alpha: 0.14),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    claim.title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: ScholesaColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${_t(claim.pillar)} • ${_t('Level')} ${claim.latestLevel}/4',
+                    style: const TextStyle(color: ScholesaColors.textSecondary),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${claim.evidenceCount} ${_t('evidence records')} • ${claim.verifiedArtifactCount} ${_t('verified artifacts')}',
+                    style: const TextStyle(color: ScholesaColors.textSecondary),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),

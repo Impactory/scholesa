@@ -2613,6 +2613,60 @@ async function buildParentLearnerSummary(params: {
     .map((row) => parseDateFromUnknown(row.createdAt))
     .filter((value): value is Date => value instanceof Date)
     .sort((left, right) => right.getTime() - left.getTime());
+  const passportClaims = masteryRows
+    .map((row) => {
+      const capabilityId = typeof row.capabilityId === 'string' ? row.capabilityId.trim() : '';
+      if (!capabilityId) return null;
+      const matchingEvidence = evidenceRows.filter((entry) =>
+        typeof entry.capabilityId === 'string' && entry.capabilityId.trim() === capabilityId,
+      );
+      const matchingPortfolio = portfolioRows.filter((entry) =>
+        Array.isArray(entry.capabilityIds) && entry.capabilityIds.includes(capabilityId),
+      );
+      const matchingGrowth = growthRows.filter((entry) =>
+        typeof entry.capabilityId === 'string' && entry.capabilityId.trim() === capabilityId,
+      );
+      const capabilityTitles = matchingPortfolio.flatMap((entry) =>
+        Array.isArray(entry.capabilityTitles) ? entry.capabilityTitles : [],
+      );
+      const evidenceTitles = matchingEvidence
+        .map((entry) => (typeof entry.capabilityLabel === 'string' ? entry.capabilityLabel.trim() : ''))
+        .filter(Boolean);
+      const title = capabilityTitles.find((value) => typeof value === 'string' && value.trim())
+        ?? evidenceTitles[0]
+        ?? capabilityId;
+      const latestLevel = typeof row.latestLevel === 'number' && Number.isFinite(row.latestLevel)
+        ? Math.round(row.latestLevel)
+        : 0;
+      const verifiedArtifactCount = matchingPortfolio.filter((entry) => {
+        const verificationStatus = typeof entry.verificationStatus === 'string'
+          ? entry.verificationStatus.trim().toLowerCase()
+          : '';
+        return verificationStatus === 'reviewed' || verificationStatus === 'verified';
+      }).length;
+      const latestEvidenceAt = [
+        ...matchingEvidence.map((entry) => parseDateFromUnknown(entry.observedAt)),
+        ...matchingGrowth.map((entry) => parseDateFromUnknown(entry.createdAt)),
+      ]
+        .filter((value): value is Date => value instanceof Date)
+        .sort((left, right) => right.getTime() - left.getTime())[0] ?? null;
+      return {
+        capabilityId,
+        title: String(title),
+        pillar: parentPillarLabelFromCodes([row.pillarCode]),
+        latestLevel,
+        evidenceCount: matchingEvidence.length,
+        verifiedArtifactCount,
+        latestEvidenceAt: latestEvidenceAt?.toISOString() ?? null,
+        verificationStatus: verifiedArtifactCount > 0 ? 'reviewed' : matchingEvidence.length > 0 ? 'captured' : null,
+      };
+    })
+    .filter((value): value is Record<string, unknown> => Boolean(value))
+    .sort((left, right) => {
+      const levelDiff = Number(right.latestLevel ?? 0) - Number(left.latestLevel ?? 0);
+      if (levelDiff !== 0) return levelDiff;
+      return Number(right.evidenceCount ?? 0) - Number(left.evidenceCount ?? 0);
+    });
   const ideationPassport: Record<string, unknown> = {
     missionAttempts: missionAttemptRows.length,
     completedMissions: missionAttemptRows.filter((row) => {
@@ -2629,6 +2683,11 @@ async function buildParentLearnerSummary(params: {
       return reflectionType === 'shout_out' || reflectionType === 'weekly_review';
     }).length,
     lastReflectionAt: reflectionDates[0]?.toISOString() ?? null,
+    generatedAt: now.toISOString(),
+    summary: passportClaims.length
+      ? `${passportClaims.length} capability claims are backed by reviewed evidence and verified artifacts.`
+      : 'No verified capability claims are available yet.',
+    claims: passportClaims,
   };
 
   const currentLevel =

@@ -211,6 +211,9 @@ class IdeationPassport extends Equatable {
     this.voiceInteractions = 0,
     this.collaborationSignals = 0,
     this.lastReflectionAt,
+    this.generatedAt,
+    this.summary,
+    this.claims = const [],
   });
 
   final int missionAttempts;
@@ -219,6 +222,9 @@ class IdeationPassport extends Equatable {
   final int voiceInteractions;
   final int collaborationSignals;
   final DateTime? lastReflectionAt;
+  final DateTime? generatedAt;
+  final String? summary;
+  final List<PassportClaim> claims;
 
   @override
   List<Object?> get props => <Object?>[
@@ -228,6 +234,43 @@ class IdeationPassport extends Equatable {
         voiceInteractions,
         collaborationSignals,
         lastReflectionAt,
+        generatedAt,
+        summary,
+        claims,
+      ];
+}
+
+class PassportClaim extends Equatable {
+  const PassportClaim({
+    required this.capabilityId,
+    required this.title,
+    required this.pillar,
+    required this.latestLevel,
+    required this.evidenceCount,
+    required this.verifiedArtifactCount,
+    this.latestEvidenceAt,
+    this.verificationStatus,
+  });
+
+  final String capabilityId;
+  final String title;
+  final String pillar;
+  final int latestLevel;
+  final int evidenceCount;
+  final int verifiedArtifactCount;
+  final DateTime? latestEvidenceAt;
+  final String? verificationStatus;
+
+  @override
+  List<Object?> get props => <Object?>[
+        capabilityId,
+        title,
+        pillar,
+        latestLevel,
+        evidenceCount,
+        verifiedArtifactCount,
+        latestEvidenceAt,
+        verificationStatus,
       ];
 }
 

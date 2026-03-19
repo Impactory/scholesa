@@ -353,6 +353,10 @@ class ParentService extends ChangeNotifier {
     final IdeationPassport ideationPassport = _buildIdeationPassport(
       missionAttemptRows,
       reflectionRows,
+      evidenceRows,
+      masteryRows,
+      growthRows,
+      portfolioRows,
     );
 
     return LearnerSummary(
@@ -587,7 +591,37 @@ class ParentService extends ChangeNotifier {
       voiceInteractions: _toInt(value['voiceInteractions']) ?? 0,
       collaborationSignals: _toInt(value['collaborationSignals']) ?? 0,
       lastReflectionAt: _parseTimestamp(value['lastReflectionAt']),
+      generatedAt: _parseTimestamp(value['generatedAt']),
+      summary: _asTrimmedString(value['summary']).isEmpty
+          ? null
+          : _asTrimmedString(value['summary']),
+      claims: _parsePassportClaims(value['claims']),
     );
+  }
+
+  List<PassportClaim> _parsePassportClaims(dynamic value) {
+    if (value is! List) return const <PassportClaim>[];
+    return value
+        .whereType<Map>()
+        .map((Map item) => PassportClaim(
+              capabilityId: _asTrimmedString(item['capabilityId']),
+              title: _asTrimmedString(item['title']).isEmpty
+                  ? _asTrimmedString(item['capabilityId'])
+                  : _asTrimmedString(item['title']),
+              pillar: _asTrimmedString(item['pillar']).isEmpty
+                  ? 'Future Skills'
+                  : _asTrimmedString(item['pillar']),
+              latestLevel: _toInt(item['latestLevel']) ?? 0,
+              evidenceCount: _toInt(item['evidenceCount']) ?? 0,
+              verifiedArtifactCount: _toInt(item['verifiedArtifactCount']) ?? 0,
+              latestEvidenceAt: _parseTimestamp(item['latestEvidenceAt']),
+              verificationStatus: _asTrimmedString(item['verificationStatus'])
+                      .isEmpty
+                  ? null
+                  : _asTrimmedString(item['verificationStatus']),
+            ))
+        .where((PassportClaim claim) => claim.capabilityId.isNotEmpty)
+        .toList(growable: false);
   }
 
   EvidenceSummary _buildEvidenceSummary(List<Map<String, dynamic>> rows) {
@@ -761,6 +795,10 @@ class ParentService extends ChangeNotifier {
   IdeationPassport _buildIdeationPassport(
     List<Map<String, dynamic>> missionAttemptRows,
     List<Map<String, dynamic>> reflectionRows,
+    List<Map<String, dynamic>> evidenceRows,
+    List<Map<String, dynamic>> masteryRows,
+    List<Map<String, dynamic>> growthRows,
+    List<Map<String, dynamic>> portfolioRows,
   ) {
     final int completedMissions = missionAttemptRows.where((Map<String, dynamic> row) {
       final String status = _asTrimmedString(row['status']).toLowerCase();
@@ -782,6 +820,12 @@ class ParentService extends ChangeNotifier {
         .whereType<DateTime>()
         .toList(growable: false);
     reflectionDates.sort((DateTime a, DateTime b) => b.compareTo(a));
+    final List<PassportClaim> claims = _buildPassportClaims(
+      evidenceRows,
+      masteryRows,
+      growthRows,
+      portfolioRows,
+    );
     return IdeationPassport(
       missionAttempts: missionAttemptRows.length,
       completedMissions: completedMissions,
@@ -789,7 +833,91 @@ class ParentService extends ChangeNotifier {
       voiceInteractions: voiceInteractions,
       collaborationSignals: collaborationSignals,
       lastReflectionAt: reflectionDates.isEmpty ? null : reflectionDates.first,
+      generatedAt: DateTime.now(),
+      summary: claims.isEmpty
+          ? 'No verified capability claims are available yet.'
+          : '${claims.length} capability claims are backed by reviewed evidence and verified artifacts.',
+      claims: claims,
     );
+  }
+
+  List<PassportClaim> _buildPassportClaims(
+    List<Map<String, dynamic>> evidenceRows,
+    List<Map<String, dynamic>> masteryRows,
+    List<Map<String, dynamic>> growthRows,
+    List<Map<String, dynamic>> portfolioRows,
+  ) {
+    final List<PassportClaim> claims = <PassportClaim>[];
+    for (final Map<String, dynamic> mastery in masteryRows) {
+      final String capabilityId = _asTrimmedString(mastery['capabilityId']);
+      if (capabilityId.isEmpty) {
+        continue;
+      }
+      final List<Map<String, dynamic>> matchingEvidence = evidenceRows
+          .where((Map<String, dynamic> row) =>
+              _asTrimmedString(row['capabilityId']) == capabilityId)
+          .toList(growable: false);
+      final List<Map<String, dynamic>> matchingPortfolio = portfolioRows
+          .where((Map<String, dynamic> row) =>
+              List<String>.from(
+                row['capabilityIds'] as List? ?? const <String>[],
+              ).contains(capabilityId))
+          .toList(growable: false);
+      final List<Map<String, dynamic>> matchingGrowth = growthRows
+          .where((Map<String, dynamic> row) =>
+              _asTrimmedString(row['capabilityId']) == capabilityId)
+          .toList(growable: false);
+      final String title = <String>[
+        ...matchingPortfolio.expand((Map<String, dynamic> row) =>
+            List<String>.from(
+              row['capabilityTitles'] as List? ?? const <String>[],
+            )),
+        ...matchingEvidence
+            .map((Map<String, dynamic> row) => _asTrimmedString(row['capabilityLabel'])),
+      ].firstWhere(
+        (String value) => value.trim().isNotEmpty,
+        orElse: () => capabilityId,
+      );
+      final List<DateTime> evidenceDates = <DateTime>[
+        ...matchingEvidence
+            .map((Map<String, dynamic> row) => _parseTimestamp(row['observedAt']))
+            .whereType<DateTime>(),
+        ...matchingGrowth
+            .map((Map<String, dynamic> row) => _parseTimestamp(row['createdAt']))
+            .whereType<DateTime>(),
+      ]..sort((DateTime a, DateTime b) => b.compareTo(a));
+      final int verifiedArtifactCount = matchingPortfolio.where((Map<String, dynamic> row) {
+        final String verificationStatus =
+            _asTrimmedString(row['verificationStatus']).toLowerCase();
+        return verificationStatus == 'reviewed' || verificationStatus == 'verified';
+      }).length;
+      claims.add(
+        PassportClaim(
+          capabilityId: capabilityId,
+          title: title,
+          pillar: _pillarLabelFromCodes(<String>[
+            _asTrimmedString(mastery['pillarCode']),
+          ]),
+          latestLevel: _toInt(mastery['latestLevel']) ?? 0,
+          evidenceCount: matchingEvidence.length,
+          verifiedArtifactCount: verifiedArtifactCount,
+          latestEvidenceAt: evidenceDates.isEmpty ? null : evidenceDates.first,
+          verificationStatus: verifiedArtifactCount > 0
+              ? 'reviewed'
+              : matchingEvidence.isNotEmpty
+                  ? 'captured'
+                  : null,
+        ),
+      );
+    }
+    claims.sort((PassportClaim a, PassportClaim b) {
+      final int levelCompare = b.latestLevel.compareTo(a.latestLevel);
+      if (levelCompare != 0) {
+        return levelCompare;
+      }
+      return b.evidenceCount.compareTo(a.evidenceCount);
+    });
+    return claims;
   }
 
   String _normalizePillarCode(String raw) {

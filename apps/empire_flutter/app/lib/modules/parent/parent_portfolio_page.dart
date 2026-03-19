@@ -785,6 +785,8 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
       '${_t('Pillar')}: ${item.pillar}',
       '${_t('Title')}: ${item.title}',
       '${_t('Description')}: ${item.description}',
+      '${_t('Evidence Linked')}: ${item.evidenceLinked ? _t('Yes') : _t('No')}',
+      '${_t('Verification Status')}: ${item.verificationStatus?.trim().isNotEmpty == true ? _titleCaseBand(item.verificationStatus!) : _t('Pending')}',
     ].join('\n');
   }
 
