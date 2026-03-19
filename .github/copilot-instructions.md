@@ -160,6 +160,23 @@ Additional product guardrails:
 - Do not ship AI assistance features without disclosure, verification intent, and an auditable trail.
 - Prefer live teacher workflows that minimize taps during studio time over admin-heavy workflows that require later cleanup.
 
+### Gold-Ready Release Gate
+
+Do not describe Scholesa as gold-ready, production-ready for capability-first release, or equivalent unless all of these workflows are verified end-to-end with real data:
+
+1. Curriculum admin can define capabilities and map them to units/checkpoints.
+2. Teacher can run a session and quickly log capability observations during build time.
+3. Student can submit artifacts, reflections, and checkpoint evidence.
+4. Teacher can apply a 4-level rubric tied to capabilities and process domains.
+5. Proof-of-learning can be captured and reviewed.
+6. Capability growth updates over time from evidence.
+7. Student portfolio shows real artifacts and reflections.
+8. Ideation Passport/report can be generated from actual evidence.
+9. AI-use is disclosed and visible where relevant.
+10. Family/student/teacher views are understandable and trustworthy.
+
+If any one of these workflows is unverified, stubbed, disconnected, workflow-only, or dependent on manual cleanup outside the product, the platform is not gold-ready.
+
 When adding new features:
 1. **Define schema** in [schema.ts](../schema.ts) first
 2. **Add Firestore rules** for the new collection (follow existing patterns)
