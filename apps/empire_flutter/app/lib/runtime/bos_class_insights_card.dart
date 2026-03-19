@@ -226,6 +226,15 @@ class _BosClassInsightsCardState extends State<BosClassInsightsCard> {
                       ),
                       const SizedBox(height: 8),
                     ],
+                    if (parsed.syntheticPreview) ...<Widget>[
+                      _buildInfoState(
+                        context,
+                        icon: Icons.science_outlined,
+                        message: BosCoachingI18n.syntheticPreview(context),
+                        accent: accent,
+                      ),
+                      const SizedBox(height: 8),
+                    ],
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
@@ -649,6 +658,7 @@ class _BosClassInsights {
     required this.integrity,
     required this.watchlist,
     required this.partialSignals,
+    required this.syntheticPreview,
   });
 
   final int? learnerCount;
@@ -658,6 +668,7 @@ class _BosClassInsights {
   final double? integrity;
   final List<_ClassLearnerSignal> watchlist;
   final bool partialSignals;
+  final bool syntheticPreview;
 
   static _BosClassInsights? tryFromPayload(
     Map<String, dynamic> payload,
@@ -668,14 +679,18 @@ class _BosClassInsights {
     final Map<String, dynamic>? coverage = _asStringDynamicMap(payload['coverage']);
     final int? learnerCount = _readInt(payload, 'learnerCount');
     final int? activeMvlCount = _readInt(payload, 'activeMvlCount');
-    final List<_ClassLearnerSignal> watchlist = (payload['watchlist'] ?? payload['learners']) is List<dynamic>
-        ? (payload['watchlist'] ?? payload['learners'])
-            .whereType<Map<dynamic, dynamic>>()
-            .map((Map<dynamic, dynamic> entry) => entry.map(
-                  (dynamic key, dynamic val) => MapEntry(key.toString(), val),
-                ))
-            .map((Map<String, dynamic> entry) =>
-                _ClassLearnerSignal.tryFromMap(entry, learnerNamesById, context))
+    final dynamic rawWatchlist = payload['watchlist'] ?? payload['learners'];
+    final List<_ClassLearnerSignal> watchlist = rawWatchlist is List<dynamic>
+        ? rawWatchlist
+            .map(_asStringDynamicMap)
+            .whereType<Map<String, dynamic>>()
+            .map(
+              (Map<String, dynamic> entry) => _ClassLearnerSignal.tryFromMap(
+                entry,
+                learnerNamesById,
+                context,
+              ),
+            )
             .whereType<_ClassLearnerSignal>()
             .where((_ClassLearnerSignal learner) => learner.needsAttention)
             .toList(growable: false)
@@ -694,6 +709,7 @@ class _BosClassInsights {
           (((_readInt(coverage, 'cognition') ?? -1) != learnerCount) ||
               ((_readInt(coverage, 'engagement') ?? -1) != learnerCount) ||
               ((_readInt(coverage, 'integrity') ?? -1) != learnerCount)),
+        syntheticPreview: payload['synthetic'] is bool && payload['synthetic'] as bool,
     );
 
     if (!parsed.hasAnySignal) {

@@ -140,5 +140,128 @@ void main() {
         findsWidgets,
       );
     });
+
+    testWidgets('learner loop discloses synthetic preview payloads',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: <SingleChildWidget>[
+            ChangeNotifierProvider<AppState>.value(value: _buildLearnerState()),
+          ],
+          child: MaterialApp(
+            theme: _testTheme,
+            home: Scaffold(
+              body: BosLearnerLoopInsightsCard(
+                title: 'MiloOS Learning Loop',
+                subtitle: 'Latest individual improvement signal',
+                emptyLabel: 'No learner loop data yet',
+                learnerId: 'learner-1',
+                learnerName: 'Avery Chen',
+                insightsLoader: ({
+                  required String siteId,
+                  required String learnerId,
+                  required int lookbackDays,
+                }) async => <String, dynamic>{
+                  'synthetic': true,
+                  'state': <String, dynamic>{
+                    'cognition': 0.72,
+                    'engagement': 0.68,
+                    'integrity': 0.91,
+                  },
+                  'trend': <String, dynamic>{
+                    'improvementScore': 0.08,
+                    'cognitionDelta': 0.04,
+                    'engagementDelta': 0.02,
+                    'integrityDelta': 0.01,
+                  },
+                  'mvl': <String, dynamic>{
+                    'active': 1,
+                    'passed': 2,
+                    'failed': 0,
+                  },
+                  'activeGoals': <String>['Prototype feedback loop'],
+                  'stateAvailability': <String, dynamic>{
+                    'hasCurrentState': true,
+                    'hasTrendBaseline': true,
+                  },
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(
+          'Synthetic MiloOS preview only. Do not treat this as classroom evidence or learner growth.',
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('class insights discloses synthetic preview payloads',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: _testTheme,
+          home: Scaffold(
+            body: BosClassInsightsCard(
+              title: 'MiloOS Class Insights',
+              subtitle:
+                  'FDM state estimate, BAE watchlist, and active MVL gates for this class',
+              emptyLabel: 'No class insights yet',
+              sessionOccurrenceId: 'occ-1',
+              siteId: 'site-1',
+              learnerNamesById: const <String, String>{
+                'learner-1': 'Avery Chen',
+              },
+              insightsLoader: ({
+                required String sessionOccurrenceId,
+                required String siteId,
+              }) async => <String, dynamic>{
+                'synthetic': true,
+                'learnerCount': 1,
+                'activeMvlCount': 0,
+                'averages': <String, dynamic>{
+                  'cognition': 0.61,
+                  'engagement': 0.57,
+                  'integrity': 0.88,
+                },
+                'coverage': <String, dynamic>{
+                  'cognition': 1,
+                  'engagement': 1,
+                  'integrity': 1,
+                },
+                'watchlist': <Map<String, dynamic>>[
+                  <String, dynamic>{
+                    'learnerId': 'learner-1',
+                    'x_hat': <String, dynamic>{
+                      'cognition': 0.41,
+                      'engagement': 0.44,
+                      'integrity': 0.9,
+                    },
+                  },
+                ],
+              },
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(
+          'Synthetic MiloOS preview only. Do not treat this as classroom evidence or learner growth.',
+        ),
+        findsOneWidget,
+      );
+    });
   });
 }

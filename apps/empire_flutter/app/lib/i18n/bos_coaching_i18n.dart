@@ -53,6 +53,7 @@ class BosCoachingI18n {
     'learnerUnavailable': '学习者信息不可用',
     'signalUnavailable': '暂无可验证信号',
     'partialSignals': '部分信号缺失，仅显示已验证数据',
+        'syntheticPreview': '当前为合成 MiloOS 预览数据，请勿视为真实课堂证据或成长记录',
   };
 
   static const Map<String, String> _zhTwTranslations = <String, String>{
@@ -96,6 +97,7 @@ class BosCoachingI18n {
     'learnerUnavailable': '學習者資訊不可用',
     'signalUnavailable': '目前沒有可驗證訊號',
     'partialSignals': '部分訊號缺失，僅顯示已驗證資料',
+        'syntheticPreview': '目前顯示的是合成 MiloOS 預覽資料，請勿視為真實課堂證據或成長紀錄',
   };
 
   static const Map<String, String> _enTranslations = <String, String>{
@@ -143,6 +145,8 @@ class BosCoachingI18n {
     'learnerUnavailable': 'Learner unavailable',
     'signalUnavailable': 'Verified signal unavailable',
     'partialSignals': 'Some signals are missing; showing only verified data',
+    'syntheticPreview':
+        'Synthetic MiloOS preview only. Do not treat this as classroom evidence or learner growth.',
   };
 
   /// Get a MiloOS coaching key in the user's locale
@@ -239,4 +243,6 @@ class BosCoachingI18n {
       get(context, 'signalUnavailable');
   static String partialSignals(BuildContext context) =>
       get(context, 'partialSignals');
+  static String syntheticPreview(BuildContext context) =>
+      get(context, 'syntheticPreview');
 }

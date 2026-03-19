@@ -268,6 +268,15 @@ class _BosLearnerLoopInsightsCardState
                       ),
                       const SizedBox(height: 8),
                     ],
+                    if (parsed.syntheticPreview) ...<Widget>[
+                      _buildInfoState(
+                        context,
+                        icon: Icons.science_outlined,
+                        message: BosCoachingI18n.syntheticPreview(context),
+                        accent: accent,
+                      ),
+                      const SizedBox(height: 8),
+                    ],
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
@@ -457,6 +466,7 @@ class _LearnerLoopInsights {
     required this.failedMvl,
     required this.activeGoals,
     required this.partialSignals,
+    required this.syntheticPreview,
   });
 
   final double? cognition;
@@ -471,6 +481,7 @@ class _LearnerLoopInsights {
   final int? failedMvl;
   final List<String> activeGoals;
   final bool partialSignals;
+  final bool syntheticPreview;
 
   static _LearnerLoopInsights? tryFromPayload(Map<String, dynamic> payload) {
     final Map<String, dynamic> state =
@@ -497,6 +508,7 @@ class _LearnerLoopInsights {
       activeGoals: _readTrimmedStringList(payload, 'activeGoals'),
       partialSignals: !(_readBool(availability, 'hasCurrentState') ?? false) ||
           !(_readBool(availability, 'hasTrendBaseline') ?? false),
+      syntheticPreview: _readBool(payload, 'synthetic') ?? false,
     );
 
     if (!parsed.hasAnySignal) {
