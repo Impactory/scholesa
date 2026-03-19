@@ -72,152 +72,187 @@ String _localizedProvisioningValue(
 String _cohortScheduleSummary(BuildContext context, CohortLaunch launch) {
   final String schedule = _localizedProvisioningValue(
     context,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: <Widget>[
-                                Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: Colors.indigo.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: const Icon(
-                                    Icons.rocket_launch_rounded,
-                                    color: Colors.indigo,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: <Widget>[
-                                      Text(
-                                        _localizedProvisioningValue(
-                                          context,
-                                          launch.cohortName,
-                                          unavailableLabel:
-                                              'Cohort unavailable',
-                                        ),
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        _cohortScheduleSummary(context, launch),
-                                        style: const TextStyle(
-                                          color: Colors.black54,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                _StatusPill(
-                                  label: _localizedProvisioningValue(
-                                    context,
-                                    launch.status,
-                                    unavailableLabel: 'Unavailable',
-                                    localizeKnownEnums: true,
-                                  ),
-                                  color: _cohortStatusColor(launch.status),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: <Widget>[
-                                _StatusPill(
-                                  label:
-                                      '${_tProvisioning(context, 'Roster')}: ${_localizedProvisioningValue(
-                                    context,
-                                    launch.rosterStatus,
-                                    unavailableLabel: 'Unavailable',
-                                    localizeKnownEnums: true,
-                                  )}',
-                                  color: _cohortStatusColor(launch.rosterStatus),
-                                ),
-                                _StatusPill(
-                                  label:
-                                      '${_tProvisioning(context, 'Parent Comms')}: ${_localizedProvisioningValue(
-                                    context,
-                                    launch.parentCommunicationStatus,
-                                    unavailableLabel: 'Unavailable',
-                                    localizeKnownEnums: true,
-                                  )}',
-                                  color: _cohortStatusColor(
-                                    launch.parentCommunicationStatus,
-                                  ),
-                                ),
-                                _StatusPill(
-                                  label:
-                                      '${_tProvisioning(context, 'Baseline Survey')}: ${_localizedProvisioningValue(
-                                    context,
-                                    launch.baselineSurveyStatus,
-                                    unavailableLabel: 'Unavailable',
-                                    localizeKnownEnums: true,
-                                  )}',
-                                  color: _cohortStatusColor(
-                                    launch.baselineSurveyStatus,
-                                  ),
-                                ),
-                                _StatusPill(
-                                  label:
-                                      '${_tProvisioning(context, 'Kickoff')}: ${_localizedProvisioningValue(
-                                    context,
-                                    launch.kickoffStatus,
-                                    unavailableLabel: 'Unavailable',
-                                    localizeKnownEnums: true,
-                                  )}',
-                                  color: _cohortStatusColor(launch.kickoffStatus),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              children: <Widget>[
-                                Expanded(
-                                  child: Text(
-                                    '${_tProvisioning(context, 'Age Band')}: ${_localizedProvisioningValue(
-                                      context,
-                                      launch.ageBand,
-                                      unavailableLabel: 'Unavailable',
-                                      localizeKnownEnums: true,
-                                    )}',
-                                    style:
-                                        const TextStyle(color: Colors.black87),
-                                  ),
-                                ),
-                                Text(
-                                  _cohortLearnerCountLabel(
-                                    context,
-                                    launch.learnerCount,
-                                  ),
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            if ((launch.notes ?? '').trim().isNotEmpty) ...<Widget>[
-                              const SizedBox(height: 8),
-                              Text(
-                                launch.notes!.trim(),
-                                style: const TextStyle(color: Colors.black54),
-                              ),
-                            ],
-                          ],
+    launch.scheduleLabel,
+    unavailableLabel: 'Schedule unavailable',
+  );
+  final String term = _localizedProvisioningValue(
+    context,
+    launch.curriculumTerm,
+    unavailableLabel: 'Curriculum term unavailable',
+  );
+  return '$schedule • $term';
+}
+
+String _cohortLearnerCountLabel(BuildContext context, int? learnerCount) {
+  final String value = learnerCount == null
+      ? _tProvisioning(context, 'Unavailable')
+      : '$learnerCount';
+  return '${_tProvisioning(context, 'Learner Count')}: $value';
+}
+
+String _deleteGuardianLinkCopy(
+  BuildContext context,
+  GuardianLink link,
+) {
+  final String parentName = link.parentName ?? link.parentId;
+  final String learnerName = link.learnerName ?? link.learnerId;
+  return WorkflowSurfaceI18n.textWithPlaceholders(
+    context,
+    'Remove the guardian link between {parentName} and {learnerName}?',
+    placeholders: <String, String>{
+      'parentName': parentName,
+      'learnerName': learnerName,
+    },
+  );
+}
+
+Widget _buildProvisioningLoadErrorState(
+  BuildContext context, {
+  required String title,
+  required String message,
+  required VoidCallback onRetry,
+}) {
+  return Padding(
+    padding: const EdgeInsets.all(16),
+    child: Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF4F4),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFFECACA)),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              const Icon(Icons.error_outline_rounded, color: Colors.redAccent),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            style: const TextStyle(color: Colors.black54),
+          ),
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh_rounded),
+            label: Text(_tProvisioning(context, 'Retry')),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+Widget _buildProvisioningStaleBanner(
+  BuildContext context,
+  String message,
+) {
+  return Padding(
+    padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+    child: Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFFDE68A)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Padding(
+            padding: EdgeInsets.only(top: 2),
+            child: Icon(Icons.warning_amber_rounded, color: Color(0xFFB45309)),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              _tProvisioning(context, 'Showing last loaded provisioning data. ') +
+                  message,
+              style: const TextStyle(color: Color(0xFF92400E)),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+/// Provisioning page for site admins
+class ProvisioningPage extends StatefulWidget {
+  const ProvisioningPage({super.key});
+
+  @override
+  State<ProvisioningPage> createState() => _ProvisioningPageState();
+}
+
+class _ProvisioningPageState extends State<ProvisioningPage>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  String? _lastLoadedSiteId;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 4, vsync: this);
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) {
+        return;
+      }
+      final String tab = switch (_tabController.index) {
+        0 => 'learners',
+        1 => 'parents',
+        2 => 'links',
+        3 => 'cohorts',
+        _ => 'unknown',
+      };
+      TelemetryService.instance.logEvent(
+        event: 'cta.clicked',
+        metadata: <String, dynamic>{
+          'module': 'provisioning',
+          'cta_id': 'change_tab',
+          'surface': 'provisioning_tab_bar',
+          'tab': tab,
+        },
+      );
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final String? activeSiteId = context.read<AppState>().activeSiteId;
+    if (activeSiteId != null && activeSiteId != _lastLoadedSiteId) {
+      _lastLoadedSiteId = activeSiteId;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+        final String? currentSiteId = context.read<AppState>().activeSiteId;
+        if (currentSiteId != activeSiteId) {
+          return;
+        }
         _loadDataForSite(activeSiteId);
       });
     }
   }
 
-              ),
+  Future<void> _loadDataForSite(String siteId) async {
     final service = context.read<ProvisioningService>();
     await Future.wait(<Future<void>>[
       service.loadLearners(siteId),
@@ -883,147 +918,152 @@ class _CohortsTab extends StatelessWidget {
                       child: Padding(
                         padding: const EdgeInsets.all(16),
                         child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: Colors.indigo.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(
-                              Icons.rocket_launch_rounded,
-                              color: Colors.indigo,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: <Widget>[
-                                Text(
-                                  _localizedProvisioningValue(
-                                    context,
-                                    launch.cohortName,
-                                    unavailableLabel: 'Cohort unavailable',
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: Colors.indigo.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(10),
                                   ),
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
+                                  child: const Icon(
+                                    Icons.rocket_launch_rounded,
+                                    color: Colors.indigo,
                                   ),
                                 ),
-                                const SizedBox(height: 4),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: <Widget>[
+                                      Text(
+                                        _localizedProvisioningValue(
+                                          context,
+                                          launch.cohortName,
+                                          unavailableLabel:
+                                              'Cohort unavailable',
+                                        ),
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        _cohortScheduleSummary(context, launch),
+                                        style: const TextStyle(
+                                          color: Colors.black54,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                _StatusPill(
+                                  label: _localizedProvisioningValue(
+                                    context,
+                                    launch.status,
+                                    unavailableLabel: 'Unavailable',
+                                    localizeKnownEnums: true,
+                                  ),
+                                  color: _cohortStatusColor(launch.status),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: <Widget>[
+                                _StatusPill(
+                                  label:
+                                      '${_tProvisioning(context, 'Roster Status')}: ${_localizedProvisioningValue(
+                                    context,
+                                    launch.rosterStatus,
+                                    unavailableLabel: 'Unavailable',
+                                    localizeKnownEnums: true,
+                                  )}',
+                                  color: _cohortStatusColor(launch.rosterStatus),
+                                ),
+                                _StatusPill(
+                                  label:
+                                      '${_tProvisioning(context, 'Parent Comms')}: ${_localizedProvisioningValue(
+                                    context,
+                                    launch.parentCommunicationStatus,
+                                    unavailableLabel: 'Unavailable',
+                                    localizeKnownEnums: true,
+                                  )}',
+                                  color: _cohortStatusColor(
+                                    launch.parentCommunicationStatus,
+                                  ),
+                                ),
+                                _StatusPill(
+                                  label:
+                                      '${_tProvisioning(context, 'Baseline Survey')}: ${_localizedProvisioningValue(
+                                    context,
+                                    launch.baselineSurveyStatus,
+                                    unavailableLabel: 'Unavailable',
+                                    localizeKnownEnums: true,
+                                  )}',
+                                  color: _cohortStatusColor(
+                                    launch.baselineSurveyStatus,
+                                  ),
+                                ),
+                                _StatusPill(
+                                  label:
+                                      '${_tProvisioning(context, 'Kickoff')}: ${_localizedProvisioningValue(
+                                    context,
+                                    launch.kickoffStatus,
+                                    unavailableLabel: 'Unavailable',
+                                    localizeKnownEnums: true,
+                                  )}',
+                                  color: _cohortStatusColor(launch.kickoffStatus),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: <Widget>[
+                                Expanded(
+                                  child: Text(
+                                    '${_tProvisioning(context, 'Age Band')}: ${_localizedProvisioningValue(
+                                      context,
+                                      launch.ageBand,
+                                      unavailableLabel: 'Unavailable',
+                                      localizeKnownEnums: true,
+                                    )}',
+                                    style:
+                                        const TextStyle(color: Colors.black87),
+                                  ),
+                                ),
                                 Text(
-                                  _cohortScheduleSummary(context, launch),
+                                  _cohortLearnerCountLabel(
+                                    context,
+                                    launch.learnerCount,
+                                  ),
                                   style: const TextStyle(
-                                    color: Colors.black54,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ],
                             ),
-                          ),
-                          _StatusPill(
-                            label: _localizedProvisioningValue(
-                              context,
-                              launch.status,
-                              unavailableLabel: 'Unavailable',
-                              localizeKnownEnums: true,
-                            ),
-                            color: _cohortStatusColor(launch.status),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: <Widget>[
-                          _StatusPill(
-                            label:
-                                '${_tProvisioning(context, 'Roster Status')}: ${_localizedProvisioningValue(
-                              context,
-                              launch.rosterStatus,
-                              unavailableLabel: 'Unavailable',
-                              localizeKnownEnums: true,
-                            )}',
-                            color: _cohortStatusColor(launch.rosterStatus),
-                          ),
-                          _StatusPill(
-                            label:
-                                '${_tProvisioning(context, 'Parent Comms')}: ${_localizedProvisioningValue(
-                              context,
-                              launch.parentCommunicationStatus,
-                              unavailableLabel: 'Unavailable',
-                              localizeKnownEnums: true,
-                            )}',
-                            color: _cohortStatusColor(
-                                launch.parentCommunicationStatus),
-                          ),
-                          _StatusPill(
-                            label:
-                                '${_tProvisioning(context, 'Baseline Survey')}: ${_localizedProvisioningValue(
-                              context,
-                              launch.baselineSurveyStatus,
-                              unavailableLabel: 'Unavailable',
-                              localizeKnownEnums: true,
-                            )}',
-                            color:
-                                _cohortStatusColor(launch.baselineSurveyStatus),
-                          ),
-                          _StatusPill(
-                            label:
-                                '${_tProvisioning(context, 'Kickoff')}: ${_localizedProvisioningValue(
-                              context,
-                              launch.kickoffStatus,
-                              unavailableLabel: 'Unavailable',
-                              localizeKnownEnums: true,
-                            )}',
-                            color: _cohortStatusColor(launch.kickoffStatus),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: <Widget>[
-                          Expanded(
-                            child: Text(
-                              '${_tProvisioning(context, 'Age Band')}: ${_localizedProvisioningValue(
-                                context,
-                                launch.ageBand,
-                                unavailableLabel: 'Unavailable',
-                                localizeKnownEnums: true,
-                              )}',
-                              style: const TextStyle(color: Colors.black87),
-                            ),
-                          ),
-                          Text(
-                            _cohortLearnerCountLabel(
-                              context,
-                              launch.learnerCount,
-                            ),
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                      if ((launch.notes ?? '').trim().isNotEmpty) ...<Widget>[
-                        const SizedBox(height: 8),
-                        Text(
-                          launch.notes!.trim(),
-                          style: const TextStyle(color: Colors.black54),
-                        ),
-                      ],
-                    ],
+                            if ((launch.notes ?? '').trim().isNotEmpty) ...<Widget>[
+                              const SizedBox(height: 8),
+                              Text(
+                                launch.notes!.trim(),
+                                style: const TextStyle(color: Colors.black54),
+                              ),
+                            ],
+                          ],
                         ),
                       ),
                     );
                   },
                 ),
-              );
+              ),
             ),
           ],
         );
