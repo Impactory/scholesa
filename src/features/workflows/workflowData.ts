@@ -1328,7 +1328,18 @@ async function loadAnalyticsBackfillAuditRecords(ctx: WorkflowContext): Promise<
     statusKeys: ['status'],
     metadataBuilder: (row) => row.metadata && typeof row.metadata === 'object' && !Array.isArray(row.metadata)
       ? Object.fromEntries(
-          Object.entries(row.metadata as Record<string, unknown>).filter((entry): entry is [string, string] => typeof entry[1] === 'string' && entry[1].trim().length > 0),
+          Object.entries(row.metadata as Record<string, unknown>)
+            .filter((entry) => entry[1] !== null && entry[1] !== undefined)
+            .flatMap((entry) => {
+              const value = entry[1];
+              if (typeof value === 'string') {
+                return value.trim().length > 0 ? [[entry[0], value]] : [];
+              }
+              if (typeof value === 'number' || typeof value === 'boolean') {
+                return [[entry[0], String(value)]];
+              }
+              return [];
+            }),
         )
       : {},
     editable: false,
