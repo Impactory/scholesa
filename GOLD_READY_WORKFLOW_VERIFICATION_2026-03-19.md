@@ -1,0 +1,141 @@
+# Gold-Ready Workflow Verification
+
+Date: 2026-03-19
+Status: Not gold-ready
+
+This matrix applies the release gate in `.github/copilot-instructions.md` to the current repo state.
+Only active product code paths were considered. A workflow is not "verified" unless the chain is real, connected, and evidence-backed end to end.
+
+## Verification Matrix
+
+| # | Required workflow | Status | Judgment |
+| --- | --- | --- | --- |
+| 1 | Curriculum admin can define capabilities and map them to units/checkpoints | Missing | Active schema and authoring flows are still pillar/skill/mission based, not first-class capability-node based. |
+| 2 | Teacher can run a session and quickly log capability observations during build time | Partial | Live capture exists in Flutter educator sessions, but the captured evidence is not yet wired into rubric, growth, portfolio, and reporting chains. |
+| 3 | Student can submit artifacts, reflections, and checkpoint evidence | Partial | Reflection and checkpoint submission paths exist, and portfolio items load, but the submission chain is fragmented and not consistently linked to capability evidence lineage. |
+| 4 | Teacher can apply a 4-level rubric tied to capabilities and process domains | Partial | Rubrics and rubric applications exist, but they are mission-oriented and not tied to a capability framework with downstream growth updates. |
+| 5 | Proof-of-learning can be captured and reviewed | Partial | Explain-back capture exists, but the current path records a generic event and does not form a teacher-reviewed proof chain attached to capability evidence. |
+| 6 | Capability growth updates over time from evidence | Missing | Repositories for skill mastery exist, but no active end-to-end path updates learner growth from live evidence or rubric outcomes. |
+| 7 | Student portfolio shows real artifacts and reflections | Partial | Real portfolio items exist, but the portfolio is still a showcase surface rather than a trustworthy evidence workspace with strong lineage. |
+| 8 | Ideation Passport/report can be generated from actual evidence | Missing | Parent bundle and passport outputs are assembled from rollups, counts, and telemetry rather than evidence provenance. |
+| 9 | AI-use is disclosed and visible where relevant | Partial | AI surfaces expose guardrails and explain-back prompts in some places, but disclosure is not consistently attached to learner artifacts, portfolio items, or reports. |
+| 10 | Family/student/teacher views are understandable and trustworthy | Partial | Active views exist, but several still rely on levels, XP, snapshots, and aggregate progress rather than direct evidence-backed claims. |
+
+## Evidence By Workflow
+
+### 1. Capability framework and curriculum mapping
+
+- `schema.ts` defines pillars, skills, missions, and skill mastery, but not a first-class capability framework with nodes, descriptors, or checkpoint mappings.
+- `apps/empire_flutter/app/lib/modules/hq_admin/hq_curriculum_page.dart` creates rubric criteria from labels and stores `pillarCode`, not capability-node references.
+- Current judgment: missing.
+
+### 2. Live teacher observation during session
+
+- `apps/empire_flutter/app/lib/modules/educator/educator_sessions_page.dart` now supports live evidence capture into `evidenceRecords` with `capabilityLabel`, `phaseKey`, `portfolioCandidate`, `rubricStatus`, and `growthStatus`.
+- `firestore.rules` includes read and write rules for `evidenceRecords`.
+- The chain stops after capture. `rubricStatus` and `growthStatus` are stored as `pending`, and there is no downstream worker or educator review path consuming those records.
+- Current judgment: partial.
+
+### 3. Learner artifact, reflection, and checkpoint submission
+
+- `ReflectionForm.tsx` writes learner reflections.
+- `src/components/checkpoints/CheckpointSubmission.tsx` records checkpoint attempts and explicitly says the result is submitted for review.
+- `apps/empire_flutter/app/lib/modules/learner/learner_portfolio_page.dart` loads learner profile, portfolio items, and credentials from Firestore.
+- Missing link: the current paths do not consistently tie a learner submission to a capability claim, verification state, and portfolio evidence lineage.
+- Current judgment: partial.
+
+### 4. 4-level rubric tied to capabilities and process domains
+
+- `apps/empire_flutter/app/lib/modules/hq_admin/hq_curriculum_page.dart` creates rubrics whose criteria include `levels: [0, 1, 2, 3, 4]`.
+- `apps/empire_flutter/app/lib/domain/models.dart` and `apps/empire_flutter/app/lib/domain/repositories.dart` persist `RubricModel` and `RubricApplicationModel`.
+- Gap: rubric criteria are not keyed to a shared capability framework, and the rubric application does not update capability growth or evidence provenance.
+- Current judgment: partial.
+
+### 5. Proof-of-learning capture and review
+
+- `src/components/sdt/AICoachScreen.tsx` exposes explain-back for AI help sessions.
+- `functions/src/aiCoachExplainBack.ts` records an `explain_it_back_submitted` event.
+- The current implementation is event-centric. The submitted explain-back is marked with `approved: true` in the generated payload and does not create a teacher-reviewed proof object attached to a learner capability record.
+- Current judgment: partial.
+
+### 6. Capability growth over time from evidence
+
+- `apps/empire_flutter/app/lib/domain/repositories.dart` includes `SkillMasteryRepository`.
+- `schema.ts` includes `SkillMastery` and references `evidenceIds`.
+- The repo contains storage for mastery, but the active evidence capture and rubric application flows do not update this model end to end.
+- Current judgment: missing.
+
+### 7. Portfolio with real artifacts and reflections
+
+- `apps/empire_flutter/app/lib/modules/learner/learner_portfolio_page.dart` loads real portfolio items.
+- Storage rules allow learner uploads to `portfolioMedia/{learnerId}/{fileName}`.
+- Gap: portfolio items are still weakly connected to reflections, verification, rubric outcomes, and capability claims, so the portfolio is not yet a trustworthy evidence graph.
+- Current judgment: partial.
+
+### 8. Passport/report generated from actual evidence
+
+- `functions/src/index.ts` builds `portfolioSnapshot` from counts and timestamps.
+- `functions/src/index.ts` builds `ideationPassport` from mission attempts and telemetry rows.
+- `functions/src/index.ts` derives `capabilitySnapshot` from pillar progress averages and then returns `currentLevel`, `totalXp`, `missionsCompleted`, and `currentStreak` in the same parent summary bundle.
+- This is a rollup layer, not a provenance-backed report generator.
+- Current judgment: missing.
+
+### 9. Visible AI-use disclosure
+
+- `src/components/sdt/AICoachScreen.tsx` shows guardrails and explain-back prompts.
+- `AiDraftBadge.tsx` provides a visible AI draft badge.
+- `apps/empire_flutter/app/lib/runtime/ai_coach_widget.dart` carries `requiresExplainBack` in runtime metadata.
+- Gap: AI disclosure is not consistently attached across artifact creation, portfolio display, family reporting, and teacher review.
+- Current judgment: partial.
+
+### 10. Trustworthy family, student, and teacher views
+
+- `apps/empire_flutter/app/lib/modules/educator/educator_sessions_page.dart` now frames the session as a studio flow and supports live evidence capture.
+- `apps/empire_flutter/app/lib/modules/learner/learner_today_page.dart` was updated earlier in this thread to surface an evidence loop.
+- `apps/empire_flutter/app/lib/modules/parent/parent_summary_page.dart` now asks evidence-first family questions.
+- `functions/src/index.ts` still returns level, XP, streak, pillar averages, and snapshot bands in the parent bundle. Those constructs weaken trust because they make claims without direct evidence provenance.
+- Current judgment: partial.
+
+## Honesty Report
+
+### A. Reusable
+
+- Firestore persistence for sessions, missions, portfolio items, reflections, rubric applications, and skill mastery.
+- Active Flutter role surfaces for educator, learner, and parent.
+- New `evidenceRecords` capture path and rules.
+- AI explain-back primitives.
+
+### B. Misaligned
+
+- Pillar and XP rollups presented as capability progress.
+- Parent bundle snapshots and report-style aggregates.
+- Mission-oriented rubric flows without capability lineage.
+- Level, streak, and completion constructs in learner and family reporting.
+
+### C. Fake or partial
+
+- Capability labels that are free text rather than references into a defined capability framework.
+- Explain-back recorded as telemetry without full proof review workflow.
+- Portfolio and report surfaces that appear evidence-aware but still depend on counts and summary metrics.
+
+### D. Missing
+
+- First-class capability framework with descriptors and checkpoint mapping.
+- Automatic or educator-confirmed growth updates from evidence.
+- Portfolio lineage connecting artifact, reflection, verification, rubric result, and capability claim.
+- Passport generation from actual evidence provenance.
+
+### E. Gold-ready blockers
+
+- No shared capability model anchors curriculum, evidence, rubric scoring, growth, portfolio, and reporting.
+- Live evidence capture exists, but the downstream chain is still disconnected.
+- Reporting still depends on rollups and gamified progress constructs.
+- AI transparency is not consistently visible across all relevant learner outputs.
+
+## Recommended build order from here
+
+1. Replace free-text capability labels with first-class capability entities and mappings.
+2. Wire `evidenceRecords` into rubric review and capability update logic.
+3. Persist growth events from rubric and verification outcomes.
+4. Link verified evidence into learner portfolio items.
+5. Rebuild Passport and family reporting from evidence provenance, not rollups.
