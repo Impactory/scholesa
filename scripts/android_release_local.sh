@@ -6,6 +6,7 @@ LOCAL_ENV_FILE="$REPO_ROOT/.env.google_play.local"
 ANDROID_DIR="$REPO_ROOT/apps/empire_flutter/app/android"
 BUNDLE_DIR="$ANDROID_DIR/vendor/bundle"
 BUNDLE_APP_CONFIG="$ANDROID_DIR/.bundle"
+BUNDLE_USER_HOME_DIR="$ANDROID_DIR/.bundle_home"
 KEY_PROPERTIES_FILE="$ANDROID_DIR/key.properties"
 COMMAND="${1:-verify_play_key}"
 
@@ -58,6 +59,8 @@ export PLAY_TRACK="${PLAY_TRACK:-internal}"
 export FLUTTER_BIN="${FLUTTER_BIN:-$REPO_ROOT/apps/empire_flutter/app/.fvm/flutter_sdk/bin/flutter}"
 export BUNDLE_PATH="${BUNDLE_PATH:-$BUNDLE_DIR}"
 export BUNDLE_APP_CONFIG
+export BUNDLE_USER_HOME="${BUNDLE_USER_HOME:-$BUNDLE_USER_HOME_DIR}"
+export BUNDLE_CACHE_PATH="${BUNDLE_CACHE_PATH:-$BUNDLE_USER_HOME/cache}"
 
 [[ -n "${GOOGLE_PLAY_JSON_KEY_PATH:-}" ]] || fail "GOOGLE_PLAY_JSON_KEY_PATH is empty in $LOCAL_ENV_FILE."
 
@@ -78,6 +81,8 @@ if [[ "$FASTLANE_LANE" != "verify_play_key" && "$FASTLANE_LANE" != "upload_inter
 fi
 
 cd "$ANDROID_DIR"
-mkdir -p "$BUNDLE_PATH" "$BUNDLE_APP_CONFIG"
+mkdir -p "$BUNDLE_PATH" "$BUNDLE_APP_CONFIG" "$BUNDLE_USER_HOME" "$BUNDLE_CACHE_PATH"
+bundle config set --local path "$BUNDLE_PATH" >/dev/null
+bundle config set --local cache_path "$BUNDLE_CACHE_PATH" >/dev/null
 bundle install
 bundle exec fastlane android "$FASTLANE_LANE"

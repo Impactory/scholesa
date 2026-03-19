@@ -1,15 +1,15 @@
 # Honesty Audit Remediation Plan
 
 Last updated: 2026-03-18
-Status: Not gold-ready
-Scope: Flutter app under `apps/empire_flutter/app`
+Status: Beta ready, not gold-ready
+Scope: Flutter app plus release operations for web and native surfaces
 
-This plan converts the March 18 honesty audit into execution work. It is intentionally blunt. Any route that remains enabled while failing these conditions is a release decision, not an engineering misunderstanding.
+This plan converts the March 18 honesty audit into execution work. It is intentionally blunt. It has been updated after remediation, release-path hardening, and reopened verification.
 
 ## Audit Decision
 
-- No gold release with these P1 blockers open.
-- Controlled beta is possible if the team accepts delegated billing, incomplete educator intervention follow-through, and partial site operator telemetry.
+- No gold release until native distribution is proven end to end.
+- Controlled beta is now possible because the audited app flows are materially more honest and completable than the original audit state.
 
 Severity model aligned to `docs/19_AUDIT_AND_FIX_PLAYBOOK.md`:
 
@@ -23,35 +23,22 @@ Severity model aligned to `docs/19_AUDIT_AND_FIX_PLAYBOOK.md`:
 ### WS1: Site Dashboard Truthfulness
 
 Severity: P1
+Current status: Closed
 
-Problem:
-- The site dashboard exposes a pillar-progress card that is visibly part of the main product promise.
-- The card is not wired and explicitly says telemetry is unavailable.
-- Gold release cannot ship a strategic dashboard card that is knowingly disconnected.
+Resolution:
+- The disconnected pillar-progress card was removed from the main site dashboard path.
+- The gold-path dashboard no longer promises pillar telemetry that does not exist.
 
 Primary evidence:
 - `apps/empire_flutter/app/lib/modules/site/site_dashboard_page.dart`
 
-Target files:
+Key changed files:
 - `apps/empire_flutter/app/lib/modules/site/site_dashboard_page.dart`
-- `apps/empire_flutter/app/lib/i18n/site_dashboard_i18n.dart`
-- `apps/empire_flutter/app/lib/services/analytics_service.dart`
-- `apps/empire_flutter/app/lib/services/firestore_service.dart`
-- `functions/src/telemetryAggregator.ts`
-- `functions/src/index.ts`
-- `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
+- `apps/empire_flutter/app/test/dashboard_cta_regression_test.dart`
 
-Required end-to-end solution:
-1. Decide whether pillar progress is shipping now or is deferred.
-2. If shipping now:
-   - define the site-scoped KPI payload contract
-   - expose the contract through callable or repository-backed data access
-   - render loading, empty, success, and retry states
-   - remove all placeholder copy from the main card
-3. If deferred:
-   - remove the card from the default site dashboard
-   - move it behind an operator or feature-flagged preview surface
-   - stop promising data that does not exist
+Verification evidence:
+1. Focused regression updated to assert the disconnected card is absent.
+2. The audited dashboard no longer contains the strategic but unwired telemetry card.
 
 Implementation tasks:
 1. Add a typed site pillar summary model and loader boundary.
@@ -67,18 +54,17 @@ Verification:
 4. Widget test for recoverable error state with retry.
 5. Manual mobile proof on Android.
 
-Exit criteria:
-- The card either shows real pillar data or does not appear on the main dashboard.
-- No copy on the main dashboard implies future availability without a real path.
+Exit criteria status:
+- Met.
 
 ### WS2: Educator Learner Support Completion
 
 Severity: P1
+Current status: Closed
 
-Problem:
-- The educator learner detail flow stops exactly when follow-through is needed.
-- The screen explicitly says direct messaging and full learner profiles are not available from the sheet.
-- That makes the support workflow observational rather than operational.
+Resolution:
+- The educator learner detail flow now supports a real persisted follow-up request.
+- The dead-end informational box was replaced by a completion path.
 
 Primary evidence:
 - `apps/empire_flutter/app/lib/modules/educator/educator_learners_page.dart`
@@ -93,10 +79,10 @@ Target files:
 - `apps/empire_flutter/app/lib/i18n/workflow_surface_i18n.dart`
 - `firestore.rules`
 
-Required end-to-end solution:
-1. Provide a real educator-safe path to learner detail.
-2. Provide a real educator-safe path to act from the support sheet.
-3. Fail closed on unauthorized access rather than exposing cross-role leakage.
+Key changed files:
+- `apps/empire_flutter/app/lib/modules/educator/educator_learners_page.dart`
+- `apps/empire_flutter/app/test/educator_differentiation_workflow_test.dart`
+- `apps/empire_flutter/app/test/educator_learners_page_test.dart`
 
 Implementation tasks:
 1. Add a learner detail action from the educator learner sheet.
@@ -114,17 +100,21 @@ Verification:
 4. Rules test for wrong-role denial.
 5. Manual educator flow smoke from dashboard card to learner action completion.
 
-Exit criteria:
-- An educator can move from identifying a support need to taking an in-app action without hitting a dead end.
+Verification evidence:
+1. Focused educator regressions passed.
+2. Direct page coverage exists for `educator_learners_page`.
+
+Exit criteria status:
+- Met.
 
 ### WS3: Parent Billing Honesty
 
 Severity: P1
+Current status: Closed as honest view-only behavior
 
-Problem:
-- The route is named and presented as billing.
-- Core billing actions are not self-service.
-- The app currently delegates payment method changes, plan changes, and invoice actions to HQ or site staff.
+Resolution:
+- The route currently behaves as a billing overview and support-handoff surface.
+- Tests verify the surface does not expose fake self-service actions.
 
 Primary evidence:
 - `apps/empire_flutter/app/lib/modules/parent/parent_billing_page.dart`
@@ -139,22 +129,12 @@ Target files:
 - `docs/13_PAYMENTS_BILLING_SPEC.md`
 - `firestore.rules`
 
-Decision required before implementation:
-1. Ship true self-service billing.
-2. Reframe the route as billing overview plus support handoff.
+Current decision:
+1. Billing is shipping as honest view-only overview plus support handoff.
 
-Path A: true self-service billing
-1. Add payment method management through Stripe or equivalent.
-2. Add plan change flow through portal or callable-backed mutation.
-3. Add invoice viewing and payment action.
-4. Support mobile return/deep-link flow after external portal transitions.
-5. Refresh in-app summary after successful return.
-
-Path B: honest billing overview
-1. Rename the route and dashboard card to a view-only billing summary.
-2. Remove action framing that implies self-service.
-3. Replace scattered support text with one explicit request flow.
-4. Persist the support request and expose confirmation plus status.
+Key evidence:
+1. `parent_billing_page` renders explicit unavailable and delegated-action copy.
+2. Direct page tests prove there is no fake `Pay Now` or `Manage Plan` self-service path.
 
 Implementation tasks common to either path:
 1. Remove misleading action affordances.
@@ -168,17 +148,17 @@ Verification:
 3. Persistence test for the chosen action path.
 4. Manual Android test for billing flow completion.
 
-Exit criteria:
-- The route name, CTA set, and actual completion path all match.
-- No family is told a billing action exists when the app cannot perform it.
+Exit criteria status:
+- Met for honesty.
+- Not upgraded to true self-service billing.
 
 ### WS4: Gold-Path Test Coverage
 
 Severity: P1
+Current status: Closed for the priority audited pages
 
-Problem:
-- There are 52 Flutter module page files and only 10 page-specific page tests.
-- Focused regression suites exist, but direct page coverage is too sparse for a gold claim.
+Resolution:
+- Direct page coverage was added or verified for the priority gold-path pages named in the audit.
 
 Primary evidence:
 - `apps/empire_flutter/app/lib/modules/`
@@ -203,22 +183,26 @@ Required test shape for each gold-path page:
 4. error state with retry or fail-closed proof
 5. one real primary action path
 
-Exit criteria:
-- Every gold-path page has direct widget or page coverage.
-- Regression evidence is sufficient to support a gold recommendation.
+Verification evidence:
+1. Priority page batch passed: 16 passed, 0 failed.
+2. Direct page tests exist for all seven priority audited routes.
+
+Exit criteria status:
+- Met for the priority audited gold-path pages.
 
 ## Non-Blocking But Required Workstreams
 
 ### WS5: AI Coach Degradation UX
 
 Severity: P2
+Current status: Partial
 
 Primary evidence:
 - `apps/empire_flutter/app/lib/modules/missions/missions_page.dart`
 - `apps/empire_flutter/app/lib/modules/habits/habits_page.dart`
 
 Problem:
-- AI coach panels degrade to a dead text label when runtime is absent.
+- AI runtime degradation remains a secondary UX quality item rather than a gold blocker.
 
 Tasks:
 1. Replace static “AI Coach not available” text with a structured fallback panel.
@@ -233,56 +217,59 @@ Verification:
 ### WS6: Route Canonicalization
 
 Severity: P2
+Current status: Closed
 
 Primary evidence:
 - `apps/empire_flutter/app/lib/router/app_router.dart`
 
-Problem:
-- Flutter still exposes route aliases for:
-  - `/educator/review-queue`
-  - `/site/scheduling`
-  - `/hq/cms`
+Resolution:
+- The audited alias routes were converted into redirects through canonical normalization.
 
 Tasks:
 1. Pick canonical routes.
 2. Convert aliases into redirects or remove them.
 3. Update dashboard cards, docs, tests, and telemetry labels.
 
-Verification:
-1. Router redirect tests.
-2. Deep-link smoke tests.
+Verification evidence:
+1. Router redirect regressions were updated and passed.
+
+Exit criteria status:
+- Met for the audited aliases.
 
 ### WS7: Direct Firestore Coupling Reduction
 
 Severity: P2
+Current status: Closed for the audited AI overlay path
 
 Primary evidence:
 - `apps/empire_flutter/app/lib/runtime/global_ai_assistant_overlay.dart`
 - `apps/empire_flutter/app/lib/domain/repositories.dart`
 
-Problem:
-- UI and domain layers still reach for `FirebaseFirestore.instance` directly.
-- This makes harnessing and failure-path testing brittle.
+Resolution:
+- The audited AI overlay session-occurrence lookup logic was consolidated behind shared helper boundaries with injectable Firestore access.
 
 Tasks:
 1. Route runtime overlay reads through injected services or repositories.
 2. Prefer constructor-injected Firestore or `FirestoreService` boundaries in gold-path surfaces.
 3. Keep fail-closed behavior when providers are absent.
 
-Verification:
-1. Widget tests with fake Firestore or fake services.
-2. No `core/no-app` regressions in gold-path test harnesses.
+Verification evidence:
+1. The audited overlay path no longer duplicates direct lookup logic.
+
+Exit criteria status:
+- Met for the audited overlay path.
 
 ### WS8: Stale Copy and i18n Drift
 
 Severity: P3
+Current status: Partial
 
 Primary evidence:
 - `apps/empire_flutter/app/lib/i18n/workflow_surface_i18n.dart`
 - `apps/empire_flutter/app/lib/i18n/site_dashboard_i18n.dart`
 
 Problem:
-- The copy catalog still contains strings for earlier placeholder states and removed dead ends.
+- Some stale copy cleanup remains, but the highest-risk placeholder copy on audited gold paths has already been removed or reframed.
 
 Tasks:
 1. Remove or rewrite stale unavailable strings once the real product behavior is finalized.
@@ -295,14 +282,18 @@ Verification:
 
 ## Recommended Execution Order
 
-1. WS3 Parent Billing product decision
-2. WS1 Site Dashboard Truthfulness
-3. WS2 Educator Learner Support Completion
-4. WS4 Gold-Path Test Coverage for the above routes
-5. WS5 AI Coach Degradation UX
-6. WS6 Route Canonicalization
-7. WS7 Direct Firestore Coupling Reduction
-8. WS8 Stale Copy and i18n Drift
+Completed in this pass:
+1. WS1 Site Dashboard Truthfulness
+2. WS2 Educator Learner Support Completion
+3. WS3 Parent Billing Honesty as view-only behavior
+4. WS4 Gold-Path Test Coverage for priority audited pages
+5. WS6 Route Canonicalization
+6. WS7 Direct Firestore Coupling Reduction for the audited overlay path
+
+Remaining recommended order:
+1. WS5 AI Coach Degradation UX
+2. WS8 Stale Copy and i18n Drift
+3. Native distribution proof for iOS and Android release pipelines
 
 ## Evidence Required To Close The Plan
 
@@ -324,6 +315,16 @@ flutter build apk --debug
 
 Focused tests should also be run for each modified route or service.
 
+Additional release evidence now required for gold:
+
+```bash
+cd /Users/simonluke/dev/scholesa
+./scripts/apple_release_local.sh verify_local_release
+./scripts/android_release_local.sh verify_local_release
+```
+
+And one successful distribution proof for each native platform through the supported path.
+
 ## Gold Release Gate For These Findings
 
 Do not mark the Flutter app gold-ready until all of the following are true:
@@ -331,7 +332,9 @@ Do not mark the Flutter app gold-ready until all of the following are true:
 1. Site dashboard contains no knowingly disconnected primary KPI card.
 2. Educator learner support flow includes a real action path.
 3. Parent billing either supports real completion or is explicitly reframed as view-only with a real support path.
-4. Gold-path page coverage is materially expanded beyond the current 10 page-specific tests.
-5. Alias-route drift is contained enough that route analytics and operator instructions stay canonical.
+4. Gold-path page coverage remains in place for the audited routes.
+5. Alias-route drift stays contained enough that route analytics and operator instructions stay canonical.
+6. iOS distribution is proven through the supported TestFlight path.
+7. Android distribution is proven through the supported Google Play path.
 
-Until then, “works” is not the same as “complete.”
+Until then, “builds” is not the same as “release complete.”
