@@ -17,7 +17,7 @@ Only active product code paths were considered. A workflow is not "verified" unl
 | 5 | Proof-of-learning can be captured and reviewed | Partial | Explain-back capture exists, but the current path records a generic event and does not form a teacher-reviewed proof chain attached to capability evidence. |
 | 6 | Capability growth updates over time from evidence | Partial | Educator rubric reviews now write capability mastery and append-only growth events, and linked evidence can now flow into portfolio items, but reporting still does not consume that chain. |
 | 7 | Student portfolio shows real artifacts and reflections | Partial | Portfolio items can now be created from reviewed educator evidence with capability and growth provenance, but reflection linkage and family/report trust layers are still incomplete. |
-| 8 | Ideation Passport/report can be generated from actual evidence | Missing | Parent views now consume more evidence-backed summary data, but there is still no true Passport/report generator that assembles claims directly from evidence provenance. |
+| 8 | Ideation Passport/report can be generated from actual evidence | Partial | Parent bundle and child detail views now generate capability claims from evidence, growth, and verified portfolio artifacts, but there is still no full exportable Passport/report workflow with end-to-end provenance presentation. |
 | 9 | AI-use is disclosed and visible where relevant | Partial | AI surfaces expose guardrails and explain-back prompts in some places, but disclosure is not consistently attached to learner artifacts, portfolio items, or reports. |
 | 10 | Family/student/teacher views are understandable and trustworthy | Partial | Active views exist, but several still rely on levels, XP, snapshots, and aggregate progress rather than direct evidence-backed claims. |
 
@@ -86,10 +86,11 @@ Only active product code paths were considered. A workflow is not "verified" unl
 ### 8. Passport/report generated from actual evidence
 
 - `functions/src/index.ts` now computes parent bundle evidence and growth summaries from `evidenceRecords`, `capabilityMastery`, `capabilityGrowthEvents`, `portfolioItems`, `learnerReflections`, and proof-ready mission attempts.
-- `apps/empire_flutter/app/lib/modules/parent/parent_summary_page.dart` and `apps/empire_flutter/app/lib/modules/parent/parent_child_page.dart` now emphasize reviewed evidence, verified artifacts, and capability updates instead of leading with `XP`, `level`, and `streak`.
-- `apps/empire_flutter/app/lib/modules/parent/parent_portfolio_page.dart` now loads real portfolio preview items from the parent bundle instead of synthesizing them from recent activities.
-- Remaining gap: this is still a family dashboard summary layer, not a full Passport/report generator with claim-by-claim provenance and exportable evidence trails.
-- Current judgment: missing.
+- The same callable now generates `ideationPassport.claims` directly from capability mastery, linked evidence, growth records, and verified portfolio artifacts.
+- `apps/empire_flutter/app/lib/modules/parent/parent_child_page.dart` now renders an `Ideation Passport` section from those evidence-backed claims.
+- `apps/empire_flutter/app/lib/modules/parent/parent_portfolio_page.dart` exports portfolio summaries with evidence-linked and verification status included.
+- Remaining gap: there is still no full exportable Passport/report workflow with complete claim-by-claim provenance presentation, family-safe publishing flow, and AI disclosure attached to each claim.
+- Current judgment: partial.
 
 ### 9. Visible AI-use disclosure
 
@@ -104,8 +105,8 @@ Only active product code paths were considered. A workflow is not "verified" unl
 - `apps/empire_flutter/app/lib/modules/educator/educator_sessions_page.dart` now frames the session as a studio flow and supports live evidence capture.
 - `apps/empire_flutter/app/lib/modules/learner/learner_today_page.dart` was updated earlier in this thread to surface an evidence loop.
 - `apps/empire_flutter/app/lib/modules/parent/parent_summary_page.dart` now asks evidence-first family questions.
-- `functions/src/index.ts` now returns evidence-backed parent summaries for reviewed observations, capability growth, verified artifacts, and reflection counts.
-- Remaining gap: legacy level/xp/streak fields still exist for compatibility, and family reporting is not yet a full evidence-traceable Passport/report surface.
+- `functions/src/index.ts` now returns evidence-backed parent summaries and claim-based Passport data for reviewed observations, capability growth, verified artifacts, and reflections.
+- Remaining gap: legacy level/xp/streak fields still exist for compatibility, and family reporting is not yet a fully polished evidence-traceable Passport/report surface.
 - Current judgment: partial.
 
 ## Honesty Report
@@ -121,22 +122,22 @@ Only active product code paths were considered. A workflow is not "verified" unl
 
 - Legacy level/xp/streak constructs still exist in family payloads for compatibility.
 - Mission-oriented rubric flows without capability lineage.
-- Family and Passport reporting still stop at summary objects instead of claim-by-claim provenance.
+- Passport/report workflows still stop short of a complete shareable/exportable claim-by-claim report surface.
 
 ### C. Fake or partial
 
 - Capability labels that are free text rather than references into a defined capability framework.
 - Explain-back recorded as telemetry without full proof review workflow.
-- Reporting surfaces now use more real evidence and portfolio provenance, but still collapse that data into summaries instead of exporting direct evidence trails.
+- Reporting surfaces now use more real evidence and portfolio provenance, but the full report/export workflow is still incomplete.
 
 ### D. Missing
 
-- Passport generation from actual evidence provenance.
+- Full Passport/report export and publishing workflow from actual evidence provenance.
 
 ### E. Gold-ready blockers
 
 - The capability model and growth records now anchor reviewed educator evidence into portfolio items, but reporting still does not consume that chain end to end.
-- Family reporting is more evidence-backed now, but Passport/report generation still does not consume the chain end to end.
+- Family reporting and Passport claims are more evidence-backed now, but the full report/export workflow still does not consume the chain end to end.
 - AI transparency is not consistently visible across all relevant learner outputs.
 
 ## Recommended build order from here
