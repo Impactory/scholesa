@@ -469,7 +469,7 @@ export const listWorkflowApprovals = onCall(async (request: CallableRequest) => 
         title: typeof data.title === 'string' ? data.title : `Contract ${snapDoc.id}`,
         summary: typeof data.summary === 'string' ? data.summary : 'Partner contract awaiting review.',
         siteId: typeof data.siteId === 'string' ? data.siteId : null,
-        status: typeof data.status === 'string' ? data.status : 'pending',
+        status: typeof data.status === 'string' && data.status.trim().length > 0 ? data.status : 'unavailable',
       };
     }),
     ...payoutsSnap.docs.map((snapDoc) => {
@@ -485,7 +485,7 @@ export const listWorkflowApprovals = onCall(async (request: CallableRequest) => 
         title: `Payout ${snapDoc.id}`,
         summary: `${amountSummary}${currencySummary}`,
         siteId: typeof data.siteId === 'string' ? data.siteId : null,
-        status: typeof data.status === 'string' ? data.status : 'pending',
+        status: typeof data.status === 'string' && data.status.trim().length > 0 ? data.status : 'unavailable',
       };
     }),
   ];

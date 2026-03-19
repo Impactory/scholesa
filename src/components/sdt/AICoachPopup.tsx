@@ -801,7 +801,7 @@ Guidance: ${
                 <p className="font-medium text-app-foreground">{t('aiCoach.basedOn')}</p>
                 {response.citations.map((citation, idx) => (
                   <div key={idx} className="text-xs text-app-muted">
-                    • {citation.type}: {citation.snippet}
+                    • {citation.type || 'Context unavailable'}: {citation.snippet}
                   </div>
                 ))}
               </div>

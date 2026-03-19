@@ -318,7 +318,18 @@ export class VectorIndexer {
         // Prepare content for embedding
         const contents = batch.map(doc => {
           const data = doc.data();
-          return `Exemplar Work:\nMission: ${data.missionTitle || 'Unknown'}\n\nStudent Work:\n${data.content || data.description}\n\nEducator Notes: ${data.exemplarNotes || ''}`;
+          const missionTitle = typeof data.missionTitle === 'string' && data.missionTitle.trim().length > 0
+            ? data.missionTitle.trim()
+            : null;
+          const studentWork = typeof data.content === 'string' && data.content.trim().length > 0
+            ? data.content
+            : typeof data.description === 'string' && data.description.trim().length > 0
+              ? data.description
+              : '';
+          const educatorNotes = typeof data.exemplarNotes === 'string' && data.exemplarNotes.trim().length > 0
+            ? `\n\nEducator Notes: ${data.exemplarNotes}`
+            : '';
+          return `Exemplar Work:${missionTitle ? `\nMission: ${missionTitle}` : ''}\n\nStudent Work:\n${studentWork}${educatorNotes}`;
         });
         
         // 3. Generate embeddings for batch
@@ -389,7 +400,13 @@ export class VectorIndexer {
         // Prepare content for embedding
         const contents = batch.map(doc => {
           const data = doc.data();
-          return `Common Misconception:\nTopic: ${data.topic || 'General'}\nSkill: ${data.skillName || 'Unknown'}\n\nMisconception: ${data.misconception}\n\nWhy students think this: ${data.reasoning}\n\nCorrect understanding: ${data.correctUnderstanding}\n\nHow to address: ${data.teachingStrategy}`;
+          const topic = typeof data.topic === 'string' && data.topic.trim().length > 0
+            ? `\nTopic: ${data.topic.trim()}`
+            : '';
+          const skillName = typeof data.skillName === 'string' && data.skillName.trim().length > 0
+            ? `\nSkill: ${data.skillName.trim()}`
+            : '';
+          return `Common Misconception:${topic}${skillName}\n\nMisconception: ${data.misconception}\n\nWhy students think this: ${data.reasoning}\n\nCorrect understanding: ${data.correctUnderstanding}\n\nHow to address: ${data.teachingStrategy}`;
         });
         
         // 3. Generate embeddings for batch

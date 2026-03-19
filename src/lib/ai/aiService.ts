@@ -63,7 +63,7 @@ export interface AIServiceResponse {
   hints?: string[];
   followUpQuestions?: string[];
   citations?: {
-    type: string;
+    type: string | null;
     snippet: string;
   }[];
   
@@ -273,7 +273,7 @@ export class AIService {
         hints: modelResponse.hints,
         followUpQuestions: modelResponse.followUpQuestions,
         citations: modelResponse.citations?.map(c => ({
-          type: modelRequest.contextBlocks.find(b => b.id === c.contextBlockId)?.type || 'unknown',
+          type: modelRequest.contextBlocks.find(b => b.id === c.contextBlockId)?.type || null,
           snippet: c.snippet
         })),
         modelUsed: modelResponse.modelUsed,
