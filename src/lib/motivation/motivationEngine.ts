@@ -43,10 +43,10 @@ export interface MissionChoice {
   id: string;
   title: string;
   description: string;
-  difficulty: DifficultyLevel;
-  estimatedMinutes: number;
+  difficulty: DifficultyLevel | null;
+  estimatedMinutes: number | null;
   skillIds: string[];
-  theme: string;
+  theme: string | null;
   connectionToInterests: string[]; // Which student interests it matches
   relevanceScore: number; // 0-1 based on student profile
 }
@@ -288,15 +288,27 @@ export class AutonomyEngine {
       
       missionsSnap.forEach(doc => {
         const data = doc.data();
+        const title = typeof data.title === 'string' && data.title.trim().length > 0
+          ? data.title.trim()
+          : null;
+        if (!title) {
+          return;
+        }
         missions.push({
           id: doc.id,
-          title: data.title || 'Untitled Mission',
-          description: data.description || '',
-          difficulty: data.difficulty || 'moderate',
-          estimatedMinutes: data.estimatedMinutes || 60,
-          skillIds: data.targetSkills || [],
-          theme: data.theme || 'general',
-          connectionToInterests: data.tags || [],
+          title,
+          description: typeof data.description === 'string' ? data.description : '',
+          difficulty: typeof data.difficulty === 'string' ? data.difficulty as DifficultyLevel : null,
+          estimatedMinutes: typeof data.estimatedMinutes === 'number' && Number.isFinite(data.estimatedMinutes)
+            ? data.estimatedMinutes
+            : null,
+          skillIds: Array.isArray(data.targetSkills)
+            ? data.targetSkills.filter((skill): skill is string => typeof skill === 'string' && skill.trim().length > 0)
+            : [],
+          theme: typeof data.theme === 'string' && data.theme.trim().length > 0 ? data.theme.trim() : null,
+          connectionToInterests: Array.isArray(data.tags)
+            ? data.tags.filter((tag): tag is string => typeof tag === 'string' && tag.trim().length > 0)
+            : [],
           relevanceScore: 0.5 // Will be calculated later based on student profile
         });
       });
@@ -323,7 +335,7 @@ export class AutonomyEngine {
       if (interestMatch) score += 0.3;
       
       // Difficulty preference
-      if (mission.difficulty === profile.preferredDifficulty) score += 0.2;
+      if (mission.difficulty != null && mission.difficulty === profile.preferredDifficulty) score += 0.2;
     }
     
     return Math.min(1, score);
@@ -334,7 +346,7 @@ export class AutonomyEngine {
     
     return profile.interests.filter(interest =>
       mission.skillIds.some(skill => skill.includes(interest)) ||
-      mission.theme.toLowerCase().includes(interest.toLowerCase())
+      (mission.theme != null && mission.theme.toLowerCase().includes(interest.toLowerCase()))
     );
   }
 }
