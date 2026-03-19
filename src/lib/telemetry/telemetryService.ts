@@ -513,7 +513,7 @@ export class TelemetryService {
     userId: string,
     siteId: string,
     days: number = 7
-  ): Promise<number> {
+  ): Promise<number | null> {
     try {
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - days);
@@ -526,6 +526,9 @@ export class TelemetryService {
       );
 
       const snapshot = await getDocs(q);
+      if (snapshot.empty) {
+        return null;
+      }
 
       const totalEvents = snapshot.size;
       const checkpointsPassed = snapshot.docs.filter(
@@ -543,7 +546,7 @@ export class TelemetryService {
 
       return Math.round(score);
     } catch {
-      return 0;
+      return null;
     }
   }
   

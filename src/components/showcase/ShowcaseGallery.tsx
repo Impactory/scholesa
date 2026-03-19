@@ -29,7 +29,7 @@ import { usePageViewTracking } from '@/src/hooks/useTelemetry';
 interface ShowcaseItem {
   id: string;
   learnerId: string;
-  learnerName: string;
+  learnerName: string | null;
   siteId: string;
   title: string;
   description: string;
@@ -91,7 +91,7 @@ export function ShowcaseGallery() {
           return {
             id: doc.id,
             learnerId: data.learnerId,
-            learnerName: data.learnerName || 'Unknown',
+            learnerName: typeof data.learnerName === 'string' && data.learnerName.trim().length > 0 ? data.learnerName : null,
             siteId: data.siteId,
             title: data.title,
             description: data.description,
@@ -204,7 +204,7 @@ export function ShowcaseGallery() {
           <div className="bg-white rounded-lg max-w-md w-full">
             <PeerRecognitionForm
               recipientId={selectedItem.learnerId}
-              recipientName={selectedItem.learnerName}
+              recipientName={selectedItem.learnerName || 'Learner unavailable'}
               onClose={() => {
                 setShowRecognitionForm(false);
                 setSelectedItem(null);
@@ -260,7 +260,7 @@ function ShowcaseCard({ item, onRecognize }: ShowcaseCardProps) {
         <p className="text-gray-600 text-sm line-clamp-2 mb-3">{item.description}</p>
         
         <div className="flex items-center gap-1 text-xs text-gray-500 mb-3">
-          <span>by {item.learnerName}</span>
+          <span>by {item.learnerName || 'Learner unavailable'}</span>
           <span>•</span>
           <span>{item.createdAt.toLocaleDateString()}</span>
         </div>
