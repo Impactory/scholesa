@@ -60,7 +60,9 @@ Only active product code paths were considered. A workflow is not "verified" unl
 
 - `src/components/sdt/AICoachScreen.tsx` exposes explain-back for AI help sessions.
 - `functions/src/aiCoachExplainBack.ts` records an `explain_it_back_submitted` event.
-- The current implementation is event-centric. The submitted explain-back is marked with `approved: true` in the generated payload and does not create a teacher-reviewed proof object attached to a learner capability record.
+- `apps/empire_flutter/app/lib/modules/missions/missions_page.dart` now requires learners to complete proof-of-learning fields and declare whether AI supported the mission before submission.
+- `apps/empire_flutter/app/lib/modules/missions/mission_service.dart` now persists learner AI disclosure directly into `proofOfLearningBundles` and carries a minimal disclosure summary onto submitted mission attempts.
+- The current implementation is still only partially connected to capability review because proof and AI disclosure are captured at the mission boundary and summarized downstream, but not yet teacher-reviewed as first-class capability evidence objects.
 - Current judgment: partial.
 
 ### 6. Capability growth over time from evidence
@@ -91,7 +93,7 @@ Only active product code paths were considered. A workflow is not "verified" unl
 - `apps/empire_flutter/app/lib/modules/parent/parent_child_page.dart` now renders an `Ideation Passport` section from those evidence-backed claims.
 - `apps/empire_flutter/app/lib/modules/parent/parent_child_page.dart` now exports an `Ideation Passport` text report with claim-by-claim evidence counts, verification status, proof-of-learning status, AI visibility status, and direct evidence/portfolio item/mission attempt IDs.
 - `apps/empire_flutter/app/lib/modules/parent/parent_portfolio_page.dart` exports portfolio summaries with evidence-linked, proof-of-learning, AI visibility, and provenance details included.
-- Remaining gap: there is still no polished family-safe publishing flow, no richer formatted Passport document, and learner-facing AI-use disclosure is still only partial because claims can now surface session-linked learner AI verification gaps, but there is still no full artifact-level learner AI provenance trail across the product.
+- Remaining gap: there is still no polished family-safe publishing flow, no richer formatted Passport document, and learner-facing AI-use disclosure is still only partial because claims now prefer direct mission-level learner disclosure when it exists, but there is still no full artifact-level learner AI provenance trail across the product.
 - Current judgment: partial.
 
 ### 9. Visible AI-use disclosure
@@ -99,7 +101,8 @@ Only active product code paths were considered. A workflow is not "verified" unl
 - `src/components/sdt/AICoachScreen.tsx` shows guardrails and explain-back prompts.
 - `AiDraftBadge.tsx` provides a visible AI draft badge.
 - `apps/empire_flutter/app/lib/runtime/ai_coach_widget.dart` carries `requiresExplainBack` in runtime metadata.
-- Gap: AI disclosure is still not consistently attached at creation time across artifact submission, portfolio generation, family reporting, and teacher review, even though family portfolio and Passport surfaces now surface learner AI verification gaps when session-linked interaction data exists.
+- `apps/empire_flutter/app/lib/modules/missions/missions_page.dart` and `apps/empire_flutter/app/lib/modules/missions/mission_service.dart` now capture learner AI-use declaration and details in the proof bundle before mission submission.
+- Gap: AI disclosure is still not consistently attached at creation time across every artifact submission, portfolio generation, family reporting, and teacher review, even though mission-linked family portfolio and Passport surfaces now prefer direct learner disclosure and fall back to session-linked interaction evidence where necessary.
 - Current judgment: partial.
 
 ### 10. Trustworthy family, student, and teacher views

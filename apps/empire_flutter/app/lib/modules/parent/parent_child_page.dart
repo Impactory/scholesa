@@ -691,6 +691,8 @@ class _ParentChildPageState extends State<ParentChildPage> {
         return _t('Learner AI use disclosed with explain-back evidence');
       case 'learner-ai-verification-gap':
         return _t('Learner AI use detected without explain-back evidence');
+      case 'learner-ai-not-used':
+        return _t('Learner declared no AI support used');
       case 'educator-feedback-ai':
         return _t('AI-assisted educator feedback visible');
       case 'no-learner-ai-signal':

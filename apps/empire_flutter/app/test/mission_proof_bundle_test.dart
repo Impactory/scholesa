@@ -141,6 +141,13 @@ void main() {
         textFields.at(1), 'I said the steps out loud and corrected one gap.');
     await tester.enterText(textFields.at(2),
         'I would rebuild the sensor flow, test inputs, then refactor outputs.');
+    await tester.scrollUntilVisible(
+      find.text('No AI support used for this mission'),
+      250,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.text('No AI support used for this mission'));
+    await tester.pumpAndSettle();
     await tester.enterText(
         textFields.at(3), 'Checkpoint after fixing the motor timing.');
     await tester.enterText(
@@ -177,6 +184,7 @@ void main() {
             .get();
     expect(proofBundleDoc.exists, isTrue);
     expect(proofBundleDoc.data()?['explainItBack'], contains('build loop'));
+    expect(proofBundleDoc.data()?['aiAssistanceUsed'], isFalse);
     expect(
         (proofBundleDoc.data()?['versionHistory'] as List<dynamic>).length, 1);
 
@@ -192,6 +200,14 @@ void main() {
     expect(
       attempts.docs.first.data()['proofBundleSummary']['isReady'],
       isTrue,
+    );
+    expect(
+      attempts.docs.first.data()['proofBundleSummary']['hasLearnerAiDisclosure'],
+      isTrue,
+    );
+    expect(
+      attempts.docs.first.data()['proofBundleSummary']['aiAssistanceUsed'],
+      isFalse,
     );
 
     final QuerySnapshot<Map<String, dynamic>> submissions =

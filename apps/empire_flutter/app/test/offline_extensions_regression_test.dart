@@ -154,10 +154,15 @@ void main() {
         explainItBack: 'Explain the core concept.',
         oralCheckResponse: 'I can talk through the model.',
         miniRebuildPlan: 'Rebuild with a new example.',
+        aiAssistanceUsed: true,
+        aiAssistanceDetails:
+            'AI helped brainstorm alternatives before I rewrote the explanation.',
       );
 
       expect(bundle, isNotNull);
       expect(bundle!.siteId, 'site-1');
+      expect(bundle.aiAssistanceUsed, isTrue);
+      expect(bundle.aiAssistanceDetails, contains('brainstorm'));
       verify(() =>
               syncCoordinator.queueOperation(OpType.attemptSaveDraft, any()))
           .called(1);

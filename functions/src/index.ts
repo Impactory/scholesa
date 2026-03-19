@@ -2611,6 +2611,8 @@ async function buildParentLearnerSummary(params: {
       const hasExplainItBack = proofBundleSummary?.hasExplainItBack === true;
       const hasOralCheck = proofBundleSummary?.hasOralCheck === true;
       const hasMiniRebuild = proofBundleSummary?.hasMiniRebuild === true;
+      const hasLearnerAiDisclosure = proofBundleSummary?.hasLearnerAiDisclosure === true;
+      const learnerAiDeclaredUsed = proofBundleSummary?.aiAssistanceUsed === true;
       const proofOfLearningStatus = !matchingMissionAttempt
         ? 'not-available'
         : hasExplainItBack && hasOralCheck && hasMiniRebuild
@@ -2628,7 +2630,13 @@ async function buildParentLearnerSummary(params: {
       });
       const hasAiFeedbackSignal = typeof matchingMissionAttempt?.aiFeedbackDraft === 'string'
         && matchingMissionAttempt.aiFeedbackDraft.trim().length > 0;
-      const aiDisclosureStatus = learnerAiEventCount > 0
+      const aiDisclosureStatus = hasLearnerAiDisclosure
+        ? learnerAiDeclaredUsed
+          ? hasExplainItBack
+            ? 'learner-ai-verified'
+            : 'learner-ai-verification-gap'
+          : 'learner-ai-not-used'
+        : learnerAiEventCount > 0
         ? hasLearnerExplainBackEvent
           ? 'learner-ai-verified'
           : 'learner-ai-verification-gap'
@@ -2734,6 +2742,14 @@ async function buildParentLearnerSummary(params: {
         const summary = entry.proofBundleSummary as Record<string, unknown> | undefined;
         return summary?.hasMiniRebuild === true;
       });
+      const hasLearnerAiDisclosure = matchingMissionAttempts.some((entry) => {
+        const summary = entry.proofBundleSummary as Record<string, unknown> | undefined;
+        return summary?.hasLearnerAiDisclosure === true;
+      });
+      const learnerAiDeclaredUsed = matchingMissionAttempts.some((entry) => {
+        const summary = entry.proofBundleSummary as Record<string, unknown> | undefined;
+        return summary?.aiAssistanceUsed === true;
+      });
       const proofOfLearningStatus = hasExplainItBack && hasOralCheck && hasMiniRebuild
         ? 'verified'
         : hasExplainItBack || hasOralCheck || hasMiniRebuild
@@ -2750,7 +2766,13 @@ async function buildParentLearnerSummary(params: {
         const eventType = typeof entry.eventType === 'string' ? entry.eventType.trim().toLowerCase() : '';
         return eventType === 'explain_it_back_submitted';
       });
-      const aiDisclosureStatus = learnerAiEventCount > 0
+      const aiDisclosureStatus = hasLearnerAiDisclosure
+        ? learnerAiDeclaredUsed
+          ? hasExplainItBack
+            ? 'learner-ai-verified'
+            : 'learner-ai-verification-gap'
+          : 'learner-ai-not-used'
+        : learnerAiEventCount > 0
         ? hasLearnerExplainBackEvent
           ? 'learner-ai-verified'
           : 'learner-ai-verification-gap'

@@ -849,6 +849,10 @@ class ParentService extends ChangeNotifier {
         final bool hasExplainItBack = proofBundleSummary?['hasExplainItBack'] == true;
         final bool hasOralCheck = proofBundleSummary?['hasOralCheck'] == true;
         final bool hasMiniRebuild = proofBundleSummary?['hasMiniRebuild'] == true;
+        final bool hasLearnerAiDisclosure =
+            proofBundleSummary?['hasLearnerAiDisclosure'] == true;
+        final bool learnerAiDeclaredUsed =
+            proofBundleSummary?['aiAssistanceUsed'] == true;
         final String proofOfLearningStatus = matchingMissionAttempt == null
           ? 'not-available'
           : hasExplainItBack && hasOralCheck && hasMiniRebuild
@@ -871,15 +875,21 @@ class ParentService extends ChangeNotifier {
         final bool hasAiFeedbackSignal = matchingMissionAttempt != null &&
           _asTrimmedString(matchingMissionAttempt['aiFeedbackDraft'])
             .isNotEmpty;
-        final String aiDisclosureStatus = learnerAiEventCount > 0
-          ? hasLearnerExplainBackEvent
-            ? 'learner-ai-verified'
-            : 'learner-ai-verification-gap'
-          : hasAiFeedbackSignal
-            ? 'educator-feedback-ai'
-            : matchingMissionAttempt != null
-              ? 'no-learner-ai-signal'
-              : 'not-available';
+        final String aiDisclosureStatus = hasLearnerAiDisclosure
+          ? learnerAiDeclaredUsed
+            ? hasExplainItBack
+              ? 'learner-ai-verified'
+              : 'learner-ai-verification-gap'
+            : 'learner-ai-not-used'
+          : learnerAiEventCount > 0
+            ? hasLearnerExplainBackEvent
+              ? 'learner-ai-verified'
+              : 'learner-ai-verification-gap'
+            : hasAiFeedbackSignal
+              ? 'educator-feedback-ai'
+              : matchingMissionAttempt != null
+                ? 'no-learner-ai-signal'
+                : 'not-available';
         return PortfolioPreviewItem(
         id: _asTrimmedString(row['id']),
         title: _asTrimmedString(row['title']).isEmpty
@@ -1073,6 +1083,20 @@ class ParentService extends ChangeNotifier {
             row['proofBundleSummary'] as Map<dynamic, dynamic>?;
         return summary?['hasMiniRebuild'] == true;
       });
+      final bool hasLearnerAiDisclosure = matchingMissionAttempts.any(
+        (Map<String, dynamic> row) {
+          final Map<dynamic, dynamic>? summary =
+              row['proofBundleSummary'] as Map<dynamic, dynamic>?;
+          return summary?['hasLearnerAiDisclosure'] == true;
+        },
+      );
+      final bool learnerAiDeclaredUsed = matchingMissionAttempts.any(
+        (Map<String, dynamic> row) {
+          final Map<dynamic, dynamic>? summary =
+              row['proofBundleSummary'] as Map<dynamic, dynamic>?;
+          return summary?['aiAssistanceUsed'] == true;
+        },
+      );
       final String proofOfLearningStatus =
           hasExplainItBack && hasOralCheck && hasMiniRebuild
               ? 'verified'
@@ -1095,15 +1119,21 @@ class ParentService extends ChangeNotifier {
             _asTrimmedString(row['eventType']).toLowerCase() ==
             'explain_it_back_submitted',
       );
-      final String aiDisclosureStatus = learnerAiEventCount > 0
-          ? hasLearnerExplainBackEvent
+        final String aiDisclosureStatus = hasLearnerAiDisclosure
+          ? learnerAiDeclaredUsed
+            ? hasExplainItBack
               ? 'learner-ai-verified'
               : 'learner-ai-verification-gap'
-          : hasAiFeedbackSignal
+            : 'learner-ai-not-used'
+          : learnerAiEventCount > 0
+            ? hasLearnerExplainBackEvent
+              ? 'learner-ai-verified'
+              : 'learner-ai-verification-gap'
+            : hasAiFeedbackSignal
               ? 'educator-feedback-ai'
               : matchingMissionAttempts.isNotEmpty
-                  ? 'no-learner-ai-signal'
-                  : 'not-available';
+                ? 'no-learner-ai-signal'
+                : 'not-available';
       claims.add(
         PassportClaim(
           capabilityId: capabilityId,
