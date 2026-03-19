@@ -25,6 +25,7 @@ Scope: Flutter app enabled routes, current runtime behavior, current test eviden
 
 - Focused page, workflow, regression, placeholder-action, and honesty test coverage now backs nearly the full enabled Flutter route surface.
 - Fresh verification in this pass:
+  - educator mission plans proof pass: 3 passed, 0 failed
   - provisioning, site sessions, and learner today proof pass: 7 passed, 0 failed
   - educator sessions and partner contracts proof pass: 5 passed, 0 failed
   - remaining-route proof pass: 7 passed, 0 failed
@@ -44,7 +45,7 @@ Scope: Flutter app enabled routes, current runtime behavior, current test eviden
 | Learner portfolio and today | Yes | Mostly yes | Mostly yes | Partly proven | Mostly yes on audited mission/habit failure and stale-data states, partial on deeper onboarding/AI paths | Yes | Today now fails honestly under direct test; deeper secondary paths still rely on broader coverage | Strong for beta |
 | Educator learners and follow-up requests | Yes | Yes | Yes | Yes | Mostly yes | Yes | No obvious fake action in audited path | Strong for beta |
 | Educator attendance | Yes | Yes | Yes | Partly proven | Yes, now honest when unavailable | Yes | No obvious fake primary action | Strong for beta |
-| Educator sessions, mission plans, integrations, learner supports, today | Yes | Mostly yes | Likely | Partly proven | Mostly yes across the audited sessions, today, and integrations failure states; mission-plan mutation depth remains narrower | Yes | No obvious fake primary action remains in the audited paths | Strong for beta |
+| Educator sessions, mission plans, integrations, learner supports, today | Yes | Mostly yes | Likely | Partly proven | Mostly yes across the audited sessions, mission-plans, today, and integrations failure states; deeper mission-plan edit/archive breadth remains narrower | Yes | No obvious fake primary action remains in the audited paths | Strong for beta |
 | Parent summary, billing, schedule, portfolio, child view | Yes | Yes | Mostly yes | Support-request persistence is real where used | Mostly yes | Yes | Billing is honest summary only, not self-service | Strong for beta |
 | Site dashboard, billing, consent, pickup auth, ops, audit, provisioning, sessions | Yes | Yes | Mostly yes | Mostly yes | Mostly yes on audited provisioning and sessions failure/stale-data paths, partial on deeper create/edit depth | Yes | No obvious fake primary action remains in the audited paths | Strong for beta |
 | Site identity and incident/admin support surfaces | Yes | Mostly yes | Partly | Partly | Mostly yes on the audited identity, incidents, and integrations-health failure path, partial on the wider cluster | Yes | Less misleading than before, still not comprehensively proven | Beta-safe, not gold |
@@ -86,7 +87,7 @@ Current truth:
 
 Risk concentration:
 
-- deeper failure and mutation coverage on educator mission plans.
+- deeper edit and archive coverage on educator mission plans.
 - alias-route isolation for learner settings.
 - alias-route isolation for parent messages and parent settings.
 - deeper rollout and governance breadth on HQ feature flags and related operator controls.

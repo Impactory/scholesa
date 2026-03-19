@@ -18,7 +18,7 @@ Proof levels:
 
 Highest-value remaining blind spots:
 
-1. deeper failure and mutation coverage on `/educator/mission-plans`
+1. deeper edit and archive coverage on `/educator/mission-plans`
 2. learner-scoped alias-route proof for `/settings`
 3. parent-scoped alias-route proof for `/messages`
 4. parent-scoped alias-route proof for `/settings`
@@ -52,7 +52,7 @@ Highest-value remaining blind spots:
 | `/educator/sessions` | direct | `apps/empire_flutter/app/test/educator_sessions_page_test.dart` | Explicit load-failure proof now exists; broader create/edit session flows still lack direct proof |
 | `/educator/learners` | direct | `apps/empire_flutter/app/test/educator_learners_page_test.dart` | — |
 | `/educator/missions/review` | direct | `apps/empire_flutter/app/test/educator_mission_review_page_test.dart`, `apps/empire_flutter/app/test/educator_honesty_regression_test.dart`, `apps/empire_flutter/app/test/persistence_blockers_regression_test.dart` | Canonical review queue now runs on `missionAttempts` with direct load failure, active-site scoped retry, failed review submission, and canonical grading persistence proof; legacy `missionSubmissions` fallback is still transitional |
-| `/educator/mission-plans` | direct | `apps/empire_flutter/app/test/educator_mission_plans_page_test.dart` | Creation flow is proven; explicit backend failure state is still not isolated |
+| `/educator/mission-plans` | direct | `apps/empire_flutter/app/test/educator_mission_plans_page_test.dart` | Happy-path creation, load failure, and create-failure truth are now proven; deeper edit/archive breadth still lacks direct proof |
 | `/educator/learner-supports` | direct | `apps/empire_flutter/app/test/educator_learner_supports_page_test.dart` | Live learner-derived support rendering is proven; failure-state handling is still indirect |
 | `/educator/integrations` | direct | `apps/empire_flutter/app/test/educator_integrations_page_test.dart`, `apps/empire_flutter/app/test/district_provider_integration_test.dart` | Honest load failure, retry, and sync-action failure states are now isolated; broader provider breadth still relies on the district and provider workflow tests |
 
@@ -134,7 +134,7 @@ Highest-value remaining blind spots:
 
 Prioritize direct proof next for:
 
-1. deeper failure and mutation coverage on `/educator/mission-plans`
+1. deeper edit and archive coverage on `/educator/mission-plans`
 2. learner-scoped alias-route proof for `/settings`
 3. parent-scoped alias-route proof for `/messages`
 4. parent-scoped alias-route proof for `/settings`
