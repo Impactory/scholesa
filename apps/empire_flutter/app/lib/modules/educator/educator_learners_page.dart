@@ -35,7 +35,9 @@ String _displayLearnerName(BuildContext context, String learnerName) {
 
 /// Educator Learners Page - View and manage learner roster
 class EducatorLearnersPage extends StatefulWidget {
-  const EducatorLearnersPage({super.key});
+  const EducatorLearnersPage({this.learnerLoopInsightsLoader, super.key});
+
+  final BosLearnerLoopInsightsLoader? learnerLoopInsightsLoader;
 
   @override
   State<EducatorLearnersPage> createState() => _EducatorLearnersPageState();
@@ -45,8 +47,7 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
   String _searchQuery = '';
   String _selectedSession = 'all';
   final TextEditingController _searchController = TextEditingController();
-  bool _loopInsightsLoading = false;
-  Map<String, dynamic>? _learnerLoopInsights;
+  String? _selectedLoopLearnerId;
   String? _loopLearnerName;
 
   @override
@@ -58,7 +59,7 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
       if (!mounted || service.learners.isEmpty) {
         return;
       }
-      await _loadLearnerLoopInsights(service.learners.first);
+      _selectLoopLearner(service.learners.first);
     });
   }
 
@@ -144,157 +145,22 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
     );
   }
 
-  Future<void> _loadLearnerLoopInsights(EducatorLearner learner) async {
-    final AppState? appState = context.read<AppState?>();
-    final String? siteId = appState?.activeSiteId;
-    if (siteId == null || siteId.isEmpty) {
-      return;
-    }
-
+  void _selectLoopLearner(EducatorLearner learner) {
     setState(() {
-      _loopInsightsLoading = true;
+      _selectedLoopLearnerId = learner.id;
       _loopLearnerName = _displayLearnerName(context, learner.name);
     });
-
-    try {
-      final Map<String, dynamic> insights =
-          await BosService.instance.getLearnerLoopInsights(
-        siteId: siteId,
-        learnerId: learner.id,
-        lookbackDays: 30,
-      );
-      if (!mounted) return;
-      setState(() {
-        _learnerLoopInsights = insights;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _learnerLoopInsights = null;
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _loopInsightsLoading = false;
-        });
-      }
-    }
   }
 
   Widget _buildLearnerLoopCard() {
-    final ThemeData theme = Theme.of(context);
-    final Map<String, dynamic>? insights = _learnerLoopInsights;
-    final Map<String, dynamic> trend =
-        (insights?['trend'] as Map<String, dynamic>?) ?? <String, dynamic>{};
-    final Map<String, dynamic> state =
-        (insights?['state'] as Map<String, dynamic>?) ?? <String, dynamic>{};
-    final Map<String, dynamic> mvl =
-        (insights?['mvl'] as Map<String, dynamic>?) ?? <String, dynamic>{};
-    final List<dynamic> goals =
-        (insights?['activeGoals'] as List<dynamic>?) ?? <dynamic>[];
-
-    String pct(dynamic value) {
-      final double v = (value as num?)?.toDouble() ?? 0;
-      return '${(v * 100).toStringAsFixed(0)}%';
-    }
-
-    String delta(dynamic value) {
-      final double v = (value as num?)?.toDouble() ?? 0;
-      final String sign = v >= 0 ? '+' : '';
-      return '$sign${(v * 100).toStringAsFixed(1)}';
-    }
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border:
-              Border.all(color: ScholesaColors.educator.withValues(alpha: 0.2)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Row(
-              children: <Widget>[
-                Icon(Icons.query_stats,
-                    color: ScholesaColors.educator, size: 18),
-                const SizedBox(width: 8),
-                Text(
-                  BosCoachingI18n.sessionLoopTitle(context),
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: ScholesaColors.educator,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              _loopLearnerName == null
-                  ? BosCoachingI18n.latestSignal(context)
-                  : '${BosCoachingI18n.latestSignal(context)}: $_loopLearnerName',
-              style: theme.textTheme.bodySmall,
-            ),
-            const SizedBox(height: 10),
-            if (_loopInsightsLoading)
-              const LinearProgressIndicator(minHeight: 4)
-            else if (insights == null)
-              Text(BosCoachingI18n.sessionLoopEmpty(context))
-            else ...<Widget>[
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: <Widget>[
-                  _metricChip(
-                    '${BosCoachingI18n.cognition(context)} ${pct(state['cognition'])}',
-                  ),
-                  _metricChip(
-                    '${BosCoachingI18n.engagement(context)} ${pct(state['engagement'])}',
-                  ),
-                  _metricChip(
-                    '${BosCoachingI18n.integrity(context)} ${pct(state['integrity'])}',
-                  ),
-                  _metricChip(
-                    '${BosCoachingI18n.improvementScore(context)} ${delta(trend['improvementScore'])}',
-                  ),
-                  _metricChip(
-                    '${BosCoachingI18n.mvlStatus(context)} ${mvl['active'] ?? 0}/${mvl['passed'] ?? 0}/${mvl['failed'] ?? 0}',
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '${_tEducatorLearnersPageSpecific(context, 'delta')}: C ${delta(trend['cognitionDelta'])}, E ${delta(trend['engagementDelta'])}, I ${delta(trend['integrityDelta'])}',
-                style: theme.textTheme.bodySmall,
-              ),
-              if (goals.isNotEmpty) ...<Widget>[
-                const SizedBox(height: 8),
-                Text(
-                  '${BosCoachingI18n.activeGoals(context)}: ${goals.take(3).join(' • ')}',
-                  style: theme.textTheme.bodySmall,
-                ),
-              ],
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _metricChip(String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: ScholesaColors.educator.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Text(
-        text,
-        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-      ),
+    return BosLearnerLoopInsightsCard(
+      title: BosCoachingI18n.sessionLoopTitle(context),
+      subtitle: BosCoachingI18n.latestSignal(context),
+      emptyLabel: BosCoachingI18n.sessionLoopEmpty(context),
+      learnerId: _selectedLoopLearnerId,
+      learnerName: _loopLearnerName,
+      accentColor: ScholesaColors.educator,
+      insightsLoader: widget.learnerLoopInsightsLoader,
     );
   }
 
@@ -520,7 +386,7 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
       backgroundColor: Colors.transparent,
       builder: (BuildContext ctx) => _LearnerDetailSheet(learner: learner),
     );
-    _loadLearnerLoopInsights(learner);
+    _selectLoopLearner(learner);
   }
 }
 

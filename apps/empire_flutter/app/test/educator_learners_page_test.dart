@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/modules/educator/educator_learners_page.dart';
 import 'package:scholesa_app/modules/educator/educator_service.dart';
+import 'package:scholesa_app/runtime/runtime.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
 import 'package:scholesa_app/ui/theme/scholesa_theme.dart';
 
@@ -32,6 +33,7 @@ AppState _buildEducatorState() {
 Widget _buildHarness({
   required FirestoreService firestoreService,
   required EducatorService educatorService,
+  BosLearnerLoopInsightsLoader? learnerLoopInsightsLoader,
 }) {
   return MultiProvider(
     providers: <SingleChildWidget>[
@@ -52,7 +54,9 @@ Widget _buildHarness({
         Locale('zh', 'CN'),
         Locale('zh', 'TW'),
       ],
-      home: const EducatorLearnersPage(),
+      home: EducatorLearnersPage(
+        learnerLoopInsightsLoader: learnerLoopInsightsLoader,
+      ),
     ),
   );
 }
@@ -165,5 +169,65 @@ void main() {
 
     expect(find.text('Learner unavailable'), findsWidgets);
     expect(find.text('Unknown'), findsNothing);
+  });
+
+  testWidgets('educator learners page discloses synthetic MiloOS preview',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedLearner(firestore);
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final EducatorService educatorService = EducatorService(
+      firestoreService: firestoreService,
+      educatorId: 'educator-1',
+      siteId: 'site-1',
+    );
+
+    await tester.pumpWidget(
+      _buildHarness(
+        firestoreService: firestoreService,
+        educatorService: educatorService,
+        learnerLoopInsightsLoader: ({
+          required String siteId,
+          required String learnerId,
+          required int lookbackDays,
+        }) async => <String, dynamic>{
+          'synthetic': true,
+          'state': <String, dynamic>{
+            'cognition': 0.73,
+            'engagement': 0.64,
+            'integrity': 0.9,
+          },
+          'trend': <String, dynamic>{
+            'improvementScore': 0.06,
+            'cognitionDelta': 0.02,
+            'engagementDelta': 0.01,
+            'integrityDelta': 0.01,
+          },
+          'mvl': <String, dynamic>{
+            'active': 1,
+            'passed': 0,
+            'failed': 0,
+          },
+          'activeGoals': <String>['Prototype feedback loop'],
+          'stateAvailability': <String, dynamic>{
+            'hasCurrentState': true,
+            'hasTrendBaseline': true,
+          },
+        },
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Synthetic MiloOS preview only. Do not treat this as classroom evidence or learner growth.',
+      ),
+      findsOneWidget,
+    );
   });
 }
