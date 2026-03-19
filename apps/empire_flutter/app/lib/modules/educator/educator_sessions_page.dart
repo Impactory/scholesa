@@ -165,7 +165,8 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
         ),
         child: Consumer<EducatorService>(
           builder: (BuildContext context, EducatorService service, _) {
-            final List<EducatorSession> sessions = _getFilteredSessions(service);
+            final List<EducatorSession> sessions =
+                _getFilteredSessions(service);
             return CustomScrollView(
               slivers: <Widget>[
                 SliverToBoxAdapter(child: _buildHeader()),
@@ -500,7 +501,9 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              _tEducatorSessions(context, 'Showing last loaded session data. ') + message,
+              _tEducatorSessions(
+                      context, 'Showing last loaded session data. ') +
+                  message,
               style: const TextStyle(color: Color(0xFF92400E)),
             ),
           ),
@@ -1401,8 +1404,9 @@ class _StudioLaunchCard extends StatelessWidget {
         .where((EducatorLearner learner) =>
             learner.enrolledSessionIds.contains(session.id))
         .toList();
-    final int learnerCount =
-        scopedLearners.isNotEmpty ? scopedLearners.length : session.learnerCount;
+    final int learnerCount = scopedLearners.isNotEmpty
+        ? scopedLearners.length
+        : session.learnerCount;
 
     return Container(
       width: double.infinity,
@@ -1472,7 +1476,8 @@ class _StudioLaunchCard extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
-                        Icon(step.icon, size: 16, color: ScholesaColors.educator),
+                        Icon(step.icon,
+                            size: 16, color: ScholesaColors.educator),
                         const SizedBox(width: 8),
                         Text(
                           _tEducatorSessions(context, step.label),
@@ -1590,9 +1595,28 @@ class _QuickEvidenceDialogState extends State<_QuickEvidenceDialog> {
   final TextEditingController _observationController = TextEditingController();
   final TextEditingController _nextExplainController = TextEditingController();
   String _selectedLearnerId = '';
+  String _selectedCapabilityId = '';
   String _selectedPhaseKey = _studioFlowSteps[2].key;
   bool _markForPortfolio = true;
   bool _isSubmitting = false;
+  bool _isLoadingCapabilities = false;
+  bool _didLoadCapabilities = false;
+  List<_CapabilityOption> _availableCapabilities = const <_CapabilityOption>[];
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_didLoadCapabilities) {
+      return;
+    }
+    _didLoadCapabilities = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      _loadCapabilities();
+    });
+  }
 
   @override
   void dispose() {
@@ -1639,6 +1663,89 @@ class _QuickEvidenceDialogState extends State<_QuickEvidenceDialog> {
     }
   }
 
+  String _pillarCodeForSession(String pillarLabel) {
+    final String normalized = pillarLabel.trim().toLowerCase();
+    if (normalized.contains('leadership')) {
+      return 'LEAD';
+    }
+    if (normalized.contains('impact')) {
+      return 'IMP';
+    }
+    return 'FS';
+  }
+
+  Future<void> _loadCapabilities() async {
+    final FirestoreService firestoreService = context.read<FirestoreService>();
+    final AppState appState = context.read<AppState>();
+    final String activeSiteId = (appState.activeSiteId?.trim().isNotEmpty ??
+            false)
+        ? appState.activeSiteId!.trim()
+        : (appState.siteIds.isNotEmpty ? appState.siteIds.first.trim() : '');
+
+    setState(() => _isLoadingCapabilities = true);
+    try {
+      final QuerySnapshot<Map<String, dynamic>> snapshot =
+          await firestoreService.firestore
+              .collection('capabilities')
+              .where(
+                'pillarCode',
+                isEqualTo: _pillarCodeForSession(widget.session.pillar),
+              )
+              .limit(100)
+              .get();
+
+      final List<_CapabilityOption> options = snapshot.docs
+          .map((_doc) => _CapabilityOption.fromDoc(_doc))
+          .where((_CapabilityOption option) {
+        final String optionSiteId = option.siteId?.trim() ?? '';
+        return optionSiteId.isEmpty ||
+            activeSiteId.isEmpty ||
+            optionSiteId == activeSiteId;
+      }).toList()
+        ..sort((_CapabilityOption a, _CapabilityOption b) {
+          final int siteBias = (b.siteId?.trim().isNotEmpty == true ? 1 : 0) -
+              (a.siteId?.trim().isNotEmpty == true ? 1 : 0);
+          if (siteBias != 0) {
+            return siteBias;
+          }
+          return a.title.toLowerCase().compareTo(b.title.toLowerCase());
+        });
+
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _availableCapabilities = options;
+        if (_selectedCapabilityId.isEmpty && options.isNotEmpty) {
+          _selectedCapabilityId = options.first.id;
+        }
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _availableCapabilities = const <_CapabilityOption>[];
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingCapabilities = false);
+      }
+    }
+  }
+
+  _CapabilityOption? _selectedCapability() {
+    if (_selectedCapabilityId.isEmpty) {
+      return null;
+    }
+    for (final _CapabilityOption option in _availableCapabilities) {
+      if (option.id == _selectedCapabilityId) {
+        return option;
+      }
+    }
+    return null;
+  }
+
   Future<void> _submit() async {
     final EducatorService educatorService = context.read<EducatorService>();
     final AppState appState = context.read<AppState>();
@@ -1646,7 +1753,9 @@ class _QuickEvidenceDialogState extends State<_QuickEvidenceDialog> {
     final List<EducatorLearner> learners = _availableLearners(educatorService);
 
     final String learnerId = _selectedLearnerId.trim();
-    final String capabilityFocus = _capabilityController.text.trim();
+    final _CapabilityOption? selectedCapability = _selectedCapability();
+    final String capabilityFocus =
+        selectedCapability?.title ?? _capabilityController.text.trim();
     final String observation = _observationController.text.trim();
     final String siteId = (educatorService.siteId?.trim().isNotEmpty ?? false)
         ? educatorService.siteId!.trim()
@@ -1697,9 +1806,10 @@ class _QuickEvidenceDialogState extends State<_QuickEvidenceDialog> {
     setState(() => _isSubmitting = true);
     try {
       final String? rawRoleName = appState.role?.name;
-      final String educatorRole = (rawRoleName != null && rawRoleName.isNotEmpty)
-          ? rawRoleName
-          : 'educator';
+      final String educatorRole =
+          (rawRoleName != null && rawRoleName.isNotEmpty)
+              ? rawRoleName
+              : 'educator';
       await firestoreService.createDocument(
         'evidenceRecords',
         <String, dynamic>{
@@ -1714,7 +1824,11 @@ class _QuickEvidenceDialogState extends State<_QuickEvidenceDialog> {
           'phaseKey': _selectedPhaseKey,
           'phaseLabel': _phaseLabel(_selectedPhaseKey),
           'evidenceType': _evidenceTypeForPhase(_selectedPhaseKey),
+          'capabilityId': selectedCapability?.id,
           'capabilityLabel': capabilityFocus,
+          'capabilityMapped': selectedCapability != null,
+          'capabilityPillarCode': selectedCapability?.pillarCode ??
+              _pillarCodeForSession(widget.session.pillar),
           'observationNote': observation,
           'nextVerificationPrompt': _nextExplainController.text.trim().isEmpty
               ? null
@@ -1735,6 +1849,8 @@ class _QuickEvidenceDialogState extends State<_QuickEvidenceDialog> {
           'sessionId': widget.session.id,
           'learnerId': learner.id,
           'phaseKey': _selectedPhaseKey,
+          'capabilityId': selectedCapability?.id,
+          'capabilityMapped': selectedCapability != null,
           'portfolioCandidate': _markForPortfolio,
         },
       );
@@ -1803,7 +1919,8 @@ class _QuickEvidenceDialogState extends State<_QuickEvidenceDialog> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                initialValue: _selectedLearnerId.isEmpty ? null : _selectedLearnerId,
+                initialValue:
+                    _selectedLearnerId.isEmpty ? null : _selectedLearnerId,
                 decoration: InputDecoration(
                   labelText: _tEducatorSessions(context, 'Learner'),
                 ),
@@ -1842,22 +1959,60 @@ class _QuickEvidenceDialogState extends State<_QuickEvidenceDialog> {
                 },
               ),
               const SizedBox(height: 12),
-              TextFormField(
-                controller: _capabilityController,
-                decoration: InputDecoration(
-                  labelText: _tEducatorSessions(context, 'Capability focus'),
-                  hintText: _tEducatorSessions(
-                    context,
-                    'Example: clear explanation, debugging, collaboration, persuasive speaking',
+              if (_isLoadingCapabilities)
+                const Padding(
+                  padding: EdgeInsets.only(bottom: 12),
+                  child: LinearProgressIndicator(minHeight: 3),
+                ),
+              if (_availableCapabilities.isNotEmpty)
+                DropdownButtonFormField<String>(
+                  initialValue: _selectedCapabilityId.isEmpty
+                      ? null
+                      : _selectedCapabilityId,
+                  decoration: InputDecoration(
+                    labelText: _tEducatorSessions(context, 'Capability focus'),
+                    helperText: _tEducatorSessions(
+                      context,
+                      'Use a mapped capability so growth and rubric workflows can connect later.',
+                    ),
+                  ),
+                  items: _availableCapabilities
+                      .map(
+                        (_CapabilityOption capability) =>
+                            DropdownMenuItem<String>(
+                          value: capability.id,
+                          child: Text(capability.title),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (String? value) {
+                    if (value != null) {
+                      setState(() => _selectedCapabilityId = value);
+                    }
+                  },
+                )
+              else
+                TextFormField(
+                  controller: _capabilityController,
+                  decoration: InputDecoration(
+                    labelText: _tEducatorSessions(context, 'Capability focus'),
+                    helperText: _tEducatorSessions(
+                      context,
+                      'No mapped capabilities found for this pillar yet. This evidence will be marked as unmapped.',
+                    ),
+                    hintText: _tEducatorSessions(
+                      context,
+                      'Example: clear explanation, debugging, collaboration, persuasive speaking',
+                    ),
                   ),
                 ),
-              ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _observationController,
                 maxLines: 3,
                 decoration: InputDecoration(
-                  labelText: _tEducatorSessions(context, 'What evidence did you see?'),
+                  labelText:
+                      _tEducatorSessions(context, 'What evidence did you see?'),
                   hintText: _tEducatorSessions(
                     context,
                     'Short, specific observation from live studio work.',
@@ -1869,7 +2024,8 @@ class _QuickEvidenceDialogState extends State<_QuickEvidenceDialog> {
                 controller: _nextExplainController,
                 maxLines: 2,
                 decoration: InputDecoration(
-                  labelText: _tEducatorSessions(context, 'Next explain or verify prompt'),
+                  labelText: _tEducatorSessions(
+                      context, 'Next explain or verify prompt'),
                   hintText: _tEducatorSessions(
                     context,
                     'Optional: what should this learner explain, rebuild, or verify next?',
@@ -1914,6 +2070,32 @@ class _QuickEvidenceDialogState extends State<_QuickEvidenceDialog> {
           label: Text(_tEducatorSessions(context, 'Capture Evidence')),
         ),
       ],
+    );
+  }
+}
+
+class _CapabilityOption {
+  const _CapabilityOption({
+    required this.id,
+    required this.title,
+    required this.pillarCode,
+    this.siteId,
+  });
+
+  final String id;
+  final String title;
+  final String pillarCode;
+  final String? siteId;
+
+  factory _CapabilityOption.fromDoc(
+    QueryDocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    final Map<String, dynamic> data = doc.data();
+    return _CapabilityOption(
+      id: doc.id,
+      title: (data['title'] as String? ?? '').trim(),
+      pillarCode: (data['pillarCode'] as String? ?? '').trim(),
+      siteId: data['siteId'] as String?,
     );
   }
 }

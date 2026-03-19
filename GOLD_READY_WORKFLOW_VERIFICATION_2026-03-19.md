@@ -33,7 +33,8 @@ Only active product code paths were considered. A workflow is not "verified" unl
 
 ### 2. Live teacher observation during session
 
-- `apps/empire_flutter/app/lib/modules/educator/educator_sessions_page.dart` now supports live evidence capture into `evidenceRecords` with `capabilityLabel`, `phaseKey`, `portfolioCandidate`, `rubricStatus`, and `growthStatus`.
+- `apps/empire_flutter/app/lib/modules/educator/educator_sessions_page.dart` now supports live evidence capture into `evidenceRecords` with `capabilityId`, `capabilityLabel`, `capabilityMapped`, `phaseKey`, `portfolioCandidate`, `rubricStatus`, and `growthStatus`.
+- The dialog now loads mapped capabilities by pillar from the new `capabilities` collection and only falls back to free-text capture when HQ has not authored mappings yet.
 - `firestore.rules` includes read and write rules for `evidenceRecords`.
 - The chain stops after capture. `rubricStatus` and `growthStatus` are stored as `pending`, and there is no downstream worker or educator review path consuming those records.
 - Current judgment: partial.
