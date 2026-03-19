@@ -150,10 +150,6 @@ preflight() {
     ensure_gcloud_auth
   fi
 
-  if [[ "$TARGET" == "primary-web" || "$TARGET" == "web" || "$TARGET" == "cloudrun-web" || "$TARGET" == "all" ]]; then
-    command -v docker >/dev/null 2>&1 || fail "docker not found on PATH"
-  fi
-
   if [[ "$TARGET" == "functions" || "$TARGET" == "rules" || "$TARGET" == "all" ]]; then
     ensure_firebase_auth
   fi
@@ -261,14 +257,8 @@ deploy_primary_web() {
   image_tag="${IMAGE_TAG:-$(date +%Y%m%d-%H%M%S)}"
   image="gcr.io/${project_id}/scholesa:${image_tag}"
 
-  log "Configuring Docker auth for primary web deploy..."
-  gcloud auth configure-docker --quiet || fail "Unable to configure Docker auth for Google Container Registry"
-
-  log "Building primary web image (project=$project_id service=$service region=$region tag=$image_tag)..."
-  (cd "$REPO_ROOT" && docker build -t "$image" .) || fail "Primary web Docker build failed"
-
-  log "Pushing primary web image..."
-  docker push "$image" || fail "Primary web Docker push failed"
+  log "Building primary web image with Cloud Build (project=$project_id service=$service region=$region tag=$image_tag)..."
+  (cd "$REPO_ROOT" && gcloud builds submit --project "$project_id" --tag "$image") || fail "Primary web Cloud Build failed"
 
   local -a deploy_args
   deploy_args=(

@@ -529,6 +529,12 @@ void main() {
         reason:
             'Manual deploy script must avoid bash4-only mapfile usage so it runs on default macOS Bash',
       );
+      expect(
+        content.contains('gcloud builds submit --project "$project_id" --tag "$image"'),
+        isTrue,
+        reason:
+            'Manual primary web deploy must use Cloud Build so local machine architecture does not break Cloud Run deploys',
+      );
     });
 
     test('Platform flow and release gates enforce Gen 2 and combined web deploy',
