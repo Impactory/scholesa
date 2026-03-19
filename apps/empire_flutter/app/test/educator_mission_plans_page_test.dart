@@ -29,7 +29,6 @@ AppState _buildEducatorState() {
   });
   return state;
 }
-  expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
 
 Widget _buildHarness({
   required FirestoreService firestoreService,
@@ -59,7 +58,6 @@ Widget _buildHarness({
     ),
   );
 }
-    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
 
 Future<void> _seedMission(
   FakeFirebaseFirestore firestore, {
@@ -136,6 +134,7 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Unable to load mission plans'), findsOneWidget);
     expect(
       find.text(
@@ -169,6 +168,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('No missions yet'), findsOneWidget);
 
     await tester.tap(find.text('New Mission'));

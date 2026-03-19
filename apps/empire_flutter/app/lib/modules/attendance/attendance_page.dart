@@ -5,6 +5,7 @@ import '../../i18n/workflow_surface_i18n.dart';
 import '../../auth/app_state.dart';
 import '../../offline/sync_status_widget.dart';
 import '../../services/telemetry_service.dart';
+import '../../ui/auth/global_session_menu.dart';
 import '../../ui/common/loading.dart';
 import '../../ui/common/empty_state.dart';
 import '../../ui/common/error_state.dart';
@@ -56,10 +57,10 @@ class _AttendancePageState extends State<AttendancePage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(_tAttendance(context, 'Take Attendance')),
-        actions: const <Widget>[
-          SyncStatusIndicator(),
-          SizedBox(width: 8),
-          SessionMenuButton(),
+        actions: <Widget>[
+          const SyncStatusIndicator(),
+          const SizedBox(width: 8),
+          const SessionMenuButton(),
         ],
       ),
       body: Column(

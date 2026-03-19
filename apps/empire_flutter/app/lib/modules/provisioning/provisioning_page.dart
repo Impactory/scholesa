@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../i18n/workflow_surface_i18n.dart';
 import '../../auth/app_state.dart';
 import '../../services/telemetry_service.dart';
+import '../../ui/auth/global_session_menu.dart';
 import '../../ui/common/empty_state.dart';
 import 'provisioning_models.dart';
 import 'provisioning_service.dart';
@@ -273,8 +274,8 @@ class _ProvisioningPageState extends State<ProvisioningPage>
     return Scaffold(
       appBar: AppBar(
         title: Text(_tProvisioning(context, 'Provisioning')),
-        actions: const <Widget>[
-          SessionMenuButton(),
+        actions: <Widget>[
+          const SessionMenuButton(),
         ],
         bottom: TabBar(
           controller: _tabController,
