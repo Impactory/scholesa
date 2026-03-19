@@ -6,6 +6,11 @@ Scope: Flutter app plus release operations for web and native surfaces
 
 This plan converts the March 18 honesty audit into execution work. It is intentionally blunt. It has been updated after remediation, release-path hardening, and reopened verification.
 
+Post-audit delta on 2026-03-19:
+
+- HQ approvals, site identity, and partner payouts no longer collapse load failures into success-looking empty states.
+- Direct page regressions were added to keep that operator-truth fix from regressing.
+
 ## Audit Decision
 
 - No gold release until native distribution is proven end to end.

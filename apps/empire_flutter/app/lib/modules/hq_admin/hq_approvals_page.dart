@@ -53,6 +53,7 @@ class _HqApprovalsPageState extends State<HqApprovalsPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _isLoading = false;
+  String? _loadError;
 
   List<_ApprovalItem> _approvals = <_ApprovalItem>[];
 
@@ -101,12 +102,19 @@ class _HqApprovalsPageState extends State<HqApprovalsPage>
   }
 
   Widget _buildApprovalList(_ApprovalStatus statusFilter) {
-    if (_isLoading) {
+    if (_isLoading && _approvals.isEmpty) {
       return Center(
         child: Text(
           _tHqApprovals(context, 'Loading...'),
           style: const TextStyle(color: ScholesaColors.textSecondary),
         ),
+      );
+    }
+
+    if (_loadError != null && _approvals.isEmpty) {
+      return _buildLoadErrorState(
+        _tHqApprovals(context, 'Approvals are temporarily unavailable'),
+        _loadError!,
       );
     }
 
@@ -132,15 +140,28 @@ class _HqApprovalsPageState extends State<HqApprovalsPage>
       );
     }
 
-    return ListView.builder(
+    return ListView(
       padding: const EdgeInsets.all(16),
-      itemCount: filtered.length,
-      itemBuilder: (BuildContext context, int index) =>
-          _buildApprovalCard(filtered[index]),
+      children: <Widget>[
+        if (_loadError != null)
+          _buildStaleDataBanner(
+            _tHqApprovals(context, 'Unable to refresh approvals right now. Showing the last successful data.'),
+          ),
+        ...filtered.map(
+          (_ApprovalItem item) => _buildApprovalCard(item),
+        ),
+      ],
     );
   }
 
   Widget _buildCompletedList() {
+    if (_loadError != null && _approvals.isEmpty && !_isLoading) {
+      return _buildLoadErrorState(
+        _tHqApprovals(context, 'Approvals are temporarily unavailable'),
+        _loadError!,
+      );
+    }
+
     final List<_ApprovalItem> completed = _approvals
         .where((_ApprovalItem a) => a.status != _ApprovalStatus.pending)
         .toList();
@@ -152,11 +173,85 @@ class _HqApprovalsPageState extends State<HqApprovalsPage>
       );
     }
 
-    return ListView.builder(
+    return ListView(
       padding: const EdgeInsets.all(16),
-      itemCount: completed.length,
-      itemBuilder: (BuildContext context, int index) =>
-          _buildApprovalCard(completed[index], showActions: false),
+      children: <Widget>[
+        if (_loadError != null)
+          _buildStaleDataBanner(
+            _tHqApprovals(context, 'Unable to refresh approvals right now. Showing the last successful data.'),
+          ),
+        ...completed.map(
+          (_ApprovalItem item) =>
+              _buildApprovalCard(item, showActions: false),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLoadErrorState(String title, String message) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Icon(
+              Icons.error_outline_rounded,
+              size: 64,
+              color: Colors.red.withValues(alpha: 0.7),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: ScholesaColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: _loadApprovals,
+              icon: const Icon(Icons.refresh_rounded),
+              label: Text(_tHqApprovals(context, 'Retry')),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStaleDataBanner(String message) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.orange.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(color: ScholesaColors.textPrimary),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -324,7 +419,10 @@ class _HqApprovalsPageState extends State<HqApprovalsPage>
 
   Future<void> _loadApprovals() async {
     if (!mounted) return;
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _loadError = null;
+    });
     try {
       final List<_ApprovalItem> loaded = <_ApprovalItem>[];
       final List<dynamic> rows;
@@ -370,10 +468,17 @@ class _HqApprovalsPageState extends State<HqApprovalsPage>
           b.submittedAt.compareTo(a.submittedAt));
 
       if (!mounted) return;
-      setState(() => _approvals = loaded);
+      setState(() {
+        _approvals = loaded;
+      });
     } catch (_) {
       if (!mounted) return;
-      setState(() => _approvals = <_ApprovalItem>[]);
+      setState(() {
+        _loadError = _tHqApprovals(
+          context,
+          'We could not load the approvals queue. Retry to check the current state.',
+        );
+      });
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);

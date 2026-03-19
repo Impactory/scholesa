@@ -36,6 +36,7 @@ class SiteIdentityPage extends StatefulWidget {
 class _SiteIdentityPageState extends State<SiteIdentityPage> {
   List<_IdentityMatch> _pendingMatches = <_IdentityMatch>[];
   bool _isLoading = false;
+  String? _loadError;
 
   @override
   void initState() {
@@ -55,17 +56,27 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
         foregroundColor: Colors.white,
       ),
       body: _isLoading
+          && _pendingMatches.isEmpty
           ? Center(
               child: Text(
                 _tSiteIdentity(context, 'Loading...'),
                 style: const TextStyle(color: ScholesaColors.textSecondary),
               ),
             )
+          : _loadError != null && _pendingMatches.isEmpty
+              ? _buildLoadErrorState(
+                  _tSiteIdentity(context, 'Identity matches are temporarily unavailable'),
+                  _loadError!,
+                )
           : _pendingMatches.isEmpty
               ? _buildEmptyState()
               : ListView(
                   padding: const EdgeInsets.all(16),
                   children: <Widget>[
+                    if (_loadError != null)
+                      _buildStaleDataBanner(
+                        _tSiteIdentity(context, 'Unable to refresh identity matches right now. Showing the last successful data.'),
+                      ),
                     _buildHeader(),
                     const SizedBox(height: 16),
                     ..._pendingMatches.map((match) => _buildMatchCard(match)),
@@ -134,6 +145,71 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
             style: const TextStyle(
               fontSize: 14,
               color: ScholesaColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoadErrorState(String title, String message) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Icon(
+              Icons.error_outline_rounded,
+              size: 64,
+              color: Colors.red.withValues(alpha: 0.7),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: ScholesaColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: ScholesaColors.textSecondary),
+            ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: _loadPendingMatches,
+              icon: const Icon(Icons.refresh_rounded),
+              label: Text(_tSiteIdentity(context, 'Retry')),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStaleDataBanner(String message) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.orange.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(color: ScholesaColors.textPrimary),
             ),
           ),
         ],
@@ -439,7 +515,10 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
         .trim();
 
     if (!mounted) return;
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _loadError = null;
+    });
 
     try {
       if (siteId.isEmpty) {
@@ -488,7 +567,12 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
       setState(() => _pendingMatches = loaded);
     } catch (_) {
       if (!mounted) return;
-      setState(() => _pendingMatches = <_IdentityMatch>[]);
+      setState(() {
+        _loadError = _tSiteIdentity(
+          context,
+          'We could not load the identity review queue. Retry to check the current state.',
+        );
+      });
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);

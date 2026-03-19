@@ -282,6 +282,7 @@ class PartnerService extends ChangeNotifier {
   /// Load payouts for this partner
   Future<void> loadPayouts() async {
     _isLoading = true;
+    _error = null;
     notifyListeners();
 
     try {
@@ -312,7 +313,7 @@ class PartnerService extends ChangeNotifier {
       if (!_isMissingFirebaseAppError(e)) {
         debugPrint('Failed to load payouts: $e');
       }
-      _payouts = <Payout>[];
+      _error = 'Unable to load payouts right now.';
     } finally {
       _isLoading = false;
       notifyListeners();

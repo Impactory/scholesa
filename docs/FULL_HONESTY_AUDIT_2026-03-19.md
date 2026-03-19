@@ -9,7 +9,7 @@ Scope: Flutter app enabled routes, current runtime behavior, current test eviden
 - Not gold ready.
 - Still beta ready for a controlled audience.
 - Core learner, educator, parent, messaging, and site operations paths are no longer obviously fake.
-- Gold is still blocked by unproven native distribution and by several enabled admin/support surfaces that still turn backend failure into success-looking empty states.
+- Gold is still blocked by unproven native distribution and by route-proof breadth across the enabled admin surface.
 
 ## A. Release Matrix Updated
 
@@ -23,10 +23,10 @@ Scope: Flutter app enabled routes, current runtime behavior, current test eviden
 
 ### Verification inventory
 
-- 38 focused test files exist for direct pages, workflows, regressions, placeholder-action checks, and honesty checks.
+- 41 focused test files exist for direct pages, workflows, regressions, placeholder-action checks, and honesty checks.
 - Fresh verification in this pass:
   - `flutter analyze`: passed
-  - targeted audit rerun: 25 passed, 0 failed
+  - operator-failure truth regressions: 3 passed, 0 failed
 - Existing broad audit baseline still current in this code cycle:
   - 247 passed, 0 failed
 
@@ -43,11 +43,11 @@ Scope: Flutter app enabled routes, current runtime behavior, current test eviden
 | Educator sessions, mission plans, integrations, learner supports, today | Yes | Mostly yes | Likely | Partly proven | Partial | Yes | Too much still relies on indirect workflow coverage | Beta-safe, not gold |
 | Parent summary, billing, schedule, portfolio, child view | Yes | Yes | Mostly yes | Support-request persistence is real where used | Mostly yes | Yes | Billing is honest summary only, not self-service | Strong for beta |
 | Site dashboard, billing, consent, pickup auth, ops, audit | Yes | Yes | Mostly yes | Mostly yes | Mostly yes | Yes | Honest on audited primary actions | Strong for beta |
-| Site identity and incident/admin support surfaces | Yes | Mostly yes | Partly | Partly | No, some failures collapse into empty-success states | Yes | Ambiguous under backend failure | Not gold-ready |
+| Site identity and incident/admin support surfaces | Yes | Mostly yes | Partly | Partly | Mostly yes on the audited identity path, partial on the wider cluster | Yes | Less misleading than before, still not comprehensively proven | Beta-safe, not gold |
 | Partner contracts and deliverables | Yes | Mostly yes | Mostly yes | Mostly yes | Partial | Yes | No obvious fake primary action in audited path | Beta-safe |
-| Partner listings and payouts | Yes | Mostly yes | Partly | Partly | No, payout failure can read as zero history | Yes | Misleading under backend failure | Not gold-ready |
+| Partner listings and payouts | Yes | Mostly yes | Partly | Partly | Mostly yes on the audited payouts path, partial on the wider cluster | Yes | Audited payout load failure is now honest | Beta-safe, not gold |
 | HQ sites, role switcher, exports, analytics | Yes | Yes | Yes | Yes | Mostly yes | Yes | No obvious fake primary path in audited route tests | Strong for beta |
-| HQ billing, approvals, audit, safety, integrations health, feature flags, user admin | Yes | Mostly yes | Partly | Partly | No, some failures become empty or placeholder-style states | Yes | Several surfaces look more complete than the current proof justifies | Not gold-ready |
+| HQ billing, approvals, audit, safety, integrations health, feature flags, user admin | Yes | Mostly yes | Partly | Partly | Mostly yes on the audited approvals path, partial across the wider cluster | Yes | Approvals no longer hide outage as an empty queue, but broader proof is still incomplete | Beta-safe, not gold |
 | Cross-role messages, notifications, profile, settings | Yes | Yes | Yes | Yes | Mostly yes | Yes | No obvious fake primary action | Strong for beta |
 
 ## B. Gold Blockers
@@ -69,27 +69,6 @@ End-to-end solution:
 1. Execute one full iOS release through the supported lane and capture the artifact, upload result, processing result, and installability evidence.
 2. Execute one full Android internal-track release through the supported lane and capture upload, processing, rollout visibility, and installability evidence.
 3. Add the evidence bundle to release docs so the next audit can treat store distribution as proven, not assumed.
-
-### 2. Several enabled admin/support routes still hide backend failure behind clean empty states
-
-Current truth:
-
-- HQ approvals clears its list on load failure, while the page empty state says `No pending approvals`.
-- Site identity clears pending matches on load failure, while the page empty state says `All Identities Resolved`.
-- Partner payouts clears payout data on failure, while the page empty state says `No Payouts Yet`.
-
-Why this is a gold blocker:
-
-- This is a product honesty problem, not just a testing gap.
-- A user can be told the queue is empty or resolved when the backend actually failed.
-- Admin operators will make the wrong decision because the UI hides operational failure.
-
-End-to-end solution:
-
-1. Separate `empty`, `loading`, and `loadFailed` into explicit states in the affected services/pages.
-2. Preserve the last known good data when refresh fails instead of replacing it with a clean slate.
-3. Show a visible retry affordance and timestamped stale-data banner where cached data exists.
-4. Add direct page tests proving the failure state for HQ approvals, site identity, and partner payouts.
 
 ## C. Beta-Safe But Not Gold
 
@@ -115,7 +94,26 @@ End-to-end solution:
 2. Add direct tests first to enabled admin/operator routes that perform approvals, billing, identity resolution, or user administration.
 3. For each added route test, prove one happy path and one failure path. Rendering-only tests do not count.
 
-### 2. Some honest surfaces are still support-handoff products rather than self-service products
+### 2. The audited operator empty-success bug class is fixed, but the wider admin surface is still only partly proven
+
+Current truth:
+
+- HQ approvals, site identity, and partner payouts now render explicit failure states when loading fails.
+- Those routes no longer pretend a backend outage means there is simply no work to do.
+- The wider admin surface still has more partial-failure combinations than the direct test footprint covers.
+
+Why this is beta-safe but not gold:
+
+- The specific misleading behavior called out in the audit is now fixed.
+- The remaining risk is breadth, not the same known lie surviving in those audited routes.
+
+End-to-end solution:
+
+1. Apply the same `error vs empty vs stale` pattern to the remaining operator-heavy HQ and site pages.
+2. Add direct failure-path tests for the next admin cluster instead of only success/render tests.
+3. Keep stale-data banners only where last-known-good data actually exists.
+
+### 3. Some honest surfaces are still support-handoff products rather than self-service products
 
 Current truth:
 
@@ -169,8 +167,8 @@ End-to-end solution:
 
 Current truth:
 
-- Some pages treat exceptions as if there is simply no data.
-- This pattern is already visible in approvals, identity resolution, and payouts.
+- Some pages still treat exceptions as if there is simply no data.
+- The audited approvals, identity resolution, and payouts routes were fixed in this pass, but the pattern still needs broader eradication.
 
 Why this will hurt later:
 
@@ -222,9 +220,9 @@ End-to-end solution:
 ## Evidence of Verification
 
 - Router inventory still exposes 52 enabled page surfaces.
-- Focused test inventory still covers 38 audit-relevant files.
+- Focused test inventory now covers 41 audit-relevant files.
 - `flutter analyze` passed on the current app state.
-- Fresh targeted audit rerun passed: 25 tests, 0 failures.
+- Fresh operator-failure regressions passed: 3 tests, 0 failures.
 - Current broad audit baseline for this code cycle remains 247 passed, 0 failed.
 
 ## Recommendation
@@ -236,5 +234,4 @@ End-to-end solution:
 
 1. Prove one real iOS TestFlight release end to end.
 2. Prove one real Android Play release end to end.
-3. Remove the empty-success lie from HQ approvals, site identity, and partner payouts.
-4. Expand route-proof coverage over the remaining high-risk enabled admin/operator surfaces.
+3. Expand route-proof coverage over the remaining high-risk enabled admin/operator surfaces.

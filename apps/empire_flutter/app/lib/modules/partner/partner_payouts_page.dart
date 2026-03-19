@@ -40,8 +40,12 @@ class _PartnerPayoutsPageState extends State<PartnerPayoutsPage> {
       ),
       body: Consumer<PartnerService>(
         builder: (BuildContext context, PartnerService service, _) {
-          if (service.isLoading) {
+          if (service.isLoading && service.payouts.isEmpty) {
             return const Center(child: CircularProgressIndicator());
+          }
+
+          if (service.error != null && service.payouts.isEmpty) {
+            return _buildLoadErrorState(service);
           }
 
           if (service.payouts.isEmpty) {
@@ -50,6 +54,10 @@ class _PartnerPayoutsPageState extends State<PartnerPayoutsPage> {
 
           return Column(
             children: <Widget>[
+              if (service.error != null)
+                _buildStaleDataBanner(
+                  _tPartnerPayouts(context, 'Unable to refresh payouts right now. Showing the last successful data.'),
+                ),
               _buildSummaryCard(service.payouts),
               Expanded(
                 child: RefreshIndicator(
@@ -76,6 +84,73 @@ class _PartnerPayoutsPageState extends State<PartnerPayoutsPage> {
             ],
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildLoadErrorState(PartnerService service) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Icon(
+              Icons.error_outline_rounded,
+              size: 64,
+              color: Colors.red.withValues(alpha: 0.7),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _tPartnerPayouts(context, 'Payouts are temporarily unavailable'),
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: ScholesaColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              service.error ??
+                  _tPartnerPayouts(context, 'We could not load your payout history.'),
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: ScholesaColors.textSecondary),
+            ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: service.loadPayouts,
+              icon: const Icon(Icons.refresh_rounded),
+              label: Text(_tPartnerPayouts(context, 'Retry')),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStaleDataBanner(String message) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.orange.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(color: ScholesaColors.textPrimary),
+            ),
+          ),
+        ],
       ),
     );
   }
