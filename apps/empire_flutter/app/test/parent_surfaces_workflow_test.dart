@@ -9,6 +9,7 @@ import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
 import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/modules/parent/parent_billing_page.dart';
+import 'package:scholesa_app/modules/parent/parent_child_page.dart';
 import 'package:scholesa_app/modules/parent/parent_models.dart';
 import 'package:scholesa_app/modules/parent/parent_portfolio_page.dart';
 import 'package:scholesa_app/modules/parent/parent_schedule_page.dart';
@@ -434,6 +435,100 @@ void main() {
       expect(
         find.text('Explain why this prototype path best matched the evidence.'),
         findsOneWidget,
+      );
+    });
+
+    testWidgets(
+        'child passport prefers direct artifact proof and ai provenance over mission fallback',
+        (WidgetTester tester) async {
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+      await _seedParentData(firestore);
+
+      final DateTime now = DateTime.now();
+      final DateTime anchor = DateTime(now.year, now.month, now.day, 11);
+
+      await firestore.collection('capabilityMastery').doc('learner-1_cap-1').set(
+        <String, dynamic>{
+          'learnerId': 'learner-1',
+          'siteId': 'site-1',
+          'capabilityId': 'cap-1',
+          'pillarCode': 'future_skills',
+          'latestLevel': 3,
+          'highestLevel': 3,
+          'latestMissionAttemptId': 'attempt-1',
+          'updatedAt': Timestamp.fromDate(anchor),
+        },
+      );
+
+      await firestore.collection('evidenceRecords').doc('evidence-1').set(
+        <String, dynamic>{
+          'learnerId': 'learner-1',
+          'siteId': 'site-1',
+          'capabilityId': 'cap-1',
+          'capabilityLabel': 'Prototype evidence',
+          'linkedMissionAttemptId': 'attempt-1',
+          'observedAt': Timestamp.fromDate(anchor.subtract(const Duration(hours: 1))),
+        },
+      );
+
+      await firestore.collection('portfolioItems').doc('artifact-1').set(
+        <String, dynamic>{
+          'learnerId': 'learner-1',
+          'title': 'Prototype Evidence',
+          'description': 'Reviewed prototype artifact with direct provenance.',
+          'pillarCodes': const <String>['future_skills'],
+          'capabilityIds': const <String>['cap-1'],
+          'capabilityTitles': const <String>['Prototype evidence'],
+          'verificationStatus': 'reviewed',
+          'missionAttemptId': 'attempt-1',
+          'proofOfLearningStatus': 'verified',
+          'aiDisclosureStatus': 'learner-ai-not-used',
+          'createdAt': Timestamp.fromDate(anchor),
+          'updatedAt': Timestamp.fromDate(anchor.add(const Duration(minutes: 5))),
+        },
+      );
+
+      await firestore.collection('missionAttempts').doc('attempt-1').set(
+        <String, dynamic>{
+          'learnerId': 'learner-1',
+          'missionId': 'mission-1',
+          'sessionOccurrenceId': 'session-1',
+          'proofBundleSummary': <String, dynamic>{
+            'hasExplainItBack': false,
+            'hasOralCheck': false,
+            'hasMiniRebuild': false,
+            'hasLearnerAiDisclosure': false,
+            'aiAssistanceUsed': false,
+          },
+        },
+      );
+
+      await firestore.collection('interactionEvents').doc('event-ai-1').set(
+        <String, dynamic>{
+          'actorId': 'learner-1',
+          'sessionOccurrenceId': 'session-1',
+          'eventType': 'ai_help_used',
+          'createdAt': Timestamp.fromDate(anchor.add(const Duration(minutes: 1))),
+        },
+      );
+
+      await _pumpPage(
+        tester,
+        firestore: firestore,
+        home: const ParentChildPage(learnerId: 'learner-1'),
+      );
+
+      expect(find.text('Ideation Passport'), findsOneWidget);
+      expect(find.text('Prototype evidence'), findsWidgets);
+      expect(
+        find.textContaining(
+          'Proof of Learning: Verified • AI Disclosure: Learner declared no AI support used',
+        ),
+        findsWidgets,
+      );
+      expect(
+        find.textContaining('Learner AI use detected without explain-back evidence'),
+        findsNothing,
       );
     });
 

@@ -1023,6 +1023,19 @@ class ParentService extends ChangeNotifier {
           .where((Map<String, dynamic> row) =>
               _asTrimmedString(row['capabilityId']) == capabilityId)
           .toList(growable: false);
+      final List<Map<String, dynamic>> matchingPortfolioByRecency =
+          List<Map<String, dynamic>>.from(matchingPortfolio)
+            ..sort((Map<String, dynamic> a, Map<String, dynamic> b) {
+              final DateTime aTimestamp =
+                  _parseTimestamp(a['updatedAt']) ??
+                      _parseTimestamp(a['createdAt']) ??
+                      DateTime(1970);
+              final DateTime bTimestamp =
+                  _parseTimestamp(b['updatedAt']) ??
+                      _parseTimestamp(b['createdAt']) ??
+                      DateTime(1970);
+              return bTimestamp.compareTo(aTimestamp);
+            });
       final Set<String> missionAttemptIds = <String>{
         _asTrimmedString(mastery['latestMissionAttemptId']),
         ...matchingEvidence.map(
@@ -1076,6 +1089,20 @@ class ParentService extends ChangeNotifier {
             _asTrimmedString(row['verificationStatus']).toLowerCase();
         return verificationStatus == 'reviewed' || verificationStatus == 'verified';
       }).length;
+      final String directProofOfLearningStatus = matchingPortfolioByRecency
+          .map((Map<String, dynamic> row) =>
+              _asTrimmedString(row['proofOfLearningStatus']))
+          .firstWhere(
+            (String value) => value.isNotEmpty,
+            orElse: () => '',
+          );
+      final String directAiDisclosureStatus = matchingPortfolioByRecency
+          .map((Map<String, dynamic> row) =>
+              _asTrimmedString(row['aiDisclosureStatus']))
+          .firstWhere(
+            (String value) => value.isNotEmpty,
+            orElse: () => '',
+          );
       final bool hasExplainItBack = matchingMissionAttempts.any((Map<String, dynamic> row) {
         final Map<dynamic, dynamic>? summary =
             row['proofBundleSummary'] as Map<dynamic, dynamic>?;
@@ -1105,12 +1132,13 @@ class ParentService extends ChangeNotifier {
           return summary?['aiAssistanceUsed'] == true;
         },
       );
-      final String proofOfLearningStatus =
-          hasExplainItBack && hasOralCheck && hasMiniRebuild
-              ? 'verified'
-              : hasExplainItBack || hasOralCheck || hasMiniRebuild
-                  ? 'partial'
-                  : 'missing';
+        final String proofOfLearningStatus = directProofOfLearningStatus.isNotEmpty
+          ? directProofOfLearningStatus
+          : hasExplainItBack && hasOralCheck && hasMiniRebuild
+            ? 'verified'
+            : hasExplainItBack || hasOralCheck || hasMiniRebuild
+              ? 'partial'
+              : 'missing';
       final bool hasAiFeedbackSignal = matchingMissionAttempts.any(
         (Map<String, dynamic> row) =>
             _asTrimmedString(row['aiFeedbackDraft']).isNotEmpty,
@@ -1127,21 +1155,23 @@ class ParentService extends ChangeNotifier {
             _asTrimmedString(row['eventType']).toLowerCase() ==
             'explain_it_back_submitted',
       );
-        final String aiDisclosureStatus = hasLearnerAiDisclosure
-          ? learnerAiDeclaredUsed
-            ? hasExplainItBack
-              ? 'learner-ai-verified'
-              : 'learner-ai-verification-gap'
-            : 'learner-ai-not-used'
-          : learnerAiEventCount > 0
-            ? hasLearnerExplainBackEvent
-              ? 'learner-ai-verified'
-              : 'learner-ai-verification-gap'
-            : hasAiFeedbackSignal
-              ? 'educator-feedback-ai'
-              : matchingMissionAttempts.isNotEmpty
-                ? 'no-learner-ai-signal'
-                : 'not-available';
+      final String aiDisclosureStatus = directAiDisclosureStatus.isNotEmpty
+          ? directAiDisclosureStatus
+          : hasLearnerAiDisclosure
+              ? learnerAiDeclaredUsed
+                  ? hasExplainItBack
+                      ? 'learner-ai-verified'
+                      : 'learner-ai-verification-gap'
+                  : 'learner-ai-not-used'
+              : learnerAiEventCount > 0
+                  ? hasLearnerExplainBackEvent
+                      ? 'learner-ai-verified'
+                      : 'learner-ai-verification-gap'
+                  : hasAiFeedbackSignal
+                      ? 'educator-feedback-ai'
+                      : matchingMissionAttempts.isNotEmpty
+                          ? 'no-learner-ai-signal'
+                          : 'not-available';
       claims.add(
         PassportClaim(
           capabilityId: capabilityId,
