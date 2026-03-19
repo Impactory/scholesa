@@ -364,42 +364,47 @@ class _EducatorMissionReviewPageState extends State<EducatorMissionReviewPage> {
   }
 
   Widget _buildLoadErrorState(String message) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: ScholesaColors.educator.withValues(alpha: 0.08),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.error_outline_rounded,
-                size: 48,
-                color: ScholesaColors.educator.withValues(alpha: 0.65),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: ScholesaColors.educator,
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: ScholesaColors.educator.withValues(alpha: 0.08),
+                    shape: BoxShape.circle,
                   ),
+                  child: Icon(
+                    Icons.error_outline_rounded,
+                    size: 48,
+                    color: ScholesaColors.educator.withValues(alpha: 0.65),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: ScholesaColors.educator,
+                      ),
+                ),
+                const SizedBox(height: 16),
+                FilledButton.tonalIcon(
+                  onPressed: _loadPendingReviews,
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: Text(_tEducatorMissionReview(context, 'Retry')),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            FilledButton.tonalIcon(
-              onPressed: _loadPendingReviews,
-              icon: const Icon(Icons.refresh_rounded),
-              label: Text(_tEducatorMissionReview(context, 'Retry')),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 

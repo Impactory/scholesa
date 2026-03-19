@@ -480,10 +480,8 @@ describe('workflow route parity', () => {
       } as never,
     }), {
       id: 'attempt-1',
+      routePath: '/educator/missions/review',
       collectionName: 'missionAttempts',
-      data: {
-        status: 'submitted',
-      },
     });
 
     expect(updateDocMock).toHaveBeenCalledWith(

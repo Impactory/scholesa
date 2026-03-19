@@ -12,17 +12,16 @@ Proof levels:
 ## Summary
 
 - Enabled canonical routes audited: 52
-- Direct: 47
-- Workflow/regression only: 5
+- Direct: 48
+- Workflow/regression only: 4
 - None: 0
 
 Highest-value remaining blind spots:
 
-1. `/educator/missions/review`
-2. deeper failure and mutation coverage on `/educator/mission-plans`
-3. learner-scoped alias-route proof for `/settings`
-4. parent-scoped alias-route proof for `/messages`
-5. parent-scoped alias-route proof for `/settings`
+1. deeper failure and mutation coverage on `/educator/mission-plans`
+2. learner-scoped alias-route proof for `/settings`
+3. parent-scoped alias-route proof for `/messages`
+4. parent-scoped alias-route proof for `/settings`
 
 ## Public, Auth, and Root
 
@@ -52,7 +51,7 @@ Highest-value remaining blind spots:
 | `/educator/attendance` | direct | `apps/empire_flutter/app/test/attendance_placeholder_actions_test.dart` | — |
 | `/educator/sessions` | direct | `apps/empire_flutter/app/test/educator_sessions_page_test.dart` | Explicit load-failure proof now exists; broader create/edit session flows still lack direct proof |
 | `/educator/learners` | direct | `apps/empire_flutter/app/test/educator_learners_page_test.dart` | — |
-| `/educator/missions/review` | workflow/regression | `apps/empire_flutter/app/test/router_redirect_test.dart`, `apps/empire_flutter/app/test/role_workflow_smoke_test.dart` | Review-page mechanics are not directly proven |
+| `/educator/missions/review` | direct | `apps/empire_flutter/app/test/educator_mission_review_page_test.dart`, `apps/empire_flutter/app/test/educator_honesty_regression_test.dart` | Honest load failure, active-site scoped retry, and failed review submission are now directly proven; collection-level source-of-truth drift vs. web still needs a separate audit |
 | `/educator/mission-plans` | direct | `apps/empire_flutter/app/test/educator_mission_plans_page_test.dart` | Creation flow is proven; explicit backend failure state is still not isolated |
 | `/educator/learner-supports` | direct | `apps/empire_flutter/app/test/educator_learner_supports_page_test.dart` | Live learner-derived support rendering is proven; failure-state handling is still indirect |
 | `/educator/integrations` | direct | `apps/empire_flutter/app/test/educator_integrations_page_test.dart`, `apps/empire_flutter/app/test/district_provider_integration_test.dart` | Honest load failure, retry, and sync-action failure states are now isolated; broader provider breadth still relies on the district and provider workflow tests |
@@ -135,10 +134,9 @@ Highest-value remaining blind spots:
 
 Prioritize direct proof next for:
 
-1. `/educator/missions/review`
-2. deeper failure and mutation coverage on `/educator/mission-plans`
-3. learner-scoped alias-route proof for `/settings`
-4. parent-scoped alias-route proof for `/messages`
-5. parent-scoped alias-route proof for `/settings`
+1. deeper failure and mutation coverage on `/educator/mission-plans`
+2. learner-scoped alias-route proof for `/settings`
+3. parent-scoped alias-route proof for `/messages`
+4. parent-scoped alias-route proof for `/settings`
 
 Then upgrade the workflow-only cluster with page-specific failure-state tests for the operationally risky routes before claiming gold.

@@ -18,6 +18,7 @@ class _StubMissionService extends MissionService {
     this.submitShouldSucceed = true,
     List<MissionSubmission> submissions = const <MissionSubmission>[],
   })  : _submissions = List<MissionSubmission>.from(submissions),
+        _seedSubmissions = List<MissionSubmission>.from(submissions),
         super(
           firestoreService: FirestoreService(
             firestore: FakeFirebaseFirestore(),
@@ -36,6 +37,7 @@ class _StubMissionService extends MissionService {
   bool _loading = false;
   String? _errorState;
   List<MissionSubmission> _submissions;
+  final List<MissionSubmission> _seedSubmissions;
   int _reviewedTodayState = 0;
 
   @override
@@ -61,6 +63,7 @@ class _StubMissionService extends MissionService {
       _reviewedTodayState = 0;
     } else {
       _errorState = null;
+      _submissions = List<MissionSubmission>.from(_seedSubmissions);
       _reviewedTodayState = 1;
     }
     notifyListeners();
@@ -137,6 +140,18 @@ Widget _buildHarness(MissionService missionService) {
   );
 }
 
+Future<void> _pumpPage(
+  WidgetTester tester,
+  MissionService missionService,
+) async {
+  await tester.binding.setSurfaceSize(const Size(1280, 1800));
+  addTearDown(() => tester.binding.setSurfaceSize(null));
+
+  await tester.pumpWidget(_buildHarness(missionService));
+  await tester.pump();
+  await tester.pumpAndSettle();
+}
+
 void main() {
   testWidgets(
       'educator mission review page shows explicit load error and retries with active site scope',
@@ -146,9 +161,7 @@ void main() {
       submissions: <MissionSubmission>[_submission()],
     );
 
-    await tester.pumpWidget(_buildHarness(missionService));
-    await tester.pump();
-    await tester.pumpAndSettle();
+    await _pumpPage(tester, missionService);
 
     expect(
       find.text('Unable to load mission review queue right now.'),
@@ -158,6 +171,7 @@ void main() {
     expect(find.text('All caught up!'), findsNothing);
     expect(missionService.requestedSiteIds, <String?>['site-1']);
 
+    await tester.ensureVisible(find.text('Retry'));
     await tester.tap(find.text('Retry'));
     await tester.pump();
     await tester.pumpAndSettle();
@@ -178,13 +192,12 @@ void main() {
       submitShouldSucceed: false,
     );
 
-    await tester.pumpWidget(_buildHarness(missionService));
-    await tester.pump();
-    await tester.pumpAndSettle();
+    await _pumpPage(tester, missionService);
 
     await tester.tap(find.text('Robotics Reflection'));
     await tester.pumpAndSettle();
 
+    await tester.ensureVisible(find.text('Approve'));
     await tester.tap(find.text('Approve'));
     await tester.pump();
     await tester.pumpAndSettle();
