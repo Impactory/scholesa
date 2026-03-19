@@ -124,6 +124,7 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Attendance is temporarily unavailable'), findsOneWidget);
     expect(
       find.text(
@@ -192,6 +193,7 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('账户菜单'), findsOneWidget);
     await tester.tap(find.text('Robotics Lab'));
     await tester.pumpAndSettle();
 

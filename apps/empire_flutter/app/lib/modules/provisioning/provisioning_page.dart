@@ -273,6 +273,9 @@ class _ProvisioningPageState extends State<ProvisioningPage>
     return Scaffold(
       appBar: AppBar(
         title: Text(_tProvisioning(context, 'Provisioning')),
+        actions: const <Widget>[
+          SessionMenuButton(),
+        ],
         bottom: TabBar(
           controller: _tabController,
           tabs: <Widget>[

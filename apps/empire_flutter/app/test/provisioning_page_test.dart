@@ -130,6 +130,7 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Unable to load learners'), findsOneWidget);
     expect(find.text('Failed to load learners from test'), findsOneWidget);
     expect(find.text('Retry'), findsOneWidget);
@@ -158,6 +159,7 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(
       find.text(
         'Showing last loaded provisioning data. Failed to refresh learners from test',

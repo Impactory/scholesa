@@ -90,6 +90,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Credentials'), findsOneWidget);
     expect(find.text('Future Skills Sprint'), findsOneWidget);
     expect(find.text('Issued 3/18/2026'), findsOneWidget);
@@ -105,6 +106,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Credential storage unavailable right now.'),
         findsOneWidget);
     expect(find.text('No credentials issued yet'), findsNothing);

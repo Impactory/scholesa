@@ -303,6 +303,7 @@ class _LearnerCredentialsPageState extends State<LearnerCredentialsPage> {
             },
             icon: const Icon(Icons.refresh_rounded),
           ),
+          const SessionMenuButton(),
         ],
       ),
       body: Builder(

@@ -29,6 +29,7 @@ AppState _buildEducatorState() {
   });
   return state;
 }
+  expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
 
 Widget _buildHarness({
   required FirestoreService firestoreService,
@@ -58,6 +59,7 @@ Widget _buildHarness({
     ),
   );
 }
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
 
 Future<void> _seedMission(
   FakeFirebaseFirestore firestore, {

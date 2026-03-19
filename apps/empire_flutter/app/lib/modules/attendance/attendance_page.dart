@@ -59,6 +59,7 @@ class _AttendancePageState extends State<AttendancePage> {
         actions: const <Widget>[
           SyncStatusIndicator(),
           SizedBox(width: 8),
+          SessionMenuButton(),
         ],
       ),
       body: Column(

@@ -171,6 +171,9 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
             icon: const Icon(Icons.filter_list_rounded),
             onPressed: () => _showFilterDialog(),
           ),
+          const SessionMenuButton(
+            foregroundColor: Colors.white,
+          ),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
