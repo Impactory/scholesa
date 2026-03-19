@@ -28,6 +28,7 @@ type VoiceComplexity = 'low' | 'medium' | 'high';
 type VoiceEmotionalState = 'frustrated' | 'neutral' | 'confident';
 type VoiceResponseMode = 'hint' | 'explain' | 'translate' | 'plan' | 'safety';
 type UnderstandingSource = 'heuristic' | 'model' | 'blended';
+type ResponseGenerationSource = 'local' | 'model' | 'guardrail';
 
 const VOICE_POLICY_VERSION = 'voice-policy-2026-02-23';
 const VOICE_MODEL_VERSION = 'voice-orchestrator-v1';
@@ -53,6 +54,13 @@ const UNAVAILABLE_STUDENT_SUPPORT: Record<VoiceLocale, string> = {
   'zh-CN': 'AI 教练现在还不能提供足够可靠的回答。你可以先分享你目前的思路，或者请老师陪你一起看下一步。',
   'zh-TW': 'AI 教練現在還不能提供足夠可靠的回答。你可以先分享你目前的思路，或者請老師陪你一起看下一步。',
   th: 'โค้ช AI ยังไม่พร้อมให้คำตอบที่เชื่อถือได้ในตอนนี้ ลองเล่าสิ่งที่ทำมาถึงตอนนี้ หรือให้ครูช่วยดูขั้นต่อไปกับคุณ',
+};
+
+const HEURISTIC_ONLY_STUDENT_SUPPORT: Record<VoiceLocale, string> = {
+  en: 'I may not have understood your voice request well enough yet. Tell me the exact step you are stuck on, and I will help with one small next move.',
+  'zh-CN': '我现在可能还没有足够准确地理解你的语音请求。请告诉我你具体卡在哪一步，我会先帮你想一个小的下一步。',
+  'zh-TW': '我現在可能還沒有足夠準確地理解你的語音請求。請告訴我你具體卡在哪一步，我會先幫你想一個小的下一步。',
+  th: 'ตอนนี้ฉันอาจยังเข้าใจคำขอเสียงของคุณได้ไม่ชัดพอ ลองบอกว่าคุณติดอยู่ตรงขั้นไหน แล้วฉันจะช่วยคิดก้าวเล็ก ๆ ถัดไปให้',
 };
 
 type VoiceTelemetryEvent =
@@ -1202,6 +1210,10 @@ function buildStudentConfidenceGuardResponse(locale: VoiceLocale): string {
 
 function buildStudentInferenceUnavailableResponse(locale: VoiceLocale): string {
   return UNAVAILABLE_STUDENT_SUPPORT[locale] ?? UNAVAILABLE_STUDENT_SUPPORT.en;
+}
+
+function buildHeuristicOnlyStudentResponse(locale: VoiceLocale): string {
+  return HEURISTIC_ONLY_STUDENT_SUPPORT[locale] ?? HEURISTIC_ONLY_STUDENT_SUPPORT.en;
 }
 
 function generateLocalizedResponse(role: VoiceRequesterRole, locale: VoiceLocale, category: SafetyDecision['category']): string {
@@ -2673,6 +2685,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
       ? buildAdaptiveLocalizedResponse(authContext.requesterRole, locale, safety.category, understanding)
       : safety.localizedMessage;
     let candidateText = baselineCandidateText;
+    let responseGenerationSource: ResponseGenerationSource = safety.safetyOutcome === 'allowed' ? 'local' : 'guardrail';
     let llmModelVersion = VOICE_MODEL_VERSION;
     let inferenceMeta: VoiceInferenceMeta = buildLocalInferenceMeta(
       'llm',
@@ -2745,22 +2758,27 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
             certifiedModelConfidence < MIN_AUTONOMOUS_STUDENT_CONFIDENCE)
         ) {
           candidateText = buildStudentConfidenceGuardResponse(locale);
+          responseGenerationSource = 'guardrail';
           inferenceMeta = buildInferenceMeta('llm', llmResult, 'child_low_confidence_guard');
         } else {
           const outputSafety = evaluateSafetyDecision(suggestedText, authContext.requesterRole, locale);
           if (outputSafety.safetyOutcome === 'allowed') {
             candidateText = suggestedText;
+            responseGenerationSource = 'model';
             inferenceMeta = buildInferenceMeta('llm', llmResult);
           } else if (outputSafety.safetyOutcome === 'modified') {
             candidateText = outputSafety.localizedMessage;
+            responseGenerationSource = 'guardrail';
             inferenceMeta = buildInferenceMeta('llm', llmResult, 'model_output_modified');
           } else {
+            responseGenerationSource = 'guardrail';
             inferenceMeta = buildInferenceMeta('llm', llmResult, 'model_output_blocked');
           }
         }
       } else if (llmResult.ok) {
         if (requiresStrictStudentConfidence(authContext.requesterRole)) {
           candidateText = buildStudentInferenceUnavailableResponse(locale);
+          responseGenerationSource = 'guardrail';
           inferenceMeta = buildInferenceMeta('llm', llmResult, 'child_empty_inference_response');
         } else {
           if (isInternalInferenceRequired()) {
@@ -2771,10 +2789,21 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
       } else {
         if (requiresStrictStudentConfidence(authContext.requesterRole)) {
           candidateText = buildStudentInferenceUnavailableResponse(locale);
+          responseGenerationSource = 'guardrail';
           inferenceMeta = buildInferenceMeta('llm', llmResult, 'child_inference_unavailable');
         } else {
           inferenceMeta = buildInferenceMeta('llm', llmResult, 'internal_call_failed');
         }
+      }
+
+      if (
+        authContext.requesterRole === 'student' &&
+        responseGenerationSource === 'local' &&
+        understandingSource === 'heuristic'
+      ) {
+        candidateText = buildHeuristicOnlyStudentResponse(locale);
+        responseGenerationSource = 'guardrail';
+        inferenceMeta = buildLocalInferenceMeta('llm', 'heuristic_only_clarification');
       }
 
       const bosResult = await callInternalInferenceJson<Record<string, unknown>, Record<string, unknown>>({
@@ -3135,6 +3164,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         redactionApplied: preparedSpeech.redactionApplied,
         redactionCount: preparedSpeech.redactionCount,
         understandingSource,
+        responseGenerationSource,
         modelToolHintCount,
         personalizationContextUsed,
         roleIntelligenceSignals,
