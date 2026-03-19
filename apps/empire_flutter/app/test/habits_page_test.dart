@@ -79,6 +79,7 @@ void main() {
       learnerId: 'learner-1',
     );
 
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
     await tester.pumpWidget(
       _buildHarness(
         firestoreService: firestoreService,
@@ -106,6 +107,7 @@ void main() {
       learnerId: 'learner-1',
     );
 
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
     await tester.pumpWidget(
       _buildHarness(
         firestoreService: firestoreService,

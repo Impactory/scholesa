@@ -89,9 +89,11 @@ void main() {
       stubBillingSummary: null,
     );
 
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
     await tester.pumpWidget(_buildHarness(parentService: parentService));
     await tester.pumpAndSettle();
 
+    await tester.scrollUntilVisible(find.text('No billing data yet'), 200);
     expect(find.text('No billing data yet'), findsOneWidget);
     expect(find.text('Statements are shared by your site or HQ billing team.'), findsOneWidget);
     await tester.tap(find.text('Plan'));
@@ -136,9 +138,11 @@ void main() {
       ),
     );
 
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
     await tester.pumpWidget(_buildHarness(parentService: parentService));
     await tester.pumpAndSettle();
 
+    await tester.scrollUntilVisible(find.text('INV-2026-03'), 200);
     expect(find.text('INV-2026-03'), findsOneWidget);
     expect(find.text('Pay Now'), findsNothing);
     expect(find.text('Invoice actions are handled by your site or HQ billing team.'), findsWidgets);

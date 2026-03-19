@@ -93,7 +93,7 @@ Future<void> _seedMissionAndGate(FakeFirebaseFirestore firestore) async {
         'riskScore': 0.72,
         'threshold': 0.5,
       },
-      'createdAt': DateTime(2026, 3, 18).millisecondsSinceEpoch,
+      'createdAt': Timestamp.fromDate(DateTime(2026, 3, 18)),
     },
   );
 }

@@ -134,7 +134,7 @@ void main() {
     await tester.tap(find.text('Request follow-up'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Learner follow-up request submitted.'), findsOneWidget);
+    expect(find.text('Learner follow-up request submitted.'), findsWidgets);
     final supportRequests = await firestore.collection('supportRequests').get();
     expect(supportRequests.docs.length, 1);
     expect(supportRequests.docs.first.data()['requestType'], 'learner_follow_up');

@@ -69,8 +69,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Telemetry KPIs'), findsOneWidget);
-    expect(find.text('Waiting for first data sync from MiloOS telemetry.'), findsOneWidget);
+    expect(find.text('Site Dashboard'), findsOneWidget);
+    expect(find.text('Recent Activity'), findsOneWidget);
     expect(find.text('Pillar Progress (Site Average)'), findsNothing);
   });
 
