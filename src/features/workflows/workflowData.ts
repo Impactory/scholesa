@@ -120,20 +120,6 @@ function asFiniteNumber(value: unknown): number | null {
   return null;
 }
 
-function asAvailabilityString(value: unknown): string {
-  const numeric = asFiniteNumber(value);
-  return numeric != null ? String(numeric) : 'unavailable';
-}
-
-function asPercentFromUnit(value: unknown): string {
-  const numeric = asFiniteNumber(value);
-  return numeric != null ? `${Math.round(numeric * 100)}%` : 'unavailable';
-}
-
-function asTextAvailability(value: unknown): string {
-  return typeof value === 'string' && value.trim().length > 0 ? value : 'unavailable';
-}
-
 function asAvailabilityLabel(value: unknown): string | null {
   const numeric = asFiniteNumber(value);
   return numeric != null ? String(numeric) : null;

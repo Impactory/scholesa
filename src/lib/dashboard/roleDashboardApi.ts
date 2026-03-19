@@ -22,7 +22,7 @@ export interface RoleDashboardSnapshot {
 export interface RosterEntry {
   id: string;
   uid: string;
-  displayName: string;
+  displayName: string | null;
   email?: string | null;
   role?: UserRole | null;
   siteIds?: string[];
@@ -50,7 +50,7 @@ export interface ParentDashboardBundle {
   linkedLearnerCount: number | null;
   learners: Array<{
     learnerId: string;
-    learnerName: string;
+    learnerName: string | null;
     currentLevel: number | null;
     totalXp: number | null;
     missionsCompleted: number | null;
@@ -109,10 +109,15 @@ function normalizeRosterEntry(raw: unknown): RosterEntry | null {
   const input = raw as Record<string, unknown>;
   const id = typeof input.id === 'string' ? input.id : typeof input.uid === 'string' ? input.uid : '';
   if (!id) return null;
+  const displayName = typeof input.displayName === 'string' && input.displayName.trim().length > 0
+    ? input.displayName.trim()
+    : typeof input.email === 'string' && input.email.trim().length > 0
+    ? input.email.trim()
+    : null;
   return {
     id,
     uid: typeof input.uid === 'string' ? input.uid : id,
-    displayName: typeof input.displayName === 'string' ? input.displayName : id,
+    displayName,
     email: typeof input.email === 'string' ? input.email : null,
     role: normalizeUserRole(input.role),
     siteIds: Array.isArray(input.siteIds) ? input.siteIds.filter((item): item is string => typeof item === 'string') : [],
@@ -212,10 +217,10 @@ export async function fetchParentDashboardBundle(params: {
     for (const item of payload.learners) {
       if (!item || typeof item !== 'object' || Array.isArray(item)) continue;
       const row = item as Record<string, unknown>;
-      if (typeof row.learnerId !== 'string' || typeof row.learnerName !== 'string') continue;
+      if (typeof row.learnerId !== 'string') continue;
       learners.push({
         learnerId: row.learnerId,
-        learnerName: row.learnerName,
+        learnerName: typeof row.learnerName === 'string' && row.learnerName.trim().length > 0 ? row.learnerName.trim() : null,
         currentLevel: normalizeFiniteNumber(row.currentLevel),
         totalXp: normalizeFiniteNumber(row.totalXp),
         missionsCompleted: normalizeFiniteNumber(row.missionsCompleted),

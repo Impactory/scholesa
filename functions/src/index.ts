@@ -2806,10 +2806,10 @@ async function buildParentLearnerSummary(params: {
         .filter(Boolean);
       const title = capabilityTitles.find((value) => typeof value === 'string' && value.trim())
         ?? evidenceTitles[0]
-        ?? capabilityId;
+        ?? 'Capability title unavailable';
       const latestLevel = typeof row.latestLevel === 'number' && Number.isFinite(row.latestLevel)
         ? Math.round(row.latestLevel)
-        : 0;
+        : null;
       const verifiedArtifactCount = matchingPortfolio.filter((entry) => {
         const verificationStatus = typeof entry.verificationStatus === 'string'
           ? entry.verificationStatus.trim().toLowerCase()
@@ -3090,7 +3090,7 @@ async function computeRoleDashboardStats(params: {
 
   if (role === 'educator') {
     let studentsToday = 0;
-    let attendanceRate = 0;
+    let attendanceRate: number | null = null;
     let toReview = 0;
 
     try {
@@ -3110,10 +3110,10 @@ async function computeRoleDashboardStats(params: {
         total += enrolledCount;
         present += presentCount;
       }
-      attendanceRate = total > 0 ? (present / total) * 100 : 0;
+      attendanceRate = total > 0 ? (present / total) * 100 : null;
     } catch {
       studentsToday = 0;
-      attendanceRate = 0;
+      attendanceRate = null;
     }
 
     try {
@@ -3133,7 +3133,7 @@ async function computeRoleDashboardStats(params: {
       { label: 'Students Today', value: String(studentsToday), icon: 'people', color: 'info' },
       {
         label: 'Attendance',
-        value: `${Math.round(attendanceRate)}%`,
+        value: attendanceRate != null ? `${Math.round(attendanceRate)}%` : 'Evidence unavailable',
         icon: 'check_circle',
         color: 'success',
       },
@@ -3161,7 +3161,7 @@ async function computeRoleDashboardStats(params: {
     return [
       { label: 'Linked Learners', value: String(learnerIds.length), icon: 'people', color: 'primary' },
       { label: 'Upcoming Sessions', value: String(upcomingSessions), icon: 'event', color: 'info' },
-      { label: 'Alerts', value: '0', icon: 'warning', color: 'warning' },
+      { label: 'Alerts', value: 'Evidence unavailable', icon: 'warning', color: 'warning' },
     ];
   }
 
