@@ -8,6 +8,7 @@ import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../services/workflow_bridge_service.dart';
 import '../../i18n/site_dashboard_i18n.dart';
+import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 /// Site Dashboard Page - Analytics and overview for site administrators
@@ -258,6 +259,10 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                 ),
                 child: const Icon(Icons.download, color: ScholesaColors.site),
               ),
+            ),
+            const SessionMenuButton(
+              foregroundColor: ScholesaColors.site,
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             ),
           ],
         ),

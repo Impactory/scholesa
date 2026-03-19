@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../services/export_service.dart';
 import '../../services/telemetry_service.dart';
+import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../i18n/parent_surface_i18n.dart';
 import 'parent_models.dart';
@@ -79,6 +80,10 @@ class _ParentChildPageState extends State<ParentChildPage> {
                 icon: const Icon(Icons.verified_user_outlined),
                 label: Text(_t('View Consent')),
                 style: TextButton.styleFrom(foregroundColor: Colors.white),
+              ),
+              const SessionMenuButton(
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
               ),
             ],
           ),

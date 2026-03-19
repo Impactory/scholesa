@@ -9,6 +9,7 @@ import '../../runtime/runtime.dart';
 import '../../i18n/bos_coaching_i18n.dart';
 import '../../i18n/parent_surface_i18n.dart';
 import '../../auth/app_state.dart';
+import '../../ui/auth/global_session_menu.dart';
 
 /// Parent Schedule Page - View learner schedules and upcoming sessions
 class ParentSchedulePage extends StatefulWidget {
@@ -285,6 +286,10 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
                 service.loadParentData();
               },
               icon: const Icon(Icons.refresh, color: ScholesaColors.parent),
+            ),
+            const SessionMenuButton(
+              foregroundColor: ScholesaColors.parent,
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             ),
             Container(
               decoration: BoxDecoration(

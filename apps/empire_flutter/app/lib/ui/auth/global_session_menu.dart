@@ -48,6 +48,66 @@ const Key _globalSessionMenuButtonKey = ValueKey<String>(
   'global_session_menu_button',
 );
 
+class SessionMenuButton extends StatelessWidget {
+  const SessionMenuButton({
+    super.key,
+    this.navigatorKey,
+    this.foregroundColor,
+    this.showLabel = false,
+    this.buttonKey,
+    this.padding = const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+  });
+
+  final GlobalKey<NavigatorState>? navigatorKey;
+  final Color? foregroundColor;
+  final bool showLabel;
+  final Key? buttonKey;
+  final EdgeInsets padding;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color resolvedForeground =
+        foregroundColor ?? Theme.of(context).colorScheme.onSurface;
+    return Material(
+      elevation: 0,
+      color: Colors.transparent,
+      child: Semantics(
+        button: true,
+        label: _tGlobalSessionMenu(context, 'Account menu'),
+        child: InkWell(
+          key: buttonKey,
+          borderRadius: BorderRadius.circular(999),
+          onTap: () => _openGlobalSessionMenu(
+            context: context,
+            navigatorKey: navigatorKey,
+          ),
+          child: Padding(
+            padding: padding,
+            child: ExcludeSemantics(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Icon(Icons.account_circle_outlined, color: resolvedForeground),
+                  if (showLabel) ...<Widget>[
+                    const SizedBox(width: 8),
+                    Text(
+                      _tGlobalSessionMenu(context, 'Account'),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: resolvedForeground,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class GlobalSessionMenu extends StatelessWidget {
   const GlobalSessionMenu({
     super.key,
@@ -75,193 +135,165 @@ class GlobalSessionMenu extends StatelessWidget {
             color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.96),
             borderRadius: BorderRadius.circular(999),
             shadowColor: Colors.black.withValues(alpha: 0.14),
-            child: Semantics(
-              button: true,
-              label: _tGlobalSessionMenu(context, 'Account menu'),
-              child: InkWell(
-                key: _globalSessionMenuButtonKey,
-                borderRadius: BorderRadius.circular(999),
-                onTap: () {
-                  _openAccountSheet(context);
-                },
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  child: ExcludeSemantics(
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        const Icon(Icons.account_circle_outlined),
-                        if (showLabel) ...<Widget>[
-                          const SizedBox(width: 8),
-                          Text(
-                            _tGlobalSessionMenu(context, 'Account'),
-                            style: const TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
+            child: SessionMenuButton(
+              navigatorKey: navigatorKey,
+              showLabel: showLabel,
+              buttonKey: _globalSessionMenuButtonKey,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+Future<void> _openGlobalSessionMenu({
+  required BuildContext context,
+  GlobalKey<NavigatorState>? navigatorKey,
+}) async {
+  final BuildContext navigatorContext = navigatorKey?.currentContext ?? context;
+  final _GlobalSessionAction? action =
+      await showModalBottomSheet<_GlobalSessionAction>(
+    context: navigatorContext,
+    useRootNavigator: true,
+    showDragHandle: true,
+    builder: (BuildContext sheetContext) {
+      return SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              ListTile(
+                leading: const Icon(Icons.person_outline_rounded),
+                title: Text(_tGlobalSessionMenu(sheetContext, 'Profile')),
+                onTap: () => Navigator.pop(
+                  sheetContext,
+                  _GlobalSessionAction.profile,
                 ),
               ),
-            ),
+              ListTile(
+                leading: const Icon(Icons.settings_outlined),
+                title: Text(_tGlobalSessionMenu(sheetContext, 'Settings')),
+                onTap: () => Navigator.pop(
+                  sheetContext,
+                  _GlobalSessionAction.settings,
+                ),
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(
+                  Icons.logout_rounded,
+                  color: ScholesaColors.error,
+                ),
+                title: Text(
+                  _tGlobalSessionMenu(sheetContext, 'Sign Out'),
+                  style: const TextStyle(color: ScholesaColors.error),
+                ),
+                onTap: () => Navigator.pop(
+                  sheetContext,
+                  _GlobalSessionAction.signOut,
+                ),
+              ),
+            ],
           ),
         ),
-      ),
-    );
+      );
+    },
+  );
+  if (action == null) {
+    return;
   }
 
-  Future<void> _openAccountSheet(BuildContext context) async {
-    final BuildContext navigatorContext = navigatorKey?.currentContext ?? context;
-    final _GlobalSessionAction? action =
-        await showModalBottomSheet<_GlobalSessionAction>(
-      context: navigatorContext,
-      useRootNavigator: true,
-      showDragHandle: true,
-      builder: (BuildContext sheetContext) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                ListTile(
-                  leading: const Icon(Icons.person_outline_rounded),
-                  title: Text(_tGlobalSessionMenu(sheetContext, 'Profile')),
-                  onTap: () => Navigator.pop(
-                    sheetContext,
-                    _GlobalSessionAction.profile,
-                  ),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.settings_outlined),
-                  title: Text(_tGlobalSessionMenu(sheetContext, 'Settings')),
-                  onTap: () => Navigator.pop(
-                    sheetContext,
-                    _GlobalSessionAction.settings,
-                  ),
-                ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(
-                    Icons.logout_rounded,
-                    color: ScholesaColors.error,
-                  ),
-                  title: Text(
-                    _tGlobalSessionMenu(sheetContext, 'Sign Out'),
-                    style: const TextStyle(color: ScholesaColors.error),
-                  ),
-                  onTap: () => Navigator.pop(
-                    sheetContext,
-                    _GlobalSessionAction.signOut,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-    if (action == null || navigatorKey?.currentContext == null) {
-      return;
-    }
-    _handleAction(action);
-  }
-
-  void _handleAction(_GlobalSessionAction action) {
-    final BuildContext? context = navigatorKey?.currentContext;
-    if (context == null) {
-      return;
-    }
-    switch (action) {
-      case _GlobalSessionAction.profile:
-        TelemetryService.instance.logEvent(
-          event: 'cta.clicked',
-          metadata: const <String, dynamic>{
-            'cta': 'global_session_menu_profile',
-          },
-        );
-        context.push('/profile');
-        return;
-      case _GlobalSessionAction.settings:
-        TelemetryService.instance.logEvent(
-          event: 'cta.clicked',
-          metadata: const <String, dynamic>{
-            'cta': 'global_session_menu_settings',
-          },
-        );
-        context.push('/settings');
-        return;
-      case _GlobalSessionAction.signOut:
-        _confirmSignOut(context);
-        return;
-    }
-  }
-
-  Future<void> _confirmSignOut(BuildContext context) async {
-    final AuthService authService = context.read<AuthService>();
-    final GoRouter router = GoRouter.of(context);
-    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
-    final String signOutFailedMessage =
-        AppStrings.of(context, 'auth.error.signOutFailed');
-
-    TelemetryService.instance.logEvent(
-      event: 'cta.clicked',
-      metadata: const <String, dynamic>{
-        'cta': 'global_session_menu_open_sign_out_dialog',
-      },
-    );
-    final bool? confirmed = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext dialogContext) => AlertDialog(
-        title: Text(_tGlobalSessionMenu(dialogContext, 'Sign Out')),
-        content: Text(
-          _tGlobalSessionMenu(
-            dialogContext,
-            'Sign out so another family member can switch accounts on this device?',
-          ),
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: Text(_tGlobalSessionMenu(dialogContext, 'Cancel')),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: ScholesaColors.error,
-            ),
-            child: Text(_tGlobalSessionMenu(dialogContext, 'Sign Out')),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed != true) {
+  final BuildContext effectiveContext = navigatorKey?.currentContext ?? context;
+  switch (action) {
+    case _GlobalSessionAction.profile:
       TelemetryService.instance.logEvent(
         event: 'cta.clicked',
         metadata: const <String, dynamic>{
-          'cta': 'global_session_menu_cancel_sign_out',
+          'cta': 'global_session_menu_profile',
         },
       );
+      effectiveContext.push('/profile');
       return;
-    }
+    case _GlobalSessionAction.settings:
+      TelemetryService.instance.logEvent(
+        event: 'cta.clicked',
+        metadata: const <String, dynamic>{
+          'cta': 'global_session_menu_settings',
+        },
+      );
+      effectiveContext.push('/settings');
+      return;
+    case _GlobalSessionAction.signOut:
+      await _confirmGlobalSessionSignOut(effectiveContext);
+      return;
+  }
+}
 
+Future<void> _confirmGlobalSessionSignOut(BuildContext context) async {
+  final AuthService authService = context.read<AuthService>();
+  final GoRouter router = GoRouter.of(context);
+  final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+  final String signOutFailedMessage =
+      AppStrings.of(context, 'auth.error.signOutFailed');
+
+  TelemetryService.instance.logEvent(
+    event: 'cta.clicked',
+    metadata: const <String, dynamic>{
+      'cta': 'global_session_menu_open_sign_out_dialog',
+    },
+  );
+  final bool? confirmed = await showDialog<bool>(
+    context: context,
+    builder: (BuildContext dialogContext) => AlertDialog(
+      title: Text(_tGlobalSessionMenu(dialogContext, 'Sign Out')),
+      content: Text(
+        _tGlobalSessionMenu(
+          dialogContext,
+          'Sign out so another family member can switch accounts on this device?',
+        ),
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.pop(dialogContext, false),
+          child: Text(_tGlobalSessionMenu(dialogContext, 'Cancel')),
+        ),
+        ElevatedButton(
+          onPressed: () => Navigator.pop(dialogContext, true),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: ScholesaColors.error,
+          ),
+          child: Text(_tGlobalSessionMenu(dialogContext, 'Sign Out')),
+        ),
+      ],
+    ),
+  );
+
+  if (confirmed != true) {
     TelemetryService.instance.logEvent(
       event: 'cta.clicked',
       metadata: const <String, dynamic>{
-        'cta': 'global_session_menu_confirm_sign_out',
+        'cta': 'global_session_menu_cancel_sign_out',
       },
     );
-    try {
-      await authService.signOut(source: 'global_session_menu');
-      router.go(kIsWeb ? '/welcome' : '/login');
-    } catch (_) {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(signOutFailedMessage),
-        ),
-      );
-    }
+    return;
+  }
+
+  TelemetryService.instance.logEvent(
+    event: 'cta.clicked',
+    metadata: const <String, dynamic>{
+      'cta': 'global_session_menu_confirm_sign_out',
+    },
+  );
+  try {
+    await authService.signOut(source: 'global_session_menu');
+    router.go(kIsWeb ? '/welcome' : '/login');
+  } catch (_) {
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(signOutFailedMessage),
+      ),
+    );
   }
 }

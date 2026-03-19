@@ -7,6 +7,7 @@ import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
 import '../../auth/app_state.dart';
+import '../../ui/auth/global_session_menu.dart';
 import 'parent_models.dart';
 import 'parent_service.dart';
 
@@ -62,6 +63,12 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
         title: Text(_t('Portfolio')),
         backgroundColor: ScholesaColors.parentGradient.colors.first,
         foregroundColor: Colors.white,
+        actions: const <Widget>[
+          SessionMenuButton(
+            foregroundColor: Colors.white,
+            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: Colors.white,

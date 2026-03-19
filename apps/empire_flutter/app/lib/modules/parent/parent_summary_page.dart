@@ -7,6 +7,7 @@ import '../../runtime/runtime.dart';
 import '../../i18n/bos_coaching_i18n.dart';
 import '../../i18n/parent_surface_i18n.dart';
 import '../../auth/app_state.dart';
+import '../../ui/auth/global_session_menu.dart';
 import 'parent_models.dart';
 import 'parent_service.dart';
 
@@ -183,6 +184,10 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
                 await service.loadParentData();
               },
               icon: const Icon(Icons.refresh, color: ScholesaColors.parent),
+            ),
+            const SessionMenuButton(
+              foregroundColor: ScholesaColors.parent,
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             ),
           ],
         ),

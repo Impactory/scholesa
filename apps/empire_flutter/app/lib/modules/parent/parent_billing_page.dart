@@ -6,6 +6,7 @@ import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
 import '../../i18n/bos_coaching_i18n.dart';
 import '../../auth/app_state.dart';
+import '../../ui/auth/global_session_menu.dart';
 import 'parent_models.dart';
 import 'parent_service.dart';
 
@@ -180,6 +181,11 @@ class _ParentBillingPageState extends State<ParentBillingPage>
                   fontWeight: FontWeight.w600,
                 ),
               ),
+            ),
+            const SizedBox(width: 8),
+            const SessionMenuButton(
+              foregroundColor: ScholesaColors.parent,
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             ),
           ],
         ),

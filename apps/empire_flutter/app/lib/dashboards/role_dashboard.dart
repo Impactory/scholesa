@@ -8,6 +8,7 @@ import '../router/app_router.dart';
 import '../modules/messages/message_service.dart';
 import '../services/telemetry_service.dart';
 import '../ui/localization/app_strings.dart';
+import '../ui/auth/global_session_menu.dart';
 import '../ui/localization/inline_locale_text.dart';
 import '../ui/theme/scholesa_theme.dart';
 import '../ui/widgets/cards.dart';
@@ -951,10 +952,9 @@ class RoleDashboard extends StatelessWidget {
                       context.push('/settings');
                     },
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.logout, color: Colors.white),
-                    tooltip: _t(context, 'Sign out'),
-                    onPressed: () => _showLogoutDialog(context),
+                  const SessionMenuButton(
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   ),
                   const SizedBox(width: 8),
                 ],
