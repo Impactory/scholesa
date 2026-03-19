@@ -374,6 +374,146 @@ describe('workflow route parity', () => {
     }));
   });
 
+  it('loads parent schedule records only for linked learners', async () => {
+    getDocsMock
+      .mockResolvedValueOnce({
+        docs: [{
+          id: 'guardian-link-1',
+          data: () => ({
+            parentId: 'parent-1',
+            learnerId: 'learner-1',
+            learnerName: 'Ava Learner',
+          }),
+        }],
+      })
+      .mockResolvedValueOnce({
+        docs: [{
+          id: 'enrollment-1',
+          data: () => ({
+            learnerId: 'learner-1',
+            sessionId: 'session-1',
+            status: 'active',
+          }),
+        }],
+      })
+      .mockResolvedValueOnce({
+        docs: [{
+          id: 'session-1',
+          data: () => ({
+            title: 'Robotics Studio',
+            description: 'Prototype review',
+            status: 'scheduled',
+            updatedAt: '2026-03-18T09:00:00.000Z',
+            siteId: 'site-1',
+          }),
+        }],
+      });
+
+    const result = await loadWorkflowRecords(makeContext('/parent/schedule', {
+      role: 'parent',
+      uid: 'parent-1',
+      profile: {
+        role: 'parent',
+        activeSiteId: 'site-1',
+        siteIds: ['site-1'],
+      } as never,
+    }));
+
+    expect(whereMock).toHaveBeenCalledWith('parentId', '==', 'parent-1');
+    expect(whereMock).toHaveBeenCalledWith('learnerId', 'in', ['learner-1']);
+    expect(result.records).toEqual([
+      expect.objectContaining({
+        collectionName: 'sessions',
+        routePath: '/parent/schedule',
+        title: 'Robotics Studio',
+        subtitle: 'Prototype review',
+        status: 'scheduled',
+        canEdit: false,
+      }),
+    ]);
+  });
+
+  it('loads parent portfolio summaries and artifacts only for linked learners', async () => {
+    setCallableHandler('getParentDashboardBundle', jest.fn().mockResolvedValue({
+      data: {
+        learners: [{
+          learnerId: 'learner-1',
+          learnerName: 'Ava Learner',
+          updatedAt: '2026-03-18T10:00:00.000Z',
+          capabilitySnapshot: {
+            band: 'developing',
+            futureSkills: 0.8,
+            leadership: 0.6,
+            impact: 0.4,
+            overall: 0.6,
+          },
+          portfolioSnapshot: {
+            artifactCount: 3,
+            publishedArtifactCount: 2,
+            badgeCount: 1,
+            projectCount: 2,
+            latestArtifactAt: '2026-03-18T10:30:00.000Z',
+          },
+          ideationPassport: {
+            completedMissions: 4,
+            reflectionsSubmitted: 2,
+            voiceInteractions: 3,
+            collaborationSignals: 1,
+            lastReflectionAt: '2026-03-18T09:30:00.000Z',
+          },
+        }],
+      },
+    }) as CallableHandler);
+    getDocsMock.mockResolvedValueOnce({
+      docs: [{
+        id: 'portfolio-item-1',
+        data: () => ({
+          learnerId: 'learner-1',
+          title: 'Build a Robot',
+          description: 'Prototype iteration complete',
+          status: 'published',
+          createdAt: '2026-03-18T11:00:00.000Z',
+        }),
+      }],
+    });
+
+    const result = await loadWorkflowRecords(makeContext('/parent/portfolio', {
+      role: 'parent',
+      uid: 'parent-1',
+      profile: {
+        role: 'parent',
+        activeSiteId: 'site-1',
+        siteIds: ['site-1'],
+      } as never,
+    }));
+
+    expect(whereMock).toHaveBeenCalledWith('learnerId', '==', 'learner-1');
+    expect(result.records).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: 'capability:learner-1',
+        collectionName: 'parentCapabilitySnapshots',
+        routePath: '/parent/portfolio',
+      }),
+      expect.objectContaining({
+        id: 'portfolio:learner-1',
+        collectionName: 'parentPortfolioSnapshots',
+        routePath: '/parent/portfolio',
+      }),
+      expect.objectContaining({
+        id: 'passport:learner-1',
+        collectionName: 'parentIdeationPassports',
+        routePath: '/parent/portfolio',
+      }),
+      expect.objectContaining({
+        id: 'portfolio-item-1',
+        collectionName: 'portfolioItems',
+        title: 'Build a Robot',
+        status: 'published',
+        routePath: '/parent/portfolio',
+      }),
+    ]));
+  });
+
   it('routes site billing plan changes through requestSiteBillingPlanChange', async () => {
     const requestSiteBillingPlanChange = setCallableHandler('requestSiteBillingPlanChange');
 

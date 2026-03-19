@@ -12,18 +12,18 @@ Proof levels:
 ## Summary
 
 - Enabled canonical routes audited: 52
-- Direct: 44
-- Workflow/regression only: 8
+- Direct: 46
+- Workflow/regression only: 6
 - None: 0
 
 Highest-value remaining blind spots:
 
 1. `/educator/integrations`
-2. `/parent/schedule`
-3. `/parent/portfolio`
-4. `/educator/missions/review`
-5. deeper failure and mutation coverage on `/educator/mission-plans`
-6. learner- and parent-scoped alias-route proof for `/settings`
+2. `/educator/missions/review`
+3. deeper failure and mutation coverage on `/educator/mission-plans`
+4. learner-scoped alias-route proof for `/settings`
+5. parent-scoped alias-route proof for `/messages`
+6. parent-scoped alias-route proof for `/settings`
 
 ## Public, Auth, and Root
 
@@ -66,8 +66,8 @@ Highest-value remaining blind spots:
 | `/parent/child/:learnerId` | direct | `apps/empire_flutter/app/test/parent_child_page_test.dart` | — |
 | `/parent/consent` | direct | `apps/empire_flutter/app/test/parent_consent_page_test.dart` | — |
 | `/parent/billing` | direct | `apps/empire_flutter/app/test/parent_billing_page_test.dart` | — |
-| `/parent/schedule` | workflow/regression | `apps/empire_flutter/app/test/parent_surfaces_workflow_test.dart` | Schedule rendering and recovery states are not isolated |
-| `/parent/portfolio` | workflow/regression | `apps/empire_flutter/app/test/parent_surfaces_localization_test.dart` | Parent portfolio depth is not directly proven |
+| `/parent/schedule` | direct | `apps/empire_flutter/app/test/parent_schedule_page_test.dart`, `apps/empire_flutter/app/test/parent_surfaces_workflow_test.dart` | Honest load failure and reminder-request flow are now directly proven |
+| `/parent/portfolio` | direct | `apps/empire_flutter/app/test/parent_portfolio_page_test.dart`, `apps/empire_flutter/app/test/parent_surfaces_workflow_test.dart` | Honest load failure, share request, and summary download are now directly proven |
 | `/parent/messages` | workflow/regression | `apps/empire_flutter/app/test/messages_pages_test.dart` | Parent-specific alias behavior is not isolated |
 | `/parent/settings` | workflow/regression | `apps/empire_flutter/app/test/settings_placeholder_actions_test.dart` | Parent-scoped settings behavior is not isolated |
 
@@ -137,10 +137,10 @@ Highest-value remaining blind spots:
 Prioritize direct proof next for:
 
 1. `/educator/integrations`
-2. `/parent/schedule`
-3. `/parent/portfolio`
-4. `/educator/missions/review`
-5. deeper failure and mutation coverage on `/educator/mission-plans`
-6. learner- and parent-scoped alias-route proof for `/settings`
+2. `/educator/missions/review`
+3. deeper failure and mutation coverage on `/educator/mission-plans`
+4. learner-scoped alias-route proof for `/settings`
+5. parent-scoped alias-route proof for `/messages`
+6. parent-scoped alias-route proof for `/settings`
 
 Then upgrade the workflow-only cluster with page-specific failure-state tests for the operationally risky routes before claiming gold.
