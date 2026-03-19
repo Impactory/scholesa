@@ -198,7 +198,6 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
             SliverToBoxAdapter(child: _buildKeyMetrics()),
             SliverToBoxAdapter(child: _buildKpiPackSection()),
             SliverToBoxAdapter(child: _buildAttendanceChart()),
-            SliverToBoxAdapter(child: _buildPillarBreakdown()),
             SliverToBoxAdapter(child: _buildRecentActivity()),
             const SliverPadding(padding: EdgeInsets.only(bottom: 32)),
           ],
@@ -773,38 +772,6 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                   ),
                 ),
               ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPillarBreakdown() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: _dashboardCardDecoration(context),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              _t('Pillar Progress (Site Average)'),
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              _t('Pillar progress telemetry is not available for this site yet.'),
-              style: TextStyle(color: context.schTextSecondary),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _t('This breakdown will appear after learner progress telemetry is connected.'),
-              style: TextStyle(
-                color: context.schTextSecondary,
-                fontSize: 12,
-              ),
-            ),
           ],
         ),
       ),

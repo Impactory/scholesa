@@ -155,7 +155,7 @@ void main() {
       expect(find.text('No recent activity yet'), findsNWidgets(2));
     });
 
-    testWidgets('site dashboard shows honest pillar telemetry empty state',
+    testWidgets('site dashboard hides disconnected pillar telemetry card',
         (WidgetTester tester) async {
       await tester.binding.setSurfaceSize(const Size(1280, 1800));
       await tester.pumpWidget(
@@ -166,17 +166,17 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Pillar Progress (Site Average)'), findsOneWidget);
+      expect(find.text('Pillar Progress (Site Average)'), findsNothing);
       expect(
         find.text(
             'Pillar progress telemetry is not available for this site yet.'),
-        findsOneWidget,
+        findsNothing,
       );
       expect(
         find.text(
           'This breakdown will appear after learner progress telemetry is connected.',
         ),
-        findsOneWidget,
+        findsNothing,
       );
     });
 

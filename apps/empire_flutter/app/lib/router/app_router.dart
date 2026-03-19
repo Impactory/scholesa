@@ -49,7 +49,6 @@ final Map<String, bool> kKnownRoutes = <String, bool>{
   '/educator/sessions': true,
   '/educator/learners': true,
   '/educator/missions/review': true,
-  '/educator/review-queue': true,
   '/educator/mission-plans': true,
   '/educator/learner-supports': true,
   '/educator/integrations': true,
@@ -69,7 +68,6 @@ final Map<String, bool> kKnownRoutes = <String, bool>{
   '/site/provisioning': true,
   '/site/dashboard': true,
   '/site/sessions': true,
-  '/site/scheduling': true,
   '/site/ops': true,
   '/site/incidents': true,
   '/site/identity': true,
@@ -97,7 +95,6 @@ final Map<String, bool> kKnownRoutes = <String, bool>{
   '/hq/safety': true,
   '/hq/exports': true,
   '/hq/integrations-health': true,
-  '/hq/cms': true,
   '/hq/curriculum': true,
   '/hq/feature-flags': true,
 
@@ -108,8 +105,16 @@ final Map<String, bool> kKnownRoutes = <String, bool>{
   '/settings': true,
 };
 
+const Map<String, String> kRouteAliases = <String, String>{
+  '/educator/review-queue': '/educator/missions/review',
+  '/site/scheduling': '/site/sessions',
+  '/hq/cms': '/hq/curriculum',
+};
+
+String normalizeAppRoute(String route) => kRouteAliases[route] ?? route;
+
 /// Check if a route is enabled
-bool isRouteEnabled(String route) => kKnownRoutes[route] ?? false;
+bool isRouteEnabled(String route) => kKnownRoutes[normalizeAppRoute(route)] ?? false;
 
 const Map<UserRole, String> kRoleDefaultWorkflowRoute = <UserRole, String>{
   UserRole.learner: '/learner/today',
@@ -393,14 +398,8 @@ GoRouter createAppRouter(
       ),
       GoRoute(
         path: '/educator/review-queue',
-        builder: (BuildContext context, GoRouterState state) => const RoleGate(
-          allowedRoles: <UserRole>[
-            UserRole.educator,
-            UserRole.site,
-            UserRole.hq
-          ],
-          child: EducatorMissionReviewPage(),
-        ),
+        redirect: (BuildContext context, GoRouterState state) =>
+            '/educator/missions/review',
       ),
 
       // Site routes
@@ -420,10 +419,7 @@ GoRouter createAppRouter(
       ),
       GoRoute(
         path: '/site/scheduling',
-        builder: (BuildContext context, GoRouterState state) => const RoleGate(
-          allowedRoles: <UserRole>[UserRole.site, UserRole.hq],
-          child: SiteSessionsPage(),
-        ),
+        redirect: (BuildContext context, GoRouterState state) => '/site/sessions',
       ),
 
       // HQ routes
@@ -712,10 +708,7 @@ GoRouter createAppRouter(
       ),
       GoRoute(
         path: '/hq/cms',
-        builder: (BuildContext context, GoRouterState state) => const RoleGate(
-          allowedRoles: <UserRole>[UserRole.hq],
-          child: HqCurriculumPage(),
-        ),
+        redirect: (BuildContext context, GoRouterState state) => '/hq/curriculum',
       ),
       GoRoute(
         path: '/hq/curriculum',

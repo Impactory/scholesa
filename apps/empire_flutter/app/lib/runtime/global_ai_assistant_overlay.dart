@@ -31,6 +31,96 @@ typedef AssistantSheetPresenter = Future<void> Function(
   Widget child,
 );
 
+Future<String?> _lookupSessionOccurrenceFromFirestore(
+  FirebaseFirestore firestore, {
+  required String siteId,
+  required String learnerId,
+}) async {
+  try {
+    final QuerySnapshot<Map<String, dynamic>> attempts = await firestore
+        .collection('missionAttempts')
+        .where('learnerId', isEqualTo: learnerId)
+        .where('siteId', isEqualTo: siteId)
+        .orderBy('updatedAt', descending: true)
+        .limit(10)
+        .get();
+
+    for (final QueryDocumentSnapshot<Map<String, dynamic>> doc in attempts.docs) {
+      final String value = (doc.data()['sessionOccurrenceId'] as String? ?? '').trim();
+      if (value.isNotEmpty) {
+        return value;
+      }
+    }
+  } catch (_) {
+    // Best-effort only; continue to interaction event fallback.
+  }
+
+  try {
+    final QuerySnapshot<Map<String, dynamic>> interactions = await firestore
+        .collection('interactionEvents')
+        .where('actorId', isEqualTo: learnerId)
+        .where('siteId', isEqualTo: siteId)
+        .where('eventType', isEqualTo: 'session_joined')
+        .orderBy('timestamp', descending: true)
+        .limit(1)
+        .get();
+
+    if (interactions.docs.isNotEmpty) {
+      final Map<String, dynamic> data = interactions.docs.first.data();
+      final String topLevel = (data['sessionOccurrenceId'] as String? ?? '').trim();
+      if (topLevel.isNotEmpty) {
+        return topLevel;
+      }
+      final Map<String, dynamic>? payload = data['payload'] as Map<String, dynamic>?;
+      final String fromPayload =
+          (payload?['sessionOccurrenceId'] as String? ?? '').trim();
+      if (fromPayload.isNotEmpty) {
+        return fromPayload;
+      }
+    }
+  } catch (_) {
+    // Keep null when unavailable.
+  }
+
+  return null;
+}
+
+Future<String?> _resolveAssistantSessionOccurrenceId(
+  BuildContext context, {
+  required String siteId,
+  required String learnerId,
+  UserRole? role,
+  SessionOccurrenceResolver? sessionOccurrenceResolver,
+  FirebaseFirestore? firestore,
+}) async {
+  if (sessionOccurrenceResolver != null) {
+    return sessionOccurrenceResolver(
+      context,
+      siteId: siteId,
+      learnerId: learnerId,
+    );
+  }
+
+  if (role == UserRole.educator ||
+      role == UserRole.site ||
+      role == UserRole.hq) {
+    final EducatorService? educatorService = context.read<EducatorService?>();
+    final String? currentClassId = educatorService?.currentClass?.id;
+    if (currentClassId != null && currentClassId.trim().isNotEmpty) {
+      return currentClassId.trim();
+    }
+    if (educatorService != null && educatorService.todayClasses.isNotEmpty) {
+      return educatorService.todayClasses.first.id.trim();
+    }
+  }
+
+  return _lookupSessionOccurrenceFromFirestore(
+    firestore ?? FirebaseFirestore.instance,
+    siteId: siteId,
+    learnerId: learnerId,
+  );
+}
+
 class GlobalAiAssistantOverlay extends StatefulWidget {
   const GlobalAiAssistantOverlay({
     super.key,
@@ -38,6 +128,7 @@ class GlobalAiAssistantOverlay extends StatefulWidget {
     this.runtimeFactory,
     this.sessionOccurrenceResolver,
     this.sheetPresenter,
+    this.firestore,
     this.nowProvider,
   });
 
@@ -45,6 +136,7 @@ class GlobalAiAssistantOverlay extends StatefulWidget {
   final RuntimeProviderFactory? runtimeFactory;
   final SessionOccurrenceResolver? sessionOccurrenceResolver;
   final AssistantSheetPresenter? sheetPresenter;
+  final FirebaseFirestore? firestore;
   final DateTime Function()? nowProvider;
 
   @override
@@ -279,6 +371,8 @@ class _GlobalAiAssistantOverlayState extends State<GlobalAiAssistantOverlay>
         siteId: siteId,
         learnerId: learnerId,
         role: role,
+        sessionOccurrenceResolver: widget.sessionOccurrenceResolver,
+        firestore: widget.firestore,
       );
       if (widget.sheetPresenter != null) {
         await widget.sheetPresenter!(sheetContext, sheetChild);
@@ -436,61 +530,13 @@ class _GlobalAiAssistantOverlayState extends State<GlobalAiAssistantOverlay>
     required String siteId,
     required String learnerId,
   }) async {
-    if (widget.sessionOccurrenceResolver != null) {
-      return widget.sessionOccurrenceResolver!(
-        context,
-        siteId: siteId,
-        learnerId: learnerId,
-      );
-    }
-
-    try {
-      final QuerySnapshot<Map<String, dynamic>> attempts =
-          await FirebaseFirestore.instance
-              .collection('missionAttempts')
-              .where('learnerId', isEqualTo: learnerId)
-              .where('siteId', isEqualTo: siteId)
-              .orderBy('updatedAt', descending: true)
-              .limit(10)
-              .get();
-
-      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
-          in attempts.docs) {
-        final String value =
-            (doc.data()['sessionOccurrenceId'] as String? ?? '').trim();
-        if (value.isNotEmpty) return value;
-      }
-    } catch (_) {
-      // Best-effort only; continue to interaction event fallback.
-    }
-
-    try {
-      final QuerySnapshot<Map<String, dynamic>> interactions =
-          await FirebaseFirestore.instance
-              .collection('interactionEvents')
-              .where('actorId', isEqualTo: learnerId)
-              .where('siteId', isEqualTo: siteId)
-              .where('eventType', isEqualTo: 'session_joined')
-              .orderBy('timestamp', descending: true)
-              .limit(1)
-              .get();
-
-      if (interactions.docs.isNotEmpty) {
-        final Map<String, dynamic> data = interactions.docs.first.data();
-        final String topLevel =
-            (data['sessionOccurrenceId'] as String? ?? '').trim();
-        if (topLevel.isNotEmpty) return topLevel;
-        final Map<String, dynamic>? payload =
-            data['payload'] as Map<String, dynamic>?;
-        final String fromPayload =
-            (payload?['sessionOccurrenceId'] as String? ?? '').trim();
-        if (fromPayload.isNotEmpty) return fromPayload;
-      }
-    } catch (_) {
-      // Keep null when unavailable.
-    }
-
-    return null;
+    return _resolveAssistantSessionOccurrenceId(
+      context,
+      siteId: siteId,
+      learnerId: learnerId,
+      sessionOccurrenceResolver: widget.sessionOccurrenceResolver,
+      firestore: widget.firestore,
+    );
   }
 
   void _disposeBosMonitor() {
@@ -563,11 +609,15 @@ class _GlobalAiAssistantSheet extends StatefulWidget {
     required this.siteId,
     required this.learnerId,
     required this.role,
+    this.sessionOccurrenceResolver,
+    this.firestore,
   });
 
   final String siteId;
   final String learnerId;
   final UserRole role;
+  final SessionOccurrenceResolver? sessionOccurrenceResolver;
+  final FirebaseFirestore? firestore;
 
   @override
   State<_GlobalAiAssistantSheet> createState() => _GlobalAiAssistantSheetState();
@@ -606,62 +656,14 @@ class _GlobalAiAssistantSheetState extends State<_GlobalAiAssistantSheet> {
   }
 
   Future<String?> _resolveSessionOccurrenceId() async {
-    if (widget.role == UserRole.educator ||
-        widget.role == UserRole.site ||
-        widget.role == UserRole.hq) {
-      final EducatorService? educatorService =
-          context.read<EducatorService?>();
-      final String? currentClassId = educatorService?.currentClass?.id;
-      if (currentClassId != null && currentClassId.trim().isNotEmpty) {
-        return currentClassId.trim();
-      }
-      if (educatorService != null && educatorService.todayClasses.isNotEmpty) {
-        return educatorService.todayClasses.first.id.trim();
-      }
-    }
-
-    try {
-      final QuerySnapshot<Map<String, dynamic>> attempts = await FirebaseFirestore
-          .instance
-          .collection('missionAttempts')
-          .where('learnerId', isEqualTo: widget.learnerId)
-          .where('siteId', isEqualTo: widget.siteId)
-          .orderBy('updatedAt', descending: true)
-          .limit(10)
-          .get();
-
-      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc in attempts.docs) {
-        final String value = (doc.data()['sessionOccurrenceId'] as String? ?? '').trim();
-        if (value.isNotEmpty) return value;
-      }
-    } catch (_) {
-      // Best-effort only; continue to interaction event fallback.
-    }
-
-    try {
-      final QuerySnapshot<Map<String, dynamic>> interactions = await FirebaseFirestore
-          .instance
-          .collection('interactionEvents')
-          .where('actorId', isEqualTo: widget.learnerId)
-          .where('siteId', isEqualTo: widget.siteId)
-          .where('eventType', isEqualTo: 'session_joined')
-          .orderBy('timestamp', descending: true)
-          .limit(1)
-          .get();
-
-      if (interactions.docs.isNotEmpty) {
-        final Map<String, dynamic> data = interactions.docs.first.data();
-        final String topLevel = (data['sessionOccurrenceId'] as String? ?? '').trim();
-        if (topLevel.isNotEmpty) return topLevel;
-        final Map<String, dynamic>? payload = data['payload'] as Map<String, dynamic>?;
-        final String fromPayload = (payload?['sessionOccurrenceId'] as String? ?? '').trim();
-        if (fromPayload.isNotEmpty) return fromPayload;
-      }
-    } catch (_) {
-      // Keep null when unavailable.
-    }
-
-    return null;
+    return _resolveAssistantSessionOccurrenceId(
+      context,
+      siteId: widget.siteId,
+      learnerId: widget.learnerId,
+      role: widget.role,
+      sessionOccurrenceResolver: widget.sessionOccurrenceResolver,
+      firestore: widget.firestore,
+    );
   }
 
   @override

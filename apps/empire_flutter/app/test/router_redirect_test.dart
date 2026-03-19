@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:scholesa_app/auth/app_state.dart';
+import 'package:scholesa_app/router/app_router.dart';
 
 /// Tests for the auth redirect logic defined in app_router.dart.
 ///
@@ -108,6 +109,16 @@ void main() {
 
       // Not loading, not authenticated, public route → stay
       expect(_redirectResult(state, matchedLocation: '/login'), isNull);
+    });
+
+    test('legacy aliases normalize to canonical routes', () {
+      expect(normalizeAppRoute('/educator/review-queue'), '/educator/missions/review');
+      expect(normalizeAppRoute('/site/scheduling'), '/site/sessions');
+      expect(normalizeAppRoute('/hq/cms'), '/hq/curriculum');
+
+      expect(isRouteEnabled('/educator/review-queue'), isTrue);
+      expect(isRouteEnabled('/site/scheduling'), isTrue);
+      expect(isRouteEnabled('/hq/cms'), isTrue);
     });
   });
 }
