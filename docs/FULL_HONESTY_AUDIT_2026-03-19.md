@@ -9,7 +9,7 @@ Scope: Flutter app enabled routes, current runtime behavior, current test eviden
 - Not gold ready.
 - Still beta ready for a controlled audience.
 - Core learner, educator, parent, messaging, and site operations paths are no longer obviously fake.
-- Gold is still blocked by unproven native distribution and by workflow-only depth on too many enabled operational routes.
+- Gold is still blocked by unproven native distribution and by workflow-only depth on a smaller but still material cluster of enabled operational routes.
 
 ## A. Release Matrix Updated
 
@@ -23,8 +23,9 @@ Scope: Flutter app enabled routes, current runtime behavior, current test eviden
 
 ### Verification inventory
 
-- 49 focused page, workflow, regression, placeholder-action, and honesty test files now back the audited Flutter route surface.
+- 50 focused page, workflow, regression, placeholder-action, and honesty test files now back the audited Flutter route surface.
 - Fresh verification in this pass:
+  - educator sessions and partner contracts proof pass: 5 passed, 0 failed
   - remaining-route proof pass: 7 passed, 0 failed
   - `flutter analyze`: passed
   - next admin-cluster failure-path pass: 4 passed, 0 failed
@@ -42,11 +43,11 @@ Scope: Flutter app enabled routes, current runtime behavior, current test eviden
 | Learner portfolio and today | Yes | Mostly yes | Mostly yes | Partly proven | Partial | Yes | Secondary actions rely more on indirect evidence than direct route proof | Beta-safe, not gold |
 | Educator learners and follow-up requests | Yes | Yes | Yes | Yes | Mostly yes | Yes | No obvious fake action in audited path | Strong for beta |
 | Educator attendance | Yes | Yes | Yes | Partly proven | Yes, now honest when unavailable | Yes | No obvious fake primary action | Strong for beta |
-| Educator sessions, mission plans, integrations, learner supports, today | Yes | Mostly yes | Likely | Partly proven | Partial | Yes | Mission plans and learner supports are now directly proven, but this cluster still has workflow-only routes | Beta-safe, not gold |
+| Educator sessions, mission plans, integrations, learner supports, today | Yes | Mostly yes | Likely | Partly proven | Partial | Yes | Sessions now fail honestly under direct test, but educator today and integrations still lean on workflow-only proof | Beta-safe, not gold |
 | Parent summary, billing, schedule, portfolio, child view | Yes | Yes | Mostly yes | Support-request persistence is real where used | Mostly yes | Yes | Billing is honest summary only, not self-service | Strong for beta |
 | Site dashboard, billing, consent, pickup auth, ops, audit | Yes | Yes | Mostly yes | Mostly yes | Mostly yes | Yes | Honest on audited primary actions | Strong for beta |
 | Site identity and incident/admin support surfaces | Yes | Mostly yes | Partly | Partly | Mostly yes on the audited identity, incidents, and integrations-health failure path, partial on the wider cluster | Yes | Less misleading than before, still not comprehensively proven | Beta-safe, not gold |
-| Partner contracts and deliverables | Yes | Mostly yes | Mostly yes | Mostly yes | Partial | Yes | No obvious fake primary action in audited path | Beta-safe |
+| Partner contracts and deliverables | Yes | Mostly yes | Mostly yes | Mostly yes | Mostly yes on the audited contracts/launches failure path, partial on deeper mutation depth | Yes | No obvious fake primary action in audited path | Strong for beta |
 | Partner listings and payouts | Yes | Mostly yes | Partly | Partly | Mostly yes on the audited payouts path, partial on the wider cluster | Yes | Listings create-and-persist path is now directly proven; broader partner depth is still partial | Beta-safe, not gold |
 | HQ sites, role switcher, exports, analytics | Yes | Yes | Yes | Yes | Mostly yes | Yes | No obvious fake primary path in audited route tests | Strong for beta |
 | HQ billing, approvals, audit, safety, integrations health, feature flags, user admin | Yes | Mostly yes | Partly | Partly | Mostly yes on the audited billing, approvals, audit, and honest-empty feature-flags paths, partial across the wider cluster | Yes | Feature-flags empty-state proof now exists, but operator depth remains workflow-only in places | Beta-safe, not gold |
@@ -80,14 +81,13 @@ Current truth:
 
 - Coverage is now materially stronger on core paths.
 - The app still has more enabled pages than direct route-level proof.
-- Current route-proof matrix: 38 direct, 14 workflow/regression-only, 0 with no convincing route proof.
+- Current route-proof matrix: 40 direct, 12 workflow/regression-only, 0 with no convincing route proof.
 
 Risk concentration:
 
-- Educator secondary surfaces: today, sessions, integrations.
+- Educator secondary surfaces: today and integrations.
 - Learner secondary surfaces: today and portfolio.
 - Site secondary surfaces: provisioning and sessions.
-- Partner secondary surfaces: contracts.
 - HQ secondary surfaces: safety, integrations health, feature-flags mutation/governance depth.
 
 End-to-end solution:
@@ -225,6 +225,7 @@ End-to-end solution:
 - Focused test inventory now covers 49 audit-relevant files.
 - `flutter analyze` passed on the current app state.
 - Fresh next-cluster admin failure regressions passed: 4 tests, 0 failures.
+- Fresh educator sessions and partner contracts proof pass: 5 tests, 0 failures.
 - Fresh remaining-route proof regressions passed: 7 tests, 0 failures.
 - Current broad audit baseline for this code cycle remains 247 passed, 0 failed.
 
@@ -237,4 +238,4 @@ End-to-end solution:
 
 1. Prove one real iOS TestFlight release end to end.
 2. Prove one real Android Play release end to end.
-3. Upgrade the remaining workflow-only high-risk enabled admin/operator surfaces to direct failure-path proof.
+3. Upgrade the remaining workflow-only high-risk enabled admin/operator surfaces to direct failure-path proof, starting with site provisioning, site sessions, learner today, and HQ feature-flag mutation depth.

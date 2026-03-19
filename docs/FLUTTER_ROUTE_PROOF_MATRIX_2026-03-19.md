@@ -12,18 +12,18 @@ Proof levels:
 ## Summary
 
 - Enabled canonical routes audited: 52
-- Direct: 38
-- Workflow/regression only: 14
+- Direct: 40
+- Workflow/regression only: 12
 - None: 0
 
 Highest-value remaining blind spots:
 
-1. `/educator/sessions`
-2. `/partner/contracts`
-3. `/site/provisioning`
-4. `/site/sessions`
-5. `/learner/today`
-6. deeper mutation and failure-path proof on `/hq/feature-flags`
+1. `/site/provisioning`
+2. `/site/sessions`
+3. `/learner/today`
+4. deeper mutation and failure-path proof on `/hq/feature-flags`
+5. `/educator/today`
+6. `/educator/integrations`
 
 ## Public, Auth, and Root
 
@@ -51,7 +51,7 @@ Highest-value remaining blind spots:
 | --- | --- | --- | --- |
 | `/educator/today` | workflow/regression | `apps/empire_flutter/app/test/role_workflow_smoke_test.dart`, `apps/empire_flutter/app/test/educator_honesty_regression_test.dart` | No dedicated today-page test |
 | `/educator/attendance` | direct | `apps/empire_flutter/app/test/attendance_placeholder_actions_test.dart` | — |
-| `/educator/sessions` | workflow/regression | `apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart` | Session rendering and recovery states are not isolated |
+| `/educator/sessions` | direct | `apps/empire_flutter/app/test/educator_sessions_page_test.dart` | Explicit load-failure proof now exists; broader create/edit session flows still lack direct proof |
 | `/educator/learners` | direct | `apps/empire_flutter/app/test/educator_learners_page_test.dart` | — |
 | `/educator/missions/review` | workflow/regression | `apps/empire_flutter/app/test/router_redirect_test.dart`, `apps/empire_flutter/app/test/role_workflow_smoke_test.dart` | Review-page mechanics are not directly proven |
 | `/educator/mission-plans` | direct | `apps/empire_flutter/app/test/educator_mission_plans_page_test.dart` | Creation flow is proven; explicit backend failure state is still not isolated |
@@ -93,7 +93,7 @@ Highest-value remaining blind spots:
 | Route | Proof | Primary evidence | Blind spot |
 | --- | --- | --- | --- |
 | `/partner/listings` | direct | `apps/empire_flutter/app/test/partner_listings_page_test.dart` | Create-and-persist path is proven; edit flow still lacks direct proof |
-| `/partner/contracts` | workflow/regression | `apps/empire_flutter/app/test/partner_contracting_workflow_test.dart` | Contract page mechanics are not isolated |
+| `/partner/contracts` | direct | `apps/empire_flutter/app/test/partner_contracting_workflow_test.dart` | Happy-path contracts/launches and launch-failure honesty are proven; deeper mutation flows still rely on broader workflow tests |
 | `/partner/deliverables` | direct | `apps/empire_flutter/app/test/partner_deliverables_page_test.dart` | — |
 | `/partner/integrations` | direct | `apps/empire_flutter/app/test/partner_integrations_page_test.dart` | — |
 | `/partner/payouts` | direct | `apps/empire_flutter/app/test/partner_payouts_page_test.dart` | — |
@@ -136,11 +136,11 @@ Highest-value remaining blind spots:
 
 Prioritize direct proof next for:
 
-1. `/educator/sessions`
-2. `/partner/contracts`
-3. `/site/provisioning`
-4. `/site/sessions`
-5. `/learner/today`
-6. deeper mutation and failure-path proof on `/hq/feature-flags`
+1. `/site/provisioning`
+2. `/site/sessions`
+3. `/learner/today`
+4. deeper mutation and failure-path proof on `/hq/feature-flags`
+5. `/educator/today`
+6. `/educator/integrations`
 
 Then upgrade the workflow-only cluster with page-specific failure-state tests for the operationally risky routes before claiming gold.
