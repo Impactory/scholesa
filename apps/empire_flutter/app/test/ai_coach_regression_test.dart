@@ -177,6 +177,23 @@ void main() {
       expect(response.mvlEpisodeId, isNull);
       expect(response.version, isNull);
     });
+
+    test('AiCoachResponse.fromMap throws when top-level response identity is malformed',
+        () {
+      expect(
+        () => AiCoachResponse.fromMap(const <String, dynamic>{
+          'mode': 'hint',
+        }),
+        throwsFormatException,
+      );
+      expect(
+        () => AiCoachResponse.fromMap(const <String, dynamic>{
+          'message': 'Hello!',
+          'mode': 'made_up',
+        }),
+        throwsFormatException,
+      );
+    });
   });
 
   // ════════════════════════════════════════════════════

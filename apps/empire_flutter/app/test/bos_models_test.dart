@@ -205,6 +205,27 @@ void main() {
 
       expect(restored.policy, isNull);
     });
+
+    test('fromMap throws on invalid intervention enums', () {
+      expect(
+        () => BosIntervention.fromMap(
+          <String, dynamic>{
+            'type': 'made_up',
+            'salience': 'medium',
+          },
+        ),
+        throwsFormatException,
+      );
+      expect(
+        () => BosIntervention.fromMap(
+          <String, dynamic>{
+            'type': 'scaffold',
+            'salience': 'unknown',
+          },
+        ),
+        throwsFormatException,
+      );
+    });
   });
 
   group('PolicyTerms', () {
@@ -252,6 +273,23 @@ void main() {
       expect(
         AutonomyRisk.tryFromMap(<String, dynamic>{
           'signals': <String>['rapid_submit']
+        }),
+        isNull,
+      );
+    });
+
+    test('tryFromMap rejects partial provenance even when scores are present', () {
+      expect(
+        ReliabilityRisk.tryFromMap(<String, dynamic>{
+          'riskScore': 0.4,
+          'threshold': 0.5,
+        }),
+        isNull,
+      );
+      expect(
+        AutonomyRisk.tryFromMap(<String, dynamic>{
+          'riskScore': 0.4,
+          'threshold': 0.5,
         }),
         isNull,
       );
