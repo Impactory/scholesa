@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
@@ -391,6 +392,41 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
                 icon: Icons.check_circle,
                 value: '${(learner.attendanceRate * 100).toInt()}%',
                 label: _t('Attendance'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: <Widget>[
+              FilledButton.tonalIcon(
+                onPressed: () {
+                  TelemetryService.instance.logEvent(
+                    event: 'cta.clicked',
+                    metadata: <String, dynamic>{
+                      'cta': 'parent_summary_view_child_detail',
+                      'learner_id': learner.learnerId,
+                    },
+                  );
+                  context.go('/parent/child/${Uri.encodeComponent(learner.learnerId)}');
+                },
+                icon: const Icon(Icons.open_in_new_rounded),
+                label: Text(_t('View Child Detail')),
+              ),
+              FilledButton.tonalIcon(
+                onPressed: () {
+                  TelemetryService.instance.logEvent(
+                    event: 'cta.clicked',
+                    metadata: <String, dynamic>{
+                      'cta': 'parent_summary_view_consent',
+                      'learner_id': learner.learnerId,
+                    },
+                  );
+                  context.go('/parent/consent');
+                },
+                icon: const Icon(Icons.verified_user_outlined),
+                label: Text(_t('View Consent')),
               ),
             ],
           ),
