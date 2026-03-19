@@ -190,13 +190,28 @@ AppState _buildSiteState({String localeCode = 'en'}) {
 Future<void> _seedSiteOpsData(FakeFirebaseFirestore firestore) async {
   final DateTime now = DateTime.now();
   final DateTime dayStart = DateTime(now.year, now.month, now.day);
+  final DateTime checkInAt = dayStart.add(const Duration(hours: 8, minutes: 45));
+  final DateTime checkOutAt =
+      dayStart.add(const Duration(hours: 9, minutes: 5));
+  final DateTime otherSiteCheckInAt =
+      dayStart.add(const Duration(hours: 9, minutes: 10));
+  final DateTime incidentAt =
+      dayStart.add(const Duration(hours: 9, minutes: 20));
+  final DateTime otherSiteIncidentAt =
+      dayStart.add(const Duration(hours: 9, minutes: 25));
+  final DateTime rosterViewedAt =
+      dayStart.add(const Duration(hours: 9, minutes: 30));
+  final DateTime otherSiteOpsAt =
+      dayStart.add(const Duration(hours: 9, minutes: 35));
+  final DateTime safetyNoteAt =
+      dayStart.add(const Duration(hours: 9, minutes: 15));
   final String dayKey =
       '${dayStart.year}-${dayStart.month.toString().padLeft(2, '0')}-${dayStart.day.toString().padLeft(2, '0')}';
   await firestore.collection('checkins').doc('checkin-1').set(<String, dynamic>{
     'siteId': 'site-1',
     'learnerId': 'learner-1',
     'type': 'checkin',
-    'timestamp': Timestamp.fromDate(now.subtract(const Duration(hours: 1))),
+    'timestamp': Timestamp.fromDate(checkInAt),
   });
   await firestore
       .collection('checkins')
@@ -205,7 +220,7 @@ Future<void> _seedSiteOpsData(FakeFirebaseFirestore firestore) async {
     'siteId': 'site-1',
     'learnerId': 'learner-2',
     'type': 'checkout',
-    'timestamp': Timestamp.fromDate(now.subtract(const Duration(minutes: 45))),
+    'timestamp': Timestamp.fromDate(checkOutAt),
   });
   await firestore
       .collection('checkins')
@@ -214,7 +229,7 @@ Future<void> _seedSiteOpsData(FakeFirebaseFirestore firestore) async {
     'siteId': 'site-2',
     'learnerId': 'learner-3',
     'type': 'checkin',
-    'timestamp': Timestamp.fromDate(now.subtract(const Duration(minutes: 30))),
+    'timestamp': Timestamp.fromDate(otherSiteCheckInAt),
   });
   await firestore
       .collection('incidents')
@@ -222,7 +237,7 @@ Future<void> _seedSiteOpsData(FakeFirebaseFirestore firestore) async {
       .set(<String, dynamic>{
     'siteId': 'site-1',
     'status': 'open',
-    'reportedAt': Timestamp.fromDate(now.subtract(const Duration(minutes: 25))),
+    'reportedAt': Timestamp.fromDate(incidentAt),
   });
   await firestore
       .collection('incidents')
@@ -230,7 +245,7 @@ Future<void> _seedSiteOpsData(FakeFirebaseFirestore firestore) async {
       .set(<String, dynamic>{
     'siteId': 'site-2',
     'status': 'open',
-    'reportedAt': Timestamp.fromDate(now.subtract(const Duration(minutes: 15))),
+    'reportedAt': Timestamp.fromDate(otherSiteIncidentAt),
   });
   await firestore
       .collection('siteOpsEvents')
@@ -238,7 +253,7 @@ Future<void> _seedSiteOpsData(FakeFirebaseFirestore firestore) async {
       .set(<String, dynamic>{
     'siteId': 'site-1',
     'action': 'View Roster',
-    'createdAt': Timestamp.fromDate(now.subtract(const Duration(minutes: 10))),
+    'createdAt': Timestamp.fromDate(rosterViewedAt),
   });
   await firestore
       .collection('siteOpsEvents')
@@ -246,7 +261,7 @@ Future<void> _seedSiteOpsData(FakeFirebaseFirestore firestore) async {
       .set(<String, dynamic>{
     'siteId': 'site-2',
     'action': 'Check-in',
-    'createdAt': Timestamp.fromDate(now.subtract(const Duration(minutes: 5))),
+    'createdAt': Timestamp.fromDate(otherSiteOpsAt),
   });
   await firestore.collection('sessions').doc('session-1').set(<String, dynamic>{
     'siteId': 'site-1',
@@ -284,7 +299,7 @@ Future<void> _seedSiteOpsData(FakeFirebaseFirestore firestore) async {
     'siteId': 'site-1',
     'dayKey': dayKey,
     'note': 'Guardian pickup change confirmed',
-    'createdAt': Timestamp.fromDate(now.subtract(const Duration(minutes: 20))),
+    'createdAt': Timestamp.fromDate(safetyNoteAt),
     'createdByName': 'Site Admin',
   });
 }

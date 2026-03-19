@@ -1,6 +1,6 @@
 # Reopened Honesty Audit
 
-Last updated: 2026-03-18
+Last updated: 2026-03-19
 Status: Beta ready, not gold ready
 Scope: Flutter app plus release operations for web and native surfaces
 
@@ -63,6 +63,10 @@ This is the reopened honesty pass after blocker remediation, clean builds, live 
 6. Verified parent billing as honest view-only billing summary behavior.
 7. Added a navigator-key-driven global Flutter session menu so every authenticated routed screen has Profile, Settings, and Sign Out available from the shell.
 8. Added web regression proof that the protected layout still mounts the shared Navigation sign-out control.
+9. Added shell-level proof that the real Flutter app still mounts the global session menu from `main.dart`.
+10. Added protected-route inventory proof that every governed web workflow page stays under the shared sign-out layout.
+11. Fixed `SiteOpsPage` day-open inference so the screen uses freshly loaded presence data instead of stale prior state during initial load.
+12. Hardened the site-ops workflow fixture against midnight rollover by anchoring seeded “today” events to the current day instead of `now - N minutes`.
 
 ### Release and operations fixes
 
@@ -80,13 +84,14 @@ This is the reopened honesty pass after blocker remediation, clean builds, live 
 - Priority blocker page batch passed: 16 passed, 0 failed.
 - Settings logout and auth coverage passed: 26 passed, 0 failed.
 - Global session menu regressions passed: 2 passed, 0 failed.
-- Protected web logout shell regression passed: 2 passed, 0 failed.
+- Flutter shell logout mount regression passed: 1 passed, 0 failed.
+- Protected web logout shell regression passed: 3 passed, 0 failed.
 
 ### Full Flutter gate verification
 
 - `flutter analyze` passed.
 - `flutter test` passed in the release validation run used by `flutter-android`.
-- `flutter test` passed after the global logout shell change: 496 passed, 0 failed.
+- `flutter test` passed after the logout-shell and site-ops truthfulness follow-up: 497 passed, 0 failed.
 
 ### Build verification
 

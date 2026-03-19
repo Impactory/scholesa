@@ -1100,6 +1100,7 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
             ),
           )
           .toList();
+      final bool inferredDayOpen = presentLearners.isNotEmpty;
       final bool preserveExistingRuntimeRolloutData =
           runtimeRolloutState.error != null &&
               !_hasRuntimeRolloutData(runtimeRolloutState) &&
@@ -1110,7 +1111,7 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
         _presentCount = presentLearners.length;
         _pendingPickups = pickupSignals;
         _openIncidents = openIncidents;
-        _isDayOpen = persistedDayOpen ?? (_presentCount > 0);
+        _isDayOpen = persistedDayOpen ?? inferredDayOpen;
         _recentActivity = recent;
         _todaySessions = timetable;
         _kitChecklist = checklist;
