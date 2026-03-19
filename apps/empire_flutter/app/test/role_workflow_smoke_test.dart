@@ -104,6 +104,10 @@ void main() {
 
         expect(find.byType(RoleDashboard), findsOneWidget);
         expect(find.text('${role.displayName} User'), findsOneWidget);
+        if (role == UserRole.partner) {
+          expect(find.text('Deliverables'), findsOneWidget);
+          expect(find.text('Partner Integrations'), findsOneWidget);
+        }
         expect(tester.takeException(), isNull);
       });
     }
