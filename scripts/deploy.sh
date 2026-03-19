@@ -47,6 +47,25 @@ append_no_traffic_arg() {
   fi
 }
 
+ensure_no_traffic_service_exists() {
+  local project_id="$1"
+  local region="$2"
+  local service="$3"
+
+  if [[ "$NO_TRAFFIC_DEPLOY" != "1" && "$NO_TRAFFIC_DEPLOY" != "true" ]]; then
+    return 0
+  fi
+
+  if gcloud run services describe "$service" \
+    --project "$project_id" \
+    --region "$region" \
+    --format='value(metadata.name)' >/dev/null 2>&1; then
+    return 0
+  fi
+
+  fail "Cloud Run service '$service' does not exist in project '$project_id' region '$region'. Cloud Run does not support --no-traffic on first deploy; create the service once without CLOUD_RUN_NO_TRAFFIC=1, then rerun the rehearsal."
+}
+
 flutter_cmd() {
   if [[ -x "$FVM_FLUTTER" ]]; then
     "$FVM_FLUTTER" "$@"
@@ -257,6 +276,8 @@ deploy_primary_web() {
   image_tag="${IMAGE_TAG:-$(date +%Y%m%d-%H%M%S)}"
   image="gcr.io/${project_id}/scholesa:${image_tag}"
 
+  ensure_no_traffic_service_exists "$project_id" "$region" "$service"
+
   log "Building primary web image with Cloud Build (project=$project_id service=$service region=$region tag=$image_tag)..."
   (cd "$REPO_ROOT" && gcloud builds submit --project "$project_id" --tag "$image") || fail "Primary web Cloud Build failed"
 
@@ -316,6 +337,8 @@ deploy_flutter_cloud_run() {
   service="${CLOUD_RUN_FLUTTER_SERVICE:-empire-web}"
   image_tag="${IMAGE_TAG:-$(date +%Y%m%d-%H%M%S)}"
 
+  ensure_no_traffic_service_exists "$project_id" "$region" "$service"
+
   log "Deploying Flutter web to Cloud Run (project=$project_id service=$service region=$region tag=$image_tag)..."
   (cd "$REPO_ROOT" && bash ./scripts/deploy-cloud-run.sh "$project_id" "$region" "$service" "$image_tag")
   log "Flutter web deployed ✓"
@@ -338,6 +361,8 @@ deploy_compliance_operator() {
   local root_redirect_url
   root_redirect_url="${COMPLIANCE_ROOT_REDIRECT_URL:-https://www.scholesa.com/en}"
   image_tag="${IMAGE_TAG:-$(date +%Y%m%d-%H%M%S)}"
+
+  ensure_no_traffic_service_exists "$project_id" "$region" "$service"
 
   log "Building compliance operator image with Cloud Build..."
   (cd "$REPO_ROOT" && gcloud builds submit --project "$project_id" --config cloudbuild.compliance.yaml --substitutions "_TAG=$image_tag")

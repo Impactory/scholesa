@@ -66,6 +66,8 @@ For a safer Cloud Run rehearsal that creates new revisions without shifting traf
 CLOUD_RUN_NO_TRAFFIC=1 ./scripts/deploy.sh web
 ```
 
+Cloud Run cannot create a brand-new service with `--no-traffic`. Bootstrap a missing service once without `CLOUD_RUN_NO_TRAFFIC=1`, then use rehearsal mode for later revisions.
+
 To deploy only the Firebase Functions:
 
 ```bash

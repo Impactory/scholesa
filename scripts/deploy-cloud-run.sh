@@ -33,6 +33,13 @@ trap cleanup EXIT
 
 no_traffic_args=()
 if [[ "$NO_TRAFFIC_DEPLOY" == "1" || "$NO_TRAFFIC_DEPLOY" == "true" ]]; then
+  if ! gcloud run services describe "$CLOUD_RUN_SERVICE" \
+    --project "$GCP_PROJECT_ID" \
+    --region "$GCP_REGION" \
+    --format='value(metadata.name)' >/dev/null 2>&1; then
+    echo "Cloud Run service '$CLOUD_RUN_SERVICE' does not exist in project '$GCP_PROJECT_ID' region '$GCP_REGION'. Cloud Run does not support --no-traffic on first deploy; create the service once without CLOUD_RUN_NO_TRAFFIC=1, then rerun the rehearsal." >&2
+    exit 1
+  fi
   no_traffic_args+=(--no-traffic)
 fi
 

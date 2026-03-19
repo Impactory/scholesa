@@ -524,6 +524,18 @@ void main() {
             'Manual deploy script must be able to deploy Cloud Run revisions without shifting traffic',
       );
       expect(
+        content.contains('ensure_no_traffic_service_exists'),
+        isTrue,
+        reason:
+            'Manual deploy script must fail fast when rehearsal mode is requested for a missing Cloud Run service',
+      );
+      expect(
+        content.contains('Cloud Run does not support --no-traffic on first deploy'),
+        isTrue,
+        reason:
+            'Manual deploy script must explain the first-deploy Cloud Run no-traffic limitation',
+      );
+      expect(
         content.contains('mapfile'),
         isFalse,
         reason:
@@ -672,6 +684,18 @@ void main() {
       expect(content.contains('CLOUD_RUN_NO_TRAFFIC'), isTrue,
           reason:
               'Flutter Cloud Run helper must support no-traffic Cloud Run rehearsals');
+      expect(
+        content.contains('Cloud Run does not support --no-traffic on first deploy'),
+        isTrue,
+        reason:
+            'Flutter Cloud Run helper must explain that rehearsal mode requires an existing service',
+      );
+      expect(
+        content.contains(r'gcloud run services describe "$CLOUD_RUN_SERVICE"'),
+        isTrue,
+        reason:
+            'Flutter Cloud Run helper must verify service existence before a no-traffic rehearsal',
+      );
     });
 
     // ── 3.8 Firestore indexes are committed ──
