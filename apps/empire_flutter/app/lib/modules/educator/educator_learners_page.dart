@@ -774,10 +774,13 @@ class _LearnerDetailSheet extends StatefulWidget {
 class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
   final TextEditingController _overrideReasonController =
       TextEditingController();
+  final TextEditingController _followUpRequestController =
+      TextEditingController();
   late final String _recommendedLane;
   late String _selectedLane;
   bool _isSavingOverride = false;
   bool _isExporting = false;
+  bool _isSubmittingFollowUp = false;
 
   EducatorLearner get learner => widget.learner;
 
@@ -791,6 +794,7 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
   @override
   void dispose() {
     _overrideReasonController.dispose();
+    _followUpRequestController.dispose();
     super.dispose();
   }
 
@@ -1006,6 +1010,107 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
     } finally {
       if (mounted) {
         setState(() => _isExporting = false);
+      }
+    }
+  }
+
+  Future<void> _submitLearnerFollowUpRequest() async {
+    final String details = _followUpRequestController.text.trim();
+    if (details.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tEducatorLearners(
+              context,
+              'Please describe the learner follow-up before sending.',
+            ),
+          ),
+        ),
+      );
+      return;
+    }
+
+    final AppState? appState = context.read<AppState?>();
+    final String siteId = appState?.activeSiteId?.trim() ?? '';
+    final String userId = appState?.userId?.trim() ?? '';
+    final String userEmail = appState?.email?.trim() ?? '';
+    final String userName = appState?.displayName?.trim() ?? '';
+    final UserRole? role = appState?.role;
+    if (siteId.isEmpty || userId.isEmpty || userEmail.isEmpty || userName.isEmpty || role == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tEducatorLearners(
+              context,
+              'Unable to submit follow-up right now. Refresh your session and try again.',
+            ),
+          ),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isSubmittingFollowUp = true);
+    try {
+      final FirestoreService firestoreService = context.read<FirestoreService>();
+      final String requestId = await firestoreService.submitSupportRequest(
+        requestType: 'learner_follow_up',
+        source: 'educator_learner_detail_request_follow_up',
+        siteId: siteId,
+        userId: userId,
+        userEmail: userEmail,
+        userName: userName,
+        role: role.name,
+        subject: 'Learner follow-up request: ${_displayLearnerName(context, learner.name)}',
+        message: details,
+        metadata: <String, dynamic>{
+          'learnerId': learner.id,
+          'learnerName': _displayLearnerName(context, learner.name),
+          'learnerEmail': learner.email,
+          'recommendedLane': _recommendedLane,
+          'selectedLane': _selectedLane,
+          'teacherOverride': _selectedLane != _recommendedLane,
+        },
+      );
+
+      await TelemetryService.instance.logEvent(
+        event: 'educator.learner_follow_up.submitted',
+        metadata: <String, dynamic>{
+          'request_id': requestId,
+          'learner_id': learner.id,
+          'selected_lane': _selectedLane,
+        },
+      );
+
+      _followUpRequestController.clear();
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tEducatorLearners(context, 'Learner follow-up request submitted.'),
+          ),
+          backgroundColor: ScholesaColors.success,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tEducatorLearners(
+              context,
+              'Unable to submit learner follow-up right now.',
+            ),
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmittingFollowUp = false);
       }
     }
   }
@@ -1229,6 +1334,12 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
                     ),
                   ),
                   const SizedBox(height: 24),
+                  Text(
+                    _tEducatorLearners(context, 'Learner follow-up'),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  const SizedBox(height: 8),
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
@@ -1237,12 +1348,62 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: Colors.grey.shade200),
                     ),
-                    child: Text(
-                      _tEducatorLearners(
-                        context,
-                        'Direct learner messaging and full learner profiles are not available from this sheet yet.',
-                      ),
-                      style: TextStyle(color: Colors.grey[700], height: 1.4),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          _tEducatorLearners(
+                            context,
+                            'Request family or support-team follow-up for this learner.',
+                          ),
+                          style: TextStyle(color: Colors.grey[700], height: 1.4),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: _followUpRequestController,
+                          maxLines: 3,
+                          decoration: InputDecoration(
+                            hintText: _tEducatorLearners(
+                              context,
+                              'Describe the concern, learner context, and next action needed.',
+                            ),
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide:
+                                  BorderSide(color: Colors.grey.shade200),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: _isSubmittingFollowUp
+                                ? null
+                                : _submitLearnerFollowUpRequest,
+                            icon: _isSubmittingFollowUp
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2),
+                                  )
+                                : const Icon(Icons.support_agent),
+                            label: Text(
+                              _tEducatorLearners(
+                                context,
+                                'Request follow-up',
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: ScholesaColors.educator,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],

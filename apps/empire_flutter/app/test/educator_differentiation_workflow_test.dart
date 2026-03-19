@@ -102,8 +102,8 @@ Future<void> _seedLearnerWithoutDisplayName(
 }
 
 void main() {
-  testWidgets(
-      'educator learner detail saves lane override and printable practice export',
+    testWidgets(
+      'educator learner detail saves lane override, printable practice export, and persisted follow-up request',
       (WidgetTester tester) async {
     String? savedFileName;
     String? savedFileContent;
@@ -172,22 +172,27 @@ void main() {
     expect(savedFileContent, contains('Learner: Learner One'));
 
     await tester.dragUntilVisible(
-      find.text(
-        'Direct learner messaging and full learner profiles are not available from this sheet yet.',
-      ),
+      find.text('Learner follow-up'),
       find.byType(Scrollable).last,
       const Offset(0, -120),
     );
     await tester.pump(const Duration(milliseconds: 200));
 
+    expect(find.text('Learner follow-up'), findsOneWidget);
     expect(
-      find.text(
-        'Direct learner messaging and full learner profiles are not available from this sheet yet.',
-      ),
+      find.text('Request family or support-team follow-up for this learner.'),
       findsOneWidget,
     );
-    expect(find.text('Message'), findsNothing);
-    expect(find.text('Full Profile'), findsNothing);
+
+    await tester.enterText(
+      find.byType(TextField).last,
+      'Please contact family and learner support team about attendance drop and move to core lane check-in next week.',
+    );
+    await tester.ensureVisible(find.text('Request follow-up'));
+    await tester.tap(find.text('Request follow-up'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Learner follow-up request submitted.'), findsOneWidget);
 
     final planDoc = await firestore
         .collection('learnerDifferentiationPlans')
@@ -206,6 +211,26 @@ void main() {
       contains('Learner: Learner One'),
     );
     expect(savedFileContent, contains('Differentiation lane: Core lane'));
+
+    final supportRequests = await firestore.collection('supportRequests').get();
+    expect(supportRequests.docs.length, 1);
+    expect(supportRequests.docs.first.data()['requestType'], 'learner_follow_up');
+    expect(
+      supportRequests.docs.first.data()['source'],
+      'educator_learner_detail_request_follow_up',
+    );
+    expect(
+      supportRequests.docs.first.data()['metadata']?['learnerId'],
+      'learner-1',
+    );
+    expect(
+      supportRequests.docs.first.data()['metadata']?['selectedLane'],
+      'core',
+    );
+    expect(
+      supportRequests.docs.first.data()['message'],
+      'Please contact family and learner support team about attendance drop and move to core lane check-in next week.',
+    );
   });
 
   testWidgets('educator learners page shows honest learner unavailable label',
