@@ -60,6 +60,12 @@ Deploy web via Cloud Run and Firebase resources separately:
 ./scripts/deploy.sh all
 ```
 
+For a safer Cloud Run rehearsal that creates new revisions without shifting traffic:
+
+```bash
+CLOUD_RUN_NO_TRAFFIC=1 ./scripts/deploy.sh web
+```
+
 To deploy only the Firebase Functions:
 
 ```bash

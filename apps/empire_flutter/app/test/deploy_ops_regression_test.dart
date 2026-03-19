@@ -457,6 +457,18 @@ void main() {
         isTrue,
         reason: 'Deploy workflow must deploy the Flutter web service explicitly',
       );
+      expect(
+        content.contains('no_traffic:'),
+        isTrue,
+        reason:
+            'Deploy workflow must expose a no-traffic rehearsal input for safer Cloud Run rollouts',
+      );
+      expect(
+        content.contains('--no-traffic'),
+        isTrue,
+        reason:
+            'Deploy workflow must support Cloud Run no-traffic deploys for rehearsal',
+      );
     });
 
     test('Manual deploy script verifies Gen 2 and deploys both web surfaces',
@@ -498,6 +510,18 @@ void main() {
         isTrue,
         reason:
             'Manual deploy script must expose a combined web target for both services',
+      );
+      expect(
+        content.contains('CLOUD_RUN_NO_TRAFFIC'),
+        isTrue,
+        reason:
+            'Manual deploy script must support no-traffic Cloud Run rehearsal mode',
+      );
+      expect(
+        content.contains('--no-traffic'),
+        isTrue,
+        reason:
+            'Manual deploy script must be able to deploy Cloud Run revisions without shifting traffic',
       );
     });
 
@@ -633,6 +657,9 @@ void main() {
       expect(content.contains('cloudbuild.flutter.yaml'), isTrue,
           reason:
               'Flutter Cloud Run helper must build through the Flutter-specific Cloud Build config');
+      expect(content.contains('CLOUD_RUN_NO_TRAFFIC'), isTrue,
+          reason:
+              'Flutter Cloud Run helper must support no-traffic Cloud Run rehearsals');
     });
 
     // ── 3.8 Firestore indexes are committed ──

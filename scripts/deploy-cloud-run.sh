@@ -6,6 +6,7 @@ GCP_PROJECT_ID=${1:-}
 GCP_REGION=${2:-us-central1}
 CLOUD_RUN_SERVICE=${3:-empire-web}
 IMAGE_TAG=${4:-latest}
+NO_TRAFFIC_DEPLOY="${CLOUD_RUN_NO_TRAFFIC:-0}"
 
 if [ -z "$GCP_PROJECT_ID" ]; then
   echo "Usage: $0 <GCP_PROJECT_ID> [GCP_REGION] [CLOUD_RUN_SERVICE] [IMAGE_TAG]"
@@ -29,6 +30,11 @@ cleanup() {
   rm -rf "$STAGING_DIR"
 }
 trap cleanup EXIT
+
+no_traffic_args=()
+if [[ "$NO_TRAFFIC_DEPLOY" == "1" || "$NO_TRAFFIC_DEPLOY" == "true" ]]; then
+  no_traffic_args+=(--no-traffic)
+fi
 
 mkdir -p "$STAGING_DIR/apps/empire_flutter"
 cp "$REPO_ROOT/Dockerfile.flutter" "$STAGING_DIR/Dockerfile.flutter"
@@ -66,6 +72,7 @@ gcloud run deploy "$CLOUD_RUN_SERVICE" \
   --project "$GCP_PROJECT_ID" \
   --region "$GCP_REGION" \
   --platform managed \
+  "${no_traffic_args[@]}" \
   --allow-unauthenticated
 
 echo "Deployment finished."

@@ -24,6 +24,7 @@ FVM_FLUTTER="$FLUTTER_APP/.fvm/flutter_sdk/bin/flutter"
 TARGET="${1:-all}"
 FLUTTER_GATE_DONE=0
 TEMP_GCP_CREDENTIALS=""
+NO_TRAFFIC_DEPLOY="${CLOUD_RUN_NO_TRAFFIC:-0}"
 
 export CLOUDSDK_CORE_DISABLE_PROMPTS="${CLOUDSDK_CORE_DISABLE_PROMPTS:-1}"
 export COPYFILE_DISABLE="${COPYFILE_DISABLE:-1}"
@@ -38,6 +39,12 @@ NC='\033[0m' # No Color
 log()  { echo -e "${GREEN}[deploy]${NC} $*"; }
 warn() { echo -e "${YELLOW}[deploy]${NC} $*"; }
 fail() { echo -e "${RED}[deploy]${NC} $*"; exit 1; }
+
+cloud_run_no_traffic_args() {
+  if [[ "$NO_TRAFFIC_DEPLOY" == "1" || "$NO_TRAFFIC_DEPLOY" == "true" ]]; then
+    printf '%s\n' '--no-traffic'
+  fi
+}
 
 flutter_cmd() {
   if [[ -x "$FVM_FLUTTER" ]]; then
@@ -263,6 +270,8 @@ deploy_primary_web() {
   docker push "$image" || fail "Primary web Docker push failed"
 
   local -a deploy_args
+  local -a no_traffic_args
+  mapfile -t no_traffic_args < <(cloud_run_no_traffic_args)
   deploy_args=(
     gcloud run deploy "$service"
     --image "$image"
@@ -270,6 +279,7 @@ deploy_primary_web() {
     --project "$project_id"
     --region "$region"
     --platform managed
+    "${no_traffic_args[@]}"
     --allow-unauthenticated
   )
 
@@ -339,6 +349,8 @@ deploy_compliance_operator() {
   local root_redirect_url
   root_redirect_url="${COMPLIANCE_ROOT_REDIRECT_URL:-https://www.scholesa.com/en}"
   image_tag="${IMAGE_TAG:-$(date +%Y%m%d-%H%M%S)}"
+  local -a no_traffic_args
+  mapfile -t no_traffic_args < <(cloud_run_no_traffic_args)
 
   log "Building compliance operator image with Cloud Build..."
   (cd "$REPO_ROOT" && gcloud builds submit --project "$project_id" --config cloudbuild.compliance.yaml --substitutions "_TAG=$image_tag")
@@ -349,6 +361,7 @@ deploy_compliance_operator() {
     --project "$project_id" \
     --region "$region" \
     --platform managed \
+    "${no_traffic_args[@]}" \
     --no-allow-unauthenticated \
     --set-env-vars "COMPLIANCE_ALLOW_UNAUTH=0,COMPLIANCE_ROOT_REDIRECT_URL=${root_redirect_url}")
 

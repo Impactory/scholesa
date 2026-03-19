@@ -2,6 +2,12 @@ name: Build and Deploy to Cloud Run
 
 on:
   workflow_dispatch:
+    inputs:
+      no_traffic:
+        description: "Deploy new revisions without shifting traffic"
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: deploy-cloud-run-${{ github.ref }}
@@ -163,11 +169,17 @@ jobs:
       - name: Deploy to Cloud Run
         env:
           IMAGE: gcr.io/${{ secrets.GCP_PROJECT_ID }}/scholesa:${{ github.sha }}
+          NO_TRAFFIC: ${{ github.event.inputs.no_traffic }}
         run: |
+          NO_TRAFFIC_FLAG=""
+          if [[ "$NO_TRAFFIC" == "true" ]]; then
+            NO_TRAFFIC_FLAG="--no-traffic"
+          fi
           gcloud run deploy ${{ secrets.CLOUD_RUN_SERVICE }} \
             --image "$IMAGE" \
             --region "${{ secrets.GCP_REGION }}" \
             --platform managed \
+            ${NO_TRAFFIC_FLAG} \
             --allow-unauthenticated \
             --set-env-vars "NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }},NEXT_PUBLIC_FIREBASE_PROJECT_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }},NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }},NEXT_PUBLIC_FIREBASE_APP_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }},NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }},NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }},NEXT_PUBLIC_ENABLE_SW=${{ secrets.NEXT_PUBLIC_ENABLE_SW }}" \
             --update-secrets "FIREBASE_SERVICE_ACCOUNT=${{ secrets.FIREBASE_SERVICE_ACCOUNT_SECRET }}:latest"
@@ -179,11 +191,17 @@ jobs:
       - name: Deploy Flutter web to Cloud Run
         env:
           FLUTTER_IMAGE: gcr.io/${{ secrets.GCP_PROJECT_ID }}/empire-web:${{ github.sha }}
+          NO_TRAFFIC: ${{ github.event.inputs.no_traffic }}
         run: |
+          NO_TRAFFIC_FLAG=""
+          if [[ "$NO_TRAFFIC" == "true" ]]; then
+            NO_TRAFFIC_FLAG="--no-traffic"
+          fi
           gcloud run deploy ${{ secrets.CLOUD_RUN_FLUTTER_SERVICE }} \
             --image "$FLUTTER_IMAGE" \
             --region "${{ secrets.GCP_REGION }}" \
             --platform managed \
+            ${NO_TRAFFIC_FLAG} \
             --allow-unauthenticated
 
       - name: Verify Flutter web deployment
@@ -194,12 +212,18 @@ jobs:
         env:
           COMPLIANCE_IMAGE: gcr.io/${{ secrets.GCP_PROJECT_ID }}/scholesa-compliance:${{ github.sha }}
           COMPLIANCE_SERVICE: ${{ secrets.CLOUD_RUN_COMPLIANCE_SERVICE }}
+          NO_TRAFFIC: ${{ github.event.inputs.no_traffic }}
         run: |
           SERVICE_NAME="${COMPLIANCE_SERVICE:-scholesa-compliance}"
+          NO_TRAFFIC_FLAG=""
+          if [[ "$NO_TRAFFIC" == "true" ]]; then
+            NO_TRAFFIC_FLAG="--no-traffic"
+          fi
           gcloud run deploy "$SERVICE_NAME" \
             --image "$COMPLIANCE_IMAGE" \
             --region "${{ secrets.GCP_REGION }}" \
             --platform managed \
+            ${NO_TRAFFIC_FLAG} \
             --no-allow-unauthenticated \
             --set-env-vars "COMPLIANCE_ALLOW_UNAUTH=0"
 
