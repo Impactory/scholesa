@@ -29,7 +29,7 @@ This is a fresh whole-app honesty pass after the earlier blocker remediation, we
 - Current audit verification run:
   - `flutter analyze`: passed
   - Focused audit suite: passed
-  - Total in the current broad audit run: 244 tests passed, 0 failed
+  - Total in the current broad audit run: 247 tests passed, 0 failed
 
 ### Surface classification
 
@@ -40,6 +40,7 @@ This is a fresh whole-app honesty pass after the earlier blocker remediation, we
 - Educator learner differentiation and follow-up request flow
 - Cross-role messages and notifications unread-state and dismiss flows
 - HQ role impersonation activation and exit flow
+- HQ sites loading, filtering, search, and create-site flow
 - Parent billing as honest view-only summary
 - Parent schedule and portfolio support-request flows
 - Site dashboard primary path after misleading pillar telemetry removal
@@ -79,8 +80,8 @@ This is a fresh whole-app honesty pass after the earlier blocker remediation, we
 
 - `flutter analyze` completed with no issues.
 - The focused audit command completed successfully:
-  - `flutter test test/*honesty* test/*placeholder* test/*regression* test/*workflow* test/missions_page_test.dart test/habits_page_test.dart test/messages_pages_test.dart test/hq_role_switcher_page_test.dart`
-- Result: 244 tests passed, 0 failed.
+  - `flutter test test/*honesty* test/*placeholder* test/*regression* test/*workflow* test/missions_page_test.dart test/habits_page_test.dart test/messages_pages_test.dart test/hq_role_switcher_page_test.dart test/hq_sites_page_test.dart`
+- Result: 247 tests passed, 0 failed.
 
 ### Notable verified behaviors
 
@@ -95,6 +96,7 @@ This is a fresh whole-app honesty pass after the earlier blocker remediation, we
 - Attendance now renders a recoverable unavailable state instead of a bare provider-missing text failure.
 - Messages and notifications now have direct page coverage for unread transitions, dismiss, and mark-all-read behavior.
 - HQ role switcher now has direct page coverage for impersonation activation and exit behavior.
+- HQ sites now has direct page coverage for Firestore-backed loading, filter/search behavior, and create-site persistence.
 
 ## D. Remaining Blockers
 
@@ -119,6 +121,7 @@ Why it matters:
 - Missions, habits, and attendance now have direct degraded-mode coverage in addition to the broader honesty, placeholder, regression, and workflow suites.
 - Messages and notifications now have direct page coverage instead of relying only on shared regressions.
 - HQ role switcher now has direct route coverage instead of remaining audit-inferred only.
+- HQ sites now has direct route coverage instead of remaining audit-inferred only.
 - Secondary role surfaces still rely on a mix of direct page tests, workflow tests, placeholder-action tests, and regression coverage rather than comprehensive route-by-route end-to-end coverage.
 - That is acceptable for beta.
 - It is still short of gold for a role-dense admin app.
