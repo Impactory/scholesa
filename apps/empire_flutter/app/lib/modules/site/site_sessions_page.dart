@@ -11,9 +11,19 @@ String _tSiteSessions(BuildContext context, String input) {
   return SiteSurfaceI18n.text(context, input);
 }
 
+typedef SiteSessionsLoader = Future<Map<String, List<_SessionData>>> Function(
+  BuildContext context,
+  DateTime selectedDate,
+);
+
 /// Site Sessions Page - Schedule and manage sessions
 class SiteSessionsPage extends StatefulWidget {
-  const SiteSessionsPage({super.key});
+  const SiteSessionsPage({
+    this.sessionsLoader,
+    super.key,
+  });
+
+  final SiteSessionsLoader? sessionsLoader;
 
   @override
   State<SiteSessionsPage> createState() => _SiteSessionsPageState();
@@ -25,6 +35,7 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
   final Map<String, List<_SessionData>> _sessionsByTime =
       <String, List<_SessionData>>{};
   bool _isLoading = false;
+  String? _loadError;
 
   @override
   void initState() {
@@ -99,6 +110,14 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
             SliverToBoxAdapter(child: _buildViewToggle()),
             SliverToBoxAdapter(child: _buildCalendarStrip()),
             SliverToBoxAdapter(child: _buildSessionsHeader()),
+            if (!_isLoading && _loadError != null && _sessionsByTime.isNotEmpty)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: _buildStaleDataBanner(_loadError!),
+                ),
+              ),
             if (_isLoading)
               SliverToBoxAdapter(
                 child: Padding(
@@ -108,6 +127,14 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
                     _tSiteSessions(context, 'Loading...'),
                     style: const TextStyle(color: ScholesaColors.textSecondary),
                   ),
+                ),
+              ),
+            if (!_isLoading && _loadError != null && timeSlots.isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: _buildLoadErrorState(_loadError!),
                 ),
               ),
             if (!_isLoading && timeSlots.isEmpty)
@@ -602,57 +629,17 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
   }
 
   Future<void> _loadSessions() async {
-    final FirestoreService? firestoreService = _maybeFirestoreService();
-    final AppState? appState = _maybeAppState();
-    if (firestoreService == null || appState == null) {
-      return;
-    }
-
-    final String siteId = (appState.activeSiteId ??
-            (appState.siteIds.isNotEmpty ? appState.siteIds.first : ''))
-        .trim();
-    if (siteId.isEmpty) {
-      return;
-    }
-
     if (!mounted) return;
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _loadError = null;
+    });
     try {
-      Query<Map<String, dynamic>> query =
-          firestoreService.firestore.collection('sessions');
-      try {
-        query = query.where('siteId', isEqualTo: siteId);
-      } catch (_) {}
-
-      QuerySnapshot<Map<String, dynamic>> snapshot;
-      try {
-        snapshot = await query.orderBy('startTime').limit(300).get();
-      } catch (_) {
-        try {
-          snapshot = await query
-              .orderBy('createdAt', descending: true)
-              .limit(300)
-              .get();
-        } catch (_) {
-          snapshot = await query.limit(300).get();
-        }
-      }
-
       final Map<String, List<_SessionData>> grouped =
-          <String, List<_SessionData>>{};
-      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
-          in snapshot.docs) {
-        final Map<String, dynamic> data = doc.data();
-        final String slot = _sessionTimeSlot(data);
-        final _SessionData session = _SessionData(
-          title: _sessionTitle(data, doc.id),
-          educator: _sessionEducator(data),
-          room: _sessionRoom(data),
-          learnerCount: _sessionLearnerCount(data),
-          pillar: _sessionPillar(data),
-        );
-        grouped.putIfAbsent(slot, () => <_SessionData>[]).add(session);
-      }
+          await (widget.sessionsLoader ?? _loadSessionsFromFirestore)(
+        context,
+        _selectedDate,
+      );
 
       if (!mounted) return;
       setState(() {
@@ -660,11 +647,143 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
           ..clear()
           ..addAll(grouped);
       });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _loadError = 'Failed to load sessions: $error';
+      });
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  Future<Map<String, List<_SessionData>>> _loadSessionsFromFirestore(
+    BuildContext context,
+    DateTime selectedDate,
+  ) async {
+    final FirestoreService? firestoreService = _maybeFirestoreService();
+    final AppState? appState = _maybeAppState();
+    if (firestoreService == null || appState == null) {
+      return <String, List<_SessionData>>{};
+    }
+
+    final String siteId = (appState.activeSiteId ??
+            (appState.siteIds.isNotEmpty ? appState.siteIds.first : ''))
+        .trim();
+    if (siteId.isEmpty) {
+      return <String, List<_SessionData>>{};
+    }
+
+    Query<Map<String, dynamic>> query =
+        firestoreService.firestore.collection('sessions');
+    try {
+      query = query.where('siteId', isEqualTo: siteId);
+    } catch (_) {}
+
+    QuerySnapshot<Map<String, dynamic>> snapshot;
+    try {
+      snapshot = await query.orderBy('startTime').limit(300).get();
+    } catch (_) {
+      try {
+        snapshot = await query
+            .orderBy('createdAt', descending: true)
+            .limit(300)
+            .get();
+      } catch (_) {
+        snapshot = await query.limit(300).get();
+      }
+    }
+
+    final Map<String, List<_SessionData>> grouped =
+        <String, List<_SessionData>>{};
+    for (final QueryDocumentSnapshot<Map<String, dynamic>> doc in snapshot.docs) {
+      final Map<String, dynamic> data = doc.data();
+      final String slot = _sessionTimeSlot(data);
+      final _SessionData session = _SessionData(
+        title: _sessionTitle(data, doc.id),
+        educator: _sessionEducator(data),
+        room: _sessionRoom(data),
+        learnerCount: _sessionLearnerCount(data),
+        pillar: _sessionPillar(data),
+      );
+      grouped.putIfAbsent(slot, () => <_SessionData>[]).add(session);
+    }
+    return grouped;
+  }
+
+  Widget _buildLoadErrorState(String message) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF4F4),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFFECACA)),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Row(
+            children: <Widget>[
+              Icon(Icons.error_outline_rounded, color: ScholesaColors.error),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Unable to load sessions',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: ScholesaColors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            style: const TextStyle(color: ScholesaColors.textSecondary),
+          ),
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: _loadSessions,
+            icon: const Icon(Icons.refresh_rounded),
+            label: Text(_tSiteSessions(context, 'Retry')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStaleDataBanner(String message) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFFDE68A)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Padding(
+            padding: EdgeInsets.only(top: 2),
+            child: Icon(Icons.warning_amber_rounded, color: Color(0xFFB45309)),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              _tSiteSessions(context, 'Showing last loaded session schedule. ') +
+                  message,
+              style: const TextStyle(color: Color(0xFF92400E)),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<bool> _persistSession(_NewSessionResult result) async {

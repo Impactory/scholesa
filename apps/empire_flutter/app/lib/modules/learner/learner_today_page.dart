@@ -461,6 +461,32 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
     return Consumer<HabitService>(
       builder: (BuildContext context, HabitService service, _) {
         final List<Habit> habits = service.todayHabits.take(3).toList();
+        if (service.error != null && habits.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.all(16),
+            child: _DashboardInfoCard(
+              title: _t("Today's Habits"),
+              body: <Widget>[
+                Text(
+                  _t('Unable to load habits'),
+                  style: TextStyle(
+                    color: context.schTextPrimary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  service.error!,
+                  style: TextStyle(
+                    color: context.schTextSecondary,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
         if (habits.isEmpty) {
           return Padding(
             padding: const EdgeInsets.all(16),
@@ -487,6 +513,13 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
+              if (service.error != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _SectionHealthBanner(
+                    message: _t('Showing last loaded habits. ') + service.error!,
+                  ),
+                ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
@@ -527,6 +560,32 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
     return Consumer<MissionService>(
       builder: (BuildContext context, MissionService service, _) {
         final List<Mission> missions = service.activeMissions.take(2).toList();
+        if (service.error != null && missions.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _DashboardInfoCard(
+              title: _t('Active Missions'),
+              body: <Widget>[
+                Text(
+                  _t('Unable to load missions'),
+                  style: TextStyle(
+                    color: context.schTextPrimary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  service.error!,
+                  style: TextStyle(
+                    color: context.schTextSecondary,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
         if (missions.isEmpty) {
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -553,6 +612,15 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
+              if (service.error != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _SectionHealthBanner(
+                    message:
+                        _t('Showing last loaded mission progress. ') +
+                            service.error!,
+                  ),
+                ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
@@ -1836,6 +1904,41 @@ class _DashboardInfoCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           ...body,
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionHealthBanner extends StatelessWidget {
+  const _SectionHealthBanner({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFFDE68A)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Padding(
+            padding: EdgeInsets.only(top: 2),
+            child: Icon(Icons.warning_amber_rounded, color: Color(0xFFB45309)),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(color: Color(0xFF92400E)),
+            ),
+          ),
         ],
       ),
     );

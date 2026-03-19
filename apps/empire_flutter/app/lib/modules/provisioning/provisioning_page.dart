@@ -72,100 +72,152 @@ String _localizedProvisioningValue(
 String _cohortScheduleSummary(BuildContext context, CohortLaunch launch) {
   final String schedule = _localizedProvisioningValue(
     context,
-    launch.scheduleLabel,
-    unavailableLabel: 'Schedule unavailable',
-  );
-  final String term = _localizedProvisioningValue(
-    context,
-    launch.curriculumTerm,
-    unavailableLabel: 'Curriculum term unavailable',
-  );
-  return '$schedule • $term';
-}
-
-String _cohortLearnerCountLabel(BuildContext context, int? learnerCount) {
-  final String value = learnerCount == null
-      ? _tProvisioning(context, 'Unavailable')
-      : '$learnerCount';
-  return '${_tProvisioning(context, 'Learner Count')}: $value';
-}
-
-String _deleteGuardianLinkCopy(
-  BuildContext context,
-  GuardianLink link,
-) {
-  final String parentName = link.parentName ?? link.parentId;
-  final String learnerName = link.learnerName ?? link.learnerId;
-  return WorkflowSurfaceI18n.textWithPlaceholders(
-    context,
-    'Remove the guardian link between {parentName} and {learnerName}?',
-    placeholders: <String, String>{
-      'parentName': parentName,
-      'learnerName': learnerName,
-    },
-  );
-}
-
-/// Provisioning page for site admins
-class ProvisioningPage extends StatefulWidget {
-  const ProvisioningPage({super.key});
-
-  @override
-  State<ProvisioningPage> createState() => _ProvisioningPageState();
-}
-
-class _ProvisioningPageState extends State<ProvisioningPage>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-  String? _lastLoadedSiteId;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 4, vsync: this);
-    _tabController.addListener(() {
-      if (!_tabController.indexIsChanging) {
-        return;
-      }
-      final String tab = switch (_tabController.index) {
-        0 => 'learners',
-        1 => 'parents',
-        2 => 'links',
-        3 => 'cohorts',
-        _ => 'unknown',
-      };
-      TelemetryService.instance.logEvent(
-        event: 'cta.clicked',
-        metadata: <String, dynamic>{
-          'module': 'provisioning',
-          'cta_id': 'change_tab',
-          'surface': 'provisioning_tab_bar',
-          'tab': tab,
-        },
-      );
-    });
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final String? activeSiteId = context.read<AppState>().activeSiteId;
-    if (activeSiteId != null && activeSiteId != _lastLoadedSiteId) {
-      _lastLoadedSiteId = activeSiteId;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) {
-          return;
-        }
-        final String? currentSiteId = context.read<AppState>().activeSiteId;
-        if (currentSiteId != activeSiteId) {
-          return;
-        }
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: Colors.indigo.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: const Icon(
+                                    Icons.rocket_launch_rounded,
+                                    color: Colors.indigo,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: <Widget>[
+                                      Text(
+                                        _localizedProvisioningValue(
+                                          context,
+                                          launch.cohortName,
+                                          unavailableLabel:
+                                              'Cohort unavailable',
+                                        ),
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        _cohortScheduleSummary(context, launch),
+                                        style: const TextStyle(
+                                          color: Colors.black54,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                _StatusPill(
+                                  label: _localizedProvisioningValue(
+                                    context,
+                                    launch.status,
+                                    unavailableLabel: 'Unavailable',
+                                    localizeKnownEnums: true,
+                                  ),
+                                  color: _cohortStatusColor(launch.status),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: <Widget>[
+                                _StatusPill(
+                                  label:
+                                      '${_tProvisioning(context, 'Roster')}: ${_localizedProvisioningValue(
+                                    context,
+                                    launch.rosterStatus,
+                                    unavailableLabel: 'Unavailable',
+                                    localizeKnownEnums: true,
+                                  )}',
+                                  color: _cohortStatusColor(launch.rosterStatus),
+                                ),
+                                _StatusPill(
+                                  label:
+                                      '${_tProvisioning(context, 'Parent Comms')}: ${_localizedProvisioningValue(
+                                    context,
+                                    launch.parentCommunicationStatus,
+                                    unavailableLabel: 'Unavailable',
+                                    localizeKnownEnums: true,
+                                  )}',
+                                  color: _cohortStatusColor(
+                                    launch.parentCommunicationStatus,
+                                  ),
+                                ),
+                                _StatusPill(
+                                  label:
+                                      '${_tProvisioning(context, 'Baseline Survey')}: ${_localizedProvisioningValue(
+                                    context,
+                                    launch.baselineSurveyStatus,
+                                    unavailableLabel: 'Unavailable',
+                                    localizeKnownEnums: true,
+                                  )}',
+                                  color: _cohortStatusColor(
+                                    launch.baselineSurveyStatus,
+                                  ),
+                                ),
+                                _StatusPill(
+                                  label:
+                                      '${_tProvisioning(context, 'Kickoff')}: ${_localizedProvisioningValue(
+                                    context,
+                                    launch.kickoffStatus,
+                                    unavailableLabel: 'Unavailable',
+                                    localizeKnownEnums: true,
+                                  )}',
+                                  color: _cohortStatusColor(launch.kickoffStatus),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: <Widget>[
+                                Expanded(
+                                  child: Text(
+                                    '${_tProvisioning(context, 'Age Band')}: ${_localizedProvisioningValue(
+                                      context,
+                                      launch.ageBand,
+                                      unavailableLabel: 'Unavailable',
+                                      localizeKnownEnums: true,
+                                    )}',
+                                    style:
+                                        const TextStyle(color: Colors.black87),
+                                  ),
+                                ),
+                                Text(
+                                  _cohortLearnerCountLabel(
+                                    context,
+                                    launch.learnerCount,
+                                  ),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if ((launch.notes ?? '').trim().isNotEmpty) ...<Widget>[
+                              const SizedBox(height: 8),
+                              Text(
+                                launch.notes!.trim(),
+                                style: const TextStyle(color: Colors.black54),
+                              ),
+                            ],
+                          ],
         _loadDataForSite(activeSiteId);
       });
     }
   }
 
-  Future<void> _loadDataForSite(String siteId) async {
+              ),
     final service = context.read<ProvisioningService>();
     await Future.wait(<Future<void>>[
       service.loadLearners(siteId),
@@ -329,6 +381,22 @@ class _LearnersTab extends StatelessWidget {
 
         final List<LearnerProfile> learners = service.learners;
 
+        final AppState appState = context.read<AppState>();
+        final String? siteId = appState.activeSiteId;
+
+        if (service.error != null && learners.isEmpty) {
+          return _buildProvisioningLoadErrorState(
+            context,
+            title: _tProvisioning(context, 'Unable to load learners'),
+            message: service.error!,
+            onRetry: () {
+              if (siteId != null) {
+                service.loadLearners(siteId);
+              }
+            },
+          );
+        }
+
         if (learners.isEmpty) {
           return EmptyState(
             icon: Icons.child_care,
@@ -338,57 +406,63 @@ class _LearnersTab extends StatelessWidget {
           );
         }
 
-        return RefreshIndicator(
-          onRefresh: () async {
-            TelemetryService.instance.logEvent(
-              event: 'cta.clicked',
-              metadata: const <String, dynamic>{
-                'module': 'provisioning',
-                'cta_id': 'refresh_learners_tab',
-              },
-            );
-            final appState = context.read<AppState>();
-            final siteId = appState.activeSiteId;
-            if (siteId != null) {
-              await service.loadLearners(siteId);
-            }
-          },
-          child: ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: learners.length,
-            itemBuilder: (BuildContext context, int index) {
-              final LearnerProfile learner = learners[index];
-              return Card(
-                margin: const EdgeInsets.only(bottom: 8),
-                child: ListTile(
-                  leading: CircleAvatar(
-                    child: Text(learner.displayName.isNotEmpty
-                        ? learner.displayName[0]
-                        : '?'),
-                  ),
-                  title: Text(learner.displayName),
-                  subtitle: learner.gradeLevel != null
-                      ? Text(
-                          '${_tProvisioning(context, 'Grade')} ${learner.gradeLevel}')
-                      : null,
-                  trailing: IconButton(
-                    icon: const Icon(Icons.more_vert),
-                    onPressed: () {
-                      TelemetryService.instance.logEvent(
-                        event: 'cta.clicked',
-                        metadata: <String, dynamic>{
-                          'module': 'provisioning',
-                          'cta_id': 'open_learner_options',
-                          'learner_id': learner.id,
-                        },
-                      );
-                      _showLearnerOptions(context, learner);
+        return Column(
+          children: <Widget>[
+            if (service.error != null)
+              _buildProvisioningStaleBanner(context, service.error!),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  TelemetryService.instance.logEvent(
+                    event: 'cta.clicked',
+                    metadata: const <String, dynamic>{
+                      'module': 'provisioning',
+                      'cta_id': 'refresh_learners_tab',
                     },
-                  ),
+                  );
+                  if (siteId != null) {
+                    await service.loadLearners(siteId);
+                  }
+                },
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: learners.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    final LearnerProfile learner = learners[index];
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          child: Text(learner.displayName.isNotEmpty
+                              ? learner.displayName[0]
+                              : '?'),
+                        ),
+                        title: Text(learner.displayName),
+                        subtitle: learner.gradeLevel != null
+                            ? Text(
+                                '${_tProvisioning(context, 'Grade')} ${learner.gradeLevel}')
+                            : null,
+                        trailing: IconButton(
+                          icon: const Icon(Icons.more_vert),
+                          onPressed: () {
+                            TelemetryService.instance.logEvent(
+                              event: 'cta.clicked',
+                              metadata: <String, dynamic>{
+                                'module': 'provisioning',
+                                'cta_id': 'open_learner_options',
+                                'learner_id': learner.id,
+                              },
+                            );
+                            _showLearnerOptions(context, learner);
+                          },
+                        ),
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
-          ),
+              ),
+            ),
+          ],
         );
       },
     );
@@ -460,6 +534,22 @@ class _ParentsTab extends StatelessWidget {
 
         final List<ParentProfile> parents = service.parents;
 
+        final AppState appState = context.read<AppState>();
+        final String? siteId = appState.activeSiteId;
+
+        if (service.error != null && parents.isEmpty) {
+          return _buildProvisioningLoadErrorState(
+            context,
+            title: _tProvisioning(context, 'Unable to load parents'),
+            message: service.error!,
+            onRetry: () {
+              if (siteId != null) {
+                service.loadParents(siteId);
+              }
+            },
+          );
+        }
+
         if (parents.isEmpty) {
           return EmptyState(
             icon: Icons.family_restroom,
@@ -469,58 +559,64 @@ class _ParentsTab extends StatelessWidget {
           );
         }
 
-        return RefreshIndicator(
-          onRefresh: () async {
-            TelemetryService.instance.logEvent(
-              event: 'cta.clicked',
-              metadata: const <String, dynamic>{
-                'module': 'provisioning',
-                'cta_id': 'refresh_parents_tab',
-              },
-            );
-            final appState = context.read<AppState>();
-            final siteId = appState.activeSiteId;
-            if (siteId != null) {
-              await service.loadParents(siteId);
-            }
-          },
-          child: ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: parents.length,
-            itemBuilder: (BuildContext context, int index) {
-              final ParentProfile parent = parents[index];
-              return Card(
-                margin: const EdgeInsets.only(bottom: 8),
-                child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: Colors.blue,
-                    child: Text(
-                      parent.displayName.isNotEmpty
-                          ? parent.displayName[0]
-                          : '?',
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                  ),
-                  title: Text(parent.displayName),
-                  subtitle: Text(parent.email ?? ''),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.more_vert),
-                    onPressed: () {
-                      TelemetryService.instance.logEvent(
-                        event: 'cta.clicked',
-                        metadata: <String, dynamic>{
-                          'module': 'provisioning',
-                          'cta_id': 'open_parent_options',
-                          'parent_id': parent.id,
-                        },
-                      );
-                      _showParentOptions(context, parent);
+        return Column(
+          children: <Widget>[
+            if (service.error != null)
+              _buildProvisioningStaleBanner(context, service.error!),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  TelemetryService.instance.logEvent(
+                    event: 'cta.clicked',
+                    metadata: const <String, dynamic>{
+                      'module': 'provisioning',
+                      'cta_id': 'refresh_parents_tab',
                     },
-                  ),
+                  );
+                  if (siteId != null) {
+                    await service.loadParents(siteId);
+                  }
+                },
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: parents.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    final ParentProfile parent = parents[index];
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: Colors.blue,
+                          child: Text(
+                            parent.displayName.isNotEmpty
+                                ? parent.displayName[0]
+                                : '?',
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        ),
+                        title: Text(parent.displayName),
+                        subtitle: Text(parent.email ?? ''),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.more_vert),
+                          onPressed: () {
+                            TelemetryService.instance.logEvent(
+                              event: 'cta.clicked',
+                              metadata: <String, dynamic>{
+                                'module': 'provisioning',
+                                'cta_id': 'open_parent_options',
+                                'parent_id': parent.id,
+                              },
+                            );
+                            _showParentOptions(context, parent);
+                          },
+                        ),
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
-          ),
+              ),
+            ),
+          ],
         );
       },
     );
@@ -739,6 +835,21 @@ class _CohortsTab extends StatelessWidget {
         }
 
         final List<CohortLaunch> launches = service.cohortLaunches;
+        final String? siteId = context.read<AppState>().activeSiteId;
+
+        if (service.error != null && launches.isEmpty) {
+          return _buildProvisioningLoadErrorState(
+            context,
+            title: _tProvisioning(context, 'Unable to load cohort launches'),
+            message: service.error!,
+            onRetry: () {
+              if (siteId != null) {
+                service.loadCohortLaunches(siteId);
+              }
+            },
+          );
+        }
+
         if (launches.isEmpty) {
           return EmptyState(
             icon: Icons.rocket_launch_rounded,
@@ -750,24 +861,28 @@ class _CohortsTab extends StatelessWidget {
           );
         }
 
-        return RefreshIndicator(
-          onRefresh: () async {
-            _logProvisioningCta('refresh_cohort_launches_tab');
-            final String? siteId = context.read<AppState>().activeSiteId;
-            if (siteId != null) {
-              await service.loadCohortLaunches(siteId);
-            }
-          },
-          child: ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: launches.length,
-            itemBuilder: (BuildContext context, int index) {
-              final CohortLaunch launch = launches[index];
-              return Card(
-                margin: const EdgeInsets.only(bottom: 12),
-                child: Padding(
+        return Column(
+          children: <Widget>[
+            if (service.error != null)
+              _buildProvisioningStaleBanner(context, service.error!),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  _logProvisioningCta('refresh_cohort_launches_tab');
+                  if (siteId != null) {
+                    await service.loadCohortLaunches(siteId);
+                  }
+                },
+                child: ListView.builder(
                   padding: const EdgeInsets.all(16),
-                  child: Column(
+                  itemCount: launches.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    final CohortLaunch launch = launches[index];
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Row(
@@ -903,11 +1018,14 @@ class _CohortsTab extends StatelessWidget {
                         ),
                       ],
                     ],
-                  ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
               );
-            },
-          ),
+            ),
+          ],
         );
       },
     );
