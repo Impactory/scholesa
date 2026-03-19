@@ -374,6 +374,60 @@ describe('workflow route parity', () => {
     }));
   });
 
+  it('loads educator integrations through getIntegrationsHealth with educator scope', async () => {
+    const getIntegrationsHealth = setCallableHandler('getIntegrationsHealth', jest.fn().mockResolvedValue({
+      data: {
+        connections: [
+          {
+            id: 'connection-1',
+            provider: 'google_classroom',
+            name: 'Google Classroom',
+            status: 'active',
+            siteId: 'site-1',
+          },
+          {
+            id: 'connection-2',
+            provider: 'classlink',
+            name: 'ClassLink',
+            status: 'revoked',
+            siteId: 'site-1',
+          },
+        ],
+      },
+    }) as CallableHandler);
+
+    const result = await loadWorkflowRecords(makeContext('/educator/integrations', {
+      role: 'educator',
+      uid: 'educator-1',
+      profile: {
+        role: 'educator',
+        activeSiteId: 'site-1',
+        siteIds: ['site-1'],
+      } as never,
+    }));
+
+    expect(getIntegrationsHealth).toHaveBeenCalledWith({
+      siteId: 'site-1',
+      scope: 'educator',
+    });
+    expect(result.records).toEqual([
+      expect.objectContaining({
+        collectionName: 'integrationConnections',
+        routePath: '/educator/integrations',
+        title: 'google_classroom',
+        status: 'active',
+        canEdit: false,
+      }),
+      expect.objectContaining({
+        collectionName: 'integrationConnections',
+        routePath: '/educator/integrations',
+        title: 'classlink',
+        status: 'revoked',
+        canEdit: false,
+      }),
+    ]);
+  });
+
   it('loads parent schedule records only for linked learners', async () => {
     getDocsMock
       .mockResolvedValueOnce({

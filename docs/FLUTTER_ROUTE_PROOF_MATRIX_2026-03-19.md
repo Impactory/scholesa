@@ -12,18 +12,17 @@ Proof levels:
 ## Summary
 
 - Enabled canonical routes audited: 52
-- Direct: 46
-- Workflow/regression only: 6
+- Direct: 47
+- Workflow/regression only: 5
 - None: 0
 
 Highest-value remaining blind spots:
 
-1. `/educator/integrations`
-2. `/educator/missions/review`
-3. deeper failure and mutation coverage on `/educator/mission-plans`
-4. learner-scoped alias-route proof for `/settings`
-5. parent-scoped alias-route proof for `/messages`
-6. parent-scoped alias-route proof for `/settings`
+1. `/educator/missions/review`
+2. deeper failure and mutation coverage on `/educator/mission-plans`
+3. learner-scoped alias-route proof for `/settings`
+4. parent-scoped alias-route proof for `/messages`
+5. parent-scoped alias-route proof for `/settings`
 
 ## Public, Auth, and Root
 
@@ -56,7 +55,7 @@ Highest-value remaining blind spots:
 | `/educator/missions/review` | workflow/regression | `apps/empire_flutter/app/test/router_redirect_test.dart`, `apps/empire_flutter/app/test/role_workflow_smoke_test.dart` | Review-page mechanics are not directly proven |
 | `/educator/mission-plans` | direct | `apps/empire_flutter/app/test/educator_mission_plans_page_test.dart` | Creation flow is proven; explicit backend failure state is still not isolated |
 | `/educator/learner-supports` | direct | `apps/empire_flutter/app/test/educator_learner_supports_page_test.dart` | Live learner-derived support rendering is proven; failure-state handling is still indirect |
-| `/educator/integrations` | workflow/regression | `apps/empire_flutter/app/test/district_provider_integration_test.dart` | Role-specific page failure states are not isolated |
+| `/educator/integrations` | direct | `apps/empire_flutter/app/test/educator_integrations_page_test.dart`, `apps/empire_flutter/app/test/district_provider_integration_test.dart` | Honest load failure, retry, and sync-action failure states are now isolated; broader provider breadth still relies on the district and provider workflow tests |
 
 ## Parent
 
@@ -136,11 +135,10 @@ Highest-value remaining blind spots:
 
 Prioritize direct proof next for:
 
-1. `/educator/integrations`
-2. `/educator/missions/review`
-3. deeper failure and mutation coverage on `/educator/mission-plans`
-4. learner-scoped alias-route proof for `/settings`
-5. parent-scoped alias-route proof for `/messages`
-6. parent-scoped alias-route proof for `/settings`
+1. `/educator/missions/review`
+2. deeper failure and mutation coverage on `/educator/mission-plans`
+3. learner-scoped alias-route proof for `/settings`
+4. parent-scoped alias-route proof for `/messages`
+5. parent-scoped alias-route proof for `/settings`
 
 Then upgrade the workflow-only cluster with page-specific failure-state tests for the operationally risky routes before claiming gold.
