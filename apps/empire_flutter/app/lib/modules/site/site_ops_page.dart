@@ -7,6 +7,7 @@ import '../../i18n/site_surface_i18n.dart';
 import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../services/workflow_bridge_service.dart';
+import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 String _tSiteOps(BuildContext context, String input) {
@@ -88,6 +89,9 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
             onChanged: _isLoading ? null : _setDayOpenStatus,
             activeThumbColor: Colors.white,
             activeTrackColor: Colors.green.withValues(alpha: 0.6),
+          ),
+          const SessionMenuButton(
+            foregroundColor: Colors.white,
           ),
           const SizedBox(width: 8),
         ],

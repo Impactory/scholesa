@@ -8,6 +8,7 @@ import '../../domain/models.dart';
 import '../../domain/repositories.dart';
 import '../../i18n/site_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
+import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 /// Site integrations health page
@@ -72,6 +73,9 @@ class _SiteIntegrationsHealthPageState
               );
               _handleRefreshIntegrations();
             },
+          ),
+          const SessionMenuButton(
+            foregroundColor: Colors.white,
           ),
         ],
       ),

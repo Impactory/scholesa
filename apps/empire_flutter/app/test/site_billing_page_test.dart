@@ -65,6 +65,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('No billing data yet'), findsOneWidget);
     expect(find.text('Billing plan unavailable'), findsOneWidget);
   });
@@ -180,6 +181,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('AI Launch Pack'), findsOneWidget);
     await tester.tap(find.text('Purchase'));
     await tester.pumpAndSettle();

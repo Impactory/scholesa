@@ -51,6 +51,7 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Unable to load integrations health'), findsOneWidget);
     expect(
       find.text('Unable to load integrations health right now.'),

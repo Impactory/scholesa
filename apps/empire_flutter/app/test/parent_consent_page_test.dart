@@ -138,6 +138,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Consent Records'), findsOneWidget);
     expect(find.text('Ava Stone'), findsOneWidget);
     expect(find.text('Hidden Learner'), findsNothing);
@@ -166,6 +167,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Unable to load consent records right now'), findsOneWidget);
     expect(find.text('Retry'), findsOneWidget);
   });

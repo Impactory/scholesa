@@ -316,6 +316,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 50));
       await tester.pumpAndSettle();
 
+      expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
       expect(find.text('MiloOS Class Insights'), findsOneWidget);
       expect(find.text('BAE Watchlist'), findsOneWidget);
       expect(find.textContaining('Avery Chen'), findsOneWidget);
@@ -429,6 +430,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pumpAndSettle();
 
+      expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
       expect(find.byType(EducatorTodayPage), findsOneWidget);
       expect(find.text('MiloOS Class Insights'), findsOneWidget);
       expect(tester.takeException(), isNull);

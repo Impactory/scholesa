@@ -174,6 +174,7 @@ void main() {
       workflowBridge: workflowBridge,
     );
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Runtime rollout details are unavailable right now'), findsOneWidget);
   });
 
@@ -216,6 +217,7 @@ void main() {
       workflowBridge: workflowBridge,
     );
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Current package: fl_pkg_1 · resolved'), findsOneWidget);
     expect(find.text('Site rollout: 1 resolved · 0 staged · 0 fallback · 0 pending'), findsOneWidget);
   });

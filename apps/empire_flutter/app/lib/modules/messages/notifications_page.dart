@@ -4,6 +4,7 @@ import 'message_models.dart';
 import 'message_service.dart';
 import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
+import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 String _tNotifications(BuildContext context, String input) {
@@ -48,6 +49,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
                   child: Text(_tNotifications(context, 'Mark all read'),
                       style: const TextStyle(color: Colors.white)),
                 ),
+              const SessionMenuButton(
+                foregroundColor: Colors.white,
+              ),
             ],
           ),
           body: notifications.isEmpty

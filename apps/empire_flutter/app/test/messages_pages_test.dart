@@ -259,6 +259,7 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Mark all read'), findsOneWidget);
 
     await tester.tap(find.text('Mark all read'));
@@ -290,6 +291,7 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Mission reminder'), findsOneWidget);
 
     await tester.drag(find.byKey(const Key('note-1')), const Offset(-600, 0));

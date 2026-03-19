@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../auth/app_state.dart';
 import '../../domain/models.dart';
 import '../../i18n/parent_surface_i18n.dart';
+import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import 'parent_consent_service.dart';
 
@@ -50,6 +51,9 @@ class _ParentConsentPageState extends State<ParentConsentPage> {
             tooltip: _t('Refresh'),
             onPressed: _isLoading ? null : _loadData,
             icon: const Icon(Icons.refresh_rounded),
+          ),
+          const SessionMenuButton(
+            foregroundColor: Colors.white,
           ),
         ],
       ),
