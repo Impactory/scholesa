@@ -810,6 +810,7 @@ function buildRecord(params: {
   subtitleKeys: string[];
   statusKeys: string[];
   siteKeys?: string[];
+  metadataOverride?: Record<string, string>;
   editable?: boolean;
   deletable?: boolean;
 }): WorkflowRecord {
@@ -833,8 +834,9 @@ function buildRecord(params: {
     }
   }
 
-  const metadata: Record<string, string> = {};
+  const metadata: Record<string, string> = params.metadataOverride ? { ...params.metadataOverride } : {};
   Object.entries(params.raw).forEach(([key, value]) => {
+    if (key in metadata) return;
     if (['title', 'name', 'displayName', 'description', 'status'].includes(key)) return;
     if (value === null || value === undefined) return;
     if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
@@ -1211,6 +1213,7 @@ async function loadHqAnalyticsRecords(ctx: WorkflowContext): Promise<WorkflowRec
     titleKeys: ['title', 'siteId', 'id'],
     subtitleKeys: ['recommendation', 'period'],
     statusKeys: ['status', 'portfolioQualityGrade'],
+    metadataBuilder: buildKpiPackMetadata,
     editable: false,
     deletable: false,
   }).catch(() => []);
@@ -1266,6 +1269,7 @@ async function loadCallableRows(params: {
   titleKeys: string[];
   subtitleKeys: string[];
   statusKeys: string[];
+  metadataBuilder?: (row: Record<string, unknown>) => Record<string, string>;
   editable?: boolean;
   deletable?: boolean;
 }): Promise<WorkflowRecord[]> {
@@ -1288,11 +1292,26 @@ async function loadCallableRows(params: {
         titleKeys: params.titleKeys,
         subtitleKeys: params.subtitleKeys,
         statusKeys: params.statusKeys,
+        metadataOverride: params.metadataBuilder?.(row),
         editable: params.editable,
         deletable: params.deletable,
       });
     })
     .filter((record): record is WorkflowRecord => Boolean(record));
+}
+
+function buildKpiPackMetadata(row: Record<string, unknown>): Record<string, string> {
+  const voiceReliability = row.voiceReliability && typeof row.voiceReliability === 'object' && !Array.isArray(row.voiceReliability)
+    ? row.voiceReliability as Record<string, unknown>
+    : null;
+
+  return metadataWithAvailableValues({
+    fidelityScore: asAvailabilityLabel(row.fidelityScore),
+    voiceCaptureSuccessRate: asPercentLabelFromUnit(voiceReliability?.captureSuccessRate),
+    voiceCaptureFailures: asAvailabilityLabel(voiceReliability?.captureFailureCount),
+    voiceEscalations: asAvailabilityLabel(voiceReliability?.escalationCount),
+    voiceBlocks: asAvailabilityLabel(voiceReliability?.blockedCount),
+  });
 }
 
 async function loadPartnerDeliverableRecords(ctx: WorkflowContext): Promise<WorkflowRecord[]> {
@@ -2198,6 +2217,7 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
             titleKeys: ['title', 'siteId', 'id'],
             subtitleKeys: ['recommendation', 'period'],
             statusKeys: ['status', 'portfolioQualityGrade'],
+            metadataBuilder: buildKpiPackMetadata,
             editable: false,
             deletable: false,
           }).catch(() => []),

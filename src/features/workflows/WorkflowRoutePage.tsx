@@ -65,6 +65,12 @@ export function WorkflowRoutePage({ routePath }: WorkflowRoutePageProps) {
   });
   const [mutatingId, setMutatingId] = useState<string | null>(null);
 
+  const formatMetadataLabel = (key: string) =>
+    key
+      .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, (match) => match.toUpperCase());
+
   const ctx = useMemo(() => {
     if (!user || !normalizedRole) return null;
     return {
@@ -411,6 +417,16 @@ export function WorkflowRoutePage({ routePath }: WorkflowRoutePageProps) {
                       <span>Updated: {new Date(record.updatedAt).toLocaleString()}</span>
                       {record.siteId ? <span>Site: {record.siteId}</span> : null}
                     </div>
+                    {Object.keys(record.metadata).length > 0 ? (
+                      <dl className="mt-2 grid gap-1 text-xs text-app-muted sm:grid-cols-2">
+                        {Object.entries(record.metadata).map(([key, value]) => (
+                          <div key={key} className="flex gap-1">
+                            <dt className="font-medium text-app-foreground">{formatMetadataLabel(key)}:</dt>
+                            <dd>{value}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                    ) : null}
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {record.canEdit && (
