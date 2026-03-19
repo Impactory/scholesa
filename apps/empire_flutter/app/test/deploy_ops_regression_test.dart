@@ -529,7 +529,7 @@ void main() {
             'RC2 regression chain must include the Functions Gen 2 verification step',
       );
       expect(
-        rc2Content.contains('npm --prefix "$FUNCTIONS_DIR" run verify:gen2'),
+        rc2Content.contains(r'npm --prefix "$FUNCTIONS_DIR" run verify:gen2'),
         isTrue,
         reason:
             'RC2 regression chain must execute verify:gen2',
