@@ -6,8 +6,8 @@ Source of Truth: `apps/empire_flutter/app/lib/router/app_router.dart` (`kKnownRo
 
 ## Status Summary
 
-- Total routes in registry: **58**
-- Enabled routes: **58**
+- Total routes in registry: **60**
+- Enabled routes: **60**
 - Disabled routes: **0**
 - Redirect-only routes outside registry: **1** (`/register` → `/login`)
 - Placeholder/coming-soon on enabled routes: **under active audit**
@@ -17,14 +17,14 @@ Source of Truth: `apps/empire_flutter/app/lib/router/app_router.dart` (`kKnownRo
 | Category | Enabled | Disabled | Total |
 |---|---:|---:|---:|
 | Public/Auth/Dashboard | 3 | 0 | 3 |
-| Learner | 6 | 0 | 6 |
+| Learner | 7 | 0 | 7 |
 | Educator | 9 | 0 | 9 |
 | Parent | 8 | 0 | 8 |
 | Site | 13 | 0 | 13 |
 | Partner | 3 | 0 | 3 |
-| HQ | 12 | 0 | 12 |
+| HQ | 13 | 0 | 13 |
 | Cross-role | 4 | 0 | 4 |
-| **Total** | **58** | **0** | **58** |
+| **Total** | **60** | **0** | **60** |
 
 ## Enabled Route Registry
 
@@ -39,6 +39,7 @@ Source of Truth: `apps/empire_flutter/app/lib/router/app_router.dart` (`kKnownRo
 - `/learner/missions`
 - `/learner/habits`
 - `/learner/portfolio`
+- `/learner/credentials`
 - `/learner/settings`
 
 ### Educator
@@ -93,6 +94,7 @@ Source of Truth: `apps/empire_flutter/app/lib/router/app_router.dart` (`kKnownRo
 - `/hq/safety`
 - `/hq/exports`
 - `/hq/integrations-health`
+- `/hq/cms`
 - `/hq/curriculum`
 - `/hq/feature-flags`
 
@@ -121,6 +123,7 @@ Source of Truth: `apps/empire_flutter/app/lib/router/app_router.dart` (`kKnownRo
 | 2026-03-18 | Site admin dedicated routes | Added dedicated `/site/pickup-auth` and `/site/audit` routes backed by live pickup authorization and audit-log data |
 | 2026-03-18 | Consent + HQ export routes | Added dedicated `/site/consent` and `/hq/exports` routes backed by live consent management and downloadable HQ bundle data |
 | 2026-03-18 | Parent dedicated routes | Added dedicated `/parent/child/:learnerId` and `/parent/consent` routes backed by linked learner summaries and live consent records |
+| 2026-03-18 | Learner credentials + HQ CMS | Added live `/learner/credentials` backed by Firestore credentials and wired `/hq/cms` to the existing curriculum management surface |
 
 <!-- TELEMETRY_WIRING:START -->
 ## Telemetry & End-to-End Wiring
