@@ -82,4 +82,14 @@ gcloud run deploy "$CLOUD_RUN_SERVICE" \
   "${no_traffic_args[@]}" \
   --allow-unauthenticated
 
+if [[ "$NO_TRAFFIC_DEPLOY" != "1" && "$NO_TRAFFIC_DEPLOY" != "true" ]]; then
+  echo "Routing traffic to latest revision for $CLOUD_RUN_SERVICE"
+  gcloud run services update-traffic "$CLOUD_RUN_SERVICE" \
+    --quiet \
+    --project "$GCP_PROJECT_ID" \
+    --region "$GCP_REGION" \
+    --platform managed \
+    --to-latest
+fi
+
 echo "Deployment finished."

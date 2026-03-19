@@ -321,6 +321,17 @@ deploy_primary_web() {
 
   log "Deploying primary web to Cloud Run..."
   "${deploy_args[@]}" || fail "Primary web Cloud Run deploy failed"
+
+  if [[ "$NO_TRAFFIC_DEPLOY" != "1" && "$NO_TRAFFIC_DEPLOY" != "true" ]]; then
+    log "Routing primary web traffic to latest revision..."
+    gcloud run services update-traffic "$service" \
+      --quiet \
+      --project "$project_id" \
+      --region "$region" \
+      --platform managed \
+      --to-latest || fail "Primary web traffic update failed"
+  fi
+
   log "Primary web deployed ✓"
 }
 
@@ -381,6 +392,16 @@ deploy_compliance_operator() {
 
   log "Deploying compliance operator to Cloud Run (service=$service region=$region)..."
   (cd "$REPO_ROOT" && "${compliance_deploy_args[@]}")
+
+  if [[ "$NO_TRAFFIC_DEPLOY" != "1" && "$NO_TRAFFIC_DEPLOY" != "true" ]]; then
+    log "Routing compliance operator traffic to latest revision..."
+    (cd "$REPO_ROOT" && gcloud run services update-traffic "$service" \
+      --quiet \
+      --project "$project_id" \
+      --region "$region" \
+      --platform managed \
+      --to-latest) || fail "Compliance operator traffic update failed"
+  fi
 
   log "Compliance operator deployed ✓"
 }
