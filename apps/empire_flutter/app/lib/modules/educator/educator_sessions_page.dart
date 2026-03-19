@@ -1695,7 +1695,7 @@ class _QuickEvidenceDialogState extends State<_QuickEvidenceDialog> {
               .get();
 
       final List<_CapabilityOption> options = snapshot.docs
-          .map((_doc) => _CapabilityOption.fromDoc(_doc))
+          .map((doc) => _CapabilityOption.fromDoc(doc))
           .where((_CapabilityOption option) {
         final String optionSiteId = option.siteId?.trim() ?? '';
         return optionSiteId.isEmpty ||

@@ -1939,7 +1939,7 @@ class MissionService extends ChangeNotifier {
                     ((capabilityRawScore / capabilityMaxScore) * 4).ceil(),
                   ),
                 );
-          final String masteryId = '${reviewLearnerId}_${capabilityId}';
+          final String masteryId = '${reviewLearnerId}_$capabilityId';
           final DocumentReference<Map<String, dynamic>> masteryRef =
               _firestore.collection('capabilityMastery').doc(masteryId);
           final DocumentSnapshot<Map<String, dynamic>> masterySnapshot =
@@ -1953,10 +1953,10 @@ class MissionService extends ChangeNotifier {
           final List<String> priorEvidenceIds = List<String>.from(
             masteryData['evidenceIds'] as List? ?? const <String>[],
           );
-          final List<String> mergedEvidenceIds = <String>[
+          final List<String> mergedEvidenceIds = <String>{
             canonicalAttemptRef.id,
             ...priorEvidenceIds,
-          ].toSet().toList(growable: false);
+          }.toList(growable: false);
 
           batch.set(
             masteryRef,
