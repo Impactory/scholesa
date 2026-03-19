@@ -421,6 +421,14 @@ class _ParentChildPageState extends State<ParentChildPage> {
                     '${claim.evidenceCount} ${_t('evidence records')} • ${claim.verifiedArtifactCount} ${_t('verified artifacts')}',
                     style: const TextStyle(color: ScholesaColors.textSecondary),
                   ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${_t('Proof of Learning')}: ${_titleCase(claim.proofOfLearningStatus ?? 'missing')} • ${_t('AI Disclosure')}: ${_formatAiDisclosure(claim.aiDisclosureStatus)}',
+                    style: const TextStyle(
+                      color: ScholesaColors.textSecondary,
+                      fontSize: 12,
+                    ),
+                  ),
                   if (claim.evidenceRecordIds.isNotEmpty ||
                       claim.portfolioItemIds.isNotEmpty) ...<Widget>[
                     const SizedBox(height: 8),
@@ -494,6 +502,12 @@ class _ParentChildPageState extends State<ParentChildPage> {
       lines.add(
         '  ${_t('Verification Status')}: ${claim.verificationStatus?.trim().isNotEmpty == true ? _titleCase(claim.verificationStatus!) : _t('Pending')}',
       );
+      lines.add(
+        '  ${_t('Proof of Learning')}: ${_titleCase(claim.proofOfLearningStatus ?? 'missing')}',
+      );
+      lines.add(
+        '  ${_t('AI Disclosure')}: ${_formatAiDisclosure(claim.aiDisclosureStatus)}',
+      );
       if (claim.latestEvidenceAt != null) {
         lines.add(
           '  ${_t('Latest Evidence At')}: ${claim.latestEvidenceAt!.toIso8601String()}',
@@ -507,6 +521,11 @@ class _ParentChildPageState extends State<ParentChildPage> {
       if (claim.portfolioItemIds.isNotEmpty) {
         lines.add(
           '  ${_t('Portfolio Item IDs')}: ${claim.portfolioItemIds.join(', ')}',
+        );
+      }
+      if (claim.missionAttemptIds.isNotEmpty) {
+        lines.add(
+          '  ${_t('Mission Attempt IDs')}: ${claim.missionAttemptIds.join(', ')}',
         );
       }
       lines.add('');
@@ -664,5 +683,18 @@ class _ParentChildPageState extends State<ParentChildPage> {
             ? part
             : '${part[0].toUpperCase()}${part.substring(1).toLowerCase()}')
         .join(' ');
+  }
+
+  String _formatAiDisclosure(String? value) {
+    switch ((value ?? '').trim().toLowerCase()) {
+      case 'educator-feedback-ai':
+        return _t('AI-assisted educator feedback visible');
+      case 'not-captured':
+        return _t('No AI disclosure captured yet');
+      case 'not-available':
+        return _t('No linked mission attempt');
+      default:
+        return _t('Unknown');
+    }
   }
 }

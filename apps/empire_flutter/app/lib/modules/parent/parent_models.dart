@@ -250,6 +250,9 @@ class PassportClaim extends Equatable {
     required this.verifiedArtifactCount,
     this.evidenceRecordIds = const [],
     this.portfolioItemIds = const [],
+    this.missionAttemptIds = const [],
+    this.proofOfLearningStatus,
+    this.aiDisclosureStatus,
     this.latestEvidenceAt,
     this.verificationStatus,
   });
@@ -262,6 +265,9 @@ class PassportClaim extends Equatable {
   final int verifiedArtifactCount;
   final List<String> evidenceRecordIds;
   final List<String> portfolioItemIds;
+  final List<String> missionAttemptIds;
+  final String? proofOfLearningStatus;
+  final String? aiDisclosureStatus;
   final DateTime? latestEvidenceAt;
   final String? verificationStatus;
 
@@ -275,6 +281,9 @@ class PassportClaim extends Equatable {
         verifiedArtifactCount,
         evidenceRecordIds,
         portfolioItemIds,
+        missionAttemptIds,
+        proofOfLearningStatus,
+        aiDisclosureStatus,
         latestEvidenceAt,
         verificationStatus,
       ];

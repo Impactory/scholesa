@@ -2484,7 +2484,7 @@ async function buildParentLearnerSummary(params: {
     .map((doc) => doc.data() as Record<string, unknown>)
     .filter(includeForSite);
   const missionAttemptRows = missionAttemptsSnap.docs
-    .map((doc) => doc.data() as Record<string, unknown>)
+    .map((doc) => ({ id: doc.id, ...(doc.data() as Record<string, unknown>) }))
     .filter(includeForSite);
 
   const evidenceDates = evidenceRows
@@ -2626,6 +2626,16 @@ async function buildParentLearnerSummary(params: {
       const matchingGrowth = growthRows.filter((entry) =>
         typeof entry.capabilityId === 'string' && entry.capabilityId.trim() === capabilityId,
       );
+      const missionAttemptIds = new Set<string>([
+        typeof row.latestMissionAttemptId === 'string' ? row.latestMissionAttemptId.trim() : '',
+        ...matchingEvidence.map((entry) => (typeof entry.linkedMissionAttemptId === 'string' ? entry.linkedMissionAttemptId.trim() : '')),
+        ...matchingGrowth.map((entry) => (typeof entry.missionAttemptId === 'string' ? entry.missionAttemptId.trim() : '')),
+        ...matchingPortfolio.map((entry) => (typeof entry.missionAttemptId === 'string' ? entry.missionAttemptId.trim() : '')),
+      ]);
+      missionAttemptIds.delete('');
+      const matchingMissionAttempts = missionAttemptRows.filter((entry) =>
+        typeof entry.id === 'string' && missionAttemptIds.has(entry.id),
+      );
       const capabilityTitles = matchingPortfolio.flatMap((entry) =>
         Array.isArray(entry.capabilityTitles) ? entry.capabilityTitles : [],
       );
@@ -2650,6 +2660,31 @@ async function buildParentLearnerSummary(params: {
       ]
         .filter((value): value is Date => value instanceof Date)
         .sort((left, right) => right.getTime() - left.getTime())[0] ?? null;
+      const hasExplainItBack = matchingMissionAttempts.some((entry) => {
+        const summary = entry.proofBundleSummary as Record<string, unknown> | undefined;
+        return summary?.hasExplainItBack === true;
+      });
+      const hasOralCheck = matchingMissionAttempts.some((entry) => {
+        const summary = entry.proofBundleSummary as Record<string, unknown> | undefined;
+        return summary?.hasOralCheck === true;
+      });
+      const hasMiniRebuild = matchingMissionAttempts.some((entry) => {
+        const summary = entry.proofBundleSummary as Record<string, unknown> | undefined;
+        return summary?.hasMiniRebuild === true;
+      });
+      const proofOfLearningStatus = hasExplainItBack && hasOralCheck && hasMiniRebuild
+        ? 'verified'
+        : hasExplainItBack || hasOralCheck || hasMiniRebuild
+        ? 'partial'
+        : 'missing';
+      const hasAiFeedbackSignal = matchingMissionAttempts.some((entry) =>
+        typeof entry.aiFeedbackDraft === 'string' && entry.aiFeedbackDraft.trim().length > 0,
+      );
+      const aiDisclosureStatus = hasAiFeedbackSignal
+        ? 'educator-feedback-ai'
+        : matchingMissionAttempts.length > 0
+        ? 'not-captured'
+        : 'not-available';
       return {
         capabilityId,
         title: String(title),
@@ -2663,6 +2698,9 @@ async function buildParentLearnerSummary(params: {
         portfolioItemIds: matchingPortfolio
           .map((entry) => (typeof entry.id === 'string' ? entry.id : ''))
           .filter(Boolean),
+        missionAttemptIds: Array.from(missionAttemptIds),
+        proofOfLearningStatus,
+        aiDisclosureStatus,
         latestEvidenceAt: latestEvidenceAt?.toISOString() ?? null,
         verificationStatus: verifiedArtifactCount > 0 ? 'reviewed' : matchingEvidence.length > 0 ? 'captured' : null,
       };

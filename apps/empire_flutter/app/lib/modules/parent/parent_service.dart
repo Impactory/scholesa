@@ -338,7 +338,8 @@ class ParentService extends ChangeNotifier {
         .get();
     final List<Map<String, dynamic>> missionAttemptRows = missionAttemptsSnapshot
       .docs
-      .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) => doc.data())
+      .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
+        <String, dynamic>{...doc.data(), 'id': doc.id})
       .toList(growable: false);
 
     final EvidenceSummary evidenceSummary = _buildEvidenceSummary(evidenceRows);
@@ -620,6 +621,17 @@ class ParentService extends ChangeNotifier {
               portfolioItemIds: List<String>.from(
                 item['portfolioItemIds'] as List? ?? const <String>[],
               ),
+              missionAttemptIds: List<String>.from(
+                item['missionAttemptIds'] as List? ?? const <String>[],
+              ),
+              proofOfLearningStatus:
+                  _asTrimmedString(item['proofOfLearningStatus']).isEmpty
+                      ? null
+                      : _asTrimmedString(item['proofOfLearningStatus']),
+              aiDisclosureStatus:
+                  _asTrimmedString(item['aiDisclosureStatus']).isEmpty
+                      ? null
+                      : _asTrimmedString(item['aiDisclosureStatus']),
               latestEvidenceAt: _parseTimestamp(item['latestEvidenceAt']),
               verificationStatus: _asTrimmedString(item['verificationStatus'])
                       .isEmpty
@@ -827,6 +839,7 @@ class ParentService extends ChangeNotifier {
         .toList(growable: false);
     reflectionDates.sort((DateTime a, DateTime b) => b.compareTo(a));
     final List<PassportClaim> claims = _buildPassportClaims(
+      missionAttemptRows,
       evidenceRows,
       masteryRows,
       growthRows,
@@ -848,6 +861,7 @@ class ParentService extends ChangeNotifier {
   }
 
   List<PassportClaim> _buildPassportClaims(
+    List<Map<String, dynamic>> missionAttemptRows,
     List<Map<String, dynamic>> evidenceRows,
     List<Map<String, dynamic>> masteryRows,
     List<Map<String, dynamic>> growthRows,
@@ -873,6 +887,24 @@ class ParentService extends ChangeNotifier {
           .where((Map<String, dynamic> row) =>
               _asTrimmedString(row['capabilityId']) == capabilityId)
           .toList(growable: false);
+      final Set<String> missionAttemptIds = <String>{
+        _asTrimmedString(mastery['latestMissionAttemptId']),
+        ...matchingEvidence.map(
+          (Map<String, dynamic> row) =>
+              _asTrimmedString(row['linkedMissionAttemptId']),
+        ),
+        ...matchingGrowth.map(
+          (Map<String, dynamic> row) =>
+              _asTrimmedString(row['missionAttemptId']),
+        ),
+        ...matchingPortfolio.map(
+          (Map<String, dynamic> row) => _asTrimmedString(row['missionAttemptId']),
+        ),
+      }..removeWhere((String value) => value.isEmpty);
+      final List<Map<String, dynamic>> matchingMissionAttempts =
+          missionAttemptRows.where((Map<String, dynamic> row) {
+        return missionAttemptIds.contains(_asTrimmedString(row['id']));
+      }).toList(growable: false);
       final String title = <String>[
         ...matchingPortfolio.expand((Map<String, dynamic> row) =>
             List<String>.from(
@@ -897,6 +929,36 @@ class ParentService extends ChangeNotifier {
             _asTrimmedString(row['verificationStatus']).toLowerCase();
         return verificationStatus == 'reviewed' || verificationStatus == 'verified';
       }).length;
+      final bool hasExplainItBack = matchingMissionAttempts.any((Map<String, dynamic> row) {
+        final Map<dynamic, dynamic>? summary =
+            row['proofBundleSummary'] as Map<dynamic, dynamic>?;
+        return summary?['hasExplainItBack'] == true;
+      });
+      final bool hasOralCheck = matchingMissionAttempts.any((Map<String, dynamic> row) {
+        final Map<dynamic, dynamic>? summary =
+            row['proofBundleSummary'] as Map<dynamic, dynamic>?;
+        return summary?['hasOralCheck'] == true;
+      });
+      final bool hasMiniRebuild = matchingMissionAttempts.any((Map<String, dynamic> row) {
+        final Map<dynamic, dynamic>? summary =
+            row['proofBundleSummary'] as Map<dynamic, dynamic>?;
+        return summary?['hasMiniRebuild'] == true;
+      });
+      final String proofOfLearningStatus =
+          hasExplainItBack && hasOralCheck && hasMiniRebuild
+              ? 'verified'
+              : hasExplainItBack || hasOralCheck || hasMiniRebuild
+                  ? 'partial'
+                  : 'missing';
+      final bool hasAiFeedbackSignal = matchingMissionAttempts.any(
+        (Map<String, dynamic> row) =>
+            _asTrimmedString(row['aiFeedbackDraft']).isNotEmpty,
+      );
+      final String aiDisclosureStatus = hasAiFeedbackSignal
+          ? 'educator-feedback-ai'
+          : matchingMissionAttempts.isNotEmpty
+              ? 'not-captured'
+              : 'not-available';
       claims.add(
         PassportClaim(
           capabilityId: capabilityId,
@@ -915,6 +977,9 @@ class ParentService extends ChangeNotifier {
               .map((Map<String, dynamic> row) => _asTrimmedString(row['id']))
               .where((String value) => value.isNotEmpty)
               .toList(growable: false),
+              missionAttemptIds: missionAttemptIds.toList(growable: false),
+              proofOfLearningStatus: proofOfLearningStatus,
+              aiDisclosureStatus: aiDisclosureStatus,
           latestEvidenceAt: evidenceDates.isEmpty ? null : evidenceDates.first,
           verificationStatus: verifiedArtifactCount > 0
               ? 'reviewed'
