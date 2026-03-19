@@ -228,6 +228,8 @@ void main() {
       expect(find.text('Ava Learner'), findsOneWidget);
       expect(find.text('Build a Robot'), findsOneWidget);
       expect(find.text('Hidden Project'), findsNothing);
+      expect(find.text('View Child Detail'), findsOneWidget);
+      expect(find.text('View Consent'), findsOneWidget);
     });
 
     testWidgets('schedule page shows linked session details and reminder flow',

@@ -115,7 +115,6 @@ class ParentSurfaceI18n {
         '查看你已关联学习者当前在系统中的实时同意记录。如需更改，请联系站点管理员。',
     'Unable to load consent records right now': '目前无法加载同意记录',
     'Retry': '重试',
-    'Consent Records': '同意记录',
     'Media Configured': '媒体已配置',
     'Research Configured': '研究已配置',
     'No linked learner consent records are available right now.':
@@ -302,7 +301,6 @@ class ParentSurfaceI18n {
         '查看你已連結學習者目前在系統中的即時同意紀錄。如需更改，請聯絡站點管理員。',
     'Unable to load consent records right now': '目前無法載入同意紀錄',
     'Retry': '重試',
-    'Consent Records': '同意紀錄',
     'Media Configured': '媒體已配置',
     'Research Configured': '研究已配置',
     'No linked learner consent records are available right now.':

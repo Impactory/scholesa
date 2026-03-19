@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
 import 'package:scholesa_app/auth/app_state.dart';
@@ -49,7 +50,8 @@ class _FakeParentService extends ChangeNotifier implements ParentService {
 }
 
 class _FakeParentConsentService extends ParentConsentService {
-  _FakeParentConsentService({required this.records});
+  _FakeParentConsentService({required this.records})
+      : super(firestore: FakeFirebaseFirestore());
 
   final List<ParentConsentRecord> records;
 

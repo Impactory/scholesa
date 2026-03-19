@@ -12,8 +12,6 @@ class _StubParentService extends ChangeNotifier implements ParentService {
   _StubParentService({
     required this.parentId,
     required this.learnerSummaries,
-    this.isLoading = false,
-    this.error,
   });
 
   @override
@@ -23,10 +21,10 @@ class _StubParentService extends ChangeNotifier implements ParentService {
   final List<LearnerSummary> learnerSummaries;
 
   @override
-  final bool isLoading;
+  final bool isLoading = false;
 
   @override
-  final String? error;
+  final String? error = null;
 
   @override
   final BillingSummary? billingSummary = null;
