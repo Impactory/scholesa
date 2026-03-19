@@ -367,6 +367,39 @@ class SkillMasteryRepository {
       _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
 }
 
+class CapabilityMasteryRepository {
+  CollectionReference<Map<String, dynamic>> get _col =>
+      FirebaseFirestore.instance.collection('capabilityMastery');
+
+  Future<List<CapabilityMasteryModel>> listByLearner(String learnerId) async {
+    final snap = await _col.where('learnerId', isEqualTo: learnerId).get();
+    return snap.docs.map(CapabilityMasteryModel.fromDoc).toList();
+  }
+
+  Future<void> upsert(CapabilityMasteryModel model) =>
+      _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
+}
+
+class CapabilityGrowthEventRepository {
+  CollectionReference<Map<String, dynamic>> get _col =>
+      FirebaseFirestore.instance.collection('capabilityGrowthEvents');
+
+  Future<List<CapabilityGrowthEventModel>> listByLearner(
+    String learnerId, {
+    int limit = 100,
+  }) async {
+    final snap = await _col
+        .where('learnerId', isEqualTo: learnerId)
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
+        .get();
+    return snap.docs.map(CapabilityGrowthEventModel.fromDoc).toList();
+  }
+
+  Future<void> upsert(CapabilityGrowthEventModel model) =>
+      _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
+}
+
 class MissionRepository {
   CollectionReference<Map<String, dynamic>> get _col =>
       FirebaseFirestore.instance.collection('missions');

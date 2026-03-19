@@ -15,7 +15,7 @@ Only active product code paths were considered. A workflow is not "verified" unl
 | 3 | Student can submit artifacts, reflections, and checkpoint evidence | Partial | Reflection and checkpoint submission paths exist, and portfolio items load, but the submission chain is fragmented and not consistently linked to capability evidence lineage. |
 | 4 | Teacher can apply a 4-level rubric tied to capabilities and process domains | Partial | Rubrics and rubric applications exist, but they are mission-oriented and not tied to a capability framework with downstream growth updates. |
 | 5 | Proof-of-learning can be captured and reviewed | Partial | Explain-back capture exists, but the current path records a generic event and does not form a teacher-reviewed proof chain attached to capability evidence. |
-| 6 | Capability growth updates over time from evidence | Missing | Repositories for skill mastery exist, but no active end-to-end path updates learner growth from live evidence or rubric outcomes. |
+| 6 | Capability growth updates over time from evidence | Partial | Educator rubric reviews now write capability mastery and append-only growth events when capability-linked scores are present, but live evidence, portfolio, and reporting do not yet consume that chain. |
 | 7 | Student portfolio shows real artifacts and reflections | Partial | Real portfolio items exist, but the portfolio is still a showcase surface rather than a trustworthy evidence workspace with strong lineage. |
 | 8 | Ideation Passport/report can be generated from actual evidence | Missing | Parent bundle and passport outputs are assembled from rollups, counts, and telemetry rather than evidence provenance. |
 | 9 | AI-use is disclosed and visible where relevant | Partial | AI surfaces expose guardrails and explain-back prompts in some places, but disclosure is not consistently attached to learner artifacts, portfolio items, or reports. |
@@ -64,10 +64,12 @@ Only active product code paths were considered. A workflow is not "verified" unl
 
 ### 6. Capability growth over time from evidence
 
-- `apps/empire_flutter/app/lib/domain/repositories.dart` includes `SkillMasteryRepository`.
-- `schema.ts` includes `SkillMastery` and references `evidenceIds`.
-- The repo contains storage for mastery, but the active evidence capture and rubric application flows do not update this model end to end.
-- Current judgment: missing.
+- `apps/empire_flutter/app/lib/modules/missions/mission_service.dart` now derives capability-level outcomes from educator rubric scores and writes both `capabilityMastery` and append-only `capabilityGrowthEvents` records.
+- `schema.ts` now defines `CapabilityMastery` and `CapabilityGrowthEvent` entities.
+- `firestore.rules` now includes access rules for `capabilityMastery` and `capabilityGrowthEvents`.
+- `apps/empire_flutter/app/lib/domain/models.dart` and `apps/empire_flutter/app/lib/domain/repositories.dart` now include Flutter models and repositories for those records.
+- Remaining gap: live evidence records, learner portfolio, and Passport/report outputs do not yet consume these growth records, so the chain is still partial rather than verified.
+- Current judgment: partial.
 
 ### 7. Portfolio with real artifacts and reflections
 
@@ -124,13 +126,12 @@ Only active product code paths were considered. A workflow is not "verified" unl
 
 ### D. Missing
 
-- Automatic or educator-confirmed growth updates from evidence.
 - Portfolio lineage connecting artifact, reflection, verification, rubric result, and capability claim.
 - Passport generation from actual evidence provenance.
 
 ### E. Gold-ready blockers
 
-- The capability model now exists in HQ authoring, but it still does not anchor evidence, growth, portfolio, and reporting end to end.
+- The capability model and growth records now exist, but they still do not anchor evidence, portfolio, and reporting end to end.
 - Live evidence capture exists, but the downstream chain is still disconnected.
 - Reporting still depends on rollups and gamified progress constructs.
 - AI transparency is not consistently visible across all relevant learner outputs.
@@ -139,6 +140,5 @@ Only active product code paths were considered. A workflow is not "verified" unl
 
 1. Replace free-text capability labels with first-class capability entities and mappings.
 2. Wire `evidenceRecords` into rubric review and capability update logic.
-3. Persist growth events from rubric and verification outcomes.
-4. Link verified evidence into learner portfolio items.
-5. Rebuild Passport and family reporting from evidence provenance, not rollups.
+3. Link verified evidence and growth records into learner portfolio items.
+4. Rebuild Passport and family reporting from evidence provenance, not rollups.

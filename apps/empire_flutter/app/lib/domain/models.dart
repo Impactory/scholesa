@@ -754,6 +754,141 @@ class CapabilityModel {
 }
 
 @immutable
+class CapabilityMasteryModel {
+  const CapabilityMasteryModel({
+    required this.id,
+    required this.learnerId,
+    required this.capabilityId,
+    required this.pillarCode,
+    required this.latestLevel,
+    required this.highestLevel,
+    this.siteId,
+    this.latestEvidenceId,
+    this.latestMissionAttemptId,
+    this.evidenceIds = const <String>[],
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  final String id;
+  final String learnerId;
+  final String capabilityId;
+  final String pillarCode;
+  final int latestLevel;
+  final int highestLevel;
+  final String? siteId;
+  final String? latestEvidenceId;
+  final String? latestMissionAttemptId;
+  final List<String> evidenceIds;
+  final Timestamp? createdAt;
+  final Timestamp? updatedAt;
+
+  factory CapabilityMasteryModel.fromDoc(
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    final data = doc.data() ?? <String, dynamic>{};
+    return CapabilityMasteryModel(
+      id: doc.id,
+      learnerId: data['learnerId'] as String? ?? '',
+      capabilityId: data['capabilityId'] as String? ?? '',
+      pillarCode: data['pillarCode'] as String? ?? '',
+      latestLevel: (data['latestLevel'] as num?)?.toInt() ?? 0,
+      highestLevel: (data['highestLevel'] as num?)?.toInt() ?? 0,
+      siteId: data['siteId'] as String?,
+      latestEvidenceId: data['latestEvidenceId'] as String?,
+      latestMissionAttemptId: data['latestMissionAttemptId'] as String?,
+      evidenceIds:
+          List<String>.from(data['evidenceIds'] as List? ?? const <String>[]),
+      createdAt: data['createdAt'] as Timestamp?,
+      updatedAt: data['updatedAt'] as Timestamp?,
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'learnerId': learnerId,
+        'capabilityId': capabilityId,
+        'pillarCode': pillarCode,
+        'latestLevel': latestLevel,
+        'highestLevel': highestLevel,
+        'siteId': siteId,
+        'latestEvidenceId': latestEvidenceId,
+        'latestMissionAttemptId': latestMissionAttemptId,
+        'evidenceIds': evidenceIds,
+        'createdAt': createdAt ?? Timestamp.now(),
+        'updatedAt': updatedAt ?? Timestamp.now(),
+      };
+}
+
+@immutable
+class CapabilityGrowthEventModel {
+  const CapabilityGrowthEventModel({
+    required this.id,
+    required this.learnerId,
+    required this.capabilityId,
+    required this.pillarCode,
+    required this.level,
+    required this.rawScore,
+    required this.maxScore,
+    this.siteId,
+    this.evidenceId,
+    this.missionAttemptId,
+    this.rubricApplicationId,
+    this.educatorId,
+    this.createdAt,
+  });
+
+  final String id;
+  final String learnerId;
+  final String capabilityId;
+  final String pillarCode;
+  final int level;
+  final int rawScore;
+  final int maxScore;
+  final String? siteId;
+  final String? evidenceId;
+  final String? missionAttemptId;
+  final String? rubricApplicationId;
+  final String? educatorId;
+  final Timestamp? createdAt;
+
+  factory CapabilityGrowthEventModel.fromDoc(
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    final data = doc.data() ?? <String, dynamic>{};
+    return CapabilityGrowthEventModel(
+      id: doc.id,
+      learnerId: data['learnerId'] as String? ?? '',
+      capabilityId: data['capabilityId'] as String? ?? '',
+      pillarCode: data['pillarCode'] as String? ?? '',
+      level: (data['level'] as num?)?.toInt() ?? 0,
+      rawScore: (data['rawScore'] as num?)?.toInt() ?? 0,
+      maxScore: (data['maxScore'] as num?)?.toInt() ?? 0,
+      siteId: data['siteId'] as String?,
+      evidenceId: data['evidenceId'] as String?,
+      missionAttemptId: data['missionAttemptId'] as String?,
+      rubricApplicationId: data['rubricApplicationId'] as String?,
+      educatorId: data['educatorId'] as String?,
+      createdAt: data['createdAt'] as Timestamp?,
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'learnerId': learnerId,
+        'capabilityId': capabilityId,
+        'pillarCode': pillarCode,
+        'level': level,
+        'rawScore': rawScore,
+        'maxScore': maxScore,
+        'siteId': siteId,
+        'evidenceId': evidenceId,
+        'missionAttemptId': missionAttemptId,
+        'rubricApplicationId': rubricApplicationId,
+        'educatorId': educatorId,
+        'createdAt': createdAt ?? Timestamp.now(),
+      };
+}
+
+@immutable
 class MissionModel {
   const MissionModel({
     required this.id,

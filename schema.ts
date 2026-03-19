@@ -101,6 +101,37 @@ export interface SkillMastery {
   evidenceIds?: string[]; // Links to portfolio items
 }
 
+export interface CapabilityMastery {
+  id: string;
+  learnerId: string;
+  capabilityId: string;
+  siteId?: string;
+  pillarCode: string;
+  latestLevel: number;
+  highestLevel: number;
+  latestEvidenceId?: string;
+  latestMissionAttemptId?: string;
+  evidenceIds?: string[];
+  updatedAt: number;
+  createdAt: number;
+}
+
+export interface CapabilityGrowthEvent {
+  id: string;
+  learnerId: string;
+  capabilityId: string;
+  siteId?: string;
+  pillarCode: string;
+  level: number;
+  rawScore: number;
+  maxScore: number;
+  evidenceId?: string;
+  missionAttemptId?: string;
+  rubricApplicationId?: string;
+  educatorId?: string;
+  createdAt: number;
+}
+
 // --- Missions ---
 
 export interface Mission {

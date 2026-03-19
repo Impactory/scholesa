@@ -264,6 +264,28 @@ service cloud.firestore {
       allow create, update: if isEducator();
       allow delete: if false; // Keep historical data
     }
+
+    // Capability Mastery: Educators can write, learners and linked parents can read.
+    match /capabilityMastery/{id} {
+      allow read: if isAuthenticated() && (
+        resource.data.learnerId == request.auth.uid
+        || isEducator()
+        || isParentLinkedToLearner(resource.data.learnerId)
+      );
+      allow create, update: if isEducator();
+      allow delete: if false;
+    }
+
+    // Capability Growth Events: append-only provenance for mastery updates.
+    match /capabilityGrowthEvents/{id} {
+      allow read: if isAuthenticated() && (
+        resource.data.learnerId == request.auth.uid
+        || isEducator()
+        || isParentLinkedToLearner(resource.data.learnerId)
+      );
+      allow create: if isEducator();
+      allow update, delete: if false;
+    }
     
     // Recognition Badges: Educators can award, learners can read their own
     match /recognitionBadges/{id} {

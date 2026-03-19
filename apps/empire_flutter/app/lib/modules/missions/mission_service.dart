@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'dart:math' as math;
 import '../../offline/offline_queue.dart';
 import '../../offline/sync_coordinator.dart';
 import '../../services/firestore_service.dart';
@@ -1855,6 +1856,113 @@ class MissionService extends ChangeNotifier {
               'updatedAt': FieldValue.serverTimestamp(),
             },
             SetOptions(merge: true));
+
+        final Map<String, List<Map<String, dynamic>>> rubricScoresByCapability =
+            <String, List<Map<String, dynamic>>>{};
+        for (final Map<String, dynamic> score in normalizedRubricScores) {
+          final String capabilityId =
+              (score['capabilityId'] as String? ?? '').trim();
+          if (capabilityId.isEmpty) {
+            continue;
+          }
+          rubricScoresByCapability.putIfAbsent(
+            capabilityId,
+            () => <Map<String, dynamic>>[],
+          );
+          rubricScoresByCapability[capabilityId]!.add(score);
+        }
+
+        for (final MapEntry<String, List<Map<String, dynamic>>> entry
+            in rubricScoresByCapability.entries) {
+          final String capabilityId = entry.key;
+          final List<Map<String, dynamic>> capabilityScores = entry.value;
+          final int capabilityRawScore = capabilityScores.fold<int>(
+            0,
+            (int total, Map<String, dynamic> score) =>
+                total + ((score['score'] as num?)?.toInt() ?? 0),
+          );
+          final int capabilityMaxScore = capabilityScores.fold<int>(
+            0,
+            (int total, Map<String, dynamic> score) =>
+                total + ((score['maxScore'] as num?)?.toInt() ?? 0),
+          );
+          final String pillarCode = capabilityScores
+              .map((Map<String, dynamic> score) =>
+                  (score['pillarCode'] as String? ?? '').trim())
+              .firstWhere(
+                (String value) => value.isNotEmpty,
+                orElse: () => '',
+              );
+          final int nextLevel = capabilityMaxScore <= 0
+              ? 0
+              : math.max(
+                  1,
+                  math.min(
+                    4,
+                    ((capabilityRawScore / capabilityMaxScore) * 4).ceil(),
+                  ),
+                );
+          final String masteryId = '${reviewLearnerId}_${capabilityId}';
+          final DocumentReference<Map<String, dynamic>> masteryRef = _firestore
+              .collection('capabilityMastery')
+              .doc(masteryId);
+          final DocumentSnapshot<Map<String, dynamic>> masterySnapshot =
+              await masteryRef.get();
+          final Map<String, dynamic> masteryData =
+              masterySnapshot.data() ?? <String, dynamic>{};
+          final int highestLevel = math.max(
+            nextLevel,
+            (masteryData['highestLevel'] as num?)?.toInt() ?? 0,
+          );
+          final List<String> priorEvidenceIds = List<String>.from(
+            masteryData['evidenceIds'] as List? ?? const <String>[],
+          );
+          final List<String> mergedEvidenceIds = <String>[
+            canonicalAttemptRef.id,
+            ...priorEvidenceIds,
+          ].toSet().toList(growable: false);
+
+          batch.set(
+            masteryRef,
+            <String, dynamic>{
+              'learnerId': reviewLearnerId,
+              'capabilityId': capabilityId,
+              if (reviewSiteId != null && reviewSiteId.isNotEmpty)
+                'siteId': reviewSiteId,
+              'pillarCode': pillarCode,
+              'latestLevel': nextLevel,
+              'highestLevel': highestLevel,
+              'latestEvidenceId': canonicalAttemptRef.id,
+              'latestMissionAttemptId': canonicalAttemptRef.id,
+              'evidenceIds': mergedEvidenceIds,
+              'createdAt': masteryData['createdAt'] ??
+                  FieldValue.serverTimestamp(),
+              'updatedAt': FieldValue.serverTimestamp(),
+            },
+            SetOptions(merge: true),
+          );
+
+          final DocumentReference<Map<String, dynamic>> growthEventRef =
+              _firestore.collection('capabilityGrowthEvents').doc();
+          batch.set(
+            growthEventRef,
+            <String, dynamic>{
+              'learnerId': reviewLearnerId,
+              'capabilityId': capabilityId,
+              if (reviewSiteId != null && reviewSiteId.isNotEmpty)
+                'siteId': reviewSiteId,
+              'pillarCode': pillarCode,
+              'level': nextLevel,
+              'rawScore': capabilityRawScore,
+              'maxScore': capabilityMaxScore,
+              'evidenceId': canonicalAttemptRef.id,
+              'missionAttemptId': canonicalAttemptRef.id,
+              'rubricApplicationId': canonicalAttemptRef.id,
+              'educatorId': reviewerId,
+              'createdAt': FieldValue.serverTimestamp(),
+            },
+          );
+        }
       }
 
       await batch.commit();
