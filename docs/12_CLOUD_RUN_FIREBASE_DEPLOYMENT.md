@@ -25,9 +25,11 @@ PWA:
 ## Release checklist
 - builds pass (docs/09)
 - deploy rules/indexes
+- verify Functions Gen 2 baseline
 - deploy API
-- deploy web app
-- smoke test: login + provisioning + attendance
+- deploy primary web app
+- deploy Flutter web app
+- smoke test: primary web, Flutter web, login + provisioning + attendance
 
 <!-- TELEMETRY_WIRING:START -->
 ## Telemetry & End-to-End Wiring

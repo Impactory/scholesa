@@ -459,6 +459,48 @@ void main() {
       );
     });
 
+    test('Manual deploy script verifies Gen 2 and deploys both web surfaces',
+        () {
+      final String content = File('$root/scripts/deploy.sh').readAsStringSync();
+
+      expect(
+        content.contains('npm run verify:gen2'),
+        isTrue,
+        reason:
+            'Manual deploy script must verify the Functions Gen 2 baseline before functions deploy',
+      );
+      expect(
+        content.contains('CLOUD_RUN_SERVICE:-scholesa-web'),
+        isTrue,
+        reason:
+            'Manual deploy script must keep a dedicated primary web Cloud Run service',
+      );
+      expect(
+        content.contains('CLOUD_RUN_FLUTTER_SERVICE:-empire-web'),
+        isTrue,
+        reason:
+            'Manual deploy script must keep a dedicated Flutter web Cloud Run service',
+      );
+      expect(
+        content.contains('deploy_primary_web'),
+        isTrue,
+        reason:
+            'Manual deploy script must expose an explicit primary web deploy path',
+      );
+      expect(
+        content.contains('deploy_flutter_cloud_run'),
+        isTrue,
+        reason:
+            'Manual deploy script must expose an explicit Flutter web deploy path',
+      );
+      expect(
+        content.contains('web)              deploy_cloud_run_web ;;'),
+        isTrue,
+        reason:
+            'Manual deploy script must expose a combined web target for both services',
+      );
+    });
+
     // ── 3.4 Dockerfile uses pinned base images ──
     test('Dockerfile base images are version-pinned', () {
       final File dockerfile = File('$root/Dockerfile');

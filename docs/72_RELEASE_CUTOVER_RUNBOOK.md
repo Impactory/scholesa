@@ -38,20 +38,25 @@ Define the exact steps to cutover safely to production.
 1) Deploy API (Cloud Run):
    - new revision
    - verify /healthz
-2) Deploy Flutter web container:
+2) Deploy primary web container:
+   - build with ENV=prod
+   - deploy to Cloud Run web
+   - verify login + routed pages
+3) Deploy Flutter web container:
    - build with ENV=prod
    - deploy to Cloud Run web
    - verify login + dashboards
-3) Turn on feature flags/routes:
+4) Turn on feature flags/routes:
    - enable only modules that passed DoD (65)
-4) Create first production Site + admin accounts
-5) First-hour smoke test:
+5) Create first production Site + admin accounts
+6) First-hour smoke test:
    - login per role
+   - verify primary web routes
    - take attendance online
    - send a message
    - view parent summary
    - validate learner AI returns high-confidence help or safe escalation, never fabricated low-confidence help
-6) Monitor:
+7) Monitor:
    - error rates
    - auth failures
    - job failures

@@ -97,15 +97,27 @@ vercel --prod
 
 **Option B: Cloud Run**
 ```bash
-# Build Docker image
+# Verify Functions Gen 2 deploy baseline
+cd functions
+npm ci
+npm run build
+npm run verify:gen2
+cd ..
+
+# Build and deploy primary web image
 docker build -t gcr.io/YOUR_PROJECT_ID/scholesa-web:latest .
-
-# Push to Container Registry
 docker push gcr.io/YOUR_PROJECT_ID/scholesa-web:latest
-
-# Deploy to Cloud Run
 gcloud run deploy scholesa-web \
   --image gcr.io/YOUR_PROJECT_ID/scholesa-web:latest \
+  --platform managed \
+  --region us-central1 \
+  --allow-unauthenticated
+
+# Build and deploy Flutter web image
+docker build -f Dockerfile.flutter -t gcr.io/YOUR_PROJECT_ID/empire-web:latest .
+docker push gcr.io/YOUR_PROJECT_ID/empire-web:latest
+gcloud run deploy empire-web \
+  --image gcr.io/YOUR_PROJECT_ID/empire-web:latest \
   --platform managed \
   --region us-central1 \
   --allow-unauthenticated
@@ -115,7 +127,7 @@ The deploy principal must be able to push to Artifact Registry. When `gcr.io/YOU
 
 **Web deployment standard**
 ```bash
-./scripts/deploy.sh cloudrun-web
+./scripts/deploy.sh web
 ```
 
 ---
