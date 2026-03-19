@@ -5,6 +5,10 @@ import 'package:scholesa_app/i18n/workflow_surface_i18n.dart';
 
 Widget _buildHarness(Locale locale) {
   return MaterialApp(
+    theme: ThemeData(
+      useMaterial3: true,
+      splashFactory: NoSplash.splashFactory,
+    ),
     locale: locale,
     localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
       GlobalMaterialLocalizations.delegate,

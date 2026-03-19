@@ -12,7 +12,11 @@ void main() {
   testWidgets('App smoke test', (WidgetTester tester) async {
     // Simple widget test without Firebase dependency
     await tester.pumpWidget(
-      const MaterialApp(
+      MaterialApp(
+        theme: ThemeData(
+          useMaterial3: true,
+          splashFactory: NoSplash.splashFactory,
+        ),
         home: Scaffold(
           body: Center(
             child: Text('Scholesa App'),

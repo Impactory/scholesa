@@ -138,6 +138,10 @@ void main() {
           ChangeNotifierProvider<AppState>.value(value: _buildHqState()),
         ],
         child: MaterialApp(
+          theme: ThemeData(
+            useMaterial3: true,
+            splashFactory: NoSplash.splashFactory,
+          ),
           home: HqAnalyticsPage(
             metricsLoader: ({String? siteId, String period = 'month'}) async {
               return const TelemetryDashboardMetrics(
@@ -276,6 +280,10 @@ void main() {
           ChangeNotifierProvider<AppState>.value(value: _buildHqState()),
         ],
         child: MaterialApp(
+          theme: ThemeData(
+            useMaterial3: true,
+            splashFactory: NoSplash.splashFactory,
+          ),
           home: HqAnalyticsPage(
             metricsLoader: ({String? siteId, String period = 'month'}) async {
               return const TelemetryDashboardMetrics(
@@ -342,6 +350,10 @@ void main() {
           ChangeNotifierProvider<AppState>.value(value: _buildHqState()),
         ],
         child: MaterialApp(
+          theme: ThemeData(
+            useMaterial3: true,
+            splashFactory: NoSplash.splashFactory,
+          ),
           home: HqAnalyticsPage(
             metricsLoader: ({String? siteId, String period = 'month'}) async {
               return const TelemetryDashboardMetrics(

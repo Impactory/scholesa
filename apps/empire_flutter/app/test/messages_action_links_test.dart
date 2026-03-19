@@ -100,6 +100,10 @@ Widget _buildHarness({
     child: MaterialApp.router(
       locale: locale,
       routerConfig: router,
+      theme: ThemeData(
+        useMaterial3: true,
+        splashFactory: NoSplash.splashFactory,
+      ),
       localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,

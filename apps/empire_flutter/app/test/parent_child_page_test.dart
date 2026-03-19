@@ -108,6 +108,10 @@ Future<void> _pumpPage(
         ChangeNotifierProvider<ParentService>.value(value: parentService),
       ],
       child: MaterialApp(
+        theme: ThemeData(
+          useMaterial3: true,
+          splashFactory: NoSplash.splashFactory,
+        ),
         locale: const Locale('en'),
         supportedLocales: const <Locale>[
           Locale('en'),

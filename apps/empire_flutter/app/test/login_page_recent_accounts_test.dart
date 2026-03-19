@@ -51,7 +51,11 @@ void main() {
             value: recentLoginStore,
           ),
         ],
-        child: const MaterialApp(
+        child: MaterialApp(
+          theme: ThemeData(
+            useMaterial3: true,
+            splashFactory: NoSplash.splashFactory,
+          ),
           localizationsDelegates: <LocalizationsDelegate<dynamic>>[
             GlobalMaterialLocalizations.delegate,
             GlobalWidgetsLocalizations.delegate,
@@ -110,7 +114,11 @@ void main() {
             value: recentLoginStore,
           ),
         ],
-        child: const MaterialApp(
+        child: MaterialApp(
+          theme: ThemeData(
+            useMaterial3: true,
+            splashFactory: NoSplash.splashFactory,
+          ),
           localizationsDelegates: <LocalizationsDelegate<dynamic>>[
             GlobalMaterialLocalizations.delegate,
             GlobalWidgetsLocalizations.delegate,

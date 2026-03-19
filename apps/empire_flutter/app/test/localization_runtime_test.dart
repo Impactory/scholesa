@@ -33,6 +33,10 @@ class _LocaleCase {
 
 Widget _buildLocaleHarness(Locale locale) {
   return MaterialApp(
+    theme: ThemeData(
+      useMaterial3: true,
+      splashFactory: NoSplash.splashFactory,
+    ),
     locale: locale,
     localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
       GlobalMaterialLocalizations.delegate,
@@ -67,6 +71,10 @@ Widget _buildRoleGateHarness(Locale locale, AppState appState) {
   return ChangeNotifierProvider<AppState>.value(
     value: appState,
     child: MaterialApp(
+      theme: ThemeData(
+        useMaterial3: true,
+        splashFactory: NoSplash.splashFactory,
+      ),
       locale: locale,
       localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
         GlobalMaterialLocalizations.delegate,

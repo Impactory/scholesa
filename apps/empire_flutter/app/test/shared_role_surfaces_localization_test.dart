@@ -44,6 +44,10 @@ Widget _buildHarness({
   return MultiProvider(
     providers: providers,
     child: MaterialApp(
+      theme: ThemeData(
+        useMaterial3: true,
+        splashFactory: NoSplash.splashFactory,
+      ),
       locale: locale,
       localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
         GlobalMaterialLocalizations.delegate,

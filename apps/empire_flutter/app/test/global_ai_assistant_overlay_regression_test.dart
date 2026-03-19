@@ -90,6 +90,10 @@ void main() {
           ChangeNotifierProvider<AppState>.value(
             value: appState,
             child: MaterialApp(
+              theme: ThemeData(
+                useMaterial3: true,
+                splashFactory: NoSplash.splashFactory,
+              ),
               home: Scaffold(
                 body: GlobalAiAssistantOverlay(
                   runtimeFactory: ({
@@ -171,6 +175,10 @@ void main() {
         ChangeNotifierProvider<AppState>.value(
           value: appState,
           child: MaterialApp(
+            theme: ThemeData(
+              useMaterial3: true,
+              splashFactory: NoSplash.splashFactory,
+            ),
             home: Scaffold(
               body: GlobalAiAssistantOverlay(
                 sessionOccurrenceResolver: (
@@ -231,6 +239,10 @@ void main() {
         ChangeNotifierProvider<AppState>.value(
           value: appState,
           child: MaterialApp(
+            theme: ThemeData(
+              useMaterial3: true,
+              splashFactory: NoSplash.splashFactory,
+            ),
             home: Scaffold(
               body: GlobalAiAssistantOverlay(
                 runtimeFactory: ({

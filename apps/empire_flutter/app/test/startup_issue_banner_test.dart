@@ -9,6 +9,10 @@ void main() {
       (WidgetTester tester) async {
     await tester.pumpWidget(
       MaterialApp(
+        theme: ThemeData(
+          useMaterial3: true,
+          splashFactory: NoSplash.splashFactory,
+        ),
         locale: const Locale('zh', 'CN'),
         supportedLocales: const <Locale>[
           Locale('en'),
@@ -50,6 +54,10 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        theme: ThemeData(
+          useMaterial3: true,
+          splashFactory: NoSplash.splashFactory,
+        ),
         supportedLocales: const <Locale>[
           Locale('en'),
           Locale('zh', 'CN'),

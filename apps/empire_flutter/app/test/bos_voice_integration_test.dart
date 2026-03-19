@@ -22,6 +22,10 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
+          theme: ThemeData(
+            useMaterial3: true,
+            splashFactory: NoSplash.splashFactory,
+          ),
           home: Scaffold(
             body: AiCoachWidget(
               runtime: runtime,

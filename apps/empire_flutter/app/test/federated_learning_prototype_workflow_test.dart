@@ -2485,6 +2485,10 @@ Map<String, dynamic> _experimentRow({
 
 Widget _wrapWithMaterial(Widget child) {
   return MaterialApp(
+    theme: ThemeData(
+      useMaterial3: true,
+      splashFactory: NoSplash.splashFactory,
+    ),
     supportedLocales: const <Locale>[
       Locale('en'),
       Locale('zh', 'CN'),

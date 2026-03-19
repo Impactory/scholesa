@@ -36,7 +36,13 @@ Widget _buildRouterHarness({
       ChangeNotifierProvider<AppState>.value(value: appState),
       Provider<FirestoreService>.value(value: firestoreService),
     ],
-    child: MaterialApp.router(routerConfig: router),
+    child: MaterialApp.router(
+      routerConfig: router,
+      theme: ThemeData(
+        useMaterial3: true,
+        splashFactory: NoSplash.splashFactory,
+      ),
+    ),
   );
 }
 
