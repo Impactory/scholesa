@@ -543,8 +543,7 @@ class _PartnerDeliverablesPageState extends State<PartnerDeliverablesPage> {
                     ),
                   ),
                 ..._contractDeliverables
-                    .map(_buildContractSection)
-                    .toList(growable: false),
+                    .map(_buildContractSection),
               ],
             ),
           );
