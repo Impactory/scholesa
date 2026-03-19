@@ -103,6 +103,7 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
         ),
         child: Consumer<EducatorService>(
           builder: (BuildContext context, EducatorService service, _) {
+            final List<EducatorSession> sessions = _getFilteredSessions(service);
             return CustomScrollView(
               slivers: <Widget>[
                 SliverToBoxAdapter(child: _buildHeader()),
@@ -141,11 +142,44 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
                       ),
                     ),
                   ),
+                if (!service.isLoading &&
+                    service.error != null &&
+                    service.sessions.isNotEmpty)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                      child: _buildStaleDataBanner(service.error!),
+                    ),
+                  ),
                 if (service.isLoading)
                   const SliverFillRemaining(
                     child: Center(
                       child: CircularProgressIndicator(
                         color: ScholesaColors.educator,
+                      ),
+                    ),
+                  )
+                else if (service.error != null && service.sessions.isEmpty)
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: _buildLoadErrorState(service.error!),
+                    ),
+                  )
+                else if (sessions.isEmpty)
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Text(
+                          _tEducatorSessions(context, 'No sessions yet'),
+                          style: const TextStyle(
+                            color: ScholesaColors.textSecondary,
+                            fontSize: 16,
+                          ),
+                        ),
                       ),
                     ),
                   )
@@ -155,8 +189,6 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
                     sliver: SliverList(
                       delegate: SliverChildBuilderDelegate(
                         (BuildContext context, int index) {
-                          final List<EducatorSession> sessions =
-                              _getFilteredSessions(service);
                           if (index >= sessions.length) return null;
                           return _SessionCard(
                             session: sessions[index],
@@ -339,6 +371,78 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildLoadErrorState(String message) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF4F4),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFFECACA)),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Row(
+            children: <Widget>[
+              Icon(Icons.error_outline_rounded, color: ScholesaColors.error),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Unable to load sessions',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: ScholesaColors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            style: const TextStyle(color: ScholesaColors.textSecondary),
+          ),
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: () => context.read<EducatorService>().loadSessions(),
+            icon: const Icon(Icons.refresh_rounded),
+            label: Text(_tEducatorSessions(context, 'Retry')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStaleDataBanner(String message) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFFDE68A)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Padding(
+            padding: EdgeInsets.only(top: 2),
+            child: Icon(Icons.warning_amber_rounded, color: Color(0xFFB45309)),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              _tEducatorSessions(context, 'Showing last loaded session data. ') + message,
+              style: const TextStyle(color: Color(0xFF92400E)),
+            ),
+          ),
+        ],
       ),
     );
   }

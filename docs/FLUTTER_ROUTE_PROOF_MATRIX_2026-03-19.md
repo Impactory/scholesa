@@ -12,21 +12,25 @@ Proof levels:
 ## Summary
 
 - Enabled canonical routes audited: 52
-- Direct: 35
-- Workflow/regression only: 15
-- None: 2
+- Direct: 38
+- Workflow/regression only: 14
+- None: 0
 
 Highest-value remaining blind spots:
 
-1. `/welcome`
-2. `/login`
+1. `/educator/sessions`
+2. `/partner/contracts`
+3. `/site/provisioning`
+4. `/site/sessions`
+5. `/learner/today`
+6. deeper mutation and failure-path proof on `/hq/feature-flags`
 
 ## Public, Auth, and Root
 
 | Route | Proof | Primary evidence | Blind spot |
 | --- | --- | --- | --- |
-| `/welcome` | none | — | Public landing route has no direct proof |
-| `/login` | none | — | Login page behavior is not directly proven |
+| `/welcome` | direct | `apps/empire_flutter/app/test/public_entry_routes_test.dart` | Navigation-to-login proof exists; deeper multi-locale coverage is still light |
+| `/login` | direct | `apps/empire_flutter/app/test/public_entry_routes_test.dart`, `apps/empire_flutter/app/test/login_page_recent_accounts_test.dart` | Required-field validation and recent-account behavior are proven |
 | `/` | workflow/regression | `apps/empire_flutter/app/test/router_redirect_test.dart`, `apps/empire_flutter/app/test/role_workflow_smoke_test.dart` | Dashboard redirect behavior is covered more than dashboard rendering |
 
 ## Learner
@@ -80,7 +84,7 @@ Highest-value remaining blind spots:
 | `/site/identity` | direct | `apps/empire_flutter/app/test/site_identity_page_test.dart` | — |
 | `/site/pickup-auth` | direct | `apps/empire_flutter/app/test/site_pickup_auth_page_test.dart` | — |
 | `/site/consent` | direct | `apps/empire_flutter/app/test/site_consent_page_test.dart` | — |
-| `/site/integrations-health` | workflow/regression | `apps/empire_flutter/app/test/district_provider_integration_test.dart` | HQ/site aggregation and alert states are not isolated |
+| `/site/integrations-health` | direct | `apps/empire_flutter/app/test/site_integrations_health_page_test.dart`, `apps/empire_flutter/app/test/district_provider_integration_test.dart` | Failure-state truth and basic provider rendering are proven; deeper action flows remain indirect |
 | `/site/billing` | direct | `apps/empire_flutter/app/test/site_billing_page_test.dart`, `apps/empire_flutter/app/test/site_billing_marketplace_test.dart` | — |
 | `/site/audit` | direct | `apps/empire_flutter/app/test/site_audit_page_test.dart` | — |
 
@@ -132,11 +136,11 @@ Highest-value remaining blind spots:
 
 Prioritize direct proof next for:
 
-1. `/welcome`
-2. `/login`
-3. `/educator/sessions`
-4. `/partner/contracts`
-5. `/site/integrations-health`
+1. `/educator/sessions`
+2. `/partner/contracts`
+3. `/site/provisioning`
+4. `/site/sessions`
+5. `/learner/today`
 6. deeper mutation and failure-path proof on `/hq/feature-flags`
 
 Then upgrade the workflow-only cluster with page-specific failure-state tests for the operationally risky routes before claiming gold.

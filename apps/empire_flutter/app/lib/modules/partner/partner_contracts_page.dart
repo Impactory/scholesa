@@ -92,6 +92,15 @@ class _PartnerContractsPageState extends State<PartnerContractsPage>
             return const Center(child: CircularProgressIndicator());
           }
 
+          if (service.error != null &&
+              service.contracts.isEmpty &&
+              service.partnerLaunches.isEmpty) {
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: _buildLoadErrorState(service.error!, service),
+            );
+          }
+
           return TabBarView(
             controller: _tabController,
             children: <Widget>[
@@ -105,6 +114,31 @@ class _PartnerContractsPageState extends State<PartnerContractsPage>
   }
 
   Widget _buildContractsTab(PartnerService service) {
+    if (service.error != null && service.contracts.isNotEmpty) {
+      return Column(
+        children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: _buildStaleDataBanner(service.error!),
+          ),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () async {
+                await service.loadContracts();
+              },
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: service.contracts.length,
+                itemBuilder: (BuildContext context, int index) {
+                  return _buildContractCard(service.contracts[index]);
+                },
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
     if (service.contracts.isEmpty) {
       return _buildEmptyState(
         icon: Icons.description_rounded,
@@ -139,6 +173,31 @@ class _PartnerContractsPageState extends State<PartnerContractsPage>
   }
 
   Widget _buildLaunchesTab(PartnerService service) {
+    if (service.error != null && service.partnerLaunches.isNotEmpty) {
+      return Column(
+        children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: _buildStaleDataBanner(service.error!),
+          ),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () async {
+                await service.loadPartnerLaunches();
+              },
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: service.partnerLaunches.length,
+                itemBuilder: (BuildContext context, int index) {
+                  return _buildLaunchCard(service.partnerLaunches[index]);
+                },
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
     if (service.partnerLaunches.isEmpty) {
       return _buildEmptyState(
         icon: Icons.rocket_launch_rounded,
@@ -204,6 +263,83 @@ class _PartnerContractsPageState extends State<PartnerContractsPage>
             style: const TextStyle(
               fontSize: 14,
               color: ScholesaColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoadErrorState(String message, PartnerService service) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF4F4),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFFECACA)),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Row(
+            children: <Widget>[
+              Icon(Icons.error_outline_rounded, color: ScholesaColors.error),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Unable to load partner workflows',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: ScholesaColors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            style: const TextStyle(color: ScholesaColors.textSecondary),
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: () async {
+              await Future.wait<void>(<Future<void>>[
+                service.loadContracts(),
+                service.loadPartnerLaunches(),
+              ]);
+            },
+            icon: const Icon(Icons.refresh_rounded),
+            label: Text(_tPartnerContracts(context, 'Retry')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStaleDataBanner(String message) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFFDE68A)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Padding(
+            padding: EdgeInsets.only(top: 2),
+            child: Icon(Icons.warning_amber_rounded, color: Color(0xFFB45309)),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              _tPartnerContracts(context, 'Showing last loaded workflow data. ') + message,
+              style: const TextStyle(color: Color(0xFF92400E)),
             ),
           ),
         ],

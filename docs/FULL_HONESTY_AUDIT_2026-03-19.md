@@ -9,7 +9,7 @@ Scope: Flutter app enabled routes, current runtime behavior, current test eviden
 - Not gold ready.
 - Still beta ready for a controlled audience.
 - Core learner, educator, parent, messaging, and site operations paths are no longer obviously fake.
-- Gold is still blocked by unproven native distribution and by route-proof breadth across the enabled route set.
+- Gold is still blocked by unproven native distribution and by workflow-only depth on too many enabled operational routes.
 
 ## A. Release Matrix Updated
 
@@ -23,9 +23,9 @@ Scope: Flutter app enabled routes, current runtime behavior, current test eviden
 
 ### Verification inventory
 
-- 47 focused page, workflow, regression, placeholder-action, and honesty test files now back the audited Flutter route surface.
+- 49 focused page, workflow, regression, placeholder-action, and honesty test files now back the audited Flutter route surface.
 - Fresh verification in this pass:
-  - remaining-route proof pass: 4 passed, 0 failed
+  - remaining-route proof pass: 7 passed, 0 failed
   - `flutter analyze`: passed
   - next admin-cluster failure-path pass: 4 passed, 0 failed
 - Existing broad audit baseline still current in this code cycle:
@@ -36,7 +36,7 @@ Scope: Flutter app enabled routes, current runtime behavior, current test eviden
 
 | Flow cluster | Discoverable | Understandable | Completable | Persists correctly | Recovers from errors | Mobile | Fake/stubbed/ambiguous | Audit call |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Auth, routing, shared-device sign-out | Yes | Yes | Yes | Yes | Mostly yes | Yes | No obvious fake path | Strong for beta |
+| Auth, routing, shared-device sign-out | Yes | Yes | Yes | Yes | Mostly yes | Yes | Welcome and login are now directly proven; no obvious fake path remains in the public/auth shells | Strong for beta |
 | Learner missions and habits | Yes | Yes | Yes | Yes | Yes, degraded AI mode is now explicit | Yes | No obvious fake primary action | Strong for beta |
 | Learner onboarding and credentials | Yes | Mostly yes | Yes | Yes | Mostly yes | Yes | Some secondary storage failures still degrade plainly rather than gracefully | Beta-safe |
 | Learner portfolio and today | Yes | Mostly yes | Mostly yes | Partly proven | Partial | Yes | Secondary actions rely more on indirect evidence than direct route proof | Beta-safe, not gold |
@@ -45,7 +45,7 @@ Scope: Flutter app enabled routes, current runtime behavior, current test eviden
 | Educator sessions, mission plans, integrations, learner supports, today | Yes | Mostly yes | Likely | Partly proven | Partial | Yes | Mission plans and learner supports are now directly proven, but this cluster still has workflow-only routes | Beta-safe, not gold |
 | Parent summary, billing, schedule, portfolio, child view | Yes | Yes | Mostly yes | Support-request persistence is real where used | Mostly yes | Yes | Billing is honest summary only, not self-service | Strong for beta |
 | Site dashboard, billing, consent, pickup auth, ops, audit | Yes | Yes | Mostly yes | Mostly yes | Mostly yes | Yes | Honest on audited primary actions | Strong for beta |
-| Site identity and incident/admin support surfaces | Yes | Mostly yes | Partly | Partly | Mostly yes on the audited identity and incidents paths, partial on the wider cluster | Yes | Less misleading than before, still not comprehensively proven | Beta-safe, not gold |
+| Site identity and incident/admin support surfaces | Yes | Mostly yes | Partly | Partly | Mostly yes on the audited identity, incidents, and integrations-health failure path, partial on the wider cluster | Yes | Less misleading than before, still not comprehensively proven | Beta-safe, not gold |
 | Partner contracts and deliverables | Yes | Mostly yes | Mostly yes | Mostly yes | Partial | Yes | No obvious fake primary action in audited path | Beta-safe |
 | Partner listings and payouts | Yes | Mostly yes | Partly | Partly | Mostly yes on the audited payouts path, partial on the wider cluster | Yes | Listings create-and-persist path is now directly proven; broader partner depth is still partial | Beta-safe, not gold |
 | HQ sites, role switcher, exports, analytics | Yes | Yes | Yes | Yes | Mostly yes | Yes | No obvious fake primary path in audited route tests | Strong for beta |
@@ -80,19 +80,19 @@ Current truth:
 
 - Coverage is now materially stronger on core paths.
 - The app still has more enabled pages than direct route-level proof.
-- Current route-proof matrix: 35 direct, 15 workflow/regression-only, 2 with no convincing route proof.
+- Current route-proof matrix: 38 direct, 14 workflow/regression-only, 0 with no convincing route proof.
 
 Risk concentration:
 
 - Educator secondary surfaces: today, sessions, integrations.
 - Learner secondary surfaces: today and portfolio.
-- Site secondary surfaces: sessions and integrations health.
+- Site secondary surfaces: provisioning and sessions.
 - Partner secondary surfaces: contracts.
 - HQ secondary surfaces: safety, integrations health, feature-flags mutation/governance depth.
 
 End-to-end solution:
 
-1. Build a route-proof matrix from `kKnownRoutes` and mark each route as direct, workflow, regression-only, or unproven.
+1. Keep the route-proof matrix from `kKnownRoutes` current and use it as a release contract.
 2. Add direct tests first to enabled admin/operator routes that perform approvals, billing, identity resolution, or user administration.
 3. For each added route test, prove one happy path and one failure path. Rendering-only tests do not count.
 
@@ -222,10 +222,10 @@ End-to-end solution:
 ## Evidence of Verification
 
 - Router inventory still exposes 52 enabled page surfaces.
-- Focused test inventory now covers 47 audit-relevant files.
+- Focused test inventory now covers 49 audit-relevant files.
 - `flutter analyze` passed on the current app state.
 - Fresh next-cluster admin failure regressions passed: 4 tests, 0 failures.
-- Fresh remaining-route proof regressions passed: 4 tests, 0 failures.
+- Fresh remaining-route proof regressions passed: 7 tests, 0 failures.
 - Current broad audit baseline for this code cycle remains 247 passed, 0 failed.
 
 ## Recommendation
@@ -237,4 +237,4 @@ End-to-end solution:
 
 1. Prove one real iOS TestFlight release end to end.
 2. Prove one real Android Play release end to end.
-3. Expand route-proof coverage over the remaining high-risk enabled admin/operator surfaces.
+3. Upgrade the remaining workflow-only high-risk enabled admin/operator surfaces to direct failure-path proof.
