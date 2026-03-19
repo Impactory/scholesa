@@ -501,6 +501,52 @@ void main() {
       );
     });
 
+    test('Platform flow and release gates enforce Gen 2 and combined web deploy',
+        () {
+      final String flowContent =
+          File('$root/scripts/full_platform_flow.sh').readAsStringSync();
+      final String rc2Content =
+          File('$root/scripts/rc2_regression.sh').readAsStringSync();
+      final String rc3Content =
+          File('$root/scripts/rc3_preflight.sh').readAsStringSync();
+
+      expect(
+        flowContent.contains('npm --prefix functions run verify:gen2'),
+        isTrue,
+        reason:
+            'Full platform flow must verify the Functions Gen 2 baseline before deploy',
+      );
+      expect(
+        flowContent.contains('bash ./scripts/deploy.sh web'),
+        isTrue,
+        reason:
+            'Full platform flow must deploy both primary web and Flutter web together',
+      );
+      expect(
+        rc2Content.contains('Functions Gen 2 verification'),
+        isTrue,
+        reason:
+            'RC2 regression chain must include the Functions Gen 2 verification step',
+      );
+      expect(
+        rc2Content.contains('npm --prefix "$FUNCTIONS_DIR" run verify:gen2'),
+        isTrue,
+        reason:
+            'RC2 regression chain must execute verify:gen2',
+      );
+      expect(
+        rc3Content.contains('Functions Gen 2 verification'),
+        isTrue,
+        reason:
+            'RC3 preflight must include the Functions Gen 2 verification step',
+      );
+      expect(
+        rc3Content.contains('npm --prefix functions run verify:gen2'),
+        isTrue,
+        reason: 'RC3 preflight must execute verify:gen2',
+      );
+    });
+
     // ── 3.4 Dockerfile uses pinned base images ──
     test('Dockerfile base images are version-pinned', () {
       final File dockerfile = File('$root/Dockerfile');

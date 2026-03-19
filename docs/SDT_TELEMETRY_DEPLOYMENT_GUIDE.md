@@ -75,17 +75,17 @@ Test the following flows:
 ### Step 3: Deploy Frontend
 
 ```bash
-# Build Next.js app
+# Build primary web app
 npm run build
 
-# Test production build locally
+# Test primary web build locally
 npm run start
 
 # Deploy to Vercel (if using Vercel)
 vercel --prod
 
-# OR deploy to Cloud Run
-./scripts/deploy.sh cloudrun-web
+# OR deploy both Cloud Run web surfaces
+./scripts/deploy.sh web
 ```
 
 ### Step 4: Deploy Cloud Functions (If Using Aggregation)
@@ -161,6 +161,8 @@ Deploy:
 ```bash
 cd functions
 npm install
+npm run build
+npm run verify:gen2
 cd ..
 firebase deploy --only functions
 ```

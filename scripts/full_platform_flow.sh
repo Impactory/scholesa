@@ -177,6 +177,9 @@ main() {
   log "Running web production build..."
   (cd "$REPO_ROOT" && npm run build)
 
+  log "Verifying Functions Gen 2 deployment baseline..."
+  (cd "$REPO_ROOT" && npm --prefix functions run verify:gen2)
+
   if [[ "$RUN_DEPLOY" -eq 0 ]]; then
     log "Flow gates completed (deploy skipped by --no-deploy)."
     return 0
@@ -185,8 +188,8 @@ main() {
   ensure_firebase_auth
   ensure_gcloud_auth
 
-  log "Deploying web service to Cloud Run..."
-  (cd "$REPO_ROOT" && bash ./scripts/deploy.sh cloudrun-web)
+  log "Deploying primary web + Flutter web services to Cloud Run..."
+  (cd "$REPO_ROOT" && bash ./scripts/deploy.sh web)
 
   log "Deploying compliance operator to Cloud Run..."
   (cd "$REPO_ROOT" && bash ./scripts/deploy.sh compliance-operator)
