@@ -17,6 +17,7 @@ import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { useLearnerAnalytics } from '@/src/hooks/useRealtimeAnalytics';
 import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import { AIInsightsPanel } from './AIInsightsPanel';
+import { VoiceReliabilityLegend, VOICE_RELIABILITY_HELPER_TEXT } from './VoiceReliabilityGuidance';
 import { useI18n } from '@/src/lib/i18n/useI18n';
 import { 
   TrendingUpIcon, 
@@ -325,7 +326,7 @@ export function AnalyticsDashboard() {
           value={siteVoiceMetrics.avgCaptureSuccess != null ? `${siteVoiceMetrics.avgCaptureSuccess}%` : 'Unavailable'}
           icon={ActivityIcon}
           color="purple"
-          helperText="Unavailable means Scholesa does not yet have enough verified voice capture evidence for this period."
+          helperText={VOICE_RELIABILITY_HELPER_TEXT.siteUnavailable}
           trend={criticalVoiceCapture ? 'down' : siteVoiceMetrics.avgCaptureSuccess != null && siteVoiceMetrics.avgCaptureSuccess >= 90 ? 'up' : undefined}
           trendLabel={periodLabel}
           t={t}
@@ -336,7 +337,7 @@ export function AnalyticsDashboard() {
         <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
           <h3 className="text-sm font-medium text-gray-700">Voice Reliability</h3>
           <p className="mt-1 text-xs text-gray-500">
-            This measures how often MiloOS captured usable voice input. Low capture weakens the trustworthiness of voice-derived support analytics.
+            {VOICE_RELIABILITY_HELPER_TEXT.siteTrustBoundary}
           </p>
           <div className="mt-2 flex flex-wrap items-baseline gap-4">
             <div>
@@ -354,20 +355,7 @@ export function AnalyticsDashboard() {
               <div className="text-xs text-gray-500">Capture attempts</div>
             </div>
           </div>
-          <div className="mt-3 flex flex-wrap gap-2 text-xs text-gray-600">
-            <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-2.5 py-1">
-              <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              Strong: 80%+
-            </span>
-            <span className="inline-flex items-center gap-2 rounded-full bg-amber-50 px-2.5 py-1">
-              <span className="h-2 w-2 rounded-full bg-amber-500" />
-              Watch: 50-79%
-            </span>
-            <span className="inline-flex items-center gap-2 rounded-full bg-red-50 px-2.5 py-1">
-              <span className="h-2 w-2 rounded-full bg-red-500" />
-              Critical: below 50%
-            </span>
-          </div>
+          <VoiceReliabilityLegend />
         </div>
         <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
           <h3 className="text-sm font-medium text-gray-700">Voice Capture Trend</h3>
@@ -399,9 +387,7 @@ export function AnalyticsDashboard() {
               })}
             </div>
           )}
-          <p className="mt-3 text-xs text-gray-500">
-            Green bars indicate strong capture, amber means voice support should be interpreted cautiously, and red means voice-derived support evidence is materially unreliable for that period.
-          </p>
+          <p className="mt-3 text-xs text-gray-500">{VOICE_RELIABILITY_HELPER_TEXT.trendInterpretation}</p>
         </div>
       </div>
       

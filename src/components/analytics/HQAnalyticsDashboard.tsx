@@ -15,6 +15,7 @@ import React, { useState, useEffect } from 'react';
 import { db } from '@/src/firebase/client-init';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { usePlatformStats } from '@/src/hooks/useRealtimeAnalytics';
+import { VoiceReliabilityLegend, VOICE_RELIABILITY_HELPER_TEXT } from './VoiceReliabilityGuidance';
 import {
   BuildingIcon,
   UsersIcon,
@@ -324,6 +325,7 @@ export function HQAnalyticsDashboard() {
             value={platformStatsLoading || platformStats.avgVoiceCaptureSuccess == null ? 'Unavailable' : `${platformStats.avgVoiceCaptureSuccess}%`}
             icon={SparklesIcon}
             color="purple"
+            helperText={VOICE_RELIABILITY_HELPER_TEXT.platformUnavailable}
           />
         </div>
       )}
@@ -360,7 +362,7 @@ export function HQAnalyticsDashboard() {
               Capture reliability across the last 7 days. Low values mean MiloOS had fewer trustworthy voice inputs to work from.
             </p>
             <p className="mt-2 text-xs text-gray-500">
-              When capture is weak, downstream voice-derived support analytics should be treated as less trustworthy operational evidence.
+              {VOICE_RELIABILITY_HELPER_TEXT.platformTrustBoundary}
             </p>
           </div>
           <div className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
@@ -375,6 +377,7 @@ export function HQAnalyticsDashboard() {
             value={avgVoiceCapture == null ? 'Unavailable' : `${avgVoiceCapture}%`}
             icon={SparklesIcon}
             color="purple"
+            helperText={VOICE_RELIABILITY_HELPER_TEXT.platformMetricNote}
           />
           <StatCard
             title="Sites With Voice Data"
@@ -395,20 +398,7 @@ export function HQAnalyticsDashboard() {
             color="red"
           />
         </div>
-        <div className="mt-4 flex flex-wrap gap-2 text-xs text-gray-600">
-          <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-2.5 py-1">
-            <span className="h-2 w-2 rounded-full bg-emerald-500" />
-            Strong: 80%+
-          </span>
-          <span className="inline-flex items-center gap-2 rounded-full bg-amber-50 px-2.5 py-1">
-            <span className="h-2 w-2 rounded-full bg-amber-500" />
-            Watch: 50-79%
-          </span>
-          <span className="inline-flex items-center gap-2 rounded-full bg-red-50 px-2.5 py-1">
-            <span className="h-2 w-2 rounded-full bg-red-500" />
-            Critical: below 50%
-          </span>
-        </div>
+        <VoiceReliabilityLegend />
       </div>
       
       {/* Sites Table */}
@@ -498,9 +488,10 @@ interface StatCardProps {
   value: string | number;
   icon: React.ComponentType<{ className?: string }>;
   color: string;
+  helperText?: string;
 }
 
-function StatCard({ title, value, icon: Icon, color }: StatCardProps) {
+function StatCard({ title, value, icon: Icon, color, helperText }: StatCardProps) {
   const colorClasses: Record<string, { bg: string; text: string }> = {
     purple: { bg: 'bg-purple-100', text: 'text-purple-700' },
     green: { bg: 'bg-green-100', text: 'text-green-700' },
@@ -518,6 +509,7 @@ function StatCard({ title, value, icon: Icon, color }: StatCardProps) {
       </div>
       <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
       <p className="text-3xl font-bold text-gray-900">{value}</p>
+      {helperText ? <p className="mt-2 max-w-xs text-xs text-gray-500">{helperText}</p> : null}
     </div>
   );
 }
