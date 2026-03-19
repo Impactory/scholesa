@@ -341,6 +341,19 @@ class SkillRepository {
       _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
 }
 
+class CapabilityRepository {
+  CollectionReference<Map<String, dynamic>> get _col =>
+      FirebaseFirestore.instance.collection('capabilities');
+
+  Future<List<CapabilityModel>> listByPillar(String pillarCode) async {
+    final snap = await _col.where('pillarCode', isEqualTo: pillarCode).get();
+    return snap.docs.map(CapabilityModel.fromDoc).toList();
+  }
+
+  Future<void> upsert(CapabilityModel model) =>
+      _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
+}
+
 class SkillMasteryRepository {
   CollectionReference<Map<String, dynamic>> get _col =>
       FirebaseFirestore.instance.collection('skillMastery');

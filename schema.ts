@@ -81,6 +81,17 @@ export interface Skill {
   level: number;
 }
 
+export interface Capability {
+  id: string;
+  title: string;
+  normalizedTitle: string;
+  pillarCode: string;
+  siteId?: string | null;
+  descriptor?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface SkillMastery {
   id: string;
   learnerId: string;
@@ -97,6 +108,8 @@ export interface Mission {
   title: string;
   description: string;
   pillarCodes: string[];
+  capabilityIds?: string[];
+  capabilityTitles?: string[];
   difficulty: 'beginner' | 'intermediate' | 'advanced';
   estimatedDurationMinutes?: number;
 }

@@ -707,6 +707,53 @@ class SkillMasteryModel {
 }
 
 @immutable
+class CapabilityModel {
+  const CapabilityModel({
+    required this.id,
+    required this.title,
+    required this.normalizedTitle,
+    required this.pillarCode,
+    this.siteId,
+    this.descriptor,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  final String id;
+  final String title;
+  final String normalizedTitle;
+  final String pillarCode;
+  final String? siteId;
+  final String? descriptor;
+  final Timestamp? createdAt;
+  final Timestamp? updatedAt;
+
+  factory CapabilityModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? <String, dynamic>{};
+    return CapabilityModel(
+      id: doc.id,
+      title: data['title'] as String? ?? '',
+      normalizedTitle: data['normalizedTitle'] as String? ?? '',
+      pillarCode: data['pillarCode'] as String? ?? '',
+      siteId: data['siteId'] as String?,
+      descriptor: data['descriptor'] as String?,
+      createdAt: data['createdAt'] as Timestamp?,
+      updatedAt: data['updatedAt'] as Timestamp?,
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'title': title,
+        'normalizedTitle': normalizedTitle,
+        'pillarCode': pillarCode,
+        'siteId': siteId,
+        'descriptor': descriptor,
+        'createdAt': createdAt ?? Timestamp.now(),
+        'updatedAt': updatedAt ?? Timestamp.now(),
+      };
+}
+
+@immutable
 class MissionModel {
   const MissionModel({
     required this.id,

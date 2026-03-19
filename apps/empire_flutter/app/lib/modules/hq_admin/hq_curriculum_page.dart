@@ -38,6 +38,8 @@ class _Curriculum {
     required this.difficulty,
     required this.misconceptionTags,
     required this.mediaFormat,
+    required this.capabilityIds,
+    required this.capabilityTitles,
     required this.version,
     required this.approvalStatus,
     required this.status,
@@ -52,10 +54,30 @@ class _Curriculum {
   final String difficulty;
   final List<String> misconceptionTags;
   final String mediaFormat;
+  final List<String> capabilityIds;
+  final List<String> capabilityTitles;
   final String version;
   final String approvalStatus;
   final _CurriculumStatus status;
   final DateTime lastUpdated;
+}
+
+class _CapabilityRef {
+  const _CapabilityRef({
+    required this.id,
+    required this.title,
+    required this.normalizedTitle,
+    required this.pillarCode,
+    this.siteId,
+    this.descriptor,
+  });
+
+  final String id;
+  final String title;
+  final String normalizedTitle;
+  final String pillarCode;
+  final String? siteId;
+  final String? descriptor;
 }
 
 class _TrainingCycle {
@@ -307,6 +329,9 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                   _buildInfoBadge(
                     _tHqCurriculum(context, curriculum.approvalStatus),
                   ),
+                  ...curriculum.capabilityTitles
+                      .map((String capabilityTitle) =>
+                          _buildInfoBadge(capabilityTitle)),
                 ],
               ),
               const SizedBox(height: 12),
@@ -468,6 +493,31 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                       ]
                     : curriculum.misconceptionTags
                         .map((String tag) => _buildInfoBadge(tag))
+                        .toList(),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                _tHqCurriculum(context, 'Capability mappings'),
+                style: const TextStyle(
+                  color: ScholesaColors.textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: curriculum.capabilityTitles.isEmpty
+                    ? <Widget>[
+                        Text(
+                          _tHqCurriculum(context, 'No capability mappings'),
+                          style: const TextStyle(
+                            color: ScholesaColors.textSecondary,
+                          ),
+                        ),
+                      ]
+                    : curriculum.capabilityTitles
+                        .map((String title) => _buildInfoBadge(title))
                         .toList(),
               ),
               const SizedBox(height: 24),
@@ -729,6 +779,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
         TextEditingController(text: curriculum.description);
     final TextEditingController misconceptionTagsController =
         TextEditingController(text: curriculum.misconceptionTags.join(', '));
+    final TextEditingController capabilityMappingsController =
+      TextEditingController(text: curriculum.capabilityTitles.join(', '));
     String selectedPillar = curriculum.pillar;
     String selectedTemplate = curriculum.template;
     String selectedDifficulty = curriculum.difficulty;
@@ -901,6 +953,20 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                   ),
                   decoration: _dialogDecoration(context, 'Misconception tags'),
                 ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: capabilityMappingsController,
+                  minLines: 2,
+                  maxLines: 4,
+                  style: const TextStyle(
+                    color: ScholesaColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  decoration: _dialogDecoration(
+                    context,
+                    'Capability statements (comma-separated)',
+                  ),
+                ),
               ],
             ),
             actions: <Widget>[
@@ -920,11 +986,26 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                     ? null
                     : () async {
                         final String title = titleController.text.trim();
+                        final List<String> capabilityLabels =
+                            _splitCommaSeparated(
+                          capabilityMappingsController.text,
+                        );
                         if (title.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
                                   _tHqCurriculum(context, 'Title is required')),
+                            ),
+                          );
+                          return;
+                        }
+                        if (capabilityLabels.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(_tHqCurriculum(
+                                context,
+                                'At least one capability mapping is required',
+                              )),
                             ),
                           );
                           return;
@@ -942,6 +1023,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                             misconceptionTagsController.text,
                           ),
                           mediaFormat: selectedMediaFormat,
+                          capabilityLabels: capabilityLabels,
                         );
                         if (!mounted || !dialogContext.mounted) return;
                         if (updated) {
@@ -1017,6 +1099,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     final TextEditingController descriptionController = TextEditingController();
     final TextEditingController misconceptionTagsController =
         TextEditingController();
+    final TextEditingController capabilityMappingsController =
+      TextEditingController();
     String selectedPillar = 'Future Skills';
     String selectedTemplate = _templateOptions.first;
     String selectedDifficulty = _difficultyOptions[1];
@@ -1175,6 +1259,20 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                   ),
                   decoration: _dialogDecoration(context, 'Misconception tags'),
                 ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: capabilityMappingsController,
+                  minLines: 2,
+                  maxLines: 4,
+                  style: const TextStyle(
+                    color: ScholesaColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  decoration: _dialogDecoration(
+                    context,
+                    'Capability statements (comma-separated)',
+                  ),
+                ),
               ],
             ),
             actions: <Widget>[
@@ -1204,11 +1302,26 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                     ? null
                     : () async {
                         final String title = titleController.text.trim();
+                        final List<String> capabilityLabels =
+                            _splitCommaSeparated(
+                          capabilityMappingsController.text,
+                        );
                         if (title.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                                 content: Text(_tHqCurriculum(
                                     context, 'Title is required'))),
+                          );
+                          return;
+                        }
+                        if (capabilityLabels.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(_tHqCurriculum(
+                                context,
+                                'At least one capability mapping is required',
+                              )),
+                            ),
                           );
                           return;
                         }
@@ -1241,6 +1354,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                             misconceptionTagsController.text,
                           ),
                           mediaFormat: selectedMediaFormat,
+                          capabilityLabels: capabilityLabels,
                         );
 
                         if (!mounted || !dialogContext.mounted) return;
@@ -1600,6 +1714,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
           difficulty: (data['difficulty'] as String? ?? 'Intermediate').trim(),
           misconceptionTags: _parseStringList(data['misconceptionTags']),
           mediaFormat: (data['mediaFormat'] as String? ?? 'Mixed media').trim(),
+          capabilityIds: _parseStringList(data['capabilityIds']),
+          capabilityTitles: _parseStringList(data['capabilityTitles']),
           version: (data['version'] as String?) ?? '1.0',
           approvalStatus: (data['approvalStatus'] as String? ?? 'draft').trim(),
           status: _parseCurriculumStatus(data['status'] as String?),
@@ -1663,6 +1779,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     required String difficulty,
     required List<String> misconceptionTags,
     required String mediaFormat,
+    required List<String> capabilityLabels,
   }) async {
     final AppState? appState = _maybeAppState();
     final FirestoreService? firestoreService = _maybeFirestoreService();
@@ -1679,6 +1796,13 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
       final String? actorRole = appState?.role?.name;
       final String? actorId = appState?.userId;
       final String? activeSiteId = appState?.activeSiteId;
+      final List<_CapabilityRef> capabilities = await _resolveCapabilityRefs(
+        firestoreService: firestoreService,
+        pillar: pillar,
+        capabilityLabels: capabilityLabels,
+        siteId: activeSiteId,
+        actorId: actorId,
+      );
 
       final String createdId = await firestoreService.createDocument(
         'missions',
@@ -1692,6 +1816,12 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
           'difficulty': difficulty,
           'misconceptionTags': misconceptionTags,
           'mediaFormat': mediaFormat,
+            'capabilityIds': capabilities
+              .map(( _CapabilityRef capability) => capability.id)
+              .toList(),
+            'capabilityTitles': capabilities
+              .map(( _CapabilityRef capability) => capability.title)
+              .toList(),
           'approvalStatus': 'draft',
           'siteId': activeSiteId,
           'createdBy': actorId,
@@ -1712,6 +1842,12 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
         difficulty: difficulty,
         misconceptionTags: misconceptionTags,
         mediaFormat: mediaFormat,
+        capabilityIds: capabilities
+          .map(( _CapabilityRef capability) => capability.id)
+          .toList(),
+        capabilityTitles: capabilities
+          .map(( _CapabilityRef capability) => capability.title)
+          .toList(),
         version: '1.0',
         approvalStatus: 'draft',
         status: _CurriculumStatus.draft,
@@ -1748,8 +1884,10 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     required String difficulty,
     required List<String> misconceptionTags,
     required String mediaFormat,
+    required List<String> capabilityLabels,
   }) async {
     final FirestoreService? firestoreService = _maybeFirestoreService();
+    final AppState? appState = _maybeAppState();
     if (firestoreService == null) {
       if (!mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1760,6 +1898,13 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
 
     try {
       final String pillarCode = _pillarCodeFromLabel(pillar);
+      final List<_CapabilityRef> capabilities = await _resolveCapabilityRefs(
+        firestoreService: firestoreService,
+        pillar: pillar,
+        capabilityLabels: capabilityLabels,
+        siteId: appState?.activeSiteId,
+        actorId: appState?.userId,
+      );
       await firestoreService
           .updateDocument('missions', curriculum.id, <String, dynamic>{
         'title': title,
@@ -1771,6 +1916,12 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
         'difficulty': difficulty,
         'misconceptionTags': misconceptionTags,
         'mediaFormat': mediaFormat,
+        'capabilityIds': capabilities
+          .map(( _CapabilityRef capability) => capability.id)
+          .toList(),
+        'capabilityTitles': capabilities
+          .map(( _CapabilityRef capability) => capability.title)
+          .toList(),
       });
 
       _replaceLocalCurriculum(
@@ -1782,6 +1933,12 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
         difficulty: difficulty,
         misconceptionTags: misconceptionTags,
         mediaFormat: mediaFormat,
+        capabilityIds: capabilities
+          .map(( _CapabilityRef capability) => capability.id)
+          .toList(),
+        capabilityTitles: capabilities
+          .map(( _CapabilityRef capability) => capability.title)
+          .toList(),
         lastUpdated: DateTime.now(),
       );
 
@@ -1963,13 +2120,36 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     }
 
     try {
+      if (curriculum.capabilityIds.isEmpty ||
+          curriculum.capabilityTitles.isEmpty) {
+        if (!mounted) return false;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_tHqCurriculum(
+              context,
+              'Add capability mappings before creating a rubric',
+            )),
+          ),
+        );
+        return false;
+      }
+
       final List<Map<String, dynamic>> criteria = criteriaLabels
           .asMap()
           .entries
           .map((MapEntry<int, String> entry) => <String, dynamic>{
                 'id': 'c${entry.key + 1}',
-                'label': entry.value,
+                'label': entry.key < curriculum.capabilityTitles.length
+                    ? curriculum.capabilityTitles[entry.key]
+                    : entry.value,
                 'pillarCode': _pillarCodeFromLabel(curriculum.pillar),
+                'capabilityId': entry.key < curriculum.capabilityIds.length
+                    ? curriculum.capabilityIds[entry.key]
+                    : null,
+                'capabilityTitle':
+                    entry.key < curriculum.capabilityTitles.length
+                        ? curriculum.capabilityTitles[entry.key]
+                        : entry.value,
                 'levels': <int>[0, 1, 2, 3, 4],
               })
           .toList();
@@ -1980,6 +2160,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
           'title': rubricTitle,
           'siteId': appState?.activeSiteId,
           'criteria': criteria,
+          'capabilityIds': curriculum.capabilityIds,
+          'capabilityTitles': curriculum.capabilityTitles,
           'createdBy': appState?.userId,
           'createdByRole': appState?.role?.name,
         },
@@ -2175,6 +2357,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     String? difficulty,
     List<String>? misconceptionTags,
     String? mediaFormat,
+    List<String>? capabilityIds,
+    List<String>? capabilityTitles,
     String? version,
     String? approvalStatus,
     _CurriculumStatus? status,
@@ -2193,6 +2377,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
           difficulty: difficulty ?? entry.difficulty,
           misconceptionTags: misconceptionTags ?? entry.misconceptionTags,
           mediaFormat: mediaFormat ?? entry.mediaFormat,
+          capabilityIds: capabilityIds ?? entry.capabilityIds,
+          capabilityTitles: capabilityTitles ?? entry.capabilityTitles,
           version: version ?? entry.version,
           approvalStatus: approvalStatus ?? entry.approvalStatus,
           status: status ?? entry.status,
@@ -2238,6 +2424,102 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
         .map((String entry) => entry.trim())
         .where((String entry) => entry.isNotEmpty)
         .toList();
+  }
+
+  Future<List<_CapabilityRef>> _resolveCapabilityRefs({
+    required FirestoreService firestoreService,
+    required String pillar,
+    required List<String> capabilityLabels,
+    required String? siteId,
+    required String? actorId,
+  }) async {
+    final String pillarCode = _pillarCodeFromLabel(pillar);
+    final String scopedSiteId = (siteId ?? '').trim();
+    final List<_CapabilityRef> resolved = <_CapabilityRef>[];
+
+    for (final String rawLabel in capabilityLabels) {
+      final String label = rawLabel.trim();
+      if (label.isEmpty) {
+        continue;
+      }
+      final String normalizedTitle = _normalizeCapabilityLabel(label);
+      final QuerySnapshot<Map<String, dynamic>> existingSnapshot =
+          await firestoreService.firestore
+              .collection('capabilities')
+              .where('normalizedTitle', isEqualTo: normalizedTitle)
+              .limit(20)
+              .get();
+
+      QueryDocumentSnapshot<Map<String, dynamic>>? matchingDoc;
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+          in existingSnapshot.docs) {
+        final Map<String, dynamic> data = doc.data();
+        final String existingPillarCode =
+            (data['pillarCode'] as String? ?? '').trim();
+        final String existingSiteId = (data['siteId'] as String? ?? '').trim();
+        final bool samePillar = existingPillarCode == pillarCode;
+        final bool sameSite = scopedSiteId.isNotEmpty
+            ? existingSiteId == scopedSiteId || existingSiteId.isEmpty
+            : existingSiteId.isEmpty;
+        if (samePillar && sameSite) {
+          matchingDoc = doc;
+          if (existingSiteId == scopedSiteId || scopedSiteId.isEmpty) {
+            break;
+          }
+        }
+      }
+
+      if (matchingDoc != null) {
+        final Map<String, dynamic> data = matchingDoc.data();
+        resolved.add(
+          _CapabilityRef(
+            id: matchingDoc.id,
+            title: (data['title'] as String? ?? label).trim(),
+            normalizedTitle: normalizedTitle,
+            pillarCode: pillarCode,
+            siteId: data['siteId'] as String?,
+            descriptor: data['descriptor'] as String?,
+          ),
+        );
+        continue;
+      }
+
+      final String createdId = await firestoreService.createDocument(
+        'capabilities',
+        <String, dynamic>{
+          'title': label,
+          'normalizedTitle': normalizedTitle,
+          'pillarCode': pillarCode,
+          'pillarLabel': pillar,
+          'siteId': scopedSiteId.isEmpty ? null : scopedSiteId,
+          'descriptor': label,
+          'createdBy': actorId,
+          'source': 'hq_curriculum',
+        },
+      );
+
+      resolved.add(
+        _CapabilityRef(
+          id: createdId,
+          title: label,
+          normalizedTitle: normalizedTitle,
+          pillarCode: pillarCode,
+          siteId: scopedSiteId.isEmpty ? null : scopedSiteId,
+          descriptor: label,
+        ),
+      );
+    }
+
+    return resolved;
+  }
+
+  String _normalizeCapabilityLabel(String input) {
+    return input
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+        .replaceAll(RegExp(r'_+'), '_')
+        .replaceAll(RegExp(r'^_|_$'), '');
   }
 
   String _pillarLabelFromCode(String raw) {

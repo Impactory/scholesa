@@ -105,6 +105,7 @@ service cloud.firestore {
     match /rooms/{id} { allow read: if isAuthenticated() && isSiteScopedRead(resource.data); allow write: if isEducator() && isSiteScopedWrite(request.resource.data); }
     match /programs/{id} { allow read: if isAuthenticated(); allow write: if isHQ(); }
     match /courses/{id} { allow read: if isAuthenticated(); allow write: if isHQ(); }
+    match /capabilities/{id} { allow read: if isAuthenticated(); allow create, update: if isHQ(); allow delete: if false; }
     match /missions/{id} { allow read: if isAuthenticated(); allow write: if isHQ(); }
 
     // Operational (Sessions, Occurrences):
