@@ -400,6 +400,7 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
               onPressed: isSubmitting
                   ? null
                   : () {
+                      FocusScope.of(dialogContext).unfocus();
                       Navigator.pop(dialogContext);
                     },
               child: Text(_tPartnerListings(context, 'Cancel')),
@@ -466,6 +467,7 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
                           'product_id': created.productId,
                         },
                       );
+                      FocusScope.of(dialogContext).unfocus();
                       Navigator.pop(dialogContext);
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
@@ -485,10 +487,7 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
           ],
         ),
       ),
-    ).whenComplete(() {
-      titleController.dispose();
-      descriptionController.dispose();
-    });
+    );
   }
 
   void _showListingDetails(MarketplaceListing listing) {

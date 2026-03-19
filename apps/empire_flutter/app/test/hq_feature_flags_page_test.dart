@@ -1,3 +1,4 @@
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -147,6 +148,8 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
 
 class _FakeUpdateSummaryRepository
     extends FederatedLearningUpdateSummaryRepository {
+  _FakeUpdateSummaryRepository() : super(firestore: FakeFirebaseFirestore());
+
   @override
   Future<List<FederatedLearningUpdateSummaryModel>> listByIds(
     List<String> ids,
