@@ -292,6 +292,60 @@ function periodStart(period: unknown, now: Date): Date {
   return new Date(now.getFullYear(), now.getMonth(), 1);
 }
 
+interface VoiceTelemetryEventEntry {
+  event: string;
+  metadata: Record<string, unknown> | null;
+}
+
+function extractVoiceTelemetryEventsFromRecords(records: Record<string, unknown>[]): VoiceTelemetryEventEntry[] {
+  return records
+    .map((data) => ({
+      event: asTrimmedString(data.event || data.eventType),
+      metadata: (data.metadata && typeof data.metadata === 'object')
+        ? data.metadata as Record<string, unknown>
+        : null,
+    }))
+    .filter((entry): entry is VoiceTelemetryEventEntry => entry.event.length > 0)
+    .filter((entry) => entry.event.startsWith('voice.'));
+}
+
+function buildVoiceReliabilitySummary(voiceTelemetryEvents: VoiceTelemetryEventEntry[]) {
+  const messageCount = voiceTelemetryEvents.filter((entry) => entry.event === 'voice.message').length;
+  const ttsCount = voiceTelemetryEvents.filter((entry) => entry.event === 'voice.tts').length;
+  const blockedCount = voiceTelemetryEvents.filter((entry) => entry.event === 'voice.blocked').length;
+  const escalationCount = voiceTelemetryEvents.filter((entry) => entry.event === 'voice.escalated').length;
+  const transcribeSuccessCount = voiceTelemetryEvents.filter((entry) => entry.event === 'voice.transcribe').length;
+  const transcribeEscalationCount = voiceTelemetryEvents.filter((entry) =>
+    entry.event === 'voice.escalated' && asTrimmedString(entry.metadata?.endpoint) === 'voice_transcribe',
+  ).length;
+  const captureAttemptCount = transcribeSuccessCount + transcribeEscalationCount;
+  const captureFailureCount = transcribeEscalationCount;
+  const captureSuccessRate = captureAttemptCount > 0
+    ? transcribeSuccessCount / captureAttemptCount
+    : null;
+
+  return {
+    messageCount,
+    ttsCount,
+    blockedCount,
+    escalationCount,
+    captureAttemptCount,
+    captureFailureCount,
+    captureSuccessRate,
+  };
+}
+
+function hasVoiceReliabilitySummary(value: unknown): boolean {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return false;
+  }
+
+  const candidate = value as Record<string, unknown>;
+  return typeof asNumber(candidate.captureAttemptCount) === 'number'
+    || typeof asNumber(candidate.captureFailureCount) === 'number'
+    || typeof asNumber(candidate.captureSuccessRate) === 'number';
+}
+
 function normalizeSubscriptionStatus(value: unknown): 'active' | 'paused' | 'cancelled' {
   const normalized = asTrimmedString(value).toLowerCase();
   if (normalized === 'paused' || normalized === 'cancelled') return normalized;
@@ -5408,31 +5462,11 @@ export const generateKpiPack = onCall(async (request: CallableRequest) => {
     const event = asTrimmedString(data.event || data.eventType);
     return event === 'reflection.submitted';
   }).length;
-  const voiceTelemetryEvents = filteredTelemetry
-    .map((docSnap) => {
-      const data = docSnap.data() as Record<string, unknown>;
-      return {
-        event: asTrimmedString(data.event || data.eventType),
-        metadata: (data.metadata && typeof data.metadata === 'object')
-          ? data.metadata as Record<string, unknown>
-          : null,
-      };
-    })
-    .filter((entry): entry is { event: string; metadata: Record<string, unknown> | null } => entry.event !== null)
-    .filter((entry) => entry.event.startsWith('voice.'));
-  const voiceMessageCount = voiceTelemetryEvents.filter((entry) => entry.event === 'voice.message').length;
-  const voiceTtsCount = voiceTelemetryEvents.filter((entry) => entry.event === 'voice.tts').length;
-  const voiceBlockedCount = voiceTelemetryEvents.filter((entry) => entry.event === 'voice.blocked').length;
-  const voiceEscalationCount = voiceTelemetryEvents.filter((entry) => entry.event === 'voice.escalated').length;
-  const voiceTranscribeSuccessCount = voiceTelemetryEvents.filter((entry) => entry.event === 'voice.transcribe').length;
-  const voiceTranscribeEscalationCount = voiceTelemetryEvents.filter((entry) =>
-    entry.event === 'voice.escalated' && asTrimmedString(entry.metadata?.endpoint) === 'voice_transcribe',
-  ).length;
-  const voiceCaptureAttemptCount = voiceTranscribeSuccessCount + voiceTranscribeEscalationCount;
-  const voiceCaptureFailureCount = voiceTranscribeEscalationCount;
-  const voiceCaptureSuccessRate = voiceCaptureAttemptCount > 0
-    ? voiceTranscribeSuccessCount / voiceCaptureAttemptCount
-    : null;
+  const voiceReliability = buildVoiceReliabilitySummary(
+    extractVoiceTelemetryEventsFromRecords(
+      filteredTelemetry.map((docSnap) => docSnap.data() as Record<string, unknown>),
+    ),
+  );
   const aiCollabCount = filteredTelemetry.filter((docSnap) => {
     const data = docSnap.data() as Record<string, unknown>;
     const event = asTrimmedString(data.event || data.eventType);
@@ -5492,15 +5526,7 @@ export const generateKpiPack = onCall(async (request: CallableRequest) => {
     reflectionCount,
     reflectionQuality,
     aiCollaborationQuality,
-    voiceReliability: {
-      messageCount: voiceMessageCount,
-      ttsCount: voiceTtsCount,
-      blockedCount: voiceBlockedCount,
-      escalationCount: voiceEscalationCount,
-      captureAttemptCount: voiceCaptureAttemptCount,
-      captureFailureCount: voiceCaptureFailureCount,
-      captureSuccessRate: voiceCaptureSuccessRate,
-    },
+    voiceReliability,
     capabilityGrowth,
     tripleHelixCoverage,
     pillarCoverage: {
@@ -5533,6 +5559,129 @@ export const generateKpiPack = onCall(async (request: CallableRequest) => {
   });
 
   return { success: true, id: ref.id };
+});
+
+export const backfillKpiPackVoiceReliability = onCall(async (request: CallableRequest) => {
+  const actor = await getActorProfile(request.auth?.uid);
+  if (actor.role !== 'hq') {
+    throw new HttpsError('permission-denied', 'HQ role required.');
+  }
+
+  const siteId = asTrimmedString(request.data?.siteId);
+  const period = asTrimmedString(request.data?.period);
+  const force = request.data?.force === true;
+  const limitValue = typeof request.data?.limit === 'number' && request.data.limit > 0 && request.data.limit <= 120
+    ? Math.round(request.data.limit)
+    : 40;
+  const startDate = toDateValue(request.data?.startDate);
+  const endDate = toDateValue(request.data?.endDate);
+  if (startDate && endDate && startDate.getTime() > endDate.getTime()) {
+    throw new HttpsError('invalid-argument', 'startDate must be on or before endDate.');
+  }
+
+  let query: FirebaseFirestore.Query = admin.firestore().collection('kpiPacks');
+  if (siteId) {
+    query = query.where('siteId', '==', siteId);
+  }
+  if (period) {
+    query = query.where('period', '==', period);
+  }
+  if (startDate) {
+    query = query.where('periodStart', '>=', Timestamp.fromDate(startDate));
+  }
+  if (endDate) {
+    query = query.where('periodEnd', '<=', Timestamp.fromDate(endDate));
+  }
+
+  const packSnap = await query.limit(limitValue).get();
+  if (packSnap.empty) {
+    return { success: true, processed: 0, updated: 0, skipped: 0 };
+  }
+
+  let batch = admin.firestore().batch();
+  let batchOps = 0;
+  let updated = 0;
+  let skipped = 0;
+  const backfilledAt = Timestamp.now();
+
+  for (const docSnap of packSnap.docs) {
+    const data = docSnap.data() as Record<string, unknown>;
+    if (!force && hasVoiceReliabilitySummary(data.voiceReliability)) {
+      skipped += 1;
+      continue;
+    }
+
+    const packSiteId = asTrimmedString(data.siteId);
+    const packStart = toDateValue(data.periodStart);
+    const packEnd = toDateValue(data.periodEnd) || toDateValue(data.updatedAt) || new Date();
+
+    if (!packSiteId || !packStart || packStart.getTime() > packEnd.getTime()) {
+      skipped += 1;
+      continue;
+    }
+
+    const telemetrySnap = await admin.firestore().collection('telemetryEvents')
+      .where('siteId', '==', packSiteId)
+      .where('timestamp', '>=', Timestamp.fromDate(packStart))
+      .where('timestamp', '<=', Timestamp.fromDate(packEnd))
+      .limit(2500)
+      .get()
+      .catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] }));
+
+    const filteredTelemetryRecords = telemetrySnap.docs
+      .map((telemetryDocSnap) => telemetryDocSnap.data() as Record<string, unknown>)
+      .filter((record) => {
+        const timestamp = toDateValue(record.timestamp || record.createdAt);
+        return !timestamp || (timestamp >= packStart && timestamp <= packEnd);
+      });
+
+    const voiceReliability = buildVoiceReliabilitySummary(
+      extractVoiceTelemetryEventsFromRecords(filteredTelemetryRecords),
+    );
+
+    batch.set(docSnap.ref, {
+      voiceReliability,
+      voiceReliabilityBackfilledAt: backfilledAt,
+      updatedAt: backfilledAt,
+      updatedBy: actor.uid,
+    }, { merge: true });
+    updated += 1;
+    batchOps += 1;
+
+    if (batchOps >= 400) {
+      await batch.commit();
+      batch = admin.firestore().batch();
+      batchOps = 0;
+    }
+  }
+
+  if (batchOps > 0) {
+    await batch.commit();
+  }
+
+  await writeWorkflowAuditLog({
+    actor,
+    action: 'kpi_pack.voice_reliability_backfilled',
+    entityType: 'kpiPacks',
+    entityId: 'bulk_backfill',
+    siteId: siteId || null,
+    details: {
+      period: period || null,
+      force,
+      processed: packSnap.size,
+      updated,
+      skipped,
+      startDate: startDate ? startDate.toISOString() : null,
+      endDate: endDate ? endDate.toISOString() : null,
+    },
+  });
+
+  return {
+    success: true,
+    processed: packSnap.size,
+    updated,
+    skipped,
+  };
 });
 
 export const listRedTeamReviews = onCall(async (request: CallableRequest) => {

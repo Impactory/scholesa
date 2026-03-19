@@ -41,6 +41,7 @@ export {
   aggregateDailyTelemetry,
   aggregateWeeklyTelemetry,
   triggerTelemetryAggregation,
+  backfillTelemetryAggregates,
 } from './telemetryAggregator';
 
 // Export BOS+MIA runtime functions
@@ -146,6 +147,7 @@ export {
   upsertPartnerLaunch,
   listKpiPacks,
   generateKpiPack,
+  backfillKpiPackVoiceReliability,
   listRedTeamReviews,
   upsertRedTeamReview,
   listTrainingCycles,
