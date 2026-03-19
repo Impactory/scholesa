@@ -34,6 +34,17 @@ export interface CopilotVoiceResponse {
     quietModeActive: boolean;
     redactionApplied: boolean;
     redactionCount: number;
+    understandingSource?: 'heuristic' | 'model' | 'blended' | null;
+    responseGenerationSource?: 'local' | 'model' | 'guardrail' | null;
+    understanding?: {
+      intent?: string | null;
+      complexity?: string | null;
+      needsScaffold?: boolean | null;
+      emotionalState?: string | null;
+      confidence?: number | null;
+      responseMode?: string | null;
+      topicTags?: string[] | null;
+    };
   };
   tts: {
     available: boolean;
@@ -62,6 +73,16 @@ export interface TranscribeVoiceResponse {
     latencyMs: number;
     partial: boolean;
     modelVersion: string;
+    understandingSource?: 'heuristic' | 'model' | 'blended' | null;
+    understanding?: {
+      intent?: string | null;
+      complexity?: string | null;
+      needsScaffold?: boolean | null;
+      emotionalState?: string | null;
+      confidence?: number | null;
+      responseMode?: string | null;
+      topicTags?: string[] | null;
+    };
   };
 }
 

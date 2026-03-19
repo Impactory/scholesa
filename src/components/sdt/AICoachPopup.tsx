@@ -49,6 +49,8 @@ interface AICoachPopupProps {
 
 type CoachMode = 'hint' | 'rubric_check' | 'debug' | 'critique';
 
+type VoiceTransparencyMeta = CopilotVoiceResponse['metadata'];
+
 function buildModeConfig(t: (key: string) => string) {
   return {
     hint: {
@@ -83,6 +85,32 @@ function buildModeConfig(t: (key: string) => string) {
   }>;
 }
 
+function buildVoiceTransparencyMessage(metadata: VoiceTransparencyMeta): string | null {
+  const understandingSource = metadata.understandingSource ?? null;
+  const responseGenerationSource = metadata.responseGenerationSource ?? null;
+  const understandingConfidence = metadata.understanding?.confidence ?? null;
+
+  if (responseGenerationSource === 'guardrail' && understandingSource === 'heuristic') {
+    return 'MiloOS is using a safety clarification here because voice understanding stayed heuristic and may not be reliable yet.';
+  }
+  if (responseGenerationSource === 'local' && understandingSource === 'heuristic') {
+    return 'MiloOS answered with local heuristic support, not model-backed understanding. Treat this as a lightweight prompt, not a verified interpretation.';
+  }
+  if (responseGenerationSource === 'model' && understandingSource === 'heuristic') {
+    return 'MiloOS used model generation for the reply, but intent understanding remained heuristic.';
+  }
+  if (understandingSource === 'blended') {
+    const confidenceText = typeof understandingConfidence === 'number'
+      ? ` Understanding confidence: ${Math.round(understandingConfidence * 100)}%.`
+      : '';
+    return `MiloOS used blended heuristic and model understanding for this voice turn.${confidenceText}`;
+  }
+  if (understandingSource === 'model') {
+    return 'MiloOS used model-derived understanding for this voice turn.';
+  }
+  return null;
+}
+
 export function AICoachPopup({
   actorId,
   actorRole,
@@ -108,6 +136,7 @@ export function AICoachPopup({
   const [voiceInputTraceId, setVoiceInputTraceId] = useState<string | null>(null);
   const [currentLogId, setCurrentLogId] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [voiceTransparencyMessage, setVoiceTransparencyMessage] = useState<string | null>(null);
   const [sdtProfile, setSdtProfile] = useState<{ autonomy: number | null; competence: number | null; belonging: number | null } | null>(null);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -472,6 +501,7 @@ Guidance: ${
         });
       }
       setVoiceInputTraceId(voiceResponse.metadata.traceId);
+      setVoiceTransparencyMessage(buildVoiceTransparencyMessage(voiceResponse.metadata));
 
       setResponse(aiResponse);
       setCurrentLogId(aiResponse.logId);
@@ -505,6 +535,7 @@ Guidance: ${
         gradeBand: grade <= 3 ? 'grades_1_3' : grade <= 6 ? 'grades_4_6' : grade <= 9 ? 'grades_7_9' : 'grades_10_12',
         traceId,
       });
+      setVoiceTransparencyMessage('MiloOS could not complete a reliable voice inference turn and fell back to the service guard response.');
     } finally {
       setLoading(false);
     }
@@ -573,6 +604,7 @@ Guidance: ${
     setResponse(null);
     setExplainBack('');
     setStatusMessage(null);
+    setVoiceTransparencyMessage(null);
   };
 
   // Minimized button
@@ -763,6 +795,12 @@ Guidance: ${
                 </p>
               )}
             </div>
+
+            {voiceTransparencyMessage ? (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+                {voiceTransparencyMessage}
+              </div>
+            ) : null}
 
             {/* Feedback buttons (was this helpful?) */}
             {currentLogId && currentLogId !== 'error' && (
