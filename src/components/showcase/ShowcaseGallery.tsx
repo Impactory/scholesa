@@ -34,10 +34,14 @@ interface ShowcaseItem {
   title: string;
   description: string;
   visibility: 'site' | 'program' | 'public';
-  recognitionCount: number;
-  viewCount: number;
+  recognitionCount: number | null;
+  viewCount: number | null;
   artifactUrl?: string;
   createdAt: Date;
+}
+
+function readFiniteNumber(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
 
 export function ShowcaseGallery() {
@@ -92,8 +96,8 @@ export function ShowcaseGallery() {
             title: data.title,
             description: data.description,
             visibility: data.visibility,
-            recognitionCount: data.recognitionCount || 0,
-            viewCount: data.viewCount || 0,
+            recognitionCount: readFiniteNumber(data.recognitionCount),
+            viewCount: readFiniteNumber(data.viewCount),
             artifactUrl: data.artifactUrl,
             createdAt: (data.createdAt as Timestamp).toDate()
           };
@@ -266,11 +270,11 @@ function ShowcaseCard({ item, onRecognize }: ShowcaseCardProps) {
           <div className="flex items-center gap-4 text-sm text-gray-600">
             <div className="flex items-center gap-1">
               <HeartIcon className="h-4 w-4" />
-              <span>{item.recognitionCount}</span>
+              <span>{item.recognitionCount != null ? item.recognitionCount : 'Unavailable'}</span>
             </div>
             <div className="flex items-center gap-1">
               <EyeIcon className="h-4 w-4" />
-              <span>{item.viewCount}</span>
+              <span>{item.viewCount != null ? item.viewCount : 'Unavailable'}</span>
             </div>
           </div>
           

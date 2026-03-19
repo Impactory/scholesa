@@ -199,9 +199,9 @@ export interface ChoiceDistribution {
 }
 
 export interface SDTScore {
-  autonomy: number;
-  competence: number;
-  belonging: number;
+  autonomy: number | null;
+  competence: number | null;
+  belonging: number | null;
 }
 
 // ==================== INSIGHT RULES ====================

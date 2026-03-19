@@ -30,10 +30,10 @@ import { usePageViewTracking } from '@/src/hooks/useTelemetry';
 import { useI18n } from '@/src/lib/i18n/useI18n';
 
 interface SDTScores {
-  autonomy: number;
-  competence: number;
-  belonging: number;
-  overall: number;
+  autonomy: number | null;
+  competence: number | null;
+  belonging: number | null;
+  overall: number | null;
 }
 
 interface SkillProgress {
@@ -94,7 +94,12 @@ export function StudentMotivationProfile() {
       try {
         // Fetch SDT scores from telemetry
         const rawScores = await TelemetryService.getSDTProfile(learnerId, siteId);
-        const overall = Math.round((rawScores.autonomy + rawScores.competence + rawScores.belonging) / 3);
+        const overall =
+          rawScores.autonomy != null &&
+          rawScores.competence != null &&
+          rawScores.belonging != null
+            ? Math.round((rawScores.autonomy + rawScores.competence + rawScores.belonging) / 3)
+            : null;
         setSDTScores({ ...rawScores, overall });
         
         // Fetch skills from skillMastery collection
@@ -342,7 +347,7 @@ export function StudentMotivationProfile() {
 interface SDTCardProps {
   title: string;
   subtitle: string;
-  score: number;
+  score: number | null;
   icon: React.ComponentType<{ className?: string }>;
   color: 'purple' | 'blue' | 'pink' | 'green';
 }
@@ -363,7 +368,7 @@ function SDTCard({ title, subtitle, score, icon: Icon, color }: SDTCardProps) {
   };
   
   const circumference = 2 * Math.PI * 45; // r=45
-  const offset = circumference - (score / 100) * circumference;
+  const offset = circumference - ((score ?? 0) / 100) * circumference;
   
   return (
     <div className={`bg-gradient-to-br ${colorClasses[color]} rounded-lg p-6 text-white`}>
@@ -400,7 +405,7 @@ function SDTCard({ title, subtitle, score, icon: Icon, color }: SDTCardProps) {
           />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-3xl font-bold">{score}%</span>
+          <span className="text-3xl font-bold">{score != null ? `${score}%` : 'N/A'}</span>
         </div>
       </div>
     </div>

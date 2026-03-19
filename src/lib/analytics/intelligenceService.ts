@@ -178,16 +178,20 @@ export class IntelligenceService {
       : undefined;
     const sanitizedActivities = context.recentActivities.map((activity) => this.sanitizeText(activity));
     const struggling = (context.strugglingConcepts ?? []).map((concept) => this.sanitizeText(concept));
+    const hasCompleteSdt =
+      profile.sdtScores.autonomy != null &&
+      profile.sdtScores.competence != null &&
+      profile.sdtScores.belonging != null;
 
     const recommendations: string[] = [];
 
-    if (profile.sdtScores.autonomy < 55) {
+    if (profile.sdtScores.autonomy != null && profile.sdtScores.autonomy < 55) {
       recommendations.push('Offer two mission pathways and let the learner choose their starting route.');
     }
-    if (profile.sdtScores.competence < 55) {
+    if (profile.sdtScores.competence != null && profile.sdtScores.competence < 55) {
       recommendations.push('Use one worked example, then require an independent attempt before additional hints.');
     }
-    if (profile.sdtScores.belonging < 55) {
+    if (profile.sdtScores.belonging != null && profile.sdtScores.belonging < 55) {
       recommendations.push('Add a short peer check-in or partner review before final submission.');
     }
     if (profile.engagementScore < 50) {
@@ -217,13 +221,15 @@ export class IntelligenceService {
     ].slice(0, 3);
 
     const strengths: string[] = [];
-    if (profile.sdtScores.autonomy >= 70) strengths.push('independent decision-making');
-    if (profile.sdtScores.competence >= 70) strengths.push('skill mastery');
-    if (profile.sdtScores.belonging >= 70) strengths.push('collaboration');
+    if (profile.sdtScores.autonomy != null && profile.sdtScores.autonomy >= 70) strengths.push('independent decision-making');
+    if (profile.sdtScores.competence != null && profile.sdtScores.competence >= 70) strengths.push('skill mastery');
+    if (profile.sdtScores.belonging != null && profile.sdtScores.belonging >= 70) strengths.push('collaboration');
     if (profile.engagementScore >= 70) strengths.push('consistent engagement');
 
     const encouragement = strengths.length > 0
       ? `You are showing strong ${strengths.slice(0, 2).join(' and ')}. Keep building on that momentum.`
+      : !hasCompleteSdt
+      ? 'Keep collecting real learning evidence so Scholesa can personalize the next recommendation with confidence.'
       : 'You are making progress. Keep going one step at a time and your consistency will pay off.';
 
     return {
@@ -253,10 +259,19 @@ export class IntelligenceService {
   }> {
     const days = timeframe === 'week' ? 7 : 30;
     const profile = await this.getLearnerProfile(userId, siteId);
+    const hasCompleteSdt =
+      profile.sdtScores.autonomy != null &&
+      profile.sdtScores.competence != null &&
+      profile.sdtScores.belonging != null;
 
     const patterns: Array<{ pattern: string; confidence: number; description: string }> = [];
 
-    if (profile.sdtScores.autonomy >= 70 && profile.sdtScores.competence < 60) {
+    if (
+      profile.sdtScores.autonomy != null &&
+      profile.sdtScores.competence != null &&
+      profile.sdtScores.autonomy >= 70 &&
+      profile.sdtScores.competence < 60
+    ) {
       const challengeGap = (profile.sdtScores.autonomy - 70) + (60 - profile.sdtScores.competence);
       patterns.push({
         pattern: 'Challenge-seeking with uneven mastery',
@@ -265,7 +280,7 @@ export class IntelligenceService {
       });
     }
 
-    if (profile.sdtScores.competence >= 70 && profile.engagementScore >= 70) {
+    if (profile.sdtScores.competence != null && profile.sdtScores.competence >= 70 && profile.engagementScore >= 70) {
       const steadyProgressGap = (profile.sdtScores.competence - 70) + (profile.engagementScore - 70);
       patterns.push({
         pattern: 'Consistent independent progress',
@@ -274,7 +289,7 @@ export class IntelligenceService {
       });
     }
 
-    if (profile.sdtScores.belonging >= 75) {
+    if (profile.sdtScores.belonging != null && profile.sdtScores.belonging >= 75) {
       const belongingGap = profile.sdtScores.belonging - 75;
       patterns.push({
         pattern: 'Collaborative momentum',
@@ -292,7 +307,7 @@ export class IntelligenceService {
       });
     }
 
-    if (patterns.length === 0) {
+    if (patterns.length === 0 && hasCompleteSdt) {
       const balanceGap = Math.abs(profile.sdtScores.autonomy - 60)
         + Math.abs(profile.sdtScores.competence - 60)
         + Math.abs(profile.sdtScores.belonging - 60)
@@ -305,15 +320,15 @@ export class IntelligenceService {
     }
 
     const strengths: string[] = [];
-    if (profile.sdtScores.autonomy >= 65) strengths.push('Makes independent learning choices');
-    if (profile.sdtScores.competence >= 65) strengths.push('Builds mastery with persistence');
-    if (profile.sdtScores.belonging >= 65) strengths.push('Collaborates effectively with peers');
+    if (profile.sdtScores.autonomy != null && profile.sdtScores.autonomy >= 65) strengths.push('Makes independent learning choices');
+    if (profile.sdtScores.competence != null && profile.sdtScores.competence >= 65) strengths.push('Builds mastery with persistence');
+    if (profile.sdtScores.belonging != null && profile.sdtScores.belonging >= 65) strengths.push('Collaborates effectively with peers');
     if (profile.engagementScore >= 65) strengths.push('Sustains attention during learning tasks');
 
     const growthAreas: string[] = [];
-    if (profile.sdtScores.autonomy < 55) growthAreas.push('Increase learner ownership through explicit choice points');
-    if (profile.sdtScores.competence < 55) growthAreas.push('Strengthen core skills with micro-scaffolded checkpoints');
-    if (profile.sdtScores.belonging < 55) growthAreas.push('Improve social connection via peer feedback loops');
+    if (profile.sdtScores.autonomy != null && profile.sdtScores.autonomy < 55) growthAreas.push('Increase learner ownership through explicit choice points');
+    if (profile.sdtScores.competence != null && profile.sdtScores.competence < 55) growthAreas.push('Strengthen core skills with micro-scaffolded checkpoints');
+    if (profile.sdtScores.belonging != null && profile.sdtScores.belonging < 55) growthAreas.push('Improve social connection via peer feedback loops');
     if (profile.engagementScore < 55) growthAreas.push('Raise engagement with shorter cycles and visible progress markers');
 
     return {
