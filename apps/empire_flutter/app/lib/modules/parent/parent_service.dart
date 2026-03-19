@@ -362,7 +362,11 @@ class ParentService extends ChangeNotifier {
     final PortfolioSnapshot portfolioSummary =
       _buildPortfolioSnapshot(portfolioRows);
     final List<PortfolioPreviewItem> portfolioItemsPreview =
-      _buildPortfolioPreviewItems(portfolioRows);
+      _buildPortfolioPreviewItems(
+        portfolioRows,
+        missionAttemptRows,
+        interactionEventRows,
+      );
     final IdeationPassport ideationPassport = _buildIdeationPassport(
       missionAttemptRows,
       interactionEventRows,
@@ -592,6 +596,27 @@ class ParentService extends ChangeNotifier {
                   ? null
                   : _asTrimmedString(item['verificationStatus']),
               evidenceLinked: item['evidenceLinked'] == true,
+                capabilityTitles: List<String>.from(
+                item['capabilityTitles'] as List? ?? const <String>[],
+                ),
+                evidenceRecordIds: List<String>.from(
+                item['evidenceRecordIds'] as List? ?? const <String>[],
+                ),
+                missionAttemptId: _asTrimmedString(item['missionAttemptId']).isEmpty
+                  ? null
+                  : _asTrimmedString(item['missionAttemptId']),
+                verificationPrompt:
+                  _asTrimmedString(item['verificationPrompt']).isEmpty
+                    ? null
+                    : _asTrimmedString(item['verificationPrompt']),
+                proofOfLearningStatus:
+                  _asTrimmedString(item['proofOfLearningStatus']).isEmpty
+                    ? null
+                    : _asTrimmedString(item['proofOfLearningStatus']),
+                aiDisclosureStatus:
+                  _asTrimmedString(item['aiDisclosureStatus']).isEmpty
+                    ? null
+                    : _asTrimmedString(item['aiDisclosureStatus']),
             ))
         .toList(growable: false);
   }
@@ -788,35 +813,112 @@ class ParentService extends ChangeNotifier {
     );
   }
 
-  List<PortfolioPreviewItem> _buildPortfolioPreviewItems(
+    List<PortfolioPreviewItem> _buildPortfolioPreviewItems(
     List<Map<String, dynamic>> rows,
-  ) {
+    List<Map<String, dynamic>> missionAttemptRows,
+    List<Map<String, dynamic>> interactionEventRows,
+    ) {
     final List<PortfolioPreviewItem> items = rows
-        .map((Map<String, dynamic> row) => PortfolioPreviewItem(
-              id: _asTrimmedString(row['id']),
-              title: _asTrimmedString(row['title']).isEmpty
-                  ? 'Portfolio artifact'
-                  : _asTrimmedString(row['title']),
-              description: _asTrimmedString(row['description']).isEmpty
-                  ? 'Evidence-backed portfolio artifact.'
-                  : _asTrimmedString(row['description']),
-              pillar: _pillarLabelFromCodes(
-                List<String>.from(row['pillarCodes'] as List? ?? const <String>[]),
-              ),
-              type: _asTrimmedString(row['title']).toLowerCase().contains('badge')
-                  ? 'badge'
-                  : 'project',
-              completedAt: _parseTimestamp(row['updatedAt']) ??
-                  _parseTimestamp(row['createdAt']) ??
-                  DateTime.now(),
-              verificationStatus: _asTrimmedString(row['verificationStatus'])
-                      .isEmpty
-                  ? null
-                  : _asTrimmedString(row['verificationStatus']),
-              evidenceLinked:
-                  (row['evidenceRecordIds'] as List<dynamic>? ?? <dynamic>[])
-                      .isNotEmpty,
-            ))
+      .map((Map<String, dynamic> row) {
+        final String missionAttemptId =
+          _asTrimmedString(row['missionAttemptId']);
+        final Map<String, dynamic>? matchingMissionAttempt =
+          missionAttemptId.isEmpty
+            ? null
+            : missionAttemptRows.cast<Map<String, dynamic>?>().firstWhere(
+              (Map<String, dynamic>? attempt) =>
+                attempt != null &&
+                _asTrimmedString(attempt['id']) == missionAttemptId,
+              orElse: () => null,
+              );
+        final String sessionOccurrenceId = matchingMissionAttempt == null
+          ? ''
+          : _asTrimmedString(matchingMissionAttempt['sessionOccurrenceId']);
+        final List<Map<String, dynamic>> matchingInteractionEvents =
+          sessionOccurrenceId.isEmpty
+            ? const <Map<String, dynamic>>[]
+            : interactionEventRows.where((Map<String, dynamic> event) {
+              return _asTrimmedString(event['sessionOccurrenceId']) ==
+                sessionOccurrenceId;
+            }).toList(growable: false);
+        final Map<dynamic, dynamic>? proofBundleSummary =
+          matchingMissionAttempt == null
+            ? null
+            : matchingMissionAttempt['proofBundleSummary']
+              as Map<dynamic, dynamic>?;
+        final bool hasExplainItBack = proofBundleSummary?['hasExplainItBack'] == true;
+        final bool hasOralCheck = proofBundleSummary?['hasOralCheck'] == true;
+        final bool hasMiniRebuild = proofBundleSummary?['hasMiniRebuild'] == true;
+        final String proofOfLearningStatus = matchingMissionAttempt == null
+          ? 'not-available'
+          : hasExplainItBack && hasOralCheck && hasMiniRebuild
+            ? 'verified'
+            : hasExplainItBack || hasOralCheck || hasMiniRebuild
+              ? 'partial'
+              : 'missing';
+        final int learnerAiEventCount = matchingInteractionEvents.where(
+        (Map<String, dynamic> event) {
+          final String eventType =
+            _asTrimmedString(event['eventType']).toLowerCase();
+          return eventType == 'ai_help_used' || eventType == 'ai_help_opened';
+        },
+        ).length;
+        final bool hasLearnerExplainBackEvent = matchingInteractionEvents.any(
+        (Map<String, dynamic> event) =>
+          _asTrimmedString(event['eventType']).toLowerCase() ==
+          'explain_it_back_submitted',
+        );
+        final bool hasAiFeedbackSignal = matchingMissionAttempt != null &&
+          _asTrimmedString(matchingMissionAttempt['aiFeedbackDraft'])
+            .isNotEmpty;
+        final String aiDisclosureStatus = learnerAiEventCount > 0
+          ? hasLearnerExplainBackEvent
+            ? 'learner-ai-verified'
+            : 'learner-ai-verification-gap'
+          : hasAiFeedbackSignal
+            ? 'educator-feedback-ai'
+            : matchingMissionAttempt != null
+              ? 'no-learner-ai-signal'
+              : 'not-available';
+        return PortfolioPreviewItem(
+        id: _asTrimmedString(row['id']),
+        title: _asTrimmedString(row['title']).isEmpty
+          ? 'Portfolio artifact'
+          : _asTrimmedString(row['title']),
+        description: _asTrimmedString(row['description']).isEmpty
+          ? 'Evidence-backed portfolio artifact.'
+          : _asTrimmedString(row['description']),
+        pillar: _pillarLabelFromCodes(
+          List<String>.from(row['pillarCodes'] as List? ?? const <String>[]),
+        ),
+        type: _asTrimmedString(row['title']).toLowerCase().contains('badge')
+          ? 'badge'
+          : 'project',
+        completedAt: _parseTimestamp(row['updatedAt']) ??
+          _parseTimestamp(row['createdAt']) ??
+          DateTime.now(),
+        verificationStatus: _asTrimmedString(row['verificationStatus'])
+            .isEmpty
+          ? null
+          : _asTrimmedString(row['verificationStatus']),
+        evidenceLinked:
+          (row['evidenceRecordIds'] as List<dynamic>? ?? <dynamic>[])
+            .isNotEmpty,
+        capabilityTitles: List<String>.from(
+          row['capabilityTitles'] as List? ?? const <String>[],
+        ),
+        evidenceRecordIds: List<String>.from(
+          row['evidenceRecordIds'] as List? ?? const <String>[],
+        ),
+        missionAttemptId: missionAttemptId.isEmpty ? null : missionAttemptId,
+        verificationPrompt:
+          _asTrimmedString(row['verificationPrompt']).isEmpty
+            ? null
+            : _asTrimmedString(row['verificationPrompt']),
+        proofOfLearningStatus: proofOfLearningStatus,
+        aiDisclosureStatus: aiDisclosureStatus,
+        );
+      })
         .toList(growable: false);
     items.sort((PortfolioPreviewItem a, PortfolioPreviewItem b) =>
         b.completedAt.compareTo(a.completedAt));

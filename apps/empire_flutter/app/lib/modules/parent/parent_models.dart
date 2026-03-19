@@ -179,6 +179,12 @@ class PortfolioPreviewItem extends Equatable {
     required this.completedAt,
     this.verificationStatus,
     this.evidenceLinked = false,
+    this.capabilityTitles = const [],
+    this.evidenceRecordIds = const [],
+    this.missionAttemptId,
+    this.verificationPrompt,
+    this.proofOfLearningStatus,
+    this.aiDisclosureStatus,
   });
 
   final String id;
@@ -189,6 +195,12 @@ class PortfolioPreviewItem extends Equatable {
   final DateTime completedAt;
   final String? verificationStatus;
   final bool evidenceLinked;
+  final List<String> capabilityTitles;
+  final List<String> evidenceRecordIds;
+  final String? missionAttemptId;
+  final String? verificationPrompt;
+  final String? proofOfLearningStatus;
+  final String? aiDisclosureStatus;
 
   @override
   List<Object?> get props => <Object?>[
@@ -200,6 +212,12 @@ class PortfolioPreviewItem extends Equatable {
         completedAt,
         verificationStatus,
         evidenceLinked,
+        capabilityTitles,
+        evidenceRecordIds,
+        missionAttemptId,
+        verificationPrompt,
+        proofOfLearningStatus,
+        aiDisclosureStatus,
       ];
 }
 
