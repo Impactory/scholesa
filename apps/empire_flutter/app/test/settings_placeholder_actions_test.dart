@@ -10,6 +10,7 @@ import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
 import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/auth/auth_service.dart';
+import 'package:scholesa_app/router/role_gate.dart';
 import 'package:scholesa_app/modules/settings/settings_page.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
 import 'package:scholesa_app/services/theme_service.dart';
@@ -63,6 +64,21 @@ AppState _buildAppState() {
     'email': 'site-user-1@scholesa.test',
     'displayName': 'Site Lead',
     'role': 'site',
+    'activeSiteId': 'site-1',
+    'siteIds': <String>['site-1'],
+    'localeCode': 'en',
+    'entitlements': <dynamic>[],
+  });
+  return state;
+}
+
+AppState _buildRoleState(UserRole role) {
+  final AppState state = AppState();
+  state.updateFromMeResponse(<String, dynamic>{
+    'userId': '${role.name}-user-1',
+    'email': '${role.name}-user-1@scholesa.test',
+    'displayName': '${role.name} User',
+    'role': role.name,
     'activeSiteId': 'site-1',
     'siteIds': <String>['site-1'],
     'localeCode': 'en',
@@ -130,6 +146,67 @@ Finder _tileTapTarget(String label) {
 }
 
 void main() {
+  testWidgets('settings route aliases render for learner and parent roles',
+      (WidgetTester tester) async {
+    Future<void> verifyRoute({
+      required String initialLocation,
+      required UserRole role,
+    }) async {
+      final AppState state = _buildRoleState(role);
+      final ThemeService themeService = ThemeService();
+      final GoRouter router = GoRouter(
+        initialLocation: initialLocation,
+        routes: <RouteBase>[ 
+          GoRoute(
+            path: '/learner/settings',
+            builder: (BuildContext context, GoRouterState state) =>
+                const RoleGate(
+              allowedRoles: <UserRole>[
+                UserRole.learner,
+                UserRole.educator,
+                UserRole.hq,
+              ],
+              child: SettingsPage(),
+            ),
+          ),
+          GoRoute(
+            path: '/parent/settings',
+            builder: (BuildContext context, GoRouterState state) =>
+                const RoleGate(
+              allowedRoles: <UserRole>[UserRole.parent, UserRole.hq],
+              child: SettingsPage(),
+            ),
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        _buildRouterHarness(
+          router: router,
+          providers: <SingleChildWidget>[
+            ChangeNotifierProvider<AppState>.value(value: state),
+            ChangeNotifierProvider<ThemeService>.value(value: themeService),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Settings'), findsOneWidget);
+      expect(find.text('Access Denied'), findsNothing);
+      expect(find.text('Sign Out'), findsWidgets);
+    }
+
+    await tester.binding.setSurfaceSize(const Size(1000, 1800));
+    await verifyRoute(
+      initialLocation: '/learner/settings',
+      role: UserRole.learner,
+    );
+    await verifyRoute(
+      initialLocation: '/parent/settings',
+      role: UserRole.parent,
+    );
+  });
+
   testWidgets('settings sign out clears session for shared-device account switching',
       (WidgetTester tester) async {
     final AppState state = _buildAppState();
