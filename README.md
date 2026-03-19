@@ -1,168 +1,175 @@
 # Scholesa Platform
 
-This is the repository for the Scholesa Platform, an Education 2.0 operating system for K-9 learning studios and schools.
+Scholesa is a multi-surface education platform for K-9 learning studios and schools. This repository now contains the locale-first web app, the Flutter client, Firebase Gen 2 backend functions, a separate compliance operator, shared/generated packages, and the release and audit tooling that governs them.
 
-## Getting Started
+## Current Platform Shape
 
-### Prerequisites
+| Surface | Primary paths | Notes |
+| --- | --- | --- |
+| Web app | `app/`, `src/`, `public/`, `locales/` | Next.js App Router with locale-first URLs and protected role workflows |
+| Flutter app | `apps/empire_flutter/app/` | Mobile and multi-platform client with its own router, role dashboard, offline queue, and runtime surfaces |
+| Backend | `functions/src/` | Firebase Functions v2 on Node 24 for workflow ops, billing, BOS/MIA, voice, telemetry, and policy enforcement |
+| Compliance operator | `services/scholesa-compliance/` | Separate Node service and CLI for compliance scans and gates |
+| Shared and generated code | `packages/`, `src/dataconnect-generated/`, `src/dataconnect-admin-generated/`, `functions/src/dataconnect-admin-generated/` | Shared packages plus checked-in generated Data Connect clients |
+| Release and audit tooling | `scripts/`, `.github/workflows/`, `docs/` | QA gates, telemetry audits, release cutover scripts, and evidence docs |
 
-- Node.js (v18 or later)
-- npm, yarn, or pnpm
+## Canonical Docs
+
+- [docs/REPO_MAP.md](docs/REPO_MAP.md): current source-of-truth repo map
+- [docs/ROUTE_MODULE_MATRIX.md](docs/ROUTE_MODULE_MATRIX.md): web and Flutter route-to-module matrix
+- [docs/TRACEABILITY_MATRIX.md](docs/TRACEABILITY_MATRIX.md): requirement and verification coverage
+- [docs/FEATURE_SET_E2E_EXECUTION_PLAN_2026-03-12.md](docs/FEATURE_SET_E2E_EXECUTION_PLAN_2026-03-12.md): execution plan used for current release evidence
+- [RC3_RELEASE_GATE_STANDARD_MARCH_8_2026.md](RC3_RELEASE_GATE_STANDARD_MARCH_8_2026.md): production release control policy
+- [tree.md](tree.md): pointer file to the current repo map docs
+
+## Prerequisites
+
+- Node.js 24.x
+- npm
 - Firebase CLI
+- Flutter stable
+- Java 21 for Android builds
 
-### Installation
+## Installation
 
-1.  Install root dependencies:
+Install root dependencies:
 
-    ```bash
-    npm install
-    ```
+```bash
+npm ci
+```
 
-2.  Install Firebase Functions dependencies:
+Install Firebase Functions dependencies:
 
-    ```bash
-    cd functions && npm install && cd ..
-    ```
+```bash
+npm --prefix functions ci
+```
 
-### Running the Development Server
+Install Flutter dependencies:
+
+```bash
+cd apps/empire_flutter/app && flutter pub get
+```
+
+## Development Commands
+
+Run the web app:
 
 ```bash
 npm run dev
 ```
 
-### Running the Firebase Emulators
+Run Firebase emulators:
 
 ```bash
 firebase emulators:start
 ```
 
-### Running Web E2E
+Run the Flutter app from the app workspace:
 
 ```bash
+cd apps/empire_flutter/app
+flutter run
+```
+
+Run the compliance operator locally:
+
+```bash
+npm run compliance:serve
+```
+
+## Verification Commands
+
+Web lint and typecheck:
+
+```bash
+npm run lint
+npm run typecheck
+```
+
+Web unit and browser tests:
+
+```bash
+npm test
 npm run test:e2e:web
+npm run test:e2e:web:wcag
 ```
 
-This Playwright gate is browser-only and does not start Firebase emulators. It uses the repository's `NEXT_PUBLIC_E2E_TEST_MODE` test harness to validate locale-first routing, role redirects, and critical workflow mutations without external services.
-
-This harness is test-only. Production deployment, BOS/MIA runtime validation, and launch signoff must run against real Firebase Auth, Firestore, Functions, and internal inference services.
-
-### Building for Production
+Functions and rules:
 
 ```bash
-npm run build
+npm --prefix functions run build
+npm run test:integration:rules
+npm run qa:coppa:guards
 ```
 
-### Deployment
+Flutter:
 
-Deploy web via Cloud Run and Firebase resources separately:
+```bash
+cd apps/empire_flutter/app
+flutter analyze
+flutter test
+```
+
+Platform release gates:
+
+```bash
+npm run flow:platform:gates
+npm run qa:vibe-telemetry:audit
+npm run qa:vibe-telemetry:blockers
+npm run compliance:gate
+```
+
+## Architecture Notes
+
+### Web
+
+- Locale-first App Router lives in `app/[locale]/`.
+- Most protected workflow pages are thin wrappers around `src/features/workflows/WorkflowRoutePage.tsx`.
+- Workflow route metadata and canonical route defaults live in `src/lib/routing/workflowRoutes.ts`.
+
+### Flutter
+
+- The single route registry lives in `apps/empire_flutter/app/lib/router/app_router.dart`.
+- Role-gated access is enforced by `apps/empire_flutter/app/lib/router/role_gate.dart`.
+- Discoverability is centered on `apps/empire_flutter/app/lib/dashboards/role_dashboard.dart`.
+- Offline state and replay live under `apps/empire_flutter/app/lib/offline/`.
+
+### Backend
+
+- Firebase Functions v2 are implemented in `functions/src/index.ts` and supporting modules.
+- Workflow callables, BOS runtime, voice surfaces, notifications, billing, and telemetry are all exported from the functions package.
+
+### Compliance and Guardrails
+
+- Compliance scanning and CI gating live in `services/scholesa-compliance/`.
+- Repo-wide release, telemetry, identity, and no-mock audits live in `scripts/`.
+
+## Deployment
+
+Deploy web and Firebase resources with the repository deployment script:
 
 ```bash
 ./scripts/deploy.sh all
 ```
 
-For a safer Cloud Run rehearsal that creates new revisions without shifting traffic:
+For a Cloud Run rehearsal that creates a revision without shifting traffic:
 
 ```bash
 CLOUD_RUN_NO_TRAFFIC=1 ./scripts/deploy.sh web
 ```
 
-Cloud Run cannot create a brand-new service with `--no-traffic`. Bootstrap a missing service once without `CLOUD_RUN_NO_TRAFFIC=1`, then use rehearsal mode for later revisions.
-
-To deploy only the Firebase Functions:
+Deploy only Firebase Functions:
 
 ```bash
-cd functions
-npm run build
-npm run verify:gen2
+npm --prefix functions run build
+npm --prefix functions run verify:gen2
 firebase deploy --only functions
 ```
 
-Production rollout policy is big-bang only. Scholesa production releases do not use partial canary exposure. Use `RC3_RELEASE_GATE_STANDARD_MARCH_8_2026.md`, `RC3_BIG_BANG_OPERATOR_SCRIPT_MARCH_12_2026.md`, and `RC3_BIG_BANG_CUTOVER_CHECKLIST_MARCH_12_2026.md` for launch control.
+Production rollout policy is big-bang only. Use the RC3 release gate documents and operator scripts in the repository root for launch control.
 
-For a single operator entry point, run `npm run rc3:big-bang:guide`.
+## Notes
 
-### Learner AI Runtime Policy
-
-- Learner-facing BOS/MIA help is internal-inference only.
-- Autonomous learner help requires certified confidence `>= 0.97`.
-- Low-confidence, unavailable, or non-compliant inference must escalate safely instead of fabricating an answer.
-- Active school consent and site-scoped authorization are mandatory for learner AI and voice flows.
-
-## Production & PWA notes
-
-This project expects runtime configuration via environment variables. Do NOT commit secrets into the repository. Use your hosting provider's secret store (Vercel, Netlify, Firebase, GCP Secret Manager, etc.).
-
-- Create a `.env` locally for testing (use `.env.example` as a template).
-- Required client vars (public): `NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`, `NEXT_PUBLIC_FIREBASE_PROJECT_ID`, `NEXT_PUBLIC_FIREBASE_APP_ID`, `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`, `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`.
-- Server-side (admin) options:
-    - Preferred: set `FIREBASE_SERVICE_ACCOUNT` to the service account JSON (raw) or base64-encoded JSON. The app will parse and use it.
-    - Alternative: set `GOOGLE_APPLICATION_CREDENTIALS` in the environment (path to service account) and let Application Default Credentials be used.
-    - Fallback: set `FIREBASE_ADMIN_CLIENT_EMAIL`, `FIREBASE_ADMIN_PRIVATE_KEY`, and `NEXT_PUBLIC_FIREBASE_PROJECT_ID` (private key must preserve newlines; on Vercel replace newlines with `\n`).
-
-- Service worker and PWA:
-    - By default the service worker registers only in production. To enable during dev, set `NEXT_PUBLIC_ENABLE_SW=true` and specify `NEXT_PUBLIC_SW_PATH` if your SW is at a custom location.
-    - Ensure `public/sw.js` exists and is the SW you want deployed. The project ships with a minimal SW — replace or enhance it as needed.
-
-Deployment tips:
-
-- Vercel: Add the env vars in the Project Settings → Environment Variables. For `FIREBASE_SERVICE_ACCOUNT`, paste the JSON or base64 string as a secret (mark it as protected if needed). Vercel will expose `process.env` at build/runtime depending on variable naming (`NEXT_PUBLIC_` are exposed to client builds).
-- Firebase Functions: Use `firebase functions:config:set` or set env vars in your CI. For server-side service accounts prefer using `GOOGLE_APPLICATION_CREDENTIALS` on CI with the service account file stored in secrets.
-
-### Google Cloud (Cloud Run) + Firebase
-
-This repository includes a GitHub Actions workflow to build and deploy to Cloud Run: `.github/workflows/deploy-cloud-run.yml`.
-
-Overview steps (automatable via the workflow):
-
-1. Create or download the Firebase service account JSON (from Firebase Console → Project Settings → Service accounts → Generate new private key). This JSON will be used by server-side code (Admin SDK).
-2. Create a GCP service account for deployment and grant it permissions to deploy to Cloud Run and push images to Container Registry / Artifact Registry. Recommended roles: `roles/run.admin`, `roles/iam.serviceAccountUser`, `roles/artifactregistry.writer`, `roles/storage.admin` (or `roles/storage.objectAdmin`), and `roles/cloudbuild.builds.editor`. For `gcr.io` image names on Artifact Registry-backed projects, make sure the principal can upload artifacts to the `gcr.io` repository in the `us` multi-region.
-3. Add repository secrets in GitHub (Repository Settings → Secrets and variables → Actions):
-    - `GCP_SA_KEY`: the JSON key for the GCP deploy service account (use the full JSON content).
-    - `GCP_PROJECT_ID`: your GCP project id.
-    - `GCP_REGION`: e.g., `us-central1`.
-    - `CLOUD_RUN_SERVICE`: desired primary web Cloud Run service name (e.g., `scholesa-web`).
-    - `CLOUD_RUN_FLUTTER_SERVICE`: desired Flutter web Cloud Run service name (e.g., `empire-web`).
-    - Client/public Firebase vars: `NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_PROJECT_ID`, `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`, `NEXT_PUBLIC_FIREBASE_APP_ID`, `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`, `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`.
-    - `NEXT_PUBLIC_ENABLE_SW` (true/false).
-    - `FIREBASE_SERVICE_ACCOUNT_SECRET` (optional): the name of a Secret Manager secret containing the Firebase service account JSON. If you store the service account JSON in Secret Manager, set this to the secret name; the workflow will reference it when deploying. Alternatively, add `FIREBASE_SERVICE_ACCOUNT` as a GitHub secret containing base64(service-account.json) and create a Secret Manager secret manually.
-
-Quick `gcloud` commands (local):
-
-```bash
-# Authenticate locally
-gcloud auth login
-gcloud config set project YOUR_PROJECT_ID
-
-# Create deploy service account (adjust name as needed):
-gcloud iam service-accounts create gh-deployer --display-name "GitHub Deployer"
-
-# Grant roles to deploy account (run as project owner or admin):
-gcloud projects add-iam-policy-binding $GCP_PROJECT_ID --member="serviceAccount:gh-deployer@${GCP_PROJECT_ID}.iam.gserviceaccount.com" --role="roles/run.admin"
-gcloud projects add-iam-policy-binding $GCP_PROJECT_ID --member="serviceAccount:gh-deployer@${GCP_PROJECT_ID}.iam.gserviceaccount.com" --role="roles/iam.serviceAccountUser"
-gcloud projects add-iam-policy-binding $GCP_PROJECT_ID --member="serviceAccount:gh-deployer@${GCP_PROJECT_ID}.iam.gserviceaccount.com" --role="roles/storage.admin"
-gcloud projects add-iam-policy-binding $GCP_PROJECT_ID --member="serviceAccount:gh-deployer@${GCP_PROJECT_ID}.iam.gserviceaccount.com" --role="roles/cloudbuild.builds.editor"
-
-# Create and download key (keep this secret):
-gcloud iam service-accounts keys create gh-deployer-key.json --iam-account=gh-deployer@${GCP_PROJECT_ID}.iam.gserviceaccount.com
-
-# (Optional) Create a Secret Manager secret for the Firebase service account JSON:
-gcloud secrets create firebase-service-account --replication-policy="automatic"
-gcloud secrets versions add firebase-service-account --data-file="path/to/firebase-service-account.json"
-
-# Deploy manually (example):
-docker build -t gcr.io/$GCP_PROJECT_ID/scholesa:latest .
-docker push gcr.io/$GCP_PROJECT_ID/scholesa:latest
-gcloud run deploy $CLOUD_RUN_SERVICE --image gcr.io/$GCP_PROJECT_ID/scholesa:latest --region $GCP_REGION --platform managed --allow-unauthenticated --set-env-vars "NEXT_PUBLIC_FIREBASE_API_KEY=$NEXT_PUBLIC_FIREBASE_API_KEY,NEXT_PUBLIC_FIREBASE_PROJECT_ID=$NEXT_PUBLIC_FIREBASE_PROJECT_ID" --update-secrets "FIREBASE_SERVICE_ACCOUNT=firebase-service-account:latest"
-
-docker build -f Dockerfile.flutter -t gcr.io/$GCP_PROJECT_ID/empire-web:latest .
-docker push gcr.io/$GCP_PROJECT_ID/empire-web:latest
-gcloud run deploy $CLOUD_RUN_FLUTTER_SERVICE --image gcr.io/$GCP_PROJECT_ID/empire-web:latest --region $GCP_REGION --platform managed --allow-unauthenticated
-```
-
-Notes:
-- The workflow I added expects the deploy SA key in `GCP_SA_KEY`, and optionally uses a Secret Manager secret name in `FIREBASE_SERVICE_ACCOUNT_SECRET`.
-- The fallback deploy workflow now verifies the Functions Gen 2 baseline and deploys both the primary web service and the Flutter web service.
-- For production, ensure your Firebase Admin service account has the appropriate Firebase permissions (create the key via Firebase Console for the Admin SDK if unsure).
-
-
-If you want help wiring a specific provider (Vercel, Netlify, Firebase), tell me which one and I will provide exact steps and a sample CI snippet.
+- The source of truth for repo structure is the code and manifests, not historical audit dumps.
+- Checked-in generated clients under `src/dataconnect-generated/` and related directories are part of the live dependency graph.
+- Large audit reports and release artifacts in the repository root are evidence outputs, not runtime entrypoints.
