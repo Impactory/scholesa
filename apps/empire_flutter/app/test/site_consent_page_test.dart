@@ -144,6 +144,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Ava Stone'), findsOneWidget);
     expect(find.text('Ben Rivers'), findsOneWidget);
     expect(find.text('No media consent has been recorded for this learner yet.'),
@@ -223,6 +224,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Unable to load consent records right now'), findsOneWidget);
     expect(find.text('Retry'), findsOneWidget);
   });

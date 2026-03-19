@@ -164,19 +164,21 @@ class _PartnerIntegrationsPageState extends State<PartnerIntegrationsPage> {
     final Color color = _statusColor(connection.status);
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
+      appBar: AppBar(
+        title: Text(_t('Partner Integrations')),
+        backgroundColor: ScholesaColors.partnerGradient.colors.first,
+        foregroundColor: Colors.white,
+        actions: const <Widget>[
+          SessionMenuButton(
+            foregroundColor: Colors.white,
+          ),
+        ],
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Row(
-              children: <Widget>[
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
                   child: Icon(Icons.hub_rounded, color: color),
                 ),
                 const SizedBox(width: 12),

@@ -117,6 +117,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('pickup_authorization.saved'), findsOneWidget);
     expect(find.text('ignored.other.site'), findsNothing);
     expect(find.text('Entries'), findsOneWidget);
@@ -148,6 +149,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Unable to load audit logs right now'), findsOneWidget);
     expect(find.text('Retry'), findsOneWidget);
   });

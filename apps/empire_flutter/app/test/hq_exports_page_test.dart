@@ -133,6 +133,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('HQ Exports'), findsOneWidget);
     expect(find.text('Analytics Bundle'), findsOneWidget);
     expect(find.text('Billing Bundle'), findsOneWidget);
@@ -179,6 +180,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(
       find.text(
         'Some export bundles are unavailable right now. Ready bundles can still be downloaded.',

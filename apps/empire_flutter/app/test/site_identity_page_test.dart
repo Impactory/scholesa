@@ -62,6 +62,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(
       find.text('Identity matches are temporarily unavailable'),
       findsOneWidget,

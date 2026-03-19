@@ -90,6 +90,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Partner Integrations'), findsOneWidget);
     expect(find.text('GitHub'), findsOneWidget);
     expect(find.text('Last updated: 3/18/2026'), findsOneWidget);
@@ -114,6 +115,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('合作夥伴整合'), findsOneWidget);
     expect(find.text('尚未連接合作夥伴整合'), findsOneWidget);
     expect(

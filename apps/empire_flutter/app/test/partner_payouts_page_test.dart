@@ -77,6 +77,7 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Payouts are temporarily unavailable'), findsOneWidget);
     expect(find.text('Unable to load payouts right now.'), findsOneWidget);
     expect(find.text('No Payouts Yet'), findsNothing);

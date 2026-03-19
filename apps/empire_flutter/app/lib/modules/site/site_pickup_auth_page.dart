@@ -66,6 +66,9 @@ class _SitePickupAuthPageState extends State<SitePickupAuthPage> {
             onPressed: _isLoading || _isSaving ? null : _openEditor,
             icon: const Icon(Icons.add_rounded),
           ),
+          const SessionMenuButton(
+            foregroundColor: Colors.white,
+          ),
         ],
       ),
       body: RefreshIndicator(

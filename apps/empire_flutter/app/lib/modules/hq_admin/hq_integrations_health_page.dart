@@ -55,6 +55,9 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
               _refreshAllIntegrations();
             },
           ),
+          const SessionMenuButton(
+            foregroundColor: Colors.white,
+          ),
         ],
       ),
       body: ListView(

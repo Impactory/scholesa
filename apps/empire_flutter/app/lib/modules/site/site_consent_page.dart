@@ -55,6 +55,9 @@ class _SiteConsentPageState extends State<SiteConsentPage> {
             onPressed: _isLoading ? null : _loadData,
             icon: const Icon(Icons.refresh_rounded),
           ),
+          const SessionMenuButton(
+            foregroundColor: Colors.white,
+          ),
         ],
       ),
       body: RefreshIndicator(

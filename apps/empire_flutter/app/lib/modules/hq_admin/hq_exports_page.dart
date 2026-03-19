@@ -98,6 +98,9 @@ class _HqExportsPageState extends State<HqExportsPage> {
             onPressed: _isLoadingAny || !_hasReadyBundle ? null : _downloadFullBundle,
             icon: const Icon(Icons.file_download_rounded),
           ),
+          const SessionMenuButton(
+            foregroundColor: Colors.white,
+          ),
         ],
       ),
       body: RefreshIndicator(

@@ -62,6 +62,9 @@ class _SiteAuditPageState extends State<SiteAuditPage> {
             onPressed: _isLoading || _auditLogs.isEmpty ? null : _exportAuditLogs,
             icon: const Icon(Icons.download_rounded),
           ),
+          const SessionMenuButton(
+            foregroundColor: Colors.white,
+          ),
         ],
       ),
       body: RefreshIndicator(

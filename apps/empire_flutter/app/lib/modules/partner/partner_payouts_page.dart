@@ -37,6 +37,11 @@ class _PartnerPayoutsPageState extends State<PartnerPayoutsPage> {
         title: Text(_tPartnerPayouts(context, 'Payouts')),
         backgroundColor: ScholesaColors.billingGradient.colors.first,
         foregroundColor: Colors.white,
+        actions: const <Widget>[
+          SessionMenuButton(
+            foregroundColor: Colors.white,
+          ),
+        ],
       ),
       body: Consumer<PartnerService>(
         builder: (BuildContext context, PartnerService service, _) {
