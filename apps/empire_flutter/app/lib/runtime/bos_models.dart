@@ -372,9 +372,7 @@ class BosIntervention {
             : null,
         reasonCodes: ((m['reasonCodes'] as List<dynamic>?)?.cast<String>()) ??
             <String>[],
-        policy: m['policy'] != null
-            ? PolicyTerms.fromMap(m['policy'] as Map<String, dynamic>)
-            : null,
+        policy: PolicyTerms.tryFromMap(_asStringDynamicMap(m['policy'])),
         outcome: m['outcome'] as String?,
         supervision: m['supervision'] != null
             ? SupervisoryControl.fromMap(
@@ -413,12 +411,32 @@ class PolicyTerms {
         'omega': omega,
       };
 
-  factory PolicyTerms.fromMap(Map<String, dynamic> m) => PolicyTerms(
-        lambda: (m['lambda'] as num?)?.toDouble() ?? 0.5,
-        mDagger: (m['m_dagger'] as num?)?.toDouble() ?? 0.6,
-        highAssist: m['highAssist'] as bool? ?? false,
-        omega: (m['omega'] as num?)?.toDouble() ?? 0.0,
-      );
+  factory PolicyTerms.fromMap(Map<String, dynamic> m) {
+    final PolicyTerms? parsed = PolicyTerms.tryFromMap(m);
+    if (parsed == null) {
+      throw const FormatException('Malformed policy terms payload.');
+    }
+    return parsed;
+  }
+
+  static PolicyTerms? tryFromMap(Map<String, dynamic>? m) {
+    if (m == null) {
+      return null;
+    }
+    final double? lambda = _readFiniteDouble(m, 'lambda');
+    final double? mDagger = _readFiniteDouble(m, 'm_dagger');
+    final bool? highAssist = m['highAssist'] is bool ? m['highAssist'] as bool : null;
+    final double? omega = _readFiniteDouble(m, 'omega');
+    if (lambda == null || mDagger == null || highAssist == null || omega == null) {
+      return null;
+    }
+    return PolicyTerms(
+      lambda: lambda,
+      mDagger: mDagger,
+      highAssist: highAssist,
+      omega: omega,
+    );
+  }
 }
 
 // ──── §5  Teacher override / supervisory control ────

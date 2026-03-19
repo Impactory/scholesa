@@ -167,6 +167,36 @@ void main() {
       expect(restored.reasonCodes, <String>['low_cognition']);
       expect(restored.policy?.mDagger, 0.6);
     });
+
+    test('drops malformed policy payload instead of inventing defaults', () {
+      final BosIntervention restored = BosIntervention.fromMap(
+        <String, dynamic>{
+          'type': 'scaffold',
+          'salience': 'medium',
+          'policy': <String, dynamic>{
+            'lambda': 0.4,
+          },
+        },
+      );
+
+      expect(restored.policy, isNull);
+    });
+  });
+
+  group('PolicyTerms', () {
+    test('tryFromMap rejects incomplete policy payloads', () {
+      expect(
+        PolicyTerms.tryFromMap(<String, dynamic>{'lambda': 0.4}),
+        isNull,
+      );
+    });
+
+    test('fromMap throws on incomplete policy payloads', () {
+      expect(
+        () => PolicyTerms.fromMap(<String, dynamic>{'lambda': 0.4}),
+        throwsFormatException,
+      );
+    });
   });
 
   group('ReliabilityRisk', () {

@@ -1,6 +1,15 @@
 import 'package:cloud_functions/cloud_functions.dart';
 import 'bos_models.dart';
 
+Map<String, dynamic>? _asStringDynamicMap(dynamic value) {
+  if (value is! Map<dynamic, dynamic>) {
+    return null;
+  }
+  return value.map(
+    (dynamic key, dynamic val) => MapEntry(key.toString(), val),
+  );
+}
+
 // ──────────────────────────────────────────────────────
 // BOS Service — Client-side callable wrapper
 // Spec: BOS_MIA_HOW_TO_IMPLEMENT.md §1–§8
@@ -55,8 +64,9 @@ class BosService {
       'sessionOccurrenceId': sessionOccurrenceId,
     });
 
-    final Map<String, dynamic>? stateData = (result.data
-        as Map<String, dynamic>?)?['state'] as Map<String, dynamic>?;
+    final Map<String, dynamic>? response = _asStringDynamicMap(result.data);
+    final Map<String, dynamic>? stateData =
+      _asStringDynamicMap(response?['state']);
     if (stateData == null) return null;
     return OrchestrationState.tryFromMap(stateData);
   }
@@ -77,8 +87,9 @@ class BosService {
       'gradeBand': gradeBand.code,
     });
 
-    final Map<String, dynamic>? interventionData = (result.data
-        as Map<String, dynamic>?)?['intervention'] as Map<String, dynamic>?;
+    final Map<String, dynamic>? response = _asStringDynamicMap(result.data);
+    final Map<String, dynamic>? interventionData =
+      _asStringDynamicMap(response?['intervention']);
     if (interventionData == null) return null;
     return BosIntervention.fromMap(interventionData);
   }
@@ -90,7 +101,12 @@ class BosService {
         await _fn.httpsCallable('bosScoreMvl').call(<String, dynamic>{
       'episodeId': episodeId,
     });
-    return (result.data as Map<String, dynamic>)['resolution'] as String;
+    final Map<String, dynamic>? response = _asStringDynamicMap(result.data);
+    final String? resolution = response?['resolution'] as String?;
+    if (resolution == null || resolution.trim().isEmpty) {
+      throw const FormatException('Malformed MVL resolution payload.');
+    }
+    return resolution;
   }
 
   // ── Endpoint 5: Submit MVL evidence ───────────────
@@ -130,7 +146,7 @@ class BosService {
       'sessionOccurrenceId': sessionOccurrenceId,
       'siteId': siteId,
     });
-    return result.data as Map<String, dynamic>;
+    return _asStringDynamicMap(result.data) ?? <String, dynamic>{};
   }
 
   // ── Endpoint 9: Get learner loop insights ───────
@@ -147,7 +163,7 @@ class BosService {
       'learnerId': learnerId,
       'lookbackDays': lookbackDays,
     });
-    return result.data as Map<String, dynamic>;
+    return _asStringDynamicMap(result.data) ?? <String, dynamic>{};
   }
 
   // ── Endpoint 8: Contestability ────────────────────
@@ -179,6 +195,10 @@ class BosService {
   Future<AiCoachResponse> callAiCoach(AiCoachRequest request) async {
     final HttpsCallableResult<dynamic> result =
         await _fn.httpsCallable('genAiCoach').call(request.toMap());
-    return AiCoachResponse.fromMap(result.data as Map<String, dynamic>);
+    final Map<String, dynamic>? response = _asStringDynamicMap(result.data);
+    if (response == null) {
+      throw const FormatException('Malformed AI coach payload.');
+    }
+    return AiCoachResponse.fromMap(response);
   }
 }
