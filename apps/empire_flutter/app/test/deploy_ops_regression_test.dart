@@ -450,6 +450,17 @@ void main() {
           reason: 'Flutter web Dockerfile must configure SPA fallback routing');
       expect(content.contains('8080'), isTrue,
           reason: 'Cloud Run expects port 8080');
+      expect(
+        content.contains('flutter build web --release'),
+        isTrue,
+        reason: 'Flutter web Dockerfile must produce a release web build',
+      );
+      expect(
+        content.contains('--no-wasm-dry-run'),
+        isTrue,
+        reason:
+            'Flutter web Dockerfile must disable wasm dry-run until the current dependency set is compatible',
+      );
     });
 
     // ── 3.6 Cloud Build config exists for Flutter ──

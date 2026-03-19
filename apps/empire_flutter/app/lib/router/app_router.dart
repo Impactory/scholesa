@@ -82,6 +82,8 @@ final Map<String, bool> kKnownRoutes = <String, bool>{
   // Partner
   '/partner/listings': true,
   '/partner/contracts': true,
+  '/partner/deliverables': true,
+  '/partner/integrations': true,
   '/partner/payouts': true,
 
   // HQ
@@ -538,6 +540,20 @@ GoRouter createAppRouter(
         builder: (BuildContext context, GoRouterState state) => const RoleGate(
           allowedRoles: <UserRole>[UserRole.partner, UserRole.hq],
           child: PartnerContractsPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/partner/deliverables',
+        builder: (BuildContext context, GoRouterState state) => const RoleGate(
+          allowedRoles: <UserRole>[UserRole.partner, UserRole.hq],
+          child: PartnerDeliverablesPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/partner/integrations',
+        builder: (BuildContext context, GoRouterState state) => const RoleGate(
+          allowedRoles: <UserRole>[UserRole.partner, UserRole.hq],
+          child: PartnerIntegrationsPage(),
         ),
       ),
       GoRoute(

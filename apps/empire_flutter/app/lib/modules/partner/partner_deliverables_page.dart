@@ -440,9 +440,6 @@ class _PartnerDeliverablesPageState extends State<PartnerDeliverablesPage> {
   @override
   Widget build(BuildContext context) {
     final bool hasContracts = _contractDeliverables.isNotEmpty;
-    final bool hasAnyDeliverables = _contractDeliverables.any(
-      (_PartnerContractDeliverables contract) => contract.deliverables.isNotEmpty,
-    );
 
     return Scaffold(
       backgroundColor: ScholesaColors.background,
@@ -498,22 +495,36 @@ class _PartnerDeliverablesPageState extends State<PartnerDeliverablesPage> {
               ),
             );
           }
-          if (!hasAnyDeliverables) {
-            return _PartnerEmptyState(
-              icon: Icons.inventory_2_outlined,
-              title: _t('No deliverables submitted yet'),
-              message: _t(
-                'Deliverables linked to your partner contracts will appear here.',
-              ),
-            );
-          }
           return RefreshIndicator(
             onRefresh: _loadDeliverables,
             child: ListView(
               padding: const EdgeInsets.all(16),
-              children: _contractDeliverables
-                  .map(_buildContractSection)
-                  .toList(growable: false),
+              children: <Widget>[
+                if (_contractDeliverables.every(
+                  (_PartnerContractDeliverables contract) =>
+                      contract.deliverables.isEmpty,
+                ))
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: Colors.blue.withValues(alpha: 0.2),
+                      ),
+                    ),
+                    child: Text(
+                      _t(
+                        'Deliverables linked to your partner contracts will appear here.',
+                      ),
+                      style: TextStyle(color: Colors.blue.shade800),
+                    ),
+                  ),
+                ..._contractDeliverables
+                    .map(_buildContractSection)
+                    .toList(growable: false),
+              ],
             ),
           );
         },

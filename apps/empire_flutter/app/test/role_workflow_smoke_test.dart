@@ -57,6 +57,8 @@ void main() {
         '/site/pickup-auth',
         '/site/consent',
         '/site/audit',
+        '/partner/deliverables',
+        '/partner/integrations',
         '/hq/cms',
         '/hq/exports',
       ];
