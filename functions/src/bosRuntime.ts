@@ -122,6 +122,66 @@ function asRecord(value: unknown): Record<string, unknown> | undefined {
   return value as Record<string, unknown>;
 }
 
+function sanitizeOrchestrationStateResponse(stateData: Record<string, unknown>): Record<string, unknown> {
+  const sanitized: Record<string, unknown> = {
+    ...stateData,
+  };
+
+  const model = asRecord(stateData.model);
+  const estimator = normalizeString(model?.estimator);
+  const modelVersion = normalizeString(model?.version);
+  const qVersion = normalizeString(model?.Q_version);
+  const rVersion = normalizeString(model?.R_version);
+  if (estimator && modelVersion && qVersion && rVersion) {
+    sanitized.model = {
+      estimator,
+      version: modelVersion,
+      Q_version: qVersion,
+      R_version: rVersion,
+    };
+  } else {
+    delete sanitized.model;
+  }
+
+  const fusion = asRecord(stateData.fusion);
+  const familiesPresent = Array.isArray(fusion?.familiesPresent)
+    ? fusion.familiesPresent
+      .filter((entry): entry is string => typeof entry === 'string' && entry.trim().length > 0)
+      .map((entry) => entry.trim())
+    : undefined;
+  const sensorFusionMet = typeof fusion?.sensorFusionMet === 'boolean'
+    ? fusion.sensorFusionMet
+    : undefined;
+  if (familiesPresent && sensorFusionMet !== undefined) {
+    sanitized.fusion = {
+      familiesPresent,
+      sensorFusionMet,
+    };
+  } else {
+    delete sanitized.fusion;
+  }
+
+  const calibration = asRecord(stateData.calibration);
+  const scope = normalizeString(calibration?.scope);
+  const gradeBand = normalizeString(calibration?.gradeBand);
+  const calibrationModelVersion = normalizeString(calibration?.modelVersion);
+  const trainingRunId = calibration?.trainingRunId == null ? null : normalizeString(calibration.trainingRunId);
+  const ekfAlpha = firstNumber(calibration?.ekfAlpha);
+  if (scope && gradeBand && calibrationModelVersion && ekfAlpha !== undefined) {
+    sanitized.calibration = {
+      scope,
+      gradeBand,
+      modelVersion: calibrationModelVersion,
+      trainingRunId,
+      ekfAlpha,
+    };
+  } else {
+    delete sanitized.calibration;
+  }
+
+  return sanitized;
+}
+
 function normalizeKey(key: string): string {
   return key.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
 }
@@ -1386,9 +1446,13 @@ export const bosGetOrchestrationState = onCall(
       return { state: null, message: 'Orchestration state is malformed' };
     }
 
-    return { state: stateData };
+    return { state: sanitizeOrchestrationStateResponse(stateData) };
   }
 );
+
+export const __bosRuntimeInternals = {
+  sanitizeOrchestrationStateResponse,
+};
 
 /**
  * Endpoint 3: Run FDM + Estimator + Policy → return intervention

@@ -906,10 +906,18 @@ type AiCoachUnderstandingSignal = {
   topicTags: string[];
 };
 
+type AiCoachSafetyOutcome = 'allowed' | 'blocked' | 'modified' | 'escalated';
+
+const AI_COACH_POLICY_VERSION = 'gen-ai-coach-policy-2026-03-12';
+
 function extractInternalLlmPayload(data: unknown): {
   text?: string;
   modelVersion?: string;
   toolSuggestions?: string[];
+  traceId?: string;
+  policyVersion?: string;
+  safetyOutcome?: AiCoachSafetyOutcome;
+  safetyReasonCode?: string;
   understanding?: Partial<AiCoachUnderstandingSignal>;
 } | undefined {
   const root = (data && typeof data === 'object') ? data as Record<string, unknown> : undefined;
@@ -958,10 +966,23 @@ function extractInternalLlmPayload(data: unknown): {
   const toOptionalNumber = (input: unknown): number | undefined =>
     typeof input === 'number' && Number.isFinite(input) ? input : undefined;
 
+  const toOptionalSafetyOutcome = (input: unknown): AiCoachSafetyOutcome | undefined =>
+    input === 'allowed' || input === 'blocked' || input === 'modified' || input === 'escalated'
+      ? input
+      : undefined;
+
   return {
     text: toOptionalString(text),
     modelVersion: toOptionalString(root.modelVersion ?? result?.modelVersion ?? output?.modelVersion ?? metadata?.modelVersion),
     toolSuggestions: toStringArray(rawToolSuggestions),
+    traceId: toOptionalString(root.traceId ?? result?.traceId ?? output?.traceId ?? metadata?.traceId),
+    policyVersion: toOptionalString(root.policyVersion ?? result?.policyVersion ?? output?.policyVersion ?? metadata?.policyVersion),
+    safetyOutcome: toOptionalSafetyOutcome(
+      root.safetyOutcome ?? result?.safetyOutcome ?? output?.safetyOutcome ?? metadata?.safetyOutcome,
+    ),
+    safetyReasonCode: toOptionalString(
+      root.safetyReasonCode ?? result?.safetyReasonCode ?? output?.safetyReasonCode ?? metadata?.safetyReasonCode,
+    ),
     understanding: understandingSource ? {
       intent: toOptionalString(understandingSource.intent),
       complexity: toOptionalString(understandingSource.complexity),
@@ -1060,12 +1081,24 @@ async function generateCoachResponseWithInference(input: {
   gradeBand: string;
   displayName: string;
   locale: string;
+  traceId: string;
+  policyVersion: string;
   studentInput?: string;
   conceptTags: string[];
   checkpointId?: string;
   learnerState?: { cognition: number; engagement: number; integrity: number } | null;
   coppaBand: string;
-}): Promise<{ message: string; suggestedNextSteps: string[]; requiresExplainBack: boolean; modelVersion: string; confidence?: number }> {
+}): Promise<{
+  message: string;
+  suggestedNextSteps: string[];
+  requiresExplainBack: boolean;
+  modelVersion: string;
+  traceId?: string;
+  policyVersion?: string;
+  safetyOutcome?: AiCoachSafetyOutcome;
+  safetyReasonCode?: string;
+  confidence?: number;
+}> {
   const applyLearnerConversationalTone = (text: string, locale: string): string => {
     const normalized = text.replace(/\s+/g, ' ').trim();
     if (!normalized) return normalized;
@@ -1120,12 +1153,12 @@ async function generateCoachResponseWithInference(input: {
       },
     },
     context: {
-      traceId: `genAiCoach-${randomUUID()}`,
+      traceId: input.traceId,
       siteId: input.siteId,
       role: 'learner',
       gradeBand: input.gradeBand,
       locale: input.locale,
-      policyVersion: 'gen-ai-coach-policy-2026-03-12',
+      policyVersion: input.policyVersion,
       callerService: 'genAiCoach',
     },
   });
@@ -1150,6 +1183,10 @@ async function generateCoachResponseWithInference(input: {
       suggestedNextSteps: buildLearnerGuardNextSteps(input.locale),
       requiresExplainBack: true,
       modelVersion: llmPayload.modelVersion ?? 'confidence-guard-v1',
+      traceId: llmPayload.traceId ?? input.traceId,
+      policyVersion: llmPayload.policyVersion ?? input.policyVersion,
+      safetyOutcome: llmPayload.safetyOutcome ?? 'escalated',
+      safetyReasonCode: llmPayload.safetyReasonCode ?? 'child_low_confidence_guard',
       confidence: certifiedConfidence,
     };
   }
@@ -1165,6 +1202,10 @@ async function generateCoachResponseWithInference(input: {
     suggestedNextSteps,
     requiresExplainBack,
     modelVersion: llmPayload?.modelVersion ?? 'voice-orchestrator-v1',
+    traceId: llmPayload?.traceId ?? input.traceId,
+    policyVersion: llmPayload?.policyVersion ?? input.policyVersion,
+    safetyOutcome: llmPayload?.safetyOutcome ?? 'allowed',
+    safetyReasonCode: llmPayload?.safetyReasonCode ?? 'none',
     confidence: understanding.confidence,
   };
 }
@@ -1229,6 +1270,8 @@ export const genAiCoach = onCall(async (request) => {
 
   const tags: string[] = Array.isArray(conceptTags) ? conceptTags : [];
   const displayName = profile.displayName ?? 'learner';
+  const traceId = randomUUID();
+  const policyVersion = AI_COACH_POLICY_VERSION;
 
   // ── A0) Sense: Load orchestration state (x_hat, P) ──
   let xHat: { cognition: number; engagement: number; integrity: number } | null = null;
@@ -1295,6 +1338,10 @@ export const genAiCoach = onCall(async (request) => {
   let requiresExplainBack = false;
   let suggestedNextSteps: string[] = [];
   let modelVersion = 'confidence-guard-v1';
+  let responseTraceId = traceId;
+  let responsePolicyVersion = policyVersion;
+  let safetyOutcome: AiCoachSafetyOutcome = 'allowed';
+  let safetyReasonCode = 'none';
   let responseConfidence: number | undefined;
 
   // If MVL gate is active, intercept with verification prompt
@@ -1329,6 +1376,8 @@ export const genAiCoach = onCall(async (request) => {
         gradeBand: gb,
         displayName,
         locale: 'en',
+        traceId,
+        policyVersion,
         studentInput,
         conceptTags: tags,
         checkpointId,
@@ -1339,12 +1388,18 @@ export const genAiCoach = onCall(async (request) => {
       requiresExplainBack = generated.requiresExplainBack;
       suggestedNextSteps = generated.suggestedNextSteps;
       modelVersion = generated.modelVersion;
+      responseTraceId = generated.traceId ?? traceId;
+      responsePolicyVersion = generated.policyVersion ?? policyVersion;
+      safetyOutcome = generated.safetyOutcome ?? 'allowed';
+      safetyReasonCode = generated.safetyReasonCode ?? 'none';
       responseConfidence = generated.confidence;
     } catch (error) {
       console.warn('genAiCoach inference guard engaged', { coachMode, siteId, reason: error instanceof Error ? error.message : String(error) });
       message = buildLearnerInferenceUnavailableMessage(displayName, 'en');
       requiresExplainBack = true;
       suggestedNextSteps = buildLearnerGuardNextSteps('en');
+      safetyOutcome = 'escalated';
+      safetyReasonCode = 'child_inference_unavailable';
     }
   }
 
@@ -1375,6 +1430,10 @@ export const genAiCoach = onCall(async (request) => {
     payload: {
       mode: coachMode,
       aiHelpOpenedEventId: aiHelpOpenedRef.id,
+      traceId: responseTraceId,
+      policyVersion: responsePolicyVersion,
+      safetyOutcome,
+      safetyReasonCode,
       reliabilityRiskScore: reliabilityRisk.riskScore,
       autonomyRiskScore: autonomyRisk.riskScore,
       mvlGateActive: mvlResult.gateActive,
@@ -1399,6 +1458,10 @@ export const genAiCoach = onCall(async (request) => {
     checkpointId: checkpointId || null,
     payload: {
       mode: coachMode,
+      traceId: responseTraceId,
+      policyVersion: responsePolicyVersion,
+      safetyOutcome,
+      safetyReasonCode,
       hasLearnerState: !!xHat,
       reliabilityRisk: reliabilityRisk,
       autonomyRisk: autonomyRisk,
@@ -1432,6 +1495,7 @@ export const genAiCoach = onCall(async (request) => {
     },
     meta: {
       version: '1.0.0',
+      traceId: responseTraceId,
       modelVersion,
       gradeBand: gb,
       gradeBandSource,
@@ -1439,6 +1503,13 @@ export const genAiCoach = onCall(async (request) => {
       conceptTags: tags,
       attachments: normalizedAttachments,
       aiHelpOpenedEventId: aiHelpOpenedRef.id,
+    },
+    metadata: {
+      traceId: responseTraceId,
+      policyVersion: responsePolicyVersion,
+      safetyOutcome,
+      safetyReasonCode,
+      modelVersion,
     },
   };
 });
