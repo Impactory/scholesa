@@ -428,6 +428,76 @@ describe('workflow route parity', () => {
     ]);
   });
 
+  it('loads educator mission review records scoped to the active site', async () => {
+    getDocsMock.mockResolvedValueOnce({
+      docs: [{
+        id: 'attempt-1',
+        data: () => ({
+          missionTitle: 'Robotics Reflection',
+          learnerId: 'learner-1',
+          feedback: 'Needs one more evidence note',
+          status: 'submitted',
+          submittedAt: '2026-03-18T12:00:00.000Z',
+          siteId: 'site-1',
+        }),
+      }],
+    });
+
+    const result = await loadWorkflowRecords(makeContext('/educator/missions/review', {
+      role: 'educator',
+      uid: 'educator-1',
+      profile: {
+        role: 'educator',
+        activeSiteId: 'site-1',
+        siteIds: ['site-1'],
+      } as never,
+    }));
+
+    expect(whereMock).toHaveBeenCalledWith('siteId', '==', 'site-1');
+    expect(whereMock).toHaveBeenCalledWith('status', '==', 'submitted');
+    expect(result.records).toEqual([
+      expect.objectContaining({
+        id: 'attempt-1',
+        collectionName: 'missionAttempts',
+        routePath: '/educator/missions/review',
+        title: 'Robotics Reflection',
+        subtitle: 'learner-1',
+        status: 'submitted',
+        canEdit: true,
+        primaryActionLabel: 'Mark reviewed',
+      }),
+    ]);
+  });
+
+  it('updates educator mission review records to reviewed with reviewer metadata', async () => {
+    await updateWorkflowRecord(makeContext('/educator/missions/review', {
+      role: 'educator',
+      uid: 'educator-1',
+      profile: {
+        role: 'educator',
+        activeSiteId: 'site-1',
+        siteIds: ['site-1'],
+      } as never,
+    }), {
+      id: 'attempt-1',
+      collectionName: 'missionAttempts',
+      data: {
+        status: 'submitted',
+      },
+    });
+
+    expect(updateDocMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collectionName: 'missionAttempts',
+        id: 'attempt-1',
+      }),
+      expect.objectContaining({
+        status: 'reviewed',
+        reviewedBy: 'educator-1',
+      }),
+    );
+  });
+
   it('loads parent schedule records only for linked learners', async () => {
     getDocsMock
       .mockResolvedValueOnce({
