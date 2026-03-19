@@ -21,27 +21,27 @@ jest.mock('@/src/firebase/client-init', () => ({
 }));
 
 jest.mock('firebase/functions', () => ({
-  httpsCallable: (...args: unknown[]) => httpsCallableMock(...args),
+  httpsCallable: (...args: unknown[]) => httpsCallableMock.apply(undefined, args),
 }));
 
 jest.mock('firebase/firestore', () => ({
-  addDoc: (...args: unknown[]) => addDocMock(...args),
+  addDoc: (...args: unknown[]) => addDocMock.apply(undefined, args),
   arrayRemove: jest.fn(),
   arrayUnion: jest.fn(),
-  collection: (...args: unknown[]) => collectionMock(...args),
-  deleteDoc: (...args: unknown[]) => deleteDocMock(...args),
-  doc: (...args: unknown[]) => docMock(...args),
+  collection: (...args: unknown[]) => collectionMock.apply(undefined, args),
+  deleteDoc: (...args: unknown[]) => deleteDocMock.apply(undefined, args),
+  doc: (...args: unknown[]) => docMock.apply(undefined, args),
   documentId: () => documentIdMock(),
-  getDoc: (...args: unknown[]) => getDocMock(...args),
-  getDocs: (...args: unknown[]) => getDocsMock(...args),
-  increment: (...args: unknown[]) => incrementMock(...args),
-  limit: (...args: unknown[]) => limitMock(...args),
-  orderBy: (...args: unknown[]) => orderByMock(...args),
-  query: (...args: unknown[]) => queryMock(...args),
+  getDoc: (...args: unknown[]) => getDocMock.apply(undefined, args),
+  getDocs: (...args: unknown[]) => getDocsMock.apply(undefined, args),
+  increment: (...args: unknown[]) => incrementMock.apply(undefined, args),
+  limit: (...args: unknown[]) => limitMock.apply(undefined, args),
+  orderBy: (...args: unknown[]) => orderByMock.apply(undefined, args),
+  query: (...args: unknown[]) => queryMock.apply(undefined, args),
   serverTimestamp: () => serverTimestampMock(),
-  setDoc: (...args: unknown[]) => setDocMock(...args),
-  updateDoc: (...args: unknown[]) => updateDocMock(...args),
-  where: (...args: unknown[]) => whereMock(...args),
+  setDoc: (...args: unknown[]) => setDocMock.apply(undefined, args),
+  updateDoc: (...args: unknown[]) => updateDocMock.apply(undefined, args),
+  where: (...args: unknown[]) => whereMock.apply(undefined, args),
 }));
 
 import {
@@ -271,6 +271,107 @@ describe('workflow route parity', () => {
         category: 'STEM',
       }),
     );
+  });
+
+  it('loads partner deliverables with contract context and HQ acceptance action', async () => {
+    getDocsMock
+      .mockResolvedValueOnce({
+        docs: [{
+          id: 'contract-1',
+          data: () => ({
+            title: 'Contract One',
+            partnerId: 'partner-1',
+            siteId: 'site-1',
+            updatedAt: '2026-03-18T01:00:00.000Z',
+          }),
+        }],
+      })
+      .mockResolvedValueOnce({
+        docs: [{
+          id: 'deliverable-1',
+          data: () => ({
+            contractId: 'contract-1',
+            title: 'Launch checklist',
+            status: 'submitted',
+            submittedAt: '2026-03-18T02:00:00.000Z',
+          }),
+        }],
+      });
+
+    const result = await loadWorkflowRecords(makeContext('/partner/deliverables'));
+
+    expect(result.records).toHaveLength(1);
+    expect(result.records[0]).toEqual(expect.objectContaining({
+      collectionName: 'partnerDeliverables',
+      subtitle: 'Contract One',
+      canEdit: true,
+      primaryActionLabel: 'Accept deliverable',
+    }));
+  });
+
+  it('creates partner deliverables in the live collection with submitted status', async () => {
+    await createWorkflowRecord(makeContext('/partner/deliverables', {
+      role: 'partner',
+      uid: 'partner-1',
+      profile: {
+        role: 'partner',
+        activeSiteId: 'site-1',
+        siteIds: ['site-1'],
+      } as never,
+    }), {
+      values: {
+        contractId: 'contract-1',
+        title: 'Robotics showcase video',
+        description: 'Edited event recap',
+        evidenceUrl: 'https://example.com/showcase',
+      },
+    });
+
+    expect(addDocMock).toHaveBeenCalledWith(
+      expect.objectContaining({ collectionName: 'partnerDeliverables' }),
+      expect.objectContaining({
+        contractId: 'contract-1',
+        title: 'Robotics showcase video',
+        description: 'Edited event recap',
+        evidenceUrl: 'https://example.com/showcase',
+        status: 'submitted',
+        submittedBy: 'partner-1',
+      }),
+    );
+  });
+
+  it('loads partner-owned integrations through integrationConnections', async () => {
+    getDocsMock.mockResolvedValueOnce({
+      docs: [{
+        id: 'connection-1',
+        data: () => ({
+          ownerUserId: 'partner-1',
+          provider: 'clever',
+          status: 'connected',
+          tokenRef: 'token-ref-1',
+          createdAt: '2026-03-18T03:00:00.000Z',
+        }),
+      }],
+    });
+
+    const result = await loadWorkflowRecords(makeContext('/partner/integrations', {
+      role: 'partner',
+      uid: 'partner-1',
+      profile: {
+        role: 'partner',
+        activeSiteId: 'site-1',
+        siteIds: ['site-1'],
+      } as never,
+    }));
+
+    expect(result.records).toHaveLength(1);
+    expect(result.records[0]).toEqual(expect.objectContaining({
+      collectionName: 'integrationConnections',
+      title: 'clever',
+      subtitle: 'token-ref-1',
+      status: 'connected',
+      canEdit: false,
+    }));
   });
 
   it('routes site billing plan changes through requestSiteBillingPlanChange', async () => {

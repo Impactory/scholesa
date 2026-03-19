@@ -673,6 +673,9 @@ function applyRouteActionLabels(records: WorkflowRecord[], routePath: WorkflowPa
           primaryActionLabel = record.status === 'submitted' ? 'Return to draft' : 'Submit contract';
         }
         break;
+      case '/partner/deliverables':
+        primaryActionLabel = record.status === 'accepted' ? 'Mark submitted' : 'Accept deliverable';
+        break;
       case '/hq/curriculum':
         if (record.collectionName === 'trainingCycles') {
           primaryActionLabel = record.status === 'completed' ? 'Reopen cycle' : 'Complete cycle';
@@ -1152,6 +1155,80 @@ async function loadCallableRows(params: {
       });
     })
     .filter((record): record is WorkflowRecord => Boolean(record));
+}
+
+async function loadPartnerDeliverableRecords(ctx: WorkflowContext): Promise<WorkflowRecord[]> {
+  const contractConstraints: QueryConstraint[] = ctx.role === 'hq'
+    ? [orderBy('updatedAt', 'desc'), limit(100)]
+    : [where('partnerId', '==', ctx.uid), orderBy('updatedAt', 'desc'), limit(100)];
+  const contractSnap = await getDocs(query(collection(firestore, 'partnerContracts'), ...contractConstraints));
+  const contractsById = new Map<string, Record<string, unknown>>();
+
+  for (const contractDoc of contractSnap.docs) {
+    contractsById.set(contractDoc.id, (contractDoc.data() || {}) as Record<string, unknown>);
+  }
+
+  if (contractsById.size === 0) {
+    return [];
+  }
+
+  const deliverableDocs: Array<{ id: string; data: Record<string, unknown> }> = [];
+  if (ctx.role === 'hq') {
+    const deliverableSnap = await getDocs(
+      query(
+        collection(firestore, 'partnerDeliverables'),
+        orderBy('submittedAt', 'desc'),
+        limit(120),
+      ),
+    );
+    for (const deliverableDoc of deliverableSnap.docs) {
+      const data = (deliverableDoc.data() || {}) as Record<string, unknown>;
+      if (!contractsById.has(asString(data.contractId, ''))) {
+        continue;
+      }
+      deliverableDocs.push({ id: deliverableDoc.id, data });
+    }
+  } else {
+    const contractIds = Array.from(contractsById.keys());
+    for (const chunk of chunkValues(contractIds, 10)) {
+      const deliverableSnap = await getDocs(
+        query(
+          collection(firestore, 'partnerDeliverables'),
+          where('contractId', 'in', chunk),
+          limit(50),
+        ),
+      );
+      for (const deliverableDoc of deliverableSnap.docs) {
+        deliverableDocs.push({
+          id: deliverableDoc.id,
+          data: (deliverableDoc.data() || {}) as Record<string, unknown>,
+        });
+      }
+    }
+  }
+
+  const records = deliverableDocs.map(({ id, data }) => {
+    const contractId = asString(data.contractId, '');
+    const contract = contractsById.get(contractId) || {};
+    return buildRecord({
+      routePath: '/partner/deliverables',
+      collectionName: 'partnerDeliverables',
+      id,
+      raw: {
+        ...data,
+        contractTitle: optionLabelFromRecord(contract, contractId),
+        siteId: asString(contract.siteId, asString(data.siteId, '')),
+        partnerId: asString(contract.partnerId, ''),
+      },
+      titleKeys: ['title', 'contractTitle'],
+      subtitleKeys: ['contractTitle', 'description', 'evidenceUrl'],
+      statusKeys: ['status'],
+      editable: ctx.role === 'hq',
+      deletable: false,
+    });
+  });
+
+  return sortWorkflowRecords(records);
 }
 
 async function loadCleverSchoolOptions(siteId: string | null): Promise<WorkflowFieldOption[]> {
@@ -2463,6 +2540,68 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
         ]),
         };
       }
+    case '/partner/deliverables': {
+      const contractOptions = ctx.role === 'partner'
+        ? await loadPartnerContractOptionsForActor(ctx)
+        : [];
+      return {
+        records: applyRouteActionLabels(await loadPartnerDeliverableRecords(ctx), ctx.routePath),
+        canCreate: ctx.role === 'partner' && contractOptions.length > 0,
+        canRefresh: true,
+        createLabel: 'Submit deliverable',
+        createConfig: ctx.role === 'partner' && contractOptions.length > 0
+          ? buildCreateConfig('Submit deliverable', 'Submit deliverable', [
+              {
+                name: 'contractId',
+                label: 'Contract',
+                type: 'select',
+                required: true,
+                defaultValue: contractOptions[0]?.value || '',
+                options: contractOptions,
+              },
+              {
+                name: 'title',
+                label: 'Deliverable title',
+                type: 'text',
+                required: true,
+              },
+              {
+                name: 'description',
+                label: 'Description',
+                type: 'textarea',
+              },
+              {
+                name: 'evidenceUrl',
+                label: 'Evidence URL',
+                type: 'text',
+                helperText: 'Optional HTTPS link to the submitted artifact.',
+              },
+            ])
+          : null,
+      };
+    }
+    case '/partner/integrations': {
+      const constraints = ctx.role === 'hq'
+        ? [orderBy('updatedAt', 'desc')]
+        : [where('ownerUserId', '==', ctx.uid), orderBy('createdAt', 'desc')];
+      return {
+        records: await queryCollectionRecords({
+          routePath: ctx.routePath,
+          collectionName: 'integrationConnections',
+          constraints,
+          titleKeys: ['provider', 'id'],
+          subtitleKeys: ['lastError', 'tokenRef', 'ownerUserId'],
+          statusKeys: ['status'],
+          editable: false,
+          deletable: false,
+          limitSize: 100,
+        }),
+        canCreate: false,
+        canRefresh: true,
+        createLabel: 'Create',
+        createConfig: null,
+      };
+    }
     case '/partner/payouts':
       return {
         records: await loadCallableRows({
@@ -3603,6 +3742,30 @@ export async function createWorkflowRecord(
         status: 'draft',
       });
       return;
+    case '/partner/deliverables': {
+      const evidenceUrl = optionalStringValue(input, 'evidenceUrl');
+      if (evidenceUrl) {
+        try {
+          const parsed = new URL(evidenceUrl);
+          if (!['http:', 'https:'].includes(parsed.protocol)) {
+            throw new Error('invalid protocol');
+          }
+        } catch {
+          throw new Error('Evidence URL must be a valid http or https link.');
+        }
+      }
+      await addDoc(collection(firestore, 'partnerDeliverables'), {
+        ...payloadBase,
+        contractId: requireStringValue(input, 'contractId', 'Contract'),
+        title: requireStringValue(input, 'title', 'Deliverable title'),
+        description: optionalStringValue(input, 'description') || null,
+        evidenceUrl: evidenceUrl || null,
+        status: 'submitted',
+        submittedBy: ctx.uid,
+        submittedAt: serverTimestamp(),
+      });
+      return;
+    }
     case '/hq/sites':
       await addDoc(collection(firestore, 'sites'), {
         ...payloadBase,
@@ -4004,6 +4167,16 @@ export async function updateWorkflowRecord(
         updatedAt: serverTimestamp(),
         status: currentStatus === 'submitted' ? 'draft' : 'submitted',
         submittedAt: currentStatus === 'submitted' ? null : serverTimestamp(),
+      });
+      return;
+    }
+    case '/partner/deliverables': {
+      const currentStatus = asString(data.status, 'submitted');
+      await updateDoc(ref, {
+        updatedAt: serverTimestamp(),
+        status: currentStatus === 'accepted' ? 'submitted' : 'accepted',
+        acceptedBy: currentStatus === 'accepted' ? null : ctx.uid,
+        acceptedAt: currentStatus === 'accepted' ? null : serverTimestamp(),
       });
       return;
     }

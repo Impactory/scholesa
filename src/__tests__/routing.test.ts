@@ -52,4 +52,21 @@ describe('Routing contracts', () => {
       ]),
     );
   });
+
+  it('includes the partner deliverables and integrations workflow routes', () => {
+    expect(WORKFLOW_ROUTE_DEFINITIONS).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          path: '/partner/deliverables',
+          allowedRoles: ['partner', 'hq'],
+          dataMode: 'firestore',
+        }),
+        expect.objectContaining({
+          path: '/partner/integrations',
+          allowedRoles: ['partner', 'hq'],
+          dataMode: 'firestore',
+        }),
+      ]),
+    );
+  });
 });
