@@ -99,7 +99,12 @@ export function ParentAnalyticsDashboard() {
         for (const userDoc of usersSnapshot.docs) {
           const userData = userDoc.data();
           const childId = userDoc.id;
-          const childName = userData.displayName || userData.email || 'Learner';
+          const childName =
+            (typeof userData.displayName === 'string' && userData.displayName.trim().length > 0
+              ? userData.displayName.trim()
+              : typeof userData.email === 'string' && userData.email.trim().length > 0
+              ? userData.email.trim()
+              : 'Learner identity unavailable');
           
           // Load aggregate SDT metrics for this learner
           let autonomyScore: number | null = null;
