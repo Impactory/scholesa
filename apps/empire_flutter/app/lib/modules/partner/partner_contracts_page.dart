@@ -114,6 +114,13 @@ class _PartnerContractsPageState extends State<PartnerContractsPage>
   }
 
   Widget _buildContractsTab(PartnerService service) {
+    if (service.error != null && service.contracts.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: _buildLoadErrorState(service.error!, service),
+      );
+    }
+
     if (service.error != null && service.contracts.isNotEmpty) {
       return Column(
         children: <Widget>[
@@ -173,6 +180,13 @@ class _PartnerContractsPageState extends State<PartnerContractsPage>
   }
 
   Widget _buildLaunchesTab(PartnerService service) {
+    if (service.error != null && service.partnerLaunches.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: _buildLoadErrorState(service.error!, service),
+      );
+    }
+
     if (service.error != null && service.partnerLaunches.isNotEmpty) {
       return Column(
         children: <Widget>[
