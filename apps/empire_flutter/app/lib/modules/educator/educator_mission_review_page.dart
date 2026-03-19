@@ -52,8 +52,29 @@ class _EducatorMissionReviewPageState extends State<EducatorMissionReviewPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<MissionService>().loadPendingReviews();
+      _loadPendingReviews();
     });
+  }
+
+  String? _activeSiteId() {
+    final AppState appState = context.read<AppState>();
+    final String activeSiteId = (appState.activeSiteId ?? '').trim();
+    if (activeSiteId.isNotEmpty) {
+      return activeSiteId;
+    }
+    if (appState.siteIds.isNotEmpty) {
+      final String firstSiteId = appState.siteIds.first.trim();
+      if (firstSiteId.isNotEmpty) {
+        return firstSiteId;
+      }
+    }
+    return null;
+  }
+
+  Future<void> _loadPendingReviews() {
+    return context.read<MissionService>().loadPendingReviews(
+          siteId: _activeSiteId(),
+        );
   }
 
   @override
@@ -122,6 +143,10 @@ class _EducatorMissionReviewPageState extends State<EducatorMissionReviewPage> {
                         color: ScholesaColors.educator,
                       ),
                     ),
+                  )
+                else if (service.error != null)
+                  SliverFillRemaining(
+                    child: _buildLoadErrorState(service.error!),
                   )
                 else if (filteredSubmissions.isEmpty)
                   SliverFillRemaining(
@@ -334,6 +359,46 @@ class _EducatorMissionReviewPageState extends State<EducatorMissionReviewPage> {
             style: TextStyle(color: Colors.grey[600]),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildLoadErrorState(String message) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: ScholesaColors.educator.withValues(alpha: 0.08),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.error_outline_rounded,
+                size: 48,
+                color: ScholesaColors.educator.withValues(alpha: 0.65),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: ScholesaColors.educator,
+                  ),
+            ),
+            const SizedBox(height: 16),
+            FilledButton.tonalIcon(
+              onPressed: _loadPendingReviews,
+              icon: const Icon(Icons.refresh_rounded),
+              label: Text(_tEducatorMissionReview(context, 'Retry')),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -809,7 +874,23 @@ class _ReviewSheetState extends State<_ReviewSheet> {
       rubricTitle: widget.submission.rubricTitle,
       rubricScores: rubricScores,
     );
-    if (!success || !context.mounted) {
+    if (!success) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _tEducatorMissionReview(
+                context,
+                'Unable to submit review right now.',
+              ),
+            ),
+            backgroundColor: ScholesaColors.error,
+          ),
+        );
+      }
+      return;
+    }
+    if (!context.mounted) {
       return;
     }
     if (_aiFeedbackDraft != null && _aiFeedbackDraft!.isNotEmpty) {
