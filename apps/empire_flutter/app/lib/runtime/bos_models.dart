@@ -1149,7 +1149,7 @@ class AiCoachResponse {
       mvlGateActive: mvl?['gateActive'] as bool? ?? false,
       mvlEpisodeId: mvl?['episodeId'] as String?,
       mvlReason: mvl?['reason'] as String?,
-      version: _readTrimmedString(meta, 'version'),
+      version: meta != null ? _readTrimmedString(meta, 'version') : null,
       aiHelpOpenedEventId: meta?['aiHelpOpenedEventId'] as String?,
       traceId: (metadata?['traceId'] ?? meta?['traceId']) as String?,
       policyVersion: metadata?['policyVersion'] as String?,
