@@ -46,6 +46,7 @@ void main() {
 
     test('inventory-aligned routes are enabled', () {
       const List<String> inventoryAlignedRoutes = <String>[
+        '/learner/credentials',
         '/learner/settings',
         '/educator/review-queue',
         '/parent/messages',
@@ -56,6 +57,7 @@ void main() {
         '/site/pickup-auth',
         '/site/consent',
         '/site/audit',
+        '/hq/cms',
         '/hq/exports',
       ];
       for (final String route in inventoryAlignedRoutes) {

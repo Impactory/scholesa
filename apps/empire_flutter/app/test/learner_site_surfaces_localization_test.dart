@@ -11,6 +11,7 @@ import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
 import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/modules/habits/habit_service.dart';
+import 'package:scholesa_app/modules/learner/learner_credentials_page.dart';
 import 'package:scholesa_app/modules/learner/learner_portfolio_page.dart';
 import 'package:scholesa_app/modules/learner/learner_today_page.dart';
 import 'package:scholesa_app/modules/messages/message_service.dart';
@@ -787,6 +788,36 @@ void main() {
       expect(find.text('我的作品集'), findsOneWidget);
       expect(find.text('展示你的成就'), findsOneWidget);
       expect(find.text('徽章'), findsOneWidget);
+    });
+
+    testWidgets('learner credentials renders zh-CN copy',
+        (WidgetTester tester) async {
+      final Locale locale = const Locale('zh', 'CN');
+      final FirestoreService firestoreService = FirestoreService(
+        firestore: FakeFirebaseFirestore(),
+        auth: _MockFirebaseAuth(),
+      );
+      final AppState appState = _buildAppState(
+        role: UserRole.learner,
+        locale: locale,
+      );
+
+      await tester.binding.setSurfaceSize(const Size(1280, 1800));
+      await tester.pumpWidget(
+        _buildHarness(
+          locale: locale,
+          child: const LearnerCredentialsPage(),
+          providers: <SingleChildWidget>[
+            ChangeNotifierProvider<AppState>.value(value: appState),
+            Provider<FirestoreService>.value(value: firestoreService),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('凭证'), findsOneWidget);
+      expect(find.text('还没有已发布的凭证'), findsOneWidget);
+      expect(find.text('教育者或站点发布给你的凭证会显示在这里。'), findsOneWidget);
     });
 
     testWidgets('learner portfolio edit updates the live profile card',
