@@ -716,6 +716,86 @@ describe('workflow route parity', () => {
     });
   });
 
+  it('surfaces analytics backfill audit runs on the HQ analytics workflow', async () => {
+    setCallableHandler('getTelemetryDashboardMetrics', jest.fn().mockResolvedValue({
+      data: {
+        metrics: {
+          attendanceTrend: [],
+        },
+      },
+    }) as CallableHandler);
+    setCallableHandler('listKpiPacks', jest.fn().mockResolvedValue({
+      data: {
+        packs: [],
+      },
+    }) as CallableHandler);
+    setCallableHandler('listAuditLogs', jest.fn().mockResolvedValue({
+      data: {
+        logs: [
+          {
+            id: 'audit-1',
+            action: 'telemetry_aggregate.backfilled',
+            actorRole: 'hq',
+            siteId: 'site-1',
+            createdAt: '2026-03-19T10:00:00.000Z',
+            details: {
+              processed: 12,
+              updated: 10,
+              skipped: 2,
+              aggregationType: 'daily',
+              startDate: '2026-03-01T00:00:00.000Z',
+              endDate: '2026-03-07T00:00:00.000Z',
+            },
+          },
+          {
+            id: 'audit-2',
+            action: 'kpi_pack.voice_reliability_backfilled',
+            actorRole: 'hq',
+            siteId: 'site-2',
+            createdAt: '2026-03-19T11:00:00.000Z',
+            details: {
+              processed: 4,
+              updated: 4,
+              period: 'quarter',
+              force: true,
+            },
+          },
+          {
+            id: 'audit-3',
+            action: 'other.audit.event',
+            actorRole: 'hq',
+            createdAt: '2026-03-19T12:00:00.000Z',
+          },
+        ],
+      },
+    }) as CallableHandler);
+
+    const result = await loadWorkflowRecords(makeContext('/hq/analytics'));
+
+    expect(result.records).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        title: 'Telemetry aggregate backfill',
+        status: 'completed',
+        metadata: expect.objectContaining({
+          processed: '12',
+          updated: '10',
+          aggregationType: 'daily',
+        }),
+      }),
+      expect.objectContaining({
+        title: 'KPI voice backfill',
+        status: 'completed',
+        metadata: expect.objectContaining({
+          processed: '4',
+          updated: '4',
+          period: 'quarter',
+          force: 'true',
+        }),
+      }),
+    ]));
+    expect(result.records.find((record) => record.id === 'audit-3')).toBeUndefined();
+  });
+
   it('routes HQ analytics aggregate backfill through backfillTelemetryAggregates', async () => {
     const backfillTelemetryAggregates = setCallableHandler('backfillTelemetryAggregates');
 

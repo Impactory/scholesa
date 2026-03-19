@@ -1163,10 +1163,26 @@ async function loadHqBillingRecords(): Promise<WorkflowRecord[]> {
 
 async function loadHqAnalyticsRecords(ctx: WorkflowContext): Promise<WorkflowRecord[]> {
   const callable = httpsCallable(functions, 'getTelemetryDashboardMetrics');
-  const response = await callable({
-    siteId: activeSiteId(ctx.profile) || undefined,
-    period: 'month',
-  });
+  const [response, kpiPackRecords, backfillAuditRecords] = await Promise.all([
+    callable({
+      siteId: activeSiteId(ctx.profile) || undefined,
+      period: 'month',
+    }),
+    loadCallableRows({
+      routePath: ctx.routePath,
+      callableName: 'listKpiPacks',
+      args: { limit: 40 },
+      rowArrayField: 'packs',
+      collectionName: 'kpiPacks',
+      titleKeys: ['title', 'siteId', 'id'],
+      subtitleKeys: ['recommendation', 'period'],
+      statusKeys: ['status', 'portfolioQualityGrade'],
+      metadataBuilder: buildKpiPackMetadata,
+      editable: false,
+      deletable: false,
+    }).catch(() => []),
+    loadAnalyticsBackfillAuditRecords(ctx),
+  ]);
   const payload = (response.data || {}) as Record<string, unknown>;
   const metrics = ((payload.metrics || {}) as Record<string, unknown>);
   const attendanceTrend = Array.isArray(metrics.attendanceTrend) ? metrics.attendanceTrend : [];
@@ -1204,21 +1220,7 @@ async function loadHqAnalyticsRecords(ctx: WorkflowContext): Promise<WorkflowRec
     });
   }
 
-  const kpiPackRecords = await loadCallableRows({
-    routePath: ctx.routePath,
-    callableName: 'listKpiPacks',
-    args: { limit: 40 },
-    rowArrayField: 'packs',
-    collectionName: 'kpiPacks',
-    titleKeys: ['title', 'siteId', 'id'],
-    subtitleKeys: ['recommendation', 'period'],
-    statusKeys: ['status', 'portfolioQualityGrade'],
-    metadataBuilder: buildKpiPackMetadata,
-    editable: false,
-    deletable: false,
-  }).catch(() => []);
-
-  return sortWorkflowRecords([...trendRecords, ...kpiPackRecords]);
+  return sortWorkflowRecords([...trendRecords, ...kpiPackRecords, ...backfillAuditRecords]);
 }
 
 async function loadHqRoleSwitcherRecords(): Promise<WorkflowRecord[]> {
