@@ -340,4 +340,36 @@ void main() {
       expect(map['buildNumber'], '2');
     });
   });
+
+  group('FeatureQuality', () {
+    test('fromMap throws on malformed quality payloads', () {
+      expect(
+        () => FeatureQuality.fromMap(<String, dynamic>{'missingness': 0.2}),
+        throwsFormatException,
+      );
+    });
+
+    test('tryFromMap rejects malformed quality payloads', () {
+      expect(
+        FeatureQuality.tryFromMap(<String, dynamic>{'missingness': 0.2}),
+        isNull,
+      );
+    });
+  });
+
+  group('SupervisoryControl', () {
+    test('fromMap throws on malformed supervisory payloads', () {
+      expect(
+        () => SupervisoryControl.fromMap(<String, dynamic>{'u_bos': <String, dynamic>{}}),
+        throwsFormatException,
+      );
+    });
+
+    test('tryFromMap rejects invalid g values', () {
+      expect(
+        SupervisoryControl.tryFromMap(<String, dynamic>{'g': 2}),
+        isNull,
+      );
+    });
+  });
 }

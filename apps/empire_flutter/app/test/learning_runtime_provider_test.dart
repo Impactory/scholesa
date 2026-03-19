@@ -115,5 +115,36 @@ void main() {
       expect(provider.stateStatus, LearningRuntimeStateStatus.malformed);
       expect(provider.stateLoadIssue, 'malformed_orchestration_state');
     });
+
+    test('ignores malformed active MVL documents instead of fabricating ids',
+        () async {
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+      final DateTime now = DateTime.now();
+
+      await firestore
+          .collection('mvlEpisodes')
+          .doc('mvl-1')
+          .set(<String, dynamic>{
+        'siteId': 'site-1',
+        'learnerId': 'learner-1',
+        'resolution': null,
+        'createdAt': Timestamp.fromDate(now),
+      });
+
+      final LearningRuntimeProvider provider = LearningRuntimeProvider(
+        siteId: 'site-1',
+        learnerId: 'learner-1',
+        sessionOccurrenceId: 'occ-1',
+        gradeBand: GradeBand.g4_6,
+        firestore: firestore,
+      );
+      addTearDown(provider.dispose);
+
+      provider.startListening();
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+
+      expect(provider.hasMvlGate, isFalse);
+      expect(provider.activeMvl, isNull);
+    });
   });
 }

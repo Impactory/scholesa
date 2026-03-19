@@ -114,7 +114,7 @@ class LearningRuntimeProvider extends ChangeNotifier {
         .snapshots()
         .listen((QuerySnapshot<Map<String, dynamic>> snap) {
       if (snap.docs.isNotEmpty) {
-        _activeMvl = MvlEpisode.fromDoc(snap.docs.first);
+        _activeMvl = MvlEpisode.tryFromDoc(snap.docs.first);
       } else {
         _activeMvl = null;
       }

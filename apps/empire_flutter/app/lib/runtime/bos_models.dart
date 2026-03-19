@@ -464,13 +464,29 @@ class SupervisoryControl {
         if (reason != null) 'reason': reason,
       };
 
-  factory SupervisoryControl.fromMap(Map<String, dynamic> m) =>
-      SupervisoryControl(
-        g: m['g'] as int? ?? 0,
-        uBos: m['u_bos'] as Map<String, dynamic>?,
-        uTeacher: m['u_teacher'] as Map<String, dynamic>?,
-        reason: m['reason'] as String?,
-      );
+  factory SupervisoryControl.fromMap(Map<String, dynamic> m) {
+    final SupervisoryControl? parsed = SupervisoryControl.tryFromMap(m);
+    if (parsed == null) {
+      throw const FormatException('Malformed supervisory control payload.');
+    }
+    return parsed;
+  }
+
+  static SupervisoryControl? tryFromMap(Map<String, dynamic>? m) {
+    if (m == null) {
+      return null;
+    }
+    final dynamic rawG = m['g'];
+    if (rawG is! int || (rawG != 0 && rawG != 1)) {
+      return null;
+    }
+    return SupervisoryControl(
+      g: rawG,
+      uBos: _asStringDynamicMap(m['u_bos']),
+      uTeacher: _asStringDynamicMap(m['u_teacher']),
+      reason: _readTrimmedString(m, 'reason'),
+    );
+  }
 }
 
 // ──── §1.3  Observation vector y_t ────
@@ -497,15 +513,14 @@ class FeatureWindow {
         if (quality != null) 'quality': quality!.toMap(),
       };
 
-  factory FeatureWindow.fromMap(Map<String, dynamic> m) => FeatureWindow(
-        window: m['window'] as String? ?? 'session',
-        features: m['features'] as Map<String, dynamic>? ?? <String, dynamic>{},
-        yVec: (m['y_vec'] as List<dynamic>?)
-            ?.map((dynamic e) => (e as num).toDouble())
-            .toList(),
-        quality: m['quality'] != null
-            ? FeatureQuality.fromMap(m['quality'] as Map<String, dynamic>)
-            : null,
+    factory FeatureWindow.fromMap(Map<String, dynamic> m) => FeatureWindow(
+      window: _readTrimmedString(m, 'window') ?? 'session',
+      features: _asStringDynamicMap(m['features']) ?? <String, dynamic>{},
+      yVec: (m['y_vec'] as List<dynamic>?)
+        ?.whereType<num>()
+        .map((num e) => e.toDouble())
+        .toList(),
+      quality: FeatureQuality.tryFromMap(_asStringDynamicMap(m['quality'])),
       );
 }
 
@@ -527,13 +542,33 @@ class FeatureQuality {
         'fusionFamiliesPresent': fusionFamiliesPresent,
       };
 
-  factory FeatureQuality.fromMap(Map<String, dynamic> m) => FeatureQuality(
-        missingness: (m['missingness'] as num?)?.toDouble() ?? 0.0,
-        driftFlag: m['driftFlag'] as bool? ?? false,
-        fusionFamiliesPresent:
-            ((m['fusionFamiliesPresent'] as List<dynamic>?)?.cast<String>()) ??
-                <String>[],
-      );
+  factory FeatureQuality.fromMap(Map<String, dynamic> m) {
+    final FeatureQuality? parsed = FeatureQuality.tryFromMap(m);
+    if (parsed == null) {
+      throw const FormatException('Malformed feature quality payload.');
+    }
+    return parsed;
+  }
+
+  static FeatureQuality? tryFromMap(Map<String, dynamic>? m) {
+    if (m == null) {
+      return null;
+    }
+    final double? missingness = _readFiniteDouble(m, 'missingness');
+    final bool? driftFlag = m['driftFlag'] is bool ? m['driftFlag'] as bool : null;
+    final dynamic familiesValue = m['fusionFamiliesPresent'];
+    if (missingness == null || driftFlag == null) {
+      return null;
+    }
+    final List<String> fusionFamiliesPresent = familiesValue is List<dynamic>
+        ? familiesValue.whereType<String>().toList(growable: false)
+        : const <String>[];
+    return FeatureQuality(
+      missingness: missingness,
+      driftFlag: driftFlag,
+      fusionFamiliesPresent: fusionFamiliesPresent,
+    );
+  }
 }
 
 // ──── §6  Reliability risk (semantic entropy) ────
@@ -687,23 +722,41 @@ class MvlEpisode {
       };
 
   factory MvlEpisode.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
-    final Map<String, dynamic> m = doc.data() ?? <String, dynamic>{};
+    final MvlEpisode? parsed = MvlEpisode.tryFromDoc(doc);
+    if (parsed == null) {
+      throw const FormatException('Malformed MVL episode payload.');
+    }
+    return parsed;
+  }
+
+  static MvlEpisode? tryFromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final Map<String, dynamic>? m = doc.data();
+    if (m == null) {
+      return null;
+    }
+    final String? siteId = _readTrimmedString(m, 'siteId');
+    final String? learnerId = _readTrimmedString(m, 'learnerId');
+    final String? sessionOccurrenceId =
+        _readTrimmedString(m, 'sessionOccurrenceId');
+    final String? triggerReason = _readTrimmedString(m, 'triggerReason');
+    if (siteId == null ||
+        learnerId == null ||
+        sessionOccurrenceId == null ||
+        triggerReason == null) {
+      return null;
+    }
     return MvlEpisode(
       id: doc.id,
-      siteId: m['siteId'] as String? ?? '',
-      learnerId: m['learnerId'] as String? ?? '',
-      sessionOccurrenceId: m['sessionOccurrenceId'] as String? ?? '',
-      triggerReason: m['triggerReason'] as String? ?? '',
-      reliabilityRisk: m['reliability'] != null
-          ? ReliabilityRisk.tryFromMap(
-              _asStringDynamicMap(m['reliability']),
-            )
-          : null,
-      autonomyRisk: m['autonomy'] != null
-          ? AutonomyRisk.tryFromMap(
-              _asStringDynamicMap(m['autonomy']),
-            )
-          : null,
+      siteId: siteId,
+      learnerId: learnerId,
+      sessionOccurrenceId: sessionOccurrenceId,
+      triggerReason: triggerReason,
+      reliabilityRisk: ReliabilityRisk.tryFromMap(
+        _asStringDynamicMap(m['reliability']),
+      ),
+      autonomyRisk: AutonomyRisk.tryFromMap(
+        _asStringDynamicMap(m['autonomy']),
+      ),
       evidenceEventIds:
           ((m['evidenceEventIds'] as List<dynamic>?)?.cast<String>()) ??
               <String>[],
