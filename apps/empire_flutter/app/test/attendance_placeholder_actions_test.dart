@@ -122,6 +122,10 @@ void main() {
           ),
         ],
         child: MaterialApp(
+          theme: ThemeData(
+            useMaterial3: true,
+            splashFactory: NoSplash.splashFactory,
+          ),
           locale: const Locale('zh', 'CN'),
           supportedLocales: const <Locale>[
             Locale('en'),

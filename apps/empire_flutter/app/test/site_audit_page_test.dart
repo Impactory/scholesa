@@ -37,6 +37,10 @@ Widget _buildHarness({
       ChangeNotifierProvider<AppState>.value(value: appState),
     ],
     child: MaterialApp(
+      theme: ThemeData(
+        useMaterial3: true,
+        splashFactory: NoSplash.splashFactory,
+      ),
       locale: const Locale('en'),
       supportedLocales: const <Locale>[
         Locale('en'),

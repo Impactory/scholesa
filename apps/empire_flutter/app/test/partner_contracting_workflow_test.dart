@@ -49,6 +49,10 @@ Widget _buildHarness({
   required List<SingleChildWidget> providers,
 }) {
   final Widget app = MaterialApp(
+    theme: ThemeData(
+      useMaterial3: true,
+      splashFactory: NoSplash.splashFactory,
+    ),
     localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
       GlobalMaterialLocalizations.delegate,
       GlobalWidgetsLocalizations.delegate,
