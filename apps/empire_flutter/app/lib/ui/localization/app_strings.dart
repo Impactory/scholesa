@@ -122,9 +122,9 @@ class AppStrings {
       'ai.banner.verification':
           'Verification active — show your understanding first.',
       'ai.banner.runtimeUnavailable':
-          'MiloOS mathematical state is unavailable. Confidence stays at 0% until live session evidence arrives, so coaching stays guarded.',
+          'MiloOS mathematical state is unavailable. Confidence remains unavailable until live session evidence arrives, so coaching stays guarded.',
       'ai.banner.runtimeMalformed':
-          'MiloOS mathematical state could not be trusted. Confidence stays at 0% until the live session state is repaired.',
+          'MiloOS mathematical state could not be trusted. Confidence remains unavailable until the live session state is repaired.',
       'ai.banner.learnerGuarded':
           'Runtime confidence {percent}%. MiloOS uses the mathematical learner-state model and synthetic-trained baseline, but stays guarded below 97%.',
       'ai.banner.lineageDisclosure':
@@ -261,8 +261,8 @@ class AppStrings {
       'ai.empty.subtitle': '选择一个模式并提出问题。我会引导你的思考，而不是直接给答案。',
       'ai.banner.verification': '验证模式已开启，请先展示你的理解。',
       'ai.banner.runtimeUnavailable':
-          'MiloOS 的数学状态当前不可用。在实时会话证据到达前，置信度保持为 0%，因此辅导会保持谨慎。',
-      'ai.banner.runtimeMalformed': 'MiloOS 的数学状态当前不可信。在修复实时会话状态前，置信度保持为 0%。',
+          'MiloOS 的数学状态当前不可用。在实时会话证据到达前，置信度保持为不可用，因此辅导会保持谨慎。',
+      'ai.banner.runtimeMalformed': 'MiloOS 的数学状态当前不可信。在修复实时会话状态前，置信度保持为不可用。',
       'ai.banner.learnerGuarded':
           '当前运行时置信度为 {percent}%。MiloOS 使用数学学习者状态模型和合成训练基线，但在低于 97% 时会保持受控。',
       'ai.banner.lineageDisclosure':
@@ -390,8 +390,8 @@ class AppStrings {
       'ai.empty.subtitle': '選擇一種模式並提出問題。我會引導你的思考，而不是直接給答案。',
       'ai.banner.verification': '驗證模式已啟用，請先展示你的理解。',
       'ai.banner.runtimeUnavailable':
-          'MiloOS 的數學狀態目前不可用。在即時會話證據到達前，信心維持在 0%，因此輔導會保持謹慎。',
-      'ai.banner.runtimeMalformed': 'MiloOS 的數學狀態目前不可信。在修復即時會話狀態前，信心維持在 0%。',
+          'MiloOS 的數學狀態目前不可用。在即時會話證據到達前，信心維持為不可用，因此輔導會保持謹慎。',
+      'ai.banner.runtimeMalformed': 'MiloOS 的數學狀態目前不可信。在修復即時會話狀態前，信心維持為不可用。',
       'ai.banner.learnerGuarded':
           '目前執行階段信心為 {percent}%。MiloOS 使用數學學習者狀態模型與合成訓練基線，但在低於 97% 時會保持受控。',
       'ai.banner.lineageDisclosure':

@@ -2177,12 +2177,14 @@ export const getTelemetryDashboardMetrics = onCall(async (request: CallableReque
 
   const attendanceTrend = buildUtcDateKeys(periodStart, periodDays).map((dateKey) => {
     const bucket = attendanceByDate.get(dateKey);
-    const total = bucket?.total ?? 0;
-    const presentRate = total > 0 ? roundTo(((bucket?.present ?? 0) / total) * 100, 1) : null;
+    const total = bucket?.total ?? null;
+    const presentRate = total != null && total > 0
+      ? roundTo(((bucket?.present ?? 0) / total) * 100, 1)
+      : null;
     return {
       date: dateKey,
-      records: bucket?.records ?? 0,
-      events: bucket?.events ?? 0,
+      records: bucket?.records ?? null,
+      events: bucket?.events ?? null,
       presentRate,
     };
   });
@@ -2207,10 +2209,12 @@ export const getTelemetryDashboardMetrics = onCall(async (request: CallableReque
     const observedEvents = accountabilityByDate.get(dateKey)?.size ?? 0;
     adherenceAccumulator += observedEvents / ACCOUNTABILITY_EVENT_TYPES.length;
   }
-  const weeklyAccountabilityAdherenceRate = roundTo(
-    (adherenceAccumulator / accountabilityDateKeys.length) * 100,
-    1,
-  );
+  const weeklyAccountabilityAdherenceRate = accountabilityByDate.size > 0
+    ? roundTo(
+        (adherenceAccumulator / accountabilityDateKeys.length) * 100,
+        1,
+      )
+    : null;
 
   let reviewCount = 0;
   let reviewWithinSlaCount = 0;
@@ -2507,7 +2511,7 @@ async function buildParentLearnerSummary(params: {
     upcomingEvents = [];
   }
 
-  let attendanceRate = 0;
+  let attendanceRate: number | null = null;
   try {
     const attendanceSnap = await admin
       .firestore()
@@ -2518,9 +2522,9 @@ async function buildParentLearnerSummary(params: {
       .get();
     const total = attendanceSnap.size;
     const present = attendanceSnap.docs.filter((doc) => doc.data().status === 'present').length;
-    attendanceRate = total > 0 ? present / total : 0;
+    attendanceRate = total > 0 ? present / total : null;
   } catch {
-    attendanceRate = 0;
+    attendanceRate = null;
   }
 
   const [portfolioSnap, evidenceSnap, masterySnap, growthSnap, reflectionsSnap, missionAttemptsSnap, interactionEventsSnap] =
@@ -2588,15 +2592,18 @@ async function buildParentLearnerSummary(params: {
   };
 
   const latestLevels = masteryRows
-    .map((row) => (typeof row.latestLevel === 'number' && Number.isFinite(row.latestLevel) ? row.latestLevel : 0))
-    .filter((value) => value > 0);
+    .map((row) => (typeof row.latestLevel === 'number' && Number.isFinite(row.latestLevel) ? row.latestLevel : null))
+    .filter((value): value is number => value != null && value > 0);
   const averageLevel = latestLevels.length
     ? latestLevels.reduce((sum, value) => sum + value, 0) / latestLevels.length
-    : 0;
+    : null;
   const growthDates = growthRows
     .map((row) => parseDateFromUnknown(row.createdAt))
     .filter((value): value is Date => value instanceof Date)
     .sort((left, right) => right.getTime() - left.getTime());
+  const latestGrowthLevel = growthRows
+    .map((row) => (typeof row.level === 'number' && Number.isFinite(row.level) ? row.level : null))
+    .find((value): value is number => value != null && value > 0) ?? null;
   const growthSummary: Record<string, unknown> = {
     capabilityCount: masteryRows.length,
     updatedCapabilityCount: new Set(
@@ -2605,10 +2612,7 @@ async function buildParentLearnerSummary(params: {
         .filter(Boolean),
     ).size,
     averageLevel,
-    latestLevel:
-      (growthRows
-        .map((row) => (typeof row.level === 'number' && Number.isFinite(row.level) ? row.level : 0))
-        .find((value) => value > 0)) ?? 0,
+    latestLevel: latestGrowthLevel,
     latestGrowthAt: growthDates[0]?.toISOString() ?? null,
   };
 
@@ -2624,18 +2628,20 @@ async function buildParentLearnerSummary(params: {
       pillarBuckets[pillarKey].push(Math.max(0, Math.min(1, latestLevel / 4)));
     }
   });
-  const averageBucket = (values: number[]): number => {
-    if (!values.length) return 0;
+  const averageBucket = (values: number[]): number | null => {
+    if (!values.length) return null;
     return values.reduce((sum, value) => sum + value, 0) / values.length;
   };
   const futureSkills = averageBucket(pillarBuckets.futureSkills);
   const leadership = averageBucket(pillarBuckets.leadership);
   const impact = averageBucket(pillarBuckets.impact);
-  const nonZeroCapabilityValues = [futureSkills, leadership, impact].filter((value) => value > 0);
+  const nonZeroCapabilityValues = [futureSkills, leadership, impact].filter((value): value is number => value != null && value > 0);
   const capabilityOverall = nonZeroCapabilityValues.length
     ? nonZeroCapabilityValues.reduce((sum, value) => sum + value, 0) / nonZeroCapabilityValues.length
-    : 0;
-  const capabilityBand = capabilityOverall >= 0.75
+    : null;
+  const capabilityBand = capabilityOverall == null
+    ? null
+    : capabilityOverall >= 0.75
     ? 'strong'
     : capabilityOverall >= 0.45
     ? 'developing'
@@ -2912,15 +2918,15 @@ async function buildParentLearnerSummary(params: {
   };
 
   const currentLevel =
-    averageLevel > 0
+    averageLevel != null && averageLevel > 0
       ? Math.max(1, Math.round(averageLevel))
       : typeof progressData.level === 'number' && Number.isFinite(progressData.level)
       ? Math.round(progressData.level)
-      : 1;
+      : null;
   const totalXp =
     typeof progressData.totalXp === 'number' && Number.isFinite(progressData.totalXp)
       ? Math.round(progressData.totalXp)
-      : 0;
+      : null;
   const missionsCompleted =
     typeof ideationPassport.completedMissions === 'number'
       ? ideationPassport.completedMissions
@@ -2930,7 +2936,7 @@ async function buildParentLearnerSummary(params: {
   const currentStreak =
     typeof progressData.currentStreak === 'number' && Number.isFinite(progressData.currentStreak)
       ? Math.round(progressData.currentStreak)
-      : 0;
+      : null;
 
   return {
     learnerId,

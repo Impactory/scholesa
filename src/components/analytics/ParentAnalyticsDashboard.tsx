@@ -29,10 +29,10 @@ import { usePageViewTracking } from '@/src/hooks/useTelemetry';
 interface ChildData {
   childId: string;
   childName: string;
-  engagementScore: number;
-  autonomyScore: number;
-  competenceScore: number;
-  belongingScore: number;
+  engagementScore: number | null;
+  autonomyScore: number | null;
+  competenceScore: number | null;
+  belongingScore: number | null;
   recentActivities: Activity[];
   upcomingGoals: Goal[];
   achievements: Achievement[];
@@ -49,7 +49,7 @@ interface Goal {
   id: string;
   description: string;
   targetDate: Date;
-  progress: number;
+  progress: number | null;
 }
 
 interface Achievement {
@@ -71,8 +71,11 @@ export function ParentAnalyticsDashboard() {
   const parentId = profile?.uid || '';
 
   const clampPercent = (value: number): number => {
-    if (!Number.isFinite(value)) return 0;
     return Math.max(0, Math.min(100, Math.round(value)));
+  };
+
+  const readFiniteNumber = (value: unknown): number | null => {
+    return typeof value === 'number' && Number.isFinite(value) ? value : null;
   };
 
   useEffect(() => {
@@ -99,25 +102,33 @@ export function ParentAnalyticsDashboard() {
           const childName = userData.displayName || userData.email || 'Learner';
           
           // Load aggregate SDT metrics for this learner
-          let autonomyScore = 0;
-          let competenceScore = 0;
-          let belongingScore = 0;
-          let engagementScore = 0;
+          let autonomyScore: number | null = null;
+          let competenceScore: number | null = null;
+          let belongingScore: number | null = null;
+          let engagementScore: number | null = null;
 
           const analyticsSnap = await getDoc(doc(db, 'motivationAnalytics', `${siteId}_${childId}`));
           if (analyticsSnap.exists()) {
             const analytics = analyticsSnap.data() as Record<string, unknown>;
-            const totalMissionsSelected = Number(analytics.totalMissionsSelected || 0);
-            const totalEvidenceSubmitted = Number(analytics.totalEvidenceSubmitted || 0);
-            const totalCheckpointsPassed = Number(analytics.totalCheckpointsPassed || 0);
-            const totalFeedbackGiven = Number(analytics.totalFeedbackGiven || 0);
-            const totalRecognitionReceived = Number(analytics.totalRecognitionReceived || 0);
-            const totalReflections = Number(analytics.totalReflections || 0);
+            const totalMissionsSelected = readFiniteNumber(analytics.totalMissionsSelected);
+            const totalEvidenceSubmitted = readFiniteNumber(analytics.totalEvidenceSubmitted);
+            const totalCheckpointsPassed = readFiniteNumber(analytics.totalCheckpointsPassed);
+            const totalFeedbackGiven = readFiniteNumber(analytics.totalFeedbackGiven);
+            const totalRecognitionReceived = readFiniteNumber(analytics.totalRecognitionReceived);
+            const totalReflections = readFiniteNumber(analytics.totalReflections);
 
-            autonomyScore = clampPercent((totalMissionsSelected + totalReflections) * 8);
-            competenceScore = clampPercent((totalEvidenceSubmitted + totalCheckpointsPassed) * 7);
-            belongingScore = clampPercent((totalFeedbackGiven + totalRecognitionReceived) * 10);
-            engagementScore = clampPercent((autonomyScore + competenceScore + belongingScore) / 3);
+            autonomyScore = totalMissionsSelected != null && totalReflections != null
+              ? clampPercent((totalMissionsSelected + totalReflections) * 8)
+              : null;
+            competenceScore = totalEvidenceSubmitted != null && totalCheckpointsPassed != null
+              ? clampPercent((totalEvidenceSubmitted + totalCheckpointsPassed) * 7)
+              : null;
+            belongingScore = totalFeedbackGiven != null && totalRecognitionReceived != null
+              ? clampPercent((totalFeedbackGiven + totalRecognitionReceived) * 10)
+              : null;
+            engagementScore = autonomyScore != null && competenceScore != null && belongingScore != null
+              ? clampPercent((autonomyScore + competenceScore + belongingScore) / 3)
+              : null;
           }
           
           // Fetch recent activities (now using real-time when selected)
@@ -139,11 +150,6 @@ export function ParentAnalyticsDashboard() {
             };
           });
 
-          if (engagementScore === 0 && recentActivities.length > 0) {
-            const eventBoost = Math.min(100, recentActivities.length * 8);
-            engagementScore = clampPercent(eventBoost);
-          }
-          
           // Fetch upcoming goals
           const goalsQuery = query(
             collection(db, 'learnerGoals'),
@@ -160,7 +166,7 @@ export function ParentAnalyticsDashboard() {
               id: doc.id,
               description: data.description,
               targetDate: data.targetDate.toDate(),
-              progress: data.progress || 0
+              progress: readFiniteNumber(data.progress)
             };
           });
           
@@ -392,7 +398,9 @@ export function ParentAnalyticsDashboard() {
       
       {/* Engagement Insight */}
       <div className={`rounded-lg border p-6 ${
-        currentChild.engagementScore >= 70
+        currentChild.engagementScore == null
+          ? 'bg-gray-50 border-gray-200'
+          : currentChild.engagementScore >= 70
           ? 'bg-green-50 border-green-200'
           : currentChild.engagementScore >= 40
           ? 'bg-yellow-50 border-yellow-200'
@@ -400,7 +408,9 @@ export function ParentAnalyticsDashboard() {
       }`}>
         <div className="flex items-start gap-3">
           <BellIcon className={`h-6 w-6 ${
-            currentChild.engagementScore >= 70
+            currentChild.engagementScore == null
+              ? 'text-gray-500'
+              : currentChild.engagementScore >= 70
               ? 'text-green-600'
               : currentChild.engagementScore >= 40
               ? 'text-yellow-600'
@@ -408,14 +418,16 @@ export function ParentAnalyticsDashboard() {
           }`} />
           <div>
             <h3 className="font-semibold text-gray-900 mb-1">
-              {currentChild.engagementScore >= 70 && '🎉 Your child is thriving!'}
-              {currentChild.engagementScore >= 40 && currentChild.engagementScore < 70 && '👍 Good progress'}
-              {currentChild.engagementScore < 40 && '💪 Needs encouragement'}
+              {currentChild.engagementScore == null && 'Engagement evidence unavailable'}
+              {currentChild.engagementScore != null && currentChild.engagementScore >= 70 && '🎉 Your child is thriving!'}
+              {currentChild.engagementScore != null && currentChild.engagementScore >= 40 && currentChild.engagementScore < 70 && '👍 Good progress'}
+              {currentChild.engagementScore != null && currentChild.engagementScore < 40 && '💪 Needs encouragement'}
             </h3>
             <p className="text-sm text-gray-700">
-              {currentChild.engagementScore >= 70 && 'They are highly engaged and making excellent progress. Keep celebrating their wins!'}
-              {currentChild.engagementScore >= 40 && currentChild.engagementScore < 70 && 'They are on the right track. Consider encouraging them to set new goals.'}
-              {currentChild.engagementScore < 40 && 'They may need extra support. Talk to them about their interests and what they enjoy learning.'}
+              {currentChild.engagementScore == null && 'Scholesa does not have enough verified analytics for a trustworthy engagement summary yet.'}
+              {currentChild.engagementScore != null && currentChild.engagementScore >= 70 && 'They are highly engaged and making excellent progress. Keep celebrating their wins!'}
+              {currentChild.engagementScore != null && currentChild.engagementScore >= 40 && currentChild.engagementScore < 70 && 'They are on the right track. Consider encouraging them to set new goals.'}
+              {currentChild.engagementScore != null && currentChild.engagementScore < 40 && 'They may need extra support. Talk to them about their interests and what they enjoy learning.'}
             </p>
           </div>
         </div>
@@ -460,7 +472,7 @@ function formatRelativeTime(date: Date): string {
 
 interface ScoreCardProps {
   title: string;
-  score: number;
+  score: number | null;
   color: string;
   icon: React.ComponentType<{ className?: string }>;
 }
@@ -475,7 +487,7 @@ function ScoreCard({ title, score, color, icon: Icon }: ScoreCardProps) {
   
   const colors = colorClasses[color];
   const circumference = 2 * Math.PI * 35;
-  const offset = circumference - (score / 100) * circumference;
+  const offset = circumference - ((score ?? 0) / 100) * circumference;
   
   return (
     <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
@@ -500,7 +512,7 @@ function ScoreCard({ title, score, color, icon: Icon }: ScoreCardProps) {
             transform="rotate(-90 32 32)"
           />
         </svg>
-        <span className="text-3xl font-bold text-gray-900">{score}%</span>
+        <span className="text-3xl font-bold text-gray-900">{score != null ? `${score}%` : 'N/A'}</span>
       </div>
     </div>
   );

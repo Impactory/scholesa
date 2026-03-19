@@ -13,6 +13,16 @@ const PILLAR_LABELS: Record<PillarCode, string> = {
   IMPACT_INNOVATION: 'Impact & Innovation',
 };
 
+type PillarScores = Partial<Record<PillarCode, number>>;
+
+function asFiniteNumber(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+function formatMetric(value: number | null, suffix = ''): string {
+  return value != null ? `${value}${suffix}` : 'No evidence yet';
+}
+
 export function SiteStats() {
   const { profile } = useAuthContext();
   const siteId = (profile as UserProfile)?.studioId;
@@ -45,24 +55,32 @@ export function SiteStats() {
 
   if (learnerCount === 0) return <div>No data available for the current cycle ({currentCycle.data().name}).</div>;
 
-  // Aggregation
-  const avgAttendance = Math.round(kpis.reduce((acc, k) => acc + k.attendancePct, 0) / learnerCount);
-  const totalMissions = kpis.reduce((acc, k) => acc + k.missionsCompleted, 0);
-  
-  const avgPillars: Record<PillarCode, number> = {
-    FUTURE_SKILLS: 0,
-    LEADERSHIP_AGENCY: 0,
-    IMPACT_INNOVATION: 0,
-  };
+  const attendanceValues = kpis
+    .map(k => asFiniteNumber(k.attendancePct))
+    .filter((value): value is number => value != null);
+  const avgAttendance = attendanceValues.length > 0
+    ? Math.round(attendanceValues.reduce((sum, value) => sum + value, 0) / attendanceValues.length)
+    : null;
 
-  kpis.forEach(k => {
-    (Object.keys(avgPillars) as PillarCode[]).forEach(p => {
-      avgPillars[p] += (k.pillarScores[p] || 0);
-    });
-  });
+  const missionValues = kpis
+    .map(k => asFiniteNumber(k.missionsCompleted))
+    .filter((value): value is number => value != null);
+  const totalMissions = missionValues.length > 0
+    ? missionValues.reduce((sum, value) => sum + value, 0)
+    : null;
 
-  (Object.keys(avgPillars) as PillarCode[]).forEach(p => {
-    avgPillars[p] = Math.round(avgPillars[p] / learnerCount);
+  const avgPillars = (Object.keys(PILLAR_LABELS) as PillarCode[]).reduce<Record<PillarCode, number | null>>((acc, pillarCode) => {
+    const values = kpis
+      .map((k) => asFiniteNumber((k.pillarScores as PillarScores | undefined)?.[pillarCode]))
+      .filter((value): value is number => value != null);
+    acc[pillarCode] = values.length > 0
+      ? Math.round(values.reduce((sum, value) => sum + value, 0) / values.length)
+      : null;
+    return acc;
+  }, {
+    FUTURE_SKILLS: null,
+    LEADERSHIP_AGENCY: null,
+    IMPACT_INNOVATION: null,
   });
 
   return (
@@ -70,10 +88,10 @@ export function SiteStats() {
       <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Site Overview: {currentCycle.data().name}</h2>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard label="Active Learners" value={learnerCount} />
-          <StatCard label="Avg Attendance" value={`${avgAttendance}%`} />
-          <StatCard label="Total Missions" value={totalMissions} />
-          <StatCard label="Avg Future Skills" value={avgPillars.FUTURE_SKILLS} />
+          <StatCard label="Learners With KPI Data" value={learnerCount} />
+          <StatCard label="Avg Attendance" value={formatMetric(avgAttendance, '%')} />
+          <StatCard label="Total Missions" value={formatMetric(totalMissions)} />
+          <StatCard label="Avg Future Skills" value={formatMetric(avgPillars.FUTURE_SKILLS)} />
         </div>
       </div>
 
@@ -84,10 +102,10 @@ export function SiteStats() {
              <div key={code}>
                <div className="flex justify-between text-sm mb-1">
                  <span className="text-gray-600">{PILLAR_LABELS[code]}</span>
-                 <span className="font-medium text-gray-900">{avgPillars[code]} / 100</span>
+                 <span className="font-medium text-gray-900">{avgPillars[code] != null ? `${avgPillars[code]} / 100` : 'No evidence yet'}</span>
                </div>
                <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100">
-                 <div className="h-full bg-indigo-600" style={{ width: `${avgPillars[code]}%` }} />
+                 <div className="h-full bg-indigo-600" style={{ width: `${avgPillars[code] ?? 0}%` }} />
                </div>
              </div>
            ))}

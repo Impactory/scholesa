@@ -51,37 +51,41 @@ export interface ParentDashboardBundle {
   learners: Array<{
     learnerId: string;
     learnerName: string;
-    currentLevel: number;
-    totalXp: number;
-    missionsCompleted: number;
-    currentStreak: number;
-    attendanceRate: number;
+    currentLevel: number | null;
+    totalXp: number | null;
+    missionsCompleted: number | null;
+    currentStreak: number | null;
+    attendanceRate: number | null;
     pillarProgress?: Record<string, number>;
     capabilitySnapshot?: {
-      futureSkills: number;
-      leadership: number;
-      impact: number;
-      overall: number;
-      band: string;
+      futureSkills: number | null;
+      leadership: number | null;
+      impact: number | null;
+      overall: number | null;
+      band: string | null;
     };
     portfolioSnapshot?: {
-      artifactCount: number;
-      publishedArtifactCount: number;
-      badgeCount: number;
-      projectCount: number;
+      artifactCount: number | null;
+      publishedArtifactCount: number | null;
+      badgeCount: number | null;
+      projectCount: number | null;
       latestArtifactAt?: string | null;
     };
     ideationPassport?: {
-      missionAttempts: number;
-      completedMissions: number;
-      reflectionsSubmitted: number;
-      voiceInteractions: number;
-      collaborationSignals: number;
+      missionAttempts: number | null;
+      completedMissions: number | null;
+      reflectionsSubmitted: number | null;
+      voiceInteractions: number | null;
+      collaborationSignals: number | null;
       lastReflectionAt?: string | null;
     };
     recentActivities: Array<Record<string, unknown>>;
     upcomingEvents: Array<Record<string, unknown>>;
   }>;
+}
+
+function normalizeFiniteNumber(raw: unknown): number | null {
+  return typeof raw === 'number' && Number.isFinite(raw) ? raw : null;
 }
 
 function normalizeStat(raw: unknown): RoleDashboardStat | null {
@@ -212,37 +216,37 @@ export async function fetchParentDashboardBundle(params: {
       learners.push({
         learnerId: row.learnerId,
         learnerName: row.learnerName,
-        currentLevel: typeof row.currentLevel === 'number' ? row.currentLevel : 0,
-        totalXp: typeof row.totalXp === 'number' ? row.totalXp : 0,
-        missionsCompleted: typeof row.missionsCompleted === 'number' ? row.missionsCompleted : 0,
-        currentStreak: typeof row.currentStreak === 'number' ? row.currentStreak : 0,
-        attendanceRate: typeof row.attendanceRate === 'number' ? row.attendanceRate : 0,
+        currentLevel: normalizeFiniteNumber(row.currentLevel),
+        totalXp: normalizeFiniteNumber(row.totalXp),
+        missionsCompleted: normalizeFiniteNumber(row.missionsCompleted),
+        currentStreak: normalizeFiniteNumber(row.currentStreak),
+        attendanceRate: normalizeFiniteNumber(row.attendanceRate),
         pillarProgress: normalizeNumberMap(row.pillarProgress),
         capabilitySnapshot: row.capabilitySnapshot && typeof row.capabilitySnapshot === 'object' && !Array.isArray(row.capabilitySnapshot)
           ? {
-              futureSkills: typeof (row.capabilitySnapshot as Record<string, unknown>).futureSkills === 'number' ? (row.capabilitySnapshot as Record<string, unknown>).futureSkills as number : 0,
-              leadership: typeof (row.capabilitySnapshot as Record<string, unknown>).leadership === 'number' ? (row.capabilitySnapshot as Record<string, unknown>).leadership as number : 0,
-              impact: typeof (row.capabilitySnapshot as Record<string, unknown>).impact === 'number' ? (row.capabilitySnapshot as Record<string, unknown>).impact as number : 0,
-              overall: typeof (row.capabilitySnapshot as Record<string, unknown>).overall === 'number' ? (row.capabilitySnapshot as Record<string, unknown>).overall as number : 0,
-              band: typeof (row.capabilitySnapshot as Record<string, unknown>).band === 'string' ? (row.capabilitySnapshot as Record<string, unknown>).band as string : 'emerging'
+              futureSkills: normalizeFiniteNumber((row.capabilitySnapshot as Record<string, unknown>).futureSkills),
+              leadership: normalizeFiniteNumber((row.capabilitySnapshot as Record<string, unknown>).leadership),
+              impact: normalizeFiniteNumber((row.capabilitySnapshot as Record<string, unknown>).impact),
+              overall: normalizeFiniteNumber((row.capabilitySnapshot as Record<string, unknown>).overall),
+              band: typeof (row.capabilitySnapshot as Record<string, unknown>).band === 'string' ? (row.capabilitySnapshot as Record<string, unknown>).band as string : null
             }
           : undefined,
         portfolioSnapshot: row.portfolioSnapshot && typeof row.portfolioSnapshot === 'object' && !Array.isArray(row.portfolioSnapshot)
           ? {
-              artifactCount: typeof (row.portfolioSnapshot as Record<string, unknown>).artifactCount === 'number' ? (row.portfolioSnapshot as Record<string, unknown>).artifactCount as number : 0,
-              publishedArtifactCount: typeof (row.portfolioSnapshot as Record<string, unknown>).publishedArtifactCount === 'number' ? (row.portfolioSnapshot as Record<string, unknown>).publishedArtifactCount as number : 0,
-              badgeCount: typeof (row.portfolioSnapshot as Record<string, unknown>).badgeCount === 'number' ? (row.portfolioSnapshot as Record<string, unknown>).badgeCount as number : 0,
-              projectCount: typeof (row.portfolioSnapshot as Record<string, unknown>).projectCount === 'number' ? (row.portfolioSnapshot as Record<string, unknown>).projectCount as number : 0,
+              artifactCount: normalizeFiniteNumber((row.portfolioSnapshot as Record<string, unknown>).artifactCount),
+              publishedArtifactCount: normalizeFiniteNumber((row.portfolioSnapshot as Record<string, unknown>).publishedArtifactCount),
+              badgeCount: normalizeFiniteNumber((row.portfolioSnapshot as Record<string, unknown>).badgeCount),
+              projectCount: normalizeFiniteNumber((row.portfolioSnapshot as Record<string, unknown>).projectCount),
               latestArtifactAt: typeof (row.portfolioSnapshot as Record<string, unknown>).latestArtifactAt === 'string' ? (row.portfolioSnapshot as Record<string, unknown>).latestArtifactAt as string : null
             }
           : undefined,
         ideationPassport: row.ideationPassport && typeof row.ideationPassport === 'object' && !Array.isArray(row.ideationPassport)
           ? {
-              missionAttempts: typeof (row.ideationPassport as Record<string, unknown>).missionAttempts === 'number' ? (row.ideationPassport as Record<string, unknown>).missionAttempts as number : 0,
-              completedMissions: typeof (row.ideationPassport as Record<string, unknown>).completedMissions === 'number' ? (row.ideationPassport as Record<string, unknown>).completedMissions as number : 0,
-              reflectionsSubmitted: typeof (row.ideationPassport as Record<string, unknown>).reflectionsSubmitted === 'number' ? (row.ideationPassport as Record<string, unknown>).reflectionsSubmitted as number : 0,
-              voiceInteractions: typeof (row.ideationPassport as Record<string, unknown>).voiceInteractions === 'number' ? (row.ideationPassport as Record<string, unknown>).voiceInteractions as number : 0,
-              collaborationSignals: typeof (row.ideationPassport as Record<string, unknown>).collaborationSignals === 'number' ? (row.ideationPassport as Record<string, unknown>).collaborationSignals as number : 0,
+              missionAttempts: normalizeFiniteNumber((row.ideationPassport as Record<string, unknown>).missionAttempts),
+              completedMissions: normalizeFiniteNumber((row.ideationPassport as Record<string, unknown>).completedMissions),
+              reflectionsSubmitted: normalizeFiniteNumber((row.ideationPassport as Record<string, unknown>).reflectionsSubmitted),
+              voiceInteractions: normalizeFiniteNumber((row.ideationPassport as Record<string, unknown>).voiceInteractions),
+              collaborationSignals: normalizeFiniteNumber((row.ideationPassport as Record<string, unknown>).collaborationSignals),
               lastReflectionAt: typeof (row.ideationPassport as Record<string, unknown>).lastReflectionAt === 'string' ? (row.ideationPassport as Record<string, unknown>).lastReflectionAt as string : null
             }
           : undefined,

@@ -39,8 +39,8 @@ interface SDTScores {
 interface SkillProgress {
   skillId: string;
   skillName: string;
-  evidenceCount: number;
-  level: 'emerging' | 'developing' | 'proficient' | 'mastery';
+  evidenceCount: number | null;
+  level: 'emerging' | 'developing' | 'proficient' | 'mastery' | null;
 }
 
 interface Badge {
@@ -55,10 +55,20 @@ interface Goal {
   goalId: string;
   description: string;
   targetDate: Date;
-  progress: number; // 0-100
+  progress: number | null;
 }
 
 type TranslateFn = (key: string, interpolation?: Record<string, string | number>) => string;
+
+function readFiniteNumber(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+function normalizeMasteryLevel(value: unknown): SkillProgress['level'] {
+  return value === 'emerging' || value === 'developing' || value === 'proficient' || value === 'mastery'
+    ? value
+    : null;
+}
 
 export function StudentMotivationProfile() {
   usePageViewTracking('learner_profile');
@@ -101,8 +111,8 @@ export function StudentMotivationProfile() {
           return {
             skillId: doc.id,
             skillName: data.skillName || t('motivation.unnamedSkill'),
-            evidenceCount: data.evidenceCount || 0,
-            level: data.masteryLevel || 'emerging'
+            evidenceCount: readFiniteNumber(data.evidenceCount),
+            level: normalizeMasteryLevel(data.masteryLevel)
           };
         });
         setSkills(skillsData);
@@ -144,7 +154,7 @@ export function StudentMotivationProfile() {
             goalId: doc.id,
             description: data.description || t('motivation.goalFallback'),
             targetDate: data.targetDate?.toDate() || new Date(),
-            progress: data.progress || 0
+            progress: readFiniteNumber(data.progress)
           };
         });
         setGoals(goalsData);
@@ -414,13 +424,23 @@ function SkillCard({ skill, t }: SkillCardProps) {
     <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
       <div className="flex items-start justify-between mb-2">
         <h3 className="font-medium text-gray-900">{skill.skillName}</h3>
-        <span className={`px-2 py-1 text-xs font-medium rounded-full ${levelColors[skill.level]}`}>
-          {t(`motivation.skillLevel.${skill.level}`)}
-        </span>
+        {skill.level != null ? (
+          <span className={`px-2 py-1 text-xs font-medium rounded-full ${levelColors[skill.level]}`}>
+            {t(`motivation.skillLevel.${skill.level}`)}
+          </span>
+        ) : (
+          <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600">
+            Unavailable
+          </span>
+        )}
       </div>
       <div className="flex items-center gap-2 text-sm text-gray-600">
         <TrendingUpIcon className="h-4 w-4" />
-        <span>{t('motivation.evidenceCollected', { count: skill.evidenceCount })}</span>
+        <span>
+          {skill.evidenceCount != null
+            ? t('motivation.evidenceCollected', { count: skill.evidenceCount })
+            : 'Evidence unavailable'}
+        </span>
       </div>
     </div>
   );
@@ -448,6 +468,7 @@ interface GoalCardProps {
 }
 
 function GoalCard({ goal, locale, t }: GoalCardProps) {
+  const progressWidth = goal.progress != null ? Math.max(0, Math.min(100, goal.progress)) : 0;
   return (
     <div className="border border-gray-200 rounded-lg p-4">
       <div className="flex items-start gap-3">
@@ -458,16 +479,16 @@ function GoalCard({ goal, locale, t }: GoalCardProps) {
             <div className="flex-1 h-2 bg-gray-200 rounded-full">
               <div 
                 className="h-full bg-indigo-600 rounded-full transition-all"
-                data-progress={goal.progress}
+                data-progress={progressWidth}
               >
                 <style jsx>{`
-                  div[data-progress="${goal.progress}"] {
-                    width: ${goal.progress}%;
+                  div[data-progress="${progressWidth}"] {
+                    width: ${progressWidth}%;
                   }
                 `}</style>
               </div>
             </div>
-            <span className="text-sm font-medium text-gray-700">{goal.progress}%</span>
+            <span className="text-sm font-medium text-gray-700">{goal.progress != null ? `${goal.progress}%` : 'Unavailable'}</span>
           </div>
           <p className="text-xs text-gray-500">
             {t('motivation.goalTargetDate', { date: goal.targetDate.toLocaleDateString(locale) })}

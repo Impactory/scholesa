@@ -12,6 +12,14 @@ const PILLAR_LABELS: Record<PillarCode, string> = {
   IMPACT_INNOVATION: 'Impact & Innovation',
 };
 
+type PillarScores = Partial<Record<PillarCode, number>>;
+
+function formatMetric(value: unknown, suffix = ''): string {
+  return typeof value === 'number' && Number.isFinite(value)
+    ? `${value}${suffix}`
+    : 'No evidence yet';
+}
+
 export function LearnerSummaryCard({ learnerId }: { learnerId: string }) {
   // 1. Fetch Learner Profile
   const [userSnap, loadingUser] = useDocument(doc(usersCollection, learnerId));
@@ -32,20 +40,20 @@ export function LearnerSummaryCard({ learnerId }: { learnerId: string }) {
 
   if (!learner) return <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">Learner not found</div>;
 
-  const scores = kpi?.pillarScores || {
-    FUTURE_SKILLS: 0,
-    LEADERSHIP_AGENCY: 0,
-    IMPACT_INNOVATION: 0,
-  };
+  const scores = (kpi?.pillarScores as PillarScores | undefined) ?? {};
+  const displayName = typeof learner.displayName === 'string' && learner.displayName.trim().length > 0
+    ? learner.displayName
+    : 'Learner unavailable';
+  const avatarLabel = displayName.slice(0, 2).toUpperCase();
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
       <div className="flex items-center gap-4 mb-6">
         <div className="h-12 w-12 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-lg">
-          {learner.displayName?.slice(0, 2).toUpperCase()}
+          {avatarLabel}
         </div>
         <div>
-          <h3 className="text-lg font-bold text-gray-900">{learner.displayName}</h3>
+          <h3 className="text-lg font-bold text-gray-900">{displayName}</h3>
           <p className="text-sm text-gray-500">{learner.email}</p>
         </div>
       </div>
@@ -55,11 +63,11 @@ export function LearnerSummaryCard({ learnerId }: { learnerId: string }) {
         <div className="space-y-4">
           <div>
             <p className="text-sm font-medium text-gray-500">Attendance</p>
-            <p className="text-2xl font-semibold text-gray-900">{kpi?.attendancePct ?? 0}%</p>
+            <p className="text-2xl font-semibold text-gray-900">{formatMetric(kpi?.attendancePct, '%')}</p>
           </div>
           <div>
             <p className="text-sm font-medium text-gray-500">Missions Completed</p>
-            <p className="text-2xl font-semibold text-gray-900">{kpi?.missionsCompleted ?? 0}</p>
+            <p className="text-2xl font-semibold text-gray-900">{formatMetric(kpi?.missionsCompleted)}</p>
           </div>
         </div>
 
@@ -67,16 +75,25 @@ export function LearnerSummaryCard({ learnerId }: { learnerId: string }) {
         <div className="space-y-3">
           {(Object.keys(PILLAR_LABELS) as PillarCode[]).map((code) => (
             <div key={code}>
+              {(() => {
+                const score = typeof scores[code] === 'number' && Number.isFinite(scores[code])
+                  ? scores[code] as number
+                  : null;
+                return (
+                  <>
               <div className="flex justify-between text-xs mb-1">
                 <span className="font-medium text-gray-600">{PILLAR_LABELS[code]}</span>
-                <span className="text-gray-900">{scores[code]}/100</span>
+                <span className="text-gray-900">{score != null ? `${score}/100` : 'No evidence yet'}</span>
               </div>
               <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
                 <div 
                   className="h-full bg-indigo-500" 
-                  style={{ width: `${Math.min(scores[code], 100)}%` }} 
+                  style={{ width: `${score != null ? Math.min(score, 100) : 0}%` }} 
                 />
               </div>
+                  </>
+                );
+              })()}
             </div>
           ))}
         </div>
