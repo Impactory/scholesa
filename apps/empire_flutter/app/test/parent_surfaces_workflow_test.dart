@@ -149,6 +149,17 @@ Future<void> _seedParentData(FakeFirebaseFirestore firestore) async {
     'status': 'present',
     'recordedAt': Timestamp.fromDate(anchor.subtract(const Duration(days: 1))),
   });
+  await firestore.collection('portfolioItems').doc('learner-1-activity-1').set(
+    <String, dynamic>{
+      'learnerId': 'learner-1',
+      'title': 'Build a Robot',
+      'description': 'Linked Update',
+      'pillarCodes': const <String>['future_skills'],
+      'verificationStatus': 'reviewed',
+      'createdAt': Timestamp.fromDate(anchor.subtract(const Duration(hours: 2))),
+      'updatedAt': Timestamp.fromDate(anchor.subtract(const Duration(hours: 1))),
+    },
+  );
 }
 
 Future<void> _pumpPage(

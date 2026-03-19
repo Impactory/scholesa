@@ -1,12 +1,10 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../auth/app_state.dart';
-import '../../auth/auth_service.dart';
 import '../../services/telemetry_service.dart';
-import '../../ui/localization/app_strings.dart';
+import 'sign_out_flow.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 const Map<String, String> _globalSessionMenuZhCn = <String, String>{
@@ -232,68 +230,18 @@ Future<void> _openGlobalSessionMenu({
 }
 
 Future<void> _confirmGlobalSessionSignOut(BuildContext context) async {
-  final AuthService authService = context.read<AuthService>();
-  final GoRouter router = GoRouter.of(context);
-  final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
-  final String signOutFailedMessage =
-      AppStrings.of(context, 'auth.error.signOutFailed');
-
-  TelemetryService.instance.logEvent(
-    event: 'cta.clicked',
-    metadata: const <String, dynamic>{
-      'cta': 'global_session_menu_open_sign_out_dialog',
-    },
-  );
-  final bool? confirmed = await showDialog<bool>(
+  await runSharedSignOutFlow(
     context: context,
-    builder: (BuildContext dialogContext) => AlertDialog(
-      title: Text(_tGlobalSessionMenu(dialogContext, 'Sign Out')),
-      content: Text(
-        _tGlobalSessionMenu(
-          dialogContext,
-          'Sign out so another family member can switch accounts on this device?',
-        ),
-      ),
-      actions: <Widget>[
-        TextButton(
-          onPressed: () => Navigator.pop(dialogContext, false),
-          child: Text(_tGlobalSessionMenu(dialogContext, 'Cancel')),
-        ),
-        ElevatedButton(
-          onPressed: () => Navigator.pop(dialogContext, true),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: ScholesaColors.error,
-          ),
-          child: Text(_tGlobalSessionMenu(dialogContext, 'Sign Out')),
-        ),
-      ],
+    source: 'global_session_menu',
+    title: _tGlobalSessionMenu(context, 'Sign Out'),
+    message: _tGlobalSessionMenu(
+      context,
+      'Sign out so another family member can switch accounts on this device?',
     ),
+    cancelLabel: _tGlobalSessionMenu(context, 'Cancel'),
+    confirmLabel: _tGlobalSessionMenu(context, 'Sign Out'),
+    openTelemetryCta: 'global_session_menu_open_sign_out_dialog',
+    cancelTelemetryCta: 'global_session_menu_cancel_sign_out',
+    confirmTelemetryCta: 'global_session_menu_confirm_sign_out',
   );
-
-  if (confirmed != true) {
-    TelemetryService.instance.logEvent(
-      event: 'cta.clicked',
-      metadata: const <String, dynamic>{
-        'cta': 'global_session_menu_cancel_sign_out',
-      },
-    );
-    return;
-  }
-
-  TelemetryService.instance.logEvent(
-    event: 'cta.clicked',
-    metadata: const <String, dynamic>{
-      'cta': 'global_session_menu_confirm_sign_out',
-    },
-  );
-  try {
-    await authService.signOut(source: 'global_session_menu');
-    router.go(kIsWeb ? '/welcome' : '/login');
-  } catch (_) {
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(signOutFailedMessage),
-      ),
-    );
-  }
 }

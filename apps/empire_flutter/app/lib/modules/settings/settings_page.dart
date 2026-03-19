@@ -13,7 +13,7 @@ import '../../auth/auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/theme_service.dart';
 import '../../services/telemetry_service.dart';
-import '../../ui/localization/app_strings.dart';
+import '../../ui/auth/sign_out_flow.dart';
 import '../../ui/localization/inline_locale_text.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
@@ -1640,63 +1640,20 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  void _confirmSignOut() {
-    final AuthService authService = context.read<AuthService>();
-    TelemetryService.instance.logEvent(
-      event: 'cta.clicked',
-      metadata: const <String, dynamic>{'cta': 'settings_open_sign_out_dialog'},
-    );
-    showDialog<void>(
+  Future<void> _confirmSignOut() async {
+    await runSharedSignOutFlow(
       context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: Text(_tSettings(dialogContext, 'Sign Out')),
-          content: Text(
-            _tSettings(
-              dialogContext,
-              'Sign out so another family member can switch accounts on this device?',
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: Text(_tSettings(dialogContext, 'Cancel')),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                TelemetryService.instance.logEvent(
-                  event: 'cta.clicked',
-                  metadata: const <String, dynamic>{
-                    'cta': 'settings_confirm_sign_out'
-                  },
-                );
-                Navigator.pop(dialogContext);
-                try {
-                  await authService.signOut(source: 'settings_page');
-                  if (!mounted) return;
-                  context.go('/login');
-                } catch (_) {
-                  if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        AppStrings.of(context, 'auth.error.signOutFailed'),
-                      ),
-                    ),
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: ScholesaColors.error,
-              ),
-              child: Text(
-                _tSettings(dialogContext, 'Sign Out'),
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
-          ],
-        );
-      },
+      source: 'settings_page',
+      title: _tSettings(context, 'Sign Out'),
+      message: _tSettings(
+        context,
+        'Sign out so another family member can switch accounts on this device?',
+      ),
+      cancelLabel: _tSettings(context, 'Cancel'),
+      confirmLabel: _tSettings(context, 'Sign Out'),
+      openTelemetryCta: 'settings_open_sign_out_dialog',
+      cancelTelemetryCta: 'settings_cancel_sign_out',
+      confirmTelemetryCta: 'settings_confirm_sign_out',
     );
   }
 

@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../i18n/workflow_surface_i18n.dart';
-import '../../auth/auth_service.dart';
 import '../../auth/app_state.dart';
 import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
-import '../../ui/localization/app_strings.dart';
+import '../../ui/auth/sign_out_flow.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 String _tProfile(BuildContext context, String input) {
@@ -334,78 +333,27 @@ class ProfilePage extends StatelessWidget {
   }
 
   Widget _buildLogoutButton(BuildContext context, AppState appState) {
-    final AuthService authService = context.read<AuthService>();
     return Padding(
       padding: const EdgeInsets.all(16),
       child: SizedBox(
         width: double.infinity,
         child: OutlinedButton.icon(
           onPressed: () async {
-            final bool? confirmed = await showDialog<bool>(
+            await runSharedSignOutFlow(
               context: context,
-              builder: (BuildContext context) => AlertDialog(
-                title: Text(_tProfile(context, 'Sign Out')),
-                content: Text(
-                  _tProfile(
-                    context,
-                    'Sign out so another family member can switch accounts on this device?',
-                  ),
-                ),
-                actions: <Widget>[
-                  TextButton(
-                    onPressed: () {
-                      TelemetryService.instance.logEvent(
-                        event: 'cta.clicked',
-                        metadata: const <String, dynamic>{
-                          'cta': 'profile_sign_out_cancel'
-                        },
-                      );
-                      Navigator.pop(context, false);
-                    },
-                    child: Text(_tProfile(context, 'Cancel')),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      TelemetryService.instance.logEvent(
-                        event: 'cta.clicked',
-                        metadata: const <String, dynamic>{
-                          'cta': 'profile_sign_out_confirm'
-                        },
-                      );
-                      Navigator.pop(context, true);
-                    },
-                    style: TextButton.styleFrom(
-                      foregroundColor: ScholesaColors.error,
-                    ),
-                    child: Text(_tProfile(context, 'Sign Out')),
-                  ),
-                ],
+              source: 'profile_page',
+              title: _tProfile(context, 'Sign Out'),
+              message: _tProfile(
+                context,
+                'Sign out so another family member can switch accounts on this device?',
               ),
+              cancelLabel: _tProfile(context, 'Cancel'),
+              confirmLabel: _tProfile(context, 'Sign Out'),
+              openTelemetryCta: 'profile_open_sign_out_dialog',
+              cancelTelemetryCta: 'profile_sign_out_cancel',
+              confirmTelemetryCta: 'profile_sign_out_confirm',
+              executeTelemetryCta: 'profile_sign_out_execute',
             );
-
-            if (confirmed ?? false) {
-              TelemetryService.instance.logEvent(
-                event: 'cta.clicked',
-                metadata: const <String, dynamic>{
-                  'cta': 'profile_sign_out_execute'
-                },
-              );
-              try {
-                await authService.signOut(source: 'profile_page');
-                if (context.mounted) {
-                  context.go('/login');
-                }
-              } catch (_) {
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      AppStrings.of(context, 'auth.error.signOutFailed'),
-                    ),
-                  ),
-                );
-              }
-            }
           },
           icon: const Icon(Icons.logout),
           label: Text(_tProfile(context, 'Sign Out')),

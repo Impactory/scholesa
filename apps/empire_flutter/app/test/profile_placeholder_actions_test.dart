@@ -254,4 +254,67 @@ void main() {
         await firestore.collection('users').doc('site-user-1').get();
     expect(userDoc.data()!['displayName'], 'Updated Site Lead');
   });
+
+  testWidgets('profile sign out clears session for shared-device account switching',
+      (WidgetTester tester) async {
+    final AppState state = _buildAppState();
+    final _MockAuthService authService = _MockAuthService();
+    final ThemeService themeService = ThemeService();
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final GoRouter router = GoRouter(
+      initialLocation: '/profile',
+      routes: <RouteBase>[
+        GoRoute(
+          path: '/profile',
+          builder: (BuildContext context, GoRouterState state) =>
+              const ProfilePage(),
+        ),
+        GoRoute(
+          path: '/login',
+          builder: (BuildContext context, GoRouterState state) =>
+              const Scaffold(body: Center(child: Text('Login Screen'))),
+        ),
+      ],
+    );
+
+    when(() => authService.signOut(source: any(named: 'source')))
+        .thenAnswer((Invocation invocation) async {
+      state.clear();
+    });
+
+    await tester.binding.setSurfaceSize(const Size(1000, 1800));
+    await tester.pumpWidget(
+      _buildHarness(
+        router: router,
+        providers: <SingleChildWidget>[
+          ChangeNotifierProvider<AppState>.value(value: state),
+          Provider<AuthService>.value(value: authService),
+          ChangeNotifierProvider<ThemeService>.value(value: themeService),
+          Provider<FirestoreService>.value(value: firestoreService),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.widgetWithText(OutlinedButton, 'Sign Out'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Sign Out'));
+    await tester.pumpAndSettle();
+
+    expect(find.widgetWithText(ElevatedButton, 'Sign Out'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Sign Out'));
+    await tester.pumpAndSettle();
+
+    verify(() => authService.signOut(source: 'profile_page')).called(1);
+    expect(state.isAuthenticated, isFalse);
+    expect(find.text('Login Screen'), findsOneWidget);
+  });
 }
