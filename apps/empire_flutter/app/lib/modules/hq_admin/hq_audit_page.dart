@@ -54,7 +54,14 @@ class _RedTeamReview {
 }
 
 class HqAuditPage extends StatefulWidget {
-  const HqAuditPage({super.key});
+  const HqAuditPage({
+    super.key,
+    this.auditLogsLoader,
+    this.redTeamReviewsLoader,
+  });
+
+  final Future<List<Map<String, dynamic>>> Function()? auditLogsLoader;
+  final Future<List<Map<String, dynamic>>> Function()? redTeamReviewsLoader;
 
   @override
   State<HqAuditPage> createState() => _HqAuditPageState();
@@ -67,6 +74,7 @@ class _HqAuditPageState extends State<HqAuditPage> {
   List<_AuditLog> _auditLogs = <_AuditLog>[];
   List<_RedTeamReview> _redTeamReviews = <_RedTeamReview>[];
   bool _isLoading = false;
+  String? _loadError;
   _AuditCategory? _filterCategory;
 
   void _logAuditEvent(String cta, [Map<String, dynamic>? metadata]) {
@@ -183,39 +191,53 @@ class _HqAuditPageState extends State<HqAuditPage> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: <Widget>[
-            _buildSummaryHeader(),
-            const SizedBox(height: 16),
-            _buildSectionHeader(
-              title: _tHqAudit(context, 'Audit Logs'),
-              count: filteredLogs.length,
-            ),
-            const SizedBox(height: 8),
-            if (_isLoading && filteredLogs.isEmpty)
-              _buildLoadingCard()
-            else if (filteredLogs.isEmpty)
-              _buildEmptyCard(_tHqAudit(context, 'No audit logs found'))
-            else
-              ...filteredLogs.map(_buildAuditCard),
-            const SizedBox(height: 20),
-            _buildSectionHeader(
-              title: _tHqAudit(context, 'Red Team Reviews'),
-              count: _redTeamReviews.length,
-              trailing: TextButton.icon(
-                onPressed: () {
-                  _logAuditEvent('hq_audit_create_review_open');
-                  _showCreateReviewDialog();
-                },
-                icon: const Icon(Icons.add_circle_outline_rounded),
-                label: Text(_tHqAudit(context, 'Create Review')),
+            if (_loadError != null &&
+                _auditLogs.isEmpty &&
+                _redTeamReviews.isEmpty &&
+                !_isLoading)
+              _buildLoadErrorCard(
+                _tHqAudit(context, 'Audit data is temporarily unavailable'),
+                _loadError!,
+              )
+            else ...<Widget>[
+              _buildSummaryHeader(),
+              const SizedBox(height: 16),
+              if (_loadError != null)
+                _buildStaleDataBanner(
+                  _tHqAudit(context, 'Unable to refresh audit data right now. Showing the last successful data.'),
+                ),
+              _buildSectionHeader(
+                title: _tHqAudit(context, 'Audit Logs'),
+                count: filteredLogs.length,
               ),
-            ),
-            const SizedBox(height: 8),
-            if (_isLoading && _redTeamReviews.isEmpty)
-              _buildLoadingCard()
-            else if (_redTeamReviews.isEmpty)
-              _buildEmptyCard(_tHqAudit(context, 'No red team reviews yet'))
-            else
-              ..._redTeamReviews.map(_buildReviewCard),
+              const SizedBox(height: 8),
+              if (_isLoading && filteredLogs.isEmpty)
+                _buildLoadingCard()
+              else if (filteredLogs.isEmpty)
+                _buildEmptyCard(_tHqAudit(context, 'No audit logs found'))
+              else
+                ...filteredLogs.map(_buildAuditCard),
+              const SizedBox(height: 20),
+              _buildSectionHeader(
+                title: _tHqAudit(context, 'Red Team Reviews'),
+                count: _redTeamReviews.length,
+                trailing: TextButton.icon(
+                  onPressed: () {
+                    _logAuditEvent('hq_audit_create_review_open');
+                    _showCreateReviewDialog();
+                  },
+                  icon: const Icon(Icons.add_circle_outline_rounded),
+                  label: Text(_tHqAudit(context, 'Create Review')),
+                ),
+              ),
+              const SizedBox(height: 8),
+              if (_isLoading && _redTeamReviews.isEmpty)
+                _buildLoadingCard()
+              else if (_redTeamReviews.isEmpty)
+                _buildEmptyCard(_tHqAudit(context, 'No red team reviews yet'))
+              else
+                ..._redTeamReviews.map(_buildReviewCard),
+            ],
           ],
         ),
       ),
@@ -335,6 +357,71 @@ class _HqAuditPageState extends State<HqAuditPage> {
     );
   }
 
+  Widget _buildLoadErrorCard(String title, String message) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Icon(
+              Icons.error_outline_rounded,
+              size: 56,
+              color: Colors.red.withValues(alpha: 0.8),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: ScholesaColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: ScholesaColors.textSecondary),
+            ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: _loadData,
+              icon: const Icon(Icons.refresh_rounded),
+              label: Text(_tHqAudit(context, 'Retry')),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStaleDataBanner(String message) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.orange.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(color: ScholesaColors.textPrimary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildAuditCard(_AuditLog log) {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -399,18 +486,25 @@ class _HqAuditPageState extends State<HqAuditPage> {
   Future<void> _loadData() async {
     _logAuditEvent('hq_audit_refresh');
     if (!mounted) return;
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _loadError = null;
+    });
     try {
+      final List<Map<String, dynamic>> rows;
+      if (widget.auditLogsLoader != null) {
+      rows = await widget.auditLogsLoader!();
+      } else {
       final HttpsCallable callable =
-          FirebaseFunctions.instance.httpsCallable('listAuditLogs');
+        FirebaseFunctions.instance.httpsCallable('listAuditLogs');
       final HttpsCallableResult<dynamic> result =
-          await callable.call(<String, dynamic>{'limit': 120});
+        await callable.call(<String, dynamic>{'limit': 120});
       final Map<String, dynamic> payload =
-          WorkflowBridgeService.asMap(result.data);
-      final List<Map<String, dynamic>> rows =
-          (payload['logs'] as List<dynamic>? ?? <dynamic>[])
-              .map(WorkflowBridgeService.asMap)
-              .toList(growable: false);
+        WorkflowBridgeService.asMap(result.data);
+      rows = (payload['logs'] as List<dynamic>? ?? <dynamic>[])
+        .map(WorkflowBridgeService.asMap)
+        .toList(growable: false);
+      }
       final List<_AuditLog> loadedLogs = rows
           .map((Map<String, dynamic> row) {
             final String actionRaw = (row['action'] as String? ?? '').trim();
@@ -437,8 +531,10 @@ class _HqAuditPageState extends State<HqAuditPage> {
         ..sort(
             (_AuditLog a, _AuditLog b) => b.timestamp.compareTo(a.timestamp));
 
-      final List<Map<String, dynamic>> reviewsRaw =
-          await _workflowBridgeService.listRedTeamReviews(limit: 80);
+        final List<Map<String, dynamic>> reviewsRaw =
+          widget.redTeamReviewsLoader != null
+            ? await widget.redTeamReviewsLoader!()
+            : await _workflowBridgeService.listRedTeamReviews(limit: 80);
       final List<_RedTeamReview> loadedReviews =
           reviewsRaw.map((Map<String, dynamic> row) {
         return _RedTeamReview(
@@ -468,8 +564,10 @@ class _HqAuditPageState extends State<HqAuditPage> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _auditLogs = <_AuditLog>[];
-        _redTeamReviews = <_RedTeamReview>[];
+        _loadError = _tHqAudit(
+          context,
+          'We could not load audit records. Retry to check the current state.',
+        );
       });
     } finally {
       if (mounted) {

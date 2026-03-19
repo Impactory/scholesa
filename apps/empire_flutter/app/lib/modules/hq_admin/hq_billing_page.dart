@@ -28,6 +28,7 @@ class _HqBillingPageState extends State<HqBillingPage>
   String _selectedSite = 'all';
   String _selectedPeriod = 'month';
   bool _isLoading = false;
+  String? _loadError;
   List<_SiteFilterOption> _siteOptions = <_SiteFilterOption>[
     const _SiteFilterOption(id: 'all', label: 'All Sites'),
   ];
@@ -244,6 +245,19 @@ class _HqBillingPageState extends State<HqBillingPage>
   }
 
   Widget _buildRevenueOverview() {
+    if (_loadError != null &&
+        _invoices.isEmpty &&
+        _payments.isEmpty &&
+        _subscriptions.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: _buildLoadErrorCard(
+          _tHqBilling(context, 'Billing data is temporarily unavailable'),
+          _loadError!,
+        ),
+      );
+    }
+
     final double totalRevenue =
         _invoices.fold<double>(0, (double sum, Map<String, dynamic> invoice) {
       return sum + ((invoice['amount'] as double?) ?? 0);
@@ -408,11 +422,22 @@ class _HqBillingPageState extends State<HqBillingPage>
   }
 
   Widget _buildInvoicesList() {
-    if (_isLoading) {
+    if (_isLoading && _invoices.isEmpty) {
       return Center(
         child: Text(
           _tHqBilling(context, 'Loading...'),
           style: const TextStyle(color: ScholesaColors.textSecondary),
+        ),
+      );
+    }
+    if (_loadError != null && _invoices.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: _buildLoadErrorCard(
+            _tHqBilling(context, 'Invoices are temporarily unavailable'),
+            _loadError!,
+          ),
         ),
       );
     }
@@ -424,22 +449,37 @@ class _HqBillingPageState extends State<HqBillingPage>
         ),
       );
     }
-    return ListView.builder(
+    return ListView(
       padding: const EdgeInsets.all(16),
-      itemCount: _invoices.length,
-      itemBuilder: (BuildContext context, int index) {
-        final Map<String, dynamic> invoice = _invoices[index];
-        return _InvoiceCard(invoice: invoice);
-      },
+      children: <Widget>[
+        if (_loadError != null)
+          _buildStaleDataBanner(
+            _tHqBilling(context, 'Unable to refresh billing right now. Showing the last successful data.'),
+          ),
+        ..._invoices.map(
+          (Map<String, dynamic> invoice) => _InvoiceCard(invoice: invoice),
+        ),
+      ],
     );
   }
 
   Widget _buildPaymentsList() {
-    if (_isLoading) {
+    if (_isLoading && _payments.isEmpty) {
       return Center(
         child: Text(
           _tHqBilling(context, 'Loading...'),
           style: const TextStyle(color: ScholesaColors.textSecondary),
+        ),
+      );
+    }
+    if (_loadError != null && _payments.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: _buildLoadErrorCard(
+            _tHqBilling(context, 'Payments are temporarily unavailable'),
+            _loadError!,
+          ),
         ),
       );
     }
@@ -451,22 +491,37 @@ class _HqBillingPageState extends State<HqBillingPage>
         ),
       );
     }
-    return ListView.builder(
+    return ListView(
       padding: const EdgeInsets.all(16),
-      itemCount: _payments.length,
-      itemBuilder: (BuildContext context, int index) {
-        final Map<String, dynamic> payment = _payments[index];
-        return _PaymentCard(payment: payment);
-      },
+      children: <Widget>[
+        if (_loadError != null)
+          _buildStaleDataBanner(
+            _tHqBilling(context, 'Unable to refresh billing right now. Showing the last successful data.'),
+          ),
+        ..._payments.map(
+          (Map<String, dynamic> payment) => _PaymentCard(payment: payment),
+        ),
+      ],
     );
   }
 
   Widget _buildSubscriptionsList() {
-    if (_isLoading) {
+    if (_isLoading && _subscriptions.isEmpty) {
       return Center(
         child: Text(
           _tHqBilling(context, 'Loading...'),
           style: const TextStyle(color: ScholesaColors.textSecondary),
+        ),
+      );
+    }
+    if (_loadError != null && _subscriptions.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: _buildLoadErrorCard(
+            _tHqBilling(context, 'Subscriptions are temporarily unavailable'),
+            _loadError!,
+          ),
         ),
       );
     }
@@ -478,13 +533,86 @@ class _HqBillingPageState extends State<HqBillingPage>
         ),
       );
     }
-    return ListView.builder(
+    return ListView(
       padding: const EdgeInsets.all(16),
-      itemCount: _subscriptions.length,
-      itemBuilder: (BuildContext context, int index) {
-        final Map<String, dynamic> subscription = _subscriptions[index];
-        return _SubscriptionCard(subscription: subscription);
-      },
+      children: <Widget>[
+        if (_loadError != null)
+          _buildStaleDataBanner(
+            _tHqBilling(context, 'Unable to refresh billing right now. Showing the last successful data.'),
+          ),
+        ..._subscriptions.map(
+          (Map<String, dynamic> subscription) =>
+              _SubscriptionCard(subscription: subscription),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLoadErrorCard(String title, String message) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: context.schSurface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.red.withValues(alpha: 0.25)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(
+            Icons.error_outline_rounded,
+            size: 56,
+            color: Colors.red.withValues(alpha: 0.8),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: ScholesaColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: ScholesaColors.textSecondary),
+          ),
+          const SizedBox(height: 16),
+          FilledButton.icon(
+            onPressed: _loadBillingData,
+            icon: const Icon(Icons.refresh_rounded),
+            label: Text(_tHqBilling(context, 'Retry')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStaleDataBanner(String message) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.orange.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(color: ScholesaColors.textPrimary),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -626,7 +754,10 @@ class _HqBillingPageState extends State<HqBillingPage>
 
   Future<void> _loadBillingData() async {
     if (!mounted) return;
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _loadError = null;
+    });
     try {
       final Map<String, dynamic> payload = await _loadBillingPayload();
       final List<_SiteFilterOption> callableSiteOptions = <_SiteFilterOption>[
@@ -733,6 +864,14 @@ class _HqBillingPageState extends State<HqBillingPage>
         _invoices = callableInvoices;
         _payments = callablePayments;
         _subscriptions = callableSubscriptions;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loadError = _tHqBilling(
+          context,
+          'We could not load billing records. Retry to check the current state.',
+        );
       });
     } finally {
       if (mounted) {

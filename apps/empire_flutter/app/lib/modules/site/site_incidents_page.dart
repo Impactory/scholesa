@@ -33,7 +33,9 @@ String _displayIncidentIdentity(
 /// Site incidents management page
 /// Based on docs/41_SAFETY_CONSENT_INCIDENTS_SPEC.md
 class SiteIncidentsPage extends StatefulWidget {
-  const SiteIncidentsPage({super.key});
+  const SiteIncidentsPage({super.key, this.incidentsLoader});
+
+  final Future<List<Map<String, dynamic>>> Function(String siteId)? incidentsLoader;
 
   @override
   State<SiteIncidentsPage> createState() => _SiteIncidentsPageState();
@@ -69,6 +71,7 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage>
   List<_Incident> _incidents = <_Incident>[];
   bool _isLoading = false;
   String? _siteId;
+  String? _loadError;
 
   String _statusLabel(_Status status) {
     switch (status) {
@@ -156,11 +159,23 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage>
   }
 
   Widget _buildIncidentList(_Status statusFilter) {
-    if (_isLoading) {
+    if (_isLoading && _incidents.isEmpty) {
       return Center(
         child: Text(
           _tSiteIncidents(context, 'Loading...'),
           style: const TextStyle(color: ScholesaColors.textSecondary),
+        ),
+      );
+    }
+
+    if (_loadError != null && _incidents.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: _buildLoadErrorCard(
+            _tSiteIncidents(context, 'Incidents are temporarily unavailable'),
+            _loadError!,
+          ),
         ),
       );
     }
@@ -191,12 +206,80 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage>
       );
     }
 
-    return ListView.builder(
+    return ListView(
       padding: const EdgeInsets.all(16),
-      itemCount: filtered.length,
-      itemBuilder: (BuildContext context, int index) {
-        return _buildIncidentCard(filtered[index]);
-      },
+      children: <Widget>[
+        if (_loadError != null)
+          _buildStaleDataBanner(
+            _tSiteIncidents(context, 'Unable to refresh incidents right now. Showing the last successful data.'),
+          ),
+        ...filtered.map(_buildIncidentCard),
+      ],
+    );
+  }
+
+  Widget _buildLoadErrorCard(String title, String message) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Icon(
+              Icons.error_outline_rounded,
+              size: 56,
+              color: Colors.red.withValues(alpha: 0.8),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: ScholesaColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: ScholesaColors.textSecondary),
+            ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: _loadIncidents,
+              icon: const Icon(Icons.refresh_rounded),
+              label: Text(_tSiteIncidents(context, 'Retry')),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStaleDataBanner(String message) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.orange.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(color: ScholesaColors.textPrimary),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -559,24 +642,36 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage>
         .trim();
     _siteId = resolvedSiteId;
 
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _loadError = null;
+    });
     try {
-      Query<Map<String, dynamic>> query =
-          firestoreService.firestore.collection('incidents');
-      if (resolvedSiteId.isNotEmpty) {
-        query = query.where('siteId', isEqualTo: resolvedSiteId);
+      final List<Map<String, dynamic>> rows;
+      if (widget.incidentsLoader != null) {
+        rows = await widget.incidentsLoader!(resolvedSiteId);
+      } else {
+        Query<Map<String, dynamic>> query =
+            firestoreService.firestore.collection('incidents');
+        if (resolvedSiteId.isNotEmpty) {
+          query = query.where('siteId', isEqualTo: resolvedSiteId);
+        }
+
+        QuerySnapshot<Map<String, dynamic>> snapshot;
+        try {
+          snapshot = await query.orderBy('reportedAt', descending: true).get();
+        } catch (_) {
+          snapshot = await query.get();
+        }
+
+        rows = snapshot.docs
+            .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
+                <String, dynamic>{'id': doc.id, ...doc.data()})
+            .toList(growable: false);
       }
 
-      QuerySnapshot<Map<String, dynamic>> snapshot;
-      try {
-        snapshot = await query.orderBy('reportedAt', descending: true).get();
-      } catch (_) {
-        snapshot = await query.get();
-      }
-
-      final List<_Incident> loaded = snapshot.docs
-          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
-            final Map<String, dynamic> data = doc.data();
+      final List<_Incident> loaded = rows
+          .map((Map<String, dynamic> data) {
             final _Severity severity = _parseSeverity(
               (data['severity'] as String?) ?? (data['type'] as String?),
             );
@@ -588,7 +683,7 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage>
             );
 
             return _Incident(
-              id: doc.id,
+              id: (data['id'] as String?) ?? '',
               title: (data['title'] as String?)?.trim().isNotEmpty == true
                   ? (data['title'] as String).trim()
                   : (data['description'] as String? ?? 'Incident'),
@@ -612,6 +707,14 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage>
           (_Incident a, _Incident b) => b.reportedAt.compareTo(a.reportedAt));
       if (!mounted) return;
       setState(() => _incidents = loaded);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loadError = _tSiteIncidents(
+          context,
+          'We could not load incidents. Retry to check the current state.',
+        );
+      });
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);

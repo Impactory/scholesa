@@ -58,6 +58,60 @@ Widget _buildHarness({
 }
 
 void main() {
+  testWidgets('site incidents shows a real load error instead of a fake empty state',
+      (WidgetTester tester) async {
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: FakeFirebaseFirestore(),
+      auth: _MockFirebaseAuth(),
+    );
+
+    await tester.pumpWidget(
+      _buildHarness(
+        appState: _buildSiteState(),
+        firestoreService: firestoreService,
+      ),
+    );
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: <SingleChildWidget>[
+          ChangeNotifierProvider<AppState>.value(value: _buildSiteState()),
+          Provider<FirestoreService>.value(value: firestoreService),
+        ],
+        child: MaterialApp(
+          theme: ThemeData(
+            useMaterial3: true,
+            splashFactory: NoSplash.splashFactory,
+          ),
+          locale: const Locale('en'),
+          supportedLocales: const <Locale>[
+            Locale('en'),
+            Locale('zh', 'CN'),
+            Locale('zh', 'TW'),
+          ],
+          localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: SiteIncidentsPage(
+            incidentsLoader: (String _) async {
+              throw StateError('incidents backend unavailable');
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Incidents are temporarily unavailable'), findsOneWidget);
+    expect(
+      find.text('We could not load incidents. Retry to check the current state.'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('No incidents'), findsNothing);
+    expect(find.text('Retry'), findsOneWidget);
+  });
+
   testWidgets(
       'site incidents use honest unavailable identities in list and details',
       (WidgetTester tester) async {
