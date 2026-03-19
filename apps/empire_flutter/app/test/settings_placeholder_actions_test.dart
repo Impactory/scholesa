@@ -193,6 +193,12 @@ void main() {
 
       expect(find.text('Settings'), findsOneWidget);
       expect(find.text('Access Denied'), findsNothing);
+      await tester.scrollUntilVisible(
+        find.text('Sign Out'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
       expect(find.text('Sign Out'), findsWidgets);
     }
 

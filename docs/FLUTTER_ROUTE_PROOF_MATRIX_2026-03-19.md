@@ -12,16 +12,16 @@ Proof levels:
 ## Summary
 
 - Enabled canonical routes audited: 52
-- Direct: 48
-- Workflow/regression only: 4
+- Direct: 51
+- Workflow/regression only: 1
 - None: 0
 
 Highest-value remaining blind spots:
 
 1. deeper edit and archive coverage on `/educator/mission-plans`
-2. learner-scoped alias-route proof for `/settings`
-3. parent-scoped alias-route proof for `/messages`
-4. parent-scoped alias-route proof for `/settings`
+2. deeper federated rollout and governance breadth on `/hq/feature-flags`
+3. broader mutation depth on `/site/sessions` and `/site/provisioning`
+4. root redirect proof is still stronger than direct home-surface rendering proof
 
 ## Public, Auth, and Root
 
@@ -41,7 +41,7 @@ Highest-value remaining blind spots:
 | `/learner/habits` | direct | `apps/empire_flutter/app/test/habits_page_test.dart` | — |
 | `/learner/portfolio` | direct | `apps/empire_flutter/app/test/learner_portfolio_honesty_test.dart` | — |
 | `/learner/credentials` | direct | `apps/empire_flutter/app/test/learner_credentials_page_test.dart` | — |
-| `/learner/settings` | workflow/regression | `apps/empire_flutter/app/test/settings_placeholder_actions_test.dart`, `apps/empire_flutter/app/test/shared_role_surfaces_localization_test.dart` | Learner-scoped settings behavior is not isolated |
+| `/learner/settings` | direct | `apps/empire_flutter/app/test/settings_placeholder_actions_test.dart`, `apps/empire_flutter/app/test/shared_role_surfaces_localization_test.dart` | Learner-scoped alias rendering is now isolated; deeper settings mutation depth remains shared with the canonical settings surface |
 
 ## Educator
 
@@ -66,8 +66,8 @@ Highest-value remaining blind spots:
 | `/parent/billing` | direct | `apps/empire_flutter/app/test/parent_billing_page_test.dart` | — |
 | `/parent/schedule` | direct | `apps/empire_flutter/app/test/parent_schedule_page_test.dart`, `apps/empire_flutter/app/test/parent_surfaces_workflow_test.dart` | Honest load failure and reminder-request flow are now directly proven |
 | `/parent/portfolio` | direct | `apps/empire_flutter/app/test/parent_portfolio_page_test.dart`, `apps/empire_flutter/app/test/parent_surfaces_workflow_test.dart` | Honest load failure, share request, and summary download are now directly proven |
-| `/parent/messages` | workflow/regression | `apps/empire_flutter/app/test/messages_pages_test.dart` | Parent-specific alias behavior is not isolated |
-| `/parent/settings` | workflow/regression | `apps/empire_flutter/app/test/settings_placeholder_actions_test.dart` | Parent-scoped settings behavior is not isolated |
+| `/parent/messages` | direct | `apps/empire_flutter/app/test/messages_pages_test.dart` | Parent alias rendering is now isolated; deeper message-action breadth still relies on the shared messages surface |
+| `/parent/settings` | direct | `apps/empire_flutter/app/test/settings_placeholder_actions_test.dart` | Parent-scoped alias rendering is now isolated; deeper settings mutation depth remains shared with the canonical settings surface |
 
 ## Site
 
@@ -135,8 +135,8 @@ Highest-value remaining blind spots:
 Prioritize direct proof next for:
 
 1. deeper edit and archive coverage on `/educator/mission-plans`
-2. learner-scoped alias-route proof for `/settings`
-3. parent-scoped alias-route proof for `/messages`
-4. parent-scoped alias-route proof for `/settings`
+2. deeper federated rollout and governance coverage on `/hq/feature-flags`
+3. broader create, edit, and recovery depth on `/site/sessions` and `/site/provisioning`
+4. stronger direct rendering proof around the `/` entry surface beyond redirect behavior
 
-Then upgrade the workflow-only cluster with page-specific failure-state tests for the operationally risky routes before claiming gold.
+Then close the final workflow-only root-entry gap and deepen mutation and failure-path proof on the operationally risky routes before claiming gold.

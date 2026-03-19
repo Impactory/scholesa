@@ -9,7 +9,7 @@ Scope: Flutter app enabled routes, current runtime behavior, current test eviden
 - Not gold ready.
 - Still beta ready for a controlled audience.
 - Core learner, educator, parent, messaging, and site operations paths are no longer obviously fake.
-- Gold is still blocked by unproven native distribution and by remaining depth gaps in mutation, failure-path, and alias-route proof.
+- Gold is still blocked by unproven native distribution and by remaining depth gaps in mutation, failure-path, and operator-governance proof.
 
 ## A. Release Matrix Updated
 
@@ -29,6 +29,7 @@ Scope: Flutter app enabled routes, current runtime behavior, current test eviden
   - provisioning, site sessions, and learner today proof pass: 7 passed, 0 failed
   - educator sessions and partner contracts proof pass: 5 passed, 0 failed
   - remaining-route proof pass: 7 passed, 0 failed
+  - learner and parent alias-route proof pass: 9 passed, 0 failed
   - `flutter analyze`: passed
   - next admin-cluster failure-path pass: 4 passed, 0 failed
 - Existing broad audit baseline still current in this code cycle:
@@ -83,14 +84,14 @@ Current truth:
 
 - Coverage is now materially stronger on core paths.
 - The app still has more enabled pages than direct route-level proof.
-- Current route-proof matrix: 48 direct, 4 workflow/regression-only, 0 with no convincing route proof.
+- Current route-proof matrix: 51 direct, 1 workflow/regression-only, 0 with no convincing route proof.
 
 Risk concentration:
 
 - deeper edit and archive coverage on educator mission plans.
-- alias-route isolation for learner settings.
-- alias-route isolation for parent messages and parent settings.
 - deeper rollout and governance breadth on HQ feature flags and related operator controls.
+- broader mutation and recovery depth on site sessions and site provisioning.
+- the root entry surface is still proven more by redirect behavior than by direct surface rendering.
 
 End-to-end solution:
 

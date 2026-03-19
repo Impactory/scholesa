@@ -28,6 +28,23 @@ typedef EducatorMissionPlanCreator = Future<bool> Function(
   required List<String> orderedSteps,
 });
 
+typedef EducatorMissionPlanUpdater = Future<bool> Function(
+  BuildContext context, {
+  required String missionId,
+  required _PlanStatus currentStatus,
+  required String title,
+  required String description,
+  required String pillar,
+  required String difficulty,
+  required List<String> evidenceDefaults,
+  required List<String> orderedSteps,
+});
+
+typedef EducatorMissionPlanArchiver = Future<bool> Function(
+  BuildContext context, {
+  required String missionId,
+});
+
 /// Educator mission plans page for planning and managing missions
 /// Based on docs/11_MISSIONS_CHALLENGES_SPEC.md
 
@@ -75,11 +92,15 @@ class EducatorMissionPlansPage extends StatefulWidget {
   const EducatorMissionPlansPage({
     this.missionPlansLoader,
     this.missionPlanCreator,
+    this.missionPlanUpdater,
+    this.missionPlanArchiver,
     super.key,
   });
 
   final EducatorMissionPlansLoader? missionPlansLoader;
   final EducatorMissionPlanCreator? missionPlanCreator;
+  final EducatorMissionPlanUpdater? missionPlanUpdater;
+  final EducatorMissionPlanArchiver? missionPlanArchiver;
 
   @override
   State<EducatorMissionPlansPage> createState() =>
@@ -645,59 +666,162 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                         },
                       );
                       Navigator.pop(context);
+                      _showCreateMissionDialog(plan: plan);
                     },
                     child: Text(_tEducatorMissionPlans(context, 'Edit')),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: ElevatedButton(
+                  child: ElevatedButton.icon(
                     onPressed: () {
-                      TelemetryService.instance.logEvent(
-                        event: 'cta.clicked',
-                        metadata: <String, dynamic>{
-                          'cta': 'educator_mission_plans_assign_plan',
-                          'plan_id': plan.id,
-                        },
-                      );
                       Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content: Text(_tEducatorMissionPlans(
-                                context, 'Assigning to sessions...'))),
-                      );
+                      _confirmArchiveMission(plan);
                     },
-                    child: Text(_tEducatorMissionPlans(context, 'Assign')),
+                    icon: const Icon(Icons.archive_outlined),
+                    label: Text(
+                      _tEducatorMissionPlans(
+                        context,
+                        plan.status == _PlanStatus.archived
+                            ? 'Archived'
+                            : 'Archive',
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: plan.status == _PlanStatus.archived
+                          ? Colors.grey.shade300
+                          : Colors.orange,
+                      foregroundColor: plan.status == _PlanStatus.archived
+                          ? Colors.black54
+                          : Colors.white,
+                    ),
                   ),
                 ),
               ],
             ),
+            if (plan.status == _PlanStatus.archived) ...<Widget>[
+              const SizedBox(height: 12),
+              Text(
+                _tEducatorMissionPlans(
+                  context,
+                  'Archived mission plans stay visible for reference but can no longer be assigned.',
+                ),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: ScholesaColors.textSecondary,
+                ),
+              ),
+            ],
+            if (plan.status != _PlanStatus.archived) ...<Widget>[
+              const SizedBox(height: 12),
+              Text(
+                _tEducatorMissionPlans(
+                  context,
+                  'Archive completed or outdated mission plans to remove them from active planning.',
+                ),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: ScholesaColors.textSecondary,
+                ),
+              ),
+            ],
           ],
         ),
       ),
     );
   }
 
-  void _showCreateMissionDialog() {
-    TelemetryService.instance.logEvent(
-      event: 'cta.clicked',
-      metadata: const <String, dynamic>{
-        'cta': 'educator_mission_plans_open_create_dialog'
+  void _confirmArchiveMission(_MissionPlan plan) {
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: ScholesaColors.surface,
+          title: Text(_tEducatorMissionPlans(context, 'Archive mission plan?')),
+          content: Text(
+            _tEducatorMissionPlans(
+              context,
+              'Archived mission plans stay visible for reference but are removed from active planning.',
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(_tEducatorMissionPlans(context, 'Cancel')),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(dialogContext);
+                final bool archived = await _archiveMission(plan.id);
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      archived
+                          ? _tEducatorMissionPlans(
+                              context,
+                              'Mission archived',
+                            )
+                          : _tEducatorMissionPlans(
+                              context,
+                              'Failed to archive mission',
+                            ),
+                    ),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+              child: Text(_tEducatorMissionPlans(context, 'Archive')),
+            ),
+          ],
+        );
       },
     );
-    final TextEditingController titleController = TextEditingController();
-    final TextEditingController descriptionController = TextEditingController();
-    String selectedPillar = 'Future Skills';
-    String selectedDifficulty = 'beginner';
+  }
+
+  void _showCreateMissionDialog({_MissionPlan? plan}) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'cta': plan == null
+            ? 'educator_mission_plans_open_create_dialog'
+            : 'educator_mission_plans_open_edit_dialog',
+        if (plan != null) 'plan_id': plan.id,
+      },
+    );
+    final bool isEditing = plan != null;
+    final TextEditingController titleController = TextEditingController(
+      text: plan?.title ?? '',
+    );
+    final TextEditingController descriptionController = TextEditingController(
+      text: plan?.description ?? '',
+    );
+    String selectedPillar = plan?.pillar ?? 'Future Skills';
+    String selectedDifficulty = plan?.difficulty ?? 'beginner';
     final Set<String> evidenceDefaults = <String>{
-      'explain_it_back',
-      'reflection_note',
+      ...(plan?.evidenceDefaults ?? const <String>[
+        'explain_it_back',
+        'reflection_note',
+      ]),
     };
-    final List<_LessonStepDraft> lessonSteps = <_LessonStepDraft>[
-      _LessonStepDraft(id: 'step-0', title: 'Launch challenge'),
-      _LessonStepDraft(id: 'step-1', title: 'Guided practice'),
-      _LessonStepDraft(id: 'step-2', title: 'Evidence capture'),
-    ];
+    final List<String> initialSteps =
+        plan?.lessonSteps.isNotEmpty == true
+            ? plan!.lessonSteps
+            : const <String>[
+                'Launch challenge',
+                'Guided practice',
+                'Evidence capture',
+              ];
+    final List<_LessonStepDraft> lessonSteps = initialSteps
+        .asMap()
+        .entries
+        .map(
+          (MapEntry<int, String> entry) => _LessonStepDraft(
+            id: 'step-${entry.key}',
+            title: entry.value,
+          ),
+        )
+        .toList();
 
     showDialog<void>(
       context: context,
@@ -706,7 +830,12 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                 void Function(void Function()) setLocalState) =>
             AlertDialog(
           backgroundColor: ScholesaColors.surface,
-          title: Text(_tEducatorMissionPlans(context, 'Create New Mission')),
+          title: Text(
+            _tEducatorMissionPlans(
+              context,
+              isEditing ? 'Edit Mission Plan' : 'Create New Mission',
+            ),
+          ),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -996,7 +1125,9 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                 TelemetryService.instance.logEvent(
                   event: 'cta.clicked',
                   metadata: const <String, dynamic>{
-                    'cta': 'educator_mission_plans_create_cancel'
+                    'cta': isEditing
+                        ? 'educator_mission_plans_edit_cancel'
+                        : 'educator_mission_plans_create_cancel'
                   },
                 );
                 Navigator.pop(dialogContext);
@@ -1007,10 +1138,18 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
               onPressed: () async {
                 final String titleRequiredText = _tEducatorMissionPlans(
                     context, 'Mission title is required');
-                final String createdText = _tEducatorMissionPlans(
-                    context, 'Mission created and added to list');
-                final String createFailedText =
-                    _tEducatorMissionPlans(context, 'Failed to create mission');
+                final String successText = _tEducatorMissionPlans(
+                  context,
+                  isEditing
+                    ? 'Mission updated'
+                    : 'Mission created and added to list',
+                );
+                final String failedText = _tEducatorMissionPlans(
+                  context,
+                  isEditing
+                    ? 'Failed to update mission'
+                    : 'Failed to create mission',
+                );
                 final String stepRequiredText = _tEducatorMissionPlans(
                     context, 'Add at least one lesson step');
                 final String title = titleController.text.trim();
@@ -1036,30 +1175,49 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                 TelemetryService.instance.logEvent(
                   event: 'cta.clicked',
                   metadata: <String, dynamic>{
-                    'cta': 'educator_mission_plans_create_submit',
+                    'cta': isEditing
+                        ? 'educator_mission_plans_edit_submit'
+                        : 'educator_mission_plans_create_submit',
                     'pillar': selectedPillar,
+                    if (plan != null) 'plan_id': plan.id,
                   },
                 );
 
-                final bool created = await _createMission(
-                  title: title,
-                  description: descriptionController.text.trim(),
-                  pillar: selectedPillar,
-                  difficulty: selectedDifficulty,
-                  evidenceDefaults: evidenceDefaults.toList(),
-                  orderedSteps: orderedSteps,
-                );
+                final bool saved = isEditing
+                    ? await _updateMission(
+                        missionId: plan!.id,
+                        currentStatus: plan.status,
+                        title: title,
+                        description: descriptionController.text.trim(),
+                        pillar: selectedPillar,
+                        difficulty: selectedDifficulty,
+                        evidenceDefaults: evidenceDefaults.toList(),
+                        orderedSteps: orderedSteps,
+                      )
+                    : await _createMission(
+                        title: title,
+                        description: descriptionController.text.trim(),
+                        pillar: selectedPillar,
+                        difficulty: selectedDifficulty,
+                        evidenceDefaults: evidenceDefaults.toList(),
+                        orderedSteps: orderedSteps,
+                      );
                 if (!mounted || !dialogContext.mounted) return;
-                if (created) {
+                if (saved) {
                   Navigator.pop(dialogContext);
                 }
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(created ? createdText : createFailedText),
+                    content: Text(saved ? successText : failedText),
                   ),
                 );
               },
-              child: Text(_tEducatorMissionPlans(context, 'Create')),
+              child: Text(
+                _tEducatorMissionPlans(
+                  context,
+                  isEditing ? 'Save changes' : 'Create',
+                ),
+              ),
             ),
           ],
         ),
@@ -1192,6 +1350,109 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
       return true;
     } catch (error) {
       debugPrint('Failed to create mission: $error');
+      return false;
+    }
+  }
+
+  Future<bool> _updateMission({
+    required String missionId,
+    required _PlanStatus currentStatus,
+    required String title,
+    required String description,
+    required String pillar,
+    required String difficulty,
+    required List<String> evidenceDefaults,
+    required List<String> orderedSteps,
+  }) async {
+    if (widget.missionPlanUpdater != null) {
+      return widget.missionPlanUpdater!(
+        context,
+        missionId: missionId,
+        currentStatus: currentStatus,
+        title: title,
+        description: description,
+        pillar: pillar,
+        difficulty: difficulty,
+        evidenceDefaults: evidenceDefaults,
+        orderedSteps: orderedSteps,
+      );
+    }
+
+    try {
+      final FirebaseFirestore firestore = _resolveFirestore();
+      final DocumentReference<Map<String, dynamic>> missionRef =
+          firestore.collection('missions').doc(missionId);
+      final QuerySnapshot<Map<String, dynamic>> existingSteps =
+          await missionRef.collection('steps').get();
+      final WriteBatch batch = firestore.batch();
+      final List<Map<String, dynamic>> lessonStepMaps = orderedSteps
+          .asMap()
+          .entries
+          .map((MapEntry<int, String> entry) => <String, dynamic>{
+                'title': entry.value,
+                'order': entry.key,
+              })
+          .toList();
+      batch.update(missionRef, <String, dynamic>{
+        'title': title,
+        'description': description,
+        'pillar': pillar,
+        'pillarCode': _pillarCodeFromLabel(pillar),
+        'pillarCodes': <String>[_pillarCodeFromLabel(pillar)],
+        'difficulty': difficulty,
+        'status': _statusKey(currentStatus),
+        'evidenceDefaults': evidenceDefaults,
+        'lessonSteps': orderedSteps,
+        'stepCount': orderedSteps.length,
+        'bodyJson': <String, dynamic>{
+          'lessonBuilder': <String, dynamic>{
+            'evidenceDefaults': evidenceDefaults,
+            'steps': lessonStepMaps,
+          },
+          'misconceptionTags': const <String>[],
+        },
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> stepDoc
+          in existingSteps.docs) {
+        batch.delete(stepDoc.reference);
+      }
+      for (final MapEntry<int, String> entry in orderedSteps.asMap().entries) {
+        batch.set(missionRef.collection('steps').doc(), <String, dynamic>{
+          'title': entry.value,
+          'order': entry.key,
+          'isCompleted': false,
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      }
+      await batch.commit();
+      await _loadMissionPlans();
+      return true;
+    } catch (error) {
+      debugPrint('Failed to update mission: $error');
+      return false;
+    }
+  }
+
+  Future<bool> _archiveMission(String missionId) async {
+    if (widget.missionPlanArchiver != null) {
+      return widget.missionPlanArchiver!(context, missionId: missionId);
+    }
+
+    try {
+      final FirebaseFirestore firestore = _resolveFirestore();
+      await firestore.collection('missions').doc(missionId).update(
+        <String, dynamic>{
+          'status': 'archived',
+          'archivedAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        },
+      );
+      await _loadMissionPlans();
+      return true;
+    } catch (error) {
+      debugPrint('Failed to archive mission: $error');
       return false;
     }
   }
@@ -1431,6 +1692,17 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
         return 'impact';
       default:
         return 'future_skills';
+    }
+  }
+
+  String _statusKey(_PlanStatus status) {
+    switch (status) {
+      case _PlanStatus.active:
+        return 'active';
+      case _PlanStatus.archived:
+        return 'archived';
+      case _PlanStatus.draft:
+        return 'draft';
     }
   }
 
