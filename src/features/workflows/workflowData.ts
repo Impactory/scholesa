@@ -2841,27 +2841,77 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
           records: await loadHqAnalyticsRecords(ctx),
           canCreate: true,
           canRefresh: true,
-          createLabel: 'Generate KPI pack',
-          createConfig: buildCreateConfig('Generate KPI pack', 'Generate pack', [
+          createLabel: 'Run analytics operation',
+          createConfig: buildCreateConfig('Run analytics operation', 'Run operation', [
+            {
+              name: 'operation',
+              label: 'Operation',
+              type: 'select',
+              required: true,
+              defaultValue: 'generateKpiPack',
+              helperText: 'Generate a fresh KPI pack or backfill historical analytics documents with the new voice reliability fields.',
+              options: [
+                { value: 'generateKpiPack', label: 'Generate KPI pack' },
+                { value: 'backfillTelemetryAggregates', label: 'Backfill telemetry aggregates' },
+                { value: 'backfillKpiPackVoiceReliability', label: 'Backfill KPI voice reliability' },
+              ],
+            },
             {
               name: 'siteId',
               label: 'Site',
               type: 'select',
-              required: true,
               options: siteOptions,
               defaultValue: activeSiteId(ctx.profile) || siteOptions[0]?.value || '',
+              helperText: 'Required for KPI generation. Leave empty to run an HQ-wide backfill across multiple sites.',
             },
             {
               name: 'period',
               label: 'Period',
               type: 'select',
-              required: true,
               defaultValue: 'month',
+              helperText: 'Used for KPI generation and optional KPI backfill filtering.',
               options: [
                 { value: 'month', label: 'Month' },
                 { value: 'quarter', label: 'Quarter' },
                 { value: 'year', label: 'Year' },
               ],
+            },
+            {
+              name: 'aggregationType',
+              label: 'Aggregate period',
+              type: 'select',
+              defaultValue: 'daily',
+              helperText: 'Used only when backfilling telemetry aggregate documents.',
+              options: [
+                { value: 'daily', label: 'Daily' },
+                { value: 'weekly', label: 'Weekly' },
+              ],
+            },
+            {
+              name: 'startDate',
+              label: 'Start date',
+              type: 'datetime-local',
+              helperText: 'Optional lower bound for the historical backfill window.',
+            },
+            {
+              name: 'endDate',
+              label: 'End date',
+              type: 'datetime-local',
+              helperText: 'Optional upper bound for the historical backfill window.',
+            },
+            {
+              name: 'limit',
+              label: 'Batch limit',
+              type: 'number',
+              defaultValue: '40',
+              helperText: 'Maximum documents to process in this run. Keep batches small for controlled rollout.',
+            },
+            {
+              name: 'force',
+              label: 'Overwrite existing KPI voice reliability',
+              type: 'checkbox',
+              defaultValue: false,
+              helperText: 'Use only when you intentionally want to recalculate KPI voice reliability even if the field already exists.',
             },
           ]),
         };
@@ -3946,6 +3996,42 @@ export async function createWorkflowRecord(
       return;
     }
     case '/hq/analytics': {
+      const operation = optionalStringValue(input, 'operation') || 'generateKpiPack';
+      const siteIdValue = optionalStringValue(input, 'siteId');
+      const periodValue = optionalStringValue(input, 'period');
+      const startDate = optionalStringValue(input, 'startDate');
+      const endDate = optionalStringValue(input, 'endDate');
+      const limitValue = optionalStringValue(input, 'limit');
+      const parsedLimit = limitValue ? Number(limitValue) : undefined;
+      if (typeof parsedLimit !== 'undefined' && (!Number.isFinite(parsedLimit) || parsedLimit <= 0)) {
+        throw new Error('Batch limit must be a positive number.');
+      }
+
+      if (operation === 'backfillTelemetryAggregates') {
+        const callable = httpsCallable(functions, 'backfillTelemetryAggregates');
+        await callable({
+          aggregationType: optionalStringValue(input, 'aggregationType') || 'daily',
+          siteId: siteIdValue || undefined,
+          startDate: startDate || undefined,
+          endDate: endDate || undefined,
+          limit: parsedLimit,
+        });
+        return;
+      }
+
+      if (operation === 'backfillKpiPackVoiceReliability') {
+        const callable = httpsCallable(functions, 'backfillKpiPackVoiceReliability');
+        await callable({
+          siteId: siteIdValue || undefined,
+          period: periodValue || undefined,
+          startDate: startDate || undefined,
+          endDate: endDate || undefined,
+          limit: parsedLimit,
+          force: booleanValue(input, 'force'),
+        });
+        return;
+      }
+
       const callable = httpsCallable(functions, 'generateKpiPack');
       await callable({
         siteId: requireStringValue(input, 'siteId', 'Site'),

@@ -699,6 +699,81 @@ describe('workflow route parity', () => {
     });
   });
 
+  it('routes HQ analytics KPI generation through generateKpiPack', async () => {
+    const generateKpiPack = setCallableHandler('generateKpiPack');
+
+    await createWorkflowRecord(makeContext('/hq/analytics'), {
+      values: {
+        operation: 'generateKpiPack',
+        siteId: 'site-2',
+        period: 'quarter',
+      },
+    });
+
+    expect(generateKpiPack).toHaveBeenCalledWith({
+      siteId: 'site-2',
+      period: 'quarter',
+    });
+  });
+
+  it('routes HQ analytics aggregate backfill through backfillTelemetryAggregates', async () => {
+    const backfillTelemetryAggregates = setCallableHandler('backfillTelemetryAggregates');
+
+    await createWorkflowRecord(makeContext('/hq/analytics'), {
+      values: {
+        operation: 'backfillTelemetryAggregates',
+        aggregationType: 'weekly',
+        siteId: 'site-3',
+        startDate: '2026-03-01T00:00',
+        endDate: '2026-03-08T00:00',
+        limit: '25',
+      },
+    });
+
+    expect(backfillTelemetryAggregates).toHaveBeenCalledWith({
+      aggregationType: 'weekly',
+      siteId: 'site-3',
+      startDate: '2026-03-01T00:00',
+      endDate: '2026-03-08T00:00',
+      limit: 25,
+    });
+  });
+
+  it('routes HQ analytics KPI voice backfill through backfillKpiPackVoiceReliability', async () => {
+    const backfillKpiPackVoiceReliability = setCallableHandler('backfillKpiPackVoiceReliability');
+
+    await createWorkflowRecord(makeContext('/hq/analytics'), {
+      values: {
+        operation: 'backfillKpiPackVoiceReliability',
+        siteId: 'site-4',
+        period: 'year',
+        startDate: '2026-01-01T00:00',
+        endDate: '2026-03-01T00:00',
+        limit: '15',
+        force: true,
+      },
+    });
+
+    expect(backfillKpiPackVoiceReliability).toHaveBeenCalledWith({
+      siteId: 'site-4',
+      period: 'year',
+      startDate: '2026-01-01T00:00',
+      endDate: '2026-03-01T00:00',
+      limit: 15,
+      force: true,
+    });
+  });
+
+  it('rejects non-positive HQ analytics batch limits', async () => {
+    await expect(createWorkflowRecord(makeContext('/hq/analytics'), {
+      values: {
+        operation: 'backfillTelemetryAggregates',
+        aggregationType: 'daily',
+        limit: '0',
+      },
+    })).rejects.toThrow('Batch limit must be a positive number.');
+  });
+
   it('fails closed for site-scoped create and update mutations without an active site context', async () => {
     const noSiteContext = makeContext('/site/incidents', {
       role: 'hq',
