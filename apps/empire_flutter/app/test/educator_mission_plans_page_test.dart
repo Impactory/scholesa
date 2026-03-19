@@ -32,6 +32,7 @@ AppState _buildEducatorState() {
 Widget _buildHarness({
   required FirestoreService firestoreService,
   required EducatorService educatorService,
+  Widget home = const EducatorMissionPlansPage(),
 }) {
   return MultiProvider(
     providers: <SingleChildWidget>[
@@ -52,12 +53,51 @@ Widget _buildHarness({
         Locale('zh', 'CN'),
         Locale('zh', 'TW'),
       ],
-      home: const EducatorMissionPlansPage(),
+      home: home,
     ),
   );
 }
 
 void main() {
+  testWidgets(
+      'educator mission plans page shows an explicit load error instead of an empty state',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final EducatorService educatorService = EducatorService(
+      firestoreService: firestoreService,
+      educatorId: 'educator-1',
+      siteId: 'site-1',
+    );
+
+    await tester.pumpWidget(
+      _buildHarness(
+        firestoreService: firestoreService,
+        educatorService: educatorService,
+        home: EducatorMissionPlansPage(
+          missionPlansLoader: (BuildContext context) async {
+            throw StateError('mission plans unavailable');
+          },
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Unable to load mission plans'), findsOneWidget);
+    expect(
+      find.text(
+        'Failed to load mission plans: Bad state: mission plans unavailable',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Retry'), findsOneWidget);
+    expect(find.text('No missions yet'), findsNothing);
+  });
+
   testWidgets('educator mission plans page creates a mission and persists it',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
@@ -101,5 +141,59 @@ void main() {
     expect(missions.docs.length, 1);
     expect(missions.docs.first.data()['title'], 'Eco Build Sprint');
     expect(missions.docs.first.data()['educatorId'], 'educator-1');
+  });
+
+  testWidgets('educator mission plans page surfaces failed mission creation',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final EducatorService educatorService = EducatorService(
+      firestoreService: firestoreService,
+      educatorId: 'educator-1',
+      siteId: 'site-1',
+    );
+
+    await tester.pumpWidget(
+      _buildHarness(
+        firestoreService: firestoreService,
+        educatorService: educatorService,
+        home: EducatorMissionPlansPage(
+          missionPlanCreator: (
+            BuildContext context, {
+            required String title,
+            required String description,
+            required String pillar,
+            required String difficulty,
+            required List<String> evidenceDefaults,
+            required List<String> orderedSteps,
+          }) async {
+            return false;
+          },
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    await tester.tap(find.text('New Mission'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).at(0), 'Eco Build Sprint');
+    await tester.enterText(
+      find.byType(TextField).at(1),
+      'Prototype a reusable habitat solution for the studio garden.',
+    );
+
+    await tester.tap(find.text('Create'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Failed to create mission'), findsOneWidget);
+    expect(find.text('Eco Build Sprint'), findsOneWidget);
+
+    final missions = await firestore.collection('missions').get();
+    expect(missions.docs, isEmpty);
   });
 }

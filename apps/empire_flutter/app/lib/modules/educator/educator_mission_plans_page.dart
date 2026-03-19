@@ -14,6 +14,20 @@ String _tEducatorMissionPlans(BuildContext context, String input) {
   return WorkflowSurfaceI18n.text(context, input);
 }
 
+typedef EducatorMissionPlansLoader = Future<List<Map<String, dynamic>>> Function(
+  BuildContext context,
+);
+
+typedef EducatorMissionPlanCreator = Future<bool> Function(
+  BuildContext context, {
+  required String title,
+  required String description,
+  required String pillar,
+  required String difficulty,
+  required List<String> evidenceDefaults,
+  required List<String> orderedSteps,
+});
+
 /// Educator mission plans page for planning and managing missions
 /// Based on docs/11_MISSIONS_CHALLENGES_SPEC.md
 
@@ -58,7 +72,14 @@ class _LessonStepDraft {
 }
 
 class EducatorMissionPlansPage extends StatefulWidget {
-  const EducatorMissionPlansPage({super.key});
+  const EducatorMissionPlansPage({
+    this.missionPlansLoader,
+    this.missionPlanCreator,
+    super.key,
+  });
+
+  final EducatorMissionPlansLoader? missionPlansLoader;
+  final EducatorMissionPlanCreator? missionPlanCreator;
 
   @override
   State<EducatorMissionPlansPage> createState() =>
@@ -69,6 +90,7 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
   List<_MissionPlan> _missionPlans = <_MissionPlan>[];
   bool _isLoading = false;
   String _pillarFilter = 'All Pillars';
+  String? _loadError;
 
   @override
   void initState() {
@@ -97,6 +119,11 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
               style: const TextStyle(color: ScholesaColors.textSecondary),
             ),
           )
+        : _loadError != null && _filteredMissionPlans.isEmpty
+            ? Padding(
+                padding: const EdgeInsets.all(16),
+                child: _buildLoadErrorState(_loadError!),
+              )
         : _filteredMissionPlans.isEmpty
             ? Center(
                 child: Text(
@@ -164,6 +191,11 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                     learnerName: service.learners.first.name,
                     accentColor: ScholesaColors.educator,
                   ),
+                ),
+              if (_loadError != null && _missionPlans.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                  child: _buildStaleDataBanner(_loadError!),
                 ),
               Expanded(child: content),
             ],
@@ -1036,64 +1068,24 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
   }
 
   Future<void> _loadMissionPlans() async {
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _loadError = null;
+    });
     try {
-      final FirebaseFirestore firestore = _resolveFirestore();
-      Query<Map<String, dynamic>> query =
-          firestore.collection('missions').limit(100);
-      try {
-        query = query.orderBy('createdAt', descending: true);
-      } catch (_) {}
-
-      final QuerySnapshot<Map<String, dynamic>> snapshot = await query.get();
-      final String? currentUserId = _resolveActorId();
-
       final List<_MissionPlan> loaded =
-          snapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
-        final Map<String, dynamic> data = doc.data();
-        final String pillar = _canonicalPillar(
-          data['pillar'] as String? ?? data['pillarCode'] as String?,
-        );
-        return _MissionPlan(
-          id: doc.id,
-          title: (data['title'] as String? ?? '').trim().isEmpty
-              ? 'Mission'
-              : (data['title'] as String).trim(),
-          description: (data['description'] as String? ?? '').trim(),
-          pillar: pillar,
-          duration: (data['duration'] as String? ?? '4 weeks'),
-          targetGrade: (data['targetGrade'] as String? ??
-              data['gradeBand'] as String? ??
-              '6-8'),
-          difficulty: (data['difficulty'] as String? ?? 'beginner').trim(),
-          status: _parsePlanStatus(data['status'] as String?),
-          assignedSessions: _asInt(data['assignedSessions']) ??
-              ((data['sessionIds'] as List<dynamic>?)?.length ?? 0),
-          completedBy: _asInt(data['completedBy']) ??
-              _asInt(data['completedCount']) ??
-              0,
-          evidenceDefaults: List<String>.from(
-            data['evidenceDefaults'] as List<dynamic>? ?? const <String>[],
-          ),
-          lessonSteps: _parseLessonSteps(data),
-        );
-      }).where((_MissionPlan plan) {
-        if (currentUserId == null || currentUserId.isEmpty) return true;
-        final QueryDocumentSnapshot<Map<String, dynamic>>? sourceDoc =
-            snapshot.docs.where((d) => d.id == plan.id).firstOrNull;
-        final Map<String, dynamic>? data = sourceDoc?.data();
-        if (data == null) return true;
-        final String? ownerId =
-            (data['educatorId'] as String?) ?? (data['createdBy'] as String?);
-        if (ownerId == null || ownerId.trim().isEmpty) return true;
-        return ownerId.trim() == currentUserId;
-      }).toList();
+          widget.missionPlansLoader != null
+              ? await _loadMissionPlansFromOverride(widget.missionPlansLoader!)
+              : await _loadMissionPlansFromFirestore();
 
       setState(() {
         _missionPlans = loaded;
       });
-    } catch (_) {
-      // Best-effort load for environments without Firebase (e.g. widget tests).
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _loadError = 'Failed to load mission plans: $error';
+      });
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -1109,6 +1101,18 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
     required List<String> evidenceDefaults,
     required List<String> orderedSteps,
   }) async {
+    if (widget.missionPlanCreator != null) {
+      return widget.missionPlanCreator!(
+        context,
+        title: title,
+        description: description,
+        pillar: pillar,
+        difficulty: difficulty,
+        evidenceDefaults: evidenceDefaults,
+        orderedSteps: orderedSteps,
+      );
+    }
+
     try {
       final FirebaseFirestore firestore = _resolveFirestore();
       final String? userId = _resolveActorId();
@@ -1190,6 +1194,159 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
       debugPrint('Failed to create mission: $error');
       return false;
     }
+  }
+
+  Future<List<_MissionPlan>> _loadMissionPlansFromOverride(
+    EducatorMissionPlansLoader loader,
+  ) async {
+    final List<Map<String, dynamic>> items = await loader(context);
+    final String? currentUserId = _resolveActorId();
+    return items
+        .map(_missionPlanFromMap)
+        .where((_MissionPlan plan) {
+          if (currentUserId == null || currentUserId.isEmpty) return true;
+          final Map<String, dynamic>? source = items
+              .where((Map<String, dynamic> item) =>
+                  (item['id'] as String? ?? '').trim() == plan.id)
+              .firstOrNull;
+          if (source == null) return true;
+          final String? ownerId =
+              (source['educatorId'] as String?) ?? (source['createdBy'] as String?);
+          if (ownerId == null || ownerId.trim().isEmpty) return true;
+          return ownerId.trim() == currentUserId;
+        })
+        .toList();
+  }
+
+  Future<List<_MissionPlan>> _loadMissionPlansFromFirestore() async {
+    final FirebaseFirestore firestore = _resolveFirestore();
+    Query<Map<String, dynamic>> query = firestore.collection('missions').limit(100);
+    try {
+      query = query.orderBy('createdAt', descending: true);
+    } catch (_) {}
+
+    final QuerySnapshot<Map<String, dynamic>> snapshot = await query.get();
+    final String? currentUserId = _resolveActorId();
+    return snapshot.docs
+        .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+          final Map<String, dynamic> data = doc.data();
+          return _missionPlanFromMap(<String, dynamic>{
+            'id': doc.id,
+            ...data,
+          });
+        })
+        .where((_MissionPlan plan) {
+          if (currentUserId == null || currentUserId.isEmpty) return true;
+          final QueryDocumentSnapshot<Map<String, dynamic>>? sourceDoc =
+              snapshot.docs.where((d) => d.id == plan.id).firstOrNull;
+          final Map<String, dynamic>? data = sourceDoc?.data();
+          if (data == null) return true;
+          final String? ownerId =
+              (data['educatorId'] as String?) ?? (data['createdBy'] as String?);
+          if (ownerId == null || ownerId.trim().isEmpty) return true;
+          return ownerId.trim() == currentUserId;
+        })
+        .toList();
+  }
+
+  _MissionPlan _missionPlanFromMap(Map<String, dynamic> data) {
+    final String pillar = _canonicalPillar(
+      data['pillar'] as String? ?? data['pillarCode'] as String?,
+    );
+    return _MissionPlan(
+      id: (data['id'] as String? ?? '').trim(),
+      title: (data['title'] as String? ?? '').trim().isEmpty
+          ? 'Mission'
+          : (data['title'] as String).trim(),
+      description: (data['description'] as String? ?? '').trim(),
+      pillar: pillar,
+      duration: (data['duration'] as String? ?? '4 weeks'),
+      targetGrade:
+          (data['targetGrade'] as String? ?? data['gradeBand'] as String? ?? '6-8'),
+      difficulty: (data['difficulty'] as String? ?? 'beginner').trim(),
+      status: _parsePlanStatus(data['status'] as String?),
+      assignedSessions: _asInt(data['assignedSessions']) ??
+          ((data['sessionIds'] as List<dynamic>?)?.length ?? 0),
+      completedBy:
+          _asInt(data['completedBy']) ?? _asInt(data['completedCount']) ?? 0,
+      evidenceDefaults: List<String>.from(
+        data['evidenceDefaults'] as List<dynamic>? ?? const <String>[],
+      ),
+      lessonSteps: _parseLessonSteps(data),
+    );
+  }
+
+  Widget _buildLoadErrorState(String message) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF4F4),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFFECACA)),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Row(
+            children: <Widget>[
+              Icon(Icons.error_outline_rounded, color: Colors.redAccent),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Unable to load mission plans',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            style: const TextStyle(color: Colors.black54),
+          ),
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: _loadMissionPlans,
+            icon: const Icon(Icons.refresh_rounded),
+            label: Text(_tEducatorMissionPlans(context, 'Retry')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStaleDataBanner(String message) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFFDE68A)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Padding(
+            padding: EdgeInsets.only(top: 2),
+            child: Icon(Icons.warning_amber_rounded, color: Color(0xFFB45309)),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              _tEducatorMissionPlans(context, 'Showing last loaded mission plans. ') +
+                  message,
+              style: const TextStyle(color: Color(0xFF92400E)),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   FirebaseFirestore _resolveFirestore() {
