@@ -9,6 +9,7 @@ import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
 import 'package:scholesa_app/domain/repositories.dart';
 import 'package:scholesa_app/modules/hq_admin/hq_approvals_page.dart';
+import 'package:scholesa_app/modules/partner/partner_models.dart';
 import 'package:scholesa_app/modules/partner/partner_contracts_page.dart';
 import 'package:scholesa_app/modules/partner/partner_service.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
