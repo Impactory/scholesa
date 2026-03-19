@@ -849,6 +849,11 @@ class _ReviewSheetState extends State<_ReviewSheet> {
         'label': criterion['label'] as String? ?? criterionId,
         'pillarCode':
             criterion['pillarCode'] as String? ?? widget.submission.pillar,
+        if ((criterion['capabilityId'] as String?)?.trim().isNotEmpty == true)
+          'capabilityId': (criterion['capabilityId'] as String).trim(),
+        if ((criterion['capabilityTitle'] as String?)?.trim().isNotEmpty ==
+            true)
+          'capabilityTitle': (criterion['capabilityTitle'] as String).trim(),
         'score': (_rubricScores[criterionId] ?? 0).clamp(0, maxScore),
         'maxScore': maxScore,
       };
@@ -870,8 +875,7 @@ class _ReviewSheetState extends State<_ReviewSheet> {
     try {
       final String firebaseUserId =
           (FirebaseAuth.instance.currentUser?.uid ?? '').trim();
-      reviewerId =
-          firebaseUserId.isNotEmpty ? firebaseUserId : appStateUserId;
+      reviewerId = firebaseUserId.isNotEmpty ? firebaseUserId : appStateUserId;
     } catch (_) {
       reviewerId = appStateUserId;
     }
