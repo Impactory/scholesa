@@ -145,15 +145,16 @@ void main() {
       'pillarCode': 'future_skills',
     });
     await firestore
-        .collection('missionSubmissions')
+        .collection('missionAttempts')
         .doc('submission-1')
         .set(<String, dynamic>{
       'missionId': 'mission-1',
+      'missionTitle': 'Robotics Reflection',
       'learnerId': 'learner-1',
       'siteId': 'site-1',
-      'status': 'pending',
+      'status': 'submitted',
       'submittedAt': Timestamp.fromDate(DateTime(2026, 3, 17, 9, 30)),
-      'submissionText': 'I built a loop that reads the sensor twice.',
+      'content': 'I built a loop that reads the sensor twice.',
     });
 
     await tester.binding.setSurfaceSize(const Size(1280, 1800));
@@ -175,6 +176,11 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     await tester.pumpAndSettle();
 
+    await tester.scrollUntilVisible(
+      find.text('Robotics Reflection'),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.tap(find.text('Robotics Reflection').first);
     await tester.pumpAndSettle();
 
@@ -205,15 +211,16 @@ void main() {
       'pillarCode': 'future_skills',
     });
     await firestore
-        .collection('missionSubmissions')
+        .collection('missionAttempts')
         .doc('submission-1')
         .set(<String, dynamic>{
       'missionId': 'mission-1',
+      'missionTitle': 'Robotics Reflection',
       'learnerId': 'learner-1',
       'siteId': 'site-1',
-      'status': 'pending',
+      'status': 'submitted',
       'submittedAt': Timestamp.fromDate(DateTime(2026, 3, 17, 9, 30)),
-      'submissionText': 'I built a loop that reads the sensor twice.',
+      'content': 'I built a loop that reads the sensor twice.',
     });
 
     await tester.binding.setSurfaceSize(const Size(1280, 1800));
@@ -235,6 +242,11 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     await tester.pumpAndSettle();
 
+    await tester.scrollUntilVisible(
+      find.text('Learner unavailable'),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('Learner unavailable'), findsWidgets);
     expect(find.text('Unknown'), findsNothing);
 
@@ -297,6 +309,11 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     await tester.pumpAndSettle();
 
+    await tester.scrollUntilVisible(
+      find.text('Mission unavailable'),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('Mission unavailable'), findsWidgets);
     expect(find.text('Unknown Mission'), findsNothing);
 

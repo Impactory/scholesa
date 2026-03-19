@@ -232,7 +232,7 @@ void main() {
               .doc('assignment-1')
               .get();
       expect(assignmentDoc.data()?['reviewStatus'], 'approved');
-      expect(assignmentDoc.data()?['lastSubmissionId'], 'submission-1');
+      expect(assignmentDoc.data()?['lastSubmissionId'], 'attempt-1');
       expect(assignmentDoc.data()?['gradedBy'], 'educator-9');
       expect(assignmentDoc.data()?['rubricTotalScore'], 7);
 
@@ -240,17 +240,19 @@ void main() {
           .collection('missionAttempts')
           .doc('attempt-1')
           .get();
+      expect(attemptDoc.data()?['status'], 'reviewed');
       expect(attemptDoc.data()?['reviewStatus'], 'approved');
+      expect(attemptDoc.data()?['reviewedBy'], 'educator-9');
       expect(attemptDoc.data()?['rubricId'], 'rubric-1');
       expect(attemptDoc.data()?['aiFeedbackEdited'], isTrue);
 
       final DocumentSnapshot<Map<String, dynamic>> rubricApplicationDoc =
           await firestore
               .collection('rubricApplications')
-              .doc('submission-1')
+              .doc('attempt-1')
               .get();
       expect(rubricApplicationDoc.exists, isTrue);
-      expect(rubricApplicationDoc.data()?['missionAttemptId'], 'submission-1');
+      expect(rubricApplicationDoc.data()?['missionAttemptId'], 'attempt-1');
       expect(rubricApplicationDoc.data()?['rubricId'], 'rubric-1');
       expect(
         (rubricApplicationDoc.data()?['scores'] as List?)?.length,

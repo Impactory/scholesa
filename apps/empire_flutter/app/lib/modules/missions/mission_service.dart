@@ -1647,11 +1647,12 @@ class MissionService extends ChangeNotifier {
       return reviewStatus.trim();
     }
     switch (status) {
+      case 'submitted':
       case 'pending':
       case 'pending_review':
-        return 'submitted';
+        return 'pending';
       default:
-        return status?.trim().isNotEmpty == true ? status!.trim() : 'submitted';
+        return status?.trim().isNotEmpty == true ? status!.trim() : 'pending';
     }
   }
 
@@ -1910,7 +1911,7 @@ class MissionService extends ChangeNotifier {
         final bool siteMatches = reviewSiteId == null ||
             reviewSiteId.isEmpty ||
             attemptSiteId == reviewSiteId;
-        return siteMatches && normalizedStatus == 'submitted';
+        return siteMatches && normalizedStatus == 'pending';
       });
       if (candidates.isNotEmpty) {
         final List<QueryDocumentSnapshot<Map<String, dynamic>>> sortedCandidates =

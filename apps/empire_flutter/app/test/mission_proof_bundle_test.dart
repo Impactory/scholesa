@@ -180,19 +180,31 @@ void main() {
     expect(
         (proofBundleDoc.data()?['versionHistory'] as List<dynamic>).length, 1);
 
-    final QuerySnapshot<Map<String, dynamic>> submissions =
-        await firestore.collection('missionSubmissions').get();
-    expect(submissions.docs, hasLength(1));
+    final QuerySnapshot<Map<String, dynamic>> attempts =
+        await firestore.collection('missionAttempts').get();
+    expect(attempts.docs, hasLength(1));
+    expect(attempts.docs.first.data()['status'], 'submitted');
+    expect(attempts.docs.first.data()['proofBundleId'], 'learner-1_mission-1');
     expect(
-        submissions.docs.first.data()['proofBundleId'], 'learner-1_mission-1');
-    expect(
-      submissions.docs.first.data()['proofBundleSummary']['checkpointCount'],
+      attempts.docs.first.data()['proofBundleSummary']['checkpointCount'],
       1,
     );
     expect(
-      submissions.docs.first.data()['proofBundleSummary']['isReady'],
+      attempts.docs.first.data()['proofBundleSummary']['isReady'],
       isTrue,
     );
+
+    final QuerySnapshot<Map<String, dynamic>> submissions =
+        await firestore.collection('missionSubmissions').get();
+    expect(submissions.docs, hasLength(1));
+    expect(submissions.docs.first.id, attempts.docs.first.id);
+    expect(
+        submissions.docs.first.data()['proofBundleId'], 'learner-1_mission-1');
+
+    final DocumentSnapshot<Map<String, dynamic>> assignmentDoc =
+        await firestore.collection('missionAssignments').doc('assignment-1').get();
+    expect(assignmentDoc.data()?['status'], 'submitted');
+    expect(assignmentDoc.data()?['lastSubmissionId'], attempts.docs.first.id);
   });
 
   testWidgets(

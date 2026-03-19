@@ -454,7 +454,7 @@ describe('workflow route parity', () => {
     }));
 
     expect(whereMock).toHaveBeenCalledWith('siteId', '==', 'site-1');
-    expect(whereMock).toHaveBeenCalledWith('status', '==', 'submitted');
+    expect(whereMock).toHaveBeenCalledWith('status', 'in', ['submitted', 'pending_review']);
     expect(result.records).toEqual([
       expect.objectContaining({
         id: 'attempt-1',
@@ -491,6 +491,8 @@ describe('workflow route parity', () => {
       }),
       expect.objectContaining({
         status: 'reviewed',
+        reviewStatus: 'reviewed',
+        gradedBy: 'educator-1',
         reviewedBy: 'educator-1',
       }),
     );
