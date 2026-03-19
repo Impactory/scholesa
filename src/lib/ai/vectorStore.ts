@@ -385,8 +385,8 @@ export class VectorIndexer {
       const misconceptionSnap = await getDocs(misconceptionQuery);
       
       if (misconceptionSnap.empty) {
-        console.log('No misconceptions found to index. Creating default set...');
-        return await this.seedDefaultMisconceptions();
+        console.log('No documented misconceptions found to index. Skipping misconception indexing.');
+        return 0;
       }
       
       let indexedCount = 0;
@@ -442,59 +442,6 @@ export class VectorIndexer {
       console.error('Failed to index misconceptions:', err);
       return 0;
     }
-  }
-  
-  /**
-   * Seed default misconceptions for common topics
-   * Run this once to populate the library
-   */
-  private static async seedDefaultMisconceptions(): Promise<number> {
-    console.log('Seeding default misconceptions...');
-    
-    const defaultMisconceptions = [
-      {
-        topic: 'Variables & Functions',
-        skillName: 'Programming',
-        gradeBand: 'grades_4_6' as AgeBand,
-        misconception: 'Variables store the code, not the value',
-        reasoning: 'Students confuse variable names with the value they hold',
-        correctUnderstanding: 'Variables are containers that store values. The variable name is a label for that container.',
-        teachingStrategy: 'Use physical box analogy: "x = 5" means putting the number 5 into a box labeled x',
-        isActive: true
-      },
-      {
-        topic: 'Loops',
-        skillName: 'Programming',
-        gradeBand: 'grades_4_6' as AgeBand,
-        misconception: 'Loop runs once per item in the list',
-        reasoning: 'Students think the loop counter and list position are different',
-        correctUnderstanding: 'For-each loop visits each item once. Counter loops run a specific number of times.',
-        teachingStrategy: 'Trace code step-by-step on paper, showing variable values changing each iteration',
-        isActive: true
-      },
-      {
-        topic: 'Fractions',
-        skillName: 'Mathematics',
-        gradeBand: 'grades_1_3' as AgeBand,
-        misconception: 'Bigger denominator means bigger fraction',
-        reasoning: 'Students apply whole number logic (bigger number = more)',
-        correctUnderstanding: 'Larger denominator means smaller pieces. 1/8 of pizza is smaller than 1/4.',
-        teachingStrategy: 'Use visual models like pizza slices or fraction bars to show piece size',
-        isActive: true
-      }
-    ];
-    
-    // Store default misconceptions
-    for (const misc of defaultMisconceptions) {
-      await addDoc(collection(db, 'commonMisconceptions'), {
-        ...misc,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now()
-      });
-    }
-    
-    // Now index them
-    return await this.indexMisconceptions();
   }
   
   /**
