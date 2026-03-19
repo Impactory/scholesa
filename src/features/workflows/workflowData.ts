@@ -236,6 +236,23 @@ async function loadSiteSelectorOptions(limitSize = 200): Promise<WorkflowFieldOp
   });
 }
 
+async function loadPartnerContractOptionsForActor(ctx: WorkflowContext): Promise<WorkflowFieldOption[]> {
+  const constraints: QueryConstraint[] = ctx.role === 'hq'
+    ? [orderBy('updatedAt', 'desc'), limit(120)]
+    : [where('partnerId', '==', ctx.uid), orderBy('updatedAt', 'desc'), limit(120)];
+
+  const snap = await getDocs(query(collection(firestore, 'partnerContracts'), ...constraints));
+  return snap.docs.map((contractDoc) => {
+    const data = (contractDoc.data() || {}) as Record<string, unknown>;
+    const baseLabel = optionLabelFromRecord(data, contractDoc.id);
+    const siteId = asString(data.siteId, '');
+    return {
+      value: contractDoc.id,
+      label: siteId ? `${baseLabel} (${siteId})` : baseLabel,
+    };
+  });
+}
+
 async function loadKpiPackOptions(limitSize = 80): Promise<WorkflowFieldOption[]> {
   const snap = await getDocs(
     query(
