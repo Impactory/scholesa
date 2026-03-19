@@ -76,6 +76,7 @@ void main() {
 
       expect(find.text('All Quick Actions'), findsOneWidget);
       expect(find.byType(ListTile), findsWidgets);
+      expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     });
 
     testWidgets('site dashboard export CTA downloads a real report when data exists',

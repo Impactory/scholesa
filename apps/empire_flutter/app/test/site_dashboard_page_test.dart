@@ -72,6 +72,7 @@ void main() {
     expect(find.text('Site Dashboard'), findsOneWidget);
     expect(find.text('Recent Activity'), findsOneWidget);
     expect(find.text('Pillar Progress (Site Average)'), findsNothing);
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
   });
 
   testWidgets('site dashboard exports a real report when activity exists',

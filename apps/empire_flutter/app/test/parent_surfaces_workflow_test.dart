@@ -231,6 +231,7 @@ void main() {
       expect(find.text('Hidden Project'), findsNothing);
       expect(find.text('View Child Detail'), findsOneWidget);
       expect(find.text('View Consent'), findsOneWidget);
+      expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     });
 
     testWidgets('schedule page shows linked session details and reminder flow',
@@ -293,6 +294,7 @@ void main() {
 
       expect(find.text('Build a Robot'), findsOneWidget);
       expect(find.text('Hidden Project'), findsNothing);
+      expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
 
       await tester.ensureVisible(find.text('Build a Robot').first);
       await tester.tap(find.text('Build a Robot').first);
@@ -520,6 +522,7 @@ void main() {
 
       expect(find.text('Ideation Passport'), findsOneWidget);
       expect(find.text('Prototype evidence'), findsWidgets);
+      expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
       expect(
         find.textContaining(
           'Proof of Learning: Verified • AI Disclosure: Learner declared no AI support used',
