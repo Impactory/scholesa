@@ -859,8 +859,20 @@ class _ReviewSheetState extends State<_ReviewSheet> {
     required Color successColor,
   }) async {
     final MissionService missionService = context.read<MissionService>();
-    final String reviewerId =
-        FirebaseAuth.instance.currentUser?.uid ?? 'unknown';
+    String reviewerId = 'unknown';
+    final String appStateUserId =
+        (context.read<AppState>().userId ?? '').trim();
+    try {
+      final String firebaseUserId =
+          (FirebaseAuth.instance.currentUser?.uid ?? '').trim();
+      reviewerId =
+          firebaseUserId.isNotEmpty ? firebaseUserId : appStateUserId;
+    } catch (_) {
+      reviewerId = appStateUserId;
+    }
+    if (reviewerId.isEmpty) {
+      reviewerId = 'unknown';
+    }
     final int effectiveRating = _rating == 0 ? fallbackRating : _rating;
     final List<Map<String, dynamic>> rubricScores = _selectedRubricScores();
     final bool success = await missionService.submitReview(
