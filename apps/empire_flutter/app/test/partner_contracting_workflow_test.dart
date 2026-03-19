@@ -44,6 +44,79 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   }
 }
 
+class _FakePartnerService extends PartnerService {
+  _FakePartnerService({
+    required FirestoreService firestoreService,
+    required this.failContracts,
+    required this.failLaunches,
+    List<PartnerContract>? contracts,
+    List<PartnerLaunch>? launches,
+  })  : _contractsValue = List<PartnerContract>.from(
+          contracts ?? <PartnerContract>[],
+        ),
+        _launchesValue = List<PartnerLaunch>.from(launches ?? <PartnerLaunch>[]),
+        super(
+          firestoreService: firestoreService,
+          partnerId: 'partner-1',
+          workflowBridgeService: _FakeWorkflowBridgeService(),
+        );
+
+  final bool failContracts;
+  final bool failLaunches;
+  List<PartnerContract> _contractsValue;
+  List<PartnerLaunch> _launchesValue;
+  bool _isLoadingValue = false;
+  String? _errorValue;
+
+  @override
+  List<PartnerContract> get contracts => _contractsValue;
+
+  @override
+  List<PartnerLaunch> get partnerLaunches => _launchesValue;
+
+  @override
+  bool get isLoading => _isLoadingValue;
+
+  @override
+  String? get error => _errorValue;
+
+  @override
+  Future<void> loadContracts() async {
+    _isLoadingValue = true;
+    _errorValue = null;
+    notifyListeners();
+
+    await Future<void>.delayed(Duration.zero);
+
+    if (failContracts) {
+      _contractsValue = <PartnerContract>[];
+      _errorValue = 'Failed to load contracts';
+    }
+
+    _isLoadingValue = false;
+    notifyListeners();
+  }
+
+  @override
+  Future<void> loadPartnerLaunches() async {
+    _isLoadingValue = true;
+    if (!failContracts) {
+      _errorValue = null;
+    }
+    notifyListeners();
+
+    await Future<void>.delayed(Duration.zero);
+
+    if (failLaunches) {
+      _launchesValue = <PartnerLaunch>[];
+      _errorValue = 'Failed to load partner launches';
+    }
+
+    _isLoadingValue = false;
+    notifyListeners();
+  }
+}
+
 Widget _buildHarness({
   required Widget child,
   required List<SingleChildWidget> providers,
@@ -139,6 +212,53 @@ void main() {
     expect(find.text('North Hub'), findsOneWidget);
     expect(find.text('APAC • en'), findsOneWidget);
     expect(find.text('Pilot Cohorts: 2'), findsOneWidget);
+  });
+
+  testWidgets(
+      'partner contracts route shows an explicit error instead of empty launches on load failure',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final PartnerService partnerService = _FakePartnerService(
+      firestoreService: firestoreService,
+      failContracts: false,
+      failLaunches: true,
+      contracts: <PartnerContract>[
+        const PartnerContract(
+          id: 'contract-1',
+          partnerId: 'partner-1',
+          siteId: 'site-1',
+          title: 'Studio Launch Agreement',
+          status: ContractStatus.submitted,
+          totalValue: 2400,
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      _buildHarness(
+        child: const PartnerContractsPage(),
+        providers: <SingleChildWidget>[
+          Provider<FirestoreService>.value(value: firestoreService),
+          ChangeNotifierProvider<PartnerService>.value(value: partnerService),
+        ],
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Studio Launch Agreement'), findsOneWidget);
+    expect(find.textContaining('Showing last loaded workflow data.'), findsOneWidget);
+
+    await tester.tap(find.text('Launches'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Unable to load partner workflows'), findsOneWidget);
+    expect(find.text('Failed to load partner launches'), findsOneWidget);
+    expect(find.text('No Launches Yet'), findsNothing);
   });
 
   testWidgets('hq approvals surface loads and approves workflow items',
