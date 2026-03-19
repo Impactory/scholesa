@@ -47,7 +47,7 @@ export interface ParentDashboardBundle {
   siteId: string | null;
   locale: string;
   range: string;
-  linkedLearnerCount: number;
+  linkedLearnerCount: number | null;
   learners: Array<{
     learnerId: string;
     learnerName: string;
@@ -262,7 +262,7 @@ export async function fetchParentDashboardBundle(params: {
     locale: typeof payload.locale === 'string' ? payload.locale : 'en',
     range: typeof payload.range === 'string' ? payload.range : 'week',
     linkedLearnerCount:
-      typeof payload.linkedLearnerCount === 'number' ? payload.linkedLearnerCount : 0,
+      typeof payload.linkedLearnerCount === 'number' ? payload.linkedLearnerCount : null,
     learners
   };
 }

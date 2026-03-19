@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot, orderBy, limit } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db } from '@/src/firebase/client-init';
 import { TelemetryService } from '@/src/lib/telemetry/telemetryService';
 
@@ -24,6 +24,14 @@ interface LearnerData {
   competenceScore: number | null;
   belongingScore: number | null;
   lastActive: Date | null;
+}
+
+interface PlatformStats {
+  totalSites: number | null;
+  totalLearners: number | null;
+  totalEducators: number | null;
+  avgEngagement: number | null;
+  activeSites: number | null;
 }
 
 /**
@@ -125,12 +133,12 @@ export function useLearnerAnalytics({ siteId, timeRange = 'week', limit: maxLear
  * Real-time platform stats for HQ
  */
 export function usePlatformStats() {
-  const [stats, setStats] = useState({
-    totalSites: 0,
-    totalLearners: 0,
-    totalEducators: 0,
-    avgEngagement: 0,
-    activeSites: 0
+  const [stats, setStats] = useState<PlatformStats>({
+    totalSites: null,
+    totalLearners: null,
+    totalEducators: null,
+    avgEngagement: null,
+    activeSites: null,
   });
   const [loading, setLoading] = useState(true);
 
@@ -144,6 +152,7 @@ export function usePlatformStats() {
         let totalEducators = 0;
         let totalEngagement = 0;
         let activeSites = 0;
+        let sitesWithEngagement = 0;
 
         for (const siteDoc of snapshot.docs) {
           const siteId = siteDoc.id;
@@ -192,10 +201,13 @@ export function usePlatformStats() {
             }
           });
 
-          const avgSiteEngagement = count > 0 ? siteEngagement / count : 0;
-          totalEngagement += avgSiteEngagement;
+          const avgSiteEngagement = count > 0 ? siteEngagement / count : null;
+          if (avgSiteEngagement !== null) {
+            totalEngagement += avgSiteEngagement;
+            sitesWithEngagement++;
+          }
 
-          if (avgSiteEngagement > 40) {
+          if (avgSiteEngagement !== null && avgSiteEngagement > 40) {
             activeSites++;
           }
         }
@@ -204,8 +216,8 @@ export function usePlatformStats() {
           totalSites,
           totalLearners,
           totalEducators,
-          avgEngagement: totalSites > 0 ? Math.round(totalEngagement / totalSites) : 0,
-          activeSites
+          avgEngagement: sitesWithEngagement > 0 ? Math.round(totalEngagement / sitesWithEngagement) : null,
+          activeSites,
         });
         setLoading(false);
       },

@@ -32,10 +32,10 @@ interface SiteMetrics {
   siteName: string;
   totalLearners: number;
   totalEducators: number;
-  avgEngagement: number;
+  avgEngagement: number | null;
   activeThisWeek: number;
-  healthStatus: 'healthy' | 'warning' | 'critical';
-  lastActivity: Date;
+  healthStatus: 'healthy' | 'warning' | 'critical' | 'unavailable';
+  lastActivity: Date | null;
 }
 
 export function HQAnalyticsDashboard() {
@@ -47,7 +47,7 @@ export function HQAnalyticsDashboard() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   
   // Real-time platform stats
-  const { stats: platformStats } = usePlatformStats();
+  const { stats: platformStats, loading: platformStatsLoading } = usePlatformStats();
 
   useEffect(() => {
     const fetchPlatformData = async () => {
@@ -96,39 +96,43 @@ export function HQAnalyticsDashboard() {
           let totalEngagementScore = 0;
           let engagementCount = 0;
           let activeThisWeek = 0;
-          let lastActivityDate = new Date(0);
+          let lastActivityDate: Date | null = null;
           
           aggregatesSnapshot.docs.forEach(doc => {
             const data = doc.data();
             const date = data.date?.toDate();
             
             if (date && date >= weekAgo) {
-              if (data.engagementScore !== undefined) {
+              if (typeof data.engagementScore === 'number' && Number.isFinite(data.engagementScore)) {
                 totalEngagementScore += data.engagementScore;
                 engagementCount++;
               }
-              if (data.activeUsers !== undefined) {
+              if (typeof data.activeUsers === 'number' && Number.isFinite(data.activeUsers)) {
                 activeThisWeek = Math.max(activeThisWeek, data.activeUsers);
               }
             }
             
-            if (date && date > lastActivityDate) {
+            if (date && (!lastActivityDate || date > lastActivityDate)) {
               lastActivityDate = date;
             }
           });
           
           const avgEngagement = engagementCount > 0 
             ? Math.round(totalEngagementScore / engagementCount)
-            : 0;
+            : null;
           
           // Determine health status
-          let healthStatus: 'healthy' | 'warning' | 'critical' = 'healthy';
-          const daysSinceActivity = Math.floor((new Date().getTime() - lastActivityDate.getTime()) / 86400000);
+          let healthStatus: 'healthy' | 'warning' | 'critical' | 'unavailable' = 'unavailable';
+          const daysSinceActivity = lastActivityDate
+            ? Math.floor((new Date().getTime() - lastActivityDate.getTime()) / 86400000)
+            : null;
           
-          if (avgEngagement < 30 || daysSinceActivity > 7) {
+          if (avgEngagement !== null && daysSinceActivity !== null && (avgEngagement < 30 || daysSinceActivity > 7)) {
             healthStatus = 'critical';
-          } else if (avgEngagement < 50 || daysSinceActivity > 3) {
+          } else if (avgEngagement !== null && daysSinceActivity !== null && (avgEngagement < 50 || daysSinceActivity > 3)) {
             healthStatus = 'warning';
+          } else if (avgEngagement !== null && daysSinceActivity !== null) {
+            healthStatus = 'healthy';
           }
           
           siteMetrics.push({
@@ -163,7 +167,9 @@ export function HQAnalyticsDashboard() {
     if (sortBy === 'name') {
       comparison = a.siteName.localeCompare(b.siteName);
     } else if (sortBy === 'engagement') {
-      comparison = a.avgEngagement - b.avgEngagement;
+      const left = a.avgEngagement ?? Number.NEGATIVE_INFINITY;
+      const right = b.avgEngagement ?? Number.NEGATIVE_INFINITY;
+      comparison = left - right;
     } else if (sortBy === 'learners') {
       comparison = a.totalLearners - b.totalLearners;
     }
@@ -178,10 +184,10 @@ export function HQAnalyticsDashboard() {
       site.siteName,
       site.totalLearners.toString(),
       site.totalEducators.toString(),
-      `${site.avgEngagement}%`,
+      site.avgEngagement != null ? `${site.avgEngagement}%` : 'Unavailable',
       site.activeThisWeek.toString(),
       site.healthStatus,
-      site.lastActivity.toLocaleDateString()
+      site.lastActivity ? site.lastActivity.toLocaleDateString() : 'Unavailable'
     ]);
     
     const csv = [headers, ...rows]
@@ -234,31 +240,31 @@ export function HQAnalyticsDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <StatCard
             title="Total Sites"
-            value={platformStats.totalSites}
+            value={platformStatsLoading || platformStats.totalSites == null ? 'Unavailable' : platformStats.totalSites}
             icon={BuildingIcon}
             color="purple"
           />
           <StatCard
             title="Active Sites"
-            value={platformStats.activeSites}
+            value={platformStatsLoading || platformStats.activeSites == null ? 'Unavailable' : platformStats.activeSites}
             icon={CheckCircleIcon}
             color="green"
           />
           <StatCard
             title="Total Learners"
-            value={platformStats.totalLearners}
+            value={platformStatsLoading || platformStats.totalLearners == null ? 'Unavailable' : platformStats.totalLearners}
             icon={UsersIcon}
             color="blue"
           />
           <StatCard
             title="Total Educators"
-            value={platformStats.totalEducators}
+            value={platformStatsLoading || platformStats.totalEducators == null ? 'Unavailable' : platformStats.totalEducators}
             icon={UsersIcon}
             color="cyan"
           />
           <StatCard
             title="Avg Engagement"
-            value={`${platformStats.avgEngagement}%`}
+            value={platformStatsLoading || platformStats.avgEngagement == null ? 'Unavailable' : `${platformStats.avgEngagement}%`}
             icon={SparklesIcon}
             color="indigo"
           />
@@ -281,6 +287,11 @@ export function HQAnalyticsDashboard() {
           title="Sites at Risk"
           count={sites.filter(s => s.healthStatus === 'critical').length}
           color="red"
+        />
+        <HealthCard
+          title="Evidence Unavailable"
+          count={sites.filter(s => s.healthStatus === 'unavailable').length}
+          color="gray"
         />
       </div>
       
@@ -332,10 +343,10 @@ export function HQAnalyticsDashboard() {
                   <td className="px-6 py-4 text-gray-700">{site.totalEducators}</td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-gray-900">{site.avgEngagement}%</span>
-                      {site.avgEngagement >= 70 ? (
+                      <span className="font-medium text-gray-900">{site.avgEngagement != null ? `${site.avgEngagement}%` : 'Unavailable'}</span>
+                      {site.avgEngagement != null && site.avgEngagement >= 70 ? (
                         <TrendingUpIcon className="h-4 w-4 text-green-500" />
-                      ) : site.avgEngagement < 40 ? (
+                      ) : site.avgEngagement != null && site.avgEngagement < 40 ? (
                         <TrendingDownIcon className="h-4 w-4 text-red-500" />
                       ) : null}
                     </div>
@@ -391,14 +402,15 @@ function StatCard({ title, value, icon: Icon, color }: StatCardProps) {
 interface HealthCardProps {
   title: string;
   count: number;
-  color: 'green' | 'yellow' | 'red';
+  color: 'green' | 'yellow' | 'red' | 'gray';
 }
 
 function HealthCard({ title, count, color }: HealthCardProps) {
   const colorClasses = {
     green: { bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-700', icon: 'text-green-600' },
     yellow: { bg: 'bg-yellow-50', border: 'border-yellow-200', text: 'text-yellow-700', icon: 'text-yellow-600' },
-    red: { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-700', icon: 'text-red-600' }
+    red: { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-700', icon: 'text-red-600' },
+    gray: { bg: 'bg-gray-50', border: 'border-gray-200', text: 'text-gray-700', icon: 'text-gray-600' },
   };
   
   const colors = colorClasses[color];
@@ -418,14 +430,15 @@ function HealthCard({ title, count, color }: HealthCardProps) {
 }
 
 interface HealthBadgeProps {
-  status: 'healthy' | 'warning' | 'critical';
+  status: 'healthy' | 'warning' | 'critical' | 'unavailable';
 }
 
 function HealthBadge({ status }: HealthBadgeProps) {
   const config = {
     healthy: { bg: 'bg-green-100', text: 'text-green-800', label: 'Healthy' },
     warning: { bg: 'bg-yellow-100', text: 'text-yellow-800', label: 'Needs Attention' },
-    critical: { bg: 'bg-red-100', text: 'text-red-800', label: 'At Risk' }
+    critical: { bg: 'bg-red-100', text: 'text-red-800', label: 'At Risk' },
+    unavailable: { bg: 'bg-gray-100', text: 'text-gray-800', label: 'Evidence Unavailable' },
   };
   
   const { bg, text, label } = config[status];
@@ -439,7 +452,8 @@ function HealthBadge({ status }: HealthBadgeProps) {
 
 // ==================== HELPER FUNCTIONS ====================
 
-function formatRelativeTime(date: Date): string {
+function formatRelativeTime(date: Date | null): string {
+  if (!date) return 'Unavailable';
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffDays = Math.floor(diffMs / 86400000);
