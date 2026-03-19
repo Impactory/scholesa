@@ -192,6 +192,16 @@ export interface PortfolioItem {
   missionAttemptId?: string;
   rubricApplicationId?: string;
   proofBundleId?: string;
+  proofOfLearningStatus?: 'not-available' | 'missing' | 'partial' | 'verified';
+  aiAssistanceUsed?: boolean;
+  aiAssistanceDetails?: string;
+  aiDisclosureStatus?:
+    | 'learner-ai-not-used'
+    | 'learner-ai-verified'
+    | 'learner-ai-verification-gap'
+    | 'educator-feedback-ai'
+    | 'no-learner-ai-signal'
+    | 'not-available';
   educatorId?: string;
   verificationPrompt?: string;
   verificationStatus?: 'pending' | 'reviewed' | 'verified';

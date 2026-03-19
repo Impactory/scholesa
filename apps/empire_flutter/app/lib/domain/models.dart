@@ -1116,6 +1116,10 @@ class PortfolioItemModel {
     this.missionAttemptId,
     this.rubricApplicationId,
     this.proofBundleId,
+    this.proofOfLearningStatus,
+    this.aiAssistanceUsed,
+    this.aiAssistanceDetails,
+    this.aiDisclosureStatus,
     this.educatorId,
     this.verificationPrompt,
     this.verificationStatus,
@@ -1139,6 +1143,10 @@ class PortfolioItemModel {
   final String? missionAttemptId;
   final String? rubricApplicationId;
   final String? proofBundleId;
+  final String? proofOfLearningStatus;
+  final bool? aiAssistanceUsed;
+  final String? aiAssistanceDetails;
+  final String? aiDisclosureStatus;
   final String? educatorId;
   final String? verificationPrompt;
   final String? verificationStatus;
@@ -1174,6 +1182,10 @@ class PortfolioItemModel {
       missionAttemptId: data['missionAttemptId'] as String?,
       rubricApplicationId: data['rubricApplicationId'] as String?,
       proofBundleId: data['proofBundleId'] as String?,
+        proofOfLearningStatus: data['proofOfLearningStatus'] as String?,
+        aiAssistanceUsed: data['aiAssistanceUsed'] as bool?,
+        aiAssistanceDetails: data['aiAssistanceDetails'] as String?,
+        aiDisclosureStatus: data['aiDisclosureStatus'] as String?,
       educatorId: data['educatorId'] as String?,
       verificationPrompt: data['verificationPrompt'] as String?,
       verificationStatus: data['verificationStatus'] as String?,
@@ -1198,6 +1210,10 @@ class PortfolioItemModel {
         'missionAttemptId': missionAttemptId,
         'rubricApplicationId': rubricApplicationId,
         'proofBundleId': proofBundleId,
+        'proofOfLearningStatus': proofOfLearningStatus,
+        'aiAssistanceUsed': aiAssistanceUsed,
+        'aiAssistanceDetails': aiAssistanceDetails,
+        'aiDisclosureStatus': aiDisclosureStatus,
         'educatorId': educatorId,
         'verificationPrompt': verificationPrompt,
         'verificationStatus': verificationStatus,

@@ -1748,6 +1748,12 @@ class MissionService extends ChangeNotifier {
               true
             ? (submissionData['proofBundleId'] as String).trim()
             : null;
+        final Map<String, dynamic>? proofBundleSummary =
+            submissionData['proofBundleSummary'] is Map
+                ? Map<String, dynamic>.from(
+                    submissionData['proofBundleSummary'] as Map,
+                  )
+                : null;
       final List<Map<String, dynamic>> normalizedRubricScores = rubricScores
           .map((Map<String, dynamic> score) => <String, dynamic>{
                 ...score,
@@ -2110,6 +2116,35 @@ class MissionService extends ChangeNotifier {
             final String verificationPrompt =
                 (evidenceData['nextVerificationPrompt'] as String? ?? '')
                     .trim();
+            final bool hasExplainItBack =
+              proofBundleSummary?['hasExplainItBack'] == true;
+            final bool hasOralCheck =
+              proofBundleSummary?['hasOralCheck'] == true;
+            final bool hasMiniRebuild =
+              proofBundleSummary?['hasMiniRebuild'] == true;
+            final bool hasLearnerAiDisclosure =
+              proofBundleSummary?['hasLearnerAiDisclosure'] == true;
+            final bool aiAssistanceUsed =
+              proofBundleSummary?['aiAssistanceUsed'] == true;
+            final bool hasAiAssistanceDetails =
+              proofBundleSummary?['hasAiAssistanceDetails'] == true;
+            final String proofOfLearningStatus =
+              proofBundleSummary == null
+                ? 'not-available'
+                : hasExplainItBack && hasOralCheck && hasMiniRebuild
+                  ? 'verified'
+                  : hasExplainItBack || hasOralCheck || hasMiniRebuild
+                    ? 'partial'
+                    : 'missing';
+            final String aiDisclosureStatus = hasLearnerAiDisclosure
+              ? aiAssistanceUsed
+                ? hasExplainItBack
+                  ? 'learner-ai-verified'
+                  : 'learner-ai-verification-gap'
+                : 'learner-ai-not-used'
+              : trimmedAiDraft != null
+                ? 'educator-feedback-ai'
+                : 'no-learner-ai-signal';
             final DocumentReference<Map<String, dynamic>> portfolioItemRef =
                 _firestore.collection('portfolioItems').doc(evidenceDoc.id);
             batch.set(
@@ -2138,6 +2173,11 @@ class MissionService extends ChangeNotifier {
                 'missionAttemptId': canonicalAttemptRef.id,
                 'rubricApplicationId': rubricApplicationRef.id,
                 if (proofBundleId != null) 'proofBundleId': proofBundleId,
+                'proofOfLearningStatus': proofOfLearningStatus,
+                if (hasLearnerAiDisclosure) 'aiAssistanceUsed': aiAssistanceUsed,
+                if (hasAiAssistanceDetails)
+                  'aiAssistanceDetails': FieldValue.delete(),
+                'aiDisclosureStatus': aiDisclosureStatus,
                 'educatorId': reviewerId,
                 if (verificationPrompt.isNotEmpty)
                   'verificationPrompt': verificationPrompt,
@@ -2149,6 +2189,24 @@ class MissionService extends ChangeNotifier {
               },
               SetOptions(merge: true),
             );
+
+            if (proofBundleId != null && hasAiAssistanceDetails) {
+              // Load the direct learner disclosure text from the proof bundle once it exists.
+              final DocumentSnapshot<Map<String, dynamic>> proofBundleSnapshot =
+                  await _proofBundleRef(missionId).get();
+              final String disclosureDetails =
+                  (proofBundleSnapshot.data()?['aiAssistanceDetails'] as String? ?? '')
+                      .trim();
+              if (disclosureDetails.isNotEmpty) {
+                batch.set(
+                  portfolioItemRef,
+                  <String, dynamic>{
+                    'aiAssistanceDetails': disclosureDetails,
+                  },
+                  SetOptions(merge: true),
+                );
+              }
+            }
 
             batch.set(
               evidenceDoc.reference,
