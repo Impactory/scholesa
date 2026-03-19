@@ -400,8 +400,6 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
               onPressed: isSubmitting
                   ? null
                   : () {
-                      titleController.dispose();
-                      descriptionController.dispose();
                       Navigator.pop(dialogContext);
                     },
               child: Text(_tPartnerListings(context, 'Cancel')),
@@ -457,8 +455,6 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
                         return;
                       }
 
-                      titleController.dispose();
-                      descriptionController.dispose();
                       TelemetryService.instance.logEvent(
                         event: 'cta.clicked',
                         metadata: <String, dynamic>{
@@ -489,7 +485,10 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
           ],
         ),
       ),
-    );
+    ).whenComplete(() {
+      titleController.dispose();
+      descriptionController.dispose();
+    });
   }
 
   void _showListingDetails(MarketplaceListing listing) {
