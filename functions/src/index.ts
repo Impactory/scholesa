@@ -17,6 +17,7 @@ import {
 } from './notificationPipeline';
 import { callInternalInferenceJson } from './internalInferenceGateway';
 import { persistLogoutAuditRecord } from './logoutAudit';
+import { ANALYTICS_REPAIR_AUDIT_ACTIONS, buildAnalyticsRepairRunRecord } from './analyticsRepairRuns';
 import { matchesAuditLogFilters, normalizeAuditLogFilters } from './auditLogFilters';
 import { classifySepEntropyBand, summarizeVerificationSignalType } from './sepVerification';
 import {
@@ -3690,6 +3691,41 @@ export const listAuditLogs = onCall(async (request: CallableRequest) => {
   }
 
   return { logs };
+});
+
+export const listAnalyticsRepairRuns = onCall(async (request: CallableRequest) => {
+  await requireHq(request.auth?.uid);
+  const limit = typeof request.data?.limit === 'number' && request.data.limit > 0 && request.data.limit <= 120 ? request.data.limit : 60;
+  const siteId = typeof request.data?.siteId === 'string' ? request.data.siteId.trim() : '';
+
+  let logs: Array<Record<string, unknown>>;
+  try {
+    let query: FirebaseFirestore.Query = admin.firestore().collection(AUDIT_COLLECTION)
+      .where('action', 'in', [...ANALYTICS_REPAIR_AUDIT_ACTIONS])
+      .orderBy('createdAt', 'desc')
+      .limit(limit);
+    if (siteId) {
+      query = query.where('siteId', '==', siteId);
+    }
+    const snap = await query.get();
+    logs = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  } catch {
+    const snap = await admin.firestore().collection(AUDIT_COLLECTION)
+      .orderBy('createdAt', 'desc')
+      .limit(Math.min(limit * 5, 500))
+      .get();
+    logs = snap.docs
+      .map((doc) => ({ id: doc.id, ...doc.data() }))
+      .filter((entry) => ANALYTICS_REPAIR_AUDIT_ACTIONS.includes(typeof entry.action === 'string' ? entry.action as typeof ANALYTICS_REPAIR_AUDIT_ACTIONS[number] : ''))
+      .filter((entry) => !siteId || entry.siteId === siteId)
+      .slice(0, limit);
+  }
+
+  return {
+    runs: logs
+      .map((entry) => buildAnalyticsRepairRunRecord(entry as { id: string; [key: string]: unknown }))
+      .filter((entry): entry is NonNullable<typeof entry> => entry !== null),
+  };
 });
 
 export const recordLogoutAudit = onCall(async (request: CallableRequest) => {

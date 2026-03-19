@@ -1316,72 +1316,24 @@ function buildKpiPackMetadata(row: Record<string, unknown>): Record<string, stri
   });
 }
 
-function buildAnalyticsBackfillAuditMetadata(row: Record<string, unknown>): Record<string, string> {
-  const details = row.details && typeof row.details === 'object' && !Array.isArray(row.details)
-    ? row.details as Record<string, unknown>
-    : null;
-  const startDate = typeof details?.startDate === 'string' && details.startDate.trim().length > 0
-    ? details.startDate
-    : null;
-  const endDate = typeof details?.endDate === 'string' && details.endDate.trim().length > 0
-    ? details.endDate
-    : null;
-
-  return metadataWithAvailableValues({
-    siteId: typeof row.siteId === 'string' ? row.siteId : null,
-    processed: asAvailabilityLabel(details?.processed),
-    updated: asAvailabilityLabel(details?.updated),
-    skipped: asAvailabilityLabel(details?.skipped),
-    aggregationType: typeof details?.aggregationType === 'string' ? details.aggregationType : null,
-    period: typeof details?.period === 'string' ? details.period : null,
-    force: typeof details?.force === 'boolean' ? String(details.force) : null,
-    backfillWindow: joinAvailableParts([startDate, endDate]) || null,
-  });
-}
-
-function analyticsBackfillRunStatus(metadata: Record<string, string>): string {
-  const updated = asFiniteNumber(metadata.updated);
-  if (updated === 0) {
-    return 'no-op';
-  }
-  return 'completed';
-}
-
 async function loadAnalyticsBackfillAuditRecords(ctx: WorkflowContext): Promise<WorkflowRecord[]> {
-  const auditLogRecords = await loadCallableRows({
+  return loadCallableRows({
     routePath: ctx.routePath,
-    callableName: 'listAuditLogs',
-    args: {
-      limit: 120,
-      actions: [
-        'telemetry_aggregate.backfilled',
-        'kpi_pack.voice_reliability_backfilled',
-      ],
-    },
-    rowArrayField: 'logs',
-    collectionName: 'auditLogs',
-    titleKeys: ['action', 'entityType', 'id'],
-    subtitleKeys: ['entityId', 'actorId'],
-    statusKeys: ['actorRole'],
-    metadataBuilder: buildAnalyticsBackfillAuditMetadata,
+    callableName: 'listAnalyticsRepairRuns',
+    args: { limit: 120 },
+    rowArrayField: 'runs',
+    collectionName: 'analyticsRepairRuns',
+    titleKeys: ['title', 'id'],
+    subtitleKeys: ['subtitle', 'siteId'],
+    statusKeys: ['status'],
+    metadataBuilder: (row) => row.metadata && typeof row.metadata === 'object' && !Array.isArray(row.metadata)
+      ? Object.fromEntries(
+          Object.entries(row.metadata as Record<string, unknown>).filter((entry): entry is [string, string] => typeof entry[1] === 'string' && entry[1].trim().length > 0),
+        )
+      : {},
     editable: false,
     deletable: false,
   }).catch(() => []);
-
-  return auditLogRecords
-    .filter((record) => record.title === 'telemetry_aggregate.backfilled' || record.title === 'kpi_pack.voice_reliability_backfilled')
-    .map((record) => ({
-      ...record,
-      title: record.title === 'telemetry_aggregate.backfilled'
-        ? 'Telemetry aggregate backfill'
-        : 'KPI voice backfill',
-      subtitle: joinAvailableParts([
-        record.metadata.updated ? `${record.metadata.updated} updated` : null,
-        record.metadata.processed ? `${record.metadata.processed} processed` : null,
-        record.metadata.backfillWindow,
-      ]) || 'Backfill run recorded',
-      status: analyticsBackfillRunStatus(record.metadata),
-    }));
 }
 
 async function loadPartnerDeliverableRecords(ctx: WorkflowContext): Promise<WorkflowRecord[]> {

@@ -729,31 +729,32 @@ describe('workflow route parity', () => {
         packs: [],
       },
     }) as CallableHandler);
-    const listAuditLogs = setCallableHandler('listAuditLogs', jest.fn().mockResolvedValue({
+    const listAnalyticsRepairRuns = setCallableHandler('listAnalyticsRepairRuns', jest.fn().mockResolvedValue({
       data: {
-        logs: [
+        runs: [
           {
             id: 'audit-1',
-            action: 'telemetry_aggregate.backfilled',
-            actorRole: 'hq',
+            title: 'Telemetry aggregate backfill',
+            subtitle: '10 updated • 12 processed • 2026-03-01T00:00:00.000Z • 2026-03-07T00:00:00.000Z',
+            status: 'completed',
             siteId: 'site-1',
-            createdAt: '2026-03-19T10:00:00.000Z',
-            details: {
+            updatedAt: '2026-03-19T10:00:00.000Z',
+            metadata: {
               processed: 12,
               updated: 10,
               skipped: 2,
               aggregationType: 'daily',
-              startDate: '2026-03-01T00:00:00.000Z',
-              endDate: '2026-03-07T00:00:00.000Z',
+              backfillWindow: '2026-03-01T00:00:00.000Z • 2026-03-07T00:00:00.000Z',
             },
           },
           {
             id: 'audit-2',
-            action: 'kpi_pack.voice_reliability_backfilled',
-            actorRole: 'hq',
+            title: 'KPI voice backfill',
+            subtitle: '0 updated • 4 processed',
+            status: 'no-op',
             siteId: 'site-2',
-            createdAt: '2026-03-19T11:00:00.000Z',
-            details: {
+            updatedAt: '2026-03-19T11:00:00.000Z',
+            metadata: {
               processed: 4,
               updated: 0,
               period: 'quarter',
@@ -762,9 +763,10 @@ describe('workflow route parity', () => {
           },
           {
             id: 'audit-3',
-            action: 'other.audit.event',
-            actorRole: 'hq',
-            createdAt: '2026-03-19T12:00:00.000Z',
+            title: 'Unexpected run',
+            subtitle: 'Should not appear in dedicated feed',
+            status: 'completed',
+            updatedAt: '2026-03-19T12:00:00.000Z',
           },
         ],
       },
@@ -772,13 +774,7 @@ describe('workflow route parity', () => {
 
     const result = await loadWorkflowRecords(makeContext('/hq/analytics'));
 
-    expect(listAuditLogs).toHaveBeenCalledWith({
-      limit: 120,
-      actions: [
-        'telemetry_aggregate.backfilled',
-        'kpi_pack.voice_reliability_backfilled',
-      ],
-    });
+    expect(listAnalyticsRepairRuns).toHaveBeenCalledWith({ limit: 120 });
 
     expect(result.records).toEqual(expect.arrayContaining([
       expect.objectContaining({
@@ -801,7 +797,9 @@ describe('workflow route parity', () => {
         }),
       }),
     ]));
-    expect(result.records.find((record) => record.id === 'audit-3')).toBeUndefined();
+    expect(result.records).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: 'audit-3', title: 'Unexpected run' }),
+    ]));
   });
 
   it('routes HQ analytics aggregate backfill through backfillTelemetryAggregates', async () => {
