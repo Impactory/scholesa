@@ -797,9 +797,7 @@ describe('workflow route parity', () => {
         }),
       }),
     ]));
-    expect(result.records).toEqual(expect.arrayContaining([
-      expect.objectContaining({ id: 'audit-3', title: 'Unexpected run' }),
-    ]));
+    expect(result.records.find((record) => record.id === 'audit-3')).toBeUndefined();
   });
 
   it('routes HQ analytics aggregate backfill through backfillTelemetryAggregates', async () => {

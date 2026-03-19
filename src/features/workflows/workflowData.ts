@@ -1317,7 +1317,7 @@ function buildKpiPackMetadata(row: Record<string, unknown>): Record<string, stri
 }
 
 async function loadAnalyticsBackfillAuditRecords(ctx: WorkflowContext): Promise<WorkflowRecord[]> {
-  return loadCallableRows({
+  const records = await loadCallableRows({
     routePath: ctx.routePath,
     callableName: 'listAnalyticsRepairRuns',
     args: { limit: 120 },
@@ -1334,6 +1334,8 @@ async function loadAnalyticsBackfillAuditRecords(ctx: WorkflowContext): Promise<
     editable: false,
     deletable: false,
   }).catch(() => []);
+
+  return records.filter((record) => record.title === 'Telemetry aggregate backfill' || record.title === 'KPI voice backfill');
 }
 
 async function loadPartnerDeliverableRecords(ctx: WorkflowContext): Promise<WorkflowRecord[]> {
