@@ -254,7 +254,13 @@ export function AICoachPopup({
             traceId: voiceInputTraceId || undefined,
             context: buildBosVoiceContext(voiceInputTraceId),
           });
-          setQuestion(transcribed.transcript.trim());
+          const transcriptText = transcribed.transcript.trim();
+          if (!transcriptText) {
+            setStatusMessage('MiloOS could not capture a reliable voice transcript. Please try again and speak more clearly.');
+            return;
+          }
+          setStatusMessage(null);
+          setQuestion(transcriptText);
           if (transcribed.metadata?.traceId) {
             setVoiceInputTraceId(transcribed.metadata.traceId);
             trackVoiceTelemetry('voice.transcribe', {
@@ -265,6 +271,11 @@ export function AICoachPopup({
           }
         } catch (error) {
           console.error('Voice transcription failed in AI coach popup.', error);
+          setStatusMessage(
+            error instanceof Error && error.message
+              ? error.message
+              : 'MiloOS could not capture a reliable voice transcript. Please try again.',
+          );
         } finally {
           audioChunksRef.current = [];
           setIsTranscribing(false);

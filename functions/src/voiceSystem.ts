@@ -1789,13 +1789,6 @@ function cleanTranscript(input: string): string {
   return `${trimmed}.`;
 }
 
-function defaultTranscriptByLocale(locale: VoiceLocale): string {
-  if (locale === 'zh-CN') return '请给我一个下一步的提示';
-  if (locale === 'zh-TW') return '請給我下一步提示';
-  if (locale === 'th') return 'ช่วยบอกใบ้ขั้นตอนถัดไปหน่อย';
-  return 'Please give me a hint for the next step';
-}
-
 function parseMultipartForm(req: Request): {
   fields: Record<string, string>;
   files: Record<string, { filename: string; contentType: string; data: Buffer }>;
@@ -3310,7 +3303,14 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
         inferenceMeta = buildInferenceMeta('stt', sttResult, 'internal_call_failed');
       }
     }
-    const transcript = cleanTranscript(transcriptCandidate ?? defaultTranscriptByLocale(locale));
+    const transcript = cleanTranscript(transcriptCandidate ?? '');
+    if (!transcript) {
+      throw new VoiceHttpError(
+        422,
+        'failed_precondition',
+        'Voice transcription did not capture a reliable transcript. Please try again.',
+      );
+    }
     if (confidence === undefined) {
       confidence = Math.max(0.72, Math.min(0.93, 0.72 + transcript.length / 500));
     }
