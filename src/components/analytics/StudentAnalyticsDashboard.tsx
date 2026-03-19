@@ -304,10 +304,11 @@ export function StudentAnalyticsDashboard() {
           <div>
             <h3 className="font-semibold text-gray-900 mb-2">{t('analytics.student.keepGoingTitle')}</h3>
             <p className="text-gray-700 text-sm">
-              {sdtScores.overall >= 80 && t('analytics.student.motivation.veryHigh')}
-              {sdtScores.overall >= 60 && sdtScores.overall < 80 && t('analytics.student.motivation.high')}
-              {sdtScores.overall >= 40 && sdtScores.overall < 60 && t('analytics.student.motivation.medium')}
-              {sdtScores.overall < 40 && t('analytics.student.motivation.low')}
+                {sdtScores.overall == null && 'Motivation evidence unavailable.'}
+                {sdtScores.overall != null && sdtScores.overall >= 80 && t('analytics.student.motivation.veryHigh')}
+                {sdtScores.overall != null && sdtScores.overall >= 60 && sdtScores.overall < 80 && t('analytics.student.motivation.high')}
+                {sdtScores.overall != null && sdtScores.overall >= 40 && sdtScores.overall < 60 && t('analytics.student.motivation.medium')}
+                {sdtScores.overall != null && sdtScores.overall < 40 && t('analytics.student.motivation.low')}
             </p>
           </div>
         </div>
@@ -373,7 +374,7 @@ function calculateStreaks(dates: Date[]): { currentStreak: number; longestStreak
 interface SDTScoreCardProps {
   title: string;
   subtitle: string;
-  score: number;
+  score: number | null;
   icon: React.ComponentType<{ className?: string }>;
   color: 'purple' | 'blue' | 'pink' | 'green';
 }
@@ -387,7 +388,7 @@ function SDTScoreCard({ title, subtitle, score, icon: Icon, color }: SDTScoreCar
   };
   
   const circumference = 2 * Math.PI * 40;
-  const offset = circumference - (score / 100) * circumference;
+  const offset = circumference - ((score ?? 0) / 100) * circumference;
   
   return (
     <div className={`bg-gradient-to-br ${colorClasses[color]} rounded-lg p-6 text-white relative overflow-hidden`}>
@@ -416,11 +417,11 @@ function SDTScoreCard({ title, subtitle, score, icon: Icon, color }: SDTScoreCar
               transform="rotate(-90 40 40)"
             />
             <text x="40" y="45" textAnchor="middle" fill="white" fontSize="18" fontWeight="bold">
-              {score}
+              {score ?? 'N/A'}
             </text>
           </svg>
           
-          <div className="text-2xl font-bold">{score}%</div>
+          <div className="text-2xl font-bold">{score != null ? `${score}%` : 'Unavailable'}</div>
         </div>
       </div>
     </div>

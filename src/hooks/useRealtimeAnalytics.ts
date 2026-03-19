@@ -278,10 +278,10 @@ export function useChildActivity(childId: string, siteId: string, limitCount: nu
  */
 export function useSDTScores(userId: string, siteId: string) {
   const [scores, setScores] = useState({
-    autonomy: 0,
-    competence: 0,
-    belonging: 0,
-    overall: 0
+    autonomy: null as number | null,
+    competence: null as number | null,
+    belonging: null as number | null,
+    overall: null as number | null,
   });
   const [loading, setLoading] = useState(true);
 
@@ -303,7 +303,12 @@ export function useSDTScores(userId: string, siteId: string) {
       async () => {
         try {
           const sdtScores = await TelemetryService.getSDTProfile(userId, siteId);
-          const overall = Math.round((sdtScores.autonomy + sdtScores.competence + sdtScores.belonging) / 3);
+          const overall =
+            sdtScores.autonomy != null &&
+            sdtScores.competence != null &&
+            sdtScores.belonging != null
+              ? Math.round((sdtScores.autonomy + sdtScores.competence + sdtScores.belonging) / 3)
+              : null;
           setScores({ ...sdtScores, overall });
           setLoading(false);
         } catch (err) {

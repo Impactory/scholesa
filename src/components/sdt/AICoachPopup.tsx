@@ -108,7 +108,7 @@ export function AICoachPopup({
   const [voiceInputTraceId, setVoiceInputTraceId] = useState<string | null>(null);
   const [currentLogId, setCurrentLogId] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
-  const [sdtProfile, setSdtProfile] = useState<{ autonomy: number; competence: number; belonging: number } | null>(null);
+  const [sdtProfile, setSdtProfile] = useState<{ autonomy: number | null; competence: number | null; belonging: number | null } | null>(null);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -359,7 +359,13 @@ export function AICoachPopup({
 
       // Build learner-only personalization from self telemetry.
       let personalizedContext = '';
-      if (sdtProfile && actorRole === 'learner') {
+      if (
+        sdtProfile &&
+        actorRole === 'learner' &&
+        sdtProfile.autonomy != null &&
+        sdtProfile.competence != null &&
+        sdtProfile.belonging != null
+      ) {
         const weakDimensions: string[] = [];
         if (sdtProfile.autonomy < 40) weakDimensions.push('autonomy (needs choice-making support)');
         if (sdtProfile.competence < 40) weakDimensions.push('competence (needs skill-building)');
