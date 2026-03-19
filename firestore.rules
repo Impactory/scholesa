@@ -181,7 +181,10 @@ service cloud.firestore {
         || isEducator()
         || isParentLinkedToLearner(resource.data.learnerId)
       );
-      allow create: if isAuthenticated() && request.resource.data.learnerId == request.auth.uid;
+      allow create: if isAuthenticated() && (
+        request.resource.data.learnerId == request.auth.uid
+        || isEducator()
+      );
       allow update: if isOwner(resource.data.learnerId) || isEducator();
       allow delete: if isOwner(resource.data.learnerId) || isEducator();
     }

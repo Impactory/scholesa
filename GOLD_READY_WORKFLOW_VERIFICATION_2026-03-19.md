@@ -11,12 +11,12 @@ Only active product code paths were considered. A workflow is not "verified" unl
 | # | Required workflow | Status | Judgment |
 | --- | --- | --- | --- |
 | 1 | Curriculum admin can define capabilities and map them to units/checkpoints | Partial | HQ curriculum authoring now persists first-class capability references on missions and rubrics, but checkpoint-level mapping and downstream usage are still incomplete. |
-| 2 | Teacher can run a session and quickly log capability observations during build time | Partial | Live capture exists in Flutter educator sessions and mapped evidence can now be linked forward into rubric and growth records, but portfolio and reporting still do not consume that chain. |
+| 2 | Teacher can run a session and quickly log capability observations during build time | Partial | Live capture exists in Flutter educator sessions and mapped evidence can now be linked forward into rubric, growth, and portfolio records, but reporting still does not consume that chain. |
 | 3 | Student can submit artifacts, reflections, and checkpoint evidence | Partial | Reflection and checkpoint submission paths exist, and portfolio items load, but the submission chain is fragmented and not consistently linked to capability evidence lineage. |
-| 4 | Teacher can apply a 4-level rubric tied to capabilities and process domains | Partial | Rubrics and rubric applications exist, but they are mission-oriented and not tied to a capability framework with downstream growth updates. |
+| 4 | Teacher can apply a 4-level rubric tied to capabilities and process domains | Partial | Educator review now preserves capability-linked rubric scores and writes downstream growth data, but process-domain coverage and report consumption remain incomplete. |
 | 5 | Proof-of-learning can be captured and reviewed | Partial | Explain-back capture exists, but the current path records a generic event and does not form a teacher-reviewed proof chain attached to capability evidence. |
-| 6 | Capability growth updates over time from evidence | Partial | Educator rubric reviews now write capability mastery and append-only growth events when capability-linked scores are present, but live evidence, portfolio, and reporting do not yet consume that chain. |
-| 7 | Student portfolio shows real artifacts and reflections | Partial | Real portfolio items exist, but the portfolio is still a showcase surface rather than a trustworthy evidence workspace with strong lineage. |
+| 6 | Capability growth updates over time from evidence | Partial | Educator rubric reviews now write capability mastery and append-only growth events, and linked evidence can now flow into portfolio items, but reporting still does not consume that chain. |
+| 7 | Student portfolio shows real artifacts and reflections | Partial | Portfolio items can now be created from reviewed educator evidence with capability and growth provenance, but reflection linkage and family/report trust layers are still incomplete. |
 | 8 | Ideation Passport/report can be generated from actual evidence | Missing | Parent bundle and passport outputs are assembled from rollups, counts, and telemetry rather than evidence provenance. |
 | 9 | AI-use is disclosed and visible where relevant | Partial | AI surfaces expose guardrails and explain-back prompts in some places, but disclosure is not consistently attached to learner artifacts, portfolio items, or reports. |
 | 10 | Family/student/teacher views are understandable and trustworthy | Partial | Active views exist, but several still rely on levels, XP, snapshots, and aggregate progress rather than direct evidence-backed claims. |
@@ -67,17 +67,20 @@ Only active product code paths were considered. A workflow is not "verified" unl
 
 - `apps/empire_flutter/app/lib/modules/missions/mission_service.dart` now derives capability-level outcomes from educator rubric scores and writes both `capabilityMastery` and append-only `capabilityGrowthEvents` records.
 - The same review path now updates matching `evidenceRecords` so the originating observation no longer stays stranded in `pending` when a capability-linked rubric review is applied.
+- The same review path now creates or updates `portfolioItems` for reviewed `portfolioCandidate` evidence, carrying `evidenceRecordIds`, `capabilityIds`, `capabilityTitles`, `growthEventIds`, and verification metadata forward into the learner portfolio layer.
 - `schema.ts` now defines `CapabilityMastery` and `CapabilityGrowthEvent` entities.
 - `firestore.rules` now includes access rules for `capabilityMastery` and `capabilityGrowthEvents`.
 - `apps/empire_flutter/app/lib/domain/models.dart` and `apps/empire_flutter/app/lib/domain/repositories.dart` now include Flutter models and repositories for those records.
-- Remaining gap: live evidence records, learner portfolio, and Passport/report outputs do not yet consume these growth records, so the chain is still partial rather than verified.
+- Remaining gap: Passport/report outputs still do not consume these growth records, so the chain is still partial rather than verified.
 - Current judgment: partial.
 
 ### 7. Portfolio with real artifacts and reflections
 
-- `apps/empire_flutter/app/lib/modules/learner/learner_portfolio_page.dart` loads real portfolio items.
+- `apps/empire_flutter/app/lib/modules/missions/mission_service.dart` now turns reviewed `portfolioCandidate` evidence into deterministic `portfolioItems` records keyed by the source evidence record.
+- Those portfolio records now carry provenance fields including `evidenceRecordIds`, `capabilityIds`, `capabilityTitles`, `growthEventIds`, `rubricApplicationId`, and `verificationStatus`.
+- `apps/empire_flutter/app/lib/modules/learner/learner_portfolio_page.dart` now surfaces linked evidence status and capability tags on learner project cards.
 - Storage rules allow learner uploads to `portfolioMedia/{learnerId}/{fileName}`.
-- Gap: portfolio items are still weakly connected to reflections, verification, rubric outcomes, and capability claims, so the portfolio is not yet a trustworthy evidence graph.
+- Gap: reflection linkage, AI disclosure, and Passport/family reporting still do not consume the same provenance graph, so the portfolio is improved but not yet trustworthy end to end.
 - Current judgment: partial.
 
 ### 8. Passport/report generated from actual evidence
@@ -128,13 +131,11 @@ Only active product code paths were considered. A workflow is not "verified" unl
 
 ### D. Missing
 
-- Portfolio lineage connecting artifact, reflection, verification, rubric result, and capability claim.
 - Passport generation from actual evidence provenance.
 
 ### E. Gold-ready blockers
 
-- The capability model and growth records now exist, but they still do not anchor evidence, portfolio, and reporting end to end.
-- Live evidence capture now reaches rubric and growth for mapped capabilities, but the chain still stops short of portfolio and reporting.
+- The capability model and growth records now anchor reviewed educator evidence into portfolio items, but reporting still does not consume that chain end to end.
 - Reporting still depends on rollups and gamified progress constructs.
 - AI transparency is not consistently visible across all relevant learner outputs.
 

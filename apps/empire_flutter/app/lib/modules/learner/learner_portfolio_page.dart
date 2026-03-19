@@ -997,6 +997,9 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
               : _t('Saved to your portfolio.'),
           'pillar': _primaryPillarLabel(item),
           'date': _formatProjectDate(item),
+          'capabilityTitles': item.capabilityTitles,
+          'evidenceLinked': item.evidenceRecordIds.isNotEmpty,
+          'verificationStatus': (item.verificationStatus ?? '').trim(),
           'image': null,
           'color': _projectColor(item),
         };
@@ -1419,6 +1422,14 @@ class _ProjectCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final List<String> capabilityTitles =
+        ((project['capabilityTitles'] as List?)?.cast<String>() ??
+                const <String>[])
+            .where((String value) => value.trim().isNotEmpty)
+            .toList(growable: false);
+    final bool evidenceLinked = project['evidenceLinked'] == true;
+    final String verificationStatus =
+        (project['verificationStatus'] as String? ?? '').trim();
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Container(
@@ -1497,6 +1508,28 @@ class _ProjectCard extends StatelessWidget {
                     style: TextStyle(
                         color: context.schTextSecondary, fontSize: 14),
                   ),
+                  if (evidenceLinked || capabilityTitles.isNotEmpty) ...<Widget>[
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: <Widget>[
+                        if (evidenceLinked)
+                          _ProjectMetaChip(
+                            label: verificationStatus.isNotEmpty
+                                ? 'Evidence linked • ${_titleCase(verificationStatus)}'
+                                : 'Evidence linked',
+                            color: project['color'] as Color,
+                          ),
+                        ...capabilityTitles.take(3).map(
+                          (String value) => _ProjectMetaChip(
+                            label: value,
+                            color: project['color'] as Color,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -1505,4 +1538,48 @@ class _ProjectCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _ProjectMetaChip extends StatelessWidget {
+  const _ProjectMetaChip({required this.label, required this.color});
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+String _titleCase(String value) {
+  if (value.isEmpty) {
+    return value;
+  }
+  final String normalized = value.replaceAll('_', ' ').trim();
+  if (normalized.isEmpty) {
+    return value;
+  }
+  return normalized
+      .split(RegExp(r'\s+'))
+      .where((String part) => part.isNotEmpty)
+      .map(
+        (String part) =>
+            '${part[0].toUpperCase()}${part.substring(1).toLowerCase()}',
+      )
+      .join(' ');
 }
