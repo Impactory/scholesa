@@ -56,14 +56,35 @@ Future<void> _pumpPage(
 }
 
 Future<void> _createDraftCurriculum(WidgetTester tester, String title) async {
-  await tester.tap(find.text('New Curriculum'));
+  await tester.tap(find.byType(FloatingActionButton).first);
   await tester.pumpAndSettle();
 
-  await tester.enterText(find.widgetWithText(TextField, 'Title'), title);
+  await _enterDialogTextField(tester, 0, title);
+  await _enterDialogTextField(
+    tester,
+    1,
+    'Curriculum workflow coverage draft.',
+  );
+  await _enterDialogTextField(tester, 3, 'Systems thinking');
   await tester.tap(find.widgetWithText(ElevatedButton, 'Create'));
   await tester.pumpAndSettle();
 
   expect(find.text('Curriculum created'), findsOneWidget);
+}
+
+Future<void> _enterDialogTextField(
+  WidgetTester tester,
+  int index,
+  String value,
+) async {
+  final Finder dialogFields = find.descendant(
+    of: find.byType(AlertDialog),
+    matching: find.byType(TextField),
+  );
+  final Finder field = dialogFields.at(index);
+  await tester.ensureVisible(field);
+  await tester.enterText(field, value);
+  await tester.pump();
 }
 
 Future<void> _tapVisible(WidgetTester tester, Finder finder) async {
@@ -222,20 +243,22 @@ void main() {
       final AppState appState = _buildHqState();
       await _pumpPage(tester, firestore: firestore, appState: appState);
 
-      await tester.tap(find.text('New Curriculum'));
+      expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
+
+      await tester.tap(find.byType(FloatingActionButton).first);
       await tester.pumpAndSettle();
 
-      await tester.enterText(
-        find.widgetWithText(TextField, 'Title'),
-        'Metadata Curriculum',
-      );
-      await tester.enterText(
-        find.widgetWithText(TextField, 'Description'),
+      await _enterDialogTextField(tester, 0, 'Metadata Curriculum');
+      await _enterDialogTextField(
+        tester,
+        1,
         'Curriculum metadata persistence coverage.',
       );
-      await tester.enterText(
-        find.widgetWithText(TextField, 'Misconception tags'),
-        'fractions, sequencing',
+      await _enterDialogTextField(tester, 2, 'fractions, sequencing');
+      await _enterDialogTextField(
+        tester,
+        3,
+        'Systems thinking, Reflection',
       );
 
       await tester.tap(find.widgetWithText(ElevatedButton, 'Create'));

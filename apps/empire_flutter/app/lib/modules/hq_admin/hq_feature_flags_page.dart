@@ -5,6 +5,7 @@ import '../../domain/repositories.dart';
 import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
 import '../../services/workflow_bridge_service.dart';
+import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 String _tHqFeatureFlags(BuildContext context, String input) {
@@ -948,9 +949,6 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               );
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-          const SessionMenuButton(
-            foregroundColor: Colors.white,
-          ),
                   content: Text(
                     _tHqFeatureFlags(
                       context,
@@ -960,6 +958,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 ),
               );
             },
+          ),
+          const SessionMenuButton(
+            foregroundColor: Colors.white,
           ),
         ],
       ),

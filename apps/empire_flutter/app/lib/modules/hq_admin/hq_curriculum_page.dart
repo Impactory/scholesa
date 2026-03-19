@@ -7,6 +7,7 @@ import '../../i18n/shared_role_surface_i18n.dart';
 import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../services/workflow_bridge_service.dart';
+import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 String _tHqCurriculum(BuildContext context, String input) {
