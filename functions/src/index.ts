@@ -17,6 +17,7 @@ import {
 } from './notificationPipeline';
 import { callInternalInferenceJson } from './internalInferenceGateway';
 import { persistLogoutAuditRecord } from './logoutAudit';
+import { matchesAuditLogFilters, normalizeAuditLogFilters } from './auditLogFilters';
 import { classifySepEntropyBand, summarizeVerificationSignalType } from './sepVerification';
 import {
   handleVoiceApi,
@@ -3657,29 +3658,20 @@ export const resetUserPassword = onCall(async (request: CallableRequest) => {
 export const listAuditLogs = onCall(async (request: CallableRequest) => {
   await requireHq(request.auth?.uid);
   const limit = typeof request.data?.limit === 'number' && request.data.limit > 0 && request.data.limit <= 100 ? request.data.limit : 50;
-  const entityId = typeof request.data?.entityId === 'string' ? request.data.entityId.trim() : '';
-  const entityType = typeof request.data?.entityType === 'string' ? request.data.entityType.trim() : '';
-  const action = typeof request.data?.action === 'string' ? request.data.action.trim() : '';
-  const actions = Array.isArray(request.data?.actions)
-    ? request.data.actions
-        .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
-        .map((value) => value.trim())
-        .slice(0, 10)
-    : [];
-  const actionFilters = action ? [action] : actions;
+  const filters = normalizeAuditLogFilters((request.data || {}) as Record<string, unknown>);
 
   const applyFilters = (baseQuery: FirebaseFirestore.Query): FirebaseFirestore.Query => {
     let nextQuery = baseQuery;
-    if (entityId) {
-      nextQuery = nextQuery.where('entityId', '==', entityId);
+    if (filters.entityId) {
+      nextQuery = nextQuery.where('entityId', '==', filters.entityId);
     }
-    if (entityType) {
-      nextQuery = nextQuery.where('entityType', '==', entityType);
+    if (filters.entityType) {
+      nextQuery = nextQuery.where('entityType', '==', filters.entityType);
     }
-    if (actionFilters.length === 1) {
-      nextQuery = nextQuery.where('action', '==', actionFilters[0]);
-    } else if (actionFilters.length > 1) {
-      nextQuery = nextQuery.where('action', 'in', actionFilters);
+    if (filters.actions.length === 1) {
+      nextQuery = nextQuery.where('action', '==', filters.actions[0]);
+    } else if (filters.actions.length > 1) {
+      nextQuery = nextQuery.where('action', 'in', filters.actions);
     }
     return nextQuery;
   };
@@ -3693,12 +3685,7 @@ export const listAuditLogs = onCall(async (request: CallableRequest) => {
     const fallbackSnap = await orderedQuery.limit(Math.min(limit * 5, 500)).get();
     logs = fallbackSnap.docs
       .map((doc) => ({ id: doc.id, ...doc.data() }))
-      .filter((entry) => {
-        if (entityId && entry.entityId !== entityId) return false;
-        if (entityType && entry.entityType !== entityType) return false;
-        if (actionFilters.length > 0 && !actionFilters.includes(typeof entry.action === 'string' ? entry.action : '')) return false;
-        return true;
-      })
+      .filter((entry) => matchesAuditLogFilters(entry, filters))
       .slice(0, limit);
   }
 
