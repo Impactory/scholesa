@@ -1382,6 +1382,7 @@ class MissionService extends ChangeNotifier {
 
   Future<void> loadPendingReviews({String? educatorId, String? siteId}) async {
     _isLoading = true;
+    _error = null;
     notifyListeners();
     try {
       // Build query for pending submissions
@@ -1490,7 +1491,9 @@ class MissionService extends ChangeNotifier {
       debugPrint('Loaded ${_pendingReviews.length} pending reviews');
     } catch (e) {
       debugPrint('Error loading pending reviews: $e');
+      _error = 'Unable to load mission review queue right now.';
       _pendingReviews = <MissionSubmission>[];
+      _reviewedToday = 0;
     } finally {
       _isLoading = false;
       notifyListeners();
