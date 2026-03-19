@@ -50,6 +50,8 @@ void main() {
         '/educator/review-queue',
         '/parent/messages',
         '/parent/settings',
+        '/parent/child/:learnerId',
+        '/parent/consent',
         '/site/scheduling',
         '/site/pickup-auth',
         '/site/consent',

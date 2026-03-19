@@ -55,6 +55,8 @@ final Map<String, bool> kKnownRoutes = <String, bool>{
 
   // Parent
   '/parent/summary': true,
+  '/parent/child/:learnerId': true,
+  '/parent/consent': true,
   '/parent/billing': true,
   '/parent/schedule': true,
   '/parent/portfolio': true,
@@ -320,6 +322,23 @@ GoRouter createAppRouter(
         builder: (BuildContext context, GoRouterState state) => const RoleGate(
           allowedRoles: <UserRole>[UserRole.parent, UserRole.hq],
           child: ParentSummaryPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/parent/child/:learnerId',
+        builder: (BuildContext context, GoRouterState state) => RoleGate(
+          allowedRoles: const <UserRole>[UserRole.parent, UserRole.hq],
+          child: ParentChildPage(
+            learnerId:
+                Uri.decodeComponent(state.pathParameters['learnerId'] ?? ''),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/parent/consent',
+        builder: (BuildContext context, GoRouterState state) => const RoleGate(
+          allowedRoles: <UserRole>[UserRole.parent, UserRole.hq],
+          child: ParentConsentPage(),
         ),
       ),
 
