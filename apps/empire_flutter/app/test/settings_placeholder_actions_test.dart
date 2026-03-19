@@ -4,10 +4,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
 import 'package:scholesa_app/auth/app_state.dart';
+import 'package:scholesa_app/auth/auth_service.dart';
 import 'package:scholesa_app/modules/settings/settings_page.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
 import 'package:scholesa_app/services/theme_service.dart';
@@ -52,6 +54,8 @@ class _FakeUrlLauncherPlatform extends UrlLauncherPlatform {
 
 class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
+class _MockAuthService extends Mock implements AuthService {}
+
 AppState _buildAppState() {
   final AppState state = AppState();
   state.updateFromMeResponse(<String, dynamic>{
@@ -90,6 +94,32 @@ Widget _buildHarness({required List<SingleChildWidget> providers}) {
   );
 }
 
+Widget _buildRouterHarness({
+  required List<SingleChildWidget> providers,
+  required GoRouter router,
+}) {
+  return MultiProvider(
+    providers: providers,
+    child: MaterialApp.router(
+      routerConfig: router,
+      theme: ThemeData(
+        useMaterial3: true,
+        splashFactory: NoSplash.splashFactory,
+      ),
+      localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const <Locale>[
+        Locale('en'),
+        Locale('zh', 'CN'),
+        Locale('zh', 'TW'),
+      ],
+    ),
+  );
+}
+
 Finder _tileTapTarget(String label) {
   return find
       .ancestor(
@@ -100,6 +130,68 @@ Finder _tileTapTarget(String label) {
 }
 
 void main() {
+  testWidgets('settings sign out clears session for shared-device account switching',
+      (WidgetTester tester) async {
+    final AppState state = _buildAppState();
+    final ThemeService themeService = ThemeService();
+    final _MockAuthService authService = _MockAuthService();
+    final GoRouter router = GoRouter(
+      initialLocation: '/settings',
+      routes: <RouteBase>[
+        GoRoute(
+          path: '/settings',
+          builder: (BuildContext context, GoRouterState state) =>
+              const SettingsPage(),
+        ),
+        GoRoute(
+          path: '/login',
+          builder: (BuildContext context, GoRouterState state) =>
+              const Scaffold(body: Center(child: Text('Login Screen'))),
+        ),
+      ],
+    );
+
+    when(() => authService.signOut(source: any(named: 'source')))
+        .thenAnswer((Invocation invocation) async {
+      state.clear();
+    });
+
+    await tester.binding.setSurfaceSize(const Size(1000, 1800));
+    await tester.pumpWidget(
+      _buildRouterHarness(
+        router: router,
+        providers: <SingleChildWidget>[
+          ChangeNotifierProvider<AppState>.value(value: state),
+          ChangeNotifierProvider<ThemeService>.value(value: themeService),
+          Provider<AuthService>.value(value: authService),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Sign Out'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(_tileTapTarget('Sign Out'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Sign out so another family member can switch accounts on this device?',
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Sign Out'));
+    await tester.pumpAndSettle();
+
+    verify(() => authService.signOut(source: 'settings_page')).called(1);
+    expect(state.isAuthenticated, isFalse);
+    expect(find.text('Login Screen'), findsOneWidget);
+  });
+
   testWidgets(
       'settings submits support requests in-app and still opens the store rating flow',
       (WidgetTester tester) async {
