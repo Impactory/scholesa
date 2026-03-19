@@ -134,6 +134,26 @@ function asTextAvailability(value: unknown): string {
   return typeof value === 'string' && value.trim().length > 0 ? value : 'unavailable';
 }
 
+function asAvailabilityLabel(value: unknown): string | null {
+  const numeric = asFiniteNumber(value);
+  return numeric != null ? String(numeric) : null;
+}
+
+function asPercentLabelFromUnit(value: unknown): string | null {
+  const numeric = asFiniteNumber(value);
+  return numeric != null ? `${Math.round(numeric * 100)}%` : null;
+}
+
+function joinAvailableParts(parts: Array<string | null | undefined>): string {
+  return parts.filter((part): part is string => typeof part === 'string' && part.trim().length > 0).join(' • ');
+}
+
+function metadataWithAvailableValues(values: Record<string, string | null | undefined>): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(values).filter((entry): entry is [string, string] => typeof entry[1] === 'string' && entry[1].trim().length > 0),
+  );
+}
+
 function asBoolean(value: unknown, fallback = false): boolean {
   if (typeof value === 'boolean') return value;
   if (typeof value === 'string') {
@@ -538,21 +558,21 @@ async function loadParentPortfolioWorkflowRecords(ctx: WorkflowContext): Promise
     const capability = learner.capabilitySnapshot as Record<string, unknown> | undefined;
     const portfolio = learner.portfolioSnapshot as Record<string, unknown> | undefined;
     const ideation = learner.ideationPassport as Record<string, unknown> | undefined;
-    const futureSkills = capability ? asPercentFromUnit(capability.futureSkills) : 'unavailable';
-    const leadership = capability ? asPercentFromUnit(capability.leadership) : 'unavailable';
-    const impact = capability ? asPercentFromUnit(capability.impact) : 'unavailable';
+    const futureSkills = capability ? asPercentLabelFromUnit(capability.futureSkills) : null;
+    const leadership = capability ? asPercentLabelFromUnit(capability.leadership) : null;
+    const impact = capability ? asPercentLabelFromUnit(capability.impact) : null;
     const capabilityBand = capability && typeof capability.band === 'string' && capability.band.trim().length > 0
       ? capability.band.trim()
-      : 'unavailable';
-    const artifactCount = portfolio ? asAvailabilityString(portfolio.artifactCount) : 'unavailable';
-    const publishedArtifactCount = portfolio ? asAvailabilityString(portfolio.publishedArtifactCount) : 'unavailable';
-    const badgeCount = portfolio ? asAvailabilityString(portfolio.badgeCount) : 'unavailable';
-    const projectCount = portfolio ? asAvailabilityString(portfolio.projectCount) : 'unavailable';
-    const missionAttempts = ideation ? asAvailabilityString(ideation.missionAttempts) : 'unavailable';
-    const completedMissions = ideation ? asAvailabilityString(ideation.completedMissions) : 'unavailable';
-    const reflectionsSubmitted = ideation ? asAvailabilityString(ideation.reflectionsSubmitted) : 'unavailable';
-    const voiceInteractions = ideation ? asAvailabilityString(ideation.voiceInteractions) : 'unavailable';
-    const collaborationSignals = ideation ? asAvailabilityString(ideation.collaborationSignals) : 'unavailable';
+      : null;
+    const artifactCount = portfolio ? asAvailabilityLabel(portfolio.artifactCount) : null;
+    const publishedArtifactCount = portfolio ? asAvailabilityLabel(portfolio.publishedArtifactCount) : null;
+    const badgeCount = portfolio ? asAvailabilityLabel(portfolio.badgeCount) : null;
+    const projectCount = portfolio ? asAvailabilityLabel(portfolio.projectCount) : null;
+    const missionAttempts = ideation ? asAvailabilityLabel(ideation.missionAttempts) : null;
+    const completedMissions = ideation ? asAvailabilityLabel(ideation.completedMissions) : null;
+    const reflectionsSubmitted = ideation ? asAvailabilityLabel(ideation.reflectionsSubmitted) : null;
+    const voiceInteractions = ideation ? asAvailabilityLabel(ideation.voiceInteractions) : null;
+    const collaborationSignals = ideation ? asAvailabilityLabel(ideation.collaborationSignals) : null;
 
     summaryRecords.push(
       buildRecord({
@@ -561,14 +581,20 @@ async function loadParentPortfolioWorkflowRecords(ctx: WorkflowContext): Promise
         id: `capability:${learnerId}`,
         raw: {
           title: `${learnerName} capability graph`,
-          summary: `Future ${futureSkills} • Leadership ${leadership} • Impact ${impact}`,
-          status: capabilityBand,
+          summary: joinAvailableParts([
+            futureSkills ? `Future ${futureSkills}` : null,
+            leadership ? `Leadership ${leadership}` : null,
+            impact ? `Impact ${impact}` : null,
+          ]) || 'No verified capability evidence yet',
+          status: capabilityBand || 'No capability band yet',
           updatedAt: portfolio?.latestArtifactAt || learner.updatedAt || new Date().toISOString(),
           siteId: activeSiteId(ctx.profile),
-          futureSkills: capability ? asAvailabilityString(capability.futureSkills) : 'unavailable',
-          leadership: capability ? asAvailabilityString(capability.leadership) : 'unavailable',
-          impact: capability ? asAvailabilityString(capability.impact) : 'unavailable',
-          overall: capability ? asAvailabilityString(capability.overall) : 'unavailable',
+          ...metadataWithAvailableValues({
+            futureSkills: capability ? asAvailabilityLabel(capability.futureSkills) : null,
+            leadership: capability ? asAvailabilityLabel(capability.leadership) : null,
+            impact: capability ? asAvailabilityLabel(capability.impact) : null,
+            overall: capability ? asAvailabilityLabel(capability.overall) : null,
+          }),
         },
         titleKeys: ['title'],
         subtitleKeys: ['summary'],
@@ -585,14 +611,20 @@ async function loadParentPortfolioWorkflowRecords(ctx: WorkflowContext): Promise
         id: `portfolio:${learnerId}`,
         raw: {
           title: `${learnerName} portfolio snapshot`,
-          summary: `Artifacts ${artifactCount} • Published ${publishedArtifactCount} • Badges ${badgeCount}`,
+          summary: joinAvailableParts([
+            artifactCount ? `Artifacts ${artifactCount}` : null,
+            publishedArtifactCount ? `Published ${publishedArtifactCount}` : null,
+            badgeCount ? `Badges ${badgeCount}` : null,
+          ]) || 'No verified portfolio evidence yet',
           status: 'active',
           updatedAt: portfolio?.latestArtifactAt || learner.updatedAt || new Date().toISOString(),
           siteId: activeSiteId(ctx.profile),
-          artifactCount,
-          publishedArtifactCount,
-          badgeCount,
-          projectCount,
+          ...metadataWithAvailableValues({
+            artifactCount,
+            publishedArtifactCount,
+            badgeCount,
+            projectCount,
+          }),
         },
         titleKeys: ['title'],
         subtitleKeys: ['summary'],
@@ -609,15 +641,21 @@ async function loadParentPortfolioWorkflowRecords(ctx: WorkflowContext): Promise
         id: `passport:${learnerId}`,
         raw: {
           title: `${learnerName} ideation passport`,
-          summary: `Missions ${completedMissions} • Reflections ${reflectionsSubmitted} • Voice ${voiceInteractions}`,
+          summary: joinAvailableParts([
+            completedMissions ? `Missions ${completedMissions}` : null,
+            reflectionsSubmitted ? `Reflections ${reflectionsSubmitted}` : null,
+            voiceInteractions ? `Voice ${voiceInteractions}` : null,
+          ]) || 'No verified ideation evidence yet',
           status: 'active',
           updatedAt: ideation?.lastReflectionAt || portfolio?.latestArtifactAt || new Date().toISOString(),
           siteId: activeSiteId(ctx.profile),
-          missionAttempts,
-          completedMissions,
-          reflectionsSubmitted,
-          voiceInteractions,
-          collaborationSignals,
+          ...metadataWithAvailableValues({
+            missionAttempts,
+            completedMissions,
+            reflectionsSubmitted,
+            voiceInteractions,
+            collaborationSignals,
+          }),
         },
         titleKeys: ['title'],
         subtitleKeys: ['summary'],
@@ -922,11 +960,15 @@ async function loadParentSummary(ctx: WorkflowContext): Promise<WorkflowRecord[]
       const artifactCount = asFiniteNumber((learner.portfolioSnapshot as Record<string, unknown> | undefined)?.artifactCount);
       const reflectionsSubmitted = asFiniteNumber((learner.ideationPassport as Record<string, unknown> | undefined)?.reflectionsSubmitted);
       const learnerName = asString(learner.learnerName, '') || 'Learner name unavailable';
+      const subtitle = joinAvailableParts([
+        currentLevel != null ? `Level ${currentLevel}` : null,
+        totalXp != null ? `XP ${totalXp}` : null,
+      ]) || 'No verified summary evidence yet';
 
       return {
         id: learnerId,
         title: learnerName,
-        subtitle: `Level ${currentLevel ?? 'unavailable'} • XP ${totalXp ?? 'unavailable'}`,
+        subtitle,
         status: 'active',
         updatedAt: toIsoDate(learner.updatedAt || learner.lastActivityAt),
         siteId: activeSiteId(ctx.profile),
@@ -934,14 +976,14 @@ async function loadParentSummary(ctx: WorkflowContext): Promise<WorkflowRecord[]
         routePath: '/parent/summary',
         canEdit: false,
         canDelete: false,
-        metadata: {
-          missionsCompleted: missionsCompleted != null ? String(missionsCompleted) : 'unavailable',
-          currentStreak: currentStreak != null ? String(currentStreak) : 'unavailable',
-          attendanceRate: attendanceRate != null ? String(attendanceRate) : 'unavailable',
-          capabilityBand: capabilityBand && capabilityBand.trim().length > 0 ? capabilityBand : 'unavailable',
-          artifactCount: artifactCount != null ? String(artifactCount) : 'unavailable',
-          reflectionsSubmitted: reflectionsSubmitted != null ? String(reflectionsSubmitted) : 'unavailable',
-        },
+        metadata: metadataWithAvailableValues({
+          missionsCompleted: missionsCompleted != null ? String(missionsCompleted) : null,
+          currentStreak: currentStreak != null ? String(currentStreak) : null,
+          attendanceRate: attendanceRate != null ? String(attendanceRate) : null,
+          capabilityBand: capabilityBand && capabilityBand.trim().length > 0 ? capabilityBand : null,
+          artifactCount: artifactCount != null ? String(artifactCount) : null,
+          reflectionsSubmitted: reflectionsSubmitted != null ? String(reflectionsSubmitted) : null,
+        }),
       } as WorkflowRecord;
     })
     .filter((row): row is WorkflowRecord => Boolean(row));
