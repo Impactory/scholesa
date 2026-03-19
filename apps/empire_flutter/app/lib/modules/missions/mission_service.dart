@@ -1872,6 +1872,18 @@ class MissionService extends ChangeNotifier {
           rubricScoresByCapability[capabilityId]!.add(score);
         }
 
+        QuerySnapshot<Map<String, dynamic>>? learnerEvidenceSnapshot;
+        if (reviewLearnerId.isNotEmpty) {
+          Query<Map<String, dynamic>> evidenceQuery = _firestore
+              .collection('evidenceRecords')
+              .where('learnerId', isEqualTo: reviewLearnerId)
+              .limit(80);
+          if (reviewSiteId != null && reviewSiteId.isNotEmpty) {
+            evidenceQuery = evidenceQuery.where('siteId', isEqualTo: reviewSiteId);
+          }
+          learnerEvidenceSnapshot = await evidenceQuery.get();
+        }
+
         for (final MapEntry<String, List<Map<String, dynamic>>> entry
             in rubricScoresByCapability.entries) {
           final String capabilityId = entry.key;
@@ -1962,6 +1974,39 @@ class MissionService extends ChangeNotifier {
               'createdAt': FieldValue.serverTimestamp(),
             },
           );
+
+          final Iterable<QueryDocumentSnapshot<Map<String, dynamic>>>
+              matchingEvidenceDocs = (learnerEvidenceSnapshot?.docs ??
+                      const <QueryDocumentSnapshot<Map<String, dynamic>>>[])
+                  .where((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+            final Map<String, dynamic> data = doc.data();
+            final String evidenceCapabilityId =
+                (data['capabilityId'] as String? ?? '').trim();
+            final String growthStatus =
+                (data['growthStatus'] as String? ?? '').trim().toLowerCase();
+            return evidenceCapabilityId == capabilityId &&
+                (growthStatus.isEmpty ||
+                    growthStatus == 'pending' ||
+                    growthStatus == 'captured');
+          });
+
+          for (final QueryDocumentSnapshot<Map<String, dynamic>> evidenceDoc
+              in matchingEvidenceDocs) {
+            batch.set(
+              evidenceDoc.reference,
+              <String, dynamic>{
+                'rubricStatus': 'linked',
+                'growthStatus': 'updated',
+                'linkedMissionAttemptId': canonicalAttemptRef.id,
+                'linkedRubricApplicationId': rubricApplicationRef.id,
+                'latestGrowthEventId': growthEventRef.id,
+                'latestCapabilityLevel': nextLevel,
+                'growthUpdatedBy': reviewerId,
+                'growthUpdatedAt': FieldValue.serverTimestamp(),
+              },
+              SetOptions(merge: true),
+            );
+          }
         }
       }
 
