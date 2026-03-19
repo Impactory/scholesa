@@ -355,7 +355,7 @@ deploy_compliance_operator() {
   local -a compliance_deploy_args
   compliance_deploy_args=(
     gcloud run deploy "$service"
-    --image "gcr.io/${project_id}/scholesa-compliance:${image_tag}" \
+    --image "gcr.io/${project_id}/scholesa-compliance:${image_tag}"
     --project "$project_id"
     --region "$region"
     --platform managed

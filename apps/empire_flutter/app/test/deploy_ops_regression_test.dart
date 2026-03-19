@@ -523,6 +523,12 @@ void main() {
         reason:
             'Manual deploy script must be able to deploy Cloud Run revisions without shifting traffic',
       );
+      expect(
+        content.contains('mapfile'),
+        isFalse,
+        reason:
+            'Manual deploy script must avoid bash4-only mapfile usage so it runs on default macOS Bash',
+      );
     });
 
     test('Platform flow and release gates enforce Gen 2 and combined web deploy',
