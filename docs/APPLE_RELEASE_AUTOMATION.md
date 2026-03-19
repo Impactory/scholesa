@@ -72,6 +72,7 @@ The workflow delegates secret validation and signing material setup to `./script
 
 - `verify-app-store-connect` validates the App Store Connect API key setup on a macOS runner.
 - `ios-testflight` is gated behind the `upload_to_testflight` workflow input and requires the iOS signing secrets above.
+- Before upload, CI now validates that the imported certificate exposes an Apple Distribution identity and that the provisioning profile matches both the configured Apple team and `com.scholesa.app`.
 
 If VS Code shows `Context access might be invalid` on the workflow secret references, that is an editor validation warning until the matching GitHub secrets exist for the repository. The workflow logic itself was validated locally through `scripts/apple_release_ci.sh` and `scripts/apple_release_local.sh`.
 
