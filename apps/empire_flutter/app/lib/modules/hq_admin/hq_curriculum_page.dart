@@ -329,9 +329,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                   _buildInfoBadge(
                     _tHqCurriculum(context, curriculum.approvalStatus),
                   ),
-                  ...curriculum.capabilityTitles
-                      .map((String capabilityTitle) =>
-                          _buildInfoBadge(capabilityTitle)),
+                  ...curriculum.capabilityTitles.map((String capabilityTitle) =>
+                      _buildInfoBadge(capabilityTitle)),
                 ],
               ),
               const SizedBox(height: 12),
@@ -780,7 +779,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     final TextEditingController misconceptionTagsController =
         TextEditingController(text: curriculum.misconceptionTags.join(', '));
     final TextEditingController capabilityMappingsController =
-      TextEditingController(text: curriculum.capabilityTitles.join(', '));
+        TextEditingController(text: curriculum.capabilityTitles.join(', '));
     String selectedPillar = curriculum.pillar;
     String selectedTemplate = curriculum.template;
     String selectedDifficulty = curriculum.difficulty;
@@ -1100,7 +1099,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     final TextEditingController misconceptionTagsController =
         TextEditingController();
     final TextEditingController capabilityMappingsController =
-      TextEditingController();
+        TextEditingController();
     String selectedPillar = 'Future Skills';
     String selectedTemplate = _templateOptions.first;
     String selectedDifficulty = _difficultyOptions[1];
@@ -1816,11 +1815,11 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
           'difficulty': difficulty,
           'misconceptionTags': misconceptionTags,
           'mediaFormat': mediaFormat,
-            'capabilityIds': capabilities
-              .map(( _CapabilityRef capability) => capability.id)
+          'capabilityIds': capabilities
+              .map((_CapabilityRef capability) => capability.id)
               .toList(),
-            'capabilityTitles': capabilities
-              .map(( _CapabilityRef capability) => capability.title)
+          'capabilityTitles': capabilities
+              .map((_CapabilityRef capability) => capability.title)
               .toList(),
           'approvalStatus': 'draft',
           'siteId': activeSiteId,
@@ -1843,11 +1842,11 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
         misconceptionTags: misconceptionTags,
         mediaFormat: mediaFormat,
         capabilityIds: capabilities
-          .map(( _CapabilityRef capability) => capability.id)
-          .toList(),
+            .map((_CapabilityRef capability) => capability.id)
+            .toList(),
         capabilityTitles: capabilities
-          .map(( _CapabilityRef capability) => capability.title)
-          .toList(),
+            .map((_CapabilityRef capability) => capability.title)
+            .toList(),
         version: '1.0',
         approvalStatus: 'draft',
         status: _CurriculumStatus.draft,
@@ -1917,11 +1916,11 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
         'misconceptionTags': misconceptionTags,
         'mediaFormat': mediaFormat,
         'capabilityIds': capabilities
-          .map(( _CapabilityRef capability) => capability.id)
-          .toList(),
+            .map((_CapabilityRef capability) => capability.id)
+            .toList(),
         'capabilityTitles': capabilities
-          .map(( _CapabilityRef capability) => capability.title)
-          .toList(),
+            .map((_CapabilityRef capability) => capability.title)
+            .toList(),
       });
 
       _replaceLocalCurriculum(
@@ -1934,11 +1933,11 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
         misconceptionTags: misconceptionTags,
         mediaFormat: mediaFormat,
         capabilityIds: capabilities
-          .map(( _CapabilityRef capability) => capability.id)
-          .toList(),
+            .map((_CapabilityRef capability) => capability.id)
+            .toList(),
         capabilityTitles: capabilities
-          .map(( _CapabilityRef capability) => capability.title)
-          .toList(),
+            .map((_CapabilityRef capability) => capability.title)
+            .toList(),
         lastUpdated: DateTime.now(),
       );
 

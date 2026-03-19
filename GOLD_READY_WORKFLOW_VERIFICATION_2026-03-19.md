@@ -10,7 +10,7 @@ Only active product code paths were considered. A workflow is not "verified" unl
 
 | # | Required workflow | Status | Judgment |
 | --- | --- | --- | --- |
-| 1 | Curriculum admin can define capabilities and map them to units/checkpoints | Missing | Active schema and authoring flows are still pillar/skill/mission based, not first-class capability-node based. |
+| 1 | Curriculum admin can define capabilities and map them to units/checkpoints | Partial | HQ curriculum authoring now persists first-class capability references on missions and rubrics, but checkpoint-level mapping and downstream usage are still incomplete. |
 | 2 | Teacher can run a session and quickly log capability observations during build time | Partial | Live capture exists in Flutter educator sessions, but the captured evidence is not yet wired into rubric, growth, portfolio, and reporting chains. |
 | 3 | Student can submit artifacts, reflections, and checkpoint evidence | Partial | Reflection and checkpoint submission paths exist, and portfolio items load, but the submission chain is fragmented and not consistently linked to capability evidence lineage. |
 | 4 | Teacher can apply a 4-level rubric tied to capabilities and process domains | Partial | Rubrics and rubric applications exist, but they are mission-oriented and not tied to a capability framework with downstream growth updates. |
@@ -25,9 +25,11 @@ Only active product code paths were considered. A workflow is not "verified" unl
 
 ### 1. Capability framework and curriculum mapping
 
-- `schema.ts` defines pillars, skills, missions, and skill mastery, but not a first-class capability framework with nodes, descriptors, or checkpoint mappings.
-- `apps/empire_flutter/app/lib/modules/hq_admin/hq_curriculum_page.dart` creates rubric criteria from labels and stores `pillarCode`, not capability-node references.
-- Current judgment: missing.
+- `schema.ts` now defines a first-class `Capability` entity and missions can persist `capabilityIds` and `capabilityTitles`.
+- `firestore.rules` now includes a `capabilities` collection rule so the model is real persistence, not a stray type.
+- `apps/empire_flutter/app/lib/modules/hq_admin/hq_curriculum_page.dart` now requires capability mappings during curriculum create and edit, persists them onto missions, creates missing capability records, and threads capability references into rubric criteria.
+- Remaining gap: there is still no checkpoint-level mapping or downstream capability consumption in live evidence, growth, portfolio, or reporting.
+- Current judgment: partial.
 
 ### 2. Live teacher observation during session
 
@@ -120,14 +122,13 @@ Only active product code paths were considered. A workflow is not "verified" unl
 
 ### D. Missing
 
-- First-class capability framework with descriptors and checkpoint mapping.
 - Automatic or educator-confirmed growth updates from evidence.
 - Portfolio lineage connecting artifact, reflection, verification, rubric result, and capability claim.
 - Passport generation from actual evidence provenance.
 
 ### E. Gold-ready blockers
 
-- No shared capability model anchors curriculum, evidence, rubric scoring, growth, portfolio, and reporting.
+- The capability model now exists in HQ authoring, but it still does not anchor evidence, growth, portfolio, and reporting end to end.
 - Live evidence capture exists, but the downstream chain is still disconnected.
 - Reporting still depends on rollups and gamified progress constructs.
 - AI transparency is not consistently visible across all relevant learner outputs.

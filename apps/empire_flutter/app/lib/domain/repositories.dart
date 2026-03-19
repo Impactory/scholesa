@@ -531,7 +531,8 @@ class AuditLogRepository {
   Future<void> log(AuditLogModel model) =>
       _col.doc(model.id).set(model.toMap());
 
-  Future<List<AuditLogModel>> listBySite(String siteId, {int limit = 100}) async {
+  Future<List<AuditLogModel>> listBySite(String siteId,
+      {int limit = 100}) async {
     final QuerySnapshot<Map<String, dynamic>> snap =
         await _col.where('siteId', isEqualTo: siteId).limit(limit).get();
     final List<AuditLogModel> logs =
@@ -545,7 +546,8 @@ class AuditLogRepository {
   }
 
   Future<List<AuditLogModel>> listRecent({int limit = 200}) async {
-    final QuerySnapshot<Map<String, dynamic>> snap = await _col.limit(limit).get();
+    final QuerySnapshot<Map<String, dynamic>> snap =
+        await _col.limit(limit).get();
     final List<AuditLogModel> logs =
         snap.docs.map(AuditLogModel.fromDoc).toList();
     logs.sort((AuditLogModel a, AuditLogModel b) {
