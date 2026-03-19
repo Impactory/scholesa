@@ -1,4 +1,5 @@
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -56,6 +57,52 @@ Widget _buildHarness({
       home: home,
     ),
   );
+}
+
+Future<void> _seedMission(
+  FakeFirebaseFirestore firestore, {
+  required String missionId,
+  required String title,
+  String description = 'Prototype a reusable habitat solution.',
+  String status = 'draft',
+}) async {
+  await firestore.collection('missions').doc(missionId).set(<String, dynamic>{
+    'title': title,
+    'description': description,
+    'pillar': 'Future Skills',
+    'pillarCode': 'future_skills',
+    'pillarCodes': const <String>['future_skills'],
+    'duration': '4 weeks',
+    'targetGrade': '6-8',
+    'difficulty': 'beginner',
+    'status': status,
+    'assignedSessions': 0,
+    'completedBy': 0,
+    'evidenceDefaults': const <String>[
+      'explain_it_back',
+      'reflection_note',
+    ],
+    'lessonSteps': const <String>[
+      'Launch challenge',
+      'Guided practice',
+    ],
+    'educatorId': 'educator-1',
+    'createdBy': 'educator-1',
+    'createdAt': Timestamp.fromDate(DateTime(2026, 3, 19)),
+    'updatedAt': Timestamp.fromDate(DateTime(2026, 3, 19)),
+  });
+  await firestore
+      .collection('missions')
+      .doc(missionId)
+      .collection('steps')
+      .doc('step-1')
+      .set(<String, dynamic>{
+    'title': 'Launch challenge',
+    'order': 0,
+    'isCompleted': false,
+    'createdAt': Timestamp.fromDate(DateTime(2026, 3, 19)),
+    'updatedAt': Timestamp.fromDate(DateTime(2026, 3, 19)),
+  });
 }
 
 void main() {
@@ -195,5 +242,164 @@ void main() {
 
     final missions = await firestore.collection('missions').get();
     expect(missions.docs, isEmpty);
+  });
+
+  testWidgets('educator mission plans page updates a mission and persists it',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedMission(
+      firestore,
+      missionId: 'mission-1',
+      title: 'Eco Build Sprint',
+    );
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final EducatorService educatorService = EducatorService(
+      firestoreService: firestoreService,
+      educatorId: 'educator-1',
+      siteId: 'site-1',
+    );
+
+    await tester.pumpWidget(
+      _buildHarness(
+        firestoreService: firestoreService,
+        educatorService: educatorService,
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Eco Build Sprint').first);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Edit'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byType(TextField).at(0),
+      'Eco Build Sprint Revised',
+    );
+    await tester.enterText(
+      find.byType(TextField).at(1),
+      'Prototype a reusable habitat solution for the studio garden and publish evidence.',
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey<String>('mission_step_field_1')),
+      'Publish evidence reflection',
+    );
+
+    await tester.tap(find.text('Save changes'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Mission updated'), findsOneWidget);
+    expect(find.text('Eco Build Sprint Revised'), findsWidgets);
+
+    final mission =
+        await firestore.collection('missions').doc('mission-1').get();
+    expect(mission.data()?['title'], 'Eco Build Sprint Revised');
+    expect(
+      mission.data()?['description'],
+      'Prototype a reusable habitat solution for the studio garden and publish evidence.',
+    );
+    expect(
+      mission.data()?['lessonSteps'],
+      <String>['Launch challenge', 'Publish evidence reflection'],
+    );
+  });
+
+  testWidgets('educator mission plans page archives a mission and persists it',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedMission(
+      firestore,
+      missionId: 'mission-1',
+      title: 'Eco Build Sprint',
+    );
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final EducatorService educatorService = EducatorService(
+      firestoreService: firestoreService,
+      educatorId: 'educator-1',
+      siteId: 'site-1',
+    );
+
+    await tester.pumpWidget(
+      _buildHarness(
+        firestoreService: firestoreService,
+        educatorService: educatorService,
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Eco Build Sprint').first);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Archive').first);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Archive').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Mission archived'), findsOneWidget);
+
+    final mission =
+        await firestore.collection('missions').doc('mission-1').get();
+    expect(mission.data()?['status'], 'archived');
+  });
+
+  testWidgets('educator mission plans page surfaces failed mission archiving',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedMission(
+      firestore,
+      missionId: 'mission-1',
+      title: 'Eco Build Sprint',
+    );
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final EducatorService educatorService = EducatorService(
+      firestoreService: firestoreService,
+      educatorId: 'educator-1',
+      siteId: 'site-1',
+    );
+
+    await tester.pumpWidget(
+      _buildHarness(
+        firestoreService: firestoreService,
+        educatorService: educatorService,
+        home: EducatorMissionPlansPage(
+          missionPlanArchiver: (
+            BuildContext context, {
+            required String missionId,
+          }) async {
+            return false;
+          },
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Eco Build Sprint').first);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Archive').first);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Archive').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Failed to archive mission'), findsOneWidget);
+
+    final mission =
+        await firestore.collection('missions').doc('mission-1').get();
+    expect(mission.data()?['status'], 'draft');
   });
 }

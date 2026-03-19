@@ -540,16 +540,23 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
     );
     showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
       backgroundColor: ScholesaColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (BuildContext context) => Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
+      builder: (BuildContext context) => SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(
+            24,
+            24,
+            24,
+            24 + MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
             Text(
               plan.title,
               style: const TextStyle(
@@ -725,7 +732,8 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                 ),
               ),
             ],
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -1124,7 +1132,7 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
               onPressed: () {
                 TelemetryService.instance.logEvent(
                   event: 'cta.clicked',
-                  metadata: const <String, dynamic>{
+                  metadata: <String, dynamic>{
                     'cta': isEditing
                         ? 'educator_mission_plans_edit_cancel'
                         : 'educator_mission_plans_create_cancel'
@@ -1185,7 +1193,7 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
 
                 final bool saved = isEditing
                     ? await _updateMission(
-                        missionId: plan!.id,
+                    missionId: plan.id,
                         currentStatus: plan.status,
                         title: title,
                         description: descriptionController.text.trim(),
