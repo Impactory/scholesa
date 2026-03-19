@@ -5,6 +5,7 @@ import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/export_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../services/workflow_bridge_service.dart';
+import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 String _tHqAudit(BuildContext context, String input) {
@@ -183,6 +184,9 @@ class _HqAuditPageState extends State<HqAuditPage> {
               _logAuditEvent('hq_audit_export_logs');
               _exportAuditLogs();
             },
+          ),
+          const SessionMenuButton(
+            foregroundColor: Colors.white,
           ),
         ],
       ),

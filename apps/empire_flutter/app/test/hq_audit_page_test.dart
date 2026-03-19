@@ -39,6 +39,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Audit data is temporarily unavailable'), findsOneWidget);
     expect(
       find.text('We could not load audit records. Retry to check the current state.'),

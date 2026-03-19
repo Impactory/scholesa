@@ -400,6 +400,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     await tester.tap(find.byIcon(Icons.download_rounded));
     await tester.pumpAndSettle();
 

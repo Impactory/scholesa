@@ -97,6 +97,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Incidents are temporarily unavailable'), findsOneWidget);
     expect(
       find.text('We could not load incidents. Retry to check the current state.'),
@@ -135,6 +136,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Playground incident'), findsOneWidget);
     expect(find.text('Learner unavailable'), findsOneWidget);
     expect(find.textContaining('Reported by Reporter unavailable'),

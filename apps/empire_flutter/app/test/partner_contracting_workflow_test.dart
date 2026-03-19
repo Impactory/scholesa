@@ -201,6 +201,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Partner Workflows'), findsOneWidget);
     expect(find.text('Studio Launch Agreement'), findsOneWidget);
     expect(find.text('Site: site-1'), findsOneWidget);
@@ -250,6 +251,7 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Studio Launch Agreement'), findsOneWidget);
     expect(find.textContaining('Showing last loaded workflow data.'), findsOneWidget);
 

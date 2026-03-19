@@ -94,6 +94,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Partner Deliverables'), findsOneWidget);
     expect(find.text('North Hub Launch'), findsOneWidget);
     expect(find.text('No deliverables submitted yet'), findsAtLeastNWidgets(1));
@@ -120,6 +121,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     await tester.tap(find.text('Submit Deliverable'));
     await tester.pumpAndSettle();
 
@@ -170,6 +172,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('账户菜单'), findsOneWidget);
     expect(find.text('合作伙伴交付项'), findsOneWidget);
     expect(find.text('合同信息不可用'), findsOneWidget);
     expect(find.text('尚未提交交付项'), findsAtLeastNWidgets(1));

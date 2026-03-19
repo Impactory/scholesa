@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
+import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import 'partner_models.dart';
 import 'partner_service.dart';
@@ -61,6 +62,11 @@ class _PartnerContractsPageState extends State<PartnerContractsPage>
         title: Text(_tPartnerContracts(context, 'Partner Workflows')),
         backgroundColor: const Color(0xFF6366F1),
         foregroundColor: Colors.white,
+        actions: const <Widget>[
+          SessionMenuButton(
+            foregroundColor: Colors.white,
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           tabs: <Widget>[

@@ -8,6 +8,7 @@ import '../../domain/repositories.dart';
 import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
+import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 String _tPartnerDeliverables(BuildContext context, String input) {
@@ -473,6 +474,9 @@ class _PartnerDeliverablesPageState extends State<PartnerDeliverablesPage> {
             tooltip: _t('Refresh'),
             onPressed: _loadDeliverables,
             icon: const Icon(Icons.refresh_rounded),
+          ),
+          const SessionMenuButton(
+            foregroundColor: Colors.white,
           ),
         ],
       ),

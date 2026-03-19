@@ -64,6 +64,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('No Listings Yet'), findsOneWidget);
 
     await tester.tap(find.text('Create Listing'));

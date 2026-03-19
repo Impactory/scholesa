@@ -9,6 +9,7 @@ import '../../offline/offline_queue.dart';
 import '../../offline/sync_coordinator.dart';
 import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
+import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 String _tSiteIncidents(BuildContext context, String input) {
@@ -107,6 +108,11 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage>
         title: Text(_tSiteIncidents(context, 'Safety & Incidents')),
         backgroundColor: ScholesaColors.safetyGradient.colors.first,
         foregroundColor: Colors.white,
+        actions: const <Widget>[
+          SessionMenuButton(
+            foregroundColor: Colors.white,
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           onTap: (int index) {
