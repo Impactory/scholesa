@@ -1007,7 +1007,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       'bosMiaLoop': true,
       'loopTags': _bosMiaLoopTags(),
       'loopLineage':
-          'mathematical_learner_state_model + synthetic_training_baseline + live_session_updates',
+          'mathematical_learner_state_model + synthetic_training_baseline_not_learner_evidence + live_session_updates',
       'personaInstructions':
           'Kid-friendly, conversational coaching voice. Keep it warm, simple, and spoken. Never give final answers; guide step-by-step.',
     };
@@ -1085,7 +1085,7 @@ Context:
 - conceptTags: ${tags.isEmpty ? 'none' : tags}
 - stateEstimate: ${_stateSnapshot()}
 - miloosLoop: Always stay in the MiloOS closed-loop coaching runtime and improve this specific learner over time.
-- loopLineage: Use the mathematical learner-state model, control policy, and synthetic-trained runtime baseline before adapting to this live session.
+- loopLineage: Use the mathematical learner-state model, control policy, and synthetic-trained runtime baseline for pretraining only, never as learner evidence, before adapting to this live session.
 
 Session learning goals:
 $goals
@@ -1533,6 +1533,10 @@ Response style:
             text: _runtimeHonestyText(runtimeHonestyStatus),
           ),
 
+        _LineageDisclosureBanner(
+          text: _t('ai.banner.lineageDisclosure'),
+        ),
+
         if (_learningGoals.isNotEmpty)
           Container(
             width: double.infinity,
@@ -1886,6 +1890,47 @@ class _RuntimeHonestyTone {
   final Color background;
   final Color foreground;
   final Color border;
+}
+
+class _LineageDisclosureBanner extends StatelessWidget {
+  const _LineageDisclosureBanner({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Icon(
+            Icons.info_outline_rounded,
+            color: theme.colorScheme.onSurfaceVariant,
+            size: 20,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _ModeSelector extends StatelessWidget {

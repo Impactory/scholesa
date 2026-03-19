@@ -127,6 +127,8 @@ class AppStrings {
           'MiloOS mathematical state could not be trusted. Confidence stays at 0% until the live session state is repaired.',
       'ai.banner.learnerGuarded':
           'Runtime confidence {percent}%. MiloOS uses the mathematical learner-state model and synthetic-trained baseline, but stays guarded below 97%.',
+      'ai.banner.lineageDisclosure':
+          'Coach guidance blends the mathematical learner-state model, synthetic pretraining baseline, and live session updates. Synthetic baseline is support only, not learner evidence or mastery proof.',
       'ai.chat.verificationRequired': 'Verification required',
       'ai.chat.helpful': 'Helpful?',
       'ai.feedback.thanks': 'Thanks for the feedback!',
@@ -263,6 +265,8 @@ class AppStrings {
       'ai.banner.runtimeMalformed': 'MiloOS 的数学状态当前不可信。在修复实时会话状态前，置信度保持为 0%。',
       'ai.banner.learnerGuarded':
           '当前运行时置信度为 {percent}%。MiloOS 使用数学学习者状态模型和合成训练基线，但在低于 97% 时会保持受控。',
+      'ai.banner.lineageDisclosure':
+          '教练建议结合了数学学习者状态模型、合成预训练基线与实时会话更新。合成基线仅作为支持，不是学习者证据或掌握证明。',
       'ai.chat.verificationRequired': '需要验证',
       'ai.chat.helpful': '有帮助吗？',
       'ai.feedback.thanks': '感谢你的反馈！',
@@ -390,6 +394,8 @@ class AppStrings {
       'ai.banner.runtimeMalformed': 'MiloOS 的數學狀態目前不可信。在修復即時會話狀態前，信心維持在 0%。',
       'ai.banner.learnerGuarded':
           '目前執行階段信心為 {percent}%。MiloOS 使用數學學習者狀態模型與合成訓練基線，但在低於 97% 時會保持受控。',
+      'ai.banner.lineageDisclosure':
+          '教練建議結合了數學學習者狀態模型、合成預訓練基線與即時會話更新。合成基線僅作為支持，不是學習者證據或掌握證明。',
       'ai.chat.verificationRequired': '需要驗證',
       'ai.chat.helpful': '有幫助嗎？',
       'ai.feedback.thanks': '感謝你的回饋！',

@@ -240,6 +240,10 @@ void main() {
         find.textContaining('Confidence stays at 0%'),
         findsOneWidget,
       );
+      expect(
+        find.textContaining('Synthetic baseline is support only'),
+        findsOneWidget,
+      );
     });
 
     testWidgets(
@@ -346,7 +350,36 @@ void main() {
       expect(capturedPrompt, contains('miloosLoop:'));
       expect(
         capturedPrompt,
-        contains('synthetic-trained runtime baseline'),
+        contains('synthetic-trained runtime baseline for pretraining only, never as learner evidence'),
+      );
+    });
+
+    testWidgets('shows lineage disclosure even without live runtime confidence',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: _testTheme,
+          home: Scaffold(
+            body: AiCoachWidget(
+              runtime: runtime,
+              actorRole: UserRole.learner,
+              skipVoiceInitializationForTesting: true,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(
+        find.textContaining(
+          'synthetic pretraining baseline, and live session updates',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('not learner evidence or mastery proof'),
+        findsOneWidget,
       );
     });
   });
