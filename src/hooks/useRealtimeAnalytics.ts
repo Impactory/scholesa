@@ -94,7 +94,12 @@ export function useLearnerAnalytics({ siteId, timeRange = 'week', limit: maxLear
 
             learnersData.push({
               userId,
-              name: userData.displayName || userData.email || 'Learner',
+              name:
+                (typeof userData.displayName === 'string' && userData.displayName.trim().length > 0
+                  ? userData.displayName.trim()
+                  : typeof userData.email === 'string' && userData.email.trim().length > 0
+                  ? userData.email.trim()
+                  : 'Learner identity unavailable'),
               engagementScore,
               autonomyScore: sdtScores.autonomy,
               competenceScore: sdtScores.competence,
