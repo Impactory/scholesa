@@ -16,9 +16,9 @@ Only active product code paths were considered. A workflow is not "verified" unl
 | 4 | Teacher can apply a 4-level rubric tied to capabilities and process domains | Partial | Educator review now preserves capability-linked rubric scores and writes downstream growth data, but process-domain coverage and report consumption remain incomplete. |
 | 5 | Proof-of-learning can be captured and reviewed | Partial | Explain-back capture exists, but the current path records a generic event and does not form a teacher-reviewed proof chain attached to capability evidence. |
 | 6 | Capability growth updates over time from evidence | Partial | Educator rubric reviews now write capability mastery and append-only growth events, and linked evidence can now flow into portfolio items, but reporting still does not consume that chain. |
-| 7 | Student portfolio shows real artifacts and reflections | Partial | Portfolio items can now be created from reviewed educator evidence with capability and growth provenance, but reflection linkage and family/report trust layers are still incomplete. |
-| 8 | Ideation Passport/report can be generated from actual evidence | Partial | Parent bundle and child detail views now generate capability claims from evidence, growth, and verified portfolio artifacts, but there is still no full exportable Passport/report workflow with end-to-end provenance presentation. |
-| 9 | AI-use is disclosed and visible where relevant | Partial | AI surfaces expose guardrails and explain-back prompts in some places, but disclosure is not consistently attached to learner artifacts, portfolio items, or reports. |
+| 7 | Student portfolio shows real artifacts and reflections | Partial | Portfolio items can now be created from reviewed educator evidence with capability, growth, proof-of-learning, and direct learner AI provenance, and family portfolio views prefer those artifact-level fields, but reflection linkage and non-mission artifact paths remain incomplete. |
+| 8 | Ideation Passport/report can be generated from actual evidence | Partial | Parent bundle and child detail views now generate capability claims from evidence, growth, and verified portfolio artifacts, and family portfolio output now prefers direct artifact-level proof/AI provenance where it exists, but there is still no full exportable Passport/report workflow with end-to-end provenance presentation. |
+| 9 | AI-use is disclosed and visible where relevant | Partial | Mission-reviewed artifacts now carry direct learner AI disclosure and family portfolio surfaces prefer that artifact-level provenance over fallback inference, but disclosure is still not attached consistently across every learner submission and reporting path. |
 | 10 | Family/student/teacher views are understandable and trustworthy | Partial | Active views exist, but several still rely on levels, XP, snapshots, and aggregate progress rather than direct evidence-backed claims. |
 
 ## Evidence By Workflow
@@ -83,7 +83,7 @@ Only active product code paths were considered. A workflow is not "verified" unl
 - `apps/empire_flutter/app/lib/modules/learner/learner_portfolio_page.dart` now surfaces linked evidence status and capability tags on learner project cards.
 - `apps/empire_flutter/app/lib/modules/parent/parent_portfolio_page.dart` now surfaces portfolio proof-of-learning status, AI visibility status, capability evidence tags, verification prompts, and provenance IDs in family-facing artifact details and exports.
 - Storage rules allow learner uploads to `portfolioMedia/{learnerId}/{fileName}`.
-- Gap: reflection linkage and artifact-level learner AI provenance are still incomplete across every submission path, even though family portfolio and Passport surfaces now expose proof and session-linked AI trust signals where the data exists.
+- Gap: reflection linkage and non-mission artifact submission paths are still incomplete, even though mission-reviewed portfolio artifacts now carry direct proof-of-learning and learner AI provenance into family-facing portfolio output.
 - Current judgment: partial.
 
 ### 8. Passport/report generated from actual evidence
@@ -93,7 +93,7 @@ Only active product code paths were considered. A workflow is not "verified" unl
 - `apps/empire_flutter/app/lib/modules/parent/parent_child_page.dart` now renders an `Ideation Passport` section from those evidence-backed claims.
 - `apps/empire_flutter/app/lib/modules/parent/parent_child_page.dart` now exports an `Ideation Passport` text report with claim-by-claim evidence counts, verification status, proof-of-learning status, AI visibility status, and direct evidence/portfolio item/mission attempt IDs.
 - `apps/empire_flutter/app/lib/modules/parent/parent_portfolio_page.dart` exports portfolio summaries with evidence-linked, proof-of-learning, AI visibility, and provenance details included.
-- Remaining gap: there is still no polished family-safe publishing flow, no richer formatted Passport document, and learner-facing AI-use disclosure is still only partial because claims now prefer direct mission-level learner disclosure when it exists, but there is still no full artifact-level learner AI provenance trail across the product.
+- Remaining gap: there is still no polished family-safe publishing flow, no richer formatted Passport document, and learner-facing AI-use disclosure is still only partial because claims and family portfolio output are stronger for mission-reviewed artifacts, but there is still no full artifact-level learner AI provenance trail across every product path.
 - Current judgment: partial.
 
 ### 9. Visible AI-use disclosure
@@ -102,7 +102,7 @@ Only active product code paths were considered. A workflow is not "verified" unl
 - `AiDraftBadge.tsx` provides a visible AI draft badge.
 - `apps/empire_flutter/app/lib/runtime/ai_coach_widget.dart` carries `requiresExplainBack` in runtime metadata.
 - `apps/empire_flutter/app/lib/modules/missions/missions_page.dart` and `apps/empire_flutter/app/lib/modules/missions/mission_service.dart` now capture learner AI-use declaration and details in the proof bundle before mission submission.
-- Gap: AI disclosure is still not consistently attached at creation time across every artifact submission, portfolio generation, family reporting, and teacher review, even though mission-linked family portfolio and Passport surfaces now prefer direct learner disclosure and fall back to session-linked interaction evidence where necessary.
+- Gap: AI disclosure is still not consistently attached at creation time across every artifact submission and reporting path, even though mission review now stamps direct learner disclosure onto portfolio artifacts and family portfolio and Passport surfaces prefer that provenance before falling back to session-linked interaction evidence.
 - Current judgment: partial.
 
 ### 10. Trustworthy family, student, and teacher views
