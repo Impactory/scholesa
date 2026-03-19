@@ -781,6 +781,8 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
   bool _isSavingOverride = false;
   bool _isExporting = false;
   bool _isSubmittingFollowUp = false;
+  String? _followUpStatusMessage;
+  bool _followUpStatusIsError = false;
 
   EducatorLearner get learner => widget.learner;
 
@@ -1086,6 +1088,11 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
       if (!mounted) {
         return;
       }
+      setState(() {
+        _followUpStatusMessage =
+            _tEducatorLearners(context, 'Learner follow-up request submitted.');
+        _followUpStatusIsError = false;
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -1098,6 +1105,13 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
       if (!mounted) {
         return;
       }
+      setState(() {
+        _followUpStatusMessage = _tEducatorLearners(
+          context,
+          'Unable to submit learner follow-up right now.',
+        );
+        _followUpStatusIsError = true;
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -1403,6 +1417,18 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
                             ),
                           ),
                         ),
+                        if (_followUpStatusMessage != null) ...<Widget>[
+                          const SizedBox(height: 12),
+                          Text(
+                            _followUpStatusMessage!,
+                            style: TextStyle(
+                              color: _followUpStatusIsError
+                                  ? Theme.of(context).colorScheme.error
+                                  : ScholesaColors.success,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
