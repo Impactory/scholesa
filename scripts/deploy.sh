@@ -3,12 +3,14 @@
 # Scholesa – Full-stack deploy script
 #
 # Usage:
-#   ./scripts/deploy.sh              # Deploy everything (functions + rules + Cloud Run web)
+#   ./scripts/deploy.sh              # Deploy everything (functions + rules + primary web + Flutter web)
 #   ./scripts/deploy.sh functions    # Deploy only Cloud Functions
 #   ./scripts/deploy.sh rules        # Deploy Firestore + Storage rules
-#   ./scripts/deploy.sh cloudrun-web # Build Flutter web & deploy to Cloud Run
+#   ./scripts/deploy.sh web          # Deploy both Cloud Run web surfaces (primary web + Flutter web)
+#   ./scripts/deploy.sh cloudrun-web # Alias of web
+#   ./scripts/deploy.sh primary-web  # Build root web app & deploy to primary Cloud Run
 #   ./scripts/deploy.sh compliance-operator # Deploy scholesa-compliance Cloud Run service
-#   ./scripts/deploy.sh flutter-web  # Alias of cloudrun-web
+#   ./scripts/deploy.sh flutter-web  # Build Flutter web & deploy to Flutter Cloud Run
 #   ./scripts/deploy.sh flutter-ios  # Build Flutter iOS (release)
 #   ./scripts/deploy.sh flutter-macos # Build Flutter macOS app (release)
 #   ./scripts/deploy.sh flutter-android # Build Flutter Android (release APK)
@@ -129,15 +131,19 @@ preflight() {
     fail "Node 24.x is required for deploy reproducibility (detected $(node -v)). Run: nvm use 24"
   fi
 
-  if [[ "$TARGET" == flutter-* || "$TARGET" == "cloudrun-web" || "$TARGET" == "all" ]]; then
+  if [[ "$TARGET" == flutter-* || "$TARGET" == "web" || "$TARGET" == "cloudrun-web" || "$TARGET" == "all" ]]; then
     if [[ ! -x "$FVM_FLUTTER" ]]; then
       command -v flutter >/dev/null 2>&1 || fail "flutter not found on PATH and FVM SDK missing at $FVM_FLUTTER"
     fi
   fi
 
-  if [[ "$TARGET" == "cloudrun-web" || "$TARGET" == "flutter-web" || "$TARGET" == "compliance-operator" || "$TARGET" == "all" ]]; then
+  if [[ "$TARGET" == "primary-web" || "$TARGET" == "web" || "$TARGET" == "cloudrun-web" || "$TARGET" == "flutter-web" || "$TARGET" == "compliance-operator" || "$TARGET" == "all" ]]; then
     command -v gcloud >/dev/null 2>&1 || fail "gcloud not found on PATH"
     ensure_gcloud_auth
+  fi
+
+  if [[ "$TARGET" == "primary-web" || "$TARGET" == "web" || "$TARGET" == "cloudrun-web" || "$TARGET" == "all" ]]; then
+    command -v docker >/dev/null 2>&1 || fail "docker not found on PATH"
   fi
 
   if [[ "$TARGET" == "functions" || "$TARGET" == "rules" || "$TARGET" == "all" ]]; then
@@ -187,6 +193,9 @@ functions_build() {
   log "Building functions..."
   (cd "$FUNCTIONS_DIR" && npm run build) || fail "Functions build failed"
 
+  log "Verifying Functions Gen 2 baseline..."
+  (cd "$FUNCTIONS_DIR" && npm run verify:gen2) || fail "Functions Gen 2 verification failed"
+
   log "Functions build passed ✓"
 }
 
@@ -232,7 +241,70 @@ deploy_rules() {
   log "Rules deployed ✓"
 }
 
-deploy_cloud_run_web() {
+deploy_primary_web() {
+  local project_id
+  project_id="$(resolve_project_id)"
+
+  [[ -n "$project_id" ]] || fail "Unable to resolve GCP project ID. Set GCP_PROJECT_ID in env."
+
+  local region service image_tag image
+  region="${GCP_REGION:-us-central1}"
+  service="${CLOUD_RUN_SERVICE:-scholesa-web}"
+  image_tag="${IMAGE_TAG:-$(date +%Y%m%d-%H%M%S)}"
+  image="gcr.io/${project_id}/scholesa:${image_tag}"
+
+  log "Configuring Docker auth for primary web deploy..."
+  gcloud auth configure-docker --quiet || fail "Unable to configure Docker auth for Google Container Registry"
+
+  log "Building primary web image (project=$project_id service=$service region=$region tag=$image_tag)..."
+  (cd "$REPO_ROOT" && docker build -t "$image" .) || fail "Primary web Docker build failed"
+
+  log "Pushing primary web image..."
+  docker push "$image" || fail "Primary web Docker push failed"
+
+  local -a deploy_args
+  deploy_args=(
+    gcloud run deploy "$service"
+    --image "$image"
+    --quiet
+    --project "$project_id"
+    --region "$region"
+    --platform managed
+    --allow-unauthenticated
+  )
+
+  local env_arg=""
+  local env_keys=(
+    NEXT_PUBLIC_FIREBASE_API_KEY
+    NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    NEXT_PUBLIC_FIREBASE_APP_ID
+    NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    NEXT_PUBLIC_ENABLE_SW
+  )
+  for key in "${env_keys[@]}"; do
+    if [[ -n "${!key:-}" ]]; then
+      if [[ -n "$env_arg" ]]; then
+        env_arg+=","
+      fi
+      env_arg+="${key}=${!key}"
+    fi
+  done
+  if [[ -n "$env_arg" ]]; then
+    deploy_args+=(--set-env-vars "$env_arg")
+  fi
+
+  if [[ -n "${FIREBASE_SERVICE_ACCOUNT_SECRET:-}" ]]; then
+    deploy_args+=(--update-secrets "FIREBASE_SERVICE_ACCOUNT=${FIREBASE_SERVICE_ACCOUNT_SECRET}:latest")
+  fi
+
+  log "Deploying primary web to Cloud Run..."
+  "${deploy_args[@]}" || fail "Primary web Cloud Run deploy failed"
+  log "Primary web deployed ✓"
+}
+
+deploy_flutter_cloud_run() {
   ensure_flutter_gate
 
   local project_id
@@ -242,12 +314,18 @@ deploy_cloud_run_web() {
 
   local region service image_tag
   region="${GCP_REGION:-us-central1}"
-  service="${CLOUD_RUN_SERVICE:-empire-web}"
+  service="${CLOUD_RUN_FLUTTER_SERVICE:-empire-web}"
   image_tag="${IMAGE_TAG:-$(date +%Y%m%d-%H%M%S)}"
 
   log "Deploying Flutter web to Cloud Run (project=$project_id service=$service region=$region tag=$image_tag)..."
   (cd "$REPO_ROOT" && bash ./scripts/deploy-cloud-run.sh "$project_id" "$region" "$service" "$image_tag")
-  log "Cloud Run web deployed ✓"
+  log "Flutter web deployed ✓"
+}
+
+deploy_cloud_run_web() {
+  deploy_primary_web
+  deploy_flutter_cloud_run
+  log "Both Cloud Run web surfaces deployed ✓"
 }
 
 deploy_compliance_operator() {
@@ -278,7 +356,7 @@ deploy_compliance_operator() {
 }
 
 deploy_flutter_web() {
-  deploy_cloud_run_web
+  deploy_flutter_cloud_run
 }
 
 deploy_flutter_ios() {
@@ -317,11 +395,13 @@ case "$TARGET" in
   all)              deploy_all ;;
   functions)        deploy_functions ;;
   rules)            deploy_rules ;;
+  web)              deploy_cloud_run_web ;;
   cloudrun-web)     deploy_cloud_run_web ;;
+  primary-web)      deploy_primary_web ;;
   compliance-operator) deploy_compliance_operator ;;
   flutter-web)      deploy_flutter_web ;;
   flutter-ios)      deploy_flutter_ios ;;
   flutter-macos)    deploy_flutter_macos ;;
   flutter-android)  deploy_flutter_android ;;
-  *)                fail "Unknown target: $TARGET. Use: all | functions | rules | cloudrun-web | compliance-operator | flutter-web | flutter-ios | flutter-macos | flutter-android" ;;
+  *)                fail "Unknown target: $TARGET. Use: all | functions | rules | web | cloudrun-web | primary-web | compliance-operator | flutter-web | flutter-ios | flutter-macos | flutter-android" ;;
 esac
