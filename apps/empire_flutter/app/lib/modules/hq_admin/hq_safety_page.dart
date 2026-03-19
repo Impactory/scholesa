@@ -3,6 +3,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/export_service.dart';
 import '../../services/telemetry_service.dart';
+import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 String _tHqSafety(BuildContext context, String input) {
@@ -60,6 +61,11 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
         title: Text(_tHqSafety(context, 'Safety Overview')),
         backgroundColor: ScholesaColors.safetyGradient.colors.first,
         foregroundColor: Colors.white,
+        actions: const <Widget>[
+          SessionMenuButton(
+            foregroundColor: Colors.white,
+          ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),

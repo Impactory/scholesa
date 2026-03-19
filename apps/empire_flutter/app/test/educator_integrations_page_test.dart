@@ -100,6 +100,7 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Unable to load integrations right now.'), findsOneWidget);
     expect(find.text('Retry'), findsOneWidget);
     expect(find.text('No integrations configured yet'), findsNothing);
@@ -150,6 +151,7 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     await tester.tap(find.byIcon(Icons.more_vert_rounded));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Sync Now'));

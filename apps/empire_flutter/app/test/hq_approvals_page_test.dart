@@ -38,6 +38,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Approvals are temporarily unavailable'), findsOneWidget);
     expect(
       find.text('We could not load the approvals queue. Retry to check the current state.'),

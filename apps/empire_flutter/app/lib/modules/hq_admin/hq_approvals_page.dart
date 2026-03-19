@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
+import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 String _tHqApprovals(BuildContext context, String input) {
@@ -80,6 +81,11 @@ class _HqApprovalsPageState extends State<HqApprovalsPage>
         title: Text(_tHqApprovals(context, 'Approvals')),
         backgroundColor: ScholesaColors.hqGradient.colors.first,
         foregroundColor: Colors.white,
+        actions: const <Widget>[
+          SessionMenuButton(
+            foregroundColor: Colors.white,
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: Colors.white,

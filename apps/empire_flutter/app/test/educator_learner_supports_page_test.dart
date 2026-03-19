@@ -101,6 +101,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Active Support Plans'), findsOneWidget);
     expect(find.text('Learner One'), findsOneWidget);
     expect(find.text('High'), findsOneWidget);

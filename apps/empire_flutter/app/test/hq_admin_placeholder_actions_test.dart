@@ -91,6 +91,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     await tester.tap(find.text('Minor playground incident').first);
     await tester.pumpAndSettle();
 
@@ -136,6 +137,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.textContaining('Site unavailable'), findsOneWidget);
     expect(find.text('Unknown Site'), findsNothing);
   });

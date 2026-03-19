@@ -3,6 +3,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:provider/provider.dart';
 import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
+import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
 import '../../i18n/bos_coaching_i18n.dart';
@@ -56,6 +57,11 @@ class _EducatorIntegrationsPageState extends State<EducatorIntegrationsPage> {
         title: Text(_tEducatorIntegrations(context, 'My Integrations')),
         backgroundColor: ScholesaColors.educatorGradient.colors.first,
         foregroundColor: Colors.white,
+        actions: const <Widget>[
+          SessionMenuButton(
+            foregroundColor: Colors.white,
+          ),
+        ],
       ),
       body: Consumer<EducatorService>(
         builder: (BuildContext context, EducatorService service, _) {

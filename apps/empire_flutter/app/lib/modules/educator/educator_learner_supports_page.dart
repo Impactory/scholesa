@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/telemetry_service.dart';
+import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
 import '../../i18n/bos_coaching_i18n.dart';
@@ -52,6 +53,9 @@ class _EducatorLearnerSupportsPageState
           IconButton(
             icon: const Icon(Icons.search_rounded),
             onPressed: _showSearchDialog,
+          ),
+          const SessionMenuButton(
+            foregroundColor: Colors.white,
           ),
         ],
       ),
