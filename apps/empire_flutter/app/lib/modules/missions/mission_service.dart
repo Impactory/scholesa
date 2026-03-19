@@ -1754,6 +1754,14 @@ class MissionService extends ChangeNotifier {
                     submissionData['proofBundleSummary'] as Map,
                   )
                 : null;
+        final String proofBundleAiAssistanceDetails = proofBundleId == null
+          ? ''
+          : (((await _firestore
+                  .collection('proofOfLearningBundles')
+                  .doc(proofBundleId)
+                  .get())
+                .data()?['aiAssistanceDetails'] as String?) ?? '')
+            .trim();
       final List<Map<String, dynamic>> normalizedRubricScores = rubricScores
           .map((Map<String, dynamic> score) => <String, dynamic>{
                 ...score,
@@ -2126,8 +2134,6 @@ class MissionService extends ChangeNotifier {
               proofBundleSummary?['hasLearnerAiDisclosure'] == true;
             final bool aiAssistanceUsed =
               proofBundleSummary?['aiAssistanceUsed'] == true;
-            final bool hasAiAssistanceDetails =
-              proofBundleSummary?['hasAiAssistanceDetails'] == true;
             final String proofOfLearningStatus =
               proofBundleSummary == null
                 ? 'not-available'
@@ -2175,8 +2181,8 @@ class MissionService extends ChangeNotifier {
                 if (proofBundleId != null) 'proofBundleId': proofBundleId,
                 'proofOfLearningStatus': proofOfLearningStatus,
                 if (hasLearnerAiDisclosure) 'aiAssistanceUsed': aiAssistanceUsed,
-                if (hasAiAssistanceDetails)
-                  'aiAssistanceDetails': FieldValue.delete(),
+                if (proofBundleAiAssistanceDetails.isNotEmpty)
+                  'aiAssistanceDetails': proofBundleAiAssistanceDetails,
                 'aiDisclosureStatus': aiDisclosureStatus,
                 'educatorId': reviewerId,
                 if (verificationPrompt.isNotEmpty)
@@ -2189,24 +2195,6 @@ class MissionService extends ChangeNotifier {
               },
               SetOptions(merge: true),
             );
-
-            if (proofBundleId != null && hasAiAssistanceDetails) {
-              // Load the direct learner disclosure text from the proof bundle once it exists.
-              final DocumentSnapshot<Map<String, dynamic>> proofBundleSnapshot =
-                  await _proofBundleRef(missionId).get();
-              final String disclosureDetails =
-                  (proofBundleSnapshot.data()?['aiAssistanceDetails'] as String? ?? '')
-                      .trim();
-              if (disclosureDetails.isNotEmpty) {
-                batch.set(
-                  portfolioItemRef,
-                  <String, dynamic>{
-                    'aiAssistanceDetails': disclosureDetails,
-                  },
-                  SetOptions(merge: true),
-                );
-              }
-            }
 
             batch.set(
               evidenceDoc.reference,
