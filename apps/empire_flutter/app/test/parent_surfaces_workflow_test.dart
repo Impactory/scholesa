@@ -360,6 +360,84 @@ void main() {
     });
 
     testWidgets(
+        'portfolio page prefers direct artifact proof and ai provenance over mission fallback',
+        (WidgetTester tester) async {
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+      await _seedParentData(firestore);
+
+      final DateTime now = DateTime.now();
+      final DateTime anchor = DateTime(now.year, now.month, now.day, 10);
+
+      await firestore.collection('portfolioItems').doc('artifact-1').set(
+        <String, dynamic>{
+          'learnerId': 'learner-1',
+          'title': 'Prototype Evidence',
+          'description': 'Reviewed prototype artifact with direct provenance.',
+          'pillarCodes': const <String>['future_skills'],
+          'verificationStatus': 'reviewed',
+          'evidenceRecordIds': const <String>['evidence-1'],
+          'capabilityTitles': const <String>['Prototype evidence'],
+          'missionAttemptId': 'attempt-1',
+          'verificationPrompt':
+              'Explain why this prototype path best matched the evidence.',
+          'proofOfLearningStatus': 'verified',
+          'aiDisclosureStatus': 'learner-ai-not-used',
+          'createdAt': Timestamp.fromDate(anchor),
+          'updatedAt': Timestamp.fromDate(anchor.add(const Duration(minutes: 5))),
+        },
+      );
+
+      await firestore.collection('missionAttempts').doc('attempt-1').set(
+        <String, dynamic>{
+          'learnerId': 'learner-1',
+          'missionId': 'mission-1',
+          'sessionOccurrenceId': 'session-1',
+          'proofBundleSummary': <String, dynamic>{
+            'hasExplainItBack': false,
+            'hasOralCheck': false,
+            'hasMiniRebuild': false,
+            'hasLearnerAiDisclosure': false,
+            'aiAssistanceUsed': false,
+          },
+        },
+      );
+
+      await firestore.collection('interactionEvents').doc('event-ai-1').set(
+        <String, dynamic>{
+          'actorId': 'learner-1',
+          'sessionOccurrenceId': 'session-1',
+          'eventType': 'ai_help_used',
+          'createdAt': Timestamp.fromDate(anchor.add(const Duration(minutes: 1))),
+        },
+      );
+
+      await _pumpPage(
+        tester,
+        firestore: firestore,
+        home: const ParentPortfolioPage(),
+      );
+
+      expect(find.text('Prototype Evidence'), findsOneWidget);
+      expect(find.text('Proof verified'), findsWidgets);
+      expect(find.text('Learner declared no AI support used'), findsWidgets);
+      expect(
+        find.text('Learner AI use detected without explain-back evidence'),
+        findsNothing,
+      );
+
+      await tester.tap(find.text('Prototype Evidence').first);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Capability Evidence'), findsOneWidget);
+      expect(find.text('Prototype evidence'), findsWidgets);
+      expect(find.text('Verification Prompt'), findsOneWidget);
+      expect(
+        find.text('Explain why this prototype path best matched the evidence.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets(
         'billing page shows explicit unavailable state when no billing data exists',
         (WidgetTester tester) async {
       final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
