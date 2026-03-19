@@ -207,6 +207,19 @@ void main() {
       expect(risk.threshold, 0.5);
     });
 
+    test('fromMap throws on malformed inferential payloads', () {
+      expect(
+        () => ReliabilityRisk.fromMap(<String, dynamic>{'method': 'sep'}),
+        throwsFormatException,
+      );
+      expect(
+        () => AutonomyRisk.fromMap(
+          <String, dynamic>{'signals': <String>['rapid_submit']},
+        ),
+        throwsFormatException,
+      );
+    });
+
     test('tryFromMap rejects missing inferential fields', () {
       expect(
         ReliabilityRisk.tryFromMap(<String, dynamic>{'method': 'sep'}),

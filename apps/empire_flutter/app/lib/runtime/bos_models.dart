@@ -567,7 +567,10 @@ class ReliabilityRisk {
 
   factory ReliabilityRisk.fromMap(Map<String, dynamic> m2) {
     final ReliabilityRisk? parsed = ReliabilityRisk.tryFromMap(m2);
-    return parsed ?? const ReliabilityRisk();
+    if (parsed == null) {
+      throw const FormatException('Malformed reliability risk payload.');
+    }
+    return parsed;
   }
 
   static ReliabilityRisk? tryFromMap(Map<String, dynamic>? m) {
@@ -614,7 +617,10 @@ class AutonomyRisk {
 
   factory AutonomyRisk.fromMap(Map<String, dynamic> m) {
     final AutonomyRisk? parsed = AutonomyRisk.tryFromMap(m);
-    return parsed ?? const AutonomyRisk();
+    if (parsed == null) {
+      throw const FormatException('Malformed autonomy risk payload.');
+    }
+    return parsed;
   }
 
   static AutonomyRisk? tryFromMap(Map<String, dynamic>? m) {
