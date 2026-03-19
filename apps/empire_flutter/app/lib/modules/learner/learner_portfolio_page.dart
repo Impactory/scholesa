@@ -303,6 +303,37 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
     return '${date.month}/${date.day}/${date.year}';
   }
 
+  String _formatCredentialDate(CredentialModel credential) {
+    final DateTime issuedAt = credential.issuedAt.toDate();
+    return '${issuedAt.month}/${issuedAt.day}/${issuedAt.year}';
+  }
+
+  String _credentialPillarLabel(String code) {
+    switch (_normalizePillarKey(code)) {
+      case 'future_skills':
+        return _t('Future Skills');
+      case 'leadership':
+        return _t('Leadership');
+      case 'impact':
+        return _t('Impact');
+      default:
+        return code.trim().isEmpty ? _t('Credentials') : code.trim();
+    }
+  }
+
+  Color _credentialPillarColor(String code) {
+    switch (_normalizePillarKey(code)) {
+      case 'future_skills':
+        return ScholesaColors.futureSkills;
+      case 'leadership':
+        return ScholesaColors.leadership;
+      case 'impact':
+        return ScholesaColors.impact;
+      default:
+        return ScholesaColors.learner;
+    }
+  }
+
   List<_PortfolioSignal> _portfolioSignals() {
     final LearnerProfileModel? profile = _learnerProfile;
     if (profile == null) {
@@ -485,6 +516,31 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
                         color: context.schTextSecondary, fontSize: 14),
                   ),
                 ],
+              ),
+            ),
+            IconButton(
+              tooltip: _t('Credentials'),
+              onPressed: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: const <String, dynamic>{
+                    'module': 'learner_portfolio',
+                    'cta_id': 'open_credentials_route',
+                    'surface': 'header',
+                  },
+                );
+                context.go('/learner/credentials');
+              },
+              icon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: ScholesaColors.learner.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.verified_rounded,
+                  color: ScholesaColors.learner,
+                ),
               ),
             ),
             IconButton(
@@ -793,6 +849,93 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
   Widget _buildBadgesList() {
     if (_isPortfolioLoading) {
       return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_credentials.isNotEmpty) {
+      return ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: _credentials.length,
+        itemBuilder: (BuildContext context, int index) {
+          final CredentialModel credential = _credentials[index];
+          return Card(
+            margin: const EdgeInsets.only(bottom: 12),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Row(
+                    children: <Widget>[
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: ScholesaColors.learner.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.workspace_premium_rounded,
+                          color: ScholesaColors.learner,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Text(
+                              credential.title.trim().isEmpty
+                                  ? _t('Credential title unavailable')
+                                  : credential.title.trim(),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '${_t('Issued')} ${_formatCredentialDate(credential)}',
+                              style: TextStyle(
+                                color: context.schTextSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (credential.pillarCodes.isNotEmpty) ...<Widget>[
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: credential.pillarCodes.map((String code) {
+                        final Color color = _credentialPillarColor(code);
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: color.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            _credentialPillarLabel(code),
+                            style: TextStyle(
+                              color: color,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        );
+                      }).toList(growable: false),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          );
+        },
+      );
     }
 
     return _buildEmptyTabState(

@@ -40,6 +40,7 @@ final Map<String, bool> kKnownRoutes = <String, bool>{
   '/learner/missions': true,
   '/learner/habits': true,
   '/learner/portfolio': true,
+  '/learner/credentials': true,
   '/learner/settings': true,
 
   // Educator
@@ -94,6 +95,7 @@ final Map<String, bool> kKnownRoutes = <String, bool>{
   '/hq/safety': true,
   '/hq/exports': true,
   '/hq/integrations-health': true,
+  '/hq/cms': true,
   '/hq/curriculum': true,
   '/hq/feature-flags': true,
 
@@ -483,6 +485,19 @@ GoRouter createAppRouter(
         ),
       ),
       GoRoute(
+        path: '/learner/credentials',
+        builder: (BuildContext context, GoRouterState state) => const RoleGate(
+          allowedRoles: <UserRole>[
+            UserRole.learner,
+            UserRole.educator,
+            UserRole.hq
+          ],
+          child: LearnerOnboardingGate(
+            child: LearnerCredentialsPage(),
+          ),
+        ),
+      ),
+      GoRoute(
         path: '/learner/settings',
         builder: (BuildContext context, GoRouterState state) => const RoleGate(
           allowedRoles: <UserRole>[
@@ -677,6 +692,13 @@ GoRouter createAppRouter(
         builder: (BuildContext context, GoRouterState state) => const RoleGate(
           allowedRoles: <UserRole>[UserRole.hq],
           child: HqIntegrationsHealthPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/hq/cms',
+        builder: (BuildContext context, GoRouterState state) => const RoleGate(
+          allowedRoles: <UserRole>[UserRole.hq],
+          child: HqCurriculumPage(),
         ),
       ),
       GoRoute(

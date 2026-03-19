@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -85,6 +86,42 @@ void main() {
 
     expect(find.text('Future Innovator • Site unavailable'), findsOneWidget);
     expect(find.text('site-1'), findsNothing);
+  });
+
+  testWidgets(
+      'learner portfolio badges tab renders live credentials instead of a fake empty state',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+
+    await firestore.collection('credentials').doc('credential-1').set(
+      <String, dynamic>{
+        'siteId': 'site-1',
+        'learnerId': 'learner-1',
+        'title': 'Impact Builder',
+        'issuedAt': Timestamp.fromDate(DateTime(2026, 3, 18)),
+        'pillarCodes': const <String>['impact'],
+        'skillIds': const <String>['prototype'],
+      },
+    );
+
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      _buildHarness(
+        appState: _buildLearnerState(),
+        firestoreService: firestoreService,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Impact Builder'), findsOneWidget);
+    expect(find.text('Issued 3/18/2026'), findsOneWidget);
+    expect(find.text('No badges earned yet'), findsNothing);
   });
 
   testWidgets(
