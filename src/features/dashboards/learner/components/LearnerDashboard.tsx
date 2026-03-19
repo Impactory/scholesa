@@ -4,6 +4,26 @@ import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { doc, getDoc, collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
 import { firestore } from '@/src/firebase/client-init';
 
+type PillarScores = {
+  FUTURE_SKILLS: number | null;
+  LEADERSHIP_AGENCY: number | null;
+  IMPACT_INNOVATION: number | null;
+};
+
+const EMPTY_PILLAR_SCORES: PillarScores = {
+  FUTURE_SKILLS: null,
+  LEADERSHIP_AGENCY: null,
+  IMPACT_INNOVATION: null,
+};
+
+function normalizeProgressMetric(value: unknown): number | null {
+  const numeric = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(numeric)) {
+    return null;
+  }
+  return Math.max(0, Math.min(100, Math.round(numeric)));
+}
+
 export function LearnerDashboard() {
   const { user, profile } = useAuthContext();
   const siteId = profile?.activeSiteId || profile?.siteIds?.[0] || '';
@@ -11,11 +31,7 @@ export function LearnerDashboard() {
   const [loading, setLoading] = useState(true);
   const [currentMission, setCurrentMission] = useState('—');
   const [overallProgress, setOverallProgress] = useState(0);
-  const [pillarScores, setPillarScores] = useState({
-    FUTURE_SKILLS: 0,
-    LEADERSHIP_AGENCY: 0,
-    IMPACT_INNOVATION: 0,
-  });
+  const [pillarScores, setPillarScores] = useState<PillarScores>(EMPTY_PILLAR_SCORES);
 
   useEffect(() => {
     let isMounted = true;
@@ -34,9 +50,9 @@ export function LearnerDashboard() {
           const data = progressSnap.data() as Record<string, unknown>;
           if (isMounted) {
             setPillarScores({
-              FUTURE_SKILLS: Number(data.futureSkillsProgress ?? 0),
-              LEADERSHIP_AGENCY: Number(data.leadershipProgress ?? 0),
-              IMPACT_INNOVATION: Number(data.impactProgress ?? 0),
+              FUTURE_SKILLS: normalizeProgressMetric(data.futureSkillsProgress),
+              LEADERSHIP_AGENCY: normalizeProgressMetric(data.leadershipProgress),
+              IMPACT_INNOVATION: normalizeProgressMetric(data.impactProgress),
             });
             setOverallProgress(Number(data.overallProgress ?? data.totalProgress ?? 0));
           }
@@ -111,7 +127,8 @@ export function LearnerDashboard() {
         </Card>
         <Card className="p-6">
           <h2 className="text-xl font-semibold mb-2">AI Coach</h2>
-          <p className="text-gray-600">&quot;Great job on the last quiz! Focus on &apos;Impact &amp; Innovation&apos; next.&quot;</p>
+          <p className="text-gray-600">AI coach guidance appears here when a real coaching response is available.</p>
+          <p className="mt-2 text-sm text-amber-700">No live coach response is attached to this dashboard card yet.</p>
         </Card>
       </div>
 
@@ -120,23 +137,23 @@ export function LearnerDashboard() {
         <Card className="p-6">
           <h3 className="font-semibold mb-2">Future Skills</h3>
           <div className="w-full bg-gray-200 rounded-full h-2.5">
-            <div className="bg-green-500 h-2.5 rounded-full" style={{ width: `${pillarScores.FUTURE_SKILLS}%` }}></div>
+            <div className="bg-green-500 h-2.5 rounded-full" style={{ width: `${pillarScores.FUTURE_SKILLS ?? 0}%` }}></div>
           </div>
-          <p className="text-right text-sm mt-1">{pillarScores.FUTURE_SKILLS}%</p>
+          <p className="text-right text-sm mt-1">{pillarScores.FUTURE_SKILLS != null ? `${pillarScores.FUTURE_SKILLS}%` : 'No evidence yet'}</p>
         </Card>
         <Card className="p-6">
           <h3 className="font-semibold mb-2">Leadership & Agency</h3>
           <div className="w-full bg-gray-200 rounded-full h-2.5">
-            <div className="bg-indigo-500 h-2.5 rounded-full" style={{ width: `${pillarScores.LEADERSHIP_AGENCY}%` }}></div>
+            <div className="bg-indigo-500 h-2.5 rounded-full" style={{ width: `${pillarScores.LEADERSHIP_AGENCY ?? 0}%` }}></div>
           </div>
-          <p className="text-right text-sm mt-1">{pillarScores.LEADERSHIP_AGENCY}%</p>
+          <p className="text-right text-sm mt-1">{pillarScores.LEADERSHIP_AGENCY != null ? `${pillarScores.LEADERSHIP_AGENCY}%` : 'No evidence yet'}</p>
         </Card>
         <Card className="p-6">
           <h3 className="font-semibold mb-2">Impact & Innovation</h3>
           <div className="w-full bg-gray-200 rounded-full h-2.5">
-            <div className="bg-purple-500 h-2.5 rounded-full" style={{ width: `${pillarScores.IMPACT_INNOVATION}%` }}></div>
+            <div className="bg-purple-500 h-2.5 rounded-full" style={{ width: `${pillarScores.IMPACT_INNOVATION ?? 0}%` }}></div>
           </div>
-          <p className="text-right text-sm mt-1">{pillarScores.IMPACT_INNOVATION}%</p>
+          <p className="text-right text-sm mt-1">{pillarScores.IMPACT_INNOVATION != null ? `${pillarScores.IMPACT_INNOVATION}%` : 'No evidence yet'}</p>
         </Card>
       </div>
     </div>

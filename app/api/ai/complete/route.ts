@@ -125,22 +125,9 @@ function extractLlmPayload(data: unknown): ParsedLlmPayload | undefined {
   };
 }
 
-function fallbackQuestion(locale: SupportedLocale): string {
-  switch (locale) {
-    case 'zh-CN':
-      return '你想先试哪一步？';
-    case 'zh-TW':
-      return '你想先試哪一步？';
-    case 'th':
-      return 'อยากลองเริ่มจากขั้นตอนไหนก่อน?';
-    default:
-      return 'What should you try first?';
-  }
-}
-
-function clampConfidence(value: unknown): number {
+function parseConfidence(value: unknown): number | undefined {
   const numeric = typeof value === 'number' ? value : Number(value);
-  if (!Number.isFinite(numeric)) return 0;
+  if (!Number.isFinite(numeric)) return undefined;
   if (numeric < 0) return 0;
   if (numeric > 1) return 1;
   return numeric;
@@ -152,7 +139,6 @@ function requiresStrictConfidence(request: ModelRequest): boolean {
 
 function buildEscalatedGuardResponse(input: {
   request: ModelRequest;
-  targetLocale: SupportedLocale;
   traceId: string;
   modelVersion: string;
   safetyReasonCode: string;
@@ -161,7 +147,7 @@ function buildEscalatedGuardResponse(input: {
 }): ModelResponse {
   return {
     answer: input.answer,
-    followUpQuestions: input.request.responseFormat.includeFollowUp ? [fallbackQuestion(input.targetLocale)] : undefined,
+    followUpQuestions: undefined,
     citations: undefined,
     modelUsed: 'scholesa_server_inference_guard',
     modelVersion: input.modelVersion,
@@ -238,7 +224,6 @@ export async function POST(request: Request) {
     if (requiresStrictConfidence(body)) {
       return NextResponse.json(buildEscalatedGuardResponse({
         request: body,
-        targetLocale,
         traceId,
         modelVersion: 'confidence-guard-v1',
         safetyReasonCode: 'child_inference_unavailable',
@@ -252,7 +237,6 @@ export async function POST(request: Request) {
     if (requiresStrictConfidence(body)) {
       return NextResponse.json(buildEscalatedGuardResponse({
         request: body,
-        targetLocale,
         traceId,
         modelVersion: 'confidence-guard-v1',
         safetyReasonCode: 'child_inference_unavailable',
@@ -267,7 +251,6 @@ export async function POST(request: Request) {
     if (requiresStrictConfidence(body)) {
       return NextResponse.json(buildEscalatedGuardResponse({
         request: body,
-        targetLocale,
         traceId,
         modelVersion: llmPayload?.modelVersion || 'confidence-guard-v1',
         safetyReasonCode: 'child_empty_inference_response',
@@ -277,14 +260,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'empty_inference_response' }, { status: 503 });
   }
 
-  const certifiedConfidence = clampConfidence(llmPayload.understanding?.confidence);
-  if (requiresStrictConfidence(body) && certifiedConfidence < MIN_AUTONOMOUS_LEARNER_CONFIDENCE) {
+  const certifiedConfidence = parseConfidence(llmPayload.understanding?.confidence);
+  if (requiresStrictConfidence(body) && (certifiedConfidence == null || certifiedConfidence < MIN_AUTONOMOUS_LEARNER_CONFIDENCE)) {
     return NextResponse.json(buildEscalatedGuardResponse({
       request: body,
-      targetLocale,
       traceId,
       modelVersion: llmPayload.modelVersion || 'confidence-guard-v1',
-      safetyReasonCode: 'child_low_confidence_guard',
+      safetyReasonCode: certifiedConfidence == null ? 'child_confidence_unavailable' : 'child_low_confidence_guard',
       confidence: certifiedConfidence,
       answer: localizedLowConfidenceSupport(targetLocale),
     }), { status: 200 });
@@ -292,7 +274,7 @@ export async function POST(request: Request) {
 
   const response: ModelResponse = {
     answer: llmPayload.text,
-    followUpQuestions: body.responseFormat.includeFollowUp ? [fallbackQuestion(targetLocale)] : undefined,
+    followUpQuestions: body.responseFormat.includeFollowUp ? llmPayload.toolSuggestions : undefined,
     citations: body.responseFormat.includeCitations
       ? body.contextBlocks.filter((block) => Boolean(block.id)).slice(0, 3).map((block) => ({
           contextBlockId: block.id as string,
