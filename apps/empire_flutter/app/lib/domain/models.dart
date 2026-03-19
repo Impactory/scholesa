@@ -1109,6 +1109,17 @@ class PortfolioItemModel {
     this.artifactUrls = const <String>[],
     this.pillarCodes = const <String>[],
     this.skillIds = const <String>[],
+    this.evidenceRecordIds = const <String>[],
+    this.capabilityIds = const <String>[],
+    this.capabilityTitles = const <String>[],
+    this.growthEventIds = const <String>[],
+    this.missionAttemptId,
+    this.rubricApplicationId,
+    this.proofBundleId,
+    this.educatorId,
+    this.verificationPrompt,
+    this.verificationStatus,
+    this.source,
     this.createdAt,
     this.updatedAt,
   });
@@ -1121,6 +1132,17 @@ class PortfolioItemModel {
   final List<String> artifactUrls;
   final List<String> pillarCodes;
   final List<String> skillIds;
+  final List<String> evidenceRecordIds;
+  final List<String> capabilityIds;
+  final List<String> capabilityTitles;
+  final List<String> growthEventIds;
+  final String? missionAttemptId;
+  final String? rubricApplicationId;
+  final String? proofBundleId;
+  final String? educatorId;
+  final String? verificationPrompt;
+  final String? verificationStatus;
+  final String? source;
   final Timestamp? createdAt;
   final Timestamp? updatedAt;
 
@@ -1139,6 +1161,23 @@ class PortfolioItemModel {
           List<String>.from(data['pillarCodes'] as List? ?? const <String>[]),
       skillIds:
           List<String>.from(data['skillIds'] as List? ?? const <String>[]),
+      evidenceRecordIds: List<String>.from(
+        data['evidenceRecordIds'] as List? ?? const <String>[],
+      ),
+      capabilityIds:
+          List<String>.from(data['capabilityIds'] as List? ?? const <String>[]),
+      capabilityTitles: List<String>.from(
+        data['capabilityTitles'] as List? ?? const <String>[],
+      ),
+      growthEventIds:
+          List<String>.from(data['growthEventIds'] as List? ?? const <String>[]),
+      missionAttemptId: data['missionAttemptId'] as String?,
+      rubricApplicationId: data['rubricApplicationId'] as String?,
+      proofBundleId: data['proofBundleId'] as String?,
+      educatorId: data['educatorId'] as String?,
+      verificationPrompt: data['verificationPrompt'] as String?,
+      verificationStatus: data['verificationStatus'] as String?,
+      source: data['source'] as String?,
       createdAt: data['createdAt'] as Timestamp?,
       updatedAt: data['updatedAt'] as Timestamp?,
     );
@@ -1152,6 +1191,17 @@ class PortfolioItemModel {
         'artifactUrls': artifactUrls,
         'pillarCodes': pillarCodes,
         'skillIds': skillIds,
+        'evidenceRecordIds': evidenceRecordIds,
+        'capabilityIds': capabilityIds,
+        'capabilityTitles': capabilityTitles,
+        'growthEventIds': growthEventIds,
+        'missionAttemptId': missionAttemptId,
+        'rubricApplicationId': rubricApplicationId,
+        'proofBundleId': proofBundleId,
+        'educatorId': educatorId,
+        'verificationPrompt': verificationPrompt,
+        'verificationStatus': verificationStatus,
+        'source': source,
         'createdAt': createdAt ?? Timestamp.now(),
         'updatedAt': updatedAt ?? Timestamp.now(),
       };

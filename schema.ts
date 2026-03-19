@@ -185,6 +185,17 @@ export interface PortfolioItem {
   mediaUrl?: string;
   mediaType: 'image' | 'video' | 'document' | 'link';
   relatedSkillIds?: string[];
+  evidenceRecordIds?: string[];
+  capabilityIds?: string[];
+  capabilityTitles?: string[];
+  growthEventIds?: string[];
+  missionAttemptId?: string;
+  rubricApplicationId?: string;
+  proofBundleId?: string;
+  educatorId?: string;
+  verificationPrompt?: string;
+  verificationStatus?: 'pending' | 'reviewed' | 'verified';
+  source?: string;
   createdAt: number;
 }
 

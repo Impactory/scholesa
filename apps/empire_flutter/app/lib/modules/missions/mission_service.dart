@@ -1702,6 +1702,18 @@ class MissionService extends ChangeNotifier {
       final String? resolvedRubricTitle = rubricTitle?.trim().isNotEmpty == true
           ? rubricTitle!.trim()
           : submissionData['rubricTitle'] as String?;
+        final String missionTitle =
+          (submissionData['missionTitle'] as String? ?? '').trim();
+        final String submissionText =
+          (submissionData['submissionText'] as String? ?? '').trim();
+        final List<String> submissionAttachmentUrls = List<String>.from(
+        submissionData['attachmentUrls'] as List? ?? const <String>[],
+        );
+        final String? proofBundleId =
+          (submissionData['proofBundleId'] as String?)?.trim().isNotEmpty ==
+              true
+            ? (submissionData['proofBundleId'] as String).trim()
+            : null;
       final List<Map<String, dynamic>> normalizedRubricScores = rubricScores
           .map((Map<String, dynamic> score) => <String, dynamic>{
                 ...score,
@@ -2004,6 +2016,7 @@ class MissionService extends ChangeNotifier {
 
           for (final QueryDocumentSnapshot<Map<String, dynamic>> evidenceDoc
               in matchingEvidenceDocs) {
+            final Map<String, dynamic> evidenceData = evidenceDoc.data();
             batch.set(
               evidenceDoc.reference,
               <String, dynamic>{
@@ -2015,6 +2028,99 @@ class MissionService extends ChangeNotifier {
                 'latestCapabilityLevel': nextLevel,
                 'growthUpdatedBy': reviewerId,
                 'growthUpdatedAt': FieldValue.serverTimestamp(),
+              },
+              SetOptions(merge: true),
+            );
+
+            final bool portfolioCandidate =
+                evidenceData['portfolioCandidate'] == true;
+            if (!portfolioCandidate) {
+              continue;
+            }
+
+            final String capabilityTitle = <String>[
+              (evidenceData['capabilityLabel'] as String? ?? '').trim(),
+              ...capabilityScores
+                  .map((Map<String, dynamic> score) =>
+                      (score['capabilityTitle'] as String? ?? '').trim())
+                  .where((String value) => value.isNotEmpty),
+            ].firstWhere(
+              (String value) => value.isNotEmpty,
+              orElse: () => capabilityId,
+            );
+            final String portfolioTitle = <String>[
+              missionTitle,
+              capabilityTitle,
+            ].where((String value) => value.isNotEmpty).join(' • ');
+            final String observationNote =
+                (evidenceData['observationNote'] as String? ?? '').trim();
+            final String portfolioDescription = <String>[
+              observationNote,
+              trimmedFeedback,
+              submissionText,
+            ].firstWhere(
+              (String value) => value.isNotEmpty,
+              orElse: () => 'Reviewed evidence linked to learner growth.',
+            );
+            final List<String> mergedArtifactUrls = <String>{
+              ...submissionAttachmentUrls,
+              ...List<String>.from(
+                evidenceData['artifactUrls'] as List? ?? const <String>[],
+              ),
+            }.toList(growable: false);
+            final List<String> mergedPillarCodes = <String>{
+              pillarCode,
+              (evidenceData['capabilityPillarCode'] as String? ?? '').trim(),
+              (submissionData['pillarCode'] as String? ?? '').trim(),
+            }.where((String value) => value.isNotEmpty).toList(growable: false);
+            final String verificationPrompt =
+                (evidenceData['nextVerificationPrompt'] as String? ?? '')
+                    .trim();
+            final DocumentReference<Map<String, dynamic>> portfolioItemRef =
+                _firestore.collection('portfolioItems').doc(evidenceDoc.id);
+            batch.set(
+              portfolioItemRef,
+              <String, dynamic>{
+                if (reviewSiteId != null && reviewSiteId.isNotEmpty)
+                  'siteId': reviewSiteId,
+                'learnerId': reviewLearnerId,
+                'title': portfolioTitle.isNotEmpty
+                    ? portfolioTitle
+                    : 'Reviewed evidence artifact',
+                'description': portfolioDescription,
+                'artifactUrls': mergedArtifactUrls,
+                'pillarCodes': mergedPillarCodes,
+                'skillIds': const <String>[],
+                'evidenceRecordIds': FieldValue.arrayUnion(<String>[
+                  evidenceDoc.id,
+                ]),
+                'capabilityIds': FieldValue.arrayUnion(<String>[capabilityId]),
+                'capabilityTitles': FieldValue.arrayUnion(<String>[
+                  capabilityTitle,
+                ]),
+                'growthEventIds': FieldValue.arrayUnion(<String>[
+                  growthEventRef.id,
+                ]),
+                'missionAttemptId': canonicalAttemptRef.id,
+                'rubricApplicationId': rubricApplicationRef.id,
+                if (proofBundleId != null) 'proofBundleId': proofBundleId,
+                'educatorId': reviewerId,
+                if (verificationPrompt.isNotEmpty)
+                  'verificationPrompt': verificationPrompt,
+                'verificationStatus': 'reviewed',
+                'source': 'educator_review_linkage',
+                if (evidenceData['observedAt'] != null)
+                  'createdAt': evidenceData['observedAt'],
+                'updatedAt': FieldValue.serverTimestamp(),
+              },
+              SetOptions(merge: true),
+            );
+
+            batch.set(
+              evidenceDoc.reference,
+              <String, dynamic>{
+                'portfolioStatus': 'linked',
+                'linkedPortfolioItemId': portfolioItemRef.id,
               },
               SetOptions(merge: true),
             );

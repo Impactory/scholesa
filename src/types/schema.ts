@@ -198,6 +198,17 @@ export interface PortfolioItem {
   description: string;
   pillarCodes: PillarCode[];
   artifacts: string[]; // URLs
+  evidenceRecordIds?: string[];
+  capabilityIds?: string[];
+  capabilityTitles?: string[];
+  growthEventIds?: string[];
+  missionAttemptId?: string;
+  rubricApplicationId?: string;
+  proofBundleId?: string;
+  educatorId?: string;
+  verificationPrompt?: string;
+  verificationStatus?: 'pending' | 'reviewed' | 'verified';
+  source?: string;
   createdAt: Timestamp;
 }
 
