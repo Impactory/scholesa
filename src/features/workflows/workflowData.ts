@@ -1058,10 +1058,12 @@ async function loadHqBillingRecords(): Promise<WorkflowRecord[]> {
     const entry = rawEntry as Record<string, unknown>;
     const id = asString(entry.id, '');
     if (!id) continue;
+    const siteLabel = typeof entry.site === 'string' && entry.site.trim().length > 0 ? entry.site : null;
+    const amountLabel = asAvailabilityString(entry.amount);
     invoiceRecords.push({
       id,
       title: `Invoice ${id}`,
-      subtitle: `${asString(entry.site, 'Site unavailable')} • ${asAvailabilityString(entry.amount)}`,
+      subtitle: siteLabel ? `${siteLabel} • ${amountLabel}` : amountLabel,
       status: asTextAvailability(entry.status),
       updatedAt: toIsoDate(entry.date),
       siteId: null,
@@ -1070,8 +1072,8 @@ async function loadHqBillingRecords(): Promise<WorkflowRecord[]> {
       canEdit: false,
       canDelete: false,
       metadata: {
-        parent: asString(entry.parent, ''),
-        learner: asString(entry.learner, ''),
+        parent: typeof entry.parent === 'string' ? entry.parent : '',
+        learner: typeof entry.learner === 'string' ? entry.learner : '',
       },
     });
   }

@@ -4943,18 +4943,18 @@ export const listHqBillingRecords = onCall(async (request: CallableRequest) => {
 
   const invoices: Array<{
     id: string;
-    parent: string;
-    learner: string;
-    site: string;
-    amount: number;
+    parent: string | null;
+    learner: string | null;
+    site: string | null;
+    amount: number | null;
     status: 'paid' | 'pending' | 'overdue';
     date: string;
   }> = [];
   const payments: Array<{
     id: string;
-    from: string;
-    method: string;
-    amount: number;
+    from: string | null;
+    method: string | null;
+    amount: number | null;
     date: string;
     invoice: string;
   }> = [];
@@ -4969,9 +4969,9 @@ export const listHqBillingRecords = onCall(async (request: CallableRequest) => {
 
     const amount = asNumber(data.amount);
     const status = normalizeInvoiceStatus(data.status);
-    const siteLabel = siteNames[rowSiteId] || (rowSiteId.length > 0 ? rowSiteId : 'Site unavailable');
-    const parentName = asTrimmedString(data.parentName) || asTrimmedString(data.requestedBy) || asTrimmedString(data.createdBy) || 'Unavailable';
-    const learnerName = asTrimmedString(data.learnerName) || asTrimmedString(data.learnerId) || 'Unavailable';
+    const siteLabel = siteNames[rowSiteId] || (rowSiteId.length > 0 ? rowSiteId : null);
+    const parentName = asTrimmedString(data.parentName) || asTrimmedString(data.requestedBy) || asTrimmedString(data.createdBy) || null;
+    const learnerName = asTrimmedString(data.learnerName) || asTrimmedString(data.learnerId) || null;
     const invoiceId = asTrimmedString(data.invoiceId) || docSnap.id;
     const dateIso = createdAt.toISOString();
 
@@ -4989,7 +4989,7 @@ export const listHqBillingRecords = onCall(async (request: CallableRequest) => {
       payments.push({
         id: docSnap.id,
         from: parentName,
-        method: asTrimmedString(data.paymentMethod) || asTrimmedString(data.method) || 'Unavailable',
+        method: asTrimmedString(data.paymentMethod) || asTrimmedString(data.method) || null,
         amount,
         date: dateIso,
         invoice: invoiceId,
