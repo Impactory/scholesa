@@ -64,10 +64,13 @@ const BOS_LOGIC_SPEC = Object.freeze({
 const FAIRNESS_COLLECTION = 'fairnessAudits';
 
 type FairnessAuditBucket = {
+  siteId: string | null;
   interventions: number;
   mvlTriggered: number;
   byRole: Record<string, number>;
   byGradeBand: Record<string, number>;
+  missingRoleCount: number;
+  missingGradeBandCount: number;
   avgAutonomyRisk: number;
   avgReliabilityRisk: number;
   riskSamples: number;
@@ -1935,26 +1938,30 @@ export const bosWeeklyFairnessAudit = onSchedule(
 
     const bySite = new Map<string, FairnessAuditBucket>();
 
-    const getSiteBucket = (siteId: string) => {
-      const existing = bySite.get(siteId);
+    const getSiteBucket = (siteId: string | null) => {
+      const bucketKey = siteId ?? '__missing_site__';
+      const existing = bySite.get(bucketKey);
       if (existing) return existing;
       const created: FairnessAuditBucket = {
+        siteId,
         interventions: 0,
         mvlTriggered: 0,
         byRole: {},
         byGradeBand: {},
+        missingRoleCount: 0,
+        missingGradeBandCount: 0,
         avgAutonomyRisk: 0,
         avgReliabilityRisk: 0,
         riskSamples: 0,
         modelVersions: new Set<string>(),
       };
-      bySite.set(siteId, created);
+      bySite.set(bucketKey, created);
       return created;
     };
 
     for (const doc of interventionsSnap.docs) {
       const data = doc.data() as Record<string, unknown>;
-      const siteId = normalizeString(data.siteId) ?? 'unknown';
+      const siteId = normalizeString(data.siteId) ?? null;
       const bucket = getSiteBucket(siteId);
 
       bucket.interventions += 1;
@@ -1962,11 +1969,19 @@ export const bosWeeklyFairnessAudit = onSchedule(
         bucket.mvlTriggered += 1;
       }
 
-      const role = normalizeString(data.roleCanonical) ?? 'unknown';
-      bucket.byRole[role] = (bucket.byRole[role] ?? 0) + 1;
+      const role = normalizeString(data.roleCanonical);
+      if (role) {
+        bucket.byRole[role] = (bucket.byRole[role] ?? 0) + 1;
+      } else {
+        bucket.missingRoleCount += 1;
+      }
 
-      const gradeBand = normalizeString(data.gradeBandCanonical) ?? 'unknown';
-      bucket.byGradeBand[gradeBand] = (bucket.byGradeBand[gradeBand] ?? 0) + 1;
+      const gradeBand = normalizeString(data.gradeBandCanonical);
+      if (gradeBand) {
+        bucket.byGradeBand[gradeBand] = (bucket.byGradeBand[gradeBand] ?? 0) + 1;
+      } else {
+        bucket.missingGradeBandCount += 1;
+      }
 
       const autonomyRisk = asRecord(data.autonomyRisk);
       const reliabilityRisk = asRecord(data.reliabilityRisk);
@@ -1986,7 +2001,7 @@ export const bosWeeklyFairnessAudit = onSchedule(
     }
 
     const writes: Promise<FirebaseFirestore.WriteResult>[] = [];
-    for (const [siteId, bucket] of bySite.entries()) {
+    for (const [siteKey, bucket] of bySite.entries()) {
       const mvlRate = bucket.interventions > 0
         ? Math.round((bucket.mvlTriggered / bucket.interventions) * 1000) / 1000
         : 0;
@@ -1997,9 +2012,9 @@ export const bosWeeklyFairnessAudit = onSchedule(
         ? Math.round((bucket.avgReliabilityRisk / bucket.riskSamples) * 1000) / 1000
         : 0;
 
-      const docId = `${siteId}_${windowStartIso.slice(0, 10)}`;
+      const docId = `${siteKey}_${windowStartIso.slice(0, 10)}`;
       writes.push(db.collection(FAIRNESS_COLLECTION).doc(docId).set({
-        siteId,
+        siteId: bucket.siteId,
         window: {
           startIso: windowStartIso,
           endIso: windowEndIso,
@@ -2015,11 +2030,14 @@ export const bosWeeklyFairnessAudit = onSchedule(
         slices: {
           byRole: bucket.byRole,
           byGradeBand: bucket.byGradeBand,
+          missingRoleCount: bucket.missingRoleCount,
+          missingGradeBandCount: bucket.missingGradeBandCount,
         },
         modelVersions: Array.from(bucket.modelVersions),
         recommendations: [
           mvlRate > 0.35 ? 'Review support calibration: elevated MVL rate.' : 'MVL rate within expected range.',
           reliabilityAvg > 0.6 ? 'Increase verification scaffolds in high-risk contexts.' : 'Reliability indicators stable.',
+          bucket.siteId == null ? 'Site provenance missing for one or more interventions in this audit bucket.' : 'Site provenance present for audited interventions.',
         ],
         generatedBy: 'bosWeeklyFairnessAudit',
         env,
