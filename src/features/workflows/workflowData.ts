@@ -1003,17 +1003,23 @@ async function loadParentBillingRecords(ctx: WorkflowContext): Promise<WorkflowR
     const subscriptionPlan = asString(summary.subscriptionPlan, '');
     const nextPaymentDate = asString(summary.nextPaymentDate, '');
     const hasUpcomingCharge = nextPaymentDate.length > 0 || summary.nextPaymentAmount != null;
-    const currentBalance = asAvailabilityString(summary.currentBalance);
-    const nextPaymentAmount = asAvailabilityString(summary.nextPaymentAmount);
+    const currentBalance = asAvailabilityLabel(summary.currentBalance);
+    const nextPaymentAmount = asAvailabilityLabel(summary.nextPaymentAmount);
+    const subtitle = hasUpcomingCharge
+      ? joinAvailableParts([
+          currentBalance ? `Current balance ${currentBalance}` : null,
+          nextPaymentAmount ? `Next ${nextPaymentAmount}` : null,
+        ])
+      : recentPayments.length > 0
+        ? `${recentPayments.length} recent payments`
+        : joinAvailableParts([
+            currentBalance ? `Current balance ${currentBalance}` : null,
+          ]);
 
     summaryRecord = {
       id: asString(summary.parentId, ctx.uid),
       title: subscriptionPlan || 'Billing Summary',
-      subtitle: hasUpcomingCharge
-        ? `Current balance ${currentBalance} • Next ${nextPaymentAmount}`
-        : recentPayments.length > 0
-          ? `${recentPayments.length} recent payments`
-          : `Current balance ${currentBalance}`,
+      subtitle: subtitle || 'No verified billing evidence yet',
       status: 'active',
       updatedAt: toIsoDate(summary.nextPaymentDate),
       siteId: activeSiteId(ctx.profile),
@@ -1021,10 +1027,10 @@ async function loadParentBillingRecords(ctx: WorkflowContext): Promise<WorkflowR
       routePath: '/parent/billing',
       canEdit: false,
       canDelete: false,
-      metadata: {
+      metadata: metadataWithAvailableValues({
         nextPaymentDate,
         parentId: asString(summary.parentId, ctx.uid),
-      },
+      }),
     };
   }
 
@@ -1033,11 +1039,16 @@ async function loadParentBillingRecords(ctx: WorkflowContext): Promise<WorkflowR
     .map((entry) => {
       const id = asString(entry.id, '');
       if (!id) return null;
+      const amountLabel = asAvailabilityLabel(entry.amount);
+      const statusLabel = typeof entry.status === 'string' && entry.status.trim().length > 0 ? entry.status : null;
       return {
         id,
         title: asString(entry.description, 'Payment'),
-        subtitle: `Amount ${asAvailabilityString(entry.amount)} • ${asTextAvailability(entry.status)}`,
-        status: asTextAvailability(entry.status),
+        subtitle: joinAvailableParts([
+          amountLabel ? `Amount ${amountLabel}` : null,
+          statusLabel,
+        ]) || 'Payment details unavailable',
+        status: statusLabel || 'No status yet',
         updatedAt: toIsoDate(entry.date),
         siteId: activeSiteId(ctx.profile),
         collectionName: 'payments',
@@ -1062,25 +1073,32 @@ async function loadSiteBillingRecords(ctx: WorkflowContext): Promise<WorkflowRec
   const invoices = Array.isArray(payload.invoices) ? payload.invoices : [];
 
   const recordSiteId = asString(payload.siteId, asString(summary?.siteId, activeSiteId(ctx.profile) || ''));
+  const monthlyAmount = summary ? asAvailabilityLabel(summary.monthlyAmount) : null;
+  const currency = summary && typeof summary.currency === 'string' && summary.currency.trim().length > 0 ? summary.currency : null;
+  const planStatus = summary && typeof summary.planStatus === 'string' && summary.planStatus.trim().length > 0 ? summary.planStatus : null;
   const siteSummary: WorkflowRecord | null = summary == null ? null : {
     id: recordSiteId,
     title: asString(summary.planName, 'Site Billing'),
-    subtitle: `${asTextAvailability(summary.currency)} ${asAvailabilityString(summary.monthlyAmount)} / month`,
-    status: asTextAvailability(summary.planStatus),
+    subtitle: joinAvailableParts([
+      currency && monthlyAmount ? `${currency} ${monthlyAmount} / month` : null,
+      currency && !monthlyAmount ? currency : null,
+      !currency && monthlyAmount ? monthlyAmount : null,
+    ]) || 'No verified site billing evidence yet',
+    status: planStatus || 'No plan status yet',
     updatedAt: toIsoDate(summary.nextBillingDate),
     siteId: recordSiteId || null,
     collectionName: 'siteBillingSummary',
     routePath: '/site/billing',
     canEdit: false,
     canDelete: false,
-    metadata: {
-      activeLearnersUsed: asAvailabilityString(summary.activeLearnersUsed),
-      activeLearnersTotal: asAvailabilityString(summary.activeLearnersTotal),
-      educatorsUsed: asAvailabilityString(summary.educatorsUsed),
-      educatorsTotal: asAvailabilityString(summary.educatorsTotal),
-      storageUsedGb: asAvailabilityString(summary.storageUsedGb),
-      storageTotalGb: asAvailabilityString(summary.storageTotalGb),
-    },
+    metadata: metadataWithAvailableValues({
+      activeLearnersUsed: asAvailabilityLabel(summary.activeLearnersUsed),
+      activeLearnersTotal: asAvailabilityLabel(summary.activeLearnersTotal),
+      educatorsUsed: asAvailabilityLabel(summary.educatorsUsed),
+      educatorsTotal: asAvailabilityLabel(summary.educatorsTotal),
+      storageUsedGb: asAvailabilityLabel(summary.storageUsedGb),
+      storageTotalGb: asAvailabilityLabel(summary.storageTotalGb),
+    }),
   };
 
   const invoiceRecords: WorkflowRecord[] = invoices
@@ -1088,11 +1106,18 @@ async function loadSiteBillingRecords(ctx: WorkflowContext): Promise<WorkflowRec
     .map((entry): WorkflowRecord | null => {
       const id = asString(entry.id, '');
       if (!id) return null;
+      const currencyLabel = typeof entry.currency === 'string' && entry.currency.trim().length > 0 ? entry.currency.toUpperCase() : null;
+      const amountLabel = asAvailabilityLabel(entry.amount);
+      const statusLabel = typeof entry.status === 'string' && entry.status.trim().length > 0 ? entry.status : null;
       return {
         id,
         title: `Invoice ${id}`,
-        subtitle: `${asTextAvailability(entry.currency).toUpperCase()} ${asAvailabilityString(entry.amount)}`,
-        status: asTextAvailability(entry.status),
+        subtitle: joinAvailableParts([
+          currencyLabel && amountLabel ? `${currencyLabel} ${amountLabel}` : null,
+          currencyLabel && !amountLabel ? currencyLabel : null,
+          !currencyLabel && amountLabel ? amountLabel : null,
+        ]) || 'Invoice amount unavailable',
+        status: statusLabel || 'No status yet',
         updatedAt: toIsoDate(entry.date),
         siteId: recordSiteId || null,
         collectionName: 'siteInvoices',
@@ -1122,22 +1147,26 @@ async function loadHqBillingRecords(): Promise<WorkflowRecord[]> {
     const id = asString(entry.id, '');
     if (!id) continue;
     const siteLabel = typeof entry.site === 'string' && entry.site.trim().length > 0 ? entry.site : null;
-    const amountLabel = asAvailabilityString(entry.amount);
+    const amountLabel = asAvailabilityLabel(entry.amount);
+    const statusLabel = typeof entry.status === 'string' && entry.status.trim().length > 0 ? entry.status : null;
     invoiceRecords.push({
       id,
       title: `Invoice ${id}`,
-      subtitle: siteLabel ? `${siteLabel} • ${amountLabel}` : amountLabel,
-      status: asTextAvailability(entry.status),
+      subtitle: joinAvailableParts([
+        siteLabel,
+        amountLabel,
+      ]) || 'Invoice details unavailable',
+      status: statusLabel || 'No status yet',
       updatedAt: toIsoDate(entry.date),
       siteId: null,
       collectionName: 'hqInvoices',
       routePath: '/hq/billing',
       canEdit: false,
       canDelete: false,
-      metadata: {
-        parent: typeof entry.parent === 'string' ? entry.parent : '',
-        learner: typeof entry.learner === 'string' ? entry.learner : '',
-      },
+      metadata: metadataWithAvailableValues({
+        parent: typeof entry.parent === 'string' ? entry.parent : null,
+        learner: typeof entry.learner === 'string' ? entry.learner : null,
+      }),
     });
   }
 
@@ -1162,10 +1191,15 @@ async function loadHqAnalyticsRecords(ctx: WorkflowContext): Promise<WorkflowRec
     const entry = rawEntry as Record<string, unknown>;
     const dateId = asString(entry.date, '');
     if (!dateId) continue;
+    const recordsLabel = asAvailabilityLabel(entry.records);
+    const presentRate = asFiniteNumber(entry.presentRate);
     trendRecords.push({
       id: dateId,
       title: `Attendance ${dateId}`,
-      subtitle: `Records ${asAvailabilityString(entry.records)} • Present ${asAvailabilityString(entry.presentRate)}%`,
+      subtitle: joinAvailableParts([
+        recordsLabel ? `Records ${recordsLabel}` : null,
+        presentRate != null ? `Present ${presentRate}%` : null,
+      ]) || 'No verified attendance evidence yet',
       status: 'active',
       updatedAt: toIsoDate(entry.date),
       siteId: activeSiteId(ctx.profile),
@@ -1173,12 +1207,12 @@ async function loadHqAnalyticsRecords(ctx: WorkflowContext): Promise<WorkflowRec
       routePath: '/hq/analytics',
       canEdit: false,
       canDelete: false,
-      metadata: {
-        events: asAvailabilityString(entry.events),
-        weeklyAccountabilityAdherenceRate: asAvailabilityString(metrics.weeklyAccountabilityAdherenceRate),
-        educatorReviewWithinSlaRate: asAvailabilityString(metrics.educatorReviewWithinSlaRate),
-        interventionHelpedRate: asAvailabilityString(metrics.interventionHelpedRate),
-      },
+      metadata: metadataWithAvailableValues({
+        events: asAvailabilityLabel(entry.events),
+        weeklyAccountabilityAdherenceRate: asAvailabilityLabel(metrics.weeklyAccountabilityAdherenceRate),
+        educatorReviewWithinSlaRate: asAvailabilityLabel(metrics.educatorReviewWithinSlaRate),
+        interventionHelpedRate: asAvailabilityLabel(metrics.interventionHelpedRate),
+      }),
     });
   }
 
