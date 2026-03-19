@@ -37,6 +37,7 @@ class _EducatorIntegrationsPageState extends State<EducatorIntegrationsPage> {
   List<_EducatorIntegration> _integrations = <_EducatorIntegration>[];
   bool _isLoading = false;
   String? _siteId;
+  String? _loadError;
 
   @override
   void initState() {
@@ -112,7 +113,12 @@ class _EducatorIntegrationsPageState extends State<EducatorIntegrationsPage> {
                     ),
                   ),
                 ),
-              if (!_isLoading && _integrations.isEmpty)
+              if (!_isLoading && _loadError != null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  child: _buildLoadErrorState(_loadError!),
+                ),
+              if (!_isLoading && _loadError == null && _integrations.isEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 24),
                   child: Center(
@@ -140,6 +146,27 @@ class _EducatorIntegrationsPageState extends State<EducatorIntegrationsPage> {
             ],
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildLoadErrorState(String message) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: ScholesaColors.textSecondary),
+          ),
+          const SizedBox(height: 16),
+          FilledButton.tonalIcon(
+            onPressed: _loadIntegrations,
+            icon: const Icon(Icons.refresh_rounded),
+            label: Text(_tEducatorIntegrations(context, 'Retry')),
+          ),
+        ],
       ),
     );
   }
@@ -307,7 +334,10 @@ class _EducatorIntegrationsPageState extends State<EducatorIntegrationsPage> {
     _siteId = siteId;
 
     if (!mounted) return;
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _loadError = null;
+    });
 
     try {
       final Map<String, dynamic> payload = widget.healthLoader != null
@@ -396,7 +426,19 @@ class _EducatorIntegrationsPageState extends State<EducatorIntegrationsPage> {
             a.name.compareTo(b.name));
 
       if (!mounted) return;
-      setState(() => _integrations = loaded);
+      setState(() {
+        _integrations = loaded;
+        _loadError = null;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _integrations = <_EducatorIntegration>[];
+        _loadError = _tEducatorIntegrations(
+          context,
+          'Unable to load integrations right now.',
+        );
+      });
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -414,53 +456,78 @@ class _EducatorIntegrationsPageState extends State<EducatorIntegrationsPage> {
 
   Future<void> _handleForceSyncIntegration(
       _EducatorIntegration integration) async {
-    if (_siteId == null || _siteId!.isEmpty) {
-      return;
-    }
-    if (widget.syncJobTrigger != null) {
-      await widget.syncJobTrigger!(_siteId!, integration.providerKey);
-    } else {
-      final HttpsCallable callable =
-          FirebaseFunctions.instance.httpsCallable('triggerIntegrationSyncJob');
-      await callable.call(<String, dynamic>{
-        'siteId': _siteId,
-        'provider': integration.providerKey,
-      });
-    }
-    await _loadIntegrations();
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '${integration.name} ${_tEducatorIntegrations(context, 'sync queued')}',
+    try {
+      if (_siteId == null || _siteId!.isEmpty) {
+        throw StateError('Active site context is required.');
+      }
+      if (widget.syncJobTrigger != null) {
+        await widget.syncJobTrigger!(_siteId!, integration.providerKey);
+      } else {
+        final HttpsCallable callable = FirebaseFunctions.instance
+            .httpsCallable('triggerIntegrationSyncJob');
+        await callable.call(<String, dynamic>{
+          'siteId': _siteId,
+          'provider': integration.providerKey,
+        });
+      }
+      await _loadIntegrations();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${integration.name} ${_tEducatorIntegrations(context, 'sync queued')}',
+          ),
         ),
-      ),
-    );
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tEducatorIntegrations(context, 'Unable to queue sync right now.'),
+          ),
+        ),
+      );
+    }
   }
 
   Future<void> _handleUpdateConnection(
     _EducatorIntegration integration,
     String status,
   ) async {
-    if (widget.connectionStatusUpdater != null) {
-      await widget.connectionStatusUpdater!(integration.id, status);
-    } else {
-      final HttpsCallable callable = FirebaseFunctions.instance
-          .httpsCallable('updateIntegrationConnectionStatus');
-      await callable.call(<String, dynamic>{
-        'id': integration.id,
-        'status': status,
-      });
-    }
-    await _loadIntegrations();
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '${integration.name} ${_tEducatorIntegrations(context, status == 'active' ? 'connected' : 'disconnected')}',
+    try {
+      if (widget.connectionStatusUpdater != null) {
+        await widget.connectionStatusUpdater!(integration.id, status);
+      } else {
+        final HttpsCallable callable = FirebaseFunctions.instance
+            .httpsCallable('updateIntegrationConnectionStatus');
+        await callable.call(<String, dynamic>{
+          'id': integration.id,
+          'status': status,
+        });
+      }
+      await _loadIntegrations();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${integration.name} ${_tEducatorIntegrations(context, status == 'active' ? 'connected' : 'disconnected')}',
+          ),
         ),
-      ),
-    );
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tEducatorIntegrations(
+              context,
+              'Unable to update integration right now.',
+            ),
+          ),
+        ),
+      );
+    }
   }
 
   DateTime? _toDateTime(dynamic value) {
