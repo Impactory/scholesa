@@ -37,6 +37,7 @@ class _SiteIntegrationsHealthPageState
   List<RosterImportModel> _rosterImports = <RosterImportModel>[];
   bool _isLoading = false;
   String? _siteId;
+  String? _loadError;
 
   RosterImportRepository get _rosterImportRepository =>
       widget.rosterImportRepository ?? RosterImportRepository();
@@ -98,6 +99,13 @@ class _SiteIntegrationsHealthPageState
                 ),
               ),
             ),
+          if (!_isLoading && _loadError != null && _integrations.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: _buildStaleDataBanner(_loadError!),
+            ),
+          if (!_isLoading && _loadError != null && _integrations.isEmpty)
+            _buildLoadErrorState(_loadError!),
           if (!_isLoading && _integrations.isEmpty)
             Center(
               child: Padding(
@@ -327,6 +335,81 @@ class _SiteIntegrationsHealthPageState
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildLoadErrorState(String message) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF4F4),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFFECACA)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Row(
+            children: <Widget>[
+              Icon(Icons.error_outline_rounded, color: ScholesaColors.error),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Unable to load integrations health',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: ScholesaColors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            style: const TextStyle(color: ScholesaColors.textSecondary),
+          ),
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: OutlinedButton.icon(
+              onPressed: _loadIntegrations,
+              icon: const Icon(Icons.refresh_rounded),
+              label: Text(_t('Retry')),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStaleDataBanner(String message) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFFDE68A)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Padding(
+            padding: EdgeInsets.only(top: 2),
+            child: Icon(Icons.warning_amber_rounded, color: Color(0xFFB45309)),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              _t('Showing last loaded integrations data. ') + message,
+              style: const TextStyle(color: Color(0xFF92400E)),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -563,7 +646,13 @@ class _SiteIntegrationsHealthPageState
     _loadIntegrations().then((_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_t('Integrations refreshed'))),
+        SnackBar(
+          content: Text(
+            _loadError == null
+                ? _t('Integrations refreshed')
+                : _loadError!,
+          ),
+        ),
       );
     });
   }
@@ -671,7 +760,10 @@ class _SiteIntegrationsHealthPageState
     _siteId = siteId;
 
     if (!mounted) return;
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _loadError = null;
+    });
 
     try {
       final Map<String, dynamic> payload = widget.healthLoader != null
@@ -763,12 +855,12 @@ class _SiteIntegrationsHealthPageState
       setState(() {
         _integrations = loaded;
         _rosterImports = rosterImports;
+        _loadError = null;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _integrations = <_Integration>[];
-        _rosterImports = <RosterImportModel>[];
+        _loadError = _t('Unable to load integrations health right now.');
       });
     } finally {
       if (mounted) {
