@@ -342,6 +342,18 @@ class ParentService extends ChangeNotifier {
         <String, dynamic>{...doc.data(), 'id': doc.id})
       .toList(growable: false);
 
+    final QuerySnapshot<Map<String, dynamic>> interactionEventsSnapshot =
+      await _firestore
+        .collection('interactionEvents')
+        .where('actorId', isEqualTo: learnerId)
+        .limit(400)
+        .get();
+    final List<Map<String, dynamic>> interactionEventRows =
+        interactionEventsSnapshot.docs
+            .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
+                <String, dynamic>{...doc.data(), 'id': doc.id})
+            .toList(growable: false);
+
     final EvidenceSummary evidenceSummary = _buildEvidenceSummary(evidenceRows);
     final GrowthSummary growthSummary =
       _buildGrowthSummary(masteryRows, growthRows);
@@ -353,6 +365,7 @@ class ParentService extends ChangeNotifier {
       _buildPortfolioPreviewItems(portfolioRows);
     final IdeationPassport ideationPassport = _buildIdeationPassport(
       missionAttemptRows,
+      interactionEventRows,
       reflectionRows,
       evidenceRows,
       masteryRows,
@@ -812,6 +825,7 @@ class ParentService extends ChangeNotifier {
 
   IdeationPassport _buildIdeationPassport(
     List<Map<String, dynamic>> missionAttemptRows,
+    List<Map<String, dynamic>> interactionEventRows,
     List<Map<String, dynamic>> reflectionRows,
     List<Map<String, dynamic>> evidenceRows,
     List<Map<String, dynamic>> masteryRows,
@@ -840,6 +854,7 @@ class ParentService extends ChangeNotifier {
     reflectionDates.sort((DateTime a, DateTime b) => b.compareTo(a));
     final List<PassportClaim> claims = _buildPassportClaims(
       missionAttemptRows,
+      interactionEventRows,
       evidenceRows,
       masteryRows,
       growthRows,
@@ -862,6 +877,7 @@ class ParentService extends ChangeNotifier {
 
   List<PassportClaim> _buildPassportClaims(
     List<Map<String, dynamic>> missionAttemptRows,
+    List<Map<String, dynamic>> interactionEventRows,
     List<Map<String, dynamic>> evidenceRows,
     List<Map<String, dynamic>> masteryRows,
     List<Map<String, dynamic>> growthRows,
@@ -904,6 +920,17 @@ class ParentService extends ChangeNotifier {
       final List<Map<String, dynamic>> matchingMissionAttempts =
           missionAttemptRows.where((Map<String, dynamic> row) {
         return missionAttemptIds.contains(_asTrimmedString(row['id']));
+      }).toList(growable: false);
+      final Set<String> sessionOccurrenceIds = matchingMissionAttempts
+          .map((Map<String, dynamic> row) =>
+              _asTrimmedString(row['sessionOccurrenceId']))
+          .where((String value) => value.isNotEmpty)
+          .toSet();
+      final List<Map<String, dynamic>> matchingInteractionEvents =
+          interactionEventRows.where((Map<String, dynamic> row) {
+        return sessionOccurrenceIds.contains(
+          _asTrimmedString(row['sessionOccurrenceId']),
+        );
       }).toList(growable: false);
       final String title = <String>[
         ...matchingPortfolio.expand((Map<String, dynamic> row) =>
@@ -954,11 +981,27 @@ class ParentService extends ChangeNotifier {
         (Map<String, dynamic> row) =>
             _asTrimmedString(row['aiFeedbackDraft']).isNotEmpty,
       );
-      final String aiDisclosureStatus = hasAiFeedbackSignal
-          ? 'educator-feedback-ai'
-          : matchingMissionAttempts.isNotEmpty
-              ? 'not-captured'
-              : 'not-available';
+      final int learnerAiEventCount = matchingInteractionEvents.where(
+        (Map<String, dynamic> row) {
+          final String eventType =
+              _asTrimmedString(row['eventType']).toLowerCase();
+          return eventType == 'ai_help_used' || eventType == 'ai_help_opened';
+        },
+      ).length;
+      final bool hasLearnerExplainBackEvent = matchingInteractionEvents.any(
+        (Map<String, dynamic> row) =>
+            _asTrimmedString(row['eventType']).toLowerCase() ==
+            'explain_it_back_submitted',
+      );
+      final String aiDisclosureStatus = learnerAiEventCount > 0
+          ? hasLearnerExplainBackEvent
+              ? 'learner-ai-verified'
+              : 'learner-ai-verification-gap'
+          : hasAiFeedbackSignal
+              ? 'educator-feedback-ai'
+              : matchingMissionAttempts.isNotEmpty
+                  ? 'no-learner-ai-signal'
+                  : 'not-available';
       claims.add(
         PassportClaim(
           capabilityId: capabilityId,

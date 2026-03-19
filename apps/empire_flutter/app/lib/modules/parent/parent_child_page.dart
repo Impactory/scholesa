@@ -687,10 +687,14 @@ class _ParentChildPageState extends State<ParentChildPage> {
 
   String _formatAiDisclosure(String? value) {
     switch ((value ?? '').trim().toLowerCase()) {
+      case 'learner-ai-verified':
+        return _t('Learner AI use disclosed with explain-back evidence');
+      case 'learner-ai-verification-gap':
+        return _t('Learner AI use detected without explain-back evidence');
       case 'educator-feedback-ai':
         return _t('AI-assisted educator feedback visible');
-      case 'not-captured':
-        return _t('No AI disclosure captured yet');
+      case 'no-learner-ai-signal':
+        return _t('No learner AI-use signal linked to this claim');
       case 'not-available':
         return _t('No linked mission attempt');
       default:

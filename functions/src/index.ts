@@ -2452,7 +2452,7 @@ async function buildParentLearnerSummary(params: {
     attendanceRate = 0;
   }
 
-  const [portfolioSnap, evidenceSnap, masterySnap, growthSnap, reflectionsSnap, missionAttemptsSnap] =
+  const [portfolioSnap, evidenceSnap, masterySnap, growthSnap, reflectionsSnap, missionAttemptsSnap, interactionEventsSnap] =
     await Promise.all([
       admin.firestore().collection('portfolioItems').where('learnerId', '==', learnerId).limit(100).get().catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
       admin.firestore().collection('evidenceRecords').where('learnerId', '==', learnerId).limit(100).get().catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
@@ -2460,6 +2460,7 @@ async function buildParentLearnerSummary(params: {
       admin.firestore().collection('capabilityGrowthEvents').where('learnerId', '==', learnerId).limit(100).get().catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
       admin.firestore().collection('learnerReflections').where('learnerId', '==', learnerId).limit(100).get().catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
       admin.firestore().collection('missionAttempts').where('learnerId', '==', learnerId).limit(100).get().catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
+      admin.firestore().collection('interactionEvents').where('actorId', '==', learnerId).limit(400).get().catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
     ]);
 
   const includeForSite = (data: Record<string, unknown>): boolean => {
@@ -2484,6 +2485,9 @@ async function buildParentLearnerSummary(params: {
     .map((doc) => doc.data() as Record<string, unknown>)
     .filter(includeForSite);
   const missionAttemptRows = missionAttemptsSnap.docs
+    .map((doc) => ({ id: doc.id, ...(doc.data() as Record<string, unknown>) }))
+    .filter(includeForSite);
+  const interactionEventRows = interactionEventsSnap.docs
     .map((doc) => ({ id: doc.id, ...(doc.data() as Record<string, unknown>) }))
     .filter(includeForSite);
 
@@ -2636,6 +2640,14 @@ async function buildParentLearnerSummary(params: {
       const matchingMissionAttempts = missionAttemptRows.filter((entry) =>
         typeof entry.id === 'string' && missionAttemptIds.has(entry.id),
       );
+      const sessionOccurrenceIds = new Set<string>(
+        matchingMissionAttempts
+          .map((entry) => (typeof entry.sessionOccurrenceId === 'string' ? entry.sessionOccurrenceId.trim() : ''))
+          .filter(Boolean),
+      );
+      const matchingInteractionEvents = interactionEventRows.filter((entry) =>
+        typeof entry.sessionOccurrenceId === 'string' && sessionOccurrenceIds.has(entry.sessionOccurrenceId.trim()),
+      );
       const capabilityTitles = matchingPortfolio.flatMap((entry) =>
         Array.isArray(entry.capabilityTitles) ? entry.capabilityTitles : [],
       );
@@ -2680,10 +2692,22 @@ async function buildParentLearnerSummary(params: {
       const hasAiFeedbackSignal = matchingMissionAttempts.some((entry) =>
         typeof entry.aiFeedbackDraft === 'string' && entry.aiFeedbackDraft.trim().length > 0,
       );
-      const aiDisclosureStatus = hasAiFeedbackSignal
+      const learnerAiEventCount = matchingInteractionEvents.filter((entry) => {
+        const eventType = typeof entry.eventType === 'string' ? entry.eventType.trim().toLowerCase() : '';
+        return eventType === 'ai_help_used' || eventType === 'ai_help_opened';
+      }).length;
+      const hasLearnerExplainBackEvent = matchingInteractionEvents.some((entry) => {
+        const eventType = typeof entry.eventType === 'string' ? entry.eventType.trim().toLowerCase() : '';
+        return eventType === 'explain_it_back_submitted';
+      });
+      const aiDisclosureStatus = learnerAiEventCount > 0
+        ? hasLearnerExplainBackEvent
+          ? 'learner-ai-verified'
+          : 'learner-ai-verification-gap'
+        : hasAiFeedbackSignal
         ? 'educator-feedback-ai'
         : matchingMissionAttempts.length > 0
-        ? 'not-captured'
+        ? 'no-learner-ai-signal'
         : 'not-available';
       return {
         capabilityId,
