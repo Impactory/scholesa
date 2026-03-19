@@ -106,7 +106,7 @@ class _SiteIntegrationsHealthPageState
             ),
           if (!_isLoading && _loadError != null && _integrations.isEmpty)
             _buildLoadErrorState(_loadError!),
-          if (!_isLoading && _integrations.isEmpty)
+          if (!_isLoading && _loadError == null && _integrations.isEmpty)
             Center(
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 20),
