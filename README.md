@@ -65,6 +65,7 @@ To deploy only the Firebase Functions:
 ```bash
 cd functions
 npm run build
+npm run verify:gen2
 firebase deploy --only functions
 ```
 

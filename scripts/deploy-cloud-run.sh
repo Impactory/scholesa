@@ -4,7 +4,7 @@ set -euo pipefail
 
 GCP_PROJECT_ID=${1:-}
 GCP_REGION=${2:-us-central1}
-CLOUD_RUN_SERVICE=${3:-scholesa-web}
+CLOUD_RUN_SERVICE=${3:-empire-web}
 IMAGE_TAG=${4:-latest}
 
 if [ -z "$GCP_PROJECT_ID" ]; then

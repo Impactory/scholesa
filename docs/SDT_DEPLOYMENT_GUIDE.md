@@ -70,6 +70,10 @@ cd functions
 # Install dependencies (if not already done)
 npm install
 
+# Build + verify the Gen 2 baseline
+npm run build
+npm run verify:gen2
+
 # Deploy all functions
 firebase deploy --only functions
 ```

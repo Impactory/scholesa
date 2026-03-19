@@ -9,7 +9,7 @@
     "test:coppa": "ts-node src/coppaGuards.spec.ts",
     "test:voice-smoke": "ts-node src/voiceSystem.voiceSmoke.spec.ts",
     "serve": "firebase emulators:start --only functions,firestore",
-    "deploy": "firebase deploy --only functions"
+    "deploy": "npm run build && npm run verify:gen2 && firebase deploy --only functions"
   },
   "engines": {
     "node": "24"

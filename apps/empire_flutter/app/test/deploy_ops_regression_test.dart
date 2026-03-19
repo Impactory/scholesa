@@ -596,6 +596,10 @@ void main() {
           reason: 'Cloud Build must reference Flutter Dockerfile');
       expect(content.contains('gcr.io'), isTrue,
           reason: 'Cloud Build should push to GCR');
+      expect(content.contains(r'gcr.io/${PROJECT_ID}/empire-web:${_TAG}'),
+          isTrue,
+          reason:
+              'Flutter Cloud Build config must use the active GCP project instead of a hardcoded project id');
     });
 
     // ── 3.7 Functions build script compiles TypeScript ──
@@ -613,6 +617,22 @@ void main() {
           reason: 'Functions must expose a Gen 2 verification script');
       expect(scripts.containsKey('deploy'), isTrue);
       expect((scripts['deploy'] as String).contains('firebase deploy'), isTrue);
+      expect((scripts['deploy'] as String).contains('npm run verify:gen2'),
+          isTrue,
+          reason:
+              'Functions deploy script must verify the Gen 2 baseline before deploy');
+    });
+
+    test('Flutter Cloud Run helper defaults to the Flutter web service', () {
+      final String content =
+          File('$root/scripts/deploy-cloud-run.sh').readAsStringSync();
+
+      expect(content.contains(r'CLOUD_RUN_SERVICE=${3:-empire-web}'), isTrue,
+          reason:
+              'Flutter Cloud Run helper must default to the dedicated Flutter web service');
+      expect(content.contains('cloudbuild.flutter.yaml'), isTrue,
+          reason:
+              'Flutter Cloud Run helper must build through the Flutter-specific Cloud Build config');
     });
 
     // ── 3.8 Firestore indexes are committed ──
