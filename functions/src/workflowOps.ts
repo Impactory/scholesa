@@ -5408,6 +5408,31 @@ export const generateKpiPack = onCall(async (request: CallableRequest) => {
     const event = asTrimmedString(data.event || data.eventType);
     return event === 'reflection.submitted';
   }).length;
+  const voiceTelemetryEvents = filteredTelemetry
+    .map((docSnap) => {
+      const data = docSnap.data() as Record<string, unknown>;
+      return {
+        event: asTrimmedString(data.event || data.eventType),
+        metadata: (data.metadata && typeof data.metadata === 'object')
+          ? data.metadata as Record<string, unknown>
+          : null,
+      };
+    })
+    .filter((entry): entry is { event: string; metadata: Record<string, unknown> | null } => entry.event !== null)
+    .filter((entry) => entry.event.startsWith('voice.'));
+  const voiceMessageCount = voiceTelemetryEvents.filter((entry) => entry.event === 'voice.message').length;
+  const voiceTtsCount = voiceTelemetryEvents.filter((entry) => entry.event === 'voice.tts').length;
+  const voiceBlockedCount = voiceTelemetryEvents.filter((entry) => entry.event === 'voice.blocked').length;
+  const voiceEscalationCount = voiceTelemetryEvents.filter((entry) => entry.event === 'voice.escalated').length;
+  const voiceTranscribeSuccessCount = voiceTelemetryEvents.filter((entry) => entry.event === 'voice.transcribe').length;
+  const voiceTranscribeEscalationCount = voiceTelemetryEvents.filter((entry) =>
+    entry.event === 'voice.escalated' && asTrimmedString(entry.metadata?.endpoint) === 'voice_transcribe',
+  ).length;
+  const voiceCaptureAttemptCount = voiceTranscribeSuccessCount + voiceTranscribeEscalationCount;
+  const voiceCaptureFailureCount = voiceTranscribeEscalationCount;
+  const voiceCaptureSuccessRate = voiceCaptureAttemptCount > 0
+    ? voiceTranscribeSuccessCount / voiceCaptureAttemptCount
+    : null;
   const aiCollabCount = filteredTelemetry.filter((docSnap) => {
     const data = docSnap.data() as Record<string, unknown>;
     const event = asTrimmedString(data.event || data.eventType);
@@ -5467,6 +5492,15 @@ export const generateKpiPack = onCall(async (request: CallableRequest) => {
     reflectionCount,
     reflectionQuality,
     aiCollaborationQuality,
+    voiceReliability: {
+      messageCount: voiceMessageCount,
+      ttsCount: voiceTtsCount,
+      blockedCount: voiceBlockedCount,
+      escalationCount: voiceEscalationCount,
+      captureAttemptCount: voiceCaptureAttemptCount,
+      captureFailureCount: voiceCaptureFailureCount,
+      captureSuccessRate: voiceCaptureSuccessRate,
+    },
     capabilityGrowth,
     tripleHelixCoverage,
     pillarCoverage: {

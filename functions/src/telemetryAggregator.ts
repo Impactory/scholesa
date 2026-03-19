@@ -21,9 +21,22 @@ interface TelemetryEvent {
   userId: string;
   siteId: string;
   category: 'autonomy' | 'competence' | 'belonging' | 'reflection' | 'ai_interaction' | 'navigation' | 'performance' | 'engagement';
+  event?: string;
   eventName: string;
   timestamp: admin.firestore.Timestamp;
   metadata?: Record<string, unknown>;
+}
+
+interface VoiceMetricsAggregate {
+  voiceAttemptCount: number;
+  transcribeSuccessCount: number;
+  messageCount: number;
+  ttsCount: number;
+  blockedCount: number;
+  escalatedCount: number;
+  transcribeEscalationCount: number;
+  captureAttemptCount: number;
+  captureSuccessRate: number | null;
 }
 
 interface TelemetryAggregate {
@@ -31,7 +44,9 @@ interface TelemetryAggregate {
   siteId: string;
   date: admin.firestore.Timestamp;
   aggregationType: 'daily' | 'weekly';
+  period: 'daily' | 'weekly';
   totalEvents: number;
+  eventCounts: Record<string, number>;
   categoryCounts: Record<string, number>;
   sdtCounts: {
     autonomy: number;
@@ -39,8 +54,70 @@ interface TelemetryAggregate {
     belonging: number;
     reflection: number;
   };
+  voiceMetrics: VoiceMetricsAggregate;
   engagementScore: number | null;
   createdAt: admin.firestore.Timestamp;
+}
+
+function createEmptyVoiceMetrics(): VoiceMetricsAggregate {
+  return {
+    voiceAttemptCount: 0,
+    transcribeSuccessCount: 0,
+    messageCount: 0,
+    ttsCount: 0,
+    blockedCount: 0,
+    escalatedCount: 0,
+    transcribeEscalationCount: 0,
+    captureAttemptCount: 0,
+    captureSuccessRate: null,
+  };
+}
+
+function resolveEventName(event: TelemetryEvent): string | null {
+  const candidates = [
+    event.event,
+    event.eventName,
+    event.metadata?.eventType,
+    event.metadata?.eventName,
+  ];
+  for (const candidate of candidates) {
+    if (typeof candidate === 'string' && candidate.trim().length > 0) {
+      return candidate.trim();
+    }
+  }
+  return null;
+}
+
+function updateVoiceMetrics(
+  metrics: VoiceMetricsAggregate,
+  eventName: string | null,
+  metadata: Record<string, unknown> | undefined,
+): void {
+  if (!eventName || !eventName.startsWith('voice.')) return;
+
+  metrics.voiceAttemptCount += 1;
+  if (eventName === 'voice.transcribe') metrics.transcribeSuccessCount += 1;
+  if (eventName === 'voice.message') metrics.messageCount += 1;
+  if (eventName === 'voice.tts') metrics.ttsCount += 1;
+  if (eventName === 'voice.blocked') metrics.blockedCount += 1;
+  if (eventName === 'voice.escalated') {
+    metrics.escalatedCount += 1;
+    const endpoint = typeof metadata?.endpoint === 'string' ? metadata.endpoint.trim() : '';
+    if (endpoint === 'voice_transcribe') {
+      metrics.transcribeEscalationCount += 1;
+    }
+  }
+}
+
+function finalizeVoiceMetrics(metrics: VoiceMetricsAggregate): VoiceMetricsAggregate {
+  const captureAttemptCount = metrics.transcribeSuccessCount + metrics.transcribeEscalationCount;
+  return {
+    ...metrics,
+    captureAttemptCount,
+    captureSuccessRate: captureAttemptCount > 0
+      ? Math.round((metrics.transcribeSuccessCount / captureAttemptCount) * 1000) / 1000
+      : null,
+  };
 }
 
 /** Helper: run daily aggregation logic */
@@ -80,17 +157,29 @@ async function runDailyAggregation(): Promise<{ aggregatesCreated: number; event
         siteId: event.siteId,
         date: admin.firestore.Timestamp.fromDate(yesterday),
         aggregationType: 'daily',
+        period: 'daily',
         totalEvents: 0,
+        eventCounts: {},
         categoryCounts: {},
         sdtCounts: { autonomy: 0, competence: 0, belonging: 0, reflection: 0 },
+        voiceMetrics: createEmptyVoiceMetrics(),
       });
     }
 
     const agg = aggregates.get(key)!;
     agg.totalEvents!++;
 
+    const eventName = resolveEventName(event);
+    if (!agg.eventCounts) agg.eventCounts = {};
+    if (eventName) {
+      agg.eventCounts[eventName] = (agg.eventCounts[eventName] || 0) + 1;
+    }
+
     if (!agg.categoryCounts) agg.categoryCounts = {};
     agg.categoryCounts[event.category] = (agg.categoryCounts[event.category] || 0) + 1;
+
+    if (!agg.voiceMetrics) agg.voiceMetrics = createEmptyVoiceMetrics();
+    updateVoiceMetrics(agg.voiceMetrics, eventName, event.metadata);
 
     if (['autonomy', 'competence', 'belonging', 'reflection'].includes(event.category)) {
       const sdtCategory = event.category as keyof typeof agg.sdtCounts;
@@ -114,6 +203,7 @@ async function runDailyAggregation(): Promise<{ aggregatesCreated: number; event
 
     const aggregateData: TelemetryAggregate = {
       ...agg as TelemetryAggregate,
+      voiceMetrics: finalizeVoiceMetrics(agg.voiceMetrics ?? createEmptyVoiceMetrics()),
       engagementScore,
       createdAt: admin.firestore.Timestamp.now(),
     };
@@ -181,17 +271,29 @@ export const aggregateWeeklyTelemetry = onSchedule(
           siteId: event.siteId,
           date: admin.firestore.Timestamp.fromDate(sevenDaysAgo),
           aggregationType: 'weekly',
+          period: 'weekly',
           totalEvents: 0,
+          eventCounts: {},
           categoryCounts: {},
           sdtCounts: { autonomy: 0, competence: 0, belonging: 0, reflection: 0 },
+          voiceMetrics: createEmptyVoiceMetrics(),
         });
       }
 
       const agg = aggregates.get(key)!;
       agg.totalEvents!++;
 
+      const eventName = resolveEventName(event);
+      if (!agg.eventCounts) agg.eventCounts = {};
+      if (eventName) {
+        agg.eventCounts[eventName] = (agg.eventCounts[eventName] || 0) + 1;
+      }
+
       if (!agg.categoryCounts) agg.categoryCounts = {};
       agg.categoryCounts[event.category] = (agg.categoryCounts[event.category] || 0) + 1;
+
+      if (!agg.voiceMetrics) agg.voiceMetrics = createEmptyVoiceMetrics();
+      updateVoiceMetrics(agg.voiceMetrics, eventName, event.metadata);
 
       if (['autonomy', 'competence', 'belonging', 'reflection'].includes(event.category)) {
         const sdtCategory = event.category as keyof typeof agg.sdtCounts;
@@ -215,6 +317,7 @@ export const aggregateWeeklyTelemetry = onSchedule(
 
       const aggregateData: TelemetryAggregate = {
         ...agg as TelemetryAggregate,
+        voiceMetrics: finalizeVoiceMetrics(agg.voiceMetrics ?? createEmptyVoiceMetrics()),
         engagementScore,
         createdAt: admin.firestore.Timestamp.now(),
       };
