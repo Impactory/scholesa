@@ -142,6 +142,18 @@ service cloud.firestore {
       allow create, update: if isEducator() && isSiteScopedWrite(request.resource.data);
       allow delete: if false;
     }
+    match /evidenceRecords/{id} {
+      allow read: if isAuthenticated() && isSiteScopedRead(resource.data) && (
+        resource.data.learnerId == request.auth.uid
+        || isEducator()
+        || (
+          resource.data.keys().hasAny(['learnerId'])
+          && isParentLinkedToLearner(resource.data.learnerId)
+        )
+      );
+      allow create, update: if isEducator() && isSiteScopedWrite(request.resource.data);
+      allow delete: if false;
+    }
 
     // Learning Artifacts (MissionAttempts, Reflections):
     // - Read: Owner or Educator.

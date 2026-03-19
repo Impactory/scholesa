@@ -1,7 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
+import '../../services/firestore_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
 import '../../auth/app_state.dart';
@@ -20,6 +23,65 @@ String _tEducatorSessions(
     placeholders: placeholders,
   );
 }
+
+class _StudioFlowStep {
+  const _StudioFlowStep({
+    required this.key,
+    required this.label,
+    required this.teacherPrompt,
+    required this.icon,
+  });
+
+  final String key;
+  final String label;
+  final String teacherPrompt;
+  final IconData icon;
+}
+
+const List<_StudioFlowStep> _studioFlowSteps = <_StudioFlowStep>[
+  _StudioFlowStep(
+    key: 'retrieval_warm_up',
+    label: 'Retrieval Warm-up',
+    teacherPrompt: 'Spot who can recall the core idea without scaffolds.',
+    icon: Icons.psychology_alt_rounded,
+  ),
+  _StudioFlowStep(
+    key: 'mini_lesson',
+    label: 'Mini-lesson / Micro-skill',
+    teacherPrompt: 'Capture who can use the micro-skill after teaching.',
+    icon: Icons.auto_stories_rounded,
+  ),
+  _StudioFlowStep(
+    key: 'build_sprint',
+    label: 'Build Sprint',
+    teacherPrompt: 'Log live observations while learners build.',
+    icon: Icons.construction_rounded,
+  ),
+  _StudioFlowStep(
+    key: 'checkpoint',
+    label: 'Checkpoint',
+    teacherPrompt: 'Record the checkpoint that proves current understanding.',
+    icon: Icons.flag_rounded,
+  ),
+  _StudioFlowStep(
+    key: 'share_out',
+    label: 'Share-out',
+    teacherPrompt: 'Mark the moment learners explain work to others.',
+    icon: Icons.campaign_rounded,
+  ),
+  _StudioFlowStep(
+    key: 'reflection',
+    label: 'Reflection',
+    teacherPrompt: 'Capture what the learner says they improved or still need.',
+    icon: Icons.edit_note_rounded,
+  ),
+  _StudioFlowStep(
+    key: 'portfolio_artifact',
+    label: 'Portfolio Artifact',
+    teacherPrompt: 'Flag the strongest artifact for portfolio follow-up.',
+    icon: Icons.collections_bookmark_rounded,
+  ),
+];
 
 /// Educator Sessions Page - Manage and view all sessions
 class EducatorSessionsPage extends StatefulWidget {
@@ -1064,6 +1126,8 @@ class _SessionDetailSheet extends StatelessWidget {
                         : session.aideIds.join(', '),
                   ),
                   const SizedBox(height: 24),
+                  _StudioLaunchCard(session: session),
+                  const SizedBox(height: 24),
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
@@ -1319,6 +1383,535 @@ class _DetailRow extends StatelessWidget {
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
           ],
+        ),
+      ],
+    );
+  }
+}
+
+class _StudioLaunchCard extends StatelessWidget {
+  const _StudioLaunchCard({required this.session});
+
+  final EducatorSession session;
+
+  @override
+  Widget build(BuildContext context) {
+    final EducatorService educatorService = context.read<EducatorService>();
+    final List<EducatorLearner> scopedLearners = educatorService.learners
+        .where((EducatorLearner learner) =>
+            learner.enrolledSessionIds.contains(session.id))
+        .toList();
+    final int learnerCount =
+        scopedLearners.isNotEmpty ? scopedLearners.length : session.learnerCount;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFD7E3F4)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: ScholesaColors.educator.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.bolt_rounded,
+                  color: ScholesaColors.educator,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      _tEducatorSessions(context, 'Live Studio Flow'),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _tEducatorSessions(
+                        context,
+                        'Run the session in Scholesa order and log evidence with as few taps as possible.',
+                      ),
+                      style: TextStyle(color: Colors.grey[700], height: 1.35),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _studioFlowSteps
+                .map(
+                  (_StudioFlowStep step) => Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Icon(step.icon, size: 16, color: ScholesaColors.educator),
+                        const SizedBox(width: 8),
+                        Text(
+                          _tEducatorSessions(context, step.label),
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+                .toList(),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  _tEducatorSessions(context, 'Live capture right now'),
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  _tEducatorSessions(
+                    context,
+                    'Attendance is available in one tap. Studio evidence capture keeps learner, session, phase, capability focus, and portfolio follow-up together.',
+                  ),
+                  style: TextStyle(color: Colors.grey[700], height: 1.35),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  _tEducatorSessions(
+                    context,
+                    'Learners ready for capture: {count}',
+                    placeholders: <String, String>{'count': '$learnerCount'},
+                  ),
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: () {
+                    TelemetryService.instance.logEvent(
+                      event: 'cta.clicked',
+                      metadata: <String, dynamic>{
+                        'cta': 'educator_sessions_open_attendance_from_studio',
+                        'session_id': session.id,
+                      },
+                    );
+                    Navigator.of(context).pop();
+                    context.go('/educator/attendance');
+                  },
+                  style: FilledButton.styleFrom(
+                    backgroundColor: ScholesaColors.educator,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  icon: const Icon(Icons.how_to_reg_rounded),
+                  label: Text(_tEducatorSessions(context, 'Take Attendance')),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    TelemetryService.instance.logEvent(
+                      event: 'cta.clicked',
+                      metadata: <String, dynamic>{
+                        'cta': 'educator_sessions_open_live_evidence',
+                        'session_id': session.id,
+                      },
+                    );
+                    showDialog<void>(
+                      context: context,
+                      builder: (BuildContext dialogContext) =>
+                          _QuickEvidenceDialog(session: session),
+                    );
+                  },
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  icon: const Icon(Icons.note_add_rounded),
+                  label: Text(_tEducatorSessions(context, 'Log Evidence')),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _QuickEvidenceDialog extends StatefulWidget {
+  const _QuickEvidenceDialog({required this.session});
+
+  final EducatorSession session;
+
+  @override
+  State<_QuickEvidenceDialog> createState() => _QuickEvidenceDialogState();
+}
+
+class _QuickEvidenceDialogState extends State<_QuickEvidenceDialog> {
+  final TextEditingController _capabilityController = TextEditingController();
+  final TextEditingController _observationController = TextEditingController();
+  final TextEditingController _nextExplainController = TextEditingController();
+  String _selectedLearnerId = '';
+  String _selectedPhaseKey = _studioFlowSteps[2].key;
+  bool _markForPortfolio = true;
+  bool _isSubmitting = false;
+
+  @override
+  void dispose() {
+    _capabilityController.dispose();
+    _observationController.dispose();
+    _nextExplainController.dispose();
+    super.dispose();
+  }
+
+  List<EducatorLearner> _availableLearners(EducatorService service) {
+    final List<EducatorLearner> scoped = service.learners
+        .where((EducatorLearner learner) =>
+            learner.enrolledSessionIds.contains(widget.session.id))
+        .toList();
+    return scoped.isNotEmpty ? scoped : service.learners;
+  }
+
+  String _phaseLabel(String key) {
+    return _studioFlowSteps
+            .where(((_StudioFlowStep step) => step.key == key))
+            .map(((_StudioFlowStep step) => step.label))
+            .cast<String?>()
+            .firstOrNull ??
+        'Build Sprint';
+  }
+
+  String _evidenceTypeForPhase(String key) {
+    switch (key) {
+      case 'retrieval_warm_up':
+        return 'retrieval_response';
+      case 'mini_lesson':
+        return 'micro_skill_observation';
+      case 'checkpoint':
+        return 'checkpoint_signal';
+      case 'share_out':
+        return 'share_out_signal';
+      case 'reflection':
+        return 'reflection_signal';
+      case 'portfolio_artifact':
+        return 'artifact_candidate';
+      case 'build_sprint':
+      default:
+        return 'build_observation';
+    }
+  }
+
+  Future<void> _submit() async {
+    final EducatorService educatorService = context.read<EducatorService>();
+    final AppState appState = context.read<AppState>();
+    final FirestoreService firestoreService = context.read<FirestoreService>();
+    final List<EducatorLearner> learners = _availableLearners(educatorService);
+
+    final String learnerId = _selectedLearnerId.trim();
+    final String capabilityFocus = _capabilityController.text.trim();
+    final String observation = _observationController.text.trim();
+    final String siteId = (educatorService.siteId?.trim().isNotEmpty ?? false)
+        ? educatorService.siteId!.trim()
+        : (appState.activeSiteId?.trim() ?? '');
+
+    if (learnerId.isEmpty || capabilityFocus.isEmpty || observation.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tEducatorSessions(
+              context,
+              'Choose a learner, add a capability focus, and capture what you observed.',
+            ),
+          ),
+        ),
+      );
+      return;
+    }
+
+    if (siteId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tEducatorSessions(
+              context,
+              'Active site is required before evidence can be captured.',
+            ),
+          ),
+          backgroundColor: ScholesaColors.error,
+        ),
+      );
+      return;
+    }
+
+    final EducatorLearner learner = learners.firstWhere(
+      (EducatorLearner value) => value.id == learnerId,
+      orElse: () => EducatorLearner(
+        id: learnerId,
+        name: _tEducatorSessions(context, 'Learner unavailable'),
+        email: '',
+        attendanceRate: 0,
+        missionsCompleted: 0,
+        pillarProgress: const <String, double>{},
+        enrolledSessionIds: const <String>[],
+      ),
+    );
+
+    setState(() => _isSubmitting = true);
+    try {
+      final String? rawRoleName = appState.role?.name;
+      final String educatorRole = (rawRoleName != null && rawRoleName.isNotEmpty)
+          ? rawRoleName
+          : 'educator';
+      await firestoreService.createDocument(
+        'evidenceRecords',
+        <String, dynamic>{
+          'siteId': siteId,
+          'learnerId': learner.id,
+          'learnerName': learner.name,
+          'sessionId': widget.session.id,
+          'sessionTitle': widget.session.title,
+          'sessionOccurrenceId': null,
+          'educatorId': appState.userId ?? educatorService.educatorId,
+          'educatorRole': educatorRole,
+          'phaseKey': _selectedPhaseKey,
+          'phaseLabel': _phaseLabel(_selectedPhaseKey),
+          'evidenceType': _evidenceTypeForPhase(_selectedPhaseKey),
+          'capabilityLabel': capabilityFocus,
+          'observationNote': observation,
+          'nextVerificationPrompt': _nextExplainController.text.trim().isEmpty
+              ? null
+              : _nextExplainController.text.trim(),
+          'portfolioCandidate': _markForPortfolio,
+          'rubricStatus': 'pending',
+          'growthStatus': 'pending',
+          'source': 'educator_live_capture',
+          'status': 'captured',
+          'observedAt': FieldValue.serverTimestamp(),
+        },
+      );
+      await TelemetryService.instance.logEvent(
+        event: 'teacher.evidence.captured',
+        role: educatorRole,
+        siteId: siteId,
+        metadata: <String, dynamic>{
+          'sessionId': widget.session.id,
+          'learnerId': learner.id,
+          'phaseKey': _selectedPhaseKey,
+          'portfolioCandidate': _markForPortfolio,
+        },
+      );
+      if (!mounted) {
+        return;
+      }
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tEducatorSessions(
+              context,
+              'Live evidence captured for {learnerName}',
+              placeholders: <String, String>{'learnerName': learner.name},
+            ),
+          ),
+          backgroundColor: ScholesaColors.success,
+        ),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tEducatorSessions(
+              context,
+              'Unable to capture evidence right now: {error}',
+              placeholders: <String, String>{'error': '$error'},
+            ),
+          ),
+          backgroundColor: ScholesaColors.error,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final EducatorService educatorService = context.read<EducatorService>();
+    final List<EducatorLearner> learners = _availableLearners(educatorService);
+    if (_selectedLearnerId.isEmpty && learners.isNotEmpty) {
+      _selectedLearnerId = learners.first.id;
+    }
+
+    return AlertDialog(
+      title: Text(_tEducatorSessions(context, 'Log Live Evidence')),
+      content: SizedBox(
+        width: 560,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                _tEducatorSessions(
+                  context,
+                  'Capture the strongest piece of evidence from studio time in one place so rubricing, growth, and portfolio follow-up can happen later.',
+                ),
+                style: TextStyle(color: Colors.grey[700], height: 1.35),
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                initialValue: _selectedLearnerId.isEmpty ? null : _selectedLearnerId,
+                decoration: InputDecoration(
+                  labelText: _tEducatorSessions(context, 'Learner'),
+                ),
+                items: learners
+                    .map(
+                      (EducatorLearner learner) => DropdownMenuItem<String>(
+                        value: learner.id,
+                        child: Text(learner.name),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (String? value) {
+                  if (value != null) {
+                    setState(() => _selectedLearnerId = value);
+                  }
+                },
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                initialValue: _selectedPhaseKey,
+                decoration: InputDecoration(
+                  labelText: _tEducatorSessions(context, 'Learning phase'),
+                ),
+                items: _studioFlowSteps
+                    .map(
+                      (_StudioFlowStep step) => DropdownMenuItem<String>(
+                        value: step.key,
+                        child: Text(_tEducatorSessions(context, step.label)),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (String? value) {
+                  if (value != null) {
+                    setState(() => _selectedPhaseKey = value);
+                  }
+                },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _capabilityController,
+                decoration: InputDecoration(
+                  labelText: _tEducatorSessions(context, 'Capability focus'),
+                  hintText: _tEducatorSessions(
+                    context,
+                    'Example: clear explanation, debugging, collaboration, persuasive speaking',
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _observationController,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  labelText: _tEducatorSessions(context, 'What evidence did you see?'),
+                  hintText: _tEducatorSessions(
+                    context,
+                    'Short, specific observation from live studio work.',
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _nextExplainController,
+                maxLines: 2,
+                decoration: InputDecoration(
+                  labelText: _tEducatorSessions(context, 'Next explain or verify prompt'),
+                  hintText: _tEducatorSessions(
+                    context,
+                    'Optional: what should this learner explain, rebuild, or verify next?',
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SwitchListTile.adaptive(
+                value: _markForPortfolio,
+                contentPadding: EdgeInsets.zero,
+                title: Text(
+                  _tEducatorSessions(context, 'Flag for portfolio follow-up'),
+                ),
+                subtitle: Text(
+                  _tEducatorSessions(
+                    context,
+                    'Use this when the artifact or moment should be curated later.',
+                  ),
+                ),
+                onChanged: (bool value) {
+                  setState(() => _markForPortfolio = value);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
+          child: Text(_tEducatorSessions(context, 'Cancel')),
+        ),
+        ElevatedButton.icon(
+          onPressed: _isSubmitting ? null : _submit,
+          icon: _isSubmitting
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.save_rounded),
+          label: Text(_tEducatorSessions(context, 'Capture Evidence')),
         ),
       ],
     );

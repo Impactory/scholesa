@@ -14,7 +14,7 @@
 ## Critical Architecture Patterns
 
 ### Data Schema (Role-Based Model)
-The schema in [schema.ts](schema.ts) defines the core domain:
+The schema in [schema.ts](../schema.ts) defines the core domain:
 - **Users** have roles (`learner`, `educator`, `parent`, `hq`) and belong to multiple sites
 - **Sessions** (courses) are tied to sites and educators; **SessionOccurrences** are individual class instances
 - **Enrollments** track learner participation; **AttendanceRecords** log per-occurrence attendance
@@ -24,9 +24,9 @@ The schema in [schema.ts](schema.ts) defines the core domain:
 **Key insight**: Users and content are site-scoped. Always include `siteId` in queries and writes.
 
 ### Authentication & Authorization
-- **Client-side**: [AuthProvider.tsx](src/firebase/auth/AuthProvider.tsx) uses Firebase Auth state + Firestore user profile sync
+- **Client-side**: [AuthProvider.tsx](../src/firebase/auth/AuthProvider.tsx) uses Firebase Auth state + Firestore user profile sync
 - **Server-side**: Use `getUserRoleServer()` in Server Components/Actions to check role without extra reads
-- **Firestore rules** ([firestore.rules](firestore.rules)): Role-based access with helper functions (`isEducator()`, `isHQ()`, etc.)
+- **Firestore rules** ([firestore.rules](../firestore.rules)): Role-based access with helper functions (`isEducator()`, `isHQ()`, etc.)
   - Note: `getUserData()` incurs 1 read per check; cache role lookups in auth context when possible
 
 **Pattern**: Always import `useAuthContext()` in client components to access `user`, `profile`, and `loading` state.
@@ -38,8 +38,8 @@ The schema in [schema.ts](schema.ts) defines the core domain:
 - **API routes**: Place in `app/api/` and leverage Firebase Admin SDK for server-only operations
 
 ### Firestore Collections & Patterns
-- **Client queries**: Use [firestore/collections.ts](src/firebase/firestore/collections.ts) exports (typed collection references)
-- **Batch operations**: Use `writeBatch()` for multi-document writes (e.g., creating sessions + occurrences in [scheduler.ts](scheduler.ts))
+- **Client queries**: Use [firestore/collections.ts](../src/firebase/firestore/collections.ts) exports (typed collection references)
+- **Batch operations**: Use `writeBatch()` for multi-document writes (e.g., creating sessions + occurrences in [scheduler.ts](../scheduler.ts))
 - **Real-time listeners**: `useCollection()` / `useDocument()` (from `react-firebase-hooks`) handle subscription cleanup
 - **Timestamps**: Use Firestore `Timestamp` for all date fields; convert to JS `Date` in UI as needed
 
@@ -70,8 +70,8 @@ firebase deploy --only functions  # Deploy only Cloud Functions
 - Use `.env` locally (template: `.env.example`); never commit secrets
 
 ### Testing & Debugging
-- **ESLint config** ([.eslintrc.cjs](.eslintrc.cjs)): Google style, strict TypeScript, relaxed on line-ending/max-length
-- **TypeScript**: `strict: true` in [tsconfig.json](tsconfig.json); use path aliases (`@/*` → root)
+- **ESLint config** ([.eslintrc.cjs](../.eslintrc.cjs)): Google style, strict TypeScript, relaxed on line-ending/max-length
+- **TypeScript**: `strict: true` in [tsconfig.json](../tsconfig.json); use path aliases (`@/*` → root)
 - **Firebase emulators**: Test auth, Firestore rules locally before deploying
 - **Build logs**: Check `build.log` for detailed compilation errors
 
@@ -84,9 +84,9 @@ firebase deploy --only functions  # Deploy only Cloud Functions
 - **Example component path**: `src/components/features/{feature-name}/{ComponentName}.tsx`
 
 ### Typing & Data Validation
-- **Schema**: Import from [src/types/schema.ts](src/types/schema.ts) for domain types
-- **Validation**: Use Zod ([package.json](package.json) has `zod: ^3.23.8`) for API request/response validation
-- **User types**: [src/types/user.ts](src/types/user.ts) defines `UserProfile` and `UserRole`
+- **Schema**: Import from [src/types/schema.ts](../src/types/schema.ts) for domain types
+- **Validation**: Use Zod ([package.json](../package.json) has `zod: ^3.23.8`) for API request/response validation
+- **User types**: [src/types/user.ts](../src/types/user.ts) defines `UserProfile` and `UserRole`
 
 ### Firebase Best Practices
 1. **Always scope by site**: Include `siteId` in queries (`where('siteId', '==', siteId)`)
@@ -103,7 +103,7 @@ firebase deploy --only functions  # Deploy only Cloud Functions
 
 ### Internationalization (i18n)
 - **Translation files**: `locales/{locale}.json` (e.g., `locales/en.json`)
-- **Server-side retrieval**: `getTranslations(locale, namespace)` in [lib/i18n.ts](lib/i18n.ts); cached per locale
+- **Server-side retrieval**: `getTranslations(locale, namespace)` in [lib/i18n.ts](../lib/i18n.ts); cached per locale
 - **Dynamic namespace switching**: Pass namespace as parameter; no client-side loading
 - **Fallback handling**: Dot-notation keys (e.g., `dashboard.welcome`) return `undefined` if missing; handle gracefully
 
@@ -123,20 +123,45 @@ firebase deploy --only functions  # Deploy only Cloud Functions
 
 | File | Purpose |
 |------|---------|
-| [schema.ts](schema.ts) | Core domain types (User, Session, Enrollment, etc.) |
-| [middleware.ts](middleware.ts) | Locale routing enforcement |
-| [src/firebase/client-init.ts](src/firebase/client-init.ts) | Firebase client SDK initialization |
-| [src/firebase/admin-init.ts](src/firebase/admin-init.ts) | Firebase Admin SDK setup (server-side) |
-| [firestore.rules](firestore.rules) | Firestore security rules |
-| [src/firebase/auth/AuthProvider.tsx](src/firebase/auth/AuthProvider.tsx) | Global auth state provider |
-| [scheduler.ts](scheduler.ts) | Session + occurrence batch creation pattern |
-| [tailwind.config.js](tailwind.config.js) | TailwindCSS customization |
-| [next.config.mjs](next.config.mjs) | Next.js config + PWA setup |
+| [schema.ts](../schema.ts) | Core domain types (User, Session, Enrollment, etc.) |
+| [proxy.ts](../proxy.ts) | Locale routing enforcement |
+| [src/firebase/client-init.ts](../src/firebase/client-init.ts) | Firebase client SDK initialization |
+| [src/firebase/admin-init.ts](../src/firebase/admin-init.ts) | Firebase Admin SDK setup (server-side) |
+| [firestore.rules](../firestore.rules) | Firestore security rules |
+| [src/firebase/auth/AuthProvider.tsx](../src/firebase/auth/AuthProvider.tsx) | Global auth state provider |
+| [scheduler.ts](../scheduler.ts) | Session + occurrence batch creation pattern |
+| [tailwind.config.js](../tailwind.config.js) | TailwindCSS customization |
+| [next.config.mjs](../next.config.mjs) | Next.js config + PWA setup |
 
 ## Evolving the Platform
 
+### Feature Specification Gate
+
+When building or changing any feature, do not treat the work as sufficiently specified until these questions are answered explicitly in the implementation plan, code path, or release notes:
+
+1. **Which capability nodes does this touch?**
+2. **What evidence is created here?**
+3. **Who can submit or observe that evidence?**
+4. **How is authenticity verified?**
+5. **How does this update learner growth over time?**
+6. **How does it appear in the portfolio?**
+7. **How does it affect the Passport/report output?**
+8. **What is the fallback if no evidence exists yet?**
+9. **What does the teacher do in under 10 seconds during live class?**
+10. **What happens on mobile in the classroom?**
+
+If these questions are unanswered, the feature is underspecified and should not be treated as done.
+
+Additional product guardrails:
+- Do not present assignment completion, mission completion, XP, level, averages, or attendance as capability mastery.
+- Do not ship dashboards or reports that make learner claims without evidence provenance.
+- Do not ship rubric flows unless rubric outcomes can connect to capability updates or clearly remain pending.
+- Do not ship portfolio surfaces that cannot explain which evidence or artifact belongs there.
+- Do not ship AI assistance features without disclosure, verification intent, and an auditable trail.
+- Prefer live teacher workflows that minimize taps during studio time over admin-heavy workflows that require later cleanup.
+
 When adding new features:
-1. **Define schema** in [schema.ts](schema.ts) first
+1. **Define schema** in [schema.ts](../schema.ts) first
 2. **Add Firestore rules** for the new collection (follow existing patterns)
 3. **Create Server/Client components** in `src/components/` respecting auth & locale contexts
 4. **Use Zod** for API validation

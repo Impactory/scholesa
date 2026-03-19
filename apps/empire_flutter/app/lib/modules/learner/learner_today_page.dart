@@ -80,6 +80,7 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
             SliverToBoxAdapter(child: _buildHeader()),
             SliverToBoxAdapter(child: _buildGreetingCard()),
             SliverToBoxAdapter(child: _buildTodayProgress()),
+            SliverToBoxAdapter(child: _buildEvidenceLoopCard()),
             SliverToBoxAdapter(child: _buildLearnerSetupCard()),
             SliverToBoxAdapter(child: _buildMotivationLoopCard()),
             SliverToBoxAdapter(child: _buildAiCoachingSection(context)),
@@ -394,6 +395,84 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildEvidenceLoopCard() {
+    return Consumer<MissionService>(
+      builder: (BuildContext context, MissionService service, _) {
+        final Mission? mission =
+            service.activeMissions.isNotEmpty ? service.activeMissions.first : null;
+        final String building = mission?.title ??
+            ((_learnerProfile?.goals.isNotEmpty ?? false)
+                ? _learnerProfile!.goals.first
+                : _t('Choose a mission to start your next build sprint.'));
+        final String capability = mission != null && mission.skills.isNotEmpty
+            ? mission.skills.first.name
+            : mission?.pillar.label ??
+                ((_learnerProfile?.strengths.isNotEmpty ?? false)
+                    ? _learnerProfile!.strengths.first
+                    : _t('Your next capability focus appears when a mission is active.'));
+        final String evidenceShown =
+            (mission?.educatorFeedback?.trim().isNotEmpty ?? false)
+                ? mission!.educatorFeedback!.trim()
+                : (mission != null &&
+                        (mission.status == MissionStatus.submitted ||
+                            mission.status == MissionStatus.completed))
+                    ? _t('Your mission work is ready for educator review.')
+                    : _t('Show your thinking through a checkpoint, share-out, or reflection.');
+        final String nextVerify =
+            (mission?.reflectionPrompt?.trim().isNotEmpty ?? false)
+                ? mission!.reflectionPrompt!.trim()
+                : _t('Be ready to explain your next step in your own words.');
+        final String portfolioArtifact =
+            ((_learnerProfile?.portfolioHighlight?.trim().isNotEmpty ?? false))
+                ? _learnerProfile!.portfolioHighlight!.trim()
+                : mission != null
+                    ? _t('Save the strongest draft, screenshot, photo, or demo from this mission.')
+                    : _t('Your best artifact will appear here after you build something worth keeping.');
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            child: _DashboardInfoCard(
+              title: _t('My Evidence Loop'),
+              body: <Widget>[
+                _EvidenceLoopRow(
+                  icon: Icons.handyman_rounded,
+                  label: _t('What I am building'),
+                  value: building,
+                ),
+                const SizedBox(height: 12),
+                _EvidenceLoopRow(
+                  icon: Icons.fact_check_rounded,
+                  label: _t('What evidence I have shown'),
+                  value: evidenceShown,
+                ),
+                const SizedBox(height: 12),
+                _EvidenceLoopRow(
+                  icon: Icons.track_changes_rounded,
+                  label: _t('What capability I am growing'),
+                  value: capability,
+                ),
+                const SizedBox(height: 12),
+                _EvidenceLoopRow(
+                  icon: Icons.record_voice_over_rounded,
+                  label: _t('What I need to explain or verify next'),
+                  value: nextVerify,
+                ),
+                const SizedBox(height: 12),
+                _EvidenceLoopRow(
+                  icon: Icons.collections_bookmark_rounded,
+                  label: _t('What artifact belongs in my portfolio'),
+                  value: portfolioArtifact,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -2105,6 +2184,60 @@ class _QuickActionCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _EvidenceLoopRow extends StatelessWidget {
+  const _EvidenceLoopRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: ScholesaColors.learner.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, size: 18, color: ScholesaColors.learner),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                label,
+                style: TextStyle(
+                  color: scheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: TextStyle(
+                  color: scheme.onSurface,
+                  height: 1.35,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

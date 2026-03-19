@@ -81,6 +81,9 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
                   SliverToBoxAdapter(child: _buildLearnerSelector(service)),
                 SliverToBoxAdapter(child: _buildProgressCard(selectedLearner)),
                 SliverToBoxAdapter(
+                  child: _buildFamilyEvidenceAnswers(selectedLearner),
+                ),
+                SliverToBoxAdapter(
                   child: AiContextCoachSection(
                     title: _t('Family AI Coach'),
                     subtitle:
@@ -431,6 +434,88 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildFamilyEvidenceAnswers(LearnerSummary learner) {
+    final int capabilityPercent =
+        (learner.capabilitySnapshot.overall * 100).round();
+    final int attendancePercent = (learner.attendanceRate * 100).round();
+    final String nextFocus = learner.portfolioSnapshot.artifactCount == 0
+        ? _t('Capture a first portfolio artifact from current studio work.')
+        : learner.portfolioSnapshot.publishedArtifactCount <
+                learner.portfolioSnapshot.artifactCount
+            ? _t('Publish the strongest recent artifact with reflection.')
+            : _t('Keep adding checkpoints, reflections, and educator evidence next week.');
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.grey.shade200),
+          boxShadow: <BoxShadow>[
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              _t('Family Evidence View'),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              _t('This view answers what the learner can do now, what evidence is on record, how growth is trending, and what should come next.'),
+              style: TextStyle(color: Colors.grey[700], height: 1.35),
+            ),
+            const SizedBox(height: 16),
+            _FamilyAnswerRow(
+              icon: Icons.workspace_premium_rounded,
+              label: _t('What can this learner do now?'),
+              value:
+                  '${learner.capabilitySnapshot.band} • $capabilityPercent% ${_t('current capability snapshot')}',
+            ),
+            const SizedBox(height: 12),
+            _FamilyAnswerRow(
+              icon: Icons.fact_check_rounded,
+              label: _t('What evidence proves it?'),
+              value:
+                  '${learner.portfolioSnapshot.artifactCount} ${_t('artifacts')}, ${learner.ideationPassport.reflectionsSubmitted} ${_t('reflections')}, ${learner.portfolioSnapshot.publishedArtifactCount} ${_t('published pieces')}',
+            ),
+            const SizedBox(height: 12),
+            _FamilyAnswerRow(
+              icon: Icons.timeline_rounded,
+              label: _t('How are they growing?'),
+              value:
+                  '${learner.missionsCompleted} ${_t('missions completed')}, ${learner.currentStreak} ${_t('day streak')}, $attendancePercent% ${_t('attendance')}',
+            ),
+            const SizedBox(height: 12),
+            _FamilyAnswerRow(
+              icon: Icons.forward_to_inbox_rounded,
+              label: _t('What should they work on next?'),
+              value: nextFocus,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              _t('Live studio observations and rubric-linked evidence will strengthen this family view as they are captured.'),
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 12,
+                height: 1.35,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -802,6 +887,59 @@ class _PillarProgressBar extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _FamilyAnswerRow extends StatelessWidget {
+  const _FamilyAnswerRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: ScholesaColors.parent.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, size: 18, color: ScholesaColors.parent),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                label,
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  height: 1.35,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
