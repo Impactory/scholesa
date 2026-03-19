@@ -11,6 +11,8 @@
  */
 
 import React, { useState } from 'react';
+import { db } from '@/src/firebase/client-init';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { useLearnerAnalytics } from '@/src/hooks/useRealtimeAnalytics';
 import { useInteractionTracking } from '@/src/hooks/useTelemetry';
@@ -39,10 +41,21 @@ interface LearnerEngagement {
   eventCount: number;
 }
 
+interface SiteVoiceMetrics {
+  avgCaptureSuccess: number | null;
+  escalationCount: number;
+  captureAttempts: number;
+}
+
 export function AnalyticsDashboard() {
   const { profile } = useAuthContext();
   const { locale, t } = useI18n();
   const [timeRange, setTimeRange] = useState<'week' | 'month'>('week');
+  const [siteVoiceMetrics, setSiteVoiceMetrics] = useState<SiteVoiceMetrics>({
+    avgCaptureSuccess: null,
+    escalationCount: 0,
+    captureAttempts: 0,
+  });
   const trackInteraction = useInteractionTracking();
   
   const siteId = profile?.activeSiteId || profile?.siteIds?.[0] || '';
@@ -53,6 +66,76 @@ export function AnalyticsDashboard() {
     timeRange,
     limit: 100 
   });
+
+  React.useEffect(() => {
+    let cancelled = false;
+
+    const loadSiteVoiceMetrics = async () => {
+      if (!siteId) {
+        if (!cancelled) {
+          setSiteVoiceMetrics({ avgCaptureSuccess: null, escalationCount: 0, captureAttempts: 0 });
+        }
+        return;
+      }
+
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - (timeRange === 'week' ? 7 : 30));
+
+      try {
+        const aggregatesSnapshot = await getDocs(
+          query(
+            collection(db, 'telemetryAggregates'),
+            where('siteId', '==', siteId),
+            where('period', '==', 'daily'),
+          ),
+        );
+
+        let successTotal = 0;
+        let successCount = 0;
+        let escalationCount = 0;
+        let captureAttempts = 0;
+
+        aggregatesSnapshot.docs.forEach((doc) => {
+          const data = doc.data();
+          const date = data.date?.toDate?.();
+          if (!(date instanceof Date) || date < startDate) return;
+
+          const voiceMetrics = data.voiceMetrics && typeof data.voiceMetrics === 'object'
+            ? data.voiceMetrics as Record<string, unknown>
+            : null;
+
+          if (typeof voiceMetrics?.captureSuccessRate === 'number' && Number.isFinite(voiceMetrics.captureSuccessRate)) {
+            successTotal += voiceMetrics.captureSuccessRate;
+            successCount += 1;
+          }
+          if (typeof voiceMetrics?.escalatedCount === 'number' && Number.isFinite(voiceMetrics.escalatedCount)) {
+            escalationCount += voiceMetrics.escalatedCount;
+          }
+          if (typeof voiceMetrics?.captureAttemptCount === 'number' && Number.isFinite(voiceMetrics.captureAttemptCount)) {
+            captureAttempts += voiceMetrics.captureAttemptCount;
+          }
+        });
+
+        if (!cancelled) {
+          setSiteVoiceMetrics({
+            avgCaptureSuccess: successCount > 0 ? Math.round((successTotal / successCount) * 100) : null,
+            escalationCount,
+            captureAttempts,
+          });
+        }
+      } catch {
+        if (!cancelled) {
+          setSiteVoiceMetrics({ avgCaptureSuccess: null, escalationCount: 0, captureAttempts: 0 });
+        }
+      }
+    };
+
+    void loadSiteVoiceMetrics();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [siteId, timeRange]);
   
   // Transform real-time data to match LearnerEngagement interface
   const learners: LearnerEngagement[] = realtimeLearners.map(s => ({
@@ -95,6 +178,8 @@ export function AnalyticsDashboard() {
     : null;
   const atRiskCount = learners.filter(s => s.engagementScore != null && s.engagementScore < 60).length;
   const highPerformers = learners.filter(s => s.engagementScore != null && s.engagementScore >= 80).length;
+  const lowVoiceCapture = siteVoiceMetrics.avgCaptureSuccess != null && siteVoiceMetrics.avgCaptureSuccess < 80;
+  const criticalVoiceCapture = siteVoiceMetrics.avgCaptureSuccess != null && siteVoiceMetrics.avgCaptureSuccess < 50;
   const periodLabel = timeRange === 'week'
     ? t('analytics.educator.period.week')
     : t('analytics.educator.period.month');
@@ -187,7 +272,7 @@ export function AnalyticsDashboard() {
       </div>
       
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <SummaryCard
           title={t('analytics.educator.summary.totalLearners')}
           value={learners.length}
@@ -222,6 +307,37 @@ export function AnalyticsDashboard() {
           trendLabel={periodLabel}
           t={t}
         />
+        <SummaryCard
+          title="Voice Capture"
+          value={siteVoiceMetrics.avgCaptureSuccess != null ? `${siteVoiceMetrics.avgCaptureSuccess}%` : 'Unavailable'}
+          icon={ActivityIcon}
+          color="purple"
+          trend={criticalVoiceCapture ? 'down' : siteVoiceMetrics.avgCaptureSuccess != null && siteVoiceMetrics.avgCaptureSuccess >= 90 ? 'up' : undefined}
+          trendLabel={periodLabel}
+          t={t}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+          <h3 className="text-sm font-medium text-gray-700">Voice Reliability</h3>
+          <div className="mt-2 flex flex-wrap items-baseline gap-4">
+            <div>
+              <div className="text-2xl font-semibold text-gray-900">
+                {siteVoiceMetrics.avgCaptureSuccess != null ? `${siteVoiceMetrics.avgCaptureSuccess}%` : 'Unavailable'}
+              </div>
+              <div className="text-xs text-gray-500">Average capture success</div>
+            </div>
+            <div>
+              <div className="text-2xl font-semibold text-gray-900">{siteVoiceMetrics.escalationCount}</div>
+              <div className="text-xs text-gray-500">Escalations this {timeRange}</div>
+            </div>
+            <div>
+              <div className="text-2xl font-semibold text-gray-900">{siteVoiceMetrics.captureAttempts}</div>
+              <div className="text-xs text-gray-500">Capture attempts</div>
+            </div>
+          </div>
+        </div>
       </div>
       
       {/* At-Risk Students Alert */}
@@ -235,6 +351,22 @@ export function AnalyticsDashboard() {
               </h3>
               <p className="mt-1 text-sm text-amber-700">
                 {t('analytics.educator.atRiskBody')}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {(lowVoiceCapture || siteVoiceMetrics.escalationCount > 0) && (
+        <div className={`rounded-lg border p-4 ${criticalVoiceCapture ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200'}`}>
+          <div className="flex items-start">
+            <AlertTriangleIcon className={`h-5 w-5 mt-0.5 mr-3 ${criticalVoiceCapture ? 'text-red-600' : 'text-amber-600'}`} />
+            <div>
+              <h3 className={`text-sm font-medium ${criticalVoiceCapture ? 'text-red-800' : 'text-amber-800'}`}>
+                Voice capture reliability needs attention
+              </h3>
+              <p className={`mt-1 text-sm ${criticalVoiceCapture ? 'text-red-700' : 'text-amber-700'}`}>
+                MiloOS voice captured only {siteVoiceMetrics.avgCaptureSuccess != null ? `${siteVoiceMetrics.avgCaptureSuccess}%` : 'an unavailable share'} of recent attempts, with {siteVoiceMetrics.escalationCount} escalations in this {timeRange}. Treat voice-derived support analytics cautiously until capture quality improves.
               </p>
             </div>
           </div>

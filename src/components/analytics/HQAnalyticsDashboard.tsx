@@ -45,7 +45,7 @@ export function HQAnalyticsDashboard() {
   
   const [sites, setSites] = useState<SiteMetrics[]>([]);
   const [loading, setLoading] = useState(true);
-  const [sortBy, setSortBy] = useState<'name' | 'engagement' | 'learners'>('engagement');
+  const [sortBy, setSortBy] = useState<'name' | 'engagement' | 'voice' | 'learners'>('engagement');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   
   // Real-time platform stats
@@ -200,12 +200,31 @@ export function HQAnalyticsDashboard() {
       const left = a.avgEngagement ?? Number.NEGATIVE_INFINITY;
       const right = b.avgEngagement ?? Number.NEGATIVE_INFINITY;
       comparison = left - right;
+    } else if (sortBy === 'voice') {
+      const left = a.avgVoiceCaptureSuccess ?? Number.NEGATIVE_INFINITY;
+      const right = b.avgVoiceCaptureSuccess ?? Number.NEGATIVE_INFINITY;
+      comparison = left - right;
     } else if (sortBy === 'learners') {
       comparison = a.totalLearners - b.totalLearners;
     }
     
     return sortOrder === 'asc' ? comparison : -comparison;
   });
+
+  const sitesWithVoiceEvidence = sites.filter((site) => site.avgVoiceCaptureSuccess != null);
+  const avgVoiceCapture = sitesWithVoiceEvidence.length > 0
+    ? Math.round(
+      sitesWithVoiceEvidence.reduce((sum, site) => sum + (site.avgVoiceCaptureSuccess as number), 0) /
+      sitesWithVoiceEvidence.length,
+    )
+    : null;
+  const lowVoiceCaptureSites = sites.filter(
+    (site) => site.avgVoiceCaptureSuccess != null && site.avgVoiceCaptureSuccess < 80,
+  ).length;
+  const criticalVoiceCaptureSites = sites.filter(
+    (site) => site.avgVoiceCaptureSuccess != null && site.avgVoiceCaptureSuccess < 50,
+  ).length;
+  const totalVoiceEscalations = sites.reduce((sum, site) => sum + site.voiceEscalationsThisWeek, 0);
   
   // Export to CSV
   const exportToCSV = () => {
@@ -332,6 +351,48 @@ export function HQAnalyticsDashboard() {
           color="gray"
         />
       </div>
+
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">Voice Reliability</h2>
+            <p className="text-sm text-gray-600">
+              Capture reliability across the last 7 days. Low values mean MiloOS had fewer trustworthy voice inputs to work from.
+            </p>
+          </div>
+          <div className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
+            {criticalVoiceCaptureSites > 0
+              ? `${criticalVoiceCaptureSites} site${criticalVoiceCaptureSites === 1 ? '' : 's'} are below 50% capture success.`
+              : 'No sites are currently below 50% capture success.'}
+          </div>
+        </div>
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-4">
+          <StatCard
+            title="Avg Voice Capture"
+            value={avgVoiceCapture == null ? 'Unavailable' : `${avgVoiceCapture}%`}
+            icon={SparklesIcon}
+            color="purple"
+          />
+          <StatCard
+            title="Sites With Voice Data"
+            value={sitesWithVoiceEvidence.length}
+            icon={CheckCircleIcon}
+            color="green"
+          />
+          <StatCard
+            title="Sites Below 80%"
+            value={lowVoiceCaptureSites}
+            icon={AlertCircleIcon}
+            color="yellow"
+          />
+          <StatCard
+            title="Weekly Escalations"
+            value={totalVoiceEscalations}
+            icon={AlertCircleIcon}
+            color="red"
+          />
+        </div>
+      </div>
       
       {/* Sites Table */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
@@ -340,12 +401,13 @@ export function HQAnalyticsDashboard() {
           <div className="flex gap-2">
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as 'name' | 'engagement' | 'learners')}
+              onChange={(e) => setSortBy(e.target.value as 'name' | 'engagement' | 'voice' | 'learners')}
               className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
               aria-label="Sort sites by"
             >
               <option value="name">Sort by Name</option>
               <option value="engagement">Sort by Engagement</option>
+              <option value="voice">Sort by Voice Capture</option>
               <option value="learners">Sort by Learners</option>
             </select>
             <button
