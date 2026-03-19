@@ -1198,6 +1198,7 @@ class _HabitDetailSheetState extends State<_HabitDetailSheet> {
                 ],
               ),
               IconButton(
+                key: const Key('habit-ai-toggle'),
                 onPressed: () {
                   TelemetryService.instance.logEvent(
                     event: 'cta.clicked',
@@ -1292,6 +1293,7 @@ class _HabitDetailSheetState extends State<_HabitDetailSheet> {
             ),
             const SizedBox(height: 16),
             OutlinedButton.icon(
+              key: const Key('habit-ai-continue'),
               onPressed: () {
                 TelemetryService.instance.logEvent(
                   event: 'cta.clicked',

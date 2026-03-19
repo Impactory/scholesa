@@ -2076,6 +2076,7 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
                     ],
                   ),
                   IconButton(
+                    key: const Key('mission-ai-toggle'),
                     onPressed: () {
                       TelemetryService.instance.logEvent(
                         event: 'cta.clicked',
@@ -2171,6 +2172,7 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
             ),
             const SizedBox(height: 16),
             OutlinedButton.icon(
+              key: const Key('mission-ai-continue'),
               onPressed: () {
                 TelemetryService.instance.logEvent(
                   event: 'cta.clicked',

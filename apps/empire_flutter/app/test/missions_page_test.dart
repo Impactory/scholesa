@@ -99,6 +99,34 @@ Future<void> _seedMissionAndGate(FakeFirebaseFirestore firestore) async {
   );
 }
 
+Future<void> _seedMission(FakeFirebaseFirestore firestore) async {
+  await firestore.collection('missionAssignments').doc('assignment-1').set(
+    <String, dynamic>{
+      'missionId': 'mission-1',
+      'learnerId': 'learner-1',
+      'siteId': 'site-1',
+      'status': 'in_progress',
+      'progress': 0.45,
+    },
+  );
+  await firestore.collection('missions').doc('mission-1').set(
+    <String, dynamic>{
+      'title': 'Mission with AI fallback',
+      'description': 'Explain your control loop before moving on.',
+      'pillarCode': 'future_skills',
+      'difficulty': 'beginner',
+      'xpReward': 120,
+    },
+  );
+  await firestore.collection('missions').doc('mission-1').collection('steps').doc('step-1').set(
+    <String, dynamic>{
+      'title': 'Prototype',
+      'order': 1,
+      'isCompleted': false,
+    },
+  );
+}
+
 void main() {
   testWidgets('missions page shows empty available-state copy', (WidgetTester tester) async {
     final FirestoreService firestoreService = FirestoreService(
@@ -159,7 +187,7 @@ void main() {
   testWidgets('missions AI fallback offers degraded-mode guidance',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
-    await _seedMissionAndGate(firestore);
+    await _seedMission(firestore);
     final FirestoreService firestoreService = FirestoreService(
       firestore: firestore,
       auth: _MockFirebaseAuth(),
@@ -182,10 +210,10 @@ void main() {
 
     await tester.tap(find.text('In Progress'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Mission with verification gate').first);
+  await tester.tap(find.text('Mission with AI fallback').first);
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Get AI Help'));
-    await tester.tap(find.byIcon(Icons.expand_more).last);
+    await tester.tap(find.byKey(const Key('mission-ai-toggle')));
     await tester.pumpAndSettle();
 
     expect(find.text('AI Coach is temporarily unavailable'), findsOneWidget);
@@ -195,7 +223,8 @@ void main() {
     );
     expect(find.text('Continue this mission'), findsOneWidget);
 
-    await tester.tap(find.text('Continue this mission'));
+    await tester.ensureVisible(find.byKey(const Key('mission-ai-continue')));
+    await tester.tap(find.byKey(const Key('mission-ai-continue')));
     await tester.pumpAndSettle();
 
     expect(find.text('AI Coach is temporarily unavailable'), findsNothing);

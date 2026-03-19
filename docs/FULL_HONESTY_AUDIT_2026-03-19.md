@@ -29,7 +29,7 @@ This is a fresh whole-app honesty pass after the earlier blocker remediation, we
 - Current audit verification run:
   - `flutter analyze`: passed
   - Focused audit suite: passed
-  - Total in the focused audit run: 231 tests passed, 0 failed
+  - Total in the current broad audit run: 238 tests passed, 0 failed
 
 ### Surface classification
 
@@ -46,8 +46,6 @@ This is a fresh whole-app honesty pass after the earlier blocker remediation, we
 
 #### Honest but partial
 
-- AI coach fallback states in learner study surfaces
-- Attendance surface dependency-fail fallback states
 - Several secondary admin and support surfaces that intentionally degrade when identity, storage, or site context is missing
 
 #### Operationally incomplete
@@ -79,8 +77,8 @@ This is a fresh whole-app honesty pass after the earlier blocker remediation, we
 
 - `flutter analyze` completed with no issues.
 - The focused audit command completed successfully:
-  - `flutter test test/*honesty* test/*placeholder* test/*regression* test/*workflow*`
-- Result: 231 tests passed, 0 failed.
+  - `flutter test test/*honesty* test/*placeholder* test/*regression* test/*workflow* test/missions_page_test.dart test/habits_page_test.dart`
+- Result: 238 tests passed, 0 failed.
 
 ### Notable verified behaviors
 
@@ -91,6 +89,8 @@ This is a fresh whole-app honesty pass after the earlier blocker remediation, we
 - Parent billing remains explicit about support handoff and avoids fake `Pay Now` or `Manage Plan` actions.
 - Settings sign-out clears the session and returns the user to an unauthenticated route.
 - AI coach widget regressions pass even when Firebase is unavailable, which confirms safe failure handling rather than crash behavior.
+- Missions and habits now provide degraded-mode guidance and a concrete continue action when AI runtime is unavailable.
+- Attendance now renders a recoverable unavailable state instead of a bare provider-missing text failure.
 
 ## D. Remaining Blockers
 
@@ -105,28 +105,14 @@ Current state:
 
 This is the main gold gate.
 
-### Blocker 2: AI coach fallback UX is still technically safe but product-thin
-
-Learner-facing study surfaces still fall back to a bare `AI Coach not available` message when the learning runtime provider is absent.
-
-Why it matters:
-
-- This is honest.
-- It is not a fake button.
-- It is still below gold quality on primary learner study routes because it gives the user no recovery path, no explanation, and no degraded alternative.
-
-Current examples:
-
-- Missions AI coach panel
-- Habits AI reflection panel
-
-### Blocker 3: Breadth confidence is still lower than gold across the full route set
+### Residual risk: Breadth confidence is still lower than gold across the full route set
 
 The app now has meaningful targeted coverage, but 52 enabled page surfaces are broader than the direct page-test footprint.
 
 Why it matters:
 
 - The core audited routes are much stronger.
+- Missions, habits, and attendance now have direct degraded-mode coverage in addition to the broader honesty, placeholder, regression, and workflow suites.
 - Secondary role surfaces still rely on a mix of direct page tests, workflow tests, placeholder-action tests, and regression coverage rather than comprehensive route-by-route end-to-end coverage.
 - That is acceptable for beta.
 - It is still short of gold for a role-dense admin app.
@@ -139,12 +125,10 @@ Why it matters:
 ## What Is Risky But Acceptable For Beta
 
 1. Honest fallback states on secondary surfaces when site context, identity, storage, or a provider is unavailable.
-2. AI coach degradation that fails closed without crashing.
-3. Coverage that is strong on priority paths but not exhaustive across every enabled route.
+2. Coverage that is strong on priority paths but not exhaustive across every enabled route.
 
 ## What Must Happen Before Gold
 
 1. Complete one successful iOS TestFlight upload through the supported release path.
 2. Complete one successful Android Play upload through the supported release path.
-3. Upgrade learner AI fallback on missions and habits from bare unavailability text to a clear degraded-mode experience.
-4. Expand direct or workflow-level verification over the remaining highest-risk secondary role surfaces until the full route set has fewer blind spots.
+3. Expand direct or workflow-level verification over the remaining highest-risk secondary role surfaces until the full route set has fewer blind spots.

@@ -158,7 +158,7 @@ void main() {
     await tester.tap(find.text('Read for 10 minutes'));
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Reflect with AI'));
-    await tester.tap(find.byIcon(Icons.expand_more).last);
+    await tester.tap(find.byKey(const Key('habit-ai-toggle')));
     await tester.pumpAndSettle();
 
     expect(find.text('AI Coach is temporarily unavailable'), findsOneWidget);
