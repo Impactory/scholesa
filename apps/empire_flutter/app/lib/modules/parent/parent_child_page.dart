@@ -204,7 +204,7 @@ class _ParentChildPageState extends State<ParentChildPage> {
           ),
           const SizedBox(height: 6),
           Text(
-            '${learner.totalXp} ${_t('XP earned')}',
+            '${learner.evidenceSummary.reviewedCount} ${_t('reviewed evidence records')} • ${learner.portfolioSnapshot.verifiedArtifactCount} ${_t('verified artifacts')}',
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.92),
             ),
@@ -215,12 +215,12 @@ class _ParentChildPageState extends State<ParentChildPage> {
             runSpacing: 12,
             children: <Widget>[
               _buildHeroStat(
-                label: _t('Level'),
-                value: '${learner.currentLevel}',
+                label: _t('Capabilities Updated'),
+                value: '${learner.growthSummary.updatedCapabilityCount}',
               ),
               _buildHeroStat(
-                label: _t('Missions'),
-                value: '${learner.missionsCompleted}',
+                label: _t('Verified Artifacts'),
+                value: '${learner.portfolioSnapshot.verifiedArtifactCount}',
               ),
               _buildHeroStat(
                 label: _t('Attendance'),
@@ -277,8 +277,12 @@ class _ParentChildPageState extends State<ParentChildPage> {
           value: _titleCase(learner.capabilitySnapshot.band),
         ),
         _buildSnapshotCard(
-          label: _t('Portfolio Items'),
-          value: '${learner.portfolioSnapshot.artifactCount}',
+          label: _t('Reviewed Evidence'),
+          value: '${learner.evidenceSummary.reviewedCount}',
+        ),
+        _buildSnapshotCard(
+          label: _t('Verified Artifacts'),
+          value: '${learner.portfolioSnapshot.verifiedArtifactCount}',
         ),
         _buildSnapshotCard(
           label: _t('Reflections Submitted'),

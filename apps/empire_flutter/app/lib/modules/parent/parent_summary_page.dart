@@ -278,7 +278,7 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
                         ),
                       ),
                       Text(
-                        '${_t('Level')} ${learner.currentLevel}',
+                        '${learner.evidenceSummary.reviewedCount} ${_t('reviewed evidence records')}',
                         style: TextStyle(
                           fontSize: 12,
                           color: isSelected ? Colors.white70 : Colors.grey[500],
@@ -333,14 +333,14 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
                       Text(
-                        'Lv',
+                        _t('Caps'),
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.8),
                           fontSize: 12,
                         ),
                       ),
                       Text(
-                        '${learner.currentLevel}',
+                        '${learner.growthSummary.updatedCapabilityCount}',
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -366,7 +366,7 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${learner.totalXp} ${_t('XP earned')}',
+                      '${learner.portfolioSnapshot.verifiedArtifactCount} ${_t('verified artifacts')} • ${_formatAverageCapabilityLevel(learner.growthSummary.averageLevel)}',
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.9),
                         fontSize: 14,
@@ -382,14 +382,14 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: <Widget>[
               _ProgressStat(
-                icon: Icons.rocket_launch,
-                value: '${learner.missionsCompleted}',
-                label: _t('Missions'),
+                icon: Icons.fact_check_rounded,
+                value: '${learner.evidenceSummary.reviewedCount}',
+                label: _t('Reviewed Evidence'),
               ),
               _ProgressStat(
-                icon: Icons.local_fire_department,
-                value: '${learner.currentStreak}',
-                label: _t('Day Streak'),
+                icon: Icons.workspace_premium_rounded,
+                value: '${learner.portfolioSnapshot.verifiedArtifactCount}',
+                label: _t('Verified Artifacts'),
               ),
               _ProgressStat(
                 icon: Icons.check_circle,
@@ -442,9 +442,11 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
     final int capabilityPercent =
         (learner.capabilitySnapshot.overall * 100).round();
     final int attendancePercent = (learner.attendanceRate * 100).round();
-    final String nextFocus = learner.portfolioSnapshot.artifactCount == 0
+    final String nextFocus = learner.evidenceSummary.verificationPromptCount > 0
+      ? _t('Follow up on the latest educator verification prompts during the next studio check-in.')
+      : learner.portfolioSnapshot.artifactCount == 0
         ? _t('Capture a first portfolio artifact from current studio work.')
-        : learner.portfolioSnapshot.publishedArtifactCount <
+      : learner.portfolioSnapshot.verifiedArtifactCount <
                 learner.portfolioSnapshot.artifactCount
             ? _t('Publish the strongest recent artifact with reflection.')
             : _t('Keep adding checkpoints, reflections, and educator evidence next week.');
@@ -483,21 +485,21 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
               icon: Icons.workspace_premium_rounded,
               label: _t('What can this learner do now?'),
               value:
-                  '${learner.capabilitySnapshot.band} • $capabilityPercent% ${_t('current capability snapshot')}',
+              '${learner.capabilitySnapshot.band} • ${learner.growthSummary.capabilityCount} ${_t('capabilities with current evidence')} • $capabilityPercent% ${_t('coverage confidence')}',
             ),
             const SizedBox(height: 12),
             _FamilyAnswerRow(
               icon: Icons.fact_check_rounded,
               label: _t('What evidence proves it?'),
               value:
-                  '${learner.portfolioSnapshot.artifactCount} ${_t('artifacts')}, ${learner.ideationPassport.reflectionsSubmitted} ${_t('reflections')}, ${learner.portfolioSnapshot.publishedArtifactCount} ${_t('published pieces')}',
+              '${learner.evidenceSummary.reviewedCount} ${_t('reviewed observations')}, ${learner.portfolioSnapshot.verifiedArtifactCount} ${_t('verified artifacts')}, ${learner.ideationPassport.reflectionsSubmitted} ${_t('reflections')}',
             ),
             const SizedBox(height: 12),
             _FamilyAnswerRow(
               icon: Icons.timeline_rounded,
               label: _t('How are they growing?'),
               value:
-                  '${learner.missionsCompleted} ${_t('missions completed')}, ${learner.currentStreak} ${_t('day streak')}, $attendancePercent% ${_t('attendance')}',
+              '${learner.growthSummary.updatedCapabilityCount} ${_t('capabilities updated')}, ${_formatAverageCapabilityLevel(learner.growthSummary.averageLevel)}, $attendancePercent% ${_t('attendance')}',
             ),
             const SizedBox(height: 12),
             _FamilyAnswerRow(
@@ -507,7 +509,7 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
             ),
             const SizedBox(height: 12),
             Text(
-              _t('Live studio observations and rubric-linked evidence will strengthen this family view as they are captured.'),
+              _t('This family view now prioritizes reviewed observations, verified artifacts, and capability growth over gamified progress counters.'),
               style: TextStyle(
                 color: Colors.grey[600],
                 fontSize: 12,
@@ -518,6 +520,13 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
         ),
       ),
     );
+  }
+
+  String _formatAverageCapabilityLevel(double value) {
+    if (value <= 0) {
+      return _t('No capability level yet');
+    }
+    return '${value.toStringAsFixed(1)}/4 ${_t('average capability level')}';
   }
 
   Widget _buildPillarProgress(LearnerSummary learner) {

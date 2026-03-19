@@ -206,8 +206,8 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
                   _t(_titleCaseBand(learner.capabilitySnapshot.band)), accent),
               const SizedBox(width: 8),
               _buildSnapshotChip(
-                _t('Portfolio Snapshot'),
-                '${learner.portfolioSnapshot.artifactCount}',
+                _t('Verified Portfolio'),
+                '${learner.portfolioSnapshot.verifiedArtifactCount}',
                 ScholesaColors.parentGradient.colors.first,
               ),
             ],
@@ -218,16 +218,16 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
             '${learner.portfolioSnapshot.artifactCount}',
           ),
           _buildSnapshotMetric(
-            _t('Published'),
-            '${learner.portfolioSnapshot.publishedArtifactCount}',
+            _t('Evidence Linked'),
+            '${learner.portfolioSnapshot.evidenceLinkedArtifactCount}',
+          ),
+          _buildSnapshotMetric(
+            _t('Verified'),
+            '${learner.portfolioSnapshot.verifiedArtifactCount}',
           ),
           _buildSnapshotMetric(
             _t('Reflections'),
             '${learner.ideationPassport.reflectionsSubmitted}',
-          ),
-          _buildSnapshotMetric(
-            _t('Voice'),
-            '${learner.ideationPassport.voiceInteractions}',
           ),
         ],
       ),
@@ -737,22 +737,18 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
     final List<_PortfolioItem> items = <_PortfolioItem>[];
 
     for (final LearnerSummary learner in service.learnerSummaries) {
-      for (final RecentActivity activity in learner.recentActivities) {
-        final _ItemType itemType = _mapActivityType(activity.type);
-        final String pillar = _pillarFromActivity(activity.type);
+      for (final PortfolioPreviewItem item in learner.portfolioItemsPreview) {
         items.add(
           _PortfolioItem(
-            id: '${learner.learnerId}-${activity.id}',
-            title: activity.title.isEmpty
-                ? '${_displayLearnerName(learner.learnerName)} ${_t('activity')}'
-                : activity.title,
-            pillar: pillar,
-            type: itemType,
-            completedAt: activity.timestamp,
+            id: item.id,
+            title: item.title,
+            pillar: item.pillar,
+            type: item.type == 'badge' ? _ItemType.badge : _ItemType.project,
+            completedAt: item.completedAt,
             imageUrl: null,
-            description: activity.description.isEmpty
-                ? '${_t('Completed by')} ${_displayLearnerName(learner.learnerName)}'
-                : activity.description,
+            description: item.description,
+            verificationStatus: item.verificationStatus,
+            evidenceLinked: item.evidenceLinked,
           ),
         );
       }
@@ -761,25 +757,6 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
     items.sort((_PortfolioItem a, _PortfolioItem b) =>
         b.completedAt.compareTo(a.completedAt));
     return items;
-  }
-
-  _ItemType _mapActivityType(String rawType) {
-    final String type = rawType.trim().toLowerCase();
-    if (type == 'achievement' || type == 'badge') {
-      return _ItemType.badge;
-    }
-    return _ItemType.project;
-  }
-
-  String _pillarFromActivity(String rawType) {
-    final String type = rawType.trim().toLowerCase();
-    if (type == 'habit') {
-      return 'Leadership & Agency';
-    }
-    if (type == 'attendance') {
-      return 'Impact & Innovation';
-    }
-    return 'Future Skills';
   }
 
   String _titleCaseBand(String value) {
@@ -901,6 +878,8 @@ class _PortfolioItem {
     required this.completedAt,
     required this.imageUrl,
     required this.description,
+    this.verificationStatus,
+    this.evidenceLinked = false,
   });
 
   final String id;
@@ -910,4 +889,6 @@ class _PortfolioItem {
   final DateTime completedAt;
   final String? imageUrl;
   final String description;
+  final String? verificationStatus;
+  final bool evidenceLinked;
 }

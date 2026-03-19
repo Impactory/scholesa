@@ -17,7 +17,10 @@ class LearnerSummary extends Equatable {
     this.upcomingEvents = const [],
     this.pillarProgress = const {},
     this.capabilitySnapshot = const CapabilitySnapshot(),
+    this.evidenceSummary = const EvidenceSummary(),
+    this.growthSummary = const GrowthSummary(),
     this.portfolioSnapshot = const PortfolioSnapshot(),
+    this.portfolioItemsPreview = const [],
     this.ideationPassport = const IdeationPassport(),
   });
   final String learnerId;
@@ -32,7 +35,10 @@ class LearnerSummary extends Equatable {
   final List<UpcomingEvent> upcomingEvents;
   final Map<String, double> pillarProgress;
   final CapabilitySnapshot capabilitySnapshot;
+  final EvidenceSummary evidenceSummary;
+  final GrowthSummary growthSummary;
   final PortfolioSnapshot portfolioSnapshot;
+  final List<PortfolioPreviewItem> portfolioItemsPreview;
   final IdeationPassport ideationPassport;
 
   @override
@@ -49,8 +55,61 @@ class LearnerSummary extends Equatable {
         upcomingEvents,
         pillarProgress,
         capabilitySnapshot,
+        evidenceSummary,
+        growthSummary,
         portfolioSnapshot,
+        portfolioItemsPreview,
         ideationPassport,
+      ];
+}
+
+class EvidenceSummary extends Equatable {
+  const EvidenceSummary({
+    this.recordCount = 0,
+    this.reviewedCount = 0,
+    this.portfolioLinkedCount = 0,
+    this.verificationPromptCount = 0,
+    this.latestEvidenceAt,
+  });
+
+  final int recordCount;
+  final int reviewedCount;
+  final int portfolioLinkedCount;
+  final int verificationPromptCount;
+  final DateTime? latestEvidenceAt;
+
+  @override
+  List<Object?> get props => <Object?>[
+        recordCount,
+        reviewedCount,
+        portfolioLinkedCount,
+        verificationPromptCount,
+        latestEvidenceAt,
+      ];
+}
+
+class GrowthSummary extends Equatable {
+  const GrowthSummary({
+    this.capabilityCount = 0,
+    this.updatedCapabilityCount = 0,
+    this.averageLevel = 0,
+    this.latestLevel = 0,
+    this.latestGrowthAt,
+  });
+
+  final int capabilityCount;
+  final int updatedCapabilityCount;
+  final double averageLevel;
+  final int latestLevel;
+  final DateTime? latestGrowthAt;
+
+  @override
+  List<Object?> get props => <Object?>[
+        capabilityCount,
+        updatedCapabilityCount,
+        averageLevel,
+        latestLevel,
+        latestGrowthAt,
       ];
 }
 
@@ -85,6 +144,8 @@ class PortfolioSnapshot extends Equatable {
     this.publishedArtifactCount = 0,
     this.badgeCount = 0,
     this.projectCount = 0,
+    this.evidenceLinkedArtifactCount = 0,
+    this.verifiedArtifactCount = 0,
     this.latestArtifactAt,
   });
 
@@ -92,6 +153,8 @@ class PortfolioSnapshot extends Equatable {
   final int publishedArtifactCount;
   final int badgeCount;
   final int projectCount;
+  final int evidenceLinkedArtifactCount;
+  final int verifiedArtifactCount;
   final DateTime? latestArtifactAt;
 
   @override
@@ -100,7 +163,43 @@ class PortfolioSnapshot extends Equatable {
         publishedArtifactCount,
         badgeCount,
         projectCount,
+        evidenceLinkedArtifactCount,
+        verifiedArtifactCount,
         latestArtifactAt,
+      ];
+}
+
+class PortfolioPreviewItem extends Equatable {
+  const PortfolioPreviewItem({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.pillar,
+    required this.type,
+    required this.completedAt,
+    this.verificationStatus,
+    this.evidenceLinked = false,
+  });
+
+  final String id;
+  final String title;
+  final String description;
+  final String pillar;
+  final String type;
+  final DateTime completedAt;
+  final String? verificationStatus;
+  final bool evidenceLinked;
+
+  @override
+  List<Object?> get props => <Object?>[
+        id,
+        title,
+        description,
+        pillar,
+        type,
+        completedAt,
+        verificationStatus,
+        evidenceLinked,
       ];
 }
 
