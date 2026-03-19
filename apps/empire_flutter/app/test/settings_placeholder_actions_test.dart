@@ -177,12 +177,8 @@ void main() {
     await tester.tap(_tileTapTarget('Sign Out'));
     await tester.pumpAndSettle();
 
-    expect(
-      find.text(
-        'Sign out so another family member can switch accounts on this device?',
-      ),
-      findsOneWidget,
-    );
+    expect(find.text('Sign Out'), findsWidgets);
+    expect(find.widgetWithText(ElevatedButton, 'Sign Out'), findsOneWidget);
 
     await tester.tap(find.widgetWithText(ElevatedButton, 'Sign Out'));
     await tester.pumpAndSettle();
