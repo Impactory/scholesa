@@ -394,7 +394,9 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
                     ],
                   ),
                   if (item.evidenceLinked ||
-                      (item.verificationStatus?.trim().isNotEmpty ?? false))
+                      (item.verificationStatus?.trim().isNotEmpty ?? false) ||
+                      (item.proofOfLearningStatus?.trim().isNotEmpty ?? false) ||
+                      (item.aiDisclosureStatus?.trim().isNotEmpty ?? false))
                     Padding(
                       padding: const EdgeInsets.only(top: 8),
                       child: Wrap(
@@ -410,6 +412,16 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
                             _buildMetaChip(
                               _titleCaseBand(item.verificationStatus!),
                               Colors.teal,
+                            ),
+                          if (item.proofOfLearningStatus?.trim().isNotEmpty ?? false)
+                            _buildMetaChip(
+                              _formatProofStatus(item.proofOfLearningStatus),
+                              Colors.indigo,
+                            ),
+                          if (item.aiDisclosureStatus?.trim().isNotEmpty ?? false)
+                            _buildMetaChip(
+                              _formatAiDisclosure(item.aiDisclosureStatus),
+                              Colors.deepOrange,
                             ),
                         ],
                       ),
@@ -557,7 +569,9 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
             const SizedBox(height: 16),
             Text(item.description, style: const TextStyle(fontSize: 15)),
             if (item.evidenceLinked ||
-                (item.verificationStatus?.trim().isNotEmpty ?? false)) ...<Widget>[
+                (item.verificationStatus?.trim().isNotEmpty ?? false) ||
+                (item.proofOfLearningStatus?.trim().isNotEmpty ?? false) ||
+                (item.aiDisclosureStatus?.trim().isNotEmpty ?? false)) ...<Widget>[
               const SizedBox(height: 16),
               Wrap(
                 spacing: 8,
@@ -573,8 +587,44 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
                       _titleCaseBand(item.verificationStatus!),
                       Colors.teal,
                     ),
+                  if (item.proofOfLearningStatus?.trim().isNotEmpty ?? false)
+                    _buildMetaChip(
+                      _formatProofStatus(item.proofOfLearningStatus),
+                      Colors.indigo,
+                    ),
+                  if (item.aiDisclosureStatus?.trim().isNotEmpty ?? false)
+                    _buildMetaChip(
+                      _formatAiDisclosure(item.aiDisclosureStatus),
+                      Colors.deepOrange,
+                    ),
                 ],
               ),
+            ],
+            if (item.capabilityTitles.isNotEmpty) ...<Widget>[
+              const SizedBox(height: 16),
+              Text(
+                _t('Capability Evidence'),
+                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: item.capabilityTitles
+                    .where((String value) => value.trim().isNotEmpty)
+                    .map((String title) =>
+                        _buildMetaChip(title, _getPillarColor(item.pillar)))
+                    .toList(growable: false),
+              ),
+            ],
+            if (item.verificationPrompt?.trim().isNotEmpty ?? false) ...<Widget>[
+              const SizedBox(height: 16),
+              Text(
+                _t('Verification Prompt'),
+                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 8),
+              Text(item.verificationPrompt!, style: const TextStyle(fontSize: 14)),
             ],
             const SizedBox(height: 24),
             LayoutBuilder(
@@ -787,6 +837,16 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
       '${_t('Description')}: ${item.description}',
       '${_t('Evidence Linked')}: ${item.evidenceLinked ? _t('Yes') : _t('No')}',
       '${_t('Verification Status')}: ${item.verificationStatus?.trim().isNotEmpty == true ? _titleCaseBand(item.verificationStatus!) : _t('Pending')}',
+      '${_t('Proof of Learning')}: ${_formatProofStatus(item.proofOfLearningStatus)}',
+      '${_t('AI Disclosure')}: ${_formatAiDisclosure(item.aiDisclosureStatus)}',
+      if (item.capabilityTitles.isNotEmpty)
+        '${_t('Capability Evidence')}: ${item.capabilityTitles.join(', ')}',
+      if (item.verificationPrompt?.trim().isNotEmpty == true)
+        '${_t('Verification Prompt')}: ${item.verificationPrompt}',
+      if (item.evidenceRecordIds.isNotEmpty)
+        '${_t('Evidence Record IDs')}: ${item.evidenceRecordIds.join(', ')}',
+      if (item.missionAttemptId?.trim().isNotEmpty == true)
+        '${_t('Mission Attempt ID')}: ${item.missionAttemptId}',
     ].join('\n');
   }
 
@@ -810,6 +870,12 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
             description: item.description,
             verificationStatus: item.verificationStatus,
             evidenceLinked: item.evidenceLinked,
+            capabilityTitles: item.capabilityTitles,
+            evidenceRecordIds: item.evidenceRecordIds,
+            missionAttemptId: item.missionAttemptId,
+            verificationPrompt: item.verificationPrompt,
+            proofOfLearningStatus: item.proofOfLearningStatus,
+            aiDisclosureStatus: item.aiDisclosureStatus,
           ),
         );
       }
@@ -832,6 +898,38 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
         return 'Verified';
       default:
         return 'Emerging';
+    }
+  }
+
+  String _formatProofStatus(String? value) {
+    switch ((value ?? '').trim().toLowerCase()) {
+      case 'verified':
+        return _t('Proof verified');
+      case 'partial':
+        return _t('Proof partial');
+      case 'missing':
+        return _t('Proof missing');
+      case 'not-available':
+        return _t('No linked proof bundle');
+      default:
+        return _t('Proof status unknown');
+    }
+  }
+
+  String _formatAiDisclosure(String? value) {
+    switch ((value ?? '').trim().toLowerCase()) {
+      case 'learner-ai-verified':
+        return _t('Learner AI use disclosed with explain-back evidence');
+      case 'learner-ai-verification-gap':
+        return _t('Learner AI use detected without explain-back evidence');
+      case 'educator-feedback-ai':
+        return _t('AI-assisted educator feedback visible');
+      case 'no-learner-ai-signal':
+        return _t('No learner AI-use signal linked to this artifact');
+      case 'not-available':
+        return _t('No linked mission attempt');
+      default:
+        return _t('AI status unknown');
     }
   }
 
@@ -945,6 +1043,12 @@ class _PortfolioItem {
     required this.description,
     this.verificationStatus,
     this.evidenceLinked = false,
+    this.capabilityTitles = const <String>[],
+    this.evidenceRecordIds = const <String>[],
+    this.missionAttemptId,
+    this.verificationPrompt,
+    this.proofOfLearningStatus,
+    this.aiDisclosureStatus,
   });
 
   final String id;
@@ -956,4 +1060,10 @@ class _PortfolioItem {
   final String description;
   final String? verificationStatus;
   final bool evidenceLinked;
+  final List<String> capabilityTitles;
+  final List<String> evidenceRecordIds;
+  final String? missionAttemptId;
+  final String? verificationPrompt;
+  final String? proofOfLearningStatus;
+  final String? aiDisclosureStatus;
 }

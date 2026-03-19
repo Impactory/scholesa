@@ -2594,23 +2594,73 @@ async function buildParentLearnerSummary(params: {
     latestArtifactAt: portfolioDates[0]?.toISOString() ?? null,
   };
   const portfolioItemsPreview = portfolioRows
-    .map((row) => ({
-      id: typeof row.id === 'string' ? row.id : randomUUID(),
-      title: typeof row.title === 'string' && row.title.trim() ? row.title.trim() : 'Portfolio artifact',
-      description:
-        typeof row.description === 'string' && row.description.trim()
-          ? row.description.trim()
-          : 'Evidence-backed portfolio artifact.',
-      pillar: parentPillarLabelFromCodes(row.pillarCodes),
-      type:
-        (typeof row.title === 'string' && row.title.toLowerCase().includes('badge')) ||
-        (typeof row.mediaType === 'string' && row.mediaType.trim().toLowerCase() === 'badge')
-          ? 'badge'
-          : 'project',
-      completedAt: parseDateFromUnknown(row.updatedAt ?? row.createdAt)?.toISOString() ?? now.toISOString(),
-      verificationStatus: typeof row.verificationStatus === 'string' ? row.verificationStatus.trim() : null,
-      evidenceLinked: Array.isArray(row.evidenceRecordIds) && row.evidenceRecordIds.length > 0,
-    }))
+    .map((row) => {
+      const missionAttemptId = typeof row.missionAttemptId === 'string' ? row.missionAttemptId.trim() : '';
+      const matchingMissionAttempt = missionAttemptId
+        ? missionAttemptRows.find((attempt) => typeof attempt.id === 'string' && attempt.id === missionAttemptId)
+        : undefined;
+      const sessionOccurrenceId = typeof matchingMissionAttempt?.sessionOccurrenceId === 'string'
+        ? matchingMissionAttempt.sessionOccurrenceId.trim()
+        : '';
+      const matchingInteractionEvents = sessionOccurrenceId
+        ? interactionEventRows.filter((entry) =>
+            typeof entry.sessionOccurrenceId === 'string' && entry.sessionOccurrenceId.trim() === sessionOccurrenceId,
+          )
+        : [];
+      const proofBundleSummary = matchingMissionAttempt?.proofBundleSummary as Record<string, unknown> | undefined;
+      const hasExplainItBack = proofBundleSummary?.hasExplainItBack === true;
+      const hasOralCheck = proofBundleSummary?.hasOralCheck === true;
+      const hasMiniRebuild = proofBundleSummary?.hasMiniRebuild === true;
+      const proofOfLearningStatus = !matchingMissionAttempt
+        ? 'not-available'
+        : hasExplainItBack && hasOralCheck && hasMiniRebuild
+        ? 'verified'
+        : hasExplainItBack || hasOralCheck || hasMiniRebuild
+        ? 'partial'
+        : 'missing';
+      const learnerAiEventCount = matchingInteractionEvents.filter((entry) => {
+        const eventType = typeof entry.eventType === 'string' ? entry.eventType.trim().toLowerCase() : '';
+        return eventType === 'ai_help_used' || eventType === 'ai_help_opened';
+      }).length;
+      const hasLearnerExplainBackEvent = matchingInteractionEvents.some((entry) => {
+        const eventType = typeof entry.eventType === 'string' ? entry.eventType.trim().toLowerCase() : '';
+        return eventType === 'explain_it_back_submitted';
+      });
+      const hasAiFeedbackSignal = typeof matchingMissionAttempt?.aiFeedbackDraft === 'string'
+        && matchingMissionAttempt.aiFeedbackDraft.trim().length > 0;
+      const aiDisclosureStatus = learnerAiEventCount > 0
+        ? hasLearnerExplainBackEvent
+          ? 'learner-ai-verified'
+          : 'learner-ai-verification-gap'
+        : hasAiFeedbackSignal
+        ? 'educator-feedback-ai'
+        : matchingMissionAttempt
+        ? 'no-learner-ai-signal'
+        : 'not-available';
+      return {
+        id: typeof row.id === 'string' ? row.id : randomUUID(),
+        title: typeof row.title === 'string' && row.title.trim() ? row.title.trim() : 'Portfolio artifact',
+        description:
+          typeof row.description === 'string' && row.description.trim()
+            ? row.description.trim()
+            : 'Evidence-backed portfolio artifact.',
+        pillar: parentPillarLabelFromCodes(row.pillarCodes),
+        type:
+          (typeof row.title === 'string' && row.title.toLowerCase().includes('badge')) ||
+          (typeof row.mediaType === 'string' && row.mediaType.trim().toLowerCase() === 'badge')
+            ? 'badge'
+            : 'project',
+        completedAt: parseDateFromUnknown(row.updatedAt ?? row.createdAt)?.toISOString() ?? now.toISOString(),
+        verificationStatus: typeof row.verificationStatus === 'string' ? row.verificationStatus.trim() : null,
+        evidenceLinked: Array.isArray(row.evidenceRecordIds) && row.evidenceRecordIds.length > 0,
+        capabilityTitles: Array.isArray(row.capabilityTitles) ? row.capabilityTitles.filter((value) => typeof value === 'string') : [],
+        evidenceRecordIds: Array.isArray(row.evidenceRecordIds) ? row.evidenceRecordIds.filter((value) => typeof value === 'string') : [],
+        missionAttemptId: missionAttemptId || null,
+        verificationPrompt: typeof row.verificationPrompt === 'string' && row.verificationPrompt.trim() ? row.verificationPrompt.trim() : null,
+        proofOfLearningStatus,
+        aiDisclosureStatus,
+      };
+    })
     .sort((left, right) => Date.parse(String(right.completedAt)) - Date.parse(String(left.completedAt)));
 
   const reflectionDates = reflectionRows
