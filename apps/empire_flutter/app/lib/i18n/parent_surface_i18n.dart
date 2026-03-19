@@ -96,9 +96,11 @@ class ParentSurfaceI18n {
     'Schedule AI Coach': '日程 AI 教练',
     'Keep MiloOS loop active for each learner schedule':
         '为每位学习者的日程保持 MiloOS 循环活跃',
+    'Unable to load schedule right now': '目前无法加载日程',
     'No learner links found yet. Ask your site admin to link parent and learner accounts.':
         '尚未找到学习者关联。请让站点管理员关联家长和学习者账户。',
     'Portfolio': '作品集',
+    'Unable to load portfolio right now': '目前无法加载作品集',
     'Consent Records': '同意记录',
     'View Child Detail': '查看孩子详情',
     'View Consent': '查看同意记录',
@@ -282,9 +284,11 @@ class ParentSurfaceI18n {
     'Schedule AI Coach': '日程 AI 教練',
     'Keep MiloOS loop active for each learner schedule':
         '為每位學習者的日程保持 MiloOS 循環活躍',
+    'Unable to load schedule right now': '目前無法載入日程',
     'No learner links found yet. Ask your site admin to link parent and learner accounts.':
         '尚未找到學習者關聯。請讓站點管理員關聯家長和學習者帳戶。',
     'Portfolio': '作品集',
+    'Unable to load portfolio right now': '目前無法載入作品集',
     'Consent Records': '同意紀錄',
     'View Child Detail': '查看孩子詳情',
     'View Consent': '查看同意紀錄',
