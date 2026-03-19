@@ -19,10 +19,10 @@ interface UseLearnerAnalyticsOptions {
 interface LearnerData {
   userId: string;
   name: string;
-  engagementScore: number;
-  autonomyScore: number;
-  competenceScore: number;
-  belongingScore: number;
+  engagementScore: number | null;
+  autonomyScore: number | null;
+  competenceScore: number | null;
+  belongingScore: number | null;
   lastActive: Date | null;
 }
 
@@ -63,7 +63,12 @@ export function useLearnerAnalytics({ siteId, timeRange = 'week', limit: maxLear
 
             // Fetch SDT scores
             const sdtScores = await TelemetryService.getSDTProfile(userId, siteId);
-            const engagementScore = Math.round((sdtScores.autonomy + sdtScores.competence + sdtScores.belonging) / 3);
+            const engagementScore =
+              sdtScores.autonomy != null &&
+              sdtScores.competence != null &&
+              sdtScores.belonging != null
+                ? Math.round((sdtScores.autonomy + sdtScores.competence + sdtScores.belonging) / 3)
+                : null;
 
             // Get last active time from telemetry
             const eventsQuery = query(
@@ -181,7 +186,7 @@ export function usePlatformStats() {
           aggregatesSnapshot.docs.forEach(doc => {
             const data = doc.data();
             const date = data.date?.toDate();
-            if (date && date >= weekAgo && data.engagementScore !== undefined) {
+            if (date && date >= weekAgo && typeof data.engagementScore === 'number' && Number.isFinite(data.engagementScore)) {
               siteEngagement += data.engagementScore;
               count++;
             }

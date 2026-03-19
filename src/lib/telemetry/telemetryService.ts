@@ -555,9 +555,9 @@ export class TelemetryService {
     siteId: string,
     days: number = 30
   ): Promise<{
-    autonomy: number;
-    competence: number;
-    belonging: number;
+    autonomy: number | null;
+    competence: number | null;
+    belonging: number | null;
   }> {
     try {
       const startDate = new Date();
@@ -590,7 +590,15 @@ export class TelemetryService {
         }
       });
 
-      const total = Object.values(categoryCount).reduce((a, b) => a + b, 0) || 1;
+      const total = Object.values(categoryCount).reduce((a, b) => a + b, 0);
+
+      if (total === 0) {
+        return {
+          autonomy: null,
+          competence: null,
+          belonging: null,
+        };
+      }
 
       return {
         autonomy: Math.round((categoryCount.autonomy / total) * 100),
@@ -599,9 +607,9 @@ export class TelemetryService {
       };
     } catch {
       return {
-        autonomy: 0,
-        competence: 0,
-        belonging: 0
+        autonomy: null,
+        competence: null,
+        belonging: null
       };
     }
   }

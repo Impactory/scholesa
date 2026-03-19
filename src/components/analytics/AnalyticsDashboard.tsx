@@ -31,10 +31,10 @@ import {
 interface LearnerEngagement {
   learnerId: string;
   learnerName: string;
-  engagementScore: number; // 0-100
-  autonomyScore: number; // 0-100
-  competenceScore: number; // 0-100
-  belongingScore: number; // 0-100
+  engagementScore: number | null;
+  autonomyScore: number | null;
+  competenceScore: number | null;
+  belongingScore: number | null;
   lastActive: Date | null;
   eventCount: number;
 }
@@ -65,6 +65,8 @@ export function AnalyticsDashboard() {
     lastActive: s.lastActive,
     eventCount: 0 // Can be enhanced later
   }));
+
+  const learnersWithEngagement = learners.filter((learner) => learner.engagementScore != null);
   
   if (loading) {
     return (
@@ -88,9 +90,11 @@ export function AnalyticsDashboard() {
     );
   }
   
-  const avgEngagement = learners.reduce((sum, s) => sum + s.engagementScore, 0) / learners.length || 0;
-  const atRiskCount = learners.filter(s => s.engagementScore < 60).length;
-  const highPerformers = learners.filter(s => s.engagementScore >= 80).length;
+  const avgEngagement = learnersWithEngagement.length > 0
+    ? learnersWithEngagement.reduce((sum, learner) => sum + (learner.engagementScore as number), 0) / learnersWithEngagement.length
+    : null;
+  const atRiskCount = learners.filter(s => s.engagementScore != null && s.engagementScore < 60).length;
+  const highPerformers = learners.filter(s => s.engagementScore != null && s.engagementScore >= 80).length;
   const periodLabel = timeRange === 'week'
     ? t('analytics.educator.period.week')
     : t('analytics.educator.period.month');
@@ -194,10 +198,10 @@ export function AnalyticsDashboard() {
         />
         <SummaryCard
           title={t('analytics.educator.summary.avgEngagement')}
-          value={`${Math.round(avgEngagement)}%`}
+          value={avgEngagement != null ? `${Math.round(avgEngagement)}%` : 'Unavailable'}
           icon={ActivityIcon}
           color="green"
-          trend={avgEngagement > 70 ? 'up' : 'down'}
+          trend={avgEngagement == null ? undefined : avgEngagement > 70 ? 'up' : 'down'}
           trendLabel={periodLabel}
           t={t}
         />
@@ -311,23 +315,25 @@ export function AnalyticsDashboard() {
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           {timeRange === 'week' ? t('analytics.educator.thisWeek') : t('analytics.educator.thisMonth')} {t('analytics.educator.table.engagement')}
         </h3>
-        {trendPoints.every((point) => point.value === 0) ? (
+        {trendPoints.every((point) => point.value == null) ? (
           <div className="h-40 flex items-center justify-center text-sm text-gray-500 border border-gray-200 rounded-lg">
-            {t('analytics.educator.never')}
+            Unavailable
           </div>
         ) : (
           <div className="grid grid-cols-7 gap-2 md:gap-3 items-end h-44 rounded-lg border border-gray-200 p-3">
             {trendPoints.map((point) => {
-              const heightPercent = Math.max(6, Math.round((point.value / trendMax) * 100));
+              const heightPercent = point.value != null
+                ? Math.max(6, Math.round((point.value / trendMax) * 100))
+                : 0;
               return (
                 <div key={point.key} className="flex flex-col items-center justify-end gap-2 h-full">
-                  <div className="text-[10px] text-gray-500">{Math.round(point.value)}%</div>
+                  <div className="text-[10px] text-gray-500">{point.value != null ? `${Math.round(point.value)}%` : 'N/A'}</div>
                   <div className="w-full max-w-10 h-full flex items-end">
                     <div
                       className="w-full bg-indigo-500 rounded-sm"
                       style={{ height: `${heightPercent}%` }}
-                      aria-label={`${point.label} ${Math.round(point.value)}%`}
-                      title={`${point.label}: ${Math.round(point.value)}%`}
+                      aria-label={point.value != null ? `${point.label} ${Math.round(point.value)}%` : `${point.label} unavailable`}
+                      title={point.value != null ? `${point.label}: ${Math.round(point.value)}%` : `${point.label}: unavailable`}
                     />
                   </div>
                   <div className="text-[10px] text-gray-600 text-center leading-tight">{point.label}</div>
@@ -394,7 +400,7 @@ function SummaryCard({ title, value, icon: Icon, color, trend, trendLabel, t }: 
 }
 
 interface ScoreBarProps {
-  score: number; // 0-100
+  score: number | null;
   color: 'purple' | 'blue' | 'pink' | 'green';
   t: (key: string, interpolation?: Record<string, string | number>) => string;
 }
@@ -419,17 +425,17 @@ function ScoreBar({ score, color, t }: ScoreBarProps) {
       <div className={`w-24 h-2 rounded-full ${bgColorClasses[color]}`}>
         <div 
           className={`h-full rounded-full ${colorClasses[color]}`}
-          data-score={score}
-          aria-label={t('analytics.educator.scoreAria', { score })}
+          data-score={score ?? 0}
+          aria-label={score != null ? t('analytics.educator.scoreAria', { score }) : 'Score unavailable'}
         >
           <style jsx>{`
-            div[data-score="${score}"] {
-              width: ${score}%;
+            div[data-score="${score ?? 0}"] {
+              width: ${score ?? 0}%;
             }
           `}</style>
         </div>
       </div>
-      <span className="text-sm font-medium text-gray-700">{score}%</span>
+      <span className="text-sm font-medium text-gray-700">{score != null ? `${score}%` : 'N/A'}</span>
     </div>
   );
 }
@@ -458,7 +464,7 @@ function formatRelativeTime(
 type TrendPoint = {
   key: string;
   label: string;
-  value: number;
+  value: number | null;
 };
 
 function buildTrendPoints(
@@ -489,7 +495,7 @@ function buildTrendPoints(
   });
 
   learners.forEach((learner) => {
-    if (!learner.lastActive) return;
+    if (!learner.lastActive || learner.engagementScore == null) return;
     const activeTime = learner.lastActive.getTime();
 
     for (const bucket of buckets) {
@@ -511,7 +517,7 @@ function buildTrendPoints(
     return {
       key: bucket.key,
       label,
-      value: bucket.count > 0 ? bucket.total / bucket.count : 0,
+      value: bucket.count > 0 ? bucket.total / bucket.count : null,
     };
   });
 }

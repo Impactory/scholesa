@@ -24,10 +24,10 @@ import {
 interface LearnerData {
   learnerId: string;
   learnerName: string;
-  engagementScore: number;
-  autonomyScore: number;
-  competenceScore: number;
-  belongingScore: number;
+  engagementScore: number | null;
+  autonomyScore: number | null;
+  competenceScore: number | null;
+  belongingScore: number | null;
   lastActive: Date | null;
   eventCount: number;
 }
@@ -59,9 +59,19 @@ export function AIInsightsPanel({ learners, timeRange }: AIInsightsPanelProps) {
   const generateInsights = () => {
     setLoading(true);
     const generatedInsights: AIInsight[] = [];
+    const learnersWithEngagement = learners.filter((learner) => learner.engagementScore != null);
+    const learnersWithAutonomy = learners.filter((learner) => learner.autonomyScore != null);
+    const learnersWithCompetence = learners.filter((learner) => learner.competenceScore != null);
+    const learnersWithBelonging = learners.filter((learner) => learner.belongingScore != null);
+
+    if (learners.length === 0 || learnersWithEngagement.length === 0) {
+      setInsights([]);
+      setLoading(false);
+      return;
+    }
 
     // 1. Identify at-risk learners (engagement < 30%)
-    const atRiskLearners = learners.filter(s => s.engagementScore < 30);
+    const atRiskLearners = learnersWithEngagement.filter(s => (s.engagementScore as number) < 30);
     if (atRiskLearners.length > 0) {
       generatedInsights.push({
         id: 'at-risk-alert',
@@ -79,8 +89,8 @@ export function AIInsightsPanel({ learners, timeRange }: AIInsightsPanelProps) {
     }
 
     // 2. Identify learners with low autonomy (< 40%)
-    const lowAutonomyLearners = learners.filter(s => s.autonomyScore < 40);
-    if (lowAutonomyLearners.length > 0 && lowAutonomyLearners.length < learners.length * 0.5) {
+    const lowAutonomyLearners = learnersWithAutonomy.filter(s => (s.autonomyScore as number) < 40);
+    if (lowAutonomyLearners.length > 0 && lowAutonomyLearners.length < learnersWithAutonomy.length * 0.5) {
       generatedInsights.push({
         id: 'low-autonomy',
         type: 'recommendation',
@@ -97,8 +107,8 @@ export function AIInsightsPanel({ learners, timeRange }: AIInsightsPanelProps) {
     }
 
     // 3. Identify learners with low competence (< 40%)
-    const lowCompetenceLearners = learners.filter(s => s.competenceScore < 40);
-    if (lowCompetenceLearners.length > 0 && lowCompetenceLearners.length < learners.length * 0.5) {
+    const lowCompetenceLearners = learnersWithCompetence.filter(s => (s.competenceScore as number) < 40);
+    if (lowCompetenceLearners.length > 0 && lowCompetenceLearners.length < learnersWithCompetence.length * 0.5) {
       generatedInsights.push({
         id: 'low-competence',
         type: 'recommendation',
@@ -115,8 +125,8 @@ export function AIInsightsPanel({ learners, timeRange }: AIInsightsPanelProps) {
     }
 
     // 4. Identify learners with low belonging (< 40%)
-    const lowBelongingLearners = learners.filter(s => s.belongingScore < 40);
-    if (lowBelongingLearners.length > 0 && lowBelongingLearners.length < learners.length * 0.5) {
+    const lowBelongingLearners = learnersWithBelonging.filter(s => (s.belongingScore as number) < 40);
+    if (lowBelongingLearners.length > 0 && lowBelongingLearners.length < learnersWithBelonging.length * 0.5) {
       generatedInsights.push({
         id: 'low-belonging',
         type: 'recommendation',
@@ -133,7 +143,7 @@ export function AIInsightsPanel({ learners, timeRange }: AIInsightsPanelProps) {
     }
 
     // 5. Identify thriving learners (engagement > 80%)
-    const thrivingLearners = learners.filter(s => s.engagementScore > 80);
+    const thrivingLearners = learnersWithEngagement.filter(s => (s.engagementScore as number) > 80);
     if (thrivingLearners.length > 0) {
       generatedInsights.push({
         id: 'thriving-learners',
@@ -151,7 +161,7 @@ export function AIInsightsPanel({ learners, timeRange }: AIInsightsPanelProps) {
     }
 
     // 6. Class-wide trend: Overall engagement
-    const avgEngagement = learners.reduce((sum, s) => sum + s.engagementScore, 0) / learners.length || 0;
+    const avgEngagement = learnersWithEngagement.reduce((sum, s) => sum + (s.engagementScore as number), 0) / learnersWithEngagement.length;
     if (avgEngagement < 50) {
       generatedInsights.push({
         id: 'class-engagement-low',
@@ -201,9 +211,18 @@ export function AIInsightsPanel({ learners, timeRange }: AIInsightsPanelProps) {
     }
 
     // 8. SDT Balance recommendation
-    const avgAutonomy = learners.reduce((sum, s) => sum + s.autonomyScore, 0) / learners.length || 0;
-    const avgCompetence = learners.reduce((sum, s) => sum + s.competenceScore, 0) / learners.length || 0;
-    const avgBelonging = learners.reduce((sum, s) => sum + s.belongingScore, 0) / learners.length || 0;
+    if (learnersWithAutonomy.length === 0 || learnersWithCompetence.length === 0 || learnersWithBelonging.length === 0) {
+      setInsights(generatedInsights.sort((a, b) => {
+        const priorityOrder = { high: 0, medium: 1, low: 2 };
+        return priorityOrder[a.priority] - priorityOrder[b.priority];
+      }));
+      setLoading(false);
+      return;
+    }
+
+    const avgAutonomy = learnersWithAutonomy.reduce((sum, s) => sum + (s.autonomyScore as number), 0) / learnersWithAutonomy.length;
+    const avgCompetence = learnersWithCompetence.reduce((sum, s) => sum + (s.competenceScore as number), 0) / learnersWithCompetence.length;
+    const avgBelonging = learnersWithBelonging.reduce((sum, s) => sum + (s.belongingScore as number), 0) / learnersWithBelonging.length;
     
     const maxDimension = Math.max(avgAutonomy, avgCompetence, avgBelonging);
     const minDimension = Math.min(avgAutonomy, avgCompetence, avgBelonging);

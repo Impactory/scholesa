@@ -4731,13 +4731,13 @@ export const getParentBillingSummary = onCall(async (request: CallableRequest) =
       if (parentId.length > 0 && parentId !== targetParentId) return null;
       return {
         id: docSnap.id,
-        amount: asNumber(row.amount) ?? 0,
+        amount: asNumber(row.amount),
         date: toIsoString(row.date || row.updatedAt || row.createdAt),
-        status: asTrimmedString(row.status).length > 0 ? asTrimmedString(row.status) : 'unknown',
+        status: asTrimmedString(row.status),
         description: asTrimmedString(row.description),
       };
     })
-    .filter((row): row is { id: string; amount: number; date: string | null; status: string; description: string } => Boolean(row))
+    .filter((row): row is { id: string; amount: number | null; date: string | null; status: string; description: string } => Boolean(row))
     .sort((a, b) => {
       const timeA = a.date ? Date.parse(a.date) : 0;
       const timeB = b.date ? Date.parse(b.date) : 0;
@@ -4754,8 +4754,8 @@ export const getParentBillingSummary = onCall(async (request: CallableRequest) =
   return {
     summary: {
       parentId: targetParentId,
-      currentBalance: asNumber(accountData?.currentBalance) ?? 0,
-      nextPaymentAmount: asNumber(accountData?.nextPaymentAmount) ?? 0,
+      currentBalance: asNumber(accountData?.currentBalance),
+      nextPaymentAmount: asNumber(accountData?.nextPaymentAmount),
       nextPaymentDate: toIsoString(accountData?.nextPaymentDate),
       subscriptionPlan: asTrimmedString(accountData?.subscriptionPlan),
       recentPayments,
@@ -4795,7 +4795,7 @@ export const getSiteBillingSnapshot = onCall(async (request: CallableRequest) =>
       const rowSiteId = asTrimmedString(row.siteId);
       if (rowSiteId.length > 0 && rowSiteId !== targetSiteId) return null;
       const amount = asNumber(row.amount) ?? 0;
-      const currency = asTrimmedString(row.currency).toUpperCase() || 'USD';
+      const currency = asTrimmedString(row.currency).toUpperCase();
       return {
         id: docSnap.id,
         amount,
@@ -4818,12 +4818,12 @@ export const getSiteBillingSnapshot = onCall(async (request: CallableRequest) =>
   const currency = asTrimmedString(siteData?.currency).toUpperCase();
   const nextBillingDate = toIsoString(siteData?.nextBillingDate);
   const activeLearnersUsed = asNumber(siteData?.learnerCount) ??
-    (Array.isArray(siteData?.learnerIds) ? siteData?.learnerIds.length : 0);
+    (Array.isArray(siteData?.learnerIds) ? siteData?.learnerIds.length : null);
   const activeLearnersTotal = asNumber(siteData?.learnerCap) ?? asNumber(siteData?.billingLearnerLimit);
   const educatorsUsed = asNumber(siteData?.educatorCount) ??
-    (Array.isArray(siteData?.educatorIds) ? siteData?.educatorIds.length : 0);
+    (Array.isArray(siteData?.educatorIds) ? siteData?.educatorIds.length : null);
   const educatorsTotal = asNumber(siteData?.educatorCap) ?? asNumber(siteData?.billingEducatorLimit);
-  const storageUsedGb = asNumber(siteData?.storageUsedGb) ?? asNumber(siteData?.storageUsed) ?? 0;
+  const storageUsedGb = asNumber(siteData?.storageUsedGb) ?? asNumber(siteData?.storageUsed);
   const storageTotalGb = asNumber(siteData?.storageCapGb) ?? asNumber(siteData?.storageLimitGb);
   const hasBillingSummary = Boolean(
     planName ||
@@ -4844,14 +4844,14 @@ export const getSiteBillingSnapshot = onCall(async (request: CallableRequest) =>
       planName,
       planStatus,
       monthlyAmount,
-      currency: currency || 'USD',
+      currency,
       nextBillingDate,
       activeLearnersUsed,
-      activeLearnersTotal: activeLearnersTotal ?? 100,
+      activeLearnersTotal,
       educatorsUsed,
-      educatorsTotal: educatorsTotal ?? 15,
+      educatorsTotal,
       storageUsedGb,
-      storageTotalGb: storageTotalGb ?? 10,
+      storageTotalGb,
     } : null,
     invoices,
   };
