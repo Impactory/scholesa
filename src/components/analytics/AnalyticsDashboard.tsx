@@ -334,6 +334,9 @@ export function AnalyticsDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
           <h3 className="text-sm font-medium text-gray-700">Voice Reliability</h3>
+          <p className="mt-1 text-xs text-gray-500">
+            This measures how often MiloOS captured usable voice input. Low capture weakens the trustworthiness of voice-derived support analytics.
+          </p>
           <div className="mt-2 flex flex-wrap items-baseline gap-4">
             <div>
               <div className="text-2xl font-semibold text-gray-900">
@@ -349,6 +352,20 @@ export function AnalyticsDashboard() {
               <div className="text-2xl font-semibold text-gray-900">{siteVoiceMetrics.captureAttempts}</div>
               <div className="text-xs text-gray-500">Capture attempts</div>
             </div>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2 text-xs text-gray-600">
+            <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-2.5 py-1">
+              <span className="h-2 w-2 rounded-full bg-emerald-500" />
+              Strong: 80%+
+            </span>
+            <span className="inline-flex items-center gap-2 rounded-full bg-amber-50 px-2.5 py-1">
+              <span className="h-2 w-2 rounded-full bg-amber-500" />
+              Watch: 50-79%
+            </span>
+            <span className="inline-flex items-center gap-2 rounded-full bg-red-50 px-2.5 py-1">
+              <span className="h-2 w-2 rounded-full bg-red-500" />
+              Critical: below 50%
+            </span>
           </div>
         </div>
         <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
@@ -381,6 +398,9 @@ export function AnalyticsDashboard() {
               })}
             </div>
           )}
+          <p className="mt-3 text-xs text-gray-500">
+            Green bars indicate strong capture, amber means voice support should be interpreted cautiously, and red means voice-derived support evidence is materially unreliable for that period.
+          </p>
         </div>
       </div>
       

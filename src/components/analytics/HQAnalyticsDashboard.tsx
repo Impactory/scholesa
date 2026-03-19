@@ -359,6 +359,9 @@ export function HQAnalyticsDashboard() {
             <p className="text-sm text-gray-600">
               Capture reliability across the last 7 days. Low values mean MiloOS had fewer trustworthy voice inputs to work from.
             </p>
+            <p className="mt-2 text-xs text-gray-500">
+              When capture is weak, downstream voice-derived support analytics should be treated as less trustworthy operational evidence.
+            </p>
           </div>
           <div className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
             {criticalVoiceCaptureSites > 0
@@ -391,6 +394,20 @@ export function HQAnalyticsDashboard() {
             icon={AlertCircleIcon}
             color="red"
           />
+        </div>
+        <div className="mt-4 flex flex-wrap gap-2 text-xs text-gray-600">
+          <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-2.5 py-1">
+            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+            Strong: 80%+
+          </span>
+          <span className="inline-flex items-center gap-2 rounded-full bg-amber-50 px-2.5 py-1">
+            <span className="h-2 w-2 rounded-full bg-amber-500" />
+            Watch: 50-79%
+          </span>
+          <span className="inline-flex items-center gap-2 rounded-full bg-red-50 px-2.5 py-1">
+            <span className="h-2 w-2 rounded-full bg-red-500" />
+            Critical: below 50%
+          </span>
         </div>
       </div>
       
