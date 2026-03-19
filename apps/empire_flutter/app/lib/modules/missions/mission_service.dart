@@ -931,9 +931,8 @@ class MissionService extends ChangeNotifier {
         final Mission mission = _missions[index];
         final QueryDocumentSnapshot<Map<String, dynamic>>? assignmentDoc =
             await _getAssignmentDocForMission(missionId);
-        final String? siteId =
-            _siteIdFromAssignment(assignmentDoc) ??
-                await _resolveSiteIdForMission(missionId);
+        final String? siteId = _siteIdFromAssignment(assignmentDoc) ??
+            await _resolveSiteIdForMission(missionId);
         final MissionProofBundle? proofBundle =
             await loadProofBundle(missionId);
         final String? sessionOccurrenceId =
@@ -1503,8 +1502,10 @@ class MissionService extends ChangeNotifier {
   Query<Map<String, dynamic>> _pendingReviewAttemptsQuery({String? siteId}) {
     Query<Map<String, dynamic>> query = _firestore
         .collection('missionAttempts')
-        .where('status', whereIn: const <String>['submitted', 'pending_review'])
-        .orderBy('submittedAt', descending: true);
+        .where('status', whereIn: const <String>[
+      'submitted',
+      'pending_review'
+    ]).orderBy('submittedAt', descending: true);
 
     if (siteId != null && siteId.isNotEmpty) {
       query = query.where('siteId', isEqualTo: siteId);
@@ -1516,9 +1517,11 @@ class MissionService extends ChangeNotifier {
     String? siteId,
   }) {
     Query<Map<String, dynamic>> query = _firestore
-          .collection('missionSubmissions')
-          .where('status', whereIn: const <String>['pending', 'submitted'])
-          .orderBy('submittedAt', descending: true);
+        .collection('missionSubmissions')
+        .where('status', whereIn: const <String>[
+      'pending',
+      'submitted'
+    ]).orderBy('submittedAt', descending: true);
 
     if (siteId != null && siteId.isNotEmpty) {
       query = query.where('siteId', isEqualTo: siteId);
@@ -1529,12 +1532,11 @@ class MissionService extends ChangeNotifier {
   Query<Map<String, dynamic>> _reviewedMissionAttemptsQuery({String? siteId}) {
     final DateTime today = DateTime.now();
     final DateTime startOfDay = DateTime(today.year, today.month, today.day);
-    Query<Map<String, dynamic>> query = _firestore
-        .collection('missionAttempts')
-        .where(
-          'reviewedAt',
-          isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay),
-        );
+    Query<Map<String, dynamic>> query =
+        _firestore.collection('missionAttempts').where(
+              'reviewedAt',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay),
+            );
     if (siteId != null && siteId.isNotEmpty) {
       query = query.where('siteId', isEqualTo: siteId);
     }
@@ -1546,12 +1548,11 @@ class MissionService extends ChangeNotifier {
   }) {
     final DateTime today = DateTime.now();
     final DateTime startOfDay = DateTime(today.year, today.month, today.day);
-    Query<Map<String, dynamic>> query = _firestore
-        .collection('missionSubmissions')
-        .where(
-          'reviewedAt',
-          isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay),
-        );
+    Query<Map<String, dynamic>> query =
+        _firestore.collection('missionSubmissions').where(
+              'reviewedAt',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay),
+            );
     if (siteId != null && siteId.isNotEmpty) {
       query = query.where('siteId', isEqualTo: siteId);
     }
@@ -1571,10 +1572,10 @@ class MissionService extends ChangeNotifier {
     final DocumentSnapshot<Map<String, dynamic>> missionDoc =
         await _firestore.collection('missions').doc(missionId).get();
     final Map<String, dynamic>? missionData = missionDoc.data();
-    final String rubricId = (data['rubricId'] as String?)?.trim().isNotEmpty ==
-            true
-        ? (data['rubricId'] as String).trim()
-        : missionData?['rubricId'] as String? ?? '';
+    final String rubricId =
+        (data['rubricId'] as String?)?.trim().isNotEmpty == true
+            ? (data['rubricId'] as String).trim()
+            : missionData?['rubricId'] as String? ?? '';
     List<Map<String, dynamic>> rubricCriteria = const <Map<String, dynamic>>[];
 
     if (rubricId.isNotEmpty) {
@@ -1720,82 +1721,93 @@ class MissionService extends ChangeNotifier {
       );
       final WriteBatch batch = _firestore.batch();
 
-      batch.set(canonicalAttemptRef, <String, dynamic>{
-        'missionId': missionId,
-        if ((submissionData['missionTitle'] as String?)?.trim().isNotEmpty ==
-            true)
-          'missionTitle': (submissionData['missionTitle'] as String).trim(),
-        'learnerId': reviewLearnerId,
-        if (reviewSiteId != null && reviewSiteId.isNotEmpty)
-          'siteId': reviewSiteId,
-        if ((submissionData['sessionOccurrenceId'] as String?)
-                ?.trim()
-                .isNotEmpty ==
-            true)
-          'sessionOccurrenceId':
-              (submissionData['sessionOccurrenceId'] as String).trim(),
-        'status': 'reviewed',
-        'reviewStatus': status,
-        'rating': rating,
-        'feedback': trimmedFeedback,
-        'reviewNotes': trimmedFeedback,
-        'reviewedBy': reviewerId,
-        'reviewedAt': FieldValue.serverTimestamp(),
-        'gradedBy': reviewerId,
-        'gradedAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-        if ((submissionData['submittedAt']) != null)
-          'submittedAt': submissionData['submittedAt'],
-        if ((submissionData['createdAt']) != null)
-          'createdAt': submissionData['createdAt'],
-        if ((submissionData['content'] as String?)?.trim().isNotEmpty == true)
-          'content': (submissionData['content'] as String).trim(),
-        if ((submissionData['submissionText'] as String?)
-                ?.trim()
-                .isNotEmpty ==
-            true)
-          'submissionText': (submissionData['submissionText'] as String).trim(),
-        if (submissionData['attachmentUrls'] is List)
-          'attachmentUrls': List<String>.from(
-            submissionData['attachmentUrls'] as List,
-          ),
-        if (trimmedAiDraft != null) 'aiFeedbackDraft': trimmedAiDraft,
-        if (trimmedAiDraft != null)
-          'aiFeedbackEdited': trimmedAiDraft != trimmedFeedback,
-        if (resolvedRubricId.isNotEmpty) 'rubricId': resolvedRubricId,
-        if (resolvedRubricTitle != null && resolvedRubricTitle.isNotEmpty)
-          'rubricTitle': resolvedRubricTitle,
-        if (normalizedRubricScores.isNotEmpty)
-          'rubricScores': normalizedRubricScores,
-        if (normalizedRubricScores.isNotEmpty)
-          'rubricTotalScore': rubricTotalScore,
-        if (normalizedRubricScores.isNotEmpty) 'rubricMaxScore': rubricMaxScore,
-      }, SetOptions(merge: true));
+      batch.set(
+          canonicalAttemptRef,
+          <String, dynamic>{
+            'missionId': missionId,
+            if ((submissionData['missionTitle'] as String?)
+                    ?.trim()
+                    .isNotEmpty ==
+                true)
+              'missionTitle': (submissionData['missionTitle'] as String).trim(),
+            'learnerId': reviewLearnerId,
+            if (reviewSiteId != null && reviewSiteId.isNotEmpty)
+              'siteId': reviewSiteId,
+            if ((submissionData['sessionOccurrenceId'] as String?)
+                    ?.trim()
+                    .isNotEmpty ==
+                true)
+              'sessionOccurrenceId':
+                  (submissionData['sessionOccurrenceId'] as String).trim(),
+            'status': 'reviewed',
+            'reviewStatus': status,
+            'rating': rating,
+            'feedback': trimmedFeedback,
+            'reviewNotes': trimmedFeedback,
+            'reviewedBy': reviewerId,
+            'reviewedAt': FieldValue.serverTimestamp(),
+            'gradedBy': reviewerId,
+            'gradedAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+            if ((submissionData['submittedAt']) != null)
+              'submittedAt': submissionData['submittedAt'],
+            if ((submissionData['createdAt']) != null)
+              'createdAt': submissionData['createdAt'],
+            if ((submissionData['content'] as String?)?.trim().isNotEmpty ==
+                true)
+              'content': (submissionData['content'] as String).trim(),
+            if ((submissionData['submissionText'] as String?)
+                    ?.trim()
+                    .isNotEmpty ==
+                true)
+              'submissionText':
+                  (submissionData['submissionText'] as String).trim(),
+            if (submissionData['attachmentUrls'] is List)
+              'attachmentUrls': List<String>.from(
+                submissionData['attachmentUrls'] as List,
+              ),
+            if (trimmedAiDraft != null) 'aiFeedbackDraft': trimmedAiDraft,
+            if (trimmedAiDraft != null)
+              'aiFeedbackEdited': trimmedAiDraft != trimmedFeedback,
+            if (resolvedRubricId.isNotEmpty) 'rubricId': resolvedRubricId,
+            if (resolvedRubricTitle != null && resolvedRubricTitle.isNotEmpty)
+              'rubricTitle': resolvedRubricTitle,
+            if (normalizedRubricScores.isNotEmpty)
+              'rubricScores': normalizedRubricScores,
+            if (normalizedRubricScores.isNotEmpty)
+              'rubricTotalScore': rubricTotalScore,
+            if (normalizedRubricScores.isNotEmpty)
+              'rubricMaxScore': rubricMaxScore,
+          },
+          SetOptions(merge: true));
 
       if (submissionSnapshot.exists || submissionId == canonicalAttemptRef.id) {
-        batch.set(submissionRef, <String, dynamic>{
-          'missionId': missionId,
-          'learnerId': reviewLearnerId,
-          if (reviewSiteId != null && reviewSiteId.isNotEmpty)
-            'siteId': reviewSiteId,
-          'status': status,
-          'rating': rating,
-          'feedback': trimmedFeedback,
-          'reviewedBy': reviewerId,
-          'reviewedAt': FieldValue.serverTimestamp(),
-          if (trimmedAiDraft != null) 'aiFeedbackDraft': trimmedAiDraft,
-          if (trimmedAiDraft != null)
-            'aiFeedbackEdited': trimmedAiDraft != trimmedFeedback,
-          if (resolvedRubricId.isNotEmpty) 'rubricId': resolvedRubricId,
-          if (resolvedRubricTitle != null && resolvedRubricTitle.isNotEmpty)
-            'rubricTitle': resolvedRubricTitle,
-          if (normalizedRubricScores.isNotEmpty)
-            'rubricScores': normalizedRubricScores,
-          if (normalizedRubricScores.isNotEmpty)
-            'rubricTotalScore': rubricTotalScore,
-          if (normalizedRubricScores.isNotEmpty)
-            'rubricMaxScore': rubricMaxScore,
-        }, SetOptions(merge: true));
+        batch.set(
+            submissionRef,
+            <String, dynamic>{
+              'missionId': missionId,
+              'learnerId': reviewLearnerId,
+              if (reviewSiteId != null && reviewSiteId.isNotEmpty)
+                'siteId': reviewSiteId,
+              'status': status,
+              'rating': rating,
+              'feedback': trimmedFeedback,
+              'reviewedBy': reviewerId,
+              'reviewedAt': FieldValue.serverTimestamp(),
+              if (trimmedAiDraft != null) 'aiFeedbackDraft': trimmedAiDraft,
+              if (trimmedAiDraft != null)
+                'aiFeedbackEdited': trimmedAiDraft != trimmedFeedback,
+              if (resolvedRubricId.isNotEmpty) 'rubricId': resolvedRubricId,
+              if (resolvedRubricTitle != null && resolvedRubricTitle.isNotEmpty)
+                'rubricTitle': resolvedRubricTitle,
+              if (normalizedRubricScores.isNotEmpty)
+                'rubricScores': normalizedRubricScores,
+              if (normalizedRubricScores.isNotEmpty)
+                'rubricTotalScore': rubricTotalScore,
+              if (normalizedRubricScores.isNotEmpty)
+                'rubricMaxScore': rubricMaxScore,
+            },
+            SetOptions(merge: true));
       }
 
       if (missionId.isNotEmpty && reviewLearnerId.isNotEmpty) {
@@ -1879,7 +1891,8 @@ class MissionService extends ChangeNotifier {
               .where('learnerId', isEqualTo: reviewLearnerId)
               .limit(80);
           if (reviewSiteId != null && reviewSiteId.isNotEmpty) {
-            evidenceQuery = evidenceQuery.where('siteId', isEqualTo: reviewSiteId);
+            evidenceQuery =
+                evidenceQuery.where('siteId', isEqualTo: reviewSiteId);
           }
           learnerEvidenceSnapshot = await evidenceQuery.get();
         }
@@ -1915,9 +1928,8 @@ class MissionService extends ChangeNotifier {
                   ),
                 );
           final String masteryId = '${reviewLearnerId}_${capabilityId}';
-          final DocumentReference<Map<String, dynamic>> masteryRef = _firestore
-              .collection('capabilityMastery')
-              .doc(masteryId);
+          final DocumentReference<Map<String, dynamic>> masteryRef =
+              _firestore.collection('capabilityMastery').doc(masteryId);
           final DocumentSnapshot<Map<String, dynamic>> masterySnapshot =
               await masteryRef.get();
           final Map<String, dynamic> masteryData =
@@ -1947,8 +1959,8 @@ class MissionService extends ChangeNotifier {
               'latestEvidenceId': canonicalAttemptRef.id,
               'latestMissionAttemptId': canonicalAttemptRef.id,
               'evidenceIds': mergedEvidenceIds,
-              'createdAt': masteryData['createdAt'] ??
-                  FieldValue.serverTimestamp(),
+              'createdAt':
+                  masteryData['createdAt'] ?? FieldValue.serverTimestamp(),
               'updatedAt': FieldValue.serverTimestamp(),
             },
             SetOptions(merge: true),
@@ -2039,7 +2051,10 @@ class MissionService extends ChangeNotifier {
     }
 
     final DocumentSnapshot<Map<String, dynamic>> submissionSnapshot =
-        await _firestore.collection('missionSubmissions').doc(reviewRecordId).get();
+        await _firestore
+            .collection('missionSubmissions')
+            .doc(reviewRecordId)
+            .get();
     final Map<String, dynamic> submissionData =
         submissionSnapshot.data() ?? <String, dynamic>{};
     final String missionId = submissionData['missionId'] as String? ?? '';
@@ -2067,8 +2082,8 @@ class MissionService extends ChangeNotifier {
         return siteMatches && normalizedStatus == 'pending';
       });
       if (candidates.isNotEmpty) {
-        final List<QueryDocumentSnapshot<Map<String, dynamic>>> sortedCandidates =
-            candidates.toList()
+        final List<QueryDocumentSnapshot<Map<String, dynamic>>>
+            sortedCandidates = candidates.toList()
               ..sort((a, b) {
                 final DateTime aSubmitted =
                     _parseTimestamp(a.data()['submittedAt']) ?? DateTime(1970);

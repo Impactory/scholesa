@@ -11,7 +11,7 @@ Only active product code paths were considered. A workflow is not "verified" unl
 | # | Required workflow | Status | Judgment |
 | --- | --- | --- | --- |
 | 1 | Curriculum admin can define capabilities and map them to units/checkpoints | Partial | HQ curriculum authoring now persists first-class capability references on missions and rubrics, but checkpoint-level mapping and downstream usage are still incomplete. |
-| 2 | Teacher can run a session and quickly log capability observations during build time | Partial | Live capture exists in Flutter educator sessions, but the captured evidence is not yet wired into rubric, growth, portfolio, and reporting chains. |
+| 2 | Teacher can run a session and quickly log capability observations during build time | Partial | Live capture exists in Flutter educator sessions and mapped evidence can now be linked forward into rubric and growth records, but portfolio and reporting still do not consume that chain. |
 | 3 | Student can submit artifacts, reflections, and checkpoint evidence | Partial | Reflection and checkpoint submission paths exist, and portfolio items load, but the submission chain is fragmented and not consistently linked to capability evidence lineage. |
 | 4 | Teacher can apply a 4-level rubric tied to capabilities and process domains | Partial | Rubrics and rubric applications exist, but they are mission-oriented and not tied to a capability framework with downstream growth updates. |
 | 5 | Proof-of-learning can be captured and reviewed | Partial | Explain-back capture exists, but the current path records a generic event and does not form a teacher-reviewed proof chain attached to capability evidence. |
@@ -36,7 +36,8 @@ Only active product code paths were considered. A workflow is not "verified" unl
 - `apps/empire_flutter/app/lib/modules/educator/educator_sessions_page.dart` now supports live evidence capture into `evidenceRecords` with `capabilityId`, `capabilityLabel`, `capabilityMapped`, `phaseKey`, `portfolioCandidate`, `rubricStatus`, and `growthStatus`.
 - The dialog now loads mapped capabilities by pillar from the new `capabilities` collection and only falls back to free-text capture when HQ has not authored mappings yet.
 - `firestore.rules` includes read and write rules for `evidenceRecords`.
-- The chain stops after capture. `rubricStatus` and `growthStatus` are stored as `pending`, and there is no downstream worker or educator review path consuming those records.
+- `apps/empire_flutter/app/lib/modules/missions/mission_service.dart` now links matching `evidenceRecords` forward when a capability-linked rubric review is submitted by setting rubric and growth linkage fields and attaching the latest growth event.
+- Remaining gap: portfolio and reporting still do not consume linked evidence provenance.
 - Current judgment: partial.
 
 ### 3. Learner artifact, reflection, and checkpoint submission
@@ -65,6 +66,7 @@ Only active product code paths were considered. A workflow is not "verified" unl
 ### 6. Capability growth over time from evidence
 
 - `apps/empire_flutter/app/lib/modules/missions/mission_service.dart` now derives capability-level outcomes from educator rubric scores and writes both `capabilityMastery` and append-only `capabilityGrowthEvents` records.
+- The same review path now updates matching `evidenceRecords` so the originating observation no longer stays stranded in `pending` when a capability-linked rubric review is applied.
 - `schema.ts` now defines `CapabilityMastery` and `CapabilityGrowthEvent` entities.
 - `firestore.rules` now includes access rules for `capabilityMastery` and `capabilityGrowthEvents`.
 - `apps/empire_flutter/app/lib/domain/models.dart` and `apps/empire_flutter/app/lib/domain/repositories.dart` now include Flutter models and repositories for those records.
@@ -132,7 +134,7 @@ Only active product code paths were considered. A workflow is not "verified" unl
 ### E. Gold-ready blockers
 
 - The capability model and growth records now exist, but they still do not anchor evidence, portfolio, and reporting end to end.
-- Live evidence capture exists, but the downstream chain is still disconnected.
+- Live evidence capture now reaches rubric and growth for mapped capabilities, but the chain still stops short of portfolio and reporting.
 - Reporting still depends on rollups and gamified progress constructs.
 - AI transparency is not consistently visible across all relevant learner outputs.
 
