@@ -120,6 +120,16 @@ function asFiniteNumber(value: unknown): number | null {
   return null;
 }
 
+function asAvailabilityString(value: unknown): string {
+  const numeric = asFiniteNumber(value);
+  return numeric != null ? String(numeric) : 'unavailable';
+}
+
+function asPercentFromUnit(value: unknown): string {
+  const numeric = asFiniteNumber(value);
+  return numeric != null ? `${Math.round(numeric * 100)}%` : 'unavailable';
+}
+
 function asBoolean(value: unknown, fallback = false): boolean {
   if (typeof value === 'boolean') return value;
   if (typeof value === 'string') {
@@ -504,6 +514,21 @@ async function loadParentPortfolioWorkflowRecords(ctx: WorkflowContext): Promise
     const capability = learner.capabilitySnapshot as Record<string, unknown> | undefined;
     const portfolio = learner.portfolioSnapshot as Record<string, unknown> | undefined;
     const ideation = learner.ideationPassport as Record<string, unknown> | undefined;
+    const futureSkills = capability ? asPercentFromUnit(capability.futureSkills) : 'unavailable';
+    const leadership = capability ? asPercentFromUnit(capability.leadership) : 'unavailable';
+    const impact = capability ? asPercentFromUnit(capability.impact) : 'unavailable';
+    const capabilityBand = capability && typeof capability.band === 'string' && capability.band.trim().length > 0
+      ? capability.band.trim()
+      : 'unavailable';
+    const artifactCount = portfolio ? asAvailabilityString(portfolio.artifactCount) : 'unavailable';
+    const publishedArtifactCount = portfolio ? asAvailabilityString(portfolio.publishedArtifactCount) : 'unavailable';
+    const badgeCount = portfolio ? asAvailabilityString(portfolio.badgeCount) : 'unavailable';
+    const projectCount = portfolio ? asAvailabilityString(portfolio.projectCount) : 'unavailable';
+    const missionAttempts = ideation ? asAvailabilityString(ideation.missionAttempts) : 'unavailable';
+    const completedMissions = ideation ? asAvailabilityString(ideation.completedMissions) : 'unavailable';
+    const reflectionsSubmitted = ideation ? asAvailabilityString(ideation.reflectionsSubmitted) : 'unavailable';
+    const voiceInteractions = ideation ? asAvailabilityString(ideation.voiceInteractions) : 'unavailable';
+    const collaborationSignals = ideation ? asAvailabilityString(ideation.collaborationSignals) : 'unavailable';
 
     summaryRecords.push(
       buildRecord({
@@ -512,14 +537,14 @@ async function loadParentPortfolioWorkflowRecords(ctx: WorkflowContext): Promise
         id: `capability:${learnerId}`,
         raw: {
           title: `${learnerName} capability graph`,
-          summary: `Future ${Math.round(Number(capability?.futureSkills || 0) * 100)}% • Leadership ${Math.round(Number(capability?.leadership || 0) * 100)}% • Impact ${Math.round(Number(capability?.impact || 0) * 100)}%`,
-          status: asString(capability?.band, 'emerging'),
+          summary: `Future ${futureSkills} • Leadership ${leadership} • Impact ${impact}`,
+          status: capabilityBand,
           updatedAt: portfolio?.latestArtifactAt || learner.updatedAt || new Date().toISOString(),
           siteId: activeSiteId(ctx.profile),
-          futureSkills: String(capability?.futureSkills ?? 0),
-          leadership: String(capability?.leadership ?? 0),
-          impact: String(capability?.impact ?? 0),
-          overall: String(capability?.overall ?? 0),
+          futureSkills: capability ? asAvailabilityString(capability.futureSkills) : 'unavailable',
+          leadership: capability ? asAvailabilityString(capability.leadership) : 'unavailable',
+          impact: capability ? asAvailabilityString(capability.impact) : 'unavailable',
+          overall: capability ? asAvailabilityString(capability.overall) : 'unavailable',
         },
         titleKeys: ['title'],
         subtitleKeys: ['summary'],
@@ -536,14 +561,14 @@ async function loadParentPortfolioWorkflowRecords(ctx: WorkflowContext): Promise
         id: `portfolio:${learnerId}`,
         raw: {
           title: `${learnerName} portfolio snapshot`,
-          summary: `Artifacts ${String(portfolio?.artifactCount || 0)} • Published ${String(portfolio?.publishedArtifactCount || 0)} • Badges ${String(portfolio?.badgeCount || 0)}`,
+          summary: `Artifacts ${artifactCount} • Published ${publishedArtifactCount} • Badges ${badgeCount}`,
           status: 'active',
           updatedAt: portfolio?.latestArtifactAt || learner.updatedAt || new Date().toISOString(),
           siteId: activeSiteId(ctx.profile),
-          artifactCount: String(portfolio?.artifactCount ?? 0),
-          publishedArtifactCount: String(portfolio?.publishedArtifactCount ?? 0),
-          badgeCount: String(portfolio?.badgeCount ?? 0),
-          projectCount: String(portfolio?.projectCount ?? 0),
+          artifactCount,
+          publishedArtifactCount,
+          badgeCount,
+          projectCount,
         },
         titleKeys: ['title'],
         subtitleKeys: ['summary'],
@@ -560,15 +585,15 @@ async function loadParentPortfolioWorkflowRecords(ctx: WorkflowContext): Promise
         id: `passport:${learnerId}`,
         raw: {
           title: `${learnerName} ideation passport`,
-          summary: `Missions ${String(ideation?.completedMissions || 0)} • Reflections ${String(ideation?.reflectionsSubmitted || 0)} • Voice ${String(ideation?.voiceInteractions || 0)}`,
+          summary: `Missions ${completedMissions} • Reflections ${reflectionsSubmitted} • Voice ${voiceInteractions}`,
           status: 'active',
           updatedAt: ideation?.lastReflectionAt || portfolio?.latestArtifactAt || new Date().toISOString(),
           siteId: activeSiteId(ctx.profile),
-          missionAttempts: String(ideation?.missionAttempts ?? 0),
-          completedMissions: String(ideation?.completedMissions ?? 0),
-          reflectionsSubmitted: String(ideation?.reflectionsSubmitted ?? 0),
-          voiceInteractions: String(ideation?.voiceInteractions ?? 0),
-          collaborationSignals: String(ideation?.collaborationSignals ?? 0),
+          missionAttempts,
+          completedMissions,
+          reflectionsSubmitted,
+          voiceInteractions,
+          collaborationSignals,
         },
         titleKeys: ['title'],
         subtitleKeys: ['summary'],
@@ -1030,7 +1055,7 @@ async function loadHqBillingRecords(): Promise<WorkflowRecord[]> {
     invoiceRecords.push({
       id,
       title: `Invoice ${id}`,
-      subtitle: `${asString(entry.site, 'Unknown Site')} • ${String(entry.amount || 0)}`,
+      subtitle: `${asString(entry.site, 'Site unavailable')} • ${asAvailabilityString(entry.amount)}`,
       status: asString(entry.status, 'pending'),
       updatedAt: toIsoDate(entry.date),
       siteId: null,
