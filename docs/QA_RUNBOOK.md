@@ -123,7 +123,7 @@ Quick link: one-page staging PITR drill checklist in STAGING_PITR_DRILL_CHECKLIS
 ### DB-IDX-01 Composite Index Rollout + Query Validation
 1) Deploy indexes from repo root: `firebase deploy --only firestore:indexes`.
 2) Wait for index build completion in Firebase Console → Firestore → Indexes.
-3) Validate target query in app/functions path (`missionAttempts` filtered by `siteId` + `status`, ordered by `startedAt desc`).
+3) Validate target query in app/functions path (`missionAttempts` filtered by `siteId` + `status`, ordered by `submittedAt desc`).
 4) Record p50/p95 latency and confirm no missing-index errors in logs.
 
 ### DB-BKP-01 Managed Backup + Restore Drill

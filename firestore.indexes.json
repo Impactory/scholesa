@@ -137,6 +137,15 @@
       "collectionGroup": "missionAttempts",
       "queryScope": "COLLECTION",
       "fields": [
+        { "fieldPath": "siteId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "submittedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "missionAttempts",
+      "queryScope": "COLLECTION",
+      "fields": [
         { "fieldPath": "learnerId", "order": "ASCENDING" },
         { "fieldPath": "startedAt", "order": "DESCENDING" }
       ]
