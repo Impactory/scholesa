@@ -9,6 +9,12 @@ import '../services/telemetry_service.dart';
 import '../ui/theme/scholesa_theme.dart';
 import 'bos_service.dart';
 
+typedef BosLearnerLoopInsightsLoader = Future<Map<String, dynamic>> Function({
+  required String siteId,
+  required String learnerId,
+  required int lookbackDays,
+});
+
 class BosLearnerLoopInsightsCard extends StatefulWidget {
   const BosLearnerLoopInsightsCard({
     required this.title,
@@ -17,6 +23,7 @@ class BosLearnerLoopInsightsCard extends StatefulWidget {
     required this.learnerId,
     required this.learnerName,
     this.accentColor,
+    this.insightsLoader,
     super.key,
   });
 
@@ -26,6 +33,7 @@ class BosLearnerLoopInsightsCard extends StatefulWidget {
   final String? learnerId;
   final String? learnerName;
   final Color? accentColor;
+  final BosLearnerLoopInsightsLoader? insightsLoader;
 
   @override
   State<BosLearnerLoopInsightsCard> createState() =>
@@ -70,8 +78,19 @@ class _BosLearnerLoopInsightsCardState
     if (siteId == null || siteId.isEmpty) return null;
 
     try {
-      final Map<String, dynamic> insights =
-          await BosService.instance.getLearnerLoopInsights(
+      final BosLearnerLoopInsightsLoader loader = widget.insightsLoader ??
+          ({
+            required String siteId,
+            required String learnerId,
+            required int lookbackDays,
+          }) {
+            return BosService.instance.getLearnerLoopInsights(
+              siteId: siteId,
+              learnerId: learnerId,
+              lookbackDays: lookbackDays,
+            );
+          };
+      final Map<String, dynamic> insights = await loader(
         siteId: siteId,
         learnerId: learnerId,
         lookbackDays: 30,
@@ -226,51 +245,9 @@ class _BosLearnerLoopInsightsCardState
                   );
                 }
 
-                final Map<String, dynamic> trend =
-                    (insights['trend'] as Map<String, dynamic>?) ??
-                        <String, dynamic>{};
-                final Map<String, dynamic> state =
-                    (insights['state'] as Map<String, dynamic>?) ??
-                        <String, dynamic>{};
-                final Map<String, dynamic> mvl =
-                    (insights['mvl'] as Map<String, dynamic>?) ??
-                        <String, dynamic>{};
-                final List<dynamic> goals =
-                    (insights['activeGoals'] as List<dynamic>?) ?? <dynamic>[];
-                final Map<String, dynamic> stateAvailability =
-                    (insights['stateAvailability'] as Map<String, dynamic>?) ??
-                        <String, dynamic>{};
-
-                String pct(dynamic value) {
-                  final double? v = (value as num?)?.toDouble();
-                  if (v == null) {
-                    return BosCoachingI18n.signalUnavailable(context);
-                  }
-                  return '${(v * 100).toStringAsFixed(0)}%';
-                }
-
-                String delta(dynamic value) {
-                  final double? v = (value as num?)?.toDouble();
-                  if (v == null) {
-                    return BosCoachingI18n.signalUnavailable(context);
-                  }
-                  final String sign = v >= 0 ? '+' : '';
-                  return '$sign${(v * 100).toStringAsFixed(1)}';
-                }
-
-                final bool hasAnyStateMetric = state['cognition'] is num ||
-                    state['engagement'] is num ||
-                    state['integrity'] is num;
-                final bool hasAnyTrendMetric = trend['cognitionDelta'] is num ||
-                    trend['engagementDelta'] is num ||
-                    trend['integrityDelta'] is num;
-                final bool partialSignals =
-                    !((stateAvailability['hasCurrentState'] as bool?) ??
-                            false) ||
-                        !((stateAvailability['hasTrendBaseline'] as bool?) ??
-                            false);
-
-                if (!hasAnyStateMetric && !hasAnyTrendMetric && goals.isEmpty) {
+                final _LearnerLoopInsights? parsed =
+                    _LearnerLoopInsights.tryFromPayload(insights);
+                if (parsed == null) {
                   return _buildInfoState(
                     context,
                     icon: Icons.sensors_off_outlined,
@@ -282,7 +259,7 @@ class _BosLearnerLoopInsightsCardState
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    if (partialSignals) ...<Widget>[
+                    if (parsed.partialSignals) ...<Widget>[
                       _buildInfoState(
                         context,
                         icon: Icons.info_outline_rounded,
@@ -296,27 +273,27 @@ class _BosLearnerLoopInsightsCardState
                       runSpacing: 8,
                       children: <Widget>[
                         _metricChip(
-                          '${BosCoachingI18n.cognition(context)} ${pct(state['cognition'])}',
+                          '${BosCoachingI18n.cognition(context)} ${parsed.pct(context, parsed.cognition)}',
                           accent,
                           context,
                         ),
                         _metricChip(
-                          '${BosCoachingI18n.engagement(context)} ${pct(state['engagement'])}',
+                          '${BosCoachingI18n.engagement(context)} ${parsed.pct(context, parsed.engagement)}',
                           accent,
                           context,
                         ),
                         _metricChip(
-                          '${BosCoachingI18n.integrity(context)} ${pct(state['integrity'])}',
+                          '${BosCoachingI18n.integrity(context)} ${parsed.pct(context, parsed.integrity)}',
                           accent,
                           context,
                         ),
                         _metricChip(
-                          '${BosCoachingI18n.improvementScore(context)} ${delta(trend['improvementScore'])}',
+                          '${BosCoachingI18n.improvementScore(context)} ${parsed.delta(context, parsed.improvementScore)}',
                           accent,
                           context,
                         ),
                         _metricChip(
-                          '${BosCoachingI18n.mvlStatus(context)} ${mvl['active'] ?? 0}/${mvl['passed'] ?? 0}/${mvl['failed'] ?? 0}',
+                          '${BosCoachingI18n.mvlStatus(context)} ${parsed.mvlSummary(context)}',
                           accent,
                           context,
                         ),
@@ -331,7 +308,7 @@ class _BosLearnerLoopInsightsCardState
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        '${BosCoachingI18n.latestSignal(context)}: C ${delta(trend['cognitionDelta'])}, E ${delta(trend['engagementDelta'])}, I ${delta(trend['integrityDelta'])}',
+                        '${BosCoachingI18n.latestSignal(context)}: C ${parsed.delta(context, parsed.cognitionDelta)}, E ${parsed.delta(context, parsed.engagementDelta)}, I ${parsed.delta(context, parsed.integrityDelta)}',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: scheme.onSurfaceVariant,
                           fontWeight: FontWeight.w600,
@@ -339,7 +316,7 @@ class _BosLearnerLoopInsightsCardState
                         ),
                       ),
                     ),
-                    if (goals.isNotEmpty) ...<Widget>[
+                    if (parsed.activeGoals.isNotEmpty) ...<Widget>[
                       const SizedBox(height: 8),
                       Container(
                         width: double.infinity,
@@ -349,7 +326,7 @@ class _BosLearnerLoopInsightsCardState
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          '${BosCoachingI18n.activeGoals(context)}: ${goals.take(3).join(' • ')}',
+                          '${BosCoachingI18n.activeGoals(context)}: ${parsed.activeGoals.take(3).join(' • ')}',
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: scheme.onSurface,
                             fontWeight: FontWeight.w600,
@@ -420,5 +397,146 @@ class _BosLearnerLoopInsightsCardState
         ],
       ),
     );
+  }
+}
+
+Map<String, dynamic>? _asStringDynamicMap(dynamic value) {
+  if (value is! Map<dynamic, dynamic>) {
+    return null;
+  }
+  return value.map(
+    (dynamic key, dynamic val) => MapEntry(key.toString(), val),
+  );
+}
+
+double? _readFiniteDouble(Map<String, dynamic> source, String key) {
+  final dynamic value = source[key];
+  if (value is! num) {
+    return null;
+  }
+  final double converted = value.toDouble();
+  return converted.isFinite ? converted : null;
+}
+
+int? _readInt(Map<String, dynamic> source, String key) {
+  final dynamic value = source[key];
+  if (value is! num) {
+    return null;
+  }
+  return value.toInt();
+}
+
+bool? _readBool(Map<String, dynamic> source, String key) {
+  final dynamic value = source[key];
+  return value is bool ? value : null;
+}
+
+List<String> _readTrimmedStringList(Map<String, dynamic> source, String key) {
+  final dynamic value = source[key];
+  if (value is! List<dynamic>) {
+    return const <String>[];
+  }
+  return value
+      .whereType<String>()
+      .map((String item) => item.trim())
+      .where((String item) => item.isNotEmpty)
+      .toList(growable: false);
+}
+
+class _LearnerLoopInsights {
+  const _LearnerLoopInsights({
+    required this.cognition,
+    required this.engagement,
+    required this.integrity,
+    required this.improvementScore,
+    required this.cognitionDelta,
+    required this.engagementDelta,
+    required this.integrityDelta,
+    required this.activeMvl,
+    required this.passedMvl,
+    required this.failedMvl,
+    required this.activeGoals,
+    required this.partialSignals,
+  });
+
+  final double? cognition;
+  final double? engagement;
+  final double? integrity;
+  final double? improvementScore;
+  final double? cognitionDelta;
+  final double? engagementDelta;
+  final double? integrityDelta;
+  final int? activeMvl;
+  final int? passedMvl;
+  final int? failedMvl;
+  final List<String> activeGoals;
+  final bool partialSignals;
+
+  static _LearnerLoopInsights? tryFromPayload(Map<String, dynamic> payload) {
+    final Map<String, dynamic> state =
+        _asStringDynamicMap(payload['state']) ?? <String, dynamic>{};
+    final Map<String, dynamic> trend =
+        _asStringDynamicMap(payload['trend']) ?? <String, dynamic>{};
+    final Map<String, dynamic> mvl =
+        _asStringDynamicMap(payload['mvl']) ?? <String, dynamic>{};
+    final Map<String, dynamic> availability =
+        _asStringDynamicMap(payload['stateAvailability']) ??
+            <String, dynamic>{};
+
+    final _LearnerLoopInsights parsed = _LearnerLoopInsights(
+      cognition: _readFiniteDouble(state, 'cognition'),
+      engagement: _readFiniteDouble(state, 'engagement'),
+      integrity: _readFiniteDouble(state, 'integrity'),
+      improvementScore: _readFiniteDouble(trend, 'improvementScore'),
+      cognitionDelta: _readFiniteDouble(trend, 'cognitionDelta'),
+      engagementDelta: _readFiniteDouble(trend, 'engagementDelta'),
+      integrityDelta: _readFiniteDouble(trend, 'integrityDelta'),
+      activeMvl: _readInt(mvl, 'active'),
+      passedMvl: _readInt(mvl, 'passed'),
+      failedMvl: _readInt(mvl, 'failed'),
+      activeGoals: _readTrimmedStringList(payload, 'activeGoals'),
+      partialSignals: !(_readBool(availability, 'hasCurrentState') ?? false) ||
+          !(_readBool(availability, 'hasTrendBaseline') ?? false),
+    );
+
+    if (!parsed.hasAnySignal) {
+      return null;
+    }
+    return parsed;
+  }
+
+  bool get hasAnySignal =>
+      cognition != null ||
+      engagement != null ||
+      integrity != null ||
+      improvementScore != null ||
+      cognitionDelta != null ||
+      engagementDelta != null ||
+      integrityDelta != null ||
+      activeMvl != null ||
+      passedMvl != null ||
+      failedMvl != null ||
+      activeGoals.isNotEmpty;
+
+  String pct(BuildContext context, double? value) {
+    if (value == null) {
+      return BosCoachingI18n.signalUnavailable(context);
+    }
+    return '${(value * 100).toStringAsFixed(0)}%';
+  }
+
+  String delta(BuildContext context, double? value) {
+    if (value == null) {
+      return BosCoachingI18n.signalUnavailable(context);
+    }
+    final String sign = value >= 0 ? '+' : '';
+    return '$sign${(value * 100).toStringAsFixed(1)}';
+  }
+
+  String mvlSummary(BuildContext context) {
+    if (activeMvl == null || passedMvl == null || failedMvl == null) {
+      return BosCoachingI18n.signalUnavailable(context);
+    }
+    return '$activeMvl/$passedMvl/$failedMvl';
   }
 }

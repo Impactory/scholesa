@@ -198,41 +198,14 @@ class _BosClassInsightsCardState extends State<BosClassInsightsCard> {
                   );
                 }
 
-                final int learnerCount =
-                    (insights['learnerCount'] as num?)?.toInt() ?? 0;
-                final int activeMvlCount =
-                    (insights['activeMvlCount'] as num?)?.toInt() ?? 0;
-                final Map<String, dynamic> averages =
-                    (insights['averages'] as Map<String, dynamic>?) ??
-                        <String, dynamic>{};
-                final Map<String, dynamic> coverage =
-                    (insights['coverage'] as Map<String, dynamic>?) ??
-                        <String, dynamic>{};
-                final List<_ClassLearnerSignal> watchlist =
-                    _watchlistFromPayload(
-                  insights['watchlist'] ?? insights['learners'],
+                final _BosClassInsights? parsed =
+                    _BosClassInsights.tryFromPayload(
+                  insights,
+                  widget.learnerNamesById,
+                  context,
                 );
 
-                String pct(dynamic value) {
-                  final double? numeric = (value as num?)?.toDouble();
-                  if (numeric == null) {
-                    return BosCoachingI18n.signalUnavailable(context);
-                  }
-                  return '${(numeric * 100).toStringAsFixed(0)}%';
-                }
-
-                final bool hasAnyAverage = averages['cognition'] is num ||
-                    averages['engagement'] is num ||
-                    averages['integrity'] is num;
-                final bool partialSignals = learnerCount > 0 &&
-                    (((coverage['cognition'] as num?)?.toInt() ?? 0) !=
-                            learnerCount ||
-                        ((coverage['engagement'] as num?)?.toInt() ?? 0) !=
-                            learnerCount ||
-                        ((coverage['integrity'] as num?)?.toInt() ?? 0) !=
-                            learnerCount);
-
-                if (!hasAnyAverage && watchlist.isEmpty && learnerCount == 0) {
+                if (parsed == null) {
                   return _buildInfoState(
                     context,
                     icon: Icons.sensors_off_outlined,
@@ -244,7 +217,7 @@ class _BosClassInsightsCardState extends State<BosClassInsightsCard> {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    if (partialSignals) ...<Widget>[
+                    if (parsed.partialSignals) ...<Widget>[
                       _buildInfoState(
                         context,
                         icon: Icons.info_outline_rounded,
@@ -258,27 +231,27 @@ class _BosClassInsightsCardState extends State<BosClassInsightsCard> {
                       runSpacing: 8,
                       children: <Widget>[
                         _metricChip(
-                          '${BosCoachingI18n.learnersTracked(context)} $learnerCount',
+                          '${BosCoachingI18n.learnersTracked(context)} ${parsed.countLabel(context, parsed.learnerCount)}',
                           accent,
                           context,
                         ),
                         _metricChip(
-                          '${BosCoachingI18n.cognition(context)} ${pct(averages['cognition'])}',
+                          '${BosCoachingI18n.cognition(context)} ${parsed.pct(context, parsed.cognition)}',
                           accent,
                           context,
                         ),
                         _metricChip(
-                          '${BosCoachingI18n.engagement(context)} ${pct(averages['engagement'])}',
+                          '${BosCoachingI18n.engagement(context)} ${parsed.pct(context, parsed.engagement)}',
                           accent,
                           context,
                         ),
                         _metricChip(
-                          '${BosCoachingI18n.integrity(context)} ${pct(averages['integrity'])}',
+                          '${BosCoachingI18n.integrity(context)} ${parsed.pct(context, parsed.integrity)}',
                           accent,
                           context,
                         ),
                         _metricChip(
-                          '${BosCoachingI18n.activeMvlGates(context)} $activeMvlCount',
+                          '${BosCoachingI18n.activeMvlGates(context)} ${parsed.countLabel(context, parsed.activeMvlCount)}',
                           accent,
                           context,
                         ),
@@ -293,7 +266,7 @@ class _BosClassInsightsCardState extends State<BosClassInsightsCard> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        '${BosCoachingI18n.fdmStateEstimate(context)}: ${BosCoachingI18n.cognition(context)} ${pct(averages['cognition'])} • ${BosCoachingI18n.engagement(context)} ${pct(averages['engagement'])} • ${BosCoachingI18n.integrity(context)} ${pct(averages['integrity'])}',
+                        '${BosCoachingI18n.fdmStateEstimate(context)}: ${BosCoachingI18n.cognition(context)} ${parsed.pct(context, parsed.cognition)} • ${BosCoachingI18n.engagement(context)} ${parsed.pct(context, parsed.engagement)} • ${BosCoachingI18n.integrity(context)} ${parsed.pct(context, parsed.integrity)}',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: scheme.onSurfaceVariant,
                           fontWeight: FontWeight.w600,
@@ -302,7 +275,7 @@ class _BosClassInsightsCardState extends State<BosClassInsightsCard> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    _buildWatchlistSection(context, accent, watchlist),
+                    _buildWatchlistSection(context, accent, parsed.watchlist),
                   ],
                 );
               },
@@ -507,33 +480,6 @@ class _BosClassInsightsCardState extends State<BosClassInsightsCard> {
     );
   }
 
-  List<_ClassLearnerSignal> _watchlistFromPayload(dynamic value) {
-    if (value is! List<dynamic>) {
-      return const <_ClassLearnerSignal>[];
-    }
-
-    final List<_ClassLearnerSignal> learners = value
-        .whereType<Map<dynamic, dynamic>>()
-        .map((Map<dynamic, dynamic> entry) {
-          final Map<String, dynamic> map = entry.map(
-            (dynamic key, dynamic val) => MapEntry(key.toString(), val),
-          );
-          return _ClassLearnerSignal.tryFromMap(
-            map,
-            widget.learnerNamesById,
-            context,
-          );
-        })
-        .whereType<_ClassLearnerSignal>()
-        .where(
-          (_ClassLearnerSignal learner) => learner.needsAttention,
-        )
-        .toList(growable: false)
-      ..sort((a, b) => a.riskScore.compareTo(b.riskScore));
-
-    return learners;
-  }
-
   Widget _metricChip(String text, Color accent, BuildContext context) {
     final ColorScheme scheme = Theme.of(context).colorScheme;
     return Container(
@@ -602,16 +548,10 @@ class _ClassLearnerSignal {
     BuildContext context,
   ) {
     final String learnerId = (map['learnerId'] as String? ?? '').trim();
-    final Map<String, dynamic>? xHat = map['x_hat'] as Map<String, dynamic>?;
-    final double? cognition = xHat?['cognition'] is num
-        ? ((xHat!['cognition'] as num).toDouble())
-        : null;
-    final double? engagement = xHat?['engagement'] is num
-        ? ((xHat!['engagement'] as num).toDouble())
-        : null;
-    final double? integrity = xHat?['integrity'] is num
-        ? ((xHat!['integrity'] as num).toDouble())
-        : null;
+    final Map<String, dynamic>? xHat = _asStringDynamicMap(map['x_hat']);
+    final double? cognition = _readFiniteDouble(xHat, 'cognition');
+    final double? engagement = _readFiniteDouble(xHat, 'engagement');
+    final double? integrity = _readFiniteDouble(xHat, 'integrity');
     if (cognition == null && engagement == null && integrity == null) {
       return null;
     }
@@ -665,5 +605,122 @@ class _ClassLearnerSignal {
         ? BosCoachingI18n.signalUnavailable(context)
         : '${(value * 100).toStringAsFixed(0)}%';
     return '${BosCoachingI18n.cognition(context)} ${pct(cognition)} • ${BosCoachingI18n.engagement(context)} ${pct(engagement)} • ${BosCoachingI18n.integrity(context)} ${pct(integrity)}';
+  }
+}
+
+Map<String, dynamic>? _asStringDynamicMap(dynamic value) {
+  if (value is! Map<dynamic, dynamic>) {
+    return null;
+  }
+  return value.map(
+    (dynamic key, dynamic val) => MapEntry(key.toString(), val),
+  );
+}
+
+double? _readFiniteDouble(Map<String, dynamic>? source, String key) {
+  if (source == null) {
+    return null;
+  }
+  final dynamic value = source[key];
+  if (value is! num) {
+    return null;
+  }
+  final double converted = value.toDouble();
+  return converted.isFinite ? converted : null;
+}
+
+int? _readInt(Map<String, dynamic>? source, String key) {
+  if (source == null) {
+    return null;
+  }
+  final dynamic value = source[key];
+  if (value is! num) {
+    return null;
+  }
+  return value.toInt();
+}
+
+class _BosClassInsights {
+  const _BosClassInsights({
+    required this.learnerCount,
+    required this.activeMvlCount,
+    required this.cognition,
+    required this.engagement,
+    required this.integrity,
+    required this.watchlist,
+    required this.partialSignals,
+  });
+
+  final int? learnerCount;
+  final int? activeMvlCount;
+  final double? cognition;
+  final double? engagement;
+  final double? integrity;
+  final List<_ClassLearnerSignal> watchlist;
+  final bool partialSignals;
+
+  static _BosClassInsights? tryFromPayload(
+    Map<String, dynamic> payload,
+    Map<String, String> learnerNamesById,
+    BuildContext context,
+  ) {
+    final Map<String, dynamic>? averages = _asStringDynamicMap(payload['averages']);
+    final Map<String, dynamic>? coverage = _asStringDynamicMap(payload['coverage']);
+    final int? learnerCount = _readInt(payload, 'learnerCount');
+    final int? activeMvlCount = _readInt(payload, 'activeMvlCount');
+    final List<_ClassLearnerSignal> watchlist = (payload['watchlist'] ?? payload['learners']) is List<dynamic>
+        ? (payload['watchlist'] ?? payload['learners'])
+            .whereType<Map<dynamic, dynamic>>()
+            .map((Map<dynamic, dynamic> entry) => entry.map(
+                  (dynamic key, dynamic val) => MapEntry(key.toString(), val),
+                ))
+            .map((Map<String, dynamic> entry) =>
+                _ClassLearnerSignal.tryFromMap(entry, learnerNamesById, context))
+            .whereType<_ClassLearnerSignal>()
+            .where((_ClassLearnerSignal learner) => learner.needsAttention)
+            .toList(growable: false)
+        : const <_ClassLearnerSignal>[];
+
+    watchlist.sort((a, b) => a.riskScore.compareTo(b.riskScore));
+
+    final _BosClassInsights parsed = _BosClassInsights(
+      learnerCount: learnerCount,
+      activeMvlCount: activeMvlCount,
+      cognition: _readFiniteDouble(averages, 'cognition'),
+      engagement: _readFiniteDouble(averages, 'engagement'),
+      integrity: _readFiniteDouble(averages, 'integrity'),
+      watchlist: watchlist,
+      partialSignals: learnerCount != null &&
+          (((_readInt(coverage, 'cognition') ?? -1) != learnerCount) ||
+              ((_readInt(coverage, 'engagement') ?? -1) != learnerCount) ||
+              ((_readInt(coverage, 'integrity') ?? -1) != learnerCount)),
+    );
+
+    if (!parsed.hasAnySignal) {
+      return null;
+    }
+    return parsed;
+  }
+
+  bool get hasAnySignal =>
+      learnerCount != null ||
+      activeMvlCount != null ||
+      cognition != null ||
+      engagement != null ||
+      integrity != null ||
+      watchlist.isNotEmpty;
+
+  String pct(BuildContext context, double? value) {
+    if (value == null) {
+      return BosCoachingI18n.signalUnavailable(context);
+    }
+    return '${(value * 100).toStringAsFixed(0)}%';
+  }
+
+  String countLabel(BuildContext context, int? value) {
+    if (value == null) {
+      return BosCoachingI18n.signalUnavailable(context);
+    }
+    return '$value';
   }
 }
