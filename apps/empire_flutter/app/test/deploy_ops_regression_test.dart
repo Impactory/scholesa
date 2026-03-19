@@ -400,6 +400,7 @@ void main() {
         'GCP_PROJECT_ID',
         'GCP_REGION',
         'CLOUD_RUN_SERVICE',
+        'CLOUD_RUN_FLUTTER_SERVICE',
         'NEXT_PUBLIC_FIREBASE_API_KEY',
         'NEXT_PUBLIC_FIREBASE_PROJECT_ID',
         'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN',
@@ -422,6 +423,40 @@ void main() {
 
       expect(content.contains(r'${{ github.sha }}'), isTrue,
           reason: 'Docker image must be tagged with git SHA for traceability');
+    });
+
+    test('Deploy workflow verifies Functions Gen 2 and deploys Flutter web separately', () {
+      final String content =
+          File('$root/.github/workflows/deploy-cloud-run.yml')
+              .readAsStringSync();
+
+      expect(
+        content.contains('npm --prefix functions run verify:gen2'),
+        isTrue,
+        reason: 'Deploy workflow must explicitly verify the Functions Gen 2 baseline',
+      );
+      expect(
+        content.contains('flutter build web --release --no-wasm-dry-run'),
+        isTrue,
+        reason: 'Deploy workflow must explicitly build the Flutter web target before deploy',
+      );
+      expect(
+        content.contains('docker build -f Dockerfile.flutter'),
+        isTrue,
+        reason: 'Deploy workflow must build the dedicated Flutter web container',
+      );
+      expect(
+        content.contains('CLOUD_RUN_FLUTTER_SERVICE'),
+        isTrue,
+        reason: 'Deploy workflow must reference a dedicated Flutter web Cloud Run service',
+      );
+      expect(
+        content.contains(
+          r'gcloud run deploy ${{ secrets.CLOUD_RUN_FLUTTER_SERVICE }}',
+        ),
+        isTrue,
+        reason: 'Deploy workflow must deploy the Flutter web service explicitly',
+      );
     });
 
     // ── 3.4 Dockerfile uses pinned base images ──

@@ -111,7 +111,8 @@ Overview steps (automatable via the workflow):
     - `GCP_SA_KEY`: the JSON key for the GCP deploy service account (use the full JSON content).
     - `GCP_PROJECT_ID`: your GCP project id.
     - `GCP_REGION`: e.g., `us-central1`.
-    - `CLOUD_RUN_SERVICE`: desired Cloud Run service name (e.g., `scholesa-web`).
+    - `CLOUD_RUN_SERVICE`: desired primary web Cloud Run service name (e.g., `scholesa-web`).
+    - `CLOUD_RUN_FLUTTER_SERVICE`: desired Flutter web Cloud Run service name (e.g., `empire-web`).
     - Client/public Firebase vars: `NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_PROJECT_ID`, `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`, `NEXT_PUBLIC_FIREBASE_APP_ID`, `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`, `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`.
     - `NEXT_PUBLIC_ENABLE_SW` (true/false).
     - `FIREBASE_SERVICE_ACCOUNT_SECRET` (optional): the name of a Secret Manager secret containing the Firebase service account JSON. If you store the service account JSON in Secret Manager, set this to the secret name; the workflow will reference it when deploying. Alternatively, add `FIREBASE_SERVICE_ACCOUNT` as a GitHub secret containing base64(service-account.json) and create a Secret Manager secret manually.
@@ -143,10 +144,15 @@ gcloud secrets versions add firebase-service-account --data-file="path/to/fireba
 docker build -t gcr.io/$GCP_PROJECT_ID/scholesa:latest .
 docker push gcr.io/$GCP_PROJECT_ID/scholesa:latest
 gcloud run deploy $CLOUD_RUN_SERVICE --image gcr.io/$GCP_PROJECT_ID/scholesa:latest --region $GCP_REGION --platform managed --allow-unauthenticated --set-env-vars "NEXT_PUBLIC_FIREBASE_API_KEY=$NEXT_PUBLIC_FIREBASE_API_KEY,NEXT_PUBLIC_FIREBASE_PROJECT_ID=$NEXT_PUBLIC_FIREBASE_PROJECT_ID" --update-secrets "FIREBASE_SERVICE_ACCOUNT=firebase-service-account:latest"
+
+docker build -f Dockerfile.flutter -t gcr.io/$GCP_PROJECT_ID/empire-web:latest .
+docker push gcr.io/$GCP_PROJECT_ID/empire-web:latest
+gcloud run deploy $CLOUD_RUN_FLUTTER_SERVICE --image gcr.io/$GCP_PROJECT_ID/empire-web:latest --region $GCP_REGION --platform managed --allow-unauthenticated
 ```
 
 Notes:
 - The workflow I added expects the deploy SA key in `GCP_SA_KEY`, and optionally uses a Secret Manager secret name in `FIREBASE_SERVICE_ACCOUNT_SECRET`.
+- The fallback deploy workflow now verifies the Functions Gen 2 baseline and deploys both the primary web service and the Flutter web service.
 - For production, ensure your Firebase Admin service account has the appropriate Firebase permissions (create the key via Firebase Console for the Admin SDK if unsure).
 
 

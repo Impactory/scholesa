@@ -6,6 +6,7 @@ Add these repository secrets (GitHub → Settings → Secrets and variables → 
 - `GCP_PROJECT_ID` — your Google Cloud project id.
 - `GCP_REGION` — e.g., `us-central1`.
 - `CLOUD_RUN_SERVICE` — Cloud Run service name, e.g., `scholesa-web`.
+- `CLOUD_RUN_FLUTTER_SERVICE` — Flutter web Cloud Run service name, e.g., `empire-web`.
 - `NEXT_PUBLIC_FIREBASE_API_KEY` — Firebase public API key (client-side).
 - `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
 - `NEXT_PUBLIC_FIREBASE_PROJECT_ID`

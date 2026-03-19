@@ -44,6 +44,7 @@ jobs:
           GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
           GCP_REGION: ${{ secrets.GCP_REGION }}
           CLOUD_RUN_SERVICE: ${{ secrets.CLOUD_RUN_SERVICE }}
+          CLOUD_RUN_FLUTTER_SERVICE: ${{ secrets.CLOUD_RUN_FLUTTER_SERVICE }}
           CLOUD_RUN_COMPLIANCE_SERVICE: ${{ secrets.CLOUD_RUN_COMPLIANCE_SERVICE }}
           NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
           NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}
@@ -60,6 +61,7 @@ jobs:
             GCP_PROJECT_ID \
             GCP_REGION \
             CLOUD_RUN_SERVICE \
+            CLOUD_RUN_FLUTTER_SERVICE \
             CLOUD_RUN_COMPLIANCE_SERVICE \
             NEXT_PUBLIC_FIREBASE_API_KEY \
             NEXT_PUBLIC_FIREBASE_PROJECT_ID \
@@ -107,6 +109,17 @@ jobs:
             exit 1
           fi
 
+      - name: Verify Functions Gen 2 deployment baseline
+        run: |
+          npm --prefix functions run build
+          npm --prefix functions run verify:gen2
+
+      - name: Verify Flutter web artifact
+        run: |
+          cd apps/empire_flutter/app
+          flutter pub get
+          flutter build web --release --no-wasm-dry-run
+
       - name: Full RC2 regression chain
         env:
           FIREBASE_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
@@ -140,6 +153,13 @@ jobs:
           docker build -f Dockerfile.compliance -t $COMPLIANCE_IMAGE .
           docker push $COMPLIANCE_IMAGE
 
+      - name: Build Flutter web image and push to GCR
+        env:
+          FLUTTER_IMAGE: gcr.io/${{ secrets.GCP_PROJECT_ID }}/empire-web:${{ github.sha }}
+        run: |
+          docker build -f Dockerfile.flutter -t $FLUTTER_IMAGE .
+          docker push $FLUTTER_IMAGE
+
       - name: Deploy to Cloud Run
         env:
           IMAGE: gcr.io/${{ secrets.GCP_PROJECT_ID }}/scholesa:${{ github.sha }}
@@ -155,6 +175,20 @@ jobs:
       - name: Verify deployment
         run: |
           echo "Deployed to Cloud Run service: ${{ secrets.CLOUD_RUN_SERVICE }} (region ${{ secrets.GCP_REGION }})"
+
+      - name: Deploy Flutter web to Cloud Run
+        env:
+          FLUTTER_IMAGE: gcr.io/${{ secrets.GCP_PROJECT_ID }}/empire-web:${{ github.sha }}
+        run: |
+          gcloud run deploy ${{ secrets.CLOUD_RUN_FLUTTER_SERVICE }} \
+            --image "$FLUTTER_IMAGE" \
+            --region "${{ secrets.GCP_REGION }}" \
+            --platform managed \
+            --allow-unauthenticated
+
+      - name: Verify Flutter web deployment
+        run: |
+          echo "Deployed Flutter web to Cloud Run service: ${{ secrets.CLOUD_RUN_FLUTTER_SERVICE }} (region ${{ secrets.GCP_REGION }})"
 
       - name: Deploy compliance operator
         env:

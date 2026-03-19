@@ -18,6 +18,7 @@ These must exist in **GitHub Repository Secrets** for production deploy flows to
 - `GCP_PROJECT_ID` — GCP project ID for image/build/deploy operations.
 - `GCP_REGION` — Cloud Run region (for example `us-central1`).
 - `CLOUD_RUN_SERVICE` — primary web Cloud Run service name.
+- `CLOUD_RUN_FLUTTER_SERVICE` — Flutter web Cloud Run service name.
 - `CLOUD_RUN_COMPLIANCE_SERVICE` — compliance Cloud Run service name.
 
 ### Firebase / Runtime
@@ -48,6 +49,7 @@ These must exist in **GitHub Repository Secrets** for production deploy flows to
 ### `.github/workflows/deploy-cloud-run.yml` (manual fallback)
 
 - Requires all **Core GCP / Deploy** and **Public Runtime Config** secrets above.
+- Deploys the primary Node web service, the separate Flutter web service, and the compliance operator.
 - Uses `FIREBASE_SERVICE_ACCOUNT_SECRET` for Cloud Run secret injection.
 - Includes a fail-fast validation step that checks every required deploy/config secret.
 
