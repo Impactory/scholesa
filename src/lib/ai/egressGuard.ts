@@ -92,7 +92,7 @@ export function assertInternalAiEgress(url: string, source: string): void {
 export async function aiSafeFetch(
   url: string,
   init: RequestInit,
-  source = 'unknown'
+  source: string
 ): Promise<Response> {
   assertInternalAiEgress(url, source);
   return fetch(url, init);
