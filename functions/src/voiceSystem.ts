@@ -2046,7 +2046,7 @@ async function recordVoiceTelemetryEvent(payload: {
   audioBytes?: number;
   textLength?: number;
   understanding?: VoiceUnderstandingSignal;
-  modelVersionOverride?: string;
+  modelVersionOverride?: string | null;
   inference?: VoiceInferenceMeta;
   understandingSource?: UnderstandingSource;
   modelToolHintCount?: number;
@@ -2110,12 +2110,7 @@ async function recordVoiceTelemetryEvent(payload: {
       emotionalState: payload.understanding?.emotionalState ?? null,
       complexity: payload.understanding?.complexity ?? null,
       topicTags: payload.understanding?.topicTags ?? null,
-      modelVersion: payload.modelVersionOverride ??
-        (payload.event === 'voice.transcribe'
-          ? STT_MODEL_VERSION
-          : payload.event === 'voice.tts'
-          ? TTS_MODEL_VERSION
-          : VOICE_MODEL_VERSION),
+      modelVersion: payload.modelVersionOverride ?? null,
       policyVersion: VOICE_POLICY_VERSION,
       redactedPathCount: 0,
       inferenceService: payload.inference?.service ?? null,
@@ -2686,7 +2681,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
       : safety.localizedMessage;
     let candidateText = baselineCandidateText;
     let responseGenerationSource: ResponseGenerationSource = safety.safetyOutcome === 'allowed' ? 'local' : 'guardrail';
-    let llmModelVersion = VOICE_MODEL_VERSION;
+    let llmModelVersion: string | null = null;
     let inferenceMeta: VoiceInferenceMeta = buildLocalInferenceMeta(
       'llm',
       safety.safetyOutcome === 'allowed' ? 'not_attempted' : 'safety_blocked',
@@ -3155,7 +3150,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
         safetyOutcome: effectiveSafetyOutcome,
         safetyReasonCode: effectiveSafetyReasonCode,
         policyVersion: VOICE_POLICY_VERSION,
-        modelVersion: llmModelVersion,
+        modelVersion: responseGenerationSource === 'model' ? llmModelVersion : null,
         locale,
         role: authContext.requesterRole,
         gradeBand: authContext.gradeBand,
@@ -3263,7 +3258,7 @@ export async function handleVoiceTranscribe(req: Request, res: Response): Promis
     const partial = normalizeBoolean(partialHint, false);
     let transcriptCandidate = transcriptRaw;
     let confidence = transcriptRaw ? 0.96 : undefined;
-    let sttModelVersion = STT_MODEL_VERSION;
+    let sttModelVersion: string | null = null;
     let sttModelUnderstanding: PartialVoiceUnderstandingSignal | undefined;
     let understandingSource: UnderstandingSource = 'heuristic';
     let inferenceMeta: VoiceInferenceMeta = buildLocalInferenceMeta(
@@ -3503,7 +3498,7 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
     const fallbackAudioUrl = buildAudioUrl(req, token);
     let audioUrl = fallbackAudioUrl;
     let effectiveVoiceProfile = voiceProfile;
-    let ttsModelVersion = TTS_MODEL_VERSION;
+    let ttsModelVersion: string | null = null;
     let inferenceMeta: VoiceInferenceMeta = buildLocalInferenceMeta('tts', 'not_attempted');
     const ttsResult = await callInternalInferenceJson<Record<string, unknown>, Record<string, unknown>>({
       service: 'tts',
@@ -3535,9 +3530,6 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
       throw new VoiceHttpError(503, 'inference_unavailable', 'Internal TTS inference is required but unavailable.');
     }
     const ttsPayload = ttsResult.ok ? extractInternalTtsPayload(ttsResult.data) : undefined;
-    if (ttsPayload?.modelVersion) {
-      ttsModelVersion = ttsPayload.modelVersion;
-    }
     if (ttsPayload?.understanding) {
       understanding = mergeUnderstandingSignal(understanding, ttsPayload.understanding);
       understandingSource = 'blended';
@@ -3545,6 +3537,9 @@ export async function handleTtsSpeak(req: Request, res: Response): Promise<void>
     if (ttsResult.ok && ttsPayload?.audioUrl) {
       if (isInternalAudioUrl(ttsPayload.audioUrl)) {
         audioUrl = ttsPayload.audioUrl;
+        if (ttsPayload.modelVersion) {
+          ttsModelVersion = ttsPayload.modelVersion;
+        }
         if (ttsPayload.voiceProfile) {
           effectiveVoiceProfile = ttsPayload.voiceProfile;
         }

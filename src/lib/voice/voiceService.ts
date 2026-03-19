@@ -26,7 +26,7 @@ export interface CopilotVoiceResponse {
     safetyOutcome: 'allowed' | 'blocked' | 'modified' | 'escalated';
     safetyReasonCode: string;
     policyVersion: string;
-    modelVersion: string;
+    modelVersion: string | null;
     locale: SupportedLocale;
     role: 'student' | 'teacher' | 'parent' | 'admin';
     gradeBand: string;
@@ -72,7 +72,7 @@ export interface TranscribeVoiceResponse {
     locale: SupportedLocale;
     latencyMs: number;
     partial: boolean;
-    modelVersion: string;
+    modelVersion: string | null;
     understandingSource?: 'heuristic' | 'model' | 'blended' | null;
     understanding?: {
       intent?: string | null;

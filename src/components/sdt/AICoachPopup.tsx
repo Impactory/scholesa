@@ -462,10 +462,16 @@ Guidance: ${
         },
       });
 
+      const responseGenerationSource = voiceResponse.metadata.responseGenerationSource ?? 'local';
+      const voiceModelUsed = responseGenerationSource === 'model'
+        ? 'miloos_voice_model'
+        : responseGenerationSource === 'guardrail'
+        ? 'miloos_voice_guardrail'
+        : 'miloos_voice_local_support';
+
       const aiResponse: AIServiceResponse = {
         answer: voiceResponse.text,
-        hints: voiceResponse.metadata.toolsInvoked.map((tool) => `${tool}`),
-        modelUsed: 'voice-orchestrator',
+        modelUsed: voiceModelUsed,
         modelVersion: voiceResponse.metadata.modelVersion,
         logId: voiceResponse.metadata.traceId,
         promptTemplateId: 'voice.copilot.message',
@@ -789,7 +795,7 @@ Guidance: ${
               <p className="whitespace-pre-wrap text-app-foreground">{response.answer}</p>
               
               {/* Model attribution */}
-              {response.modelUsed && response.modelUsed !== 'error' && (
+              {response.modelUsed === 'miloos_voice_model' && response.modelVersion && (
                 <p className="mt-2 text-xs text-app-muted">
                   {t('aiCoach.poweredBy', { model: response.modelUsed })}
                 </p>

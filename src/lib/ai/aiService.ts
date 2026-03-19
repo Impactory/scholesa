@@ -69,7 +69,7 @@ export interface AIServiceResponse {
   
   // Metadata
   modelUsed: string;
-  modelVersion: string;
+  modelVersion: string | null;
   logId: string; // For tracking outcomes
   promptTemplateId: string;
   policyVersion: string;
