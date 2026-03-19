@@ -242,7 +242,9 @@ void main() {
         ],
       );
 
-      expect(reviewed, isTrue);
+      if (!reviewed) {
+        fail(service.error ?? 'submitReview returned false');
+      }
 
       final DocumentSnapshot<Map<String, dynamic>> submissionDoc =
           await firestore
