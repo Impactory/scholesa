@@ -34,6 +34,10 @@ Future<void> _pumpCheckinPage(
         ChangeNotifierProvider<CheckinService>.value(value: checkinService),
       ],
       child: MaterialApp(
+        theme: ThemeData(
+          useMaterial3: true,
+          splashFactory: NoSplash.splashFactory,
+        ),
         locale: locale,
         supportedLocales: const <Locale>[
           Locale('en'),
