@@ -39,7 +39,7 @@ interface TelemetryAggregate {
     belonging: number;
     reflection: number;
   };
-  engagementScore: number;
+  engagementScore: number | null;
   createdAt: admin.firestore.Timestamp;
 }
 
@@ -108,7 +108,9 @@ async function runDailyAggregation(): Promise<{ aggregatesCreated: number; event
                     (agg.sdtCounts?.belonging || 0) +
                     (agg.sdtCounts?.reflection || 0);
 
-    const engagementScore = Math.min(100, Math.round((totalSDT / 20) * 100));
+    const engagementScore = totalSDT > 0
+      ? Math.min(100, Math.round((totalSDT / 20) * 100))
+      : null;
 
     const aggregateData: TelemetryAggregate = {
       ...agg as TelemetryAggregate,
@@ -207,7 +209,9 @@ export const aggregateWeeklyTelemetry = onSchedule(
                       (agg.sdtCounts?.belonging || 0) +
                       (agg.sdtCounts?.reflection || 0);
 
-      const engagementScore = Math.min(100, Math.round((totalSDT / 140) * 100));
+      const engagementScore = totalSDT > 0
+        ? Math.min(100, Math.round((totalSDT / 140) * 100))
+        : null;
 
       const aggregateData: TelemetryAggregate = {
         ...agg as TelemetryAggregate,
