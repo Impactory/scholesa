@@ -7,6 +7,7 @@ import '../../domain/repositories.dart';
 import '../../i18n/learner_surface_i18n.dart';
 import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
+import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 String _tLearnerCredentials(BuildContext context, String input) {

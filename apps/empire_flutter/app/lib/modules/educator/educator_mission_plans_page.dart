@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
 import '../../services/firestore_service.dart';
+import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
 import '../../i18n/bos_coaching_i18n.dart';
