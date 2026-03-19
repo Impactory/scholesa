@@ -311,8 +311,8 @@ export function AICoachPopup({
       'ai_coach_popup',
       'voice',
       `role:${actorRole}`,
-      mode ? `mode:${mode}` : 'mode:general',
-    ],
+      mode ? `mode:${mode}` : null,
+    ].filter((tag): tag is string => Boolean(tag)),
     traceId: traceId || undefined,
     voiceTraceId: traceId || undefined,
     voiceInputTraceId: traceId || undefined,
@@ -462,7 +462,9 @@ Guidance: ${
       if (voiceResponse.tts.available && voiceResponse.tts.audioUrl) {
         trackVoiceTelemetry('voice.tts', {
           traceId: voiceResponse.metadata.traceId,
-          voiceProfile: voiceResponse.tts.voiceProfile || 'default',
+          ...(voiceResponse.tts.voiceProfile
+            ? { voiceProfile: voiceResponse.tts.voiceProfile }
+            : {}),
         });
         const audio = new Audio(voiceResponse.tts.audioUrl);
         void audio.play().catch((error) => {

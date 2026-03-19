@@ -459,11 +459,11 @@ interface ReliabilityRiskFromEvents {
 }
 
 interface VoiceUnderstandingObservation {
-  intent: string;
-  responseMode: string;
-  complexity: string;
-  emotionalState: string;
-  needsScaffold: boolean;
+  intent: string | null;
+  responseMode: string | null;
+  complexity: string | null;
+  emotionalState: string | null;
+  needsScaffold: boolean | null;
   confidence: number;
 }
 
@@ -511,11 +511,13 @@ function readVoiceUnderstandingObservation(event: FirebaseFirestore.DocumentData
     : clamp(Number(confidenceRaw ?? 0));
   if (!Number.isFinite(confidence) || confidence <= 0) return null;
 
-  const intent = normalizeString(payload.understandingIntent) ?? 'general_support';
-  const responseMode = normalizeString(payload.responseMode) ?? 'hint';
-  const complexity = normalizeString(payload.complexity) ?? 'medium';
-  const emotionalState = normalizeString(payload.emotionalState) ?? 'neutral';
-  const needsScaffold = Boolean(payload.needsScaffold);
+  const intent = normalizeString(payload.understandingIntent) ?? null;
+  const responseMode = normalizeString(payload.responseMode) ?? null;
+  const complexity = normalizeString(payload.complexity) ?? null;
+  const emotionalState = normalizeString(payload.emotionalState) ?? null;
+  const needsScaffold = typeof payload.needsScaffold === 'boolean'
+    ? payload.needsScaffold
+    : null;
 
   return {
     intent,
@@ -713,7 +715,7 @@ async function extractFeatures(
   const avgUnderstandingConfidence = voiceSignalCount > 0
     ? voiceSignals.reduce((sum, signal) => sum + signal.confidence, 0) / voiceSignalCount
     : 0;
-  const scaffoldSignals = voiceSignals.filter((signal) => signal.needsScaffold).length;
+  const scaffoldSignals = voiceSignals.filter((signal) => signal.needsScaffold === true).length;
   const frustrationSignals = voiceSignals.filter((signal) => signal.emotionalState === 'frustrated').length;
   const explainSignals = voiceSignals.filter((signal) =>
     signal.intent === 'explain_request' ||
