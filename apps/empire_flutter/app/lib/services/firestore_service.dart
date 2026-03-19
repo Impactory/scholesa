@@ -283,9 +283,10 @@ class FirestoreService {
       'missionId': missionId,
       'learnerId': learnerId,
       'submission': submission,
-      'status': 'pending_review',
+      'status': 'submitted',
       'submittedAt': FieldValue.serverTimestamp(),
       'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
     });
     return docRef.id;
   }

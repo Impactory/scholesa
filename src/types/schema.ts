@@ -108,13 +108,24 @@ export interface MissionAttempt {
   id: string;
   learnerId: string;
   missionId: string;
+  missionTitle?: string;
   sessionOccurrenceId?: string;
   siteId: string;
-  status: 'started' | 'submitted' | 'completed';
+  status: 'started' | 'submitted' | 'pending_review' | 'reviewed' | 'completed';
+  reviewStatus?: 'reviewed' | 'approved' | 'revision';
   content?: string; // Artifacts or submission text
-  submittedAt: Timestamp;
+  notes?: string;
+  attachmentUrls?: string[];
+  startedAt?: Timestamp;
+  submittedAt?: Timestamp;
+  reviewedAt?: Timestamp;
+  updatedAt?: Timestamp;
   feedback?: string;
   gradedBy?: string;
+  gradedAt?: Timestamp;
+  reviewedBy?: string;
+  reviewNotes?: string;
+  proofBundleId?: string;
 }
 
 export interface Reflection {

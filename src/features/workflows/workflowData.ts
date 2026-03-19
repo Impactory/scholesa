@@ -1623,8 +1623,8 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
           routePath: ctx.routePath,
           collectionName: 'missionAttempts',
           constraints: siteId
-            ? [where('siteId', '==', siteId), where('status', '==', 'submitted'), orderBy('submittedAt', 'desc')]
-            : [where('status', '==', 'submitted'), orderBy('submittedAt', 'desc')],
+            ? [where('siteId', '==', siteId), where('status', 'in', ['submitted', 'pending_review']), orderBy('submittedAt', 'desc')]
+            : [where('status', 'in', ['submitted', 'pending_review']), orderBy('submittedAt', 'desc')],
           titleKeys: ['missionTitle', 'missionId'],
           subtitleKeys: ['learnerId', 'feedback'],
           statusKeys: ['status'],
@@ -4059,6 +4059,9 @@ export async function updateWorkflowRecord(
       await updateDoc(ref, {
         updatedAt: serverTimestamp(),
         status: 'reviewed',
+        reviewStatus: 'reviewed',
+        gradedBy: ctx.uid,
+        gradedAt: serverTimestamp(),
         reviewedBy: ctx.uid,
         reviewedAt: serverTimestamp(),
       });

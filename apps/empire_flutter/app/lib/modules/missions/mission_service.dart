@@ -922,28 +922,41 @@ class MissionService extends ChangeNotifier {
     }
   }
 
-  /// Submit a mission for review and persist an explicit submission document.
+  /// Submit a mission for review using the canonical missionAttempts record.
   Future<String?> submitMission(String missionId) async {
     try {
       final int index = _missions.indexWhere((Mission m) => m.id == missionId);
       if (index != -1) {
         final Mission mission = _missions[index];
-        final String? siteId = await _resolveSiteIdForMission(missionId);
+        final QueryDocumentSnapshot<Map<String, dynamic>>? assignmentDoc =
+            await _getAssignmentDocForMission(missionId);
+        final String? siteId =
+            _siteIdFromAssignment(assignmentDoc) ??
+                await _resolveSiteIdForMission(missionId);
         final MissionProofBundle? proofBundle =
             await loadProofBundle(missionId);
+        final String? sessionOccurrenceId =
+            assignmentDoc?.data()['sessionOccurrenceId'] as String?;
+        final DocumentReference<Map<String, dynamic>> attemptRef =
+            _firestore.collection('missionAttempts').doc();
         final DocumentReference<Map<String, dynamic>> submissionRef =
-            _firestore.collection('missionSubmissions').doc();
-
-        await submissionRef.set(<String, dynamic>{
+            _firestore.collection('missionSubmissions').doc(attemptRef.id);
+        final String submissionText =
+            'Mission "${mission.title}" submitted for educator review.';
+        final Map<String, dynamic> canonicalAttempt = <String, dynamic>{
           'missionId': missionId,
+          'missionTitle': mission.title,
           'learnerId': learnerId,
           if (siteId != null && siteId.isNotEmpty) 'siteId': siteId,
-          'status': 'pending',
+          if (sessionOccurrenceId != null && sessionOccurrenceId.isNotEmpty)
+            'sessionOccurrenceId': sessionOccurrenceId,
+          'status': 'submitted',
           'submittedAt': FieldValue.serverTimestamp(),
           'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
           // Keep submission payload privacy-minimized.
-          'submissionText':
-              'Mission "${mission.title}" submitted for educator review.',
+          'content': submissionText,
+          'submissionText': submissionText,
           'attachmentUrls': const <String>[],
           if (proofBundle != null) 'proofBundleId': proofBundle.id,
           if (proofBundle != null)
@@ -957,13 +970,43 @@ class MissionService extends ChangeNotifier {
               'hasMiniRebuild':
                   proofBundle.miniRebuildPlan?.trim().isNotEmpty ?? false,
             },
-        });
+        };
+
+        final WriteBatch batch = _firestore.batch();
+        batch.set(attemptRef, canonicalAttempt);
+        batch.set(
+          submissionRef,
+          canonicalAttempt,
+          SetOptions(merge: true),
+        );
+        if (assignmentDoc != null) {
+          batch.update(assignmentDoc.reference, <String, dynamic>{
+            'status': 'submitted',
+            'submittedAt': FieldValue.serverTimestamp(),
+            'lastSubmissionId': attemptRef.id,
+            'updatedAt': FieldValue.serverTimestamp(),
+            'reviewStatus': FieldValue.delete(),
+            'gradedBy': FieldValue.delete(),
+            'gradedAt': FieldValue.delete(),
+            'rating': FieldValue.delete(),
+            'feedback': FieldValue.delete(),
+            'aiFeedbackDraft': FieldValue.delete(),
+            'aiFeedbackEdited': FieldValue.delete(),
+            'rubricId': FieldValue.delete(),
+            'rubricTitle': FieldValue.delete(),
+            'rubricScores': FieldValue.delete(),
+            'rubricTotalScore': FieldValue.delete(),
+            'rubricMaxScore': FieldValue.delete(),
+          });
+        }
+
+        await batch.commit();
 
         _missions[index] = _missions[index].copyWith(
           status: MissionStatus.submitted,
         );
         notifyListeners();
-        return submissionRef.id;
+        return attemptRef.id;
       }
       return null;
     } catch (e) {
@@ -1385,108 +1428,64 @@ class MissionService extends ChangeNotifier {
     _error = null;
     notifyListeners();
     try {
-      // Build query for pending submissions
-      Query<Map<String, dynamic>> query = _firestore
-          .collection('missionSubmissions')
-          .where('status', isEqualTo: 'pending')
-          .orderBy('submittedAt', descending: true);
+      final QuerySnapshot<Map<String, dynamic>> canonicalSnapshot =
+          await _pendingReviewAttemptsQuery(siteId: siteId).limit(50).get();
+      final Set<String> canonicalIds =
+          canonicalSnapshot.docs.map((doc) => doc.id).toSet();
+      final QuerySnapshot<Map<String, dynamic>> legacySnapshot =
+          await _legacyPendingReviewSubmissionsQuery(siteId: siteId)
+              .limit(50)
+              .get();
 
-      if (siteId != null && siteId.isNotEmpty) {
-        query = query.where('siteId', isEqualTo: siteId);
-      }
-
-      final QuerySnapshot<Map<String, dynamic>> snapshot =
-          await query.limit(50).get();
-
-      _pendingReviews = await Future.wait(
-        snapshot.docs
-            .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) async {
-          final Map<String, dynamic> data = doc.data();
-          final String learnerId = data['learnerId'] as String? ?? '';
-
-          // Get learner info
-          final DocumentSnapshot<Map<String, dynamic>> learnerDoc =
-              await _firestore.collection('users').doc(learnerId).get();
-          final Map<String, dynamic>? learnerData = learnerDoc.data();
-
-          // Get mission info
-          final String missionId = data['missionId'] as String? ?? '';
-          final DocumentSnapshot<Map<String, dynamic>> missionDoc =
-              await _firestore.collection('missions').doc(missionId).get();
-          final Map<String, dynamic>? missionData = missionDoc.data();
-          final String rubricId = missionData?['rubricId'] as String? ??
-              data['rubricId'] as String? ??
-              '';
-          List<Map<String, dynamic>> rubricCriteria =
-              const <Map<String, dynamic>>[];
-
-          if (rubricId.isNotEmpty) {
-            final DocumentSnapshot<Map<String, dynamic>> rubricDoc =
-                await _firestore.collection('rubrics').doc(rubricId).get();
-            rubricCriteria = (rubricDoc.data()?['criteria'] as List?)
-                    ?.map(
-                      (dynamic entry) =>
-                          Map<String, dynamic>.from(entry as Map),
-                    )
-                    .toList() ??
-                const <Map<String, dynamic>>[];
-          }
-
-          return MissionSubmission(
-            id: doc.id,
-            missionId: missionId,
-            missionTitle:
-              (missionData?['title'] as String?)?.trim().isNotEmpty == true
-                ? (missionData?['title'] as String).trim()
-                : 'Mission unavailable',
-            learnerId: learnerId,
-            learnerName:
-                (learnerData?['displayName'] as String?)?.trim().isNotEmpty ==
-                        true
-                    ? (learnerData?['displayName'] as String).trim()
-                    : _fallbackLearnerName,
-            learnerPhotoUrl: learnerData?['photoUrl'] as String?,
-            siteId: data['siteId'] as String?,
-            pillar: missionData?['pillarCode'] as String? ?? 'future_skills',
-            submittedAt: _parseTimestamp(data['submittedAt']) ?? DateTime.now(),
-            status: data['status'] as String? ?? 'pending',
-            submissionText: data['submissionText'] as String?,
-            attachmentUrls: List<String>.from(
-                data['attachmentUrls'] as List? ?? <String>[]),
-            rating: data['rating'] as int?,
-            feedback: data['feedback'] as String?,
-            aiFeedbackDraft: data['aiFeedbackDraft'] as String?,
-            rubricId: rubricId,
-            rubricTitle: missionData?['rubricTitle'] as String? ??
-                data['rubricTitle'] as String?,
-            rubricCriteria: rubricCriteria,
-            rubricScores: (data['rubricScores'] as List?)
-                    ?.map(
-                      (dynamic entry) =>
-                          Map<String, dynamic>.from(entry as Map),
-                    )
-                    .toList() ??
-                const <Map<String, dynamic>>[],
-          );
-        }),
+      final List<MissionSubmission> canonicalReviews = await Future.wait(
+        canonicalSnapshot.docs.map(
+          (QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
+              _hydrateMissionSubmission(docId: doc.id, data: doc.data()),
+        ),
+      );
+      final List<MissionSubmission> legacyReviews = await Future.wait(
+        legacySnapshot.docs
+            .where((QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
+                !canonicalIds.contains(doc.id))
+            .map(
+              (QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
+                  _hydrateMissionSubmission(docId: doc.id, data: doc.data()),
+            ),
       );
 
-      // Count reviewed today
-      final DateTime today = DateTime.now();
-      final DateTime startOfDay = DateTime(today.year, today.month, today.day);
+      _pendingReviews = <MissionSubmission>[
+        ...canonicalReviews,
+        ...legacyReviews,
+      ]..sort((MissionSubmission a, MissionSubmission b) =>
+          b.submittedAt.compareTo(a.submittedAt));
+
       final QuerySnapshot<Map<String, dynamic>> reviewedSnapshot =
-          await _firestore
-              .collection('missionSubmissions')
-              .where('reviewedAt',
-                  isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
-              .get();
+          await _reviewedMissionAttemptsQuery(siteId: siteId).get();
       _reviewedToday = reviewedSnapshot.docs.where((doc) {
-        final String reviewedStatus =
-            doc.data()['status'] as String? ?? 'pending';
+        final Map<String, dynamic> data = doc.data();
+        final String reviewedStatus = _normalizedReviewQueueStatus(
+          status: data['status'] as String?,
+          reviewStatus: data['reviewStatus'] as String?,
+        );
         return reviewedStatus == 'reviewed' ||
             reviewedStatus == 'approved' ||
             reviewedStatus == 'revision';
       }).length;
+
+      if (_reviewedToday == 0) {
+        final QuerySnapshot<Map<String, dynamic>> legacyReviewedSnapshot =
+            await _legacyReviewedSubmissionsQuery(siteId: siteId).get();
+        _reviewedToday = legacyReviewedSnapshot.docs.where((doc) {
+          final Map<String, dynamic> data = doc.data();
+          final String reviewedStatus = _normalizedReviewQueueStatus(
+            status: data['status'] as String?,
+            reviewStatus: data['reviewStatus'] as String?,
+          );
+          return reviewedStatus == 'reviewed' ||
+              reviewedStatus == 'approved' ||
+              reviewedStatus == 'revision';
+        }).length;
+      }
 
       debugPrint('Loaded ${_pendingReviews.length} pending reviews');
     } catch (e) {
@@ -1497,6 +1496,162 @@ class MissionService extends ChangeNotifier {
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  Query<Map<String, dynamic>> _pendingReviewAttemptsQuery({String? siteId}) {
+    Query<Map<String, dynamic>> query = _firestore
+        .collection('missionAttempts')
+        .where('status', whereIn: const <String>['submitted', 'pending_review'])
+        .orderBy('submittedAt', descending: true);
+
+    if (siteId != null && siteId.isNotEmpty) {
+      query = query.where('siteId', isEqualTo: siteId);
+    }
+    return query;
+  }
+
+  Query<Map<String, dynamic>> _legacyPendingReviewSubmissionsQuery({
+    String? siteId,
+  }) {
+    Query<Map<String, dynamic>> query = _firestore
+          .collection('missionSubmissions')
+          .where('status', whereIn: const <String>['pending', 'submitted'])
+          .orderBy('submittedAt', descending: true);
+
+    if (siteId != null && siteId.isNotEmpty) {
+      query = query.where('siteId', isEqualTo: siteId);
+    }
+    return query;
+  }
+
+  Query<Map<String, dynamic>> _reviewedMissionAttemptsQuery({String? siteId}) {
+    final DateTime today = DateTime.now();
+    final DateTime startOfDay = DateTime(today.year, today.month, today.day);
+    Query<Map<String, dynamic>> query = _firestore
+        .collection('missionAttempts')
+        .where(
+          'reviewedAt',
+          isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay),
+        );
+    if (siteId != null && siteId.isNotEmpty) {
+      query = query.where('siteId', isEqualTo: siteId);
+    }
+    return query;
+  }
+
+  Query<Map<String, dynamic>> _legacyReviewedSubmissionsQuery({
+    String? siteId,
+  }) {
+    final DateTime today = DateTime.now();
+    final DateTime startOfDay = DateTime(today.year, today.month, today.day);
+    Query<Map<String, dynamic>> query = _firestore
+        .collection('missionSubmissions')
+        .where(
+          'reviewedAt',
+          isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay),
+        );
+    if (siteId != null && siteId.isNotEmpty) {
+      query = query.where('siteId', isEqualTo: siteId);
+    }
+    return query;
+  }
+
+  Future<MissionSubmission> _hydrateMissionSubmission({
+    required String docId,
+    required Map<String, dynamic> data,
+  }) async {
+    final String learnerId = data['learnerId'] as String? ?? '';
+    final DocumentSnapshot<Map<String, dynamic>> learnerDoc =
+        await _firestore.collection('users').doc(learnerId).get();
+    final Map<String, dynamic>? learnerData = learnerDoc.data();
+
+    final String missionId = data['missionId'] as String? ?? '';
+    final DocumentSnapshot<Map<String, dynamic>> missionDoc =
+        await _firestore.collection('missions').doc(missionId).get();
+    final Map<String, dynamic>? missionData = missionDoc.data();
+    final String rubricId = (data['rubricId'] as String?)?.trim().isNotEmpty ==
+            true
+        ? (data['rubricId'] as String).trim()
+        : missionData?['rubricId'] as String? ?? '';
+    List<Map<String, dynamic>> rubricCriteria = const <Map<String, dynamic>>[];
+
+    if (rubricId.isNotEmpty) {
+      final DocumentSnapshot<Map<String, dynamic>> rubricDoc =
+          await _firestore.collection('rubrics').doc(rubricId).get();
+      rubricCriteria = (rubricDoc.data()?['criteria'] as List?)
+              ?.map(
+                (dynamic entry) => Map<String, dynamic>.from(entry as Map),
+              )
+              .toList() ??
+          const <Map<String, dynamic>>[];
+    }
+
+    final String missionTitle =
+        (data['missionTitle'] as String?)?.trim().isNotEmpty == true
+            ? (data['missionTitle'] as String).trim()
+            : (missionData?['title'] as String?)?.trim().isNotEmpty == true
+                ? (missionData?['title'] as String).trim()
+                : 'Mission unavailable';
+    final List<String> attachmentUrls = List<String>.from(
+      data['attachmentUrls'] as List? ??
+          data['artifactUrls'] as List? ??
+          const <String>[],
+    );
+
+    return MissionSubmission(
+      id: docId,
+      missionId: missionId,
+      missionTitle: missionTitle,
+      learnerId: learnerId,
+      learnerName:
+          (learnerData?['displayName'] as String?)?.trim().isNotEmpty == true
+              ? (learnerData?['displayName'] as String).trim()
+              : _fallbackLearnerName,
+      learnerPhotoUrl: learnerData?['photoUrl'] as String?,
+      siteId: data['siteId'] as String?,
+      pillar: data['pillarCode'] as String? ??
+          missionData?['pillarCode'] as String? ??
+          'future_skills',
+      submittedAt: _parseTimestamp(data['submittedAt']) ??
+          _parseTimestamp(data['updatedAt']) ??
+          DateTime.now(),
+      status: _normalizedReviewQueueStatus(
+        status: data['status'] as String?,
+        reviewStatus: data['reviewStatus'] as String?,
+      ),
+      submissionText:
+          data['submissionText'] as String? ?? data['content'] as String?,
+      attachmentUrls: attachmentUrls,
+      rating: data['rating'] as int?,
+      feedback: data['feedback'] as String?,
+      aiFeedbackDraft: data['aiFeedbackDraft'] as String?,
+      rubricId: rubricId,
+      rubricTitle: data['rubricTitle'] as String? ??
+          missionData?['rubricTitle'] as String?,
+      rubricCriteria: rubricCriteria,
+      rubricScores: (data['rubricScores'] as List?)
+              ?.map(
+                (dynamic entry) => Map<String, dynamic>.from(entry as Map),
+              )
+              .toList() ??
+          const <Map<String, dynamic>>[],
+    );
+  }
+
+  String _normalizedReviewQueueStatus({
+    required String? status,
+    required String? reviewStatus,
+  }) {
+    if (reviewStatus != null && reviewStatus.trim().isNotEmpty) {
+      return reviewStatus.trim();
+    }
+    switch (status) {
+      case 'pending':
+      case 'pending_review':
+        return 'submitted';
+      default:
+        return status?.trim().isNotEmpty == true ? status!.trim() : 'submitted';
     }
   }
 
@@ -1513,12 +1668,23 @@ class MissionService extends ChangeNotifier {
     List<Map<String, dynamic>> rubricScores = const <Map<String, dynamic>>[],
   }) async {
     try {
+      final DocumentReference<Map<String, dynamic>> canonicalAttemptRef =
+          await _resolveReviewAttemptRef(submissionId);
+      final DocumentSnapshot<Map<String, dynamic>> canonicalAttemptSnapshot =
+          await canonicalAttemptRef.get();
       final DocumentReference<Map<String, dynamic>> submissionRef =
           _firestore.collection('missionSubmissions').doc(submissionId);
       final DocumentSnapshot<Map<String, dynamic>> submissionSnapshot =
           await submissionRef.get();
       final Map<String, dynamic> submissionData =
-          submissionSnapshot.data() ?? <String, dynamic>{};
+          canonicalAttemptSnapshot.data() ??
+              submissionSnapshot.data() ??
+              <String, dynamic>{};
+      if (submissionData.isEmpty) {
+        _error = 'Unable to load mission review record right now.';
+        notifyListeners();
+        return false;
+      }
       final String missionId = submissionData['missionId'] as String? ?? '';
       final String reviewLearnerId =
           submissionData['learnerId'] as String? ?? learnerId;
@@ -1552,12 +1718,45 @@ class MissionService extends ChangeNotifier {
       );
       final WriteBatch batch = _firestore.batch();
 
-      batch.update(submissionRef, <String, dynamic>{
-        'status': status,
+      batch.set(canonicalAttemptRef, <String, dynamic>{
+        'missionId': missionId,
+        if ((submissionData['missionTitle'] as String?)?.trim().isNotEmpty ==
+            true)
+          'missionTitle': (submissionData['missionTitle'] as String).trim(),
+        'learnerId': reviewLearnerId,
+        if (reviewSiteId != null && reviewSiteId.isNotEmpty)
+          'siteId': reviewSiteId,
+        if ((submissionData['sessionOccurrenceId'] as String?)
+                ?.trim()
+                .isNotEmpty ==
+            true)
+          'sessionOccurrenceId':
+              (submissionData['sessionOccurrenceId'] as String).trim(),
+        'status': 'reviewed',
+        'reviewStatus': status,
         'rating': rating,
         'feedback': trimmedFeedback,
+        'reviewNotes': trimmedFeedback,
         'reviewedBy': reviewerId,
         'reviewedAt': FieldValue.serverTimestamp(),
+        'gradedBy': reviewerId,
+        'gradedAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        if ((submissionData['submittedAt']) != null)
+          'submittedAt': submissionData['submittedAt'],
+        if ((submissionData['createdAt']) != null)
+          'createdAt': submissionData['createdAt'],
+        if ((submissionData['content'] as String?)?.trim().isNotEmpty == true)
+          'content': (submissionData['content'] as String).trim(),
+        if ((submissionData['submissionText'] as String?)
+                ?.trim()
+                .isNotEmpty ==
+            true)
+          'submissionText': (submissionData['submissionText'] as String).trim(),
+        if (submissionData['attachmentUrls'] is List)
+          'attachmentUrls': List<String>.from(
+            submissionData['attachmentUrls'] as List,
+          ),
         if (trimmedAiDraft != null) 'aiFeedbackDraft': trimmedAiDraft,
         if (trimmedAiDraft != null)
           'aiFeedbackEdited': trimmedAiDraft != trimmedFeedback,
@@ -1569,7 +1768,33 @@ class MissionService extends ChangeNotifier {
         if (normalizedRubricScores.isNotEmpty)
           'rubricTotalScore': rubricTotalScore,
         if (normalizedRubricScores.isNotEmpty) 'rubricMaxScore': rubricMaxScore,
-      });
+      }, SetOptions(merge: true));
+
+      if (submissionSnapshot.exists || submissionId == canonicalAttemptRef.id) {
+        batch.set(submissionRef, <String, dynamic>{
+          'missionId': missionId,
+          'learnerId': reviewLearnerId,
+          if (reviewSiteId != null && reviewSiteId.isNotEmpty)
+            'siteId': reviewSiteId,
+          'status': status,
+          'rating': rating,
+          'feedback': trimmedFeedback,
+          'reviewedBy': reviewerId,
+          'reviewedAt': FieldValue.serverTimestamp(),
+          if (trimmedAiDraft != null) 'aiFeedbackDraft': trimmedAiDraft,
+          if (trimmedAiDraft != null)
+            'aiFeedbackEdited': trimmedAiDraft != trimmedFeedback,
+          if (resolvedRubricId.isNotEmpty) 'rubricId': resolvedRubricId,
+          if (resolvedRubricTitle != null && resolvedRubricTitle.isNotEmpty)
+            'rubricTitle': resolvedRubricTitle,
+          if (normalizedRubricScores.isNotEmpty)
+            'rubricScores': normalizedRubricScores,
+          if (normalizedRubricScores.isNotEmpty)
+            'rubricTotalScore': rubricTotalScore,
+          if (normalizedRubricScores.isNotEmpty)
+            'rubricMaxScore': rubricMaxScore,
+        }, SetOptions(merge: true));
+      }
 
       if (missionId.isNotEmpty && reviewLearnerId.isNotEmpty) {
         final QuerySnapshot<Map<String, dynamic>> assignmentSnapshot =
@@ -1589,42 +1814,7 @@ class MissionService extends ChangeNotifier {
           }
           batch.update(assignmentDoc.reference, <String, dynamic>{
             'reviewStatus': status,
-            'lastSubmissionId': submissionId,
-            'gradedBy': reviewerId,
-            'gradedAt': FieldValue.serverTimestamp(),
-            'rating': rating,
-            'feedback': trimmedFeedback,
-            if (trimmedAiDraft != null) 'aiFeedbackDraft': trimmedAiDraft,
-            if (trimmedAiDraft != null)
-              'aiFeedbackEdited': trimmedAiDraft != trimmedFeedback,
-            if (resolvedRubricId.isNotEmpty) 'rubricId': resolvedRubricId,
-            if (resolvedRubricTitle != null && resolvedRubricTitle.isNotEmpty)
-              'rubricTitle': resolvedRubricTitle,
-            if (normalizedRubricScores.isNotEmpty)
-              'rubricScores': normalizedRubricScores,
-            if (normalizedRubricScores.isNotEmpty)
-              'rubricTotalScore': rubricTotalScore,
-            if (normalizedRubricScores.isNotEmpty)
-              'rubricMaxScore': rubricMaxScore,
-          });
-        }
-
-        final QuerySnapshot<Map<String, dynamic>> missionAttemptSnapshot =
-            await _firestore
-                .collection('missionAttempts')
-                .where('learnerId', isEqualTo: reviewLearnerId)
-                .where('missionId', isEqualTo: missionId)
-                .get();
-        for (final QueryDocumentSnapshot<Map<String, dynamic>> attemptDoc
-            in missionAttemptSnapshot.docs) {
-          final String? attemptSiteId = attemptDoc.data()['siteId'] as String?;
-          if (reviewSiteId != null &&
-              reviewSiteId.isNotEmpty &&
-              attemptSiteId != reviewSiteId) {
-            continue;
-          }
-          batch.update(attemptDoc.reference, <String, dynamic>{
-            'reviewStatus': status,
+            'lastSubmissionId': canonicalAttemptRef.id,
             'gradedBy': reviewerId,
             'gradedAt': FieldValue.serverTimestamp(),
             'rating': rating,
@@ -1647,12 +1837,14 @@ class MissionService extends ChangeNotifier {
 
       if (resolvedRubricId.isNotEmpty && normalizedRubricScores.isNotEmpty) {
         final DocumentReference<Map<String, dynamic>> rubricApplicationRef =
-            _firestore.collection('rubricApplications').doc(submissionId);
+            _firestore
+                .collection('rubricApplications')
+                .doc(canonicalAttemptRef.id);
         batch.set(
             rubricApplicationRef,
             <String, dynamic>{
               'siteId': reviewSiteId,
-              'missionAttemptId': submissionId,
+              'missionAttemptId': canonicalAttemptRef.id,
               'submissionId': submissionId,
               'educatorId': reviewerId,
               'rubricId': resolvedRubricId,
@@ -1679,6 +1871,62 @@ class MissionService extends ChangeNotifier {
       notifyListeners();
       return false;
     }
+  }
+
+  Future<DocumentReference<Map<String, dynamic>>> _resolveReviewAttemptRef(
+    String reviewRecordId,
+  ) async {
+    final DocumentReference<Map<String, dynamic>> sameIdAttemptRef =
+        _firestore.collection('missionAttempts').doc(reviewRecordId);
+    final DocumentSnapshot<Map<String, dynamic>> sameIdAttemptSnapshot =
+        await sameIdAttemptRef.get();
+    if (sameIdAttemptSnapshot.exists) {
+      return sameIdAttemptRef;
+    }
+
+    final DocumentSnapshot<Map<String, dynamic>> submissionSnapshot =
+        await _firestore.collection('missionSubmissions').doc(reviewRecordId).get();
+    final Map<String, dynamic> submissionData =
+        submissionSnapshot.data() ?? <String, dynamic>{};
+    final String missionId = submissionData['missionId'] as String? ?? '';
+    final String reviewLearnerId = submissionData['learnerId'] as String? ?? '';
+    final String? reviewSiteId = submissionData['siteId'] as String?;
+
+    if (missionId.isNotEmpty && reviewLearnerId.isNotEmpty) {
+      final QuerySnapshot<Map<String, dynamic>> missionAttemptSnapshot =
+          await _firestore
+              .collection('missionAttempts')
+              .where('learnerId', isEqualTo: reviewLearnerId)
+              .where('missionId', isEqualTo: missionId)
+              .get();
+      final Iterable<QueryDocumentSnapshot<Map<String, dynamic>>> candidates =
+          missionAttemptSnapshot.docs.where((attemptDoc) {
+        final Map<String, dynamic> data = attemptDoc.data();
+        final String? attemptSiteId = data['siteId'] as String?;
+        final String normalizedStatus = _normalizedReviewQueueStatus(
+          status: data['status'] as String?,
+          reviewStatus: data['reviewStatus'] as String?,
+        );
+        final bool siteMatches = reviewSiteId == null ||
+            reviewSiteId.isEmpty ||
+            attemptSiteId == reviewSiteId;
+        return siteMatches && normalizedStatus == 'submitted';
+      });
+      if (candidates.isNotEmpty) {
+        final List<QueryDocumentSnapshot<Map<String, dynamic>>> sortedCandidates =
+            candidates.toList()
+              ..sort((a, b) {
+                final DateTime aSubmitted =
+                    _parseTimestamp(a.data()['submittedAt']) ?? DateTime(1970);
+                final DateTime bSubmitted =
+                    _parseTimestamp(b.data()['submittedAt']) ?? DateTime(1970);
+                return bSubmitted.compareTo(aSubmitted);
+              });
+        return sortedCandidates.first.reference;
+      }
+    }
+
+    return sameIdAttemptRef;
   }
 }
 
