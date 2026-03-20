@@ -143,8 +143,7 @@ class _ParentBillingPageState extends State<ParentBillingPage>
       );
       if (!mounted) return;
       final String errorMessage = error is StateError
-          ? error.message?.toString() ??
-              _tParentBilling(context, 'Support requests are unavailable right now.')
+          ? error.message.toString()
           : _tParentBilling(
               context,
               'Unable to submit support request right now.',
@@ -893,13 +892,14 @@ class _ParentBillingPageState extends State<ParentBillingPage>
                         'Current Plan: $planName',
                         'Learner Scope: $learnerLabel',
                         'Next Payment Amount: ${_formatCurrency(billing.nextPaymentAmount)}',
-                        'Next Payment Date: ${billing.nextPaymentDate.toIso8601String()}',
+                        'Next Payment Date: ${billing.nextPaymentDate?.toIso8601String() ?? 'Not set'}',
                       ].join('\n'),
                       metadata: <String, dynamic>{
                         'planName': planName,
                         'learnerScope': learnerLabel,
                         'nextPaymentAmount': billing.nextPaymentAmount,
-                        'nextPaymentDate': billing.nextPaymentDate.toIso8601String(),
+                        'nextPaymentDate':
+                            billing.nextPaymentDate?.toIso8601String(),
                       },
                       successMessage: _tParentBilling(
                         context,

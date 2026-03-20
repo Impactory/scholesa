@@ -136,22 +136,18 @@ class WorkflowSurfaceI18n {
     'See support ideas while reviewing learner submissions':
         '在审查学习者提交内容时查看支持建议',
     'Session AI Help': '课堂 AI 帮助',
-    'See support ideas for each session and learner':
-        '查看每节课和每位学习者的支持建议',
+    'See support ideas for each session and learner': '查看每节课和每位学习者的支持建议',
     'Learner AI Help': '学习者 AI 帮助',
     'See support ideas for each learner': '查看每位学习者的支持建议',
     'Integrations AI Help': '集成 AI 帮助',
-    'See support ideas while syncing learner systems':
-        '在同步学习者系统时查看支持建议',
+    'See support ideas while syncing learner systems': '在同步学习者系统时查看支持建议',
     'Mission Planning AI Help': '任务规划 AI 帮助',
     'See support ideas while designing missions for each learner':
         '在为每位学习者设计任务时查看支持建议',
     'Support AI Help': '支持 AI 帮助',
-    'See support ideas for each learner support plan':
-        '查看每个学习者支持计划的支持建议',
+    'See support ideas for each learner support plan': '查看每个学习者支持计划的支持建议',
     'Continue this mission': '继续这个任务',
-    'Keep your streak moving while AI reconnects.':
-        '在 AI 重新连接期间，继续保持你的习惯连胜。',
+    'Keep your streak moving while AI reconnects.': '在 AI 重新连接期间，继续保持你的习惯连胜。',
     'Log your next habit check-in and reopen reflection in a moment.':
         '先记录下一次习惯打卡，稍后再重新打开 AI 反思。',
     'Continue this habit': '继续这个习惯',
@@ -404,7 +400,8 @@ class WorkflowSurfaceI18n {
     'Export Audit Logs': '导出审计日志',
     'Export the current audit log feed for offline review.':
         '导出当前审计日志列表以供离线审阅。',
-    'Audit log exports are not available in the app yet.': '当有可导出的审计日志时，导出会直接下载到此设备。',
+    'Audit log exports are not available in the app yet.':
+        '当有可导出的审计日志时，导出会直接下载到此设备。',
     'No audit records to export yet.': '暂时没有可导出的审计记录。',
     'Audit export copied to clipboard.': '审计导出内容已复制到剪贴板。',
     'Audit export downloaded.': '审计导出文件已下载。',
@@ -432,28 +429,19 @@ class WorkflowSurfaceI18n {
     'incidents': '事件',
     'Empty': '空',
     'Download Export': '下载导出',
-    'Unable to load the analytics export bundle right now.':
-        '当前无法加载分析导出包。',
-    'Unable to load the billing export bundle right now.':
-        '当前无法加载账单导出包。',
-    'Unable to load the audit export bundle right now.':
-        '当前无法加载审计导出包。',
-    'Unable to load the safety export bundle right now.':
-        '当前无法加载安全导出包。',
+    'Unable to load the analytics export bundle right now.': '当前无法加载分析导出包。',
+    'Unable to load the billing export bundle right now.': '当前无法加载账单导出包。',
+    'Unable to load the audit export bundle right now.': '当前无法加载审计导出包。',
+    'Unable to load the safety export bundle right now.': '当前无法加载安全导出包。',
     'Analytics export downloaded.': '分析导出已下载。',
-    'Unable to download the analytics export right now.':
-        '当前无法下载分析导出。',
+    'Unable to download the analytics export right now.': '当前无法下载分析导出。',
     'Billing export downloaded.': '账单导出已下载。',
-    'Unable to download the billing export right now.':
-        '当前无法下载账单导出。',
+    'Unable to download the billing export right now.': '当前无法下载账单导出。',
     'Safety export downloaded.': '安全导出已下载。',
-    'Unable to download the safety export right now.':
-        '当前无法下载安全导出。',
-    'Unable to download the audit export right now.':
-        '当前无法下载审计导出。',
+    'Unable to download the safety export right now.': '当前无法下载安全导出。',
+    'Unable to download the audit export right now.': '当前无法下载审计导出。',
     'Full export bundle downloaded.': '完整导出包已下载。',
-    'Unable to download the full export bundle right now.':
-        '当前无法下载完整导出包。',
+    'Unable to download the full export bundle right now.': '当前无法下载完整导出包。',
     'Audit action unavailable': '审计动作不可用',
     'Actor unavailable': '操作者信息不可用',
     'Mission unavailable': '任务不可用',
@@ -854,22 +842,18 @@ class WorkflowSurfaceI18n {
     'See support ideas while reviewing learner submissions':
         '在審查學習者提交內容時查看支持建議',
     'Session AI Help': '課堂 AI 幫助',
-    'See support ideas for each session and learner':
-        '查看每堂課和每位學習者的支持建議',
+    'See support ideas for each session and learner': '查看每堂課和每位學習者的支持建議',
     'Learner AI Help': '學習者 AI 幫助',
     'See support ideas for each learner': '查看每位學習者的支持建議',
     'Integrations AI Help': '整合 AI 幫助',
-    'See support ideas while syncing learner systems':
-        '在同步學習者系統時查看支持建議',
+    'See support ideas while syncing learner systems': '在同步學習者系統時查看支持建議',
     'Mission Planning AI Help': '任務規劃 AI 幫助',
     'See support ideas while designing missions for each learner':
         '在為每位學習者設計任務時查看支持建議',
     'Support AI Help': '支持 AI 幫助',
-    'See support ideas for each learner support plan':
-        '查看每個學習者支持計畫的支持建議',
+    'See support ideas for each learner support plan': '查看每個學習者支持計畫的支持建議',
     'Continue this mission': '繼續這個任務',
-    'Keep your streak moving while AI reconnects.':
-        '在 AI 重新連線期間，繼續維持你的習慣連勝。',
+    'Keep your streak moving while AI reconnects.': '在 AI 重新連線期間，繼續維持你的習慣連勝。',
     'Log your next habit check-in and reopen reflection in a moment.':
         '先記錄下一次習慣打卡，稍後再重新開啟 AI 反思。',
     'Continue this habit': '繼續這個習慣',
@@ -987,7 +971,8 @@ class WorkflowSurfaceI18n {
     'Export Audit Logs': '匯出稽核日誌',
     'Export the current audit log feed for offline review.':
         '匯出目前的稽核日誌清單以供離線審閱。',
-    'Audit log exports are not available in the app yet.': '當有可匯出的稽核日誌時，匯出會直接下載到此裝置。',
+    'Audit log exports are not available in the app yet.':
+        '當有可匯出的稽核日誌時，匯出會直接下載到此裝置。',
     'No audit records to export yet.': '目前沒有可匯出的稽核記錄。',
     'Audit export copied to clipboard.': '稽核匯出內容已複製到剪貼簿。',
     'Audit export downloaded.': '稽核匯出檔已下載。',
@@ -1015,28 +1000,19 @@ class WorkflowSurfaceI18n {
     'incidents': '事件',
     'Empty': '空',
     'Download Export': '下載匯出',
-    'Unable to load the analytics export bundle right now.':
-        '目前無法載入分析匯出包。',
-    'Unable to load the billing export bundle right now.':
-        '目前無法載入帳單匯出包。',
-    'Unable to load the audit export bundle right now.':
-        '目前無法載入稽核匯出包。',
-    'Unable to load the safety export bundle right now.':
-        '目前無法載入安全匯出包。',
+    'Unable to load the analytics export bundle right now.': '目前無法載入分析匯出包。',
+    'Unable to load the billing export bundle right now.': '目前無法載入帳單匯出包。',
+    'Unable to load the audit export bundle right now.': '目前無法載入稽核匯出包。',
+    'Unable to load the safety export bundle right now.': '目前無法載入安全匯出包。',
     'Analytics export downloaded.': '分析匯出已下載。',
-    'Unable to download the analytics export right now.':
-        '目前無法下載分析匯出。',
+    'Unable to download the analytics export right now.': '目前無法下載分析匯出。',
     'Billing export downloaded.': '帳單匯出已下載。',
-    'Unable to download the billing export right now.':
-        '目前無法下載帳單匯出。',
+    'Unable to download the billing export right now.': '目前無法下載帳單匯出。',
     'Safety export downloaded.': '安全匯出已下載。',
-    'Unable to download the safety export right now.':
-        '目前無法下載安全匯出。',
-    'Unable to download the audit export right now.':
-        '目前無法下載稽核匯出。',
+    'Unable to download the safety export right now.': '目前無法下載安全匯出。',
+    'Unable to download the audit export right now.': '目前無法下載稽核匯出。',
     'Full export bundle downloaded.': '完整匯出包已下載。',
-    'Unable to download the full export bundle right now.':
-        '目前無法下載完整匯出包。',
+    'Unable to download the full export bundle right now.': '目前無法下載完整匯出包。',
     'Audit action unavailable': '稽核動作不可用',
     'Actor unavailable': '操作者資訊不可用',
     'Mission unavailable': '任務不可用',

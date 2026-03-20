@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -36,6 +37,20 @@ class _StubParentService extends ParentService {
 
   @override
   Future<void> loadParentData() async {}
+}
+
+class _UnavailableBillingSupportParentService extends _StubParentService {
+  _UnavailableBillingSupportParentService({
+    required super.firestoreService,
+    required super.parentId,
+    required super.stubLearnerSummaries,
+    required super.stubBillingSummary,
+  });
+
+  @override
+  FirestoreService get firestoreService {
+    throw StateError('Support requests are unavailable right now.');
+  }
 }
 
 AppState _buildParentState() {
@@ -102,16 +117,18 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
     expect(find.text('No billing data yet'), findsOneWidget);
-    expect(find.text('Statements are shared by your site or HQ billing team.'), findsOneWidget);
+    expect(find.text('Statements are shared by your site or HQ billing team.'),
+        findsOneWidget);
     await tester.tap(find.text('Plan'));
     await tester.pumpAndSettle();
     expect(find.text('Billing plan unavailable'), findsOneWidget);
   });
 
-  testWidgets('parent billing page keeps populated controls read-only',
+  testWidgets('parent billing page persists billing support requests',
       (WidgetTester tester) async {
+    final FakeFirebaseFirestore fakeFirestore = FakeFirebaseFirestore();
     final FirestoreService firestoreService = FirestoreService(
-      firestore: FakeFirebaseFirestore(),
+      firestore: fakeFirestore,
       auth: _MockFirebaseAuth(),
     );
     final ParentService parentService = _StubParentService(
@@ -130,7 +147,7 @@ void main() {
       ],
       stubBillingSummary: BillingSummary(
         currentBalance: 199.0,
-        nextPaymentAmount: 199.0,
+        nextPaymentAmount: 0,
         nextPaymentDate: DateTime(2026, 4, 1),
         subscriptionPlan: 'Family Plan',
         recentPayments: <PaymentHistory>[
@@ -155,11 +172,126 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
     expect(find.text('INV-2026-03'), findsOneWidget);
-    expect(find.text('Pay Now'), findsNothing);
-    expect(find.text('Invoice actions are handled by your site or HQ billing team.'), findsWidgets);
+    expect(find.text('Request Invoice Help'), findsOneWidget);
+    await tester.tap(find.text('Request Invoice Help'));
+    await tester.pumpAndSettle();
+    expect(find.text('Invoice help request submitted.'), findsOneWidget);
+
+    final QuerySnapshot<Map<String, dynamic>> supportRequests =
+        await fakeFirestore.collection('supportRequests').get();
+    expect(supportRequests.docs, hasLength(1));
+    expect(
+      supportRequests.docs.single.data()['requestType'],
+      'billing_invoice_help',
+    );
+    expect(
+      (supportRequests.docs.single.data()['metadata']
+          as Map<String, dynamic>)['invoiceId'],
+      'INV-2026-03',
+    );
+  });
+
+  testWidgets('parent billing page shows bounded plan support actions',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore fakeFirestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: fakeFirestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final ParentService parentService = _StubParentService(
+      firestoreService: firestoreService,
+      parentId: 'parent-1',
+      stubLearnerSummaries: <LearnerSummary>[
+        LearnerSummary(
+          learnerId: 'learner-1',
+          learnerName: 'Ava Learner',
+          currentLevel: 4,
+          totalXp: 1200,
+          missionsCompleted: 5,
+          currentStreak: 7,
+          attendanceRate: 1.0,
+        ),
+      ],
+      stubBillingSummary: BillingSummary(
+        currentBalance: 199.0,
+        nextPaymentAmount: 0,
+        nextPaymentDate: DateTime(2026, 4, 1),
+        subscriptionPlan: 'Family Plan',
+        recentPayments: <PaymentHistory>[
+          PaymentHistory(
+            id: 'INV-2026-03',
+            amount: 199.0,
+            date: DateTime(2026, 3, 1),
+            status: 'due',
+            description: 'Visa ending 4242',
+          ),
+        ],
+      ),
+    );
+
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
+    await tester.pumpWidget(_buildHarness(parentService: parentService));
+    await tester.pumpAndSettle();
+
     await tester.tap(find.text('Plan'));
     await tester.pumpAndSettle();
-    expect(find.text('Payment method changes are handled by HQ billing support.'), findsOneWidget);
-    expect(find.text('Manage Plan'), findsNothing);
+
+    expect(find.text('Request Payment Method Update'), findsOneWidget);
+    expect(find.text('Request Plan Change'), findsOneWidget);
+  });
+
+  testWidgets(
+      'parent billing page fails closed when support requests are unavailable',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore fakeFirestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: fakeFirestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final ParentService parentService = _UnavailableBillingSupportParentService(
+      firestoreService: firestoreService,
+      parentId: 'parent-1',
+      stubLearnerSummaries: <LearnerSummary>[
+        LearnerSummary(
+          learnerId: 'learner-1',
+          learnerName: 'Ava Learner',
+          currentLevel: 4,
+          totalXp: 1200,
+          missionsCompleted: 5,
+          currentStreak: 7,
+          attendanceRate: 1.0,
+        ),
+      ],
+      stubBillingSummary: BillingSummary(
+        currentBalance: 199.0,
+        nextPaymentAmount: 0,
+        nextPaymentDate: DateTime(2026, 4, 1),
+        subscriptionPlan: 'Family Plan',
+        recentPayments: <PaymentHistory>[
+          PaymentHistory(
+            id: 'INV-2026-03',
+            amount: 199.0,
+            date: DateTime(2026, 3, 1),
+            status: 'due',
+            description: 'Visa ending 4242',
+          ),
+        ],
+      ),
+    );
+
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
+    await tester.pumpWidget(_buildHarness(parentService: parentService));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Plan'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Request Plan Change'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Support requests are unavailable right now.'),
+        findsOneWidget);
+    final QuerySnapshot<Map<String, dynamic>> supportRequests =
+        await fakeFirestore.collection('supportRequests').get();
+    expect(supportRequests.docs, isEmpty);
   });
 }
