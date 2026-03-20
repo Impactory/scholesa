@@ -119,9 +119,75 @@ void main() {
     expect(find.text('No billing data yet'), findsOneWidget);
     expect(find.text('Statements are shared by your site or HQ billing team.'),
         findsOneWidget);
+    expect(find.text('Request Statement Copy'), findsOneWidget);
     await tester.tap(find.text('Plan'));
     await tester.pumpAndSettle();
     expect(find.text('Billing plan unavailable'), findsOneWidget);
+  });
+
+  testWidgets('parent billing page persists statement copy requests',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore fakeFirestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: fakeFirestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final ParentService parentService = _StubParentService(
+      firestoreService: firestoreService,
+      parentId: 'parent-1',
+      stubLearnerSummaries: <LearnerSummary>[
+        LearnerSummary(
+          learnerId: 'learner-1',
+          learnerName: 'Ava Learner',
+          currentLevel: 4,
+          totalXp: 1200,
+          missionsCompleted: 5,
+          currentStreak: 7,
+          attendanceRate: 1.0,
+        ),
+      ],
+      stubBillingSummary: BillingSummary(
+        currentBalance: 199.0,
+        nextPaymentAmount: 199.0,
+        nextPaymentDate: DateTime(2026, 4, 1),
+        subscriptionPlan: 'Family Plan',
+        recentPayments: <PaymentHistory>[
+          PaymentHistory(
+            id: 'INV-2026-03',
+            amount: 199.0,
+            date: DateTime(2026, 3, 1),
+            status: 'paid',
+            description: 'Visa ending 4242',
+          ),
+        ],
+      ),
+    );
+
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
+    await tester.pumpWidget(_buildHarness(parentService: parentService));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Request Statement Copy'), findsOneWidget);
+    await tester.tap(find.text('Request Statement Copy'));
+    await tester.pumpAndSettle();
+    expect(find.text('Statement copy request submitted.'), findsOneWidget);
+
+    final QuerySnapshot<Map<String, dynamic>> supportRequests =
+        await fakeFirestore.collection('supportRequests').get();
+    expect(supportRequests.docs, hasLength(1));
+    expect(
+      supportRequests.docs.single.data()['requestType'],
+      'billing_statement_copy',
+    );
+    expect(
+      supportRequests.docs.single.data()['source'],
+      'parent_billing_request_statement_copy',
+    );
+    expect(
+      (supportRequests.docs.single.data()['metadata']
+          as Map<String, dynamic>)['planName'],
+      'FAMILY PLAN',
+    );
   });
 
   testWidgets('parent billing page persists billing support requests',

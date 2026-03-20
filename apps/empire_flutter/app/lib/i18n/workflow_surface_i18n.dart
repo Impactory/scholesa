@@ -218,9 +218,11 @@ class WorkflowSurfaceI18n {
     'Payment method changes are handled by HQ billing support.':
         '付款方式变更由 HQ 计费支持处理。',
     'Plan changes are handled by HQ billing support.': '方案变更由 HQ 计费支持处理。',
+    'Request Statement Copy': '请求发送账单对账单副本',
     'Request Invoice Help': '请求发票协助',
     'Request Payment Method Update': '请求更新付款方式',
     'Request Plan Change': '请求变更方案',
+    'Statement copy request submitted.': '账单对账单副本请求已提交。',
     'Invoice help request submitted.': '发票协助请求已提交。',
     'Payment method update request submitted.': '付款方式更新请求已提交。',
     'Plan change request submitted.': '方案变更请求已提交。',
@@ -767,9 +769,11 @@ class WorkflowSurfaceI18n {
     'Payment method changes are handled by HQ billing support.':
         '付款方式變更由 HQ 計費支援處理。',
     'Plan changes are handled by HQ billing support.': '方案變更由 HQ 計費支援處理。',
+    'Request Statement Copy': '請求寄送帳單對帳單副本',
     'Request Invoice Help': '請求發票協助',
     'Request Payment Method Update': '請求更新付款方式',
     'Request Plan Change': '請求變更方案',
+    'Statement copy request submitted.': '帳單對帳單副本請求已提交。',
     'Invoice help request submitted.': '發票協助請求已提交。',
     'Payment method update request submitted.': '付款方式更新請求已提交。',
     'Plan change request submitted.': '方案變更請求已提交。',

@@ -169,6 +169,52 @@ class _ParentBillingPageState extends State<ParentBillingPage>
     );
   }
 
+  Future<void> _requestStatementCopy(ParentService service) {
+    final BillingSummary? billing = service.billingSummary;
+    final String learnerLabel = _selectedLearnerName(service);
+    final String planName = billing != null && billing.subscriptionPlan.trim().isNotEmpty
+        ? billing.subscriptionPlan.toUpperCase()
+        : _tParentBilling(context, 'STANDARD PLAN');
+
+    final List<String> messageLines = <String>[
+      'Please share the latest family billing statement with this parent.',
+      '',
+      'Learner Scope: $learnerLabel',
+      'Plan: $planName',
+    ];
+    if (billing != null) {
+      messageLines.add(
+        'Current Balance: ${_formatCurrency(billing.currentBalance)}',
+      );
+      messageLines.add(
+        'Next Payment Amount: ${_formatCurrency(billing.nextPaymentAmount)}',
+      );
+      if (billing.nextPaymentDate != null) {
+        messageLines.add(
+          'Next Payment Date: ${billing.nextPaymentDate!.toIso8601String()}',
+        );
+      }
+    }
+
+    return _handleBillingSupportRequest(
+      requestType: 'billing_statement_copy',
+      source: 'parent_billing_request_statement_copy',
+      subject: 'Parent billing statement copy request',
+      message: messageLines.join('\n'),
+      metadata: <String, dynamic>{
+        'learnerScope': learnerLabel,
+        'planName': planName,
+        'currentBalance': billing?.currentBalance,
+        'nextPaymentAmount': billing?.nextPaymentAmount,
+        'nextPaymentDate': billing?.nextPaymentDate?.toIso8601String(),
+      },
+      successMessage: _tParentBilling(
+        context,
+        'Statement copy request submitted.',
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -244,58 +290,45 @@ class _ParentBillingPageState extends State<ParentBillingPage>
         padding: const EdgeInsets.all(20),
         child: Row(
           children: <Widget>[
+              constraints: const BoxConstraints(maxWidth: 280),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 gradient: ScholesaColors.parentGradient,
                 borderRadius: BorderRadius.circular(16),
-                boxShadow: <BoxShadow>[
-                  BoxShadow(
-                    color: ScholesaColors.parent.withValues(alpha: 0.3),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: const Icon(Icons.account_balance_wallet,
-                  color: Colors.white, size: 28),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   Text(
-                    _tParentBilling(context, 'Billing & Payments'),
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: ScholesaColors.parent,
-                        ),
+                    _tParentBilling(
+                      context,
+                      'Statements are shared by your site or HQ billing team.',
+                    ),
+                    textAlign: TextAlign.right,
+                    style: TextStyle(
+                      color: ScholesaColors.parent,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                  Text(
-                    _tParentBilling(context, 'Manage your payments'),
-                    style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: () => _requestStatementCopy(service),
+                    style: TextButton.styleFrom(
+                      foregroundColor: ScholesaColors.parent,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: Text(
+                      _tParentBilling(context, 'Request Statement Copy'),
+                    ),
                   ),
                 ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: ScholesaColors.parent.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                _tParentBilling(
-                  context,
-                  'Statements are shared by your site or HQ billing team.',
-                ),
-                textAlign: TextAlign.right,
-                style: TextStyle(
-                  color: ScholesaColors.parent,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
               ),
             ),
             const SizedBox(width: 8),
@@ -429,7 +462,7 @@ class _ParentBillingPageState extends State<ParentBillingPage>
                     const SizedBox(height: 4),
                     Text(
                       _formatCurrency(billing.currentBalance),
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
@@ -448,12 +481,15 @@ class _ParentBillingPageState extends State<ParentBillingPage>
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: <Widget>[
-                          Icon(Icons.check_circle,
+                          const Icon(Icons.check_circle,
                               size: 14, color: Colors.white),
-                          SizedBox(width: 4),
+                          const SizedBox(width: 4),
                           Text(
                             _tParentBilling(context, 'All paid'),
-                            style: TextStyle(color: Colors.white, fontSize: 12),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                            ),
                           ),
                         ],
                       ),
@@ -470,6 +506,77 @@ class _ParentBillingPageState extends State<ParentBillingPage>
                     Icons.receipt_long,
                     color: Colors.white,
                     size: 32,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: _BalanceStatCard(
+                    label: _tParentBilling(context, 'This Month'),
+                    value: _formatCurrency(thisMonthPaid),
+                    icon: Icons.calendar_today,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _BalanceStatCard(
+                    label: _tParentBilling(context, 'Next Due'),
+                    value: _formatDate(billing.nextPaymentDate),
+                    icon: Icons.event,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _BalanceStatCard(
+                    label: _tParentBilling(context, 'Total Paid'),
+                    value: _formatCurrency(totalPaid),
+                    icon: Icons.check_circle_outline,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTabBar() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: TabBar(
+        controller: _tabController,
+        onTap: (int index) {
+          final List<String> tabs = <String>['invoices', 'payments', 'plan'];
+          TelemetryService.instance.logEvent(
+            event: 'cta.clicked',
+            metadata: <String, dynamic>{
+              'cta': 'parent_billing_tab_change',
+              'tab': tabs[index],
+            },
+          );
+        },
+        labelColor: Colors.white,
+        unselectedLabelColor: Colors.grey[600],
+        indicator: BoxDecoration(
+          color: ScholesaColors.parent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        tabs: <Widget>[
+          Tab(text: _tParentBilling(context, 'Invoices')),
+          Tab(text: _tParentBilling(context, 'Payments')),
+          Tab(text: _tParentBilling(context, 'Plan')),
+        ],
+      ),
+    );
+  }
                   ),
                 ),
               ],
