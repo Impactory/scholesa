@@ -195,7 +195,7 @@ void main() {
 
       await expectLater(
         find.byType(AiCoachWidget),
-        matchesGoldenFile('goldens/miloos_coach_unavailable_mobile.png'),
+        matchesGoldenFile('goldens/ai_help_unavailable_mobile.png'),
       );
     });
 
@@ -213,7 +213,7 @@ void main() {
 
       await expectLater(
         find.byType(AiCoachWidget),
-        matchesGoldenFile('goldens/miloos_coach_guarded_mobile.png'),
+        matchesGoldenFile('goldens/ai_help_guarded_mobile.png'),
       );
     });
 
@@ -233,7 +233,7 @@ void main() {
 
       await expectLater(
         find.byType(AiCoachWidget),
-        matchesGoldenFile('goldens/miloos_coach_verification_desktop.png'),
+        matchesGoldenFile('goldens/ai_help_verification_desktop.png'),
       );
     });
 
@@ -247,7 +247,7 @@ void main() {
 
       await expectLater(
         find.byType(BosLearnerLoopInsightsCard),
-        matchesGoldenFile('goldens/miloos_learner_loop_empty_mobile.png'),
+        matchesGoldenFile('goldens/learner_support_loop_empty_mobile.png'),
       );
     });
 
@@ -261,7 +261,7 @@ void main() {
 
       await expectLater(
         find.byType(BosClassInsightsCard),
-        matchesGoldenFile('goldens/miloos_class_insights_partial_desktop.png'),
+        matchesGoldenFile('goldens/class_insights_partial_desktop.png'),
       );
     });
 
@@ -276,7 +276,7 @@ void main() {
       await expectLater(
         find.byType(BosClassInsightsCard),
         matchesGoldenFile(
-          'goldens/miloos_class_insights_missing_identity_mobile.png',
+          'goldens/class_insights_missing_identity_mobile.png',
         ),
       );
     });
