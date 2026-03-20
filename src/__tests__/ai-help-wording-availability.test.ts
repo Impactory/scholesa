@@ -120,9 +120,9 @@ describe('AI help wording availability', () => {
       {
         relativePath: ['packages', 'i18n', 'locales', 'th.json'],
         required: [
-          '"title": "AI Help"',
+          '"title": "ความช่วยเหลือจาก AI"',
           '"tooltip": "ขอความช่วยเหลือ"',
-          '"responseLabel": "AI Help:"',
+          '"responseLabel": "ความช่วยเหลือจาก AI:"',
           '"voiceRequirements": "ลงชื่อเข้าใช้ เปิดสิทธิ์ไมโครโฟน และตั้งค่าเสียงให้เสร็จก่อนใช้ความช่วยเหลือด้วยเสียง"',
           '"sessionLoopTitle": "สัญญาณการเรียนรู้ของคาบนี้"',
           '"improvementScore": "แนวโน้มการเติบโต"',

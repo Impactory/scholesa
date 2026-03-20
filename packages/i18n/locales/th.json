@@ -495,11 +495,11 @@
     }
   },
   "aiCoach": {
-    "title": "AI Help",
+    "title": "ความช่วยเหลือจาก AI",
     "tooltip": "ขอความช่วยเหลือ",
-    "openAria": "เปิด AI Help",
-    "minimizeAria": "ย่อ AI Help",
-    "teacherGuidance": "ถามครูก่อนใช้ AI Help",
+    "openAria": "เปิดความช่วยเหลือจาก AI",
+    "minimizeAria": "ย่อความช่วยเหลือจาก AI",
+    "teacherGuidance": "ถามครูก่อนใช้ความช่วยเหลือจาก AI",
     "howCanIHelp": "วันนี้ฉันช่วยอะไรได้บ้าง?",
     "mode": {
       "hint": {
@@ -525,7 +525,7 @@
     "speakQuestion": "พูดคำถามของคุณ",
     "thinking": "กำลังคิด...",
     "ask": "ถาม",
-    "responseLabel": "AI Help:",
+    "responseLabel": "ความช่วยเหลือจาก AI:",
     "poweredBy": "ขับเคลื่อนโดย {{model}}",
     "wasHelpful": "สิ่งนี้ช่วยได้ไหม?",
     "helpfulYes": "ได้",
