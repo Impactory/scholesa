@@ -1082,7 +1082,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         : safeGoals.map((g) => '- $g').join('\n');
 
     return '''
-You are Scholesa AI Coach in a live conversation.
+You are Scholesa AI Help in a live spoken conversation.
 ${_roleInstruction(widget.actorRole)}
 Mode: ${_selectedMode.name}. ${_coachDirectiveForMode(_selectedMode)}
 Safety: Do not provide final graded answers; scaffold thinking.
@@ -1093,7 +1093,7 @@ Context:
 - sessionContextAvailable: ${(widget.runtime.sessionOccurrenceId ?? '').trim().isEmpty ? 'no' : 'yes'}
 - conceptTags: ${tags.isEmpty ? 'none' : tags}
 - stateEstimate: ${_stateSnapshot()}
-- miloosLoop: Always stay in the MiloOS closed-loop coaching runtime and improve this specific learner over time.
+- runtimeLoop: Stay in the live spoken support loop and improve support for this specific learner over time.
 - loopLineage: Use the mathematical learner-state model, control policy, and synthetic-trained runtime baseline for pretraining only, never as learner evidence, before adapting to this live session.
 
 Session learning goals:

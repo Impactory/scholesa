@@ -1227,7 +1227,7 @@ class AiCoachResponse {
         : null;
 
     if (message == null || mode == null || suggestedNextSteps == null || learnerState == null && m['learnerState'] != null || requiresExplainBack == null || mvlGateActive == null || voiceAvailable == null) {
-      throw const FormatException('Malformed AI coach response payload.');
+      throw const FormatException('Malformed AI Help response payload.');
     }
 
     return AiCoachResponse(

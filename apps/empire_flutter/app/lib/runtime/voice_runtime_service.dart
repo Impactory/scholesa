@@ -61,12 +61,12 @@ class VoiceRuntimeService {
   Future<String> _requiredIdToken() async {
     final User? user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      throw Exception('Authentication required for voice runtime request.');
+      throw Exception('Sign in to use AI Help by voice.');
     }
     final String? idToken = await user.getIdToken();
     if (idToken == null || idToken.isEmpty) {
       throw Exception(
-          'Unable to resolve auth token for voice runtime request.');
+          'Sign-in could not be confirmed for AI Help voice support.');
     }
     return idToken;
   }
@@ -89,7 +89,7 @@ class VoiceRuntimeService {
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw Exception(
-          'Voice API error (${response.statusCode}): ${response.body}');
+          'Voice help is unavailable right now (${response.statusCode}).');
     }
 
     final Map<String, dynamic> json =
@@ -133,7 +133,7 @@ class VoiceRuntimeService {
 
     final File file = File(audioFilePath);
     if (!await file.exists()) {
-      throw Exception('Audio file missing for transcription.');
+      throw Exception('Audio recording is unavailable for transcription.');
     }
 
     request.files
@@ -144,7 +144,7 @@ class VoiceRuntimeService {
     final http.Response response = await http.Response.fromStream(streamed);
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw Exception(
-          'Voice transcribe error (${response.statusCode}): ${response.body}');
+          'Voice transcription is unavailable right now (${response.statusCode}).');
     }
 
     final Map<String, dynamic> json =
