@@ -913,7 +913,7 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              _tEducatorToday(context, 'AI help is loading'),
+              _tEducatorToday(context, 'MiloOS is loading'),
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 4),

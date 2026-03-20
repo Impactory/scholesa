@@ -28,8 +28,8 @@ class LearnerSurfaceI18n {
     'No habits scheduled yet': '还没有安排习惯',
     'Set up a habit to start your daily streak.': '设置一个习惯，开始你的每日连续记录。',
     'No active missions yet': '还没有进行中的任务',
-    'Start a mission to activate your learning loop.': '开始一个任务，启动你的学习循环。',
-    'AI help is loading': 'AI 帮助正在加载',
+    'Start a mission to build real learning evidence today.': '开始一个任务，建立今天真实的学习证据。',
+    'MiloOS is loading': 'MiloOS 正在加载',
     'Runtime context is syncing. Try again in a moment.': '运行时上下文正在同步。请稍后再试。',
     'My Portfolio': '我的作品集',
     'Showcase your achievements': '展示你的成就',
@@ -191,8 +191,8 @@ class LearnerSurfaceI18n {
         '你正在持续推进进行中的任务，这份势头很有价值。',
     'You set a clear goal for your week. That is real progress.':
         '你为这周设定了清晰目标，这就是真实的进步。',
-    'You checked in and kept your learning loop moving today.':
-        '你今天完成了签到，也让自己的学习循环继续前进。',
+    'You checked in and kept your learning moving today.':
+        '你今天完成了签到，也让自己的学习持续前进。',
     'What win are you proud of today?': '你今天最为自己骄傲的收获是什么？',
     'Pre-plan reflection': '课前计划反思',
     'Post-session reflection': '课后回顾反思',
@@ -225,8 +225,8 @@ class LearnerSurfaceI18n {
     'No habits scheduled yet': '尚未安排習慣',
     'Set up a habit to start your daily streak.': '設定一個習慣，開始你的每日連續紀錄。',
     'No active missions yet': '尚未有進行中的任務',
-    'Start a mission to activate your learning loop.': '開始一個任務，啟動你的學習循環。',
-    'AI help is loading': 'AI 幫助正在載入',
+    'Start a mission to build real learning evidence today.': '開始一個任務，建立今天真實的學習證據。',
+    'MiloOS is loading': 'MiloOS 正在載入',
     'Runtime context is syncing. Try again in a moment.': '執行階段內容正在同步。請稍後再試。',
     'My Portfolio': '我的作品集',
     'Showcase your achievements': '展示你的成就',
@@ -388,8 +388,8 @@ class LearnerSurfaceI18n {
         '你正持續推進進行中的任務，這份動能很有價值。',
     'You set a clear goal for your week. That is real progress.':
         '你為這週設下了清楚目標，這就是真實的進步。',
-    'You checked in and kept your learning loop moving today.':
-        '你今天完成了簽到，也讓自己的學習循環持續前進。',
+    'You checked in and kept your learning moving today.':
+        '你今天完成了簽到，也讓自己的學習持續前進。',
     'What win are you proud of today?': '你今天最為自己驕傲的收穫是什麼？',
     'Pre-plan reflection': '課前計畫反思',
     'Post-session reflection': '課後回顧反思',

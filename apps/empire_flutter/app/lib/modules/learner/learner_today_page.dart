@@ -677,7 +677,7 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  _t('Start a mission to activate your learning loop.'),
+                  _t('Start a mission to build real learning evidence today.'),
                   style:
                       TextStyle(color: context.schTextSecondary, fontSize: 12),
                 ),
@@ -1140,7 +1140,7 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
     if (weeklyTargetMinutes > 0) {
       return _t('You set a clear goal for your week. That is real progress.');
     }
-    return _t('You checked in and kept your learning loop moving today.');
+    return _t('You checked in and kept your learning moving today.');
   }
 
   Future<void> _openLearnerSetupSheet() async {
@@ -1861,7 +1861,7 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
       return Container(
         margin: const EdgeInsets.only(top: 12),
         child: _DashboardInfoCard(
-          title: _t('AI help is loading'),
+          title: _t('MiloOS is loading'),
           compactTitle: true,
           body: <Widget>[
             Text(
