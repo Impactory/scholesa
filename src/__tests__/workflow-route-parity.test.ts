@@ -797,6 +797,10 @@ describe('workflow route parity', () => {
         }),
       }),
     ]));
+    const telemetryBackfillRecord = result.records.find((record) => record.id === 'audit-1');
+    expect(telemetryBackfillRecord?.metadata).not.toHaveProperty('subtitle');
+    expect(telemetryBackfillRecord?.metadata).not.toHaveProperty('updatedAt');
+    expect(telemetryBackfillRecord?.metadata).not.toHaveProperty('id');
     expect(result.records.find((record) => record.id === 'audit-3')).toBeUndefined();
   });
 
