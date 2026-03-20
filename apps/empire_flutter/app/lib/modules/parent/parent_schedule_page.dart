@@ -99,6 +99,70 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
     );
   }
 
+  Future<void> _submitLinkedLearnerReviewRequest() async {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{
+        'cta': 'parent_schedule_request_linked_learner_review',
+      },
+    );
+
+    final FirestoreService? firestoreService = _maybeFirestoreService();
+    if (firestoreService == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_t('Support requests are unavailable right now.')),
+        ),
+      );
+      return;
+    }
+
+    final AppState appState = context.read<AppState>();
+    try {
+      final String requestId = await firestoreService.submitSupportRequest(
+        requestType: 'parent_linked_learner_review',
+        source: 'parent_schedule_request_linked_learner_review',
+        siteId: appState.activeSiteId?.trim().isNotEmpty == true
+            ? appState.activeSiteId!.trim()
+            : 'Not set',
+        userId: appState.userId?.trim().isNotEmpty == true
+            ? appState.userId!.trim()
+            : 'Not set',
+        userEmail: appState.email?.trim().isNotEmpty == true
+            ? appState.email!.trim()
+            : 'Not set',
+        userName: appState.displayName?.trim().isNotEmpty == true
+            ? appState.displayName!.trim()
+            : 'Not set',
+        role: appState.role?.name ?? 'unknown',
+        subject: 'Parent linked learner review request from schedule',
+        message: 'Please review the learner links for this parent schedule account.',
+        metadata: <String, dynamic>{
+          'activeSiteId': appState.activeSiteId,
+          'viewMode': _viewMode,
+        },
+      );
+      TelemetryService.instance.logEvent(
+        event: 'parent.linked_learner_review.submitted',
+        metadata: <String, dynamic>{'request_id': requestId},
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_t('Linked learner review request submitted.')),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_t('Unable to submit linked learner review right now.')),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final ColorScheme scheme = Theme.of(context).colorScheme;
@@ -133,12 +197,22 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
               return Center(
                 child: Padding(
                   padding: const EdgeInsets.all(24),
-                  child: Text(
-                    _t('No learner links found yet. Ask your site admin to link parent and learner accounts.'),
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                        ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Text(
+                        _t('No learner links found yet. Ask your site admin to link parent and learner accounts.'),
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: scheme.onSurfaceVariant,
+                            ),
+                      ),
+                      const SizedBox(height: 16),
+                      FilledButton.tonal(
+                        onPressed: _submitLinkedLearnerReviewRequest,
+                        child: Text(_t('Request Linking Review')),
+                      ),
+                    ],
                   ),
                 ),
               );

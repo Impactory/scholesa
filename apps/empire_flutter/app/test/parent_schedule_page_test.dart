@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
 import 'package:scholesa_app/auth/app_state.dart';
@@ -8,13 +10,27 @@ import 'package:scholesa_app/modules/parent/parent_models.dart';
 import 'package:scholesa_app/modules/parent/parent_schedule_page.dart';
 import 'package:scholesa_app/modules/parent/parent_service.dart';
 import 'package:scholesa_app/runtime/learning_runtime_provider.dart';
+import 'package:scholesa_app/services/firestore_service.dart';
+
+class _FakeFirebaseAuth implements FirebaseAuth {
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
 
 class _StubParentService extends ChangeNotifier implements ParentService {
   _StubParentService({
     required this.parentId,
     required this.learnerSummaries,
     this.error,
-  });
+    FirestoreService? firestoreService,
+  }) : firestoreService = firestoreService ??
+            FirestoreService(
+              firestore: FakeFirebaseFirestore(),
+              auth: _FakeFirebaseAuth(),
+            );
+
+  @override
+  final FirestoreService firestoreService;
 
   @override
   final String parentId;
@@ -57,6 +73,7 @@ AppState _buildParentState() {
 Future<void> _pumpPage(
   WidgetTester tester, {
   required ParentService parentService,
+  FirestoreService? firestoreService,
 }) async {
   await tester.binding.setSurfaceSize(const Size(1280, 1800));
   addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -66,6 +83,8 @@ Future<void> _pumpPage(
       providers: <SingleChildWidget>[
         ChangeNotifierProvider<AppState>.value(value: _buildParentState()),
         ChangeNotifierProvider<ParentService>.value(value: parentService),
+        if (firestoreService != null)
+          Provider<FirestoreService>.value(value: firestoreService),
         Provider<LearningRuntimeProvider?>.value(value: null),
       ],
       child: MaterialApp(
@@ -120,5 +139,53 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(service.loadCallCount, loadCallCountAfterMount + 1);
+  });
+
+  testWidgets('parent schedule empty state persists linked learner review requests',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _FakeFirebaseAuth(),
+    );
+    final _StubParentService service = _StubParentService(
+      parentId: 'parent-test-1',
+      learnerSummaries: const <LearnerSummary>[],
+      firestoreService: firestoreService,
+    );
+
+    await _pumpPage(
+      tester,
+      parentService: service,
+      firestoreService: firestoreService,
+    );
+
+    expect(find.text('Request Linking Review'), findsOneWidget);
+    await tester.tap(find.text('Request Linking Review'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Linked learner review request submitted.'), findsOneWidget);
+    final requests = await firestore.collection('supportRequests').get();
+    expect(requests.docs, hasLength(1));
+    expect(requests.docs.single.data()['requestType'], 'parent_linked_learner_review');
+    expect(requests.docs.single.data()['source'], 'parent_schedule_request_linked_learner_review');
+  });
+
+  testWidgets('parent schedule empty state fails closed when support requests are unavailable',
+      (WidgetTester tester) async {
+    final _StubParentService service = _StubParentService(
+      parentId: 'parent-test-1',
+      learnerSummaries: const <LearnerSummary>[],
+    );
+
+    await _pumpPage(
+      tester,
+      parentService: service,
+    );
+
+    await tester.tap(find.text('Request Linking Review'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Support requests are unavailable right now.'), findsOneWidget);
   });
 }
