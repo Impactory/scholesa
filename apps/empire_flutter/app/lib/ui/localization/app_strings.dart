@@ -126,7 +126,7 @@ class AppStrings {
       'ai.banner.runtimeMalformed':
           'Live learning signals could not be trusted. Confidence stays at 0% until the session state is repaired.',
       'ai.banner.learnerGuarded':
-          'Confidence {percent}%. MiloOS uses live learning signals plus a synthetic baseline, and stays careful below 97%.',
+          'Confidence {percent}%. Help uses live learning signals plus a synthetic baseline, and stays careful below 97%.',
       'ai.banner.lineageDisclosure':
           'Coach guidance uses live learning signals plus a synthetic baseline. The synthetic baseline helps with support, but it is not learner evidence or proof of mastery.',
       'ai.chat.verificationRequired': 'Verification required',
@@ -264,7 +264,7 @@ class AppStrings {
           '实时学习信号当前不可用。在真实课堂证据到达前，置信度保持 0%，因此辅导会保持谨慎。',
       'ai.banner.runtimeMalformed': '实时学习信号当前不可信。在修复会话状态前，置信度保持 0%。',
       'ai.banner.learnerGuarded':
-          '当前置信度为 {percent}%。MiloOS 会结合实时学习信号与合成基线，并在低于 97% 时保持谨慎。',
+          '当前置信度为 {percent}%。帮助会结合实时学习信号与合成基线，并在低于 97% 时保持谨慎。',
       'ai.banner.lineageDisclosure':
           '教练建议会结合实时学习信号与合成基线。合成基线只用于支持，不是学习者证据，也不是掌握证明。',
       'ai.chat.verificationRequired': '需要验证',
@@ -393,7 +393,7 @@ class AppStrings {
           '即時學習訊號目前不可用。在真實課堂證據到達前，信心維持 0%，因此輔導會保持謹慎。',
       'ai.banner.runtimeMalformed': '即時學習訊號目前不可信。在修復會話狀態前，信心維持 0%。',
       'ai.banner.learnerGuarded':
-          '目前信心為 {percent}%。MiloOS 會結合即時學習訊號與合成基線，並在低於 97% 時保持謹慎。',
+          '目前信心為 {percent}%。幫助會結合即時學習訊號與合成基線，並在低於 97% 時保持謹慎。',
       'ai.banner.lineageDisclosure':
           '教練建議會結合即時學習訊號與合成基線。合成基線只用於支持，不是學習者證據，也不是掌握證明。',
       'ai.chat.verificationRequired': '需要驗證',
