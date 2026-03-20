@@ -91,22 +91,22 @@ function buildVoiceTransparencyMessage(metadata: VoiceTransparencyMeta): string 
   const understandingConfidence = metadata.understanding?.confidence ?? null;
 
   if (responseGenerationSource === 'guardrail' && understandingSource === 'heuristic') {
-    return 'MiloOS is using a safety clarification here because voice understanding stayed heuristic and may not be reliable yet.';
+    return 'MiloOS is being careful here because it could not understand the voice request clearly enough yet.';
   }
   if (responseGenerationSource === 'local' && understandingSource === 'heuristic') {
-    return 'MiloOS answered with local heuristic support, not model-backed understanding. Treat this as a lightweight prompt, not a verified interpretation.';
+    return 'MiloOS answered with a simple local hint because it could not confirm the voice request clearly. Treat this as a prompt to think, not a verified reading of what you meant.';
   }
   if (responseGenerationSource === 'model' && understandingSource === 'heuristic') {
-    return 'MiloOS used model generation for the reply, but intent understanding remained heuristic.';
+    return 'MiloOS used the model to write the reply, but it still could not confirm the voice request clearly.';
   }
   if (understandingSource === 'blended') {
     const confidenceText = typeof understandingConfidence === 'number'
-      ? ` Understanding confidence: ${Math.round(understandingConfidence * 100)}%.`
+      ? ` Confidence in that reading: ${Math.round(understandingConfidence * 100)}%.`
       : '';
-    return `MiloOS used blended heuristic and model understanding for this voice turn.${confidenceText}`;
+    return `MiloOS used both a quick local check and model support to understand this voice turn.${confidenceText}`;
   }
   if (understandingSource === 'model') {
-    return 'MiloOS used model-derived understanding for this voice turn.';
+    return 'MiloOS used model support to understand this voice turn.';
   }
   return null;
 }
@@ -552,7 +552,7 @@ Guidance: ${
         gradeBand: grade <= 3 ? 'grades_1_3' : grade <= 6 ? 'grades_4_6' : grade <= 9 ? 'grades_7_9' : 'grades_10_12',
         traceId,
       });
-      setVoiceTransparencyMessage('MiloOS could not complete a reliable voice inference turn and fell back to the service guard response.');
+      setVoiceTransparencyMessage('MiloOS could not understand this voice turn reliably, so it switched to a safer fallback reply.');
     } finally {
       setLoading(false);
     }
