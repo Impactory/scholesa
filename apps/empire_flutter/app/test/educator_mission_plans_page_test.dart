@@ -118,6 +118,10 @@ Future<void> _seedMission(
 }
 
 void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+  });
+
   testWidgets(
       'educator mission plans page shows an explicit load error instead of an empty state',
       (WidgetTester tester) async {
@@ -359,16 +363,17 @@ void main() {
     await tester.tap(find.text('Eco Build Sprint').first);
     await tester.pumpAndSettle();
 
-    await tester.scrollUntilVisible(
-      find.text('Archive').first,
-      250,
-      scrollable: find.byType(Scrollable).last,
-    );
-
-    await tester.tap(find.text('Archive').first);
+    final Finder archiveAction = find.widgetWithText(ElevatedButton, 'Archive');
+    await tester.ensureVisible(archiveAction);
+    await tester.tap(archiveAction);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Archive').last);
+    await tester.tap(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.text('Archive'),
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('Mission archived'), findsOneWidget);
@@ -483,16 +488,17 @@ void main() {
     await tester.tap(find.text('Eco Build Sprint').first);
     await tester.pumpAndSettle();
 
-    await tester.scrollUntilVisible(
-      find.text('Archive').first,
-      250,
-      scrollable: find.byType(Scrollable).last,
-    );
-
-    await tester.tap(find.text('Archive').first);
+    final Finder archiveAction = find.widgetWithText(ElevatedButton, 'Archive');
+    await tester.ensureVisible(archiveAction);
+    await tester.tap(archiveAction);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Archive').last);
+    await tester.tap(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.text('Archive'),
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('Failed to archive mission'), findsOneWidget);
