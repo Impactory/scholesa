@@ -160,6 +160,8 @@ class WorkflowSurfaceI18n {
     'We could not load integrations health. Retry to check the current state.':
         '我们暂时无法加载集成健康状态。请重试以检查当前状态。',
     'Unable to retry this integration right now.': '目前无法重试此集成。',
+    'Unable to update site day status right now.': '目前无法更新站点日状态。',
+    'Unable to update kit checklist right now.': '目前无法更新设备检查清单。',
     'Mission Planning AI Help': '任务规划 AI 帮助',
     'See support ideas while designing missions for each learner':
         '在为每位学习者设计任务时查看支持建议',
@@ -899,6 +901,8 @@ class WorkflowSurfaceI18n {
     'We could not load integrations health. Retry to check the current state.':
         '我們暫時無法載入整合健康狀態。請重試以檢查目前狀態。',
     'Unable to retry this integration right now.': '目前無法重試此整合。',
+    'Unable to update site day status right now.': '目前無法更新站點日狀態。',
+    'Unable to update kit checklist right now.': '目前無法更新設備檢查清單。',
     'Mission Planning AI Help': '任務規劃 AI 幫助',
     'See support ideas while designing missions for each learner':
         '在為每位學習者設計任務時查看支持建議',

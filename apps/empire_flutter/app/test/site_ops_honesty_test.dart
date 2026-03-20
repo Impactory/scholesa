@@ -179,6 +179,7 @@ Future<void> _pumpPage(
   WidgetTester tester, {
   required FakeFirebaseFirestore firestore,
   required WorkflowBridgeService workflowBridge,
+  SiteOpsPage? page,
 }) async {
   await tester.binding.setSurfaceSize(const Size(1440, 2200));
   addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -210,7 +211,7 @@ Future<void> _pumpPage(
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
-        home: SiteOpsPage(workflowBridge: workflowBridge),
+        home: page ?? SiteOpsPage(workflowBridge: workflowBridge),
       ),
     ),
   );
@@ -327,5 +328,104 @@ void main() {
       find.text('Site rollout: 1 resolved · 0 staged · 0 fallback · 0 pending'),
       findsOneWidget,
     );
+  });
+
+  testWidgets(
+      'site ops day-open switch stays fail-closed when the write fails',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final _SequencedRuntimeWorkflowBridgeService workflowBridge =
+        _SequencedRuntimeWorkflowBridgeService(
+      snapshots: const <_RuntimeLoadSnapshot>[],
+    );
+
+    await _pumpPage(
+      tester,
+      firestore: firestore,
+      workflowBridge: workflowBridge,
+      page: SiteOpsPage(
+        workflowBridge: workflowBridge,
+        dayStatusWriter: (
+          String siteId,
+          String dayKey,
+          bool isOpen,
+          String? userId,
+        ) async {
+          throw StateError('day status write failed');
+        },
+      ),
+    );
+
+    final Switch daySwitch = tester.widget<Switch>(find.byType(Switch).first);
+    expect(daySwitch.value, isFalse);
+
+    await tester.tap(find.byType(Switch).first);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Unable to update site day status right now.'),
+      findsOneWidget,
+    );
+    final Switch failedDaySwitch =
+        tester.widget<Switch>(find.byType(Switch).first);
+    expect(failedDaySwitch.value, isFalse);
+    expect(
+      firestore.collection('siteOpsDailyStatus').get(),
+      completion(isA<QuerySnapshot<Map<String, dynamic>>>()),
+    );
+  });
+
+  testWidgets(
+      'site ops kit checklist stays unchanged when the write fails',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final _SequencedRuntimeWorkflowBridgeService workflowBridge =
+        _SequencedRuntimeWorkflowBridgeService(
+      snapshots: const <_RuntimeLoadSnapshot>[],
+    );
+
+    await _pumpPage(
+      tester,
+      firestore: firestore,
+      workflowBridge: workflowBridge,
+      page: SiteOpsPage(
+        workflowBridge: workflowBridge,
+        checklistItemWriter: (
+          String siteId,
+          String dayKey,
+          String itemId,
+          String label,
+          bool completed,
+          int order,
+          String? note,
+          String? userId,
+        ) async {
+          throw StateError('checklist write failed');
+        },
+      ),
+    );
+
+    await tester.scrollUntilVisible(
+      find.widgetWithText(CheckboxListTile, 'Tablets charged'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+
+    CheckboxListTile checklistTile = tester.widget<CheckboxListTile>(
+      find.widgetWithText(CheckboxListTile, 'Tablets charged'),
+    );
+    expect(checklistTile.value, isFalse);
+
+    await tester.tap(find.text('Tablets charged'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Unable to update kit checklist right now.'),
+      findsOneWidget,
+    );
+    checklistTile = tester.widget<CheckboxListTile>(
+      find.widgetWithText(CheckboxListTile, 'Tablets charged'),
+    );
+    expect(checklistTile.value, isFalse);
   });
 }
