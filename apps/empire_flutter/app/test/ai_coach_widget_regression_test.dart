@@ -141,7 +141,7 @@ void main() {
       expect(spoken, isNotEmpty);
       expect(
         spoken.first.toLowerCase(),
-        contains('miloos'),
+        contains('guide you with hints'),
       );
     });
 
@@ -216,6 +216,62 @@ void main() {
       expect(find.byIcon(Icons.mic_none), findsOneWidget);
       expect(
         find.textContaining('Help will answer out loud.'), findsOneWidget,
+      );
+    });
+
+    testWidgets(
+        'voice-only learner replies stay spoken-first with replay instead of visible transcript',
+        (WidgetTester tester) async {
+      final _FakeRuntime fakeRuntime = _FakeRuntime();
+      final List<String> spoken = <String>[];
+
+      addTearDown(fakeRuntime.dispose);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: _testTheme,
+          home: Scaffold(
+            body: AiCoachWidget(
+              runtime: fakeRuntime,
+              actorRole: UserRole.learner,
+              voiceOnlyConversation: true,
+              autoAssistOnHesitation: true,
+              hesitationInactivityThreshold: Duration.zero,
+              autoAssistCooldown: const Duration(milliseconds: 50),
+              proactiveScanInterval: const Duration(milliseconds: 40),
+              skipVoiceInitializationForTesting: true,
+              onSpeakOverride: (String text) async {
+                spoken.add(text);
+              },
+              onAutoResponseRequest: (String prompt, AiCoachMode mode) async {
+                return AiCoachResponse.fromMap(<String, dynamic>{
+                  'message': 'Try one tiny next step now.',
+                  'mode': mode.name,
+                  'meta': <String, dynamic>{'version': 'test'},
+                });
+              },
+            ),
+          ),
+        ),
+      );
+
+      fakeRuntime.setHesitatingState();
+      await tester.pump(const Duration(milliseconds: 220));
+
+      expect(spoken, isNotEmpty);
+      expect(find.textContaining('Try one tiny next step now.'), findsNothing);
+      expect(
+        find.textContaining('Help answered out loud.'),
+        findsOneWidget,
+      );
+      expect(find.text('Replay spoken response'), findsOneWidget);
+
+      await tester.tap(find.text('Replay spoken response'));
+      await tester.pump();
+
+      expect(
+        spoken.where((String text) => text.contains('Try one tiny next step now.')).length,
+        greaterThanOrEqualTo(2),
       );
     });
 
