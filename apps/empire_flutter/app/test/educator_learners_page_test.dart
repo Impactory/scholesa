@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +15,31 @@ import 'package:scholesa_app/services/firestore_service.dart';
 import 'package:scholesa_app/ui/theme/scholesa_theme.dart';
 
 class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
+
+class _FailingLaneOverrideFirestoreService extends FirestoreService {
+  _FailingLaneOverrideFirestoreService({
+    required super.firestore,
+    required super.auth,
+  });
+
+  @override
+  Future<void> setDocument(
+    String collection,
+    String docId,
+    Map<String, dynamic> data, {
+    bool merge = false,
+  }) async {
+    if (collection == 'learnerDifferentiationPlans') {
+      throw StateError('lane override write failed');
+    }
+    return super.setDocument(
+      collection,
+      docId,
+      data,
+      merge: merge,
+    );
+  }
+}
 
 AppState _buildEducatorState() {
   final AppState state = AppState();
@@ -99,6 +125,8 @@ Future<void> _seedLearnerWithoutDisplayName(FakeFirebaseFirestore firestore) asy
     'sessionId': 'session-1',
   });
 }
+
+Finder _laneChip(String label) => find.widgetWithText(ChoiceChip, label);
 
 void main() {
   testWidgets('educator learners page persists learner follow-up requests',
@@ -229,5 +257,98 @@ void main() {
       ),
       findsOneWidget,
     );
+  });
+
+  testWidgets('educator learners page saves lane taps immediately and reloads overrides',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedLearner(firestore);
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final EducatorService educatorService = EducatorService(
+      firestoreService: firestoreService,
+      educatorId: 'educator-1',
+      siteId: 'site-1',
+    );
+
+    await tester.pumpWidget(
+      _buildHarness(
+        firestoreService: firestoreService,
+        educatorService: educatorService,
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    await tester.tap(find.text('Learner One'));
+    await tester.pumpAndSettle();
+
+    expect(tester.widget<ChoiceChip>(_laneChip('Scaffolded lane')).selected, isTrue);
+    expect(tester.widget<ElevatedButton>(find.widgetWithText(ElevatedButton, 'Save lane override')).enabled, isFalse);
+
+    await tester.tap(_laneChip('Stretch lane'));
+    await tester.pumpAndSettle();
+
+    final DocumentSnapshot<Map<String, dynamic>> savedPlan = await firestore
+        .collection('learnerDifferentiationPlans')
+        .doc('learner-1_site-1')
+        .get();
+    expect(savedPlan.exists, isTrue);
+    expect(savedPlan.data()?['selectedLane'], 'stretch');
+    expect(find.text('Differentiation lane saved'), findsOneWidget);
+    expect(tester.widget<ChoiceChip>(_laneChip('Stretch lane')).selected, isTrue);
+    expect(tester.widget<ElevatedButton>(find.widgetWithText(ElevatedButton, 'Save lane override')).enabled, isFalse);
+
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Learner One'));
+    await tester.pumpAndSettle();
+
+    expect(tester.widget<ChoiceChip>(_laneChip('Stretch lane')).selected, isTrue);
+    expect(tester.widget<ChoiceChip>(_laneChip('Scaffolded lane')).selected, isFalse);
+  });
+
+  testWidgets('educator learners page reverts lane selection when immediate save fails',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedLearner(firestore);
+    final FirestoreService firestoreService = _FailingLaneOverrideFirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final EducatorService educatorService = EducatorService(
+      firestoreService: firestoreService,
+      educatorId: 'educator-1',
+      siteId: 'site-1',
+    );
+
+    await tester.pumpWidget(
+      _buildHarness(
+        firestoreService: firestoreService,
+        educatorService: educatorService,
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    await tester.tap(find.text('Learner One'));
+    await tester.pumpAndSettle();
+
+    expect(tester.widget<ChoiceChip>(_laneChip('Scaffolded lane')).selected, isTrue);
+
+    await tester.tap(_laneChip('Stretch lane'));
+    await tester.pumpAndSettle();
+
+    final DocumentSnapshot<Map<String, dynamic>> savedPlan = await firestore
+        .collection('learnerDifferentiationPlans')
+        .doc('learner-1_site-1')
+        .get();
+    expect(savedPlan.exists, isFalse);
+    expect(find.text('Unable to save lane override right now.'), findsOneWidget);
+    expect(tester.widget<ChoiceChip>(_laneChip('Scaffolded lane')).selected, isTrue);
+    expect(tester.widget<ChoiceChip>(_laneChip('Stretch lane')).selected, isFalse);
   });
 }

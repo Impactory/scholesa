@@ -801,6 +801,12 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
     }
   }
 
+  bool get _hasPendingOverrideChanges {
+    final String baselineLane = _savedLane ?? _recommendedLane;
+    return _selectedLane != baselineLane ||
+        _overrideReasonController.text.trim() != _savedOverrideReason;
+  }
+
   Future<bool> _saveLaneOverride({bool showSuccessMessage = true}) async {
     final AppState? appState = context.read<AppState?>();
     final String? siteId = appState?.activeSiteId;
@@ -828,10 +834,10 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
     try {
       final FirestoreService firestoreService =
           context.read<FirestoreService>();
-      await firestoreService.firestore
-          .collection(_differentiationPlansCollection)
-          .doc('${learner.id}_$siteId')
-          .set(<String, dynamic>{
+      await firestoreService.setDocument(
+        _differentiationPlansCollection,
+        '${learner.id}_$siteId',
+        <String, dynamic>{
         'siteId': siteId,
         'learnerId': learner.id,
         'educatorId': educatorId,
@@ -841,7 +847,9 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
         'teacherOverride': _selectedLane != _recommendedLane,
         'printablePracticePlan': _buildPrintablePracticePlan(),
         'updatedAt': DateTime.now().toIso8601String(),
-      }, SetOptions(merge: true));
+        },
+        merge: true,
+      );
 
       _savedLane = _selectedLane;
       _savedOverrideReason = _overrideReasonController.text.trim();
@@ -1249,6 +1257,7 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
                         const SizedBox(height: 12),
                         TextField(
                           controller: _overrideReasonController,
+                          onChanged: (_) => setState(() {}),
                           maxLines: 2,
                           decoration: InputDecoration(
                             hintText: _tEducatorLearners(
@@ -1268,8 +1277,9 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton.icon(
-                            onPressed:
-                                _isSavingOverride ? null : _saveLaneOverride,
+                          onPressed: _isSavingOverride || !_hasPendingOverrideChanges
+                            ? null
+                            : _saveLaneOverride,
                             icon: _isSavingOverride
                                 ? const SizedBox(
                                     width: 16,

@@ -579,6 +579,22 @@ class FirestoreService {
     });
   }
 
+  /// Generic document set
+  Future<void> setDocument(
+    String collection,
+    String docId,
+    Map<String, dynamic> data, {
+    bool merge = false,
+  }) async {
+    await _firestore.collection(collection).doc(docId).set(
+      <String, dynamic>{
+        ...data,
+        'updatedAt': FieldValue.serverTimestamp(),
+      },
+      SetOptions(merge: merge),
+    );
+  }
+
   /// Generic document delete
   Future<void> deleteDocument(String collection, String docId) async {
     await _firestore.collection(collection).doc(docId).delete();
