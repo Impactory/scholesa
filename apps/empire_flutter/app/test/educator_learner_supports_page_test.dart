@@ -107,6 +107,26 @@ Future<void> _seedLearner(FakeFirebaseFirestore firestore) async {
   });
 }
 
+Future<void> _seedSecondLearner(FakeFirebaseFirestore firestore) async {
+  await firestore.collection('users').doc('learner-2').set(<String, dynamic>{
+    'displayName': 'Learner Two',
+    'email': 'learner-2@scholesa.test',
+    'siteId': 'site-1',
+    'attendanceRate': 91,
+    'missionsCompleted': 8,
+    'futureSkillsProgress': 0.72,
+    'leadershipProgress': 0.64,
+    'impactProgress': 0.59,
+    'enrolledSessionIds': <String>['session-2'],
+  });
+  await firestore.collection('enrollments').doc('enrollment-2').set(<String, dynamic>{
+    'siteId': 'site-1',
+    'learnerId': 'learner-2',
+    'educatorId': 'educator-1',
+    'sessionId': 'session-2',
+  });
+}
+
 void main() {
   testWidgets('educator learner supports page renders support plan from live learner data',
       (WidgetTester tester) async {
@@ -211,6 +231,12 @@ void main() {
         .docs
         .map((doc) => doc.data())
         .toList();
+    final List<Map<String, dynamic>> outcomes = (await firestore
+        .collection('learnerSupportOutcomes')
+        .get())
+      .docs
+      .map((doc) => doc.data())
+      .toList();
 
     expect(plans, hasLength(1));
     expect(plans.single['siteId'], 'site-1');
@@ -222,6 +248,12 @@ void main() {
     );
     expect(plans.single['priority'], 'medium');
     expect(plans.single['notes'], 'Updated support plan with visual cues.');
+    expect(outcomes, hasLength(1));
+    expect(outcomes.single['siteId'], 'site-1');
+    expect(outcomes.single['learnerId'], 'learner-1');
+    expect(outcomes.single['supportType'], 'Behavioral');
+    expect(outcomes.single['priority'], 'medium');
+    expect(outcomes.single['outcome'], 'helped');
 
     expect(find.text('Behavioral'), findsOneWidget);
     expect(find.text('Visual checklist'), findsOneWidget);
@@ -265,5 +297,54 @@ void main() {
     expect(find.text('Unable to update support plan right now.'), findsOneWidget);
     expect(find.text('Log Support Outcome'), findsNothing);
     expect(find.text('Edit Support Plan'), findsOneWidget);
+  });
+
+  testWidgets('educator learner supports search filters the visible inventory',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedLearner(firestore);
+    await _seedSecondLearner(firestore);
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final EducatorService educatorService = EducatorService(
+      firestoreService: firestoreService,
+      educatorId: 'educator-1',
+      siteId: 'site-1',
+    );
+
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      _buildHarness(
+        firestoreService: firestoreService,
+        educatorService: educatorService,
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Learner One'), findsOneWidget);
+    expect(find.text('Learner Two'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.search_rounded));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).last, 'learner two');
+    await tester.tap(find.text('Search'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Showing results for'), findsOneWidget);
+    expect(find.text('Learner Two'), findsOneWidget);
+    expect(find.text('Learner One'), findsNothing);
+    expect(find.textContaining('Found 1 matching support plans'), findsOneWidget);
+
+    await tester.tap(find.text('Clear Search'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Showing results for'), findsNothing);
+    expect(find.text('Learner One'), findsOneWidget);
+    expect(find.text('Learner Two'), findsOneWidget);
   });
 }

@@ -29,9 +29,11 @@ class EducatorLearnerSupportsPage extends StatefulWidget {
 class _EducatorLearnerSupportsPageState
     extends State<EducatorLearnerSupportsPage> {
   static const String _supportPlansCollection = 'learnerSupportPlans';
+  static const String _supportOutcomesCollection = 'learnerSupportOutcomes';
 
   Map<String, _PersistedSupportPlan> _supportPlanOverrides =
       <String, _PersistedSupportPlan>{};
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -116,6 +118,8 @@ class _EducatorLearnerSupportsPageState
       body: Consumer<EducatorService>(
         builder: (BuildContext context, EducatorService service, _) {
           final List<_LearnerSupport> supports = _supportsFromService(service);
+          final List<_LearnerSupport> visibleSupports =
+              _applySearchFilter(supports);
           if (service.isLoading && supports.isEmpty) {
             return Center(
               child: Text(
@@ -131,6 +135,38 @@ class _EducatorLearnerSupportsPageState
                 _tEducatorLearnerSupports(context, 'No support plans yet'),
                 style: const TextStyle(color: ScholesaColors.textSecondary),
               ),
+            );
+          }
+
+          if (visibleSupports.isEmpty) {
+            return ListView(
+              padding: const EdgeInsets.all(16),
+              children: <Widget>[
+                if (_searchQuery.isNotEmpty) _buildSearchBanner(),
+                const SizedBox(height: 24),
+                Center(
+                  child: Column(
+                    children: <Widget>[
+                      const Icon(
+                        Icons.search_off_rounded,
+                        size: 48,
+                        color: ScholesaColors.textSecondary,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        _tEducatorLearnerSupports(
+                          context,
+                          'No matching support plans',
+                        ),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: ScholesaColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             );
           }
 
@@ -162,7 +198,11 @@ class _EducatorLearnerSupportsPageState
                   learnerName: service.learners.first.name,
                   accentColor: ScholesaColors.educator,
                 ),
-              _buildSummaryCards(supports),
+              _buildSummaryCards(visibleSupports),
+              if (_searchQuery.isNotEmpty) ...<Widget>[
+                const SizedBox(height: 16),
+                _buildSearchBanner(),
+              ],
               const SizedBox(height: 24),
               Text(
                 _tEducatorLearnerSupports(context, 'Active Support Plans'),
@@ -173,10 +213,43 @@ class _EducatorLearnerSupportsPageState
                 ),
               ),
               const SizedBox(height: 12),
-              ...supports.map((support) => _buildSupportCard(support)),
+              ...visibleSupports.map((support) => _buildSupportCard(support)),
             ],
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildSearchBanner() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: ScholesaColors.educator.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: ScholesaColors.educator.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Row(
+        children: <Widget>[
+          const Icon(Icons.search_rounded, color: ScholesaColors.educator),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              '${_tEducatorLearnerSupports(context, 'Showing results for')}: "$_searchQuery"',
+              style: const TextStyle(color: ScholesaColors.textPrimary),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              setState(() {
+                _searchQuery = '';
+              });
+            },
+            child: Text(_tEducatorLearnerSupports(context, 'Clear Search')),
+          ),
+        ],
       ),
     );
   }
@@ -639,8 +712,7 @@ class _EducatorLearnerSupportsPageState
             onPressed: () {
               final String query = controller.text.trim().toLowerCase();
               final int matches = supports
-                  .where((support) =>
-                      support.learnerName.toLowerCase().contains(query))
+                  .where((support) => _matchesSearchQuery(support, query))
                   .length;
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
@@ -662,6 +734,9 @@ class _EducatorLearnerSupportsPageState
                 },
               );
               popupCompleted = true;
+              setState(() {
+                _searchQuery = query;
+              });
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -738,6 +813,11 @@ class _EducatorLearnerSupportsPageState
       return;
     }
 
+    final bool saved = await _saveSupportOutcome(support, outcome);
+    if (!saved) {
+      return;
+    }
+
     TelemetryService.instance.logEvent(
       event: 'support.outcome.logged',
       metadata: <String, dynamic>{
@@ -762,6 +842,66 @@ class _EducatorLearnerSupportsPageState
           content: Text(
               '${_tEducatorLearnerSupports(context, 'Support outcome logged')}: $outcome')),
     );
+  }
+
+  Future<bool> _saveSupportOutcome(
+    _LearnerSupport support,
+    String outcome,
+  ) async {
+    final String siteId = _activeSiteId();
+    if (siteId.isEmpty) {
+      if (!mounted) {
+        return false;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tEducatorLearnerSupports(
+              context,
+              'Unable to log support outcome right now.',
+            ),
+          ),
+        ),
+      );
+      return false;
+    }
+
+    try {
+      final FirestoreService firestoreService = context.read<FirestoreService>();
+      final AppState appState = context.read<AppState>();
+      await firestoreService.createDocument(
+        _supportOutcomesCollection,
+        <String, dynamic>{
+          'siteId': siteId,
+          'learnerId': support.learnerId,
+          'learnerName': support.learnerName,
+          'supportType': support.supportType,
+          'priority': support.priority.name,
+          'outcome': outcome,
+          'loggedAt': Timestamp.fromDate(DateTime.now()),
+          'supportPlanId': _supportPlanOverrides[support.learnerId]?.documentId,
+          'loggedBy': (appState.userId ?? '').trim(),
+          'loggedByName': (appState.displayName ?? '').trim(),
+        },
+      );
+      return true;
+    } catch (error) {
+      debugPrint('Failed to log support outcome: $error');
+      if (!mounted) {
+        return false;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tEducatorLearnerSupports(
+              context,
+              'Unable to log support outcome right now.',
+            ),
+          ),
+        ),
+      );
+      return false;
+    }
   }
 
   Future<void> _showEditSupportPlanDialog(_LearnerSupport support) async {
@@ -1049,6 +1189,32 @@ class _EducatorLearnerSupportsPageState
       notes: override.notes,
       priority: override.priority,
       lastUpdated: override.lastUpdated,
+    );
+  }
+
+  List<_LearnerSupport> _applySearchFilter(List<_LearnerSupport> supports) {
+    final String query = _searchQuery.trim().toLowerCase();
+    if (query.isEmpty) {
+      return supports;
+    }
+    return supports
+        .where((_LearnerSupport support) => _matchesSearchQuery(support, query))
+        .toList(growable: false);
+  }
+
+  bool _matchesSearchQuery(_LearnerSupport support, String query) {
+    if (query.isEmpty) {
+      return true;
+    }
+    final List<String> haystacks = <String>[
+      support.learnerName,
+      support.supportType,
+      support.notes,
+      support.priority.name,
+      ...support.accommodations,
+    ];
+    return haystacks.any(
+      (String value) => value.toLowerCase().contains(query),
     );
   }
 
