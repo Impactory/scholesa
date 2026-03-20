@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../auth/app_state.dart';
 import '../../services/analytics_service.dart';
 import '../../services/export_service.dart';
@@ -14,13 +15,24 @@ import '../../ui/theme/scholesa_theme.dart';
 
 /// Site Dashboard Page - Analytics and overview for site administrators
 class SiteDashboardPage extends StatefulWidget {
-  const SiteDashboardPage({super.key});
+  const SiteDashboardPage({
+    super.key,
+    this.sharedPreferences,
+  });
+
+  final SharedPreferences? sharedPreferences;
 
   @override
   State<SiteDashboardPage> createState() => _SiteDashboardPageState();
 }
 
 class _SiteDashboardPageState extends State<SiteDashboardPage> {
+  static const List<String> _supportedPeriods = <String>[
+    'today',
+    'week',
+    'month',
+    'term',
+  ];
   String _selectedPeriod = 'week';
   final AnalyticsService _analyticsService = AnalyticsService.instance;
   final WorkflowBridgeService _workflowBridgeService =
@@ -49,10 +61,64 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
     );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      _loadMetrics();
-      _loadKpiPacks();
+      _restoreSelectedPeriod().then((_) {
+        if (!mounted) return;
+        _loadMetrics();
+        _loadKpiPacks();
+      });
       _loadRecentActivity();
     });
+  }
+
+  Future<SharedPreferences> _prefs() async {
+    return widget.sharedPreferences ?? await SharedPreferences.getInstance();
+  }
+
+  String _selectedPeriodPrefsKey() {
+    final AppState? appState = _maybeAppState();
+    final String userId = appState?.userId?.trim() ?? 'anonymous';
+    final String siteId = appState?.activeSiteId?.trim() ?? 'global';
+    return 'site_dashboard.selected_period.$userId.$siteId';
+  }
+
+  String _normalizeSelectedPeriod(String? raw) {
+    final String candidate = (raw ?? '').trim().toLowerCase();
+    if (_supportedPeriods.contains(candidate)) {
+      return candidate;
+    }
+    return 'week';
+  }
+
+  Future<void> _restoreSelectedPeriod() async {
+    try {
+      final SharedPreferences prefs = await _prefs();
+      final String restored =
+          _normalizeSelectedPeriod(prefs.getString(_selectedPeriodPrefsKey()));
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _selectedPeriod = restored;
+      });
+    } catch (error) {
+      debugPrint('Failed to restore site dashboard period: $error');
+    }
+  }
+
+  Future<void> _setSelectedPeriod(String period) async {
+    final String normalized = _normalizeSelectedPeriod(period);
+    if (!mounted || normalized == _selectedPeriod) {
+      return;
+    }
+    setState(() {
+      _selectedPeriod = normalized;
+    });
+    try {
+      final SharedPreferences prefs = await _prefs();
+      await prefs.setString(_selectedPeriodPrefsKey(), normalized);
+    } catch (error) {
+      debugPrint('Failed to save site dashboard period: $error');
+    }
   }
 
   Future<void> _loadMetrics() async {
@@ -279,14 +345,14 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
           _PeriodChip(
             label: _t('Today'),
             isSelected: _selectedPeriod == 'today',
-            onTap: () {
+            onTap: () async {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
                 metadata: const <String, dynamic>{
                   'cta': 'site_dashboard_period_today',
                 },
               );
-              setState(() => _selectedPeriod = 'today');
+              await _setSelectedPeriod('today');
               _loadMetrics();
               _loadKpiPacks();
             },
@@ -295,14 +361,14 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
           _PeriodChip(
             label: _t('This Week'),
             isSelected: _selectedPeriod == 'week',
-            onTap: () {
+            onTap: () async {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
                 metadata: const <String, dynamic>{
                   'cta': 'site_dashboard_period_week',
                 },
               );
-              setState(() => _selectedPeriod = 'week');
+              await _setSelectedPeriod('week');
               _loadMetrics();
               _loadKpiPacks();
             },
@@ -311,14 +377,14 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
           _PeriodChip(
             label: _t('This Month'),
             isSelected: _selectedPeriod == 'month',
-            onTap: () {
+            onTap: () async {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
                 metadata: const <String, dynamic>{
                   'cta': 'site_dashboard_period_month',
                 },
               );
-              setState(() => _selectedPeriod = 'month');
+              await _setSelectedPeriod('month');
               _loadMetrics();
               _loadKpiPacks();
             },
@@ -327,14 +393,14 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
           _PeriodChip(
             label: _t('Term'),
             isSelected: _selectedPeriod == 'term',
-            onTap: () {
+            onTap: () async {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
                 metadata: const <String, dynamic>{
                   'cta': 'site_dashboard_period_term',
                 },
               );
-              setState(() => _selectedPeriod = 'term');
+              await _setSelectedPeriod('term');
               _loadMetrics();
               _loadKpiPacks();
             },

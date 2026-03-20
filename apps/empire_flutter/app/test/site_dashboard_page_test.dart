@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:nested/nested.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/modules/site/site_dashboard_page.dart';
 import 'package:scholesa_app/services/export_service.dart';
@@ -35,6 +36,7 @@ AppState _buildSiteState() {
 Widget _buildHarness({
   required FirestoreService firestoreService,
   required AppState appState,
+  SharedPreferences? sharedPreferences,
 }) {
   return MultiProvider(
     providers: <SingleChildWidget>[
@@ -43,13 +45,14 @@ Widget _buildHarness({
     ],
     child: MaterialApp(
       theme: ScholesaTheme.light,
-      home: const SiteDashboardPage(),
+      home: SiteDashboardPage(sharedPreferences: sharedPreferences),
     ),
   );
 }
 
 void main() {
   setUp(() {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
     _savedFileName = null;
     _savedFileContent = null;
     ExportService.instance.debugSaveTextFile = null;
@@ -183,6 +186,60 @@ void main() {
             doc.data()['status'] == 'copied',
       ),
       isTrue,
+    );
+  });
+
+  testWidgets('site dashboard restores the selected period on reopen',
+      (WidgetTester tester) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: FakeFirebaseFirestore(),
+      auth: _MockFirebaseAuth(),
+    );
+    final AppState appState = _buildSiteState();
+
+    Widget buildHome() => _buildHarness(
+          firestoreService: firestoreService,
+          appState: appState,
+          sharedPreferences: prefs,
+        );
+
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
+    await tester.pumpWidget(buildHome());
+    await tester.pumpAndSettle();
+
+    final Finder termChip = find.text('Term');
+    await tester.tap(termChip);
+    await tester.pumpAndSettle();
+
+    final Finder selectedTermChip = find.ancestor(
+      of: termChip,
+      matching: find.byWidgetPredicate(
+        (Widget widget) =>
+            widget is Container &&
+            widget.decoration is BoxDecoration &&
+            (widget.decoration as BoxDecoration).color == ScholesaColors.site,
+      ),
+    );
+    expect(selectedTermChip, findsWidgets);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+
+    await tester.pumpWidget(buildHome());
+    await tester.pumpAndSettle();
+
+    expect(
+      find.ancestor(
+        of: find.text('Term'),
+        matching: find.byWidgetPredicate(
+          (Widget widget) =>
+              widget is Container &&
+              widget.decoration is BoxDecoration &&
+              (widget.decoration as BoxDecoration).color == ScholesaColors.site,
+        ),
+      ),
+      findsWidgets,
     );
   });
 }
