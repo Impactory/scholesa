@@ -256,7 +256,7 @@ export function AICoachPopup({
           });
           const transcriptText = transcribed.transcript.trim();
           if (!transcriptText) {
-            setStatusMessage('MiloOS could not capture a reliable voice transcript. Please try again and speak more clearly.');
+            setStatusMessage('MiloOS could not clearly capture what you said. Please try again and speak a little more clearly.');
             return;
           }
           setStatusMessage(null);
@@ -274,7 +274,7 @@ export function AICoachPopup({
           setStatusMessage(
             error instanceof Error && error.message
               ? error.message
-              : 'MiloOS could not capture a reliable voice transcript. Please try again.',
+              : 'MiloOS could not clearly capture what you said. Please try again.',
           );
         } finally {
           audioChunksRef.current = [];

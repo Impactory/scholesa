@@ -26,6 +26,8 @@ describe('AI help wording availability', () => {
     expect(popupSource).toContain('MiloOS used both a quick local check and model support to understand this voice turn.');
     expect(popupSource).toContain('MiloOS used model support to understand this voice turn.');
     expect(popupSource).toContain('MiloOS could not understand this voice turn reliably, so it switched to a safer fallback reply.');
+    expect(popupSource).toContain('MiloOS could not clearly capture what you said. Please try again and speak a little more clearly.');
+    expect(popupSource).toContain('MiloOS could not clearly capture what you said. Please try again.');
     expect(popupSource).not.toContain('voice understanding stayed heuristic');
     expect(popupSource).not.toContain('local heuristic support');
     expect(popupSource).not.toContain('model-backed understanding');
@@ -33,6 +35,31 @@ describe('AI help wording availability', () => {
     expect(popupSource).not.toContain('blended heuristic and model understanding');
     expect(popupSource).not.toContain('model-derived understanding');
     expect(popupSource).not.toContain('reliable voice inference turn');
+    expect(popupSource).not.toContain('reliable voice transcript');
+  });
+
+  it('keeps service-unavailable help copy aligned across web guardrails and voice backends', () => {
+    const guardrailSource = readRepoFile('src', 'lib', 'ai', 'multilingualGuardrails.ts');
+    const voiceSystemSource = readRepoFile('functions', 'src', 'voiceSystem.ts');
+    const functionIndexSource = readRepoFile('functions', 'src', 'index.ts');
+
+    const requiredSnippets = [
+      'AI help is not ready to give a reliable answer right now. Share your work so far, or ask your educator to review the next step with you.',
+      'AI 帮助现在还不能提供足够可靠的回答。你可以先分享你目前的思路，或者请老师陪你一起看下一步。',
+      'AI 幫助現在還不能提供足夠可靠的回答。你可以先分享你目前的思路，或者請老師陪你一起看下一步。',
+      'ความช่วยเหลือจาก AI ยังไม่พร้อมให้คำตอบที่เชื่อถือได้ในตอนนี้ ลองเล่าสิ่งที่ทำมาถึงตอนนี้ หรือให้ครูช่วยดูขั้นต่อไปกับคุณ',
+    ];
+
+    for (const source of [guardrailSource, voiceSystemSource, functionIndexSource]) {
+      for (const requiredSnippet of requiredSnippets) {
+        expect(source).toContain(requiredSnippet);
+      }
+
+      expect(source).not.toContain('The AI coach is not ready to give a reliable answer right now.');
+      expect(source).not.toContain('AI 教练现在还不能提供足够可靠的回答。');
+      expect(source).not.toContain('AI 教練現在還不能提供足夠可靠的回答。');
+      expect(source).not.toContain('โค้ช AI ยังไม่พร้อมให้คำตอบที่เชื่อถือได้ในตอนนี้');
+    }
   });
 
   it('keeps shared web locale catalogs on friendly AI help and learning signal wording', () => {

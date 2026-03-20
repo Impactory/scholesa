@@ -1041,13 +1041,13 @@ function buildLearnerConfidenceGuardMessage(displayName: string, locale: string)
 function buildLearnerInferenceUnavailableMessage(displayName: string, locale: string): string {
   switch (locale) {
     case 'zh-CN':
-      return `${displayName}，AI 教练现在还不能提供足够可靠的回答。你可以先分享你目前的思路，或者请老师陪你一起看下一步。`;
+      return `${displayName}，AI 帮助现在还不能提供足够可靠的回答。你可以先分享你目前的思路，或者请老师陪你一起看下一步。`;
     case 'zh-TW':
-      return `${displayName}，AI 教練現在還不能提供足夠可靠的回答。你可以先分享你目前的思路，或者請老師陪你一起看下一步。`;
+      return `${displayName}，AI 幫助現在還不能提供足夠可靠的回答。你可以先分享你目前的思路，或者請老師陪你一起看下一步。`;
     case 'th':
-      return `${displayName} โค้ช AI ยังไม่พร้อมให้คำตอบที่เชื่อถือได้ในตอนนี้ ลองเล่าสิ่งที่ทำมาถึงตอนนี้ หรือให้ครูช่วยดูขั้นต่อไปกับคุณ`;
+      return `${displayName} ความช่วยเหลือจาก AI ยังไม่พร้อมให้คำตอบที่เชื่อถือได้ในตอนนี้ ลองเล่าสิ่งที่ทำมาถึงตอนนี้ หรือให้ครูช่วยดูขั้นต่อไปกับคุณ`;
     default:
-      return `${displayName}, the AI coach is not ready to give a reliable answer right now. Share your work so far, or ask your educator to review the next step with you.`;
+      return `${displayName}, AI help is not ready to give a reliable answer right now. Share your work so far, or ask your educator to review the next step with you.`;
   }
 }
 
