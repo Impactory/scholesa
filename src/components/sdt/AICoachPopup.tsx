@@ -398,10 +398,10 @@ Guidance: ${
 
       const responseGenerationSource = voiceResponse.metadata.responseGenerationSource ?? 'local';
       const voiceModelUsed = responseGenerationSource === 'model'
-        ? 'miloos_voice_model'
+        ? 'ai_help_voice_model'
         : responseGenerationSource === 'guardrail'
-        ? 'miloos_voice_guardrail'
-        : 'miloos_voice_local_support';
+        ? 'ai_help_voice_guardrail'
+        : 'ai_help_voice_local_support';
 
       const aiResponse: AIServiceResponse = {
         answer: voiceResponse.text,

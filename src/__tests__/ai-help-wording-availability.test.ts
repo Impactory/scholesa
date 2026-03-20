@@ -43,6 +43,9 @@ describe('AI help wording availability', () => {
     expect(popupSource).toContain('Voice capture is unavailable. Please sign in and complete voice setup to use AI Help by voice.');
     expect(popupSource).toContain('Sign in to use AI Help by voice.');
     expect(popupSource).toContain('Voice help is not available right now. Complete voice setup and try again.');
+    expect(popupSource).toContain('ai_help_voice_model');
+    expect(popupSource).toContain('ai_help_voice_guardrail');
+    expect(popupSource).toContain('ai_help_voice_local_support');
     expect(popupSource).toContain("console.error('Voice playback failed in AI Help popup:'");
     expect(popupSource).toContain("console.error('Voice transcription failed in AI Help popup.'");
     expect(popupSource).toContain("console.error('AI Help error:'");
@@ -54,6 +57,9 @@ describe('AI help wording availability', () => {
     expect(popupSource).not.toContain('AI Coach error:');
     expect(popupSource).not.toContain('AI coach popup explain-back error:');
     expect(popupSource).not.toContain('BOS AI Coach');
+    expect(popupSource).not.toContain('miloos_voice_model');
+    expect(popupSource).not.toContain('miloos_voice_guardrail');
+    expect(popupSource).not.toContain('miloos_voice_local_support');
     expect(popupSource).not.toContain('Voice API');
     expect(popupSource).not.toContain('voice understanding stayed heuristic');
     expect(popupSource).not.toContain('local heuristic support');
