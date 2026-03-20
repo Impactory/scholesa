@@ -50,6 +50,10 @@ describe('AI help wording availability', () => {
     expect(screenSource).toContain('Ask AI Help');
     expect(screenSource).toContain('AI Help answered out loud.');
     expect(screenSource).toContain('Replay spoken response');
+    expect(screenSource).toContain('transcribeVoiceAudio');
+    expect(screenSource).toContain('voiceApiConfigured');
+    expect(screenSource).toContain('Speak your question');
+    expect(screenSource).toContain('Speak now');
     expect(screenSource).toContain('AI Help prepared a spoken response, but this browser could not play it out loud. Turn on audio and try Replay.');
     expect(screenSource).toContain('AI Help is here to help you think, not to do the work for you.');
     expect(screenSource).not.toContain('{response.message}');

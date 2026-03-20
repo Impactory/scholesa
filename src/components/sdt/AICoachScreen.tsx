@@ -8,7 +8,7 @@
  * Guardrails: Student must explain back and show proof of work
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   LightbulbIcon,
   ClipboardCheckIcon,
@@ -16,11 +16,15 @@ import {
   SendIcon,
   CheckCircle2Icon,
   AlertCircleIcon,
-  Volume2Icon
+  Volume2Icon,
+  MicIcon
 } from 'lucide-react';
 import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import { sdtMotivation, type AICoachRequest, type AICoachResponse } from '@/src/lib/motivation/sdtMotivation';
 import { speakBrowserText, stopBrowserSpeech } from '@/src/lib/voice/browserSpeech';
+import { transcribeVoiceAudio, voiceApiConfigured } from '@/src/lib/voice/voiceService';
+import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
+import { useI18n } from '@/src/lib/i18n/useI18n';
 
 interface AICoachScreenProps {
   learnerId: string;
@@ -38,6 +42,8 @@ export function AICoachScreen({
   missionId
 }: AICoachScreenProps) {
   const trackInteraction = useInteractionTracking();
+  const { user } = useAuthContext();
+  const { locale } = useI18n();
   const [mode, setMode] = useState<CoachMode | null>(null);
   const [question, setQuestion] = useState('');
   const [response, setResponse] = useState<AICoachResponse | null>(null);
@@ -46,9 +52,23 @@ export function AICoachScreen({
   const [error, setError] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [spokenResponseStatus, setSpokenResponseStatus] = useState<string | null>(null);
+  const [isListening, setIsListening] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const audioChunksRef = useRef<BlobPart[]>([]);
 
   useEffect(() => {
     return () => {
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop();
+      }
+      mediaRecorderRef.current = null;
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+      }
+      mediaStreamRef.current = null;
       stopBrowserSpeech();
     };
   }, []);
@@ -69,8 +89,11 @@ export function AICoachScreen({
     return 'AI Help prepared a spoken response, but this browser could not play it out loud. Turn on audio and try Replay.';
   };
 
-  const handleSubmitQuestion = async () => {
-    if (!question.trim() || !mode) return;
+  const handleSubmitQuestion = async (questionOverride?: string) => {
+    const resolvedQuestion = (questionOverride ?? question).trim();
+    if (!resolvedQuestion || !mode) return;
+
+    setQuestion(resolvedQuestion);
 
     trackInteraction('help_accessed', {
       cta: 'ai_coach_submit_question',
@@ -86,7 +109,7 @@ export function AICoachScreen({
 
       const request: AICoachRequest = {
         mode,
-        studentInput: question,
+        studentInput: resolvedQuestion,
         missionId,
         sessionOccurrenceId: sprintSessionId,
       };
@@ -100,6 +123,105 @@ export function AICoachScreen({
     } finally {
       setLoading(false);
     }
+  };
+
+  const startListening = async () => {
+    if (loading || isTranscribing) return;
+
+    const canRecordAudio = typeof window !== 'undefined'
+      && typeof MediaRecorder !== 'undefined'
+      && typeof navigator !== 'undefined'
+      && Boolean(navigator.mediaDevices?.getUserMedia)
+      && Boolean(user)
+      && voiceApiConfigured();
+
+    if (!canRecordAudio) {
+      setStatusMessage('Voice capture is unavailable. Please sign in and ensure voice setup is available.');
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStreamRef.current = stream;
+      audioChunksRef.current = [];
+      const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      mediaRecorderRef.current = recorder;
+
+      recorder.ondataavailable = (event: BlobEvent) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      recorder.onerror = () => {
+        setIsListening(false);
+      };
+
+      recorder.onstop = async () => {
+        setIsListening(false);
+        mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+        mediaStreamRef.current = null;
+
+        if (!user || audioChunksRef.current.length === 0) {
+          return;
+        }
+
+        setIsTranscribing(true);
+        try {
+          const idToken = await user.getIdToken();
+          const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+          const transcribed = await transcribeVoiceAudio({
+            idToken,
+            audioBlob: blob,
+            siteId,
+            locale,
+            partial: false,
+            context: {
+              learnerId,
+              missionId,
+              sessionOccurrenceId: sprintSessionId,
+              source: 'ai_coach_screen_voice',
+            },
+          });
+
+          const transcriptText = transcribed.transcript.trim();
+          if (!transcriptText) {
+            setStatusMessage('AI Help could not clearly capture what you said. Please try again and speak a little more clearly.');
+            return;
+          }
+
+          setStatusMessage(null);
+          setQuestion(transcriptText);
+          await handleSubmitQuestion(transcriptText);
+        } catch (voiceError) {
+          console.error('Voice transcription failed in AI coach screen:', voiceError);
+          setStatusMessage(
+            voiceError instanceof Error && voiceError.message
+              ? voiceError.message
+              : 'AI Help could not clearly capture what you said. Please try again.',
+          );
+        } finally {
+          audioChunksRef.current = [];
+          setIsTranscribing(false);
+        }
+      };
+
+      recorder.start();
+      setStatusMessage('Listening now. Speak your question out loud.');
+      setIsListening(true);
+    } catch (microphoneError) {
+      console.error('Microphone capture unavailable for AI coach screen:', microphoneError);
+      setStatusMessage('Microphone access is required for voice questions. Please allow microphone permission and try again.');
+      setIsListening(false);
+    }
+  };
+
+  const stopListening = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+      return;
+    }
+    setIsListening(false);
   };
 
   const handleSubmitExplainBack = async () => {
@@ -162,7 +284,7 @@ export function AICoachScreen({
       <div className="bg-gradient-to-r from-purple-500 to-indigo-600 rounded-lg p-6 text-white">
         <h1 className="text-2xl font-bold mb-2">AI Help</h1>
         <p className="text-purple-100">
-          Get help when you're stuck - but remember, you still need to understand and explain it!
+          Speak your question or type when needed. AI Help answers out loud, and you still need to understand and explain it.
         </p>
       </div>
 
@@ -241,6 +363,39 @@ export function AICoachScreen({
           </button>
 
           <div className="space-y-4">
+            {statusMessage ? (
+              <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900">
+                {statusMessage}
+              </div>
+            ) : null}
+
+            <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="font-medium text-indigo-900">Speak your question</p>
+                  <p className="text-sm text-indigo-800">
+                    {isListening
+                      ? 'Listening now. Finish your thought, then tap again to stop.'
+                      : 'Use the mic for a conversational turn. AI Help will transcribe it, think, and answer out loud.'}
+                  </p>
+                </div>
+                <button
+                  onClick={isListening ? stopListening : startListening}
+                  disabled={loading || isTranscribing}
+                  className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                >
+                  <MicIcon className="w-4 h-4" />
+                  <span>
+                    {isTranscribing
+                      ? 'Transcribing...'
+                      : isListening
+                      ? 'Stop listening'
+                      : 'Speak now'}
+                  </span>
+                </button>
+              </div>
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 What do you need help with?
@@ -256,19 +411,19 @@ export function AICoachScreen({
                     : 'Example: My code runs but the answer is wrong. I\'ve checked my logic three times...'
                 }
                 className="w-full h-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                disabled={loading}
+                disabled={loading || isTranscribing}
               />
             </div>
 
             <button
               onClick={handleSubmitQuestion}
-              disabled={!question.trim() || loading}
+              disabled={!question.trim() || loading || isTranscribing}
               className="w-full bg-indigo-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              {loading ? (
+              {loading || isTranscribing ? (
                 <>
                   <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
-                  <span>Thinking...</span>
+                  <span>{isTranscribing ? 'Transcribing...' : 'Thinking...'}</span>
                 </>
               ) : (
                 <>
