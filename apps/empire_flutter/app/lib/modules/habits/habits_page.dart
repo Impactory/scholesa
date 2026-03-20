@@ -1266,7 +1266,7 @@ class _HabitDetailSheetState extends State<_HabitDetailSheet> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    _tHabits(context, 'AI help is temporarily unavailable'),
+                    _tHabits(context, 'MiloOS is temporarily unavailable'),
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
                       color: context.schTextPrimary,
