@@ -241,7 +241,7 @@ void main() {
       flags: <Map<String, dynamic>>[
         <String, dynamic>{
           'id': 'flag-1',
-          'name': 'miloos_loop',
+          'name': 'ai_help_loop',
           'description': 'Enable spoken AI help loop runtime',
           'enabled': false,
           'scope': 'global',
@@ -261,7 +261,7 @@ void main() {
 
     expect(workflowBridge.recordedFlagUpdates, hasLength(1));
     expect(workflowBridge.recordedFlagUpdates.single['enabled'], isTrue);
-    expect(workflowBridge.recordedFlagUpdates.single['name'], 'miloos_loop');
+    expect(workflowBridge.recordedFlagUpdates.single['name'], 'ai_help_loop');
     expect(find.text('ai_help_loop enabled'), findsOneWidget);
     expect(tester.widget<Switch>(find.byType(Switch)).value, isTrue);
   });
@@ -274,7 +274,7 @@ void main() {
       flags: <Map<String, dynamic>>[
         <String, dynamic>{
           'id': 'flag-1',
-          'name': 'miloos_loop',
+          'name': 'ai_help_loop',
           'description': 'Enable spoken AI help loop runtime',
           'enabled': false,
           'scope': 'global',

@@ -13,16 +13,6 @@ String _tHqFeatureFlags(BuildContext context, String input) {
 }
 
 const String _canonicalUnavailableLabel = 'Unavailable';
-const String _canonicalAiHelpLoopFlagName = 'ai_help_loop';
-const String _legacyAiHelpLoopFlagName = 'miloos_loop';
-
-String _canonicalFeatureFlagName(String input) {
-  final String normalized = input.trim();
-  if (normalized == _legacyAiHelpLoopFlagName) {
-    return _canonicalAiHelpLoopFlagName;
-  }
-  return normalized;
-}
 
 /// HQ Feature Flags page for managing feature toggles
 /// Based on docs/49_ROUTE_FLIP_TRACKER.md
@@ -44,7 +34,6 @@ class HqFeatureFlagsPage extends StatefulWidget {
 class _FeatureFlag {
   _FeatureFlag({
     required this.id,
-    required this.persistedName,
     required this.name,
     required this.description,
     required this.isEnabled,
@@ -53,7 +42,6 @@ class _FeatureFlag {
   });
 
   final String id;
-  final String persistedName;
   final String name;
   final String description;
   bool isEnabled;
@@ -9357,7 +9345,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     try {
       await _workflowBridge.upsertFeatureFlag(<String, dynamic>{
         'id': flag.id,
-        'name': flag.persistedName,
+        'name': flag.name,
         'description': flag.description,
         'enabled': enabled,
         'scope': flag.scope,
@@ -9788,12 +9776,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     final List<String>? enabledSites = (data['enabledSites'] as List?)
         ?.map((dynamic e) => e.toString())
         .toList();
-    final String rawName =
-      (data['name'] as String?) ?? (data['id'] as String?) ?? 'flag';
     return _FeatureFlag(
       id: (data['id'] as String?) ?? (data['name'] as String?) ?? 'flag',
-      persistedName: rawName,
-      name: _canonicalFeatureFlagName(rawName),
+      name: (data['name'] as String?) ?? (data['id'] as String?) ?? 'flag',
       description: (data['description'] as String?) ?? '',
       isEnabled:
           (data['enabled'] as bool?) ?? (data['isEnabled'] as bool?) ?? false,

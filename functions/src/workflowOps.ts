@@ -1693,10 +1693,18 @@ export const listFeatureFlags = onCall(async (request: CallableRequest) => {
     throw new HttpsError('permission-denied', 'HQ role required.');
   }
 
+  const canonicalizeFeatureFlagName = (value: unknown, fallback: string) => {
+    const raw = typeof value === 'string' && value.trim().length > 0
+      ? value.trim()
+      : fallback;
+    return raw === 'miloos_loop' ? 'ai_help_loop' : raw;
+  };
+
   const snap = await admin.firestore().collection('featureFlags').limit(300).get();
   const flags = snap.docs.map((snapDoc) => ({
     id: snapDoc.id,
     ...(snapDoc.data() as Record<string, unknown>),
+    name: canonicalizeFeatureFlagName((snapDoc.data() as Record<string, unknown>).name, snapDoc.id),
   }));
   return { flags };
 });
@@ -1714,7 +1722,8 @@ export const upsertFeatureFlag = onCall(async (request: CallableRequest) => {
     ? admin.firestore().collection('featureFlags').doc(requestedId)
     : admin.firestore().collection('featureFlags').doc();
   const id = ref.id;
-  const name = typeof request.data?.name === 'string' ? request.data.name : id;
+  const rawName = typeof request.data?.name === 'string' ? request.data.name.trim() : id;
+  const name = rawName === 'miloos_loop' ? 'ai_help_loop' : rawName;
   const description = typeof request.data?.description === 'string' ? request.data.description : '';
   const enabled = typeof request.data?.enabled === 'boolean' ? request.data.enabled : false;
   const scope = ['global', 'site', 'user'].includes(asTrimmedString(request.data?.scope))
