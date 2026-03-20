@@ -58,10 +58,29 @@ class MockDocumentReference {
     public readonly id: string,
   ) {}
 
+  async get(): Promise<MockDocumentSnapshot> {
+    return new MockDocumentSnapshot(this, ensureCollection(this.collectionName).get(this.id));
+  }
+
   async set(data: Record<string, unknown>, options?: { merge?: boolean }): Promise<void> {
     const store = ensureCollection(this.collectionName);
     const current = options?.merge ? store.get(this.id) || {} : {};
     store.set(this.id, { ...cloneValue(current), ...materializeWrite(data) });
+  }
+}
+
+class MockDocumentSnapshot {
+  constructor(
+    public readonly ref: MockDocumentReference,
+    private readonly record: StoredDoc | undefined,
+  ) {}
+
+  get exists(): boolean {
+    return this.record !== undefined;
+  }
+
+  data(): StoredDoc | undefined {
+    return this.record ? cloneValue(this.record) : undefined;
   }
 }
 
