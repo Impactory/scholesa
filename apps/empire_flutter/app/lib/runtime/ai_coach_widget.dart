@@ -590,7 +590,11 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       );
 
       setState(() => _messages.add(aiMessage));
-      await _speakText(aiMessage.text, traceId: response.traceId);
+      await _speakText(
+        aiMessage.text,
+        traceId: response.traceId,
+        responseOverride: response,
+      );
 
       widget.runtime.trackEvent(
         'ai_help_used',
@@ -836,7 +840,11 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     );
   }
 
-  Future<void> _speakText(String text, {String? traceId}) async {
+  Future<void> _speakText(
+    String text, {
+    String? traceId,
+    AiCoachResponse? responseOverride,
+  }) async {
     if (!_voiceOutputEnabled) return;
 
     if (widget.onSpeakOverride != null) {
@@ -862,15 +870,16 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     }
 
     bool played = false;
-    if (_lastResponse?.voiceAvailable == true &&
-        _lastResponse?.voiceAudioUrl != null &&
-        _lastResponse!.voiceAudioUrl!.isNotEmpty) {
+    final AiCoachResponse? responseForPlayback = responseOverride ?? _lastResponse;
+    if (responseForPlayback?.voiceAvailable == true &&
+        responseForPlayback?.voiceAudioUrl != null &&
+        responseForPlayback!.voiceAudioUrl!.isNotEmpty) {
       final AudioPlayer audioPlayer = _ensureAudioPlayer();
       try {
         await _flutterTts.stop();
         await audioPlayer.stop();
         if (mounted) setState(() => _isSpeaking = true);
-        await audioPlayer.play(UrlSource(_lastResponse!.voiceAudioUrl!));
+        await audioPlayer.play(UrlSource(responseForPlayback.voiceAudioUrl!));
         played = true;
         await TelemetryService.instance.logEvent(
           event: 'voice.tts',
@@ -1341,6 +1350,7 @@ Response style:
       await _speakText(
         aiMessage.text,
         traceId: response.traceId,
+        responseOverride: response,
       );
 
       // Emit ai_help_used (client-side tracking)
@@ -1641,6 +1651,16 @@ Response style:
                   itemBuilder: (BuildContext context, int index) {
                     return _ChatBubble(
                       message: _messages[index],
+                      voiceOnlyConversation: widget.voiceOnlyConversation,
+                      onReplay: !_messages[index].isUser &&
+                              widget.voiceOnlyConversation &&
+                              _messages[index].response != null
+                          ? () => _speakText(
+                                _messages[index].text,
+                                traceId: _messages[index].response!.traceId,
+                                responseOverride: _messages[index].response,
+                              )
+                          : null,
                       onFeedback: index == _messages.length - 1 &&
                               !_messages[index].isUser
                           ? _sendFeedback
