@@ -50,6 +50,7 @@ import {
   updateWorkflowRecord,
   type WorkflowContext,
 } from '@/src/features/workflows/workflowData';
+import { formatWorkflowRecordUpdatedAt } from '@/src/features/workflows/workflowRecordTimestamps';
 
 type CallableHandler = jest.Mock<Promise<{ data: Record<string, unknown> }>, [Record<string, unknown>?]>;
 
@@ -805,6 +806,48 @@ describe('workflow route parity', () => {
     expect(result.records.find((record) => record.id === 'audit-3')).toBeUndefined();
   });
 
+  it('preserves missing analytics repair timestamps instead of fabricating recency', async () => {
+    setCallableHandler('getTelemetryDashboardMetrics', jest.fn().mockResolvedValue({
+      data: {
+        metrics: {
+          attendanceTrend: [],
+        },
+      },
+    }) as CallableHandler);
+    setCallableHandler('listKpiPacks', jest.fn().mockResolvedValue({
+      data: {
+        packs: [],
+      },
+    }) as CallableHandler);
+    setCallableHandler('listAnalyticsRepairRuns', jest.fn().mockResolvedValue({
+      data: {
+        runs: [
+          {
+            id: 'audit-missing-time',
+            title: 'Telemetry aggregate backfill',
+            subtitle: '0 updated • 1 processed',
+            status: 'no-op',
+            updatedAt: null,
+            metadata: {
+              processed: 1,
+              updated: 0,
+            },
+          },
+        ],
+      },
+    }) as CallableHandler);
+
+    const result = await loadWorkflowRecords(makeContext('/hq/analytics'));
+
+    expect(result.records).toEqual([
+      expect.objectContaining({
+        id: 'audit-missing-time',
+        updatedAt: null,
+        status: 'no-op',
+      }),
+    ]);
+  });
+
   it('routes HQ analytics aggregate backfill through backfillTelemetryAggregates', async () => {
     const backfillTelemetryAggregates = setCallableHandler('backfillTelemetryAggregates');
 
@@ -914,5 +957,13 @@ describe('workflow route parity', () => {
       primaryActionLabel: undefined,
       collectionName: 'payouts',
     }));
+  });
+
+  it('formats missing workflow timestamps as unavailable', () => {
+    expect(formatWorkflowRecordUpdatedAt(null)).toBe('Unavailable');
+    expect(formatWorkflowRecordUpdatedAt('not-a-date')).toBe('Unavailable');
+    expect(formatWorkflowRecordUpdatedAt('2026-03-19T10:00:00.000Z')).toBe(
+      new Date('2026-03-19T10:00:00.000Z').toLocaleString(),
+    );
   });
 });

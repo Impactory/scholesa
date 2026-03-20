@@ -22,6 +22,7 @@ import {
   type WorkflowFieldDefinition,
   type WorkflowLoadResult,
 } from './workflowData';
+import { formatWorkflowRecordUpdatedAt } from './workflowRecordTimestamps';
 
 interface WorkflowRoutePageProps {
   routePath: WorkflowPath;
@@ -71,12 +72,6 @@ export function WorkflowRoutePage({ routePath }: WorkflowRoutePageProps) {
       .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
       .replace(/_/g, ' ')
       .replace(/\b\w/g, (match) => match.toUpperCase());
-
-  const formatUpdatedAt = (value: string | null) => {
-    if (!value) return 'Unavailable';
-    const parsed = Date.parse(value);
-    return Number.isNaN(parsed) ? 'Unavailable' : new Date(parsed).toLocaleString();
-  };
 
   const ctx = useMemo(() => {
     if (!user || !normalizedRole) return null;
@@ -427,7 +422,7 @@ export function WorkflowRoutePage({ routePath }: WorkflowRoutePageProps) {
                     <p className="text-sm text-app-muted">{record.subtitle}</p>
                     <div className="flex flex-wrap gap-3 text-xs text-app-muted">
                       <span>Status: {record.status}</span>
-                      <span>Updated: {formatUpdatedAt(record.updatedAt)}</span>
+                      <span>Updated: {formatWorkflowRecordUpdatedAt(record.updatedAt)}</span>
                       {record.siteId ? <span>Site: {record.siteId}</span> : null}
                     </div>
                     {Object.keys(record.metadata).length > 0 ? (
