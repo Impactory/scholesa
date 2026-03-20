@@ -20,6 +20,7 @@ class ParentService extends ChangeNotifier {
   }) : _firestoreService = firestoreService;
   final FirestoreService _firestoreService;
   final String parentId;
+  FirestoreService get firestoreService => _firestoreService;
   FirebaseFirestore get _firestore => _firestoreService.firestore;
 
   List<LearnerSummary> _learnerSummaries = <LearnerSummary>[];

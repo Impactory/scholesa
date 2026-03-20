@@ -6,6 +6,7 @@ import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
 import '../../i18n/bos_coaching_i18n.dart';
 import '../../auth/app_state.dart';
+import '../../services/firestore_service.dart';
 import '../../ui/auth/global_session_menu.dart';
 import 'parent_models.dart';
 import 'parent_service.dart';
@@ -51,6 +52,122 @@ class _ParentBillingPageState extends State<ParentBillingPage>
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  FirestoreService? _maybeFirestoreService() {
+    try {
+      return context.read<ParentService>().firestoreService;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<String> _submitBillingSupportRequest({
+    required String requestType,
+    required String source,
+    required String subject,
+    required String message,
+    required Map<String, dynamic> metadata,
+  }) async {
+    final FirestoreService? firestoreService = _maybeFirestoreService();
+    if (firestoreService == null) {
+      throw StateError(
+        _tParentBilling(context, 'Support requests are unavailable right now.'),
+      );
+    }
+
+    final AppState appState = context.read<AppState>();
+    return firestoreService.submitSupportRequest(
+      requestType: requestType,
+      source: source,
+      siteId: appState.activeSiteId?.trim().isNotEmpty == true
+          ? appState.activeSiteId!.trim()
+          : 'Not set',
+      userId: appState.userId?.trim().isNotEmpty == true
+          ? appState.userId!.trim()
+          : 'Not set',
+      userEmail: appState.email?.trim().isNotEmpty == true
+          ? appState.email!.trim()
+          : 'Not set',
+      userName: appState.displayName?.trim().isNotEmpty == true
+          ? appState.displayName!.trim()
+          : 'Not set',
+      role: appState.role?.name ?? 'unknown',
+      subject: subject,
+      message: message,
+      metadata: metadata,
+    );
+  }
+
+  Future<void> _handleBillingSupportRequest({
+    required String requestType,
+    required String source,
+    required String subject,
+    required String message,
+    required Map<String, dynamic> metadata,
+    required String successMessage,
+  }) async {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'cta': source,
+        'request_type': requestType,
+      },
+    );
+
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+    try {
+      final String requestId = await _submitBillingSupportRequest(
+        requestType: requestType,
+        source: source,
+        subject: subject,
+        message: message,
+        metadata: metadata,
+      );
+      TelemetryService.instance.logEvent(
+        event: 'parent.billing.support_request_submitted',
+        metadata: <String, dynamic>{
+          'request_type': requestType,
+          'request_id': requestId,
+        },
+      );
+      if (!mounted) return;
+      messenger.showSnackBar(SnackBar(content: Text(successMessage)));
+    } catch (error) {
+      TelemetryService.instance.logEvent(
+        event: 'parent.billing.support_request_failed',
+        metadata: <String, dynamic>{
+          'request_type': requestType,
+          'error': error.toString(),
+        },
+      );
+      if (!mounted) return;
+      final String errorMessage = error is StateError
+          ? error.message?.toString() ??
+              _tParentBilling(context, 'Support requests are unavailable right now.')
+          : _tParentBilling(
+              context,
+              'Unable to submit support request right now.',
+            );
+      messenger.showSnackBar(SnackBar(content: Text(errorMessage)));
+    }
+  }
+
+  Widget _buildBillingSupportButton({
+    required String label,
+    required VoidCallback onPressed,
+  }) {
+    return OutlinedButton(
+      onPressed: onPressed,
+      style: OutlinedButton.styleFrom(
+        foregroundColor: ScholesaColors.parent,
+        side: BorderSide(
+          color: ScholesaColors.parent.withValues(alpha: 0.3),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      ),
+      child: Text(label, textAlign: TextAlign.center),
+    );
   }
 
   @override
@@ -477,7 +594,34 @@ class _ParentBillingPageState extends State<ParentBillingPage>
       itemCount: invoices.length,
       itemBuilder: (BuildContext context, int index) {
         final Map<String, dynamic> invoice = invoices[index];
-        return _InvoiceCard(invoice: invoice);
+        return _InvoiceCard(
+          invoice: invoice,
+          onRequestInvoiceHelp: !_isDueInvoice(invoice)
+              ? null
+              : () => _handleBillingSupportRequest(
+                    requestType: 'billing_invoice_help',
+                    source: 'parent_billing_request_invoice_help',
+                    subject: 'Parent invoice help request',
+                    message: <String>[
+                      'Please review this family invoice and follow up with the parent.',
+                      '',
+                      'Invoice ID: ${invoice['id']}',
+                      'Learner: ${invoice['learner']}',
+                      'Billing Period: ${invoice['period']}',
+                      'Amount: ${_formatCurrency(invoice['amount'] as double)}',
+                    ].join('\n'),
+                    metadata: <String, dynamic>{
+                      'invoiceId': invoice['id'],
+                      'learner': invoice['learner'],
+                      'billingPeriod': invoice['period'],
+                      'amount': invoice['amount'],
+                    },
+                    successMessage: _tParentBilling(
+                      context,
+                      'Invoice help request submitted.',
+                    ),
+                  ),
+        );
       },
     );
   }
@@ -658,18 +802,53 @@ class _ParentBillingPageState extends State<ParentBillingPage>
                     ],
                   ),
                 ),
+                const SizedBox(width: 12),
                 Flexible(
-                  child: Text(
-                    _tParentBilling(
-                      context,
-                      'Payment method changes are handled by HQ billing support.',
-                    ),
-                    textAlign: TextAlign.right,
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: <Widget>[
+                      Text(
+                        _tParentBilling(
+                          context,
+                          'Payment method changes are handled by HQ billing support.',
+                        ),
+                        textAlign: TextAlign.right,
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      _buildBillingSupportButton(
+                        label: _tParentBilling(
+                          context,
+                          'Request Payment Method Update',
+                        ),
+                        onPressed: () => _handleBillingSupportRequest(
+                          requestType: 'billing_payment_method_update',
+                          source:
+                              'parent_billing_request_payment_method_update',
+                          subject: 'Parent payment method update request',
+                          message: <String>[
+                            'Please contact this parent to review the payment method on file.',
+                            '',
+                            'Current Method: $paymentMethod',
+                            'Plan: $planName',
+                            'Learner Scope: $learnerLabel',
+                          ].join('\n'),
+                          metadata: <String, dynamic>{
+                            'paymentMethod': paymentMethod,
+                            'planName': planName,
+                            'learnerScope': learnerLabel,
+                          },
+                          successMessage: _tParentBilling(
+                            context,
+                            'Payment method update request submitted.',
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -686,15 +865,50 @@ class _ParentBillingPageState extends State<ParentBillingPage>
                 color: ScholesaColors.parent.withValues(alpha: 0.18),
               ),
             ),
-            child: Text(
-              _tParentBilling(
-                context,
-                'Plan changes are handled by HQ billing support.',
-              ),
-              style: TextStyle(
-                color: Colors.grey[700],
-                fontWeight: FontWeight.w600,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  _tParentBilling(
+                    context,
+                    'Plan changes are handled by HQ billing support.',
+                  ),
+                  style: TextStyle(
+                    color: Colors.grey[700],
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: _buildBillingSupportButton(
+                    label: _tParentBilling(context, 'Request Plan Change'),
+                    onPressed: () => _handleBillingSupportRequest(
+                      requestType: 'billing_plan_change',
+                      source: 'parent_billing_request_plan_change',
+                      subject: 'Parent billing plan change request',
+                      message: <String>[
+                        'Please follow up with this parent about changing their billing plan.',
+                        '',
+                        'Current Plan: $planName',
+                        'Learner Scope: $learnerLabel',
+                        'Next Payment Amount: ${_formatCurrency(billing.nextPaymentAmount)}',
+                        'Next Payment Date: ${billing.nextPaymentDate.toIso8601String()}',
+                      ].join('\n'),
+                      metadata: <String, dynamic>{
+                        'planName': planName,
+                        'learnerScope': learnerLabel,
+                        'nextPaymentAmount': billing.nextPaymentAmount,
+                        'nextPaymentDate': billing.nextPaymentDate.toIso8601String(),
+                      },
+                      successMessage: _tParentBilling(
+                        context,
+                        'Plan change request submitted.',
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -767,6 +981,10 @@ class _ParentBillingPageState extends State<ParentBillingPage>
 
   String _formatCurrency(double amount) {
     return '\$${amount.toStringAsFixed(2)}';
+  }
+
+  bool _isDueInvoice(Map<String, dynamic> invoice) {
+    return invoice['status'] == 'due';
   }
 
   Widget _buildBillingUnavailableCard({
@@ -884,9 +1102,11 @@ class _BalanceStatCard extends StatelessWidget {
 
 class _InvoiceCard extends StatelessWidget {
   final Map<String, dynamic> invoice;
+  final VoidCallback? onRequestInvoiceHelp;
 
   const _InvoiceCard({
     required this.invoice,
+    this.onRequestInvoiceHelp,
   });
 
   bool get _isPaid => invoice['status'] == 'paid';
@@ -1001,6 +1221,28 @@ class _InvoiceCard extends StatelessWidget {
                   ),
                 ),
               ),
+              if (onRequestInvoiceHelp != null) ...<Widget>[
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: OutlinedButton(
+                    onPressed: onRequestInvoiceHelp,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: ScholesaColors.parent,
+                      side: BorderSide(
+                        color: ScholesaColors.parent.withValues(alpha: 0.3),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                    ),
+                    child: Text(
+                      _tParentBilling(context, 'Request Invoice Help'),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ],
         ),
