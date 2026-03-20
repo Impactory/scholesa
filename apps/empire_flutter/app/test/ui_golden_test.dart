@@ -181,7 +181,7 @@ void main() {
       );
     });
 
-    testWidgets('MiloOS coach - unavailable runtime honesty',
+    testWidgets('AI Help - unavailable runtime honesty',
         (WidgetTester tester) async {
       await _pumpSized(
         tester,
@@ -199,7 +199,7 @@ void main() {
       );
     });
 
-    testWidgets('MiloOS coach - guarded learner runtime',
+    testWidgets('AI Help - guarded learner runtime',
         (WidgetTester tester) async {
       await _pumpSized(
         tester,
@@ -217,7 +217,7 @@ void main() {
       );
     });
 
-    testWidgets('MiloOS coach - verification gate',
+    testWidgets('AI Help - verification gate',
         (WidgetTester tester) async {
       await _pumpSized(
         tester,
@@ -237,7 +237,7 @@ void main() {
       );
     });
 
-    testWidgets('MiloOS learner loop - honest empty state',
+    testWidgets('Learner support loop - honest empty state',
         (WidgetTester tester) async {
       await _pumpSized(
         tester,
@@ -251,7 +251,7 @@ void main() {
       );
     });
 
-    testWidgets('MiloOS class insights - partial verified data',
+    testWidgets('Class insights - partial verified data',
         (WidgetTester tester) async {
       await _pumpSized(
         tester,
@@ -265,7 +265,7 @@ void main() {
       );
     });
 
-    testWidgets('MiloOS class insights - missing learner identity',
+    testWidgets('Class insights - missing learner identity',
         (WidgetTester tester) async {
       await _pumpSized(
         tester,
@@ -395,7 +395,7 @@ Widget _buildAiCoachHarness({
       actorRole: role,
       voiceOnlyConversation: voiceOnlyConversation,
       skipVoiceInitializationForTesting: true,
-      conceptTags: const <String>['golden-test', 'miloos'],
+      conceptTags: const <String>['golden-test', 'ai-help'],
     ),
   );
 }
@@ -406,7 +406,7 @@ Widget _buildLearnerLoopHarness() {
     child: const Scaffold(
       body: SingleChildScrollView(
         child: BosLearnerLoopInsightsCard(
-          title: 'MiloOS Learning Loop',
+          title: 'Learning Support Loop',
           subtitle: 'Latest individual improvement signal',
           emptyLabel: 'No learner loop data yet',
           learnerId: null,
@@ -421,7 +421,7 @@ Widget _buildClassInsightsHarness() {
   return Scaffold(
     body: SingleChildScrollView(
       child: BosClassInsightsCard(
-        title: 'MiloOS Class Insights',
+        title: 'Class Learning Insights',
         subtitle:
           'Class learning signals, learners who may need support, and active understanding checks',
         emptyLabel: 'No class insights yet',
@@ -442,7 +442,7 @@ Widget _buildClassInsightsMissingIdentityHarness() {
   return Scaffold(
     body: SingleChildScrollView(
       child: BosClassInsightsCard(
-        title: 'MiloOS Class Insights',
+        title: 'Class Learning Insights',
         subtitle:
           'Class learning signals, learners who may need support, and active understanding checks',
         emptyLabel: 'No class insights yet',

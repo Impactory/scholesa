@@ -8,7 +8,7 @@ import 'package:scholesa_app/runtime/bos_models.dart';
 import 'package:scholesa_app/runtime/learning_runtime_provider.dart';
 
 void main() {
-  group('AI Coach runtime integration', () {
+  group('AI Help runtime integration', () {
     testWidgets('renders core coach controls for floating assistant',
         (tester) async {
       final LearningRuntimeProvider runtime = LearningRuntimeProvider(

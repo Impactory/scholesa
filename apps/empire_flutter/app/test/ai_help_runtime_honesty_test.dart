@@ -40,7 +40,7 @@ void main() {
     });
 
     test(
-        'removes legacy AI Coach and MiloOS identity wording from runtime prompt and errors',
+      'removes legacy assistant identity wording from runtime prompt and errors',
         () {
       expect(coachWidgetSource,
           contains('You are Scholesa AI Help in a live spoken conversation.'));

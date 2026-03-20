@@ -198,8 +198,8 @@ Observed result:
 
 What this evidence covers:
 
-- Floating AI coach surface renders correctly.
-- AI coach contract and regression suite remains stable.
+- Floating AI help surface renders correctly.
+- AI help contract and regression suite remains stable.
 - Auto greeting still speaks through the test override path.
 - BOS hesitation auto-assist still triggers a voiced response path.
 - Voice-only conversation mode still hides text controls correctly.

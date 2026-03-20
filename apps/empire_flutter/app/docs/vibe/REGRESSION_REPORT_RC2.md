@@ -41,8 +41,8 @@ Deep regression testing was performed across all 4 Vibe Master test suites (A–
 |-------|--------|-------|
 | B.1 Mission lifecycle (CRUD) | ✅ PASS | MissionModel + MissionPlanModel + MissionAttemptModel |
 | B.2 Checkpoint progression | ✅ PASS | BOS events: checkpoint_started → submitted → graded |
-| B.3 AI Coach 4 modes | ✅ PASS | hint, verify, explain, debug (enum enforced) |
-| B.4 AI Coach mode enforcement | ✅ PASS | Client-side enum prevents arbitrary modes |
+| B.3 AI Help 4 modes | ✅ PASS | hint, verify, explain, debug (enum enforced) |
+| B.4 AI Help mode enforcement | ✅ PASS | Client-side enum prevents arbitrary modes |
 | B.5 MVL gating | ✅ PASS | MvlGateWidget + sensor fusion (2+ risk sources) |
 | B.6 Explain-it-back prompts | ✅ PASS | `explain_it_back_submitted` event + requiresExplainBack flag |
 | B.7 Reflection prompts | ✅ PASS | Mission.reflectionPrompt + MissionAttempt.reflection |
@@ -60,7 +60,7 @@ Deep regression testing was performed across all 4 Vibe Master test suites (A–
 
 | Check | Status | Notes |
 |-------|--------|-------|
-| C.1 AI Coach modes constrained | ✅ PASS | AiCoachMode enum (4 values only) |
+| C.1 AI Help modes constrained | ✅ PASS | AiCoachMode enum (4 values only) |
 | C.2 Forbidden content tested | ✅ PASS | 712-line regression test incl. hallucination traps |
 | C.3 Prompt injection tested | ✅ PASS | Test: "ignore instructions" → blocked |
 | C.4 MVL non-punitive | ✅ PASS | No "cheating" language in MVL widget |
@@ -170,7 +170,7 @@ Deep regression testing was performed across all 4 Vibe Master test suites (A–
 | 10 | Added `ItemResponseModel` (per-item scoring) | models.dart |
 | 11 | Fixed pubspec version regex test (supports pre-release tags) | deploy_ops_regression_test.dart |
 | 12 | Added research-grade envelope tests | bos_models_test.dart |
-| 13 | Updated AI Coach regression test for new envelope | ai_coach_regression_test.dart |
+| 13 | Updated AI Help regression test for new envelope | ai_coach_regression_test.dart |
 | 14 | Created `docs/vibe/` directory | directory structure |
 | 15 | Created `scripts/vibe_run.sh` | executable script |
 
@@ -185,7 +185,7 @@ Deep regression testing was performed across all 4 Vibe Master test suites (A–
 
 ### P1 — Should fix for research readiness
 4. **Pseudonymous ID generation** — Implement site-salt HMAC to derive actorIdPseudo from actorId
-5. **ai_trace_id** on AI Coach requests/responses
+5. **ai_trace_id** on AI help requests/responses
 6. **model_name** in AiCoachResponse (requires server-side Cloud Function change)
 7. **Integration tests** — Create integration_test/ with golden scenario E2E flow
 8. **Homework mode UI** — Wire ContextMode toggle in learner UI

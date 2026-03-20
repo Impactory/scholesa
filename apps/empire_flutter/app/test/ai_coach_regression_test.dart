@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:scholesa_app/runtime/bos_models.dart';
 
 // ──────────────────────────────────────────────────────
-// AI Coach Contract Regression Test Suite
+// AI Help Contract Regression Test Suite
 // Spec: BOS_MIA_HOW_TO_IMPLEMENT.md A0–A2
 //       BOS_MIA_MATH_CONTRACT.md §5–§8
 //
@@ -22,7 +22,7 @@ void main() {
   // 1. SCHEMA CONTRACT TESTS
   // ════════════════════════════════════════════════════
 
-  group('AI Coach Schema Contract', () {
+  group('AI Help Schema Contract', () {
     test('AiCoachRequest.toMap includes all required fields', () {
       const AiCoachRequest req = AiCoachRequest(
         siteId: 'site1',
@@ -681,7 +681,7 @@ void main() {
 
   group('Closed-Loop Runtime', () {
     test(
-        'AI Coach is a control surface: Sense-Detect-Estimate-Control-Gate-Govern',
+      'AI Help is a control surface: Sense-Detect-Estimate-Control-Gate-Govern',
         () {
       // Verify the full loop is representable in the data model:
 
