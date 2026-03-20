@@ -12,7 +12,7 @@ export interface AnalyticsRepairRunRecord {
   status: string;
   updatedAt: string;
   siteId: string | null;
-  actorRole: string;
+  actorRole?: string | null;
   metadata: Record<string, string>;
 }
 
@@ -103,7 +103,7 @@ export function buildAnalyticsRepairRunRecord(entry: AnalyticsRepairAuditEntry):
     status: analyticsRepairRunStatus(metadata),
     updatedAt: toIsoDate(entry.createdAt),
     siteId: asTrimmedString(entry.siteId) || null,
-    actorRole: asTrimmedString(entry.actorRole) || 'unknown',
+    ...(asTrimmedString(entry.actorRole) ? { actorRole: asTrimmedString(entry.actorRole) } : {}),
     metadata,
   };
 }

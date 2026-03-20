@@ -69,4 +69,23 @@ describe('analyticsRepairRuns', () => {
       }),
     }));
   });
+
+  it('preserves missing actorRole as absent instead of inventing unknown', () => {
+    const result = buildAnalyticsRepairRunRecord({
+      id: 'audit-3',
+      action: 'telemetry_aggregate.backfilled',
+      createdAt: '2026-03-19T12:00:00.000Z',
+      details: {
+        processed: 1,
+        updated: 1,
+      },
+    });
+
+    expect(result).toEqual(expect.objectContaining({
+      id: 'audit-3',
+      title: 'Telemetry aggregate backfill',
+      status: 'completed',
+    }));
+    expect(result).not.toHaveProperty('actorRole');
+  });
 });
