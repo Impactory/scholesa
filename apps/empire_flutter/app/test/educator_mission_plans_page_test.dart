@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/modules/educator/educator_mission_plans_page.dart';
 import 'package:scholesa_app/modules/educator/educator_service.dart';
@@ -65,13 +66,24 @@ Future<void> _seedMission(
   required String title,
   String description = 'Prototype a reusable habitat solution.',
   String status = 'draft',
+  String pillar = 'Future Skills',
 }) async {
   await firestore.collection('missions').doc(missionId).set(<String, dynamic>{
     'title': title,
     'description': description,
-    'pillar': 'Future Skills',
-    'pillarCode': 'future_skills',
-    'pillarCodes': const <String>['future_skills'],
+    'pillar': pillar,
+    'pillarCode': pillar == 'Leadership & Agency'
+        ? 'leadership'
+        : pillar == 'Impact & Innovation'
+            ? 'impact'
+            : 'future_skills',
+    'pillarCodes': <String>[
+      pillar == 'Leadership & Agency'
+          ? 'leadership'
+          : pillar == 'Impact & Innovation'
+              ? 'impact'
+              : 'future_skills',
+    ],
     'duration': '4 weeks',
     'targetGrade': '6-8',
     'difficulty': 'beginner',
@@ -364,6 +376,73 @@ void main() {
     final mission =
         await firestore.collection('missions').doc('mission-1').get();
     expect(mission.data()?['status'], 'archived');
+  });
+
+  testWidgets('educator mission plans page restores the saved pillar filter on reopen',
+      (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedMission(
+      firestore,
+      missionId: 'mission-1',
+      title: 'Eco Build Sprint',
+      pillar: 'Future Skills',
+    );
+    await _seedMission(
+      firestore,
+      missionId: 'mission-2',
+      title: 'Leadership Studio',
+      pillar: 'Leadership & Agency',
+    );
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final EducatorService educatorService = EducatorService(
+      firestoreService: firestoreService,
+      educatorId: 'educator-1',
+      siteId: 'site-1',
+    );
+
+    Widget buildHome() => _buildHarness(
+          firestoreService: firestoreService,
+          educatorService: educatorService,
+          home: EducatorMissionPlansPage(sharedPreferences: prefs),
+        );
+
+    await tester.pumpWidget(buildHome());
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Eco Build Sprint'), findsWidgets);
+    expect(find.text('Leadership Studio'), findsWidgets);
+
+    await tester.tap(find.byIcon(Icons.filter_list_rounded));
+    await tester.pumpAndSettle();
+    final Finder filterDialog = find.byType(AlertDialog);
+    await tester.tap(
+      find.descendant(
+        of: filterDialog,
+        matching: find.text('Leadership & Agency'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Apply'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Leadership Studio'), findsWidgets);
+    expect(find.text('Eco Build Sprint'), findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+
+    await tester.pumpWidget(buildHome());
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Leadership Studio'), findsWidgets);
+    expect(find.text('Eco Build Sprint'), findsNothing);
   });
 
   testWidgets('educator mission plans page surfaces failed mission archiving',

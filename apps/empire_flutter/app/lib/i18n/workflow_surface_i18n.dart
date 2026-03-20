@@ -156,6 +156,10 @@ class WorkflowSurfaceI18n {
     'Mission Planning AI Help': '任务规划 AI 帮助',
     'See support ideas while designing missions for each learner':
         '在为每位学习者设计任务时查看支持建议',
+    'Filter Missions': '筛选任务',
+    'All Pillars': '所有支柱',
+    'Leadership & Agency': '领导力与自主性',
+    'Impact & Innovation': '影响力与创新',
     'Support AI Help': '支持 AI 帮助',
     'See support ideas for each learner support plan': '查看每个学习者支持计划的支持建议',
     'Continue this mission': '继续这个任务',
@@ -884,6 +888,10 @@ class WorkflowSurfaceI18n {
     'Mission Planning AI Help': '任務規劃 AI 幫助',
     'See support ideas while designing missions for each learner':
         '在為每位學習者設計任務時查看支持建議',
+    'Filter Missions': '篩選任務',
+    'All Pillars': '所有支柱',
+    'Leadership & Agency': '領導力與自主性',
+    'Impact & Innovation': '影響力與創新',
     'Support AI Help': '支持 AI 幫助',
     'See support ideas for each learner support plan': '查看每個學習者支持計畫的支持建議',
     'Continue this mission': '繼續這個任務',
