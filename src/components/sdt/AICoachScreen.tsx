@@ -8,7 +8,7 @@
  * Guardrails: Student must explain back and show proof of work
  */
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   LightbulbIcon,
   ClipboardCheckIcon,
@@ -22,9 +22,9 @@ import {
 import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import { sdtMotivation, type AICoachRequest, type AICoachResponse } from '@/src/lib/motivation/sdtMotivation';
 import { speakBrowserText, stopBrowserSpeech } from '@/src/lib/voice/browserSpeech';
-import { transcribeVoiceAudio, voiceApiConfigured } from '@/src/lib/voice/voiceService';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { useI18n } from '@/src/lib/i18n/useI18n';
+import { useVoiceTranscription } from '@/src/hooks/useVoiceTranscription';
 
 interface AICoachScreenProps {
   learnerId: string;
@@ -52,23 +52,9 @@ export function AICoachScreen({
   const [error, setError] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [spokenResponseStatus, setSpokenResponseStatus] = useState<string | null>(null);
-  const [isListening, setIsListening] = useState(false);
-  const [isTranscribing, setIsTranscribing] = useState(false);
-
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const mediaStreamRef = useRef<MediaStream | null>(null);
-  const audioChunksRef = useRef<BlobPart[]>([]);
 
   useEffect(() => {
     return () => {
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-        mediaRecorderRef.current.stop();
-      }
-      mediaRecorderRef.current = null;
-      if (mediaStreamRef.current) {
-        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
-      }
-      mediaStreamRef.current = null;
       stopBrowserSpeech();
     };
   }, []);
@@ -125,104 +111,44 @@ export function AICoachScreen({
     }
   };
 
-  const startListening = async () => {
-    if (loading || isTranscribing) return;
-
-    const canRecordAudio = typeof window !== 'undefined'
-      && typeof MediaRecorder !== 'undefined'
-      && typeof navigator !== 'undefined'
-      && Boolean(navigator.mediaDevices?.getUserMedia)
-      && Boolean(user)
-      && voiceApiConfigured();
-
-    if (!canRecordAudio) {
+  const { isListening, isTranscribing, startListening, stopListening } = useVoiceTranscription({
+    user,
+    siteId,
+    locale,
+    disabled: loading,
+    buildContext: () => ({
+      learnerId,
+      missionId,
+      sessionOccurrenceId: sprintSessionId,
+      source: 'ai_coach_screen_voice',
+    }),
+    onTranscript: async ({ transcript }) => {
+      setStatusMessage(null);
+      setQuestion(transcript);
+      await handleSubmitQuestion(transcript);
+    },
+    onUnavailable: () => {
       setStatusMessage('Voice capture is unavailable. Please sign in and ensure voice setup is available.');
-      return;
-    }
-
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaStreamRef.current = stream;
-      audioChunksRef.current = [];
-      const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
-      mediaRecorderRef.current = recorder;
-
-      recorder.ondataavailable = (event: BlobEvent) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-
-      recorder.onerror = () => {
-        setIsListening(false);
-      };
-
-      recorder.onstop = async () => {
-        setIsListening(false);
-        mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
-        mediaStreamRef.current = null;
-
-        if (!user || audioChunksRef.current.length === 0) {
-          return;
-        }
-
-        setIsTranscribing(true);
-        try {
-          const idToken = await user.getIdToken();
-          const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-          const transcribed = await transcribeVoiceAudio({
-            idToken,
-            audioBlob: blob,
-            siteId,
-            locale,
-            partial: false,
-            context: {
-              learnerId,
-              missionId,
-              sessionOccurrenceId: sprintSessionId,
-              source: 'ai_coach_screen_voice',
-            },
-          });
-
-          const transcriptText = transcribed.transcript.trim();
-          if (!transcriptText) {
-            setStatusMessage('AI Help could not clearly capture what you said. Please try again and speak a little more clearly.');
-            return;
-          }
-
-          setStatusMessage(null);
-          setQuestion(transcriptText);
-          await handleSubmitQuestion(transcriptText);
-        } catch (voiceError) {
-          console.error('Voice transcription failed in AI coach screen:', voiceError);
-          setStatusMessage(
-            voiceError instanceof Error && voiceError.message
-              ? voiceError.message
-              : 'AI Help could not clearly capture what you said. Please try again.',
-          );
-        } finally {
-          audioChunksRef.current = [];
-          setIsTranscribing(false);
-        }
-      };
-
-      recorder.start();
-      setStatusMessage('Listening now. Speak your question out loud.');
-      setIsListening(true);
-    } catch (microphoneError) {
+    },
+    onCaptureError: (microphoneError) => {
       console.error('Microphone capture unavailable for AI coach screen:', microphoneError);
       setStatusMessage('Microphone access is required for voice questions. Please allow microphone permission and try again.');
-      setIsListening(false);
-    }
-  };
-
-  const stopListening = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop();
-      return;
-    }
-    setIsListening(false);
-  };
+    },
+    onEmptyTranscript: () => {
+      setStatusMessage('AI Help could not clearly capture what you said. Please try again and speak a little more clearly.');
+    },
+    onTranscriptionError: (voiceError) => {
+      console.error('Voice transcription failed in AI coach screen:', voiceError);
+      setStatusMessage(
+        voiceError instanceof Error && voiceError.message
+          ? voiceError.message
+          : 'AI Help could not clearly capture what you said. Please try again.',
+      );
+    },
+    onListeningStarted: () => {
+      setStatusMessage('Listening now. Speak your question out loud.');
+    },
+  });
 
   const handleSubmitExplainBack = async () => {
     if (!explainBack.trim() || !response) return;
