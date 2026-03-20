@@ -930,7 +930,7 @@ export interface ReflectionEntry {
 }
 
 /**
- * AI Coach interaction log
+ * AI help interaction log
  */
 export interface AICoachInteraction {
   id: string;

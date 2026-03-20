@@ -190,7 +190,7 @@ class BosService {
     });
   }
 
-  // ── AI Coach (genAiCoach with BOS context) ────────
+  // ── AI help (genAiCoach with BOS context) ────────
 
   Future<AiCoachResponse> callAiCoach(AiCoachRequest request) async {
     final HttpsCallableResult<dynamic> result =

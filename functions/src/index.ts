@@ -475,7 +475,7 @@ function toStringArray(value: unknown): string[] {
 }
 
 // ──────────────────────────────────────────────────────
-// AI Coach Control Surface — Helper Functions
+// AI help control surface — Helper Functions
 // Spec: BOS_MIA_HOW_TO_IMPLEMENT.md §5, Math Contract §6-§8
 // ──────────────────────────────────────────────────────
 
@@ -897,7 +897,7 @@ function generateMvlInterceptMessage(
 }
 
 /**
- * Generate AI Coach response from internal inference only.
+ * Generate AI help response from internal inference only.
  * Forbidden: final answers, doing the learner's work, punitive language, or low-confidence autonomous help.
  */
 

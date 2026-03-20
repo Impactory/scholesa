@@ -1063,9 +1063,9 @@ class GradeBandPolicy {
   }
 }
 
-// ──── AI Coach Request/Response ────
+// ──── AI Help Request/Response ────
 
-/// AI Coach request (HOW_TO §5).
+/// AI help request (HOW_TO §5).
 @immutable
 class AiCoachRequest {
   const AiCoachRequest({

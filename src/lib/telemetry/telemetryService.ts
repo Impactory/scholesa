@@ -33,7 +33,7 @@ export type TelemetryCategory =
   | 'competence'     // Skill mastery, achievement
   | 'belonging'      // Social, collaboration
   | 'reflection'     // Metacognition
-  | 'ai_interaction' // AI coach usage
+  | 'ai_interaction' // AI help usage
   | 'navigation'     // Page views, clicks
   | 'performance'    // Load times, errors
   | 'engagement';    // Time on task, session patterns

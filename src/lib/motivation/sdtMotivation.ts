@@ -85,7 +85,7 @@ export interface ProgressInsights {
 }
 
 /**
- * AI Coach Request — aligned to BOS+MIA contract (HOW_TO §5, A2).
+ * AI Help Request — aligned to BOS+MIA contract (HOW_TO §5, A2).
  * Modes: hint (low assist), verify (evidence check), explain (scaffolding), debug (guided).
  * Forbidden: final answers, doing student's work, punitive language.
  */
@@ -101,7 +101,7 @@ export interface AICoachRequest {
 }
 
 /**
- * AI Coach Response — aligned to BOS+MIA contract.
+ * AI Help Response — aligned to BOS+MIA contract.
  * Includes risk assessment, MVL gating, and audit metadata.
  */
 export interface AICoachResponse {
@@ -416,10 +416,10 @@ class SDTMotivationService {
     return result.data;
   }
   
-  // === AI COACH ===
+  // === AI HELP ===
   
   /**
-   * Request AI coach help (with guardrails)
+  * Request AI help (with guardrails)
    */
   async requestAICoach(
     learnerId: string,

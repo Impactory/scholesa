@@ -269,7 +269,7 @@ export class RetrievalService {
 // ==================== CONVENIENCE FUNCTIONS ====================
 
 /**
- * Get context for AI Coach hint request
+ * Get context for AI help hint request
  */
 export async function getHintContext(
   studentQuestion: string,

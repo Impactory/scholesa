@@ -18,7 +18,7 @@ import '../auth/app_state.dart';
 import '../ui/localization/app_strings.dart';
 
 // ──────────────────────────────────────────────────────
-// AI Coach Widget — Control Surface
+// AI Help Widget — Control Surface
 // Spec: BOS_MIA_HOW_TO_IMPLEMENT.md §5, A0–A2
 //
 // AI is a control surface in the closed-loop runtime:
@@ -1381,7 +1381,7 @@ Response style:
       );
 
       if (kDebugMode) {
-        debugPrint('AI request failed, returning safe escalation: $e');
+        debugPrint('AI Help request failed, returning safe escalation: $e');
       }
 
       setState(() {

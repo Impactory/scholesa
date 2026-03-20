@@ -19,7 +19,7 @@ export interface GradeBandPolicy {
   missionChoiceCount: 2 | 3;
   allowCustomMissions: boolean;
   
-  // AI Coach modes
+  // AI help modes
   aiCoach: {
     enabled: boolean;
     modes: {
@@ -502,7 +502,7 @@ export function isFeatureAvailable(
 }
 
 /**
- * Get AI Coach modes for grade
+ * Get AI help modes for grade
  */
 export function getAICoachModesForGrade(grade: number): Array<'hint' | 'rubric_check' | 'debug' | 'critique'> {
   const policy = getPolicyForGrade(grade);

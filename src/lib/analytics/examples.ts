@@ -93,7 +93,7 @@ export async function trackCheckpointSubmission(
   });
 }
 
-// ==================== EXAMPLE 3: Track AI Coach Usage ====================
+// ==================== EXAMPLE 3: Track AI Help Usage ====================
 
 export async function trackAICoachUsage(
   userId: string,
@@ -176,7 +176,7 @@ export async function getStudentRecommendations(userId: string, siteId: string) 
       recentActivities: [
         'Completed Bronze mission on geometry',
         'Attempted Silver checkpoint (failed twice)',
-        'Used AI coach 4 times',
+        'Used AI help 4 times',
         'Submitted reflection on learning'
       ],
       currentMission: 'Build a scale model',
@@ -224,7 +224,7 @@ export async function analyzeLearnerPatterns(userId: string, siteId: string) {
 //     {
 //       pattern: "AI-assisted learner",
 //       confidence: 0.75,
-//       description: "Frequently uses AI coach for hints before attempting checkpoints. Could benefit from more independent problem-solving opportunities."
+//       description: "Frequently uses AI help for hints before attempting checkpoints. Could benefit from more independent problem-solving opportunities."
 //     }
 //   ],
 //   strengths: [

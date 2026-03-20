@@ -219,7 +219,7 @@ export class AIInteractionLogger {
 // ==================== CONVENIENCE FUNCTIONS ====================
 
 /**
- * Quick log for AI Coach interactions
+ * Quick log for AI help interactions
  */
 export async function logAICoachInteraction(
   request: ModelRequest,

@@ -36,7 +36,7 @@ class BosEventBus {
     'artifact_reviewed',
     'artifact_version_saved',
     'debug_attempted',
-    // ── AI Coach (A0 control surface)
+    // ── AI help (A0 control surface)
     'ai_help_opened',
     'ai_help_used',
     'ai_coach_response',

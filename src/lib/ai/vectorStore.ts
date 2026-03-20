@@ -2,7 +2,7 @@
  * Vector Database Integration for RAG
  * 
  * Provides semantic search over rubrics, exemplars, and student work.
- * Enables the AI coach to retrieve relevant context for better answers.
+ * Enables AI help to retrieve relevant context for better answers.
  * 
  * Architecture:
  * - **Firestore Vector Search** (primary choice - no extra service)
