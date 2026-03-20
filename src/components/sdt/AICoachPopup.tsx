@@ -207,7 +207,7 @@ export function AICoachPopup({
       }
     },
     onUnavailable: () => {
-      setStatusMessage('Voice capture is unavailable. Please sign in and ensure voice API settings are configured.');
+      setStatusMessage('Voice capture is unavailable. Please sign in and complete voice setup to use AI Help by voice.');
     },
     onCaptureError: (error) => {
       console.error('Microphone capture unavailable for BOS voice flow.', error);
@@ -370,10 +370,10 @@ Guidance: ${
         ? `${personalizedContext}\n\nStudent Question: ${resolvedQuestion}`
         : resolvedQuestion;
       if (!user) {
-        throw new Error('Authentication is required for BOS AI Coach voice flow.');
+        throw new Error('Sign in to use AI Help by voice.');
       }
       if (!voiceApiConfigured()) {
-        throw new Error('Voice API is not configured; BOS AI Coach endpoint unavailable.');
+        throw new Error('Voice help is not available right now. Complete voice setup and try again.');
       }
 
       const idToken = await user.getIdToken();

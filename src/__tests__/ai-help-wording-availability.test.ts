@@ -37,7 +37,12 @@ describe('AI help wording availability', () => {
     expect(popupSource).toContain('AI Help could not understand this voice turn reliably, so it switched to a safer fallback reply.');
     expect(popupSource).toContain('AI Help could not clearly capture what you said. Please try again and speak a little more clearly.');
     expect(popupSource).toContain('AI Help could not clearly capture what you said. Please try again.');
+    expect(popupSource).toContain('Voice capture is unavailable. Please sign in and complete voice setup to use AI Help by voice.');
+    expect(popupSource).toContain('Sign in to use AI Help by voice.');
+    expect(popupSource).toContain('Voice help is not available right now. Complete voice setup and try again.');
     expect(popupSource).not.toContain('{response.answer}');
+    expect(popupSource).not.toContain('BOS AI Coach');
+    expect(popupSource).not.toContain('Voice API');
     expect(popupSource).not.toContain('voice understanding stayed heuristic');
     expect(popupSource).not.toContain('local heuristic support');
     expect(popupSource).not.toContain('model-backed understanding');
