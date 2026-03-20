@@ -13,43 +13,51 @@ void main() {
     final String coachWidgetSource =
         File('lib/runtime/ai_coach_widget.dart').readAsStringSync();
 
-        test('keeps runtime exception text aligned to AI Help and voice help wording',
-                () {
-            expect(bosServiceSource, contains('Malformed AI Help payload.'));
-            expect(bosModelsSource, contains('Malformed AI Help response payload.'));
-            expect(voiceRuntimeSource, contains('Sign in to use AI Help by voice.'));
-            expect(
-                voiceRuntimeSource,
-                contains('Sign-in could not be confirmed for AI Help voice support.'),
-            );
-            expect(
-                voiceRuntimeSource,
-                contains('Voice help is unavailable right now ('),
-            );
-            expect(
-                voiceRuntimeSource,
-                contains('Audio recording is unavailable for transcription.'),
-            );
-            expect(
-                voiceRuntimeSource,
-                contains('Voice transcription is unavailable right now ('),
-            );
-        });
+    test(
+        'keeps runtime exception text aligned to AI Help and voice help wording',
+        () {
+      expect(bosServiceSource, contains('Malformed AI Help payload.'));
+      expect(bosModelsSource, contains('Malformed AI Help response payload.'));
+      expect(voiceRuntimeSource, contains('Sign in to use AI Help by voice.'));
+      expect(
+        voiceRuntimeSource,
+        contains('Sign-in could not be confirmed for AI Help voice support.'),
+      );
+      expect(
+        voiceRuntimeSource,
+        contains('Voice help is unavailable right now ('),
+      );
+      expect(
+        voiceRuntimeSource,
+        contains('Audio recording is unavailable for transcription.'),
+      );
+      expect(
+        voiceRuntimeSource,
+        contains('Voice transcription is unavailable right now ('),
+      );
+    });
 
-    test('removes legacy AI Coach and MiloOS identity wording from runtime prompt and errors',
+    test(
+        'removes legacy AI Coach and MiloOS identity wording from runtime prompt and errors',
         () {
       expect(coachWidgetSource,
           contains('You are Scholesa AI Help in a live spoken conversation.'));
-      expect(coachWidgetSource,
-          contains('runtimeLoop: Stay in the live spoken support loop and improve support for this specific learner over time.'));
+      expect(
+          coachWidgetSource,
+          contains(
+              'runtimeLoop: Stay in the live spoken support loop and improve support for this specific learner over time.'));
 
       expect(bosServiceSource, isNot(contains('Malformed AI coach payload.')));
+      expect(bosModelsSource,
+          isNot(contains('Malformed AI coach response payload.')));
       expect(
-          bosModelsSource, isNot(contains('Malformed AI coach response payload.')));
-      expect(voiceRuntimeSource,
-          isNot(contains('Authentication required for voice runtime request.')));
-      expect(voiceRuntimeSource,
-          isNot(contains('Unable to resolve auth token for voice runtime request.')));
+          voiceRuntimeSource,
+          isNot(
+              contains('Authentication required for voice runtime request.')));
+      expect(
+          voiceRuntimeSource,
+          isNot(contains(
+              'Unable to resolve auth token for voice runtime request.')));
       expect(voiceRuntimeSource, isNot(contains('Voice API error')));
       expect(voiceRuntimeSource, isNot(contains('Voice transcribe error')));
       expect(coachWidgetSource,

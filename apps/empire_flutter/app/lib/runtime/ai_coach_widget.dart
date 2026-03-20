@@ -870,7 +870,8 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     }
 
     bool played = false;
-    final AiCoachResponse? responseForPlayback = responseOverride ?? _lastResponse;
+    final AiCoachResponse? responseForPlayback =
+        responseOverride ?? _lastResponse;
     if (responseForPlayback?.voiceAvailable == true &&
         responseForPlayback?.voiceAudioUrl != null &&
         responseForPlayback!.voiceAudioUrl!.isNotEmpty) {
@@ -2085,7 +2086,8 @@ class _ChatBubble extends StatelessWidget {
                           foregroundColor: theme.colorScheme.primary,
                         ),
                         icon: const Icon(Icons.volume_up_outlined, size: 16),
-                        label: Text(AppStrings.of(context, 'ai.voiceOnly.replay')),
+                        label:
+                            Text(AppStrings.of(context, 'ai.voiceOnly.replay')),
                       ),
                     ),
                 ],

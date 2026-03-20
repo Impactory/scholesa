@@ -307,7 +307,10 @@ class EstimatorModel {
     final String? version = _readTrimmedString(m, 'version');
     final String? qVersion = _readTrimmedString(m, 'Q_version');
     final String? rVersion = _readTrimmedString(m, 'R_version');
-    if (estimator == null || version == null || qVersion == null || rVersion == null) {
+    if (estimator == null ||
+        version == null ||
+        qVersion == null ||
+        rVersion == null) {
       return null;
     }
     return EstimatorModel(
@@ -346,11 +349,12 @@ class FusionInfo {
     if (m == null) {
       return null;
     }
-    final List<String>? familiesPresent = (m['familiesPresent'] as List<dynamic>?)
-        ?.whereType<String>()
-        .map((String family) => family.trim())
-        .where((String family) => family.isNotEmpty)
-        .toList();
+    final List<String>? familiesPresent =
+        (m['familiesPresent'] as List<dynamic>?)
+            ?.whereType<String>()
+            .map((String family) => family.trim())
+            .where((String family) => family.isNotEmpty)
+            .toList();
     final bool? sensorFusionMet = m['sensorFusionMet'] as bool?;
     if (familiesPresent == null || sensorFusionMet == null) {
       return null;
@@ -411,14 +415,20 @@ class BosIntervention {
     final String? salienceName = _readTrimmedString(m, 'salience');
     final InterventionType? type = typeName == null
         ? null
-        : InterventionType.values.where((InterventionType e) => e.name == typeName).firstOrNull;
+        : InterventionType.values
+            .where((InterventionType e) => e.name == typeName)
+            .firstOrNull;
     final Salience? salience = salienceName == null
         ? null
-        : Salience.values.where((Salience e) => e.name == salienceName).firstOrNull;
+        : Salience.values
+            .where((Salience e) => e.name == salienceName)
+            .firstOrNull;
     final String? modeName = _readTrimmedString(m, 'mode');
     final AiCoachMode? mode = modeName == null
         ? null
-        : AiCoachMode.values.where((AiCoachMode e) => e.name == modeName).firstOrNull;
+        : AiCoachMode.values
+            .where((AiCoachMode e) => e.name == modeName)
+            .firstOrNull;
     final dynamic rawReasonCodes = m['reasonCodes'];
     final List<String>? reasonCodes = rawReasonCodes == null
         ? <String>[]
@@ -429,11 +439,16 @@ class BosIntervention {
                 .where((String code) => code.isNotEmpty)
                 .toList(growable: false)
             : null;
-    final Map<String, dynamic>? supervisionMap = _asStringDynamicMap(m['supervision']);
+    final Map<String, dynamic>? supervisionMap =
+        _asStringDynamicMap(m['supervision']);
     final SupervisoryControl? supervision = supervisionMap == null
         ? null
         : SupervisoryControl.tryFromMap(supervisionMap);
-    if (type == null || salience == null || (modeName != null && mode == null) || reasonCodes == null || (m['supervision'] != null && supervision == null)) {
+    if (type == null ||
+        salience == null ||
+        (modeName != null && mode == null) ||
+        reasonCodes == null ||
+        (m['supervision'] != null && supervision == null)) {
       return null;
     }
     return BosIntervention(
@@ -492,9 +507,13 @@ class PolicyTerms {
     }
     final double? lambda = _readFiniteDouble(m, 'lambda');
     final double? mDagger = _readFiniteDouble(m, 'm_dagger');
-    final bool? highAssist = m['highAssist'] is bool ? m['highAssist'] as bool : null;
+    final bool? highAssist =
+        m['highAssist'] is bool ? m['highAssist'] as bool : null;
     final double? omega = _readFiniteDouble(m, 'omega');
-    if (lambda == null || mDagger == null || highAssist == null || omega == null) {
+    if (lambda == null ||
+        mDagger == null ||
+        highAssist == null ||
+        omega == null) {
       return null;
     }
     return PolicyTerms(
@@ -594,10 +613,11 @@ class FeatureWindow {
     }
     final String? window = _readTrimmedString(m, 'window');
     final Map<String, dynamic>? features = _asStringDynamicMap(m['features']);
-    final List<double>? yVec = m['y_vec'] == null
-        ? null
-        : _readFiniteDoubleList(m, 'y_vec');
-    if (window == null || features == null || (m['y_vec'] != null && yVec == null)) {
+    final List<double>? yVec =
+        m['y_vec'] == null ? null : _readFiniteDoubleList(m, 'y_vec');
+    if (window == null ||
+        features == null ||
+        (m['y_vec'] != null && yVec == null)) {
       return null;
     }
     return FeatureWindow(
@@ -640,7 +660,8 @@ class FeatureQuality {
       return null;
     }
     final double? missingness = _readFiniteDouble(m, 'missingness');
-    final bool? driftFlag = m['driftFlag'] is bool ? m['driftFlag'] as bool : null;
+    final bool? driftFlag =
+        m['driftFlag'] is bool ? m['driftFlag'] as bool : null;
     final dynamic familiesValue = m['fusionFamiliesPresent'];
     if (missingness == null || driftFlag == null) {
       return null;
@@ -704,7 +725,12 @@ class ReliabilityRisk {
     final double? hSem = _readFiniteDouble(m, 'H_sem');
     final double? riskScore = _readFiniteDouble(m, 'riskScore');
     final double? threshold = _readFiniteDouble(m, 'threshold');
-    if (method == null || k == null || mValue == null || hSem == null || riskScore == null || threshold == null) {
+    if (method == null ||
+        k == null ||
+        mValue == null ||
+        hSem == null ||
+        riskScore == null ||
+        threshold == null) {
       return null;
     }
 
@@ -1187,8 +1213,10 @@ class AiCoachResponse {
     final String? message = _readTrimmedString(m, 'message');
     final String? modeName = _readTrimmedString(m, 'mode');
     final AiCoachMode? mode = modeName == null
-      ? null
-      : AiCoachMode.values.where((AiCoachMode e) => e.name == modeName).firstOrNull;
+        ? null
+        : AiCoachMode.values
+            .where((AiCoachMode e) => e.name == modeName)
+            .firstOrNull;
     final Map<String, dynamic>? risk = _asStringDynamicMap(m['risk']);
     final Map<String, dynamic>? mvl = _asStringDynamicMap(m['mvl']);
     final Map<String, dynamic>? meta = _asStringDynamicMap(m['meta']);
@@ -1196,37 +1224,43 @@ class AiCoachResponse {
     final Map<String, dynamic>? tts = _asStringDynamicMap(m['tts']);
     final dynamic rawSuggestedNextSteps = m['suggestedNextSteps'];
     final List<String>? suggestedNextSteps = rawSuggestedNextSteps == null
-      ? <String>[]
-      : rawSuggestedNextSteps is List<dynamic>
-        ? rawSuggestedNextSteps
-          .whereType<String>()
-          .map((String step) => step.trim())
-          .where((String step) => step.isNotEmpty)
-          .toList(growable: false)
-        : null;
+        ? <String>[]
+        : rawSuggestedNextSteps is List<dynamic>
+            ? rawSuggestedNextSteps
+                .whereType<String>()
+                .map((String step) => step.trim())
+                .where((String step) => step.isNotEmpty)
+                .toList(growable: false)
+            : null;
     final XHat? learnerState = m['learnerState'] != null
-      ? XHat.tryFromMap(_asStringDynamicMap(m['learnerState']))
-      : null;
+        ? XHat.tryFromMap(_asStringDynamicMap(m['learnerState']))
+        : null;
     final dynamic rawRequiresExplainBack = m['requiresExplainBack'];
     final bool? requiresExplainBack = rawRequiresExplainBack == null
-      ? false
-      : rawRequiresExplainBack is bool
-        ? rawRequiresExplainBack
-        : null;
+        ? false
+        : rawRequiresExplainBack is bool
+            ? rawRequiresExplainBack
+            : null;
     final dynamic rawMvlGateActive = mvl?['gateActive'];
     final bool? mvlGateActive = rawMvlGateActive == null
-      ? false
-      : rawMvlGateActive is bool
-        ? rawMvlGateActive
-        : null;
+        ? false
+        : rawMvlGateActive is bool
+            ? rawMvlGateActive
+            : null;
     final dynamic rawVoiceAvailable = tts?['available'];
     final bool? voiceAvailable = rawVoiceAvailable == null
-      ? false
-      : rawVoiceAvailable is bool
-        ? rawVoiceAvailable
-        : null;
+        ? false
+        : rawVoiceAvailable is bool
+            ? rawVoiceAvailable
+            : null;
 
-    if (message == null || mode == null || suggestedNextSteps == null || learnerState == null && m['learnerState'] != null || requiresExplainBack == null || mvlGateActive == null || voiceAvailable == null) {
+    if (message == null ||
+        mode == null ||
+        suggestedNextSteps == null ||
+        learnerState == null && m['learnerState'] != null ||
+        requiresExplainBack == null ||
+        mvlGateActive == null ||
+        voiceAvailable == null) {
       throw const FormatException('Malformed AI Help response payload.');
     }
 
@@ -1247,17 +1281,28 @@ class AiCoachResponse {
             )
           : null,
       mvlGateActive: mvlGateActive,
-      mvlEpisodeId: _readTrimmedString(mvl ?? const <String, dynamic>{}, 'episodeId'),
+      mvlEpisodeId:
+          _readTrimmedString(mvl ?? const <String, dynamic>{}, 'episodeId'),
       mvlReason: _readTrimmedString(mvl ?? const <String, dynamic>{}, 'reason'),
       version: meta != null ? _readTrimmedString(meta, 'version') : null,
-      aiHelpOpenedEventId: meta != null ? _readTrimmedString(meta, 'aiHelpOpenedEventId') : null,
+      aiHelpOpenedEventId:
+          meta != null ? _readTrimmedString(meta, 'aiHelpOpenedEventId') : null,
       traceId: metadata != null
-          ? _readTrimmedString(metadata, 'traceId') ?? (meta != null ? _readTrimmedString(meta, 'traceId') : null)
+          ? _readTrimmedString(metadata, 'traceId') ??
+              (meta != null ? _readTrimmedString(meta, 'traceId') : null)
           : (meta != null ? _readTrimmedString(meta, 'traceId') : null),
-      policyVersion: metadata != null ? _readTrimmedString(metadata, 'policyVersion') : null,
-      safetyOutcome: metadata != null ? _readTrimmedString(metadata, 'safetyOutcome') : null,
-      safetyReasonCode: metadata != null ? _readTrimmedString(metadata, 'safetyReasonCode') : null,
-      modelVersion: metadata != null ? _readTrimmedString(metadata, 'modelVersion') : null,
+      policyVersion: metadata != null
+          ? _readTrimmedString(metadata, 'policyVersion')
+          : null,
+      safetyOutcome: metadata != null
+          ? _readTrimmedString(metadata, 'safetyOutcome')
+          : null,
+      safetyReasonCode: metadata != null
+          ? _readTrimmedString(metadata, 'safetyReasonCode')
+          : null,
+      modelVersion: metadata != null
+          ? _readTrimmedString(metadata, 'modelVersion')
+          : null,
       voiceAudioUrl: tts != null ? _readTrimmedString(tts, 'audioUrl') : null,
       voiceAvailable: voiceAvailable,
     );

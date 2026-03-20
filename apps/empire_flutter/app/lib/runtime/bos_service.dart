@@ -66,7 +66,7 @@ class BosService {
 
     final Map<String, dynamic>? response = _asStringDynamicMap(result.data);
     final Map<String, dynamic>? stateData =
-      _asStringDynamicMap(response?['state']);
+        _asStringDynamicMap(response?['state']);
     if (stateData == null) return null;
     return OrchestrationState.tryFromMap(stateData);
   }
@@ -89,7 +89,7 @@ class BosService {
 
     final Map<String, dynamic>? response = _asStringDynamicMap(result.data);
     final Map<String, dynamic>? interventionData =
-      _asStringDynamicMap(response?['intervention']);
+        _asStringDynamicMap(response?['intervention']);
     if (interventionData == null) return null;
     return BosIntervention.fromMap(interventionData);
   }
