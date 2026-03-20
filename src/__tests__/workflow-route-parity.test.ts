@@ -184,6 +184,32 @@ describe('workflow route parity', () => {
     }));
   });
 
+  it('canonicalizes legacy feature flag names when HQ loads feature flags', async () => {
+    setCallableHandler('listFeatureFlags', jest.fn().mockResolvedValue({
+      data: {
+        flags: [{
+          id: 'flag-1',
+          name: 'miloos_loop',
+          description: 'Enable spoken AI help loop runtime',
+          status: 'enabled',
+          enabled: true,
+          scope: 'global',
+        }],
+      },
+    }) as CallableHandler);
+
+    const result = await loadWorkflowRecords(makeContext('/hq/feature-flags'));
+
+    expect(result.records).toHaveLength(1);
+    expect(result.records[0]).toEqual(expect.objectContaining({
+      title: 'ai_help_loop',
+      subtitle: 'Enable spoken AI help loop runtime',
+      status: 'enabled',
+      canEdit: true,
+      collectionName: 'featureFlags',
+    }));
+  });
+
   it('fails closed for site workflows without an active site context', async () => {
     await expect(loadWorkflowRecords(makeContext('/site/checkin', {
       role: 'hq',
@@ -250,6 +276,23 @@ describe('workflow route parity', () => {
       partnerId: 'partner-1',
       partnerName: 'Partner One',
       region: 'APAC',
+    }));
+  });
+
+  it('canonicalizes legacy feature flag names before HQ feature flag creation', async () => {
+    const upsertFeatureFlag = setCallableHandler('upsertFeatureFlag');
+
+    await createWorkflowRecord(makeContext('/hq/feature-flags'), {
+      values: {
+        name: 'miloos_loop',
+        description: 'Enable spoken AI help loop runtime',
+      },
+    });
+
+    expect(upsertFeatureFlag).toHaveBeenCalledWith(expect.objectContaining({
+      name: 'ai_help_loop',
+      description: 'Enable spoken AI help loop runtime',
+      enabled: false,
     }));
   });
 

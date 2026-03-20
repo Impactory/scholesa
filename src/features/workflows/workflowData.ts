@@ -157,6 +157,25 @@ function asBoolean(value: unknown, fallback = false): boolean {
   return fallback;
 }
 
+function canonicalizeFeatureFlagName(value: unknown): string | null {
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    return null;
+  }
+  const normalized = value.trim();
+  return normalized === 'miloos_loop' ? 'ai_help_loop' : normalized;
+}
+
+function canonicalizeFeatureFlagRow(row: Record<string, unknown>): Record<string, unknown> {
+  const canonicalName = canonicalizeFeatureFlagName(row.name);
+  if (!canonicalName) {
+    return row;
+  }
+  return {
+    ...row,
+    name: canonicalName,
+  };
+}
+
 function activeSiteId(profile: UserProfile | null): string | null {
   return profile?.activeSiteId || profile?.siteIds?.[0] || null;
 }
@@ -1281,6 +1300,7 @@ async function loadCallableRows(params: {
   subtitleKeys: string[];
   statusKeys: string[];
   metadataBuilder?: (row: Record<string, unknown>) => Record<string, string>;
+  rowTransformer?: (row: Record<string, unknown>) => Record<string, unknown>;
   excludedMetadataKeys?: string[];
   editable?: boolean;
   deletable?: boolean;
@@ -1294,17 +1314,18 @@ async function loadCallableRows(params: {
   return rows
     .filter((row): row is Record<string, unknown> => !!row && typeof row === 'object' && !Array.isArray(row))
     .map((row) => {
-      const id = asString(row.id, '');
+      const normalizedRow = params.rowTransformer ? params.rowTransformer(row) : row;
+      const id = asString(normalizedRow.id, '');
       if (!id) return null;
       return buildRecord({
         routePath: params.routePath,
         collectionName: params.collectionName,
         id,
-        raw: row,
+        raw: normalizedRow,
         titleKeys: params.titleKeys,
         subtitleKeys: params.subtitleKeys,
         statusKeys: params.statusKeys,
-        metadataOverride: params.metadataBuilder?.(row),
+        metadataOverride: params.metadataBuilder?.(normalizedRow),
         excludedMetadataKeys: params.excludedMetadataKeys,
         editable: params.editable,
         deletable: params.deletable,
@@ -3316,6 +3337,7 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
           titleKeys: ['name', 'id'],
           subtitleKeys: ['description', 'scope'],
           statusKeys: ['status', 'enabled'],
+          rowTransformer: canonicalizeFeatureFlagRow,
           editable: true,
         }), ctx.routePath),
         canCreate: true,
@@ -4136,7 +4158,7 @@ export async function createWorkflowRecord(
     case '/hq/feature-flags': {
       const callable = httpsCallable(functions, 'upsertFeatureFlag');
       await callable({
-        name: requireStringValue(input, 'name', 'Flag name'),
+        name: canonicalizeFeatureFlagName(requireStringValue(input, 'name', 'Flag name')),
         description: optionalStringValue(input, 'description'),
         enabled: false,
       });
