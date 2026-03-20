@@ -335,52 +335,52 @@
     }
   },
   "motivation": {
-    "noData": "No data available yet. Start learning to see your progress!",
-    "headerTitle": "My Learning Journey",
-    "headerSubtitle": "Track your growth, skills, and achievements",
+    "noData": "還沒有可顯示的資料。開始學習後，你就能看到自己的成長！",
+    "headerTitle": "我的學習旅程",
+    "headerSubtitle": "查看你的成長、技能發展和成果",
     "sdt": {
       "autonomy": {
-        "title": "Autonomy",
-        "subtitle": "Your Choices"
+        "title": "自主性",
+        "subtitle": "我的選擇"
       },
       "competence": {
-        "title": "Competence",
-        "subtitle": "Skills Mastered"
+        "title": "技能",
+        "subtitle": "我正在發展的技能"
       },
       "belonging": {
-        "title": "Belonging",
-        "subtitle": "Community"
+        "title": "歸屬感",
+        "subtitle": "學習共同體"
       },
       "overall": {
-        "title": "Overall",
-        "subtitle": "Total Score"
+        "title": "整體情況",
+        "subtitle": "我的學習全貌"
       }
     },
     "skills": {
-      "title": "Skills I'm Developing",
-      "empty": "No skills tracked yet. Complete missions to build your skill profile!"
+      "title": "我正在發展的技能",
+      "empty": "還沒有記錄到技能。完成任務並提交證據後，這裡會顯示你的技能發展。"
     },
     "badges": {
-      "title": "Badges Earned",
-      "empty": "No badges earned yet. Keep learning to unlock achievements!"
+      "title": "我獲得的徽章",
+      "empty": "還沒有獲得徽章。繼續學習，解鎖新的成果吧！"
     },
     "goals": {
-      "title": "My Learning Goals",
-      "setNew": "+ Set New Goal",
-      "empty": "No goals set yet. Set goals to guide your learning journey!"
+      "title": "我的學習目標",
+      "setNew": "+ 新增目標",
+      "empty": "你還沒有設定目標。設定一個目標來指引下一步學習吧！"
     },
-    "recognitionCount": "Times recognized by peers",
-    "unnamedSkill": "Unnamed Skill",
-    "badgeFallback": "Badge",
-    "goalFallback": "Learning goal",
+    "recognitionCount": "收到同儕肯定的次數",
+    "unnamedSkill": "未命名技能",
+    "badgeFallback": "徽章",
+    "goalFallback": "學習目標",
     "skillLevel": {
-      "emerging": "Emerging",
-      "developing": "Developing",
-      "proficient": "Proficient",
-      "mastery": "Mastery"
+      "emerging": "剛開始",
+      "developing": "持續發展中",
+      "proficient": "已經會應用",
+      "mastery": "已有充分證據"
     },
-    "evidenceCollected": "{{count}} evidence collected",
-    "goalTargetDate": "Target: {{date}}"
+    "evidenceCollected": "已收集 {{count}} 項證據",
+    "goalTargetDate": "目標日期：{{date}}"
   },
   "aiInsights": {
     "panelTitle": "AI Insights",

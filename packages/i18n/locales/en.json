@@ -337,15 +337,15 @@
   "motivation": {
     "noData": "No data available yet. Start learning to see your progress!",
     "headerTitle": "My Learning Journey",
-    "headerSubtitle": "Track your growth, skills, and achievements",
+    "headerSubtitle": "Track your growth, skill building, and achievements",
     "sdt": {
       "autonomy": {
         "title": "Autonomy",
         "subtitle": "Your Choices"
       },
       "competence": {
-        "title": "Competence",
-        "subtitle": "Skills Mastered"
+        "title": "Skills",
+        "subtitle": "Skills I'm Building"
       },
       "belonging": {
         "title": "Belonging",
@@ -353,7 +353,7 @@
       },
       "overall": {
         "title": "Overall",
-        "subtitle": "Total Score"
+        "subtitle": "Across My Learning"
       }
     },
     "skills": {
@@ -374,10 +374,10 @@
     "badgeFallback": "Badge",
     "goalFallback": "Learning goal",
     "skillLevel": {
-      "emerging": "Emerging",
-      "developing": "Developing",
-      "proficient": "Proficient",
-      "mastery": "Mastery"
+      "emerging": "Getting Started",
+      "developing": "Building",
+      "proficient": "Applying",
+      "mastery": "Strong Evidence"
     },
     "evidenceCollected": "{{count}} evidence collected",
     "goalTargetDate": "Target: {{date}}"
