@@ -83,9 +83,9 @@ class AppStrings {
       'ai.greeting.initial':
           'Hi! I can guide you with hints, explanations, and quick debug steps whenever you need support.',
       'ai.autoAssist.hesitationPrompt':
-          'The learner may be hesitating. Current MiloOS loop state: {state}. Offer a short supportive check-in, one tiny next step, and one follow-up question.',
+          'The learner may be hesitating. Current support state: {state}. Offer a short supportive check-in, one tiny next step, and one follow-up question.',
       'ai.autoAssist.interventionPrompt':
-          'MiloOS detected a proactive support moment. Intervention type: {type}, salience: {salience}, reason codes: {reasons}. Give a short supportive voice nudge with one immediate action and one follow-up question.',
+          'A proactive support moment was detected. Intervention type: {type}, salience: {salience}, reason codes: {reasons}. Give a short supportive voice nudge with one immediate action and one follow-up question.',
       'ai.autoAssist.fallbackPrompt':
           'Check in proactively with the learner. Offer one tiny next step and ask a confidence-building follow-up question.',
       'ai.error.unreachable':
@@ -128,7 +128,7 @@ class AppStrings {
       'ai.banner.learnerGuarded':
           'Confidence {percent}%. Help uses live learning signals plus a synthetic baseline, and stays careful below 97%.',
       'ai.banner.lineageDisclosure':
-          'Coach guidance uses live learning signals plus a synthetic baseline. The synthetic baseline helps with support, but it is not learner evidence or proof of mastery.',
+          'Help guidance uses live learning signals plus a synthetic baseline. The synthetic baseline helps with support, but it is not learner evidence or proof of mastery.',
       'ai.chat.verificationRequired': 'Verification required',
       'ai.chat.helpful': 'Helpful?',
       'ai.feedback.thanks': 'Thanks for the feedback!',
@@ -232,9 +232,9 @@ class AppStrings {
     'assistant.hoverHint': '点击获取帮助',
             'ai.greeting.initial': '你好！需要帮助时，我可以提供提示、解释和简短的调试步骤。',
       'ai.autoAssist.hesitationPrompt':
-          '学习者可能正在犹豫。当前 MiloOS 循环状态：{state}。请给出简短支持性提醒、一个微小下一步和一个追问。',
+          '学习者可能正在犹豫。当前支持状态：{state}。请给出简短支持性提醒、一个微小下一步和一个追问。',
       'ai.autoAssist.interventionPrompt':
-          'MiloOS 检测到一个需要主动支持的时刻。干预类型：{type}，显著性：{salience}，原因码：{reasons}。请给出简短支持性语音提醒，包含一个立即行动和一个追问。',
+          '系统检测到一个需要主动支持的时刻。干预类型：{type}，显著性：{salience}，原因码：{reasons}。请给出简短支持性语音提醒，包含一个立即行动和一个追问。',
       'ai.autoAssist.fallbackPrompt': '请主动关心学习者，给出一个微小下一步，并提出一个增强信心的追问。',
     'ai.error.unreachable': '当前无法使用帮助，请稍后再试。',
       'ai.error.safeEscalation':
@@ -266,7 +266,7 @@ class AppStrings {
       'ai.banner.learnerGuarded':
           '当前置信度为 {percent}%。帮助会结合实时学习信号与合成基线，并在低于 97% 时保持谨慎。',
       'ai.banner.lineageDisclosure':
-          '教练建议会结合实时学习信号与合成基线。合成基线只用于支持，不是学习者证据，也不是掌握证明。',
+          '帮助建议会结合实时学习信号与合成基线。合成基线只用于支持，不是学习者证据，也不是掌握证明。',
       'ai.chat.verificationRequired': '需要验证',
       'ai.chat.helpful': '有帮助吗？',
       'ai.feedback.thanks': '感谢你的反馈！',
@@ -361,9 +361,9 @@ class AppStrings {
     'assistant.hoverHint': '點擊取得幫助',
             'ai.greeting.initial': '你好！當你需要協助時，我可以提供提示、解釋和簡短除錯步驟。',
       'ai.autoAssist.hesitationPrompt':
-          '學習者可能正在猶豫。當前 MiloOS 迴圈狀態：{state}。請給出簡短支持性提醒、一個微小下一步以及一個追問。',
+          '學習者可能正在猶豫。當前支持狀態：{state}。請給出簡短支持性提醒、一個微小下一步以及一個追問。',
       'ai.autoAssist.interventionPrompt':
-          'MiloOS 偵測到需要主動支持的時刻。介入類型：{type}，顯著性：{salience}，原因碼：{reasons}。請給出簡短支持性語音提醒，包含一個立即行動和一個追問。',
+          '系統偵測到需要主動支持的時刻。介入類型：{type}，顯著性：{salience}，原因碼：{reasons}。請給出簡短支持性語音提醒，包含一個立即行動和一個追問。',
       'ai.autoAssist.fallbackPrompt': '請主動關心學習者，給出一個微小下一步，並提出一個建立信心的追問。',
     'ai.error.unreachable': '目前無法使用幫助，請稍後再試。',
       'ai.error.safeEscalation':
@@ -395,7 +395,7 @@ class AppStrings {
       'ai.banner.learnerGuarded':
           '目前信心為 {percent}%。幫助會結合即時學習訊號與合成基線，並在低於 97% 時保持謹慎。',
       'ai.banner.lineageDisclosure':
-          '教練建議會結合即時學習訊號與合成基線。合成基線只用於支持，不是學習者證據，也不是掌握證明。',
+          '幫助建議會結合即時學習訊號與合成基線。合成基線只用於支持，不是學習者證據，也不是掌握證明。',
       'ai.chat.verificationRequired': '需要驗證',
       'ai.chat.helpful': '有幫助嗎？',
       'ai.feedback.thanks': '感謝你的回饋！',
