@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -12,6 +13,7 @@ import 'package:scholesa_app/ui/theme/scholesa_theme.dart';
 
 String? _savedFileName;
 String? _savedFileContent;
+String? _clipboardText;
 
 Widget _buildHarness({required Widget child, required AppState appState}) {
   return MultiProvider(
@@ -55,6 +57,7 @@ void main() {
   setUp(() {
     _savedFileName = null;
     _savedFileContent = null;
+    _clipboardText = null;
     ExportService.instance.debugSaveTextFile = null;
   });
 
@@ -112,6 +115,67 @@ void main() {
     expect(_savedFileContent, contains('Title: Minor playground incident'));
     expect(_savedFileContent, contains('Site: Site One'));
     expect(_savedFileContent, contains('Severity: MAJOR'));
+  });
+
+  testWidgets('HQ safety copies incident summary when file export is unsupported',
+      (WidgetTester tester) async {
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (MethodCall methodCall) async {
+        if (methodCall.method == 'Clipboard.setData') {
+          final Map<dynamic, dynamic> arguments =
+              methodCall.arguments as Map<dynamic, dynamic>;
+          _clipboardText = arguments['text'] as String?;
+        }
+        return null;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null);
+    });
+
+    ExportService.instance.debugSaveTextFile = ({
+      required String fileName,
+      required String content,
+      required String mimeType,
+    }) async {
+      throw UnsupportedError('File export is not supported on this platform.');
+    };
+
+    await tester.binding.setSurfaceSize(const Size(1200, 1800));
+    await tester.pumpWidget(
+      _buildHarness(
+        child: HqSafetyPage(
+          incidentsLoader: () async => <String, dynamic>{
+            'incidents': <Map<String, dynamic>>[
+              <String, dynamic>{
+                'id': 'incident-2',
+                'title': 'Workshop injury review',
+                'siteName': 'Site Two',
+                'severity': 'critical',
+                'updatedAt': '2026-03-18T10:00:00.000Z',
+                'isEscalated': true,
+              },
+            ],
+          },
+        ),
+        appState: _buildAppState(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Workshop injury review').first);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Download Incident Summary'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Incident summary copied to clipboard.'), findsOneWidget);
+    expect(_clipboardText, isNotNull);
+    expect(_clipboardText, contains('Incident Summary'));
+    expect(_clipboardText, contains('ID: incident-2'));
+    expect(_clipboardText, contains('Severity: CRITICAL'));
   });
 
   testWidgets(

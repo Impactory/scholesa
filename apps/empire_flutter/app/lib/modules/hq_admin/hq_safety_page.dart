@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/export_service.dart';
@@ -383,6 +384,28 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
       messenger.showSnackBar(
         SnackBar(
           content: Text(successMessage),
+        ),
+      );
+    } on UnsupportedError catch (_) {
+      if (!mounted) return;
+
+      await Clipboard.setData(ClipboardData(text: summary));
+      TelemetryService.instance.logEvent(
+        event: 'export.copied',
+        metadata: <String, dynamic>{
+          'module': 'hq_safety',
+          'surface': 'incident_details_sheet',
+          'incident_id': incident.id,
+          'severity': incident.severity.name,
+          'file_name': fileName,
+        },
+      );
+
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            _tHqSafety(context, 'Incident summary copied to clipboard.'),
+          ),
         ),
       );
     } catch (_) {

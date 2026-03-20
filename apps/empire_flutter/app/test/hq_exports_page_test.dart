@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -191,5 +192,98 @@ void main() {
       find.text('Unable to load the analytics export bundle right now.'),
       findsOneWidget,
     );
+  });
+
+  testWidgets('hq exports copies full bundle when file export is unsupported',
+      (WidgetTester tester) async {
+    String? clipboardText;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (MethodCall methodCall) async {
+        if (methodCall.method == 'Clipboard.setData') {
+          final Map<dynamic, dynamic> arguments = methodCall.arguments as Map<dynamic, dynamic>;
+          clipboardText = arguments['text'] as String?;
+        }
+        return null;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null);
+    });
+
+    ExportService.instance.debugSaveTextFile = ({
+      required String fileName,
+      required String content,
+      required String mimeType,
+    }) async {
+      throw UnsupportedError('File export is not supported on this platform.');
+    };
+
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      _buildHarness(
+        appState: _buildHqState(),
+        child: HqExportsPage(
+          analyticsLoader: () async => const TelemetryDashboardMetrics(
+            weeklyAccountabilityAdherenceRate: 84.5,
+            educatorReviewTurnaroundHoursAvg: 12.0,
+            educatorReviewWithinSlaRate: 92.0,
+            educatorReviewSlaHours: 48,
+            interventionHelpedRate: 61.2,
+            interventionTotal: 14,
+            attendanceTrend: <AttendanceTrendPoint>[
+              AttendanceTrendPoint(
+                date: '2026-03-17',
+                records: 12,
+                events: 10,
+                presentRate: 95.0,
+              ),
+            ],
+          ),
+          billingLoader: () async => <String, dynamic>{
+            'invoices': <Map<String, dynamic>>[
+              <String, dynamic>{'id': 'INV-1', 'amount': 120.0},
+            ],
+            'payments': <Map<String, dynamic>>[
+              <String, dynamic>{'id': 'PAY-1', 'amount': 120.0},
+            ],
+            'subscriptions': <Map<String, dynamic>>[
+              <String, dynamic>{'id': 'SUB-1', 'amount': 49.0},
+            ],
+          },
+          auditLoader: () async => <AuditLogModel>[
+            AuditLogModel(
+              id: 'audit-1',
+              actorId: 'hq-1',
+              actorRole: 'hq',
+              action: 'export.downloaded',
+              entityType: 'report',
+              entityId: 'report-1',
+              createdAt: Timestamp.fromDate(DateTime(2026, 3, 18, 10)),
+            ),
+          ],
+          safetyLoader: () async => <String, dynamic>{
+            'incidents': <Map<String, dynamic>>[
+              <String, dynamic>{
+                'id': 'incident-1',
+                'title': 'Minor playground incident',
+              },
+            ],
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Download Full Bundle'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Full export bundle copied to clipboard.'), findsOneWidget);
+    expect(clipboardText, isNotNull);
+    expect(clipboardText, contains('HQ Full Export Bundle'));
+    expect(clipboardText, contains('Intervention total: 14'));
+    expect(clipboardText, contains('Incidents: 1'));
   });
 }

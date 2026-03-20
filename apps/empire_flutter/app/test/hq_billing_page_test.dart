@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
 import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/modules/hq_admin/hq_billing_page.dart';
+import 'package:scholesa_app/services/export_service.dart';
 
 Finder _dropdownField(String hintText) {
   return find.byWidgetPredicate(
@@ -58,6 +60,10 @@ AppState _buildAppState() {
 }
 
 void main() {
+  setUp(() {
+    ExportService.instance.debugSaveTextFile = null;
+  });
+
   testWidgets(
       'HQ billing shows a real load error instead of empty finance tabs',
       (WidgetTester tester) async {
@@ -225,5 +231,131 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Invoice creation failed'), findsOneWidget);
+  });
+
+  testWidgets('HQ billing copies financial export when file export is unsupported',
+      (WidgetTester tester) async {
+    String? clipboardText;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (MethodCall methodCall) async {
+        if (methodCall.method == 'Clipboard.setData') {
+          final Map<dynamic, dynamic> arguments = methodCall.arguments as Map<dynamic, dynamic>;
+          clipboardText = arguments['text'] as String?;
+        }
+        return null;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null);
+    });
+
+    ExportService.instance.debugSaveTextFile = ({
+      required String fileName,
+      required String content,
+      required String mimeType,
+    }) async {
+      throw UnsupportedError('File export is not supported on this platform.');
+    };
+
+    await tester.pumpWidget(
+      _buildHarness(
+        HqBillingPage(
+          billingLoader: () async => <String, dynamic>{
+            'siteOptions': <Map<String, dynamic>>[
+              <String, dynamic>{'id': 'all', 'label': 'All Sites'},
+            ],
+            'invoices': <Map<String, dynamic>>[
+              <String, dynamic>{
+                'id': 'INV-100',
+                'parent': 'Parent One',
+                'learner': 'Learner One',
+                'site': 'Harbor Studio',
+                'date': '2026-03-20',
+                'amount': 120.0,
+                'status': 'paid',
+              },
+            ],
+            'payments': <Map<String, dynamic>>[
+              <String, dynamic>{'id': 'PAY-1', 'amount': 120.0},
+            ],
+            'subscriptions': <Map<String, dynamic>>[
+              <String, dynamic>{'id': 'SUB-1', 'amount': 49.0},
+            ],
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.download).first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Financial export copied to clipboard.'), findsOneWidget);
+    expect(clipboardText, isNotNull);
+    expect(clipboardText, contains('Export Financials'));
+    expect(clipboardText, contains('Harbor Studio'));
+  });
+
+  testWidgets('HQ billing copies invoice reminder when file export is unsupported',
+      (WidgetTester tester) async {
+    String? clipboardText;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (MethodCall methodCall) async {
+        if (methodCall.method == 'Clipboard.setData') {
+          final Map<dynamic, dynamic> arguments = methodCall.arguments as Map<dynamic, dynamic>;
+          clipboardText = arguments['text'] as String?;
+        }
+        return null;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null);
+    });
+
+    ExportService.instance.debugSaveTextFile = ({
+      required String fileName,
+      required String content,
+      required String mimeType,
+    }) async {
+      throw UnsupportedError('File export is not supported on this platform.');
+    };
+
+    await tester.pumpWidget(
+      _buildHarness(
+        HqBillingPage(
+          billingLoader: () async => <String, dynamic>{
+            'siteOptions': <Map<String, dynamic>>[
+              <String, dynamic>{'id': 'all', 'label': 'All Sites'},
+            ],
+            'invoices': <Map<String, dynamic>>[
+              <String, dynamic>{
+                'id': 'INV-200',
+                'parent': 'Parent One',
+                'learner': 'Learner One',
+                'site': 'Harbor Studio',
+                'date': '2026-03-20',
+                'amount': 120.0,
+                'status': 'overdue',
+              },
+            ],
+            'payments': <Map<String, dynamic>>[],
+            'subscriptions': <Map<String, dynamic>>[],
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Download Invoice Reminder'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Invoice reminder copied to clipboard.'), findsOneWidget);
+    expect(clipboardText, isNotNull);
+    expect(clipboardText, contains('Invoice Reminder'));
+    expect(clipboardText, contains('INV-200'));
   });
 }
