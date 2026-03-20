@@ -571,13 +571,12 @@ class _ScholesaAppState extends State<ScholesaApp> {
             localizationsDelegates: _localizationDelegates,
             supportedLocales: _supportedLocales,
             builder: (BuildContext context, Widget? child) {
+              final bool showStartupIssueBanner =
+                  _showStartupIssues && _startupIssues.isNotEmpty;
               return Stack(
                 children: <Widget>[
                   if (child != null) child,
-                  GlobalSessionMenu(
-                    navigatorKey: _rootNavigatorKey,
-                  ),
-                  if (_showStartupIssues && _startupIssues.isNotEmpty)
+                  if (showStartupIssueBanner)
                     StartupIssueBanner(
                       issues: _startupIssues,
                       onDismiss: () {
@@ -594,6 +593,10 @@ class _ScholesaAppState extends State<ScholesaApp> {
                         });
                       },
                     ),
+                  GlobalSessionMenu(
+                    navigatorKey: _rootNavigatorKey,
+                    topPadding: showStartupIssueBanner ? 132 : 16,
+                  ),
                   GlobalAiAssistantOverlay(
                     navigatorKey: _rootNavigatorKey,
                   ),

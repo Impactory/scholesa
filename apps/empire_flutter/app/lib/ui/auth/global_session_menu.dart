@@ -207,9 +207,11 @@ class GlobalSessionMenu extends StatelessWidget {
   const GlobalSessionMenu({
     super.key,
     this.navigatorKey,
+    this.topPadding = 16,
   });
 
   final GlobalKey<NavigatorState>? navigatorKey;
+  final double topPadding;
 
   @override
   Widget build(BuildContext context) {
@@ -226,7 +228,7 @@ class GlobalSessionMenu extends StatelessWidget {
       child: Align(
         alignment: Alignment.topRight,
         child: Padding(
-          padding: const EdgeInsets.only(top: 16, right: 12),
+          padding: EdgeInsets.only(top: topPadding, right: 12),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
