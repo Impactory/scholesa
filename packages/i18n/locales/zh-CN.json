@@ -115,9 +115,9 @@
       "viewSchedule": "查看日程",
       "defaultLearnerInitial": "学",
       "askSiteLinkLearner": "请站点关联学习者",
-      "levelXp": "等级 {{level}} • XP {{xp}}",
-      "missionsCount": "任务：{{count}}",
-      "streakCount": "连续天数：{{count}}",
+      "levelXp": "已评审证据 {{level}} • 已分享作品 {{xp}}",
+      "missionsCount": "已完成任务：{{count}}",
+      "streakCount": "近期活跃天数：{{count}}",
       "fallback": {
         "linkedLearners": "已关联学习者",
         "upcomingSessions": "即将开始课程",

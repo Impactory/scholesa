@@ -573,13 +573,13 @@ async function loadParentPortfolioWorkflowRecords(ctx: WorkflowContext): Promise
         collectionName: 'parentCapabilitySnapshots',
         id: `capability:${learnerId}`,
         raw: {
-          title: `${learnerName} capability graph`,
+          title: `${learnerName} growth snapshot`,
           summary: joinAvailableParts([
-            futureSkills ? `Future ${futureSkills}` : null,
+            futureSkills ? `Future Skills ${futureSkills}` : null,
             leadership ? `Leadership ${leadership}` : null,
-            impact ? `Impact ${impact}` : null,
-          ]) || 'No verified capability evidence yet',
-          status: capabilityBand || 'No capability band yet',
+            impact ? `Impact & Innovation ${impact}` : null,
+          ]) || 'No verified growth evidence yet',
+          status: capabilityBand || 'Evidence building',
           updatedAt: portfolio?.latestArtifactAt || learner.updatedAt || new Date().toISOString(),
           siteId: activeSiteId(ctx.profile),
           ...metadataWithAvailableValues({
@@ -603,10 +603,10 @@ async function loadParentPortfolioWorkflowRecords(ctx: WorkflowContext): Promise
         collectionName: 'parentPortfolioSnapshots',
         id: `portfolio:${learnerId}`,
         raw: {
-          title: `${learnerName} portfolio snapshot`,
+          title: `${learnerName} portfolio highlights`,
           summary: joinAvailableParts([
             artifactCount ? `Artifacts ${artifactCount}` : null,
-            publishedArtifactCount ? `Published ${publishedArtifactCount}` : null,
+            publishedArtifactCount ? `Shared ${publishedArtifactCount}` : null,
             badgeCount ? `Badges ${badgeCount}` : null,
           ]) || 'No verified portfolio evidence yet',
           status: 'active',
@@ -633,11 +633,11 @@ async function loadParentPortfolioWorkflowRecords(ctx: WorkflowContext): Promise
         collectionName: 'parentIdeationPassports',
         id: `passport:${learnerId}`,
         raw: {
-          title: `${learnerName} ideation passport`,
+          title: `${learnerName} learning story`,
           summary: joinAvailableParts([
-            completedMissions ? `Missions ${completedMissions}` : null,
+            completedMissions ? `Completed missions ${completedMissions}` : null,
             reflectionsSubmitted ? `Reflections ${reflectionsSubmitted}` : null,
-            voiceInteractions ? `Voice ${voiceInteractions}` : null,
+            voiceInteractions ? `Voice check-ins ${voiceInteractions}` : null,
           ]) || 'No verified ideation evidence yet',
           status: 'active',
           updatedAt: ideation?.lastReflectionAt || portfolio?.latestArtifactAt || new Date().toISOString(),
@@ -947,8 +947,6 @@ async function loadParentSummary(ctx: WorkflowContext): Promise<WorkflowRecord[]
     .map((learner) => {
       const learnerId = asString(learner.learnerId, '');
       if (!learnerId) return null;
-      const currentLevel = asFiniteNumber(learner.currentLevel);
-      const totalXp = asFiniteNumber(learner.totalXp);
       const missionsCompleted = asFiniteNumber(learner.missionsCompleted);
       const currentStreak = asFiniteNumber(learner.currentStreak);
       const attendanceRate = asFiniteNumber(learner.attendanceRate);
@@ -959,9 +957,10 @@ async function loadParentSummary(ctx: WorkflowContext): Promise<WorkflowRecord[]
       const reflectionsSubmitted = asFiniteNumber((learner.ideationPassport as Record<string, unknown> | undefined)?.reflectionsSubmitted);
       const learnerName = asString(learner.learnerName, '') || 'Learner name unavailable';
       const subtitle = joinAvailableParts([
-        currentLevel != null ? `Level ${currentLevel}` : null,
-        totalXp != null ? `XP ${totalXp}` : null,
-      ]) || 'No verified summary evidence yet';
+        artifactCount != null ? `Artifacts ${artifactCount}` : null,
+        reflectionsSubmitted != null ? `Reflections ${reflectionsSubmitted}` : null,
+        missionsCompleted != null ? `Completed missions ${missionsCompleted}` : null,
+      ]) || 'No verified portfolio or reflection evidence yet';
 
       return {
         id: learnerId,

@@ -115,9 +115,9 @@
       "viewSchedule": "View Schedule",
       "defaultLearnerInitial": "L",
       "askSiteLinkLearner": "Ask site to link learner",
-      "levelXp": "Level {{level}} • XP {{xp}}",
-      "missionsCount": "Missions: {{count}}",
-      "streakCount": "Streak: {{count}}",
+      "levelXp": "Reviewed evidence {{level}} • Shared artifacts {{xp}}",
+      "missionsCount": "Completed missions: {{count}}",
+      "streakCount": "Recent active days: {{count}}",
       "fallback": {
         "linkedLearners": "Linked Learners",
         "upcomingSessions": "Upcoming Sessions",

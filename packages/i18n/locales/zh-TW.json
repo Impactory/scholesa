@@ -115,9 +115,9 @@
       "viewSchedule": "查看行程",
       "defaultLearnerInitial": "學",
       "askSiteLinkLearner": "請站點協助連結學習者",
-      "levelXp": "等級 {{level}} • XP {{xp}}",
-      "missionsCount": "任務：{{count}}",
-      "streakCount": "連續天數：{{count}}",
+      "levelXp": "已審查證據 {{level}} • 已分享作品 {{xp}}",
+      "missionsCount": "已完成任務：{{count}}",
+      "streakCount": "近期活躍天數：{{count}}",
       "fallback": {
         "linkedLearners": "已連結學習者",
         "upcomingSessions": "即將開始課程",
