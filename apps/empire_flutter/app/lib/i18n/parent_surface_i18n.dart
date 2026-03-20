@@ -111,8 +111,8 @@ class ParentSurfaceI18n {
     'Capability Band': '能力层级',
     'Portfolio Items': '作品条目',
     'Reflections Submitted': '已提交反思',
-    'View the live consent records currently on file for your linked learners. Contact your site admin to request changes.':
-        '查看你已关联学习者当前在系统中的实时同意记录。如需更改，请联系站点管理员。',
+    'View the live consent records currently on file for your linked learners. Request a consent review if any details need to be corrected.':
+        '查看你已关联学习者当前在系统中的实时同意记录。如需更正任何内容，请请求发起同意审核。',
     'Unable to load consent records right now': '目前无法加载同意记录',
     'Retry': '重试',
     'Media Configured': '媒体已配置',
@@ -146,8 +146,11 @@ class ParentSurfaceI18n {
         '该学习者尚未记录站点媒体同意。',
     'No research consent has been recorded for your account for this learner.':
         '你的账户尚未为该学习者记录研究同意。',
-    'This screen is view-only. Contact your site admin to change these records.':
-        '此页面仅供查看。如需更改这些记录，请联系站点管理员。',
+    'This screen is view-only. Use the request flow below if any consent details need to change.':
+        '此页面仅供查看。如需更改任何同意详情，请使用下方的请求流程。',
+    'Request Consent Review': '请求同意审核',
+    'Consent review request submitted.': '同意审核请求已提交。',
+    'Unable to submit consent review request right now.': '目前无法提交同意审核请求。',
     'Parent context unavailable right now': '目前家长上下文不可用',
     'Unavailable': '不可用',
     'All': '全部',
@@ -300,8 +303,8 @@ class ParentSurfaceI18n {
     'Capability Band': '能力層級',
     'Portfolio Items': '作品條目',
     'Reflections Submitted': '已提交反思',
-    'View the live consent records currently on file for your linked learners. Contact your site admin to request changes.':
-        '查看你已連結學習者目前在系統中的即時同意紀錄。如需更改，請聯絡站點管理員。',
+    'View the live consent records currently on file for your linked learners. Request a consent review if any details need to be corrected.':
+        '查看你已連結學習者目前在系統中的即時同意紀錄。如需更正任何內容，請請求發起同意審核。',
     'Unable to load consent records right now': '目前無法載入同意紀錄',
     'Retry': '重試',
     'Media Configured': '媒體已配置',
@@ -335,8 +338,11 @@ class ParentSurfaceI18n {
         '該學習者尚未記錄站點媒體同意。',
     'No research consent has been recorded for your account for this learner.':
         '你的帳戶尚未為該學習者記錄研究同意。',
-    'This screen is view-only. Contact your site admin to change these records.':
-        '此頁面僅供查看。如需更改這些紀錄，請聯絡站點管理員。',
+    'This screen is view-only. Use the request flow below if any consent details need to change.':
+        '此頁面僅供查看。如需更改任何同意詳情，請使用下方的請求流程。',
+    'Request Consent Review': '請求同意審核',
+    'Consent review request submitted.': '同意審核請求已提交。',
+    'Unable to submit consent review request right now.': '目前無法提交同意審核請求。',
     'Parent context unavailable right now': '目前家長上下文不可用',
     'Unavailable': '不可用',
     'All': '全部',

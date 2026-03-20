@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import '../../auth/app_state.dart';
 import '../../domain/models.dart';
 import '../../i18n/parent_surface_i18n.dart';
+import '../../services/firestore_service.dart';
+import '../../services/telemetry_service.dart';
 import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import 'parent_consent_service.dart';
@@ -29,6 +31,14 @@ class _ParentConsentPageState extends State<ParentConsentPage> {
   String? _loadError;
 
   String _t(String input) => ParentSurfaceI18n.text(context, input);
+
+  FirestoreService? _maybeFirestoreService() {
+    try {
+      return context.read<FirestoreService>();
+    } catch (_) {
+      return null;
+    }
+  }
 
   @override
   void initState() {
@@ -108,11 +118,23 @@ class _ParentConsentPageState extends State<ParentConsentPage> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Text(
-          _t(
-            'View the live consent records currently on file for your linked learners. Contact your site admin to request changes.',
-          ),
-          style: const TextStyle(color: ScholesaColors.textSecondary),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              _t(
+                'View the live consent records currently on file for your linked learners. Request a consent review if any details need to be corrected.',
+              ),
+              style: const TextStyle(color: ScholesaColors.textSecondary),
+            ),
+            if (_records.isNotEmpty) ...<Widget>[
+              const SizedBox(height: 12),
+              OutlinedButton(
+                onPressed: () => _submitConsentReviewRequest(_records.first),
+                child: Text(_t('Request Consent Review')),
+              ),
+            ],
+          ],
         ),
       ),
     );
@@ -256,14 +278,111 @@ class _ParentConsentPageState extends State<ParentConsentPage> {
             const SizedBox(height: 12),
             Text(
               _t(
-                'This screen is view-only. Contact your site admin to change these records.',
+                'This screen is view-only. Use the request flow below if any consent details need to change.',
               ),
               style: const TextStyle(color: ScholesaColors.textSecondary),
+            ),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton(
+                onPressed: () => _submitConsentReviewRequest(record),
+                child: Text(_t('Request Consent Review')),
+              ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _submitConsentReviewRequest(ParentConsentRecord record) async {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'module': 'parent_consent',
+        'cta_id': 'request_consent_review',
+        'learner_id': record.learnerId,
+        'site_id': record.siteId,
+      },
+    );
+
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+    final FirestoreService? firestoreService = _maybeFirestoreService();
+    if (firestoreService == null) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(_t('Support requests are unavailable right now.')),
+        ),
+      );
+      return;
+    }
+
+    final AppState appState = context.read<AppState>();
+    try {
+      final String requestId = await firestoreService.submitSupportRequest(
+        requestType: 'parent_consent_review',
+        source: 'parent_consent_request_review',
+        siteId: record.siteId?.trim().isNotEmpty == true
+            ? record.siteId!.trim()
+            : (appState.activeSiteId?.trim().isNotEmpty == true
+                ? appState.activeSiteId!.trim()
+                : 'Not set'),
+        userId: appState.userId?.trim().isNotEmpty == true
+            ? appState.userId!.trim()
+            : 'Not set',
+        userEmail: appState.email?.trim().isNotEmpty == true
+            ? appState.email!.trim()
+            : 'Not set',
+        userName: appState.displayName?.trim().isNotEmpty == true
+            ? appState.displayName!.trim()
+            : 'Not set',
+        role: appState.role?.name ?? 'unknown',
+        subject: 'Parent consent review request for ${record.learnerName}',
+        message: <String>[
+          'Please review the consent records for this linked learner.',
+          '',
+          'Learner: ${record.learnerName}',
+          'Learner ID: ${record.learnerId}',
+          'Site: ${record.siteId?.trim().isNotEmpty == true ? record.siteId!.trim() : 'Not set'}',
+          'Media Consent: ${_mediaStatusLabel(record.mediaConsent)}',
+          'Research Consent: ${_researchStatusLabel(record.researchConsent)}',
+        ].join('\n'),
+        metadata: <String, dynamic>{
+          'learnerId': record.learnerId,
+          'learnerName': record.learnerName,
+          'siteId': record.siteId,
+          'mediaConsentStatus': _mediaStatusLabel(record.mediaConsent),
+          'researchConsentStatus': _researchStatusLabel(record.researchConsent),
+        },
+      );
+      TelemetryService.instance.logEvent(
+        event: 'parent.consent.review_request_submitted',
+        metadata: <String, dynamic>{
+          'request_id': requestId,
+          'learner_id': record.learnerId,
+        },
+      );
+      if (!mounted) {
+        return;
+      }
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(_t('Consent review request submitted.')),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            _t('Unable to submit consent review request right now.'),
+          ),
+        ),
+      );
+    }
   }
 
   Widget _buildConsentSection({
