@@ -39,7 +39,7 @@ class ParentSurfaceI18n {
     'No learners linked': '尚未关联学习者',
     'Learner unavailable': '学习者信息不可用',
     'Contact your school to link your children': '请联系学校关联你的孩子账户',
-    'MiloOS Family Help': 'MiloOS 家庭帮助',
+    'Family AI Help': '家庭 AI 帮助',
     'See support ideas for each child’s progress': '查看每个孩子进展的支持建议',
     'No recent activity yet': '暂无最近活动',
     'Recent learner updates will appear here once missions or habits are completed.':
@@ -92,7 +92,7 @@ class ParentSurfaceI18n {
     'min': '分钟',
     'hr': '小时',
     'on': '于',
-    'MiloOS Schedule Help': 'MiloOS 日程帮助',
+    'Schedule AI Help': '日程 AI 帮助',
     'See support ideas for each learner schedule': '查看每位学习者日程的支持建议',
     'Unable to load schedule right now': '目前无法加载日程',
     'No learner links found yet. Ask your site admin to link parent and learner accounts.':
@@ -225,7 +225,7 @@ class ParentSurfaceI18n {
     'No learners linked': '尚未關聯學習者',
     'Learner unavailable': '學習者資訊不可用',
     'Contact your school to link your children': '請聯絡學校關聯你的孩子帳戶',
-    'MiloOS Family Help': 'MiloOS 家庭幫助',
+    'Family AI Help': '家庭 AI 幫助',
     'See support ideas for each child’s progress': '查看每個孩子進展的支持建議',
     'No recent activity yet': '目前沒有最近活動',
     'Recent learner updates will appear here once missions or habits are completed.':
@@ -278,7 +278,7 @@ class ParentSurfaceI18n {
     'min': '分鐘',
     'hr': '小時',
     'on': '於',
-    'MiloOS Schedule Help': 'MiloOS 日程幫助',
+    'Schedule AI Help': '日程 AI 幫助',
     'See support ideas for each learner schedule': '查看每位學習者日程的支持建議',
     'Unable to load schedule right now': '目前無法載入日程',
     'No learner links found yet. Ask your site admin to link parent and learner accounts.':

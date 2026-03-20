@@ -75,11 +75,11 @@ class AppStrings {
       'app.startupService.firebase': 'Firebase',
       'app.startupService.authEmulator': 'Auth emulator',
       'app.startupService.generic': 'Startup service',
-        'assistant.tooltip': 'MiloOS Help',
-        'assistant.title': 'MiloOS Help',
+        'assistant.tooltip': 'Get help',
+        'assistant.title': 'Get help',
       'assistant.close': 'Close',
-        'assistant.loading': 'Loading MiloOS…',
-        'assistant.hoverHint': 'Click for MiloOS',
+        'assistant.loading': 'Loading help…',
+        'assistant.hoverHint': 'Click for help',
       'ai.greeting.initial':
           'Hi! I can guide you with hints, explanations, and quick debug steps whenever you need support.',
       'ai.autoAssist.hesitationPrompt':
@@ -89,7 +89,7 @@ class AppStrings {
       'ai.autoAssist.fallbackPrompt':
           'Check in proactively with the learner. Offer one tiny next step and ask a confidence-building follow-up question.',
       'ai.error.unreachable':
-          'MiloOS is not available right now. Try again in a moment.',
+          'Help is not available right now. Try again in a moment.',
       'ai.error.safeEscalation':
           'I want to be careful here. Share what you have tried so far, and I can help with the next safe step. If you need a full check, ask your educator to review it with you.',
       'ai.voice.transcriptionUnavailable':
@@ -104,7 +104,7 @@ class AppStrings {
       'ai.voice.speaking': 'Speaking…',
       'ai.voice.tapInterrupt': 'Tap to interrupt',
       'ai.voiceOnly.promptTap':
-          'Tap the mic and speak. MiloOS will answer out loud.',
+          'Tap the mic and speak. Help will answer out loud.',
       'ai.voiceOnly.listening': 'Listening… speak now.',
       'ai.voice.outputUnavailable':
           'Voice output is unavailable. Check device volume and audio permissions.',
@@ -116,7 +116,7 @@ class AppStrings {
       'ai.clear': 'Clear',
       'ai.currentGoals': 'Current goals',
       'ai.clearGoals.cta': 'Clear goals',
-    'ai.empty.title': 'MiloOS',
+    'ai.empty.title': 'AI Help',
       'ai.empty.subtitle':
           'Choose a help mode and ask a question. I\'ll guide your thinking, not hand over the answer.',
       'ai.banner.verification':
@@ -126,9 +126,9 @@ class AppStrings {
       'ai.banner.runtimeMalformed':
           'Live learning signals could not be trusted. Confidence stays at 0% until the session state is repaired.',
       'ai.banner.learnerGuarded':
-          'Confidence {percent}%. MiloOS uses live learning signals plus a synthetic baseline, and stays careful below 97%.',
+          'Confidence {percent}%. Help uses live learning signals plus a synthetic baseline, and stays careful below 97%.',
       'ai.banner.lineageDisclosure':
-          'MiloOS guidance uses live learning signals plus a synthetic baseline. The synthetic baseline helps with support, but it is not learner evidence or proof of mastery.',
+          'Help guidance uses live learning signals plus a synthetic baseline. The synthetic baseline helps with support, but it is not learner evidence or proof of mastery.',
       'ai.chat.verificationRequired': 'Verification required',
       'ai.chat.helpful': 'Helpful?',
       'ai.feedback.thanks': 'Thanks for the feedback!',
