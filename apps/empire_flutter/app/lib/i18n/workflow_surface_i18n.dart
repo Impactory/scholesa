@@ -168,6 +168,11 @@ class WorkflowSurfaceI18n {
         '我们暂时无法加载站点。请重试以检查当前状态。',
     'Unable to refresh sites right now. Showing the last successful data.':
         '目前无法刷新站点。正在显示最近一次成功加载的数据。',
+    'Safety incidents are temporarily unavailable': '安全事件暂时不可用',
+    'We could not load safety incidents right now. Retry to check the current state.':
+        '我们暂时无法加载安全事件。请重试以检查当前状态。',
+    'Unable to refresh safety incidents right now. Showing the last successful data.':
+        '目前无法刷新安全事件。正在显示最近一次成功加载的数据。',
     'Mission Planning AI Help': '任务规划 AI 帮助',
     'See support ideas while designing missions for each learner':
         '在为每位学习者设计任务时查看支持建议',
@@ -921,6 +926,11 @@ class WorkflowSurfaceI18n {
         '我們暫時無法載入站點。請重試以檢查目前狀態。',
     'Unable to refresh sites right now. Showing the last successful data.':
         '目前無法重新整理站點。正在顯示最近一次成功載入的資料。',
+    'Safety incidents are temporarily unavailable': '安全事件暫時不可用',
+    'We could not load safety incidents right now. Retry to check the current state.':
+        '我們暫時無法載入安全事件。請重試以檢查目前狀態。',
+    'Unable to refresh safety incidents right now. Showing the last successful data.':
+        '目前無法重新整理安全事件。正在顯示最近一次成功載入的資料。',
     'Mission Planning AI Help': '任務規劃 AI 幫助',
     'See support ideas while designing missions for each learner':
         '在為每位學習者設計任務時查看支持建議',
