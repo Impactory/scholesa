@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'parent_models.dart';
 import 'parent_service.dart';
 import '../../services/firestore_service.dart';
@@ -13,13 +14,23 @@ import '../../ui/auth/global_session_menu.dart';
 
 /// Parent Schedule Page - View learner schedules and upcoming sessions
 class ParentSchedulePage extends StatefulWidget {
-  const ParentSchedulePage({super.key});
+  const ParentSchedulePage({
+    super.key,
+    this.sharedPreferences,
+  });
+
+  final SharedPreferences? sharedPreferences;
 
   @override
   State<ParentSchedulePage> createState() => _ParentSchedulePageState();
 }
 
 class _ParentSchedulePageState extends State<ParentSchedulePage> {
+  static const List<String> _supportedViewModes = <String>[
+    'day',
+    'week',
+    'month',
+  ];
   String _selectedLearner = 'all';
   DateTime _selectedDate = DateTime.now();
   String _viewMode = 'week'; // day, week, month
@@ -42,9 +53,61 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
   @override
   void initState() {
     super.initState();
+    _loadSavedViewMode();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ParentService>().loadParentData();
     });
+  }
+
+  Future<SharedPreferences> _prefs() async {
+    return widget.sharedPreferences ?? await SharedPreferences.getInstance();
+  }
+
+  String _viewModePrefsKey() {
+    final AppState? appState = context.read<AppState?>();
+    final String userId = appState?.userId?.trim() ?? 'anonymous';
+    final String siteId = appState?.activeSiteId?.trim() ?? 'global';
+    return 'parent_schedule.view_mode.$userId.$siteId';
+  }
+
+  String _normalizeViewMode(String? raw) {
+    final String candidate = (raw ?? '').trim().toLowerCase();
+    if (_supportedViewModes.contains(candidate)) {
+      return candidate;
+    }
+    return 'week';
+  }
+
+  Future<void> _loadSavedViewMode() async {
+    try {
+      final SharedPreferences prefs = await _prefs();
+      final String restored =
+          _normalizeViewMode(prefs.getString(_viewModePrefsKey()));
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _viewMode = restored;
+      });
+    } catch (error) {
+      debugPrint('Failed to load parent schedule view mode: $error');
+    }
+  }
+
+  Future<void> _setViewMode(String mode) async {
+    final String normalized = _normalizeViewMode(mode);
+    if (!mounted || normalized == _viewMode) {
+      return;
+    }
+    setState(() {
+      _viewMode = normalized;
+    });
+    try {
+      final SharedPreferences prefs = await _prefs();
+      await prefs.setString(_viewModePrefsKey(), normalized);
+    } catch (error) {
+      debugPrint('Failed to save parent schedule view mode: $error');
+    }
   }
 
   FirestoreService? _maybeFirestoreService() {
@@ -247,8 +310,12 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
                   ),
                 SliverToBoxAdapter(child: _buildCalendarStrip(service)),
                 SliverToBoxAdapter(child: _buildUpcomingSection(service)),
-                SliverToBoxAdapter(child: _buildTodaySchedule(service)),
-                SliverToBoxAdapter(child: _buildWeekOverview(service)),
+                if (_viewMode == 'day')
+                  SliverToBoxAdapter(child: _buildTodaySchedule(service)),
+                if (_viewMode == 'week')
+                  SliverToBoxAdapter(child: _buildWeekOverview(service)),
+                if (_viewMode == 'month')
+                  SliverToBoxAdapter(child: _buildMonthOverview(service)),
                 const SliverPadding(padding: EdgeInsets.only(bottom: 32)),
               ],
             );
@@ -382,7 +449,7 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
                           'cta': 'parent_schedule_view_mode_day',
                         },
                       );
-                      setState(() => _viewMode = 'day');
+                      _setViewMode('day');
                     },
                   ),
                   _ViewModeButton(
@@ -395,7 +462,7 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
                           'cta': 'parent_schedule_view_mode_week',
                         },
                       );
-                      setState(() => _viewMode = 'week');
+                      _setViewMode('week');
                     },
                   ),
                   _ViewModeButton(
@@ -408,7 +475,7 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
                           'cta': 'parent_schedule_view_mode_month',
                         },
                       );
-                      setState(() => _viewMode = 'month');
+                      _setViewMode('month');
                     },
                   ),
                 ],
@@ -974,6 +1041,101 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
     );
   }
 
+  Widget _buildMonthOverview(ParentService service) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
+    final List<_ParentScheduleEntry> monthEntries = _entriesForMonth(service);
+    final Map<DateTime, List<_ParentScheduleEntry>> grouped =
+        <DateTime, List<_ParentScheduleEntry>>{};
+    for (final _ParentScheduleEntry entry in monthEntries) {
+      final DateTime dayKey = DateTime(
+        entry.dateTime.year,
+        entry.dateTime.month,
+        entry.dateTime.day,
+      );
+      grouped.putIfAbsent(dayKey, () => <_ParentScheduleEntry>[]).add(entry);
+    }
+    final List<DateTime> orderedDays = grouped.keys.toList()
+      ..sort((DateTime a, DateTime b) => a.compareTo(b));
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              Text(
+                _t('This Month'),
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+              Text(
+                '${monthEntries.length} ${monthEntries.length == 1 ? _t('session') : _t('sessions')}',
+                style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 14),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (orderedDays.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: scheme.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: scheme.outlineVariant),
+              ),
+              child: Text(
+                _t('No sessions this month.'),
+                style: TextStyle(color: scheme.onSurfaceVariant),
+              ),
+            ),
+          ...orderedDays.map((DateTime day) {
+            final List<_ParentScheduleEntry> dayEntries =
+                grouped[day] ?? <_ParentScheduleEntry>[];
+            return Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: scheme.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: scheme.outlineVariant),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    _formatMonthDay(day),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: ScholesaColors.parent,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  ...dayEntries.map(
+                    (_ParentScheduleEntry entry) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: _ScheduleItem(
+                        time: _formatTime(entry.dateTime),
+                        title: entry.title,
+                        learner: entry.learnerName,
+                        location: entry.location,
+                        pillar: entry.pillarLabel,
+                        pillarColor: entry.pillarColor,
+                        status: entry.status,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
   String _getDayName(int weekday) {
     const List<String> days = <String>['M', 'T', 'W', 'T', 'F', 'S', 'S'];
     return days[weekday - 1];
@@ -1035,6 +1197,16 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
         .toList();
   }
 
+        List<_ParentScheduleEntry> _entriesForMonth(ParentService service) {
+          return _visibleEntries(service)
+          .where(
+            (_ParentScheduleEntry entry) =>
+            entry.dateTime.year == _selectedDate.year &&
+            entry.dateTime.month == _selectedDate.month,
+          )
+          .toList();
+        }
+
   _ParentScheduleEntry? _nextSession(ParentService service) {
     final DateTime now = DateTime.now();
     for (final _ParentScheduleEntry entry in _visibleEntries(service)) {
@@ -1052,6 +1224,10 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
 
   bool _isSameDay(DateTime a, DateTime b) {
     return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
+  String _formatMonthDay(DateTime dateTime) {
+    return '${dateTime.month}/${dateTime.day}';
   }
 
   String _statusForDate(DateTime dateTime, DateTime now) {

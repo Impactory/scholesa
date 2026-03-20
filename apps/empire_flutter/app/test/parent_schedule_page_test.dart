@@ -5,6 +5,7 @@ import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/modules/parent/parent_models.dart';
 import 'package:scholesa_app/modules/parent/parent_schedule_page.dart';
@@ -74,6 +75,7 @@ Future<void> _pumpPage(
   WidgetTester tester, {
   required ParentService parentService,
   FirestoreService? firestoreService,
+  SharedPreferences? sharedPreferences,
 }) async {
   await tester.binding.setSurfaceSize(const Size(1280, 1800));
   addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -103,14 +105,47 @@ Future<void> _pumpPage(
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
-        home: const ParentSchedulePage(),
+        home: ParentSchedulePage(sharedPreferences: sharedPreferences),
       ),
     ),
   );
   await tester.pumpAndSettle();
 }
 
+LearnerSummary _buildLearnerSummaryWithEvents() {
+  final DateTime now = DateTime.now();
+  return LearnerSummary(
+    learnerId: 'learner-1',
+    learnerName: 'Ava Learner',
+    currentLevel: 4,
+    totalXp: 120,
+    missionsCompleted: 8,
+    currentStreak: 3,
+    attendanceRate: 0.94,
+    upcomingEvents: <UpcomingEvent>[
+      UpcomingEvent(
+        id: 'event-1',
+        title: 'Design Studio',
+        dateTime: now.add(const Duration(days: 1, hours: 2)),
+        type: 'class',
+        location: 'Room A',
+      ),
+      UpcomingEvent(
+        id: 'event-2',
+        title: 'Reflection Circle',
+        dateTime: now.add(const Duration(days: 10, hours: 1)),
+        type: 'conference',
+        location: 'Room B',
+      ),
+    ],
+  );
+}
+
 void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+  });
+
   testWidgets(
       'parent schedule page shows explicit load error instead of empty linked-state copy',
       (WidgetTester tester) async {
@@ -187,5 +222,52 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Support requests are unavailable right now.'), findsOneWidget);
+  });
+
+  testWidgets('parent schedule month view changes visible content and persists on reopen',
+      (WidgetTester tester) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final _StubParentService service = _StubParentService(
+      parentId: 'parent-test-1',
+      learnerSummaries: <LearnerSummary>[
+        _buildLearnerSummaryWithEvents(),
+      ],
+    );
+
+    await _pumpPage(
+      tester,
+      parentService: service,
+      sharedPreferences: prefs,
+    );
+
+    expect(find.text('This Week'), findsOneWidget);
+    expect(find.text('This Month'), findsNothing);
+
+    final Finder monthToggle = find.byWidgetPredicate(
+      (Widget widget) =>
+          widget is Text &&
+          widget.data == 'M' &&
+          widget.style?.fontSize == 12,
+      description: 'month view toggle',
+    );
+    await tester.tap(monthToggle);
+    await tester.pumpAndSettle();
+
+    expect(find.text('This Month'), findsOneWidget);
+    expect(find.text('This Week'), findsNothing);
+    expect(find.text('Design Studio'), findsWidgets);
+    expect(find.text('Reflection Circle'), findsWidgets);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+
+    await _pumpPage(
+      tester,
+      parentService: service,
+      sharedPreferences: prefs,
+    );
+
+    expect(find.text('This Month'), findsOneWidget);
+    expect(find.text('This Week'), findsNothing);
   });
 }
