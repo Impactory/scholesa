@@ -129,7 +129,7 @@ void main() {
     expect(find.text('Retry'), findsOneWidget);
     expect(
       find.text(
-        'No learner links found yet. Ask your site admin to link parent and learner accounts.',
+        'No learner links found yet. Request a linking review and we will check your family account.',
       ),
       findsNothing,
     );

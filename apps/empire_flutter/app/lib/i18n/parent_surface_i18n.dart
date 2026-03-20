@@ -98,8 +98,8 @@ class ParentSurfaceI18n {
     'Schedule AI Help': '日程 AI 帮助',
     'See support ideas for each learner schedule': '查看每位学习者日程的支持建议',
     'Unable to load schedule right now': '目前无法加载日程',
-    'No learner links found yet. Ask your site admin to link parent and learner accounts.':
-        '尚未找到学习者关联。请让站点管理员关联家长和学习者账户。',
+    'No learner links found yet. Request a linking review and we will check your family account.':
+        '尚未找到学习者关联。请发起关联审核，我们会检查你的家庭账户。',
     'Portfolio': '作品集',
     'Unable to load portfolio right now': '目前无法加载作品集',
     'Consent Records': '同意记录',
@@ -109,8 +109,8 @@ class ParentSurfaceI18n {
     'Open Family Dashboard': '打开家庭仪表板',
     'Unable to load learner details right now': '目前无法加载学习者详情',
     'This learner is not linked to your account right now.': '该学习者目前未关联到你的账户。',
-    'Ask your site admin to confirm the guardian link before trying again.':
-        '请让站点管理员确认监护人关联后再试。',
+    'Request a linking review and we will check this learner connection for your family account.':
+        '请发起关联审核，我们会检查此学习者与家庭账户的关联。',
     'Capability Band': '能力层级',
     'Portfolio Items': '作品条目',
     'Reflections Submitted': '已提交反思',
@@ -293,8 +293,8 @@ class ParentSurfaceI18n {
     'Schedule AI Help': '日程 AI 幫助',
     'See support ideas for each learner schedule': '查看每位學習者日程的支持建議',
     'Unable to load schedule right now': '目前無法載入日程',
-    'No learner links found yet. Ask your site admin to link parent and learner accounts.':
-        '尚未找到學習者關聯。請讓站點管理員關聯家長和學習者帳戶。',
+    'No learner links found yet. Request a linking review and we will check your family account.':
+        '尚未找到學習者關聯。請發起連結審核，我們會檢查你的家庭帳戶。',
     'Portfolio': '作品集',
     'Unable to load portfolio right now': '目前無法載入作品集',
     'Consent Records': '同意紀錄',
@@ -304,8 +304,8 @@ class ParentSurfaceI18n {
     'Open Family Dashboard': '開啟家庭儀表板',
     'Unable to load learner details right now': '目前無法載入學習者詳情',
     'This learner is not linked to your account right now.': '該學習者目前未連結到你的帳戶。',
-    'Ask your site admin to confirm the guardian link before trying again.':
-        '請讓站點管理員確認監護人連結後再試。',
+    'Request a linking review and we will check this learner connection for your family account.':
+        '請發起連結審核，我們會檢查此學習者與家庭帳戶的連結。',
     'Capability Band': '能力層級',
     'Portfolio Items': '作品條目',
     'Reflections Submitted': '已提交反思',

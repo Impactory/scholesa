@@ -201,7 +201,7 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
                       Text(
-                        _t('No learner links found yet. Ask your site admin to link parent and learner accounts.'),
+                        _t('No learner links found yet. Request a linking review and we will check your family account.'),
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: scheme.onSurfaceVariant,

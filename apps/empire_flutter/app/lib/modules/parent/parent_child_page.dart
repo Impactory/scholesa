@@ -129,7 +129,7 @@ class _ParentChildPageState extends State<ParentChildPage> {
       return _buildMessageState(
         title: _t('This learner is not linked to your account right now.'),
         body: _t(
-          'Ask your site admin to confirm the guardian link before trying again.',
+          'Request a linking review and we will check this learner connection for your family account.',
         ),
         actionLabel: _t('Request Linking Review'),
         onPressed: _submitLinkedLearnerReviewRequest,
