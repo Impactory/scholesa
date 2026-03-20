@@ -162,6 +162,7 @@ class WorkflowSurfaceI18n {
     'Unable to retry this integration right now.': '目前无法重试此集成。',
     'Unable to update site day status right now.': '目前无法更新站点日状态。',
     'Unable to update kit checklist right now.': '目前无法更新设备检查清单。',
+    'Unable to update this approval right now.': '目前无法更新此审批。',
     'Mission Planning AI Help': '任务规划 AI 帮助',
     'See support ideas while designing missions for each learner':
         '在为每位学习者设计任务时查看支持建议',
@@ -903,6 +904,7 @@ class WorkflowSurfaceI18n {
     'Unable to retry this integration right now.': '目前無法重試此整合。',
     'Unable to update site day status right now.': '目前無法更新站點日狀態。',
     'Unable to update kit checklist right now.': '目前無法更新設備檢查清單。',
+    'Unable to update this approval right now.': '目前無法更新此審批。',
     'Mission Planning AI Help': '任務規劃 AI 幫助',
     'See support ideas while designing missions for each learner':
         '在為每位學習者設計任務時查看支持建議',

@@ -55,6 +55,7 @@ class _HqApprovalsPageState extends State<HqApprovalsPage>
   late TabController _tabController;
   bool _isLoading = false;
   String? _loadError;
+  Set<String> _pendingDecisionIds = <String>{};
 
   List<_ApprovalItem> _approvals = <_ApprovalItem>[];
 
@@ -262,6 +263,7 @@ class _HqApprovalsPageState extends State<HqApprovalsPage>
   }
 
   Widget _buildApprovalCard(_ApprovalItem item, {bool showActions = true}) {
+    final bool isDecisionPending = _pendingDecisionIds.contains(item.id);
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       color: ScholesaColors.surface,
@@ -302,7 +304,8 @@ class _HqApprovalsPageState extends State<HqApprovalsPage>
                 children: <Widget>[
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () => _handleReject(item),
+                      onPressed:
+                          isDecisionPending ? null : () => _handleReject(item),
                       style:
                           OutlinedButton.styleFrom(foregroundColor: Colors.red),
                       child: Text(_tHqApprovals(context, 'Reject')),
@@ -311,10 +314,20 @@ class _HqApprovalsPageState extends State<HqApprovalsPage>
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () => _handleApprove(item),
+                      onPressed:
+                          isDecisionPending ? null : () => _handleApprove(item),
                       style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green),
-                      child: Text(_tHqApprovals(context, 'Approve')),
+                      child: isDecisionPending
+                          ? const SizedBox(
+                              height: 18,
+                              width: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Text(_tHqApprovals(context, 'Approve')),
                     ),
                   ),
                 ],
@@ -497,6 +510,10 @@ class _HqApprovalsPageState extends State<HqApprovalsPage>
     final String statusLabel =
         newStatus == _ApprovalStatus.approved ? 'approved' : 'rejected';
 
+    setState(() => _pendingDecisionIds = <String>{
+          ..._pendingDecisionIds,
+          item.id,
+        });
     try {
       if (widget.decideApproval != null) {
         await widget.decideApproval!(id: item.id, status: statusLabel);
@@ -510,6 +527,21 @@ class _HqApprovalsPageState extends State<HqApprovalsPage>
       }
 
       if (!mounted) return;
+      setState(() {
+        _approvals = _approvals
+            .map((_ApprovalItem current) => current.id == item.id
+                ? _ApprovalItem(
+                    id: current.id,
+                    title: current.title,
+                    type: current.type,
+                    submittedBy: current.submittedBy,
+                    submittedAt: current.submittedAt,
+                    status: newStatus,
+                    sourceCollection: current.sourceCollection,
+                  )
+                : current)
+            .toList(growable: false);
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -524,10 +556,18 @@ class _HqApprovalsPageState extends State<HqApprovalsPage>
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_tHqApprovals(context, 'Approval update failed')),
+          content: Text(
+            _tHqApprovals(context, 'Unable to update this approval right now.'),
+          ),
           backgroundColor: Colors.red,
         ),
       );
+    } finally {
+      if (mounted) {
+        final Set<String> next = Set<String>.from(_pendingDecisionIds)
+          ..remove(item.id);
+        setState(() => _pendingDecisionIds = next);
+      }
     }
   }
 

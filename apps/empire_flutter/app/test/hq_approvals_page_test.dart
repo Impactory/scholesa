@@ -47,4 +47,90 @@ void main() {
     expect(find.text('No pending approvals'), findsNothing);
     expect(find.text('Retry'), findsOneWidget);
   });
+
+  testWidgets(
+      'HQ approvals keeps an item pending when the approval action fails',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      _buildHarness(
+        HqApprovalsPage(
+          loadApprovals: () async => <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 'approval-1',
+              'title': 'Studio Launch Agreement',
+              'submittedBy': 'Ops',
+              'status': 'pending',
+              'sourceCollection': 'partnerContracts',
+              'updatedAt': DateTime(2026, 3, 20, 9).toIso8601String(),
+            },
+          ],
+          decideApproval: ({required String id, required String status}) async {
+            throw StateError('decision failed');
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Studio Launch Agreement'), findsOneWidget);
+
+    await tester.tap(find.text('Approve'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Unable to update this approval right now.'),
+      findsOneWidget,
+    );
+    expect(find.text('Approved: Studio Launch Agreement'), findsNothing);
+    expect(find.text('Studio Launch Agreement'), findsOneWidget);
+    expect(find.text('Approve'), findsOneWidget);
+  });
+
+  testWidgets(
+      'HQ approvals moves a decided item into completed even if the refresh fails',
+      (WidgetTester tester) async {
+    int loadCalls = 0;
+
+    await tester.pumpWidget(
+      _buildHarness(
+        HqApprovalsPage(
+          loadApprovals: () async {
+            loadCalls += 1;
+            if (loadCalls == 1) {
+              return <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'id': 'approval-1',
+                  'title': 'Studio Launch Agreement',
+                  'submittedBy': 'Ops',
+                  'status': 'pending',
+                  'sourceCollection': 'partnerContracts',
+                  'updatedAt': DateTime(2026, 3, 20, 9).toIso8601String(),
+                },
+              ];
+            }
+            throw StateError('refresh failed');
+          },
+          decideApproval: ({required String id, required String status}) async {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Approve'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Approved: Studio Launch Agreement'), findsOneWidget);
+    expect(find.text('Studio Launch Agreement'), findsNothing);
+
+    await tester.tap(find.text('Completed'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Studio Launch Agreement'), findsOneWidget);
+    expect(
+      find.text(
+        'Unable to refresh approvals right now. Showing the last successful data.',
+      ),
+      findsOneWidget,
+    );
+  });
 }
