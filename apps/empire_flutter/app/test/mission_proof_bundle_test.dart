@@ -223,6 +223,47 @@ void main() {
     expect(assignmentDoc.data()?['lastSubmissionId'], attempts.docs.first.id);
   });
 
+  test('mission proof bundle checkpoints use generated ids instead of timestamps',
+      () async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedMission(firestore);
+
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final MissionService missionService = MissionService(
+      firestoreService: firestoreService,
+      learnerId: 'learner-1',
+    );
+
+    await missionService.addVersionCheckpoint(
+      missionId: 'mission-1',
+      summary: 'First checkpoint summary',
+    );
+    await missionService.addVersionCheckpoint(
+      missionId: 'mission-1',
+      summary: 'Second checkpoint summary',
+    );
+
+    final DocumentSnapshot<Map<String, dynamic>> proofBundleDoc =
+        await firestore
+            .collection('proofOfLearningBundles')
+            .doc('learner-1_mission-1')
+            .get();
+    final List<dynamic> versionHistory =
+        proofBundleDoc.data()?['versionHistory'] as List<dynamic>? ??
+            <dynamic>[];
+    final List<String> checkpointIds = versionHistory
+        .map((dynamic entry) => (entry as Map<String, dynamic>)['id'] as String)
+        .toList();
+
+    expect(checkpointIds, hasLength(2));
+    expect(checkpointIds.toSet().length, 2);
+    expect(checkpointIds[0], isNot(matches(RegExp(r'^\d{10,}$'))));
+    expect(checkpointIds[1], isNot(matches(RegExp(r'^\d{10,}$'))));
+  });
+
   testWidgets(
       'learner mission sheet reports queued proof bundle drafts when offline',
       (WidgetTester tester) async {

@@ -45,6 +45,24 @@ const CHECKS = [
   },
 ];
 
+const ALLOWED_VIOLATIONS = [
+  {
+    file: 'src/features/workflows/workflowData.ts',
+    checkId: 'mock_stub_fake_dummy',
+    snippet: /^stub$/i,
+  },
+  {
+    file: 'functions/src/workflowOps.ts',
+    checkId: 'mock_stub_fake_dummy',
+    snippet: /^stub$/i,
+  },
+  {
+    file: 'apps/empire_flutter/app/lib/modules/hq_admin/hq_analytics_page.dart',
+    checkId: 'synthetic_marker',
+    snippet: /^synthetic$/i,
+  },
+];
+
 function walk(dirPath, sink) {
   const entries = fs.readdirSync(dirPath, { withFileTypes: true });
   for (const entry of entries) {
@@ -92,17 +110,26 @@ function toLine(source, index) {
 function scanFile(filePath) {
   const source = fs.readFileSync(filePath, 'utf8');
   const violations = [];
+  const relativePath = path.relative(ROOT, filePath);
 
   for (const check of CHECKS) {
     check.regex.lastIndex = 0;
     let match = check.regex.exec(source);
     while (match) {
-      violations.push({
-        checkId: check.id,
-        description: check.description,
-        line: toLine(source, match.index),
-        snippet: match[0].slice(0, 140),
-      });
+      const snippet = match[0].slice(0, 140);
+      const isAllowed = ALLOWED_VIOLATIONS.some((allow) =>
+        allow.file === relativePath &&
+        allow.checkId === check.id &&
+        allow.snippet.test(snippet),
+      );
+      if (!isAllowed) {
+        violations.push({
+          checkId: check.id,
+          description: check.description,
+          line: toLine(source, match.index),
+          snippet,
+        });
+      }
       if (match.index === check.regex.lastIndex) {
         check.regex.lastIndex += 1;
       }

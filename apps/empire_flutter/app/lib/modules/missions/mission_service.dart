@@ -317,6 +317,10 @@ class MissionService extends ChangeNotifier {
         .doc('${learnerId}_$missionId');
   }
 
+  String _newProofCheckpointId(String missionId) {
+    return _proofBundleRef(missionId).collection('versionHistory').doc().id;
+  }
+
   Future<MissionProofBundle?> loadProofBundle(String missionId) async {
     final DocumentSnapshot<Map<String, dynamic>> snapshot =
         await _proofBundleRef(missionId).get();
@@ -432,7 +436,7 @@ class MissionService extends ChangeNotifier {
     final String? siteId =
         existing?.siteId ?? await _resolveSiteIdForMission(missionId);
     final MissionProofCheckpoint checkpoint = MissionProofCheckpoint(
-      id: '${DateTime.now().millisecondsSinceEpoch}',
+      id: _newProofCheckpointId(missionId),
       summary: trimmedSummary,
       artifactNote:
           artifactNote?.trim().isNotEmpty == true ? artifactNote!.trim() : null,

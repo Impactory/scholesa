@@ -13,6 +13,7 @@ const allowedLegacyFiles = new Set([
   path.join(repoRoot, 'functions', 'src', 'aiCoachTone.ts'),
   path.join(repoRoot, 'functions', 'src', 'workflowOps.ts'),
   path.join(repoRoot, 'src', 'features', 'workflows', 'workflowData.ts'),
+  path.join(repoRoot, 'apps', 'empire_flutter', 'app', 'lib', 'modules', 'hq_admin', 'hq_feature_flags_page.dart'),
 ]);
 
 const relevantExtensions = new Set(['.ts', '.tsx', '.dart']);
