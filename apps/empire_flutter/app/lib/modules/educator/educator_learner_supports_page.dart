@@ -84,10 +84,10 @@ class _EducatorLearnerSupportsPageState
             padding: const EdgeInsets.all(16),
             children: <Widget>[
               AiContextCoachSection(
-                title: _tEducatorLearnerSupports(context, 'Support AI Coach'),
+                title: _tEducatorLearnerSupports(context, 'Support AI Help'),
                 subtitle: _tEducatorLearnerSupports(
                   context,
-                  'Keep MiloOS loop active for each learner support plan',
+                  'See support ideas for each learner support plan',
                 ),
                 module: 'educator_learner_supports',
                 surface: 'support_plans',

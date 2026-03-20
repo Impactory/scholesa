@@ -149,9 +149,9 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
                 SliverToBoxAdapter(child: _buildLearnerFilter(service)),
                 SliverToBoxAdapter(
                   child: AiContextCoachSection(
-                    title: _t('Schedule AI Coach'),
+                    title: _t('Schedule AI Help'),
                     subtitle:
-                        _t('Keep MiloOS loop active for each learner schedule'),
+                        _t('See support ideas for each learner schedule'),
                     module: 'parent_schedule',
                     surface: 'schedule_overview',
                     actorRole: UserRole.parent,

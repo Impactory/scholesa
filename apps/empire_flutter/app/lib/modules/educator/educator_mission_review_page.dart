@@ -109,10 +109,10 @@ class _EducatorMissionReviewPageState extends State<EducatorMissionReviewPage> {
                 SliverToBoxAdapter(child: _buildHeader(service)),
                 SliverToBoxAdapter(
                   child: AiContextCoachSection(
-                    title: _tEducatorMissionReview(context, 'Review AI Coach'),
+                    title: _tEducatorMissionReview(context, 'Review AI Help'),
                     subtitle: _tEducatorMissionReview(
                       context,
-                      'Keep MiloOS loop active while reviewing learner submissions',
+                      'See support ideas while reviewing learner submissions',
                     ),
                     module: 'educator_mission_review',
                     surface: 'mission_review_queue',

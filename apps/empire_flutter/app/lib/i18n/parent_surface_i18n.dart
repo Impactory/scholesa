@@ -39,9 +39,8 @@ class ParentSurfaceI18n {
     'No learners linked': '尚未关联学习者',
     'Learner unavailable': '学习者信息不可用',
     'Contact your school to link your children': '请联系学校关联你的孩子账户',
-    'Family AI Coach': '家庭 AI 教练',
-    'Keep MiloOS loop active for each child’s progress':
-        '为每个孩子的进展保持 MiloOS 循环活跃',
+    'Family AI Help': '家庭 AI 帮助',
+    'See support ideas for each child’s progress': '查看每个孩子进展的支持建议',
     'No recent activity yet': '暂无最近活动',
     'Recent learner updates will appear here once missions or habits are completed.':
         '完成任务或习惯后，学习者的最新动态会显示在这里。',
@@ -93,9 +92,8 @@ class ParentSurfaceI18n {
     'min': '分钟',
     'hr': '小时',
     'on': '于',
-    'Schedule AI Coach': '日程 AI 教练',
-    'Keep MiloOS loop active for each learner schedule':
-        '为每位学习者的日程保持 MiloOS 循环活跃',
+    'Schedule AI Help': '日程 AI 帮助',
+    'See support ideas for each learner schedule': '查看每位学习者日程的支持建议',
     'Unable to load schedule right now': '目前无法加载日程',
     'No learner links found yet. Ask your site admin to link parent and learner accounts.':
         '尚未找到学习者关联。请让站点管理员关联家长和学习者账户。',
@@ -227,9 +225,8 @@ class ParentSurfaceI18n {
     'No learners linked': '尚未關聯學習者',
     'Learner unavailable': '學習者資訊不可用',
     'Contact your school to link your children': '請聯絡學校關聯你的孩子帳戶',
-    'Family AI Coach': '家庭 AI 教練',
-    'Keep MiloOS loop active for each child’s progress':
-        '為每個孩子的進展保持 MiloOS 循環活躍',
+    'Family AI Help': '家庭 AI 幫助',
+    'See support ideas for each child’s progress': '查看每個孩子進展的支持建議',
     'No recent activity yet': '目前沒有最近活動',
     'Recent learner updates will appear here once missions or habits are completed.':
         '完成任務或習慣後，學習者的最新動態會顯示在這裡。',
@@ -281,9 +278,8 @@ class ParentSurfaceI18n {
     'min': '分鐘',
     'hr': '小時',
     'on': '於',
-    'Schedule AI Coach': '日程 AI 教練',
-    'Keep MiloOS loop active for each learner schedule':
-        '為每位學習者的日程保持 MiloOS 循環活躍',
+    'Schedule AI Help': '日程 AI 幫助',
+    'See support ideas for each learner schedule': '查看每位學習者日程的支持建議',
     'Unable to load schedule right now': '目前無法載入日程',
     'No learner links found yet. Ask your site admin to link parent and learner accounts.':
         '尚未找到學習者關聯。請讓站點管理員關聯家長和學習者帳戶。',

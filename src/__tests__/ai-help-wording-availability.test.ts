@@ -12,6 +12,7 @@ describe('AI help wording availability', () => {
     const popupSource = readRepoFile('src', 'components', 'sdt', 'AICoachPopup.tsx');
     const screenSource = readRepoFile('src', 'components', 'sdt', 'AICoachScreen.tsx');
     const learnerDashboardSource = readRepoFile('src', 'features', 'dashboards', 'learner', 'components', 'LearnerDashboard.tsx');
+    const pricingPlansSource = readRepoFile('src', 'components', 'stripe', 'PricingPlans.tsx');
 
     expect(popupSource).toContain("title={t('aiCoach.tooltip')}");
     expect(popupSource).toContain("aria-label={t('aiCoach.openAria')}");
@@ -55,6 +56,9 @@ describe('AI help wording availability', () => {
     expect(learnerDashboardSource).toContain('No live help response is attached to this dashboard card yet.');
     expect(learnerDashboardSource).not.toContain('AI Coach');
     expect(learnerDashboardSource).not.toContain('AI coach guidance appears here');
+
+    expect(pricingPlansSource).toContain('AI help and guidance');
+    expect(pricingPlansSource).not.toContain('AI coaching support');
   });
 
   it('keeps service-unavailable help copy aligned across web guardrails and voice backends', () => {

@@ -175,10 +175,10 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
                 SliverToBoxAdapter(child: _buildFilters()),
                 SliverToBoxAdapter(
                   child: AiContextCoachSection(
-                    title: _tEducatorSessions(context, 'Session AI Coach'),
+                    title: _tEducatorSessions(context, 'Session AI Help'),
                     subtitle: _tEducatorSessions(
                       context,
-                      'Keep MiloOS loop active for each session and learner',
+                      'See support ideas for each session and learner',
                     ),
                     module: 'educator_sessions',
                     surface: 'sessions_schedule',

@@ -30,7 +30,7 @@ const plans: PricingPlan[] = [
     features: [
       'Access to all learning missions',
       'Personal progress dashboard',
-      'AI coaching support',
+      'AI help and guidance',
       'Portfolio builder',
       'Certificate generation',
     ],

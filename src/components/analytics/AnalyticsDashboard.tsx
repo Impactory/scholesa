@@ -417,7 +417,7 @@ export function AnalyticsDashboard() {
                 Voice capture needs attention
               </h3>
               <p className={`mt-1 text-sm ${criticalVoiceCapture ? 'text-red-700' : 'text-amber-700'}`}>
-                MiloOS clearly captured only {siteVoiceMetrics.avgCaptureSuccess != null ? `${siteVoiceMetrics.avgCaptureSuccess}%` : 'an unavailable share'} of recent attempts, with {siteVoiceMetrics.escalationCount} escalations in this {timeRange}. Read voice support trends carefully until capture improves.
+                The app clearly captured only {siteVoiceMetrics.avgCaptureSuccess != null ? `${siteVoiceMetrics.avgCaptureSuccess}%` : 'an unavailable share'} of recent attempts, with {siteVoiceMetrics.escalationCount} escalations in this {timeRange}. Read voice support trends carefully until capture improves.
               </p>
             </div>
           </div>

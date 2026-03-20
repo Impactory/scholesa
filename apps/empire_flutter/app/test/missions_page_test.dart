@@ -216,7 +216,7 @@ void main() {
     await tester.tap(find.byKey(const Key('mission-ai-toggle')));
     await tester.pumpAndSettle();
 
-    expect(find.text('AI Coach is temporarily unavailable'), findsOneWidget);
+    expect(find.text('AI help is temporarily unavailable'), findsOneWidget);
     expect(
       find.text('Keep working on this mission while AI reconnects.'),
       findsOneWidget,
@@ -227,7 +227,7 @@ void main() {
     await tester.tap(find.byKey(const Key('mission-ai-continue')));
     await tester.pumpAndSettle();
 
-    expect(find.text('AI Coach is temporarily unavailable'), findsNothing);
+    expect(find.text('AI help is temporarily unavailable'), findsNothing);
     expect(
       find.text('Ask for hints, explanations, or debugging help'),
       findsOneWidget,

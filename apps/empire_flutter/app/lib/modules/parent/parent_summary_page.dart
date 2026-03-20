@@ -86,9 +86,9 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
                 ),
                 SliverToBoxAdapter(
                   child: AiContextCoachSection(
-                    title: _t('Family AI Coach'),
+                    title: _t('Family AI Help'),
                     subtitle:
-                        _t('Keep MiloOS loop active for each child’s progress'),
+                        _t('See support ideas for each child’s progress'),
                     module: 'parent_summary',
                     surface: 'family_dashboard',
                     actorRole: UserRole.parent,
