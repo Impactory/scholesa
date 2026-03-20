@@ -563,7 +563,7 @@ Guidance: ${
 
     const interactionId = response.traceId?.trim();
     if (actorRole !== 'learner' || !interactionId) {
-      setStatusMessage('Open AI Coach from the learner workspace to record explain-back for this session.');
+      setStatusMessage('Open AI Help from the learner workspace to record explain-back for this session.');
       return;
     }
 
@@ -598,11 +598,11 @@ Guidance: ${
       setMode(null);
       setCurrentLogId(null);
       setStatusMessage(
-        result.feedback?.trim() || 'Explain-back recorded for this AI coach session.',
+        result.feedback?.trim() || 'Explain-back recorded for this AI help session.',
       );
     } catch (err) {
       console.error('AI coach popup explain-back error:', err);
-      setStatusMessage('Unable to record explain-back right now. Open the learner AI Coach screen or try again later.');
+      setStatusMessage('Unable to record explain-back right now. Open the learner AI Help screen or try again later.');
     } finally {
       setLoading(false);
     }

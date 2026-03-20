@@ -10,6 +10,8 @@ function readRepoFile(...relativePath: string[]): string {
 describe('AI help wording availability', () => {
   it('keeps the web AI popup wired to friendly aiCoach locale keys at visible UI touchpoints', () => {
     const popupSource = readRepoFile('src', 'components', 'sdt', 'AICoachPopup.tsx');
+    const screenSource = readRepoFile('src', 'components', 'sdt', 'AICoachScreen.tsx');
+    const learnerDashboardSource = readRepoFile('src', 'features', 'dashboards', 'learner', 'components', 'LearnerDashboard.tsx');
 
     expect(popupSource).toContain("title={t('aiCoach.tooltip')}");
     expect(popupSource).toContain("aria-label={t('aiCoach.openAria')}");
@@ -19,6 +21,9 @@ describe('AI help wording availability', () => {
     expect(popupSource).toContain("{t('aiCoach.voiceRequirements')}");
     expect(popupSource).toContain("{t('aiCoach.responseLabel')}");
     expect(popupSource).toContain("{t('aiCoach.footerTip')}");
+    expect(popupSource).toContain('Open AI Help from the learner workspace to record explain-back for this session.');
+    expect(popupSource).toContain('Explain-back recorded for this AI help session.');
+    expect(popupSource).toContain('Unable to record explain-back right now. Open the learner AI Help screen or try again later.');
     expect(popupSource).toContain('MiloOS is being careful here because it could not understand the voice request clearly enough yet.');
     expect(popupSource).toContain('MiloOS answered with a simple local hint because it could not confirm the voice request clearly. Treat this as a prompt to think, not a verified reading of what you meant.');
     expect(popupSource).toContain('MiloOS used the model to write the reply, but it still could not confirm the voice request clearly.');
@@ -36,6 +41,20 @@ describe('AI help wording availability', () => {
     expect(popupSource).not.toContain('model-derived understanding');
     expect(popupSource).not.toContain('reliable voice inference turn');
     expect(popupSource).not.toContain('reliable voice transcript');
+
+    expect(screenSource).toContain('AI Help');
+    expect(screenSource).toContain('Ask AI Help');
+    expect(screenSource).toContain('AI Help says:');
+    expect(screenSource).toContain('AI Help is here to help you think, not to do the work for you.');
+    expect(screenSource).not.toContain('Ask AI Coach');
+    expect(screenSource).not.toContain('AI Coach says:');
+    expect(screenSource).not.toContain('The AI Coach is here to help you think');
+
+    expect(learnerDashboardSource).toContain('AI Help');
+    expect(learnerDashboardSource).toContain('AI help appears here when a real support response is available.');
+    expect(learnerDashboardSource).toContain('No live help response is attached to this dashboard card yet.');
+    expect(learnerDashboardSource).not.toContain('AI Coach');
+    expect(learnerDashboardSource).not.toContain('AI coach guidance appears here');
   });
 
   it('keeps service-unavailable help copy aligned across web guardrails and voice backends', () => {
