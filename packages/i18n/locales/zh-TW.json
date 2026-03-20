@@ -200,7 +200,7 @@
       "noRecentMissions": "No recent missions started. Check with your educator!",
       "myStats": "My Stats",
       "sessionsAttended": "Sessions Attended",
-      "skillsMastered": "Skills Mastered",
+      "skillsMastered": "已有證據的技能",
       "viewSession": "查看課程",
       "openMissionBoard": "開啟任務看板",
       "activeMissionsThisWeek": "本週進行中的任務：{{count}}",
@@ -276,26 +276,26 @@
       "trendDown": "Below target vs last {{period}}"
     },
     "student": {
-      "headerTitle": "My Learning Analytics",
-      "headerSubtitle": "Track your growth and celebrate your achievements",
-      "thisWeek": "This Week",
-      "thisMonth": "This Month",
+      "headerTitle": "我的學習分析",
+      "headerSubtitle": "查看你的成長，並慶祝你的學習成果",
+      "thisWeek": "本週",
+      "thisMonth": "本月",
       "sdt": {
         "autonomy": {
-          "title": "Autonomy",
-          "subtitle": "My Choices"
+          "title": "自主性",
+          "subtitle": "我的選擇"
         },
         "competence": {
-          "title": "Competence",
-          "subtitle": "Skills Mastered"
+          "title": "技能",
+          "subtitle": "我正在發展的技能"
         },
         "belonging": {
-          "title": "Belonging",
-          "subtitle": "Community"
+          "title": "歸屬感",
+          "subtitle": "學習共同體"
         },
         "overall": {
-          "title": "Overall",
-          "subtitle": "Total Score"
+          "title": "整體情況",
+          "subtitle": "我的學習全貌"
         }
       },
       "stats": {
@@ -419,11 +419,11 @@
       }
     },
     "lowCompetence": {
-      "title": "Skill Mastery Support Needed",
+      "title": "需要更多技能發展支持",
       "description": "{{count}} learners need more skill-building opportunities.",
       "actions": {
         "scaffoldedPractice": "Provide scaffolded practice activities",
-        "smallWins": "Celebrate small wins with badges",
+        "smallWins": "用徽章慶祝成長",
         "peerMentoring": "Offer peer mentoring opportunities"
       }
     },

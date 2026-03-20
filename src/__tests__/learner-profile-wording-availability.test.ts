@@ -29,17 +29,30 @@ describe('learner profile wording availability', () => {
     expect(englishLocale.motivation.sdt.competence.subtitle).toBe("Skills I'm Building");
     expect(englishLocale.motivation.sdt.overall.subtitle).toBe('Across My Learning');
     expect(englishLocale.motivation.skillLevel.mastery).toBe('Strong Evidence');
+    expect(englishLocale.role.parent.levelXp).toBe('Reviewed evidence {{level}} • Shared artifacts {{xp}}');
+    expect(englishLocale.role.learner.skillsMastered).toBe('Skills with Evidence');
+    expect(englishLocale.analytics.student.sdt.competence.subtitle).toBe("Skills I'm Building");
+    expect(englishLocale.aiInsights.lowCompetence.title).toBe('More Skill-Building Support Needed');
+    expect(englishLocale.aiInsights.lowCompetence.actions.smallWins).toBe('Celebrate growth with badges');
 
     expect(simplifiedChineseLocale.motivation.headerTitle).toBe('我的学习旅程');
     expect(simplifiedChineseLocale.motivation.sdt.competence.title).toBe('技能');
     expect(simplifiedChineseLocale.motivation.sdt.competence.subtitle).toBe('我正在发展的技能');
     expect(simplifiedChineseLocale.motivation.skillLevel.mastery).toBe('已有充分证据');
     expect(simplifiedChineseLocale.motivation.evidenceCollected).toBe('已收集 {{count}} 条证据');
+    expect(simplifiedChineseLocale.role.learner.skillsMastered).toBe('已有证据的技能');
+    expect(simplifiedChineseLocale.analytics.student.sdt.competence.subtitle).toBe('我正在发展的技能');
+    expect(simplifiedChineseLocale.aiInsights.lowCompetence.title).toBe('需要更多技能发展支持');
+    expect(simplifiedChineseLocale.aiInsights.lowCompetence.actions.smallWins).toBe('用徽章庆祝成长');
 
     expect(traditionalChineseLocale.motivation.headerTitle).toBe('我的學習旅程');
     expect(traditionalChineseLocale.motivation.sdt.competence.title).toBe('技能');
     expect(traditionalChineseLocale.motivation.sdt.competence.subtitle).toBe('我正在發展的技能');
     expect(traditionalChineseLocale.motivation.skillLevel.mastery).toBe('已有充分證據');
     expect(traditionalChineseLocale.motivation.evidenceCollected).toBe('已收集 {{count}} 項證據');
+    expect(traditionalChineseLocale.role.learner.skillsMastered).toBe('已有證據的技能');
+    expect(traditionalChineseLocale.analytics.student.sdt.competence.subtitle).toBe('我正在發展的技能');
+    expect(traditionalChineseLocale.aiInsights.lowCompetence.title).toBe('需要更多技能發展支持');
+    expect(traditionalChineseLocale.aiInsights.lowCompetence.actions.smallWins).toBe('用徽章慶祝成長');
   });
 });
