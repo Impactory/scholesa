@@ -359,7 +359,7 @@ export function HQAnalyticsDashboard() {
           <div>
             <h2 className="text-lg font-semibold text-gray-900">Voice Reliability</h2>
             <p className="text-sm text-gray-600">
-              Capture reliability across the last 7 days. Low values mean MiloOS had fewer trustworthy voice inputs to work from.
+              Capture reliability across the last 7 days. Low values mean MiloOS had fewer clear voice inputs to work from.
             </p>
             <p className="mt-2 text-xs text-gray-500">
               {VOICE_RELIABILITY_HELPER_TEXT.platformTrustBoundary}

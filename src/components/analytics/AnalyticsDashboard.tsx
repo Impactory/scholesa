@@ -414,10 +414,10 @@ export function AnalyticsDashboard() {
             <AlertTriangleIcon className={`h-5 w-5 mt-0.5 mr-3 ${criticalVoiceCapture ? 'text-red-600' : 'text-amber-600'}`} />
             <div>
               <h3 className={`text-sm font-medium ${criticalVoiceCapture ? 'text-red-800' : 'text-amber-800'}`}>
-                Voice capture reliability needs attention
+                Voice capture needs attention
               </h3>
               <p className={`mt-1 text-sm ${criticalVoiceCapture ? 'text-red-700' : 'text-amber-700'}`}>
-                MiloOS voice captured only {siteVoiceMetrics.avgCaptureSuccess != null ? `${siteVoiceMetrics.avgCaptureSuccess}%` : 'an unavailable share'} of recent attempts, with {siteVoiceMetrics.escalationCount} escalations in this {timeRange}. Treat voice-derived support analytics cautiously until capture quality improves.
+                MiloOS clearly captured only {siteVoiceMetrics.avgCaptureSuccess != null ? `${siteVoiceMetrics.avgCaptureSuccess}%` : 'an unavailable share'} of recent attempts, with {siteVoiceMetrics.escalationCount} escalations in this {timeRange}. Read voice support trends carefully until capture improves.
               </p>
             </div>
           </div>

@@ -3,10 +3,10 @@ import React from 'react';
 export const VOICE_RELIABILITY_HELPER_TEXT = {
   siteUnavailable: 'Unavailable means Scholesa does not yet have enough verified voice capture evidence for this period.',
   platformUnavailable: 'Unavailable means Scholesa does not yet have enough verified voice capture evidence across sites for this period.',
-  siteTrustBoundary: 'This measures how often MiloOS captured usable voice input. Low capture weakens the trustworthiness of voice-derived support analytics.',
-  platformTrustBoundary: 'When capture is weak, downstream voice-derived support analytics should be treated as less trustworthy operational evidence.',
-  platformMetricNote: 'Low capture reduces confidence in voice-derived support analytics across sites.',
-  trendInterpretation: 'Green bars indicate strong capture, amber means voice support should be interpreted cautiously, and red means voice-derived support evidence is materially unreliable for that period.',
+  siteTrustBoundary: 'This shows how often MiloOS captured voice input clearly enough to use. Low capture means the voice-based support numbers here may miss part of the picture.',
+  platformTrustBoundary: 'When capture is weak, voice-based support numbers across sites may miss part of the picture and should be read carefully.',
+  platformMetricNote: 'Low capture lowers confidence because there are fewer clear voice examples across sites.',
+  trendInterpretation: 'Green bars mean capture stayed strong, amber means read voice support trends carefully, and red means there was not enough clear voice evidence to rely on for that period.',
 } as const;
 
 export function VoiceReliabilityLegend() {
