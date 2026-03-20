@@ -2026,15 +2026,23 @@ class _ChatMessage {
 // ──── Chat bubble ────
 
 class _ChatBubble extends StatelessWidget {
-  const _ChatBubble({required this.message, this.onFeedback});
+  const _ChatBubble({
+    required this.message,
+    this.voiceOnlyConversation = false,
+    this.onReplay,
+    this.onFeedback,
+  });
 
   final _ChatMessage message;
+  final bool voiceOnlyConversation;
+  final Future<void> Function()? onReplay;
   final void Function(bool helpful)? onFeedback;
 
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final bool isUser = message.isUser;
+    final bool hideAiTranscript = voiceOnlyConversation && !isUser;
 
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
@@ -2054,14 +2062,43 @@ class _ChatBubble extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text(
-              message.text,
-              style: TextStyle(
-                color: isUser
-                    ? theme.colorScheme.onPrimary
-                    : theme.colorScheme.onSurface,
+            if (hideAiTranscript)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    AppStrings.of(context, 'ai.voiceOnly.answeredOutLoud'),
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                  if (onReplay != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: TextButton.icon(
+                        onPressed: () => onReplay!(),
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          minimumSize: const Size(0, 0),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          visualDensity: VisualDensity.compact,
+                          foregroundColor: theme.colorScheme.primary,
+                        ),
+                        icon: const Icon(Icons.volume_up_outlined, size: 16),
+                        label: Text(AppStrings.of(context, 'ai.voiceOnly.replay')),
+                      ),
+                    ),
+                ],
+              )
+            else
+              Text(
+                message.text,
+                style: TextStyle(
+                  color: isUser
+                      ? theme.colorScheme.onPrimary
+                      : theme.colorScheme.onSurface,
+                ),
               ),
-            ),
 
             // MVL gate indicator
             if (message.response?.mvlGateActive == true)
