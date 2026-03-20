@@ -229,7 +229,8 @@ class GlobalSessionMenu extends StatelessWidget {
     }
 
     final double width = MediaQuery.sizeOf(context).width;
-    final bool showLabel = width >= 720;
+    final bool showMenuLabel = width >= 720;
+    final bool showSignOutLabel = kIsWeb || width >= 720;
     final bool showExplicitSignOut = kIsWeb || width >= 960;
 
     final Widget menu = Align(
@@ -242,7 +243,7 @@ class GlobalSessionMenu extends StatelessWidget {
             if (showExplicitSignOut) ...<Widget>[
               SessionSignOutButton(
                 navigatorKey: navigatorKey,
-                showLabel: showLabel,
+                showLabel: showSignOutLabel,
               ),
               const SizedBox(width: 8),
             ],
@@ -256,7 +257,7 @@ class GlobalSessionMenu extends StatelessWidget {
               shadowColor: Colors.black.withValues(alpha: 0.14),
               child: SessionMenuButton(
                 navigatorKey: navigatorKey,
-                showLabel: showLabel,
+                showLabel: showMenuLabel,
                 buttonKey: _globalSessionMenuButtonKey,
               ),
             ),

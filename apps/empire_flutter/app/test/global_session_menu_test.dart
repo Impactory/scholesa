@@ -230,12 +230,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final Finder tooltipTarget = find.byTooltip('Sign Out');
-      expect(tooltipTarget, findsOneWidget);
-      await tester.longPress(tooltipTarget);
-      await tester.pumpAndSettle();
-
-      expect(find.text('Sign Out'), findsWidgets);
+      expect(find.bySemanticsLabel('Sign Out'), findsOneWidget);
     });
   });
 }
