@@ -158,5 +158,84 @@ void main() {
           .called(1);
       expect(find.text('Login Screen'), findsOneWidget);
     });
+
+    testWidgets('renders a direct sign out control on wide authenticated layouts',
+        (WidgetTester tester) async {
+      final _MockAuthService authService = _MockAuthService();
+      when(() => authService.signOut(source: any(named: 'source')))
+          .thenAnswer((_) async {});
+
+      tester.view.physicalSize = const Size(1400, 1000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        _buildHarness(
+          appState: _buildAppState(UserRole.educator),
+          authService: authService,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.bySemanticsLabel('Sign Out'), findsOneWidget);
+
+      await tester.tap(find.bySemanticsLabel('Sign Out'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Sign Out'));
+      await tester.pumpAndSettle();
+
+      verify(() => authService.signOut(source: 'global_session_menu'))
+          .called(1);
+      expect(find.text('Login Screen'), findsOneWidget);
+    });
+
+    testWidgets('icon-only direct sign out still exposes explicit tooltip copy',
+        (WidgetTester tester) async {
+      final _MockAuthService authService = _MockAuthService();
+      when(() => authService.signOut(source: any(named: 'source')))
+          .thenAnswer((_) async {});
+
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: <SingleChildWidget>[
+            ChangeNotifierProvider<AppState>.value(
+              value: _buildAppState(UserRole.educator),
+            ),
+            Provider<AuthService>.value(value: authService),
+          ],
+          child: MaterialApp(
+            theme: ScholesaTheme.light,
+            locale: const Locale('en'),
+            localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const <Locale>[
+              Locale('en'),
+              Locale('zh', 'CN'),
+              Locale('zh', 'TW'),
+            ],
+            home: const Scaffold(
+              body: Align(
+                alignment: Alignment.topRight,
+                child: SessionSignOutButton(showLabel: false),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final Finder tooltipTarget = find.byTooltip('Sign Out');
+      expect(tooltipTarget, findsOneWidget);
+      await tester.longPress(tooltipTarget);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Sign Out'), findsWidgets);
+    });
   });
 }
