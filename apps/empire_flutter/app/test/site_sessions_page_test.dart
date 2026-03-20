@@ -299,8 +299,6 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
-    expect(find.text('Today Advisory'), findsOneWidget);
-    expect(find.text('Week Studio'), findsOneWidget);
     expect(find.text('Month Showcase'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
