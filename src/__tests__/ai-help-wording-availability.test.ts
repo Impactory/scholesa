@@ -43,6 +43,10 @@ describe('AI help wording availability', () => {
     expect(popupSource).toContain('Voice capture is unavailable. Please sign in and complete voice setup to use AI Help by voice.');
     expect(popupSource).toContain('Sign in to use AI Help by voice.');
     expect(popupSource).toContain('Voice help is not available right now. Complete voice setup and try again.');
+    expect(popupSource).toContain("console.error('Voice playback failed in AI Help popup:'");
+    expect(popupSource).toContain("console.error('Voice transcription failed in AI Help popup.'");
+    expect(popupSource).toContain("console.error('AI Help error:'");
+    expect(popupSource).toContain("console.error('AI Help popup explain-back error:'");
     expect(popupSource).not.toContain('{response.answer}');
     expect(popupSource).not.toContain("t('aiCoach.poweredBy'");
     expect(popupSource).not.toContain('Voice playback failed in AI coach popup:');
@@ -71,6 +75,10 @@ describe('AI help wording availability', () => {
     expect(screenSource).toContain('AI Help is here to help you think, not to do the work for you.');
     expect(screenSource).toContain('Voice capture is unavailable. Please sign in and complete voice setup to use AI Help by voice.');
     expect(screenSource).toContain('getUserFacingVoiceTranscriptionError');
+    expect(screenSource).toContain("console.error('AI Help error:'");
+    expect(screenSource).toContain("console.error('Microphone capture unavailable for AI Help screen:'");
+    expect(screenSource).toContain("console.error('Voice transcription failed in AI Help screen:'");
+    expect(screenSource).toContain("console.error('AI Help explain-back error:'");
     expect(screenSource).not.toContain('{response.message}');
     expect(screenSource).not.toContain('Ask AI Coach');
     expect(screenSource).not.toContain('AI Coach says:');
@@ -84,6 +92,7 @@ describe('AI help wording availability', () => {
 
     expect(dockSource).toContain('<AICoachPopup');
     expect(dockSource).toContain("t('common.userLabel')");
+    expect(dockSource).toContain("console.error('Failed to load linked roster for AI assistant dock.'");
     expect(dockSource).not.toContain('AI Coach');
     expect(dockSource).not.toContain('MiloOS');
     expect(dockSource).not.toContain('Voice API');

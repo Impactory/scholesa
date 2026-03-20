@@ -48,6 +48,10 @@ void main() {
           coachWidgetSource,
           contains(
               'runtimeLoop: Stay in the live spoken support loop and improve support for this specific learner over time.'));
+      expect(
+        coachWidgetSource,
+        contains('AI Help request failed, returning safe escalation: \$e'),
+      );
 
       expect(bosServiceSource, isNot(contains('Malformed AI coach payload.')));
       expect(bosModelsSource,
@@ -73,9 +77,15 @@ void main() {
           contains("AppStrings.of(context, 'assistant.tooltip')"));
       expect(overlaySource,
           contains("AppStrings.of(context, 'assistant.hoverHint')"));
+        expect(overlaySource, contains("event: 'assistant.open.failed'"));
+        expect(overlaySource, contains("'cta': 'global_ai_assistant_open'"));
+        expect(overlaySource, contains("'source': 'global_ai_assistant_open'"));
+        expect(overlaySource, contains("'cta': 'global_ai_assistant_close'"));
       expect(overlaySource, isNot(contains('AI Coach')));
       expect(overlaySource, isNot(contains('MiloOS')));
       expect(overlaySource, isNot(contains('Voice API')));
+        expect(coachWidgetSource,
+          isNot(contains('AI request failed, returning safe escalation:')));
     });
   });
 }
