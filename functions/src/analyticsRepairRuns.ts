@@ -10,7 +10,7 @@ export interface AnalyticsRepairRunRecord {
   title: string;
   subtitle: string;
   status: string;
-  updatedAt: string;
+  updatedAt: string | null;
   siteId: string | null;
   actorRole?: string | null;
   metadata: Record<string, string>;
@@ -25,7 +25,7 @@ interface AnalyticsRepairAuditEntry {
   details?: unknown;
 }
 
-function toIsoDate(value: unknown): string {
+function toIsoDate(value: unknown): string | null {
   if (value && typeof value === 'object' && 'toDate' in value && typeof (value as { toDate: () => Date }).toDate === 'function') {
     return (value as { toDate: () => Date }).toDate().toISOString();
   }
@@ -34,7 +34,7 @@ function toIsoDate(value: unknown): string {
     const parsed = Date.parse(value);
     if (!Number.isNaN(parsed)) return new Date(parsed).toISOString();
   }
-  return new Date().toISOString();
+  return null;
 }
 
 function joinAvailableParts(parts: Array<string | null | undefined>): string {

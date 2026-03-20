@@ -42,7 +42,7 @@ export interface WorkflowRecord {
   title: string;
   subtitle: string;
   status: string;
-  updatedAt: string;
+  updatedAt: string | null;
   siteId: string | null;
   collectionName: string;
   routePath: WorkflowPath;
@@ -94,7 +94,7 @@ export interface WorkflowMutationTarget {
   id: string;
 }
 
-function toIsoDate(value: unknown): string {
+function toIsoDate(value: unknown): string | null {
   if (value && typeof value === 'object' && 'toDate' in value && typeof (value as { toDate: () => Date }).toDate === 'function') {
     return (value as { toDate: () => Date }).toDate().toISOString();
   }
@@ -103,7 +103,13 @@ function toIsoDate(value: unknown): string {
     const asMs = Date.parse(value);
     if (!Number.isNaN(asMs)) return new Date(asMs).toISOString();
   }
-  return new Date().toISOString();
+  return null;
+}
+
+function sortableTimestamp(value: string | null): number {
+  if (!value) return Number.NEGATIVE_INFINITY;
+  const parsed = Date.parse(value);
+  return Number.isNaN(parsed) ? Number.NEGATIVE_INFINITY : parsed;
 }
 
 function asString(value: unknown, fallback: string): string {
@@ -458,7 +464,7 @@ async function loadPortfolioRecordsForLearners(params: {
     });
   }
 
-  return records.sort((left, right) => Date.parse(right.updatedAt) - Date.parse(left.updatedAt));
+  return records.sort((left, right) => sortableTimestamp(right.updatedAt) - sortableTimestamp(left.updatedAt));
 }
 
 async function loadParentSchedule(ctx: WorkflowContext): Promise<WorkflowRecord[]> {
@@ -511,11 +517,11 @@ async function loadParentSchedule(ctx: WorkflowContext): Promise<WorkflowRecord[
     });
   }
 
-  return records.sort((left, right) => Date.parse(left.updatedAt) - Date.parse(right.updatedAt));
+  return records.sort((left, right) => sortableTimestamp(left.updatedAt) - sortableTimestamp(right.updatedAt));
 }
 
 function sortWorkflowRecords(records: WorkflowRecord[]): WorkflowRecord[] {
-  return [...records].sort((left, right) => Date.parse(right.updatedAt) - Date.parse(left.updatedAt));
+  return [...records].sort((left, right) => sortableTimestamp(right.updatedAt) - sortableTimestamp(left.updatedAt));
 }
 
 async function loadParentDashboardBundlePayload(ctx: WorkflowContext): Promise<Record<string, unknown>> {

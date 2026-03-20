@@ -72,6 +72,12 @@ export function WorkflowRoutePage({ routePath }: WorkflowRoutePageProps) {
       .replace(/_/g, ' ')
       .replace(/\b\w/g, (match) => match.toUpperCase());
 
+  const formatUpdatedAt = (value: string | null) => {
+    if (!value) return 'Unavailable';
+    const parsed = Date.parse(value);
+    return Number.isNaN(parsed) ? 'Unavailable' : new Date(parsed).toLocaleString();
+  };
+
   const ctx = useMemo(() => {
     if (!user || !normalizedRole) return null;
     return {
@@ -421,7 +427,7 @@ export function WorkflowRoutePage({ routePath }: WorkflowRoutePageProps) {
                     <p className="text-sm text-app-muted">{record.subtitle}</p>
                     <div className="flex flex-wrap gap-3 text-xs text-app-muted">
                       <span>Status: {record.status}</span>
-                      <span>Updated: {new Date(record.updatedAt).toLocaleString()}</span>
+                      <span>Updated: {formatUpdatedAt(record.updatedAt)}</span>
                       {record.siteId ? <span>Site: {record.siteId}</span> : null}
                     </div>
                     {Object.keys(record.metadata).length > 0 ? (

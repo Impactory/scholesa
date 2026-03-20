@@ -88,4 +88,21 @@ describe('analyticsRepairRuns', () => {
     }));
     expect(result).not.toHaveProperty('actorRole');
   });
+
+  it('preserves missing createdAt as absent instead of inventing a fresh timestamp', () => {
+    const result = buildAnalyticsRepairRunRecord({
+      id: 'audit-4',
+      action: 'telemetry_aggregate.backfilled',
+      details: {
+        processed: 2,
+        updated: 1,
+      },
+    });
+
+    expect(result).toEqual(expect.objectContaining({
+      id: 'audit-4',
+      title: 'Telemetry aggregate backfill',
+      updatedAt: null,
+    }));
+  });
 });
