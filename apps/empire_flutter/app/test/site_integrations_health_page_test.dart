@@ -146,7 +146,7 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
-    await tester.tap(find.widgetWithText(OutlinedButton, 'Mark reviewed'));
+    await tester.tap(find.widgetWithText(TextButton, 'Mark reviewed'));
     await tester.pumpAndSettle();
 
     expect(
