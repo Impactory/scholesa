@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../services/telemetry_service.dart';
+import '../../services/firestore_service.dart';
 import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
@@ -26,11 +28,16 @@ class EducatorLearnerSupportsPage extends StatefulWidget {
 
 class _EducatorLearnerSupportsPageState
     extends State<EducatorLearnerSupportsPage> {
+  static const String _supportPlansCollection = 'learnerSupportPlans';
+
+  Map<String, _PersistedSupportPlan> _supportPlanOverrides =
+      <String, _PersistedSupportPlan>{};
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<EducatorService>().loadLearners();
+      _loadSupportPlansAndLearners();
     });
     TelemetryService.instance.logEvent(
       event: 'insight.viewed',
@@ -39,6 +46,53 @@ class _EducatorLearnerSupportsPageState
         'insight_type': 'support_overview',
       },
     );
+  }
+
+  Future<void> _loadSupportPlansAndLearners() async {
+    await context.read<EducatorService>().loadLearners();
+    await _loadPersistedSupportPlans();
+  }
+
+  String _activeSiteId() {
+    final String siteId = (context.read<AppState>().activeSiteId ?? '').trim();
+    return siteId;
+  }
+
+  Future<void> _loadPersistedSupportPlans() async {
+    final String siteId = _activeSiteId();
+    if (siteId.isEmpty || !mounted) {
+      return;
+    }
+
+    try {
+      final FirestoreService firestoreService = context.read<FirestoreService>();
+      final QuerySnapshot<Map<String, dynamic>> snapshot = await firestoreService
+          .firestore
+          .collection(_supportPlansCollection)
+          .where('siteId', isEqualTo: siteId)
+          .get();
+
+      final Map<String, _PersistedSupportPlan> nextOverrides =
+          <String, _PersistedSupportPlan>{};
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+          in snapshot.docs) {
+        final _PersistedSupportPlan? plan =
+            _PersistedSupportPlan.fromDocument(doc);
+        if (plan == null) {
+          continue;
+        }
+        nextOverrides[plan.learnerId] = plan;
+      }
+
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _supportPlanOverrides = nextOverrides;
+      });
+    } catch (error) {
+      debugPrint('Failed to load learner support plans: $error');
+    }
   }
 
   @override
@@ -487,7 +541,7 @@ class _EducatorLearnerSupportsPageState
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       TelemetryService.instance.logEvent(
                         event: 'cta.clicked',
                         metadata: <String, dynamic>{
@@ -497,27 +551,9 @@ class _EducatorLearnerSupportsPageState
                           'learner_id': support.learnerId,
                         },
                       );
-                      TelemetryService.instance.logEvent(
-                        event: 'support.applied',
-                        metadata: <String, dynamic>{
-                          'learner_id': support.learnerId,
-                          'support_type': support.supportType,
-                          'priority': support.priority.name,
-                          'action': 'edit_support_plan',
-                        },
-                      );
-                      TelemetryService.instance.logEvent(
-                        event: 'popup.completed',
-                        metadata: <String, dynamic>{
-                          'popup_id': 'support_details_sheet',
-                          'surface': 'educator_learner_supports',
-                          'completion_action': 'edit_support_plan',
-                          'learner_id': support.learnerId,
-                        },
-                      );
                       popupCompleted = true;
                       Navigator.pop(context);
-                      _showOutcomeDialog(support);
+                      await _showEditSupportPlanDialog(support);
                     },
                     child:
                         Text(_tEducatorLearnerSupports(context, 'Edit Plan')),
@@ -728,6 +764,251 @@ class _EducatorLearnerSupportsPageState
     );
   }
 
+  Future<void> _showEditSupportPlanDialog(_LearnerSupport support) async {
+    final TextEditingController accommodationsController =
+        TextEditingController(text: support.accommodations.join(', '));
+    final TextEditingController notesController =
+        TextEditingController(text: support.notes);
+    String selectedSupportType = support.supportType;
+    _Priority selectedPriority = support.priority;
+
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) => StatefulBuilder(
+        builder: (
+          BuildContext innerContext,
+          void Function(void Function()) setLocalState,
+        ) {
+          return AlertDialog(
+            title:
+                Text(_tEducatorLearnerSupports(context, 'Edit Support Plan')),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  DropdownButtonFormField<String>(
+                    initialValue: selectedSupportType,
+                    decoration: InputDecoration(
+                      labelText:
+                          _tEducatorLearnerSupports(context, 'Support Type'),
+                    ),
+                    items: const <String>[
+                      'Academic',
+                      'Social-Emotional',
+                      'Behavioral',
+                    ].map((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(_tEducatorLearnerSupports(context, value)),
+                      );
+                    }).toList(growable: false),
+                    onChanged: (String? value) {
+                      if (value == null) {
+                        return;
+                      }
+                      setLocalState(() {
+                        selectedSupportType = value;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<_Priority>(
+                    initialValue: selectedPriority,
+                    decoration: InputDecoration(
+                      labelText: _tEducatorLearnerSupports(context, 'Priority'),
+                    ),
+                    items: _Priority.values.map((_Priority value) {
+                      return DropdownMenuItem<_Priority>(
+                        value: value,
+                        child: Text(
+                          _tEducatorLearnerSupports(
+                            context,
+                            value.name[0].toUpperCase() + value.name.substring(1),
+                          ),
+                        ),
+                      );
+                    }).toList(growable: false),
+                    onChanged: (_Priority? value) {
+                      if (value == null) {
+                        return;
+                      }
+                      setLocalState(() {
+                        selectedPriority = value;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: accommodationsController,
+                    minLines: 2,
+                    maxLines: 3,
+                    decoration: InputDecoration(
+                      labelText: _tEducatorLearnerSupports(
+                        context,
+                        'Accommodations (comma separated)',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: notesController,
+                    minLines: 3,
+                    maxLines: 5,
+                    decoration: InputDecoration(
+                      labelText: _tEducatorLearnerSupports(context, 'Notes'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: Text(_tEducatorLearnerSupports(context, 'Cancel')),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  final List<String> accommodations = accommodationsController
+                      .text
+                      .split(',')
+                      .map((String value) => value.trim())
+                      .where((String value) => value.isNotEmpty)
+                      .toList(growable: false);
+                  final String notes = notesController.text.trim();
+
+                  final _LearnerSupport updatedSupport = support.copyWith(
+                    supportType: selectedSupportType,
+                    accommodations: accommodations,
+                    notes: notes,
+                    priority: selectedPriority,
+                    lastUpdated: DateTime.now(),
+                  );
+
+                  final bool saved = await _saveSupportPlan(updatedSupport);
+                  if (!saved) {
+                    return;
+                  }
+
+                  if (!dialogContext.mounted) {
+                    return;
+                  }
+                  Navigator.pop(dialogContext);
+                  if (!mounted) {
+                    return;
+                  }
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        _tEducatorLearnerSupports(
+                          context,
+                          'Support plan updated.',
+                        ),
+                      ),
+                    ),
+                  );
+                  await _showOutcomeDialog(updatedSupport);
+                },
+                child: Text(_tEducatorLearnerSupports(context, 'Save')),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Future<bool> _saveSupportPlan(_LearnerSupport support) async {
+    final String siteId = _activeSiteId();
+    if (siteId.isEmpty) {
+      if (!mounted) {
+        return false;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tEducatorLearnerSupports(
+              context,
+              'Unable to update support plan right now.',
+            ),
+          ),
+        ),
+      );
+      return false;
+    }
+
+    try {
+      final FirestoreService firestoreService = context.read<FirestoreService>();
+      final AppState appState = context.read<AppState>();
+      final _PersistedSupportPlan? existing =
+          _supportPlanOverrides[support.learnerId];
+      final Map<String, dynamic> payload = <String, dynamic>{
+        'siteId': siteId,
+        'learnerId': support.learnerId,
+        'learnerName': support.learnerName,
+        'supportType': support.supportType,
+        'priority': support.priority.name,
+        'accommodations': support.accommodations,
+        'notes': support.notes,
+        'lastUpdated': Timestamp.fromDate(support.lastUpdated),
+        'updatedBy': (appState.userId ?? '').trim(),
+        'updatedByName': (appState.displayName ?? '').trim(),
+      };
+
+      String documentId = existing?.documentId ?? '';
+      if (documentId.isEmpty) {
+        documentId = await firestoreService.createDocument(
+          _supportPlansCollection,
+          payload,
+        );
+      } else {
+        await firestoreService.updateDocument(
+          _supportPlansCollection,
+          documentId,
+          payload,
+        );
+      }
+
+      setState(() {
+        _supportPlanOverrides[support.learnerId] = _PersistedSupportPlan(
+          documentId: documentId,
+          learnerId: support.learnerId,
+          supportType: support.supportType,
+          accommodations: support.accommodations,
+          notes: support.notes,
+          priority: support.priority,
+          lastUpdated: support.lastUpdated,
+        );
+      });
+
+      TelemetryService.instance.logEvent(
+        event: 'support.plan_updated',
+        metadata: <String, dynamic>{
+          'learner_id': support.learnerId,
+          'support_type': support.supportType,
+          'priority': support.priority.name,
+          'accommodation_count': support.accommodations.length,
+        },
+      );
+      return true;
+    } catch (error) {
+      debugPrint('Failed to update support plan: $error');
+      if (!mounted) {
+        return false;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tEducatorLearnerSupports(
+              context,
+              'Unable to update support plan right now.',
+            ),
+          ),
+        ),
+      );
+      return false;
+    }
+  }
+
   List<_LearnerSupport> _supportsFromService(EducatorService service) {
     final List<EducatorLearner> learners = service.learners;
     final List<_LearnerSupport> supports = <_LearnerSupport>[];
@@ -737,7 +1018,8 @@ class _EducatorLearnerSupportsPageState
       final _Priority priority = _priorityForLearner(learner);
       final String supportType = _supportTypeForIndex(index);
       supports.add(
-        _LearnerSupport(
+        _mergeSupportPlan(
+          _LearnerSupport(
           learnerId: learner.id,
           learnerName: learner.name,
           avatarUrl: learner.photoUrl,
@@ -747,11 +1029,27 @@ class _EducatorLearnerSupportsPageState
           lastUpdated:
               DateTime.now().subtract(Duration(days: (index % 10) + 1)),
           priority: priority,
+          ),
         ),
       );
     }
 
     return supports;
+  }
+
+  _LearnerSupport _mergeSupportPlan(_LearnerSupport baseSupport) {
+    final _PersistedSupportPlan? override =
+        _supportPlanOverrides[baseSupport.learnerId];
+    if (override == null) {
+      return baseSupport;
+    }
+    return baseSupport.copyWith(
+      supportType: override.supportType,
+      accommodations: override.accommodations,
+      notes: override.notes,
+      priority: override.priority,
+      lastUpdated: override.lastUpdated,
+    );
   }
 
   _Priority _priorityForLearner(EducatorLearner learner) {
@@ -820,4 +1118,84 @@ class _LearnerSupport {
   final String notes;
   final DateTime lastUpdated;
   final _Priority priority;
+
+  _LearnerSupport copyWith({
+    String? supportType,
+    List<String>? accommodations,
+    String? notes,
+    DateTime? lastUpdated,
+    _Priority? priority,
+  }) {
+    return _LearnerSupport(
+      learnerId: learnerId,
+      learnerName: learnerName,
+      avatarUrl: avatarUrl,
+      supportType: supportType ?? this.supportType,
+      accommodations: accommodations ?? this.accommodations,
+      notes: notes ?? this.notes,
+      lastUpdated: lastUpdated ?? this.lastUpdated,
+      priority: priority ?? this.priority,
+    );
+  }
+}
+
+class _PersistedSupportPlan {
+  const _PersistedSupportPlan({
+    required this.documentId,
+    required this.learnerId,
+    required this.supportType,
+    required this.accommodations,
+    required this.notes,
+    required this.priority,
+    required this.lastUpdated,
+  });
+
+  final String documentId;
+  final String learnerId;
+  final String supportType;
+  final List<String> accommodations;
+  final String notes;
+  final _Priority priority;
+  final DateTime lastUpdated;
+
+  static _PersistedSupportPlan? fromDocument(
+    QueryDocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    final Map<String, dynamic> data = doc.data();
+    final String learnerId = (data['learnerId'] as String? ?? '').trim();
+    if (learnerId.isEmpty) {
+      return null;
+    }
+    final String supportType =
+        (data['supportType'] as String? ?? 'Academic').trim();
+    final List<String> accommodations =
+        (data['accommodations'] as List<dynamic>? ?? <dynamic>[])
+            .whereType<String>()
+            .map((String value) => value.trim())
+            .where((String value) => value.isNotEmpty)
+            .toList(growable: false);
+    final String notes = (data['notes'] as String? ?? '').trim();
+    final String priorityName = (data['priority'] as String? ?? 'medium').trim();
+    final Timestamp? lastUpdatedTimestamp = data['lastUpdated'] as Timestamp?;
+    return _PersistedSupportPlan(
+      documentId: doc.id,
+      learnerId: learnerId,
+      supportType: supportType.isEmpty ? 'Academic' : supportType,
+      accommodations: accommodations,
+      notes: notes,
+      priority: _priorityFromName(priorityName),
+      lastUpdated: lastUpdatedTimestamp?.toDate() ?? DateTime.now(),
+    );
+  }
+
+  static _Priority _priorityFromName(String value) {
+    switch (value) {
+      case 'high':
+        return _Priority.high;
+      case 'low':
+        return _Priority.low;
+      default:
+        return _Priority.medium;
+    }
+  }
 }
