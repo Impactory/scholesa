@@ -126,9 +126,9 @@ export function LearnerDashboard() {
           <p className="text-sm text-gray-500 mt-2">{progressPct}% Complete</p>
         </Card>
         <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-2">AI Coach</h2>
-          <p className="text-gray-600">AI coach guidance appears here when a real coaching response is available.</p>
-          <p className="mt-2 text-sm text-amber-700">No live coach response is attached to this dashboard card yet.</p>
+          <h2 className="text-xl font-semibold mb-2">AI Help</h2>
+          <p className="text-gray-600">AI help appears here when a real support response is available.</p>
+          <p className="mt-2 text-sm text-amber-700">No live help response is attached to this dashboard card yet.</p>
         </Card>
       </div>
 

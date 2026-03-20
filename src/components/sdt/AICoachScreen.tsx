@@ -133,7 +133,7 @@ export function AICoachScreen({
     <div className="max-w-3xl mx-auto space-y-6">
       {/* Header */}
       <div className="bg-gradient-to-r from-purple-500 to-indigo-600 rounded-lg p-6 text-white">
-        <h1 className="text-2xl font-bold mb-2">AI Coach</h1>
+        <h1 className="text-2xl font-bold mb-2">AI Help</h1>
         <p className="text-purple-100">
           Get help when you're stuck - but remember, you still need to understand and explain it!
         </p>
@@ -246,7 +246,7 @@ export function AICoachScreen({
               ) : (
                 <>
                   <SendIcon className="w-5 h-5" />
-                  <span>Ask AI Coach</span>
+                  <span>Ask AI Help</span>
                 </>
               )}
             </button>
@@ -267,7 +267,7 @@ export function AICoachScreen({
               <LightbulbIcon className="w-5 h-5 text-purple-600" />
             </div>
             <div className="flex-1">
-              <p className="font-medium text-gray-900 mb-2">AI Coach says:</p>
+              <p className="font-medium text-gray-900 mb-2">AI Help says:</p>
               <p className="text-gray-700 whitespace-pre-wrap">{response.message}</p>
             </div>
           </div>
@@ -339,7 +339,7 @@ export function AICoachScreen({
       <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-600">
         <p className="font-medium text-gray-700 mb-1">💡 Pro tip:</p>
         <p>
-          The AI Coach is here to help you think, not to do the work for you. 
+          AI Help is here to help you think, not to do the work for you. 
           The best learning happens when you struggle a bit and figure things out!
         </p>
       </div>
