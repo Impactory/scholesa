@@ -9,6 +9,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
 import 'package:scholesa_app/auth/app_state.dart';
+import 'package:scholesa_app/modules/messages/message_models.dart';
 import 'package:scholesa_app/modules/messages/message_service.dart';
 import 'package:scholesa_app/modules/messages/messages_page.dart';
 import 'package:scholesa_app/modules/messages/notifications_page.dart';
@@ -17,6 +18,75 @@ import 'package:scholesa_app/services/firestore_service.dart';
 import 'package:scholesa_app/ui/theme/scholesa_theme.dart';
 
 class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
+
+class _NotificationsLoadSnapshot {
+  const _NotificationsLoadSnapshot({
+    this.notifications = const <Message>[],
+    this.error,
+  });
+
+  final List<Message> notifications;
+  final String? error;
+}
+
+class _SequencedNotificationsMessageService extends MessageService {
+  _SequencedNotificationsMessageService({
+    required List<_NotificationsLoadSnapshot> snapshots,
+  })  : _snapshots = snapshots,
+        super(
+          firestoreService: FirestoreService(
+            firestore: FakeFirebaseFirestore(),
+            auth: _MockFirebaseAuth(),
+          ),
+          userId: 'user-1',
+        );
+
+  final List<_NotificationsLoadSnapshot> _snapshots;
+  List<Message> _notifications = <Message>[];
+  bool _isLoading = false;
+  String? _error;
+  int _loadCalls = 0;
+
+  _NotificationsLoadSnapshot _snapshotFor(int index) {
+    if (_snapshots.isEmpty) {
+      return const _NotificationsLoadSnapshot();
+    }
+    final int resolvedIndex =
+        index < _snapshots.length ? index : _snapshots.length - 1;
+    return _snapshots[resolvedIndex];
+  }
+
+  @override
+  List<Message> get notificationMessages =>
+      List<Message>.unmodifiable(_notifications);
+
+  @override
+  bool get isLoading => _isLoading;
+
+  @override
+  String? get error => _error;
+
+  @override
+  int get unreadNotificationCount =>
+      _notifications.where((Message message) => !message.isRead).length;
+
+  @override
+  Future<void> loadMessages() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    final _NotificationsLoadSnapshot snapshot = _snapshotFor(_loadCalls++);
+    if (snapshot.error == null) {
+      _notifications = List<Message>.from(snapshot.notifications);
+    } else {
+      _error = snapshot.error;
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+}
 
 Widget _buildHarness({
   required MessageService messageService,
@@ -119,6 +189,25 @@ Future<void> _seedMessages(FakeFirebaseFirestore firestore) async {
       'lastMessageSenderId': 'educator-2',
       'updatedAt': now,
     },
+  );
+}
+
+Message _notificationFixture({
+  required String id,
+  required String title,
+  bool isRead = false,
+}) {
+  return Message(
+    id: id,
+    title: title,
+    body: 'Bring your prototype notes to class.',
+    type: MessageType.reminder,
+    priority: MessagePriority.high,
+    senderId: 'educator-1',
+    senderName: 'Educator One',
+    recipientId: 'user-1',
+    createdAt: DateTime(2026, 3, 18, 10),
+    isRead: isRead,
   );
 }
 
@@ -299,5 +388,79 @@ void main() {
 
     expect(find.text('Mission reminder'), findsNothing);
     expect(find.text('Notification dismissed'), findsOneWidget);
+  });
+
+  testWidgets(
+      'notifications page shows an explicit unavailable state instead of a fake empty inbox',
+      (WidgetTester tester) async {
+    final _SequencedNotificationsMessageService messageService =
+        _SequencedNotificationsMessageService(
+      snapshots: const <_NotificationsLoadSnapshot>[
+        _NotificationsLoadSnapshot(error: 'notifications backend unavailable'),
+      ],
+    );
+
+    await tester.pumpWidget(
+      _buildHarness(
+        messageService: messageService,
+        home: const NotificationsPage(),
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Notifications are temporarily unavailable'),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'We could not load notifications. Retry to check the current state.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('No notifications'), findsNothing);
+    expect(find.text('You\'re all caught up!'), findsNothing);
+  });
+
+  testWidgets(
+      'notifications page keeps stale notifications visible when a refresh fails',
+      (WidgetTester tester) async {
+    final _SequencedNotificationsMessageService messageService =
+        _SequencedNotificationsMessageService(
+      snapshots: <_NotificationsLoadSnapshot>[
+        _NotificationsLoadSnapshot(
+          notifications: <Message>[
+            _notificationFixture(id: 'note-1', title: 'Mission reminder'),
+          ],
+        ),
+        const _NotificationsLoadSnapshot(
+          error: 'notifications refresh unavailable',
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      _buildHarness(
+        messageService: messageService,
+        home: const NotificationsPage(),
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Mission reminder'), findsOneWidget);
+
+    await messageService.loadMessages();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Mission reminder'), findsOneWidget);
+    expect(
+      find.text(
+        'Unable to refresh notifications right now. Showing the last successful data.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('No notifications'), findsNothing);
   });
 }

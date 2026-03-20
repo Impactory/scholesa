@@ -532,6 +532,12 @@ class WorkflowSurfaceI18n {
     'Notifications': '通知',
     'Mark all read': '全部标记为已读',
     'No notifications': '暂无通知',
+    'You\'re all caught up!': '你已全部查看完毕！',
+    'Notifications are temporarily unavailable': '通知暂时不可用',
+    'We could not load notifications. Retry to check the current state.':
+        '我们暂时无法加载通知。请重试以检查当前状态。',
+    'Unable to refresh notifications right now. Showing the last successful data.':
+        '目前无法刷新通知。正在显示最近一次成功加载的数据。',
     'My Missions': '我的任务',
     'Completed': '已完成',
     'Available': '可用',
@@ -1133,6 +1139,14 @@ class WorkflowSurfaceI18n {
     'Integrations Health': '整合健康狀態',
     'Habit Coach': '習慣教練',
     'Notifications': '通知',
+    'Mark all read': '全部標記為已讀',
+    'No notifications': '暫無通知',
+    'You\'re all caught up!': '你已全部查看完畢！',
+    'Notifications are temporarily unavailable': '通知暫時不可用',
+    'We could not load notifications. Retry to check the current state.':
+        '我們暫時無法載入通知。請重試以檢查目前狀態。',
+    'Unable to refresh notifications right now. Showing the last successful data.':
+        '目前無法重新整理通知。正在顯示最近一次成功載入的資料。',
     'My Missions': '我的任務',
     'Completed': '已完成',
     'Available': '可用',
