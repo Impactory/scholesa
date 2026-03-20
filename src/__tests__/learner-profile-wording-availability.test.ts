@@ -43,8 +43,11 @@ describe('learner profile wording availability', () => {
     expect(simplifiedChineseLocale.motivation.evidenceCollected).toBe('已收集 {{count}} 条证据');
     expect(simplifiedChineseLocale.role.learner.skillsMastered).toBe('已有证据的技能');
     expect(simplifiedChineseLocale.analytics.student.sdt.competence.subtitle).toBe('我正在发展的技能');
+    expect(simplifiedChineseLocale.goalForm.title).toBe('设定学习目标');
+    expect(simplifiedChineseLocale.aiInsights.panelTitle).toBe('AI 建议');
     expect(simplifiedChineseLocale.aiInsights.lowCompetence.title).toBe('需要更多技能发展支持');
     expect(simplifiedChineseLocale.aiInsights.lowCompetence.actions.smallWins).toBe('用徽章庆祝成长');
+    expect(simplifiedChineseLocale.aiInsights.sdtImbalance.actions.competence.badges).toBe('用徽章庆祝成长');
 
     expect(traditionalChineseLocale.motivation.headerTitle).toBe('我的學習旅程');
     expect(traditionalChineseLocale.motivation.sdt.competence.title).toBe('技能');
@@ -53,8 +56,11 @@ describe('learner profile wording availability', () => {
     expect(traditionalChineseLocale.motivation.evidenceCollected).toBe('已收集 {{count}} 項證據');
     expect(traditionalChineseLocale.role.learner.skillsMastered).toBe('已有證據的技能');
     expect(traditionalChineseLocale.analytics.student.sdt.competence.subtitle).toBe('我正在發展的技能');
+    expect(traditionalChineseLocale.goalForm.title).toBe('設定學習目標');
+    expect(traditionalChineseLocale.aiInsights.panelTitle).toBe('AI 建議');
     expect(traditionalChineseLocale.aiInsights.lowCompetence.title).toBe('需要更多技能發展支持');
     expect(traditionalChineseLocale.aiInsights.lowCompetence.actions.smallWins).toBe('用徽章慶祝成長');
+    expect(traditionalChineseLocale.aiInsights.sdtImbalance.actions.competence.badges).toBe('用徽章慶祝成長');
 
     expect(thaiLocale.role.learner.skillsMastered).toBe('ทักษะที่มีหลักฐานแล้ว');
     expect(thaiLocale.analytics.student.sdt.competence.subtitle).toBe('ทักษะที่ฉันกำลังพัฒนา');

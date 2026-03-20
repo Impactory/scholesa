@@ -299,39 +299,39 @@
         }
       },
       "stats": {
-        "goalsSet": "Goals Set",
-        "goalsAchieved": "Goals Achieved",
-        "checkpointsPassed": "Checkpoints Passed",
-        "badgesEarned": "Badges Earned",
-        "recognition": "Recognition",
-        "currentStreak": "Current Streak"
+        "goalsSet": "已設定目標",
+        "goalsAchieved": "達成目標",
+        "checkpointsPassed": "已通過檢查點",
+        "badgesEarned": "已獲得徽章",
+        "recognition": "收到肯定",
+        "currentStreak": "最近連續學習"
       },
-      "currentStreakValue": "{{count}} days",
-      "activityTitle": "My Learning Activity",
-      "activityEmpty": "Start learning to see your activity!",
-      "totalActivity": "Total Activity",
-      "keepGoingTitle": "Keep Going!",
+      "currentStreakValue": "{{count}} 天",
+      "activityTitle": "我的學習動態",
+      "activityEmpty": "開始學習後，這裡會顯示你的學習動態",
+      "totalActivity": "全部動態",
+      "keepGoingTitle": "繼續加油！",
       "motivation": {
-        "veryHigh": "You are doing amazing! Your dedication is inspiring. Keep up the excellent work!",
-        "high": "Great progress! You are building momentum. Try setting a new goal to keep growing.",
-        "medium": "You are on the right path! Consider completing more missions to boost your skills.",
-        "low": "Every journey starts somewhere! Set a small goal and take one step at a time. You can do this!"
+        "veryHigh": "你做得非常棒！你的投入很令人佩服，繼續保持下去。",
+        "high": "進步很明顯！你正在建立穩定節奏，試著設定一個新目標繼續成長。",
+        "medium": "你正走在正確的路上！可以再完成一些任務，繼續發展你的技能。",
+        "low": "每段旅程都從第一步開始！先設一個小目標，一步一步來。你做得到。"
       }
     }
   },
   "goalForm": {
-    "title": "Set a Learning Goal",
-    "subtitle": "What do you want to achieve? Setting goals helps you stay motivated and track your progress.",
-    "goalLabel": "My Goal",
-    "goalPlaceholder": "Example: Master Python loops and conditionals",
-    "targetDateLabel": "Target Date",
-    "characters": "{{count}}/200 characters",
-    "setting": "Setting Goal...",
-    "submit": "Set Goal",
+    "title": "設定學習目標",
+    "subtitle": "你想達成什麼？設定目標能幫助你保持動力並追蹤自己的進展。",
+    "goalLabel": "我的目標",
+    "goalPlaceholder": "例如：更熟練地使用 Python 的迴圈和條件判斷",
+    "targetDateLabel": "目標日期",
+    "characters": "{{count}}/200 個字元",
+    "setting": "正在設定目標...",
+    "submit": "設定目標",
     "error": {
-      "descriptionRequired": "Please describe your goal",
-      "dateRequired": "Please select a target date",
-      "saveFailed": "Failed to save goal. Please try again."
+      "descriptionRequired": "請描述你的目標",
+      "dateRequired": "請選擇目標日期",
+      "saveFailed": "儲存目標失敗，請再試一次。"
     }
   },
   "motivation": {
@@ -383,113 +383,113 @@
     "goalTargetDate": "目標日期：{{date}}"
   },
   "aiInsights": {
-    "panelTitle": "AI Insights",
-    "countLabel": "{{count}} insights",
-    "empty": "No insights available yet. Check back after students engage more with the platform.",
-    "showLess": "Show less",
-    "showDetails": "Show details",
-    "affectedLearners": "Affected Learners:",
-    "recommendedActions": "Recommended Actions:",
+    "panelTitle": "AI 建議",
+    "countLabel": "{{count}} 則建議",
+    "empty": "目前還沒有建議。等學生在平台上有更多學習活動後再回來查看。",
+    "showLess": "收起",
+    "showDetails": "查看詳情",
+    "affectedLearners": "受影響的學習者：",
+    "recommendedActions": "建議行動：",
     "priority": {
-      "high": "High",
-      "medium": "Medium",
-      "low": "Low"
+      "high": "高",
+      "medium": "中",
+      "low": "低"
     },
     "dimension": {
-      "autonomy": "Autonomy",
-      "competence": "Competence",
-      "belonging": "Belonging"
+      "autonomy": "自主性",
+      "competence": "技能",
+      "belonging": "歸屬感"
     },
     "atRisk": {
-      "title": "{{count}} learners at risk",
-      "description": "These learners show very low engagement and may need immediate attention.",
+      "title": "有 {{count}} 名學習者需要重點關注",
+      "description": "這些學習者的參與度很低，可能需要盡快關心。",
       "actions": {
-        "checkIn": "Schedule one-on-one check-ins",
-        "reviewHistory": "Review mission history for blockers",
-        "adjustPath": "Adjust learning path to match interests"
+        "checkIn": "安排一對一關心",
+        "reviewHistory": "查看任務紀錄，找出卡點",
+        "adjustPath": "調整學習路徑，讓內容更貼近興趣"
       }
     },
     "lowAutonomy": {
-      "title": "Learners Need More Choice",
-      "description": "{{count}} learners show low autonomy scores.",
+      "title": "學習者需要更多選擇權",
+      "description": "有 {{count}} 名學習者在自主性方面得分較低。",
       "actions": {
-        "choiceBoards": "Offer mission choice boards",
-        "goalSetting": "Encourage goal-setting activities",
-        "projectOptions": "Provide interest-based project options"
+        "choiceBoards": "提供更多可選擇的任務方案",
+        "goalSetting": "鼓勵學習者自己設定目標",
+        "projectOptions": "提供以興趣為主的專題選項"
       }
     },
     "lowCompetence": {
       "title": "需要更多技能發展支持",
-      "description": "{{count}} learners need more skill-building opportunities.",
+      "description": "有 {{count}} 名學習者需要更多發展技能的機會。",
       "actions": {
-        "scaffoldedPractice": "Provide scaffolded practice activities",
+        "scaffoldedPractice": "提供有支架的練習活動",
         "smallWins": "用徽章慶祝成長",
-        "peerMentoring": "Offer peer mentoring opportunities"
+        "peerMentoring": "提供同儕輔導機會"
       }
     },
     "lowBelonging": {
-      "title": "Community Connection Needed",
-      "description": "{{count}} learners show low belonging scores.",
+      "title": "需要加強學習共同體連結",
+      "description": "有 {{count}} 名學習者在歸屬感方面得分較低。",
       "actions": {
-        "peerCollaboration": "Facilitate peer collaboration activities",
-        "showcase": "Encourage showcase submissions",
-        "recognition": "Create recognition opportunities"
+        "peerCollaboration": "安排更多同儕合作活動",
+        "showcase": "鼓勵提交展示作品",
+        "recognition": "創造彼此肯定的機會"
       }
     },
     "thriving": {
-      "title": "{{count}} learners thriving",
-      "description": "These learners show exceptional engagement across SDT dimensions.",
+      "title": "有 {{count}} 名學習者發展良好",
+      "description": "這些學習者在多個學習維度上都展現出很高的參與度。",
       "actions": {
-        "advancedChallenges": "Offer advanced challenges",
-        "mentorPeers": "Invite them to mentor peers",
-        "showcaseWork": "Showcase their work as examples"
+        "advancedChallenges": "提供更高階的挑戰",
+        "mentorPeers": "邀請他們協助同儕成長",
+        "showcaseWork": "把他們的作品展示出來作為範例"
       }
     },
     "classLow": {
-      "title": "Class Engagement Below Target",
-      "description": "Average class engagement is {{score}}%. Consider adjusting pacing.",
+      "title": "班級整體參與度低於目標",
+      "description": "班級平均參與度為 {{score}}%，可以考慮調整學習節奏。",
       "actions": {
-        "survey": "Survey learners about interests and challenges",
-        "variety": "Introduce more variety in mission types",
-        "choice": "Increase opportunities for student choice"
+        "survey": "了解學習者的興趣與困難",
+        "variety": "增加任務類型的多樣性",
+        "choice": "給學習者更多自主選擇的機會"
       }
     },
     "classHigh": {
-      "title": "Strong Class Engagement",
-      "description": "Class is highly engaged ({{score}}%). Keep up the strong work.",
+      "title": "班級整體參與度良好",
+      "description": "班級整體參與度很高（{{score}}%），請繼續保持這套有效做法。",
       "actions": {
-        "document": "Document successful strategies",
-        "share": "Share best practices with other educators",
-        "continue": "Continue the current approach"
+        "document": "記錄有效做法",
+        "share": "與其他老師分享經驗",
+        "continue": "繼續保持目前做法"
       }
     },
     "inactive": {
-      "title": "{{count}} inactive students",
-      "description": "These students have not logged in for over a week.",
+      "title": "有 {{count}} 名學習者暫未活躍",
+      "description": "這些學習者已經超過一週沒有登入。",
       "actions": {
-        "reengage": "Send re-engagement message",
-        "contactParents": "Contact parents or guardians",
-        "investigateBarriers": "Investigate potential access barriers"
+        "reengage": "發送重新參與的提醒",
+        "contactParents": "聯繫家長或監護人",
+        "investigateBarriers": "了解是否存在使用障礙"
       }
     },
     "sdtImbalance": {
-      "title": "{{dimension}} dimension needs attention",
-      "description": "Class shows stronger {{strong}} than {{weak}}.",
+      "title": "{{dimension}} 維度需要更多關注",
+      "description": "班級在 {{strong}} 方面強於 {{weak}}。",
       "actions": {
         "autonomy": {
-          "choice": "Increase student choice in missions",
-          "goals": "Allow learners to set personal goals",
-          "selfPaced": "Offer self-paced learning paths"
+          "choice": "在任務中增加學習者的選擇空間",
+          "goals": "允許學習者設定個人目標",
+          "selfPaced": "提供可依自己節奏推進的學習路徑"
         },
         "competence": {
-          "checkpoints": "Provide more skill-building checkpoints",
-          "badges": "Celebrate mastery with badges",
-          "challenges": "Offer progressive challenges"
+          "checkpoints": "增加幫助建立技能的檢查點",
+          "badges": "用徽章慶祝成長",
+          "challenges": "提供循序漸進的挑戰"
         },
         "belonging": {
-          "collaboration": "Increase peer collaboration opportunities",
-          "showcase": "Encourage showcase submissions",
-          "recognition": "Facilitate peer recognition activities"
+          "collaboration": "增加同儕合作機會",
+          "showcase": "鼓勵提交展示作品",
+          "recognition": "促進同儕之間的肯定"
         }
       }
     }
