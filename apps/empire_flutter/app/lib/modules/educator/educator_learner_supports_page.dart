@@ -84,7 +84,7 @@ class _EducatorLearnerSupportsPageState
             padding: const EdgeInsets.all(16),
             children: <Widget>[
               AiContextCoachSection(
-                title: _tEducatorLearnerSupports(context, 'MiloOS Support Help'),
+                title: _tEducatorLearnerSupports(context, 'Support AI Help'),
                 subtitle: _tEducatorLearnerSupports(
                   context,
                   'See support ideas for each learner support plan',

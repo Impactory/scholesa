@@ -255,7 +255,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
     if (_bosMiaFeedbackSummary != null) {
       final _BosMiaFeedbackSummary feedback = _bosMiaFeedbackSummary!;
       buffer
-        ..writeln('MiloOS feedback')
+        ..writeln('AI help feedback')
         ..writeln('------------------')
         ..writeln('Submissions: ${feedback.submissionCount}')
         ..writeln('Average overall: ${feedback.avgOverall.toStringAsFixed(1)}')
@@ -1019,7 +1019,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      _t('Synthetic MiloOS training'),
+                      _t('Synthetic AI help training'),
                       style: const TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 14,
@@ -1127,7 +1127,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(
-                _t('HQ MiloOS feedback'),
+                _t('HQ AI help feedback'),
                 style:
                     const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
@@ -1160,7 +1160,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              _t('HQ MiloOS feedback'),
+              _t('HQ AI help feedback'),
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 4),
@@ -1492,7 +1492,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
           builder: (BuildContext context,
               void Function(void Function()) setDialogState) {
             return AlertDialog(
-              title: Text(_t('MiloOS feedback')),
+              title: Text(_t('AI help feedback')),
               content: SizedBox(
                 width: 420,
                 child: SingleChildScrollView(
@@ -1501,7 +1501,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
                       Text(
-                        _t('Rate real-world MiloOS usefulness'),
+                        _t('Rate real-world AI help usefulness'),
                         style: TextStyle(color: Colors.grey[700]),
                       ),
                       const SizedBox(height: 16),

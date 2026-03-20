@@ -189,7 +189,7 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
             children: <Widget>[
               AiContextCoachSection(
                 title: _tEducatorMissionPlans(
-                    context, 'MiloOS Mission Planning Help'),
+                    context, 'Mission Planning AI Help'),
                 subtitle: _tEducatorMissionPlans(
                   context,
                   'See support ideas while designing missions for each learner',

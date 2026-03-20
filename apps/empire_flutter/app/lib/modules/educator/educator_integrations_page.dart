@@ -69,7 +69,7 @@ class _EducatorIntegrationsPageState extends State<EducatorIntegrationsPage> {
             padding: const EdgeInsets.all(16),
             children: <Widget>[
               AiContextCoachSection(
-                title: _tEducatorIntegrations(context, 'MiloOS Integrations Help'),
+                title: _tEducatorIntegrations(context, 'Integrations AI Help'),
                 subtitle: _tEducatorIntegrations(
                   context,
                   'See support ideas while syncing learner systems',
