@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nested/nested.dart';
@@ -152,5 +153,70 @@ void main() {
     expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Unable to load audit logs right now'), findsOneWidget);
     expect(find.text('Retry'), findsOneWidget);
+  });
+
+  testWidgets('site audit copies export when file export is unsupported',
+      (WidgetTester tester) async {
+    String? copiedText;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (MethodCall methodCall) async {
+        if (methodCall.method == 'Clipboard.setData') {
+          final Object? args = methodCall.arguments;
+          if (args is Map) {
+            copiedText = args['text'] as String?;
+          }
+        }
+        return null;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null);
+    });
+
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await firestore.collection('auditLogs').doc('audit-1').set(
+      <String, dynamic>{
+        'actorId': 'site-admin-1',
+        'actorRole': 'site',
+        'action': 'pickup_authorization.saved',
+        'entityType': 'pickupAuthorization',
+        'entityId': 'pickup-1',
+        'siteId': 'site-1',
+        'details': <String, dynamic>{
+          'learnerId': 'learner-1',
+          'pickupCount': 2,
+        },
+        'createdAt': Timestamp.fromDate(DateTime(2026, 3, 18, 9, 30)),
+      },
+    );
+
+    ExportService.instance.debugSaveTextFile = ({
+      required String fileName,
+      required String content,
+      required String mimeType,
+    }) async {
+      throw UnsupportedError('File export is not supported on this platform.');
+    };
+
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      _buildHarness(
+        appState: _buildSiteState(),
+        child: SiteAuditPage(
+          auditLogLoader: AuditLogRepository(firestore: firestore).listBySite,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Export Audit Log'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Audit export copied for sharing.'), findsOneWidget);
+    expect(copiedText, contains('Site Audit Export'));
+    expect(copiedText, contains('pickup_authorization.saved'));
   });
 }

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../auth/app_state.dart';
@@ -382,10 +383,11 @@ class _SiteAuditPageState extends State<SiteAuditPage> {
     }
 
     final String fileName = _auditExportFileName();
+    final String exportContent = export.toString().trim();
     try {
       final String? savedLocation = await ExportService.instance.saveTextFile(
         fileName: fileName,
-        content: export.toString().trim(),
+        content: exportContent,
       );
       if (savedLocation == null || !mounted) {
         return;
@@ -404,6 +406,31 @@ class _SiteAuditPageState extends State<SiteAuditPage> {
         SnackBar(
           content: Text(
             _tSiteAudit(context, 'Audit export downloaded.'),
+          ),
+        ),
+      );
+    } on UnsupportedError catch (error) {
+      debugPrint(
+          'Export unsupported for site audit export, copying content instead: $error');
+      await Clipboard.setData(ClipboardData(text: exportContent));
+      TelemetryService.instance.logEvent(
+        event: 'site.audit_export.copied',
+        role: 'site',
+        siteId: _siteId,
+        metadata: <String, dynamic>{
+          'module': 'site_audit',
+          'file_name': fileName,
+          'entry_count': _auditLogs.length,
+          'fallback': 'clipboard',
+        },
+      );
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tSiteAudit(context, 'Audit export copied for sharing.'),
           ),
         ),
       );

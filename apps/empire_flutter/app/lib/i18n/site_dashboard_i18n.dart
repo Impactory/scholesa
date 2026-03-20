@@ -65,6 +65,7 @@ class SiteDashboardI18n {
     'Unable to export site report right now.': '目前无法导出站点报告。',
     'Site report exported': '站点报告已导出',
     'Site report exported.': '站点报告已导出。',
+    'Site report copied for sharing.': '站点报告已复制，可直接分享。',
     'Generate a': '生成一个',
     'summary report for this site dashboard.': '用于此站点仪表板的摘要报告。',
     'Site report exports are not generated in the app yet. Requests are recorded for follow-up.':
@@ -73,6 +74,7 @@ class SiteDashboardI18n {
     'Report export requested': '已请求导出报告',
     'report export request logged': '报告导出请求已记录',
     'report export downloaded': '报告导出已下载',
+    'report export copied': '报告导出已复制',
     'just now': '刚刚',
     'report export request recorded': '报告导出请求已记录',
     'Generate': '生成',
@@ -144,6 +146,7 @@ class SiteDashboardI18n {
     'Unable to export site report right now.': '目前無法匯出站點報告。',
     'Site report exported': '站點報告已匯出',
     'Site report exported.': '站點報告已匯出。',
+    'Site report copied for sharing.': '站點報告已複製，可直接分享。',
     'Generate a': '產生一份',
     'summary report for this site dashboard.': '供此站點儀表板使用的摘要報告。',
     'Site report exports are not generated in the app yet. Requests are recorded for follow-up.':
@@ -152,6 +155,7 @@ class SiteDashboardI18n {
     'Report export requested': '已請求匯出報告',
     'report export request logged': '報告匯出請求已記錄',
     'report export downloaded': '報告匯出已下載',
+    'report export copied': '報告匯出已複製',
     'just now': '剛剛',
     'report export request recorded': '報告匯出請求已記錄',
     'Generate': '產生',

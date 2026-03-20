@@ -1,5 +1,6 @@
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/export_service.dart';
@@ -625,10 +626,11 @@ class _HqAuditPageState extends State<HqAuditPage> {
     }
 
     final String fileName = _auditExportFileName();
+    final String exportContent = export.toString().trim();
     try {
       final String? savedLocation = await ExportService.instance.saveTextFile(
         fileName: fileName,
-        content: export.toString().trim(),
+        content: exportContent,
       );
       if (savedLocation == null || !mounted) {
         return;
@@ -645,6 +647,27 @@ class _HqAuditPageState extends State<HqAuditPage> {
         SnackBar(
           content: Text(
             _tHqAudit(context, 'Audit export downloaded.'),
+          ),
+        ),
+      );
+    } on UnsupportedError catch (error) {
+      debugPrint(
+          'Export unsupported for HQ audit export, copying content instead: $error');
+      await Clipboard.setData(ClipboardData(text: exportContent));
+      TelemetryService.instance.logEvent(
+        event: 'hq.audit_export.copied',
+        metadata: <String, dynamic>{
+          'module': 'hq_audit',
+          'filter': _filterCategory?.name ?? 'all',
+          'file_name': fileName,
+          'fallback': 'clipboard',
+        },
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tHqAudit(context, 'Audit export copied to clipboard.'),
           ),
         ),
       );

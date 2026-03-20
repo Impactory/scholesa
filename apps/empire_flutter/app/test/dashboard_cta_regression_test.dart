@@ -1,6 +1,7 @@
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:nested/nested.dart';
@@ -136,6 +137,78 @@ void main() {
       expect(_savedFileContent, contains('Export Site Report'));
       expect(_savedFileContent, contains('Recent Activity'));
       expect(_savedFileContent, contains('Check-in'));
+    });
+
+    testWidgets('site dashboard export CTA copies report when file export is unsupported',
+        (WidgetTester tester) async {
+      String? copiedText;
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (MethodCall methodCall) async {
+          if (methodCall.method == 'Clipboard.setData') {
+            final Object? args = methodCall.arguments;
+            if (args is Map) {
+              copiedText = args['text'] as String?;
+            }
+          }
+          return null;
+        },
+      );
+      addTearDown(() {
+        tester.binding.defaultBinaryMessenger
+            .setMockMethodCallHandler(SystemChannels.platform, null);
+      });
+
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+      await firestore.collection('siteOpsEvents').doc('event-1').set(
+        <String, dynamic>{
+          'siteId': 'site-1',
+          'action': 'Check-in',
+          'createdAt': DateTime(2026, 3, 18, 10).millisecondsSinceEpoch,
+        },
+      );
+      final FirestoreService firestoreService = FirestoreService(
+        firestore: firestore,
+        auth: _MockFirebaseAuth(),
+      );
+      final AppState appState = AppState()
+        ..updateFromMeResponse(<String, dynamic>{
+          'userId': 'site-1-admin',
+          'email': 'site@scholesa.dev',
+          'displayName': 'Site Admin',
+          'role': 'site',
+          'activeSiteId': 'site-1',
+          'siteIds': <String>['site-1'],
+          'entitlements': <Map<String, dynamic>>[],
+        });
+      ExportService.instance.debugSaveTextFile = ({
+        required String fileName,
+        required String content,
+        required String mimeType,
+      }) async {
+        throw UnsupportedError('File export is not supported on this platform.');
+      };
+      await tester.binding.setSurfaceSize(const Size(1280, 1800));
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: <SingleChildWidget>[
+            Provider<FirestoreService>.value(value: firestoreService),
+            ChangeNotifierProvider<AppState>.value(value: appState),
+          ],
+          child: MaterialApp(
+            theme: _testTheme,
+            home: SiteDashboardPage(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.download));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Site report copied for sharing.'), findsOneWidget);
+      expect(copiedText, contains('Export Site Report'));
+      expect(copiedText, contains('Check-in'));
     });
 
     testWidgets('site dashboard activity View All opens bottom sheet',

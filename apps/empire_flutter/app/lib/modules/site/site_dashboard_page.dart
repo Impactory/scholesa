@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import '../../auth/app_state.dart';
@@ -896,10 +897,11 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
       return;
     }
     final String fileName = _siteReportFileName();
+    final String reportContent = _buildSiteReportExport();
     try {
       final String? savedLocation = await ExportService.instance.saveTextFile(
         fileName: fileName,
-        content: _buildSiteReportExport(),
+        content: reportContent,
       );
       if (savedLocation == null || !mounted) {
         return;
@@ -912,7 +914,27 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
           'file_name': fileName,
         },
       );
-      await _persistReportGeneratedEvent(fileName: fileName);
+      await _persistReportGeneratedEvent(
+        fileName: fileName,
+        status: 'downloaded',
+      );
+    } on UnsupportedError catch (error) {
+      debugPrint(
+          'Export unsupported for site dashboard report, copying report instead: $error');
+      await Clipboard.setData(ClipboardData(text: reportContent));
+      TelemetryService.instance.logEvent(
+        event: 'site.report_export.copied',
+        metadata: <String, dynamic>{
+          'surface': 'site_dashboard',
+          'period': _selectedPeriod,
+          'file_name': fileName,
+          'fallback': 'clipboard',
+        },
+      );
+      await _persistReportGeneratedEvent(
+        fileName: fileName,
+        status: 'copied',
+      );
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1097,9 +1119,18 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
     );
   }
 
-  Future<void> _persistReportGeneratedEvent({required String fileName}) async {
+  Future<void> _persistReportGeneratedEvent({
+    required String fileName,
+    required String status,
+  }) async {
     final AppState? appState = _maybeAppState();
     final FirestoreService? firestoreService = _maybeFirestoreService();
+    final bool copied = status == 'copied';
+    final String activitySubtitle = copied
+        ? '${_selectedPeriod[0].toUpperCase()}${_selectedPeriod.substring(1)} ${_t('report export copied')}'
+        : '${_selectedPeriod[0].toUpperCase()}${_selectedPeriod.substring(1)} ${_t('report export downloaded')}';
+    final String snackbarMessage =
+        copied ? _t('Site report copied for sharing.') : _t('Site report exported.');
 
     if (appState == null || firestoreService == null) {
       if (!mounted) return;
@@ -1109,8 +1140,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
           _SiteActivity(
             icon: Icons.download_done,
             title: _t('Site report exported'),
-            subtitle:
-                '${_selectedPeriod[0].toUpperCase()}${_selectedPeriod.substring(1)} ${_t('report export downloaded')}',
+            subtitle: activitySubtitle,
             time: _t('just now'),
             color: ScholesaColors.site,
           ),
@@ -1121,9 +1151,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            _t('Site report exported.'),
-          ),
+          content: Text(snackbarMessage),
           backgroundColor: ScholesaColors.site,
         ),
       );
@@ -1140,7 +1168,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
           'siteId': siteId,
           'action': 'Export Site Report',
           'period': _selectedPeriod,
-          'status': 'downloaded',
+          'status': status,
           'fileName': fileName,
           'createdAt': FieldValue.serverTimestamp(),
         },
@@ -1150,9 +1178,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          _t('Site report exported.'),
-        ),
+        content: Text(snackbarMessage),
         backgroundColor: ScholesaColors.site,
       ),
     );
@@ -1250,8 +1276,8 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
         final ({IconData icon, Color color}) visual =
             _mapActivityVisual(action);
         final String subtitle = action == 'Export Site Report'
-            ? '${_selectedPeriod[0].toUpperCase()}${_selectedPeriod.substring(1)} ${status == 'downloaded' ? _t('report export downloaded') : _t('report export request logged')}'
-            : _t('Site operation event');
+          ? '${_selectedPeriod[0].toUpperCase()}${_selectedPeriod.substring(1)} ${status == 'downloaded' ? _t('report export downloaded') : status == 'copied' ? _t('report export copied') : _t('report export request logged')}'
+          : _t('Site operation event');
         feed.add(
           _TimedSiteActivity(
             at: at,
