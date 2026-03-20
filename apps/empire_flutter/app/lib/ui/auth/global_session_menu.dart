@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -120,7 +121,7 @@ class SessionMenuHeaderAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool showLabel = MediaQuery.sizeOf(context).width >= 960;
+    final bool showLabel = MediaQuery.sizeOf(context).width >= 720;
     final Color resolvedBackground = backgroundColor ??
         Theme.of(context).colorScheme.surface.withValues(alpha: 0.92);
 
@@ -132,6 +133,71 @@ class SessionMenuHeaderAction extends StatelessWidget {
         navigatorKey: navigatorKey,
         foregroundColor: foregroundColor,
         showLabel: showLabel,
+      ),
+    );
+  }
+}
+
+class SessionSignOutButton extends StatelessWidget {
+  const SessionSignOutButton({
+    super.key,
+    this.navigatorKey,
+    this.foregroundColor,
+    this.backgroundColor,
+    this.showLabel = true,
+  });
+
+  final GlobalKey<NavigatorState>? navigatorKey;
+  final Color? foregroundColor;
+  final Color? backgroundColor;
+  final bool showLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color resolvedForeground =
+        foregroundColor ?? Theme.of(context).colorScheme.error;
+    final Color resolvedBackground = backgroundColor ??
+        Theme.of(context).colorScheme.surface.withValues(alpha: 0.96);
+
+    return Material(
+      elevation: 0,
+      color: resolvedBackground,
+      borderRadius: BorderRadius.circular(999),
+      child: Semantics(
+        button: true,
+        label: _tGlobalSessionMenu(context, 'Sign Out'),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(999),
+          onTap: () async {
+            final BuildContext effectiveContext =
+                navigatorKey?.currentContext ?? context;
+            if (!effectiveContext.mounted) {
+              return;
+            }
+            await _confirmGlobalSessionSignOut(effectiveContext);
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            child: ExcludeSemantics(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Icon(Icons.logout_rounded, color: resolvedForeground),
+                  if (showLabel) ...<Widget>[
+                    const SizedBox(width: 8),
+                    Text(
+                      _tGlobalSessionMenu(context, 'Sign Out'),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: resolvedForeground,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -152,23 +218,40 @@ class GlobalSessionMenu extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    final bool showLabel = MediaQuery.sizeOf(context).width >= 960;
+    final double width = MediaQuery.sizeOf(context).width;
+    final bool showLabel = width >= 720;
+    final bool showExplicitSignOut = kIsWeb || width >= 960;
 
     return SafeArea(
       child: Align(
         alignment: Alignment.topRight,
         child: Padding(
-          padding: const EdgeInsets.only(top: 72, right: 12),
-          child: Material(
-            elevation: 6,
-            color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.96),
-            borderRadius: BorderRadius.circular(999),
-            shadowColor: Colors.black.withValues(alpha: 0.14),
-            child: SessionMenuButton(
-              navigatorKey: navigatorKey,
-              showLabel: showLabel,
-              buttonKey: _globalSessionMenuButtonKey,
-            ),
+          padding: const EdgeInsets.only(top: 16, right: 12),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              if (showExplicitSignOut) ...<Widget>[
+                SessionSignOutButton(
+                  navigatorKey: navigatorKey,
+                  showLabel: showLabel,
+                ),
+                const SizedBox(width: 8),
+              ],
+              Material(
+                elevation: 6,
+                color: Theme.of(context)
+                    .colorScheme
+                    .surface
+                    .withValues(alpha: 0.96),
+                borderRadius: BorderRadius.circular(999),
+                shadowColor: Colors.black.withValues(alpha: 0.14),
+                child: SessionMenuButton(
+                  navigatorKey: navigatorKey,
+                  showLabel: showLabel,
+                  buttonKey: _globalSessionMenuButtonKey,
+                ),
+              ),
+            ],
           ),
         ),
       ),
