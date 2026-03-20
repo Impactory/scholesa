@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/modules/site/site_incidents_page.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
@@ -30,6 +31,8 @@ AppState _buildSiteState() {
 Widget _buildHarness({
   required AppState appState,
   required FirestoreService firestoreService,
+  SharedPreferences? sharedPreferences,
+  SiteIncidentsPage? child,
 }) {
   return MultiProvider(
     providers: <SingleChildWidget>[
@@ -52,12 +55,16 @@ Widget _buildHarness({
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      home: const SiteIncidentsPage(),
+      home: child ?? SiteIncidentsPage(sharedPreferences: sharedPreferences),
     ),
   );
 }
 
 void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+  });
+
   testWidgets('site incidents shows a real load error instead of a fake empty state',
       (WidgetTester tester) async {
     final FirestoreService firestoreService = FirestoreService(
@@ -149,5 +156,115 @@ void main() {
     expect(find.text('Reporter unavailable'), findsWidgets);
     expect(find.text('Learner unavailable'), findsWidgets);
     expect(find.text('Unknown'), findsNothing);
+  });
+
+  testWidgets('site incidents restores the selected status tab on reopen',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    await tester.pumpWidget(
+      _buildHarness(
+        appState: _buildSiteState(),
+        firestoreService: firestoreService,
+        sharedPreferences: prefs,
+        child: SiteIncidentsPage(
+          sharedPreferences: prefs,
+          incidentsLoader: (String _) async => <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 'incident-open',
+              'title': 'Open Playground Incident',
+              'severity': 'minor',
+              'status': 'submitted',
+              'learnerName': 'Learner One',
+              'reportedByName': 'Staff One',
+              'reportedAt': DateTime(2026, 3, 17, 9).millisecondsSinceEpoch,
+            },
+            <String, dynamic>{
+              'id': 'incident-reviewed',
+              'title': 'Reviewed Lab Incident',
+              'severity': 'major',
+              'status': 'reviewed',
+              'learnerName': 'Learner Two',
+              'reportedByName': 'Staff Two',
+              'reportedAt': DateTime(2026, 3, 17, 10).millisecondsSinceEpoch,
+            },
+            <String, dynamic>{
+              'id': 'incident-closed',
+              'title': 'Closed Arrival Incident',
+              'severity': 'critical',
+              'status': 'closed',
+              'learnerName': 'Learner Three',
+              'reportedByName': 'Staff Three',
+              'reportedAt': DateTime(2026, 3, 17, 11).millisecondsSinceEpoch,
+            },
+          ],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Open Playground Incident'), findsOneWidget);
+    expect(find.text('Reviewed Lab Incident'), findsNothing);
+    expect(find.text('Closed Arrival Incident'), findsNothing);
+
+    await tester.tap(find.text('Reviewed'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Open Playground Incident'), findsNothing);
+    expect(find.text('Reviewed Lab Incident'), findsOneWidget);
+    expect(find.text('Closed Arrival Incident'), findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+
+    await tester.pumpWidget(
+      _buildHarness(
+        appState: _buildSiteState(),
+        firestoreService: firestoreService,
+        sharedPreferences: prefs,
+        child: SiteIncidentsPage(
+          sharedPreferences: prefs,
+          incidentsLoader: (String _) async => <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 'incident-open',
+              'title': 'Open Playground Incident',
+              'severity': 'minor',
+              'status': 'submitted',
+              'learnerName': 'Learner One',
+              'reportedByName': 'Staff One',
+              'reportedAt': DateTime(2026, 3, 17, 9).millisecondsSinceEpoch,
+            },
+            <String, dynamic>{
+              'id': 'incident-reviewed',
+              'title': 'Reviewed Lab Incident',
+              'severity': 'major',
+              'status': 'reviewed',
+              'learnerName': 'Learner Two',
+              'reportedByName': 'Staff Two',
+              'reportedAt': DateTime(2026, 3, 17, 10).millisecondsSinceEpoch,
+            },
+            <String, dynamic>{
+              'id': 'incident-closed',
+              'title': 'Closed Arrival Incident',
+              'severity': 'critical',
+              'status': 'closed',
+              'learnerName': 'Learner Three',
+              'reportedByName': 'Staff Three',
+              'reportedAt': DateTime(2026, 3, 17, 11).millisecondsSinceEpoch,
+            },
+          ],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Reviewed Lab Incident'), findsOneWidget);
+    expect(find.text('Open Playground Incident'), findsNothing);
+    expect(find.text('Closed Arrival Incident'), findsNothing);
   });
 }

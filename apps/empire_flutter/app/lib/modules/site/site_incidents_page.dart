@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../auth/app_state.dart';
 import '../../i18n/site_surface_i18n.dart';
@@ -34,9 +35,14 @@ String _displayIncidentIdentity(
 /// Site incidents management page
 /// Based on docs/41_SAFETY_CONSENT_INCIDENTS_SPEC.md
 class SiteIncidentsPage extends StatefulWidget {
-  const SiteIncidentsPage({super.key, this.incidentsLoader});
+  const SiteIncidentsPage({
+    super.key,
+    this.incidentsLoader,
+    this.sharedPreferences,
+  });
 
   final Future<List<Map<String, dynamic>>> Function(String siteId)? incidentsLoader;
+  final SharedPreferences? sharedPreferences;
 
   @override
   State<SiteIncidentsPage> createState() => _SiteIncidentsPageState();
@@ -68,7 +74,14 @@ class _Incident {
 
 class _SiteIncidentsPageState extends State<SiteIncidentsPage>
     with SingleTickerProviderStateMixin {
+  static const List<String> _tabKeys = <String>[
+    'open',
+    'reviewed',
+    'closed',
+  ];
+
   late TabController _tabController;
+  SharedPreferences? _prefsCache;
   List<_Incident> _incidents = <_Incident>[];
   bool _isLoading = false;
   String? _siteId;
@@ -89,7 +102,11 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _restoreSelectedTab();
+      if (!mounted) {
+        return;
+      }
       _loadIncidents();
     });
   }
@@ -98,6 +115,54 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage>
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  Future<SharedPreferences> _prefs() async {
+    final SharedPreferences? injected = widget.sharedPreferences;
+    if (injected != null) {
+      return injected;
+    }
+    return _prefsCache ??= await SharedPreferences.getInstance();
+  }
+
+  String _selectedTabPrefsKey() {
+    final AppState appState = context.read<AppState>();
+    final String siteKey = (appState.activeSiteId ??
+            (appState.siteIds.isNotEmpty ? appState.siteIds.first : ''))
+        .trim();
+    return 'site_incidents.selected_tab.${siteKey.isNotEmpty ? siteKey : 'no-site'}';
+  }
+
+  String _normalizeTabKey(String? value) {
+    if (value == null) {
+      return _tabKeys.first;
+    }
+    final String normalized =
+        value.trim().toLowerCase().replaceAll('-', '_').replaceAll(' ', '_');
+    if (_tabKeys.contains(normalized)) {
+      return normalized;
+    }
+    return _tabKeys.first;
+  }
+
+  int _tabIndexForKey(String value) {
+    final int index = _tabKeys.indexOf(_normalizeTabKey(value));
+    return index >= 0 ? index : 0;
+  }
+
+  Future<void> _restoreSelectedTab() async {
+    final SharedPreferences prefs = await _prefs();
+    final int restoredIndex =
+        _tabIndexForKey(prefs.getString(_selectedTabPrefsKey()) ?? _tabKeys.first);
+    if (!mounted) {
+      return;
+    }
+    setState(() => _tabController.index = restoredIndex);
+  }
+
+  Future<void> _persistSelectedTab(String key) async {
+    final SharedPreferences prefs = await _prefs();
+    await prefs.setString(_selectedTabPrefsKey(), _normalizeTabKey(key));
   }
 
   @override
@@ -116,14 +181,15 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage>
         bottom: TabBar(
           controller: _tabController,
           onTap: (int index) {
-            final List<String> tabs = <String>['open', 'reviewed', 'closed'];
+            final String selectedTab = _tabKeys[index];
+            _persistSelectedTab(selectedTab);
             TelemetryService.instance.logEvent(
               event: 'cta.clicked',
               metadata: <String, dynamic>{
                 'module': 'site_incidents',
                 'cta_id': 'switch_tab',
                 'surface': 'incidents_tab_bar',
-                'tab': tabs[index],
+                'tab': selectedTab,
               },
             );
           },

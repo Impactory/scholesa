@@ -153,6 +153,13 @@ class WorkflowSurfaceI18n {
     'See support ideas for each learner': '查看每位学习者的支持建议',
     'Integrations AI Help': '集成 AI 帮助',
     'See support ideas while syncing learner systems': '在同步学习者系统时查看支持建议',
+    'Integrations health is temporarily unavailable': '集成健康状态暂时不可用',
+    'Unable to refresh integrations health right now. Showing the last successful data.':
+        '目前无法刷新集成健康状态。正在显示最近一次成功加载的数据。',
+    'Unable to refresh integrations health right now.': '目前无法刷新集成健康状态。',
+    'We could not load integrations health. Retry to check the current state.':
+        '我们暂时无法加载集成健康状态。请重试以检查当前状态。',
+    'Unable to retry this integration right now.': '目前无法重试此集成。',
     'Mission Planning AI Help': '任务规划 AI 帮助',
     'See support ideas while designing missions for each learner':
         '在为每位学习者设计任务时查看支持建议',
@@ -885,6 +892,13 @@ class WorkflowSurfaceI18n {
     'See support ideas for each learner': '查看每位學習者的支持建議',
     'Integrations AI Help': '整合 AI 幫助',
     'See support ideas while syncing learner systems': '在同步學習者系統時查看支持建議',
+    'Integrations health is temporarily unavailable': '整合健康狀態暫時不可用',
+    'Unable to refresh integrations health right now. Showing the last successful data.':
+        '目前無法重新整理整合健康狀態。正在顯示最近一次成功載入的資料。',
+    'Unable to refresh integrations health right now.': '目前無法重新整理整合健康狀態。',
+    'We could not load integrations health. Retry to check the current state.':
+        '我們暫時無法載入整合健康狀態。請重試以檢查目前狀態。',
+    'Unable to retry this integration right now.': '目前無法重試此整合。',
     'Mission Planning AI Help': '任務規劃 AI 幫助',
     'See support ideas while designing missions for each learner':
         '在為每位學習者設計任務時查看支持建議',

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/auth/global_session_menu.dart';
@@ -12,9 +13,17 @@ String _tHqIntegrations(BuildContext context, String input) {
 /// HQ Integrations Health page for monitoring all site integrations
 /// Based on docs/31_GOOGLE_CLASSROOM_SYNC_JOBS.md and docs/37_GITHUB_WEBHOOKS_EVENTS_AND_SYNC.md
 class HqIntegrationsHealthPage extends StatefulWidget {
-  const HqIntegrationsHealthPage({super.key, this.integrationsLoader});
+  const HqIntegrationsHealthPage({
+    super.key,
+    this.integrationsLoader,
+    this.retryIntegrationRunner,
+    this.sharedPreferences,
+  });
 
   final Future<Map<String, dynamic>> Function()? integrationsLoader;
+  final Future<void> Function(String siteId, String providerKey)?
+      retryIntegrationRunner;
+  final SharedPreferences? sharedPreferences;
 
   @override
   State<HqIntegrationsHealthPage> createState() =>
@@ -23,14 +32,58 @@ class HqIntegrationsHealthPage extends StatefulWidget {
 
 class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
   List<_SiteIntegration> _sites = <_SiteIntegration>[];
+  SharedPreferences? _prefsCache;
+  Set<String> _expandedSiteIds = <String>{};
   bool _isLoading = false;
+  String? _loadError;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _restoreExpandedSites();
+      if (!mounted) {
+        return;
+      }
       _loadIntegrationsHealth();
     });
+  }
+
+  Future<SharedPreferences> _prefs() async {
+    final SharedPreferences? injected = widget.sharedPreferences;
+    if (injected != null) {
+      return injected;
+    }
+    return _prefsCache ??= await SharedPreferences.getInstance();
+  }
+
+  String _expandedSitesPrefsKey() {
+    return 'hq_integrations_health.expanded_sites';
+  }
+
+  Future<void> _restoreExpandedSites() async {
+    final SharedPreferences prefs = await _prefs();
+    final List<String> expanded =
+        prefs.getStringList(_expandedSitesPrefsKey()) ?? <String>[];
+    if (!mounted) {
+      return;
+    }
+    setState(() => _expandedSiteIds = expanded.toSet());
+  }
+
+  Future<void> _setExpandedSite(String siteId, bool expanded) async {
+    final Set<String> next = Set<String>.from(_expandedSiteIds);
+    if (expanded) {
+      next.add(siteId);
+    } else {
+      next.remove(siteId);
+    }
+    final SharedPreferences prefs = await _prefs();
+    await prefs.setStringList(_expandedSitesPrefsKey(), next.toList()..sort());
+    if (!mounted) {
+      return;
+    }
+    setState(() => _expandedSiteIds = next);
   }
 
   @override
@@ -76,7 +129,14 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
                 ),
               ),
             ),
-          if (!_isLoading && _sites.isEmpty)
+          if (!_isLoading && _loadError != null && _sites.isEmpty)
+            _buildLoadErrorCard(context, _loadError!),
+          if (!_isLoading && _loadError != null && _sites.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: _buildStaleDataBanner(context, _loadError!),
+            ),
+          if (!_isLoading && _sites.isEmpty && _loadError == null)
             Center(
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 20),
@@ -172,7 +232,10 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
       color: ScholesaColors.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ExpansionTile(
+        key: PageStorageKey<String>('hq-integrations-${site.siteId}'),
+        initiallyExpanded: _expandedSiteIds.contains(site.siteId),
         onExpansionChanged: (bool expanded) {
+          _setExpandedSite(site.siteId, expanded);
           TelemetryService.instance.logEvent(
             event: 'cta.clicked',
             metadata: <String, dynamic>{
@@ -266,25 +329,105 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
     );
   }
 
+  Widget _buildLoadErrorCard(BuildContext context, String message) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Icon(
+              Icons.error_outline_rounded,
+              size: 56,
+              color: Colors.red.withValues(alpha: 0.8),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _tHqIntegrations(context, 'Integrations health is temporarily unavailable'),
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: ScholesaColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: ScholesaColors.textSecondary),
+            ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: _loadIntegrationsHealth,
+              icon: const Icon(Icons.refresh_rounded),
+              label: Text(_tHqIntegrations(context, 'Retry')),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStaleDataBanner(BuildContext context, String message) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.orange.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              _tHqIntegrations(context, 'Unable to refresh integrations health right now. Showing the last successful data.') +
+                  ' ' +
+                  message,
+              style: const TextStyle(color: ScholesaColors.textPrimary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _refreshAllIntegrations() {
     _loadIntegrationsHealth().then((_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text(
-                _tHqIntegrations(context, 'Integrations health refreshed'))),
+          content: Text(
+            _loadError == null
+                ? _tHqIntegrations(context, 'Integrations health refreshed')
+                : _tHqIntegrations(
+                    context,
+                    'Unable to refresh integrations health right now.',
+                  ),
+          ),
+        ),
       );
     });
   }
 
   Future<void> _retryIntegration(_Integration integration) async {
     try {
-      final HttpsCallable callable =
-          FirebaseFunctions.instance.httpsCallable('triggerIntegrationSyncJob');
-      await callable.call(<String, dynamic>{
-        'siteId': integration.siteId,
-        'provider': integration.providerKey,
-      });
+      if (widget.retryIntegrationRunner != null) {
+        await widget.retryIntegrationRunner!(
+          integration.siteId,
+          integration.providerKey,
+        );
+      } else {
+        final HttpsCallable callable = FirebaseFunctions.instance
+            .httpsCallable('triggerIntegrationSyncJob');
+        await callable.call(<String, dynamic>{
+          'siteId': integration.siteId,
+          'provider': integration.providerKey,
+        });
+      }
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -293,12 +436,25 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
                 '${integration.name} ${_tHqIntegrations(context, 'recovered successfully')}')),
       );
       await _loadIntegrationsHealth();
-    } catch (_) {}
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tHqIntegrations(context, 'Unable to retry this integration right now.'),
+          ),
+          backgroundColor: ScholesaColors.error,
+        ),
+      );
+    }
   }
 
   Future<void> _loadIntegrationsHealth() async {
     if (!mounted) return;
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _loadError = null;
+    });
     try {
       final Map<String, dynamic> payload;
       if (widget.integrationsLoader != null) {
@@ -411,11 +567,15 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
       if (!mounted) return;
       setState(() {
         _sites = loaded;
+        _loadError = null;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _sites = <_SiteIntegration>[];
+        _loadError = _tHqIntegrations(
+          context,
+          'We could not load integrations health. Retry to check the current state.',
+        );
       });
     } finally {
       if (mounted) {
