@@ -235,7 +235,7 @@ void main() {
     expect(find.text('Synthetic Data'), findsOneWidget);
     expect(find.text('Starter + full synthetic packs'), findsOneWidget);
     expect(find.text('17040'), findsOneWidget);
-    expect(find.text('MiloOS synthetic training'), findsOneWidget);
+    expect(find.text('Synthetic AI help training'), findsOneWidget);
     expect(
       find.textContaining('synthetic-bos-mia-starter-full-v1'),
       findsOneWidget,
@@ -255,13 +255,13 @@ void main() {
     expect(find.text('Luna Learner'), findsOneWidget);
 
     await tester.scrollUntilVisible(
-      find.text('HQ MiloOS Usability'),
+      find.text('HQ AI help feedback'),
       -300,
       scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('HQ MiloOS Usability'), findsOneWidget);
+    expect(find.text('HQ AI help feedback'), findsOneWidget);
   });
 
   testWidgets(

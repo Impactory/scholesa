@@ -81,7 +81,7 @@ class AppStrings {
     'assistant.loading': 'Loading help…',
     'assistant.hoverHint': 'Click for help',
       'ai.greeting.initial':
-          'Hi! I\'m MiloOS. I can guide you with hints, explanations, and quick debug steps whenever you need support.',
+          'Hi! I can guide you with hints, explanations, and quick debug steps whenever you need support.',
       'ai.autoAssist.hesitationPrompt':
           'The learner may be hesitating. Current MiloOS loop state: {state}. Offer a short supportive check-in, one tiny next step, and one follow-up question.',
       'ai.autoAssist.interventionPrompt':
@@ -116,7 +116,7 @@ class AppStrings {
       'ai.clear': 'Clear',
       'ai.currentGoals': 'Current goals',
       'ai.clearGoals.cta': 'Clear goals',
-      'ai.empty.title': 'MiloOS',
+    'ai.empty.title': 'AI Help',
       'ai.empty.subtitle':
           'Choose a help mode and ask a question. I\'ll guide your thinking, not hand over the answer.',
       'ai.banner.verification':
@@ -230,7 +230,7 @@ class AppStrings {
       'assistant.close': '关闭',
     'assistant.loading': '正在加载帮助…',
     'assistant.hoverHint': '点击获取帮助',
-      'ai.greeting.initial': '你好！我是 MiloOS。需要帮助时，我可以提供提示、解释和简短的调试步骤。',
+            'ai.greeting.initial': '你好！需要帮助时，我可以提供提示、解释和简短的调试步骤。',
       'ai.autoAssist.hesitationPrompt':
           '学习者可能正在犹豫。当前 MiloOS 循环状态：{state}。请给出简短支持性提醒、一个微小下一步和一个追问。',
       'ai.autoAssist.interventionPrompt':
@@ -257,7 +257,7 @@ class AppStrings {
       'ai.clear': '清除',
       'ai.currentGoals': '当前目标',
       'ai.clearGoals.cta': '清除目标',
-      'ai.empty.title': 'MiloOS',
+    'ai.empty.title': 'AI 帮助',
       'ai.empty.subtitle': '选择一种帮助方式并提出问题。我会引导你的思考，而不是直接给答案。',
       'ai.banner.verification': '理解检查已开启，请先展示你的思路。',
       'ai.banner.runtimeUnavailable':
@@ -359,7 +359,7 @@ class AppStrings {
       'assistant.close': '關閉',
     'assistant.loading': '正在載入幫助…',
     'assistant.hoverHint': '點擊取得幫助',
-      'ai.greeting.initial': '你好！我是 MiloOS。當你需要協助時，我可以提供提示、解釋和簡短除錯步驟。',
+            'ai.greeting.initial': '你好！當你需要協助時，我可以提供提示、解釋和簡短除錯步驟。',
       'ai.autoAssist.hesitationPrompt':
           '學習者可能正在猶豫。當前 MiloOS 迴圈狀態：{state}。請給出簡短支持性提醒、一個微小下一步以及一個追問。',
       'ai.autoAssist.interventionPrompt':
@@ -386,7 +386,7 @@ class AppStrings {
       'ai.clear': '清除',
       'ai.currentGoals': '目前目標',
       'ai.clearGoals.cta': '清除目標',
-      'ai.empty.title': 'MiloOS',
+    'ai.empty.title': 'AI 幫助',
       'ai.empty.subtitle': '選擇一種幫助方式並提出問題。我會引導你的思考，而不是直接給答案。',
       'ai.banner.verification': '理解檢查已啟用，請先展示你的思路。',
       'ai.banner.runtimeUnavailable':

@@ -91,22 +91,22 @@ function buildVoiceTransparencyMessage(metadata: VoiceTransparencyMeta): string 
   const understandingConfidence = metadata.understanding?.confidence ?? null;
 
   if (responseGenerationSource === 'guardrail' && understandingSource === 'heuristic') {
-    return 'MiloOS is being careful here because it could not understand the voice request clearly enough yet.';
+    return 'AI Help is being careful here because it could not understand the voice request clearly enough yet.';
   }
   if (responseGenerationSource === 'local' && understandingSource === 'heuristic') {
-    return 'MiloOS answered with a simple local hint because it could not confirm the voice request clearly. Treat this as a prompt to think, not a verified reading of what you meant.';
+    return 'AI Help answered with a simple local hint because it could not confirm the voice request clearly. Treat this as a prompt to think, not a verified reading of what you meant.';
   }
   if (responseGenerationSource === 'model' && understandingSource === 'heuristic') {
-    return 'MiloOS used the model to write the reply, but it still could not confirm the voice request clearly.';
+    return 'AI Help used the model to write the reply, but it still could not confirm the voice request clearly.';
   }
   if (understandingSource === 'blended') {
     const confidenceText = typeof understandingConfidence === 'number'
       ? ` Confidence in that reading: ${Math.round(understandingConfidence * 100)}%.`
       : '';
-    return `MiloOS used both a quick local check and model support to understand this voice turn.${confidenceText}`;
+    return `AI Help used both a quick local check and model support to understand this voice turn.${confidenceText}`;
   }
   if (understandingSource === 'model') {
-    return 'MiloOS used model support to understand this voice turn.';
+    return 'AI Help used model support to understand this voice turn.';
   }
   return null;
 }
@@ -256,7 +256,7 @@ export function AICoachPopup({
           });
           const transcriptText = transcribed.transcript.trim();
           if (!transcriptText) {
-            setStatusMessage('MiloOS could not clearly capture what you said. Please try again and speak a little more clearly.');
+            setStatusMessage('AI Help could not clearly capture what you said. Please try again and speak a little more clearly.');
             return;
           }
           setStatusMessage(null);
@@ -274,7 +274,7 @@ export function AICoachPopup({
           setStatusMessage(
             error instanceof Error && error.message
               ? error.message
-              : 'MiloOS could not clearly capture what you said. Please try again.',
+              : 'AI Help could not clearly capture what you said. Please try again.',
           );
         } finally {
           audioChunksRef.current = [];
@@ -552,7 +552,7 @@ Guidance: ${
         gradeBand: grade <= 3 ? 'grades_1_3' : grade <= 6 ? 'grades_4_6' : grade <= 9 ? 'grades_7_9' : 'grades_10_12',
         traceId,
       });
-      setVoiceTransparencyMessage('MiloOS could not understand this voice turn reliably, so it switched to a safer fallback reply.');
+      setVoiceTransparencyMessage('AI Help could not understand this voice turn reliably, so it switched to a safer fallback reply.');
     } finally {
       setLoading(false);
     }

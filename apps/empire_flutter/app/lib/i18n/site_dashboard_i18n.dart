@@ -25,8 +25,7 @@ class SiteDashboardI18n {
     'Unable to load telemetry metrics:': '无法加载遥测指标：',
     'Telemetry KPIs': '遥测 KPI',
     'Telemetry feed pending': '遥测数据流待接入',
-    'Waiting for first data sync from MiloOS telemetry.':
-        '正在等待 MiloOS 遥测的首次数据同步。',
+    'Waiting for first app telemetry sync.': '正在等待应用遥测的首次数据同步。',
     'Weekly Accountability': '每周问责',
     'within SLA': '在 SLA 内',
     'Avg Review Turnaround': '平均审核周转',
@@ -105,8 +104,7 @@ class SiteDashboardI18n {
     'Unable to load telemetry metrics:': '無法載入遙測指標：',
     'Telemetry KPIs': '遙測 KPI',
     'Telemetry feed pending': '遙測資料流待接入',
-    'Waiting for first data sync from MiloOS telemetry.':
-        '正在等待 MiloOS 遙測的首次資料同步。',
+    'Waiting for first app telemetry sync.': '正在等待應用程式遙測的首次資料同步。',
     'Weekly Accountability': '每週問責',
     'within SLA': '在 SLA 內',
     'Avg Review Turnaround': '平均審核週轉',

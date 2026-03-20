@@ -194,7 +194,7 @@ void main() {
 
       expect(find.text('Telemetry KPIs'), findsOneWidget);
       expect(
-        find.text('Waiting for first data sync from MiloOS telemetry.'),
+        find.text('Waiting for first app telemetry sync.'),
         findsOneWidget,
       );
       expect(find.text('KPI Packs'), findsOneWidget);
