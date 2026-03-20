@@ -398,7 +398,7 @@ class WorkflowSurfaceI18n {
     'Export Audit Logs': '导出审计日志',
     'Export the current audit log feed for offline review.':
         '导出当前审计日志列表以供离线审阅。',
-    'Audit log exports are not available in the app yet': '当有可导出的审计日志时，导出会直接下载到此设备。',
+    'Audit log exports are not available in the app yet.': '当有可导出的审计日志时，导出会直接下载到此设备。',
     'No audit records to export yet.': '暂时没有可导出的审计记录。',
     'Audit export copied to clipboard.': '审计导出内容已复制到剪贴板。',
     'Audit export downloaded.': '审计导出文件已下载。',
