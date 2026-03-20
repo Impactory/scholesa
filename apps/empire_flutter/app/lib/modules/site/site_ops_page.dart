@@ -17,9 +17,30 @@ String _tSiteOps(BuildContext context, String input) {
 /// Site operations page for daily operations overview
 /// Based on docs/42_PHYSICAL_SITE_CHECKIN_CHECKOUT_SPEC.md
 class SiteOpsPage extends StatefulWidget {
-  const SiteOpsPage({super.key, this.workflowBridge});
+  const SiteOpsPage({
+    super.key,
+    this.workflowBridge,
+    this.dayStatusWriter,
+    this.checklistItemWriter,
+  });
 
   final WorkflowBridgeService? workflowBridge;
+  final Future<void> Function(
+    String siteId,
+    String dayKey,
+    bool isOpen,
+    String? userId,
+  )? dayStatusWriter;
+  final Future<void> Function(
+    String siteId,
+    String dayKey,
+    String itemId,
+    String label,
+    bool completed,
+    int order,
+    String? note,
+    String? userId,
+  )? checklistItemWriter;
 
   @override
   State<SiteOpsPage> createState() => _SiteOpsPageState();
@@ -27,6 +48,7 @@ class SiteOpsPage extends StatefulWidget {
 
 class _SiteOpsPageState extends State<SiteOpsPage> {
   bool _isDayOpen = false;
+  bool _isUpdatingDayOpen = false;
   int _presentCount = 0;
   int _pendingPickups = 0;
   int _openIncidents = 0;
@@ -45,6 +67,7 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
       <FederatedLearningRuntimeActivationRecordModel>[];
   bool _isLoadingRuntimeRollout = false;
   String? _runtimeRolloutError;
+  Set<String> _pendingChecklistItemIds = <String>{};
   final TextEditingController _safetyNoteController = TextEditingController();
 
   bool _hasRuntimeRolloutData(_SiteRuntimeRolloutState state) {
@@ -86,7 +109,8 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
         actions: <Widget>[
           Switch(
             value: _isDayOpen,
-            onChanged: _isLoading ? null : _setDayOpenStatus,
+            onChanged:
+                (_isLoading || _isUpdatingDayOpen) ? null : _setDayOpenStatus,
             activeThumbColor: Colors.white,
             activeTrackColor: Colors.green.withValues(alpha: 0.6),
           ),
@@ -207,9 +231,11 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
                           ? null
                           : Text(_tSiteOps(context, item.note!)),
                       controlAffinity: ListTileControlAffinity.leading,
-                      onChanged: (bool? value) {
-                        _toggleChecklistItem(item, value ?? false);
-                      },
+                      onChanged: _pendingChecklistItemIds.contains(item.id)
+                          ? null
+                          : (bool? value) {
+                              _toggleChecklistItem(item, value ?? false);
+                            },
                     ))
                 .toList(growable: false),
           ),
@@ -1142,7 +1168,6 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
   }
 
   Future<void> _setDayOpenStatus(bool isDayOpen) async {
-    final FirestoreService firestoreService = context.read<FirestoreService>();
     final AppState appState = context.read<AppState>();
     final String siteId = (_siteId ?? '').trim();
     if (siteId.isEmpty) {
@@ -1152,27 +1177,13 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
     final DateTime now = DateTime.now();
     final String dayKey = _dayKey(now);
 
+    setState(() => _isUpdatingDayOpen = true);
     try {
-      await firestoreService.firestore
-          .collection('siteOpsDailyStatus')
-          .doc('$siteId-$dayKey')
-          .set(
-        <String, dynamic>{
-          'siteId': siteId,
-          'dayKey': dayKey,
-          'isOpen': isDayOpen,
-          'updatedAt': FieldValue.serverTimestamp(),
-          'updatedBy': appState.userId,
-        },
-        SetOptions(merge: true),
-      );
-      await firestoreService.firestore.collection('siteOpsEvents').add(
-        <String, dynamic>{
-          'siteId': siteId,
-          'action': isDayOpen ? 'Day opened' : 'Day closed',
-          'createdBy': appState.userId,
-          'createdAt': FieldValue.serverTimestamp(),
-        },
+      await (widget.dayStatusWriter ?? _persistDayOpenStatus)(
+        siteId,
+        dayKey,
+        isDayOpen,
+        appState.userId,
       );
       TelemetryService.instance.logEvent(
         event: 'cta.clicked',
@@ -1196,9 +1207,47 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_tSiteOps(context, 'Action failed'))),
+        SnackBar(
+          content: Text(
+            _tSiteOps(context, 'Unable to update site day status right now.'),
+          ),
+        ),
       );
+    } finally {
+      if (mounted) {
+        setState(() => _isUpdatingDayOpen = false);
+      }
     }
+  }
+
+  Future<void> _persistDayOpenStatus(
+    String siteId,
+    String dayKey,
+    bool isDayOpen,
+    String? userId,
+  ) async {
+    final FirestoreService firestoreService = context.read<FirestoreService>();
+    await firestoreService.firestore
+        .collection('siteOpsDailyStatus')
+        .doc('$siteId-$dayKey')
+        .set(
+      <String, dynamic>{
+        'siteId': siteId,
+        'dayKey': dayKey,
+        'isOpen': isDayOpen,
+        'updatedAt': FieldValue.serverTimestamp(),
+        'updatedBy': userId,
+      },
+      SetOptions(merge: true),
+    );
+    await firestoreService.firestore.collection('siteOpsEvents').add(
+      <String, dynamic>{
+        'siteId': siteId,
+        'action': isDayOpen ? 'Day opened' : 'Day closed',
+        'createdBy': userId,
+        'createdAt': FieldValue.serverTimestamp(),
+      },
+    );
   }
 
   Future<_SiteRuntimeRolloutState> _loadRuntimeRolloutState(
@@ -1474,39 +1523,25 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
     _KitChecklistItem item,
     bool completed,
   ) async {
-    final FirestoreService firestoreService = context.read<FirestoreService>();
     final AppState appState = context.read<AppState>();
     final String siteId = (_siteId ?? '').trim();
     if (siteId.isEmpty) return;
     final DateTime now = DateTime.now();
     final _KitChecklistItem updated = item.copyWith(completed: completed);
-    setState(() {
-      _kitChecklist = _kitChecklist
-          .map((_KitChecklistItem current) =>
-              current.id == item.id ? updated : current)
-          .toList(growable: false);
-    });
+    setState(() => _pendingChecklistItemIds = <String>{
+          ..._pendingChecklistItemIds,
+          item.id,
+        });
     try {
-      await firestoreService.firestore
-          .collection('siteOpsKitChecklist')
-          .doc(updated.id)
-          .set(<String, dynamic>{
-        'siteId': siteId,
-        'dayKey': _dayKey(now),
-        'label': updated.label,
-        'completed': completed,
-        'order': updated.order,
-        if ((updated.note ?? '').trim().isNotEmpty) 'note': updated.note,
-        'updatedAt': FieldValue.serverTimestamp(),
-        'updatedBy': appState.userId,
-      }, SetOptions(merge: true));
-      await firestoreService.firestore.collection('siteOpsEvents').add(
-        <String, dynamic>{
-          'siteId': siteId,
-          'action': 'Kit checklist updated',
-          'createdBy': appState.userId,
-          'createdAt': FieldValue.serverTimestamp(),
-        },
+      await (widget.checklistItemWriter ?? _persistChecklistItem)(
+        siteId,
+        _dayKey(now),
+        updated.id,
+        updated.label,
+        completed,
+        updated.order,
+        updated.note,
+        appState.userId,
       );
       TelemetryService.instance.logEvent(
         event: 'cta.clicked',
@@ -1522,9 +1557,53 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_tSiteOps(context, 'Action failed'))),
+        SnackBar(
+          content: Text(
+            _tSiteOps(context, 'Unable to update kit checklist right now.'),
+          ),
+        ),
       );
+    } finally {
+      if (mounted) {
+        final Set<String> next = Set<String>.from(_pendingChecklistItemIds)
+          ..remove(item.id);
+        setState(() => _pendingChecklistItemIds = next);
+      }
     }
+  }
+
+  Future<void> _persistChecklistItem(
+    String siteId,
+    String dayKey,
+    String itemId,
+    String label,
+    bool completed,
+    int order,
+    String? note,
+    String? userId,
+  ) async {
+    final FirestoreService firestoreService = context.read<FirestoreService>();
+    await firestoreService.firestore
+        .collection('siteOpsKitChecklist')
+        .doc(itemId)
+        .set(<String, dynamic>{
+      'siteId': siteId,
+      'dayKey': dayKey,
+      'label': label,
+      'completed': completed,
+      'order': order,
+      if ((note ?? '').trim().isNotEmpty) 'note': note,
+      'updatedAt': FieldValue.serverTimestamp(),
+      'updatedBy': userId,
+    }, SetOptions(merge: true));
+    await firestoreService.firestore.collection('siteOpsEvents').add(
+      <String, dynamic>{
+        'siteId': siteId,
+        'action': 'Kit checklist updated',
+        'createdBy': userId,
+        'createdAt': FieldValue.serverTimestamp(),
+      },
+    );
   }
 
   Future<void> _saveSafetyNote() async {
