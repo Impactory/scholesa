@@ -102,7 +102,7 @@ class SharedRoleSurfaceI18n {
     'Generate and export the current HQ analytics summary for cross-site review.':
         '生成并导出当前 HQ 分析摘要供跨站点审核。',
     'HQ analytics exports are not available in the app yet.':
-        '应用内暂不支持导出 HQ 分析。',
+      '当有可导出的 HQ 分析数据时，导出会直接下载到此设备。',
     'No HQ analytics data to export yet.': '暂时没有可导出的 HQ 分析数据。',
     'HQ analytics export copied to clipboard.': 'HQ 分析导出内容已复制到剪贴板。',
     'HQ analytics export downloaded.': 'HQ 分析导出文件已下载。',
@@ -334,7 +334,7 @@ class SharedRoleSurfaceI18n {
     'Generate and export the current HQ analytics summary for cross-site review.':
         '產生並匯出目前 HQ 分析摘要供跨站點審查。',
     'HQ analytics exports are not available in the app yet.':
-        'App 內暫不支援匯出 HQ 分析。',
+      '當有可匯出的 HQ 分析資料時，匯出會直接下載到此裝置。',
     'No HQ analytics data to export yet.': '目前沒有可匯出的 HQ 分析資料。',
     'HQ analytics export copied to clipboard.': 'HQ 分析匯出內容已複製到剪貼簿。',
     'HQ analytics export downloaded.': 'HQ 分析匯出檔已下載。',
