@@ -14,6 +14,14 @@ String _tHqFeatureFlags(BuildContext context, String input) {
 
 const String _canonicalUnavailableLabel = 'Unavailable';
 
+String _canonicalizeFeatureFlagName(String value) {
+  final String normalized = value.trim();
+  if (normalized.isEmpty) {
+    return 'flag';
+  }
+  return normalized == 'miloos_loop' ? 'ai_help_loop' : normalized;
+}
+
 /// HQ Feature Flags page for managing feature toggles
 /// Based on docs/49_ROUTE_FLIP_TRACKER.md
 class HqFeatureFlagsPage extends StatefulWidget {
@@ -9345,7 +9353,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     try {
       await _workflowBridge.upsertFeatureFlag(<String, dynamic>{
         'id': flag.id,
-        'name': flag.name,
+        'name': _canonicalizeFeatureFlagName(flag.name),
         'description': flag.description,
         'enabled': enabled,
         'scope': flag.scope,
@@ -9778,7 +9786,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         .toList();
     return _FeatureFlag(
       id: (data['id'] as String?) ?? (data['name'] as String?) ?? 'flag',
-      name: (data['name'] as String?) ?? (data['id'] as String?) ?? 'flag',
+      name: _canonicalizeFeatureFlagName(
+        (data['name'] as String?) ?? (data['id'] as String?) ?? 'flag',
+      ),
       description: (data['description'] as String?) ?? '',
       isEnabled:
           (data['enabled'] as bool?) ?? (data['isEnabled'] as bool?) ?? false,

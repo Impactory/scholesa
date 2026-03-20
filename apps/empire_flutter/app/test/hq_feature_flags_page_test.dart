@@ -267,6 +267,38 @@ void main() {
   });
 
   testWidgets(
+      'hq feature flags page canonicalizes legacy loop names at the rendered surface',
+      (WidgetTester tester) async {
+    final _FakeWorkflowBridgeService workflowBridge =
+        _FakeWorkflowBridgeService(
+      flags: <Map<String, dynamic>>[
+        <String, dynamic>{
+          'id': 'flag-1',
+          'name': 'miloos_loop',
+          'description': 'Enable spoken AI help loop runtime',
+          'enabled': false,
+          'scope': 'global',
+        },
+      ],
+    );
+
+    await tester.pumpWidget(buildHarness(workflowBridge: workflowBridge));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('ai_help_loop'), findsOneWidget);
+    expect(find.text('miloos_loop'), findsNothing);
+
+    await tester.tap(find.byType(Switch));
+    await tester.pumpAndSettle();
+
+    expect(workflowBridge.recordedFlagUpdates, hasLength(1));
+    expect(workflowBridge.recordedFlagUpdates.single['name'], 'ai_help_loop');
+    expect(find.text('ai_help_loop enabled'), findsOneWidget);
+    expect(find.text('miloos_loop enabled'), findsNothing);
+  });
+
+  testWidgets(
       'hq feature flags page keeps the prior toggle state when save fails',
       (WidgetTester tester) async {
     final _FakeWorkflowBridgeService workflowBridge =

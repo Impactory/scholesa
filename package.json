@@ -16,6 +16,7 @@
     "typecheck": "tsc --noEmit",
     "lint:fix": "eslint . --fix",
     "test": "jest --runInBand",
+    "test:functions:workflow-feature-flags": "npm --prefix functions run test -- --runInBand src/workflowOps.featureFlags.test.ts",
     "test:e2e:web:install": "npx playwright install chromium",
     "test:e2e:web": "npx playwright test --config playwright.config.ts",
     "test:e2e:web:wcag": "npx playwright test --config playwright.config.ts --grep @wcag",
