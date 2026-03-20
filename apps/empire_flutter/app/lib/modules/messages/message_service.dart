@@ -160,8 +160,6 @@ class MessageService extends ChangeNotifier {
     } catch (e) {
       debugPrint('Error loading messages: $e');
       _error = 'Failed to load messages: $e';
-      _messages = <Message>[];
-      _conversations = <Conversation>[];
     } finally {
       _isLoading = false;
       notifyListeners();

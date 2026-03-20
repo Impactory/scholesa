@@ -54,14 +54,42 @@ class _NotificationsPageState extends State<NotificationsPage> {
               ),
             ],
           ),
-          body: notifications.isEmpty
-              ? _buildEmptyState()
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: notifications.length,
-                  itemBuilder: (BuildContext context, int index) =>
-                      _buildNotificationCard(notifications[index], service),
-                ),
+          body: _buildBody(service, notifications),
+        );
+      },
+    );
+  }
+
+  Widget _buildBody(MessageService service, List<Message> notifications) {
+    if (service.isLoading && notifications.isEmpty) {
+      return Center(
+        child: Text(
+          _tNotifications(context, 'Loading...'),
+          style: const TextStyle(color: ScholesaColors.textSecondary),
+        ),
+      );
+    }
+
+    if (service.error != null && notifications.isEmpty) {
+      return _buildLoadErrorState(service);
+    }
+
+    if (notifications.isEmpty) {
+      return _buildEmptyState();
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: notifications.length + (service.error != null ? 1 : 0),
+      itemBuilder: (BuildContext context, int index) {
+        if (service.error != null && index == 0) {
+          return _buildStaleDataBanner();
+        }
+        final int notificationIndex =
+            index - (service.error != null ? 1 : 0);
+        return _buildNotificationCard(
+          notifications[notificationIndex],
+          service,
         );
       },
     );
@@ -84,6 +112,80 @@ class _NotificationsPageState extends State<NotificationsPage> {
           Text(
             _tNotifications(context, 'You\'re all caught up!'),
             style: TextStyle(color: ScholesaColors.textSecondary),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoadErrorState(MessageService service) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Icon(
+              Icons.error_outline_rounded,
+              size: 64,
+              color: Colors.red.withValues(alpha: 0.7),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _tNotifications(
+                context,
+                'Notifications are temporarily unavailable',
+              ),
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: ScholesaColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _tNotifications(
+                context,
+                'We could not load notifications. Retry to check the current state.',
+              ),
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: ScholesaColors.textSecondary),
+            ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: service.loadMessages,
+              icon: const Icon(Icons.refresh_rounded),
+              label: Text(_tNotifications(context, 'Retry')),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStaleDataBanner() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.orange.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              _tNotifications(
+                context,
+                'Unable to refresh notifications right now. Showing the last successful data.',
+              ),
+              style: const TextStyle(color: ScholesaColors.textPrimary),
+            ),
           ),
         ],
       ),
