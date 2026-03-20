@@ -51,6 +51,81 @@ class _StubParentService extends ChangeNotifier implements ParentService {
   Future<void> loadParentData() async {}
 }
 
+class _ParentChildLoadSnapshot {
+  const _ParentChildLoadSnapshot({
+    this.learnerSummaries = const <LearnerSummary>[],
+    this.error,
+  });
+
+  final List<LearnerSummary> learnerSummaries;
+  final String? error;
+}
+
+class _SequencedParentService extends ChangeNotifier implements ParentService {
+  _SequencedParentService({
+    required this.parentId,
+    required List<_ParentChildLoadSnapshot> snapshots,
+    FirestoreService? firestoreService,
+  })  : _snapshots = snapshots,
+        firestoreService = firestoreService ??
+            FirestoreService(
+              firestore: FakeFirebaseFirestore(),
+              auth: _FakeFirebaseAuth(),
+            );
+
+  final List<_ParentChildLoadSnapshot> _snapshots;
+
+  @override
+  final FirestoreService firestoreService;
+
+  @override
+  final String parentId;
+
+  List<LearnerSummary> _learnerSummaries = <LearnerSummary>[];
+  bool _isLoading = false;
+  String? _error;
+  int _loadCalls = 0;
+
+  _ParentChildLoadSnapshot _snapshotFor(int index) {
+    if (_snapshots.isEmpty) {
+      return const _ParentChildLoadSnapshot();
+    }
+    final int resolvedIndex =
+        index < _snapshots.length ? index : _snapshots.length - 1;
+    return _snapshots[resolvedIndex];
+  }
+
+  @override
+  List<LearnerSummary> get learnerSummaries =>
+      List<LearnerSummary>.unmodifiable(_learnerSummaries);
+
+  @override
+  bool get isLoading => _isLoading;
+
+  @override
+  String? get error => _error;
+
+  @override
+  final BillingSummary? billingSummary = null;
+
+  @override
+  Future<void> loadParentData() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    final _ParentChildLoadSnapshot snapshot = _snapshotFor(_loadCalls++);
+    if (snapshot.error == null) {
+      _learnerSummaries = List<LearnerSummary>.from(snapshot.learnerSummaries);
+    } else {
+      _error = snapshot.error;
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+}
+
 AppState _buildParentState() {
   final AppState state = AppState();
   state.updateFromMeResponse(<String, dynamic>{
@@ -308,5 +383,58 @@ void main() {
     expect(requests.docs, hasLength(1));
     expect(requests.docs.single.data()['requestType'], 'parent_linked_learner_review');
     expect(requests.docs.single.data()['source'], 'parent_child_request_linked_learner_review');
+  });
+
+  testWidgets('parent child page shows an explicit unavailable state when learner details fail to load',
+      (WidgetTester tester) async {
+    await _pumpPage(
+      tester,
+      parentService: _SequencedParentService(
+        parentId: 'parent-1',
+        snapshots: const <_ParentChildLoadSnapshot>[
+          _ParentChildLoadSnapshot(error: 'learner detail unavailable'),
+        ],
+      ),
+      child: const ParentChildPage(learnerId: 'learner-1'),
+    );
+
+    expect(find.text('Unable to load learner details right now'), findsOneWidget);
+    expect(
+      find.text('We could not load this learner right now. Retry to check the current state.'),
+      findsOneWidget,
+    );
+    expect(find.text('This learner is not linked to your account right now.'), findsNothing);
+  });
+
+  testWidgets('parent child page keeps stale learner details visible when refresh fails',
+      (WidgetTester tester) async {
+    final _SequencedParentService parentService = _SequencedParentService(
+      parentId: 'parent-1',
+      snapshots: <_ParentChildLoadSnapshot>[
+        _ParentChildLoadSnapshot(
+          learnerSummaries: <LearnerSummary>[_sampleLearner()],
+        ),
+        const _ParentChildLoadSnapshot(error: 'refresh unavailable'),
+      ],
+    );
+
+    await _pumpPage(
+      tester,
+      parentService: parentService,
+      child: const ParentChildPage(learnerId: 'learner-1'),
+    );
+
+    expect(find.text('Ava Learner'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.refresh_rounded));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ava Learner'), findsOneWidget);
+    expect(
+      find.text(
+        'Unable to refresh learner details right now. Showing the last successful data.',
+      ),
+      findsOneWidget,
+    );
   });
 }

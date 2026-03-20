@@ -69,6 +69,11 @@ class _ParentChildPageState extends State<ParentChildPage> {
             backgroundColor: ScholesaColors.parent,
             foregroundColor: Colors.white,
             actions: <Widget>[
+              IconButton(
+                onPressed: service.loadParentData,
+                icon: const Icon(Icons.refresh_rounded),
+                tooltip: _t('Refresh'),
+              ),
               TextButton.icon(
                 onPressed: learner == null
                     ? null
@@ -120,7 +125,9 @@ class _ParentChildPageState extends State<ParentChildPage> {
     if (service.error != null && learner == null) {
       return _buildMessageState(
         title: _t('Unable to load learner details right now'),
-        body: service.error!,
+        body: _t(
+          'We could not load this learner right now. Retry to check the current state.',
+        ),
         actionLabel: _t('Retry'),
         onPressed: service.loadParentData,
       );
@@ -142,6 +149,10 @@ class _ParentChildPageState extends State<ParentChildPage> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: <Widget>[
+        if (service.error != null) ...<Widget>[
+          _buildStaleDataBanner(),
+          const SizedBox(height: 16),
+        ],
         _buildHeroCard(learner),
         const SizedBox(height: 16),
         _buildSnapshotGrid(learner),
@@ -154,6 +165,32 @@ class _ParentChildPageState extends State<ParentChildPage> {
         const SizedBox(height: 16),
         _buildUpcomingSection(learner),
       ],
+    );
+  }
+
+  Widget _buildStaleDataBanner() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.orange.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              _t(
+                'Unable to refresh learner details right now. Showing the last successful data.',
+              ),
+              style: const TextStyle(color: ScholesaColors.textPrimary),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

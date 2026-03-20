@@ -115,6 +115,10 @@ class ParentSurfaceI18n {
     'Child Detail': '孩子详情',
     'Open Family Dashboard': '打开家庭仪表板',
     'Unable to load learner details right now': '目前无法加载学习者详情',
+    'We could not load this learner right now. Retry to check the current state.':
+        '我们暂时无法加载该学习者。请重试以检查当前状态。',
+    'Unable to refresh learner details right now. Showing the last successful data.':
+        '目前无法刷新学习者详情。正在显示最近一次成功加载的数据。',
     'This learner is not linked to your account right now.': '该学习者目前未关联到你的账户。',
     'Request a linking review and we will check this learner connection for your family account.':
         '请发起关联审核，我们会检查此学习者与家庭账户的关联。',
@@ -322,6 +326,10 @@ class ParentSurfaceI18n {
     'Child Detail': '孩子詳情',
     'Open Family Dashboard': '開啟家庭儀表板',
     'Unable to load learner details right now': '目前無法載入學習者詳情',
+    'We could not load this learner right now. Retry to check the current state.':
+        '我們暫時無法載入該學習者。請重試以檢查目前狀態。',
+    'Unable to refresh learner details right now. Showing the last successful data.':
+        '目前無法重新整理學習者詳情。正在顯示最近一次成功載入的資料。',
     'This learner is not linked to your account right now.': '該學習者目前未連結到你的帳戶。',
     'Request a linking review and we will check this learner connection for your family account.':
         '請發起連結審核，我們會檢查此學習者與家庭帳戶的連結。',
