@@ -80,6 +80,7 @@ export interface WorkflowLoadResult {
   canCreate: boolean;
   canRefresh: boolean;
   createLabel: string;
+  guidanceText?: string | null;
   createConfig?: WorkflowFormDefinition | null;
 }
 
@@ -2268,6 +2269,7 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
           canCreate: true,
           canRefresh: true,
           createLabel: 'Generate KPI pack',
+          guidanceText: null,
           createConfig: buildCreateConfig('Generate KPI pack', 'Generate pack', [
             {
               name: 'period',
@@ -2883,6 +2885,7 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
           canCreate: true,
           canRefresh: true,
           createLabel: 'Run analytics operation',
+          guidanceText: 'Repair runs marked completed changed at least one stored document. Runs marked no-op executed successfully but verified zero document updates for the selected scope or time window.',
           createConfig: buildCreateConfig('Run analytics operation', 'Run operation', [
             {
               name: 'operation',
@@ -3499,7 +3502,7 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
       };
     }
     default:
-      return { records: [], canCreate: false, canRefresh: true, createLabel: 'Create', createConfig: null };
+      return { records: [], canCreate: false, canRefresh: true, createLabel: 'Create', guidanceText: null, createConfig: null };
   }
 }
 

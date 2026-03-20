@@ -55,6 +55,7 @@ export function WorkflowRoutePage({ routePath }: WorkflowRoutePageProps) {
     canCreate: false,
     canRefresh: true,
     createLabel: 'Create',
+    guidanceText: null,
     createConfig: null,
   });
   const [loading, setLoading] = useState(true);
@@ -246,6 +247,12 @@ export function WorkflowRoutePage({ routePath }: WorkflowRoutePageProps) {
             </button>
           )}
         </div>
+
+        {data.guidanceText ? (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900" data-testid="workflow-guidance">
+            {data.guidanceText}
+          </div>
+        ) : null}
 
         {createOpen && data.canCreate && (
           <div className="rounded-xl border border-app bg-app-surface p-4" data-testid="workflow-create-form">
