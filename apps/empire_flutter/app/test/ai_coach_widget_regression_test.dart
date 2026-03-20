@@ -241,7 +241,7 @@ void main() {
         findsOneWidget,
       );
       expect(
-        find.textContaining('Synthetic baseline is support only'),
+        find.textContaining('synthetic baseline helps with support'),
         findsOneWidget,
       );
     });
@@ -378,7 +378,7 @@ void main() {
         findsOneWidget,
       );
       expect(
-        find.textContaining('not learner evidence or mastery proof'),
+        find.textContaining('not learner evidence or proof of mastery'),
         findsOneWidget,
       );
     });

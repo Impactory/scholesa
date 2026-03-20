@@ -175,71 +175,120 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
     final String greeting = now.hour < 12
         ? 'Good morning'
         : (now.hour < 17 ? 'Good afternoon' : 'Good evening');
+    final Widget datePill = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: ScholesaColors.educator.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        _formatDate(now),
+        style: const TextStyle(
+          color: ScholesaColors.educator,
+          fontWeight: FontWeight.w600,
+          fontSize: 12,
+        ),
+      ),
+    );
+    final Widget sessionAction = SessionMenuHeaderAction(
+      foregroundColor: ScholesaColors.educator,
+      backgroundColor: Colors.white,
+    );
 
     return SafeArea(
       bottom: false,
       child: Padding(
         padding: const EdgeInsets.all(20),
-        child: Row(
-          children: <Widget>[
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: <Color>[ScholesaColors.educator, Color(0xFF10B981)],
+        child: LayoutBuilder(
+          builder: (BuildContext context, BoxConstraints constraints) {
+            final bool compactHeader = constraints.maxWidth < 420;
+
+            return Row(
+              crossAxisAlignment:
+                  compactHeader ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+              children: <Widget>[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: <Color>[ScholesaColors.educator, Color(0xFF10B981)],
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: <BoxShadow>[
+                      BoxShadow(
+                        color: ScholesaColors.educator.withValues(alpha: 0.3),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(Icons.today, color: Colors.white, size: 28),
                 ),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: <BoxShadow>[
-                  BoxShadow(
-                    color: ScholesaColors.educator.withValues(alpha: 0.3),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: const Icon(Icons.today, color: Colors.white, size: 28),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    _tEducatorToday(context, greeting),
-                    style: TextStyle(
-                        color: context.schTextSecondary, fontSize: 14),
-                  ),
-                  Text(
-                    _tEducatorToday(context, "Today's Schedule"),
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: ScholesaColors.educator,
+                const SizedBox(width: 16),
+                Expanded(
+                  child: compactHeader
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Text(
+                              _tEducatorToday(context, greeting),
+                              style: TextStyle(
+                                  color: context.schTextSecondary, fontSize: 14),
+                            ),
+                            Text(
+                              _tEducatorToday(context, "Today's Schedule"),
+                              style:
+                                  Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: ScholesaColors.educator,
+                                      ),
+                            ),
+                            const SizedBox(height: 10),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: <Widget>[
+                                datePill,
+                                sessionAction,
+                              ],
+                            ),
+                          ],
+                        )
+                      : Row(
+                          children: <Widget>[
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  Text(
+                                    _tEducatorToday(context, greeting),
+                                    style: TextStyle(
+                                        color: context.schTextSecondary, fontSize: 14),
+                                  ),
+                                  Text(
+                                    _tEducatorToday(context, "Today's Schedule"),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .headlineSmall
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          color: ScholesaColors.educator,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            datePill,
+                            const SizedBox(width: 12),
+                            sessionAction,
+                          ],
                         ),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: ScholesaColors.educator.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                _formatDate(now),
-                style: const TextStyle(
-                  color: ScholesaColors.educator,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 12,
                 ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            SessionMenuHeaderAction(
-              foregroundColor: ScholesaColors.educator,
-              backgroundColor: Colors.white,
-            ),
-          ],
+              ],
+            );
+          },
         ),
       ),
     );
