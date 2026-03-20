@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:nested/nested.dart';
@@ -390,5 +391,81 @@ void main() {
       _savedFileContent,
       contains('Weekly accountability adherence: 91.0%'),
     );
+  });
+
+  testWidgets('hq analytics export copies content when file export is unsupported',
+      (WidgetTester tester) async {
+    String? copiedText;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (MethodCall methodCall) async {
+        if (methodCall.method == 'Clipboard.setData') {
+          final Object? args = methodCall.arguments;
+          if (args is Map) {
+            copiedText = args['text'] as String?;
+          }
+        }
+        return null;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null);
+    });
+
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    ExportService.instance.debugSaveTextFile = ({
+      required String fileName,
+      required String content,
+      required String mimeType,
+    }) async {
+      throw UnsupportedError('File export is not supported on this platform.');
+    };
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: <SingleChildWidget>[
+          Provider<FirestoreService>.value(value: firestoreService),
+          ChangeNotifierProvider<AppState>.value(value: _buildHqState()),
+        ],
+        child: MaterialApp(
+          theme: ThemeData(
+            useMaterial3: true,
+            splashFactory: NoSplash.splashFactory,
+          ),
+          home: HqAnalyticsPage(
+            metricsLoader: ({String? siteId, String period = 'month'}) async {
+              return const TelemetryDashboardMetrics(
+                weeklyAccountabilityAdherenceRate: 91.0,
+                educatorReviewTurnaroundHoursAvg: 18.5,
+                educatorReviewWithinSlaRate: 87.0,
+                educatorReviewSlaHours: 48,
+                interventionHelpedRate: 72.0,
+                interventionTotal: 11,
+                attendanceTrend: <AttendanceTrendPoint>[],
+              );
+            },
+            kpiPacksLoader: ({String? siteId, int limit = 24}) async =>
+                <Map<String, dynamic>>[],
+            syntheticImportLoader: () async => null,
+          ),
+        ),
+      ),
+    );
+
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.download));
+    await tester.pumpAndSettle();
+
+    expect(find.text('HQ analytics export copied to clipboard.'), findsOneWidget);
+    expect(copiedText, contains('Export HQ Analytics'));
+    expect(copiedText, contains('Weekly accountability adherence: 91.0%'));
   });
 }

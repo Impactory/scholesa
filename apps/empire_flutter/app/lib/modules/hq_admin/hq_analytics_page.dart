@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/services.dart';
 
 import '../../auth/app_state.dart';
 import '../../i18n/shared_role_surface_i18n.dart';
@@ -1398,10 +1399,11 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
       return;
     }
     final String fileName = _analyticsExportFileName();
+    final String exportContent = _buildAnalyticsExport();
     try {
       final String? savedLocation = await ExportService.instance.saveTextFile(
         fileName: fileName,
-        content: _buildAnalyticsExport(),
+        content: exportContent,
       );
       if (savedLocation == null || !mounted) {
         return;
@@ -1418,6 +1420,26 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(_t('HQ analytics export downloaded.')),
+        ),
+      );
+    } on UnsupportedError catch (error) {
+      debugPrint(
+          'Export unsupported for HQ analytics export, copying content instead: $error');
+      await Clipboard.setData(ClipboardData(text: exportContent));
+      TelemetryService.instance.logEvent(
+        event: 'hq.analytics_export.copied',
+        metadata: <String, dynamic>{
+          'surface': 'hq_analytics',
+          'site': _selectedSite,
+          'period': _selectedPeriod,
+          'file_name': fileName,
+          'fallback': 'clipboard',
+        },
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_t('HQ analytics export copied to clipboard.')),
         ),
       );
     } catch (_) {
