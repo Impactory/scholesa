@@ -456,27 +456,40 @@ class _ParentChildPageState extends State<ParentChildPage> {
 
   Future<void> _exportPassport(LearnerSummary learner) async {
     final String content = _buildPassportExport(learner);
-    final String? savedLocation = await ExportService.instance.saveTextFile(
-      fileName: 'ideation-passport-${learner.learnerId}.txt',
-      content: content,
-    );
-    if (!mounted || savedLocation == null) {
-      return;
+    final String fileName = 'ideation-passport-${learner.learnerId}.txt';
+    try {
+      final String? savedLocation = await ExportService.instance.saveTextFile(
+        fileName: fileName,
+        content: content,
+      );
+      if (!mounted || savedLocation == null) {
+        return;
+      }
+      TelemetryService.instance.logEvent(
+        event: 'export.downloaded',
+        metadata: <String, dynamic>{
+          'module': 'parent_child',
+          'surface': 'passport_export',
+          'learner_id': learner.learnerId,
+          'file_name': fileName,
+        },
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_t('Ideation Passport downloaded.')),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_t('Unable to download Ideation Passport right now.')),
+          backgroundColor: ScholesaColors.error,
+        ),
+      );
     }
-    TelemetryService.instance.logEvent(
-      event: 'export.downloaded',
-      metadata: <String, dynamic>{
-        'module': 'parent_child',
-        'surface': 'passport_export',
-        'learner_id': learner.learnerId,
-        'file_name': 'ideation-passport-${learner.learnerId}.txt',
-      },
-    );
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(_t('Ideation Passport downloaded.')),
-      ),
-    );
   }
 
   String _buildPassportExport(LearnerSummary learner) {
