@@ -107,8 +107,7 @@ class LearnerSurfaceI18n {
     'Update your portfolio bio, goals, and featured highlights.':
         '更新你的作品集简介、目标和精选亮点。',
     'Cancel': '取消',
-    'Portfolio profile editing is not available in the app yet':
-        '应用内暂不支持编辑作品集资料',
+    'Update your portfolio profile in the app.': '在应用内更新你的作品集资料。',
     'Portfolio Headline': '作品集标题',
     'Current Goal': '当前目标',
     'Featured Highlight': '精选亮点',
@@ -118,8 +117,7 @@ class LearnerSurfaceI18n {
     'Save': '保存',
     'Share Portfolio': '分享作品集',
     'Create a secure share link for parents or mentors.': '为家长或导师创建一个安全的分享链接。',
-    'Portfolio share links are not available in the app yet':
-        '应用内暂不支持生成作品集分享链接',
+    'Copy a portfolio summary for sharing.': '复制作品集摘要以便分享。',
     'Portfolio summary copied for sharing.': '作品集摘要已复制，可直接分享。',
     'Generate Link': '生成链接',
     'Build a confident weekly shipping rhythm across Future Skills missions.':
@@ -304,8 +302,7 @@ class LearnerSurfaceI18n {
     'Update your portfolio bio, goals, and featured highlights.':
         '更新你的作品集簡介、目標與精選亮點。',
     'Cancel': '取消',
-    'Portfolio profile editing is not available in the app yet':
-        'App 內暫不支援編輯作品集資料',
+    'Update your portfolio profile in the app.': '在 App 內更新你的作品集資料。',
     'Portfolio Headline': '作品集標題',
     'Current Goal': '目前目標',
     'Featured Highlight': '精選亮點',
@@ -315,8 +312,7 @@ class LearnerSurfaceI18n {
     'Save': '儲存',
     'Share Portfolio': '分享作品集',
     'Create a secure share link for parents or mentors.': '為家長或導師建立安全的分享連結。',
-    'Portfolio share links are not available in the app yet':
-        'App 內暫不支援產生作品集分享連結',
+    'Copy a portfolio summary for sharing.': '複製作品集摘要以便分享。',
     'Portfolio summary copied for sharing.': '作品集摘要已複製，可直接分享。',
     'Generate Link': '產生連結',
     'Build a confident weekly shipping rhythm across Future Skills missions.':

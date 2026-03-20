@@ -136,8 +136,8 @@ const Map<String, String> _settingsZhCn = <String, String>{
   'Support request submitted.': '支持请求已提交。',
   'Unable to submit support request right now.': '目前无法提交支持请求。',
   'Send': '发送',
-    'Feedback sends through your email app so support can follow up with context.':
-      '反馈会通过你的邮件应用发送，以便支持团队结合上下文跟进。',
+  'Feedback is submitted in-app so support can follow up with context.':
+      '反馈会在应用内提交，以便支持团队结合上下文跟进。',
   'Feedback submitted.': '反馈已提交。',
   'Unable to submit feedback right now.': '目前无法提交反馈。',
   'Thanks for helping improve Scholesa.': '感谢你帮助改进 Scholesa。',
@@ -271,8 +271,8 @@ const Map<String, String> _settingsZhTw = <String, String>{
   'Support request submitted.': '支援請求已提交。',
   'Unable to submit support request right now.': '目前無法提交支援請求。',
   'Send': '傳送',
-    'Feedback sends through your email app so support can follow up with context.':
-      '回饋會透過你的郵件 App 傳送，讓支援團隊能結合情境跟進。',
+  'Feedback is submitted in-app so support can follow up with context.':
+      '回饋會在 App 內提交，讓支援團隊能結合情境跟進。',
   'Feedback submitted.': '回饋已提交。',
   'Unable to submit feedback right now.': '目前無法提交回饋。',
   'Thanks for helping improve Scholesa.': '感謝你協助改善 Scholesa。',
