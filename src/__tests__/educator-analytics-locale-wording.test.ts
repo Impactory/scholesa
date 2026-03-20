@@ -18,11 +18,13 @@ describe('educator analytics locale wording', () => {
     const traditionalChineseLocale = readLocaleJson('packages', 'i18n', 'locales', 'zh-TW.json');
     const thaiLocale = readLocaleJson('packages', 'i18n', 'locales', 'th.json');
 
-    expect(analyticsDashboardSource).toContain("t('analytics.educator.title')");
-    expect(analyticsDashboardSource).toContain("t('analytics.educator.subtitle')");
+    expect(analyticsDashboardSource).toContain("t('analytics.educator.loadError')");
+    expect(analyticsDashboardSource).toContain("t('analytics.educator.thisWeek')");
+    expect(analyticsDashboardSource).toContain("t('analytics.educator.thisMonth')");
     expect(analyticsDashboardSource).toContain("t('analytics.educator.table.title')");
     expect(analyticsDashboardSource).toContain("t('analytics.educator.atRiskTitle', { count: atRiskCount })");
     expect(analyticsDashboardSource).toContain("t('analytics.educator.csvHeaders.learnerName')");
+    expect(analyticsDashboardSource).toContain("t('analytics.educator.summary.totalLearners')");
 
     expect(simplifiedChineseLocale.meta.educatorAnalytics.title).toBe('学习数据看板 | Scholesa');
     expect(simplifiedChineseLocale.meta.educatorAnalytics.description).toBe('帮助老师查看学生参与度与学习动力的数据分析');
