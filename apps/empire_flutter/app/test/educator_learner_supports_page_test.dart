@@ -177,7 +177,12 @@ void main() {
     await tester.tap(find.text('Behavioral').last);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byType(DropdownButtonFormField).at(1));
+    final Finder priorityField = find.byWidgetPredicate(
+      (Widget widget) =>
+          widget is DropdownButtonFormField &&
+          widget.decoration.labelText == 'Priority',
+    );
+    await tester.tap(priorityField);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Medium').last);
     await tester.pumpAndSettle();
