@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../services/firestore_service.dart';
 import '../../services/export_service.dart';
@@ -821,6 +822,7 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
     final AppState? appState = context.read<AppState?>();
     final String? siteId = appState?.activeSiteId;
     final String? educatorId = appState?.userId;
+    final String printablePlan = _buildPrintablePracticePlan();
     if (siteId == null ||
         siteId.isEmpty ||
         educatorId == null ||
@@ -831,7 +833,6 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
     try {
       final FirestoreService firestoreService =
           context.read<FirestoreService>();
-      final String printablePlan = _buildPrintablePracticePlan();
       await firestoreService.firestore.collection('practiceExports').add(
         <String, dynamic>{
           'siteId': siteId,
@@ -864,6 +865,27 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
         SnackBar(
           content: Text(
             _tEducatorLearners(context, 'Practice plan downloaded.'),
+          ),
+          backgroundColor: ScholesaColors.educator,
+        ),
+      );
+    } on UnsupportedError catch (error) {
+      debugPrint(
+          'Export unsupported for educator practice plan download, copying plan instead: $error');
+      await Clipboard.setData(ClipboardData(text: printablePlan));
+      TelemetryService.instance.logEvent(
+        event: 'educator.practice_plan_export.copied',
+        metadata: <String, dynamic>{
+          'learner_id': learner.id,
+          'lane': _selectedLane,
+          'fallback': 'clipboard',
+        },
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tEducatorLearners(context, 'Practice plan copied for sharing.'),
           ),
           backgroundColor: ScholesaColors.educator,
         ),

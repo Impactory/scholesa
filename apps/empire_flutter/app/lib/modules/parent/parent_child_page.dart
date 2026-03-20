@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -566,6 +567,25 @@ class _ParentChildPageState extends State<ParentChildPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(_t('Ideation Passport downloaded.')),
+        ),
+      );
+    } on UnsupportedError catch (error) {
+      debugPrint(
+          'Export unsupported for parent passport download, copying summary instead: $error');
+      await Clipboard.setData(ClipboardData(text: content));
+      TelemetryService.instance.logEvent(
+        event: 'parent.passport_export.copied',
+        metadata: <String, dynamic>{
+          'learner_id': learner.learnerId,
+          'fallback': 'clipboard',
+        },
+      );
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_t('Ideation Passport copied for sharing.')),
         ),
       );
     } catch (_) {

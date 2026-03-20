@@ -1,6 +1,7 @@
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -263,5 +264,81 @@ void main() {
 
     expect(find.text('Learner unavailable'), findsWidgets);
     expect(find.text('Unknown'), findsNothing);
+  });
+
+  testWidgets(
+      'educator learner detail copies practice plan when file export is unsupported',
+      (WidgetTester tester) async {
+    String? copiedText;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (MethodCall methodCall) async {
+        if (methodCall.method == 'Clipboard.setData') {
+          final Object? args = methodCall.arguments;
+          if (args is Map) {
+            copiedText = args['text'] as String?;
+          }
+        }
+        return null;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null);
+    });
+
+    ExportService.instance.debugSaveTextFile = ({
+      required String fileName,
+      required String content,
+      required String mimeType,
+    }) async {
+      throw UnsupportedError('File export is not supported on this platform.');
+    };
+    addTearDown(() => ExportService.instance.debugSaveTextFile = null);
+
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedLearner(firestore);
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final EducatorService educatorService = EducatorService(
+      firestoreService: firestoreService,
+      educatorId: 'educator-1',
+      siteId: 'site-1',
+    );
+
+    await tester.pumpWidget(
+      _buildHarness(
+        child: const EducatorLearnersPage(),
+        providers: <SingleChildWidget>[
+          Provider<FirestoreService>.value(value: firestoreService),
+          ChangeNotifierProvider<AppState>.value(value: _buildEducatorState()),
+          ChangeNotifierProvider<EducatorService>.value(value: educatorService),
+        ],
+      ),
+    );
+
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('Learner One'));
+    await tester.pump(const Duration(milliseconds: 400));
+
+    await tester.dragUntilVisible(
+      find.text('Export practice plan'),
+      find.byType(Scrollable).last,
+      const Offset(0, -120),
+    );
+    await tester.pump(const Duration(milliseconds: 200));
+    await tester.ensureVisible(find.text('Export practice plan'));
+    await tester.tap(find.text('Export practice plan'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Practice plan copied for sharing.'), findsOneWidget);
+    expect(copiedText, contains('Learner: Learner One'));
+    expect(copiedText, contains('Differentiation lane: Scaffolded lane'));
+
+    final practiceExports = await firestore.collection('practiceExports').get();
+    expect(practiceExports.docs.length, 1);
   });
 }

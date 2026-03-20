@@ -177,6 +177,7 @@ class ParentSurfaceI18n {
     'Portfolio share request submitted.': '作品分享请求已提交。',
     'Unable to submit portfolio share request right now.': '目前无法提交作品分享请求。',
     'Portfolio summary downloaded.': '作品摘要已下载。',
+    'Portfolio summary copied for sharing.': '作品摘要已复制，可直接分享。',
     'Unable to download portfolio summary right now.': '目前无法下载作品摘要。',
     'Support requests are unavailable right now.': '目前暂时无法提交支持请求。',
     'We could not open your email app right now. Contact support@scholesa.com with your site ID and portfolio item details.':
@@ -190,6 +191,7 @@ class ParentSurfaceI18n {
     'Portfolio Snapshot': '作品集快照',
     'Ideation Passport': '创意护照',
     'Ideation Passport downloaded.': '创意护照已下载。',
+    'Ideation Passport copied for sharing.': '创意护照已复制，可直接分享。',
     'Unable to download Ideation Passport right now.': '目前无法下载创意护照。',
     'Artifacts': '作品',
     'Published': '已发布',
@@ -372,6 +374,7 @@ class ParentSurfaceI18n {
     'Portfolio share request submitted.': '作品分享請求已提交。',
     'Unable to submit portfolio share request right now.': '目前無法提交作品分享請求。',
     'Portfolio summary downloaded.': '作品摘要已下載。',
+    'Portfolio summary copied for sharing.': '作品摘要已複製，可直接分享。',
     'Unable to download portfolio summary right now.': '目前無法下載作品摘要。',
     'Support requests are unavailable right now.': '目前暫時無法提交支援請求。',
     'We could not open your email app right now. Contact support@scholesa.com with your site ID and portfolio item details.':
@@ -385,6 +388,7 @@ class ParentSurfaceI18n {
     'Portfolio Snapshot': '作品集快照',
     'Ideation Passport': '創意護照',
     'Ideation Passport downloaded.': '創意護照已下載。',
+    'Ideation Passport copied for sharing.': '創意護照已複製，可直接分享。',
     'Unable to download Ideation Passport right now.': '目前無法下載創意護照。',
     'Artifacts': '作品',
     'Published': '已發佈',

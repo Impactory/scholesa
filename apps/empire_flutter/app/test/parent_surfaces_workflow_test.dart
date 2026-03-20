@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -373,6 +374,56 @@ void main() {
           contains('Portfolio Item ID: learner-1-activity-1'));
       expect(_savedFileContent, contains('Title: Build a Robot'));
       expect(_savedFileContent, contains('Description: Linked Update'));
+    });
+
+    testWidgets('portfolio page copies summary when file export is unsupported',
+        (WidgetTester tester) async {
+      String? copiedText;
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (MethodCall methodCall) async {
+          if (methodCall.method == 'Clipboard.setData') {
+            final Object? args = methodCall.arguments;
+            if (args is Map) {
+              copiedText = args['text'] as String?;
+            }
+          }
+          return null;
+        },
+      );
+      addTearDown(() {
+        tester.binding.defaultBinaryMessenger
+            .setMockMethodCallHandler(SystemChannels.platform, null);
+      });
+
+      ExportService.instance.debugSaveTextFile = ({
+        required String fileName,
+        required String content,
+        required String mimeType,
+      }) async {
+        throw UnsupportedError('File export is not supported on this platform.');
+      };
+
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+      await _seedParentData(firestore);
+
+      await _pumpPage(
+        tester,
+        firestore: firestore,
+        home: const ParentPortfolioPage(),
+      );
+
+      await tester.ensureVisible(find.text('Build a Robot').first);
+      await tester.tap(find.text('Build a Robot').first);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Download Summary'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Portfolio summary copied for sharing.'), findsOneWidget);
+      expect(copiedText, contains('Portfolio Item ID: learner-1-activity-1'));
+      expect(copiedText, contains('Title: Build a Robot'));
+      expect(copiedText, contains('Description: Linked Update'));
     });
 
     testWidgets(

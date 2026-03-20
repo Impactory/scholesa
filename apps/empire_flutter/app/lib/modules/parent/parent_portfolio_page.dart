@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../i18n/parent_surface_i18n.dart';
 import '../../services/export_service.dart';
@@ -706,6 +707,7 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
     required String requestType,
   }) async {
     final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+    final String portfolioSummary = _buildPortfolioSummary(context, item);
     try {
       if (requestType == 'share') {
         final String requestId = await _submitPortfolioShareRequest(
@@ -730,7 +732,7 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
 
       final String? savedLocation = await ExportService.instance.saveTextFile(
         fileName: _portfolioSummaryFileName(item),
-        content: _buildPortfolioSummary(context, item),
+        content: portfolioSummary,
       );
       if (savedLocation == null || !mounted) {
         return;
@@ -747,6 +749,23 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
       messenger.showSnackBar(
         SnackBar(
           content: Text(_t('Portfolio summary downloaded.')),
+        ),
+      );
+    } on UnsupportedError catch (error) {
+      debugPrint(
+          'Export unsupported for parent portfolio download, copying summary instead: $error');
+      await Clipboard.setData(ClipboardData(text: portfolioSummary));
+      TelemetryService.instance.logEvent(
+        event: 'parent.portfolio_download.copied',
+        metadata: <String, dynamic>{
+          'item_id': item.id,
+          'fallback': 'clipboard',
+        },
+      );
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(_t('Portfolio summary copied for sharing.')),
         ),
       );
     } catch (error) {

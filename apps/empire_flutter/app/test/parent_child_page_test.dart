@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
@@ -202,14 +203,60 @@ void main() {
     expect(savedFileContent, contains('Ava Learner'));
   });
 
-  testWidgets('parent child page fails closed when passport export is unavailable',
+  testWidgets('parent child page copies passport when file export is unsupported',
       (WidgetTester tester) async {
+    String? copiedText;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (MethodCall methodCall) async {
+        if (methodCall.method == 'Clipboard.setData') {
+          final Object? args = methodCall.arguments;
+          if (args is Map) {
+            copiedText = args['text'] as String?;
+          }
+        }
+        return null;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null);
+    });
+
     ExportService.instance.debugSaveTextFile = ({
       required String fileName,
       required String content,
       required String mimeType,
     }) async {
       throw UnsupportedError('File export is not supported on this platform.');
+    };
+
+    await _pumpPage(
+      tester,
+      parentService: _StubParentService(
+        parentId: 'parent-1',
+        learnerSummaries: <LearnerSummary>[_sampleLearner()],
+      ),
+      child: const ParentChildPage(learnerId: 'learner-1'),
+    );
+
+    await tester.tap(find.text('Export Passport'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ideation Passport copied for sharing.'),
+        findsOneWidget);
+    expect(copiedText, contains('Ideation Passport'));
+    expect(copiedText, contains('Learner: Ava Learner'));
+  });
+
+  testWidgets('parent child page fails closed when passport export hits a non-export error',
+      (WidgetTester tester) async {
+    ExportService.instance.debugSaveTextFile = ({
+      required String fileName,
+      required String content,
+      required String mimeType,
+    }) async {
+      throw StateError('storage unavailable');
     };
 
     await _pumpPage(
