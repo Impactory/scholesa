@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
 import '../../services/firestore_service.dart';
@@ -95,6 +96,7 @@ class EducatorMissionPlansPage extends StatefulWidget {
     this.missionPlanCreator,
     this.missionPlanUpdater,
     this.missionPlanArchiver,
+    this.sharedPreferences,
     super.key,
   });
 
@@ -102,6 +104,7 @@ class EducatorMissionPlansPage extends StatefulWidget {
   final EducatorMissionPlanCreator? missionPlanCreator;
   final EducatorMissionPlanUpdater? missionPlanUpdater;
   final EducatorMissionPlanArchiver? missionPlanArchiver;
+  final SharedPreferences? sharedPreferences;
 
   @override
   State<EducatorMissionPlansPage> createState() =>
@@ -109,14 +112,23 @@ class EducatorMissionPlansPage extends StatefulWidget {
 }
 
 class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
+  static const String _allPillarsFilter = '__all_pillars__';
+  static const List<String> _supportedPillarFilters = <String>[
+    _allPillarsFilter,
+    'Future Skills',
+    'Leadership & Agency',
+    'Impact & Innovation',
+  ];
+
   List<_MissionPlan> _missionPlans = <_MissionPlan>[];
   bool _isLoading = false;
-  String _pillarFilter = 'All Pillars';
+  String _pillarFilter = _allPillarsFilter;
   String? _loadError;
 
   @override
   void initState() {
     super.initState();
+    _loadSavedPillarFilter();
     _loadMissionPlans();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<EducatorService>().loadLearners();
@@ -124,12 +136,73 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
   }
 
   List<_MissionPlan> get _filteredMissionPlans {
-    if (_pillarFilter == 'All Pillars') {
+    if (_pillarFilter == _allPillarsFilter) {
       return _missionPlans;
     }
     return _missionPlans
         .where((_MissionPlan mission) => mission.pillar == _pillarFilter)
         .toList();
+  }
+
+  Future<SharedPreferences> _prefs() async {
+    return widget.sharedPreferences ?? await SharedPreferences.getInstance();
+  }
+
+  String _pillarFilterPrefsKey() {
+    final AppState? appState = context.read<AppState?>();
+    final String userId = appState?.userId?.trim() ?? 'anonymous';
+    final String siteId = appState?.activeSiteId?.trim() ?? 'global';
+    return 'educator_mission_plans.pillar_filter.$userId.$siteId';
+  }
+
+  String _normalizeSavedPillarFilter(String? raw) {
+    final String candidate = (raw ?? '').trim();
+    if (_supportedPillarFilters.contains(candidate)) {
+      return candidate;
+    }
+    if (candidate == 'All Pillars') {
+      return _allPillarsFilter;
+    }
+    return _allPillarsFilter;
+  }
+
+  String _pillarFilterLabel(String value) {
+    if (value == _allPillarsFilter) {
+      return _tEducatorMissionPlans(context, 'All Pillars');
+    }
+    return _tEducatorMissionPlans(context, value);
+  }
+
+  Future<void> _loadSavedPillarFilter() async {
+    try {
+      final SharedPreferences prefs = await _prefs();
+      final String restored =
+          _normalizeSavedPillarFilter(prefs.getString(_pillarFilterPrefsKey()));
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _pillarFilter = restored;
+      });
+    } catch (error) {
+      debugPrint('Failed to load mission plans pillar filter: $error');
+    }
+  }
+
+  Future<void> _applyPillarFilter(String nextFilter) async {
+    final String normalized = _normalizeSavedPillarFilter(nextFilter);
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _pillarFilter = normalized;
+    });
+    try {
+      final SharedPreferences prefs = await _prefs();
+      await prefs.setString(_pillarFilterPrefsKey(), normalized);
+    } catch (error) {
+      debugPrint('Failed to save mission plans pillar filter: $error');
+    }
   }
 
   @override
@@ -459,30 +532,32 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   _buildFilterOption(
-                    label: _tEducatorMissionPlans(context, 'All Pillars'),
+                    value: _allPillarsFilter,
+                    label: _pillarFilterLabel(_allPillarsFilter),
                     selected: selected,
                     onChanged: (String value) {
                       setLocalState(() => selected = value);
                     },
                   ),
                   _buildFilterOption(
-                    label: _tEducatorMissionPlans(context, 'Future Skills'),
+                    value: 'Future Skills',
+                    label: _pillarFilterLabel('Future Skills'),
                     selected: selected,
                     onChanged: (String value) {
                       setLocalState(() => selected = value);
                     },
                   ),
                   _buildFilterOption(
-                    label:
-                        _tEducatorMissionPlans(context, 'Leadership & Agency'),
+                    value: 'Leadership & Agency',
+                    label: _pillarFilterLabel('Leadership & Agency'),
                     selected: selected,
                     onChanged: (String value) {
                       setLocalState(() => selected = value);
                     },
                   ),
                   _buildFilterOption(
-                    label:
-                        _tEducatorMissionPlans(context, 'Impact & Innovation'),
+                    value: 'Impact & Innovation',
+                    label: _pillarFilterLabel('Impact & Innovation'),
                     selected: selected,
                     onChanged: (String value) {
                       setLocalState(() => selected = value);
@@ -504,8 +579,11 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                   child: Text(_tEducatorMissionPlans(context, 'Close')),
                 ),
                 ElevatedButton(
-                  onPressed: () {
-                    setState(() => _pillarFilter = selected);
+                  onPressed: () async {
+                    await _applyPillarFilter(selected);
+                    if (!context.mounted) {
+                      return;
+                    }
                     Navigator.pop(context);
                   },
                   child: Text(_tEducatorMissionPlans(context, 'Apply')),
@@ -519,14 +597,15 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
   }
 
   Widget _buildFilterOption({
+    required String value,
     required String label,
     required String selected,
     required ValueChanged<String> onChanged,
   }) {
     return ListTile(
-      onTap: () => onChanged(label),
+      onTap: () => onChanged(value),
       leading: Icon(
-        selected == label
+        selected == value
             ? Icons.radio_button_checked
             : Icons.radio_button_unchecked,
       ),
