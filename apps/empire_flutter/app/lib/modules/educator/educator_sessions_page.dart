@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
 import '../../services/firestore_service.dart';
+import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
 import '../../auth/app_state.dart';
@@ -319,6 +320,11 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
                   ),
                 ],
               ),
+            ),
+            const SizedBox(width: 12),
+            SessionMenuHeaderAction(
+              foregroundColor: ScholesaColors.educator,
+              backgroundColor: Colors.white,
             ),
           ],
         ),

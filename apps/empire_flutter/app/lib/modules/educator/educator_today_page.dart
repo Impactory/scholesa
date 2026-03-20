@@ -235,7 +235,10 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
               ),
             ),
             const SizedBox(width: 12),
-            const SessionMenuButton(),
+            SessionMenuHeaderAction(
+              foregroundColor: ScholesaColors.educator,
+              backgroundColor: Colors.white,
+            ),
           ],
         ),
       ),

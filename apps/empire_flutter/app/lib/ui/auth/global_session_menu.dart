@@ -106,6 +106,37 @@ class SessionMenuButton extends StatelessWidget {
   }
 }
 
+class SessionMenuHeaderAction extends StatelessWidget {
+  const SessionMenuHeaderAction({
+    super.key,
+    this.navigatorKey,
+    this.foregroundColor,
+    this.backgroundColor,
+  });
+
+  final GlobalKey<NavigatorState>? navigatorKey;
+  final Color? foregroundColor;
+  final Color? backgroundColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool showLabel = MediaQuery.sizeOf(context).width >= 960;
+    final Color resolvedBackground = backgroundColor ??
+        Theme.of(context).colorScheme.surface.withValues(alpha: 0.92);
+
+    return Material(
+      elevation: 0,
+      color: resolvedBackground,
+      borderRadius: BorderRadius.circular(999),
+      child: SessionMenuButton(
+        navigatorKey: navigatorKey,
+        foregroundColor: foregroundColor,
+        showLabel: showLabel,
+      ),
+    );
+  }
+}
+
 class GlobalSessionMenu extends StatelessWidget {
   const GlobalSessionMenu({
     super.key,

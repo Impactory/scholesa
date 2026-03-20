@@ -9,6 +9,7 @@ import '../../runtime/runtime.dart';
 import '../../auth/app_state.dart';
 import '../../i18n/bos_coaching_i18n.dart';
 import '../../i18n/workflow_surface_i18n.dart';
+import '../../ui/auth/global_session_menu.dart';
 import 'educator_models.dart';
 import 'educator_service.dart';
 
@@ -205,6 +206,11 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
                   ),
                 ],
               ),
+            ),
+            const SizedBox(width: 12),
+            SessionMenuHeaderAction(
+              foregroundColor: ScholesaColors.educator,
+              backgroundColor: Colors.white,
             ),
           ],
         ),
