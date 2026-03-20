@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../i18n/workflow_surface_i18n.dart';
 import '../../auth/app_state.dart';
@@ -675,10 +676,11 @@ class _HqBillingPageState extends State<HqBillingPage>
       return;
     }
     final String fileName = _financialExportFileName();
+    final String exportContent = _buildFinancialExport();
     try {
       final String? savedLocation = await ExportService.instance.saveTextFile(
         fileName: fileName,
-        content: _buildFinancialExport(),
+        content: exportContent,
       );
       if (savedLocation == null || !mounted) {
         return;
@@ -696,6 +698,28 @@ class _HqBillingPageState extends State<HqBillingPage>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(_tHqBilling(context, 'Financial export downloaded.')),
+        ),
+      );
+    } on UnsupportedError catch (_) {
+      if (!mounted) {
+        return;
+      }
+      await Clipboard.setData(ClipboardData(text: exportContent));
+      TelemetryService.instance.logEvent(
+        event: 'export.copied',
+        metadata: <String, dynamic>{
+          'module': 'hq_billing',
+          'surface': 'header',
+          'site': _selectedSite,
+          'period': _selectedPeriod,
+          'file_name': fileName,
+        },
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tHqBilling(context, 'Financial export copied to clipboard.'),
+          ),
         ),
       );
     } catch (_) {
@@ -1127,6 +1151,28 @@ class _InvoiceCard extends StatelessWidget {
         SnackBar(
           content: Text(
             _tHqBilling(context, 'Invoice reminder downloaded.'),
+          ),
+        ),
+      );
+    } on UnsupportedError catch (_) {
+      if (!context.mounted) {
+        return;
+      }
+      await Clipboard.setData(ClipboardData(text: reminder));
+      TelemetryService.instance.logEvent(
+        event: 'export.copied',
+        metadata: <String, dynamic>{
+          'module': 'hq_billing',
+          'surface': 'invoice_card',
+          'invoice_id': invoice['id'],
+          'status': invoice['status'],
+          'file_name': fileName,
+        },
+      );
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            _tHqBilling(context, 'Invoice reminder copied to clipboard.'),
           ),
         ),
       );

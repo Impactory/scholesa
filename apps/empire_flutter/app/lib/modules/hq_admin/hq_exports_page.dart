@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../domain/models.dart';
 import '../../domain/repositories.dart';
@@ -509,6 +510,7 @@ class _HqExportsPageState extends State<HqExportsPage> {
       fileName: _bundleFileName('analytics'),
       content: buffer.toString().trim(),
       successMessage: _tHqExports(context, 'Analytics export downloaded.'),
+      copiedMessage: _tHqExports(context, 'Analytics export copied to clipboard.'),
       failureMessage:
           _tHqExports(context, 'Unable to download the analytics export right now.'),
     );
@@ -553,6 +555,7 @@ class _HqExportsPageState extends State<HqExportsPage> {
       fileName: _bundleFileName('billing'),
       content: buffer.toString().trim(),
       successMessage: _tHqExports(context, 'Billing export downloaded.'),
+      copiedMessage: _tHqExports(context, 'Billing export copied to clipboard.'),
       failureMessage:
           _tHqExports(context, 'Unable to download the billing export right now.'),
     );
@@ -584,6 +587,7 @@ class _HqExportsPageState extends State<HqExportsPage> {
       fileName: _bundleFileName('audit'),
       content: buffer.toString().trim(),
       successMessage: _tHqExports(context, 'Audit export downloaded.'),
+      copiedMessage: _tHqExports(context, 'Audit export copied to clipboard.'),
       failureMessage:
           _tHqExports(context, 'Unable to download the audit export right now.'),
     );
@@ -607,6 +611,7 @@ class _HqExportsPageState extends State<HqExportsPage> {
       fileName: _bundleFileName('safety'),
       content: buffer.toString().trim(),
       successMessage: _tHqExports(context, 'Safety export downloaded.'),
+      copiedMessage: _tHqExports(context, 'Safety export copied to clipboard.'),
       failureMessage:
           _tHqExports(context, 'Unable to download the safety export right now.'),
     );
@@ -650,6 +655,7 @@ class _HqExportsPageState extends State<HqExportsPage> {
       fileName: _bundleFileName('full'),
       content: buffer.toString().trim(),
       successMessage: _tHqExports(context, 'Full export bundle downloaded.'),
+      copiedMessage: _tHqExports(context, 'Full export bundle copied to clipboard.'),
       failureMessage:
           _tHqExports(context, 'Unable to download the full export bundle right now.'),
     );
@@ -661,6 +667,7 @@ class _HqExportsPageState extends State<HqExportsPage> {
     required String fileName,
     required String content,
     required String successMessage,
+    required String copiedMessage,
     required String failureMessage,
   }) async {
     try {
@@ -681,6 +688,22 @@ class _HqExportsPageState extends State<HqExportsPage> {
       );
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(successMessage)),
+      );
+    } on UnsupportedError catch (_) {
+      if (!mounted) {
+        return;
+      }
+      await Clipboard.setData(ClipboardData(text: content));
+      TelemetryService.instance.logEvent(
+        event: 'export.copied',
+        metadata: <String, dynamic>{
+          'module': module,
+          'bundle_id': bundleId,
+          'file_name': fileName,
+        },
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(copiedMessage)),
       );
     } catch (_) {
       if (!mounted) {
