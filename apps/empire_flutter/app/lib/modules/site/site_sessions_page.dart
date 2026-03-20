@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../auth/app_state.dart';
 import '../../i18n/site_surface_i18n.dart';
 import '../../services/firestore_service.dart';
@@ -20,18 +21,27 @@ typedef SiteSessionsLoader = Future<Map<String, List<SiteSessionData>>> Function
 class SiteSessionsPage extends StatefulWidget {
   const SiteSessionsPage({
     this.sessionsLoader,
+    this.sharedPreferences,
     super.key,
   });
 
   final SiteSessionsLoader? sessionsLoader;
+  final SharedPreferences? sharedPreferences;
 
   @override
   State<SiteSessionsPage> createState() => _SiteSessionsPageState();
 }
 
 class _SiteSessionsPageState extends State<SiteSessionsPage> {
+  static const List<String> _supportedViewModes = <String>[
+    'day',
+    'week',
+    'month',
+  ];
+
   DateTime _selectedDate = DateTime.now();
   String _viewMode = 'week';
+  SharedPreferences? _prefsCache;
   final Map<String, List<SiteSessionData>> _sessionsByTime =
       <String, List<SiteSessionData>>{};
   bool _isLoading = false;
@@ -40,10 +50,66 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _restoreSavedViewMode();
+      if (!mounted) {
+        return;
+      }
       _logScheduleViewed(trigger: 'page_open');
       _loadSessions();
     });
+  }
+
+  Future<SharedPreferences> _prefs() async {
+    final SharedPreferences? injected = widget.sharedPreferences;
+    if (injected != null) {
+      return injected;
+    }
+    return _prefsCache ??= await SharedPreferences.getInstance();
+  }
+
+  String _viewModePrefsKey() {
+    final AppState? appState = _maybeAppState();
+    final String siteKey = appState?.activeSiteId?.trim().isNotEmpty == true
+        ? appState!.activeSiteId!.trim()
+        : (appState?.siteIds.isNotEmpty == true
+            ? appState!.siteIds.first.trim()
+            : 'no-site');
+    return 'site_sessions.view_mode.$siteKey';
+  }
+
+  String _normalizeViewMode(String? value) {
+    if (value == null) {
+      return 'week';
+    }
+    final String normalized =
+        value.trim().toLowerCase().replaceAll('-', '_').replaceAll(' ', '_');
+    if (_supportedViewModes.contains(normalized)) {
+      return normalized;
+    }
+    return 'week';
+  }
+
+  Future<void> _restoreSavedViewMode() async {
+    final SharedPreferences prefs = await _prefs();
+    final String restoredMode =
+        _normalizeViewMode(prefs.getString(_viewModePrefsKey()));
+    if (!mounted) {
+      return;
+    }
+    setState(() => _viewMode = restoredMode);
+  }
+
+  Future<void> _setViewMode(String value, {required String trigger}) async {
+    final String normalized = _normalizeViewMode(value);
+    final SharedPreferences prefs = await _prefs();
+    await prefs.setString(_viewModePrefsKey(), normalized);
+    if (!mounted) {
+      return;
+    }
+    setState(() => _viewMode = normalized);
+    _logScheduleViewed(trigger: trigger);
+    await _loadSessions();
   }
 
   void _logScheduleViewed({required String trigger}) {
@@ -67,10 +133,62 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
     required String trigger,
   }) async {
     setState(() {
-      _selectedDate = nextDate;
+      _selectedDate = DateUtils.dateOnly(nextDate);
     });
     _logScheduleViewed(trigger: trigger);
     await _loadSessions();
+  }
+
+  List<DateTime> _datesForActiveRange() {
+    final DateTime base = DateUtils.dateOnly(_selectedDate);
+    switch (_viewMode) {
+      case 'day':
+        return <DateTime>[base];
+      case 'month':
+        final DateTime monthStart = DateTime(base.year, base.month, 1);
+        final DateTime nextMonth = DateTime(base.year, base.month + 1, 1);
+        final int dayCount = nextMonth.difference(monthStart).inDays;
+        return List<DateTime>.generate(
+          dayCount,
+          (int index) => monthStart.add(Duration(days: index)),
+        );
+      case 'week':
+      default:
+        final DateTime weekStart =
+            base.subtract(Duration(days: base.weekday - 1));
+        return List<DateTime>.generate(
+          7,
+          (int index) => weekStart.add(Duration(days: index)),
+        );
+    }
+  }
+
+  DateTime _previousRangeDate() {
+    switch (_viewMode) {
+      case 'day':
+        return _selectedDate.subtract(const Duration(days: 1));
+      case 'month':
+        return DateTime(_selectedDate.year, _selectedDate.month - 1, 1);
+      case 'week':
+      default:
+        return _selectedDate.subtract(const Duration(days: 7));
+    }
+  }
+
+  DateTime _nextRangeDate() {
+    switch (_viewMode) {
+      case 'day':
+        return _selectedDate.add(const Duration(days: 1));
+      case 'month':
+        return DateTime(_selectedDate.year, _selectedDate.month + 1, 1);
+      case 'week':
+      default:
+        return _selectedDate.add(const Duration(days: 7));
+    }
+  }
+
+  String _slotLabelForDate(DateTime date, String timeLabel) {
+    return '${_getDayAbbrev(date.weekday)} ${date.month}/${date.day} • $timeLabel';
   }
 
   _SessionConflict? _findSessionConflict(_NewSessionResult result) {
@@ -266,8 +384,7 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
                       'view_mode': 'day',
                     },
                   );
-                  setState(() => _viewMode = 'day');
-                  _logScheduleViewed(trigger: 'view_mode_day');
+                  _setViewMode('day', trigger: 'view_mode_day');
                 },
               ),
             ),
@@ -285,8 +402,7 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
                       'view_mode': 'week',
                     },
                   );
-                  setState(() => _viewMode = 'week');
-                  _logScheduleViewed(trigger: 'view_mode_week');
+                  _setViewMode('week', trigger: 'view_mode_week');
                 },
               ),
             ),
@@ -304,8 +420,7 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
                       'view_mode': 'month',
                     },
                   );
-                  setState(() => _viewMode = 'month');
-                  _logScheduleViewed(trigger: 'view_mode_month');
+                  _setViewMode('month', trigger: 'view_mode_month');
                 },
               ),
             ),
@@ -316,10 +431,57 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
   }
 
   Widget _buildCalendarStrip() {
-    final DateTime today = DateTime.now();
+    if (_viewMode == 'month') {
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: context.schSurfaceMuted,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: <Widget>[
+              IconButton(
+                onPressed: () async {
+                  await _updateSelectedDate(
+                    _previousRangeDate(),
+                    trigger: 'navigate_previous_month',
+                  );
+                },
+                icon: const Icon(Icons.chevron_left),
+              ),
+              Expanded(
+                child: Text(
+                  _formatSelectedDate(),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+              IconButton(
+                onPressed: () async {
+                  await _updateSelectedDate(
+                    _nextRangeDate(),
+                    trigger: 'navigate_next_month',
+                  );
+                },
+                icon: const Icon(Icons.chevron_right),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final DateTime today = DateUtils.dateOnly(DateTime.now());
+    final DateTime weekAnchor = DateUtils.dateOnly(_selectedDate);
     final List<DateTime> weekDays = List<DateTime>.generate(
       7,
-      (int i) => today.subtract(Duration(days: today.weekday - 1 - i)),
+      (int i) =>
+          weekAnchor.subtract(Duration(days: weekAnchor.weekday - 1 - i)),
     );
 
     return Padding(
@@ -337,8 +499,10 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
                 },
               );
               await _updateSelectedDate(
-                _selectedDate.subtract(const Duration(days: 7)),
-                trigger: 'navigate_previous_week',
+                _previousRangeDate(),
+                trigger: _viewMode == 'day'
+                    ? 'navigate_previous_day'
+                    : 'navigate_previous_week',
               );
             },
             icon: const Icon(Icons.chevron_left),
@@ -422,8 +586,9 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
                 },
               );
               await _updateSelectedDate(
-                _selectedDate.add(const Duration(days: 7)),
-                trigger: 'navigate_next_week',
+                _nextRangeDate(),
+                trigger:
+                    _viewMode == 'day' ? 'navigate_next_day' : 'navigate_next_week',
               );
             },
             icon: const Icon(Icons.chevron_right),
@@ -489,7 +654,7 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
                       (String mode) => ChoiceChip(
                         label: Text(mode.toUpperCase()),
                         selected: _viewMode == mode,
-                        onSelected: (_) {
+                        onSelected: (_) async {
                           TelemetryService.instance.logEvent(
                             event: 'cta.clicked',
                             metadata: <String, dynamic>{
@@ -499,8 +664,10 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
                               'view_mode': mode,
                             },
                           );
-                          setState(() => _viewMode = mode);
-                          _logScheduleViewed(trigger: 'filter_view_mode');
+                          await _setViewMode(
+                            mode,
+                            trigger: 'filter_view_mode',
+                          );
                           Navigator.pop(sheetContext);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
@@ -564,6 +731,20 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
     ];
     final String month =
         _tSiteSessions(context, months[_selectedDate.month - 1]);
+    if (_viewMode == 'month') {
+      return '$month ${_selectedDate.year}';
+    }
+    if (_viewMode == 'week') {
+      final DateTime weekStart =
+          _selectedDate.subtract(Duration(days: _selectedDate.weekday - 1));
+      final DateTime weekEnd = weekStart.add(const Duration(days: 6));
+      final String startMonth = _tSiteSessions(context, months[weekStart.month - 1]);
+      final String endMonth = _tSiteSessions(context, months[weekEnd.month - 1]);
+      if (weekStart.month == weekEnd.month) {
+        return '$startMonth ${weekStart.day}-${weekEnd.day}, ${weekEnd.year}';
+      }
+      return '$startMonth ${weekStart.day} - $endMonth ${weekEnd.day}, ${weekEnd.year}';
+    }
     return '$month ${_selectedDate.day}, ${_selectedDate.year}';
   }
 
@@ -659,11 +840,21 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
       _loadError = null;
     });
     try {
+      final SiteSessionsLoader loader =
+          widget.sessionsLoader ?? _loadSessionsFromFirestore;
       final Map<String, List<SiteSessionData>> grouped =
-          await (widget.sessionsLoader ?? _loadSessionsFromFirestore)(
-        context,
-        _selectedDate,
-      );
+          <String, List<SiteSessionData>>{};
+      for (final DateTime date in _datesForActiveRange()) {
+        final Map<String, List<SiteSessionData>> daily =
+            await loader(context, date);
+        daily.forEach((String timeLabel, List<SiteSessionData> sessions) {
+          final String slotLabel = _viewMode == 'day'
+              ? timeLabel
+              : _slotLabelForDate(date, timeLabel);
+          grouped.putIfAbsent(slotLabel, () => <SiteSessionData>[])
+            ..addAll(sessions);
+        });
+      }
 
       if (!mounted) return;
       setState(() {
@@ -959,9 +1150,24 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
   }
 
   int _timeSortKey(String label) {
-    final DateTime? parsed = _dateWithTimeLabel(DateTime.now(), label);
+    final RegExp datedRegex = RegExp(
+      r'^(?:[^\d]*?)?(\d{1,2})\/(\d{1,2})\s+•\s+(\d{1,2}:\d{2}\s*[AP]M)$',
+      caseSensitive: false,
+    );
+    final Match? datedMatch = datedRegex.firstMatch(label.trim());
+    if (datedMatch != null) {
+      final int month = int.tryParse(datedMatch.group(1) ?? '') ?? 1;
+      final int day = int.tryParse(datedMatch.group(2) ?? '') ?? 1;
+      final DateTime baseDate = DateTime(_selectedDate.year, month, day);
+      final DateTime? parsed =
+          _dateWithTimeLabel(baseDate, datedMatch.group(3) ?? '');
+      if (parsed != null) {
+        return parsed.millisecondsSinceEpoch ~/ 60000;
+      }
+    }
+    final DateTime? parsed = _dateWithTimeLabel(_selectedDate, label);
     if (parsed == null) return 24 * 60;
-    return parsed.hour * 60 + parsed.minute;
+    return parsed.millisecondsSinceEpoch ~/ 60000;
   }
 
   DateTime? _dateWithTimeLabel(DateTime baseDate, String label) {
