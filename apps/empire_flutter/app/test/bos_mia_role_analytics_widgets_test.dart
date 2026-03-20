@@ -41,8 +41,8 @@ AppState _buildAppState({
 }
 
 void main() {
-  group('MiloOS role analytics regressions', () {
-    testWidgets('learner today renders MiloOS learning loop card',
+  group('role analytics regressions', () {
+    testWidgets('learner today renders learning support snapshot card',
         (WidgetTester tester) async {
       final FirestoreService firestoreService = FirestoreService(
         firestore: FakeFirebaseFirestore(),
@@ -87,18 +87,18 @@ void main() {
       await tester.pump(const Duration(milliseconds: 200));
 
       await tester.scrollUntilVisible(
-        find.text('MiloOS Learning Loop'),
+        find.text('Learning Support Snapshot'),
         300,
         scrollable: find.byType(Scrollable).first,
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('MiloOS Learning Loop'), findsOneWidget);
-      expect(find.textContaining('Latest individual improvement signal'),
+      expect(find.text('Learning Support Snapshot'), findsOneWidget);
+      expect(find.textContaining('Latest verified learning signals for this learner'),
           findsOneWidget);
     });
 
-    testWidgets('educator today renders MiloOS learner loop card',
+    testWidgets('educator today renders class support snapshot card',
         (WidgetTester tester) async {
       final FakeFirebaseFirestore fakeFirestore = FakeFirebaseFirestore();
       await fakeFirestore.collection('users').doc('educator-test-1').set(
@@ -149,15 +149,15 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       await tester.scrollUntilVisible(
-        find.text('MiloOS Class Insights'),
+        find.text('Class Support Snapshot'),
         300,
         scrollable: find.byType(Scrollable).first,
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('MiloOS Class Insights'), findsOneWidget);
+      expect(find.text('Class Support Snapshot'), findsOneWidget);
       expect(
-        find.textContaining('Class learning signals, learners who may need support'),
+        find.textContaining('Verified class learning signals, learners who may need support'),
         findsOneWidget,
       );
     });

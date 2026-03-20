@@ -183,7 +183,7 @@ void main() {
 
       expect(find.text('家庭仪表板'), findsOneWidget);
       expect(find.text('学习支柱'), findsOneWidget);
-      expect(find.text('家庭学习循环'), findsOneWidget);
+      expect(find.text('家庭学习概览'), findsOneWidget);
     });
 
     testWidgets('parent summary localizes unavailable learner labels in zh-CN',
@@ -212,7 +212,7 @@ void main() {
 
       expect(find.text('日程'), findsOneWidget);
       expect(find.text('所有學習者'), findsOneWidget);
-      expect(find.text('家庭日程循環'), findsOneWidget);
+      expect(find.text('家庭日程概覽'), findsOneWidget);
     });
 
     testWidgets('parent portfolio renders zh-CN strings',

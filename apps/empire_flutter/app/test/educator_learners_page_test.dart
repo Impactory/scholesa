@@ -225,7 +225,7 @@ void main() {
 
     expect(
       find.text(
-        'Synthetic MiloOS preview only. Do not treat this as classroom evidence or learner growth.',
+        'Synthetic preview only. Do not treat this as classroom evidence or learner growth.',
       ),
       findsOneWidget,
     );

@@ -317,7 +317,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
-      expect(find.text('MiloOS Class Insights'), findsOneWidget);
+      expect(find.text('Class Support Snapshot'), findsOneWidget);
       expect(find.text('Learners Who May Need Support'), findsOneWidget);
       expect(find.textContaining('Avery Chen'), findsOneWidget);
       expect(find.text('View Support List'), findsOneWidget);
@@ -432,7 +432,7 @@ void main() {
 
       expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
       expect(find.byType(EducatorTodayPage), findsOneWidget);
-      expect(find.text('MiloOS Class Insights'), findsOneWidget);
+      expect(find.text('Class Support Snapshot'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
 
@@ -446,7 +446,7 @@ void main() {
           home: Scaffold(
             body: SingleChildScrollView(
               child: BosClassInsightsCard(
-                title: 'MiloOS Class Insights',
+                title: 'Class Support Snapshot',
                 subtitle:
                   'Class learning signals, learners who may need support, and active understanding checks',
                 emptyLabel: 'No class insights yet',

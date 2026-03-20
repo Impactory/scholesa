@@ -38,9 +38,9 @@ void main() {
             theme: _testTheme,
             home: Scaffold(
               body: BosLearnerLoopInsightsCard(
-                title: 'MiloOS Learning Loop',
-                subtitle: 'Latest individual improvement signal',
-                emptyLabel: 'No learner loop data yet',
+                title: 'Learning Support Snapshot',
+                subtitle: 'Latest verified learning signals for this learner',
+                emptyLabel: 'No learning support snapshot yet',
                 learnerId: 'learner-1',
                 learnerName: 'Avery Chen',
                 insightsLoader: ({
@@ -86,10 +86,10 @@ void main() {
           theme: _testTheme,
           home: Scaffold(
             body: BosClassInsightsCard(
-              title: 'MiloOS Class Insights',
+              title: 'Class Support Snapshot',
                 subtitle:
-                  'Class learning signals, learners who may need support, and active understanding checks',
-              emptyLabel: 'No class insights yet',
+                  'Verified class learning signals, learners who may need support, and active understanding checks',
+              emptyLabel: 'No class support snapshot yet',
               sessionOccurrenceId: 'occ-1',
               siteId: 'site-1',
               learnerNamesById: const <String, String>{},
@@ -152,9 +152,9 @@ void main() {
             theme: _testTheme,
             home: Scaffold(
               body: BosLearnerLoopInsightsCard(
-                title: 'MiloOS Learning Loop',
-                subtitle: 'Latest individual improvement signal',
-                emptyLabel: 'No learner loop data yet',
+                title: 'Learning Support Snapshot',
+                subtitle: 'Latest verified learning signals for this learner',
+                emptyLabel: 'No learning support snapshot yet',
                 learnerId: 'learner-1',
                 learnerName: 'Avery Chen',
                 insightsLoader: ({
@@ -197,7 +197,7 @@ void main() {
 
       expect(
         find.text(
-          'Synthetic MiloOS preview only. Do not treat this as classroom evidence or learner growth.',
+          'Synthetic preview only. Do not treat this as classroom evidence or learner growth.',
         ),
         findsOneWidget,
       );
@@ -210,10 +210,10 @@ void main() {
           theme: _testTheme,
           home: Scaffold(
             body: BosClassInsightsCard(
-              title: 'MiloOS Class Insights',
+              title: 'Class Support Snapshot',
                 subtitle:
-                  'Class learning signals, learners who may need support, and active understanding checks',
-              emptyLabel: 'No class insights yet',
+                  'Verified class learning signals, learners who may need support, and active understanding checks',
+              emptyLabel: 'No class support snapshot yet',
               sessionOccurrenceId: 'occ-1',
               siteId: 'site-1',
               learnerNamesById: const <String, String>{
@@ -258,7 +258,7 @@ void main() {
 
       expect(
         find.text(
-          'Synthetic MiloOS preview only. Do not treat this as classroom evidence or learner growth.',
+          'Synthetic preview only. Do not treat this as classroom evidence or learner growth.',
         ),
         findsOneWidget,
       );
