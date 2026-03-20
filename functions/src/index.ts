@@ -28,6 +28,7 @@ import {
   handleTtsSpeak,
   __voiceSystemInternals,
 } from './voiceSystem';
+import { applyKidFriendlyConversationalTone } from './aiCoachTone';
 
 admin.initializeApp();
 
@@ -1212,32 +1213,6 @@ async function generateCoachResponseWithInference(input: {
     safetyReasonCode: llmPayload?.safetyReasonCode ?? 'none',
     confidence: understanding.confidence,
   };
-}
-
-function applyKidFriendlyConversationalTone(
-  message: string,
-  displayName: string,
-  personaHint?: string,
-): string {
-  const trimmed = (message || '').replace(/\s+/g, ' ').trim();
-  if (!trimmed) {
-    return `${displayName}, you’re doing fine. Let’s take one small step together. What do you want to try first?`;
-  }
-
-  const encouragementRegex = /\b(great|good|nice|awesome|well done|you can do this|you've got this|let’s|i’m here|we’ll)\b/i;
-  const hasEncouragement = encouragementRegex.test(trimmed);
-  const hasQuestion = /\?/.test(trimmed);
-  const skipFollowupQuestion = /no\s+question/i.test(personaHint ?? '');
-  const normalized = trimmed
-    .replace(/^hello\s+[^,]+,?\s*this is your ai coach\.?\s*/i, '')
-    .replace(/^hello\s+/i, '');
-
-  let shaped = hasEncouragement ? normalized : `${displayName}, nice effort. ${normalized}`;
-  if (!hasQuestion && !skipFollowupQuestion) {
-    shaped = `${shaped} What feels like the best first move?`;
-  }
-
-  return shaped;
 }
 
 export const genAiCoach = onCall(async (request) => {
