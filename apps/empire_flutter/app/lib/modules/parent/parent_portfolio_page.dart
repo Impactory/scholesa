@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../i18n/parent_surface_i18n.dart';
 import '../../services/export_service.dart';
 import '../../services/firestore_service.dart';
@@ -15,7 +16,9 @@ import 'parent_service.dart';
 /// Parent portfolio page for viewing learner's work and achievements
 /// Based on docs/01_SUPREME_SPEC_EMPIRE_PLATFORM.md - Portfolio features
 class ParentPortfolioPage extends StatefulWidget {
-  const ParentPortfolioPage({super.key});
+  const ParentPortfolioPage({super.key, this.sharedPreferences});
+
+  final SharedPreferences? sharedPreferences;
 
   @override
   State<ParentPortfolioPage> createState() => _ParentPortfolioPageState();
@@ -23,7 +26,14 @@ class ParentPortfolioPage extends StatefulWidget {
 
 class _ParentPortfolioPageState extends State<ParentPortfolioPage>
     with SingleTickerProviderStateMixin {
+  static const List<String> _portfolioTabs = <String>[
+    'all',
+    'projects',
+    'badges',
+  ];
+
   late TabController _tabController;
+  SharedPreferences? _prefsCache;
   bool _showAiCoach = false;
   static const String _canonicalLearnerUnavailableLabel = 'Learner unavailable';
 
@@ -45,7 +55,17 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) {
+        return;
+      }
+      _persistSelectedTab(_tabNameForIndex(_tabController.index));
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _restoreSavedViewState();
+      if (!mounted) {
+        return;
+      }
       context.read<ParentService>().loadParentData();
     });
   }
@@ -54,6 +74,92 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  Future<SharedPreferences> _prefs() async {
+    final SharedPreferences? injected = widget.sharedPreferences;
+    if (injected != null) {
+      return injected;
+    }
+    return _prefsCache ??= await SharedPreferences.getInstance();
+  }
+
+  String _viewPrefsScope(AppState appState) {
+    final String parentKey = appState.userId?.trim().isNotEmpty == true
+        ? appState.userId!.trim()
+        : 'anonymous';
+    final String siteKey = appState.activeSiteId?.trim().isNotEmpty == true
+        ? appState.activeSiteId!.trim()
+        : 'no-site';
+    return '$parentKey.$siteKey';
+  }
+
+  String _selectedTabPrefsKey(AppState appState) {
+    return 'parent_portfolio.selected_tab.${_viewPrefsScope(appState)}';
+  }
+
+  String _showAiCoachPrefsKey(AppState appState) {
+    return 'parent_portfolio.show_ai_coach.${_viewPrefsScope(appState)}';
+  }
+
+  String _normalizeTabName(String? value) {
+    if (value == null) {
+      return _portfolioTabs.first;
+    }
+    final String normalized =
+        value.trim().toLowerCase().replaceAll('-', '_').replaceAll(' ', '_');
+    if (_portfolioTabs.contains(normalized)) {
+      return normalized;
+    }
+    return _portfolioTabs.first;
+  }
+
+  String _tabNameForIndex(int index) {
+    if (index < 0 || index >= _portfolioTabs.length) {
+      return _portfolioTabs.first;
+    }
+    return _portfolioTabs[index];
+  }
+
+  int _tabIndexForName(String value) {
+    final int index = _portfolioTabs.indexOf(_normalizeTabName(value));
+    return index >= 0 ? index : 0;
+  }
+
+  Future<void> _restoreSavedViewState() async {
+    final AppState appState = context.read<AppState>();
+    final SharedPreferences prefs = await _prefs();
+    final bool restoredShowAiCoach =
+        prefs.getBool(_showAiCoachPrefsKey(appState)) ?? false;
+    final int restoredTabIndex = _tabIndexForName(
+      prefs.getString(_selectedTabPrefsKey(appState)) ?? _portfolioTabs.first,
+    );
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _showAiCoach = restoredShowAiCoach;
+      _tabController.index = restoredTabIndex;
+    });
+  }
+
+  Future<void> _persistSelectedTab(String value) async {
+    final AppState appState = context.read<AppState>();
+    final SharedPreferences prefs = await _prefs();
+    await prefs.setString(
+      _selectedTabPrefsKey(appState),
+      _normalizeTabName(value),
+    );
+  }
+
+  Future<void> _setShowAiCoach(bool value) async {
+    final AppState appState = context.read<AppState>();
+    final SharedPreferences prefs = await _prefs();
+    await prefs.setBool(_showAiCoachPrefsKey(appState), value);
+    if (!mounted) {
+      return;
+    }
+    setState(() => _showAiCoach = value);
   }
 
   @override
@@ -1007,12 +1113,13 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
                   _showAiCoach ? Icons.expand_less : Icons.expand_more,
                 ),
                 onPressed: () {
-                  setState(() => _showAiCoach = !_showAiCoach);
+                  final bool nextValue = !_showAiCoach;
+                  _setShowAiCoach(nextValue);
                   TelemetryService.instance.logEvent(
                     event: 'cta.clicked',
                     metadata: <String, dynamic>{
                       'module': 'parent_portfolio',
-                      'cta': 'parent_ai_${_showAiCoach ? 'show' : 'hide'}',
+                      'cta': 'parent_ai_${nextValue ? 'show' : 'hide'}',
                       'surface': 'portfolio_header',
                     },
                   );
@@ -1030,7 +1137,50 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
     final LearningRuntimeProvider? runtime =
         context.read<LearningRuntimeProvider?>();
     if (runtime == null) {
-      return const SizedBox.shrink();
+      final Color parentColor = ScholesaColors.parentGradient.colors.first;
+      return Container(
+        margin: const EdgeInsets.only(top: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: parentColor.withValues(alpha: 0.05),
+          border: Border.all(
+            color: parentColor.withValues(alpha: 0.1),
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Icon(
+              Icons.info_outline_rounded,
+              color: parentColor,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    _t('AI guidance unavailable right now.'),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _t('Your learner snapshots and saved portfolio evidence are still available while AI guidance reconnects.'),
+                    style: TextStyle(
+                      color: ScholesaColors.textSecondary,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
     }
 
     final Color parentColor = ScholesaColors.parentGradient.colors.first;

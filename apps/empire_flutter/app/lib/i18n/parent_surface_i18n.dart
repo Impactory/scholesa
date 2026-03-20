@@ -188,6 +188,9 @@ class ParentSurfaceI18n {
     'Completed by': '完成者',
     'Getting AI Guidance': '获取 AI 指导',
     'Get personalized coaching on supporting your child': '获取关于如何支持孩子的个性化指导',
+    'AI guidance unavailable right now.': '目前无法使用 AI 指导。',
+    'Your learner snapshots and saved portfolio evidence are still available while AI guidance reconnects.':
+        '在 AI 指导恢复连接期间，你的学习者快照和已保存的作品证据仍然可用。',
     'Hide AI Guidance': '隐藏 AI 指导',
     'Capability Snapshot': '能力快照',
     'Portfolio Snapshot': '作品集快照',
@@ -387,6 +390,9 @@ class ParentSurfaceI18n {
     'Completed by': '完成者',
     'Getting AI Guidance': '取得 AI 指導',
     'Get personalized coaching on supporting your child': '取得關於如何支持孩子的個人化指導',
+    'AI guidance unavailable right now.': '目前無法使用 AI 指導。',
+    'Your learner snapshots and saved portfolio evidence are still available while AI guidance reconnects.':
+        '在 AI 指導重新連線期間，你的學習者快照與已儲存的作品證據仍然可用。',
     'Hide AI Guidance': '隱藏 AI 指導',
     'Capability Snapshot': '能力快照',
     'Portfolio Snapshot': '作品集快照',
