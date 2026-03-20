@@ -51,7 +51,7 @@ Scholesa becomes a **closed-loop learning runtime** (BOS) with an **integrity ga
 ### Step B — Add MVL gating (proof-of-work)
 - Add MVL gates before:
   - checkpoint submission
-  - AI coach “use” actions (copy, apply suggestion)
+  - AI help “use” actions (copy, apply suggestion)
   - portfolio publish/share actions
 - Add contestability UI (“Why am I seeing this?” + “Request teacher review”)
 
@@ -106,7 +106,7 @@ Scholesa becomes a **closed-loop learning runtime** (BOS) with an **integrity ga
 ## 4) Phase alignment
 This plan **does not delete** your existing phase roadmap; it **re-anchors** it:
 - Phase 2/3 become “learning runtime + collaboration signals”
-- Phase 4 becomes “Integrity-first AI Coach (MVL-aware)”
+- Phase 4 becomes “Integrity-first AI Help (MVL-aware)”
 - Phase 7 becomes “BOS-ready teacher analytics derived from orchestration logs”
 
 ---

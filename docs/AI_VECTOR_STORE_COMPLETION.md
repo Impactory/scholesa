@@ -9,7 +9,7 @@
 
 ### 1. ✅ Vector Store Indexing (vectorStore.ts)
 
-**Feature:** Semantic search infrastructure for AI coach context retrieval
+**Feature:** Semantic search infrastructure for AI help context retrieval
 
 **Implementations:**
 
@@ -23,7 +23,7 @@ static async indexAllRubrics(): Promise<number>
 - Generates 1536-dim embeddings using OpenAI text-embedding-3-small
 - Stores in vector DB with metadata (gradeBand, missionId, skillIds)
 - Returns count of indexed rubrics
-- **Use case:** AI coach retrieves relevant rubric criteria when helping students
+- **Use case:** AI help retrieves relevant rubric criteria when helping students
 
 #### B. Exemplar Indexing (`indexAllExemplars()`)
 ```typescript
@@ -33,7 +33,7 @@ static async indexAllExemplars(): Promise<number>
 - Processes high-quality student work in batches
 - Includes mission context and educator notes in embedding
 - Stores with learner ID and skill associations
-- **Use case:** AI coach shows students examples of excellent work
+- **Use case:** AI help shows students examples of excellent work
 
 #### C. Misconception Indexing (`indexMisconceptions()`)
 ```typescript
@@ -45,7 +45,7 @@ static async indexMisconceptions(): Promise<number>
   - Loops (Programming, 4-6)
   - Fractions (Mathematics, K-3)
 - Includes topic, reasoning, correct understanding, and teaching strategy
-- **Use case:** AI coach recognizes when students have common misconceptions
+- **Use case:** AI help recognizes when students have common misconceptions
 
 #### D. Default Misconception Seeding
 ```typescript
@@ -70,10 +70,10 @@ const useVectorSearch = true; // ✅ Vector store with indexing now implemented
 ```
 
 **How it works:**
-1. User asks AI coach a question
+1. User asks AI help a question
 2. System generates embedding for question
 3. Vector search finds top 5 most similar documents (rubrics, exemplars, misconceptions)
-4. AI coach uses retrieved context to give accurate, relevant answer
+4. AI help uses retrieved context to give accurate, relevant answer
 5. Fallback to keyword search if vector search fails
 
 **Benefits:**
@@ -293,7 +293,7 @@ console.log(`Indexed:
 `);
 ```
 
-### For AI Coach: Retrieve Context
+### For AI Help: Retrieve Context
 ```typescript
 import { RetrievalService } from '@/src/lib/ai/retrievalService';
 
@@ -376,7 +376,7 @@ where('parentIds', 'array-contains', currentParent.uid)
 - ✅ Vector search enabled in retrieval pipeline
 - ✅ Fallback to keyword search
 - ✅ Context ranking by relevance
-- ✅ Ready for AI coach integration
+- ✅ Ready for AI help integration
 
 **Analytics Dashboards:** 100% Complete
 - ✅ All 4 dashboards use real-time hooks

@@ -197,7 +197,7 @@ Exit criteria status:
 
 ## Non-Blocking But Required Workstreams
 
-### WS5: AI Coach Degradation UX
+### WS5: AI Help Degradation UX
 
 Severity: P2
 Current status: Partial
@@ -210,7 +210,7 @@ Problem:
 - AI runtime degradation remains a secondary UX quality item rather than a gold blocker.
 
 Tasks:
-1. Replace static “AI Coach not available” text with a structured fallback panel.
+1. Replace static “AI Help not available” text with a structured fallback panel.
 2. Explain why the feature is unavailable.
 3. Offer next actions: retry, continue without AI, or educator escalation when appropriate.
 4. Emit telemetry for runtime-unavailable states.
@@ -296,7 +296,7 @@ Completed in this pass:
 6. WS7 Direct Firestore Coupling Reduction for the audited overlay path
 
 Remaining recommended order:
-1. WS5 AI Coach Degradation UX
+1. WS5 AI Help Degradation UX
 2. WS8 Stale Copy and i18n Drift
 3. Native distribution proof for iOS and Android release pipelines
 

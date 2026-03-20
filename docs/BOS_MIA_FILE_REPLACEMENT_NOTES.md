@@ -30,7 +30,7 @@
 - Any security assumptions for immutable messaging → should be implemented with the same “append-only events” principle in `interactionEvents`
 
 ### 2.4 `PHASES_4_TO_10_ROADMAP.md` — superseded areas
-- AI Coach requirements → must now be MVL-aware and integrity-gated per `BOS_MIA_REWIRE_PLAN.md`
+- AI Help requirements → must now be MVL-aware and integrity-gated per `BOS_MIA_REWIRE_PLAN.md`
 - Teacher analytics requirements → must be derived from orchestration logs and features in `BOS_MIA_DATA_MODEL.md`
 
 ---

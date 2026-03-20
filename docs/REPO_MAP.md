@@ -51,7 +51,7 @@ This is the current source-of-truth map for the Scholesa repository. It replaces
 | `apps/empire_flutter/app/lib/dashboards/role_dashboard.dart` | Discoverability hub per role |
 | `apps/empire_flutter/app/lib/modules/` | User-facing and admin-facing Flutter pages by domain |
 | `apps/empire_flutter/app/lib/offline/` | Queueing, sync, offline status |
-| `apps/empire_flutter/app/lib/runtime/` | BOS, MIA, AI coach, and runtime surfaces |
+| `apps/empire_flutter/app/lib/runtime/` | BOS, MIA, AI help, and runtime surfaces |
 | `apps/empire_flutter/app/lib/services/` | Billing, telemetry, storage, export, API, and runtime service integrations |
 
 ## Backend and Compliance Layout

@@ -1,8 +1,8 @@
-# AI Coach Popup + Telemetry Implementation Summary
+# AI Help Popup + Telemetry Implementation Summary
 
 ## What Was Built (December 2025)
 
-### 1. AI Coach Popup Component ✅
+### 1. AI Help Popup Component ✅
 **File**: [src/components/sdt/AICoachPopup.tsx](src/components/sdt/AICoachPopup.tsx)
 
 A floating, always-available AI assistant in the lower-right corner that adapts to learner age and developmental stage.
@@ -11,7 +11,7 @@ A floating, always-available AI assistant in the lower-right corner that adapts 
 - **Minimizable floating button** - Stays accessible without blocking workspace
 - **Speech input** - Microphone button uses Web Speech API (perfect for younger learners)
 - **Text input** - Typed questions for older students
-- **Age-aware modes** - Automatically filters AI Coach modes based on grade level:
+- **Age-aware modes** - Automatically filters AI help modes based on grade level:
   - K-3: Hint only (teacher guidance required)
   - 4-6: Hint + Debug
   - 7-9: Hint + Rubric Check + Debug
@@ -76,7 +76,7 @@ Real-time behavioral tracking system to understand what motivates each learner.
 - **Competence signals**: evidence submitted/revised, checkpoints attempted/passed/failed
 - **Belonging signals**: showcases submitted, recognition given/received, peer feedback
 - **Reflection signals**: reflections submitted, effort/enjoyment rated
-- **AI Coach signals**: AI used, explain-back submitted
+- **AI help signals**: AI used, explain-back submitted
 - **Time signals**: sessions started/resumed/paused/completed
 
 **Motivation Metrics Computed**:
@@ -102,7 +102,7 @@ Real-time behavioral tracking system to understand what motivates each learner.
 
 **Motivation Insights Generated**:
 - "High first-time success rate → Suggest harder missions"
-- "Struggles with checkpoints but persists → Offer AI Coach nudge"
+- "Struggles with checkpoints but persists → Offer AI help nudge"
 - "Not giving peer feedback → Prompt to review teammate's work"
 
 **Collections**:
@@ -120,7 +120,7 @@ trackAICoachUse()
 
 ## Integration Guide
 
-### Add AI Coach Popup to Layout
+### Add AI Help Popup to Layout
 ```tsx
 'use client';
 
@@ -134,7 +134,7 @@ export function LearnerLayout({ children, siteId }) {
     <div>
       {children}
       
-      {/* Global AI Coach - always available */}
+      {/* Global AI Help - always available */}
       {profile && (
         <AICoachPopup
           learnerId={profile.uid}
@@ -209,7 +209,7 @@ function MissionWorkspace({ grade }) {
 
 ### 4. Adapt Experience
 - Low choice diversity → Surface more mission options
-- High revision persistence → Suggest AI Coach or scaffolding
+- High revision persistence → Suggest AI help or scaffolding
 - Low peer feedback → Nudge to review teammate's work
 - High first-time success → Recommend harder missions
 
@@ -271,7 +271,7 @@ SDT_IMPLEMENTATION_SUMMARY.md              (comprehensive update)
 ## Success Metrics
 
 ### Short-term (1-2 months)
-- [ ] 80%+ of learners use AI Coach at least once per week
+- [ ] 80%+ of learners use AI Help at least once per week
 - [ ] Explain-back completion rate >70% (shows understanding)
 - [ ] Age-appropriate mode usage (K-3 stays in 'hint' mode)
 - [ ] Telemetry coverage >95% of interactions
@@ -280,7 +280,7 @@ SDT_IMPLEMENTATION_SUMMARY.md              (comprehensive update)
 - [ ] Motivation insights accuracy >75% (educator validation)
 - [ ] Learners with low autonomy signals show +20% choice diversity after nudges
 - [ ] Reflection consistency improves from <50% to >70%
-- [ ] AI Coach reduces checkpoint revision rate by 15%
+- [ ] AI Help reduces checkpoint revision rate by 15%
 
 ### Long-term (6-12 months)
 - [ ] Predictive model forecasts motivation drop 2 weeks ahead (80% accuracy)
@@ -291,7 +291,7 @@ SDT_IMPLEMENTATION_SUMMARY.md              (comprehensive update)
 ---
 
 **Built with ❤️ for Scholesa Education 2.0 OS**  
-*December 2025 - AI Coach Popup + Age-Band Policies + Telemetry System*
+*December 2025 - AI Help Popup + Age-Band Policies + Telemetry System*
 
 <!-- TELEMETRY_WIRING:START -->
 ## Telemetry & End-to-End Wiring

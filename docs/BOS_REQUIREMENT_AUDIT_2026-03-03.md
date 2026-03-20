@@ -16,7 +16,7 @@ Overall status: **14 PASS / 0 PARTIAL / 0 GAP** for the highest-impact BOS requi
 
 | Requirement | Status | Evidence | Notes |
 |---|---|---|---|
-| AI Coach live behind stable API contract | PASS | `functions/src/index.ts` (`genAiCoach`), `apps/empire_flutter/app/lib/runtime/bos_service.dart` (`callAiCoach`) | Contract currently stable and consumed by client. |
+| AI Help live behind stable API contract | PASS | `functions/src/index.ts` (`genAiCoach`), `apps/empire_flutter/app/lib/runtime/bos_service.dart` (`callAiCoach`) | Contract currently stable and consumed by client. |
 | AI emits `ai_help_opened` + `ai_help_used` | PASS | `functions/src/index.ts` (`genAiCoach` event writes), `functions/src/voiceSystem.ts` (`recordBosInteractionEvent` for `ai_help_opened` / `ai_help_used`) | Emitted on callable and voice HTTP paths. |
 | Reliability + autonomy risk gates exist | PASS | `functions/src/index.ts` (`computeReliabilityRisk`, `computeAutonomyRisk`, `checkAndMaybeCreateMvl`), `functions/src/bosRuntime.ts` risk pipeline | Implemented as v1 heuristics and used in gating decisions. |
 | Learner timeline reconstructable (events → features → state → interventions → outcomes) | PASS | `functions/src/bosRuntime.ts` writes `interactionEvents`, `fdmFeatures`, `orchestrationStates`, `interventions`, `mvlEpisodes`; score/override/contestability endpoints | Core chain exists and is queryable. |
@@ -29,7 +29,7 @@ Overall status: **14 PASS / 0 PARTIAL / 0 GAP** for the highest-impact BOS requi
 | Sensor fusion: no single proxy for high-salience MVL | PASS | `functions/src/bosRuntime.ts` requires ≥2 risk sources before MVL trigger | Policy request cannot bypass corroboration rule. |
 | Weekly fairness audits collection (`fairnessAudits`) | PASS | `functions/src/bosRuntime.ts` (`bosWeeklyFairnessAudit`) | Weekly scheduler writes per-site fairness audit summaries. |
 | Privacy-minimized telemetry payloads | PASS | `functions/src/bosRuntime.ts` payload sanitizer, `functions/src/voiceSystem.ts` redaction + derived metrics | Good baseline in server paths. |
-| Conversational, kid-friendly spoken AI | PASS | `functions/src/index.ts` (`applyKidFriendlyConversationalTone`), `functions/src/voiceSystem.ts` persona + tone shaping, `apps/empire_flutter/app/lib/runtime/ai_coach_widget.dart` voice-first flow | Behavior implemented end-to-end for learner-facing responses. |
+| Conversational, kid-friendly spoken AI help | PASS | `functions/src/index.ts` (`applyKidFriendlyConversationalTone`), `functions/src/voiceSystem.ts` persona + tone shaping, `apps/empire_flutter/app/lib/runtime/ai_coach_widget.dart` voice-first flow | Behavior implemented end-to-end for learner-facing responses. |
 
 ## Residual Partial
 

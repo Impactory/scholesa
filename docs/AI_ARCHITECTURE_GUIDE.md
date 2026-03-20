@@ -418,7 +418,7 @@ const ids = await seedDefaultRubrics('admin-user-id');
 - Feedback recording → training dataset
 
 ### Manual Testing
-1. **AI Coach Popup**: Ask question → See response → Click "helpful" → Check log
+1. **AI Help Popup**: Ask question → See response → Click "helpful" → Check log
 2. **Rubric Retrieval**: Create mission-specific rubric → Request AI help → Verify context includes rubric
 3. **Redaction**: Student asks "My name is X" → Verify "STUDENT_A" sent to model
 4. **Guardrail**: Force low-confidence learner inference → Verify safe escalation instead of fabricated help
@@ -508,7 +508,7 @@ A: `await AIInteractionLogger.exportForTraining(siteId, { minHelpfulRating: 0.7 
 ## Next Steps
 
 1. **Seed rubrics**: Run `seedDefaultRubrics('your-user-id')`
-2. **Test AI Coach**: Update component with `studentName` prop
+2. **Test AI Help**: Update component with `studentName` prop
 3. **Verify logging**: Check `aiInteractionLogs` collection after AI request
 4. **Add feedback UI**: Ensure thumbs up/down buttons work
 5. **Plan vector store**: Choose Pinecone/Weaviate/Firestore Vector Search

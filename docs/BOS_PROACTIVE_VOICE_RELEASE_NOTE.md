@@ -1,7 +1,7 @@
 # BOS Proactive Voice Auto-Assist — Release Note
 
 ## Summary
-This release enables BOS to proactively trigger AI coaching with spoken guidance when learners appear to hesitate, and enables automatic spoken greeting when the assistant opens.
+This release enables BOS to proactively trigger AI help with spoken guidance when learners appear to hesitate, and enables automatic spoken greeting when the assistant opens.
 
 Current production policy: learner-facing spoken coaching may respond autonomously only when BOS/MIA returns certified confidence `>= 0.97`. Low-confidence, unavailable, or consent-blocked inference must escalate safely instead of speaking fabricated guidance.
 
@@ -9,12 +9,12 @@ Current production policy: learner-facing spoken coaching may respond autonomous
 - Floating assistant opens by click and hover (pointer platforms) and automatically speaks greeting.
 - BOS proactive engine runs periodic idle scans for learners.
 - BOS evaluates hesitation via runtime state and intervention salience.
-- AI coach automatically generates and speaks proactive nudges.
+- AI help automatically generates and speaks proactive nudges.
 - BOS events are emitted for proactive flow:
   - `idle_detected`
   - `ai_help_opened`
   - `ai_help_used`
-- Learner-facing proactive behavior is enabled in both floating and embedded AI coach surfaces.
+- Learner-facing proactive behavior is enabled in both floating and embedded AI help surfaces.
 
 ## Files changed
 - [apps/empire_flutter/app/lib/runtime/ai_coach_widget.dart](../apps/empire_flutter/app/lib/runtime/ai_coach_widget.dart)

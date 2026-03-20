@@ -36,7 +36,7 @@ Each learning page must:
 - Enforces: MVL gates before submit/publish
 
 ### `/learner/coach`
-- AI coach in Hint/Verify/Explain modes
+- AI help in Hint/Verify/Explain modes
 - Emits: `ai_help_opened`, `ai_help_used`
 - Triggers MVL when needed
 

@@ -111,7 +111,7 @@ Successfully implemented comprehensive analytics dashboards for all user roles (
 
 ---
 
-### 5. ✅ AI Coach Personalization with SDT Telemetry
+### 5. ✅ AI Help Personalization with SDT Telemetry
 **File:** `src/components/sdt/AICoachPopup.tsx` (MODIFIED)
 
 **Enhancements:**
@@ -284,7 +284,7 @@ Check `firestore.indexes.json` for composite indexes on:
 - [ ] Parent dashboard displays all children with selector
 - [ ] HQ dashboard aggregates all sites correctly
 - [ ] CSV export downloads valid data
-- [ ] AI Coach uses SDT context in responses
+- [ ] AI Help uses SDT context in responses
 - [ ] Embedding generation works with API key
 - [ ] Embedding generation falls back gracefully without key
 - [ ] All queries respect site-scoping
@@ -318,7 +318,7 @@ Check `firestore.indexes.json` for composite indexes on:
 - Recommendations are specific and actionable
 
 ### 2. SDT Telemetry Creates Personalized Learning
-- AI Coach adapts to individual motivation profiles
+- AI Help adapts to individual motivation profiles
 - Students with low autonomy get more choices
 - Students with low competence get scaffolded support
 
@@ -379,7 +379,7 @@ Check `firestore.indexes.json` for composite indexes on:
 **After:**
 - ✅ 4 comprehensive role-based dashboards
 - ✅ AI-powered early intervention alerts
-- ✅ SDT-driven personalized AI Coach
+- ✅ SDT-driven personalized AI Help
 - ✅ All TODOs resolved or documented
 - ✅ Real Firestore data (no mocks)
 - ✅ Production-ready vector embeddings

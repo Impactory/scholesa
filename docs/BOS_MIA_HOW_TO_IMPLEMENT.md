@@ -1,6 +1,6 @@
 # BOS+MIA Vibe Coding Master Instructions (Gold Release)
 **Product:** Scholesa (BOS + MIA/MVL runtime)
-**Goal:** Ship a deployable closed-loop learning runtime with integrity gating + AI coach, grounded in BOS+MIA docs.
+**Goal:** Ship a deployable closed-loop learning runtime with integrity gating + AI help, grounded in BOS+MIA docs.
 
 ---
 
@@ -53,7 +53,7 @@
 
 ## 2) Definition of “AI Fully Implemented”
 AI is “fully implemented” only when all are true:
-- AI Coach is live behind a stable API contract.
+- AI help is live behind a stable API contract.
 - AI usage emits required events (`ai_help_opened`, `ai_help_used`) and triggers MVL when needed.
 - Reliability risk + autonomy risk gates exist (even as v1 heuristics).
 - You can reconstruct a learner timeline: events → features → state → interventions → outcomes.
@@ -135,7 +135,7 @@ The deployed runtime exposes the same contract through Firebase callable names:
 
 ---
 
-## 5) AI Coach Contract (v1)
+## 5) AI Help Contract (v1)
 ### Coach modes
 - `hint` (low assist)
 - `verify` (evidence + checking)

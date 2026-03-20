@@ -63,7 +63,7 @@ Replaced Cloud Functions approach with client-side implementation using 4 engine
 5. **`useCompetenceTracking()`** - Artifact submission, checkpoint passes, badges
 6. **`useBelongingTracking()`** - Recognition, showcase, peer feedback
 7. **`useReflectionTracking()`** - Reflections, effort/enjoyment ratings
-8. **`useAITracking()`** - AI coach interactions
+8. **`useAITracking()`** - AI help interactions
 9. **`usePerformanceTracking()`** - Load times, errors
 10. **Usage pattern**:
 ```typescript

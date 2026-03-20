@@ -22,7 +22,7 @@
 | BOS server endpoints | ❌ 0/8 | ✅ 8/8 |
 | FDM + Estimator | ❌ 0% | ✅ V1 stubs |
 | MVL + Policy | ❌ 0% | ✅ V1 stubs |
-| AI Coach (genAiCoach) | ~5% stub | ✅ BOS-aware V0.2 |
+| AI Help (genAiCoach) | ~5% stub | ✅ BOS-aware V0.2 |
 | BOS unit tests | 0 | 16 |
 | bosRuntime.ts TS errors | N/A | 0 |
 
@@ -123,7 +123,7 @@
 |------|---------|--------|
 | FDM feature extraction | Heuristic (event counts) | ML pipeline with sensor fusion |
 | EKF-lite estimator | Linear interpolation (α=0.7) | Full EKF with Jacobian |
-| AI Coach | Template-based responses | LLM integration (Vertex AI / OpenAI) |
+| AI Help | Template-based responses | LLM integration (Vertex AI / OpenAI) |
 | MVL scoring | Evidence count threshold (≥2) | Rubric-based quality scoring |
 | Fairness audits | Collection rules only | Automated bias detection + reports |
 | Sensor fusion | Single family (interaction) | Multi-family (interaction + time + context) |

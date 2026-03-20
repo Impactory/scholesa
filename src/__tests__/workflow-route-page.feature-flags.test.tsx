@@ -43,23 +43,25 @@ jest.mock('next/link', () => ({
 }));
 
 const replaceMock = jest.fn();
+const routerMock = { replace: replaceMock };
+const authState = {
+  user: { uid: 'hq-user-1' },
+  profile: {
+    role: 'hq',
+    activeSiteId: 'site-1',
+    siteIds: ['site-1'],
+    displayName: 'HQ User',
+  },
+  loading: false,
+};
 
 jest.mock('next/navigation', () => ({
   useParams: () => ({ locale: 'en' }),
-  useRouter: () => ({ replace: replaceMock }),
+  useRouter: () => routerMock,
 }));
 
 jest.mock('@/src/firebase/auth/AuthProvider', () => ({
-  useAuthContext: () => ({
-    user: { uid: 'hq-user-1' },
-    profile: {
-      role: 'hq',
-      activeSiteId: 'site-1',
-      siteIds: ['site-1'],
-      displayName: 'HQ User',
-    },
-    loading: false,
-  }),
+  useAuthContext: () => authState,
 }));
 
 const trackInteractionMock = jest.fn();

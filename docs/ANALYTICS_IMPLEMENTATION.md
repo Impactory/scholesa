@@ -19,7 +19,7 @@ Implements the complete `analytics.json` specification:
 - ✅ `artifact_uploaded` - Track student work submissions
 - ✅ `reflection_submitted` - Track metacognitive reflections
 - ✅ `role_assigned` / `role_rotated` - Track team collaboration
-- ✅ `ai_coach_used` - Track AI coach interactions
+- ✅ `ai_coach_used` - Track AI help interactions
 - ✅ `explain_it_back_submitted` - Track learning explanations
 - ✅ `peer_feedback_given` - Track peer collaboration
 

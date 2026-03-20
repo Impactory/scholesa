@@ -229,7 +229,7 @@ User Activity → TelemetryService.track() → telemetryEvents collection
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                     Student Interactions                     │
-│  (Mission select, Checkpoint, Reflection, AI Coach, etc.)   │
+│  (Mission select, Checkpoint, Reflection, AI Help, etc.)    │
 └─────────────────────┬───────────────────────────────────────┘
                       │
                       ▼
@@ -378,7 +378,7 @@ User Activity → TelemetryService.track() → telemetryEvents collection
 - [ ] Implement `EmbeddingService.generateEmbedding()` with OpenAI API
 - [ ] Populate `vectorDocuments` collection with rubrics/exemplars
 - [ ] Enable semantic search in `retrievalService.ts` (`useVectorSearch = true`)
-- [ ] Test AI Coach retrieval quality
+- [ ] Test AI Help retrieval quality
 
 ### Phase 4: Advanced Analytics
 - [ ] Weekly trend line charts (Chart.js or Recharts)

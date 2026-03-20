@@ -7,7 +7,7 @@ A comprehensive Self-Determination Theory (SDT) based motivation system for K-9 
 **Core Equation**: Motivation = Autonomy + Competence + Belonging
 
 **Latest Updates** (Dec 2025):
-- ✅ AI Coach Popup (speech + text input, age-aware)
+- ✅ AI Help Popup (speech + text input, age-aware)
 - ✅ GradeBandPolicy system (K-3, 4-6, 7-9, 10-12 feature gating)
 - ✅ Telemetry system with real-time insights
 - ✅ Phase A UI components complete
@@ -98,7 +98,7 @@ giveRecognition()        // Celebrate peer strategies
 submitPeerFeedback()     // "I like / I wonder / Next step"
 ```
 
-#### Reflection & AI Coach
+#### Reflection & AI Help
 ```typescript
 submitReflection()       // "Proud of... Next I will..."
 requestAICoach()         // Hint / Rubric Check / Debug
@@ -136,7 +136,7 @@ All components in [src/components/sdt/](src/components/sdt/)
 - **Expandable Units**: Click to see details
 - **Compact Version**: Current unit progress only
 
-#### AI Coach Screen
+#### AI Help Screen
 **File**: `AICoachScreen.tsx`
 
 - **3 Safe Modes**:
@@ -168,7 +168,7 @@ All components in [src/components/sdt/](src/components/sdt/)
 - **Quick Version**: Post-sprint compact form
 - **Encouragement**: "Reflection helps your brain remember!"
 
-#### AI Coach Popup ✨ NEW
+#### AI Help Popup ✨ NEW
 **File**: `AICoachPopup.tsx`
 
 - **Floating Assistant**: Lower-right corner, minimizable
@@ -265,7 +265,7 @@ trackPeerFeedback(learnerId, siteId, grade, targetLearnerId, showcaseId)
 // Reflection signals
 trackReflection(learnerId, siteId, grade, sessionId, effortRating, enjoymentRating)
 
-// AI Coach signals
+// AI help signals
 trackAICoachUse(learnerId, siteId, grade, sessionId, mode, explainedBack)
 ```
 
@@ -313,7 +313,7 @@ trackAICoachUse(learnerId, siteId, grade, sessionId, mode, explainedBack)
 
 **Example Insights**:
 - "High first-time success rate → Suggest harder missions"
-- "Struggles with checkpoints but persists → Offer AI Coach nudge"
+- "Struggles with checkpoints but persists → Offer AI help nudge"
 - "Not giving peer feedback → Prompt to review teammate's work"
 
 #### Collections
@@ -334,7 +334,7 @@ trackAICoachUse(learnerId, siteId, grade, sessionId, mode, explainedBack)
 
 ## Integration Examples
 
-### Learner Dashboard with AI Coach
+### Learner Dashboard with AI Help
 ```tsx
 import { 
   StudentDashboard, 
@@ -363,7 +363,7 @@ function LearnerHome({ siteId }) {
         onSelectMission={(id) => startMission(id)}
       />
       
-      {/* AI Coach Popup - always available */}
+      {/* AI Help Popup - always available */}
       <AICoachPopup
         learnerId={profile.uid}
         siteId={siteId}
@@ -436,7 +436,7 @@ function MissionScreen({ grade }) {
         <PeerFeedbackButton />
       )}
       
-      {/* AI Coach modes filtered by age */}
+      {/* AI help modes filtered by age */}
       <AICoachPopup
         availableModes={policy.aiCoach.modes}
         requireExplainBack={policy.aiCoach.explainBackRequired}
@@ -478,7 +478,7 @@ function MissionScreen({ grade }) {
 - ✅ Peer feedback given (belonging signals)
 - ✅ Role rotation completions (crew engagement)
 - ✅ Choice distribution (difficulty levels picked)
-- ✅ AI Coach usage patterns (by mode and age band)
+- ✅ AI Help usage patterns (by mode and age band)
 - ✅ Effort/enjoyment trends over time
 - ✅ Session completion rate
 - ✅ Optimal time of day for engagement
@@ -500,7 +500,7 @@ function MissionScreen({ grade }) {
 
 ### Grades K-3 (Ages 5-9) - Safety + Wonder
 **Sprint**: 5-10 minutes, 1 checkpoint
-**AI Coach**: Hint only, teacher guidance required, explain-back enforced
+**AI Help**: Hint only, teacher guidance required, explain-back enforced
 **Social**: No peer feedback, no crews (1:1 teacher connection)
 **Reflection**: One emoji + one sentence ("I'm proud I...")
 **Rubric**: 2 levels (Not Yet / Got It) with pictures
@@ -512,11 +512,11 @@ function MissionScreen({ grade }) {
 - No public leaderboards
 - No timed challenges
 - No peer messaging
-- Teacher must approve AI Coach use
+- Teacher must approve AI help use
 
 ### Grades 4-6 (Ages 10-12) - Agency + Teamwork
 **Sprint**: 15-30 minutes, 2 checkpoints
-**AI Coach**: Hint + Debug modes, explain-back required
+**AI Help**: Hint + Debug modes, explain-back required
 **Social**: Structured peer feedback ("I like / I wonder / Next step"), crews enabled with roles
 **Reflection**: Two prompts ("Proud of... Next I will..."), effort + enjoyment emojis
 **Rubric**: 3 levels (Emerging / Proficient / Advanced) with examples
@@ -532,7 +532,7 @@ function MissionScreen({ grade }) {
 
 ### Grades 7-9 (Ages 13-15) - Identity + Relevance
 **Sprint**: 20-45 minutes, 2-3 checkpoints
-**AI Coach**: Hint + Rubric Check + Debug, explain-back required
+**AI Help**: Hint + Rubric Check + Debug, explain-back required
 **Social**: Open peer feedback with moderation, crew competitions, showcase events
 **Reflection**: Identity-focused ("I am becoming... I care about...")
 **Rubric**: 3 levels with criteria co-creation
@@ -548,7 +548,7 @@ function MissionScreen({ grade }) {
 
 ### Grades 10-12 (Ages 16-18) - Purpose + Credibility
 **Sprint**: 30-90 minutes, 3-4 checkpoints
-**AI Coach**: All modes including Critique, explain-back for new concepts
+**AI Help**: All modes including Critique, explain-back for new concepts
 **Social**: Full peer review, professional networking, public showcases
 **Reflection**: Career + impact focus ("This connects to...")
 **Rubric**: 4 levels (professional standard)
