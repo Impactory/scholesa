@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/modules/educator/educator_models.dart';
 import 'package:scholesa_app/modules/educator/educator_service.dart';
@@ -16,11 +17,24 @@ import 'package:scholesa_app/ui/theme/scholesa_theme.dart';
 class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
 class _FakeEducatorService extends EducatorService {
-  _FakeEducatorService({required super.firestoreService})
-      : super(
+  _FakeEducatorService({
+    required super.firestoreService,
+    this.failSessionLoad = true,
+    List<EducatorSession> sessions = const <EducatorSession>[],
+    List<EducatorLearner> learners = const <EducatorLearner>[],
+  })  : _seedSessions = List<EducatorSession>.from(sessions),
+        _seedLearners = List<EducatorLearner>.from(learners),
+        super(
           educatorId: 'educator-1',
           siteId: 'site-1',
-        );
+        ) {
+    _sessionsValue = List<EducatorSession>.from(_seedSessions);
+    _learnersValue = List<EducatorLearner>.from(_seedLearners);
+  }
+
+  final bool failSessionLoad;
+  final List<EducatorSession> _seedSessions;
+  final List<EducatorLearner> _seedLearners;
 
   List<EducatorSession> _sessionsValue = <EducatorSession>[];
   List<EducatorLearner> _learnersValue = <EducatorLearner>[];
@@ -47,15 +61,20 @@ class _FakeEducatorService extends EducatorService {
 
     await Future<void>.delayed(Duration.zero);
 
-    _sessionsValue = <EducatorSession>[];
-    _errorValue = 'Failed to load sessions';
+    if (failSessionLoad) {
+      _sessionsValue = <EducatorSession>[];
+      _errorValue = 'Failed to load sessions';
+    } else {
+      _sessionsValue = List<EducatorSession>.from(_seedSessions);
+      _errorValue = null;
+    }
     _isLoadingValue = false;
     notifyListeners();
   }
 
   @override
   Future<void> loadLearners() async {
-    _learnersValue = <EducatorLearner>[];
+    _learnersValue = List<EducatorLearner>.from(_seedLearners);
     notifyListeners();
   }
 }
@@ -75,7 +94,10 @@ AppState _buildEducatorState() {
   return state;
 }
 
-Widget _buildHarness({required EducatorService educatorService}) {
+Widget _buildHarness({
+  required EducatorService educatorService,
+  SharedPreferences? sharedPreferences,
+}) {
   final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
   final FirestoreService firestoreService = FirestoreService(
     firestore: firestore,
@@ -101,12 +123,46 @@ Widget _buildHarness({required EducatorService educatorService}) {
         Locale('zh', 'CN'),
         Locale('zh', 'TW'),
       ],
-      home: const EducatorSessionsPage(),
+      home: EducatorSessionsPage(sharedPreferences: sharedPreferences),
     ),
   );
 }
 
+EducatorSession _buildSession({
+  required String id,
+  required String title,
+  required String pillar,
+  required String status,
+}) {
+  final DateTime start = DateTime(2026, 3, 20, 9 + id.length);
+  return EducatorSession(
+    id: id,
+    title: title,
+    pillar: pillar,
+    startTime: start,
+    endTime: start.add(const Duration(hours: 1)),
+    location: 'Studio A',
+    enrolledCount: 12,
+    maxCapacity: 16,
+    status: status,
+  );
+}
+
+Finder _filterChipLabel(String label) {
+  return find.byWidgetPredicate(
+    (Widget widget) =>
+        widget is Text &&
+        widget.data == label &&
+        widget.style?.fontSize == 13 &&
+        widget.style?.fontWeight == FontWeight.w600,
+  );
+}
+
 void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+  });
+
   testWidgets(
       'educator sessions page shows an explicit load error instead of an empty state',
       (WidgetTester tester) async {
@@ -128,5 +184,82 @@ void main() {
     expect(find.text('Failed to load sessions'), findsOneWidget);
     expect(find.text('Retry'), findsOneWidget);
     expect(find.text('No sessions yet'), findsNothing);
+  });
+
+  testWidgets(
+      'educator sessions tabs change visible content and selections persist on reopen',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final EducatorService educatorService = _FakeEducatorService(
+      firestoreService: firestoreService,
+      failSessionLoad: false,
+      sessions: <EducatorSession>[
+        _buildSession(
+          id: 'upcoming-1',
+          title: 'Robotics Warm-up',
+          pillar: 'future_skills',
+          status: 'upcoming',
+        ),
+        _buildSession(
+          id: 'ongoing-1',
+          title: 'Leadership Circle',
+          pillar: 'leadership',
+          status: 'in_progress',
+        ),
+        _buildSession(
+          id: 'past-1',
+          title: 'Impact Expo',
+          pillar: 'impact',
+          status: 'completed',
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      _buildHarness(
+        educatorService: educatorService,
+        sharedPreferences: prefs,
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Robotics Warm-up'), findsOneWidget);
+    expect(find.text('Leadership Circle'), findsNothing);
+    expect(find.text('Impact Expo'), findsNothing);
+
+    await tester.tap(find.text('Ongoing'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Robotics Warm-up'), findsNothing);
+    expect(find.text('Leadership Circle'), findsOneWidget);
+    expect(find.text('Impact Expo'), findsNothing);
+
+    await tester.tap(_filterChipLabel('Leadership'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Leadership Circle'), findsOneWidget);
+    expect(find.text('Robotics Warm-up'), findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+
+    await tester.pumpWidget(
+      _buildHarness(
+        educatorService: educatorService,
+        sharedPreferences: prefs,
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Leadership Circle'), findsOneWidget);
+    expect(find.text('Robotics Warm-up'), findsNothing);
+    expect(find.text('Impact Expo'), findsNothing);
   });
 }

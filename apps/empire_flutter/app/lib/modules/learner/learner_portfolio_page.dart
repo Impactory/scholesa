@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/models.dart';
 import '../../domain/repositories.dart';
 import '../../services/firestore_service.dart';
@@ -20,7 +21,9 @@ String _tLearnerPortfolio(BuildContext context, String input) {
 
 /// Learner Portfolio Page - Achievements, badges, and skill showcase
 class LearnerPortfolioPage extends StatefulWidget {
-  const LearnerPortfolioPage({super.key});
+  const LearnerPortfolioPage({super.key, this.sharedPreferences});
+
+  final SharedPreferences? sharedPreferences;
 
   @override
   State<LearnerPortfolioPage> createState() => _LearnerPortfolioPageState();
@@ -28,7 +31,14 @@ class LearnerPortfolioPage extends StatefulWidget {
 
 class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
     with SingleTickerProviderStateMixin {
+  static const List<String> _portfolioTabs = <String>[
+    'badges',
+    'skills',
+    'projects',
+  ];
+
   late TabController _tabController;
+  SharedPreferences? _prefsCache;
   bool _showAiCoach = false;
   LearnerProfileModel? _learnerProfile;
   List<PortfolioItemModel> _portfolioItems = const <PortfolioItemModel>[];
@@ -86,6 +96,7 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
         2 => 'projects',
         _ => 'unknown',
       };
+      _persistSelectedTab(tab);
       TelemetryService.instance.logEvent(
         event: 'cta.clicked',
         metadata: <String, dynamic>{
@@ -96,7 +107,9 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
         },
       );
     });
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      await _restoreSavedViewState();
       if (!mounted) return;
       unawaited(_loadPortfolioState());
     });
@@ -114,6 +127,85 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
     } catch (_) {
       return null;
     }
+  }
+
+  Future<SharedPreferences> _prefs() async {
+    final SharedPreferences? injected = widget.sharedPreferences;
+    if (injected != null) {
+      return injected;
+    }
+    return _prefsCache ??= await SharedPreferences.getInstance();
+  }
+
+  String _viewPrefsScope(AppState appState) {
+    final String learnerKey = appState.userId?.trim().isNotEmpty == true
+        ? appState.userId!.trim()
+        : 'anonymous';
+    final String siteKey = _activeSiteId(appState).trim().isNotEmpty
+        ? _activeSiteId(appState).trim()
+        : 'no-site';
+    return '$learnerKey.$siteKey';
+  }
+
+  String _showAiCoachPrefsKey(AppState appState) {
+    return 'learner_portfolio.show_ai_coach.${_viewPrefsScope(appState)}';
+  }
+
+  String _selectedTabPrefsKey(AppState appState) {
+    return 'learner_portfolio.selected_tab.${_viewPrefsScope(appState)}';
+  }
+
+  String _normalizePortfolioTab(String? value) {
+    if (value == null) {
+      return _portfolioTabs.first;
+    }
+    final String normalized =
+        value.trim().toLowerCase().replaceAll('-', '_').replaceAll(' ', '_');
+    if (_portfolioTabs.contains(normalized)) {
+      return normalized;
+    }
+    return _portfolioTabs.first;
+  }
+
+  int _tabIndexForName(String value) {
+    final int index = _portfolioTabs.indexOf(_normalizePortfolioTab(value));
+    return index >= 0 ? index : 0;
+  }
+
+  Future<void> _restoreSavedViewState() async {
+    final AppState appState = context.read<AppState>();
+    final SharedPreferences prefs = await _prefs();
+    final bool restoredAiCoach =
+        prefs.getBool(_showAiCoachPrefsKey(appState)) ?? false;
+    final int restoredTabIndex = _tabIndexForName(
+      prefs.getString(_selectedTabPrefsKey(appState)) ?? _portfolioTabs.first,
+    );
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _showAiCoach = restoredAiCoach;
+      _tabController.index = restoredTabIndex;
+    });
+  }
+
+  Future<void> _persistSelectedTab(String value) async {
+    final AppState appState = context.read<AppState>();
+    final SharedPreferences prefs = await _prefs();
+    await prefs.setString(
+      _selectedTabPrefsKey(appState),
+      _normalizePortfolioTab(value),
+    );
+  }
+
+  Future<void> _setShowAiCoach(bool value) async {
+    final AppState appState = context.read<AppState>();
+    final SharedPreferences prefs = await _prefs();
+    await prefs.setBool(_showAiCoachPrefsKey(appState), value);
+    if (!mounted) {
+      return;
+    }
+    setState(() => _showAiCoach = value);
   }
 
   String _activeSiteId(AppState appState) {
@@ -1228,12 +1320,13 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
                   _showAiCoach ? Icons.expand_less : Icons.expand_more,
                 ),
                 onPressed: () {
-                  setState(() => _showAiCoach = !_showAiCoach);
+                  final bool nextValue = !_showAiCoach;
+                  _setShowAiCoach(nextValue);
                   TelemetryService.instance.logEvent(
                     event: 'cta.clicked',
                     metadata: <String, dynamic>{
                       'module': 'learner_portfolio',
-                      'cta': 'portfolio_ai_${_showAiCoach ? 'show' : 'hide'}',
+                      'cta': 'portfolio_ai_${nextValue ? 'show' : 'hide'}',
                       'surface': 'portfolio_header',
                     },
                   );
@@ -1251,7 +1344,49 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
     final LearningRuntimeProvider? runtime =
         context.read<LearningRuntimeProvider?>();
     if (runtime == null) {
-      return const SizedBox.shrink();
+      return Container(
+        margin: const EdgeInsets.only(top: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: context.schSurface,
+          border: Border.all(
+            color: ScholesaColors.learner.withValues(alpha: 0.1),
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            const Icon(
+              Icons.info_outline_rounded,
+              color: ScholesaColors.learner,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    _t('AI guidance unavailable right now.'),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _t('Your saved badges, skills, and projects are still available while AI reflection reconnects.'),
+                    style: TextStyle(
+                      color: context.schTextSecondary,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
     }
 
     return Container(

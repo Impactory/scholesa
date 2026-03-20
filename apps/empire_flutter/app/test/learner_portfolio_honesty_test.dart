@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/modules/learner/learner_portfolio_page.dart';
 import 'package:scholesa_app/runtime/learning_runtime_provider.dart';
@@ -35,6 +36,7 @@ AppState _buildLearnerState({
 Widget _buildHarness({
   required AppState appState,
   FirestoreService? firestoreService,
+  SharedPreferences? sharedPreferences,
 }) {
   final List<SingleChildWidget> providers = <SingleChildWidget>[
     ChangeNotifierProvider<AppState>.value(value: appState),
@@ -62,12 +64,16 @@ Widget _buildHarness({
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      home: const LearnerPortfolioPage(),
+      home: LearnerPortfolioPage(sharedPreferences: sharedPreferences),
     ),
   );
 }
 
 void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+  });
+
   testWidgets(
       'learner portfolio uses site unavailable in the fallback headline when site identity is missing',
       (WidgetTester tester) async {
@@ -154,5 +160,55 @@ void main() {
     expect(find.text('Profile storage unavailable right now.'), findsOneWidget);
     expect(find.text('Portfolio profile updated.'), findsNothing);
     expect(find.text('Stored headline that should not persist'), findsNothing);
+  });
+
+  testWidgets(
+      'learner portfolio AI coach shows an unavailable message and stays expanded on reopen',
+      (WidgetTester tester) async {
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: FakeFirebaseFirestore(),
+      auth: _MockFirebaseAuth(),
+    );
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      _buildHarness(
+        appState: _buildLearnerState(),
+        firestoreService: firestoreService,
+        sharedPreferences: prefs,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('AI guidance unavailable right now.'), findsNothing);
+
+    await tester.tap(find.byIcon(Icons.expand_more));
+    await tester.pumpAndSettle();
+
+    expect(find.text('AI guidance unavailable right now.'), findsOneWidget);
+    expect(
+      find.text(
+        'Your saved badges, skills, and projects are still available while AI reflection reconnects.',
+      ),
+      findsOneWidget,
+    );
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+
+    await tester.pumpWidget(
+      _buildHarness(
+        appState: _buildLearnerState(),
+        firestoreService: firestoreService,
+        sharedPreferences: prefs,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('AI guidance unavailable right now.'), findsOneWidget);
+    expect(find.byIcon(Icons.expand_less), findsOneWidget);
   });
 }

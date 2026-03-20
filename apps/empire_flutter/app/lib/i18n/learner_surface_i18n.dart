@@ -128,6 +128,9 @@ class LearnerSurfaceI18n {
     'to next level': '距离下一级',
     'Reflect on Progress': '反思进展',
     'Get AI insights on your achievements': '获取关于你成就的 AI 洞察',
+    'AI guidance unavailable right now.': '目前无法使用 AI 指导。',
+    'Your saved badges, skills, and projects are still available while AI reflection reconnects.':
+        '在 AI 反思恢复连接期间，你已保存的徽章、技能和项目仍然可用。',
     'Learner Setup': '学习者设置',
     'Complete your setup to personalize goals, reminders, and accessibility supports.':
         '完成你的设置，以个性化目标、提醒和无障碍支持。',
@@ -323,6 +326,9 @@ class LearnerSurfaceI18n {
     'to next level': '距離下一級',
     'Reflect on Progress': '反思進展',
     'Get AI insights on your achievements': '取得關於你成就的 AI 洞察',
+    'AI guidance unavailable right now.': '目前無法使用 AI 指導。',
+    'Your saved badges, skills, and projects are still available while AI reflection reconnects.':
+        '在 AI 反思重新連線期間，你已儲存的徽章、技能與專案仍然可用。',
     'Learner Setup': '學習者設定',
     'Complete your setup to personalize goals, reminders, and accessibility supports.':
         '完成你的設定，以個人化目標、提醒與無障礙支援。',

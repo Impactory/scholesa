@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
 import '../../services/firestore_service.dart';
@@ -86,7 +87,9 @@ const List<_StudioFlowStep> _studioFlowSteps = <_StudioFlowStep>[
 
 /// Educator Sessions Page - Manage and view all sessions
 class EducatorSessionsPage extends StatefulWidget {
-  const EducatorSessionsPage({super.key});
+  const EducatorSessionsPage({super.key, this.sharedPreferences});
+
+  final SharedPreferences? sharedPreferences;
 
   @override
   State<EducatorSessionsPage> createState() => _EducatorSessionsPageState();
@@ -94,15 +97,23 @@ class EducatorSessionsPage extends StatefulWidget {
 
 class _EducatorSessionsPageState extends State<EducatorSessionsPage>
     with SingleTickerProviderStateMixin {
+  static const List<String> _tabs = <String>['upcoming', 'ongoing', 'past'];
+  static const List<String> _supportedFilterStatuses = <String>[
+    'all',
+    'future_skills',
+    'leadership',
+    'impact',
+  ];
+
   late TabController _tabController;
+  SharedPreferences? _prefsCache;
   String _filterStatus = 'all';
 
   String _tabNameForIndex(int index) {
-    const List<String> tabs = <String>['upcoming', 'ongoing', 'past'];
-    if (index < 0 || index >= tabs.length) {
+    if (index < 0 || index >= _tabs.length) {
       return 'unknown';
     }
-    return tabs[index];
+    return _tabs[index];
   }
 
   void _logScheduleViewed({required String trigger}) {
@@ -124,23 +135,139 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(() {
+      if (!mounted) {
+        return;
+      }
+      setState(() {});
       if (_tabController.indexIsChanging) {
-        final List<String> tabs = <String>['upcoming', 'ongoing', 'past'];
         TelemetryService.instance.logEvent(
           event: 'cta.clicked',
           metadata: <String, dynamic>{
             'cta': 'educator_sessions_tab_change',
-            'tab': tabs[_tabController.index],
+            'tab': _tabs[_tabController.index],
           },
         );
         _logScheduleViewed(trigger: 'tab_change');
       }
     });
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _restoreSavedSelections();
+      if (!mounted) {
+        return;
+      }
       context.read<EducatorService>().loadSessions();
       context.read<EducatorService>().loadLearners();
       _logScheduleViewed(trigger: 'page_open');
     });
+  }
+
+  Future<SharedPreferences> _prefs() async {
+    final SharedPreferences? injected = widget.sharedPreferences;
+    if (injected != null) {
+      return injected;
+    }
+    return _prefsCache ??= await SharedPreferences.getInstance();
+  }
+
+  String _selectionPrefsScope() {
+    final AppState appState = context.read<AppState>();
+    final String userKey =
+        appState.userId?.trim().isNotEmpty == true ? appState.userId!.trim() : 'anonymous';
+    final String siteKey = appState.activeSiteId?.trim().isNotEmpty == true
+        ? appState.activeSiteId!.trim()
+        : 'no-site';
+    return '$userKey.$siteKey';
+  }
+
+  String _filterStatusPrefsKey() {
+    return 'educator_sessions.filter_status.${_selectionPrefsScope()}';
+  }
+
+  String _selectedTabPrefsKey() {
+    return 'educator_sessions.selected_tab.${_selectionPrefsScope()}';
+  }
+
+  String _normalizeFilterStatus(String? value) {
+    if (value == null) {
+      return 'all';
+    }
+    final String normalized =
+        value.trim().toLowerCase().replaceAll('-', '_').replaceAll(' ', '_');
+    if (_supportedFilterStatuses.contains(normalized)) {
+      return normalized;
+    }
+    return 'all';
+  }
+
+  String _normalizeTabName(String? value) {
+    if (value == null) {
+      return _tabs.first;
+    }
+    final String normalized =
+        value.trim().toLowerCase().replaceAll('-', '_').replaceAll(' ', '_');
+    if (_tabs.contains(normalized)) {
+      return normalized;
+    }
+    return _tabs.first;
+  }
+
+  int _tabIndexForName(String value) {
+    final int index = _tabs.indexOf(_normalizeTabName(value));
+    return index >= 0 ? index : 0;
+  }
+
+  Future<void> _restoreSavedSelections() async {
+    final SharedPreferences prefs = await _prefs();
+    final String restoredFilterStatus =
+        _normalizeFilterStatus(prefs.getString(_filterStatusPrefsKey()));
+    final int restoredTabIndex =
+        _tabIndexForName(prefs.getString(_selectedTabPrefsKey()) ?? _tabs.first);
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _filterStatus = restoredFilterStatus;
+      _tabController.index = restoredTabIndex;
+    });
+  }
+
+  Future<void> _setFilterStatus(String value) async {
+    final String normalized = _normalizeFilterStatus(value);
+    final SharedPreferences prefs = await _prefs();
+    await prefs.setString(_filterStatusPrefsKey(), normalized);
+    if (!mounted) {
+      return;
+    }
+    setState(() => _filterStatus = normalized);
+  }
+
+  Future<void> _setSelectedTab(String value) async {
+    final String normalized = _normalizeTabName(value);
+    final SharedPreferences prefs = await _prefs();
+    await prefs.setString(_selectedTabPrefsKey(), normalized);
+  }
+
+  String _normalizeSessionStatus(String value) {
+    final String normalized =
+        value.trim().toLowerCase().replaceAll('-', '_').replaceAll(' ', '_');
+    switch (normalized) {
+      case 'active':
+      case 'in_progress':
+      case 'ongoing':
+        return 'ongoing';
+      case 'completed':
+      case 'past':
+      case 'cancelled':
+      case 'canceled':
+        return 'past';
+      default:
+        return 'upcoming';
+    }
+  }
+
+  bool _matchesSelectedTab(EducatorSession session) {
+    return _normalizeSessionStatus(session.status) ==
+        _tabNameForIndex(_tabController.index);
   }
 
   @override
@@ -343,14 +470,16 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
         child: TabBar(
           controller: _tabController,
           onTap: (int index) {
-            final List<String> tabs = <String>['upcoming', 'ongoing', 'past'];
+            final String selectedTab = _tabs[index];
             TelemetryService.instance.logEvent(
               event: 'cta.clicked',
               metadata: <String, dynamic>{
                 'cta': 'educator_sessions_tab_bar_tap',
-                'tab': tabs[index],
+                'tab': selectedTab,
               },
             );
+            setState(() {});
+            _setSelectedTab(selectedTab);
             _logScheduleViewed(trigger: 'tab_tap');
           },
           indicator: BoxDecoration(
@@ -386,7 +515,7 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
                     'cta': 'educator_sessions_filter_all'
                   },
                 );
-                setState(() => _filterStatus = 'all');
+                _setFilterStatus('all');
                 _logScheduleViewed(trigger: 'filter_all');
               },
             ),
@@ -402,7 +531,7 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
                     'cta': 'educator_sessions_filter_future_skills'
                   },
                 );
-                setState(() => _filterStatus = 'future_skills');
+                _setFilterStatus('future_skills');
                 _logScheduleViewed(trigger: 'filter_future_skills');
               },
             ),
@@ -418,7 +547,7 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
                     'cta': 'educator_sessions_filter_leadership'
                   },
                 );
-                setState(() => _filterStatus = 'leadership');
+                _setFilterStatus('leadership');
                 _logScheduleViewed(trigger: 'filter_leadership');
               },
             ),
@@ -434,7 +563,7 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
                     'cta': 'educator_sessions_filter_impact'
                   },
                 );
-                setState(() => _filterStatus = 'impact');
+                _setFilterStatus('impact');
                 _logScheduleViewed(trigger: 'filter_impact');
               },
             ),
@@ -519,13 +648,17 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
   }
 
   List<EducatorSession> _getFilteredSessions(EducatorService service) {
-    if (_filterStatus == 'all') {
-      return service.sessions;
-    }
-    return service.sessions
-        .where((EducatorSession s) =>
-            s.pillar.toLowerCase().replaceAll(' ', '_') == _filterStatus)
-        .toList();
+    return service.sessions.where((EducatorSession session) {
+      final bool matchesTab = _matchesSelectedTab(session);
+      if (!matchesTab) {
+        return false;
+      }
+      if (_filterStatus == 'all') {
+        return true;
+      }
+      return session.pillar.toLowerCase().replaceAll(' ', '_') ==
+          _filterStatus;
+    }).toList();
   }
 
   void _openSessionDetail(EducatorSession session) {
@@ -920,11 +1053,16 @@ class _SessionCard extends StatelessWidget {
                     Icon(Icons.calendar_today,
                         size: 14, color: Colors.grey[500]),
                     const SizedBox(width: 4),
-                    Text(
-                      _formatSchedule(),
-                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                    Expanded(
+                      child: Text(
+                        _formatSchedule(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style:
+                            TextStyle(color: Colors.grey[600], fontSize: 12),
+                      ),
                     ),
-                    const Spacer(),
+                    const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 2),
@@ -991,7 +1129,14 @@ class _SessionCard extends StatelessWidget {
   }
 
   String _formatSchedule() {
-    return '${session.dayOfWeek} • ${session.startTime} - ${session.endTime}';
+    return '${session.dayOfWeek} • ${_formatTimeOfDay(session.startTime)} - ${_formatTimeOfDay(session.endTime)}';
+  }
+
+  String _formatTimeOfDay(DateTime value) {
+    final int hour = value.hour % 12 == 0 ? 12 : value.hour % 12;
+    final String minute = value.minute.toString().padLeft(2, '0');
+    final String meridiem = value.hour >= 12 ? 'PM' : 'AM';
+    return '$hour:$minute $meridiem';
   }
 }
 
