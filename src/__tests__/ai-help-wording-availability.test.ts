@@ -12,6 +12,7 @@ describe('AI help wording availability', () => {
     const popupSource = readRepoFile('src', 'components', 'sdt', 'AICoachPopup.tsx');
     const screenSource = readRepoFile('src', 'components', 'sdt', 'AICoachScreen.tsx');
     const spokenResponseHookSource = readRepoFile('src', 'hooks', 'useSpokenResponse.ts');
+    const voiceServiceSource = readRepoFile('src', 'lib', 'voice', 'voiceService.ts');
     const learnerDashboardSource = readRepoFile('src', 'features', 'dashboards', 'learner', 'components', 'LearnerDashboard.tsx');
     const pricingPlansSource = readRepoFile('src', 'components', 'stripe', 'PricingPlans.tsx');
 
@@ -61,10 +62,12 @@ describe('AI help wording availability', () => {
     expect(screenSource).toContain('Speak your question');
     expect(screenSource).toContain('Speak now');
     expect(screenSource).toContain('AI Help is here to help you think, not to do the work for you.');
+    expect(screenSource).toContain('Voice capture is unavailable. Please sign in and complete voice setup to use AI Help by voice.');
     expect(screenSource).not.toContain('{response.message}');
     expect(screenSource).not.toContain('Ask AI Coach');
     expect(screenSource).not.toContain('AI Coach says:');
     expect(screenSource).not.toContain('The AI Coach is here to help you think');
+    expect(screenSource).not.toContain('ensure voice setup is available');
 
     expect(learnerDashboardSource).toContain('AI Help');
     expect(learnerDashboardSource).toContain('AI help appears here when a real support response is available.');
@@ -78,6 +81,11 @@ describe('AI help wording availability', () => {
     expect(spokenResponseHookSource).toContain('AI Help answered out loud. Replay the spoken response if you need to hear it again.');
     expect(spokenResponseHookSource).toContain('AI Help answered out loud using this device audio. Replay the spoken response if you need to hear it again.');
     expect(spokenResponseHookSource).toContain('AI Help prepared a spoken response, but this device could not play it out loud. Turn on audio and try Replay.');
+
+    expect(voiceServiceSource).toContain('Voice help took too long to respond. Please try again.');
+    expect(voiceServiceSource).toContain('Voice help is unavailable right now. Complete voice setup and try again.');
+    expect(voiceServiceSource).not.toContain('Voice API request timed out.');
+    expect(voiceServiceSource).not.toContain('Voice API base URL is not configured.');
   });
 
   it('keeps service-unavailable help copy aligned across web guardrails and voice backends', () => {

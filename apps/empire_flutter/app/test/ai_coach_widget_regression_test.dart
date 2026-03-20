@@ -215,7 +215,8 @@ void main() {
       expect(find.byIcon(Icons.send), findsNothing);
       expect(find.byIcon(Icons.mic_none), findsOneWidget);
       expect(
-        find.textContaining('Help will answer out loud.'), findsOneWidget,
+        find.textContaining('Help will answer out loud.'),
+        findsOneWidget,
       );
     });
 
@@ -270,7 +271,10 @@ void main() {
       await tester.pump();
 
       expect(
-        spoken.where((String text) => text.contains('Try one tiny next step now.')).length,
+        spoken
+            .where(
+                (String text) => text.contains('Try one tiny next step now.'))
+            .length,
         greaterThanOrEqualTo(2),
       );
     });
@@ -404,10 +408,13 @@ void main() {
       expect(capturedPrompt, isNotNull);
       expect(capturedPrompt, contains('stateEstimate: unavailable'));
       expect(capturedPrompt, isNot(contains('stateEstimate: unknown')));
-      expect(capturedPrompt, contains('miloosLoop:'));
+      expect(capturedPrompt, contains('runtimeLoop:'));
+      expect(capturedPrompt,
+          isNot(contains('MiloOS closed-loop coaching runtime')));
       expect(
         capturedPrompt,
-        contains('synthetic-trained runtime baseline for pretraining only, never as learner evidence'),
+        contains(
+            'synthetic-trained runtime baseline for pretraining only, never as learner evidence'),
       );
     });
 

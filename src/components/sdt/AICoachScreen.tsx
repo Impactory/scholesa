@@ -111,7 +111,7 @@ export function AICoachScreen({
       await handleSubmitQuestion(transcript);
     },
     onUnavailable: () => {
-      setStatusMessage('Voice capture is unavailable. Please sign in and ensure voice setup is available.');
+      setStatusMessage('Voice capture is unavailable. Please sign in and complete voice setup to use AI Help by voice.');
     },
     onCaptureError: (microphoneError) => {
       console.error('Microphone capture unavailable for AI coach screen:', microphoneError);

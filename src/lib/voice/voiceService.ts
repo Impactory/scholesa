@@ -110,7 +110,7 @@ function defaultVoiceApiBaseUrl(): string | null {
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
   return new Promise<T>((resolve, reject) => {
-    const timeout = setTimeout(() => reject(new Error('Voice API request timed out.')), timeoutMs);
+    const timeout = setTimeout(() => reject(new Error('Voice help took too long to respond. Please try again.')), timeoutMs);
     promise.then(
       (value) => {
         clearTimeout(timeout);
@@ -135,7 +135,7 @@ async function parseErrorResponse(response: Response): Promise<string> {
 
 async function postJson<TResponse>(path: string, idToken: string, body: Record<string, unknown>): Promise<TResponse> {
   const baseUrl = defaultVoiceApiBaseUrl();
-  if (!baseUrl) throw new Error('Voice API base URL is not configured.');
+  if (!baseUrl) throw new Error('Voice help is unavailable right now. Complete voice setup and try again.');
   const localeHeader = typeof body.locale === 'string' ? normalizeLocale(body.locale) : 'en';
   const requestId = createVoiceRequestId('voice-json');
   const traceId = typeof body.traceId === 'string' && body.traceId.trim().length > 0
@@ -180,7 +180,7 @@ export async function sendCopilotVoiceMessage(req: CopilotVoiceRequest): Promise
 
 export async function transcribeVoiceAudio(req: TranscribeVoiceRequest): Promise<TranscribeVoiceResponse> {
   const baseUrl = defaultVoiceApiBaseUrl();
-  if (!baseUrl) throw new Error('Voice API base URL is not configured.');
+  if (!baseUrl) throw new Error('Voice help is unavailable right now. Complete voice setup and try again.');
   const locale = normalizeLocale(req.locale);
   const requestId = createVoiceRequestId('voice-stt');
   const traceId = req.traceId || createVoiceTraceId('voice-trace');
