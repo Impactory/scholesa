@@ -13,25 +13,46 @@ import 'package:scholesa_app/services/firestore_service.dart';
 
 class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
+class _FailingLatePickupCheckinService extends CheckinService {
+  _FailingLatePickupCheckinService({
+    required super.firestoreService,
+    required super.siteId,
+  });
+
+  @override
+  Future<bool> markLate({
+    required String learnerId,
+    required String learnerName,
+    String? notes,
+  }) async {
+    return false;
+  }
+}
+
 Future<void> _pumpCheckinPage(
   WidgetTester tester, {
   required FakeFirebaseFirestore firestore,
   Locale locale = const Locale('en'),
+  CheckinService? checkinService,
 }) async {
   final FirestoreService firestoreService = FirestoreService(
     firestore: firestore,
     auth: _MockFirebaseAuth(),
   );
-  final CheckinService checkinService = CheckinService(
-    firestoreService: firestoreService,
-    siteId: 'site-1',
-  );
+  final CheckinService resolvedCheckinService =
+      checkinService ??
+      CheckinService(
+        firestoreService: firestoreService,
+        siteId: 'site-1',
+      );
 
   await tester.pumpWidget(
     MultiProvider(
       providers: <SingleChildWidget>[
         Provider<FirestoreService>.value(value: firestoreService),
-        ChangeNotifierProvider<CheckinService>.value(value: checkinService),
+        ChangeNotifierProvider<CheckinService>.value(
+          value: resolvedCheckinService,
+        ),
       ],
       child: MaterialApp(
         theme: ThemeData(
@@ -151,6 +172,49 @@ void main() {
     expect(find.textContaining('学习者信息不可用'), findsWidgets);
     expect(find.text('Learner unavailable'), findsNothing);
     expect(find.text('Unknown'), findsNothing);
+  });
+
+  testWidgets('late pickup flagging shows an error when the write fails',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final DateTime now = DateTime.now();
+    await firestore.collection('users').doc('learner-1').set(<String, dynamic>{
+      'role': 'learner',
+      'displayName': 'Ava Learner',
+      'siteIds': <String>['site-1'],
+    });
+    await firestore.collection('checkins').doc('checkin-1').set(
+      <String, dynamic>{
+        'siteId': 'site-1',
+        'learnerId': 'learner-1',
+        'learnerName': 'Ava Learner',
+        'type': 'checkin',
+        'timestamp': Timestamp.fromDate(now.subtract(const Duration(minutes: 5))),
+      },
+    );
+
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final CheckinService checkinService = _FailingLatePickupCheckinService(
+      firestoreService: firestoreService,
+      siteId: 'site-1',
+    );
+
+    await _pumpCheckinPage(
+      tester,
+      firestore: firestore,
+      checkinService: checkinService,
+    );
+
+    await tester.tap(find.byTooltip('Flag late pickup'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Unable to flag late pickup right now.'), findsOneWidget);
+    final QuerySnapshot<Map<String, dynamic>> records =
+        await firestore.collection('checkins').get();
+    expect(records.docs.length, 1);
   });
 
   test('checkin service loads guardian-link pickups when pickup auth docs are absent',

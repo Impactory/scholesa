@@ -526,7 +526,21 @@ class _CheckinPageState extends State<CheckinPage>
       learnerName: summary.learnerName,
       notes: 'Late pickup flagged from check-in desk',
     );
-    if (!success || !mounted) {
+    if (!mounted) {
+      return;
+    }
+    if (!success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tCheckin(context, 'Unable to flag late pickup right now.'),
+          ),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
       return;
     }
     TelemetryService.instance.logEvent(

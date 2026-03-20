@@ -288,6 +288,8 @@ void main() {
     expect(tester.widget<ChoiceChip>(_laneChip('Scaffolded lane')).selected, isTrue);
     expect(tester.widget<ElevatedButton>(find.widgetWithText(ElevatedButton, 'Save lane override')).enabled, isFalse);
 
+    await tester.ensureVisible(_laneChip('Stretch lane'));
+    await tester.pumpAndSettle();
     await tester.tap(_laneChip('Stretch lane'));
     await tester.pumpAndSettle();
 
@@ -301,7 +303,7 @@ void main() {
     expect(tester.widget<ChoiceChip>(_laneChip('Stretch lane')).selected, isTrue);
     expect(tester.widget<ElevatedButton>(find.widgetWithText(ElevatedButton, 'Save lane override')).enabled, isFalse);
 
-    await tester.pageBack();
+    await tester.tapAt(const Offset(16, 16));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Learner One'));
@@ -339,6 +341,8 @@ void main() {
 
     expect(tester.widget<ChoiceChip>(_laneChip('Scaffolded lane')).selected, isTrue);
 
+    await tester.ensureVisible(_laneChip('Stretch lane'));
+    await tester.pumpAndSettle();
     await tester.tap(_laneChip('Stretch lane'));
     await tester.pumpAndSettle();
 
