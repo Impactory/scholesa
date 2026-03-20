@@ -1222,7 +1222,7 @@ export const genAiCoach = onCall(async (request) => {
   const userId = request.auth.uid;
   const profile = await getUserProfile(userId);
   if (!profile || normalizeRoleValue(profile.role) !== 'learner') {
-    throw new HttpsError('permission-denied', 'Learner role required for AI coach.');
+    throw new HttpsError('permission-denied', 'Learner role required for AI help.');
   }
 
   // ── A2) Hard schema validation ──────────────────
