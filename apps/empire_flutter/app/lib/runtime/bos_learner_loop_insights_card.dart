@@ -317,7 +317,7 @@ class _BosLearnerLoopInsightsCardState
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        '${BosCoachingI18n.latestSignal(context)}: C ${parsed.delta(context, parsed.cognitionDelta)}, E ${parsed.delta(context, parsed.engagementDelta)}, I ${parsed.delta(context, parsed.integrityDelta)}',
+                        '${BosCoachingI18n.latestSignal(context)}: ${BosCoachingI18n.cognition(context)} ${parsed.delta(context, parsed.cognitionDelta)} • ${BosCoachingI18n.engagement(context)} ${parsed.delta(context, parsed.engagementDelta)} • ${BosCoachingI18n.integrity(context)} ${parsed.delta(context, parsed.integrityDelta)}',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: scheme.onSurfaceVariant,
                           fontWeight: FontWeight.w600,
