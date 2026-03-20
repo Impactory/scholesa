@@ -21,10 +21,10 @@ import {
 } from 'lucide-react';
 import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import { sdtMotivation, type AICoachRequest, type AICoachResponse } from '@/src/lib/motivation/sdtMotivation';
-import { speakBrowserText, stopBrowserSpeech } from '@/src/lib/voice/browserSpeech';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { useI18n } from '@/src/lib/i18n/useI18n';
 import { useVoiceTranscription } from '@/src/hooks/useVoiceTranscription';
+import { useSpokenResponse } from '@/src/hooks/useSpokenResponse';
 
 interface AICoachScreenProps {
   learnerId: string;
@@ -51,29 +51,12 @@ export function AICoachScreen({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
-  const [spokenResponseStatus, setSpokenResponseStatus] = useState<string | null>(null);
-
-  useEffect(() => {
-    return () => {
-      stopBrowserSpeech();
-    };
-  }, []);
-
-  const playSpokenResponse = (text: string): boolean => {
-    stopBrowserSpeech();
-    if (typeof navigator !== 'undefined' && navigator.language) {
-      return speakBrowserText(text, navigator.language);
-    }
-    return speakBrowserText(text, 'en-US');
-  };
-
-  const describeSpokenResponse = (wasSpoken: boolean): string => {
-    if (wasSpoken) {
-      return 'AI Help answered out loud. Replay the spoken response if you need to hear it again.';
-    }
-
-    return 'AI Help prepared a spoken response, but this browser could not play it out loud. Turn on audio and try Replay.';
-  };
+  const {
+    spokenResponseStatus,
+    play: playSpokenResponse,
+    replay: replaySpokenResponse,
+    clear: clearSpokenResponse,
+  } = useSpokenResponse({ locale });
 
   const handleSubmitQuestion = async (questionOverride?: string) => {
     const resolvedQuestion = (questionOverride ?? question).trim();
@@ -91,7 +74,7 @@ export function AICoachScreen({
       setLoading(true);
       setError(null);
       setStatusMessage(null);
-      setSpokenResponseStatus(null);
+      clearSpokenResponse();
 
       const request: AICoachRequest = {
         mode,
@@ -102,7 +85,7 @@ export function AICoachScreen({
 
       const aiResponse = await sdtMotivation.requestAICoach(learnerId, siteId, request);
       setResponse(aiResponse);
-      setSpokenResponseStatus(describeSpokenResponse(playSpokenResponse(aiResponse.message)));
+      await playSpokenResponse(aiResponse.message);
     } catch (err) {
       console.error('AI Coach error:', err);
       setError('Unable to get AI help right now. Try again or ask your teacher!');
@@ -380,7 +363,9 @@ export function AICoachScreen({
                 {spokenResponseStatus || 'Replay the spoken response if you need to hear it again.'}
               </p>
               <button
-                onClick={() => setSpokenResponseStatus(describeSpokenResponse(playSpokenResponse(response.message)))}
+                onClick={() => {
+                  void replaySpokenResponse();
+                }}
                 className="mt-3 inline-flex items-center gap-2 rounded-lg bg-purple-100 px-3 py-2 text-sm font-medium text-purple-900 transition-colors hover:bg-purple-200"
               >
                 <Volume2Icon className="w-4 h-4" />
@@ -437,7 +422,7 @@ export function AICoachScreen({
               setExplainBack('');
               setMode(null);
               setStatusMessage(null);
-              setSpokenResponseStatus(null);
+              clearSpokenResponse();
             }}
             className="text-sm text-gray-600 hover:text-gray-900"
           >

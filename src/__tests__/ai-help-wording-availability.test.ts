@@ -11,6 +11,7 @@ describe('AI help wording availability', () => {
   it('keeps the web AI popup wired to friendly aiCoach locale keys at visible UI touchpoints', () => {
     const popupSource = readRepoFile('src', 'components', 'sdt', 'AICoachPopup.tsx');
     const screenSource = readRepoFile('src', 'components', 'sdt', 'AICoachScreen.tsx');
+    const spokenResponseHookSource = readRepoFile('src', 'hooks', 'useSpokenResponse.ts');
     const learnerDashboardSource = readRepoFile('src', 'features', 'dashboards', 'learner', 'components', 'LearnerDashboard.tsx');
     const pricingPlansSource = readRepoFile('src', 'components', 'stripe', 'PricingPlans.tsx');
 
@@ -21,9 +22,9 @@ describe('AI help wording availability', () => {
     expect(popupSource).toContain("{t('aiCoach.teacherGuidance')}");
     expect(popupSource).toContain("{t('aiCoach.voiceRequirements')}");
     expect(popupSource).toContain("{t('aiCoach.footerTip')}");
+    expect(popupSource).toContain('useSpokenResponse');
     expect(popupSource).toContain('AI Help answered out loud.');
     expect(popupSource).toContain('Replay spoken response');
-    expect(popupSource).toContain('AI Help prepared a spoken response, but this device could not play it out loud. Turn on audio and try Replay.');
     expect(popupSource).toContain('Open AI Help from the learner workspace to record explain-back for this session.');
     expect(popupSource).toContain('Explain-back recorded for this AI help session.');
     expect(popupSource).toContain('Unable to record explain-back right now. Open the learner AI Help screen or try again later.');
@@ -51,9 +52,9 @@ describe('AI help wording availability', () => {
     expect(screenSource).toContain('AI Help answered out loud.');
     expect(screenSource).toContain('Replay spoken response');
     expect(screenSource).toContain('useVoiceTranscription');
+    expect(screenSource).toContain('useSpokenResponse');
     expect(screenSource).toContain('Speak your question');
     expect(screenSource).toContain('Speak now');
-    expect(screenSource).toContain('AI Help prepared a spoken response, but this browser could not play it out loud. Turn on audio and try Replay.');
     expect(screenSource).toContain('AI Help is here to help you think, not to do the work for you.');
     expect(screenSource).not.toContain('{response.message}');
     expect(screenSource).not.toContain('Ask AI Coach');
@@ -68,6 +69,10 @@ describe('AI help wording availability', () => {
 
     expect(pricingPlansSource).toContain('AI help and guidance');
     expect(pricingPlansSource).not.toContain('AI coaching support');
+
+    expect(spokenResponseHookSource).toContain('AI Help answered out loud. Replay the spoken response if you need to hear it again.');
+    expect(spokenResponseHookSource).toContain('AI Help answered out loud using this device audio. Replay the spoken response if you need to hear it again.');
+    expect(spokenResponseHookSource).toContain('AI Help prepared a spoken response, but this device could not play it out loud. Turn on audio and try Replay.');
   });
 
   it('keeps service-unavailable help copy aligned across web guardrails and voice backends', () => {

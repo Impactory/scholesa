@@ -30,8 +30,8 @@ import { TelemetryService } from '@/src/lib/telemetry/telemetryService';
 import { useI18n } from '@/src/lib/i18n/useI18n';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { sendCopilotVoiceMessage, voiceApiConfigured } from '@/src/lib/voice/voiceService';
-import { speakBrowserText, stopBrowserSpeech } from '@/src/lib/voice/browserSpeech';
 import { useVoiceTranscription } from '@/src/hooks/useVoiceTranscription';
+import { useSpokenResponse } from '@/src/hooks/useSpokenResponse';
 import type { UserRole } from '@/src/types/user';
 
 interface AICoachPopupProps {
@@ -139,11 +139,7 @@ export function AICoachPopup({
   const [currentLogId, setCurrentLogId] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [voiceTransparencyMessage, setVoiceTransparencyMessage] = useState<string | null>(null);
-  const [spokenResponseStatus, setSpokenResponseStatus] = useState<string | null>(null);
-  const [spokenResponsePayload, setSpokenResponsePayload] = useState<{ text: string; audioUrl: string | null } | null>(null);
   const [sdtProfile, setSdtProfile] = useState<{ autonomy: number | null; competence: number | null; belonging: number | null } | null>(null);
-  
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   const policy = getPolicyForGrade(grade);
   const availableModes = getAICoachModesForGrade(grade);
   const trackAI = useAITracking();
@@ -178,51 +174,18 @@ export function AICoachPopup({
     };
   }, [actorRole, intelligenceLearnerId, siteId]);
 
-  // Recorder cleanup
-  useEffect(() => {
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
-      audioRef.current = null;
-      stopBrowserSpeech();
-    };
-  }, []);
-
-  const deliverSpokenResponse = async (text: string, audioUrl?: string | null): Promise<'audio' | 'browser' | 'none'> => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-    }
-    audioRef.current = null;
-    stopBrowserSpeech();
-
-    if (audioUrl) {
-      const audio = new Audio(audioUrl);
-      audioRef.current = audio;
-      try {
-        await audio.play();
-        return 'audio';
-      } catch (error) {
-        console.error('Voice playback failed in AI coach popup:', error);
-      }
-    }
-
-    if (speakBrowserText(text, locale)) {
-      return 'browser';
-    }
-
-    return 'none';
-  };
-
-  const describeSpokenDelivery = (deliveryMode: 'audio' | 'browser' | 'none'): string => {
-    if (deliveryMode === 'audio') {
-      return 'AI Help answered out loud. Replay the spoken response if you need to hear it again.';
-    }
-    if (deliveryMode === 'browser') {
-      return 'AI Help answered out loud using this device audio. Replay the spoken response if you need to hear it again.';
-    }
-    return 'AI Help prepared a spoken response, but this device could not play it out loud. Turn on audio and try Replay.';
-  };
+  const {
+    spokenResponseStatus,
+    spokenResponsePayload,
+    play: playSpokenResponse,
+    replay: replaySpokenResponse,
+    clear: clearSpokenResponse,
+  } = useSpokenResponse({
+    locale,
+    onAudioPlaybackError: (error) => {
+      console.error('Voice playback failed in AI coach popup:', error);
+    },
+  });
 
   const { canUseVoiceInput: hasVoiceInputControl, isListening, isTranscribing, startListening, stopListening } = useVoiceTranscription({
     user,
@@ -481,9 +444,7 @@ Guidance: ${
 
       setResponse(aiResponse);
       const audioUrl = voiceResponse.tts.available ? (voiceResponse.tts.audioUrl ?? null) : null;
-      setSpokenResponsePayload({ text: aiResponse.answer, audioUrl });
-      const deliveryMode = await deliverSpokenResponse(aiResponse.answer, audioUrl);
-      setSpokenResponseStatus(describeSpokenDelivery(deliveryMode));
+      await playSpokenResponse(aiResponse.answer, audioUrl);
       setCurrentLogId(aiResponse.logId);
 
       // Track telemetry
@@ -515,9 +476,7 @@ Guidance: ${
         gradeBand: grade <= 3 ? 'grades_1_3' : grade <= 6 ? 'grades_4_6' : grade <= 9 ? 'grades_7_9' : 'grades_10_12',
         traceId,
       });
-      setSpokenResponsePayload({ text: localizedServiceUnavailable(locale), audioUrl: null });
-      const deliveryMode = await deliverSpokenResponse(localizedServiceUnavailable(locale));
-      setSpokenResponseStatus(describeSpokenDelivery(deliveryMode));
+      await playSpokenResponse(localizedServiceUnavailable(locale));
       setVoiceTransparencyMessage('AI Help could not understand this voice turn reliably, so it switched to a safer fallback reply.');
     } finally {
       setLoading(false);
@@ -588,8 +547,7 @@ Guidance: ${
     setExplainBack('');
     setStatusMessage(null);
     setVoiceTransparencyMessage(null);
-    setSpokenResponseStatus(null);
-    setSpokenResponsePayload(null);
+    clearSpokenResponse();
   };
 
   // Minimized button
@@ -778,11 +736,7 @@ Guidance: ${
                 <button
                   onClick={() => {
                     void (async () => {
-                      const deliveryMode = await deliverSpokenResponse(
-                        spokenResponsePayload.text,
-                        spokenResponsePayload.audioUrl,
-                      );
-                      setSpokenResponseStatus(describeSpokenDelivery(deliveryMode));
+                      await replaySpokenResponse();
                     })();
                   }}
                   className="mt-3 inline-flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-medium text-purple-900 ring-1 ring-purple-200 transition-colors hover:bg-purple-100"
