@@ -230,11 +230,18 @@ void main() {
 
   testWidgets('parent child page shows explicit not linked state',
       (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _FakeFirebaseAuth(),
+    );
+
     await _pumpPage(
       tester,
       parentService: _StubParentService(
         parentId: 'parent-1',
         learnerSummaries: <LearnerSummary>[_sampleLearner()],
+        firestoreService: firestoreService,
       ),
       child: const ParentChildPage(learnerId: 'learner-missing'),
     );
@@ -243,6 +250,16 @@ void main() {
       find.text('This learner is not linked to your account right now.'),
       findsOneWidget,
     );
+    expect(find.text('Request Linking Review'), findsOneWidget);
     expect(find.text('Open Family Dashboard'), findsOneWidget);
+
+    await tester.tap(find.text('Request Linking Review'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Linked learner review request submitted.'), findsOneWidget);
+    final requests = await firestore.collection('supportRequests').get();
+    expect(requests.docs, hasLength(1));
+    expect(requests.docs.single.data()['requestType'], 'parent_linked_learner_review');
+    expect(requests.docs.single.data()['source'], 'parent_child_request_linked_learner_review');
   });
 }
