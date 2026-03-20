@@ -121,6 +121,11 @@ class _HqSitesPageState extends State<HqSitesPage> {
                 ],
               ),
             ),
+            IconButton(
+              onPressed: _loadSites,
+              icon: const Icon(Icons.refresh, color: ScholesaColors.hq),
+              tooltip: _tHqSites(context, 'Refresh'),
+            ),
           ],
         ),
       ),

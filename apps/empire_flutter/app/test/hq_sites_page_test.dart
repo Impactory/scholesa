@@ -12,7 +12,10 @@ import 'package:scholesa_app/services/firestore_service.dart';
 
 class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
-Widget _buildHarness(FirestoreService firestoreService) {
+Widget _buildHarness(
+  FirestoreService firestoreService, {
+  Future<List<Map<String, dynamic>>> Function()? loadSitesOverride,
+}) {
   return MultiProvider(
     providers: <SingleChildWidget>[
       Provider<FirestoreService>.value(value: firestoreService),
@@ -32,7 +35,7 @@ Widget _buildHarness(FirestoreService firestoreService) {
         Locale('zh', 'CN'),
         Locale('zh', 'TW'),
       ],
-      home: const HqSitesPage(),
+      home: HqSitesPage(loadSitesOverride: loadSitesOverride),
     ),
   );
 }
@@ -144,5 +147,79 @@ void main() {
     expect(created.length, 1);
     expect(created.single['status'], 'pending');
     expect(created.single['location'], 'Seoul');
+  });
+
+  testWidgets('HQ sites page shows an explicit unavailable state instead of a fake empty list',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+
+    await tester.pumpWidget(
+      _buildHarness(
+        firestoreService,
+        loadSitesOverride: () async {
+          throw StateError('sites backend unavailable');
+        },
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sites are temporarily unavailable'), findsOneWidget);
+    expect(
+      find.text('We could not load sites right now. Retry to check the current state.'),
+      findsOneWidget,
+    );
+    expect(find.text('No sites found'), findsNothing);
+  });
+
+  testWidgets('HQ sites page keeps stale data visible when a refresh fails',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    int loadCalls = 0;
+
+    await tester.pumpWidget(
+      _buildHarness(
+        firestoreService,
+        loadSitesOverride: () async {
+          loadCalls += 1;
+          if (loadCalls == 1) {
+            return <Map<String, dynamic>>[
+              <String, dynamic>{
+                'id': 'site-active',
+                'name': 'Alpha Studio',
+                'location': 'Singapore',
+                'status': 'active',
+                'learnerCount': 42,
+                'educatorCount': 5,
+                'healthScore': 96,
+              },
+            ];
+          }
+          throw StateError('sites refresh unavailable');
+        },
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Alpha Studio'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.refresh).first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Alpha Studio'), findsOneWidget);
+    expect(
+      find.text('Unable to refresh sites right now. Showing the last successful data.'),
+      findsOneWidget,
+    );
+    expect(find.text('No sites found'), findsNothing);
   });
 }
