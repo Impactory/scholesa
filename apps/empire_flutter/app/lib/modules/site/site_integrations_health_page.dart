@@ -18,10 +18,15 @@ class SiteIntegrationsHealthPage extends StatefulWidget {
     super.key,
     this.healthLoader,
     this.rosterImportRepository,
+    this.connectionStatusUpdater,
+    this.syncJobTrigger,
   });
 
   final Future<Map<String, dynamic>> Function(String siteId)? healthLoader;
   final RosterImportRepository? rosterImportRepository;
+  final Future<void> Function(String integrationId, String status)?
+      connectionStatusUpdater;
+  final Future<void> Function(String? siteId, String provider)? syncJobTrigger;
 
   @override
   State<SiteIntegrationsHealthPage> createState() =>
@@ -42,6 +47,60 @@ class _SiteIntegrationsHealthPageState
 
   RosterImportRepository get _rosterImportRepository =>
       widget.rosterImportRepository ?? RosterImportRepository();
+
+  Future<void> _showActionResult({
+    required String successMessage,
+    required String failureMessage,
+    required Future<void> Function() action,
+  }) async {
+    try {
+      await action();
+      if (!mounted) {
+        return;
+      }
+      final String message = _loadError == null ? successMessage : _loadError!;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    } catch (error) {
+      debugPrint('Site integrations action failed: $error');
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(failureMessage)),
+      );
+    }
+  }
+
+  Future<void> _updateIntegrationConnectionStatus(
+    String integrationId,
+    String status,
+  ) async {
+    if (widget.connectionStatusUpdater != null) {
+      await widget.connectionStatusUpdater!(integrationId, status);
+      return;
+    }
+    final HttpsCallable callable = FirebaseFunctions.instance
+        .httpsCallable('updateIntegrationConnectionStatus');
+    await callable.call(<String, dynamic>{
+      'id': integrationId,
+      'status': status,
+    });
+  }
+
+  Future<void> _triggerIntegrationSync(String provider) async {
+    if (widget.syncJobTrigger != null) {
+      await widget.syncJobTrigger!(_siteId, provider);
+      return;
+    }
+    final HttpsCallable callable =
+        FirebaseFunctions.instance.httpsCallable('triggerIntegrationSyncJob');
+    await callable.call(<String, dynamic>{
+      'siteId': _siteId,
+      'provider': provider,
+    });
+  }
 
   @override
   void initState() {
@@ -662,59 +721,49 @@ class _SiteIntegrationsHealthPageState
   }
 
   Future<void> _handleConnectIntegration(_Integration integration) async {
-    final HttpsCallable callable = FirebaseFunctions.instance
-        .httpsCallable('updateIntegrationConnectionStatus');
-    await callable.call(<String, dynamic>{
-      'id': integration.id,
-      'status': 'active',
-    });
-    await _loadIntegrations();
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${integration.name} ${_t('connected')}')),
+    await _showActionResult(
+      successMessage: '${integration.name} ${_t('connected')}',
+      failureMessage: _t('Unable to update integration right now.'),
+      action: () async {
+        await _updateIntegrationConnectionStatus(integration.id, 'active');
+        await _loadIntegrations();
+      },
     );
   }
 
   Future<void> _handleForceSyncIntegration(_Integration integration) async {
-    final HttpsCallable callable =
-        FirebaseFunctions.instance.httpsCallable('triggerIntegrationSyncJob');
-    await callable.call(<String, dynamic>{
-      'siteId': _siteId,
-      'provider': integration.providerKey,
-    });
-    await _loadIntegrations();
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-          content: Text('${integration.name} ${_t('synced successfully')}')),
+    await _showActionResult(
+      successMessage: '${integration.name} ${_t('synced successfully')}',
+      failureMessage: _t('Unable to queue sync right now.'),
+      action: () async {
+        await _triggerIntegrationSync(integration.providerKey);
+        await _loadIntegrations();
+      },
     );
   }
 
   Future<void> _handleRetryFailedSyncs(_Integration integration) async {
-    final HttpsCallable callable =
-        FirebaseFunctions.instance.httpsCallable('triggerIntegrationSyncJob');
-    await callable.call(<String, dynamic>{
-      'siteId': _siteId,
-      'provider': integration.providerKey,
-    });
-    await _loadIntegrations();
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(_t('Failed syncs retried successfully'))),
+    await _showActionResult(
+      successMessage: _t('Failed syncs retried successfully'),
+      failureMessage: _t('Unable to queue sync right now.'),
+      action: () async {
+        await _triggerIntegrationSync(integration.providerKey);
+        await _loadIntegrations();
+      },
     );
   }
 
   Future<void> _handleDisconnectIntegration(_Integration integration) async {
-    final HttpsCallable callable = FirebaseFunctions.instance
-        .httpsCallable('updateIntegrationConnectionStatus');
-    await callable.call(<String, dynamic>{
-      'id': integration.id,
-      'status': 'disconnected',
-    });
-    await _loadIntegrations();
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${integration.name} ${_t('disconnected')}')),
+    await _showActionResult(
+      successMessage: '${integration.name} ${_t('disconnected')}',
+      failureMessage: _t('Unable to update integration right now.'),
+      action: () async {
+        await _updateIntegrationConnectionStatus(
+          integration.id,
+          'disconnected',
+        );
+        await _loadIntegrations();
+      },
     );
   }
 
@@ -734,14 +783,16 @@ class _SiteIntegrationsHealthPageState
       },
     );
 
-    await _rosterImportRepository.markReviewed(
-      id: importRow.id,
-      reviewerId: reviewerId,
-    );
-    await _loadIntegrations();
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(_t('Roster row marked reviewed'))),
+    await _showActionResult(
+      successMessage: _t('Roster row marked reviewed'),
+      failureMessage: _t('Unable to mark roster row reviewed right now.'),
+      action: () async {
+        await _rosterImportRepository.markReviewed(
+          id: importRow.id,
+          reviewerId: reviewerId,
+        );
+        await _loadIntegrations();
+      },
     );
   }
 
