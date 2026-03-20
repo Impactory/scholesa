@@ -201,6 +201,11 @@ describe('workflowOps feature flags', () => {
         }),
       ],
     });
+
+    expect(ensureCollection('featureFlags').get('flag_legacy')).toMatchObject({
+      name: 'ai_help_loop',
+      updatedBy: 'hq-actor',
+    });
   });
 
   it('writes canonical ai help loop flag names on upsert', async () => {

@@ -1701,11 +1701,24 @@ export const listFeatureFlags = onCall(async (request: CallableRequest) => {
   };
 
   const snap = await admin.firestore().collection('featureFlags').limit(300).get();
-  const flags = snap.docs.map((snapDoc) => ({
-    id: snapDoc.id,
-    ...(snapDoc.data() as Record<string, unknown>),
-    name: canonicalizeFeatureFlagName((snapDoc.data() as Record<string, unknown>).name, snapDoc.id),
+  const normalizedDocs = await Promise.all(snap.docs.map(async (snapDoc) => {
+    const data = snapDoc.data() as Record<string, unknown>;
+    const canonicalName = canonicalizeFeatureFlagName(data.name, snapDoc.id);
+    if (data.name !== canonicalName) {
+      await admin.firestore().collection('featureFlags').doc(snapDoc.id).set({
+        name: canonicalName,
+        updatedBy: actor.uid,
+        updatedAt: FieldValue.serverTimestamp(),
+      }, { merge: true });
+    }
+
+    return {
+      id: snapDoc.id,
+      ...data,
+      name: canonicalName,
+    };
   }));
+  const flags = normalizedDocs;
   return { flags };
 });
 
