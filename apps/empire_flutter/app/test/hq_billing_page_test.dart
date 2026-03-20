@@ -73,6 +73,13 @@ void main() {
     );
     expect(find.text('No invoices found'), findsNothing);
     expect(find.text('No payments found'), findsNothing);
+        Finder _dropdownField(String hintText) {
+          return find.byWidgetPredicate(
+            (Widget widget) =>
+                widget is DropdownButtonFormField<String> &&
+                widget.decoration?.hintText == hintText,
+          );
+        }
     expect(find.text('No subscriptions found'), findsNothing);
     expect(find.text('Retry'), findsWidgets);
   });
@@ -156,19 +163,30 @@ void main() {
             'subscriptions': <Map<String, dynamic>>[],
           },
           userOptionsLoader: (String? siteId) async =>
-              <String, List<Map<String, dynamic>>>{
+            final Finder sheetScrollable = find.byType(Scrollable).last;
+            final Finder parentField = _dropdownField('Select parent');
+            final Finder learnerField = _dropdownField('Select learner');
+
+            await tester.ensureVisible(parentField);
+            await tester.tap(parentField, warnIfMissed: false);
             'parents': <Map<String, dynamic>>[
               <String, dynamic>{'id': 'parent-1', 'displayName': 'Parent One'},
             ],
             'learners': <Map<String, dynamic>>[
-              <String, dynamic>{
+            await tester.ensureVisible(learnerField);
+            await tester.tap(learnerField, warnIfMissed: false);
                 'id': 'learner-1',
                 'displayName': 'Learner One'
               },
             ],
           },
           invoiceCreator: (Map<String, dynamic> payload) async {
-            throw Exception('invoice callable unavailable');
+            await tester.scrollUntilVisible(
+              find.text('Create Invoice').last,
+              250,
+              scrollable: sheetScrollable,
+            );
+            await tester.tap(find.text('Create Invoice').last, warnIfMissed: false);
           },
         ),
       ),
