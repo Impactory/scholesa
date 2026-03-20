@@ -234,7 +234,15 @@ Future<void> _openGlobalSessionMenu({
     return;
   }
 
+  if (!context.mounted) {
+    return;
+  }
+
   final BuildContext effectiveContext = navigatorKey?.currentContext ?? context;
+  if (!effectiveContext.mounted) {
+    return;
+  }
+
   switch (action) {
     case _GlobalSessionAction.profile:
       TelemetryService.instance.logEvent(
