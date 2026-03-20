@@ -30,6 +30,7 @@ import { TelemetryService } from '@/src/lib/telemetry/telemetryService';
 import { useI18n } from '@/src/lib/i18n/useI18n';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { sendCopilotVoiceMessage, voiceApiConfigured } from '@/src/lib/voice/voiceService';
+import { getUserFacingVoiceTranscriptionError } from '@/src/lib/voice/userFacingVoiceErrors';
 import { useVoiceTranscription } from '@/src/hooks/useVoiceTranscription';
 import { useSpokenResponse } from '@/src/hooks/useSpokenResponse';
 import type { UserRole } from '@/src/types/user';
@@ -231,11 +232,7 @@ export function AICoachPopup({
     },
     onTranscriptionError: (error) => {
       console.error('Voice transcription failed in AI coach popup.', error);
-      setStatusMessage(
-        error instanceof Error && error.message
-          ? error.message
-          : 'AI Help could not clearly capture what you said. Please try again.',
-      );
+      setStatusMessage(getUserFacingVoiceTranscriptionError(error));
     },
   });
 
@@ -745,13 +742,6 @@ Guidance: ${
                   <span>Replay spoken response</span>
                 </button>
               ) : null}
-              
-              {/* Model attribution */}
-              {response.modelUsed === 'miloos_voice_model' && response.modelVersion && (
-                <p className="mt-2 text-xs text-app-muted">
-                  {t('aiCoach.poweredBy', { model: response.modelUsed })}
-                </p>
-              )}
             </div>
 
             {voiceTransparencyMessage ? (

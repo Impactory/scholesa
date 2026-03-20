@@ -13,6 +13,7 @@ describe('AI help wording availability', () => {
     const screenSource = readRepoFile('src', 'components', 'sdt', 'AICoachScreen.tsx');
     const spokenResponseHookSource = readRepoFile('src', 'hooks', 'useSpokenResponse.ts');
     const voiceServiceSource = readRepoFile('src', 'lib', 'voice', 'voiceService.ts');
+    const voiceErrorSource = readRepoFile('src', 'lib', 'voice', 'userFacingVoiceErrors.ts');
     const learnerDashboardSource = readRepoFile('src', 'features', 'dashboards', 'learner', 'components', 'LearnerDashboard.tsx');
     const pricingPlansSource = readRepoFile('src', 'components', 'stripe', 'PricingPlans.tsx');
 
@@ -37,11 +38,12 @@ describe('AI help wording availability', () => {
     expect(popupSource).toContain('AI Help used model support to understand this voice turn.');
     expect(popupSource).toContain('AI Help could not understand this voice turn reliably, so it switched to a safer fallback reply.');
     expect(popupSource).toContain('AI Help could not clearly capture what you said. Please try again and speak a little more clearly.');
-    expect(popupSource).toContain('AI Help could not clearly capture what you said. Please try again.');
+    expect(popupSource).toContain('getUserFacingVoiceTranscriptionError');
     expect(popupSource).toContain('Voice capture is unavailable. Please sign in and complete voice setup to use AI Help by voice.');
     expect(popupSource).toContain('Sign in to use AI Help by voice.');
     expect(popupSource).toContain('Voice help is not available right now. Complete voice setup and try again.');
     expect(popupSource).not.toContain('{response.answer}');
+    expect(popupSource).not.toContain("t('aiCoach.poweredBy'");
     expect(popupSource).not.toContain('BOS AI Coach');
     expect(popupSource).not.toContain('Voice API');
     expect(popupSource).not.toContain('voice understanding stayed heuristic');
@@ -63,11 +65,18 @@ describe('AI help wording availability', () => {
     expect(screenSource).toContain('Speak now');
     expect(screenSource).toContain('AI Help is here to help you think, not to do the work for you.');
     expect(screenSource).toContain('Voice capture is unavailable. Please sign in and complete voice setup to use AI Help by voice.');
+    expect(screenSource).toContain('getUserFacingVoiceTranscriptionError');
     expect(screenSource).not.toContain('{response.message}');
     expect(screenSource).not.toContain('Ask AI Coach');
     expect(screenSource).not.toContain('AI Coach says:');
     expect(screenSource).not.toContain('The AI Coach is here to help you think');
     expect(screenSource).not.toContain('ensure voice setup is available');
+    expect(screenSource).not.toContain('voiceError instanceof Error && voiceError.message');
+
+    expect(voiceErrorSource).toContain('AI Help could not clearly capture what you said. Please try again.');
+    expect(voiceErrorSource).toContain('Sign in to use AI Help by voice.');
+    expect(voiceErrorSource).toContain('Voice help is not available right now. Complete voice setup and try again.');
+    expect(voiceErrorSource).toContain('Voice help took too long to respond. Please try again.');
 
     expect(learnerDashboardSource).toContain('AI Help');
     expect(learnerDashboardSource).toContain('AI help appears here when a real support response is available.');

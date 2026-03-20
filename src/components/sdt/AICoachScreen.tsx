@@ -25,6 +25,7 @@ import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { useI18n } from '@/src/lib/i18n/useI18n';
 import { useVoiceTranscription } from '@/src/hooks/useVoiceTranscription';
 import { useSpokenResponse } from '@/src/hooks/useSpokenResponse';
+import { getUserFacingVoiceTranscriptionError } from '@/src/lib/voice/userFacingVoiceErrors';
 
 interface AICoachScreenProps {
   learnerId: string;
@@ -122,11 +123,7 @@ export function AICoachScreen({
     },
     onTranscriptionError: (voiceError) => {
       console.error('Voice transcription failed in AI coach screen:', voiceError);
-      setStatusMessage(
-        voiceError instanceof Error && voiceError.message
-          ? voiceError.message
-          : 'AI Help could not clearly capture what you said. Please try again.',
-      );
+      setStatusMessage(getUserFacingVoiceTranscriptionError(voiceError));
     },
     onListeningStarted: () => {
       setStatusMessage('Listening now. Speak your question out loud.');
