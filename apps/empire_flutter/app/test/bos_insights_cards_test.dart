@@ -74,9 +74,9 @@ void main() {
       await tester.pump(const Duration(milliseconds: 50));
       await tester.pumpAndSettle();
 
-      expect(find.text('Verified signal unavailable'), findsOneWidget);
+      expect(find.text('No verified learning signals yet'), findsOneWidget);
       expect(find.textContaining('Mastery Validation 0/0/0'), findsNothing);
-      expect(find.textContaining('Improvement Score'), findsNothing);
+      expect(find.textContaining('Growth Trend'), findsNothing);
     });
 
     testWidgets('class insights renders unavailable counts for malformed payload',
@@ -87,8 +87,8 @@ void main() {
           home: Scaffold(
             body: BosClassInsightsCard(
               title: 'MiloOS Class Insights',
-              subtitle:
-                  'FDM state estimate, BAE watchlist, and active MVL gates for this class',
+                subtitle:
+                  'Class learning signals, learners who may need support, and active understanding checks',
               emptyLabel: 'No class insights yet',
               sessionOccurrenceId: 'occ-1',
               siteId: 'site-1',
@@ -126,17 +126,17 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.textContaining('Learners Tracked Verified signal unavailable'),
+        find.textContaining('Learners Tracked No verified learning signals yet'),
         findsOneWidget,
       );
       expect(
-        find.textContaining('Active MVL Gates Verified signal unavailable'),
+        find.textContaining('Active Understanding Checks No verified learning signals yet'),
         findsOneWidget,
       );
-      expect(find.text('BAE Watchlist'), findsOneWidget);
+      expect(find.text('Learners Who May Need Support'), findsOneWidget);
       expect(find.textContaining('Cognition 41%'), findsWidgets);
       expect(
-        find.textContaining('Engagement Verified signal unavailable'),
+        find.textContaining('Engagement No verified learning signals yet'),
         findsWidgets,
       );
     });
@@ -211,8 +211,8 @@ void main() {
           home: Scaffold(
             body: BosClassInsightsCard(
               title: 'MiloOS Class Insights',
-              subtitle:
-                  'FDM state estimate, BAE watchlist, and active MVL gates for this class',
+                subtitle:
+                  'Class learning signals, learners who may need support, and active understanding checks',
               emptyLabel: 'No class insights yet',
               sessionOccurrenceId: 'occ-1',
               siteId: 'site-1',

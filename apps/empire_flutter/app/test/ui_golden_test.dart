@@ -423,7 +423,7 @@ Widget _buildClassInsightsHarness() {
       child: BosClassInsightsCard(
         title: 'MiloOS Class Insights',
         subtitle:
-            'FDM state estimate, BAE watchlist, and active MVL gates for this class',
+          'Class learning signals, learners who may need support, and active understanding checks',
         emptyLabel: 'No class insights yet',
         sessionOccurrenceId: 'occ-golden',
         siteId: 'site-1',
@@ -444,7 +444,7 @@ Widget _buildClassInsightsMissingIdentityHarness() {
       child: BosClassInsightsCard(
         title: 'MiloOS Class Insights',
         subtitle:
-            'FDM state estimate, BAE watchlist, and active MVL gates for this class',
+          'Class learning signals, learners who may need support, and active understanding checks',
         emptyLabel: 'No class insights yet',
         sessionOccurrenceId: 'occ-golden',
         siteId: 'site-1',

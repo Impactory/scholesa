@@ -318,11 +318,11 @@ void main() {
 
       expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
       expect(find.text('MiloOS Class Insights'), findsOneWidget);
-      expect(find.text('BAE Watchlist'), findsOneWidget);
+      expect(find.text('Learners Who May Need Support'), findsOneWidget);
       expect(find.textContaining('Avery Chen'), findsOneWidget);
-      expect(find.text('View Watchlist'), findsOneWidget);
+      expect(find.text('View Support List'), findsOneWidget);
 
-      await tester.tap(find.text('View Watchlist'));
+      await tester.tap(find.text('View Support List'));
       await tester.pumpAndSettle();
 
       expect(
@@ -448,7 +448,7 @@ void main() {
               child: BosClassInsightsCard(
                 title: 'MiloOS Class Insights',
                 subtitle:
-                    'FDM state estimate, BAE watchlist, and active MVL gates for this class',
+                  'Class learning signals, learners who may need support, and active understanding checks',
                 emptyLabel: 'No class insights yet',
                 sessionOccurrenceId: 'occ-1',
                 siteId: 'site-1',
@@ -489,7 +489,7 @@ void main() {
 
       expect(find.textContaining('Learner unavailable'), findsOneWidget);
       expect(find.text('Learner 7f9c'), findsNothing);
-      await tester.tap(find.text('View Watchlist'));
+      await tester.tap(find.text('View Support List'));
       await tester.pumpAndSettle();
 
       expect(find.textContaining('Learner unavailable'), findsWidgets);

@@ -157,7 +157,7 @@ void main() {
 
       expect(find.text('MiloOS Class Insights'), findsOneWidget);
       expect(
-        find.textContaining('FDM state estimate, BAE watchlist'),
+        find.textContaining('Class learning signals, learners who may need support'),
         findsOneWidget,
       );
     });

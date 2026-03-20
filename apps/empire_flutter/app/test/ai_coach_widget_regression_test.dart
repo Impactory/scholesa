@@ -214,8 +214,8 @@ void main() {
       expect(find.byType(TextField), findsNothing);
       expect(find.byIcon(Icons.send), findsNothing);
       expect(find.byIcon(Icons.mic_none), findsOneWidget);
-      expect(
-          find.textContaining('MiloOS will reply by voice.'), findsOneWidget);
+        expect(
+          find.textContaining('MiloOS will answer out loud.'), findsOneWidget);
     });
 
     testWidgets(
@@ -269,7 +269,7 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('Runtime confidence 81%'), findsOneWidget);
+      expect(find.textContaining('Confidence 81%'), findsOneWidget);
       expect(find.textContaining('below 97%'), findsOneWidget);
     });
 
@@ -373,7 +373,7 @@ void main() {
 
       expect(
         find.textContaining(
-          'synthetic pretraining baseline, and live session updates',
+          'live learning signals plus a synthetic baseline',
         ),
         findsOneWidget,
       );

@@ -209,7 +209,7 @@ void main() {
       await mouse.moveTo(tester.getCenter(fab));
       await tester.pump(const Duration(milliseconds: 150));
 
-      expect(find.text('Click for AI help'), findsOneWidget);
+      expect(find.text('Click for help'), findsOneWidget);
       expect(sheetOpenCount, equals(0));
     });
 
