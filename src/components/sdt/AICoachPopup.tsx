@@ -30,6 +30,7 @@ import { TelemetryService } from '@/src/lib/telemetry/telemetryService';
 import { useI18n } from '@/src/lib/i18n/useI18n';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { sendCopilotVoiceMessage, transcribeVoiceAudio, voiceApiConfigured } from '@/src/lib/voice/voiceService';
+import { speakBrowserText, stopBrowserSpeech } from '@/src/lib/voice/browserSpeech';
 import type { UserRole } from '@/src/types/user';
 
 interface AICoachPopupProps {
@@ -137,8 +138,11 @@ export function AICoachPopup({
   const [currentLogId, setCurrentLogId] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [voiceTransparencyMessage, setVoiceTransparencyMessage] = useState<string | null>(null);
+  const [spokenResponseStatus, setSpokenResponseStatus] = useState<string | null>(null);
+  const [spokenResponsePayload, setSpokenResponsePayload] = useState<{ text: string; audioUrl: string | null } | null>(null);
   const [sdtProfile, setSdtProfile] = useState<{ autonomy: number | null; competence: number | null; belonging: number | null } | null>(null);
   
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const audioChunksRef = useRef<BlobPart[]>([]);
@@ -184,6 +188,11 @@ export function AICoachPopup({
   // Recorder cleanup
   useEffect(() => {
     return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+      audioRef.current = null;
+      stopBrowserSpeech();
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
         mediaRecorderRef.current.stop();
       }
@@ -194,6 +203,41 @@ export function AICoachPopup({
       mediaStreamRef.current = null;
     };
   }, []);
+
+  const deliverSpokenResponse = async (text: string, audioUrl?: string | null): Promise<'audio' | 'browser' | 'none'> => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+    audioRef.current = null;
+    stopBrowserSpeech();
+
+    if (audioUrl) {
+      const audio = new Audio(audioUrl);
+      audioRef.current = audio;
+      try {
+        await audio.play();
+        return 'audio';
+      } catch (error) {
+        console.error('Voice playback failed in AI coach popup:', error);
+      }
+    }
+
+    if (speakBrowserText(text)) {
+      return 'browser';
+    }
+
+    return 'none';
+  };
+
+  const describeSpokenDelivery = (deliveryMode: 'audio' | 'browser' | 'none'): string => {
+    if (deliveryMode === 'audio') {
+      return 'AI Help answered out loud. Replay the spoken response if you need to hear it again.';
+    }
+    if (deliveryMode === 'browser') {
+      return 'AI Help answered out loud using this device audio. Replay the spoken response if you need to hear it again.';
+    }
+    return 'AI Help prepared a spoken response, but this device could not play it out loud. Turn on audio and try Replay.';
+  };
 
   const startListening = async () => {
     if (loading || isTranscribing) return;
@@ -206,20 +250,7 @@ export function AICoachPopup({
       && voiceApiConfigured();
 
     if (!canRecordAudio) {
-      setResponse({
-        answer: 'Voice capture is unavailable. Please sign in and ensure voice API settings are configured.',
-        modelUsed: 'error',
-        modelVersion: 'error',
-        logId: 'error',
-        promptTemplateId: 'coach.voice_unavailable',
-        policyVersion: 'i18n-guardrails-2026-02-23',
-        safetyOutcome: 'escalated',
-        safetyReasonCode: 'voice_unavailable',
-        toolCallIds: [],
-        targetLocale: locale,
-        gradeBand: grade <= 3 ? 'grades_1_3' : grade <= 6 ? 'grades_4_6' : grade <= 9 ? 'grades_7_9' : 'grades_10_12',
-        traceId: `ai_popup_voice_${Date.now()}`,
-      });
+      setStatusMessage('Voice capture is unavailable. Please sign in and ensure voice API settings are configured.');
       return;
     }
 
@@ -512,15 +543,15 @@ Guidance: ${
             ? { voiceProfile: voiceResponse.tts.voiceProfile }
             : {}),
         });
-        const audio = new Audio(voiceResponse.tts.audioUrl);
-        void audio.play().catch((error) => {
-          console.error('Voice playback failed in AI coach popup:', error);
-        });
       }
       setVoiceInputTraceId(voiceResponse.metadata.traceId);
       setVoiceTransparencyMessage(buildVoiceTransparencyMessage(voiceResponse.metadata));
 
       setResponse(aiResponse);
+      const audioUrl = voiceResponse.tts.available ? (voiceResponse.tts.audioUrl ?? null) : null;
+      setSpokenResponsePayload({ text: aiResponse.answer, audioUrl });
+      const deliveryMode = await deliverSpokenResponse(aiResponse.answer, audioUrl);
+      setSpokenResponseStatus(describeSpokenDelivery(deliveryMode));
       setCurrentLogId(aiResponse.logId);
 
       // Track telemetry
@@ -552,6 +583,9 @@ Guidance: ${
         gradeBand: grade <= 3 ? 'grades_1_3' : grade <= 6 ? 'grades_4_6' : grade <= 9 ? 'grades_7_9' : 'grades_10_12',
         traceId,
       });
+      setSpokenResponsePayload({ text: localizedServiceUnavailable(locale), audioUrl: null });
+      const deliveryMode = await deliverSpokenResponse(localizedServiceUnavailable(locale));
+      setSpokenResponseStatus(describeSpokenDelivery(deliveryMode));
       setVoiceTransparencyMessage('AI Help could not understand this voice turn reliably, so it switched to a safer fallback reply.');
     } finally {
       setLoading(false);
@@ -622,6 +656,8 @@ Guidance: ${
     setExplainBack('');
     setStatusMessage(null);
     setVoiceTransparencyMessage(null);
+    setSpokenResponseStatus(null);
+    setSpokenResponsePayload(null);
   };
 
   // Minimized button
@@ -802,8 +838,27 @@ Guidance: ${
         {response && (
           <div className="space-y-3">
             <div className="bg-purple-50 rounded-lg p-3 text-sm">
-              <p className="font-medium text-purple-900 mb-2">{t('aiCoach.responseLabel')}</p>
-              <p className="whitespace-pre-wrap text-app-foreground">{response.answer}</p>
+              <p className="font-medium text-purple-900 mb-2">AI Help answered out loud.</p>
+              <p className="text-app-foreground">
+                {spokenResponseStatus || 'Replay the spoken response if you need to hear it again.'}
+              </p>
+              {spokenResponsePayload ? (
+                <button
+                  onClick={() => {
+                    void (async () => {
+                      const deliveryMode = await deliverSpokenResponse(
+                        spokenResponsePayload.text,
+                        spokenResponsePayload.audioUrl,
+                      );
+                      setSpokenResponseStatus(describeSpokenDelivery(deliveryMode));
+                    })();
+                  }}
+                  className="mt-3 inline-flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-medium text-purple-900 ring-1 ring-purple-200 transition-colors hover:bg-purple-100"
+                >
+                  <Volume2Icon className="h-4 w-4" />
+                  <span>Replay spoken response</span>
+                </button>
+              ) : null}
               
               {/* Model attribution */}
               {response.modelUsed === 'miloos_voice_model' && response.modelVersion && (
