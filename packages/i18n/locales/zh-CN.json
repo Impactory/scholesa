@@ -1,23 +1,23 @@
 {
   "common": {
-    "appName": "Scholesa",
-    "loading": "加载中...",
-    "viewAll": "查看全部",
-    "noData": "暂无数据",
-    "active": "启用",
-    "operational": "运行中",
-    "healthy": "健康",
-    "general": "通用",
-    "cancel": "取消",
-    "save": "保存",
+      "loading": "正在加载你的学习旅程...",
+      "welcome": "欢迎回来，{{name}}！",
+      "defaultName": "学习者",
+      "subtitle": "准备继续你的未来技能之旅了吗？",
+      "activeSessions": "你当前参与的课程",
+      "noSessions": "你目前还没有参与中的课程。",
+      "recentMissions": "最近任务",
+      "noRecentMissions": "最近还没有开始新的任务，可以去问问老师下一步做什么。",
+      "myStats": "我的概览",
+      "sessionsAttended": "已参加课程",
     "close": "关闭",
-    "userLabel": "用户",
-    "tbd": "待定",
+      "viewSession": "查看课程",
+      "openMissionBoard": "打开任务看板",
     "liveStats": "实时统计",
     "liveRoster": "实时名册",
-    "liveMetrics": "实时指标",
-    "learners": "学习者",
-    "parents": "家长",
+        "activeSessions": "进行中的课程",
+        "activeMissions": "进行中的任务",
+        "unreadMessages": "未读消息"
     "educators": "教育者"
   },
   "landing": {
@@ -216,64 +216,64 @@
   },
   "meta": {
     "learnerProfile": {
-      "title": "My Learning Profile | Scholesa",
-      "description": "Your motivation, skills, and learning journey"
+      "title": "我的学习档案 | Scholesa",
+      "description": "你的学习动力、技能与成长旅程"
     },
     "educatorAnalytics": {
-      "title": "Analytics Dashboard | Scholesa",
-      "description": "Student engagement and motivation analytics for educators"
+      "title": "学习数据看板 | Scholesa",
+      "description": "帮助老师查看学生参与度与学习动力的数据分析"
     }
   },
   "analytics": {
     "educator": {
-      "title": "Analytics Dashboard",
-      "subtitle": "Track student engagement, SDT metrics, and learning progress",
-      "loadError": "Failed to load analytics. Please try again.",
-      "thisWeek": "This Week",
-      "thisMonth": "This Month",
-      "exportCsv": "Export CSV",
-      "never": "Never",
+      "title": "学习数据看板",
+      "subtitle": "查看学生参与度、学习动力指标与成长进展",
+      "loadError": "加载数据失败，请重试。",
+      "thisWeek": "本周",
+      "thisMonth": "本月",
+      "exportCsv": "导出 CSV",
+      "never": "从未",
       "period": {
-        "week": "week",
-        "month": "month"
+        "week": "周",
+        "month": "月"
       },
       "summary": {
-        "totalLearners": "Total Learners",
-        "avgEngagement": "Avg Engagement",
-        "highPerformers": "High Performers",
-        "atRisk": "At Risk"
+        "totalLearners": "学习者总数",
+        "avgEngagement": "平均参与度",
+        "highPerformers": "表现亮眼",
+        "atRisk": "需要关注"
       },
-      "atRiskTitle": "{{count}} learners may need support",
-      "atRiskBody": "Students with engagement below 60% have low recent activity or participation.",
+      "atRiskTitle": "有 {{count}} 名学习者可能需要更多支持",
+      "atRiskBody": "参与度低于 60% 的学生，最近的学习活动或参与情况较少。",
       "table": {
-        "title": "Student Motivation Profiles (SDT)",
-        "subtitle": "Self-Determination Theory metrics by student",
-        "student": "Student",
-        "autonomy": "Autonomy",
-        "competence": "Competence",
-        "belonging": "Belonging",
-        "engagement": "Engagement",
-        "lastActive": "Last Active"
+        "title": "学生学习动力概览",
+        "subtitle": "按学生查看学习动力指标",
+        "student": "学生",
+        "autonomy": "自主性",
+        "competence": "技能",
+        "belonging": "归属感",
+        "engagement": "参与度",
+        "lastActive": "最近活跃"
       },
-      "eventsCount": "{{count}} events",
-      "scoreAria": "Score: {{score}}%",
+      "eventsCount": "{{count}} 条记录",
+      "scoreAria": "分数：{{score}}%",
       "relative": {
-        "justNow": "Just now",
-        "minutesAgo": "{{count}}m ago",
-        "hoursAgo": "{{count}}h ago",
-        "daysAgo": "{{count}}d ago"
+        "justNow": "刚刚",
+        "minutesAgo": "{{count}} 分钟前",
+        "hoursAgo": "{{count}} 小时前",
+        "daysAgo": "{{count}} 天前"
       },
       "csvHeaders": {
-        "learnerName": "Learner Name",
-        "engagement": "Engagement %",
-        "autonomy": "Autonomy %",
-        "competence": "Competence %",
-        "belonging": "Belonging %",
-        "events": "Events",
-        "lastActive": "Last Active"
+        "learnerName": "学习者姓名",
+        "engagement": "参与度 %",
+        "autonomy": "自主性 %",
+        "competence": "技能 %",
+        "belonging": "归属感 %",
+        "events": "记录数",
+        "lastActive": "最近活跃"
       },
-      "trendUp": "Improving vs last {{period}}",
-      "trendDown": "Below target vs last {{period}}"
+      "trendUp": "比上个{{period}}有所提升",
+      "trendDown": "比上个{{period}}低于目标"
     },
     "student": {
       "headerTitle": "我的学习分析",
