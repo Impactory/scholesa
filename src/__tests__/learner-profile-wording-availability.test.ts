@@ -17,6 +17,7 @@ describe('learner profile wording availability', () => {
     const englishLocale = readLocaleJson('packages', 'i18n', 'locales', 'en.json');
     const simplifiedChineseLocale = readLocaleJson('packages', 'i18n', 'locales', 'zh-CN.json');
     const traditionalChineseLocale = readLocaleJson('packages', 'i18n', 'locales', 'zh-TW.json');
+    const thaiLocale = readLocaleJson('packages', 'i18n', 'locales', 'th.json');
 
     expect(profileSource).toContain("title={t('motivation.sdt.competence.title')}");
     expect(profileSource).toContain("subtitle={t('motivation.sdt.competence.subtitle')}");
@@ -54,5 +55,14 @@ describe('learner profile wording availability', () => {
     expect(traditionalChineseLocale.analytics.student.sdt.competence.subtitle).toBe('我正在發展的技能');
     expect(traditionalChineseLocale.aiInsights.lowCompetence.title).toBe('需要更多技能發展支持');
     expect(traditionalChineseLocale.aiInsights.lowCompetence.actions.smallWins).toBe('用徽章慶祝成長');
+
+    expect(thaiLocale.role.learner.skillsMastered).toBe('ทักษะที่มีหลักฐานแล้ว');
+    expect(thaiLocale.analytics.student.sdt.competence.subtitle).toBe('ทักษะที่ฉันกำลังพัฒนา');
+    expect(thaiLocale.motivation.sdt.competence.subtitle).toBe('ทักษะที่ฉันกำลังพัฒนา');
+    expect(thaiLocale.motivation.skillLevel.mastery).toBe('มีหลักฐานชัดเจน');
+    expect(thaiLocale.motivation.evidenceCollected).toBe('รวบรวมหลักฐานแล้ว {{count}} ชิ้น');
+    expect(thaiLocale.aiInsights.lowCompetence.title).toBe('ต้องการการสนับสนุนเพื่อพัฒนาทักษะเพิ่ม');
+    expect(thaiLocale.aiInsights.lowCompetence.actions.smallWins).toBe('ฉลองการเติบโตด้วยเหรียญตรา');
+    expect(thaiLocale.aiInsights.sdtImbalance.actions.competence.badges).toBe('Celebrate growth with badges');
   });
 });
