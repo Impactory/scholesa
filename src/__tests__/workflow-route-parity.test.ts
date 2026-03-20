@@ -775,6 +775,7 @@ describe('workflow route parity', () => {
     const result = await loadWorkflowRecords(makeContext('/hq/analytics'));
 
     expect(listAnalyticsRepairRuns).toHaveBeenCalledWith({ limit: 120 });
+    expect(result.guidanceText).toContain('Runs marked no-op executed successfully');
 
     expect(result.records).toEqual(expect.arrayContaining([
       expect.objectContaining({
