@@ -214,8 +214,9 @@ void main() {
       expect(find.byType(TextField), findsNothing);
       expect(find.byIcon(Icons.send), findsNothing);
       expect(find.byIcon(Icons.mic_none), findsOneWidget);
-        expect(
-          find.textContaining('MiloOS will answer out loud.'), findsOneWidget);
+      expect(
+        find.textContaining('Help will answer out loud.'), findsOneWidget,
+      );
     });
 
     testWidgets(

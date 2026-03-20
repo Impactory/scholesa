@@ -75,8 +75,8 @@ class AppStrings {
       'app.startupService.firebase': 'Firebase',
       'app.startupService.authEmulator': 'Auth emulator',
       'app.startupService.generic': 'Startup service',
-    'assistant.tooltip': 'MiloOS Help',
-    'assistant.title': 'MiloOS Help',
+    'assistant.tooltip': 'Get help',
+    'assistant.title': 'Get help',
       'assistant.close': 'Close',
     'assistant.loading': 'Loading help…',
     'assistant.hoverHint': 'Click for help',
@@ -89,7 +89,7 @@ class AppStrings {
       'ai.autoAssist.fallbackPrompt':
           'Check in proactively with the learner. Offer one tiny next step and ask a confidence-building follow-up question.',
       'ai.error.unreachable':
-          'Unable to reach MiloOS right now. Try again in a moment.',
+          'Help is not available right now. Try again in a moment.',
       'ai.error.safeEscalation':
           'I want to be careful here. Share what you have tried so far, and I can help with the next safe step. If you need a full check, ask your educator to review it with you.',
       'ai.voice.transcriptionUnavailable':
@@ -104,7 +104,7 @@ class AppStrings {
       'ai.voice.speaking': 'Speaking…',
       'ai.voice.tapInterrupt': 'Tap to interrupt',
       'ai.voiceOnly.promptTap':
-          'Tap the mic and speak. MiloOS will answer out loud.',
+          'Tap the mic and speak. Help will answer out loud.',
       'ai.voiceOnly.listening': 'Listening… speak now.',
       'ai.voice.outputUnavailable':
           'Voice output is unavailable. Check device volume and audio permissions.',
@@ -225,8 +225,8 @@ class AppStrings {
       'app.startupService.firebase': 'Firebase',
       'app.startupService.authEmulator': '认证模拟器',
       'app.startupService.generic': '启动服务',
-    'assistant.tooltip': 'MiloOS 帮助',
-    'assistant.title': 'MiloOS 帮助',
+    'assistant.tooltip': '获取帮助',
+    'assistant.title': '获取帮助',
       'assistant.close': '关闭',
     'assistant.loading': '正在加载帮助…',
     'assistant.hoverHint': '点击获取帮助',
@@ -236,7 +236,7 @@ class AppStrings {
       'ai.autoAssist.interventionPrompt':
           'MiloOS 检测到一个需要主动支持的时刻。干预类型：{type}，显著性：{salience}，原因码：{reasons}。请给出简短支持性语音提醒，包含一个立即行动和一个追问。',
       'ai.autoAssist.fallbackPrompt': '请主动关心学习者，给出一个微小下一步，并提出一个增强信心的追问。',
-      'ai.error.unreachable': '当前无法连接 MiloOS，请稍后再试。',
+    'ai.error.unreachable': '当前无法使用帮助，请稍后再试。',
       'ai.error.safeEscalation':
           '我想更谨慎一点。先告诉我你已经试过什么，我可以帮你想下一步更安全的做法。如果你需要完整检查，请请老师和你一起看。',
       'ai.voice.transcriptionUnavailable': '语音转写不可用，请改用文字输入。',
@@ -248,7 +248,7 @@ class AppStrings {
       'ai.voice.enableOutput': '开启语音输出',
       'ai.voice.speaking': '正在说话…',
       'ai.voice.tapInterrupt': '点击即可打断',
-    'ai.voiceOnly.promptTap': '点击麦克风开始说话。MiloOS 会直接语音回答。',
+    'ai.voiceOnly.promptTap': '点击麦克风开始说话。帮助会直接语音回答。',
       'ai.voiceOnly.listening': '正在聆听…请开始说话。',
       'ai.voice.outputUnavailable': '语音输出不可用，请检查设备音量和音频权限。',
       'ai.voice.outputUnavailableWeb': '浏览器中的语音输出被阻止。请使用 HTTPS、允许自动播放/音频后再试。',
@@ -354,8 +354,8 @@ class AppStrings {
       'app.startupService.firebase': 'Firebase',
       'app.startupService.authEmulator': '認證模擬器',
       'app.startupService.generic': '啟動服務',
-    'assistant.tooltip': 'MiloOS 幫助',
-    'assistant.title': 'MiloOS 幫助',
+    'assistant.tooltip': '取得幫助',
+    'assistant.title': '取得幫助',
       'assistant.close': '關閉',
     'assistant.loading': '正在載入幫助…',
     'assistant.hoverHint': '點擊取得幫助',
@@ -365,7 +365,7 @@ class AppStrings {
       'ai.autoAssist.interventionPrompt':
           'MiloOS 偵測到需要主動支持的時刻。介入類型：{type}，顯著性：{salience}，原因碼：{reasons}。請給出簡短支持性語音提醒，包含一個立即行動和一個追問。',
       'ai.autoAssist.fallbackPrompt': '請主動關心學習者，給出一個微小下一步，並提出一個建立信心的追問。',
-      'ai.error.unreachable': '目前無法連線到 MiloOS，請稍後再試。',
+    'ai.error.unreachable': '目前無法使用幫助，請稍後再試。',
       'ai.error.safeEscalation':
           '我想更謹慎一點。先告訴我你已經試過什麼，我可以幫你想下一步更安全的做法。如果你需要完整檢查，請請老師和你一起看。',
       'ai.voice.transcriptionUnavailable': '語音轉寫不可用，請改用文字輸入。',
@@ -377,7 +377,7 @@ class AppStrings {
       'ai.voice.enableOutput': '開啟語音輸出',
       'ai.voice.speaking': '正在說話…',
       'ai.voice.tapInterrupt': '點擊即可打斷',
-    'ai.voiceOnly.promptTap': '點擊麥克風開始說話。MiloOS 會直接語音回答。',
+    'ai.voiceOnly.promptTap': '點擊麥克風開始說話。幫助會直接語音回答。',
       'ai.voiceOnly.listening': '正在聆聽…請開始說話。',
       'ai.voice.outputUnavailable': '語音輸出不可用，請檢查裝置音量與音訊權限。',
       'ai.voice.outputUnavailableWeb': '瀏覽器中的語音輸出被阻擋。請使用 HTTPS、允許自動播放/音訊後再試。',
