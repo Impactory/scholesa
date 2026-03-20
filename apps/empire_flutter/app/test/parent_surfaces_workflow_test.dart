@@ -156,8 +156,10 @@ Future<void> _seedParentData(FakeFirebaseFirestore firestore) async {
       'description': 'Linked Update',
       'pillarCodes': const <String>['future_skills'],
       'verificationStatus': 'reviewed',
-      'createdAt': Timestamp.fromDate(anchor.subtract(const Duration(hours: 2))),
-      'updatedAt': Timestamp.fromDate(anchor.subtract(const Duration(hours: 1))),
+      'createdAt':
+          Timestamp.fromDate(anchor.subtract(const Duration(hours: 2))),
+      'updatedAt':
+          Timestamp.fromDate(anchor.subtract(const Duration(hours: 1))),
     },
   );
 }
@@ -397,7 +399,8 @@ void main() {
           'proofOfLearningStatus': 'verified',
           'aiDisclosureStatus': 'learner-ai-not-used',
           'createdAt': Timestamp.fromDate(anchor),
-          'updatedAt': Timestamp.fromDate(anchor.add(const Duration(minutes: 5))),
+          'updatedAt':
+              Timestamp.fromDate(anchor.add(const Duration(minutes: 5))),
         },
       );
 
@@ -421,7 +424,8 @@ void main() {
           'actorId': 'learner-1',
           'sessionOccurrenceId': 'session-1',
           'eventType': 'ai_help_used',
-          'createdAt': Timestamp.fromDate(anchor.add(const Duration(minutes: 1))),
+          'createdAt':
+              Timestamp.fromDate(anchor.add(const Duration(minutes: 1))),
         },
       );
 
@@ -460,7 +464,10 @@ void main() {
       final DateTime now = DateTime.now();
       final DateTime anchor = DateTime(now.year, now.month, now.day, 11);
 
-      await firestore.collection('capabilityMastery').doc('learner-1_cap-1').set(
+      await firestore
+          .collection('capabilityMastery')
+          .doc('learner-1_cap-1')
+          .set(
         <String, dynamic>{
           'learnerId': 'learner-1',
           'siteId': 'site-1',
@@ -480,7 +487,8 @@ void main() {
           'capabilityId': 'cap-1',
           'capabilityLabel': 'Prototype evidence',
           'linkedMissionAttemptId': 'attempt-1',
-          'observedAt': Timestamp.fromDate(anchor.subtract(const Duration(hours: 1))),
+          'observedAt':
+              Timestamp.fromDate(anchor.subtract(const Duration(hours: 1))),
         },
       );
 
@@ -497,7 +505,8 @@ void main() {
           'proofOfLearningStatus': 'verified',
           'aiDisclosureStatus': 'learner-ai-not-used',
           'createdAt': Timestamp.fromDate(anchor),
-          'updatedAt': Timestamp.fromDate(anchor.add(const Duration(minutes: 5))),
+          'updatedAt':
+              Timestamp.fromDate(anchor.add(const Duration(minutes: 5))),
         },
       );
 
@@ -521,7 +530,8 @@ void main() {
           'actorId': 'learner-1',
           'sessionOccurrenceId': 'session-1',
           'eventType': 'ai_help_used',
-          'createdAt': Timestamp.fromDate(anchor.add(const Duration(minutes: 1))),
+          'createdAt':
+              Timestamp.fromDate(anchor.add(const Duration(minutes: 1))),
         },
       );
 
@@ -541,7 +551,8 @@ void main() {
         findsWidgets,
       );
       expect(
-        find.textContaining('Learner AI use detected without explain-back evidence'),
+        find.textContaining(
+            'Learner AI use detected without explain-back evidence'),
         findsNothing,
       );
     });
@@ -630,24 +641,14 @@ void main() {
       expect(find.text('NEXT-DUE'), findsOneWidget);
       expect(find.text('Pay Now'), findsNothing);
       expect(find.text('View'), findsNothing);
-      expect(
-        find.text(
-            'Invoice actions are handled by your site or HQ billing team.'),
-        findsNWidgets(2),
-      );
+      expect(find.text('Request Invoice Help'), findsNWidgets(2));
 
       await tester.tap(find.text('Plan'));
       await tester.pumpAndSettle();
 
       expect(find.text('FAMILY PLAN'), findsOneWidget);
-      expect(
-        find.text('Payment method changes are handled by HQ billing support.'),
-        findsOneWidget,
-      );
-      expect(
-        find.text('Plan changes are handled by HQ billing support.'),
-        findsOneWidget,
-      );
+      expect(find.text('Request Payment Method Update'), findsOneWidget);
+      expect(find.text('Request Plan Change'), findsOneWidget);
       expect(find.text('Manage Plan'), findsNothing);
     });
   });

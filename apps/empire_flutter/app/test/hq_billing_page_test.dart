@@ -6,6 +6,14 @@ import 'package:provider/provider.dart';
 import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/modules/hq_admin/hq_billing_page.dart';
 
+Finder _dropdownField(String hintText) {
+  return find.byWidgetPredicate(
+    (Widget widget) =>
+        widget is DropdownButtonFormField<String> &&
+        widget.decoration.hintText == hintText,
+  );
+}
+
 Widget _buildHarness(Widget child, {AppState? appState}) {
   return MultiProvider(
     providers: <SingleChildWidget>[
@@ -73,13 +81,6 @@ void main() {
     );
     expect(find.text('No invoices found'), findsNothing);
     expect(find.text('No payments found'), findsNothing);
-        Finder _dropdownField(String hintText) {
-          return find.byWidgetPredicate(
-            (Widget widget) =>
-                widget is DropdownButtonFormField<String> &&
-                widget.decoration?.hintText == hintText,
-          );
-        }
     expect(find.text('No subscriptions found'), findsNothing);
     expect(find.text('Retry'), findsWidgets);
   });
@@ -123,12 +124,18 @@ void main() {
     await tester.tap(find.text('New Invoice'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Select parent'));
+    final Finder sheetScrollable = find.byType(Scrollable).last;
+    final Finder parentField = _dropdownField('Select parent');
+    final Finder learnerField = _dropdownField('Select learner');
+
+    await tester.ensureVisible(parentField);
+    await tester.tap(parentField, warnIfMissed: false);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Parent One').last);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Select learner'));
+    await tester.ensureVisible(learnerField);
+    await tester.tap(learnerField, warnIfMissed: false);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Learner One').last);
     await tester.pumpAndSettle();
@@ -136,7 +143,12 @@ void main() {
     await tester.enterText(find.byType(TextField).at(0), '120');
     await tester.enterText(
         find.byType(TextField).at(1), 'Studio tuition for March');
-    await tester.tap(find.text('Create Invoice').last);
+    await tester.scrollUntilVisible(
+      find.text('Create Invoice').last,
+      250,
+      scrollable: sheetScrollable,
+    );
+    await tester.tap(find.text('Create Invoice').last, warnIfMissed: false);
     await tester.pumpAndSettle();
 
     expect(find.text('Invoice created successfully'), findsOneWidget);
@@ -163,30 +175,19 @@ void main() {
             'subscriptions': <Map<String, dynamic>>[],
           },
           userOptionsLoader: (String? siteId) async =>
-            final Finder sheetScrollable = find.byType(Scrollable).last;
-            final Finder parentField = _dropdownField('Select parent');
-            final Finder learnerField = _dropdownField('Select learner');
-
-            await tester.ensureVisible(parentField);
-            await tester.tap(parentField, warnIfMissed: false);
+              <String, List<Map<String, dynamic>>>{
             'parents': <Map<String, dynamic>>[
               <String, dynamic>{'id': 'parent-1', 'displayName': 'Parent One'},
             ],
             'learners': <Map<String, dynamic>>[
-            await tester.ensureVisible(learnerField);
-            await tester.tap(learnerField, warnIfMissed: false);
+              <String, dynamic>{
                 'id': 'learner-1',
                 'displayName': 'Learner One'
               },
             ],
           },
           invoiceCreator: (Map<String, dynamic> payload) async {
-            await tester.scrollUntilVisible(
-              find.text('Create Invoice').last,
-              250,
-              scrollable: sheetScrollable,
-            );
-            await tester.tap(find.text('Create Invoice').last, warnIfMissed: false);
+            throw Exception('invoice callable unavailable');
           },
         ),
       ),
@@ -195,18 +196,32 @@ void main() {
 
     await tester.tap(find.text('New Invoice'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Select parent'));
+
+    final Finder sheetScrollable = find.byType(Scrollable).last;
+    final Finder parentField = _dropdownField('Select parent');
+    final Finder learnerField = _dropdownField('Select learner');
+
+    await tester.ensureVisible(parentField);
+    await tester.tap(parentField, warnIfMissed: false);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Parent One').last);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Select learner'));
+
+    await tester.ensureVisible(learnerField);
+    await tester.tap(learnerField, warnIfMissed: false);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Learner One').last);
     await tester.pumpAndSettle();
+
     await tester.enterText(find.byType(TextField).at(0), '120');
     await tester.enterText(
         find.byType(TextField).at(1), 'Studio tuition for March');
-    await tester.tap(find.text('Create Invoice').last);
+    await tester.scrollUntilVisible(
+      find.text('Create Invoice').last,
+      250,
+      scrollable: sheetScrollable,
+    );
+    await tester.tap(find.text('Create Invoice').last, warnIfMissed: false);
     await tester.pumpAndSettle();
 
     expect(find.text('Invoice creation failed'), findsOneWidget);
