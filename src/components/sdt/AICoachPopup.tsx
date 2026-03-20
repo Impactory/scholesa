@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * AI Coach Popup
+ * AI Help Popup
  * 
  * Floating assistant in bottom-right corner
  * - Voice-first input and auto-submit
@@ -184,7 +184,7 @@ export function AICoachPopup({
   } = useSpokenResponse({
     locale,
     onAudioPlaybackError: (error) => {
-      console.error('Voice playback failed in AI coach popup:', error);
+      console.error('Voice playback failed in AI Help popup:', error);
     },
   });
 
@@ -231,7 +231,7 @@ export function AICoachPopup({
       setStatusMessage('AI Help could not clearly capture what you said. Please try again and speak a little more clearly.');
     },
     onTranscriptionError: (error) => {
-      console.error('Voice transcription failed in AI coach popup.', error);
+      console.error('Voice transcription failed in AI Help popup.', error);
       setStatusMessage(getUserFacingVoiceTranscriptionError(error));
     },
   });
@@ -457,7 +457,7 @@ Guidance: ${
         voiceInputTraceId: voiceInputTraceId || undefined,
       });
     } catch (err) {
-      console.error('AI Coach error:', err);
+      console.error('AI Help error:', err);
       const traceId = `ai_popup_${Date.now()}`;
       setResponse({
         answer: localizedServiceUnavailable(locale),
@@ -523,7 +523,7 @@ Guidance: ${
         result.feedback?.trim() || 'Explain-back recorded for this AI help session.',
       );
     } catch (err) {
-      console.error('AI coach popup explain-back error:', err);
+      console.error('AI Help popup explain-back error:', err);
       setStatusMessage('Unable to record explain-back right now. Open the learner AI Help screen or try again later.');
     } finally {
       setLoading(false);

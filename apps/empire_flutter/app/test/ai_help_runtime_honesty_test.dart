@@ -12,6 +12,8 @@ void main() {
         File('lib/runtime/voice_runtime_service.dart').readAsStringSync();
     final String coachWidgetSource =
         File('lib/runtime/ai_coach_widget.dart').readAsStringSync();
+    final String overlaySource =
+        File('lib/runtime/global_ai_assistant_overlay.dart').readAsStringSync();
 
     test(
         'keeps runtime exception text aligned to AI Help and voice help wording',
@@ -64,6 +66,16 @@ void main() {
           isNot(contains('You are Scholesa AI Coach in a live conversation.')));
       expect(coachWidgetSource,
           isNot(contains('MiloOS closed-loop coaching runtime')));
+
+      expect(
+          overlaySource, contains("AppStrings.of(context, 'assistant.title')"));
+      expect(overlaySource,
+          contains("AppStrings.of(context, 'assistant.tooltip')"));
+      expect(overlaySource,
+          contains("AppStrings.of(context, 'assistant.hoverHint')"));
+      expect(overlaySource, isNot(contains('AI Coach')));
+      expect(overlaySource, isNot(contains('MiloOS')));
+      expect(overlaySource, isNot(contains('Voice API')));
     });
   });
 }

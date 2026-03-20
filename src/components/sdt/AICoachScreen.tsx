@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * AI Coach Screen
+ * AI Help Screen
  * 
  * Level 1: Must-have for flow and retention
  * Three modes: Hint / Rubric Check / Debug-by-Questions + Explain-it-back box
@@ -88,7 +88,7 @@ export function AICoachScreen({
       setResponse(aiResponse);
       await playSpokenResponse(aiResponse.message);
     } catch (err) {
-      console.error('AI Coach error:', err);
+      console.error('AI Help error:', err);
       setError('Unable to get AI help right now. Try again or ask your teacher!');
     } finally {
       setLoading(false);
@@ -115,14 +115,14 @@ export function AICoachScreen({
       setStatusMessage('Voice capture is unavailable. Please sign in and complete voice setup to use AI Help by voice.');
     },
     onCaptureError: (microphoneError) => {
-      console.error('Microphone capture unavailable for AI coach screen:', microphoneError);
+      console.error('Microphone capture unavailable for AI Help screen:', microphoneError);
       setStatusMessage('Microphone access is required for voice questions. Please allow microphone permission and try again.');
     },
     onEmptyTranscript: () => {
       setStatusMessage('AI Help could not clearly capture what you said. Please try again and speak a little more clearly.');
     },
     onTranscriptionError: (voiceError) => {
-      console.error('Voice transcription failed in AI coach screen:', voiceError);
+      console.error('Voice transcription failed in AI Help screen:', voiceError);
       setStatusMessage(getUserFacingVoiceTranscriptionError(voiceError));
     },
     onListeningStarted: () => {
@@ -177,7 +177,7 @@ export function AICoachScreen({
         approved: result.approved,
       });
     } catch (err) {
-      console.error('AI Coach explain-back error:', err);
+      console.error('AI Help explain-back error:', err);
       setError('Unable to submit your explanation right now. Try again or ask your teacher to review it.');
     } finally {
       setLoading(false);

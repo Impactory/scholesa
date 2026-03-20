@@ -11,6 +11,7 @@ describe('AI help wording availability', () => {
   it('keeps the web AI popup wired to friendly aiCoach locale keys at visible UI touchpoints', () => {
     const popupSource = readRepoFile('src', 'components', 'sdt', 'AICoachPopup.tsx');
     const screenSource = readRepoFile('src', 'components', 'sdt', 'AICoachScreen.tsx');
+    const dockSource = readRepoFile('src', 'components', 'sdt', 'GlobalAIAssistantDock.tsx');
     const spokenResponseHookSource = readRepoFile('src', 'hooks', 'useSpokenResponse.ts');
     const voiceServiceSource = readRepoFile('src', 'lib', 'voice', 'voiceService.ts');
     const voiceErrorSource = readRepoFile('src', 'lib', 'voice', 'userFacingVoiceErrors.ts');
@@ -44,6 +45,10 @@ describe('AI help wording availability', () => {
     expect(popupSource).toContain('Voice help is not available right now. Complete voice setup and try again.');
     expect(popupSource).not.toContain('{response.answer}');
     expect(popupSource).not.toContain("t('aiCoach.poweredBy'");
+    expect(popupSource).not.toContain('Voice playback failed in AI coach popup:');
+    expect(popupSource).not.toContain('Voice transcription failed in AI coach popup.');
+    expect(popupSource).not.toContain('AI Coach error:');
+    expect(popupSource).not.toContain('AI coach popup explain-back error:');
     expect(popupSource).not.toContain('BOS AI Coach');
     expect(popupSource).not.toContain('Voice API');
     expect(popupSource).not.toContain('voice understanding stayed heuristic');
@@ -70,8 +75,18 @@ describe('AI help wording availability', () => {
     expect(screenSource).not.toContain('Ask AI Coach');
     expect(screenSource).not.toContain('AI Coach says:');
     expect(screenSource).not.toContain('The AI Coach is here to help you think');
+    expect(screenSource).not.toContain('AI Coach error:');
+    expect(screenSource).not.toContain('Microphone capture unavailable for AI coach screen:');
+    expect(screenSource).not.toContain('Voice transcription failed in AI coach screen:');
+    expect(screenSource).not.toContain('AI Coach explain-back error:');
     expect(screenSource).not.toContain('ensure voice setup is available');
     expect(screenSource).not.toContain('voiceError instanceof Error && voiceError.message');
+
+    expect(dockSource).toContain('<AICoachPopup');
+    expect(dockSource).toContain("t('common.userLabel')");
+    expect(dockSource).not.toContain('AI Coach');
+    expect(dockSource).not.toContain('MiloOS');
+    expect(dockSource).not.toContain('Voice API');
 
     expect(voiceErrorSource).toContain('AI Help could not clearly capture what you said. Please try again.');
     expect(voiceErrorSource).toContain('Sign in to use AI Help by voice.');
