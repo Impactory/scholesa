@@ -45,6 +45,7 @@ class _SafetyIncident {
 class _HqSafetyPageState extends State<HqSafetyPage> {
   List<_SafetyIncident> _incidents = <_SafetyIncident>[];
   bool _isLoading = false;
+  String? _loadError;
 
   @override
   void initState() {
@@ -62,8 +63,13 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
         title: Text(_tHqSafety(context, 'Safety Overview')),
         backgroundColor: ScholesaColors.safetyGradient.colors.first,
         foregroundColor: Colors.white,
-        actions: const <Widget>[
-          SessionMenuButton(
+        actions: <Widget>[
+          IconButton(
+            onPressed: _loadIncidents,
+            icon: const Icon(Icons.refresh_rounded),
+            tooltip: _tHqSafety(context, 'Retry'),
+          ),
+          const SessionMenuButton(
             foregroundColor: Colors.white,
           ),
         ],
@@ -172,6 +178,10 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
       );
     }
 
+    if (_loadError != null && _incidents.isEmpty) {
+      return _buildLoadErrorCard();
+    }
+
     if (_incidents.isEmpty) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 20),
@@ -187,6 +197,10 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
+        if (_loadError != null) ...<Widget>[
+          _buildStaleDataBanner(),
+          const SizedBox(height: 12),
+        ],
         Text(
           _tHqSafety(context, 'All Recent Incidents'),
           style: TextStyle(
@@ -197,6 +211,76 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
         const SizedBox(height: 12),
         ..._incidents.map((incident) => _buildIncidentCard(incident)),
       ],
+    );
+  }
+
+  Widget _buildLoadErrorCard() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Icon(
+              Icons.error_outline_rounded,
+              size: 64,
+              color: Colors.red.withValues(alpha: 0.7),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _tHqSafety(context, 'Safety incidents are temporarily unavailable'),
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: ScholesaColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _tHqSafety(
+                context,
+                'We could not load safety incidents right now. Retry to check the current state.',
+              ),
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: ScholesaColors.textSecondary),
+            ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: _loadIncidents,
+              icon: const Icon(Icons.refresh_rounded),
+              label: Text(_tHqSafety(context, 'Retry')),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStaleDataBanner() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.orange.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              _tHqSafety(
+                context,
+                'Unable to refresh safety incidents right now. Showing the last successful data.',
+              ),
+              style: const TextStyle(color: ScholesaColors.textPrimary),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -467,7 +551,10 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
 
   Future<void> _loadIncidents() async {
     if (!mounted) return;
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _loadError = null;
+    });
     try {
       final Map<String, dynamic> payload = await _loadIncidentPayload();
       final List<dynamic> rows =
@@ -522,7 +609,12 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
       setState(() => _incidents = loaded);
     } catch (_) {
       if (!mounted) return;
-      setState(() => _incidents = <_SafetyIncident>[]);
+      setState(() {
+        _loadError = _tHqSafety(
+          context,
+          'We could not load safety incidents right now. Retry to check the current state.',
+        );
+      });
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
