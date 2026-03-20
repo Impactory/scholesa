@@ -13,6 +13,7 @@ describe('parent workflow wording availability', () => {
     const englishLocale = JSON.parse(readRepoFile('packages', 'i18n', 'locales', 'en.json'));
     const simplifiedChineseLocale = JSON.parse(readRepoFile('packages', 'i18n', 'locales', 'zh-CN.json'));
     const traditionalChineseLocale = JSON.parse(readRepoFile('packages', 'i18n', 'locales', 'zh-TW.json'));
+    const thaiLocale = JSON.parse(readRepoFile('packages', 'i18n', 'locales', 'th.json'));
 
     expect(workflowDataSource).toContain('title: `${learnerName} growth snapshot`');
     expect(workflowDataSource).toContain('Future Skills ${futureSkills}');
@@ -51,5 +52,9 @@ describe('parent workflow wording availability', () => {
     expect(traditionalChineseLocale.role.parent.levelXp).toBe('已審查證據 {{level}} • 已分享作品 {{xp}}');
     expect(traditionalChineseLocale.role.parent.missionsCount).toBe('已完成任務：{{count}}');
     expect(traditionalChineseLocale.role.parent.streakCount).toBe('近期活躍天數：{{count}}');
+
+    expect(thaiLocale.role.parent.levelXp).toBe('หลักฐานที่ตรวจแล้ว {{level}} • ผลงานที่แชร์ {{xp}}');
+    expect(thaiLocale.role.parent.missionsCount).toBe('ภารกิจที่เสร็จแล้ว: {{count}}');
+    expect(thaiLocale.role.parent.streakCount).toBe('วันที่มีการเรียนรู้ล่าสุด: {{count}}');
   });
 });

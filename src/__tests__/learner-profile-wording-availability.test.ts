@@ -59,10 +59,12 @@ describe('learner profile wording availability', () => {
     expect(thaiLocale.role.learner.skillsMastered).toBe('ทักษะที่มีหลักฐานแล้ว');
     expect(thaiLocale.analytics.student.sdt.competence.subtitle).toBe('ทักษะที่ฉันกำลังพัฒนา');
     expect(thaiLocale.motivation.sdt.competence.subtitle).toBe('ทักษะที่ฉันกำลังพัฒนา');
+    expect(thaiLocale.goalForm.title).toBe('ตั้งเป้าหมายการเรียนรู้');
     expect(thaiLocale.motivation.skillLevel.mastery).toBe('มีหลักฐานชัดเจน');
     expect(thaiLocale.motivation.evidenceCollected).toBe('รวบรวมหลักฐานแล้ว {{count}} ชิ้น');
+    expect(thaiLocale.aiInsights.panelTitle).toBe('ข้อเสนอแนะจาก AI');
     expect(thaiLocale.aiInsights.lowCompetence.title).toBe('ต้องการการสนับสนุนเพื่อพัฒนาทักษะเพิ่ม');
     expect(thaiLocale.aiInsights.lowCompetence.actions.smallWins).toBe('ฉลองการเติบโตด้วยเหรียญตรา');
-    expect(thaiLocale.aiInsights.sdtImbalance.actions.competence.badges).toBe('Celebrate growth with badges');
+    expect(thaiLocale.aiInsights.sdtImbalance.actions.competence.badges).toBe('ฉลองการเติบโตด้วยเหรียญตรา');
   });
 });

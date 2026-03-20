@@ -115,9 +115,9 @@
       "viewSchedule": "ดูตาราง",
       "defaultLearnerInitial": "ผ",
       "askSiteLinkLearner": "ขอให้ศูนย์เชื่อมโยงผู้เรียน",
-      "levelXp": "ระดับ {{level}} • XP {{xp}}",
-      "missionsCount": "ภารกิจ: {{count}}",
-      "streakCount": "สตรีค: {{count}}",
+      "levelXp": "หลักฐานที่ตรวจแล้ว {{level}} • ผลงานที่แชร์ {{xp}}",
+      "missionsCount": "ภารกิจที่เสร็จแล้ว: {{count}}",
+      "streakCount": "วันที่มีการเรียนรู้ล่าสุด: {{count}}",
       "fallback": {
         "linkedLearners": "ผู้เรียนที่เชื่อมโยง",
         "upcomingSessions": "เซสชันที่กำลังจะมาถึง",
@@ -216,64 +216,64 @@
   },
   "meta": {
     "learnerProfile": {
-      "title": "My Learning Profile | Scholesa",
-      "description": "Your motivation, skills, and learning journey"
+      "title": "โปรไฟล์การเรียนรู้ของฉัน | Scholesa",
+      "description": "แรงจูงใจ ทักษะ และเส้นทางการเรียนรู้ของคุณ"
     },
     "educatorAnalytics": {
-      "title": "Analytics Dashboard | Scholesa",
-      "description": "Student engagement and motivation analytics for educators"
+      "title": "แดชบอร์ดข้อมูลการเรียนรู้ | Scholesa",
+      "description": "ข้อมูลการมีส่วนร่วมและแรงจูงใจของผู้เรียนสำหรับครู"
     }
   },
   "analytics": {
     "educator": {
-      "title": "Analytics Dashboard",
-      "subtitle": "Track student engagement, SDT metrics, and learning progress",
-      "loadError": "Failed to load analytics. Please try again.",
-      "thisWeek": "This Week",
-      "thisMonth": "This Month",
-      "exportCsv": "Export CSV",
-      "never": "Never",
+      "title": "แดชบอร์ดข้อมูลการเรียนรู้",
+      "subtitle": "ติดตามการมีส่วนร่วมของผู้เรียน ตัวชี้วัดแรงจูงใจ และความก้าวหน้าในการเรียนรู้",
+      "loadError": "โหลดข้อมูลไม่สำเร็จ โปรดลองอีกครั้ง",
+      "thisWeek": "สัปดาห์นี้",
+      "thisMonth": "เดือนนี้",
+      "exportCsv": "ส่งออก CSV",
+      "never": "ไม่เคย",
       "period": {
-        "week": "week",
-        "month": "month"
+        "week": "สัปดาห์",
+        "month": "เดือน"
       },
       "summary": {
-        "totalLearners": "Total Learners",
-        "avgEngagement": "Avg Engagement",
-        "highPerformers": "High Performers",
-        "atRisk": "At Risk"
+        "totalLearners": "ผู้เรียนทั้งหมด",
+        "avgEngagement": "การมีส่วนร่วมเฉลี่ย",
+        "highPerformers": "ผู้เรียนที่ก้าวหน้าเด่น",
+        "atRisk": "ผู้เรียนที่อาจต้องการการช่วยเหลือ"
       },
-      "atRiskTitle": "{{count}} learners may need support",
-      "atRiskBody": "Students with engagement below 60% have low recent activity or participation.",
+      "atRiskTitle": "ผู้เรียน {{count}} คนอาจต้องการการช่วยเหลือเพิ่มเติม",
+      "atRiskBody": "ผู้เรียนที่มีการมีส่วนร่วมต่ำกว่า 60% มีกิจกรรมหรือการเข้าร่วมล่าสุดค่อนข้างน้อย",
       "table": {
-        "title": "Student Motivation Profiles (SDT)",
-        "subtitle": "Self-Determination Theory metrics by student",
-        "student": "Student",
-        "autonomy": "Autonomy",
-        "competence": "Competence",
-        "belonging": "Belonging",
-        "engagement": "Engagement",
-        "lastActive": "Last Active"
+        "title": "ภาพรวมแรงจูงใจของผู้เรียน",
+        "subtitle": "ตัวชี้วัดแรงจูงใจของผู้เรียนแต่ละคน",
+        "student": "ผู้เรียน",
+        "autonomy": "การตัดสินใจของตนเอง",
+        "competence": "ทักษะ",
+        "belonging": "ความเป็นส่วนหนึ่ง",
+        "engagement": "การมีส่วนร่วม",
+        "lastActive": "ใช้งานล่าสุด"
       },
-      "eventsCount": "{{count}} events",
-      "scoreAria": "Score: {{score}}%",
+      "eventsCount": "{{count}} กิจกรรม",
+      "scoreAria": "คะแนน: {{score}}%",
       "relative": {
-        "justNow": "Just now",
-        "minutesAgo": "{{count}}m ago",
-        "hoursAgo": "{{count}}h ago",
-        "daysAgo": "{{count}}d ago"
+        "justNow": "เมื่อสักครู่",
+        "minutesAgo": "{{count}} นาทีที่แล้ว",
+        "hoursAgo": "{{count}} ชั่วโมงที่แล้ว",
+        "daysAgo": "{{count}} วันที่แล้ว"
       },
       "csvHeaders": {
-        "learnerName": "Learner Name",
-        "engagement": "Engagement %",
-        "autonomy": "Autonomy %",
-        "competence": "Competence %",
-        "belonging": "Belonging %",
-        "events": "Events",
-        "lastActive": "Last Active"
+        "learnerName": "ชื่อผู้เรียน",
+        "engagement": "การมีส่วนร่วม %",
+        "autonomy": "การตัดสินใจของตนเอง %",
+        "competence": "ทักษะ %",
+        "belonging": "ความเป็นส่วนหนึ่ง %",
+        "events": "กิจกรรม",
+        "lastActive": "ใช้งานล่าสุด"
       },
-      "trendUp": "Improving vs last {{period}}",
-      "trendDown": "Below target vs last {{period}}"
+      "trendUp": "ดีขึ้นเมื่อเทียบกับ{{period}}ก่อนหน้า",
+      "trendDown": "ต่ำกว่าเป้าหมายเมื่อเทียบกับ{{period}}ก่อนหน้า"
     },
     "student": {
       "headerTitle": "ข้อมูลการเรียนรู้ของฉัน",
@@ -320,18 +320,18 @@
     }
   },
   "goalForm": {
-    "title": "Set a Learning Goal",
-    "subtitle": "What do you want to achieve? Setting goals helps you stay motivated and track your progress.",
-    "goalLabel": "My Goal",
-    "goalPlaceholder": "Example: Master Python loops and conditionals",
-    "targetDateLabel": "Target Date",
-    "characters": "{{count}}/200 characters",
-    "setting": "Setting Goal...",
-    "submit": "Set Goal",
+    "title": "ตั้งเป้าหมายการเรียนรู้",
+    "subtitle": "คุณอยากทำอะไรให้สำเร็จ? การตั้งเป้าหมายช่วยให้คุณมีแรงจูงใจและติดตามความก้าวหน้าได้",
+    "goalLabel": "เป้าหมายของฉัน",
+    "goalPlaceholder": "ตัวอย่าง: เขียนลูปและเงื่อนไขใน Python ได้คล่องขึ้น",
+    "targetDateLabel": "วันที่เป้าหมาย",
+    "characters": "{{count}}/200 ตัวอักษร",
+    "setting": "กำลังตั้งเป้าหมาย...",
+    "submit": "ตั้งเป้าหมาย",
     "error": {
-      "descriptionRequired": "Please describe your goal",
-      "dateRequired": "Please select a target date",
-      "saveFailed": "Failed to save goal. Please try again."
+      "descriptionRequired": "กรุณาอธิบายเป้าหมายของคุณ",
+      "dateRequired": "กรุณาเลือกวันที่เป้าหมาย",
+      "saveFailed": "บันทึกเป้าหมายไม่สำเร็จ โปรดลองอีกครั้ง"
     }
   },
   "motivation": {
@@ -383,113 +383,113 @@
     "goalTargetDate": "เป้าหมายวันที่ {{date}}"
   },
   "aiInsights": {
-    "panelTitle": "AI Insights",
-    "countLabel": "{{count}} insights",
-    "empty": "No insights available yet. Check back after students engage more with the platform.",
-    "showLess": "Show less",
-    "showDetails": "Show details",
-    "affectedLearners": "Affected Learners:",
-    "recommendedActions": "Recommended Actions:",
+    "panelTitle": "ข้อเสนอแนะจาก AI",
+    "countLabel": "{{count}} ข้อเสนอแนะ",
+    "empty": "ยังไม่มีข้อเสนอแนะในตอนนี้ กลับมาดูอีกครั้งหลังผู้เรียนใช้งานมากขึ้น",
+    "showLess": "แสดงน้อยลง",
+    "showDetails": "ดูรายละเอียด",
+    "affectedLearners": "ผู้เรียนที่ได้รับผลกระทบ:",
+    "recommendedActions": "สิ่งที่แนะนำ:",
     "priority": {
-      "high": "High",
-      "medium": "Medium",
-      "low": "Low"
+      "high": "สูง",
+      "medium": "กลาง",
+      "low": "ต่ำ"
     },
     "dimension": {
-      "autonomy": "Autonomy",
-      "competence": "Competence",
-      "belonging": "Belonging"
+      "autonomy": "การตัดสินใจของตนเอง",
+      "competence": "ทักษะ",
+      "belonging": "ความเป็นส่วนหนึ่ง"
     },
     "atRisk": {
-      "title": "{{count}} learners at risk",
-      "description": "These learners show very low engagement and may need immediate attention.",
+      "title": "ผู้เรียน {{count}} คนมีความเสี่ยง",
+      "description": "ผู้เรียนกลุ่มนี้มีการมีส่วนร่วมต่ำมากและอาจต้องได้รับการดูแลทันที",
       "actions": {
-        "checkIn": "Schedule one-on-one check-ins",
-        "reviewHistory": "Review mission history for blockers",
-        "adjustPath": "Adjust learning path to match interests"
+        "checkIn": "นัดพูดคุยแบบตัวต่อตัว",
+        "reviewHistory": "ทบทวนประวัติภารกิจเพื่อหาจุดที่ติดขัด",
+        "adjustPath": "ปรับเส้นทางการเรียนรู้ให้ตรงกับความสนใจ"
       }
     },
     "lowAutonomy": {
-      "title": "Learners Need More Choice",
-      "description": "{{count}} learners show low autonomy scores.",
+      "title": "ผู้เรียนต้องการทางเลือกมากขึ้น",
+      "description": "มีผู้เรียน {{count}} คนที่ได้คะแนนด้านการตัดสินใจของตนเองต่ำ",
       "actions": {
-        "choiceBoards": "Offer mission choice boards",
-        "goalSetting": "Encourage goal-setting activities",
-        "projectOptions": "Provide interest-based project options"
+        "choiceBoards": "เพิ่มตัวเลือกภารกิจให้เลือก",
+        "goalSetting": "ชวนผู้เรียนตั้งเป้าหมายของตนเอง",
+        "projectOptions": "เสนอโปรเจกต์ตามความสนใจ"
       }
     },
     "lowCompetence": {
       "title": "ต้องการการสนับสนุนเพื่อพัฒนาทักษะเพิ่ม",
-      "description": "{{count}} learners need more skill-building opportunities.",
+      "description": "มีผู้เรียน {{count}} คนที่ต้องการโอกาสฝึกทักษะเพิ่มเติม",
       "actions": {
-        "scaffoldedPractice": "Provide scaffolded practice activities",
+        "scaffoldedPractice": "เพิ่มกิจกรรมฝึกฝนแบบมีการช่วยพยุง",
         "smallWins": "ฉลองการเติบโตด้วยเหรียญตรา",
-        "peerMentoring": "Offer peer mentoring opportunities"
+        "peerMentoring": "เปิดโอกาสให้เพื่อนช่วยกันโค้ช"
       }
     },
     "lowBelonging": {
-      "title": "Community Connection Needed",
-      "description": "{{count}} learners show low belonging scores.",
+      "title": "ควรเสริมความรู้สึกเป็นส่วนหนึ่งของชุมชน",
+      "description": "มีผู้เรียน {{count}} คนที่ได้คะแนนด้านความเป็นส่วนหนึ่งต่ำ",
       "actions": {
-        "peerCollaboration": "Facilitate peer collaboration activities",
-        "showcase": "Encourage showcase submissions",
-        "recognition": "Create recognition opportunities"
+        "peerCollaboration": "จัดกิจกรรมให้เพื่อนร่วมมือกันมากขึ้น",
+        "showcase": "ชวนส่งผลงานมาแบ่งปัน",
+        "recognition": "สร้างโอกาสให้เพื่อนเห็นคุณค่ากันและกัน"
       }
     },
     "thriving": {
-      "title": "{{count}} learners thriving",
-      "description": "These learners show exceptional engagement across SDT dimensions.",
+      "title": "ผู้เรียน {{count}} คนกำลังก้าวหน้าได้ดี",
+      "description": "ผู้เรียนกลุ่มนี้มีการมีส่วนร่วมโดดเด่นในหลายด้านของการเรียนรู้",
       "actions": {
-        "advancedChallenges": "Offer advanced challenges",
-        "mentorPeers": "Invite them to mentor peers",
-        "showcaseWork": "Showcase their work as examples"
+        "advancedChallenges": "มอบโจทย์ที่ท้าทายขึ้น",
+        "mentorPeers": "ชวนให้ช่วยเป็นพี่เลี้ยงเพื่อน",
+        "showcaseWork": "นำผลงานมาเป็นตัวอย่างให้เพื่อนดู"
       }
     },
     "classLow": {
-      "title": "Class Engagement Below Target",
-      "description": "Average class engagement is {{score}}%. Consider adjusting pacing.",
+      "title": "การมีส่วนร่วมของทั้งชั้นต่ำกว่าเป้าหมาย",
+      "description": "การมีส่วนร่วมเฉลี่ยของชั้นอยู่ที่ {{score}}% อาจต้องปรับจังหวะการเรียน",
       "actions": {
-        "survey": "Survey learners about interests and challenges",
-        "variety": "Introduce more variety in mission types",
-        "choice": "Increase opportunities for student choice"
+        "survey": "ถามผู้เรียนถึงความสนใจและอุปสรรค",
+        "variety": "เพิ่มความหลากหลายของรูปแบบภารกิจ",
+        "choice": "เพิ่มโอกาสให้ผู้เรียนเลือกเอง"
       }
     },
     "classHigh": {
-      "title": "Strong Class Engagement",
-      "description": "Class is highly engaged ({{score}}%). Keep up the strong work.",
+      "title": "การมีส่วนร่วมของทั้งชั้นแข็งแรง",
+      "description": "ทั้งชั้นมีการมีส่วนร่วมสูง ({{score}}%) รักษาแนวทางที่ได้ผลนี้ไว้",
       "actions": {
-        "document": "Document successful strategies",
-        "share": "Share best practices with other educators",
-        "continue": "Continue the current approach"
+        "document": "บันทึกแนวทางที่ได้ผล",
+        "share": "แบ่งปันวิธีที่ได้ผลกับครูคนอื่น",
+        "continue": "ทำแนวทางปัจจุบันต่อไป"
       }
     },
     "inactive": {
-      "title": "{{count}} inactive students",
-      "description": "These students have not logged in for over a week.",
+      "title": "มีผู้เรียน {{count}} คนที่ยังไม่กลับมาใช้งาน",
+      "description": "ผู้เรียนกลุ่มนี้ไม่ได้เข้าสู่ระบบมานานกว่าหนึ่งสัปดาห์",
       "actions": {
-        "reengage": "Send re-engagement message",
-        "contactParents": "Contact parents or guardians",
-        "investigateBarriers": "Investigate potential access barriers"
+        "reengage": "ส่งข้อความชวนกลับมาเรียนรู้",
+        "contactParents": "ติดต่อผู้ปกครองหรือผู้ดูแล",
+        "investigateBarriers": "ตรวจสอบว่ามีอุปสรรคในการเข้าใช้งานหรือไม่"
       }
     },
     "sdtImbalance": {
-      "title": "{{dimension}} dimension needs attention",
-      "description": "Class shows stronger {{strong}} than {{weak}}.",
+      "title": "ด้าน{{dimension}}ต้องการการดูแลเพิ่ม",
+      "description": "ทั้งชั้นมีจุดแข็งด้าน {{strong}} มากกว่า {{weak}}",
       "actions": {
         "autonomy": {
-          "choice": "Increase student choice in missions",
-          "goals": "Allow learners to set personal goals",
-          "selfPaced": "Offer self-paced learning paths"
+          "choice": "เพิ่มทางเลือกในภารกิจให้ผู้เรียน",
+          "goals": "เปิดโอกาสให้ผู้เรียนตั้งเป้าหมายของตนเอง",
+          "selfPaced": "จัดเส้นทางการเรียนรู้ที่เดินได้ตามจังหวะของตนเอง"
         },
         "competence": {
-          "checkpoints": "Provide more skill-building checkpoints",
-          "badges": "Celebrate growth with badges",
-          "challenges": "Offer progressive challenges"
+          "checkpoints": "เพิ่มจุดตรวจที่ช่วยสร้างทักษะ",
+          "badges": "ฉลองการเติบโตด้วยเหรียญตรา",
+          "challenges": "เพิ่มความท้าทายแบบค่อยเป็นค่อยไป"
         },
         "belonging": {
-          "collaboration": "Increase peer collaboration opportunities",
-          "showcase": "Encourage showcase submissions",
-          "recognition": "Facilitate peer recognition activities"
+          "collaboration": "เพิ่มโอกาสให้เพื่อนร่วมมือกัน",
+          "showcase": "ชวนส่งผลงานมาแบ่งปัน",
+          "recognition": "จัดกิจกรรมให้เพื่อนให้การยอมรับกัน"
         }
       }
     }
