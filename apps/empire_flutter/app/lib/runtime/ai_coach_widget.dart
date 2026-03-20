@@ -29,7 +29,7 @@ import '../ui/localization/app_strings.dart';
 // Forbidden: final answers, doing student's work, punitive language.
 // ──────────────────────────────────────────────────────
 
-/// AI Coach chat panel for learner missions.
+/// AI Help chat panel for learner missions.
 ///
 /// Emits events: ai_help_opened, ai_help_used, ai_coach_feedback.
 /// Respects MVL gating — intercepted responses trigger verification.

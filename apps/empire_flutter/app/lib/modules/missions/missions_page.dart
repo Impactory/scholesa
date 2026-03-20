@@ -1428,7 +1428,7 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
                         const SizedBox(height: 24),
                       ],
 
-                      // AI Coaching Section
+                      // AI Help Section
                       _buildAiCoachingSection(context, _pillarColor),
                       const SizedBox(height: 24),
 

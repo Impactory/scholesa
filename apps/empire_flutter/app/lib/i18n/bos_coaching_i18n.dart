@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// MiloOS coaching internationalization keys
+/// AI help internationalization keys
 ///
-/// Centralized i18n keys for MiloOS coaching surfaces.
+/// Centralized i18n keys for AI help surfaces.
 /// Shared by all educator and parent pages to ensure consistency.
 ///
 /// **Usage**:
@@ -149,7 +149,7 @@ class BosCoachingI18n {
         'Synthetic preview only. Do not treat this as classroom evidence or learner growth.',
   };
 
-  /// Get a MiloOS coaching key in the user's locale
+    /// Get an AI help key in the user's locale
   /// Returns English default if locale not supported
   static String get(BuildContext context, String key) {
     final Locale locale = Localizations.localeOf(context);

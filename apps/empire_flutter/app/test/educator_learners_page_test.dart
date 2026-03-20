@@ -171,7 +171,7 @@ void main() {
     expect(find.text('Unknown'), findsNothing);
   });
 
-  testWidgets('educator learners page discloses synthetic MiloOS preview',
+  testWidgets('educator learners page discloses synthetic AI help preview',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     await _seedLearner(firestore);

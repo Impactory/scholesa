@@ -242,7 +242,7 @@ void main() {
         <String, dynamic>{
           'id': 'flag-1',
           'name': 'miloos_loop',
-          'description': 'Enable MiloOS loop runtime',
+          'description': 'Enable spoken AI help loop runtime',
           'enabled': false,
           'scope': 'global',
         },
@@ -274,7 +274,7 @@ void main() {
         <String, dynamic>{
           'id': 'flag-1',
           'name': 'miloos_loop',
-          'description': 'Enable MiloOS loop runtime',
+          'description': 'Enable spoken AI help loop runtime',
           'enabled': false,
           'scope': 'global',
         },

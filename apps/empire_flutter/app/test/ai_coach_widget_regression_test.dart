@@ -280,7 +280,7 @@ void main() {
     });
 
     testWidgets(
-        'shows zero-confidence MiloOS banner when runtime state is unavailable',
+      'shows zero-confidence AI Help banner when runtime state is unavailable',
         (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
@@ -308,7 +308,7 @@ void main() {
     });
 
     testWidgets(
-        'shows guarded MiloOS banner when learner confidence is below threshold',
+      'shows guarded AI Help banner when learner confidence is below threshold',
         (WidgetTester tester) async {
       final _FakeRuntime fakeRuntime = _FakeRuntime()
         ..setReadyState(confidence: 0.81);

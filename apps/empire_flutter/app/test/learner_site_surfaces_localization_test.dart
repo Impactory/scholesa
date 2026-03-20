@@ -857,7 +857,7 @@ void main() {
 
       await tester.enterText(
         find.widgetWithText(TextField, 'Portfolio Headline'),
-        'MiloOS Builder • site-1',
+        'Future Skills Builder • site-1',
       );
       await tester.enterText(
         find.widgetWithText(TextField, 'Current Goal'),
@@ -871,7 +871,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Portfolio profile updated.'), findsOneWidget);
-      expect(find.text('MiloOS Builder • site-1'), findsOneWidget);
+      expect(find.text('Future Skills Builder • site-1'), findsOneWidget);
       expect(find.text('Ship one Future Skills prototype this week.'),
           findsOneWidget);
       expect(
@@ -883,8 +883,8 @@ void main() {
               .doc('test-user-1')
               .get();
       expect(profileDoc.exists, isTrue);
-      expect(
-          profileDoc.data()?['portfolioHeadline'], 'MiloOS Builder • site-1');
+        expect(
+          profileDoc.data()?['portfolioHeadline'], 'Future Skills Builder • site-1');
       expect(
         profileDoc.data()?['portfolioGoal'],
         'Ship one Future Skills prototype this week.',
