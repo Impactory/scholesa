@@ -645,12 +645,16 @@ class _LearnerDetailSheet extends StatefulWidget {
 }
 
 class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
+  static const String _differentiationPlansCollection =
+      'learnerDifferentiationPlans';
   final TextEditingController _overrideReasonController =
       TextEditingController();
   final TextEditingController _followUpRequestController =
       TextEditingController();
   late final String _recommendedLane;
   late String _selectedLane;
+  String? _savedLane;
+  String _savedOverrideReason = '';
   bool _isSavingOverride = false;
   bool _isExporting = false;
   bool _isSubmittingFollowUp = false;
@@ -664,6 +668,10 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
     super.initState();
     _recommendedLane = _resolveRecommendedLane();
     _selectedLane = _recommendedLane;
+    _savedLane = _recommendedLane;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadSavedLaneOverride();
+    });
   }
 
   @override
@@ -761,7 +769,39 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
     ].join('\n');
   }
 
-  Future<void> _saveLaneOverride() async {
+  Future<void> _loadSavedLaneOverride() async {
+    final AppState? appState = context.read<AppState?>();
+    final String siteId = appState?.activeSiteId?.trim() ?? '';
+    if (siteId.isEmpty) {
+      return;
+    }
+
+    try {
+      final FirestoreService firestoreService = context.read<FirestoreService>();
+      final DocumentSnapshot<Map<String, dynamic>> doc = await firestoreService
+          .firestore
+          .collection(_differentiationPlansCollection)
+          .doc('${learner.id}_$siteId')
+          .get();
+      if (!doc.exists || !mounted) {
+        return;
+      }
+      final Map<String, dynamic> data = doc.data() ?? <String, dynamic>{};
+      final String savedLane =
+          (data['selectedLane'] as String? ?? _recommendedLane).trim();
+      final String savedReason = (data['overrideReason'] as String? ?? '').trim();
+      setState(() {
+        _selectedLane = savedLane.isEmpty ? _recommendedLane : savedLane;
+        _savedLane = _selectedLane;
+        _savedOverrideReason = savedReason;
+        _overrideReasonController.text = savedReason;
+      });
+    } catch (error) {
+      debugPrint('Failed to load learner differentiation override: $error');
+    }
+  }
+
+  Future<bool> _saveLaneOverride({bool showSuccessMessage = true}) async {
     final AppState? appState = context.read<AppState?>();
     final String? siteId = appState?.activeSiteId;
     final String? educatorId = appState?.userId;
@@ -769,14 +809,27 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
         siteId.isEmpty ||
         educatorId == null ||
         educatorId.isEmpty) {
-      return;
+      if (!mounted) {
+        return false;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tEducatorLearners(
+              context,
+              'Unable to save lane override right now.',
+            ),
+          ),
+        ),
+      );
+      return false;
     }
     setState(() => _isSavingOverride = true);
     try {
       final FirestoreService firestoreService =
           context.read<FirestoreService>();
       await firestoreService.firestore
-          .collection('learnerDifferentiationPlans')
+          .collection(_differentiationPlansCollection)
           .doc('${learner.id}_$siteId')
           .set(<String, dynamic>{
         'siteId': siteId,
@@ -790,6 +843,9 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
         'updatedAt': DateTime.now().toIso8601String(),
       }, SetOptions(merge: true));
 
+      _savedLane = _selectedLane;
+      _savedOverrideReason = _overrideReasonController.text.trim();
+
       TelemetryService.instance.logEvent(
         event: _selectedLane == _recommendedLane
             ? 'teacher_override_mvl'
@@ -802,19 +858,54 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
         },
       );
 
-      if (!mounted) return;
+      if (!mounted) return true;
+      if (showSuccessMessage) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _tEducatorLearners(context, 'Differentiation lane saved'),
+            ),
+            backgroundColor: ScholesaColors.success,
+          ),
+        );
+      }
+      return true;
+    } catch (error) {
+      debugPrint('Failed to save differentiation lane override: $error');
+      if (!mounted) {
+        return false;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            _tEducatorLearners(context, 'Differentiation lane saved'),
+            _tEducatorLearners(
+              context,
+              'Unable to save lane override right now.',
+            ),
           ),
-          backgroundColor: ScholesaColors.success,
         ),
       );
+      return false;
     } finally {
       if (mounted) {
         setState(() => _isSavingOverride = false);
       }
+    }
+  }
+
+  Future<void> _handleLaneSelected(String lane) async {
+    if (_isSavingOverride || lane == _selectedLane) {
+      return;
+    }
+    final String previousLane = _selectedLane;
+    setState(() {
+      _selectedLane = lane;
+    });
+    final bool saved = await _saveLaneOverride();
+    if (!saved && mounted) {
+      setState(() {
+        _selectedLane = previousLane;
+      });
     }
   }
 
@@ -1148,8 +1239,8 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
                                 (String lane) => ChoiceChip(
                                   label: Text(_laneLabel(lane)),
                                   selected: _selectedLane == lane,
-                                  onSelected: (_) {
-                                    setState(() => _selectedLane = lane);
+                                  onSelected: (_) async {
+                                    await _handleLaneSelected(lane);
                                   },
                                 ),
                               )
