@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/firestore_service.dart';
 import '../../services/export_service.dart';
 import '../../services/telemetry_service.dart';
@@ -37,9 +38,14 @@ String _displayLearnerName(BuildContext context, String learnerName) {
 
 /// Educator Learners Page - View and manage learner roster
 class EducatorLearnersPage extends StatefulWidget {
-  const EducatorLearnersPage({this.learnerLoopInsightsLoader, super.key});
+  const EducatorLearnersPage({
+    this.learnerLoopInsightsLoader,
+    this.sharedPreferences,
+    super.key,
+  });
 
   final BosLearnerLoopInsightsLoader? learnerLoopInsightsLoader;
+  final SharedPreferences? sharedPreferences;
 
   @override
   State<EducatorLearnersPage> createState() => _EducatorLearnersPageState();
@@ -51,11 +57,13 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
   final TextEditingController _searchController = TextEditingController();
   String? _selectedLoopLearnerId;
   String? _loopLearnerName;
+  SharedPreferences? _prefsCache;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _restoreFilters();
       final EducatorService service = context.read<EducatorService>();
       await service.loadLearners();
       if (!mounted || service.learners.isEmpty) {
@@ -69,6 +77,40 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<SharedPreferences> _prefs() async {
+    return _prefsCache ??= widget.sharedPreferences ??
+        await SharedPreferences.getInstance();
+  }
+
+  String _searchQueryPrefsKey() => 'educator_learners.search_query';
+
+  String _selectedSessionPrefsKey() => 'educator_learners.selected_session';
+
+  Future<void> _restoreFilters() async {
+    final SharedPreferences prefs = await _prefs();
+    final String restoredQuery = prefs.getString(_searchQueryPrefsKey()) ?? '';
+    final String restoredSession =
+        prefs.getString(_selectedSessionPrefsKey()) ?? 'all';
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _searchQuery = restoredQuery;
+      _selectedSession = restoredSession;
+      _searchController.text = restoredQuery;
+    });
+  }
+
+  Future<void> _persistSearchQuery(String value) async {
+    final SharedPreferences prefs = await _prefs();
+    await prefs.setString(_searchQueryPrefsKey(), value);
+  }
+
+  Future<void> _persistSelectedSession(String sessionId) async {
+    final SharedPreferences prefs = await _prefs();
+    await prefs.setString(_selectedSessionPrefsKey(), sessionId);
   }
 
   @override
@@ -237,6 +279,7 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
             );
           }
           setState(() => _searchQuery = value);
+          _persistSearchQuery(value);
         },
         decoration: InputDecoration(
           hintText: _tEducatorLearners(context, 'Search learners...'),
@@ -255,6 +298,7 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
                     );
                     _searchController.clear();
                     setState(() => _searchQuery = '');
+                    _persistSearchQuery('');
                   },
                 )
               : null,
@@ -294,6 +338,7 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
                   },
                 );
                 setState(() => _selectedSession = 'all');
+                _persistSelectedSession('all');
               },
             ),
             const SizedBox(width: 8),
@@ -314,6 +359,7 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
                       },
                     );
                     setState(() => _selectedSession = session.id);
+                    _persistSelectedSession(session.id);
                   },
                 ),
               ),

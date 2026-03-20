@@ -42,6 +42,11 @@ class ParentSurfaceI18n {
     'Unable to submit linked learner review right now.': '目前无法提交学习者关联审核请求。',
     'Learner unavailable': '学习者信息不可用',
     'Contact your school to link your children': '请联系学校关联你的孩子账户',
+    'Family dashboard is temporarily unavailable': '家庭仪表板暂时不可用',
+    'We could not load your linked learners right now. Retry to check the current state.':
+        '我们暂时无法加载你已关联的学习者。请重试以检查当前状态。',
+    'Unable to refresh family dashboard right now. Showing the last successful data.':
+        '目前无法刷新家庭仪表板。正在显示最近一次成功加载的数据。',
     'Family AI Help': '家庭 AI 帮助',
     'See support ideas for each child’s progress': '查看每个孩子进展的支持建议',
     'No recent activity yet': '暂无最近活动',
@@ -244,6 +249,11 @@ class ParentSurfaceI18n {
     'Unable to submit linked learner review right now.': '目前無法提交學習者關聯審核請求。',
     'Learner unavailable': '學習者資訊不可用',
     'Contact your school to link your children': '請聯絡學校關聯你的孩子帳戶',
+    'Family dashboard is temporarily unavailable': '家庭儀表板暫時不可用',
+    'We could not load your linked learners right now. Retry to check the current state.':
+        '我們暫時無法載入你已關聯的學習者。請重試以檢查目前狀態。',
+    'Unable to refresh family dashboard right now. Showing the last successful data.':
+        '目前無法重新整理家庭儀表板。正在顯示最近一次成功載入的資料。',
     'Family AI Help': '家庭 AI 幫助',
     'See support ideas for each child’s progress': '查看每個孩子進展的支持建議',
     'No recent activity yet': '目前沒有最近活動',

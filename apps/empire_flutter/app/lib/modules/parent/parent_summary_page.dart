@@ -123,16 +123,26 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
               );
             }
 
+            if (service.error != null && service.learnerSummaries.isEmpty) {
+              return _buildLoadErrorState(service);
+            }
+
             if (service.learnerSummaries.isEmpty) {
               return _buildEmptyState();
             }
 
+            final int selectedIndex = _selectedLearnerIndex >= 0 &&
+                    _selectedLearnerIndex < service.learnerSummaries.length
+                ? _selectedLearnerIndex
+                : 0;
             final LearnerSummary selectedLearner =
-                service.learnerSummaries[_selectedLearnerIndex];
+                service.learnerSummaries[selectedIndex];
 
             return CustomScrollView(
               slivers: <Widget>[
                 SliverToBoxAdapter(child: _buildHeader(service)),
+                if (service.error != null)
+                  SliverToBoxAdapter(child: _buildStaleDataBanner()),
                 if (service.learnerSummaries.length > 1)
                   SliverToBoxAdapter(child: _buildLearnerSelector(service)),
                 SliverToBoxAdapter(child: _buildProgressCard(selectedLearner)),
@@ -820,6 +830,69 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
           FilledButton.tonal(
             onPressed: _submitLinkedLearnerReviewRequest,
             child: Text(_t('Request Linking Review')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoadErrorState(ParentService service) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Icon(
+              Icons.error_outline_rounded,
+              size: 64,
+              color: Colors.red.withValues(alpha: 0.7),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _t('Family dashboard is temporarily unavailable'),
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _t('We could not load your linked learners right now. Retry to check the current state.'),
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey[600]),
+            ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: service.loadParentData,
+              icon: const Icon(Icons.refresh_rounded),
+              label: Text(_t('Retry')),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStaleDataBanner() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.orange.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              _t('Unable to refresh family dashboard right now. Showing the last successful data.'),
+              style: const TextStyle(color: ScholesaColors.textPrimary),
+            ),
           ),
         ],
       ),

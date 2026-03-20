@@ -61,6 +61,81 @@ class _UnavailableParentService extends _StubParentService {
   }
 }
 
+class _ParentLoadSnapshot {
+  const _ParentLoadSnapshot({
+    this.learnerSummaries = const <LearnerSummary>[],
+    this.error,
+  });
+
+  final List<LearnerSummary> learnerSummaries;
+  final String? error;
+}
+
+class _SequencedParentService extends ChangeNotifier implements ParentService {
+  _SequencedParentService({
+    required this.parentId,
+    required List<_ParentLoadSnapshot> snapshots,
+    FirestoreService? firestoreService,
+  })  : _snapshots = snapshots,
+        firestoreService = firestoreService ??
+            FirestoreService(
+              firestore: FakeFirebaseFirestore(),
+              auth: _FakeFirebaseAuth(),
+            );
+
+  final List<_ParentLoadSnapshot> _snapshots;
+
+  @override
+  final FirestoreService firestoreService;
+
+  @override
+  final String parentId;
+
+  List<LearnerSummary> _learnerSummaries = <LearnerSummary>[];
+  bool _isLoading = false;
+  String? _error;
+  int _loadCalls = 0;
+
+  _ParentLoadSnapshot _snapshotFor(int index) {
+    if (_snapshots.isEmpty) {
+      return const _ParentLoadSnapshot();
+    }
+    final int resolvedIndex =
+        index < _snapshots.length ? index : _snapshots.length - 1;
+    return _snapshots[resolvedIndex];
+  }
+
+  @override
+  List<LearnerSummary> get learnerSummaries =>
+      List<LearnerSummary>.unmodifiable(_learnerSummaries);
+
+  @override
+  bool get isLoading => _isLoading;
+
+  @override
+  String? get error => _error;
+
+  @override
+  final BillingSummary? billingSummary = null;
+
+  @override
+  Future<void> loadParentData() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    final _ParentLoadSnapshot snapshot = _snapshotFor(_loadCalls++);
+    if (snapshot.error == null) {
+      _learnerSummaries = List<LearnerSummary>.from(snapshot.learnerSummaries);
+    } else {
+      _error = snapshot.error;
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+}
+
 AppState _buildParentState() {
   final AppState state = AppState();
   state.updateFromMeResponse(<String, dynamic>{
@@ -155,5 +230,81 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Unable to submit linked learner review right now.'), findsOneWidget);
+  });
+
+  testWidgets(
+      'parent summary shows an explicit unavailable state instead of a fake empty family',
+      (WidgetTester tester) async {
+    await _pumpPage(
+      tester,
+      parentService: _SequencedParentService(
+        parentId: 'parent-1',
+        snapshots: const <_ParentLoadSnapshot>[
+          _ParentLoadSnapshot(error: 'parent dashboard unavailable'),
+        ],
+      ),
+    );
+
+    expect(
+      find.text('Family dashboard is temporarily unavailable'),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'We could not load your linked learners right now. Retry to check the current state.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('No learners linked'), findsNothing);
+  });
+
+  testWidgets(
+      'parent summary keeps stale learner data visible when a refresh fails',
+      (WidgetTester tester) async {
+    final _SequencedParentService parentService = _SequencedParentService(
+      parentId: 'parent-1',
+      snapshots: <_ParentLoadSnapshot>[
+        _ParentLoadSnapshot(
+          learnerSummaries: <LearnerSummary>[
+            LearnerSummary(
+              learnerId: 'learner-1',
+              learnerName: 'Avery Stone',
+              currentLevel: 3,
+              totalXp: 120,
+              missionsCompleted: 4,
+              currentStreak: 6,
+              attendanceRate: 92,
+              recentActivities: const <RecentActivity>[],
+              upcomingEvents: const <UpcomingEvent>[],
+              pillarProgress: const <String, double>{
+                'future_skills': 0.70,
+                'leadership': 0.65,
+                'impact': 0.60,
+              },
+            ),
+          ],
+        ),
+        const _ParentLoadSnapshot(error: 'refresh failed'),
+      ],
+    );
+
+    await _pumpPage(
+      tester,
+      parentService: parentService,
+    );
+
+    expect(find.text('Avery Stone'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.refresh));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Avery Stone'), findsOneWidget);
+    expect(
+      find.text(
+        'Unable to refresh family dashboard right now. Showing the last successful data.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('No learners linked'), findsNothing);
   });
 }

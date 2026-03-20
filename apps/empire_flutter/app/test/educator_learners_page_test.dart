@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/modules/educator/educator_learners_page.dart';
 import 'package:scholesa_app/modules/educator/educator_service.dart';
@@ -60,6 +61,7 @@ Widget _buildHarness({
   required FirestoreService firestoreService,
   required EducatorService educatorService,
   BosLearnerLoopInsightsLoader? learnerLoopInsightsLoader,
+  SharedPreferences? sharedPreferences,
 }) {
   return MultiProvider(
     providers: <SingleChildWidget>[
@@ -82,6 +84,7 @@ Widget _buildHarness({
       ],
       home: EducatorLearnersPage(
         learnerLoopInsightsLoader: learnerLoopInsightsLoader,
+        sharedPreferences: sharedPreferences,
       ),
     ),
   );
@@ -107,6 +110,41 @@ Future<void> _seedLearner(FakeFirebaseFirestore firestore) async {
   });
 }
 
+Future<void> _seedLearnerTwo(FakeFirebaseFirestore firestore) async {
+  await firestore.collection('users').doc('learner-2').set(<String, dynamic>{
+    'displayName': 'Learner Two',
+    'email': 'learner-2@scholesa.test',
+    'siteId': 'site-1',
+    'attendanceRate': 82,
+    'missionsCompleted': 5,
+    'futureSkillsProgress': 0.54,
+    'leadershipProgress': 0.57,
+    'impactProgress': 0.61,
+    'enrolledSessionIds': <String>['session-2'],
+  });
+  await firestore.collection('enrollments').doc('enrollment-2').set(<String, dynamic>{
+    'siteId': 'site-1',
+    'learnerId': 'learner-2',
+    'educatorId': 'educator-1',
+    'sessionId': 'session-2',
+  });
+}
+
+Future<void> _seedSessions(FakeFirebaseFirestore firestore) async {
+  await firestore.collection('sessions').doc('session-1').set(<String, dynamic>{
+    'title': 'Robotics Studio',
+    'siteId': 'site-1',
+    'educatorId': 'educator-1',
+    'startTime': Timestamp.fromDate(DateTime(2026, 3, 20, 9)),
+  });
+  await firestore.collection('sessions').doc('session-2').set(<String, dynamic>{
+    'title': 'Design Lab',
+    'siteId': 'site-1',
+    'educatorId': 'educator-1',
+    'startTime': Timestamp.fromDate(DateTime(2026, 3, 20, 11)),
+  });
+}
+
 Future<void> _seedLearnerWithoutDisplayName(FakeFirebaseFirestore firestore) async {
   await firestore.collection('users').doc('learner-1').set(<String, dynamic>{
     'email': 'learner-1@scholesa.test',
@@ -129,6 +167,10 @@ Future<void> _seedLearnerWithoutDisplayName(FakeFirebaseFirestore firestore) asy
 Finder _laneChip(String label) => find.widgetWithText(ChoiceChip, label);
 
 void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+  });
+
   testWidgets('educator learners page persists learner follow-up requests',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
@@ -354,5 +396,68 @@ void main() {
     expect(find.text('Unable to save lane override right now.'), findsOneWidget);
     expect(tester.widget<ChoiceChip>(_laneChip('Scaffolded lane')).selected, isTrue);
     expect(tester.widget<ChoiceChip>(_laneChip('Stretch lane')).selected, isFalse);
+  });
+
+  testWidgets('educator learners page restores search and session filters on reopen',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedLearner(firestore);
+    await _seedLearnerTwo(firestore);
+    await _seedSessions(firestore);
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final EducatorService educatorService = EducatorService(
+      firestoreService: firestoreService,
+      educatorId: 'educator-1',
+      siteId: 'site-1',
+    );
+    await educatorService.loadSessions();
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    await tester.pumpWidget(
+      _buildHarness(
+        firestoreService: firestoreService,
+        educatorService: educatorService,
+        sharedPreferences: prefs,
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).first, 'Two');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Design Lab'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Learner Two'), findsOneWidget);
+    expect(find.text('Learner One'), findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+
+    final EducatorService reopenedService = EducatorService(
+      firestoreService: firestoreService,
+      educatorId: 'educator-1',
+      siteId: 'site-1',
+    );
+    await reopenedService.loadSessions();
+
+    await tester.pumpWidget(
+      _buildHarness(
+        firestoreService: firestoreService,
+        educatorService: reopenedService,
+        sharedPreferences: prefs,
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Learner Two'), findsOneWidget);
+    expect(find.text('Learner One'), findsNothing);
+    expect(find.widgetWithText(TextField, 'Two'), findsOneWidget);
   });
 }

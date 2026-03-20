@@ -12,7 +12,9 @@ String _tHqSites(BuildContext context, String input) {
 
 /// HQ Sites Page - Manage all sites across the platform
 class HqSitesPage extends StatefulWidget {
-  const HqSitesPage({super.key});
+  const HqSitesPage({super.key, this.loadSitesOverride});
+
+  final Future<List<Map<String, dynamic>>> Function()? loadSitesOverride;
 
   @override
   State<HqSitesPage> createState() => _HqSitesPageState();
@@ -24,6 +26,7 @@ class _HqSitesPageState extends State<HqSitesPage> {
   final TextEditingController _searchController = TextEditingController();
   List<_SiteItem> _sites = <_SiteItem>[];
   bool _isLoading = false;
+  String? _loadError;
 
   @override
   void initState() {
@@ -345,6 +348,15 @@ class _HqSitesPageState extends State<HqSitesPage> {
     }
 
     final List<_SiteItem> filtered = _filteredSites();
+    if (_loadError != null && _sites.isEmpty) {
+      return SliverList(
+        delegate: SliverChildListDelegate(
+          <Widget>[
+            _buildLoadErrorCard(),
+          ],
+        ),
+      );
+    }
     if (filtered.isEmpty) {
       return SliverList(
         delegate: SliverChildListDelegate(
@@ -366,7 +378,11 @@ class _HqSitesPageState extends State<HqSitesPage> {
     return SliverList(
       delegate: SliverChildBuilderDelegate(
         (BuildContext context, int index) {
-          final _SiteItem item = filtered[index];
+          if (_loadError != null && index == 0) {
+            return _buildStaleDataBanner();
+          }
+          final int siteIndex = index - (_loadError != null ? 1 : 0);
+          final _SiteItem item = filtered[siteIndex];
           return _SiteCard(
             name: item.name,
             location: item.location,
@@ -377,7 +393,78 @@ class _HqSitesPageState extends State<HqSitesPage> {
             onTap: () => _openSiteDetail(item.id),
           );
         },
-        childCount: filtered.length,
+        childCount: filtered.length + (_loadError != null ? 1 : 0),
+      ),
+    );
+  }
+
+  Widget _buildLoadErrorCard() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 24),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Icon(
+              Icons.error_outline_rounded,
+              size: 64,
+              color: Colors.red.withValues(alpha: 0.7),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _tHqSites(context, 'Sites are temporarily unavailable'),
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: ScholesaColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _tHqSites(
+                context,
+                'We could not load sites right now. Retry to check the current state.',
+              ),
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: ScholesaColors.textSecondary),
+            ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: _loadSites,
+              icon: const Icon(Icons.refresh_rounded),
+              label: Text(_tHqSites(context, 'Retry')),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStaleDataBanner() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.orange.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              _tHqSites(
+                context,
+                'Unable to refresh sites right now. Showing the last successful data.',
+              ),
+              style: const TextStyle(color: ScholesaColors.textPrimary),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -407,53 +494,86 @@ class _HqSitesPageState extends State<HqSitesPage> {
     }
 
     if (!mounted) return;
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _loadError = null;
+    });
     try {
-      QuerySnapshot<Map<String, dynamic>> snapshot;
-      try {
-        snapshot = await firestoreService.firestore
-            .collection('sites')
-            .orderBy('name')
-            .limit(300)
-            .get();
-      } catch (_) {
-        snapshot = await firestoreService.firestore
-            .collection('sites')
-            .limit(300)
-            .get();
-      }
-
-      final List<_SiteItem> loaded = snapshot.docs
-          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
-        final Map<String, dynamic> data = doc.data();
-        final List<dynamic> learnerIds = (data['learnerIds'] as List?) ?? <dynamic>[];
-        final List<dynamic> educatorIds = (data['educatorIds'] as List?) ?? <dynamic>[];
-        final String status = ((data['status'] as String?) ?? 'active').trim().toLowerCase();
-        final int healthScore = _asInt(data['healthScore']) ?? _defaultHealth(status);
-
-        return _SiteItem(
-          id: doc.id,
-          name: (data['name'] as String?)?.trim().isNotEmpty == true
-              ? (data['name'] as String).trim()
-              : doc.id,
-          location: (data['location'] as String?)?.trim().isNotEmpty == true
-              ? (data['location'] as String).trim()
-              : '—',
-          learnerCount: _asInt(data['learnerCount']) ?? learnerIds.length,
-          educatorCount: _asInt(data['educatorCount']) ?? educatorIds.length,
-          status: _normalizeStatus(status),
-          healthScore: healthScore,
-        );
-      }).toList()
-        ..sort((_SiteItem a, _SiteItem b) => a.name.compareTo(b.name));
+      final List<_SiteItem> loaded = await _loadSiteItems(firestoreService);
 
       if (!mounted) return;
       setState(() => _sites = loaded);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loadError = _tHqSites(
+          context,
+          'We could not load sites right now. Retry to check the current state.',
+        );
+      });
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  Future<List<_SiteItem>> _loadSiteItems(FirestoreService firestoreService) async {
+    if (widget.loadSitesOverride != null) {
+      final List<Map<String, dynamic>> rows = await widget.loadSitesOverride!();
+      return rows.map(_siteItemFromMap).toList()
+        ..sort((_SiteItem a, _SiteItem b) => a.name.compareTo(b.name));
+    }
+
+    QuerySnapshot<Map<String, dynamic>> snapshot;
+    try {
+      snapshot = await firestoreService.firestore
+          .collection('sites')
+          .orderBy('name')
+          .limit(300)
+          .get();
+    } catch (_) {
+      snapshot = await firestoreService.firestore
+          .collection('sites')
+          .limit(300)
+          .get();
+    }
+
+    return snapshot.docs
+        .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
+            _siteItemFromMap(<String, dynamic>{'id': doc.id, ...doc.data()}))
+        .toList()
+      ..sort((_SiteItem a, _SiteItem b) => a.name.compareTo(b.name));
+  }
+
+  _SiteItem _siteItemFromMap(Map<String, dynamic> data) {
+    final List<dynamic> learnerIds =
+        (data['learnerIds'] as List?) ?? <dynamic>[];
+    final List<dynamic> educatorIds =
+        (data['educatorIds'] as List?) ?? <dynamic>[];
+    final String status =
+        ((data['status'] as String?) ?? 'active').trim().toLowerCase();
+    final int healthScore = _asInt(data['healthScore']) ?? _defaultHealth(status);
+
+    return _SiteItem(
+      id: (data['id'] as String?)?.trim().isNotEmpty == true
+          ? (data['id'] as String).trim()
+          : ((data['name'] as String?)?.trim().isNotEmpty == true
+              ? (data['name'] as String).trim()
+              : 'site'),
+      name: (data['name'] as String?)?.trim().isNotEmpty == true
+          ? (data['name'] as String).trim()
+          : ((data['id'] as String?)?.trim().isNotEmpty == true
+              ? (data['id'] as String).trim()
+              : 'Site'),
+      location: (data['location'] as String?)?.trim().isNotEmpty == true
+          ? (data['location'] as String).trim()
+          : '—',
+      learnerCount: _asInt(data['learnerCount']) ?? learnerIds.length,
+      educatorCount: _asInt(data['educatorCount']) ?? educatorIds.length,
+      status: _normalizeStatus(status),
+      healthScore: healthScore,
+    );
   }
 
   String _normalizeStatus(String status) {

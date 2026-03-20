@@ -65,7 +65,6 @@ class ParentService extends ChangeNotifier {
     } catch (e) {
       debugPrint('Error loading parent data: $e');
       _error = 'Failed to load data: $e';
-      _learnerSummaries = <LearnerSummary>[];
     } finally {
       _isLoading = false;
       notifyListeners();
