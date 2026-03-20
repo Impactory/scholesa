@@ -7,7 +7,9 @@ import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
 import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/auth/auth_service.dart';
+import 'package:scholesa_app/services/app_resilience.dart';
 import 'package:scholesa_app/ui/auth/global_session_menu.dart';
+import 'package:scholesa_app/ui/error/startup_issue_banner.dart';
 import 'package:scholesa_app/ui/theme/scholesa_theme.dart';
 
 class _MockAuthService extends Mock implements AuthService {}
@@ -192,7 +194,7 @@ void main() {
       expect(find.text('Login Screen'), findsOneWidget);
     });
 
-    testWidgets('icon-only direct sign out still exposes explicit tooltip copy',
+    testWidgets('icon-only direct sign out still exposes explicit semantics',
         (WidgetTester tester) async {
       final _MockAuthService authService = _MockAuthService();
       when(() => authService.signOut(source: any(named: 'source')))
@@ -231,6 +233,92 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.bySemanticsLabel('Sign Out'), findsOneWidget);
+    });
+
+    testWidgets(
+        'startup recovery banner and shared session chrome remain concurrently reachable',
+        (WidgetTester tester) async {
+      final _MockAuthService authService = _MockAuthService();
+      when(() => authService.signOut(source: any(named: 'source')))
+          .thenAnswer((_) async {});
+
+      tester.view.physicalSize = const Size(1400, 1100);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      final AppState appState = _buildAppState(UserRole.educator);
+
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: <SingleChildWidget>[
+            ChangeNotifierProvider<AppState>.value(value: appState),
+            Provider<AuthService>.value(value: authService),
+          ],
+          child: MaterialApp(
+            theme: ScholesaTheme.light,
+            locale: const Locale('zh', 'TW'),
+            supportedLocales: const <Locale>[
+              Locale('en'),
+              Locale('zh', 'CN'),
+              Locale('zh', 'TW'),
+            ],
+            localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            home: Scaffold(
+              body: Stack(
+                children: <Widget>[
+                  const Center(child: Text('Protected')),
+                  SafeArea(
+                    bottom: false,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: <Widget>[
+                          StartupIssueBanner(
+                            issues: <AppStartupIssue>[
+                              AppStartupIssue(
+                                serviceKey: 'firebase',
+                                message:
+                                    'Firebase services were unavailable during startup.',
+                              ),
+                              AppStartupIssue(
+                                serviceKey: 'localStorage',
+                                message:
+                                    'Local storage was unavailable during startup.',
+                              ),
+                            ],
+                            includeSafeArea: false,
+                            padding: EdgeInsets.zero,
+                            onDismiss: () {},
+                          ),
+                          const SizedBox(height: 12),
+                          const GlobalSessionMenu(
+                            includeSafeArea: false,
+                            padding: EdgeInsets.zero,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.bySemanticsLabel('Sign Out'), findsOneWidget);
+      expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
+      expect(find.text('Scholesa 以恢復模式啟動'), findsOneWidget);
     });
   });
 }

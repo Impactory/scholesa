@@ -70,37 +70,34 @@ class SessionMenuButton extends StatelessWidget {
     return Material(
       elevation: 0,
       color: Colors.transparent,
-      child: Tooltip(
-        message: _tGlobalSessionMenu(context, 'Account menu'),
-        child: Semantics(
-          button: true,
-          label: _tGlobalSessionMenu(context, 'Account menu'),
-          child: InkWell(
-            key: buttonKey,
-            borderRadius: BorderRadius.circular(999),
-            onTap: () => _openGlobalSessionMenu(
-              context: context,
-              navigatorKey: navigatorKey,
-            ),
-            child: Padding(
-              padding: padding,
-              child: ExcludeSemantics(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Icon(Icons.account_circle_outlined, color: resolvedForeground),
-                    if (showLabel) ...<Widget>[
-                      const SizedBox(width: 8),
-                      Text(
-                        _tGlobalSessionMenu(context, 'Account'),
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: resolvedForeground,
-                        ),
+      child: Semantics(
+        button: true,
+        label: _tGlobalSessionMenu(context, 'Account menu'),
+        child: InkWell(
+          key: buttonKey,
+          borderRadius: BorderRadius.circular(999),
+          onTap: () => _openGlobalSessionMenu(
+            context: context,
+            navigatorKey: navigatorKey,
+          ),
+          child: Padding(
+            padding: padding,
+            child: ExcludeSemantics(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Icon(Icons.account_circle_outlined, color: resolvedForeground),
+                  if (showLabel) ...<Widget>[
+                    const SizedBox(width: 8),
+                    Text(
+                      _tGlobalSessionMenu(context, 'Account'),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: resolvedForeground,
                       ),
-                    ],
+                    ),
                   ],
-                ),
+                ],
               ),
             ),
           ),
@@ -166,40 +163,37 @@ class SessionSignOutButton extends StatelessWidget {
       elevation: 0,
       color: resolvedBackground,
       borderRadius: BorderRadius.circular(999),
-      child: Tooltip(
-        message: _tGlobalSessionMenu(context, 'Sign Out'),
-        child: Semantics(
-          button: true,
-          label: _tGlobalSessionMenu(context, 'Sign Out'),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(999),
-            onTap: () async {
-              final BuildContext effectiveContext =
-                  navigatorKey?.currentContext ?? context;
-              if (!effectiveContext.mounted) {
-                return;
-              }
-              await _confirmGlobalSessionSignOut(effectiveContext);
-            },
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              child: ExcludeSemantics(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Icon(Icons.logout_rounded, color: resolvedForeground),
-                    if (showLabel) ...<Widget>[
-                      const SizedBox(width: 8),
-                      Text(
-                        _tGlobalSessionMenu(context, 'Sign Out'),
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: resolvedForeground,
-                        ),
+      child: Semantics(
+        button: true,
+        label: _tGlobalSessionMenu(context, 'Sign Out'),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(999),
+          onTap: () async {
+            final BuildContext effectiveContext =
+                navigatorKey?.currentContext ?? context;
+            if (!effectiveContext.mounted) {
+              return;
+            }
+            await _confirmGlobalSessionSignOut(effectiveContext);
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            child: ExcludeSemantics(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Icon(Icons.logout_rounded, color: resolvedForeground),
+                  if (showLabel) ...<Widget>[
+                    const SizedBox(width: 8),
+                    Text(
+                      _tGlobalSessionMenu(context, 'Sign Out'),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: resolvedForeground,
                       ),
-                    ],
+                    ),
                   ],
-                ),
+                ],
               ),
             ),
           ),
