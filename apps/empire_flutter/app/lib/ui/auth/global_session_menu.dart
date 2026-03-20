@@ -207,11 +207,13 @@ class GlobalSessionMenu extends StatelessWidget {
   const GlobalSessionMenu({
     super.key,
     this.navigatorKey,
-    this.topPadding = 16,
+    this.includeSafeArea = true,
+    this.padding = const EdgeInsets.only(top: 16, right: 12),
   });
 
   final GlobalKey<NavigatorState>? navigatorKey;
-  final double topPadding;
+  final bool includeSafeArea;
+  final EdgeInsets padding;
 
   @override
   Widget build(BuildContext context) {
@@ -224,38 +226,47 @@ class GlobalSessionMenu extends StatelessWidget {
     final bool showLabel = width >= 720;
     final bool showExplicitSignOut = kIsWeb || width >= 960;
 
+    final Widget menu = Align(
+      alignment: Alignment.topRight,
+      child: Padding(
+        padding: padding,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            if (showExplicitSignOut) ...<Widget>[
+              SessionSignOutButton(
+                navigatorKey: navigatorKey,
+                showLabel: showLabel,
+              ),
+              const SizedBox(width: 8),
+            ],
+            Material(
+              elevation: 6,
+              color: Theme.of(context)
+                  .colorScheme
+                  .surface
+                  .withValues(alpha: 0.96),
+              borderRadius: BorderRadius.circular(999),
+              shadowColor: Colors.black.withValues(alpha: 0.14),
+              child: SessionMenuButton(
+                navigatorKey: navigatorKey,
+                showLabel: showLabel,
+                buttonKey: _globalSessionMenuButtonKey,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (!includeSafeArea) {
+      return menu;
+    }
+
     return SafeArea(
       child: Align(
         alignment: Alignment.topRight,
-        child: Padding(
-          padding: EdgeInsets.only(top: topPadding, right: 12),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              if (showExplicitSignOut) ...<Widget>[
-                SessionSignOutButton(
-                  navigatorKey: navigatorKey,
-                  showLabel: showLabel,
-                ),
-                const SizedBox(width: 8),
-              ],
-              Material(
-                elevation: 6,
-                color: Theme.of(context)
-                    .colorScheme
-                    .surface
-                    .withValues(alpha: 0.96),
-                borderRadius: BorderRadius.circular(999),
-                shadowColor: Colors.black.withValues(alpha: 0.14),
-                child: SessionMenuButton(
-                  navigatorKey: navigatorKey,
-                  showLabel: showLabel,
-                  buttonKey: _globalSessionMenuButtonKey,
-                ),
-              ),
-            ],
-          ),
-        ),
+        child: menu,
       ),
     );
   }

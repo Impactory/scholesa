@@ -576,26 +576,43 @@ class _ScholesaAppState extends State<ScholesaApp> {
               return Stack(
                 children: <Widget>[
                   if (child != null) child,
-                  if (showStartupIssueBanner)
-                    StartupIssueBanner(
-                      issues: _startupIssues,
-                      onDismiss: () {
-                        TelemetryService.instance.logEvent(
-                          event: 'cta.clicked',
-                          metadata: <String, dynamic>{
-                            'cta': 'dismiss_startup_issues',
-                            'surface': 'startup_issue_banner',
-                            'issueCount': _startupIssues.length,
-                          },
-                        );
-                        setState(() {
-                          _showStartupIssues = false;
-                        });
-                      },
+                  SafeArea(
+                    bottom: false,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: <Widget>[
+                          if (showStartupIssueBanner)
+                            StartupIssueBanner(
+                              issues: _startupIssues,
+                              includeSafeArea: false,
+                              padding: EdgeInsets.zero,
+                              onDismiss: () {
+                                TelemetryService.instance.logEvent(
+                                  event: 'cta.clicked',
+                                  metadata: <String, dynamic>{
+                                    'cta': 'dismiss_startup_issues',
+                                    'surface': 'startup_issue_banner',
+                                    'issueCount': _startupIssues.length,
+                                  },
+                                );
+                                setState(() {
+                                  _showStartupIssues = false;
+                                });
+                              },
+                            ),
+                          if (showStartupIssueBanner)
+                            const SizedBox(height: 12),
+                          GlobalSessionMenu(
+                            navigatorKey: _rootNavigatorKey,
+                            includeSafeArea: false,
+                            padding: EdgeInsets.zero,
+                          ),
+                        ],
+                      ),
                     ),
-                  GlobalSessionMenu(
-                    navigatorKey: _rootNavigatorKey,
-                    topPadding: showStartupIssueBanner ? 132 : 16,
                   ),
                   GlobalAiAssistantOverlay(
                     navigatorKey: _rootNavigatorKey,

@@ -18,11 +18,13 @@ describe('flutter web logout availability', () => {
     );
 
     expect(mainSource).toContain('GlobalSessionMenu(');
-    expect(mainSource).toContain('topPadding: showStartupIssueBanner ? 132 : 16');
+    expect(mainSource).toContain('includeSafeArea: false');
+    expect(mainSource).toContain('const SizedBox(height: 12)');
     expect(sessionMenuSource).toContain('class SessionSignOutButton extends StatelessWidget');
     expect(sessionMenuSource).toContain('final bool showExplicitSignOut = kIsWeb || width >= 960;');
     expect(sessionMenuSource).toContain('await _confirmGlobalSessionSignOut(effectiveContext);');
-    expect(sessionMenuSource).toContain('this.topPadding = 16');
+    expect(sessionMenuSource).toContain('this.includeSafeArea = true');
+    expect(sessionMenuSource).toContain('this.padding = const EdgeInsets.only(top: 16, right: 12)');
   });
 
   it('keeps a visible shared header session action for educator web surfaces with custom headers', () => {
