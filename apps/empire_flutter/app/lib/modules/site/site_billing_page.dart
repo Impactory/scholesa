@@ -13,6 +13,10 @@ import 'site_marketplace_panel.dart';
 typedef SiteBillingSnapshotLoader = Future<Map<String, dynamic>> Function(
   String siteId,
 );
+typedef SiteRequestPlanChange = Future<void> Function(
+  String siteId,
+  String reason,
+);
 
 /// Site billing page
 /// Based on docs/13_PAYMENTS_BILLING_SPEC.md
@@ -23,12 +27,14 @@ class SiteBillingPage extends StatefulWidget {
     this.loadBillingSnapshot,
     this.createCheckoutIntent,
     this.completeCheckout,
+    this.requestPlanChange,
   });
 
   final FirebaseFirestore? firestore;
   final SiteBillingSnapshotLoader? loadBillingSnapshot;
   final SiteCreateCheckoutIntent? createCheckoutIntent;
   final SiteCompleteCheckout? completeCheckout;
+  final SiteRequestPlanChange? requestPlanChange;
 
   @override
   State<SiteBillingPage> createState() => _SiteBillingPageState();
@@ -459,7 +465,7 @@ class _SiteBillingPageState extends State<SiteBillingPage> {
         title: Text(_t(context, 'Manage Site Plan')),
         content: Text(
           _t(context,
-              'Review current usage, upgrade limits, or contact HQ billing support.'),
+              'Review current usage, compare plan limits, and submit a plan change request to HQ billing.'),
         ),
         actions: <Widget>[
           TextButton(
@@ -570,14 +576,13 @@ class _SiteBillingPageState extends State<SiteBillingPage> {
             await callable.call(<String, dynamic>{'siteId': siteId});
         payload = _asMap(result.data);
       }
-        final bool hasNestedSummary = payload.containsKey('summary');
-        final Map<String, dynamic> summary = hasNestedSummary
-          ? _asMap(payload['summary'])
-          : payload;
-        final bool hasBillingSummary = hasNestedSummary
+      final bool hasNestedSummary = payload.containsKey('summary');
+      final Map<String, dynamic> summary =
+          hasNestedSummary ? _asMap(payload['summary']) : payload;
+      final bool hasBillingSummary = hasNestedSummary
           ? summary.isNotEmpty
           : _hasFlatBillingSummary(summary);
-        final DateTime? nextBilling = _toDateTime(summary['nextBillingDate']);
+      final DateTime? nextBilling = _toDateTime(summary['nextBillingDate']);
 
       final List<_InvoiceItem> invoices = _asMapList(payload['invoices'])
           .map((Map<String, dynamic> row) {
@@ -607,23 +612,23 @@ class _SiteBillingPageState extends State<SiteBillingPage> {
 
       if (!mounted) return;
       setState(() {
-    _billingDataLoaded = true;
-    _hasBillingSummary = hasBillingSummary;
-    _planName = ((summary['planName'] as String?) ?? '').trim();
-    _planStatus = ((summary['planStatus'] as String?) ?? '').trim();
-    final double? monthlyAmount = _asDouble(summary['monthlyAmount']);
-    final String currency =
-      ((summary['currency'] as String?) ?? 'USD').toUpperCase();
-    _monthlyAmount = monthlyAmount == null
-      ? '-'
-      : '${_currencySymbol(currency)}${monthlyAmount.toStringAsFixed(0)}/month';
-    _nextBillingDate = nextBilling != null ? _formatDate(nextBilling) : '-';
-    _activeLearnersUsed = _asDouble(summary['activeLearnersUsed']) ?? 0;
-    _activeLearnersTotal = _asDouble(summary['activeLearnersTotal']) ?? 0;
-    _educatorsUsed = _asDouble(summary['educatorsUsed']) ?? 0;
-    _educatorsTotal = _asDouble(summary['educatorsTotal']) ?? 0;
-    _storageUsedGb = _asDouble(summary['storageUsedGb']) ?? 0;
-    _storageTotalGb = _asDouble(summary['storageTotalGb']) ?? 0;
+        _billingDataLoaded = true;
+        _hasBillingSummary = hasBillingSummary;
+        _planName = ((summary['planName'] as String?) ?? '').trim();
+        _planStatus = ((summary['planStatus'] as String?) ?? '').trim();
+        final double? monthlyAmount = _asDouble(summary['monthlyAmount']);
+        final String currency =
+            ((summary['currency'] as String?) ?? 'USD').toUpperCase();
+        _monthlyAmount = monthlyAmount == null
+            ? '-'
+            : '${_currencySymbol(currency)}${monthlyAmount.toStringAsFixed(0)}/month';
+        _nextBillingDate = nextBilling != null ? _formatDate(nextBilling) : '-';
+        _activeLearnersUsed = _asDouble(summary['activeLearnersUsed']) ?? 0;
+        _activeLearnersTotal = _asDouble(summary['activeLearnersTotal']) ?? 0;
+        _educatorsUsed = _asDouble(summary['educatorsUsed']) ?? 0;
+        _educatorsTotal = _asDouble(summary['educatorsTotal']) ?? 0;
+        _storageUsedGb = _asDouble(summary['storageUsedGb']) ?? 0;
+        _storageTotalGb = _asDouble(summary['storageTotalGb']) ?? 0;
         _invoices = invoices;
       });
     } finally {
@@ -640,14 +645,19 @@ class _SiteBillingPageState extends State<SiteBillingPage> {
                 ? appState!.siteIds.first
                 : ''))
         .trim();
+    const String reason = 'Requested from site billing UI';
 
     try {
-      final HttpsCallable callable = FirebaseFunctions.instance
-          .httpsCallable('requestSiteBillingPlanChange');
-      await callable.call(<String, dynamic>{
-        if (siteId.isNotEmpty) 'siteId': siteId,
-        'reason': 'Requested from site billing UI',
-      });
+      if (widget.requestPlanChange != null) {
+        await widget.requestPlanChange!(siteId, reason);
+      } else {
+        final HttpsCallable callable = FirebaseFunctions.instance
+            .httpsCallable('requestSiteBillingPlanChange');
+        await callable.call(<String, dynamic>{
+          if (siteId.isNotEmpty) 'siteId': siteId,
+          'reason': reason,
+        });
+      }
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

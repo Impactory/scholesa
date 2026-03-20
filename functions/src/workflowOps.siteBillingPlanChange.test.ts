@@ -1,0 +1,205 @@
+const SERVER_TIMESTAMP = Symbol('serverTimestamp');
+
+type StoredDoc = Record<string, unknown>;
+type CollectionStore = Map<string, StoredDoc>;
+
+const database = new Map<string, CollectionStore>();
+let writeCounter = 0;
+
+function nextWriteMillis(): number {
+  writeCounter += 1;
+  return 1716000000000 + writeCounter;
+}
+
+function clearDatabase(): void {
+  database.clear();
+  writeCounter = 0;
+}
+
+function ensureCollection(name: string): CollectionStore {
+  const existing = database.get(name);
+  if (existing) {
+    return existing;
+  }
+  const created = new Map<string, StoredDoc>();
+  database.set(name, created);
+  return created;
+}
+
+function cloneValue<T>(value: T): T {
+  if (value == null) {
+    return value;
+  }
+  return JSON.parse(JSON.stringify(value)) as T;
+}
+
+function materializeWrite(input: Record<string, unknown>): Record<string, unknown> {
+  const output: Record<string, unknown> = {};
+  Object.entries(input).forEach(([key, value]) => {
+    if (value === SERVER_TIMESTAMP) {
+      output[key] = nextWriteMillis();
+      return;
+    }
+    output[key] = cloneValue(value);
+  });
+  return output;
+}
+
+function seedCollection(name: string, docs: Record<string, StoredDoc>): void {
+  const store = ensureCollection(name);
+  Object.entries(docs).forEach(([id, data]) => {
+    store.set(id, cloneValue(data));
+  });
+}
+
+class MockDocumentReference {
+  constructor(
+    private readonly collectionName: string,
+    public readonly id: string,
+  ) {}
+
+  async get(): Promise<MockDocumentSnapshot> {
+    return new MockDocumentSnapshot(this, ensureCollection(this.collectionName).get(this.id));
+  }
+
+  async set(data: Record<string, unknown>, options?: { merge?: boolean }): Promise<void> {
+    const store = ensureCollection(this.collectionName);
+    const current = options?.merge ? store.get(this.id) || {} : {};
+    store.set(this.id, { ...cloneValue(current), ...materializeWrite(data) });
+  }
+}
+
+class MockDocumentSnapshot {
+  constructor(
+    public readonly ref: MockDocumentReference,
+    private readonly record: StoredDoc | undefined,
+  ) {}
+
+  get exists(): boolean {
+    return this.record !== undefined;
+  }
+
+  data(): StoredDoc | undefined {
+    return this.record ? cloneValue(this.record) : undefined;
+  }
+}
+
+class MockCollectionReference {
+  constructor(private readonly name: string) {}
+
+  doc(id?: string): MockDocumentReference {
+    return new MockDocumentReference(this.name, id ?? `${this.name}_${ensureCollection(this.name).size + 1}`);
+  }
+
+  async add(data: Record<string, unknown>): Promise<MockDocumentReference> {
+    const ref = this.doc();
+    await ref.set(data);
+    return ref;
+  }
+}
+
+const firestoreRoot = {
+  collection: (name: string) => new MockCollectionReference(name),
+};
+
+const mockFirestore = Object.assign(jest.fn(() => firestoreRoot), {
+  FieldValue: undefined,
+  Timestamp: undefined,
+});
+
+jest.mock('firebase-admin', () => ({
+  firestore: mockFirestore,
+}));
+
+jest.mock('firebase-admin/firestore', () => ({
+  FieldValue: {
+    serverTimestamp: jest.fn(() => SERVER_TIMESTAMP),
+  },
+  Timestamp: class MockTimestamp {},
+}));
+
+class MockHttpsError extends Error {
+  constructor(public readonly code: string, message: string) {
+    super(message);
+    this.name = 'HttpsError';
+  }
+}
+
+jest.mock('firebase-functions/v2/https', () => ({
+  HttpsError: MockHttpsError,
+  onCall: jest.fn((handler: unknown) => handler),
+}));
+
+jest.mock('./ltiIntegration', () => ({
+  buildLtiGradePassbackAuditLog: jest.fn(),
+  buildLtiGradePassbackJob: jest.fn(),
+  normalizeIntegrationProvider: jest.fn(),
+}));
+
+jest.mock('./districtProviderIntegration', () => ({
+  buildDistrictConnectionDocId: jest.fn(),
+  districtProviderAuditAction: jest.fn(),
+  districtProviderDefaultAuthBaseUrl: jest.fn(),
+  districtProviderDisplayName: jest.fn(),
+  districtProviderRosterSyncJobType: jest.fn(),
+  districtProviderSchoolField: jest.fn(),
+  districtProviderSectionsField: jest.fn(),
+}));
+
+import { requestSiteBillingPlanChange } from './workflowOps';
+
+type TestCallable = (request: { auth?: { uid?: string }; data?: Record<string, unknown> }) => Promise<unknown>;
+
+const requestPlanChange = requestSiteBillingPlanChange as unknown as TestCallable;
+
+function buildRequest(uid: string, data: Record<string, unknown> = {}) {
+  return {
+    auth: { uid },
+    data,
+  };
+}
+
+describe('workflowOps site billing plan change', () => {
+  beforeEach(() => {
+    clearDatabase();
+    seedCollection('users', {
+      'site-actor': {
+        role: 'site',
+        siteIds: ['site-1'],
+        activeSiteId: 'site-1',
+      },
+    });
+  });
+
+  it('persists a plan change request and audit log for a site actor', async () => {
+    await expect(
+      requestPlanChange(buildRequest('site-actor', {
+        siteId: 'site-1',
+        reason: 'Need a higher learner cap before the next intake.',
+      })),
+    ).resolves.toEqual({
+      success: true,
+      id: 'billingPlanChangeRequests_1',
+    });
+
+    expect(ensureCollection('billingPlanChangeRequests').get('billingPlanChangeRequests_1')).toMatchObject({
+      siteId: 'site-1',
+      status: 'pending',
+      reason: 'Need a higher learner cap before the next intake.',
+      requestedBy: 'site-actor',
+      requestedByRole: 'site',
+    });
+
+    expect(ensureCollection('auditLogs').get('auditLogs_1')).toMatchObject({
+      actorId: 'site-actor',
+      actorRole: 'site',
+      action: 'billing.plan_change_requested',
+      entityType: 'billingPlanChangeRequest',
+      entityId: 'billingPlanChangeRequests_1',
+      siteId: 'site-1',
+      details: {
+        reason: 'Need a higher learner cap before the next intake.',
+      },
+    });
+  });
+});

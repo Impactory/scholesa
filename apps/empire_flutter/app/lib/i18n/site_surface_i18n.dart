@@ -21,8 +21,8 @@ class SiteSurfaceI18n {
     'Paid': '已支付',
     'Pending': '待处理',
     'Manage Site Plan': '管理站点方案',
-    'Review current usage, upgrade limits, or contact HQ billing support.':
-        '查看当前使用情况、升级额度，或联系 HQ 计费支持。',
+    'Review current usage, compare plan limits, and submit a plan change request to HQ billing.':
+        '查看当前使用情况、比较方案额度，并向 HQ 计费团队提交方案变更请求。',
     'Close': '关闭',
     'Plan management request submitted': '方案管理请求已提交',
     'Plan management request failed': '方案管理请求失败',
@@ -260,8 +260,7 @@ class SiteSurfaceI18n {
     'Verification code': '验证代码',
     'Expires': '到期时间',
     'Updated by': '更新人',
-    'Explicit pickup authorization saved for this learner.':
-        '已为该学习者保存明确的接走授权。',
+    'Explicit pickup authorization saved for this learner.': '已为该学习者保存明确的接走授权。',
     'Site context unavailable right now': '当前无法获取站点上下文',
     'Unable to load pickup authorizations right now': '当前无法加载接走授权',
     'Pickup authorizations saved': '接走授权已保存',
@@ -313,11 +312,9 @@ class SiteSurfaceI18n {
     'Research Consent': '研究同意',
     'Edit Media Consent': '编辑媒体同意',
     'Edit Research Consent': '编辑研究同意',
-    'No linked parents available for research consent.':
-        '当前没有可用于研究同意的关联家长。',
+    'No linked parents available for research consent.': '当前没有可用于研究同意的关联家长。',
     'Not configured': '未配置',
-    'No media consent has been recorded for this learner yet.':
-        '该学习者尚未记录媒体同意。',
+    'No media consent has been recorded for this learner yet.': '该学习者尚未记录媒体同意。',
     'Photo capture': '照片采集',
     'Share with linked parents': '与关联家长共享',
     'Marketing use': '营销使用',
@@ -368,8 +365,8 @@ class SiteSurfaceI18n {
     'Paid': '已付款',
     'Pending': '待處理',
     'Manage Site Plan': '管理站點方案',
-    'Review current usage, upgrade limits, or contact HQ billing support.':
-        '檢視目前使用情況、升級額度，或聯絡 HQ 計費支援。',
+    'Review current usage, compare plan limits, and submit a plan change request to HQ billing.':
+        '檢視目前使用情況、比較方案額度，並向 HQ 計費團隊提交方案變更請求。',
     'Close': '關閉',
     'Plan management request submitted': '方案管理請求已提交',
     'Plan management request failed': '方案管理請求失敗',
@@ -607,8 +604,7 @@ class SiteSurfaceI18n {
     'Verification code': '驗證代碼',
     'Expires': '到期時間',
     'Updated by': '更新者',
-    'Explicit pickup authorization saved for this learner.':
-        '已為此學習者儲存明確的接回授權。',
+    'Explicit pickup authorization saved for this learner.': '已為此學習者儲存明確的接回授權。',
     'Site context unavailable right now': '目前無法取得站點內容',
     'Unable to load pickup authorizations right now': '目前無法載入接回授權',
     'Pickup authorizations saved': '接回授權已儲存',
@@ -660,11 +656,9 @@ class SiteSurfaceI18n {
     'Research Consent': '研究同意',
     'Edit Media Consent': '編輯媒體同意',
     'Edit Research Consent': '編輯研究同意',
-    'No linked parents available for research consent.':
-        '目前沒有可用於研究同意的連結家長。',
+    'No linked parents available for research consent.': '目前沒有可用於研究同意的連結家長。',
     'Not configured': '未設定',
-    'No media consent has been recorded for this learner yet.':
-        '此學習者尚未記錄媒體同意。',
+    'No media consent has been recorded for this learner yet.': '此學習者尚未記錄媒體同意。',
     'Photo capture': '照片擷取',
     'Share with linked parents': '與連結家長分享',
     'Marketing use': '行銷使用',
