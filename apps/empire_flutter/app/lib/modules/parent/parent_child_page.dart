@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../auth/app_state.dart';
 import '../../services/export_service.dart';
+import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
@@ -24,6 +26,14 @@ class ParentChildPage extends StatefulWidget {
 
 class _ParentChildPageState extends State<ParentChildPage> {
   String _t(String input) => ParentSurfaceI18n.text(context, input);
+
+  FirestoreService? _maybeFirestoreService() {
+    try {
+      return context.read<ParentService>().firestoreService;
+    } catch (_) {
+      return null;
+    }
+  }
 
   @override
   void initState() {
@@ -121,8 +131,10 @@ class _ParentChildPageState extends State<ParentChildPage> {
         body: _t(
           'Ask your site admin to confirm the guardian link before trying again.',
         ),
-        actionLabel: _t('Open Family Dashboard'),
-        onPressed: () => context.go('/parent/summary'),
+        actionLabel: _t('Request Linking Review'),
+        onPressed: _submitLinkedLearnerReviewRequest,
+        secondaryActionLabel: _t('Open Family Dashboard'),
+        onSecondaryPressed: () => context.go('/parent/summary'),
       );
     }
 
@@ -149,6 +161,8 @@ class _ParentChildPageState extends State<ParentChildPage> {
     required String body,
     required String actionLabel,
     required VoidCallback onPressed,
+    String? secondaryActionLabel,
+    VoidCallback? onSecondaryPressed,
   }) {
     return ListView(
       padding: const EdgeInsets.all(24),
@@ -180,12 +194,87 @@ class _ParentChildPageState extends State<ParentChildPage> {
                   onPressed: onPressed,
                   child: Text(actionLabel),
                 ),
+                if (secondaryActionLabel != null && onSecondaryPressed != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: OutlinedButton(
+                      onPressed: onSecondaryPressed,
+                      child: Text(secondaryActionLabel),
+                    ),
+                  ),
               ],
             ),
           ),
         ),
       ],
     );
+  }
+
+  Future<void> _submitLinkedLearnerReviewRequest() async {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{
+        'cta': 'parent_child_request_linked_learner_review',
+      },
+    );
+
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+    final FirestoreService? firestoreService = _maybeFirestoreService();
+    if (firestoreService == null) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(_t('Support requests are unavailable right now.')),
+        ),
+      );
+      return;
+    }
+
+    final AppState appState = context.read<AppState>();
+    try {
+      final String requestId = await firestoreService.submitSupportRequest(
+        requestType: 'parent_linked_learner_review',
+        source: 'parent_child_request_linked_learner_review',
+        siteId: appState.activeSiteId?.trim().isNotEmpty == true
+            ? appState.activeSiteId!.trim()
+            : 'Not set',
+        userId: appState.userId?.trim().isNotEmpty == true
+            ? appState.userId!.trim()
+            : 'Not set',
+        userEmail: appState.email?.trim().isNotEmpty == true
+            ? appState.email!.trim()
+            : 'Not set',
+        userName: appState.displayName?.trim().isNotEmpty == true
+            ? appState.displayName!.trim()
+            : 'Not set',
+        role: appState.role?.name ?? 'unknown',
+        subject: 'Parent guardian link review request',
+        message: 'Please review the guardian link for the requested learner detail route.',
+        metadata: <String, dynamic>{
+          'requestedLearnerId': widget.learnerId,
+          'activeSiteId': appState.activeSiteId,
+        },
+      );
+      TelemetryService.instance.logEvent(
+        event: 'parent.linked_learner_review.submitted',
+        metadata: <String, dynamic>{
+          'request_id': requestId,
+          'requested_learner_id': widget.learnerId,
+        },
+      );
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(_t('Linked learner review request submitted.')),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(_t('Unable to submit linked learner review right now.')),
+        ),
+      );
+    }
   }
 
   Widget _buildHeroCard(LearnerSummary learner) {

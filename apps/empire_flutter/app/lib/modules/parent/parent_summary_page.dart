@@ -37,6 +37,61 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
     return normalized;
   }
 
+  Future<void> _submitLinkedLearnerReviewRequest() async {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: const <String, dynamic>{
+        'cta': 'parent_summary_request_linked_learner_review',
+      },
+    );
+
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+    try {
+      final AppState appState = context.read<AppState>();
+      final ParentService parentService = context.read<ParentService>();
+      final String requestId = await parentService.firestoreService.submitSupportRequest(
+        requestType: 'parent_linked_learner_review',
+        source: 'parent_summary_request_linked_learner_review',
+        siteId: appState.activeSiteId?.trim().isNotEmpty == true
+            ? appState.activeSiteId!.trim()
+            : 'Not set',
+        userId: appState.userId?.trim().isNotEmpty == true
+            ? appState.userId!.trim()
+            : 'Not set',
+        userEmail: appState.email?.trim().isNotEmpty == true
+            ? appState.email!.trim()
+            : 'Not set',
+        userName: appState.displayName?.trim().isNotEmpty == true
+            ? appState.displayName!.trim()
+            : 'Not set',
+        role: appState.role?.name ?? 'unknown',
+        subject: 'Parent linked learner review request',
+        message: 'Please review the learner links for this parent account.',
+        metadata: <String, dynamic>{
+          'activeSiteId': appState.activeSiteId,
+          'linkedLearnerCount': parentService.learnerSummaries.length,
+        },
+      );
+      TelemetryService.instance.logEvent(
+        event: 'parent.linked_learner_review.submitted',
+        metadata: <String, dynamic>{'request_id': requestId},
+      );
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(_t('Linked learner review request submitted.')),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(_t('Unable to submit linked learner review right now.')),
+        ),
+      );
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -760,6 +815,11 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
           Text(
             _t('Contact your school to link your children'),
             style: TextStyle(color: Colors.grey[600]),
+          ),
+          const SizedBox(height: 16),
+          FilledButton.tonal(
+            onPressed: _submitLinkedLearnerReviewRequest,
+            child: Text(_t('Request Linking Review')),
           ),
         ],
       ),
