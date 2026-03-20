@@ -1029,9 +1029,9 @@ function clampLearnerConfidence(value: unknown): number {
 function buildLearnerConfidenceGuardMessage(displayName: string, locale: string): string {
   switch (locale) {
     case 'zh-CN':
-      return `${displayName}，我想更谨慎一点。先告诉我你已经试过什么，我可以帮你想下一步更安全的做法。如果你需要完整检查，请请老师和你一起看。`;
+      return `${displayName}，我想更谨慎一点。先告诉我你已经试过什么，我可以帮你想下一步更安全的做法。如果你需要完整检查，请老师和你一起看。`;
     case 'zh-TW':
-      return `${displayName}，我想更謹慎一點。先告訴我你已經試過什麼，我可以幫你想下一步更安全的做法。如果你需要完整檢查，請請老師和你一起看。`;
+      return `${displayName}，我想更謹慎一點。先告訴我你已經試過什麼，我可以幫你想下一步更安全的做法。如果你需要完整檢查，請老師和你一起看。`;
     case 'th':
       return `${displayName} ฉันอยากระวังให้มากขึ้น ลองบอกก่อนว่าคุณได้ลองอะไรไปแล้วบ้าง แล้วฉันจะช่วยคิดขั้นต่อไปที่ปลอดภัยให้ ถ้าต้องการตรวจแบบครบถ้วน ให้ครูช่วยดูไปด้วยกัน`;
     default:
