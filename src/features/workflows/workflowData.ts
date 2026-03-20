@@ -811,6 +811,7 @@ function buildRecord(params: {
   statusKeys: string[];
   siteKeys?: string[];
   metadataOverride?: Record<string, string>;
+  excludedMetadataKeys?: string[];
   editable?: boolean;
   deletable?: boolean;
 }): WorkflowRecord {
@@ -834,9 +835,11 @@ function buildRecord(params: {
     }
   }
 
+  const excludedMetadataKeys = new Set(params.excludedMetadataKeys || []);
   const metadata: Record<string, string> = params.metadataOverride ? { ...params.metadataOverride } : {};
   Object.entries(params.raw).forEach(([key, value]) => {
     if (key in metadata) return;
+    if (excludedMetadataKeys.has(key)) return;
     if (['title', 'name', 'displayName', 'description', 'status'].includes(key)) return;
     if (value === null || value === undefined) return;
     if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
@@ -1272,6 +1275,7 @@ async function loadCallableRows(params: {
   subtitleKeys: string[];
   statusKeys: string[];
   metadataBuilder?: (row: Record<string, unknown>) => Record<string, string>;
+  excludedMetadataKeys?: string[];
   editable?: boolean;
   deletable?: boolean;
 }): Promise<WorkflowRecord[]> {
@@ -1295,6 +1299,7 @@ async function loadCallableRows(params: {
         subtitleKeys: params.subtitleKeys,
         statusKeys: params.statusKeys,
         metadataOverride: params.metadataBuilder?.(row),
+        excludedMetadataKeys: params.excludedMetadataKeys,
         editable: params.editable,
         deletable: params.deletable,
       });
@@ -1342,6 +1347,7 @@ async function loadAnalyticsBackfillAuditRecords(ctx: WorkflowContext): Promise<
             }),
         )
       : {},
+    excludedMetadataKeys: ['id', 'title', 'subtitle', 'status', 'updatedAt', 'actorRole'],
     editable: false,
     deletable: false,
   }).catch(() => []);
