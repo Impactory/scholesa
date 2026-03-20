@@ -12,11 +12,26 @@ String _tHqBilling(BuildContext context, String input) {
   return WorkflowSurfaceI18n.text(context, input);
 }
 
+typedef HqBillingUserOptionsLoader
+    = Future<Map<String, List<Map<String, dynamic>>>> Function(
+  String? siteId,
+);
+typedef HqInvoiceCreator = Future<void> Function(
+  Map<String, dynamic> payload,
+);
+
 /// HQ Billing Page - Platform-wide billing and revenue management
 class HqBillingPage extends StatefulWidget {
-  const HqBillingPage({super.key, this.billingLoader});
+  const HqBillingPage({
+    super.key,
+    this.billingLoader,
+    this.userOptionsLoader,
+    this.invoiceCreator,
+  });
 
   final Future<Map<String, dynamic>> Function()? billingLoader;
+  final HqBillingUserOptionsLoader? userOptionsLoader;
+  final HqInvoiceCreator? invoiceCreator;
 
   @override
   State<HqBillingPage> createState() => _HqBillingPageState();
@@ -454,7 +469,8 @@ class _HqBillingPageState extends State<HqBillingPage>
       children: <Widget>[
         if (_loadError != null)
           _buildStaleDataBanner(
-            _tHqBilling(context, 'Unable to refresh billing right now. Showing the last successful data.'),
+            _tHqBilling(context,
+                'Unable to refresh billing right now. Showing the last successful data.'),
           ),
         ..._invoices.map(
           (Map<String, dynamic> invoice) => _InvoiceCard(invoice: invoice),
@@ -496,7 +512,8 @@ class _HqBillingPageState extends State<HqBillingPage>
       children: <Widget>[
         if (_loadError != null)
           _buildStaleDataBanner(
-            _tHqBilling(context, 'Unable to refresh billing right now. Showing the last successful data.'),
+            _tHqBilling(context,
+                'Unable to refresh billing right now. Showing the last successful data.'),
           ),
         ..._payments.map(
           (Map<String, dynamic> payment) => _PaymentCard(payment: payment),
@@ -538,7 +555,8 @@ class _HqBillingPageState extends State<HqBillingPage>
       children: <Widget>[
         if (_loadError != null)
           _buildStaleDataBanner(
-            _tHqBilling(context, 'Unable to refresh billing right now. Showing the last successful data.'),
+            _tHqBilling(context,
+                'Unable to refresh billing right now. Showing the last successful data.'),
           ),
         ..._subscriptions.map(
           (Map<String, dynamic> subscription) =>
@@ -631,6 +649,8 @@ class _HqBillingPageState extends State<HqBillingPage>
       backgroundColor: Colors.transparent,
       builder: (BuildContext context) => _CreateInvoiceSheet(
         selectedSiteId: _selectedSite == 'all' ? null : _selectedSite,
+        userOptionsLoader: widget.userOptionsLoader,
+        invoiceCreator: widget.invoiceCreator,
       ),
     );
     await _loadBillingData();
@@ -1433,9 +1453,15 @@ class _SubscriptionCard extends StatelessWidget {
 }
 
 class _CreateInvoiceSheet extends StatefulWidget {
-  const _CreateInvoiceSheet({this.selectedSiteId});
+  const _CreateInvoiceSheet({
+    this.selectedSiteId,
+    this.userOptionsLoader,
+    this.invoiceCreator,
+  });
 
   final String? selectedSiteId;
+  final HqBillingUserOptionsLoader? userOptionsLoader;
+  final HqInvoiceCreator? invoiceCreator;
 
   @override
   State<_CreateInvoiceSheet> createState() => _CreateInvoiceSheetState();
@@ -1689,9 +1715,7 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
                       ? appState!.siteIds.first
                       : ''));
 
-      final HttpsCallable callable =
-          FirebaseFunctions.instance.httpsCallable('createHqInvoice');
-      await callable.call(<String, dynamic>{
+      final Map<String, dynamic> payload = <String, dynamic>{
         'siteId': siteId.isNotEmpty ? siteId : null,
         'parentId': _selectedParent,
         'parentName': parent?.label ?? _selectedParent,
@@ -1700,7 +1724,15 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
         'amount': amount,
         'description': _descriptionController.text.trim(),
         'currency': 'USD',
-      });
+      };
+
+      if (widget.invoiceCreator != null) {
+        await widget.invoiceCreator!(payload);
+      } else {
+        final HttpsCallable callable =
+            FirebaseFunctions.instance.httpsCallable('createHqInvoice');
+        await callable.call(payload);
+      }
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1736,36 +1768,63 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
                   ? activeSiteId
                   : '');
 
-      final HttpsCallable listUsersCallable =
-          FirebaseFunctions.instance.httpsCallable('listUsers');
-      final List<HttpsCallableResult<dynamic>> responses =
-          await Future.wait(<Future<HttpsCallableResult<dynamic>>>[
-        listUsersCallable.call(<String, dynamic>{
-          'role': 'parent',
-          if (siteScopeId.isNotEmpty) 'siteId': siteScopeId,
-          'limit': 300,
-        }),
-        listUsersCallable.call(<String, dynamic>{
-          'role': 'learner',
-          if (siteScopeId.isNotEmpty) 'siteId': siteScopeId,
-          'limit': 300,
-        }),
-      ]);
+      final List<_UserOption> parents;
+      final List<_UserOption> learners;
+      if (widget.userOptionsLoader != null) {
+        final Map<String, List<Map<String, dynamic>>> response = await widget
+            .userOptionsLoader!(siteScopeId.isNotEmpty ? siteScopeId : null);
+        parents = response['parents']
+                ?.map((Map<String, dynamic> row) => _UserOption(
+                      id: ((row['id'] as String?) ?? '').trim(),
+                      label: _displayNameFromUserDoc(
+                        row,
+                        ((row['id'] as String?) ?? '').trim(),
+                      ),
+                    ))
+                .where((option) => option.id.isNotEmpty)
+                .toList() ??
+            <_UserOption>[];
+        learners = response['learners']
+                ?.map((Map<String, dynamic> row) => _UserOption(
+                      id: ((row['id'] as String?) ?? '').trim(),
+                      label: _displayNameFromUserDoc(
+                        row,
+                        ((row['id'] as String?) ?? '').trim(),
+                      ),
+                    ))
+                .where((option) => option.id.isNotEmpty)
+                .toList() ??
+            <_UserOption>[];
+      } else {
+        final HttpsCallable listUsersCallable =
+            FirebaseFunctions.instance.httpsCallable('listUsers');
+        final List<HttpsCallableResult<dynamic>> responses =
+            await Future.wait(<Future<HttpsCallableResult<dynamic>>>[
+          listUsersCallable.call(<String, dynamic>{
+            'role': 'parent',
+            if (siteScopeId.isNotEmpty) 'siteId': siteScopeId,
+            'limit': 300,
+          }),
+          listUsersCallable.call(<String, dynamic>{
+            'role': 'learner',
+            if (siteScopeId.isNotEmpty) 'siteId': siteScopeId,
+            'limit': 300,
+          }),
+        ]);
 
-      final List<_UserOption> parents =
-          _asMapList(_asMap(responses[0].data)['users'])
-              .map((_MapValue row) => _UserOption(
-                    id: row.id,
-                    label: _displayNameFromUserDoc(row.data, row.id),
-                  ))
-              .toList();
-      final List<_UserOption> learners =
-          _asMapList(_asMap(responses[1].data)['users'])
-              .map((_MapValue row) => _UserOption(
-                    id: row.id,
-                    label: _displayNameFromUserDoc(row.data, row.id),
-                  ))
-              .toList();
+        parents = _asMapList(_asMap(responses[0].data)['users'])
+            .map((_MapValue row) => _UserOption(
+                  id: row.id,
+                  label: _displayNameFromUserDoc(row.data, row.id),
+                ))
+            .toList();
+        learners = _asMapList(_asMap(responses[1].data)['users'])
+            .map((_MapValue row) => _UserOption(
+                  id: row.id,
+                  label: _displayNameFromUserDoc(row.data, row.id),
+                ))
+            .toList();
+      }
 
       if (!mounted) return;
       setState(() {
