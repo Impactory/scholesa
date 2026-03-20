@@ -180,7 +180,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
   List<String> _bosMiaLoopTags() {
     final Set<String> tags = <String>{
       ...widget.conceptTags.where((String tag) => tag.trim().isNotEmpty),
-      'miloos_loop',
+      'ai_help_loop',
       'bos_mia_loop',
       'continuous_improvement',
       'learner_${widget.runtime.learnerId}',
@@ -1013,7 +1013,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         'sessionOccurrenceId': widget.runtime.sessionOccurrenceId,
       'mode': _selectedMode.name,
       'role': widget.actorRole.name,
-      'miloosLoop': true,
+      'aiHelpLoop': true,
       'bosMiaLoop': true,
       'loopTags': _bosMiaLoopTags(),
       'loopLineage':

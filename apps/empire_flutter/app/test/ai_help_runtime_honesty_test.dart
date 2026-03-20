@@ -48,6 +48,8 @@ void main() {
           coachWidgetSource,
           contains(
               'runtimeLoop: Stay in the live spoken support loop and improve support for this specific learner over time.'));
+      expect(coachWidgetSource, contains("'aiHelpLoop': true"));
+      expect(coachWidgetSource, contains("'ai_help_loop'"));
       expect(
         coachWidgetSource,
         contains('AI Help request failed, returning safe escalation: \$e'),
@@ -70,6 +72,8 @@ void main() {
           isNot(contains('You are Scholesa AI Coach in a live conversation.')));
       expect(coachWidgetSource,
           isNot(contains('MiloOS closed-loop coaching runtime')));
+        expect(coachWidgetSource, isNot(contains("'miloosLoop': true")));
+        expect(coachWidgetSource, isNot(contains("'miloos_loop'")));
 
       expect(
           overlaySource, contains("AppStrings.of(context, 'assistant.title')"));

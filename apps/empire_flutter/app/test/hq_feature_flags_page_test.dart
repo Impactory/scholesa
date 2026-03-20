@@ -261,7 +261,8 @@ void main() {
 
     expect(workflowBridge.recordedFlagUpdates, hasLength(1));
     expect(workflowBridge.recordedFlagUpdates.single['enabled'], isTrue);
-    expect(find.text('miloos_loop enabled'), findsOneWidget);
+    expect(workflowBridge.recordedFlagUpdates.single['name'], 'miloos_loop');
+    expect(find.text('ai_help_loop enabled'), findsOneWidget);
     expect(tester.widget<Switch>(find.byType(Switch)).value, isTrue);
   });
 
