@@ -1,5 +1,5 @@
 # GLOBAL POST-IMPLEMENTATION AUDIT (Stage 4)
-**Scholesa Platform – BOS/MIA & AI Coaching Integration**
+**Scholesa Platform – BOS/MIA & AI Help Integration**
 
 **Audit Date**: December 26, 2025  
 **Scope**: 19,730 source files (Dart + TypeScript)  
@@ -21,7 +21,7 @@
 - ✅ **PWA Setup**: Solid (service worker, manifest, offline fallback all present).
 - ✅ **Firestore Rules**: Comprehensive; all 65+ collections defined with role-based access.
 - ✅ **Auth Architecture**: Role hierarchy (learner/educator/parent/site/partner/hq) enforced via `getUserDataSafe()` + site-scoped gates.
-- ✅ **AI Coach Integration**: `AiContextCoachSection` + `AiCoachWidget` + persistent goals via SharedPreferences.
+- ✅ **AI Help Integration**: `AiContextCoachSection` + `AiCoachWidget` + persistent goals via SharedPreferences.
 - ✅ **Event Alignment**: `ai_learning_goal_updated` + `mvl_gate_triggered` verified across 4 locations (Dart/TypeScript).
 - ✅ **BOS/MIA Callable**: `bosGetLearnerLoopInsights` logic correct; queries orchestrationStates, interactionEvents, mvlEpisodes.
 - ✅ **Flutter Analysis**: 10 surfaces compile cleanly; 4 info-level lints (non-blocking).
@@ -140,7 +140,7 @@ db.collection('orchestrationStates')
 
 **Status**: ✅ **PASS** (with minor logging gap)
 
-**AI Coach Implementation** (`AiCoachWidget`):
+**AI Help Implementation** (`AiCoachWidget`):
 - ✅ Persistent learner goals stored in SharedPreferences (keyed by siteId.learnerId).
 - ✅ Goals loaded on widget init + updated when `ai_learning_goal_updated` event fired.
 - ✅ Prompt enhanced with `_bosMiaLoopTags()` appending learner goals + role context.
@@ -305,7 +305,7 @@ const Map<String, String> _educatorSessionsEs = <String, String>{
 - "Family Learning Loop"
 - "Family Schedule Loop"
 - "Family Billing Loop"
-- ... (18+ BOS/MIA AI coaching keys)
+- ... (18+ BOS/MIA AI help keys)
 ```
 
 **Recommended Fix**:

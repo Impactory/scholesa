@@ -82,7 +82,7 @@ Steps:
 3. Open Missions.
 4. Create a mission attempt.
 5. Submit the mission attempt.
-6. Trigger the AI coach on a learner-safe prompt and confirm the response is either high-confidence help or an explicit educator-review escalation, never fabricated help.
+6. Trigger the AI help flow on a learner-safe prompt and confirm the response is either high-confidence help or an explicit educator-review escalation, never fabricated help.
 7. Refresh the page.
 8. Confirm the attempt remains submitted.
 

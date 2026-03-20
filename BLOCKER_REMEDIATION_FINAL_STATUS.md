@@ -29,7 +29,7 @@ All **4 critical blockers** identified in the December 26, 2025 global post-impl
 ✅ **Blocker #3 (Callable Error Handling)**: Live in production (Dec 26 deployment)  
 ✅ **Blocker #4 (Unit Tests)**: 15/15 Jest tests passing; backend callable fully tested  
 
-**Production Readiness**: Scholesa BOS/MIA + AI Coaching integration is **stable and ready for final launch**.
+**Production Readiness**: Scholesa BOS/MIA + AI Help integration is **stable and ready for final launch**.
 
 **Identity hygiene status**: Production Firebase identity data has been reconciled and cleaned. The environment now reports `0` Firestore-only users, `0` Auth-only login-capable users, `0` Auth-only ephemeral users, `0` missing Auth role claims, and validated password login for the remaining legacy HQ and partner profiles.
 
@@ -367,7 +367,7 @@ Mar 3, 2026 (TODAY) – READINESS ASSESSMENT
 
 ### Production Readiness: ✅ GREEN
 
-**The Scholesa BOS/MIA + AI Coaching integration is ready for RC3 hardening and launch**:
+**The Scholesa BOS/MIA + AI Help integration is ready for RC3 hardening and launch**:
 
 1. ✅ All 4 blockers resolved and validated
 2. ✅ Backend callable (highest-risk component) fully tested (15/15 tests)
