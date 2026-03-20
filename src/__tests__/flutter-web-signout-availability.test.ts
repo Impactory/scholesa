@@ -25,6 +25,8 @@ describe('flutter web logout availability', () => {
     expect(sessionMenuSource).toContain('await _confirmGlobalSessionSignOut(effectiveContext);');
     expect(sessionMenuSource).toContain('this.includeSafeArea = true');
     expect(sessionMenuSource).toContain('this.padding = const EdgeInsets.only(top: 16, right: 12)');
+    expect(sessionMenuSource).toContain("message: _tGlobalSessionMenu(context, 'Sign Out')");
+    expect(sessionMenuSource).toContain("message: _tGlobalSessionMenu(context, 'Account menu')");
   });
 
   it('keeps a visible shared header session action for educator web surfaces with custom headers', () => {
