@@ -106,6 +106,9 @@ class AppStrings {
       'ai.voiceOnly.promptTap':
           'Tap the mic and speak. Help will answer out loud.',
       'ai.voiceOnly.listening': 'Listening… speak now.',
+      'ai.voiceOnly.answeredOutLoud':
+          'Help answered out loud. Replay the spoken response if you need to hear it again.',
+      'ai.voiceOnly.replay': 'Replay spoken response',
       'ai.voice.outputUnavailable':
           'Voice output is unavailable. Check device volume and audio permissions.',
       'ai.voice.outputUnavailableWeb':
@@ -250,6 +253,8 @@ class AppStrings {
       'ai.voice.tapInterrupt': '点击即可打断',
     'ai.voiceOnly.promptTap': '点击麦克风开始说话。帮助会直接语音回答。',
       'ai.voiceOnly.listening': '正在聆听…请开始说话。',
+            'ai.voiceOnly.answeredOutLoud': '帮助已直接语音回答。如需再听一次，请重播语音回答。',
+            'ai.voiceOnly.replay': '重播语音回答',
       'ai.voice.outputUnavailable': '语音输出不可用，请检查设备音量和音频权限。',
       'ai.voice.outputUnavailableWeb': '浏览器中的语音输出被阻止。请使用 HTTPS、允许自动播放/音频后再试。',
       'ai.clearGoals.title': '清除当前目标？',
@@ -379,6 +384,8 @@ class AppStrings {
       'ai.voice.tapInterrupt': '點擊即可打斷',
     'ai.voiceOnly.promptTap': '點擊麥克風開始說話。幫助會直接語音回答。',
       'ai.voiceOnly.listening': '正在聆聽…請開始說話。',
+            'ai.voiceOnly.answeredOutLoud': '幫助已直接語音回答。如需再聽一次，請重播語音回答。',
+            'ai.voiceOnly.replay': '重播語音回答',
       'ai.voice.outputUnavailable': '語音輸出不可用，請檢查裝置音量與音訊權限。',
       'ai.voice.outputUnavailableWeb': '瀏覽器中的語音輸出被阻擋。請使用 HTTPS、允許自動播放/音訊後再試。',
       'ai.clearGoals.title': '清除目前目標？',

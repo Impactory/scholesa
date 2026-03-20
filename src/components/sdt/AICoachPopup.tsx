@@ -222,7 +222,7 @@ export function AICoachPopup({
       }
     }
 
-    if (speakBrowserText(text)) {
+    if (speakBrowserText(text, locale)) {
       return 'browser';
     }
 

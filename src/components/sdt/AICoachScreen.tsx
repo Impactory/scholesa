@@ -55,7 +55,10 @@ export function AICoachScreen({
 
   const playSpokenResponse = (text: string): boolean => {
     stopBrowserSpeech();
-    return speakBrowserText(text);
+    if (typeof navigator !== 'undefined' && navigator.language) {
+      return speakBrowserText(text, navigator.language);
+    }
+    return speakBrowserText(text, 'en-US');
   };
 
   const describeSpokenResponse = (wasSpoken: boolean): string => {
