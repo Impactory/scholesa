@@ -77,7 +77,7 @@ Highest-value remaining blind spots:
 | `/site/provisioning` | direct | `apps/empire_flutter/app/test/provisioning_page_test.dart`, `apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart` | Learner-tab failure and stale-data truth are now isolated; parent/link/cohort depth still leans on broader workflow tests |
 | `/site/dashboard` | direct | `apps/empire_flutter/app/test/site_dashboard_page_test.dart` | — |
 | `/site/sessions` | direct | `apps/empire_flutter/app/test/site_sessions_page_test.dart`, `apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart` | Date-based reload and stale-data recovery are now isolated; create/edit depth still relies on broader workflow tests |
-| `/site/ops` | direct | `apps/empire_flutter/app/test/site_ops_page_test.dart`, `apps/empire_flutter/app/test/site_ops_honesty_test.dart` | — |
+| `/site/ops` | direct | `apps/empire_flutter/app/test/site_ops_page_test.dart`, `apps/empire_flutter/app/test/site_ops_honesty_test.dart` | Runtime rollout first-load outage, stale-refresh truth, and direct in-surface refresh/retry recovery are now proven; deeper activity mutation breadth still leans on the broader workflow tests |
 | `/site/incidents` | direct | `apps/empire_flutter/app/test/site_incidents_honesty_test.dart` | — |
 | `/site/identity` | direct | `apps/empire_flutter/app/test/site_identity_page_test.dart` | — |
 | `/site/pickup-auth` | direct | `apps/empire_flutter/app/test/site_pickup_auth_page_test.dart` | — |

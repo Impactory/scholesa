@@ -82,6 +82,8 @@ This is the reopened honesty pass after blocker remediation, clean builds, live 
 25. Hardened educator attendance roster rendering so refresh failures preserve the last successful class roster instead of masking it behind a blocking error state.
 26. Added direct educator attendance roster proof for stale-refresh honesty.
 27. Hardened recent attendance, partner, and HQ audit surfaces for accessibility so stale-data warnings announce as live status updates and icon-only recovery or creation actions stay labeled for assistive technology.
+28. Hardened site ops runtime rollout recovery so operators can refresh the page from the app bar and retry runtime rollout outages directly from the affected card.
+29. Added direct site ops runtime rollout recovery proof for first-load outage recovery and stale partial-outage retry visibility.
 
 ### Release and operations fixes
 
@@ -98,6 +100,7 @@ This is the reopened honesty pass after blocker remediation, clean builds, live 
 - Focused educator follow-up regressions passed: 10 passed, 0 failed.
 - Focused attendance honesty regressions passed: 5 passed, 0 failed.
 - Focused operator accessibility follow-up suites passed: 29 passed, 0 failed.
+- Focused site ops recovery suites passed: 6 passed, 0 failed.
 - Priority blocker page batch passed: 16 passed, 0 failed.
 - Settings logout and auth coverage passed: 26 passed, 0 failed.
 - Global session menu regressions passed: 2 passed, 0 failed.
