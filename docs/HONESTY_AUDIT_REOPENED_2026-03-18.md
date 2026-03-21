@@ -125,6 +125,7 @@ Interpretation rule:
 35. Refreshed direct site integrations health proof for stale-refresh detail visibility.
 36. Hardened HQ feature flags stale-refresh behavior so operators keep the last successful feature-flag and experiment data with refresh-failure detail visible, stale warnings assistive-tech announced, and app-bar recovery/history controls labeled.
 37. Refreshed direct HQ feature flags proof for first-load failure detail, stale-refresh detail visibility, and labeled operator controls.
+38. Added direct HQ feature flags rollout-control proof for owner-required validation and successful save with authoritative experiment reload.
 
 ### Release and operations fixes
 
@@ -145,7 +146,7 @@ Interpretation rule:
 - Focused site identity honesty regressions passed: 2 passed, 0 failed.
 - Focused site incidents honesty regressions passed: 4 passed, 0 failed.
 - Focused site integrations health regressions passed: 4 passed, 0 failed.
-- Focused HQ feature flags regressions passed: 8 passed, 0 failed.
+- Focused HQ feature flags regressions passed: 10 passed, 0 failed.
 - Priority blocker page batch passed: 16 passed, 0 failed.
 - Settings logout and auth coverage passed: 26 passed, 0 failed.
 - Global session menu regressions passed: 2 passed, 0 failed.
