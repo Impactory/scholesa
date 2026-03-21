@@ -16,6 +16,7 @@ Scope: Flutter app enabled routes, current runtime behavior, current test eviden
 The audit standard is now stricter than simple visible rendering or stale-data honesty.
 
 The reusable certification checklist for future route and workflow reviews lives in `docs/FULL_FLOW_CERTIFICATION_GATE_2026-03-21.md`.
+The running worksheet for concrete route classifications lives in `docs/FULL_FLOW_GATE_WORKSHEET_2026-03-21.md`.
 
 Terminology:
 
@@ -319,6 +320,7 @@ End-to-end solution:
 Applied gate:
 
 - This recommendation should now be interpreted through `docs/FULL_FLOW_CERTIFICATION_GATE_2026-03-21.md`, not through route presence or stale-state honesty alone.
+- Route-by-route gate applications should now be recorded in `docs/FULL_FLOW_GATE_WORKSHEET_2026-03-21.md`.
 
 ## What Must Happen Before The Next Gold Claim
 
