@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/modules/educator/educator_learners_page.dart';
+import 'package:scholesa_app/modules/educator/educator_models.dart';
 import 'package:scholesa_app/modules/educator/educator_service.dart';
 import 'package:scholesa_app/runtime/runtime.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
@@ -165,6 +166,18 @@ Future<void> _seedLearnerWithoutDisplayName(FakeFirebaseFirestore firestore) asy
 }
 
 Finder _laneChip(String label) => find.widgetWithText(ChoiceChip, label);
+
+Future<void> _scrollUntilVisible(
+  WidgetTester tester,
+  Finder finder,
+) async {
+  await tester.scrollUntilVisible(
+    finder,
+    200,
+    scrollable: find.byType(Scrollable).first,
+  );
+  await tester.pumpAndSettle();
+}
 
 void main() {
   setUp(() {
@@ -459,5 +472,111 @@ void main() {
     expect(find.text('Learner Two'), findsOneWidget);
     expect(find.text('Learner One'), findsNothing);
     expect(find.widgetWithText(TextField, 'Two'), findsOneWidget);
+  });
+
+  testWidgets('educator learners page shows roster load failure instead of blank roster',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final EducatorService educatorService = EducatorService(
+      firestoreService: firestoreService,
+      educatorId: 'educator-1',
+      siteId: 'site-1',
+      learnersLoader: () async {
+        throw StateError('load failed from test');
+      },
+    );
+
+    await tester.pumpWidget(
+      _buildHarness(
+        firestoreService: firestoreService,
+        educatorService: educatorService,
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Unable to load learners'), findsOneWidget);
+    expect(
+      find.text('We could not load learners right now. Retry to check the current state.'),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('Failed to load learners: Bad state: load failed from test'),
+      findsOneWidget,
+    );
+    expect(find.text('No learners enrolled'), findsNothing);
+  });
+
+  testWidgets('educator learners page keeps stale roster visible after refresh failure',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    int loadCount = 0;
+    final EducatorService educatorService = EducatorService(
+      firestoreService: firestoreService,
+      educatorId: 'educator-1',
+      siteId: 'site-1',
+      learnersLoader: () async {
+        loadCount += 1;
+        if (loadCount == 1) {
+          return EducatorLearnersSnapshot(
+            learners: <EducatorLearner>[
+              EducatorLearner(
+                id: 'learner-1',
+                name: 'Learner One',
+                email: 'learner-1@scholesa.test',
+                attendanceRate: 68,
+                missionsCompleted: 3,
+                pillarProgress: <String, double>{
+                  'future_skills': 0.32,
+                  'leadership': 0.48,
+                  'impact': 0.41,
+                },
+                enrolledSessionIds: <String>['session-1'],
+              ),
+            ],
+          );
+        }
+        throw StateError('refresh failed from test');
+      },
+    );
+
+    await tester.pumpWidget(
+      _buildHarness(
+        firestoreService: firestoreService,
+        educatorService: educatorService,
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Refresh'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+
+    await _scrollUntilVisible(
+      tester,
+      find.text(
+        'Unable to refresh learners right now. Showing the last successful data. Failed to load learners: Bad state: refresh failed from test',
+      ),
+    );
+    expect(
+      find.text(
+        'Unable to refresh learners right now. Showing the last successful data. Failed to load learners: Bad state: refresh failed from test',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Learner One'), findsOneWidget);
+    expect(find.text('No learners enrolled'), findsNothing);
   });
 }

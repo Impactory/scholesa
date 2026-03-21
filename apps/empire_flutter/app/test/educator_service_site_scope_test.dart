@@ -161,6 +161,48 @@ void main() {
       expect(service.learners.first.name, 'Learner A');
     });
 
+    test('loadLearners keeps stale learners visible after refresh failure', () async {
+      int loadCount = 0;
+      final EducatorService service = EducatorService(
+        firestoreService: FirestoreService(
+          firestore: FakeFirebaseFirestore(),
+          auth: _MockFirebaseAuth(),
+        ),
+        educatorId: 'educator-1',
+        siteId: 'site-a',
+        learnersLoader: () async {
+          loadCount += 1;
+          if (loadCount == 1) {
+            return const EducatorLearnersSnapshot(
+              learners: <EducatorLearner>[
+                EducatorLearner(
+                  id: 'learner-a',
+                  name: 'Learner A',
+                  email: 'a@test.dev',
+                  attendanceRate: 91,
+                  missionsCompleted: 4,
+                  pillarProgress: <String, double>{
+                    'future_skills': 0.52,
+                    'leadership': 0.41,
+                    'impact': 0.39,
+                  },
+                  enrolledSessionIds: <String>['session-1'],
+                ),
+              ],
+            );
+          }
+          throw Exception('network down');
+        },
+      );
+
+      await service.loadLearners();
+      await service.loadLearners();
+
+      expect(service.learners, hasLength(1));
+      expect(service.learners.single.name, 'Learner A');
+      expect(service.error, contains('Failed to load learners'));
+    });
+
     test('createSession persists join code and teacher role variants',
         () async {
       final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
