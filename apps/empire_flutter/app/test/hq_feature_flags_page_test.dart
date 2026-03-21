@@ -971,6 +971,13 @@ void main() {
     await tester.tap(acknowledgeAlertButton);
     await tester.pumpAndSettle();
 
+    expect(
+      find.text(
+        'Delivery delivery-1 stays immutable; this HQ operator action applies only to this rollout delivery, 1 target sites, and runtime flutter_mobile.',
+      ),
+      findsOneWidget,
+    );
+
     await tester.enterText(
       find.widgetWithText(TextFormField, 'HQ notes'),
       'Fallback and pending rollout reviewed by HQ operator.',
@@ -1086,6 +1093,118 @@ void main() {
   });
 
   testWidgets(
+      'hq feature flags alert history reflects the saved rollout control',
+      (WidgetTester tester) async {
+    final _FakeWorkflowBridgeService workflowBridge =
+        buildRolloutGovernanceHarness();
+
+    await tester.pumpWidget(buildHarness(workflowBridge: workflowBridge));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    final Finder rolloutControlButton =
+        find.widgetWithText(TextButton, 'Rollout control');
+
+    await tester.ensureVisible(rolloutControlButton);
+    await tester.pumpAndSettle();
+
+    await tester.tap(rolloutControlButton);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(DropdownButtonFormField<String>).last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('restricted').last);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Owner user ID'),
+      'hq-operator-1',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Control reason'),
+      'Fallback pending while HQ reviews bounded rollout health.',
+    );
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    final Finder alertHistoryButton =
+        find.widgetWithText(TextButton, 'Alert history');
+
+    await tester.ensureVisible(alertHistoryButton);
+    await tester.pumpAndSettle();
+
+    await tester.tap(alertHistoryButton);
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(
+      find.textContaining('Control: restricted'),
+      findsWidgets,
+    );
+    expect(find.textContaining('hq-operator-1'), findsWidgets);
+    expect(
+      find.textContaining(
+        'Fallback pending while HQ reviews bounded rollout health.',
+      ),
+      findsWidgets,
+    );
+  });
+
+  testWidgets(
+      'hq feature flags alert history reflects the saved rollout escalation',
+      (WidgetTester tester) async {
+    final _FakeWorkflowBridgeService workflowBridge =
+        buildRolloutGovernanceHarness();
+
+    await tester.pumpWidget(buildHarness(workflowBridge: workflowBridge));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    final Finder escalateAlertButton =
+        find.widgetWithText(TextButton, 'Escalate alert');
+
+    await tester.ensureVisible(escalateAlertButton);
+    await tester.pumpAndSettle();
+
+    await tester.tap(escalateAlertButton);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Owner user ID'),
+      'hq-escalation-owner',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Escalation notes'),
+      'Pending rollout requires HQ follow-up before wider activation.',
+    );
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    final Finder alertHistoryButton =
+        find.widgetWithText(TextButton, 'Alert history');
+
+    await tester.ensureVisible(alertHistoryButton);
+    await tester.pumpAndSettle();
+
+    await tester.tap(alertHistoryButton);
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Escalation: open'), findsWidgets);
+    expect(find.textContaining('hq-escalation-owner'), findsWidgets);
+    expect(
+      find.textContaining(
+        'Pending rollout requires HQ follow-up before wider activation.',
+      ),
+      findsWidgets,
+    );
+  });
+
+  testWidgets(
       'hq feature flags rollout control requires an owner for restricted mode',
       (WidgetTester tester) async {
     final _FakeWorkflowBridgeService workflowBridge =
@@ -1105,6 +1224,13 @@ void main() {
 
     await tester.tap(rolloutControlButton);
     await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Delivery delivery-1 stays immutable; this HQ operator action applies only to this rollout delivery, 1 target sites, and runtime flutter_mobile.',
+      ),
+      findsOneWidget,
+    );
 
     await tester.tap(find.byType(DropdownButtonFormField<String>).last);
     await tester.pumpAndSettle();
@@ -1242,6 +1368,13 @@ void main() {
 
     await tester.tap(escalateAlertButton);
     await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Delivery delivery-1 stays immutable; this HQ operator action applies only to this rollout delivery, 1 target sites, and runtime flutter_mobile.',
+      ),
+      findsOneWidget,
+    );
 
     await tester.tap(find.widgetWithText(FilledButton, 'Save'));
     await tester.pumpAndSettle();

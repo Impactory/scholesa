@@ -6895,6 +6895,16 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                       Text(
                         _tHqFeatureFlags(
                           dialogContext,
+                          _buildRuntimeRolloutOperatorContext(delivery),
+                        ),
+                        style: const TextStyle(
+                          color: ScholesaColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        _tHqFeatureFlags(
+                          dialogContext,
                           'Current alert: ${summary.fallbackCount} fallback · ${summary.pendingCount} pending',
                         ),
                         style: const TextStyle(fontWeight: FontWeight.w700),
@@ -7802,6 +7812,16 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                       Text(
                         _tHqFeatureFlags(
                           dialogContext,
+                          _buildRuntimeRolloutOperatorContext(delivery),
+                        ),
+                        style: const TextStyle(
+                          color: ScholesaColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        _tHqFeatureFlags(
+                          dialogContext,
                           'Current issue: ${summary.fallbackCount} fallback · ${summary.pendingCount} pending',
                         ),
                         style: const TextStyle(fontWeight: FontWeight.w700),
@@ -7965,7 +7985,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                       Text(
                         _tHqFeatureFlags(
                           dialogContext,
-                          'Delivery ${delivery.id} stays immutable; this control is an HQ operator override for rollout handling only.',
+                          _buildRuntimeRolloutOperatorContext(delivery),
                         ),
                         style: const TextStyle(
                           color: ScholesaColors.textSecondary,
@@ -8465,6 +8485,12 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
       return 'Rollout alert acknowledged: ${parts.join(' · ')} site statuses reviewed. Use Site rollout for detail.';
     }
     return 'Rollout alert: ${parts.join(' · ')} site statuses need review. Use Site rollout for detail.';
+  }
+
+  String _buildRuntimeRolloutOperatorContext(
+    FederatedLearningRuntimeDeliveryRecordModel delivery,
+  ) {
+    return 'Delivery ${delivery.id} stays immutable; this HQ operator action applies only to this rollout delivery, ${delivery.targetSiteIds.length} target sites, and runtime ${delivery.runtimeTarget}.';
   }
 
   String _runtimeRolloutAuditTitle(

@@ -26,7 +26,7 @@ Proven gates:
    - stale warnings are assistive-tech visible and app-bar controls are labeled
 6. Gate G `Telemetry And Auditability`
    - refresh and history app-bar actions emit telemetry; rollout governance surfaces expose audit and history dialogs in implementation
-   - direct proof now exists that the alert-history surface reflects a saved rollout-triage record
+   - direct proof now exists that the alert-history surface reflects saved rollout-triage, rollout-control, and rollout-escalation state
 
 Missing gates:
 
@@ -35,7 +35,7 @@ Missing gates:
 2. Gate E `Scope And Permission Correctness`
    - no focused route proof yet shows governance actions are correctly bounded to HQ/operator scope and delivery context
 3. Gate G `Telemetry And Auditability`
-   - route proof still does not verify audit or history traceability for every consequential governance mutation beyond rollout-alert triage
+   - route proof still does not verify every audit trail source beyond the alert-history surface itself
 4. Gate H `Educational Truth`
    - the wider federated-learning governance workflow still needs proof that runtime and candidate decisions do not overstate learner or capability claims outside verified evidence chains
 5. Gate I `AI Transparency`
@@ -43,12 +43,12 @@ Missing gates:
 
 Blocking risk:
 
-- The route now directly proves rollout-alert triage, rollout-control, and rollout-escalation mutation behavior across success, validation, reload, and backend-failure paths, and the alert-history surface reflects saved triage state, but scope correctness and broader mutation traceability remain uncertified at the focused route level.
+- The route now directly proves rollout-alert triage, rollout-control, and rollout-escalation mutation behavior across success, validation, reload, and backend-failure paths, and the alert-history surface reflects saved governance state for all three, but scope correctness remains uncertified at the focused route level.
 
 Next proof task:
 
 1. Certify scope correctness by proving the route surfaces the right HQ-bounded delivery context while governance actions are opened and saved.
-2. Deepen auditability by proving traceability cues for rollout-control and rollout-escalation history, not just rollout-alert triage.
+2. Decide whether the existing alert-history surface is sufficient auditability for this route or whether a separate audit-surface proof is still required for certification.
 3. Then decide whether `/hq/feature-flags` can move from `Full-flow partial` to `Full-flow verified` or whether wider federated-learning governance still blocks it.
 
 ## Template
