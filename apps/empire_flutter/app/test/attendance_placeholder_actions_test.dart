@@ -13,6 +13,7 @@ import 'package:scholesa_app/modules/attendance/attendance_service.dart';
 import 'package:scholesa_app/offline/offline_queue.dart';
 import 'package:scholesa_app/offline/sync_coordinator.dart';
 import 'package:scholesa_app/services/api_client.dart';
+import 'package:scholesa_app/services/telemetry_service.dart';
 import 'package:scholesa_app/ui/common/error_state.dart';
 
 class _MockApiClient extends Mock implements ApiClient {}
@@ -164,6 +165,19 @@ Future<void> _seedAttendanceCouplingData(
     'role': 'learner',
     'siteIds': <String>['site-1'],
   });
+}
+
+Future<List<Map<String, dynamic>>> _captureTelemetry(
+  Future<void> Function() body,
+) async {
+  final List<Map<String, dynamic>> events = <Map<String, dynamic>>[];
+  await TelemetryService.runWithDispatcher(
+    (Map<String, dynamic> payload) async {
+      events.add(Map<String, dynamic>.from(payload));
+    },
+    body,
+  );
+  return events;
 }
 
 void main() {
@@ -608,6 +622,93 @@ void main() {
     expect(statuses, equals(<String>{'present'}));
   });
 
+  testWidgets('attendance page logs save telemetry on live save',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedAttendanceCouplingData(firestore);
+
+    final _MockSyncCoordinator syncCoordinator = _MockSyncCoordinator();
+    when(() => syncCoordinator.isOnline).thenReturn(true);
+    when(() => syncCoordinator.pendingCount).thenReturn(0);
+    when(() => syncCoordinator.isSyncing).thenReturn(false);
+    when(() => syncCoordinator.retryFailed()).thenAnswer((_) async {});
+
+    final AttendanceService attendanceService = AttendanceService(
+      apiClient: _MockApiClient(),
+      syncCoordinator: syncCoordinator,
+      firestore: firestore,
+      siteId: 'site-1',
+    );
+    final AppState appState = _buildAppState();
+
+    final List<Map<String, dynamic>> events = await _captureTelemetry(() async {
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: <SingleChildWidget>[
+            ChangeNotifierProvider<AppState>.value(value: appState),
+            ChangeNotifierProvider<SyncCoordinator>.value(
+              value: syncCoordinator,
+            ),
+            ChangeNotifierProvider<AttendanceService>.value(
+              value: attendanceService,
+            ),
+          ],
+          child: MaterialApp(
+            theme: ThemeData(
+              useMaterial3: true,
+              splashFactory: NoSplash.splashFactory,
+            ),
+            locale: const Locale('en'),
+            supportedLocales: const <Locale>[
+              Locale('en'),
+              Locale('zh', 'CN'),
+              Locale('zh', 'TW'),
+            ],
+            localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            home: const AttendancePage(),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Robotics Lab'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('All Present'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Save Attendance (2/2)'));
+      await tester.pumpAndSettle();
+    });
+
+    expect(
+      events.any(
+        (Map<String, dynamic> payload) =>
+            payload['event'] == 'cta.clicked' &&
+            (payload['metadata'] as Map<String, dynamic>)['cta'] ==
+                'attendance_save' &&
+            (payload['metadata'] as Map<String, dynamic>)['occurrence_id'] ==
+                'occ-1' &&
+            (payload['metadata'] as Map<String, dynamic>)['records_count'] == 2,
+      ),
+      isTrue,
+    );
+    expect(
+      events.any(
+        (Map<String, dynamic> payload) =>
+            payload['event'] == 'attendance.recorded' &&
+            (payload['metadata'] as Map<String, dynamic>)['occurrence_id'] ==
+                'occ-1' &&
+            (payload['metadata'] as Map<String, dynamic>)['records_count'] == 2,
+      ),
+      isTrue,
+    );
+  });
+
   testWidgets('attendance page shows explicit save failure',
       (WidgetTester tester) async {
     final _FailingAttendanceSaveService attendanceService =
@@ -819,6 +920,99 @@ void main() {
     expect(
       (await firestore.collection('attendanceRecords').get()).docs,
       isEmpty,
+    );
+  });
+
+  testWidgets('attendance page logs queue telemetry when offline',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedAttendanceCouplingData(firestore);
+
+    final _MockSyncCoordinator syncCoordinator = _MockSyncCoordinator();
+    when(() => syncCoordinator.isOnline).thenReturn(false);
+    when(() => syncCoordinator.pendingCount).thenReturn(2);
+    when(() => syncCoordinator.isSyncing).thenReturn(false);
+    when(() => syncCoordinator.retryFailed()).thenAnswer((_) async {});
+    when(() => syncCoordinator.queueOperation(any(), any())).thenAnswer(
+      (_) async => QueuedOp(
+        type: OpType.attendanceRecord,
+        payload: const <String, dynamic>{},
+      ),
+    );
+
+    final AttendanceService attendanceService = AttendanceService(
+      apiClient: _MockApiClient(),
+      syncCoordinator: syncCoordinator,
+      firestore: firestore,
+      siteId: 'site-1',
+    );
+    final AppState appState = _buildAppState();
+
+    final List<Map<String, dynamic>> events = await _captureTelemetry(() async {
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: <SingleChildWidget>[
+            ChangeNotifierProvider<AppState>.value(value: appState),
+            ChangeNotifierProvider<SyncCoordinator>.value(
+              value: syncCoordinator,
+            ),
+            ChangeNotifierProvider<AttendanceService>.value(
+              value: attendanceService,
+            ),
+          ],
+          child: MaterialApp(
+            theme: ThemeData(
+              useMaterial3: true,
+              splashFactory: NoSplash.splashFactory,
+            ),
+            locale: const Locale('en'),
+            supportedLocales: const <Locale>[
+              Locale('en'),
+              Locale('zh', 'CN'),
+              Locale('zh', 'TW'),
+            ],
+            localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            home: const AttendancePage(),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Robotics Lab'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('All Present'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Save Attendance (2/2)'));
+      await tester.pumpAndSettle();
+    });
+
+    expect(
+      events.any(
+        (Map<String, dynamic> payload) =>
+            payload['event'] == 'cta.clicked' &&
+            (payload['metadata'] as Map<String, dynamic>)['cta'] ==
+                'attendance_save' &&
+            (payload['metadata'] as Map<String, dynamic>)['occurrence_id'] ==
+                'occ-1' &&
+            (payload['metadata'] as Map<String, dynamic>)['records_count'] == 2,
+      ),
+      isTrue,
+    );
+    expect(
+      events.any(
+        (Map<String, dynamic> payload) =>
+            payload['event'] == 'attendance.record_queued' &&
+            (payload['metadata'] as Map<String, dynamic>)['occurrence_id'] ==
+                'occ-1' &&
+            (payload['metadata'] as Map<String, dynamic>)['records_count'] == 2,
+      ),
+      isTrue,
     );
   });
 }
