@@ -476,13 +476,14 @@ class _UserAdminPageState extends State<UserAdminPage>
         }
 
         if (service.auditLogError != null && service.auditLogs.isEmpty) {
-          return _buildEmptyState(
+          return _buildLoadErrorState(
             icon: Icons.error_outline,
             title: _tUserAdmin(context, 'Unable to load audit logs right now'),
             subtitle: _tUserAdmin(
               context,
               'Try again in a moment or refresh after your connection stabilizes.',
             ),
+            onRetry: () => service.loadAuditLogs(),
           );
         }
 
@@ -499,9 +500,21 @@ class _UserAdminPageState extends State<UserAdminPage>
 
         return ListView.builder(
           padding: const EdgeInsets.all(16),
-          itemCount: service.auditLogs.length,
+          itemCount:
+              service.auditLogs.length + (service.auditLogError != null ? 1 : 0),
           itemBuilder: (BuildContext context, int index) {
-            final AuditLogEntry log = service.auditLogs[index];
+            if (service.auditLogError != null && index == 0) {
+              return _buildStaleDataBanner(
+                _tUserAdmin(
+                      context,
+                      'Unable to refresh audit logs right now. Showing the last successful data.',
+                    ) +
+                    ' ${service.auditLogError!}',
+              );
+            }
+            final int logIndex =
+                service.auditLogError != null ? index - 1 : index;
+            final AuditLogEntry log = service.auditLogs[logIndex];
             return _AuditLogCard(log: log);
           },
         );

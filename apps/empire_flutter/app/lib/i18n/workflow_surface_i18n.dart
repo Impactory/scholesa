@@ -558,6 +558,8 @@ class WorkflowSurfaceI18n {
         '当前无法刷新审计数据。正在显示最近一次成功加载的数据。',
     'No audit logs found': '未找到审计日志',
     'Unable to load audit logs right now': '目前无法加载审计日志',
+    'Unable to refresh audit logs right now. Showing the last successful data.':
+        '目前无法刷新审计日志。正在显示最近一次成功加载的数据。',
     'Try again in a moment or refresh after your connection stabilizes.':
         '请稍后重试，或在网络稳定后刷新。',
     'Audit activity will appear here after user administration actions are recorded.':
@@ -1245,6 +1247,8 @@ class WorkflowSurfaceI18n {
         '目前無法刷新稽核資料。正在顯示最近一次成功載入的資料。',
     'No audit logs found': '找不到稽核日誌',
     'Unable to load audit logs right now': '目前無法載入稽核日誌',
+    'Unable to refresh audit logs right now. Showing the last successful data.':
+        '目前無法刷新稽核日誌。正在顯示最近一次成功載入的資料。',
     'Try again in a moment or refresh after your connection stabilizes.':
         '請稍後再試，或在連線穩定後重新整理。',
     'Audit activity will appear here after user administration actions are recorded.':

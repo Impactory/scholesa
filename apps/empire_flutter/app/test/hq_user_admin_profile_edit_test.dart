@@ -20,10 +20,11 @@ class _FakeUserAdminService extends UserAdminService {
     List<SiteModel>? sites,
     List<AuditLogEntry>? auditLogs,
     String? error,
-    this.hasLoadedAuditLogs = true,
-    this.isLoadingAuditLogs = false,
-    this.auditLogError,
+    bool hasLoadedAuditLogs = true,
+    bool isLoadingAuditLogs = false,
+    String? auditLogError,
     this.onLoadUsers,
+    this.onLoadAuditLogs,
   })  : _fakeAuditLogs =
             List<AuditLogEntry>.from(auditLogs ?? const <AuditLogEntry>[]),
         _fakeUsers = List<UserModel>.from(
@@ -42,6 +43,9 @@ class _FakeUserAdminService extends UserAdminService {
         ),
         _fakeSites = List<SiteModel>.from(sites ?? const <SiteModel>[]),
         _error = error,
+        _hasLoadedAuditLogs = hasLoadedAuditLogs,
+        _isLoadingAuditLogs = isLoadingAuditLogs,
+        _auditLogError = auditLogError,
         super(
           firestoreService: FirestoreService(
             firestore: FakeFirebaseFirestore(),
@@ -54,17 +58,15 @@ class _FakeUserAdminService extends UserAdminService {
   String? lastUpdatedDisplayName;
   int loadAuditLogsCallCount = 0;
   final Future<void> Function(_FakeUserAdminService service)? onLoadUsers;
-  @override
-  final String? auditLogError;
-  @override
-  final bool hasLoadedAuditLogs;
-  @override
-  final bool isLoadingAuditLogs;
+  final Future<void> Function(_FakeUserAdminService service)? onLoadAuditLogs;
 
   final List<UserModel> _fakeUsers;
   final List<SiteModel> _fakeSites;
   final List<AuditLogEntry> _fakeAuditLogs;
   String? _error;
+  String? _auditLogError;
+  bool _hasLoadedAuditLogs;
+  bool _isLoadingAuditLogs;
 
   @override
   List<UserModel> get users => List<UserModel>.unmodifiable(_fakeUsers);
@@ -77,6 +79,15 @@ class _FakeUserAdminService extends UserAdminService {
 
   @override
   List<AuditLogEntry> get auditLogs => List<AuditLogEntry>.unmodifiable(_fakeAuditLogs);
+
+  @override
+  String? get auditLogError => _auditLogError;
+
+  @override
+  bool get hasLoadedAuditLogs => _hasLoadedAuditLogs;
+
+  @override
+  bool get isLoadingAuditLogs => _isLoadingAuditLogs;
 
   @override
   bool get isLoading => false;
@@ -104,6 +115,9 @@ class _FakeUserAdminService extends UserAdminService {
   @override
   Future<void> loadAuditLogs({String? userId}) async {
     loadAuditLogsCallCount += 1;
+    if (onLoadAuditLogs != null) {
+      await onLoadAuditLogs!(this);
+    }
   }
 
   @override
@@ -130,6 +144,27 @@ class _FakeUserAdminService extends UserAdminService {
       _fakeSites
         ..clear()
         ..addAll(sites);
+    }
+    notifyListeners();
+  }
+
+  void setAuditLogState({
+    String? auditLogError,
+    List<AuditLogEntry>? auditLogs,
+    bool? hasLoadedAuditLogs,
+    bool? isLoadingAuditLogs,
+  }) {
+    _auditLogError = auditLogError;
+    if (auditLogs != null) {
+      _fakeAuditLogs
+        ..clear()
+        ..addAll(auditLogs);
+    }
+    if (hasLoadedAuditLogs != null) {
+      _hasLoadedAuditLogs = hasLoadedAuditLogs;
+    }
+    if (isLoadingAuditLogs != null) {
+      _isLoadingAuditLogs = isLoadingAuditLogs;
     }
     notifyListeners();
   }
@@ -379,7 +414,57 @@ void main() {
       ),
       findsOneWidget,
     );
+    expect(find.text('Retry'), findsOneWidget);
     expect(find.byType(CircularProgressIndicator), findsNothing);
+  });
+
+  testWidgets('hq user admin audit log keeps stale entries visible after refresh failure',
+      (WidgetTester tester) async {
+    final _FakeUserAdminService service = _FakeUserAdminService(
+      auditLogs: <AuditLogEntry>[
+        AuditLogEntry(
+          id: 'audit-1',
+          actorId: 'hq-1',
+          actorEmail: 'hq@scholesa.test',
+          action: 'user.updated',
+          entityType: 'user',
+          entityId: 'user-1',
+          timestamp: DateTime(2026, 3, 20),
+        ),
+      ],
+      hasLoadedAuditLogs: true,
+      onLoadAuditLogs: (_FakeUserAdminService current) async {
+        current.setAuditLogState(
+          auditLogError: 'Unable to load audit logs right now',
+        );
+      },
+    );
+
+    await tester.binding.setSurfaceSize(const Size(1440, 2000));
+    await tester.pumpWidget(
+      _buildHarness(
+        providers: <SingleChildWidget>[
+          ChangeNotifierProvider<UserAdminService>.value(value: service),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Audit Log'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Updated'), findsOneWidget);
+
+    await service.loadAuditLogs();
+    await tester.pumpAndSettle();
+
+    expect(
+      find.textContaining(
+        'Unable to refresh audit logs right now. Showing the last successful data.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Updated'), findsOneWidget);
   });
 
   testWidgets('hq user admin users tab shows explicit unavailable state on failed load',
