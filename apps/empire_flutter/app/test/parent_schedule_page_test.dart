@@ -57,6 +57,81 @@ class _StubParentService extends ChangeNotifier implements ParentService {
   }
 }
 
+class _ParentLoadSnapshot {
+  const _ParentLoadSnapshot({
+    this.learnerSummaries = const <LearnerSummary>[],
+    this.error,
+  });
+
+  final List<LearnerSummary> learnerSummaries;
+  final String? error;
+}
+
+class _SequencedParentService extends ChangeNotifier implements ParentService {
+  _SequencedParentService({
+    required this.parentId,
+    required List<_ParentLoadSnapshot> snapshots,
+    FirestoreService? firestoreService,
+  })  : _snapshots = snapshots,
+        firestoreService = firestoreService ??
+            FirestoreService(
+              firestore: FakeFirebaseFirestore(),
+              auth: _FakeFirebaseAuth(),
+            );
+
+  final List<_ParentLoadSnapshot> _snapshots;
+
+  @override
+  final FirestoreService firestoreService;
+
+  @override
+  final String parentId;
+
+  List<LearnerSummary> _learnerSummaries = <LearnerSummary>[];
+  bool _isLoading = false;
+  String? _error;
+  int _loadCalls = 0;
+
+  _ParentLoadSnapshot _snapshotFor(int index) {
+    if (_snapshots.isEmpty) {
+      return const _ParentLoadSnapshot();
+    }
+    final int resolvedIndex =
+        index < _snapshots.length ? index : _snapshots.length - 1;
+    return _snapshots[resolvedIndex];
+  }
+
+  @override
+  List<LearnerSummary> get learnerSummaries =>
+      List<LearnerSummary>.unmodifiable(_learnerSummaries);
+
+  @override
+  String? get error => _error;
+
+  @override
+  bool get isLoading => _isLoading;
+
+  @override
+  final BillingSummary? billingSummary = null;
+
+  @override
+  Future<void> loadParentData() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    final _ParentLoadSnapshot snapshot = _snapshotFor(_loadCalls++);
+    if (snapshot.error == null) {
+      _learnerSummaries = List<LearnerSummary>.from(snapshot.learnerSummaries);
+    } else {
+      _error = snapshot.error;
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+}
+
 AppState _buildParentState() {
   final AppState state = AppState();
   state.updateFromMeResponse(<String, dynamic>{
@@ -269,5 +344,50 @@ void main() {
 
     expect(find.text('This Month'), findsOneWidget);
     expect(find.text('This Week'), findsNothing);
+  });
+
+  testWidgets('parent schedule keeps stale learner schedule visible when a refresh fails',
+      (WidgetTester tester) async {
+    final _SequencedParentService service = _SequencedParentService(
+      parentId: 'parent-test-1',
+      snapshots: <_ParentLoadSnapshot>[
+        _ParentLoadSnapshot(
+          learnerSummaries: <LearnerSummary>[
+            _buildLearnerSummaryWithEvents(),
+          ],
+        ),
+        const _ParentLoadSnapshot(error: 'refresh failed'),
+      ],
+    );
+
+    await _pumpPage(
+      tester,
+      parentService: service,
+    );
+
+    expect(find.text('This Week'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Refresh'));
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Design Studio'),
+      300,
+      scrollable: find.byType(Scrollable).last,
+    );
+
+    expect(find.text('Design Studio'), findsWidgets);
+    expect(
+      find.text(
+        'Unable to refresh family dashboard right now. Showing the last successful data.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'No learner links found yet. Request a linking review and we will check your family account.',
+      ),
+      findsNothing,
+    );
   });
 }

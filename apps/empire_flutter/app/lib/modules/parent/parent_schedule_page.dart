@@ -250,7 +250,7 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
                 child: CircularProgressIndicator(color: ScholesaColors.parent),
               );
             }
-            if (service.error != null) {
+            if (service.error != null && service.learnerSummaries.isEmpty) {
               return _buildLoadErrorState(
                 message: _t('Unable to load schedule right now'),
                 onRetry: service.loadParentData,
@@ -283,6 +283,13 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
             return CustomScrollView(
               slivers: <Widget>[
                 SliverToBoxAdapter(child: _buildHeader(service)),
+                if (service.error != null)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                      child: _buildStaleDataBanner(),
+                    ),
+                  ),
                 SliverToBoxAdapter(child: _buildLearnerFilter(service)),
                 SliverToBoxAdapter(
                   child: AiContextCoachSection(
@@ -367,6 +374,40 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildStaleDataBanner() {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: scheme.tertiaryContainer.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: scheme.tertiary.withValues(alpha: 0.28)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Icon(
+            Icons.warning_amber_rounded,
+            color: scheme.tertiary,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              _t(
+                'Unable to refresh family dashboard right now. Showing the last successful data.',
+              ),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: scheme.onSurface,
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+          ),
+        ],
       ),
     );
   }
