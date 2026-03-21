@@ -361,6 +361,18 @@ class _UserAdminPageState extends State<UserAdminPage>
           );
         }
 
+        if (service.error != null && service.users.isEmpty) {
+          return _buildLoadErrorState(
+            icon: Icons.error_outline,
+            title: _tUserAdmin(context, 'Users are temporarily unavailable'),
+            subtitle: _tUserAdmin(
+              context,
+              'We could not load users right now. Retry to check the current state.',
+            ),
+            onRetry: service.loadUsers,
+          );
+        }
+
         if (service.users.isEmpty) {
           return _buildEmptyState(
             icon: Icons.people_outline,
@@ -371,9 +383,18 @@ class _UserAdminPageState extends State<UserAdminPage>
 
         return ListView.builder(
           padding: const EdgeInsets.all(16),
-          itemCount: service.users.length,
+          itemCount: service.users.length + (service.error != null ? 1 : 0),
           itemBuilder: (BuildContext context, int index) {
-            final UserModel user = service.users[index];
+            if (service.error != null && index == 0) {
+              return _buildStaleDataBanner(
+                _tUserAdmin(
+                  context,
+                  'Unable to refresh users right now. Showing the last successful data.',
+                ),
+              );
+            }
+            final int userIndex = index - (service.error != null ? 1 : 0);
+            final UserModel user = service.users[userIndex];
             return _UserCard(
               user: user,
               sites: service.sites,
@@ -388,6 +409,24 @@ class _UserAdminPageState extends State<UserAdminPage>
   Widget _buildSitesList() {
     return Consumer<UserAdminService>(
       builder: (BuildContext context, UserAdminService service, _) {
+        if (service.isLoading) {
+          return const Center(
+            child: CircularProgressIndicator(color: ScholesaColors.hq),
+          );
+        }
+
+        if (service.error != null && service.sites.isEmpty) {
+          return _buildLoadErrorState(
+            icon: Icons.error_outline,
+            title: _tUserAdmin(context, 'Sites are temporarily unavailable'),
+            subtitle: _tUserAdmin(
+              context,
+              'We could not load sites right now. Retry to check the current state.',
+            ),
+            onRetry: service.loadUsers,
+          );
+        }
+
         if (service.sites.isEmpty) {
           return _buildEmptyState(
             icon: Icons.location_city_outlined,
@@ -398,9 +437,18 @@ class _UserAdminPageState extends State<UserAdminPage>
 
         return ListView.builder(
           padding: const EdgeInsets.all(16),
-          itemCount: service.sites.length,
+          itemCount: service.sites.length + (service.error != null ? 1 : 0),
           itemBuilder: (BuildContext context, int index) {
-            final SiteModel site = service.sites[index];
+            if (service.error != null && index == 0) {
+              return _buildStaleDataBanner(
+                _tUserAdmin(
+                  context,
+                  'Unable to refresh sites right now. Showing the last successful data.',
+                ),
+              );
+            }
+            final int siteIndex = index - (service.error != null ? 1 : 0);
+            final SiteModel site = service.sites[siteIndex];
             return _SiteCard(site: site);
           },
         );
@@ -482,6 +530,71 @@ class _UserAdminPageState extends State<UserAdminPage>
           Text(title, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
           Text(subtitle, style: TextStyle(color: context.schTextSecondary)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoadErrorState({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Future<void> Function() onRetry,
+  }) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: ScholesaColors.error.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 48, color: ScholesaColors.error),
+            ),
+            const SizedBox(height: 16),
+            Text(title, style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 8),
+            Text(
+              subtitle,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: context.schTextSecondary),
+            ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh_rounded),
+              label: Text(_tUserAdmin(context, 'Retry')),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStaleDataBanner(String message) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.orange.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(color: ScholesaColors.textPrimary),
+            ),
+          ),
         ],
       ),
     );
