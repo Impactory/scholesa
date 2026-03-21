@@ -401,7 +401,7 @@ void main() {
         home: const ParentSchedulePage(),
       );
 
-      expect(find.text('Prototype Studio'), findsOneWidget);
+      expect(find.text('Prototype Studio @ Innovation Lab'), findsOneWidget);
       expect(find.text('Hidden Session'), findsNothing);
 
       await tester.ensureVisible(find.text('Details'));
