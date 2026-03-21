@@ -10,6 +10,7 @@ import 'package:scholesa_app/modules/attendance/attendance_page.dart';
 import 'package:scholesa_app/modules/attendance/attendance_service.dart';
 import 'package:scholesa_app/offline/sync_coordinator.dart';
 import 'package:scholesa_app/services/api_client.dart';
+import 'package:scholesa_app/ui/common/error_state.dart';
 
 class _MockApiClient extends Mock implements ApiClient {}
 
@@ -317,5 +318,72 @@ void main() {
     );
     expect(find.text('Robotics Lab'), findsOneWidget);
     expect(find.text('No classes today'), findsNothing);
+  });
+
+  testWidgets('attendance roster keeps stale learners visible after refresh failure',
+      (WidgetTester tester) async {
+    final _FakeAttendanceService attendanceService = _FakeAttendanceService(
+      rosterOccurrence: SessionOccurrence(
+        id: 'occ-1',
+        sessionId: 'session-1',
+        siteId: 'site-1',
+        title: 'Robotics Lab',
+        startTime: DateTime(2026, 3, 17, 9),
+        endTime: DateTime(2026, 3, 17, 10),
+        roomName: 'Studio A',
+        roster: const <RosterLearner>[
+          RosterLearner(
+            id: 'learner-1',
+            displayName: 'Amina Patel',
+          ),
+        ],
+      ),
+      loadError: 'Failed to load roster from test',
+    );
+    final _MockSyncCoordinator syncCoordinator = _MockSyncCoordinator();
+    when(() => syncCoordinator.isOnline).thenReturn(true);
+    when(() => syncCoordinator.pendingCount).thenReturn(0);
+    when(() => syncCoordinator.isSyncing).thenReturn(false);
+    when(() => syncCoordinator.retryFailed()).thenAnswer((_) async {});
+    final AppState appState = _buildAppState();
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: <SingleChildWidget>[
+          ChangeNotifierProvider<AppState>.value(value: appState),
+          ChangeNotifierProvider<SyncCoordinator>.value(value: syncCoordinator),
+          ChangeNotifierProvider<AttendanceService>.value(value: attendanceService),
+        ],
+        child: MaterialApp(
+          theme: ThemeData(useMaterial3: true, splashFactory: NoSplash.splashFactory),
+          locale: const Locale('en'),
+          supportedLocales: const <Locale>[
+            Locale('en'),
+            Locale('zh', 'CN'),
+            Locale('zh', 'TW'),
+          ],
+          localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: const AttendancePage(),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Robotics Lab'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Unable to refresh attendance roster right now. Showing the last successful data. Failed to load roster from test',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Amina Patel'), findsOneWidget);
+    expect(find.byType(ErrorState), findsNothing);
   });
 }

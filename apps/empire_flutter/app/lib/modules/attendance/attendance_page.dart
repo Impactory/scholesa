@@ -343,6 +343,7 @@ class _AttendanceRosterViewState extends State<_AttendanceRosterView> {
   Widget build(BuildContext context) {
     final AttendanceService? service = context.watch<AttendanceService?>();
     final AppState appState = context.watch<AppState>();
+    final SessionOccurrence? occurrence = service?.currentOccurrence;
 
     if (service == null) {
       return Scaffold(
@@ -379,7 +380,7 @@ class _AttendanceRosterViewState extends State<_AttendanceRosterView> {
       );
     }
 
-    if (service.error != null) {
+    if (service.error != null && occurrence == null) {
       return Scaffold(
         appBar: AppBar(title: Text(_tAttendance(context, 'Class Roster'))),
         body: ErrorState(
@@ -398,7 +399,6 @@ class _AttendanceRosterViewState extends State<_AttendanceRosterView> {
       );
     }
 
-    final SessionOccurrence? occurrence = service.currentOccurrence;
     if (occurrence == null) {
       return Scaffold(
         appBar: AppBar(title: Text(_tAttendance(context, 'Class Roster'))),
@@ -415,14 +415,30 @@ class _AttendanceRosterViewState extends State<_AttendanceRosterView> {
     return Scaffold(
       appBar: AppBar(
         title: Text(occurrence.title),
-        actions: const <Widget>[
-          SyncStatusIndicator(),
-          SizedBox(width: 8),
+        actions: <Widget>[
+          IconButton(
+            tooltip: 'Refresh',
+            onPressed: _loadRoster,
+            icon: const Icon(Icons.refresh_rounded),
+          ),
+          const SyncStatusIndicator(),
+          const SizedBox(width: 8),
         ],
       ),
       body: Column(
         children: <Widget>[
           const OfflineBanner(),
+          if (service.error != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+              child: _AttendanceStatusBanner(
+                message: _tAttendance(
+                      context,
+                      'Unable to refresh attendance roster right now. Showing the last successful data. ',
+                    ) +
+                    service.error!,
+              ),
+            ),
           // Quick actions bar
           Container(
             padding: const EdgeInsets.all(8),

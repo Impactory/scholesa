@@ -26,6 +26,7 @@ Scope: Flutter app enabled routes, current runtime behavior, current test eviden
 - Focused page, workflow, regression, placeholder-action, and honesty test coverage now backs nearly the full enabled Flutter route surface.
 - Fresh verification in this pass:
   - partner contracting workflow proof pass: 6 passed, 0 failed
+  - attendance honesty proof pass: 5 passed, 0 failed
   - HQ user-admin audit-log proof pass: 12 passed, 0 failed
   - partner listings, integrations, and deliverables proof pass: 12 passed, 0 failed
   - partner integrations proof pass: 4 passed, 0 failed
@@ -50,7 +51,7 @@ Scope: Flutter app enabled routes, current runtime behavior, current test eviden
 | Learner onboarding and credentials | Yes | Mostly yes | Yes | Yes | Mostly yes | Yes | Some secondary storage failures still degrade plainly rather than gracefully | Beta-safe |
 | Learner portfolio and today | Yes | Mostly yes | Mostly yes | Partly proven | Mostly yes on audited mission/habit failure and stale-data states, partial on deeper onboarding/AI paths | Yes | Today now fails honestly under direct test; deeper secondary paths still rely on broader coverage | Strong for beta |
 | Educator learners and follow-up requests | Yes | Yes | Yes | Yes | Mostly yes | Yes | No obvious fake action in audited path | Strong for beta |
-| Educator attendance | Yes | Yes | Yes | Partly proven | Yes, now honest when unavailable | Yes | No obvious fake primary action | Strong for beta |
+| Educator attendance | Yes | Yes | Yes | Partly proven | Yes on audited attendance list and roster first-load/stale-refresh paths; save persistence still has narrower proof depth | Yes | No obvious fake primary action | Strong for beta |
 | Educator sessions, mission plans, integrations, learner supports, today | Yes | Mostly yes | Likely | Partly proven | Mostly yes across the audited sessions, mission-plans, today, learner-supports, and integrations failure states; learner-support first-load outage and stale saved-plan refresh truth are now directly proven and remaining depth is narrower assignment breadth | Yes | No obvious fake primary action remains in the audited paths | Strong for beta |
 | Parent summary, billing, schedule, portfolio, child view | Yes | Yes | Mostly yes | Support-request persistence is real where used | Mostly yes | Yes | Billing is honest summary only, not self-service | Strong for beta |
 | Site dashboard, billing, consent, pickup auth, ops, audit, provisioning, sessions | Yes | Yes | Mostly yes | Mostly yes | Mostly yes on audited provisioning and sessions failure/stale-data paths, partial on deeper create/edit depth | Yes | No obvious fake primary action remains in the audited paths | Strong for beta |

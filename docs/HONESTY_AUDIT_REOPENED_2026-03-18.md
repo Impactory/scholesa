@@ -79,6 +79,8 @@ This is the reopened honesty pass after blocker remediation, clean builds, live 
 22. Added direct HQ user-admin audit-log proof for stale-refresh honesty.
 23. Hardened partner contracts and launches so refresh failures preserve the last successful workflow data instead of clearing contracts or launch plans.
 24. Added direct partner contracting proof for stale contract and stale launch refresh behavior.
+25. Hardened educator attendance roster rendering so refresh failures preserve the last successful class roster instead of masking it behind a blocking error state.
+26. Added direct educator attendance roster proof for stale-refresh honesty.
 
 ### Release and operations fixes
 
@@ -93,6 +95,7 @@ This is the reopened honesty pass after blocker remediation, clean builds, live 
 
 - Focused regressions passed after the first remediation wave: 17 passed, 0 failed.
 - Focused educator follow-up regressions passed: 10 passed, 0 failed.
+- Focused attendance honesty regressions passed: 5 passed, 0 failed.
 - Priority blocker page batch passed: 16 passed, 0 failed.
 - Settings logout and auth coverage passed: 26 passed, 0 failed.
 - Global session menu regressions passed: 2 passed, 0 failed.
