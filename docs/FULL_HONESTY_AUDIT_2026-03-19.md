@@ -15,6 +15,8 @@ Scope: Flutter app enabled routes, current runtime behavior, current test eviden
 
 The audit standard is now stricter than simple visible rendering or stale-data honesty.
 
+The reusable certification checklist for future route and workflow reviews lives in `docs/FULL_FLOW_CERTIFICATION_GATE_2026-03-21.md`.
+
 Terminology:
 
 - Honest degraded mode: the route keeps prior verified data visible, declares that refresh is failing, exposes the failure detail when it matters, and offers a real recovery path.
@@ -47,6 +49,12 @@ Full-flow proof minimum for an auditable route:
 
 Because of this stricter standard, references below to direct proof or honest stale behavior should be read as partial confidence unless the mutation, reload, and scope paths are also directly proven.
 
+### Confidence classes used below
+
+- Operationally honest: the route no longer lies about loading, emptiness, failure, or stale state, but full-flow mutation and scope depth may still be partial.
+- Full-flow partial: important read and some write paths are proven, but at least one of authoritative reload, scope enforcement, recovery depth, telemetry, or evidence provenance is still under-proven.
+- Gold-ready: reserved for routes or workflows with full-flow proof plus release-grade verification. No broad route cluster below should be read as gold-ready unless stated explicitly.
+
 ## A. Release Matrix Updated
 
 ### Route inventory
@@ -60,6 +68,8 @@ Because of this stricter standard, references below to direct proof or honest st
 ### Verification inventory
 
 - Focused page, workflow, regression, placeholder-action, and honesty test coverage now backs nearly the full enabled Flutter route surface.
+- That route-direct coverage is stronger than the current full-flow certification depth.
+- No broad flow cluster below should be read as universally full-flow certified merely because it has strong route-direct coverage.
 - Fresh verification in this pass:
   - partner contracting workflow proof pass: 6 passed, 0 failed
   - attendance honesty proof pass: 5 passed, 0 failed
@@ -88,21 +98,21 @@ Because of this stricter standard, references below to direct proof or honest st
 
 | Flow cluster | Discoverable | Understandable | Completable | Persists correctly | Recovers from errors | Mobile | Fake/stubbed/ambiguous | Audit call |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Auth, routing, shared-device sign-out | Yes | Yes | Yes | Yes | Mostly yes | Yes | Welcome and login are now directly proven; no obvious fake path remains in the public/auth shells | Strong for beta |
-| Learner missions and habits | Yes | Yes | Yes | Yes | Yes, degraded AI mode is now explicit | Yes | No obvious fake primary action | Strong for beta |
-| Learner onboarding and credentials | Yes | Mostly yes | Yes | Yes | Mostly yes | Yes | Some secondary storage failures still degrade plainly rather than gracefully | Beta-safe |
-| Learner portfolio and today | Yes | Mostly yes | Mostly yes | Partly proven | Mostly yes on audited mission/habit failure and stale-data states, partial on deeper onboarding/AI paths | Yes | Today now fails honestly under direct test; deeper secondary paths still rely on broader coverage | Strong for beta |
-| Educator learners and follow-up requests | Yes | Yes | Yes | Yes | Mostly yes | Yes | No obvious fake action in audited path | Strong for beta |
-| Educator attendance | Yes | Yes | Yes | Partly proven | Yes on audited attendance list and roster first-load/stale-refresh paths; recovery controls are now labeled and stale-state messaging is assistive-tech visible; save persistence still has narrower proof depth | Yes | No obvious fake primary action | Strong for beta |
-| Educator sessions, mission plans, integrations, learner supports, today | Yes | Mostly yes | Likely | Partly proven | Mostly yes across the audited sessions, mission-plans, today, learner-supports, and integrations failure states; learner-support first-load outage and stale saved-plan refresh truth are now directly proven and remaining depth is narrower assignment breadth | Yes | No obvious fake primary action remains in the audited paths | Strong for beta |
-| Parent summary, billing, schedule, portfolio, child view | Yes | Yes | Mostly yes | Support-request persistence is real where used | Mostly yes | Yes | Billing is honest summary only, not self-service | Strong for beta |
-| Site dashboard, billing, consent, pickup auth, ops, audit, provisioning, sessions | Yes | Yes | Mostly yes | Mostly yes | Mostly yes on audited provisioning, sessions, and site-ops runtime rollout failure/stale-data paths, with direct refresh and retry recovery now proven; deeper create/edit depth remains partial | Yes | No obvious fake primary action remains in the audited paths | Strong for beta |
-| Site identity and incident/admin support surfaces | Yes | Mostly yes | Partly | Partly | Mostly yes on the audited identity, incidents, and integrations-health failure path; identity, incidents, and integrations health now keep visible refresh-failure detail with accessible stale-state announcement, but the wider cluster is still partial | Yes | Less misleading than before, still not comprehensively proven | Beta-safe, not gold |
-| Partner contracts and deliverables | Yes | Mostly yes | Mostly yes | Mostly yes | Mostly yes on the audited contracts/launches plus deliverables first-load and stale-refresh failure paths, including preserved stale contracts and launches on refresh failure; stale-state warnings now announce accessibly, but deeper mutation depth is still partial | Yes | No obvious fake primary action in audited path | Strong for beta |
-| Partner listings and payouts | Yes | Mostly yes | Partly | Partly | Mostly yes on the audited payouts path plus listings first-load and stale-refresh failure paths, partial on the wider cluster | Yes | Listings create-and-persist path is now directly proven and no longer degrades outages into fake empty state; broader partner depth is still partial | Beta-safe, not gold |
-| HQ sites, role switcher, exports, analytics | Yes | Yes | Yes | Yes | Mostly yes | Yes | No obvious fake primary path in audited route tests | Strong for beta |
-| HQ billing, approvals, audit, safety, integrations health, feature flags, user admin | Yes | Mostly yes | Partly | Partly | Mostly yes on the audited billing, approvals, audit, feature-flags, and user-admin audit-log failure and stale-data paths; feature flags now expose first-load failure detail, stale-refresh detail visibility, and labeled operator recovery controls, but the wider cluster is still only partially proven | Yes | Feature-flags failure-state truth is directly stronger now, but deeper rollout governance mutation depth remains workflow-only in places | Beta-safe, not gold |
-| Cross-role messages, notifications, profile, settings | Yes | Yes | Yes | Yes | Mostly yes | Yes | No obvious fake primary action | Strong for beta |
+| Auth, routing, shared-device sign-out | Yes | Yes | Yes | Yes | Mostly yes | Yes | Welcome and login are now directly proven; no obvious fake path remains in the public/auth shells | Operationally honest, full-flow breadth still partial |
+| Learner missions and habits | Yes | Yes | Yes | Yes | Yes, degraded AI mode is now explicit | Yes | No obvious fake primary action | Operationally honest, capability-claim depth still partial |
+| Learner onboarding and credentials | Yes | Mostly yes | Yes | Yes | Mostly yes | Yes | Some secondary storage failures still degrade plainly rather than gracefully | Operationally honest, full-flow partial |
+| Learner portfolio and today | Yes | Mostly yes | Mostly yes | Partly proven | Mostly yes on audited mission/habit failure and stale-data states, partial on deeper onboarding/AI paths | Yes | Today now fails honestly under direct test; deeper secondary paths still rely on broader coverage | Operationally honest, evidence/provenance depth partial |
+| Educator learners and follow-up requests | Yes | Yes | Yes | Yes | Mostly yes | Yes | No obvious fake action in audited path | Operationally honest, broader write/reload depth partial |
+| Educator attendance | Yes | Yes | Yes | Partly proven | Yes on audited attendance list and roster first-load/stale-refresh paths; recovery controls are now labeled and stale-state messaging is assistive-tech visible; save persistence still has narrower proof depth | Yes | No obvious fake primary action | Operationally honest, attendance save/reload depth partial |
+| Educator sessions, mission plans, integrations, learner supports, today | Yes | Mostly yes | Likely | Partly proven | Mostly yes across the audited sessions, mission-plans, today, learner-supports, and integrations failure states; learner-support first-load outage and stale saved-plan refresh truth are now directly proven and remaining depth is narrower assignment breadth | Yes | No obvious fake primary action remains in the audited paths | Operationally honest, full-flow partial across the cluster |
+| Parent summary, billing, schedule, portfolio, child view | Yes | Yes | Mostly yes | Support-request persistence is real where used | Mostly yes | Yes | Billing is honest summary only, not self-service | Operationally honest, support-handoff and provenance depth partial |
+| Site dashboard, billing, consent, pickup auth, ops, audit, provisioning, sessions | Yes | Yes | Mostly yes | Mostly yes | Mostly yes on audited provisioning, sessions, and site-ops runtime rollout failure/stale-data paths, with direct refresh and retry recovery now proven; deeper create/edit depth remains partial | Yes | No obvious fake primary action remains in the audited paths | Operationally honest, deeper site mutation flows still partial |
+| Site identity and incident/admin support surfaces | Yes | Mostly yes | Partly | Partly | Mostly yes on the audited identity, incidents, and integrations-health failure path; identity, incidents, and integrations health now keep visible refresh-failure detail with accessible stale-state announcement, but the wider cluster is still partial | Yes | Less misleading than before, still not comprehensively proven | Operationally honest, full-flow partial and not gold |
+| Partner contracts and deliverables | Yes | Mostly yes | Mostly yes | Mostly yes | Mostly yes on the audited contracts/launches plus deliverables first-load and stale-refresh failure paths, including preserved stale contracts and launches on refresh failure; stale-state warnings now announce accessibly, but deeper mutation depth is still partial | Yes | No obvious fake primary action in audited path | Operationally honest, broader mutation depth partial |
+| Partner listings and payouts | Yes | Mostly yes | Partly | Partly | Mostly yes on the audited payouts path plus listings first-load and stale-refresh failure paths, partial on the wider cluster | Yes | Listings create-and-persist path is now directly proven and no longer degrades outages into fake empty state; broader partner depth is still partial | Operationally honest, full-flow partial and not gold |
+| HQ sites, role switcher, exports, analytics | Yes | Yes | Yes | Yes | Mostly yes | Yes | No obvious fake primary path in audited route tests | Operationally honest, broader operator workflow depth partial |
+| HQ billing, approvals, audit, safety, integrations health, feature flags, user admin | Yes | Mostly yes | Partly | Partly | Mostly yes on the audited billing, approvals, audit, feature-flags, and user-admin audit-log failure and stale-data paths; feature flags now expose first-load failure detail, stale-refresh detail visibility, and labeled operator recovery controls, but the wider cluster is still only partially proven | Yes | Feature-flags failure-state truth is directly stronger now, but deeper rollout governance mutation depth remains workflow-only in places | Operationally honest, full-flow partial and not gold |
+| Cross-role messages, notifications, profile, settings | Yes | Yes | Yes | Yes | Mostly yes | Yes | No obvious fake primary action | Operationally honest, deeper cross-role action breadth partial |
 
 ## B. Gold Blockers
 
@@ -131,8 +141,9 @@ End-to-end solution:
 Current truth:
 
 - Coverage is now materially stronger on core paths.
-- The app still has more enabled pages than direct route-level proof.
+- The app now has strong route-direct coverage, but that remains broader than its full-flow certification depth.
 - Current route-proof matrix: 51 direct, 1 workflow/regression-only, 0 with no convincing route proof.
+- That route-proof count should not be read as a count of fully certified end-to-end routes.
 
 Risk concentration:
 
@@ -304,6 +315,10 @@ End-to-end solution:
 
 - Recommendation: beta ready
 - Gold readiness: blocked
+
+Applied gate:
+
+- This recommendation should now be interpreted through `docs/FULL_FLOW_CERTIFICATION_GATE_2026-03-21.md`, not through route presence or stale-state honesty alone.
 
 ## What Must Happen Before The Next Gold Claim
 

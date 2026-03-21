@@ -21,6 +21,8 @@ Interpretation:
 - Direct: 51
 - Workflow/regression only: 1
 - None: 0
+- Full-flow certified count: not claimed by this matrix
+- Gold-ready certified count: not claimed by this matrix
 
 Highest-value remaining blind spots:
 
@@ -28,6 +30,8 @@ Highest-value remaining blind spots:
 2. broader mutation depth on `/site/sessions` and `/site/provisioning`
 3. partner listings edit depth beyond create-and-persist proof
 4. root redirect proof is still stronger than direct home-surface rendering proof
+
+Use this matrix together with the stricter full-flow gate in `docs/FULL_HONESTY_AUDIT_2026-03-19.md`. This file measures route-proof presence, not final workflow certification.
 
 ## Public, Auth, and Root
 
@@ -146,3 +150,10 @@ Prioritize direct proof next for:
 4. stronger direct rendering proof around the `/` entry surface beyond redirect behavior
 
 Then close the final workflow-only root-entry gap and deepen mutation and failure-path proof on the operationally risky routes before claiming gold.
+
+Under the tightened honesty standard, prioritize in this order:
+
+1. operator mutations with governance consequences
+2. routes that claim persisted change without authoritative reload proof
+3. evidence-bearing learner and educator flows that can imply growth or mastery
+4. remaining rendering-only or redirect-only route coverage gaps
