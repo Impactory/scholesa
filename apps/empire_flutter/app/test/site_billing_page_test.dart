@@ -50,6 +50,33 @@ Widget _buildHarness({required Widget child}) {
 
 void main() {
   testWidgets(
+      'site billing page shows explicit unavailable state when billing snapshot load fails',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      _buildHarness(
+        child: SiteBillingPage(
+          firestore: FakeFirebaseFirestore(),
+          loadBillingSnapshot: (String siteId) async {
+            throw StateError('billing snapshot unavailable');
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
+    expect(find.byTooltip('Refresh'), findsWidgets);
+    expect(find.text('Billing data is temporarily unavailable'), findsOneWidget);
+    expect(
+      find.text(
+        'We could not load the current billing snapshot. Retry to check the current state.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('No billing data yet'), findsNothing);
+  });
+
+  testWidgets(
       'site billing page shows explicit unavailable state when no billing data exists',
       (WidgetTester tester) async {
     Future<Map<String, dynamic>> loadBillingSnapshot(String siteId) async {
@@ -73,6 +100,61 @@ void main() {
     expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('No billing data yet'), findsOneWidget);
     expect(find.text('Billing plan unavailable'), findsOneWidget);
+  });
+
+  testWidgets('site billing page keeps stale billing summary visible after refresh failure',
+      (WidgetTester tester) async {
+    int loadCount = 0;
+    final Finder billingRefresh = find.descendant(
+      of: find.byType(AppBar),
+      matching: find.byTooltip('Refresh'),
+    );
+
+    await tester.pumpWidget(
+      _buildHarness(
+        child: SiteBillingPage(
+          firestore: FakeFirebaseFirestore(),
+          loadBillingSnapshot: (String siteId) async {
+            loadCount += 1;
+            if (loadCount == 1) {
+              return <String, dynamic>{
+                'planName': 'Growth',
+                'planStatus': 'Active',
+                'monthlyAmount': 199,
+                'currency': 'USD',
+                'nextBillingDate': DateTime(2026, 4, 1).toIso8601String(),
+                'activeLearnersUsed': 12,
+                'activeLearnersTotal': 50,
+                'educatorsUsed': 4,
+                'educatorsTotal': 10,
+                'storageUsedGb': 2,
+                'storageTotalGb': 10,
+                'invoices': <Map<String, dynamic>>[],
+              };
+            }
+            throw StateError('billing refresh unavailable');
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Growth'), findsOneWidget);
+    expect(find.text('Active'), findsOneWidget);
+
+    await tester.tap(billingRefresh);
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Unable to refresh billing data right now. Showing the last successful data.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Growth'), findsOneWidget);
+    expect(find.text('Active'), findsOneWidget);
+    expect(find.text('No billing data yet'), findsNothing);
   });
 
   testWidgets(

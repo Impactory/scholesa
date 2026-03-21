@@ -608,20 +608,35 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
             _formatSelectedDate(),
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
-          TextButton.icon(
-            onPressed: () {
-              TelemetryService.instance.logEvent(
-                event: 'cta.clicked',
-                metadata: <String, dynamic>{
-                  'module': 'site_sessions',
-                  'cta_id': 'open_filter_sheet',
-                  'surface': 'sessions_header',
+          Row(
+            children: <Widget>[
+              IconButton(
+                tooltip: _tSiteSessions(context, 'Refresh'),
+                onPressed: _isLoading ? null : _loadSessions,
+                icon: _isLoading
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.refresh_rounded),
+              ),
+              TextButton.icon(
+                onPressed: () {
+                  TelemetryService.instance.logEvent(
+                    event: 'cta.clicked',
+                    metadata: <String, dynamic>{
+                      'module': 'site_sessions',
+                      'cta_id': 'open_filter_sheet',
+                      'surface': 'sessions_header',
+                    },
+                  );
+                  _showFilterSheet();
                 },
-              );
-              _showFilterSheet();
-            },
-            icon: const Icon(Icons.filter_list, size: 18),
-            label: Text(_tSiteSessions(context, 'Filter')),
+                icon: const Icon(Icons.filter_list, size: 18),
+                label: Text(_tSiteSessions(context, 'Filter')),
+              ),
+            ],
           ),
         ],
       ),
@@ -834,6 +849,7 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
   }
 
   Future<void> _loadSessions() async {
+    final bool hadSessions = _sessionsByTime.isNotEmpty;
     if (!mounted) return;
     setState(() {
       _isLoading = true;
@@ -865,7 +881,15 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
     } catch (error) {
       if (!mounted) return;
       setState(() {
-        _loadError = 'Failed to load sessions: $error';
+        _loadError = hadSessions
+            ? _tSiteSessions(
+                context,
+                'Unable to refresh sessions right now. Showing the last successful data.',
+              )
+            : _tSiteSessions(
+                context,
+                'We could not load sessions right now. Retry to check the current state.',
+              );
       });
     } finally {
       if (mounted) {
@@ -948,13 +972,13 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const Row(
+          Row(
             children: <Widget>[
               Icon(Icons.error_outline_rounded, color: ScholesaColors.error),
               SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Unable to load sessions',
+                  _tSiteSessions(context, 'Unable to load sessions'),
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     color: ScholesaColors.textPrimary,
@@ -998,8 +1022,7 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              _tSiteSessions(context, 'Showing last loaded session schedule. ') +
-                  message,
+              message,
               style: const TextStyle(color: Color(0xFF92400E)),
             ),
           ),

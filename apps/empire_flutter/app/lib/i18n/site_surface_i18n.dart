@@ -33,6 +33,14 @@ class SiteSurfaceI18n {
     'Billing details will appear once HQ configures an active site billing account.':
         '一旦 HQ 配置了有效的站点计费账户，计费详情就会显示在这里。',
     'Billing plan unavailable': '计费方案不可用',
+    'Billing data is temporarily unavailable': '计费数据暂时不可用',
+    'We could not load the current billing snapshot. Retry to check the current state.':
+        '我们暂时无法加载当前计费快照。请重试以检查当前状态。',
+    'Unable to refresh billing data right now. Showing the last successful data.':
+        '当前无法刷新计费数据。正在显示最近一次成功加载的数据。',
+    'Unable to load marketplace data right now': '当前无法加载市场数据',
+    'Unable to refresh marketplace data right now. Showing the last successful data.':
+        '当前无法刷新市场数据。正在显示最近一次成功加载的数据。',
     'Identity Resolution': '身份匹配处理',
     'Review and confirm matches between local accounts and external provider accounts.':
         '审核并确认本地账户与外部提供方账户之间的匹配。',
@@ -243,6 +251,11 @@ class SiteSurfaceI18n {
     'Unassigned': '未分配',
     'Create Session': '创建课程',
     'No sessions scheduled': '暂无课程安排',
+    'Unable to load sessions': '当前无法加载课程',
+    'We could not load sessions right now. Retry to check the current state.':
+        '我们暂时无法加载课程。请重试以检查当前状态。',
+    'Unable to refresh sessions right now. Showing the last successful data.':
+        '当前无法刷新课程。正在显示最近一次成功加载的数据。',
     'Refresh': '刷新',
     'Retry': '重试',
     'Save': '保存',
@@ -392,6 +405,14 @@ class SiteSurfaceI18n {
     'Billing details will appear once HQ configures an active site billing account.':
         '一旦 HQ 設定有效的站點計費帳戶，計費詳情就會顯示在這裡。',
     'Billing plan unavailable': '計費方案不可用',
+    'Billing data is temporarily unavailable': '計費資料暫時不可用',
+    'We could not load the current billing snapshot. Retry to check the current state.':
+        '我們暫時無法載入目前的計費快照。請重試以確認目前狀態。',
+    'Unable to refresh billing data right now. Showing the last successful data.':
+        '目前無法刷新計費資料。正在顯示最近一次成功載入的資料。',
+    'Unable to load marketplace data right now': '目前無法載入市集資料',
+    'Unable to refresh marketplace data right now. Showing the last successful data.':
+        '目前無法刷新市集資料。正在顯示最近一次成功載入的資料。',
     'Identity Resolution': '身分匹配處理',
     'Review and confirm matches between local accounts and external provider accounts.':
         '檢視並確認本地帳戶與外部提供者帳戶之間的匹配。',
@@ -602,6 +623,11 @@ class SiteSurfaceI18n {
     'Unassigned': '未指派',
     'Create Session': '建立課程',
     'No sessions scheduled': '目前沒有課程安排',
+    'Unable to load sessions': '目前無法載入課程',
+    'We could not load sessions right now. Retry to check the current state.':
+        '我們暫時無法載入課程。請重試以確認目前狀態。',
+    'Unable to refresh sessions right now. Showing the last successful data.':
+        '目前無法刷新課程。正在顯示最近一次成功載入的資料。',
     'Refresh': '重新整理',
     'Retry': '重試',
     'Save': '儲存',

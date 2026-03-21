@@ -90,10 +90,11 @@ void main() {
 
     expect(find.text('Unable to load sessions'), findsOneWidget);
     expect(
-      find.text('Failed to load sessions: Bad state: schedule backend unavailable'),
+      find.text('We could not load sessions right now. Retry to check the current state.'),
       findsOneWidget,
     );
     expect(find.text('Retry'), findsOneWidget);
+    expect(find.byTooltip('Refresh'), findsOneWidget);
     expect(find.text('No sessions scheduled'), findsNothing);
   });
 
@@ -203,16 +204,13 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.textContaining('Showing last loaded session schedule.'),
-      findsOneWidget,
-    );
-    expect(
-      find.textContaining(
-        'Failed to load sessions: Bad state: next week temporarily unavailable',
+      find.text(
+        'Unable to refresh sessions right now. Showing the last successful data.',
       ),
       findsOneWidget,
     );
     expect(find.text('Today Advisory'), findsOneWidget);
+    expect(find.byTooltip('Refresh'), findsOneWidget);
     expect(loadCount, 8);
   });
 

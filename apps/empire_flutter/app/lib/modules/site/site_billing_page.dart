@@ -44,6 +44,7 @@ class _SiteBillingPageState extends State<SiteBillingPage> {
   bool _isLoading = true;
   bool _billingDataLoaded = false;
   bool _hasBillingSummary = false;
+  String? _billingLoadError;
   String _planName = '';
   String _planStatus = '';
   String _monthlyAmount = '-';
@@ -76,8 +77,19 @@ class _SiteBillingPageState extends State<SiteBillingPage> {
         title: Text(_t(context, 'Site Billing')),
         backgroundColor: ScholesaColors.billingGradient.colors.first,
         foregroundColor: Colors.white,
-        actions: const <Widget>[
-          SessionMenuButton(
+        actions: <Widget>[
+          IconButton(
+            tooltip: _t(context, 'Refresh'),
+            onPressed: _isLoading ? null : _loadBillingData,
+            icon: _isLoading
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.refresh_rounded),
+          ),
+          const SessionMenuButton(
             foregroundColor: Colors.white,
           ),
         ],
@@ -95,8 +107,15 @@ class _SiteBillingPageState extends State<SiteBillingPage> {
                   style: const TextStyle(color: ScholesaColors.textSecondary),
                 ),
               ),
+            if (!_isLoading && _billingLoadError != null && _billingDataLoaded)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: _buildBillingStaleBanner(context, _billingLoadError!),
+              ),
             if (_isLoading && !_billingDataLoaded)
               _buildLoadingCard(context)
+            else if (_billingLoadError != null && !_billingDataLoaded)
+              _buildBillingLoadErrorCard(context)
             else if (_hasBillingSummary)
               _buildSubscriptionCard(context)
             else
@@ -305,6 +324,64 @@ class _SiteBillingPageState extends State<SiteBillingPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildBillingLoadErrorCard(BuildContext context) {
+    return Card(
+      color: ScholesaColors.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              _t(context, 'Billing data is temporarily unavailable'),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _t(
+                context,
+                'We could not load the current billing snapshot. Retry to check the current state.',
+              ),
+              style: const TextStyle(color: ScholesaColors.textSecondary),
+            ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: _isLoading ? null : _loadBillingData,
+              icon: const Icon(Icons.refresh_rounded),
+              label: Text(_t(context, 'Retry')),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBillingStaleBanner(BuildContext context, String message) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.orange.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(color: ScholesaColors.textPrimary),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -564,7 +641,10 @@ class _SiteBillingPageState extends State<SiteBillingPage> {
     if (siteId.isEmpty) return;
 
     if (!mounted) return;
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _billingLoadError = null;
+    });
     try {
       final Map<String, dynamic> payload;
       if (widget.loadBillingSnapshot != null) {
@@ -613,6 +693,7 @@ class _SiteBillingPageState extends State<SiteBillingPage> {
       if (!mounted) return;
       setState(() {
         _billingDataLoaded = true;
+        _billingLoadError = null;
         _hasBillingSummary = hasBillingSummary;
         _planName = ((summary['planName'] as String?) ?? '').trim();
         _planStatus = ((summary['planStatus'] as String?) ?? '').trim();
@@ -630,6 +711,19 @@ class _SiteBillingPageState extends State<SiteBillingPage> {
         _storageUsedGb = _asDouble(summary['storageUsedGb']) ?? 0;
         _storageTotalGb = _asDouble(summary['storageTotalGb']) ?? 0;
         _invoices = invoices;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _billingLoadError = _billingDataLoaded
+            ? _t(
+                context,
+                'Unable to refresh billing data right now. Showing the last successful data.',
+              )
+            : _t(
+                context,
+                'We could not load the current billing snapshot. Retry to check the current state.',
+              );
       });
     } finally {
       if (mounted) {

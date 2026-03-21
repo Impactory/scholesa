@@ -20,16 +20,37 @@ typedef SiteCompleteCheckout = Future<Map<String, dynamic>?> Function({
   String? amount,
   String? currency,
 });
+typedef SiteMarketplaceSnapshotLoader = Future<SiteMarketplaceSnapshot>
+    Function({
+  required String siteId,
+  required String userId,
+});
+
+class SiteMarketplaceSnapshot {
+  const SiteMarketplaceSnapshot({
+    this.listings = const <Map<String, dynamic>>[],
+    this.orders = const <Map<String, dynamic>>[],
+    this.entitlements = const <Map<String, dynamic>>[],
+    this.fulfillments = const <Map<String, dynamic>>[],
+  });
+
+  final List<Map<String, dynamic>> listings;
+  final List<Map<String, dynamic>> orders;
+  final List<Map<String, dynamic>> entitlements;
+  final List<Map<String, dynamic>> fulfillments;
+}
 
 class SiteMarketplacePanel extends StatefulWidget {
   const SiteMarketplacePanel({
     super.key,
     this.firestore,
+    this.marketplaceSnapshotLoader,
     this.createCheckoutIntent,
     this.completeCheckout,
   });
 
   final FirebaseFirestore? firestore;
+  final SiteMarketplaceSnapshotLoader? marketplaceSnapshotLoader;
   final SiteCreateCheckoutIntent? createCheckoutIntent;
   final SiteCompleteCheckout? completeCheckout;
 
@@ -40,6 +61,7 @@ class SiteMarketplacePanel extends StatefulWidget {
 class _SiteMarketplacePanelState extends State<SiteMarketplacePanel> {
   bool _isLoading = false;
   String? _error;
+  bool _hasLoadedSnapshot = false;
   String? _processingListingId;
   List<_MarketplaceListingItem> _marketplaceListings =
       <_MarketplaceListingItem>[];
@@ -74,20 +96,27 @@ class _SiteMarketplacePanelState extends State<SiteMarketplacePanel> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
-            Text(
-              _t(context, 'Marketplace'),
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: ScholesaColors.textPrimary,
+            Expanded(
+              child: Text(
+                _t(context, 'Marketplace'),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: ScholesaColors.textPrimary,
+                ),
               ),
             ),
-            if (_isLoading)
-              const SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
+            IconButton(
+              tooltip: _t(context, 'Refresh'),
+              onPressed: _isLoading ? null : _loadMarketplaceData,
+              icon: _isLoading
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.refresh_rounded),
+            ),
           ],
         ),
         const SizedBox(height: 8),
@@ -100,100 +129,111 @@ class _SiteMarketplacePanelState extends State<SiteMarketplacePanel> {
           ),
         ),
         const SizedBox(height: 12),
-        if (_error != null)
-          _buildInfoCard(_error!, tone: ScholesaColors.warning)
-        else if (_marketplaceListings.isEmpty)
-          _buildInfoCard(
-            _t(context, 'No published marketplace offerings are available yet.'),
+        if (_error != null && !_hasLoadedSnapshot)
+          _buildLoadErrorCard(
+            _t(context, 'Unable to load marketplace data right now'),
           )
-        else
-          Column(
-            children: _marketplaceListings
-                .map((item) => _buildMarketplaceCard(context, item))
-                .toList(),
-          ),
-        const SizedBox(height: 24),
-        Text(
-          _t(context, 'Purchases & Fulfillment'),
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: ScholesaColors.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          _t(context,
-              'Track paid orders, granted entitlements, and fulfillment handoff status in one place.'),
-          style: const TextStyle(
-            fontSize: 13,
-            color: ScholesaColors.textSecondary,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Card(
-          color: ScholesaColors.surface,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                _buildStatusList(
-                  context,
-                  title: 'Recent Orders',
-                  emptyText: 'No paid orders yet',
-                  rows: _orders
-                      .map((order) => _StatusRow(
-                            title: listingTitles[order.listingId] ??
-                                _productLabel(order.productId),
-                            subtitle:
-                                '${_formatMoney(order.amount, order.currency)} • ${order.status}',
-                            trailing: order.paidAt != null
-                                ? _formatDate(order.paidAt!)
-                                : order.id,
-                          ))
-                      .toList(),
-                ),
-                const SizedBox(height: 16),
-                _buildStatusList(
-                  context,
-                  title: 'Entitlements',
-                  emptyText: 'No entitlements granted yet',
-                  rows: _entitlements
-                      .map((entitlement) => _StatusRow(
-                            title: _productLabel(entitlement.productId),
-                            subtitle: entitlement.roles.isEmpty
-                                ? _t(context, 'No role grants')
-                                : entitlement.roles.join(', '),
-                            trailing: entitlement.createdAt != null
-                                ? _formatDate(entitlement.createdAt!)
-                                : entitlement.id,
-                          ))
-                      .toList(),
-                ),
-                const SizedBox(height: 16),
-                _buildStatusList(
-                  context,
-                  title: 'Fulfillment Queue',
-                  emptyText: 'No fulfillment records yet',
-                  rows: _fulfillments
-                      .map((fulfillment) => _StatusRow(
-                            title: listingTitles[fulfillment.listingId] ??
-                                fulfillment.listingId,
-                            subtitle:
-                                '${fulfillment.status}${fulfillment.note == null || fulfillment.note!.trim().isEmpty ? '' : ' • ${fulfillment.note!.trim()}'}',
-                            trailing: fulfillment.updatedAt != null
-                                ? _formatDate(fulfillment.updatedAt!)
-                                : fulfillment.orderId,
-                          ))
-                      .toList(),
-                ),
-              ],
+        else ...<Widget>[
+          if (_error != null)
+            _buildStaleDataBanner(
+              _t(
+                context,
+                'Unable to refresh marketplace data right now. Showing the last successful data.',
+              ),
+            ),
+          if (_marketplaceListings.isEmpty)
+            _buildInfoCard(
+              _t(context, 'No published marketplace offerings are available yet.'),
+            )
+          else
+            Column(
+              children: _marketplaceListings
+                  .map((item) => _buildMarketplaceCard(context, item))
+                  .toList(),
+            ),
+          const SizedBox(height: 24),
+          Text(
+            _t(context, 'Purchases & Fulfillment'),
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: ScholesaColors.textPrimary,
             ),
           ),
-        ),
+          const SizedBox(height: 8),
+          Text(
+            _t(context,
+                'Track paid orders, granted entitlements, and fulfillment handoff status in one place.'),
+            style: const TextStyle(
+              fontSize: 13,
+              color: ScholesaColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Card(
+            color: ScholesaColors.surface,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  _buildStatusList(
+                    context,
+                    title: 'Recent Orders',
+                    emptyText: 'No paid orders yet',
+                    rows: _orders
+                        .map((order) => _StatusRow(
+                              title: listingTitles[order.listingId] ??
+                                  _productLabel(order.productId),
+                              subtitle:
+                                  '${_formatMoney(order.amount, order.currency)} • ${order.status}',
+                              trailing: order.paidAt != null
+                                  ? _formatDate(order.paidAt!)
+                                  : order.id,
+                            ))
+                        .toList(),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildStatusList(
+                    context,
+                    title: 'Entitlements',
+                    emptyText: 'No entitlements granted yet',
+                    rows: _entitlements
+                        .map((entitlement) => _StatusRow(
+                              title: _productLabel(entitlement.productId),
+                              subtitle: entitlement.roles.isEmpty
+                                  ? _t(context, 'No role grants')
+                                  : entitlement.roles.join(', '),
+                              trailing: entitlement.createdAt != null
+                                  ? _formatDate(entitlement.createdAt!)
+                                  : entitlement.id,
+                            ))
+                        .toList(),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildStatusList(
+                    context,
+                    title: 'Fulfillment Queue',
+                    emptyText: 'No fulfillment records yet',
+                    rows: _fulfillments
+                        .map((fulfillment) => _StatusRow(
+                              title: listingTitles[fulfillment.listingId] ??
+                                  fulfillment.listingId,
+                              subtitle:
+                                  '${fulfillment.status}${fulfillment.note == null || fulfillment.note!.trim().isEmpty ? '' : ' • ${fulfillment.note!.trim()}'}',
+                              trailing: fulfillment.updatedAt != null
+                                  ? _formatDate(fulfillment.updatedAt!)
+                                  : fulfillment.orderId,
+                            ))
+                        .toList(),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -207,6 +247,55 @@ class _SiteMarketplacePanelState extends State<SiteMarketplacePanel> {
           message,
           style: TextStyle(color: tone ?? ScholesaColors.textSecondary),
         ),
+      ),
+    );
+  }
+
+  Widget _buildLoadErrorCard(String message) {
+    return Card(
+      color: ScholesaColors.surface,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              message,
+              style: const TextStyle(color: ScholesaColors.warning),
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _isLoading ? null : _loadMarketplaceData,
+              icon: const Icon(Icons.refresh_rounded),
+              label: Text(_t(context, 'Retry')),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStaleDataBanner(String message) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.orange.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(color: ScholesaColors.textPrimary),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -415,32 +504,11 @@ class _SiteMarketplacePanelState extends State<SiteMarketplacePanel> {
     });
 
     try {
-      final QuerySnapshot<Map<String, dynamic>> listingSnapshot =
-          await _firestore
-              .collection('marketplaceListings')
-              .where('status', isEqualTo: 'published')
-              .limit(12)
-              .get();
-      final QuerySnapshot<Map<String, dynamic>> orderSnapshot = await _firestore
-          .collection('orders')
-          .where('userId', isEqualTo: userId)
-          .limit(20)
-          .get();
-      final QuerySnapshot<Map<String, dynamic>> entitlementSnapshot =
-          await _firestore
-              .collection('entitlements')
-              .where('userId', isEqualTo: userId)
-              .limit(20)
-              .get();
-      final QuerySnapshot<Map<String, dynamic>> fulfillmentSnapshot =
-          await _firestore
-              .collection('fulfillments')
-              .where('userId', isEqualTo: userId)
-              .limit(20)
-              .get();
+      final SiteMarketplaceSnapshot snapshot =
+          await _loadMarketplaceSnapshot(siteId: siteId, userId: userId);
 
-      final List<_MarketplaceListingItem> listings = listingSnapshot.docs
-          .map(_MarketplaceListingItem.fromDoc)
+      final List<_MarketplaceListingItem> listings = snapshot.listings
+          .map(_MarketplaceListingItem.fromData)
           .where(
             (item) => item.productId.trim().isNotEmpty &&
                 BillingService.productCatalog.containsKey(item.productId),
@@ -448,21 +516,21 @@ class _SiteMarketplacePanelState extends State<SiteMarketplacePanel> {
           .toList()
         ..sort((a, b) => _compareDates(b.publishedAt, a.publishedAt));
 
-      final List<_OrderItem> orders = orderSnapshot.docs
-          .map(_OrderItem.fromDoc)
+      final List<_OrderItem> orders = snapshot.orders
+          .map(_OrderItem.fromData)
           .where((order) => order.siteId == siteId)
           .toList()
         ..sort((a, b) =>
             _compareDates(b.paidAt ?? b.createdAt, a.paidAt ?? a.createdAt));
 
-      final List<_EntitlementItem> entitlements = entitlementSnapshot.docs
-          .map(_EntitlementItem.fromDoc)
+      final List<_EntitlementItem> entitlements = snapshot.entitlements
+          .map(_EntitlementItem.fromData)
           .where((entitlement) => entitlement.siteId == siteId)
           .toList()
         ..sort((a, b) => _compareDates(b.createdAt, a.createdAt));
 
-      final List<_FulfillmentItem> fulfillments = fulfillmentSnapshot.docs
-          .map(_FulfillmentItem.fromDoc)
+      final List<_FulfillmentItem> fulfillments = snapshot.fulfillments
+          .map(_FulfillmentItem.fromData)
           .where((fulfillment) =>
               fulfillment.siteId == null || fulfillment.siteId == siteId)
           .toList()
@@ -475,17 +543,74 @@ class _SiteMarketplacePanelState extends State<SiteMarketplacePanel> {
         _orders = orders;
         _entitlements = entitlements;
         _fulfillments = fulfillments;
+        _hasLoadedSnapshot = true;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = _t(context, 'Marketplace data is temporarily unavailable.');
+        _error = _hasLoadedSnapshot
+            ? _t(
+                context,
+                'Unable to refresh marketplace data right now. Showing the last successful data.',
+              )
+            : _t(context, 'Unable to load marketplace data right now');
       });
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  Future<SiteMarketplaceSnapshot> _loadMarketplaceSnapshot({
+    required String siteId,
+    required String userId,
+  }) async {
+    if (widget.marketplaceSnapshotLoader != null) {
+      return widget.marketplaceSnapshotLoader!(siteId: siteId, userId: userId);
+    }
+
+    final QuerySnapshot<Map<String, dynamic>> listingSnapshot = await _firestore
+        .collection('marketplaceListings')
+        .where('status', isEqualTo: 'published')
+        .limit(12)
+        .get();
+    final QuerySnapshot<Map<String, dynamic>> orderSnapshot = await _firestore
+        .collection('orders')
+        .where('userId', isEqualTo: userId)
+        .limit(20)
+        .get();
+    final QuerySnapshot<Map<String, dynamic>> entitlementSnapshot =
+        await _firestore
+            .collection('entitlements')
+            .where('userId', isEqualTo: userId)
+            .limit(20)
+            .get();
+    final QuerySnapshot<Map<String, dynamic>> fulfillmentSnapshot =
+        await _firestore
+            .collection('fulfillments')
+            .where('userId', isEqualTo: userId)
+            .limit(20)
+            .get();
+
+    return SiteMarketplaceSnapshot(
+      listings: listingSnapshot.docs
+          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
+              <String, dynamic>{'id': doc.id, ...doc.data()})
+          .toList(),
+      orders: orderSnapshot.docs
+          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
+              <String, dynamic>{'id': doc.id, ...doc.data()})
+          .toList(),
+      entitlements: entitlementSnapshot.docs
+          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
+              <String, dynamic>{'id': doc.id, ...doc.data()})
+          .toList(),
+      fulfillments: fulfillmentSnapshot.docs
+          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
+              <String, dynamic>{'id': doc.id, ...doc.data()})
+          .toList(),
+    );
   }
 
   Future<void> _purchaseListing(_MarketplaceListingItem listing) async {
@@ -622,19 +747,20 @@ class _MarketplaceListingItem {
     this.publishedAt,
   });
 
-  factory _MarketplaceListingItem.fromDoc(
-      QueryDocumentSnapshot<Map<String, dynamic>> doc) {
-    final Map<String, dynamic> data = doc.data();
+  factory _MarketplaceListingItem.fromData(Map<String, dynamic> data) {
+    final dynamic rawPublishedAt = data['publishedAt'];
     return _MarketplaceListingItem(
-      id: doc.id,
+      id: data['id'] as String? ?? '',
       title: data['title'] as String? ?? '',
       description: data['description'] as String?,
       category: data['category'] as String? ?? 'General',
       productId: data['productId'] as String? ?? '',
       currency: data['currency'] as String? ?? 'USD',
       price: (data['price'] as num?)?.toDouble(),
-      publishedAt: data['publishedAt'] is Timestamp
-          ? (data['publishedAt'] as Timestamp).toDate()
+      publishedAt: rawPublishedAt is Timestamp
+          ? rawPublishedAt.toDate()
+          : rawPublishedAt is DateTime
+              ? rawPublishedAt
           : null,
     );
   }
@@ -662,25 +788,30 @@ class _OrderItem {
     this.paidAt,
   });
 
-  factory _OrderItem.fromDoc(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
-    final Map<String, dynamic> data = doc.data();
+  factory _OrderItem.fromData(Map<String, dynamic> data) {
     final dynamic rawAmount = data['amount'];
+    final dynamic rawCreatedAt = data['createdAt'];
+    final dynamic rawPaidAt = data['paidAt'];
     final double parsedAmount = rawAmount is num
         ? rawAmount.toDouble()
         : double.tryParse(rawAmount?.toString() ?? '0') ?? 0;
     return _OrderItem(
-      id: doc.id,
+      id: data['id'] as String? ?? '',
       siteId: data['siteId'] as String? ?? '',
       productId: data['productId'] as String? ?? '',
       amount: parsedAmount,
       currency: data['currency'] as String? ?? 'USD',
       status: data['status'] as String? ?? 'paid',
       listingId: data['listingId'] as String?,
-      createdAt: data['createdAt'] is Timestamp
-          ? (data['createdAt'] as Timestamp).toDate()
+      createdAt: rawCreatedAt is Timestamp
+          ? rawCreatedAt.toDate()
+          : rawCreatedAt is DateTime
+              ? rawCreatedAt
           : null,
-      paidAt: data['paidAt'] is Timestamp
-          ? (data['paidAt'] as Timestamp).toDate()
+      paidAt: rawPaidAt is Timestamp
+          ? rawPaidAt.toDate()
+          : rawPaidAt is DateTime
+              ? rawPaidAt
           : null,
     );
   }
@@ -705,16 +836,17 @@ class _EntitlementItem {
     this.createdAt,
   });
 
-  factory _EntitlementItem.fromDoc(
-      QueryDocumentSnapshot<Map<String, dynamic>> doc) {
-    final Map<String, dynamic> data = doc.data();
+  factory _EntitlementItem.fromData(Map<String, dynamic> data) {
+    final dynamic rawCreatedAt = data['createdAt'];
     return _EntitlementItem(
-      id: doc.id,
+      id: data['id'] as String? ?? '',
       siteId: data['siteId'] as String? ?? '',
       productId: data['productId'] as String? ?? '',
       roles: List<String>.from(data['roles'] as List? ?? const <String>[]),
-      createdAt: data['createdAt'] is Timestamp
-          ? (data['createdAt'] as Timestamp).toDate()
+      createdAt: rawCreatedAt is Timestamp
+          ? rawCreatedAt.toDate()
+          : rawCreatedAt is DateTime
+              ? rawCreatedAt
           : null,
     );
   }
@@ -738,21 +870,25 @@ class _FulfillmentItem {
     this.updatedAt,
   });
 
-  factory _FulfillmentItem.fromDoc(
-      QueryDocumentSnapshot<Map<String, dynamic>> doc) {
-    final Map<String, dynamic> data = doc.data();
+  factory _FulfillmentItem.fromData(Map<String, dynamic> data) {
+    final dynamic rawCreatedAt = data['createdAt'];
+    final dynamic rawUpdatedAt = data['updatedAt'];
     return _FulfillmentItem(
-      id: doc.id,
+      id: data['id'] as String? ?? '',
       orderId: data['orderId'] as String? ?? '',
       listingId: data['listingId'] as String? ?? '',
       status: data['status'] as String? ?? 'pending',
       siteId: data['siteId'] as String?,
       note: data['note'] as String?,
-      createdAt: data['createdAt'] is Timestamp
-          ? (data['createdAt'] as Timestamp).toDate()
+      createdAt: rawCreatedAt is Timestamp
+          ? rawCreatedAt.toDate()
+          : rawCreatedAt is DateTime
+              ? rawCreatedAt
           : null,
-      updatedAt: data['updatedAt'] is Timestamp
-          ? (data['updatedAt'] as Timestamp).toDate()
+      updatedAt: rawUpdatedAt is Timestamp
+          ? rawUpdatedAt.toDate()
+          : rawUpdatedAt is DateTime
+              ? rawUpdatedAt
           : null,
     );
   }
