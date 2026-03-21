@@ -1180,6 +1180,8 @@ class _CreateLearnerDialogState extends State<_CreateLearnerDialog> {
     setState(() => _isSubmitting = false);
 
     if (result != null) {
+      await service.loadLearners(siteId);
+      if (!mounted) return;
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1332,6 +1334,8 @@ class _CreateParentDialogState extends State<_CreateParentDialog> {
     setState(() => _isSubmitting = false);
 
     if (result != null) {
+      await service.loadParents(siteId);
+      if (!mounted) return;
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
