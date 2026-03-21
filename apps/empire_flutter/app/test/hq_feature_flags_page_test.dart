@@ -17,9 +17,11 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     List<Map<String, dynamic>>? candidatePackages,
     List<Map<String, dynamic>>? runtimeDeliveries,
     List<Map<String, dynamic>>? runtimeActivations,
+    List<Map<String, dynamic>>? runtimeRolloutAlerts,
     List<Map<String, dynamic>>? runtimeRolloutEscalations,
     List<Map<String, dynamic>>? runtimeRolloutControls,
     this.failOnUpsertFeatureFlag = false,
+    this.failOnUpsertRolloutAlert = false,
     this.failOnUpsertRolloutEscalation = false,
     this.failOnUpsertRolloutControl = false,
     this.failFeatureFlagsOnCall,
@@ -38,6 +40,9 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
        _runtimeActivations = List<Map<String, dynamic>>.from(
          runtimeActivations ?? <Map<String, dynamic>>[],
        ),
+       _runtimeRolloutAlerts = List<Map<String, dynamic>>.from(
+         runtimeRolloutAlerts ?? <Map<String, dynamic>>[],
+       ),
        _runtimeRolloutEscalations = List<Map<String, dynamic>>.from(
          runtimeRolloutEscalations ?? <Map<String, dynamic>>[],
        ),
@@ -54,16 +59,20 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   final List<Map<String, dynamic>> _experiments;
   final List<Map<String, dynamic>> _runtimeActivations;
   final List<Map<String, dynamic>> _runtimeDeliveries;
+  final List<Map<String, dynamic>> _runtimeRolloutAlerts;
   final List<Map<String, dynamic>> _runtimeRolloutEscalations;
   final List<Map<String, dynamic>> _runtimeRolloutControls;
   final bool failOnUpsertFeatureFlag;
+  final bool failOnUpsertRolloutAlert;
   final bool failOnUpsertRolloutEscalation;
   final bool failOnUpsertRolloutControl;
   final int? failFeatureFlagsOnCall;
   final int? failExperimentsOnCall;
   final List<Map<String, dynamic>> recordedFlagUpdates =
       <Map<String, dynamic>>[];
-    final List<Map<String, dynamic>> recordedRolloutEscalationUpdates =
+  final List<Map<String, dynamic>> recordedRolloutAlertUpdates =
+      <Map<String, dynamic>>[];
+  final List<Map<String, dynamic>> recordedRolloutEscalationUpdates =
       <Map<String, dynamic>>[];
   final List<Map<String, dynamic>> recordedRolloutControlUpdates =
       <Map<String, dynamic>>[];
@@ -232,8 +241,32 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     String? deliveryRecordId,
     String? status,
     int limit = 60,
-  }) async =>
-          <Map<String, dynamic>>[];
+  }) async {
+    Iterable<Map<String, dynamic>> rows = _runtimeRolloutAlerts;
+    if (experimentId != null) {
+      rows = rows.where(
+        (Map<String, dynamic> row) => row['experimentId'] == experimentId,
+      );
+    }
+    if (candidateModelPackageId != null) {
+      rows = rows.where(
+        (Map<String, dynamic> row) =>
+            row['candidateModelPackageId'] == candidateModelPackageId,
+      );
+    }
+    if (deliveryRecordId != null) {
+      rows = rows.where(
+        (Map<String, dynamic> row) => row['deliveryRecordId'] == deliveryRecordId,
+      );
+    }
+    if (status != null) {
+      rows = rows.where((Map<String, dynamic> row) => row['status'] == status);
+    }
+    return rows
+        .take(limit)
+        .map((Map<String, dynamic> row) => Map<String, dynamic>.from(row))
+        .toList();
+  }
 
   @override
   Future<List<Map<String, dynamic>>>
@@ -341,6 +374,70 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
       _flags[existingIndex] = persisted;
     } else {
       _flags.add(persisted);
+    }
+    return id;
+  }
+
+  @override
+  Future<String?> upsertFederatedLearningRuntimeRolloutAlertRecord(
+    Map<String, dynamic> data,
+  ) async {
+    if (failOnUpsertRolloutAlert) {
+      throw Exception('runtime rollout alert save failed');
+    }
+    final Map<String, dynamic> normalized = Map<String, dynamic>.from(data);
+    recordedRolloutAlertUpdates.add(normalized);
+    final String deliveryRecordId =
+        normalized['deliveryRecordId'] as String? ?? 'delivery-1';
+    final Map<String, dynamic>? delivery = _runtimeDeliveries
+        .cast<Map<String, dynamic>?>()
+        .firstWhere(
+          (Map<String, dynamic>? row) => row?['id'] == deliveryRecordId,
+          orElse: () => null,
+        );
+    final int pendingCount =
+        (delivery?['targetSiteIds'] as List?)?.length ?? 0;
+    final String id = 'runtime-rollout-alert-$deliveryRecordId';
+    final Timestamp updatedAt = Timestamp.fromDate(DateTime(2026, 3, 21, 12));
+    final Map<String, dynamic> persisted = <String, dynamic>{
+      'id': id,
+      'deliveryRecordId': deliveryRecordId,
+      'experimentId': delivery?['experimentId'] as String? ?? '',
+      'candidateModelPackageId':
+          delivery?['candidateModelPackageId'] as String? ?? '',
+      'runtimeTarget': delivery?['runtimeTarget'] as String? ?? '',
+      'targetSiteIds':
+          List<String>.from(delivery?['targetSiteIds'] as List? ?? const <String>[]),
+      'packageDigest': delivery?['packageDigest'] as String? ?? '',
+      'boundedDigest': delivery?['boundedDigest'] as String? ?? '',
+      'triggerSummaryId': delivery?['triggerSummaryId'] as String? ?? '',
+      'summaryIds':
+          List<String>.from(delivery?['summaryIds'] as List? ?? const <String>[]),
+      'schemaVersions':
+          List<String>.from(delivery?['schemaVersions'] as List? ?? const <String>[]),
+      'optimizerStrategies': List<String>.from(
+        delivery?['optimizerStrategies'] as List? ?? const <String>[],
+      ),
+      'compatibilityKey': delivery?['compatibilityKey'] as String? ?? '',
+      'warmStartPackageId': delivery?['warmStartPackageId'] as String?,
+      'warmStartModelVersion': delivery?['warmStartModelVersion'] as String?,
+      'manifestDigest': delivery?['manifestDigest'] as String? ?? '',
+      'status': normalized['status'] as String? ?? 'acknowledged',
+      'fallbackCount': 0,
+      'pendingCount': pendingCount,
+      'notes': normalized['notes'] as String? ?? '',
+      'acknowledgedBy': 'hq-operator',
+      'acknowledgedAt': updatedAt,
+      'createdAt': updatedAt,
+      'updatedAt': updatedAt,
+    };
+    final int existingIndex = _runtimeRolloutAlerts.indexWhere(
+      (Map<String, dynamic> row) => row['deliveryRecordId'] == deliveryRecordId,
+    );
+    if (existingIndex >= 0) {
+      _runtimeRolloutAlerts[existingIndex] = persisted;
+    } else {
+      _runtimeRolloutAlerts.add(persisted);
     }
     return id;
   }
@@ -472,6 +569,7 @@ class _FakeUpdateSummaryRepository
 
 void main() {
   _FakeWorkflowBridgeService buildRolloutGovernanceHarness({
+    bool failOnUpsertRolloutAlert = false,
     bool failOnUpsertRolloutControl = false,
   }) {
     return _FakeWorkflowBridgeService(
@@ -559,8 +657,10 @@ void main() {
         },
       ],
       runtimeActivations: const <Map<String, dynamic>>[],
+      runtimeRolloutAlerts: const <Map<String, dynamic>>[],
       runtimeRolloutEscalations: const <Map<String, dynamic>>[],
       runtimeRolloutControls: const <Map<String, dynamic>>[],
+      failOnUpsertRolloutAlert: failOnUpsertRolloutAlert,
       failOnUpsertRolloutEscalation: false,
       failOnUpsertRolloutControl: failOnUpsertRolloutControl,
     );
@@ -824,6 +924,90 @@ void main() {
       find.text('No federated-learning experiments are configured yet.'),
       findsNothing,
     );
+  });
+
+  testWidgets(
+      'hq feature flags alert triage saves and reloads authoritative data',
+      (WidgetTester tester) async {
+    final _FakeWorkflowBridgeService workflowBridge =
+        buildRolloutGovernanceHarness();
+
+    await tester.pumpWidget(buildHarness(workflowBridge: workflowBridge));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(workflowBridge.experimentsLoadCount, 1);
+
+    final Finder acknowledgeAlertButton =
+        find.widgetWithText(TextButton, 'Acknowledge alert');
+
+    await tester.ensureVisible(acknowledgeAlertButton);
+    await tester.pumpAndSettle();
+
+    expect(acknowledgeAlertButton, findsOneWidget);
+
+    await tester.tap(acknowledgeAlertButton);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'HQ notes'),
+      'Fallback and pending rollout reviewed by HQ operator.',
+    );
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(workflowBridge.recordedRolloutAlertUpdates, hasLength(1));
+    expect(
+      workflowBridge.recordedRolloutAlertUpdates.single['status'],
+      'acknowledged',
+    );
+    expect(
+      workflowBridge.recordedRolloutAlertUpdates.single['notes'],
+      'Fallback and pending rollout reviewed by HQ operator.',
+    );
+    expect(workflowBridge.experimentsLoadCount, 2);
+    expect(find.text('Rollout alert triage saved'), findsOneWidget);
+    expect(find.text('Update triage'), findsOneWidget);
+  });
+
+  testWidgets(
+      'hq feature flags alert triage shows explicit failure when save fails',
+      (WidgetTester tester) async {
+    final _FakeWorkflowBridgeService workflowBridge =
+        buildRolloutGovernanceHarness(failOnUpsertRolloutAlert: true);
+
+    await tester.pumpWidget(buildHarness(workflowBridge: workflowBridge));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(workflowBridge.experimentsLoadCount, 1);
+
+    final Finder acknowledgeAlertButton =
+        find.widgetWithText(TextButton, 'Acknowledge alert');
+
+    await tester.ensureVisible(acknowledgeAlertButton);
+    await tester.pumpAndSettle();
+
+    expect(acknowledgeAlertButton, findsOneWidget);
+
+    await tester.tap(acknowledgeAlertButton);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'HQ notes'),
+      'HQ attempted to record triage but the backend write failed.',
+    );
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(workflowBridge.recordedRolloutAlertUpdates, isEmpty);
+    expect(workflowBridge.experimentsLoadCount, 1);
+    expect(find.text('Rollout alert triage failed'), findsOneWidget);
+    expect(find.text('Acknowledge alert'), findsOneWidget);
   });
 
   testWidgets(
