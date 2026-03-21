@@ -12,6 +12,33 @@ This is the reopened honesty pass after blocker remediation, clean builds, live 
 - Beta ready for a controlled audience.
 - The main remaining risk is release completeness for native distribution, not fake or dead-end user-facing product paths on the core app routes.
 
+## Tightened Audit Criteria
+
+This reopened pass now uses a stricter honesty standard.
+
+What no longer counts as sufficient:
+
+1. A page merely rendering without obvious placeholders.
+2. A stale banner that keeps old data visible but does not prove the live system is healthy.
+3. A direct route test that proves rendering but not mutation, reload, or scope correctness.
+4. A completed dialog that only closes locally without proving persisted change.
+5. A workflow that is technically honest but still makes educational claims without evidence provenance.
+
+What must be true before a flow is treated as fully honest:
+
+1. The user can tell whether the system is loading, empty, unavailable, stale, partially loaded, or saved.
+2. The primary action either persists and reloads truthfully or fails explicitly.
+3. The route exposes a real recovery path when backend refresh or mutation fails.
+4. Role and site scope are enforced in the visible behavior, not just assumed in code.
+5. Accessibility is preserved for warnings, blocked states, and recovery controls.
+6. Evidence-bearing educational flows do not imply mastery, growth, or proof without a real underlying evidence chain.
+
+Interpretation rule:
+
+- `stale` means honest degraded mode, not full end-to-end success.
+- `direct proof` means route behavior is tested, not that the whole workflow is fully certified.
+- `fixed` means the specific fake or misleading behavior named in this document is closed; it does not automatically certify the surrounding workflow as gold-ready.
+
 ## A. Release Matrix Updated
 
 ### App and route status
@@ -41,6 +68,12 @@ This is the reopened honesty pass after blocker remediation, clean builds, live 
   - `missions_page`
   - `habits_page`
   - `site_billing_page`
+
+  Coverage interpretation under the tightened standard:
+
+  - direct page coverage is necessary but not sufficient for gold
+  - mutation plus authoritative reload proof carries more weight than rendering-only proof
+  - operator and evidence-bearing surfaces remain partial until their critical write and provenance paths are directly exercised
 
 ### Release operations status
 

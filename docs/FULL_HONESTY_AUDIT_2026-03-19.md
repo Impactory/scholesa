@@ -11,6 +11,42 @@ Scope: Flutter app enabled routes, current runtime behavior, current test eviden
 - Core learner, educator, parent, messaging, and site operations paths are no longer obviously fake.
 - Gold is still blocked by unproven native distribution and by remaining depth gaps in mutation, failure-path, and operator-governance proof.
 
+## Honesty Standard Tightened
+
+The audit standard is now stricter than simple visible rendering or stale-data honesty.
+
+Terminology:
+
+- Honest degraded mode: the route keeps prior verified data visible, declares that refresh is failing, exposes the failure detail when it matters, and offers a real recovery path.
+- Route-direct proof: the route itself has focused test evidence for the page behavior being claimed.
+- Full-flow proof: the route or workflow proves live read, live mutation where applicable, source-of-truth reload, honest failure handling, correct role and scope enforcement, and no fake completion.
+- Gold-ready proof: full-flow proof plus release-grade evidence that the path works end to end on the real supported surface, not only in a harness.
+
+Rules:
+
+1. Stale data does not count as end-to-end success. It only counts as honest degraded behavior.
+2. A direct route test does not by itself count as full-flow verification.
+3. A save action is not proven unless the post-mutation state is re-read from the authoritative source and rendered truthfully.
+4. A route is not honest if a control exists but the user cannot tell whether it persisted, failed, was blocked by permissions, or stayed local-only.
+5. Empty state, unavailable state, stale state, partial data, and post-save state must be distinguishable in both copy and behavior.
+6. Accessibility is part of honesty. If assistive-tech users cannot discover the warning, retry, scope, or blocked action, the route is not fully honest.
+7. Capability-first flows must not imply learner growth, mastery, proof, or readiness unless evidence provenance is visible and the claim is actually derived from persisted evidence.
+8. AI-assisted flows must disclose AI involvement and must not present generated output as verified learner proof.
+
+Full-flow proof minimum for an auditable route:
+
+1. Read path: current scoped data loads from the real backing source or a faithful test double and renders the correct state.
+2. Mutation path: the primary action persists the intended change.
+3. Re-query path: the UI reflects the persisted result after reload or equivalent authoritative refresh.
+4. Failure path: the route shows an explicit, truthful failure state without collapsing into fake empty or fake success.
+5. Recovery path: the user can retry, refresh, or otherwise recover from the failure in-surface.
+6. Scope path: role, site, learner, or partner boundaries are enforced and visible where relevant.
+7. Accessibility path: controls, warnings, and outcomes are reachable and announced appropriately.
+8. Telemetry path: critical operator or learner actions emit auditable telemetry where the product depends on that trace.
+9. Pedagogy path: any capability, evidence, portfolio, rubric, passport, or proof-of-learning claim is tied to real persisted evidence, not UI inference.
+
+Because of this stricter standard, references below to direct proof or honest stale behavior should be read as partial confidence unless the mutation, reload, and scope paths are also directly proven.
+
 ## A. Release Matrix Updated
 
 ### Route inventory
@@ -118,6 +154,25 @@ Current truth:
 - HQ approvals, site identity, partner payouts, HQ billing, HQ audit, and site incidents now render explicit failure states when loading fails.
 - Those routes no longer pretend a backend outage means there is simply no work to do.
 - The wider admin surface still has more partial-failure combinations than the direct test footprint covers.
+
+### 3. Capability-first educational truth is still below gold in several workflow clusters
+
+Current truth:
+
+- The reopened audit removed many fake empty, fake success, and hidden-failure states.
+- That does not yet prove that every learner-facing claim is backed by evidence provenance, rubric linkage, capability updates, portfolio visibility, passport consequences, and AI-use disclosure.
+- Some route clusters are operationally honest but still short of pedagogical full-flow proof.
+
+Why this is a gold blocker:
+
+- Scholesa is not gold-ready if a workflow completes technically but still leaves learner growth claims, mastery claims, or evidence lineage under-proven.
+- Capability-first correctness requires not only software truthfulness but educational truthfulness.
+
+End-to-end solution:
+
+1. For each capability-affecting workflow, prove what evidence is created, who can observe it, and how it updates learner growth over time.
+2. Add direct proof that portfolio and passport/report surfaces consume the same underlying evidence rather than disconnected summary state.
+3. Add explicit AI-use disclosure and verification-path proof where AI assistance affects the learner artifact or teacher decision surface.
 
 Why this is beta-safe but not gold:
 

@@ -9,6 +9,12 @@ Proof levels:
 - `workflow/regression`: route is only covered indirectly through shared, navigation, localization, or regression tests
 - `none`: no convincing route proof was found
 
+Interpretation:
+
+- `direct` does not automatically mean full-flow verified
+- stale-refresh proof only certifies honest degraded behavior, not live end-to-end health
+- gold confidence requires read, mutate where applicable, authoritative reload, failure, recovery, and scope proof on the same route or tightly coupled workflow
+
 ## Summary
 
 - Enabled canonical routes audited: 52
