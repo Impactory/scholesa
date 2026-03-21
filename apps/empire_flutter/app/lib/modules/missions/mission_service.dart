@@ -118,10 +118,13 @@ class MissionService extends ChangeNotifier {
     required FirestoreService firestoreService,
     required this.learnerId,
     SyncCoordinator? syncCoordinator,
+    Future<List<Mission>> Function()? missionsLoader,
   })  : _firestoreService = firestoreService,
-        _syncCoordinator = syncCoordinator;
+        _syncCoordinator = syncCoordinator,
+        _missionsLoader = missionsLoader;
   final FirestoreService _firestoreService;
   final SyncCoordinator? _syncCoordinator;
+  final Future<List<Mission>> Function()? _missionsLoader;
   final String learnerId;
   FirebaseFirestore get _firestore => _firestoreService.firestore;
   bool get isOnline => _syncCoordinator?.isOnline ?? true;
@@ -196,112 +199,122 @@ class MissionService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _missionProfiles.clear();
-
-      // Load missions assigned to this learner
-      final QuerySnapshot<Map<String, dynamic>> assignmentsSnapshot =
-          await _firestore
-              .collection('missionAssignments')
-              .where('learnerId', isEqualTo: learnerId)
-              .get();
-
-      final List<Mission> loadedMissions = <Mission>[];
-
-      for (final QueryDocumentSnapshot<Map<String, dynamic>> assignDoc
-          in assignmentsSnapshot.docs) {
-        final Map<String, dynamic> assignData = assignDoc.data();
-        final String missionId = assignData['missionId'] as String? ?? '';
-
-        // Get mission details
-        final DocumentSnapshot<Map<String, dynamic>> missionDoc =
-            await _firestore.collection('missions').doc(missionId).get();
-
-        if (missionDoc.exists) {
-          final Map<String, dynamic> missionData = missionDoc.data()!;
-          final List<Skill> skills = await _loadMissionSkills(missionData);
-          _missionProfiles[missionId] = await _loadMissionConfusabilityProfile(
-            missionId,
-            missionData,
-            skills,
-          );
-
-          // Get steps for this mission
-          final QuerySnapshot<Map<String, dynamic>> stepsSnapshot =
-              await _firestore
-                  .collection('missions')
-                  .doc(missionId)
-                  .collection('steps')
-                  .orderBy('order')
-                  .get();
-
-          final List<MissionStep> steps = stepsSnapshot.docs
-              .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
-            final Map<String, dynamic> stepData = doc.data();
-            return MissionStep(
-              id: doc.id,
-              title: stepData['title'] as String? ?? '',
-              order: stepData['order'] as int? ?? 0,
-              isCompleted: stepData['isCompleted'] as bool? ?? false,
-              completedAt: stepData['completedAt'] as String?,
-            );
-          }).toList();
-
-          loadedMissions.add(Mission(
-            id: missionDoc.id,
-            title: missionData['title'] as String? ?? 'Mission',
-            description: missionData['description'] as String? ?? '',
-            pillar: _parsePillar(missionData['pillarCode'] as String?),
-            difficulty: _parseDifficulty(missionData['difficulty'] as String?),
-            xpReward: missionData['xpReward'] as int? ?? 100,
-            status: _parseStatus(assignData['status'] as String?),
-            progress: (assignData['progress'] as num?)?.toDouble() ?? 0.0,
-            steps: steps,
-            skills: skills,
-            dueDate: _parseTimestamp(assignData['dueDate']),
-            startedAt: _parseTimestamp(assignData['startedAt']),
-            completedAt: _parseTimestamp(assignData['completedAt']),
-            educatorFeedback: assignData['feedback'] as String?,
-            reflectionPrompt: missionData['reflectionPrompt'] as String?,
-            fsrsLastRating:
-                _parseFsrsRating(assignData['fsrsLastRating'] as String?),
-            nextReviewAt: _parseTimestamp(assignData['nextReviewAt']),
-            fsrsQueueState: _parseFsrsQueueState(
-              assignData['fsrsQueueState'] as String?,
-            ),
-            interleavingMode: _parseInterleavingMode(
-              assignData['interleavingMode'] as String?,
-            ),
-            recommendedInterleavingMissionIds: List<String>.from(
-              assignData['recommendedInterleavingMissionIds'] as List? ??
-                  const <String>[],
-            ),
-            confusabilityBand:
-                assignData['confusabilityBand'] as String? ?? 'low',
-            workedExampleShown:
-                assignData['workedExampleShown'] as bool? ?? false,
-            workedExampleFadeStage:
-                assignData['workedExampleFadeStage'] as int? ?? 0,
-            workedExamplePromptLevel: _parseWorkedExamplePromptLevel(
-              assignData['workedExamplePromptLevel'] as String?,
-            ),
-            workedExampleSuccessStreak:
-                assignData['workedExampleSuccessStreak'] as int? ?? 0,
-          ));
-        }
+      if (_missionsLoader != null) {
+        _missions = await _missionsLoader();
+      } else {
+        final _MissionLoadSnapshot snapshot = await _loadMissionSnapshot();
+        _missions = snapshot.missions;
+        _missionProfiles
+          ..clear()
+          ..addAll(snapshot.missionProfiles);
       }
-
-      _missions = loadedMissions;
       _progress = _calculateProgress();
 
       debugPrint('Loaded ${_missions.length} missions for learner');
     } catch (e) {
       debugPrint('Error loading missions: $e');
       _error = 'Failed to load missions: $e';
-      _missions = <Mission>[];
     } finally {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  Future<_MissionLoadSnapshot> _loadMissionSnapshot() async {
+    final QuerySnapshot<Map<String, dynamic>> assignmentsSnapshot =
+        await _firestore
+            .collection('missionAssignments')
+            .where('learnerId', isEqualTo: learnerId)
+            .get();
+
+    final List<Mission> loadedMissions = <Mission>[];
+    final Map<String, _MissionConfusabilityProfile> loadedProfiles =
+        <String, _MissionConfusabilityProfile>{};
+
+    for (final QueryDocumentSnapshot<Map<String, dynamic>> assignDoc
+        in assignmentsSnapshot.docs) {
+      final Map<String, dynamic> assignData = assignDoc.data();
+      final String missionId = assignData['missionId'] as String? ?? '';
+
+      final DocumentSnapshot<Map<String, dynamic>> missionDoc =
+          await _firestore.collection('missions').doc(missionId).get();
+
+      if (missionDoc.exists) {
+        final Map<String, dynamic> missionData = missionDoc.data()!;
+        final List<Skill> skills = await _loadMissionSkills(missionData);
+        loadedProfiles[missionId] = await _loadMissionConfusabilityProfile(
+          missionId,
+          missionData,
+          skills,
+        );
+
+        final QuerySnapshot<Map<String, dynamic>> stepsSnapshot =
+            await _firestore
+                .collection('missions')
+                .doc(missionId)
+                .collection('steps')
+                .orderBy('order')
+                .get();
+
+        final List<MissionStep> steps = stepsSnapshot.docs
+            .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+          final Map<String, dynamic> stepData = doc.data();
+          return MissionStep(
+            id: doc.id,
+            title: stepData['title'] as String? ?? '',
+            order: stepData['order'] as int? ?? 0,
+            isCompleted: stepData['isCompleted'] as bool? ?? false,
+            completedAt: stepData['completedAt'] as String?,
+          );
+        }).toList();
+
+        loadedMissions.add(Mission(
+          id: missionDoc.id,
+          title: missionData['title'] as String? ?? 'Mission',
+          description: missionData['description'] as String? ?? '',
+          pillar: _parsePillar(missionData['pillarCode'] as String?),
+          difficulty: _parseDifficulty(missionData['difficulty'] as String?),
+          xpReward: missionData['xpReward'] as int? ?? 100,
+          status: _parseStatus(assignData['status'] as String?),
+          progress: (assignData['progress'] as num?)?.toDouble() ?? 0.0,
+          steps: steps,
+          skills: skills,
+          dueDate: _parseTimestamp(assignData['dueDate']),
+          startedAt: _parseTimestamp(assignData['startedAt']),
+          completedAt: _parseTimestamp(assignData['completedAt']),
+          educatorFeedback: assignData['feedback'] as String?,
+          reflectionPrompt: missionData['reflectionPrompt'] as String?,
+          fsrsLastRating:
+              _parseFsrsRating(assignData['fsrsLastRating'] as String?),
+          nextReviewAt: _parseTimestamp(assignData['nextReviewAt']),
+          fsrsQueueState: _parseFsrsQueueState(
+            assignData['fsrsQueueState'] as String?,
+          ),
+          interleavingMode: _parseInterleavingMode(
+            assignData['interleavingMode'] as String?,
+          ),
+          recommendedInterleavingMissionIds: List<String>.from(
+            assignData['recommendedInterleavingMissionIds'] as List? ??
+                const <String>[],
+          ),
+          confusabilityBand: assignData['confusabilityBand'] as String? ?? 'low',
+          workedExampleShown:
+              assignData['workedExampleShown'] as bool? ?? false,
+          workedExampleFadeStage:
+              assignData['workedExampleFadeStage'] as int? ?? 0,
+          workedExamplePromptLevel: _parseWorkedExamplePromptLevel(
+            assignData['workedExamplePromptLevel'] as String?,
+          ),
+          workedExampleSuccessStreak:
+              assignData['workedExampleSuccessStreak'] as int? ?? 0,
+        ));
+      }
+    }
+
+    return _MissionLoadSnapshot(
+      missions: loadedMissions,
+      missionProfiles: loadedProfiles,
+    );
   }
 
   DateTime? _parseTimestamp(dynamic value) {
@@ -2311,6 +2324,16 @@ class _InterleavingRecommendation {
 
   final List<String> missionIds;
   final String confusabilityBand;
+}
+
+class _MissionLoadSnapshot {
+  const _MissionLoadSnapshot({
+    required this.missions,
+    required this.missionProfiles,
+  });
+
+  final List<Mission> missions;
+  final Map<String, _MissionConfusabilityProfile> missionProfiles;
 }
 
 class _MissionConfusabilityProfile {

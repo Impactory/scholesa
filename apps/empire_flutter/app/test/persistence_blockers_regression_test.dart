@@ -648,6 +648,108 @@ void main() {
       expect(logs.docs.first.data()['habitId'], createdHabit.id);
     });
 
+    test('habit service keeps stale habits visible after refresh failure',
+        () async {
+      int loadCount = 0;
+      final Habit seededHabit = Habit(
+        id: 'habit-1',
+        title: 'Read 10 min',
+        emoji: '📚',
+        category: HabitCategory.learning,
+        frequency: HabitFrequency.daily,
+        preferredTime: HabitTimePreference.anytime,
+        targetMinutes: 10,
+        createdAt: DateTime(2026, 1, 1),
+        currentStreak: 4,
+        longestStreak: 7,
+        totalCompletions: 12,
+        isActive: true,
+      );
+      final HabitLog seededLog = HabitLog(
+        id: 'log-1',
+        habitId: 'habit-1',
+        completedAt: DateTime(2026, 1, 2),
+        durationMinutes: 10,
+      );
+      final HabitService service = HabitService(
+        firestoreService: firestoreService,
+        learnerId: 'learner-1',
+        snapshotLoader: () async {
+          loadCount += 1;
+          if (loadCount == 1) {
+            return HabitLoadSnapshot(
+              habits: <Habit>[seededHabit],
+              recentLogs: <HabitLog>[seededLog],
+            );
+          }
+          throw Exception('network down');
+        },
+      );
+
+      await service.loadHabits();
+      await service.loadHabits();
+
+      expect(service.habits, hasLength(1));
+      expect(service.habits.single.title, 'Read 10 min');
+      expect(service.recentLogs, hasLength(1));
+      expect(service.weeklySummary, isNotNull);
+      expect(service.error, contains('Failed to load habits'));
+      expect(service.isLoading, isFalse);
+    });
+
+    test('mission service keeps stale missions and progress after refresh failure',
+        () async {
+      int loadCount = 0;
+      final Mission seededMission = Mission(
+        id: 'mission-1',
+        title: 'Build a bridge',
+        description: 'Prototype and explain load paths',
+        pillar: Pillar.futureSkills,
+        difficulty: DifficultyLevel.beginner,
+        status: MissionStatus.inProgress,
+        progress: 0.5,
+        steps: const <MissionStep>[
+          MissionStep(
+            id: 'step-1',
+            title: 'Sketch ideas',
+            order: 1,
+            isCompleted: true,
+          ),
+          MissionStep(
+            id: 'step-2',
+            title: 'Build prototype',
+            order: 2,
+          ),
+        ],
+        recommendedInterleavingMissionIds: const <String>['mission-2'],
+        confusabilityBand: 'medium',
+      );
+      final MissionService service = MissionService(
+        firestoreService: firestoreService,
+        learnerId: 'learner-1',
+        missionsLoader: () async {
+          loadCount += 1;
+          if (loadCount == 1) {
+            return <Mission>[seededMission];
+          }
+          throw Exception('network down');
+        },
+      );
+
+      await service.loadMissions();
+      final LearnerProgress? initialProgress = service.progress;
+      await service.loadMissions();
+
+      expect(service.missions, hasLength(1));
+      expect(service.missions.single.title, 'Build a bridge');
+      expect(service.missions.single.recommendedInterleavingMissionIds,
+          contains('mission-2'));
+      expect(service.progress, isNotNull);
+      expect(service.progress?.totalXp, initialProgress?.totalXp);
+      expect(service.error, contains('Failed to load missions'));
+      expect(service.isLoading, isFalse);
+    });
+
     test('shared firestore message service uses messageThreads and threadId',
         () async {
       await firestore.collection('users').doc('site-staff-1').set(

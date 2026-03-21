@@ -3,13 +3,26 @@ import 'package:flutter/foundation.dart';
 import '../../services/firestore_service.dart';
 import 'habit_models.dart';
 
+class HabitLoadSnapshot {
+  const HabitLoadSnapshot({
+    required this.habits,
+    required this.recentLogs,
+  });
+
+  final List<Habit> habits;
+  final List<HabitLog> recentLogs;
+}
+
 /// Service for habit tracking and coaching
 class HabitService extends ChangeNotifier {
   HabitService({
     required FirestoreService firestoreService,
     required this.learnerId,
-  }) : _firestoreService = firestoreService;
+    Future<HabitLoadSnapshot> Function()? snapshotLoader,
+  })  : _firestoreService = firestoreService,
+        _snapshotLoader = snapshotLoader;
   final FirestoreService _firestoreService;
+  final Future<HabitLoadSnapshot> Function()? _snapshotLoader;
   final String learnerId;
   FirebaseFirestore get _firestore => _firestoreService.firestore;
 
@@ -47,60 +60,12 @@ class HabitService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Load habits for this learner
-      final QuerySnapshot<Map<String, dynamic>> habitsSnapshot =
-          await _firestore
-              .collection('habits')
-              .where('learnerId', isEqualTo: learnerId)
-              .where('isActive', isEqualTo: true)
-              .get();
+      final HabitLoadSnapshot snapshot = _snapshotLoader != null
+          ? await _snapshotLoader!()
+          : await _loadHabitSnapshot();
 
-      _habits = habitsSnapshot.docs
-          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
-        final Map<String, dynamic> data = doc.data();
-        return Habit(
-          id: doc.id,
-          title: data['title'] as String? ?? 'Habit',
-          description: data['description'] as String?,
-          emoji: data['emoji'] as String? ?? '⭐',
-          category: _parseCategory(data['category'] as String?),
-          frequency: _parseFrequency(data['frequency'] as String?),
-          preferredTime: _parseTimePreference(data['preferredTime'] as String?),
-          targetMinutes: data['targetMinutes'] as int? ?? 10,
-          createdAt: _parseTimestamp(data['createdAt']) ?? DateTime.now(),
-          currentStreak: data['currentStreak'] as int? ?? 0,
-          longestStreak: data['longestStreak'] as int? ?? 0,
-          totalCompletions: data['totalCompletions'] as int? ?? 0,
-          lastCompletedAt: _parseTimestamp(data['lastCompletedAt']),
-          isActive: data['isActive'] as bool? ?? true,
-          buildingPhaseStartDate: _parseTimestamp(data['buildingPhaseStartDate']),
-        );
-      }).toList();
-
-      // Load recent logs
-      final DateTime weekAgo = DateTime.now().subtract(const Duration(days: 7));
-      final QuerySnapshot<Map<String, dynamic>> logsSnapshot = await _firestore
-          .collection('habitLogs')
-          .where('learnerId', isEqualTo: learnerId)
-          .where('completedAt', isGreaterThan: Timestamp.fromDate(weekAgo))
-          .orderBy('completedAt', descending: true)
-          .limit(50)
-          .get();
-
-      _recentLogs = logsSnapshot.docs
-          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
-        final Map<String, dynamic> data = doc.data();
-        return HabitLog(
-          id: doc.id,
-          habitId: data['habitId'] as String? ?? '',
-          completedAt: _parseTimestamp(data['completedAt']) ?? DateTime.now(),
-          durationMinutes: data['durationMinutes'] as int? ?? 0,
-          note: data['note'] as String?,
-          moodEmoji: data['moodEmoji'] as String?,
-        );
-      }).toList();
-
-      // Calculate weekly summary
+      _habits = snapshot.habits;
+      _recentLogs = snapshot.recentLogs;
       _weeklySummary = _calculateWeeklySummary();
 
       debugPrint(
@@ -108,12 +73,67 @@ class HabitService extends ChangeNotifier {
     } catch (e) {
       debugPrint('Error loading habits: $e');
       _error = 'Failed to load habits: $e';
-      _habits = <Habit>[];
-      _recentLogs = <HabitLog>[];
     } finally {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  Future<HabitLoadSnapshot> _loadHabitSnapshot() async {
+    final QuerySnapshot<Map<String, dynamic>> habitsSnapshot = await _firestore
+        .collection('habits')
+        .where('learnerId', isEqualTo: learnerId)
+        .where('isActive', isEqualTo: true)
+        .get();
+
+    final List<Habit> habits = habitsSnapshot.docs
+        .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+      final Map<String, dynamic> data = doc.data();
+      return Habit(
+        id: doc.id,
+        title: data['title'] as String? ?? 'Habit',
+        description: data['description'] as String?,
+        emoji: data['emoji'] as String? ?? '⭐',
+        category: _parseCategory(data['category'] as String?),
+        frequency: _parseFrequency(data['frequency'] as String?),
+        preferredTime: _parseTimePreference(data['preferredTime'] as String?),
+        targetMinutes: data['targetMinutes'] as int? ?? 10,
+        createdAt: _parseTimestamp(data['createdAt']) ?? DateTime.now(),
+        currentStreak: data['currentStreak'] as int? ?? 0,
+        longestStreak: data['longestStreak'] as int? ?? 0,
+        totalCompletions: data['totalCompletions'] as int? ?? 0,
+        lastCompletedAt: _parseTimestamp(data['lastCompletedAt']),
+        isActive: data['isActive'] as bool? ?? true,
+        buildingPhaseStartDate: _parseTimestamp(data['buildingPhaseStartDate']),
+      );
+    }).toList();
+
+    final DateTime weekAgo = DateTime.now().subtract(const Duration(days: 7));
+    final QuerySnapshot<Map<String, dynamic>> logsSnapshot = await _firestore
+        .collection('habitLogs')
+        .where('learnerId', isEqualTo: learnerId)
+        .where('completedAt', isGreaterThan: Timestamp.fromDate(weekAgo))
+        .orderBy('completedAt', descending: true)
+        .limit(50)
+        .get();
+
+    final List<HabitLog> recentLogs = logsSnapshot.docs
+        .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+      final Map<String, dynamic> data = doc.data();
+      return HabitLog(
+        id: doc.id,
+        habitId: data['habitId'] as String? ?? '',
+        completedAt: _parseTimestamp(data['completedAt']) ?? DateTime.now(),
+        durationMinutes: data['durationMinutes'] as int? ?? 0,
+        note: data['note'] as String?,
+        moodEmoji: data['moodEmoji'] as String?,
+      );
+    }).toList();
+
+    return HabitLoadSnapshot(
+      habits: habits,
+      recentLogs: recentLogs,
+    );
   }
 
   DateTime? _parseTimestamp(dynamic value) {
