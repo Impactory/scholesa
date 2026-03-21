@@ -173,6 +173,11 @@ class _HqAuditPageState extends State<HqAuditPage> {
             },
           ),
           IconButton(
+            tooltip: _tHqAudit(context, 'Refresh'),
+            icon: const Icon(Icons.refresh_rounded),
+            onPressed: _loadData,
+          ),
+          IconButton(
             icon: const Icon(Icons.add_task_rounded),
             onPressed: () {
               _logAuditEvent('hq_audit_create_review_open');

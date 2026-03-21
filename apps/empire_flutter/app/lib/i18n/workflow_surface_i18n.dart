@@ -521,6 +521,11 @@ class WorkflowSurfaceI18n {
     'Audit action unavailable': '审计动作不可用',
     'Actor unavailable': '操作者信息不可用',
     'Mission unavailable': '任务不可用',
+    'Audit data is temporarily unavailable': '审计数据暂时不可用',
+    'We could not load audit records. Retry to check the current state.':
+        '我们暂时无法加载审计记录。请重试以检查当前状态。',
+    'Unable to refresh audit data right now. Showing the last successful data.':
+        '当前无法刷新审计数据。正在显示最近一次成功加载的数据。',
     'No audit logs found': '未找到审计日志',
     'Unable to load audit logs right now': '目前无法加载审计日志',
     'Try again in a moment or refresh after your connection stabilizes.':
@@ -1165,6 +1170,11 @@ class WorkflowSurfaceI18n {
     'Audit action unavailable': '稽核動作不可用',
     'Actor unavailable': '操作者資訊不可用',
     'Mission unavailable': '任務不可用',
+    'Audit data is temporarily unavailable': '稽核資料暫時不可用',
+    'We could not load audit records. Retry to check the current state.':
+        '我們暫時無法載入稽核記錄。請重試以確認目前狀態。',
+    'Unable to refresh audit data right now. Showing the last successful data.':
+        '目前無法刷新稽核資料。正在顯示最近一次成功載入的資料。',
     'No audit logs found': '找不到稽核日誌',
     'Unable to load audit logs right now': '目前無法載入稽核日誌',
     'Try again in a moment or refresh after your connection stabilizes.':

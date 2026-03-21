@@ -56,6 +56,69 @@ void main() {
     expect(find.text('Retry'), findsOneWidget);
   });
 
+  testWidgets('HQ audit keeps stale data visible after refresh failure',
+      (WidgetTester tester) async {
+    int loadCount = 0;
+
+    await tester.pumpWidget(
+      _buildHarness(
+        HqAuditPage(
+          auditLogsLoader: () async {
+            loadCount += 1;
+            if (loadCount == 1) {
+              return <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'id': 'audit-1',
+                  'action': 'policy.updated',
+                  'category': 'admin',
+                  'actorEmail': 'hq-admin@scholesa.test',
+                  'details': 'Updated export rules',
+                  'createdAt': '2026-03-18T09:30:00.000Z',
+                },
+              ];
+            }
+            throw StateError('audit refresh unavailable');
+          },
+          redTeamReviewsLoader: () async {
+            if (loadCount <= 1) {
+              return <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'id': 'review-1',
+                  'title': 'Vendor review',
+                  'decision': 'continue',
+                  'partnerStatus': 'active',
+                  'recommendations': 'Keep monitoring',
+                  'nextAction': 'Check quarterly',
+                  'updatedAt': '2026-03-18T10:00:00.000Z',
+                },
+              ];
+            }
+            throw StateError('review refresh unavailable');
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Policy Updated'), findsOneWidget);
+    expect(find.text('Vendor review'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Refresh'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Unable to refresh audit data right now. Showing the last successful data.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Policy Updated'), findsOneWidget);
+    expect(find.text('Vendor review'), findsOneWidget);
+    expect(find.text('No audit logs found'), findsNothing);
+    expect(find.text('No red team reviews yet'), findsNothing);
+  });
+
   testWidgets('HQ audit copies export when file export is unsupported',
       (WidgetTester tester) async {
     String? copiedText;
