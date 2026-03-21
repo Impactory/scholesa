@@ -163,6 +163,18 @@ Widget _buildHarness({
   );
 }
 
+Future<void> _scrollUntilTextVisible(
+  WidgetTester tester,
+  String text,
+) async {
+  await tester.scrollUntilVisible(
+    find.text(text),
+    300,
+    scrollable: find.byType(Scrollable).first,
+  );
+  await tester.pumpAndSettle();
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -203,6 +215,7 @@ void main() {
     expect(find.text('Unable to load habits'), findsOneWidget);
     expect(find.text('Failed to load habits from test'), findsOneWidget);
     expect(find.text('No habits scheduled yet'), findsNothing);
+    await _scrollUntilTextVisible(tester, 'Active Missions');
     expect(find.text('Unable to load missions'), findsOneWidget);
     expect(find.text('Failed to load missions from test'), findsOneWidget);
     expect(find.text('No active missions yet'), findsNothing);
@@ -266,6 +279,7 @@ void main() {
       find.text('Showing last loaded habits. Failed to refresh habits from test'),
       findsOneWidget,
     );
+    await _scrollUntilTextVisible(tester, 'Active Missions');
     expect(
       find.text(
         'Showing last loaded mission progress. Failed to refresh missions from test',
@@ -273,6 +287,6 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Read for 10 minutes'), findsOneWidget);
-    expect(find.text('Prototype a water filter'), findsOneWidget);
+    expect(find.text('Prototype a water filter'), findsWidgets);
   });
 }

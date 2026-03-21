@@ -61,7 +61,7 @@ class HabitService extends ChangeNotifier {
 
     try {
       final HabitLoadSnapshot snapshot = _snapshotLoader != null
-          ? await _snapshotLoader!()
+          ? await _snapshotLoader()
           : await _loadHabitSnapshot();
 
       _habits = snapshot.habits;

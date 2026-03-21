@@ -868,7 +868,7 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
               ? timeLabel
               : _slotLabelForDate(date, timeLabel);
           grouped.putIfAbsent(slotLabel, () => <SiteSessionData>[])
-            ..addAll(sessions);
+            .addAll(sessions);
         });
       }
 

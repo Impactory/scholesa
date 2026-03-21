@@ -384,9 +384,7 @@ class _HqIntegrationsHealthPageState extends State<HqIntegrationsHealthPage> {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              _tHqIntegrations(context, 'Unable to refresh integrations health right now. Showing the last successful data.') +
-                  ' ' +
-                  message,
+              '${_tHqIntegrations(context, 'Unable to refresh integrations health right now. Showing the last successful data.')} $message',
               style: const TextStyle(color: ScholesaColors.textPrimary),
             ),
           ),
