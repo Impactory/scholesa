@@ -32,6 +32,7 @@ Scope: Flutter app enabled routes, current runtime behavior, current test eviden
   - site identity honesty proof pass: 2 passed, 0 failed
   - site incidents honesty proof pass: 4 passed, 0 failed
   - site integrations health proof pass: 4 passed, 0 failed
+  - HQ feature flags proof pass: 8 passed, 0 failed
   - HQ user-admin audit-log proof pass: 12 passed, 0 failed
   - partner listings, integrations, and deliverables proof pass: 12 passed, 0 failed
   - partner integrations proof pass: 4 passed, 0 failed
@@ -64,7 +65,7 @@ Scope: Flutter app enabled routes, current runtime behavior, current test eviden
 | Partner contracts and deliverables | Yes | Mostly yes | Mostly yes | Mostly yes | Mostly yes on the audited contracts/launches plus deliverables first-load and stale-refresh failure paths, including preserved stale contracts and launches on refresh failure; stale-state warnings now announce accessibly, but deeper mutation depth is still partial | Yes | No obvious fake primary action in audited path | Strong for beta |
 | Partner listings and payouts | Yes | Mostly yes | Partly | Partly | Mostly yes on the audited payouts path plus listings first-load and stale-refresh failure paths, partial on the wider cluster | Yes | Listings create-and-persist path is now directly proven and no longer degrades outages into fake empty state; broader partner depth is still partial | Beta-safe, not gold |
 | HQ sites, role switcher, exports, analytics | Yes | Yes | Yes | Yes | Mostly yes | Yes | No obvious fake primary path in audited route tests | Strong for beta |
-| HQ billing, approvals, audit, safety, integrations health, feature flags, user admin | Yes | Mostly yes | Partly | Partly | Mostly yes on the audited billing, approvals, audit, feature-flags, and user-admin audit-log failure and stale-data paths, with stale audit warnings now assistive-tech visible; the wider cluster is still only partially proven | Yes | Feature-flags empty-state proof now exists, but operator depth remains workflow-only in places | Beta-safe, not gold |
+| HQ billing, approvals, audit, safety, integrations health, feature flags, user admin | Yes | Mostly yes | Partly | Partly | Mostly yes on the audited billing, approvals, audit, feature-flags, and user-admin audit-log failure and stale-data paths; feature flags now expose first-load failure detail, stale-refresh detail visibility, and labeled operator recovery controls, but the wider cluster is still only partially proven | Yes | Feature-flags failure-state truth is directly stronger now, but deeper rollout governance mutation depth remains workflow-only in places | Beta-safe, not gold |
 | Cross-role messages, notifications, profile, settings | Yes | Yes | Yes | Yes | Mostly yes | Yes | No obvious fake primary action | Strong for beta |
 
 ## B. Gold Blockers
@@ -99,7 +100,7 @@ Current truth:
 
 Risk concentration:
 
-- deeper rollout and governance breadth on HQ feature flags and related operator controls.
+- deeper rollout governance mutation breadth on HQ feature flags and related operator controls.
 - broader mutation and recovery depth on site sessions and site provisioning.
 - partner listings edit depth remains thinner than create-and-persist proof.
 - the root entry surface is still proven more by redirect behavior than by direct surface rendering.

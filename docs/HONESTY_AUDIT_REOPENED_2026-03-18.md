@@ -90,6 +90,8 @@ This is the reopened honesty pass after blocker remediation, clean builds, live 
 33. Refreshed direct site incidents proof for stale-refresh detail visibility.
 34. Hardened site integrations health stale-refresh behavior so operators keep the last successful integrations view with the refresh failure detail still visible, the refresh control labeled, and the warning assistive-tech announced.
 35. Refreshed direct site integrations health proof for stale-refresh detail visibility.
+36. Hardened HQ feature flags stale-refresh behavior so operators keep the last successful feature-flag and experiment data with refresh-failure detail visible, stale warnings assistive-tech announced, and app-bar recovery/history controls labeled.
+37. Refreshed direct HQ feature flags proof for first-load failure detail, stale-refresh detail visibility, and labeled operator controls.
 
 ### Release and operations fixes
 
@@ -110,6 +112,7 @@ This is the reopened honesty pass after blocker remediation, clean builds, live 
 - Focused site identity honesty regressions passed: 2 passed, 0 failed.
 - Focused site incidents honesty regressions passed: 4 passed, 0 failed.
 - Focused site integrations health regressions passed: 4 passed, 0 failed.
+- Focused HQ feature flags regressions passed: 8 passed, 0 failed.
 - Priority blocker page batch passed: 16 passed, 0 failed.
 - Settings logout and auth coverage passed: 26 passed, 0 failed.
 - Global session menu regressions passed: 2 passed, 0 failed.

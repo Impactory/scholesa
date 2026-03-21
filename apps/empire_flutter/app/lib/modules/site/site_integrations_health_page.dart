@@ -926,10 +926,9 @@ class _SiteIntegrationsHealthPageState
       if (!mounted) return;
       setState(() {
         _loadError = hadVisibleHealthData
-            ? _t(
+            ? '${_t(
                 'Unable to refresh integrations health right now. Showing the last successful data.',
-              ) +
-                ' ${error.toString()}'
+              )} ${error.toString()}'
             : _t('Unable to load integrations health right now.');
       });
     } finally {

@@ -18,7 +18,7 @@ Proof levels:
 
 Highest-value remaining blind spots:
 
-1. deeper federated rollout and governance breadth on `/hq/feature-flags`
+1. deeper federated rollout governance mutation breadth on `/hq/feature-flags`
 2. broader mutation depth on `/site/sessions` and `/site/provisioning`
 3. partner listings edit depth beyond create-and-persist proof
 4. root redirect proof is still stronger than direct home-surface rendering proof
@@ -111,7 +111,7 @@ Highest-value remaining blind spots:
 | `/hq/exports` | direct | `apps/empire_flutter/app/test/hq_exports_page_test.dart` | — |
 | `/hq/integrations-health` | direct | `apps/empire_flutter/app/test/hq_admin_placeholder_actions_test.dart` | Direct proof is narrower than full aggregation behavior |
 | `/hq/curriculum` | direct | `apps/empire_flutter/app/test/hq_curriculum_workflow_test.dart` | — |
-| `/hq/feature-flags` | direct | `apps/empire_flutter/app/test/hq_feature_flags_page_test.dart` | Honest empty-state, flag-toggle persistence, and failed-save truth are directly proven; deeper federated rollout governance breadth still leans on the large prototype workflow suite |
+| `/hq/feature-flags` | direct | `apps/empire_flutter/app/test/hq_feature_flags_page_test.dart` | Honest empty-state, first-load failure detail, stale-refresh detail visibility, labeled app-bar recovery controls, flag-toggle persistence, and failed-save truth are directly proven; deeper federated rollout governance mutation breadth still leans on the large prototype workflow suite |
 
 ## Cross-Role
 
@@ -134,7 +134,7 @@ Highest-value remaining blind spots:
 
 Prioritize direct proof next for:
 
-1. deeper federated rollout and governance coverage on `/hq/feature-flags`
+1. deeper federated rollout governance mutation coverage on `/hq/feature-flags`
 2. broader create, edit, and recovery depth on `/site/sessions` and `/site/provisioning`
 3. partner listings edit depth beyond create-and-persist proof
 4. stronger direct rendering proof around the `/` entry surface beyond redirect behavior
