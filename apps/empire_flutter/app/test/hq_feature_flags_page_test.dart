@@ -17,8 +17,10 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     List<Map<String, dynamic>>? candidatePackages,
     List<Map<String, dynamic>>? runtimeDeliveries,
     List<Map<String, dynamic>>? runtimeActivations,
+    List<Map<String, dynamic>>? runtimeRolloutEscalations,
     List<Map<String, dynamic>>? runtimeRolloutControls,
     this.failOnUpsertFeatureFlag = false,
+    this.failOnUpsertRolloutEscalation = false,
     this.failOnUpsertRolloutControl = false,
     this.failFeatureFlagsOnCall,
     this.failExperimentsOnCall,
@@ -36,6 +38,9 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
        _runtimeActivations = List<Map<String, dynamic>>.from(
          runtimeActivations ?? <Map<String, dynamic>>[],
        ),
+       _runtimeRolloutEscalations = List<Map<String, dynamic>>.from(
+         runtimeRolloutEscalations ?? <Map<String, dynamic>>[],
+       ),
        _runtimeRolloutControls = List<Map<String, dynamic>>.from(
          runtimeRolloutControls ?? <Map<String, dynamic>>[],
        ),
@@ -49,12 +54,16 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   final List<Map<String, dynamic>> _experiments;
   final List<Map<String, dynamic>> _runtimeActivations;
   final List<Map<String, dynamic>> _runtimeDeliveries;
+  final List<Map<String, dynamic>> _runtimeRolloutEscalations;
   final List<Map<String, dynamic>> _runtimeRolloutControls;
   final bool failOnUpsertFeatureFlag;
+  final bool failOnUpsertRolloutEscalation;
   final bool failOnUpsertRolloutControl;
   final int? failFeatureFlagsOnCall;
   final int? failExperimentsOnCall;
   final List<Map<String, dynamic>> recordedFlagUpdates =
+      <Map<String, dynamic>>[];
+    final List<Map<String, dynamic>> recordedRolloutEscalationUpdates =
       <Map<String, dynamic>>[];
   final List<Map<String, dynamic>> recordedRolloutControlUpdates =
       <Map<String, dynamic>>[];
@@ -234,8 +243,32 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     String? deliveryRecordId,
     String? status,
     int limit = 60,
-  }) async =>
-          <Map<String, dynamic>>[];
+  }) async {
+    Iterable<Map<String, dynamic>> rows = _runtimeRolloutEscalations;
+    if (experimentId != null) {
+      rows = rows.where(
+        (Map<String, dynamic> row) => row['experimentId'] == experimentId,
+      );
+    }
+    if (candidateModelPackageId != null) {
+      rows = rows.where(
+        (Map<String, dynamic> row) =>
+            row['candidateModelPackageId'] == candidateModelPackageId,
+      );
+    }
+    if (deliveryRecordId != null) {
+      rows = rows.where(
+        (Map<String, dynamic> row) => row['deliveryRecordId'] == deliveryRecordId,
+      );
+    }
+    if (status != null) {
+      rows = rows.where((Map<String, dynamic> row) => row['status'] == status);
+    }
+    return rows
+        .take(limit)
+        .map((Map<String, dynamic> row) => Map<String, dynamic>.from(row))
+        .toList();
+  }
 
   @override
   Future<List<Map<String, dynamic>>>
@@ -366,6 +399,64 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     }
     return id;
   }
+
+  @override
+  Future<String?> upsertFederatedLearningRuntimeRolloutEscalationRecord(
+    Map<String, dynamic> data,
+  ) async {
+    if (failOnUpsertRolloutEscalation) {
+      throw Exception('runtime rollout escalation save failed');
+    }
+    final Map<String, dynamic> normalized = Map<String, dynamic>.from(data);
+    recordedRolloutEscalationUpdates.add(normalized);
+    final String deliveryRecordId =
+        normalized['deliveryRecordId'] as String? ?? 'delivery-1';
+    final Map<String, dynamic>? delivery = _runtimeDeliveries.cast<Map<String, dynamic>?>().firstWhere(
+          (Map<String, dynamic>? row) => row?['id'] == deliveryRecordId,
+          orElse: () => null,
+        );
+    final int pendingCount = (delivery?['targetSiteIds'] as List?)?.length ?? 0;
+    final String id = 'runtime-rollout-escalation-$deliveryRecordId';
+    final Map<String, dynamic> persisted = <String, dynamic>{
+      'id': id,
+      'deliveryRecordId': deliveryRecordId,
+      'experimentId': delivery?['experimentId'] as String? ?? '',
+      'candidateModelPackageId':
+          delivery?['candidateModelPackageId'] as String? ?? '',
+      'runtimeTarget': delivery?['runtimeTarget'] as String? ?? '',
+      'targetSiteIds':
+          List<String>.from(delivery?['targetSiteIds'] as List? ?? const <String>[]),
+      'packageDigest': delivery?['packageDigest'] as String? ?? '',
+      'boundedDigest': delivery?['boundedDigest'] as String? ?? '',
+      'triggerSummaryId': delivery?['triggerSummaryId'] as String? ?? '',
+      'summaryIds':
+          List<String>.from(delivery?['summaryIds'] as List? ?? const <String>[]),
+      'schemaVersions':
+          List<String>.from(delivery?['schemaVersions'] as List? ?? const <String>[]),
+      'optimizerStrategies': List<String>.from(
+        delivery?['optimizerStrategies'] as List? ?? const <String>[],
+      ),
+      'compatibilityKey': delivery?['compatibilityKey'] as String? ?? '',
+      'warmStartPackageId': delivery?['warmStartPackageId'] as String?,
+      'warmStartModelVersion': delivery?['warmStartModelVersion'] as String?,
+      'manifestDigest': delivery?['manifestDigest'] as String? ?? '',
+      'status': normalized['status'] as String? ?? 'open',
+      'fallbackCount': 0,
+      'pendingCount': pendingCount,
+      'ownerUserId': normalized['ownerUserId'] as String? ?? '',
+      'notes': normalized['notes'] as String? ?? '',
+      'updatedAt': Timestamp.fromDate(DateTime(2026, 3, 21, 12)),
+    };
+    final int existingIndex = _runtimeRolloutEscalations.indexWhere(
+      (Map<String, dynamic> row) => row['deliveryRecordId'] == deliveryRecordId,
+    );
+    if (existingIndex >= 0) {
+      _runtimeRolloutEscalations[existingIndex] = persisted;
+    } else {
+      _runtimeRolloutEscalations.add(persisted);
+    }
+    return id;
+  }
 }
 
 class _FakeUpdateSummaryRepository
@@ -468,7 +559,9 @@ void main() {
         },
       ],
       runtimeActivations: const <Map<String, dynamic>>[],
+      runtimeRolloutEscalations: const <Map<String, dynamic>>[],
       runtimeRolloutControls: const <Map<String, dynamic>>[],
+      failOnUpsertRolloutEscalation: false,
       failOnUpsertRolloutControl: failOnUpsertRolloutControl,
     );
   }
@@ -822,5 +915,89 @@ void main() {
     expect(workflowBridge.experimentsLoadCount, 2);
     expect(find.text('Rollout control saved'), findsOneWidget);
     expect(find.text('Update control'), findsOneWidget);
+  });
+
+  testWidgets(
+      'hq feature flags escalation requires an owner while issue remains active',
+      (WidgetTester tester) async {
+    final _FakeWorkflowBridgeService workflowBridge =
+        buildRolloutGovernanceHarness();
+
+    await tester.pumpWidget(buildHarness(workflowBridge: workflowBridge));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    final Finder escalateAlertButton =
+        find.widgetWithText(TextButton, 'Escalate alert');
+
+    await tester.ensureVisible(escalateAlertButton);
+    await tester.pumpAndSettle();
+
+    expect(escalateAlertButton, findsOneWidget);
+
+    await tester.tap(escalateAlertButton);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Owner user ID is required while the rollout issue remains active.',
+      ),
+      findsOneWidget,
+    );
+    expect(workflowBridge.recordedRolloutEscalationUpdates, isEmpty);
+    expect(workflowBridge.experimentsLoadCount, 1);
+  });
+
+  testWidgets(
+      'hq feature flags escalation saves and reloads authoritative data',
+      (WidgetTester tester) async {
+    final _FakeWorkflowBridgeService workflowBridge =
+        buildRolloutGovernanceHarness();
+
+    await tester.pumpWidget(buildHarness(workflowBridge: workflowBridge));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(workflowBridge.experimentsLoadCount, 1);
+
+    final Finder escalateAlertButton =
+        find.widgetWithText(TextButton, 'Escalate alert');
+
+    await tester.ensureVisible(escalateAlertButton);
+    await tester.pumpAndSettle();
+
+    expect(escalateAlertButton, findsOneWidget);
+
+    await tester.tap(escalateAlertButton);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Owner user ID'),
+      'hq-escalation-owner',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Escalation notes'),
+      'Pending rollout requires HQ follow-up before wider activation.',
+    );
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(workflowBridge.recordedRolloutEscalationUpdates, hasLength(1));
+    expect(
+      workflowBridge.recordedRolloutEscalationUpdates.single['status'],
+      'open',
+    );
+    expect(
+      workflowBridge.recordedRolloutEscalationUpdates.single['ownerUserId'],
+      'hq-escalation-owner',
+    );
+    expect(workflowBridge.experimentsLoadCount, 2);
+    expect(find.text('Rollout escalation saved'), findsOneWidget);
+    expect(find.text('Update escalation'), findsOneWidget);
   });
 }
