@@ -25,6 +25,7 @@ Scope: Flutter app enabled routes, current runtime behavior, current test eviden
 
 - Focused page, workflow, regression, placeholder-action, and honesty test coverage now backs nearly the full enabled Flutter route surface.
 - Fresh verification in this pass:
+  - partner integrations proof pass: 4 passed, 0 failed
   - educator learner supports and partner deliverables proof pass: 12 passed, 0 failed
   - educator mission plans proof pass: 6 passed, 0 failed
   - provisioning, site sessions, and learner today proof pass: 7 passed, 0 failed

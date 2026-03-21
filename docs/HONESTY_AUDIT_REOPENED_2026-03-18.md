@@ -71,6 +71,8 @@ This is the reopened honesty pass after blocker remediation, clean builds, live 
 14. Added stale-data recovery messaging and refresh proof for educator learner supports when saved plans fail after prior success.
 15. Hardened partner deliverables so refresh failures preserve the last successful contracts and deliverables instead of wiping the page into a blocking outage.
 16. Added direct partner deliverables proof for first-load outage and stale-refresh behavior.
+17. Hardened partner integrations so first-load outages block honestly and refresh failures preserve the last successful connection state.
+18. Added direct partner integrations proof for first-load outage and stale-refresh behavior.
 
 ### Release and operations fixes
 
@@ -91,6 +93,7 @@ This is the reopened honesty pass after blocker remediation, clean builds, live 
 - Flutter shell logout mount regression passed: 1 passed, 0 failed.
 - Protected web logout shell regression passed: 3 passed, 0 failed.
 - Educator learner supports and partner deliverables honesty regressions passed: 12 passed, 0 failed.
+- Partner integrations honesty regressions passed: 4 passed, 0 failed.
 
 ### Full Flutter gate verification
 
