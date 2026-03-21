@@ -15,7 +15,13 @@ String _tLearnerCredentials(BuildContext context, String input) {
 }
 
 class LearnerCredentialsPage extends StatefulWidget {
-  const LearnerCredentialsPage({super.key});
+  const LearnerCredentialsPage({
+    super.key,
+    this.credentialsLoader,
+  });
+
+  final Future<List<CredentialModel>> Function(String learnerId, String? siteId)?
+      credentialsLoader;
 
   @override
   State<LearnerCredentialsPage> createState() => _LearnerCredentialsPageState();
@@ -58,11 +64,11 @@ class _LearnerCredentialsPageState extends State<LearnerCredentialsPage> {
     final FirestoreService? firestoreService = _maybeFirestoreService();
     final String learnerId = appState.userId?.trim() ?? '';
     final String siteId = _activeSiteId(appState);
+    final bool hadCredentials = _credentials.isNotEmpty;
 
     if (firestoreService == null) {
       setState(() {
         _error = _t('Credential storage unavailable right now.');
-        _credentials = const <CredentialModel>[];
         _isLoading = false;
       });
       return;
@@ -71,7 +77,6 @@ class _LearnerCredentialsPageState extends State<LearnerCredentialsPage> {
     if (learnerId.isEmpty) {
       setState(() {
         _error = _t('Learner identity unavailable right now.');
-        _credentials = const <CredentialModel>[];
         _isLoading = false;
       });
       return;
@@ -83,26 +88,94 @@ class _LearnerCredentialsPageState extends State<LearnerCredentialsPage> {
     });
 
     try {
-      final CredentialRepository repository =
-          CredentialRepository(firestore: firestoreService.firestore);
-      final List<CredentialModel> credentials = await repository.listByLearner(
-        learnerId,
-        siteId: siteId.isEmpty ? null : siteId,
-        limit: 50,
-      );
+      final List<CredentialModel> credentials =
+          await (widget.credentialsLoader != null
+              ? widget.credentialsLoader!(
+                  learnerId,
+                  siteId.isEmpty ? null : siteId,
+                )
+              : CredentialRepository(firestore: firestoreService.firestore)
+                  .listByLearner(
+                  learnerId,
+                  siteId: siteId.isEmpty ? null : siteId,
+                  limit: 50,
+                ));
       if (!mounted) return;
       setState(() {
         _credentials = credentials;
+        _error = null;
         _isLoading = false;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = _t('Unable to load credentials right now.');
-        _credentials = const <CredentialModel>[];
+        _error = hadCredentials
+            ? _t(
+                'Unable to refresh credentials right now. Showing the last successful data.',
+              )
+            : _t('Unable to load credentials right now.');
         _isLoading = false;
       });
     }
+  }
+
+  Widget _buildLoadErrorState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Text(
+              _error!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 16),
+            FilledButton.tonalIcon(
+              onPressed: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: const <String, dynamic>{
+                    'module': 'learner_credentials',
+                    'cta_id': 'retry_load_credentials',
+                    'surface': 'error_state',
+                  },
+                );
+                _loadCredentials();
+              },
+              icon: const Icon(Icons.refresh_rounded),
+              label: Text(_t('Retry')),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStaleDataBanner() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.orange.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              _error!,
+              style: const TextStyle(color: ScholesaColors.textPrimary),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   String _formatIssuedDate(CredentialModel credential) {
@@ -313,38 +386,8 @@ class _LearnerCredentialsPageState extends State<LearnerCredentialsPage> {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (_error != null) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Text(
-                      _error!,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                    const SizedBox(height: 16),
-                    FilledButton.tonalIcon(
-                      onPressed: () {
-                        TelemetryService.instance.logEvent(
-                          event: 'cta.clicked',
-                          metadata: const <String, dynamic>{
-                            'module': 'learner_credentials',
-                            'cta_id': 'retry_load_credentials',
-                            'surface': 'error_state',
-                          },
-                        );
-                        _loadCredentials();
-                      },
-                      icon: const Icon(Icons.refresh_rounded),
-                      label: Text(_t('Retry')),
-                    ),
-                  ],
-                ),
-              ),
-            );
+          if (_error != null && _credentials.isEmpty) {
+            return _buildLoadErrorState();
           }
 
           if (_credentials.isEmpty) {
@@ -353,11 +396,12 @@ class _LearnerCredentialsPageState extends State<LearnerCredentialsPage> {
 
           return RefreshIndicator(
             onRefresh: _loadCredentials,
-            child: ListView.builder(
+            child: ListView(
               padding: const EdgeInsets.all(16),
-              itemCount: _credentials.length,
-              itemBuilder: (BuildContext context, int index) =>
-                  _buildCredentialCard(_credentials[index]),
+              children: <Widget>[
+                if (_error != null) _buildStaleDataBanner(),
+                ..._credentials.map(_buildCredentialCard),
+              ],
             ),
           );
         },

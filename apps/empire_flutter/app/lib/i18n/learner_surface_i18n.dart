@@ -65,6 +65,8 @@ class LearnerSurfaceI18n {
     'Credential storage unavailable right now.': '目前无法访问凭证存储。',
     'Learner identity unavailable right now.': '目前无法识别学习者身份。',
     'Unable to load credentials right now.': '暂时无法加载凭证。',
+    'Unable to refresh credentials right now. Showing the last successful data.':
+        '当前无法刷新凭证。正在显示最近一次成功加载的数据。',
     'Credential title unavailable': '凭证标题不可用',
     'Retry': '重试',
     'Refresh': '刷新',
@@ -263,6 +265,8 @@ class LearnerSurfaceI18n {
     'Credential storage unavailable right now.': '目前無法存取憑證儲存。',
     'Learner identity unavailable right now.': '目前無法識別學習者身分。',
     'Unable to load credentials right now.': '暫時無法載入憑證。',
+    'Unable to refresh credentials right now. Showing the last successful data.':
+        '目前無法刷新憑證。正在顯示最近一次成功載入的資料。',
     'Credential title unavailable': '憑證標題不可用',
     'Retry': '重試',
     'Refresh': '重新整理',

@@ -8,6 +8,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
 import 'package:scholesa_app/auth/app_state.dart';
+import 'package:scholesa_app/domain/models.dart';
 import 'package:scholesa_app/modules/learner/learner_credentials_page.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
 
@@ -31,6 +32,7 @@ AppState _buildLearnerState() {
 Widget _buildHarness({
   required AppState appState,
   FirestoreService? firestoreService,
+  LearnerCredentialsPage? child,
 }) {
   final List<SingleChildWidget> providers = <SingleChildWidget>[
     ChangeNotifierProvider<AppState>.value(value: appState),
@@ -57,7 +59,7 @@ Widget _buildHarness({
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      home: const LearnerCredentialsPage(),
+      home: child ?? const LearnerCredentialsPage(),
     ),
   );
 }
@@ -109,6 +111,57 @@ void main() {
     expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Credential storage unavailable right now.'),
         findsOneWidget);
+    expect(find.text('No credentials issued yet'), findsNothing);
+  });
+
+  testWidgets('learner credentials page keeps stale credentials visible after refresh failure',
+      (WidgetTester tester) async {
+    int loadCount = 0;
+
+    await tester.pumpWidget(
+      _buildHarness(
+        appState: _buildLearnerState(),
+        firestoreService: FirestoreService(
+          firestore: FakeFirebaseFirestore(),
+          auth: _MockFirebaseAuth(),
+        ),
+        child: LearnerCredentialsPage(
+          credentialsLoader: (String learnerId, String? siteId) async {
+            loadCount += 1;
+            if (loadCount == 1) {
+              return <CredentialModel>[
+                CredentialModel(
+                  id: 'credential-1',
+                  siteId: siteId ?? 'site-1',
+                  learnerId: learnerId,
+                  title: 'Future Skills Sprint',
+                  issuedAt: Timestamp.fromDate(DateTime(2026, 3, 18)),
+                  pillarCodes: const <String>['future_skills'],
+                  skillIds: const <String>['collaboration'],
+                ),
+              ];
+            }
+            throw StateError('credentials refresh unavailable');
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Future Skills Sprint'), findsOneWidget);
+    expect(find.text('No credentials issued yet'), findsNothing);
+
+    await tester.tap(find.byTooltip('Refresh'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Unable to refresh credentials right now. Showing the last successful data.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Future Skills Sprint'), findsOneWidget);
     expect(find.text('No credentials issued yet'), findsNothing);
   });
 }
