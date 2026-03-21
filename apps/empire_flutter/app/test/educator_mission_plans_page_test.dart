@@ -122,6 +122,68 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
   });
 
+  testWidgets('educator mission plans page keeps stale plans visible after refresh failure',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final EducatorService educatorService = EducatorService(
+      firestoreService: firestoreService,
+      educatorId: 'educator-1',
+      siteId: 'site-1',
+    );
+    int loadCount = 0;
+
+    await tester.pumpWidget(
+      _buildHarness(
+        firestoreService: firestoreService,
+        educatorService: educatorService,
+        home: EducatorMissionPlansPage(
+          missionPlansLoader: (BuildContext context) async {
+            loadCount += 1;
+            if (loadCount == 1) {
+              return <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'id': 'mission-1',
+                  'title': 'Eco Build Sprint',
+                  'description': 'Prototype a reusable habitat solution.',
+                  'pillar': 'Future Skills',
+                  'difficulty': 'beginner',
+                  'status': 'draft',
+                  'assignedSessions': 0,
+                  'completedBy': 0,
+                  'evidenceDefaults': const <String>['explain_it_back'],
+                  'lessonSteps': const <String>['Launch challenge'],
+                  'educatorId': 'educator-1',
+                },
+              ];
+            }
+            throw StateError('mission plans unavailable');
+          },
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Eco Build Sprint'), findsWidgets);
+
+    await tester.tap(find.byTooltip('Refresh'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Eco Build Sprint'), findsWidgets);
+    expect(
+      find.text(
+        'Unable to refresh mission plans right now. Showing the last successful data. Failed to load mission plans: Bad state: mission plans unavailable',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('No missions yet'), findsNothing);
+  });
+
   testWidgets(
       'educator mission plans page shows an explicit load error instead of an empty state',
       (WidgetTester tester) async {

@@ -242,6 +242,11 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
         foregroundColor: Colors.white,
         actions: <Widget>[
           IconButton(
+            icon: const Icon(Icons.refresh_rounded),
+            tooltip: _tEducatorMissionPlans(context, 'Refresh'),
+            onPressed: _loadMissionPlans,
+          ),
+          IconButton(
             icon: const Icon(Icons.filter_list_rounded),
             onPressed: () => _showFilterDialog(),
           ),
@@ -1691,7 +1696,10 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              _tEducatorMissionPlans(context, 'Showing last loaded mission plans. ') +
+              _tEducatorMissionPlans(
+                    context,
+                    'Unable to refresh mission plans right now. Showing the last successful data. ',
+                  ) +
                   message,
               style: const TextStyle(color: Color(0xFF92400E)),
             ),

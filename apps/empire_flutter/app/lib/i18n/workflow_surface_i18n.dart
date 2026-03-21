@@ -94,6 +94,8 @@ class WorkflowSurfaceI18n {
         '我们暂时无法加载课程。请重试以检查当前状态。',
     'Unable to refresh sessions right now. Showing the last successful data. ':
         '目前无法刷新课程数据。正在显示最近一次成功加载的数据。',
+    'Unable to refresh mission plans right now. Showing the last successful data. ':
+        '目前无法刷新任务计划。正在显示最近一次成功加载的数据。',
     'Learners will appear here when enrollments sync to your roster.':
         '当报名数据同步到名册后，学习者会显示在这里。',
     'Differentiation lane': '差异化路径',
@@ -913,6 +915,8 @@ class WorkflowSurfaceI18n {
         '我們暫時無法載入課程。請重試以確認目前狀態。',
     'Unable to refresh sessions right now. Showing the last successful data. ':
         '目前無法刷新課程資料。正在顯示最近一次成功載入的資料。',
+    'Unable to refresh mission plans right now. Showing the last successful data. ':
+        '目前無法刷新任務計畫。正在顯示最近一次成功載入的資料。',
     'Learners will appear here when enrollments sync to your roster.':
         '當報名資料同步到名冊後，學習者會顯示在這裡。',
         'Retry': '重試',
