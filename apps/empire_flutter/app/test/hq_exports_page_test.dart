@@ -462,6 +462,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Audit export downloaded.'), findsOneWidget);
-    expect(_savedFileContent, contains('Entries: 1'));
+    expect(_savedFileContent, contains('Action: export.downloaded'));
   });
 }
