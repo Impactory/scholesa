@@ -51,6 +51,44 @@ Next proof task:
 2. Prove that upstream and downstream governance surfaces consuming this state preserve the same educational-truth and AI-transparency boundary.
 3. Do not upgrade to `Gold-ready` until the wider federated-learning workflow is verified end to end with real evidence provenance.
 
+## Route: `/site/sessions`
+
+Classification: `Full-flow partial`
+
+Proven gates:
+
+1. Gate A `State Truth`
+   - direct proof exists for first-load failure, date-based reload, and stale-after-success schedule refresh behavior
+2. Gate B `Real Mutation`
+   - direct route proof now exists that the primary create action persists a new session record for the active site
+3. Gate C `Authoritative Reload`
+   - direct route proof now exists that the page re-reads source-of-truth schedule data after create instead of relying only on optimistic local reflection
+4. Gate D `Recovery`
+   - refresh and retry controls are directly proven for load failure and stale-after-success states
+5. Gate E `Scope And Permission Correctness`
+   - direct route proof now exists that `/site/sessions` only allows `site` and `hq` roles and that the `/site/scheduling` alias redirects back to the canonical route
+5. Gate F `Accessibility And Discoverability`
+   - refresh and retry controls are labeled and failure copy is explicit in the route UI
+
+Missing gates:
+
+1. Gate G `Telemetry And Auditability`
+   - telemetry exists in the implementation, but direct proof of schedule-create auditability is still missing
+2. Gate H `Educational Truth`
+   - this operational route does not make capability claims itself, but its downstream relationship to attendance and evidence-bearing session workflows is not yet certified
+3. Gate I `AI Transparency`
+   - no AI claim is made on the route, but wider workflow coupling is still outside this focused route proof
+
+Blocking risk:
+
+- `/site/sessions` now directly proves honest loading, stale recovery, create persistence, authoritative reload, create failure, and route-level role gating. Remaining risk is no longer the page's create path or route gate itself; it is wider site workflow coupling with provisioning, attendance, and other downstream evidence-bearing surfaces.
+
+Next proof task:
+
+1. Audit `/site/provisioning` to the same mutation-and-reload depth.
+2. Verify downstream attendance or session-linked evidence workflows consume the persisted session state without introducing fake completion.
+3. Add direct auditability proof for schedule-create telemetry or operator trace where the product depends on that record.
+
 ## Template
 
 Route or workflow:

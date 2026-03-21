@@ -26,9 +26,10 @@ Interpretation:
 
 Highest-value remaining blind spots:
 
-1. broader mutation depth on `/site/sessions` and `/site/provisioning`
-2. partner listings edit depth beyond create-and-persist proof
-3. root redirect proof is still stronger than direct home-surface rendering proof
+1. wider federated-learning workflow certification beyond the route-level `/hq/feature-flags` proof
+2. broader mutation depth on `/site/provisioning` and wider site workflow coupling beyond the `/site/sessions` page itself
+3. partner listings edit depth beyond create-and-persist proof
+4. root redirect proof is still stronger than direct home-surface rendering proof
 
 
 Use this matrix together with the stricter full-flow gate in `docs/FULL_HONESTY_AUDIT_2026-03-19.md`. This file measures route-proof presence, not final workflow certification.
@@ -86,7 +87,7 @@ Use this matrix together with the stricter full-flow gate in `docs/FULL_HONESTY_
 | `/site/checkin` | direct | `apps/empire_flutter/app/test/checkin_placeholder_actions_test.dart` | — |
 | `/site/provisioning` | direct | `apps/empire_flutter/app/test/provisioning_page_test.dart`, `apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart` | Learner-tab failure and stale-data truth are now isolated; parent/link/cohort depth still leans on broader workflow tests |
 | `/site/dashboard` | direct | `apps/empire_flutter/app/test/site_dashboard_page_test.dart` | — |
-| `/site/sessions` | direct | `apps/empire_flutter/app/test/site_sessions_page_test.dart`, `apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart` | Date-based reload and stale-data recovery are now isolated; create/edit depth still relies on broader workflow tests |
+| `/site/sessions` | direct | `apps/empire_flutter/app/test/site_sessions_page_test.dart`, `apps/empire_flutter/app/test/site_sessions_route_gate_test.dart`, `apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart` | Date-based reload, stale-data recovery, create persistence, authoritative reload, create failure, and direct site/HQ route gating are now isolated on the route itself; broader scheduling workflow depth still extends beyond this single page |
 | `/site/ops` | direct | `apps/empire_flutter/app/test/site_ops_page_test.dart`, `apps/empire_flutter/app/test/site_ops_honesty_test.dart` | Runtime rollout first-load outage, stale-refresh truth, and direct in-surface refresh/retry recovery are now proven; deeper activity mutation breadth still leans on the broader workflow tests |
 | `/site/incidents` | direct | `apps/empire_flutter/app/test/site_incidents_honesty_test.dart` | First-load outage, stale-refresh retention, identity fallback labels, and visible refresh-failure detail are directly proven; broader incident mutation depth is still outside the focused audit |
 | `/site/identity` | direct | `apps/empire_flutter/app/test/site_identity_page_test.dart` | First-load outage, stale-refresh retention, and visible refresh-failure detail are directly proven; deeper resolution-action breadth still extends beyond the focused audit |
