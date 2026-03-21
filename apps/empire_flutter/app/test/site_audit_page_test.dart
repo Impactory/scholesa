@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
 import 'package:scholesa_app/auth/app_state.dart';
+import 'package:scholesa_app/domain/models.dart';
 import 'package:scholesa_app/domain/repositories.dart';
 import 'package:scholesa_app/modules/site/site_audit_page.dart';
 import 'package:scholesa_app/services/export_service.dart';
@@ -153,6 +154,56 @@ void main() {
     expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Unable to load audit logs right now'), findsOneWidget);
     expect(find.text('Retry'), findsOneWidget);
+  });
+
+  testWidgets('site audit keeps stale logs visible after refresh failure',
+      (WidgetTester tester) async {
+    int loadCount = 0;
+
+    await tester.binding.setSurfaceSize(const Size(1024, 1400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      _buildHarness(
+        appState: _buildSiteState(),
+        child: SiteAuditPage(
+          auditLogLoader: (String siteId) async {
+            loadCount += 1;
+            if (loadCount == 1) {
+              return <AuditLogModel>[
+                AuditLogModel(
+                  id: 'audit-1',
+                  actorId: 'site-admin-1',
+                  actorRole: 'site',
+                  action: 'pickup_authorization.saved',
+                  entityType: 'pickupAuthorization',
+                  entityId: 'pickup-1',
+                  siteId: 'site-1',
+                  details: const <String, dynamic>{'learnerId': 'learner-1'},
+                  createdAt: Timestamp.fromDate(DateTime(2026, 3, 18, 9, 30)),
+                ),
+              ];
+            }
+            throw StateError('audit refresh unavailable');
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('pickup_authorization.saved'), findsOneWidget);
+    expect(find.text('No audit logs found for this site'), findsNothing);
+
+    await tester.tap(find.byTooltip('Refresh'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Unable to refresh audit logs right now. Showing the last successful data.'),
+      findsOneWidget,
+    );
+    expect(find.text('pickup_authorization.saved'), findsOneWidget);
+    expect(find.text('No audit logs found for this site'), findsNothing);
   });
 
   testWidgets('site audit copies export when file export is unsupported',

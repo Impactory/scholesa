@@ -305,6 +305,8 @@ class SiteSurfaceI18n {
     'Timestamp': '时间戳',
     'Details unavailable': '详情不可用',
     'Unable to load audit logs right now': '当前无法加载审计日志',
+    'Unable to refresh audit logs right now. Showing the last successful data.':
+        '当前无法刷新审计日志。正在显示最近一次成功加载的数据。',
     'Unable to export audit logs right now.': '当前无法导出审计日志。',
     'Consent Management': '同意管理',
     'Manage media capture and research consent flags for each learner using live site records.':
@@ -658,6 +660,8 @@ class SiteSurfaceI18n {
     'Timestamp': '時間戳記',
     'Details unavailable': '詳細資料不可用',
     'Unable to load audit logs right now': '目前無法載入稽核日誌',
+    'Unable to refresh audit logs right now. Showing the last successful data.':
+        '目前無法刷新稽核日誌。正在顯示最近一次成功載入的資料。',
     'Unable to export audit logs right now.': '目前無法匯出稽核日誌。',
     'Consent Management': '同意管理',
     'Manage media capture and research consent flags for each learner using live site records.':

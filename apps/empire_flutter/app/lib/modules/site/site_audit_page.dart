@@ -326,6 +326,7 @@ class _SiteAuditPageState extends State<SiteAuditPage> {
       _isLoading = true;
       _loadError = null;
     });
+    final bool hadAuditLogs = _auditLogs.isNotEmpty;
 
     try {
       final List<AuditLogModel> logs = await (widget.auditLogLoader != null
@@ -342,8 +343,12 @@ class _SiteAuditPageState extends State<SiteAuditPage> {
         return;
       }
       setState(() {
-        _loadError =
-            _tSiteAudit(context, 'Unable to load audit logs right now');
+        _loadError = hadAuditLogs
+            ? _tSiteAudit(
+                context,
+                'Unable to refresh audit logs right now. Showing the last successful data.',
+              )
+            : _tSiteAudit(context, 'Unable to load audit logs right now');
       });
     } finally {
       if (mounted) {
