@@ -2140,6 +2140,8 @@ class _EditParentDialogState extends State<_EditParentDialog> {
     setState(() => _isSubmitting = false);
 
     if (result != null) {
+      await service.loadParents(siteId);
+      if (!mounted) return;
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(_tProvisioning(context, 'Parent updated'))),
