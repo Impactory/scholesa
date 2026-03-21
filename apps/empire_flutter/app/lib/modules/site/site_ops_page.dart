@@ -107,6 +107,11 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
         backgroundColor: ScholesaColors.siteGradient.colors.first,
         foregroundColor: Colors.white,
         actions: <Widget>[
+          IconButton(
+            tooltip: _tSiteOps(context, 'Refresh'),
+            onPressed: _isLoading ? null : () => _refreshOpsData('appbar'),
+            icon: const Icon(Icons.refresh_rounded),
+          ),
           Switch(
             value: _isDayOpen,
             onChanged:
@@ -441,14 +446,27 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
                     ),
                   )
                 : _runtimeRolloutError != null && !hasRolloutData
-                    ? Text(
-                        _tSiteOps(
-                          context,
-                          'Runtime rollout details are unavailable right now',
-                        ),
-                        style: const TextStyle(
-                          color: ScholesaColors.textSecondary,
-                        ),
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            _tSiteOps(
+                              context,
+                              'Runtime rollout details are unavailable right now',
+                            ),
+                            style: const TextStyle(
+                              color: ScholesaColors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          FilledButton.tonalIcon(
+                            onPressed: _isLoading ? null : () => _refreshOpsData(
+                                  'runtime_rollout_error_card',
+                                ),
+                            icon: const Icon(Icons.refresh_rounded),
+                            label: Text(_tSiteOps(context, 'Retry')),
+                          ),
+                        ],
                       )
                     : !hasRolloutData
                         ? Text(
@@ -545,14 +563,30 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
                               ],
                               if (_runtimeRolloutError != null) ...<Widget>[
                                 const SizedBox(height: 8),
-                                Text(
-                                  _tSiteOps(
-                                    context,
-                                    'Runtime rollout details are partially unavailable right now',
-                                  ),
-                                  style: const TextStyle(
-                                    color: ScholesaColors.textSecondary,
-                                  ),
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: <Widget>[
+                                    Expanded(
+                                      child: Text(
+                                        _tSiteOps(
+                                          context,
+                                          'Runtime rollout details are partially unavailable right now',
+                                        ),
+                                        style: const TextStyle(
+                                          color: ScholesaColors.textSecondary,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    TextButton.icon(
+                                      onPressed: _isLoading ? null : () =>
+                                          _refreshOpsData(
+                                            'runtime_rollout_partial_banner',
+                                          ),
+                                      icon: const Icon(Icons.refresh_rounded),
+                                      label: Text(_tSiteOps(context, 'Retry')),
+                                    ),
+                                  ],
                                 ),
                               ],
                               if (_runtimeDeliveryHistory
@@ -1218,6 +1252,18 @@ class _SiteOpsPageState extends State<SiteOpsPage> {
         setState(() => _isUpdatingDayOpen = false);
       }
     }
+  }
+
+  Future<void> _refreshOpsData(String surface) async {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'module': 'site_ops',
+        'cta_id': 'refresh_ops_data',
+        'surface': surface,
+      },
+    );
+    await _loadOpsData();
   }
 
   Future<void> _persistDayOpenStatus(

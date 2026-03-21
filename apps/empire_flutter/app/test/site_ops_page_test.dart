@@ -159,12 +159,33 @@ Future<void> _pumpPage(WidgetTester tester, {required FakeFirebaseFirestore fire
 }
 
 void main() {
-  testWidgets('site ops page shows unavailable runtime copy on load failure',
+  testWidgets('site ops page shows unavailable runtime copy and can retry from the same screen',
       (WidgetTester tester) async {
     final _SequencedRuntimeWorkflowBridgeService workflowBridge =
         _SequencedRuntimeWorkflowBridgeService(
       snapshots: <_RuntimeLoadSnapshot>[
         _RuntimeLoadSnapshot(error: StateError('runtime rollout unavailable')),
+        _RuntimeLoadSnapshot(
+          deliveries: <Map<String, dynamic>>[_runtimeDeliveryRow()],
+          history: const <Map<String, dynamic>>[],
+          activations: <Map<String, dynamic>>[_runtimeActivationRow()],
+          resolvedRuntimePackage: <String, dynamic>{
+            'packageId': 'fl_pkg_1',
+            'deliveryRecordId': 'fl_delivery_1',
+            'experimentId': 'fl_exp_1',
+            'siteId': 'site-1',
+            'runtimeTarget': 'flutter_mobile',
+            'packageDigest': 'sha256:pkg-1',
+            'manifestDigest': 'sha256:manifest-1',
+            'resolutionStatus': 'resolved',
+            'modelVersion': 'fl_runtime_model_v1',
+            'runtimeVectorLength': 8,
+            'runtimeVector': <double>[0.1, 0.2, 0.3, 0.4],
+            'runtimeVectorDigest': 'sha256:runtime-digest-1',
+            'rolloutStatus': 'distributed',
+            'rolloutControlMode': 'monitor',
+          },
+        ),
       ],
     );
 
@@ -176,6 +197,16 @@ void main() {
 
     expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Runtime rollout details are unavailable right now'), findsOneWidget);
+    expect(find.text('Retry'), findsOneWidget);
+    expect(find.byTooltip('Refresh'), findsOneWidget);
+
+    await tester.tap(find.text('Retry'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Runtime rollout details are unavailable right now'), findsNothing);
+    expect(find.text('Current package: fl_pkg_1 · resolved'), findsOneWidget);
   });
 
   testWidgets('site ops page keeps live rollout data visible after refresh failure',
@@ -220,5 +251,20 @@ void main() {
     expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Current package: fl_pkg_1 · resolved'), findsOneWidget);
     expect(find.text('Site rollout: 1 resolved · 0 staged · 0 fallback · 0 pending'), findsOneWidget);
+
+    await tester.enterText(
+      find.byType(TextField).first,
+      'Guardian pickup updated after runtime refresh issue.',
+    );
+    await tester.scrollUntilVisible(
+      find.text('Save Safety Note'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('Save Safety Note'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Runtime rollout details are partially unavailable right now'), findsOneWidget);
+    expect(find.text('Retry'), findsOneWidget);
   });
 }
