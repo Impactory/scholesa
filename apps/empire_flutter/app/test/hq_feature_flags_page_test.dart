@@ -339,6 +339,27 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   }
 
   @override
+  Future<List<Map<String, dynamic>>> listFederatedLearningRuntimeRolloutAuditEvents({
+    String? experimentId,
+    String? candidateModelPackageId,
+    String? deliveryRecordId,
+    String? siteId,
+    int limit = 160,
+  }) async =>
+      <Map<String, dynamic>>[];
+
+  @override
+  Future<List<Map<String, dynamic>>>
+      listFederatedLearningRuntimeRolloutEscalationHistoryRecords({
+    String? experimentId,
+    String? candidateModelPackageId,
+    String? deliveryRecordId,
+    String? status,
+    int limit = 160,
+  }) async =>
+          <Map<String, dynamic>>[];
+
+  @override
   Future<List<Map<String, dynamic>>>
       listFederatedLearningCandidatePromotionRecords({
     String? experimentId,
@@ -1009,6 +1030,59 @@ void main() {
     expect(workflowBridge.experimentsLoadCount, 1);
     expect(find.text('Rollout alert triage failed'), findsOneWidget);
     expect(find.text('Acknowledge alert'), findsOneWidget);
+  });
+
+  testWidgets(
+      'hq feature flags alert history reflects the saved triage record',
+      (WidgetTester tester) async {
+    final _FakeWorkflowBridgeService workflowBridge =
+        buildRolloutGovernanceHarness();
+
+    await tester.pumpWidget(buildHarness(workflowBridge: workflowBridge));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    final Finder acknowledgeAlertButton =
+        find.widgetWithText(TextButton, 'Acknowledge alert');
+
+    await tester.ensureVisible(acknowledgeAlertButton);
+    await tester.pumpAndSettle();
+
+    await tester.tap(acknowledgeAlertButton);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'HQ notes'),
+      'HQ captured rollout triage context for the pending delivery.',
+    );
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    final Finder alertHistoryButton =
+        find.widgetWithText(TextButton, 'Alert history');
+
+    await tester.ensureVisible(alertHistoryButton);
+    await tester.pumpAndSettle();
+
+    expect(alertHistoryButton, findsOneWidget);
+
+    await tester.tap(alertHistoryButton);
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Runtime rollout alert history: Prototype Voice Loop'),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'HQ notes: HQ captured rollout triage context for the pending delivery.',
+      ),
+      findsWidgets,
+    );
+    expect(find.textContaining('delivery-1 · acknowledged'), findsOneWidget);
   });
 
   testWidgets(
