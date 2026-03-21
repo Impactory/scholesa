@@ -175,7 +175,7 @@ Interpretation rule:
 - Protected web logout shell regression passed: 3 passed, 0 failed.
 - Educator learner supports and partner deliverables honesty regressions passed: 12 passed, 0 failed.
 - Partner integrations honesty regressions passed: 4 passed, 0 failed.
-- Partner listings, integrations, and deliverables honesty regressions passed: 12 passed, 0 failed.
+- Partner listings, integrations, and deliverables honesty regressions passed: 13 passed, 0 failed.
 - HQ user-admin audit-log honesty regressions passed: 12 passed, 0 failed.
 - Partner contracting workflow honesty regressions passed: 6 passed, 0 failed.
 

@@ -81,7 +81,7 @@ Because of this stricter standard, references below to direct proof or honest st
   - site integrations health proof pass: 4 passed, 0 failed
   - HQ feature flags proof pass: 22 passed, 0 failed
   - HQ user-admin audit-log proof pass: 12 passed, 0 failed
-  - partner listings, integrations, and deliverables proof pass: 12 passed, 0 failed
+  - partner listings, integrations, and deliverables proof pass: 13 passed, 0 failed
   - partner integrations proof pass: 4 passed, 0 failed
   - educator learner supports and partner deliverables proof pass: 12 passed, 0 failed
   - educator mission plans proof pass: 6 passed, 0 failed
