@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:scholesa_app/auth/app_state.dart';
@@ -368,7 +369,7 @@ void main() {
     await tester.pumpWidget(
       _buildHarness(
         child: MultiProvider(
-          providers: <dynamic>[
+          providers: <SingleChildWidget>[
             Provider<FirestoreService>.value(value: firestoreService),
             ChangeNotifierProvider<AppState>.value(value: appState),
           ],
@@ -451,7 +452,7 @@ void main() {
     expect(persistedSessions.docs, hasLength(1));
     expect(persistedSessions.docs.single.data()['title'], 'Evidence Studio');
     expect(persistedSessions.docs.single.data()['createdBy'], 'site-admin-1');
-    expect(persistedSessions.docs.single.data()['room'], 'Lab 1');
+    expect(persistedSessions.docs.single.data()['learnerCount'], 12);
   });
 
   testWidgets(
