@@ -5,7 +5,7 @@ Purpose: record route and workflow reviews using the explicit output format from
 
 ## Route: `/hq/feature-flags`
 
-Classification: `Full-flow partial`
+Classification: `Full-flow verified`
 
 Proven gates:
 
@@ -30,6 +30,7 @@ Proven gates:
 7. Gate G `Telemetry And Auditability`
    - refresh and history app-bar actions emit telemetry; rollout governance surfaces expose audit and history dialogs in implementation
    - direct proof now exists that the alert-history surface reflects saved rollout-triage, rollout-control, and rollout-escalation state
+   - direct proof now exists that the rollout-audit dialog renders saved alert, control, and escalation audit events for the targeted delivery scope
 8. Gate H `Educational Truth`
    - direct route proof now exists that rollout status is explicitly separated from learner growth, capability mastery, portfolio evidence, and Passport claims
 9. Gate I `AI Transparency`
@@ -37,18 +38,18 @@ Proven gates:
 
 Missing gates:
 
-1. Gate G `Telemetry And Auditability`
-   - route proof still does not verify every audit trail source beyond the alert-history surface itself
+1. None at the focused route level under the current certification gate.
+   - Wider federated-learning governance still needs workflow-level certification outside this single route before any gold-ready claim.
 
 Blocking risk:
 
-- The route now directly proves HQ-only access, HQ-bounded delivery context, rollout-alert triage, rollout-control, and rollout-escalation mutation behavior across success, validation, reload, and backend-failure paths, and it explicitly separates rollout state from learner-evidence and AI-disclosure claims. Remaining risk is now concentrated in audit-source certification beyond the alert-history surface.
+- The route now directly proves HQ-only access, HQ-bounded delivery context, rollout-alert triage, rollout-control, and rollout-escalation mutation behavior across success, validation, reload, and backend-failure paths, and it explicitly separates rollout state from learner-evidence and AI-disclosure claims. Remaining risk is now outside this single route: wider federated-learning governance workflow coupling and gold-ready evidence requirements.
 
 Next proof task:
 
-1. Decide whether the existing alert-history surface is sufficient auditability for this route or whether a separate audit-surface proof is still required for certification.
-2. If not, add direct proof for the broader rollout-audit surface or record explicitly why alert history is the authoritative traceability boundary for this route.
-3. Then decide whether `/hq/feature-flags` can move from `Full-flow partial` to `Full-flow verified` or whether wider federated-learning workflow coupling still blocks it.
+1. Keep `/hq/feature-flags` marked `Full-flow verified` at the route level and move the next audit pass to cross-route federated-learning workflow coupling.
+2. Prove that upstream and downstream governance surfaces consuming this state preserve the same educational-truth and AI-transparency boundary.
+3. Do not upgrade to `Gold-ready` until the wider federated-learning workflow is verified end to end with real evidence provenance.
 
 ## Template
 

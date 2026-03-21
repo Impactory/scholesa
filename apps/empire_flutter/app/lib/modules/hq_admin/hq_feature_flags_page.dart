@@ -7638,6 +7638,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                             SizedBox(
                               width: 240,
                               child: DropdownButtonFormField<String>(
+                                isExpanded: true,
                                 initialValue: selectedPackageId,
                                 decoration: InputDecoration(
                                   labelText: _tHqFeatureFlags(
@@ -7667,6 +7668,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                             SizedBox(
                               width: 220,
                               child: DropdownButtonFormField<String>(
+                                isExpanded: true,
                                 initialValue: selectedSiteId,
                                 decoration: InputDecoration(
                                   labelText: _tHqFeatureFlags(

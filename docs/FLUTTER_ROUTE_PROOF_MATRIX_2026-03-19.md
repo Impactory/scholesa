@@ -26,10 +26,10 @@ Interpretation:
 
 Highest-value remaining blind spots:
 
-1. audit-source certification depth for `/hq/feature-flags` beyond the alert-history surface
-2. broader mutation depth on `/site/sessions` and `/site/provisioning`
-3. partner listings edit depth beyond create-and-persist proof
-4. root redirect proof is still stronger than direct home-surface rendering proof
+1. broader mutation depth on `/site/sessions` and `/site/provisioning`
+2. partner listings edit depth beyond create-and-persist proof
+3. root redirect proof is still stronger than direct home-surface rendering proof
+
 
 Use this matrix together with the stricter full-flow gate in `docs/FULL_HONESTY_AUDIT_2026-03-19.md`. This file measures route-proof presence, not final workflow certification.
 
@@ -121,7 +121,7 @@ Use this matrix together with the stricter full-flow gate in `docs/FULL_HONESTY_
 | `/hq/exports` | direct | `apps/empire_flutter/app/test/hq_exports_page_test.dart` | — |
 | `/hq/integrations-health` | direct | `apps/empire_flutter/app/test/hq_admin_placeholder_actions_test.dart` | Direct proof is narrower than full aggregation behavior |
 | `/hq/curriculum` | direct | `apps/empire_flutter/app/test/hq_curriculum_workflow_test.dart` | — |
-| `/hq/feature-flags` | direct | `apps/empire_flutter/app/test/hq_feature_flags_page_test.dart`, `apps/empire_flutter/app/test/hq_feature_flags_route_gate_test.dart` | Honest empty-state, first-load failure detail, stale-refresh detail visibility, labeled app-bar recovery controls, flag-toggle persistence, failed-save truth, HQ-only route gating, HQ-bounded dialog context, rollout-alert triage save-plus-reload and failure truth, rollout-control validation/save-plus-reload plus failure truth, rollout-escalation validation/save-plus-reload plus failure truth, alert-history reflection of saved triage/control/escalation state, and explicit copy that rollout status is not learner evidence, mastery, Passport, or AI-use disclosure truth are directly proven; broader audit-source certification still leans on the wider federated-learning workflow suite |
+| `/hq/feature-flags` | direct | `apps/empire_flutter/app/test/hq_feature_flags_page_test.dart`, `apps/empire_flutter/app/test/hq_feature_flags_route_gate_test.dart` | Honest empty-state, first-load failure detail, stale-refresh detail visibility, labeled app-bar recovery controls, flag-toggle persistence, failed-save truth, HQ-only route gating, HQ-bounded dialog context, rollout-alert triage save-plus-reload and failure truth, rollout-control validation/save-plus-reload plus failure truth, rollout-escalation validation/save-plus-reload plus failure truth, alert-history reflection of saved triage/control/escalation state, rollout-audit feed rendering for saved governance events, and explicit copy that rollout status is not learner evidence, mastery, Passport, or AI-use disclosure truth are directly proven; route-level full-flow gate is satisfied, but wider federated-learning workflow certification remains separate |
 
 ## Cross-Role
 
@@ -144,10 +144,9 @@ Use this matrix together with the stricter full-flow gate in `docs/FULL_HONESTY_
 
 Prioritize direct proof next for:
 
-1. audit-source proof on `/hq/feature-flags` after consequential governance mutations
-2. broader create, edit, and recovery depth on `/site/sessions` and `/site/provisioning`
-3. partner listings edit depth beyond create-and-persist proof
-4. stronger direct rendering proof around the `/` entry surface beyond redirect behavior
+1. broader create, edit, and recovery depth on `/site/sessions` and `/site/provisioning`
+2. partner listings edit depth beyond create-and-persist proof
+3. stronger direct rendering proof around the `/` entry surface beyond redirect behavior
 
 Then close the final workflow-only root-entry gap and deepen mutation and failure-path proof on the operationally risky routes before claiming gold.
 

@@ -60,6 +60,8 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
   final List<Map<String, dynamic>> _runtimeActivations;
   final List<Map<String, dynamic>> _runtimeDeliveries;
   final List<Map<String, dynamic>> _runtimeRolloutAlerts;
+  final List<Map<String, dynamic>> _runtimeRolloutAuditEvents =
+      <Map<String, dynamic>>[];
   final List<Map<String, dynamic>> _runtimeRolloutEscalations;
   final List<Map<String, dynamic>> _runtimeRolloutControls;
   final bool failOnUpsertFeatureFlag;
@@ -345,8 +347,42 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     String? deliveryRecordId,
     String? siteId,
     int limit = 160,
-  }) async =>
-      <Map<String, dynamic>>[];
+  }) async {
+    Iterable<Map<String, dynamic>> rows = _runtimeRolloutAuditEvents;
+    if (experimentId != null) {
+      rows = rows.where(
+        (Map<String, dynamic> row) =>
+            (row['details'] as Map<String, dynamic>)['experimentId'] == experimentId,
+      );
+    }
+    if (candidateModelPackageId != null) {
+      rows = rows.where(
+        (Map<String, dynamic> row) =>
+            (row['details'] as Map<String, dynamic>)['candidateModelPackageId'] ==
+            candidateModelPackageId,
+      );
+    }
+    if (deliveryRecordId != null) {
+      rows = rows.where(
+        (Map<String, dynamic> row) =>
+            (row['details'] as Map<String, dynamic>)['deliveryRecordId'] ==
+            deliveryRecordId,
+      );
+    }
+    if (siteId != null) {
+      rows = rows.where((Map<String, dynamic> row) {
+        final Map<String, dynamic> details =
+            Map<String, dynamic>.from(row['details'] as Map);
+        final List<String> targetSiteIds =
+            List<String>.from(details['targetSiteIds'] as List? ?? const <String>[]);
+        return details['siteId'] == siteId || targetSiteIds.contains(siteId);
+      });
+    }
+    return rows
+        .take(limit)
+        .map((Map<String, dynamic> row) => Map<String, dynamic>.from(row))
+        .toList();
+  }
 
   @override
   Future<List<Map<String, dynamic>>>
@@ -460,6 +496,12 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     } else {
       _runtimeRolloutAlerts.add(persisted);
     }
+    _recordRolloutAuditEvent(
+      action: 'federated_learning.runtime_rollout_alert_record.upsert',
+      collection: 'federatedLearningRuntimeRolloutAlertRecords',
+      documentId: id,
+      details: persisted,
+    );
     return id;
   }
 
@@ -515,6 +557,12 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     } else {
       _runtimeRolloutControls.add(persisted);
     }
+    _recordRolloutAuditEvent(
+      action: 'federated_learning.runtime_rollout_control_record.upsert',
+      collection: 'federatedLearningRuntimeRolloutControlRecords',
+      documentId: id,
+      details: persisted,
+    );
     return id;
   }
 
@@ -573,7 +621,32 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     } else {
       _runtimeRolloutEscalations.add(persisted);
     }
+    _recordRolloutAuditEvent(
+      action: 'federated_learning.runtime_rollout_escalation_record.upsert',
+      collection: 'federatedLearningRuntimeRolloutEscalationRecords',
+      documentId: id,
+      details: persisted,
+    );
     return id;
+  }
+
+  void _recordRolloutAuditEvent({
+    required String action,
+    required String collection,
+    required String documentId,
+    required Map<String, dynamic> details,
+  }) {
+    final int timestamp = DateTime.utc(2026, 3, 21, 12).millisecondsSinceEpoch +
+        _runtimeRolloutAuditEvents.length;
+    _runtimeRolloutAuditEvents.add(<String, dynamic>{
+      'id': 'audit-${_runtimeRolloutAuditEvents.length + 1}',
+      'action': action,
+      'collection': collection,
+      'documentId': documentId,
+      'timestamp': timestamp,
+      'userId': 'hq-operator',
+      'details': Map<String, dynamic>.from(details),
+    });
   }
 }
 
@@ -1215,6 +1288,106 @@ void main() {
     expect(
       find.textContaining(
         'Pending rollout requires HQ follow-up before wider activation.',
+      ),
+      findsWidgets,
+    );
+  });
+
+  testWidgets(
+      'hq feature flags rollout audit reflects saved governance mutations',
+      (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1600, 2200);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final _FakeWorkflowBridgeService workflowBridge =
+        buildRolloutGovernanceHarness();
+
+    await tester.pumpWidget(buildHarness(workflowBridge: workflowBridge));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    final Finder acknowledgeAlertButton =
+        find.widgetWithText(TextButton, 'Acknowledge alert');
+    await tester.ensureVisible(acknowledgeAlertButton);
+    await tester.pumpAndSettle();
+    await tester.tap(acknowledgeAlertButton);
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'HQ notes'),
+      'Fallback and pending rollout reviewed by HQ operator.',
+    );
+    await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    final Finder rolloutControlButton =
+        find.widgetWithText(TextButton, 'Rollout control');
+    await tester.ensureVisible(rolloutControlButton);
+    await tester.pumpAndSettle();
+    await tester.tap(rolloutControlButton);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(DropdownButtonFormField<String>).last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('restricted').last);
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Owner user ID'),
+      'hq-operator-1',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Control reason'),
+      'Fallback pending while HQ reviews bounded rollout health.',
+    );
+    await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    final Finder escalateAlertButton =
+        find.widgetWithText(TextButton, 'Escalate alert');
+    await tester.ensureVisible(escalateAlertButton);
+    await tester.pumpAndSettle();
+    await tester.tap(escalateAlertButton);
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Owner user ID'),
+      'hq-escalation-owner',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Escalation notes'),
+      'Pending rollout requires HQ follow-up before wider activation.',
+    );
+    await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    final Finder openRolloutAuditButton =
+        find.widgetWithText(TextButton, 'Open rollout audit');
+    await tester.ensureVisible(openRolloutAuditButton);
+    await tester.pumpAndSettle();
+    await tester.tap(openRolloutAuditButton);
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Runtime rollout audit: Prototype Voice Loop · delivery-1'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Alert triage delivery-1 · acknowledged'), findsOneWidget);
+    expect(find.textContaining('Control delivery-1 · restricted'), findsOneWidget);
+    expect(find.textContaining('Escalation delivery-1 · open'), findsOneWidget);
+    expect(find.textContaining('owner hq-operator-1'), findsWidgets);
+    expect(find.textContaining('owner hq-escalation-owner'), findsWidgets);
+    expect(
+      find.textContaining(
+        'Fallback pending while HQ reviews bounded rollout health.',
+      ),
+      findsWidgets,
+    );
+    expect(
+      find.textContaining(
+        'Delivery delivery-1 · 0 fallback · 1 pending',
       ),
       findsWidgets,
     );
