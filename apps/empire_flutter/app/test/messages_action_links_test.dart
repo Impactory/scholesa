@@ -23,6 +23,7 @@ class _FakeMessageService extends MessageService {
     List<Conversation>? conversations,
     this.loading = false,
     this.loadError,
+    this.onLoad,
   })  : _notifications = List<Message>.from(notifications ?? const <Message>[]),
         _conversations = List<Conversation>.from(conversations ?? const <Conversation>[]),
         super(
@@ -37,6 +38,10 @@ class _FakeMessageService extends MessageService {
   final List<Conversation> _conversations;
   final bool loading;
   final String? loadError;
+  final Future<void> Function(_FakeMessageService service)? onLoad;
+
+  bool _loadingValue = false;
+  String? _errorValue;
 
   @override
   List<Message> get notificationMessages => List<Message>.unmodifiable(_notifications);
@@ -45,13 +50,27 @@ class _FakeMessageService extends MessageService {
   List<Conversation> get conversations => List<Conversation>.unmodifiable(_conversations);
 
   @override
-  bool get isLoading => loading;
+  bool get isLoading => onLoad == null ? loading : _loadingValue;
 
   @override
-  String? get error => loadError;
+  String? get error => onLoad == null ? loadError : _errorValue;
+
+  void setLoadError(String? value) {
+    _errorValue = value;
+  }
 
   @override
-  Future<void> loadMessages() async {}
+  Future<void> loadMessages() async {
+    if (onLoad == null) {
+      return;
+    }
+    _loadingValue = true;
+    _errorValue = null;
+    notifyListeners();
+    await onLoad!(this);
+    _loadingValue = false;
+    notifyListeners();
+  }
 }
 
 class _FakeUrlLauncherPlatform extends UrlLauncherPlatform {
@@ -399,6 +418,84 @@ void main() {
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
       expect(find.text('No conversations'), findsNothing);
+    });
+
+    testWidgets('messages page keeps stale inbox data visible after refresh failure',
+        (WidgetTester tester) async {
+      int loadCount = 0;
+      final _FakeMessageService messageService = _FakeMessageService(
+        notifications: <Message>[
+          Message(
+            id: 'message-1',
+            title: 'Parent update',
+            body: 'Bring the prototype notes tomorrow.',
+            type: MessageType.announcement,
+            senderName: 'Scholesa Team',
+            createdAt: DateTime(2026, 3, 17, 9),
+            isRead: false,
+          ),
+        ],
+        conversations: <Conversation>[
+          Conversation(
+            id: 'thread-1',
+            participantIds: const <String>['test-user-1', 'educator-1'],
+            participantNames: const <String>['Test User', 'Educator One'],
+            lastMessage: Message(
+              id: 'thread-message-1',
+              title: 'Direct conversation',
+              body: 'Latest thread update.',
+              type: MessageType.direct,
+              senderName: 'Educator One',
+              createdAt: DateTime(2026, 3, 17, 10),
+              isRead: false,
+            ),
+            updatedAt: DateTime(2026, 3, 17, 10),
+            unreadCount: 1,
+          ),
+        ],
+        onLoad: (_FakeMessageService service) async {
+          loadCount += 1;
+          if (loadCount > 1) {
+            service.setLoadError('Failed to load messages: boom');
+          }
+        },
+      );
+      final GoRouter router = GoRouter(
+        initialLocation: '/messages',
+        routes: <RouteBase>[
+          GoRoute(
+            path: '/messages',
+            builder: (BuildContext context, GoRouterState state) =>
+                const MessagesPage(),
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        _buildHarness(
+          router: router,
+          providers: <SingleChildWidget>[
+            ChangeNotifierProvider<MessageService>.value(value: messageService),
+          ],
+        ),
+      );
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Parent update'), findsOneWidget);
+
+      await tester.tap(find.byTooltip('Refresh'));
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Parent update'), findsOneWidget);
+      expect(
+        find.text(
+          'Unable to refresh messages right now. Showing the last successful data. Failed to load messages: boom',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('No notifications'), findsNothing);
     });
   });
 }
