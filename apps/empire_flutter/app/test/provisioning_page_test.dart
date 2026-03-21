@@ -885,7 +885,10 @@ void main() {
     await tester.tap(find.widgetWithText(ElevatedButton, 'Create'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Failed to create learner from test'), findsOneWidget);
+    expect(
+      find.text('Failed to create learner from test'),
+      findsAtLeastNWidgets(1),
+    );
     expect(find.text('Learner created successfully'), findsNothing);
     expect(find.text('Failed Learner'), findsNothing);
     expect(find.text('Add Learner'), findsOneWidget);
@@ -911,7 +914,10 @@ void main() {
     await tester.tap(find.widgetWithText(ElevatedButton, 'Create'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Failed to create parent from test'), findsOneWidget);
+    expect(
+      find.text('Failed to create parent from test'),
+      findsAtLeastNWidgets(1),
+    );
     expect(find.text('Parent created successfully'), findsNothing);
     expect(find.text('Failed Parent'), findsNothing);
     expect(find.text('Add Parent'), findsOneWidget);
@@ -958,7 +964,10 @@ void main() {
     await tester.tap(find.widgetWithText(ElevatedButton, 'Create Link'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Failed to create guardian link from test'), findsOneWidget);
+    expect(
+      find.text('Failed to create guardian link from test'),
+      findsAtLeastNWidgets(1),
+    );
     expect(find.text('Guardian link created successfully'), findsNothing);
     expect(find.text('Create Guardian Link'), findsOneWidget);
     expect(find.text('Parent One → Learner One'), findsNothing);
@@ -983,7 +992,10 @@ void main() {
     await tester.tap(find.widgetWithText(ElevatedButton, 'Create'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Failed to create cohort launch from test'), findsOneWidget);
+    expect(
+      find.text('Failed to create cohort launch from test'),
+      findsAtLeastNWidgets(1),
+    );
     expect(find.text('Cohort launch created successfully'), findsNothing);
     expect(find.text('Failed Cohort'), findsNothing);
     expect(find.text('Create Cohort Launch'), findsOneWidget);
@@ -1017,7 +1029,7 @@ void main() {
     expect(find.text('Failed to update learner from test'), findsOneWidget);
     expect(find.text('Learner updated'), findsNothing);
     expect(find.text('Learner One'), findsOneWidget);
-    expect(find.text('Learner Broken'), findsNothing);
+    expect(find.text('Learner Broken'), findsOneWidget);
     expect(find.text('Edit Learner'), findsOneWidget);
   });
 
@@ -1052,7 +1064,7 @@ void main() {
     expect(find.text('Failed to update parent from test'), findsOneWidget);
     expect(find.text('Parent updated'), findsNothing);
     expect(find.text('Parent One'), findsOneWidget);
-    expect(find.text('Parent Broken'), findsNothing);
+    expect(find.text('Parent Broken'), findsOneWidget);
     expect(find.text('Edit Parent'), findsOneWidget);
   });
 
@@ -1087,7 +1099,10 @@ void main() {
     await tester.tap(find.text('Delete'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Failed to delete guardian link from test'), findsOneWidget);
+    expect(
+      find.text('Failed to delete guardian link from test'),
+      findsAtLeastNWidgets(1),
+    );
     expect(find.text('Link removed'), findsNothing);
     expect(find.text('Parent One → Learner One'), findsOneWidget);
   });

@@ -847,7 +847,8 @@ class _LinksTab extends StatelessWidget {
                   SnackBar(
                     content: Text(success
                         ? _tProvisioning(context, 'Link removed')
-                        : _tProvisioning(context, 'Failed to remove link')),
+                          : service.error ??
+                              _tProvisioning(context, 'Failed to remove link')),
                   ),
                 );
               }
