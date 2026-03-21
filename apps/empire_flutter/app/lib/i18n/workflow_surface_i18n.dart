@@ -486,9 +486,17 @@ class WorkflowSurfaceI18n {
     'Empty': '空',
     'Download Export': '下载导出',
     'Unable to load the analytics export bundle right now.': '当前无法加载分析导出包。',
+    'Unable to refresh the analytics export bundle right now. Showing the last successful bundle.':
+        '当前无法刷新分析导出包。正在显示最近一次成功加载的导出包。',
     'Unable to load the billing export bundle right now.': '当前无法加载账单导出包。',
+    'Unable to refresh the billing export bundle right now. Showing the last successful bundle.':
+        '当前无法刷新账单导出包。正在显示最近一次成功加载的导出包。',
     'Unable to load the audit export bundle right now.': '当前无法加载审计导出包。',
+    'Unable to refresh the audit export bundle right now. Showing the last successful bundle.':
+        '当前无法刷新审计导出包。正在显示最近一次成功加载的导出包。',
     'Unable to load the safety export bundle right now.': '当前无法加载安全导出包。',
+    'Unable to refresh the safety export bundle right now. Showing the last successful bundle.':
+        '当前无法刷新安全导出包。正在显示最近一次成功加载的导出包。',
     'Analytics export downloaded.': '分析导出已下载。',
     'Analytics export copied to clipboard.': '分析导出内容已复制到剪贴板。',
     'Unable to download the analytics export right now.': '当前无法下载分析导出。',
@@ -1122,9 +1130,17 @@ class WorkflowSurfaceI18n {
     'Empty': '空',
     'Download Export': '下載匯出',
     'Unable to load the analytics export bundle right now.': '目前無法載入分析匯出包。',
+    'Unable to refresh the analytics export bundle right now. Showing the last successful bundle.':
+        '目前無法重新整理分析匯出包。正在顯示最近一次成功載入的匯出包。',
     'Unable to load the billing export bundle right now.': '目前無法載入帳單匯出包。',
+    'Unable to refresh the billing export bundle right now. Showing the last successful bundle.':
+        '目前無法重新整理帳單匯出包。正在顯示最近一次成功載入的匯出包。',
     'Unable to load the audit export bundle right now.': '目前無法載入稽核匯出包。',
+    'Unable to refresh the audit export bundle right now. Showing the last successful bundle.':
+        '目前無法重新整理稽核匯出包。正在顯示最近一次成功載入的匯出包。',
     'Unable to load the safety export bundle right now.': '目前無法載入安全匯出包。',
+    'Unable to refresh the safety export bundle right now. Showing the last successful bundle.':
+        '目前無法重新整理安全匯出包。正在顯示最近一次成功載入的匯出包。',
     'Analytics export downloaded.': '分析匯出已下載。',
     'Analytics export copied to clipboard.': '分析匯出內容已複製到剪貼簿。',
     'Unable to download the analytics export right now.': '目前無法下載分析匯出。',

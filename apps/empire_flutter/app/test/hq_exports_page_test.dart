@@ -286,4 +286,182 @@ void main() {
     expect(clipboardText, contains('Intervention total: 14'));
     expect(clipboardText, contains('Incidents: 1'));
   });
+
+  testWidgets('hq exports keeps full bundle downloadable after analytics refresh failure',
+      (WidgetTester tester) async {
+    ExportService.instance.debugSaveTextFile = ({
+      required String fileName,
+      required String content,
+      required String mimeType,
+    }) async {
+      _savedFileName = fileName;
+      _savedFileContent = content;
+      return '/tmp/$fileName';
+    };
+
+    int analyticsCalls = 0;
+
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      _buildHarness(
+        appState: _buildHqState(),
+        child: HqExportsPage(
+          analyticsLoader: () async {
+            analyticsCalls += 1;
+            if (analyticsCalls > 1) {
+              throw StateError('analytics refresh unavailable');
+            }
+            return const TelemetryDashboardMetrics(
+              weeklyAccountabilityAdherenceRate: 84.5,
+              educatorReviewTurnaroundHoursAvg: 12.0,
+              educatorReviewWithinSlaRate: 92.0,
+              educatorReviewSlaHours: 48,
+              interventionHelpedRate: 61.2,
+              interventionTotal: 14,
+              attendanceTrend: <AttendanceTrendPoint>[
+                AttendanceTrendPoint(
+                  date: '2026-03-17',
+                  records: 12,
+                  events: 10,
+                  presentRate: 95.0,
+                ),
+              ],
+            );
+          },
+          billingLoader: () async => <String, dynamic>{
+            'invoices': <Map<String, dynamic>>[
+              <String, dynamic>{'id': 'INV-1', 'amount': 120.0},
+            ],
+            'payments': <Map<String, dynamic>>[
+              <String, dynamic>{'id': 'PAY-1', 'amount': 120.0},
+            ],
+            'subscriptions': <Map<String, dynamic>>[
+              <String, dynamic>{'id': 'SUB-1', 'amount': 49.0},
+            ],
+          },
+          auditLoader: () async => <AuditLogModel>[
+            AuditLogModel(
+              id: 'audit-1',
+              actorId: 'hq-1',
+              actorRole: 'hq',
+              action: 'export.downloaded',
+              entityType: 'report',
+              entityId: 'report-1',
+              createdAt: Timestamp.fromDate(DateTime(2026, 3, 18, 10)),
+            ),
+          ],
+          safetyLoader: () async => <String, dynamic>{
+            'incidents': <Map<String, dynamic>>[
+              <String, dynamic>{
+                'id': 'incident-1',
+                'title': 'Minor playground incident',
+              },
+            ],
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Refresh'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Unable to refresh the analytics export bundle right now. Showing the last successful bundle.'),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Some export bundles are unavailable right now. Ready bundles can still be downloaded.',
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byTooltip('Download Full Bundle'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Full export bundle downloaded.'), findsOneWidget);
+    expect(_savedFileContent, contains('Intervention total: 14'));
+  });
+
+  testWidgets('hq exports keeps stale audit bundle count after refresh failure',
+      (WidgetTester tester) async {
+    ExportService.instance.debugSaveTextFile = ({
+      required String fileName,
+      required String content,
+      required String mimeType,
+    }) async {
+      _savedFileName = fileName;
+      _savedFileContent = content;
+      return '/tmp/$fileName';
+    };
+
+    int auditCalls = 0;
+
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      _buildHarness(
+        appState: _buildHqState(),
+        child: HqExportsPage(
+          analyticsLoader: () async => const TelemetryDashboardMetrics(
+            weeklyAccountabilityAdherenceRate: 84.5,
+            educatorReviewTurnaroundHoursAvg: 12.0,
+            educatorReviewWithinSlaRate: 92.0,
+            educatorReviewSlaHours: 48,
+            interventionHelpedRate: 61.2,
+            interventionTotal: 14,
+            attendanceTrend: <AttendanceTrendPoint>[],
+          ),
+          billingLoader: () async => <String, dynamic>{
+            'invoices': const <Map<String, dynamic>>[],
+            'payments': const <Map<String, dynamic>>[],
+            'subscriptions': const <Map<String, dynamic>>[],
+          },
+          auditLoader: () async {
+            auditCalls += 1;
+            if (auditCalls > 1) {
+              throw StateError('audit refresh unavailable');
+            }
+            return <AuditLogModel>[
+              AuditLogModel(
+                id: 'audit-1',
+                actorId: 'hq-1',
+                actorRole: 'hq',
+                action: 'export.downloaded',
+                entityType: 'report',
+                entityId: 'report-1',
+                createdAt: Timestamp.fromDate(DateTime(2026, 3, 18, 10)),
+              ),
+            ];
+          },
+          safetyLoader: () async => <String, dynamic>{
+            'incidents': const <Map<String, dynamic>>[],
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Refresh'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Unable to refresh the audit export bundle right now. Showing the last successful bundle.'),
+      findsOneWidget,
+    );
+
+    final Finder auditCard = find.ancestor(
+      of: find.text('Audit Bundle'),
+      matching: find.byType(Card),
+    );
+    await tester.tap(
+      find.descendant(of: auditCard, matching: find.text('Download Export')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Audit export downloaded.'), findsOneWidget);
+    expect(_savedFileContent, contains('Entries: 1'));
+  });
 }
