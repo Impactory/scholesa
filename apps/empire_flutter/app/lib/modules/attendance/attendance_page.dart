@@ -59,7 +59,7 @@ class _AttendancePageState extends State<AttendancePage> {
         title: Text(_tAttendance(context, 'Take Attendance')),
         actions: <Widget>[
           IconButton(
-            tooltip: 'Refresh',
+            tooltip: _tAttendance(context, 'Refresh'),
             onPressed: _loadOccurrences,
             icon: const Icon(Icons.refresh_rounded),
           ),
@@ -252,32 +252,41 @@ class _AttendanceStatusBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.tertiaryContainer,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Icon(
-            Icons.info_outline,
-            size: 18,
-            color: Theme.of(context).colorScheme.onTertiaryContainer,
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              message,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onTertiaryContainer,
-                fontSize: 12,
-                height: 1.4,
-              ),
+      child: Semantics(
+        container: true,
+        liveRegion: true,
+        label: message,
+        child: ExcludeSemantics(
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.tertiaryContainer,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Icon(
+                  Icons.info_outline,
+                  size: 18,
+                  color: Theme.of(context).colorScheme.onTertiaryContainer,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    message,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onTertiaryContainer,
+                      fontSize: 12,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -417,7 +426,7 @@ class _AttendanceRosterViewState extends State<_AttendanceRosterView> {
         title: Text(occurrence.title),
         actions: <Widget>[
           IconButton(
-            tooltip: 'Refresh',
+            tooltip: _tAttendance(context, 'Refresh'),
             onPressed: _loadRoster,
             icon: const Icon(Icons.refresh_rounded),
           ),

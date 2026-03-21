@@ -71,6 +71,7 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
           ),
           IconButton(
             icon: const Icon(Icons.add_rounded),
+            tooltip: _tPartnerListings(context, 'Create Listing'),
             onPressed: () {
               TelemetryService.instance.logEvent(
                 event: 'cta.clicked',
@@ -192,30 +193,37 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
   }
 
   Widget _buildStaleDataBanner(String message) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFFBEB),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFFDE68A)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          const Padding(
-            padding: EdgeInsets.only(top: 2),
-            child: Icon(Icons.warning_amber_rounded, color: Color(0xFFB45309)),
+    return Semantics(
+      container: true,
+      liveRegion: true,
+      label: message,
+      child: ExcludeSemantics(
+        child: Container(
+          width: double.infinity,
+          margin: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFFBEB),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFFDE68A)),
           ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              message,
-              style: const TextStyle(color: Color(0xFF92400E)),
-            ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              const Padding(
+                padding: EdgeInsets.only(top: 2),
+                child: Icon(Icons.warning_amber_rounded, color: Color(0xFFB45309)),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  message,
+                  style: const TextStyle(color: Color(0xFF92400E)),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

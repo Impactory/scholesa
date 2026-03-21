@@ -371,30 +371,39 @@ class _PartnerIntegrationsPageState extends State<PartnerIntegrationsPage> {
   }
 
   Widget _buildStaleDataBanner() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFFBEB),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFFDE68A)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          const Padding(
-            padding: EdgeInsets.only(top: 2),
-            child: Icon(Icons.warning_amber_rounded, color: Color(0xFFB45309)),
+    final String message =
+        _t('Unable to refresh partner integrations right now. Showing the last successful data.') +
+            (_error == null ? '' : ' ${_error!}');
+    return Semantics(
+      container: true,
+      liveRegion: true,
+      label: message,
+      child: ExcludeSemantics(
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFFBEB),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFFDE68A)),
           ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              _t('Unable to refresh partner integrations right now. Showing the last successful data.') +
-                  (_error == null ? '' : ' ${_error!}'),
-              style: const TextStyle(color: Color(0xFF92400E)),
-            ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              const Padding(
+                padding: EdgeInsets.only(top: 2),
+                child: Icon(Icons.warning_amber_rounded, color: Color(0xFFB45309)),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  message,
+                  style: const TextStyle(color: Color(0xFF92400E)),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
