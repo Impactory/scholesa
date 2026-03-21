@@ -729,6 +729,10 @@ class WorkflowSurfaceI18n {
     'Deliverable storage unavailable right now.': '交付项存储当前不可用。',
     'Partner identity unavailable right now.': '合作方身份当前不可用。',
     'Unable to load partner deliverables right now.': '目前无法加载合作方交付项。',
+    'We could not load partner deliverables right now. Retry to check the current state.':
+        '我们暂时无法加载合作方交付项。请重试以检查当前状态。',
+    'Unable to refresh partner deliverables right now. Showing the last successful data.':
+        '目前无法刷新合作方交付项。正在显示最近一次成功加载的数据。',
     'Contract unavailable': '合同信息不可用',
     'Title unavailable': '标题不可用',
     'Unknown': '未知',
@@ -1407,6 +1411,10 @@ class WorkflowSurfaceI18n {
     'Deliverable storage unavailable right now.': '交付項儲存目前不可用。',
     'Partner identity unavailable right now.': '合作夥伴身份目前不可用。',
     'Unable to load partner deliverables right now.': '目前無法載入合作夥伴交付項。',
+    'We could not load partner deliverables right now. Retry to check the current state.':
+        '我們暫時無法載入合作夥伴交付項。請重試以確認目前狀態。',
+    'Unable to refresh partner deliverables right now. Showing the last successful data.':
+        '目前無法刷新合作夥伴交付項。正在顯示最近一次成功載入的資料。',
     'Contract unavailable': '合約資訊不可用',
     'Title unavailable': '標題不可用',
     'Unknown': '未知',

@@ -13,6 +13,40 @@ import 'package:scholesa_app/services/firestore_service.dart';
 
 class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
+class _SequencedPartnerFirestoreService extends FirestoreService {
+  _SequencedPartnerFirestoreService({
+    required super.firestore,
+    required super.auth,
+    this.failAfterQuery,
+  });
+
+  final int? failAfterQuery;
+  int _queryCount = 0;
+
+  @override
+  Future<List<Map<String, dynamic>>> queryCollection(
+    String collection, {
+    List<List<dynamic>>? where,
+    String? orderBy,
+    bool descending = false,
+    int? limit,
+  }) async {
+    _queryCount += 1;
+    if (collection == 'partnerContracts' &&
+        failAfterQuery != null &&
+        _queryCount > failAfterQuery!) {
+      throw StateError('partner contracts unavailable');
+    }
+    return super.queryCollection(
+      collection,
+      where: where,
+      orderBy: orderBy,
+      descending: descending,
+      limit: limit,
+    );
+  }
+}
+
 AppState _buildPartnerState({Locale locale = const Locale('en')}) {
   final AppState state = AppState();
   state.updateFromMeResponse(<String, dynamic>{
@@ -71,6 +105,20 @@ Future<void> _seedContract(
       'siteId': 'site-1',
       'title': title,
       'status': 'active',
+    },
+  );
+}
+
+Future<void> _seedDeliverable(FakeFirebaseFirestore firestore) async {
+  await firestore.collection('partnerDeliverables').doc('deliverable-1').set(
+    <String, dynamic>{
+      'contractId': 'contract-1',
+      'title': 'Evidence Pack',
+      'description': 'Pilot summary and session assets',
+      'evidenceUrl': 'https://files.scholesa.test/evidence-pack.pdf',
+      'status': 'submitted',
+      'submittedBy': 'partner-1',
+      'submittedAt': Timestamp.fromDate(DateTime(2026, 1, 5)),
     },
   );
 }
@@ -176,5 +224,63 @@ void main() {
     expect(find.text('合作伙伴交付项'), findsOneWidget);
     expect(find.text('合同信息不可用'), findsOneWidget);
     expect(find.text('尚未提交交付项'), findsAtLeastNWidgets(1));
+  });
+
+  testWidgets('partner deliverables page blocks on first-load outages instead of showing empty states',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = _SequencedPartnerFirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+      failAfterQuery: 0,
+    );
+
+    await tester.pumpWidget(
+      _buildHarness(
+        appState: _buildPartnerState(),
+        firestoreService: firestoreService,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('We could not load partner deliverables right now. Retry to check the current state.'),
+      findsOneWidget,
+    );
+    expect(find.text('No partner contracts available yet'), findsNothing);
+    expect(find.text('No deliverables submitted yet'), findsNothing);
+  });
+
+  testWidgets('partner deliverables page keeps stale contract data visible after refresh failure',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedContract(firestore);
+    await _seedDeliverable(firestore);
+    final FirestoreService firestoreService = _SequencedPartnerFirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+      failAfterQuery: 1,
+    );
+
+    await tester.pumpWidget(
+      _buildHarness(
+        appState: _buildPartnerState(),
+        firestoreService: firestoreService,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('North Hub Launch'), findsOneWidget);
+    expect(find.text('Evidence Pack'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.refresh_rounded));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.textContaining('Unable to refresh partner deliverables right now. Showing the last successful data.'),
+      findsOneWidget,
+    );
+    expect(find.text('North Hub Launch'), findsOneWidget);
+    expect(find.text('Evidence Pack'), findsOneWidget);
   });
 }

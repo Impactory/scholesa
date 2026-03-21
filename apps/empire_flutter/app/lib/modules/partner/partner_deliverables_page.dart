@@ -58,7 +58,6 @@ class _PartnerDeliverablesPageState extends State<PartnerDeliverablesPage> {
     if (firestoreService == null) {
       setState(() {
         _error = _t('Deliverable storage unavailable right now.');
-        _contractDeliverables = const <_PartnerContractDeliverables>[];
         _isLoading = false;
       });
       return;
@@ -67,7 +66,6 @@ class _PartnerDeliverablesPageState extends State<PartnerDeliverablesPage> {
     if (partnerId.isEmpty) {
       setState(() {
         _error = _t('Partner identity unavailable right now.');
-        _contractDeliverables = const <_PartnerContractDeliverables>[];
         _isLoading = false;
       });
       return;
@@ -124,13 +122,13 @@ class _PartnerDeliverablesPageState extends State<PartnerDeliverablesPage> {
       if (!mounted) return;
       setState(() {
         _contractDeliverables = contractDeliverables;
+        _error = null;
         _isLoading = false;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _error = _t('Unable to load partner deliverables right now.');
-        _contractDeliverables = const <_PartnerContractDeliverables>[];
         _isLoading = false;
       });
     }
@@ -489,25 +487,14 @@ class _PartnerDeliverablesPageState extends State<PartnerDeliverablesPage> {
       ),
       body: Builder(
         builder: (BuildContext context) {
-          if (_isLoading) {
+          if (_isLoading && !hasContracts) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (_error != null) {
+          if (_error != null && !hasContracts) {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Text(_error!, textAlign: TextAlign.center),
-                    const SizedBox(height: 16),
-                    FilledButton.tonalIcon(
-                      onPressed: _loadDeliverables,
-                      icon: const Icon(Icons.refresh_rounded),
-                      label: Text(_t('Retry')),
-                    ),
-                  ],
-                ),
+                child: _buildLoadErrorState(),
               ),
             );
           }
@@ -525,6 +512,11 @@ class _PartnerDeliverablesPageState extends State<PartnerDeliverablesPage> {
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: <Widget>[
+                if (_error != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: _buildStaleDataBanner(),
+                  ),
                 if (_contractDeliverables.every(
                   (_PartnerContractDeliverables contract) =>
                       contract.deliverables.isEmpty,
@@ -552,6 +544,79 @@ class _PartnerDeliverablesPageState extends State<PartnerDeliverablesPage> {
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildLoadErrorState() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF4F4),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFFECACA)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              const Icon(Icons.error_outline_rounded, color: ScholesaColors.error),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  _t('We could not load partner deliverables right now. Retry to check the current state.'),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: ScholesaColors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _error ?? _t('Unable to load partner deliverables right now.'),
+            style: TextStyle(color: context.schTextSecondary),
+          ),
+          const SizedBox(height: 16),
+          FilledButton.tonalIcon(
+            onPressed: _loadDeliverables,
+            icon: const Icon(Icons.refresh_rounded),
+            label: Text(_t('Retry')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStaleDataBanner() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFFDE68A)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Padding(
+            padding: EdgeInsets.only(top: 2),
+            child: Icon(Icons.warning_amber_rounded, color: Color(0xFFB45309)),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              _t('Unable to refresh partner deliverables right now. Showing the last successful data.') +
+                  (_error == null ? '' : ' ${_error!}'),
+              style: const TextStyle(color: Color(0xFF92400E)),
+            ),
+          ),
+        ],
       ),
     );
   }
