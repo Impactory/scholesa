@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:scholesa_app/modules/attendance/attendance_models.dart';
 import 'package:scholesa_app/modules/attendance/attendance_service.dart';
+import 'package:scholesa_app/modules/checkin/checkin_models.dart';
 import 'package:scholesa_app/modules/checkin/checkin_service.dart';
 import 'package:scholesa_app/modules/habits/habit_models.dart';
 import 'package:scholesa_app/modules/habits/habit_service.dart';
@@ -833,6 +834,50 @@ void main() {
       expect(service.todayOccurrences, hasLength(1));
       expect(service.todayOccurrences.single.title, 'Robotics Lab');
       expect(service.error, contains('Failed to load occurrences'));
+    });
+
+    test('checkin service keeps stale learner summaries visible after refresh failure',
+        () async {
+      int loadCount = 0;
+      final CheckinService service = CheckinService(
+        firestoreService: firestoreService,
+        siteId: 'site-1',
+        daySnapshotLoader: () async {
+          loadCount += 1;
+          if (loadCount == 1) {
+            return CheckinDaySnapshot(
+              learnerSummaries: <LearnerDaySummary>[
+                const LearnerDaySummary(
+                  learnerId: 'learner-1',
+                  learnerName: 'Ava Learner',
+                  currentStatus: CheckStatus.checkedIn,
+                ),
+              ],
+              todayRecords: <CheckRecord>[
+                CheckRecord(
+                  id: 'record-1',
+                  visitorId: 'visitor-1',
+                  visitorName: 'Parent One',
+                  learnerId: 'learner-1',
+                  learnerName: 'Ava Learner',
+                  siteId: 'site-1',
+                  timestamp: DateTime(2026, 3, 21, 8, 30),
+                  status: CheckStatus.checkedIn,
+                ),
+              ],
+            );
+          }
+          throw Exception('network down');
+        },
+      );
+
+      await service.loadTodayData();
+      await service.loadTodayData();
+
+      expect(service.learnerSummaries, hasLength(1));
+      expect(service.learnerSummaries.single.learnerName, 'Ava Learner');
+      expect(service.todayRecords, hasLength(1));
+      expect(service.error, contains('Failed to load check-in data'));
     });
   });
 }

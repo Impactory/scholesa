@@ -21,7 +21,7 @@ class _FakeAttendanceService extends AttendanceService {
     List<SessionOccurrence>? occurrences,
     this.loadError,
   })  : _occurrences = occurrences,
-      : _rosterOccurrence = rosterOccurrence,
+        _rosterOccurrence = rosterOccurrence,
         super(
           apiClient: _MockApiClient(),
           syncCoordinator: _MockSyncCoordinator(),

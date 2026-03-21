@@ -74,7 +74,7 @@ class _CheckinPageState extends State<CheckinPage>
               _buildStatsRow(),
               _buildSearchAndFilters(),
               _buildTabBar(),
-              Expanded(child: _buildTabContent()),
+              Expanded(child: _buildContent()),
             ],
           ),
         ),
@@ -352,20 +352,47 @@ class _CheckinPageState extends State<CheckinPage>
     );
   }
 
-  Widget _buildTabContent() {
-    return TabBarView(
-      controller: _tabController,
-      children: <Widget>[
-        _buildLearnersList(),
-        _buildTodayLog(),
-      ],
+  Widget _buildContent() {
+    return Consumer<CheckinService>(
+      builder: (BuildContext context, CheckinService service, _) {
+        final bool hasCachedData =
+            service.learnerSummaries.isNotEmpty || service.todayRecords.isNotEmpty;
+
+        if (service.isLoading && !hasCachedData) {
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
+          );
+        }
+
+        if (service.error != null && !hasCachedData) {
+          return _buildLoadErrorCard(service.error!);
+        }
+
+        return Column(
+          children: <Widget>[
+            if (service.error != null)
+              _CheckinStatusBanner(message: service.error!),
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: <Widget>[
+                  _buildLearnersList(),
+                  _buildTodayLog(),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
   Widget _buildLearnersList() {
     return Consumer<CheckinService>(
       builder: (BuildContext context, CheckinService service, _) {
-        if (service.isLoading) {
+        if (service.isLoading &&
+            service.learnerSummaries.isEmpty &&
+            service.todayRecords.isEmpty) {
           return const Center(
             child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
           );
@@ -399,6 +426,14 @@ class _CheckinPageState extends State<CheckinPage>
   Widget _buildTodayLog() {
     return Consumer<CheckinService>(
       builder: (BuildContext context, CheckinService service, _) {
+        if (service.isLoading &&
+            service.todayRecords.isEmpty &&
+            service.learnerSummaries.isEmpty) {
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
+          );
+        }
+
         if (service.todayRecords.isEmpty) {
           return _buildEmptyState(
             icon: Icons.history,
@@ -442,6 +477,48 @@ class _CheckinPageState extends State<CheckinPage>
           const SizedBox(height: 8),
           Text(subtitle, style: TextStyle(color: context.schTextSecondary)),
         ],
+      ),
+    );
+  }
+
+  Widget _buildLoadErrorCard(String error) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: ScholesaColors.error.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.cloud_off,
+                size: 40,
+                color: ScholesaColors.error,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _tCheckin(
+                context,
+                'We could not load check-in data right now. Retry to check the current state.',
+              ),
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              error,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: context.schTextSecondary),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -578,6 +655,45 @@ class _CheckinPageState extends State<CheckinPage>
       match.summary,
       initialPickup: match.pickup,
       source: 'quick_pickup_lookup',
+    );
+  }
+}
+
+class _CheckinStatusBanner extends StatelessWidget {
+  const _CheckinStatusBanner({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: ScholesaColors.warning.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: ScholesaColors.warning.withValues(alpha: 0.4),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Icon(Icons.warning_amber_rounded,
+              color: ScholesaColors.warning, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              '${_tCheckin(context, 'Unable to refresh check-in data right now. Showing the last successful data. ')}$message',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: context.schTextPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

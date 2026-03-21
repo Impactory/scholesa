@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
+import 'package:scholesa_app/modules/checkin/checkin_models.dart';
 import 'package:scholesa_app/modules/checkin/checkin_page.dart';
 import 'package:scholesa_app/modules/checkin/checkin_service.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
@@ -27,6 +28,30 @@ class _FailingLatePickupCheckinService extends CheckinService {
   }) async {
     return false;
   }
+}
+
+CheckinDaySnapshot _buildCheckinSnapshot() {
+  return CheckinDaySnapshot(
+    learnerSummaries: const <LearnerDaySummary>[
+      LearnerDaySummary(
+        learnerId: 'learner-1',
+        learnerName: 'Ava Learner',
+        currentStatus: CheckStatus.checkedIn,
+      ),
+    ],
+    todayRecords: <CheckRecord>[
+      CheckRecord(
+        id: 'record-1',
+        visitorId: 'visitor-1',
+        visitorName: 'Parent One',
+        learnerId: 'learner-1',
+        learnerName: 'Ava Learner',
+        siteId: 'site-1',
+        timestamp: DateTime(2026, 3, 17, 8, 30),
+        status: CheckStatus.checkedIn,
+      ),
+    ],
+  );
 }
 
 Future<void> _pumpCheckinPage(
@@ -215,6 +240,78 @@ void main() {
     final QuerySnapshot<Map<String, dynamic>> records =
         await firestore.collection('checkins').get();
     expect(records.docs.length, 1);
+  });
+
+  testWidgets('checkin page shows load failure instead of fake empty learners',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final CheckinService checkinService = CheckinService(
+      firestoreService: firestoreService,
+      siteId: 'site-1',
+      daySnapshotLoader: () async {
+        throw Exception('network down');
+      },
+    );
+
+    await _pumpCheckinPage(
+      tester,
+      firestore: firestore,
+      checkinService: checkinService,
+    );
+
+    expect(
+      find.text(
+        'We could not load check-in data right now. Retry to check the current state.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('No learners found'), findsNothing);
+  });
+
+  testWidgets('checkin page keeps stale learner data visible after refresh failure',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    int loadCount = 0;
+    final CheckinService checkinService = CheckinService(
+      firestoreService: firestoreService,
+      siteId: 'site-1',
+      daySnapshotLoader: () async {
+        loadCount += 1;
+        if (loadCount == 1) {
+          return _buildCheckinSnapshot();
+        }
+        throw Exception('network down');
+      },
+    );
+
+    await _pumpCheckinPage(
+      tester,
+      firestore: firestore,
+      checkinService: checkinService,
+    );
+
+    expect(find.text('Ava Learner'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Refresh'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Unable to refresh check-in data right now. Showing the last successful data. Failed to load check-in data: Exception: network down',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Ava Learner'), findsOneWidget);
+    expect(find.text('No learners found'), findsNothing);
   });
 
   test('checkin service loads guardian-link pickups when pickup auth docs are absent',

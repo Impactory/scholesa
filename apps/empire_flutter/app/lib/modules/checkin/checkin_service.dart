@@ -8,17 +8,30 @@ import 'checkin_models.dart';
 const String _fallbackLearnerName = 'Learner unavailable';
 const String _fallbackPickupName = 'Authorized pickup';
 
+class CheckinDaySnapshot {
+  const CheckinDaySnapshot({
+    required this.learnerSummaries,
+    required this.todayRecords,
+  });
+
+  final List<LearnerDaySummary> learnerSummaries;
+  final List<CheckRecord> todayRecords;
+}
+
 /// Service for site check-in/check-out operations - wired to Firebase
 class CheckinService extends ChangeNotifier {
   CheckinService({
     required FirestoreService firestoreService,
     required this.siteId,
     SyncCoordinator? syncCoordinator,
+    Future<CheckinDaySnapshot> Function()? daySnapshotLoader,
   })  : _firestoreService = firestoreService,
-        _syncCoordinator = syncCoordinator;
+        _syncCoordinator = syncCoordinator,
+        _daySnapshotLoader = daySnapshotLoader;
   final FirestoreService _firestoreService;
   final SyncCoordinator? _syncCoordinator;
   final String siteId;
+  final Future<CheckinDaySnapshot> Function()? _daySnapshotLoader;
   FirebaseFirestore get _firestore => _firestoreService.firestore;
 
   List<LearnerDaySummary> _learnerSummaries = <LearnerDaySummary>[];
@@ -209,144 +222,143 @@ class CheckinService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final DateTime now = DateTime.now();
-      final DateTime startOfDay = DateTime(now.year, now.month, now.day);
-      final DateTime endOfDay = startOfDay.add(const Duration(days: 1));
+        final CheckinDaySnapshot snapshot = _daySnapshotLoader != null
+          ? await _daySnapshotLoader()
+          : await _loadDaySnapshot();
 
-      // Query presence records for today
-      final QuerySnapshot<Map<String, dynamic>> recordsSnapshot =
-          await _firestore
-              .collection('checkins')
-              .where('siteId', isEqualTo: siteId)
-              .where('timestamp',
-                  isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
-              .where('timestamp', isLessThan: Timestamp.fromDate(endOfDay))
-              .orderBy('timestamp', descending: true)
-              .get();
-
-      // Build today's records
-      _todayRecords = recordsSnapshot.docs
-          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
-        final Map<String, dynamic> data = doc.data();
-        final String type = data['type'] as String? ?? '';
-        return CheckRecord(
-          id: doc.id,
-          learnerId: data['learnerId'] as String? ?? '',
-          learnerName: _nonEmptyOrFallback(
-            data['learnerName'] as String?,
-            _fallbackLearnerName,
-          ),
-          siteId: siteId,
-          status: type == 'checkin'
-              ? CheckStatus.checkedIn
-              : type == 'late'
-                  ? CheckStatus.late
-                  : CheckStatus.checkedOut,
-          timestamp: _parseTimestamp(data['timestamp']) ?? DateTime.now(),
-          visitorId: data['recordedBy'] as String? ?? '',
-          visitorName: data['recorderName'] as String? ?? '',
-          notes: data['notes'] as String?,
-        );
-      }).toList();
-
-      // Group records by learner to build summaries
-      final Map<String, List<CheckRecord>> byLearner =
-          <String, List<CheckRecord>>{};
-      for (final CheckRecord record in _todayRecords) {
-        byLearner
-            .putIfAbsent(record.learnerId, () => <CheckRecord>[])
-            .add(record);
-      }
-
-      // Get all learners enrolled at this site
-      final QuerySnapshot<Map<String, dynamic>> learnersSnapshot =
-          await _firestore
-              .collection('users')
-              .where('siteIds', arrayContains: siteId)
-              .where('role', isEqualTo: 'learner')
-              .get();
-      final Map<String, List<AuthorizedPickup>> authorizedPickupsByLearner =
-          await _loadAuthorizedPickupsByLearner();
-
-      _learnerSummaries = learnersSnapshot.docs
-          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
-        final Map<String, dynamic> data = doc.data();
-        final List<CheckRecord> records = byLearner[doc.id] ?? <CheckRecord>[];
-
-        // Find latest checkin and checkout
-        CheckRecord? latestCheckin;
-        CheckRecord? latestCheckout;
-        CheckRecord? latestLate;
-        for (final CheckRecord r in records) {
-          if (r.status == CheckStatus.checkedIn &&
-              (latestCheckin == null ||
-                  r.timestamp.isAfter(latestCheckin.timestamp))) {
-            latestCheckin = r;
-          }
-          if (r.status == CheckStatus.checkedOut &&
-              (latestCheckout == null ||
-                  r.timestamp.isAfter(latestCheckout.timestamp))) {
-            latestCheckout = r;
-          }
-          if (r.status == CheckStatus.late &&
-              (latestLate == null ||
-                  r.timestamp.isAfter(latestLate.timestamp))) {
-            latestLate = r;
-          }
-        }
-
-        // Determine current status
-        CheckStatus? currentStatus;
-        final DateTime? latestInOrLateTime =
-            latestCheckin != null || latestLate != null
-                ? ((latestCheckin?.timestamp ??
-                            DateTime.fromMillisecondsSinceEpoch(0))
-                        .isAfter(latestLate?.timestamp ??
-                            DateTime.fromMillisecondsSinceEpoch(0))
-                    ? latestCheckin!.timestamp
-                    : latestLate!.timestamp)
-                : null;
-
-        if (latestCheckout != null && latestInOrLateTime != null) {
-          currentStatus = latestCheckout.timestamp.isAfter(latestInOrLateTime)
-              ? CheckStatus.checkedOut
-              : (latestLate != null &&
-                      latestLate.timestamp == latestInOrLateTime
-                  ? CheckStatus.late
-                  : CheckStatus.checkedIn);
-        } else if (latestCheckin != null) {
-          currentStatus = CheckStatus.checkedIn;
-        } else if (latestLate != null) {
-          currentStatus = CheckStatus.late;
-        }
-
-        return LearnerDaySummary(
-          learnerId: doc.id,
-          learnerName: _nonEmptyOrFallback(
-            data['displayName'] as String?,
-            _fallbackLearnerName,
-          ),
-          currentStatus: currentStatus,
-          checkedInAt: latestCheckin?.timestamp,
-          checkedInBy: latestCheckin?.visitorName,
-          checkedOutAt: latestCheckout?.timestamp,
-          checkedOutBy: latestCheckout?.visitorName,
-          authorizedPickups:
-              authorizedPickupsByLearner[doc.id] ?? const <AuthorizedPickup>[],
-        );
-      }).toList();
+      _todayRecords = snapshot.todayRecords;
+      _learnerSummaries = snapshot.learnerSummaries;
 
       debugPrint(
           'Loaded ${_learnerSummaries.length} learners and ${_todayRecords.length} records');
     } catch (e) {
       debugPrint('Error loading checkin data: $e');
       _error = 'Failed to load check-in data: $e';
-      _learnerSummaries = <LearnerDaySummary>[];
-      _todayRecords = <CheckRecord>[];
     } finally {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  Future<CheckinDaySnapshot> _loadDaySnapshot() async {
+    final DateTime now = DateTime.now();
+    final DateTime startOfDay = DateTime(now.year, now.month, now.day);
+    final DateTime endOfDay = startOfDay.add(const Duration(days: 1));
+
+    final QuerySnapshot<Map<String, dynamic>> recordsSnapshot = await _firestore
+        .collection('checkins')
+        .where('siteId', isEqualTo: siteId)
+        .where('timestamp', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+        .where('timestamp', isLessThan: Timestamp.fromDate(endOfDay))
+        .orderBy('timestamp', descending: true)
+        .get();
+
+    final List<CheckRecord> todayRecords = recordsSnapshot.docs
+        .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+      final Map<String, dynamic> data = doc.data();
+      final String type = data['type'] as String? ?? '';
+      return CheckRecord(
+        id: doc.id,
+        learnerId: data['learnerId'] as String? ?? '',
+        learnerName: _nonEmptyOrFallback(
+          data['learnerName'] as String?,
+          _fallbackLearnerName,
+        ),
+        siteId: siteId,
+        status: type == 'checkin'
+            ? CheckStatus.checkedIn
+            : type == 'late'
+                ? CheckStatus.late
+                : CheckStatus.checkedOut,
+        timestamp: _parseTimestamp(data['timestamp']) ?? DateTime.now(),
+        visitorId: data['recordedBy'] as String? ?? '',
+        visitorName: data['recorderName'] as String? ?? '',
+        notes: data['notes'] as String?,
+      );
+    }).toList();
+
+    final Map<String, List<CheckRecord>> byLearner = <String, List<CheckRecord>>{};
+    for (final CheckRecord record in todayRecords) {
+      byLearner.putIfAbsent(record.learnerId, () => <CheckRecord>[]).add(record);
+    }
+
+    final QuerySnapshot<Map<String, dynamic>> learnersSnapshot = await _firestore
+        .collection('users')
+        .where('siteIds', arrayContains: siteId)
+        .where('role', isEqualTo: 'learner')
+        .get();
+    final Map<String, List<AuthorizedPickup>> authorizedPickupsByLearner =
+        await _loadAuthorizedPickupsByLearner();
+
+    final List<LearnerDaySummary> learnerSummaries = learnersSnapshot.docs
+        .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+      final Map<String, dynamic> data = doc.data();
+      final List<CheckRecord> records = byLearner[doc.id] ?? <CheckRecord>[];
+
+      CheckRecord? latestCheckin;
+      CheckRecord? latestCheckout;
+      CheckRecord? latestLate;
+      for (final CheckRecord record in records) {
+        if (record.status == CheckStatus.checkedIn &&
+            (latestCheckin == null ||
+                record.timestamp.isAfter(latestCheckin.timestamp))) {
+          latestCheckin = record;
+        }
+        if (record.status == CheckStatus.checkedOut &&
+            (latestCheckout == null ||
+                record.timestamp.isAfter(latestCheckout.timestamp))) {
+          latestCheckout = record;
+        }
+        if (record.status == CheckStatus.late &&
+            (latestLate == null ||
+                record.timestamp.isAfter(latestLate.timestamp))) {
+          latestLate = record;
+        }
+      }
+
+      CheckStatus? currentStatus;
+      final DateTime? latestInOrLateTime =
+          latestCheckin != null || latestLate != null
+              ? ((latestCheckin?.timestamp ??
+                          DateTime.fromMillisecondsSinceEpoch(0))
+                      .isAfter(latestLate?.timestamp ??
+                          DateTime.fromMillisecondsSinceEpoch(0))
+                  ? latestCheckin!.timestamp
+                  : latestLate!.timestamp)
+              : null;
+
+      if (latestCheckout != null && latestInOrLateTime != null) {
+        currentStatus = latestCheckout.timestamp.isAfter(latestInOrLateTime)
+            ? CheckStatus.checkedOut
+            : (latestLate != null && latestLate.timestamp == latestInOrLateTime
+                ? CheckStatus.late
+                : CheckStatus.checkedIn);
+      } else if (latestCheckin != null) {
+        currentStatus = CheckStatus.checkedIn;
+      } else if (latestLate != null) {
+        currentStatus = CheckStatus.late;
+      }
+
+      return LearnerDaySummary(
+        learnerId: doc.id,
+        learnerName: _nonEmptyOrFallback(
+          data['displayName'] as String?,
+          _fallbackLearnerName,
+        ),
+        currentStatus: currentStatus,
+        checkedInAt: latestCheckin?.timestamp,
+        checkedInBy: latestCheckin?.visitorName,
+        checkedOutAt: latestCheckout?.timestamp,
+        checkedOutBy: latestCheckout?.visitorName,
+        authorizedPickups:
+            authorizedPickupsByLearner[doc.id] ?? const <AuthorizedPickup>[],
+      );
+    }).toList();
+
+    return CheckinDaySnapshot(
+      learnerSummaries: learnerSummaries,
+      todayRecords: todayRecords,
+    );
   }
 
   DateTime? _parseTimestamp(dynamic value) {

@@ -24,6 +24,10 @@ class WorkflowSurfaceI18n {
         '我们暂时无法加载出勤课次。请重试以检查当前状态。',
     'Unable to refresh attendance sessions right now. Showing the last successful data. ':
         '目前无法刷新出勤课次。正在显示最近一次成功加载的数据。',
+    'We could not load check-in data right now. Retry to check the current state.':
+        '我们暂时无法加载签到数据。请重试以检查当前状态。',
+    'Unable to refresh check-in data right now. Showing the last successful data. ':
+        '目前无法刷新签到数据。正在显示最近一次成功加载的数据。',
     'No classes today': '今天没有课程',
     'Refresh': '刷新',
     'students': '学生',
@@ -800,6 +804,10 @@ class WorkflowSurfaceI18n {
         '我們暫時無法載入出勤課次。請重試以確認目前狀態。',
     'Unable to refresh attendance sessions right now. Showing the last successful data. ':
         '目前無法刷新出勤課次。正在顯示最近一次成功載入的資料。',
+    'We could not load check-in data right now. Retry to check the current state.':
+        '我們暫時無法載入簽到資料。請重試以確認目前狀態。',
+    'Unable to refresh check-in data right now. Showing the last successful data. ':
+        '目前無法刷新簽到資料。正在顯示最近一次成功載入的資料。',
     'No classes today': '今天沒有課程',
     'Refresh': '重新整理',
     'students': '學生',
