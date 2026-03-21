@@ -18,9 +18,12 @@ class SiteDashboardPage extends StatefulWidget {
   const SiteDashboardPage({
     super.key,
     this.sharedPreferences,
+    this.kpiPacksLoader,
   });
 
   final SharedPreferences? sharedPreferences;
+  final Future<List<Map<String, dynamic>>> Function(String? siteId, int limit)?
+      kpiPacksLoader;
 
   @override
   State<SiteDashboardPage> createState() => _SiteDashboardPageState();
@@ -42,6 +45,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
   bool _isLoadingKpiPacks = true;
   bool _isLoadingActivities = true;
   String? _metricsError;
+  String? _kpiPacksError;
   List<_KpiPackSummary> _kpiPacks = <_KpiPackSummary>[];
   List<_SiteActivity> _activities = <_SiteActivity>[];
 
@@ -185,13 +189,19 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
   Future<void> _loadKpiPacks() async {
     final String? siteId = _maybeAppState()?.activeSiteId;
     if (!mounted) return;
-    setState(() => _isLoadingKpiPacks = true);
+    setState(() {
+      _isLoadingKpiPacks = true;
+      _kpiPacksError = null;
+    });
+    final bool hadKpiPacks = _kpiPacks.isNotEmpty;
     try {
       final List<Map<String, dynamic>> rows =
-          await _workflowBridgeService.listKpiPacks(
-        siteId: siteId,
-        limit: 12,
-      );
+          widget.kpiPacksLoader != null
+              ? await widget.kpiPacksLoader!(siteId, 12)
+              : await _workflowBridgeService.listKpiPacks(
+                  siteId: siteId,
+                  limit: 12,
+                );
       if (!mounted) return;
       final List<_KpiPackSummary> packs = rows
           .map(
@@ -216,15 +226,30 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
               b.generatedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
           return bTime.compareTo(aTime);
         });
-      setState(() => _kpiPacks = packs);
+      setState(() {
+        _kpiPacks = packs;
+        _kpiPacksError = null;
+      });
     } catch (_) {
       if (!mounted) return;
-      setState(() => _kpiPacks = <_KpiPackSummary>[]);
+      setState(() {
+        _kpiPacksError = hadKpiPacks
+            ? _t('Unable to refresh KPI packs right now. Showing the last successful data.')
+            : _t('We could not load KPI packs right now. Retry to check the current state.');
+      });
     } finally {
       if (mounted) {
         setState(() => _isLoadingKpiPacks = false);
       }
     }
+  }
+
+  Future<void> _refreshDashboard() async {
+    await Future.wait(<Future<void>>[
+      _loadMetrics(),
+      _loadKpiPacks(),
+      _loadRecentActivity(),
+    ]);
   }
 
   double? _readFiniteScore(dynamic value) {
@@ -314,6 +339,18 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                         color: context.schTextSecondary, fontSize: 14),
                   ),
                 ],
+              ),
+            ),
+            IconButton(
+              tooltip: _t('Refresh'),
+              onPressed: _refreshDashboard,
+              icon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: ScholesaColors.site.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.refresh_rounded, color: ScholesaColors.site),
               ),
             ),
             IconButton(
@@ -440,12 +477,19 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
             const SizedBox(height: 12),
             if (_isLoadingKpiPacks)
               const Center(child: CircularProgressIndicator())
+            else if (_kpiPacksError != null && _kpiPacks.isEmpty)
+              _buildLoadErrorCard(
+                _t('KPI packs are temporarily unavailable'),
+                _kpiPacksError!,
+              )
             else if (_kpiPacks.isEmpty)
               Text(
                 _t('No KPI packs yet'),
                 style: TextStyle(color: context.schTextSecondary),
               )
             else ...<Widget>[
+              if (_kpiPacksError != null)
+                _buildStaleDataBanner(_kpiPacksError!),
               Text(
                 _t('Latest KPI pack'),
                 style: TextStyle(
@@ -458,6 +502,62 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
             ],
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildLoadErrorCard(String title, String message) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: _dashboardCardDecoration(context, radius: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            title,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              color: context.schTextPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            style: TextStyle(color: context.schTextSecondary),
+          ),
+          const SizedBox(height: 12),
+          FilledButton.icon(
+            onPressed: _loadKpiPacks,
+            icon: const Icon(Icons.refresh_rounded),
+            label: Text(_t('Retry')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStaleDataBanner(String message) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.orange.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(color: context.schTextPrimary),
+            ),
+          ),
+        ],
       ),
     );
   }

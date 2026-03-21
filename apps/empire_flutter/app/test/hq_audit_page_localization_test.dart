@@ -111,5 +111,81 @@ void main() {
       expect(find.text('觀察'), findsOneWidget);
       expect(find.text('暫停'), findsOneWidget);
     });
+
+    testWidgets('hq audit failure and stale copy render in zh-CN',
+        (WidgetTester tester) async {
+      int loadCount = 0;
+
+      await tester.binding.setSurfaceSize(const Size(1280, 1800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        _buildHarness(
+          const Locale('zh', 'CN'),
+          auditLogsLoader: () async {
+            loadCount += 1;
+            if (loadCount == 1) {
+              return <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'id': 'audit-1',
+                  'action': 'policy.updated',
+                  'category': 'admin',
+                  'actorEmail': 'hq-admin@scholesa.test',
+                  'details': 'Updated export rules',
+                  'createdAt': '2026-03-18T09:30:00.000Z',
+                },
+              ];
+            }
+            throw StateError('audit refresh unavailable');
+          },
+          redTeamReviewsLoader: () async {
+            if (loadCount <= 1) {
+              return <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'id': 'review-1',
+                  'title': '供应商审查',
+                  'decision': 'continue',
+                  'partnerStatus': 'active',
+                  'recommendations': '继续监控',
+                  'nextAction': '季度检查',
+                  'updatedAt': '2026-03-18T10:00:00.000Z',
+                },
+              ];
+            }
+            throw StateError('review refresh unavailable');
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('刷新'));
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      expect(find.text('当前无法刷新审计数据。正在显示最近一次成功加载的数据。'), findsOneWidget);
+      expect(find.text('Policy Updated'), findsOneWidget);
+      expect(find.text('供应商审查'), findsOneWidget);
+    });
+
+    testWidgets('hq audit first-load failure copy renders in zh-TW',
+        (WidgetTester tester) async {
+      await tester.binding.setSurfaceSize(const Size(1280, 1800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        _buildHarness(
+          const Locale('zh', 'TW'),
+          auditLogsLoader: () async {
+            throw StateError('audit backend unavailable');
+          },
+          redTeamReviewsLoader: () async => <Map<String, dynamic>>[],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('稽核資料暫時不可用'), findsOneWidget);
+      expect(find.text('我們暫時無法載入稽核記錄。請重試以確認目前狀態。'), findsOneWidget);
+      expect(find.text('重試'), findsOneWidget);
+    });
   });
 }

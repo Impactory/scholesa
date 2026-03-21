@@ -242,4 +242,95 @@ void main() {
       findsWidgets,
     );
   });
+
+  testWidgets('site dashboard shows a real KPI error instead of fake emptiness',
+      (WidgetTester tester) async {
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: FakeFirebaseFirestore(),
+      auth: _MockFirebaseAuth(),
+    );
+
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: <SingleChildWidget>[
+          Provider<FirestoreService>.value(value: firestoreService),
+          ChangeNotifierProvider<AppState>.value(value: _buildSiteState()),
+        ],
+        child: MaterialApp(
+          theme: ScholesaTheme.light,
+          home: SiteDashboardPage(
+            kpiPacksLoader: (String? siteId, int limit) async {
+              throw StateError('kpi unavailable');
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('KPI packs are temporarily unavailable'), findsOneWidget);
+    expect(
+      find.text('We could not load KPI packs right now. Retry to check the current state.'),
+      findsOneWidget,
+    );
+    expect(find.text('No KPI packs yet'), findsNothing);
+    expect(find.text('Retry'), findsOneWidget);
+  });
+
+  testWidgets('site dashboard keeps stale KPI pack visible after refresh failure',
+      (WidgetTester tester) async {
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: FakeFirebaseFirestore(),
+      auth: _MockFirebaseAuth(),
+    );
+    int loadCount = 0;
+
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: <SingleChildWidget>[
+          Provider<FirestoreService>.value(value: firestoreService),
+          ChangeNotifierProvider<AppState>.value(value: _buildSiteState()),
+        ],
+        child: MaterialApp(
+          theme: ScholesaTheme.light,
+          home: SiteDashboardPage(
+            kpiPacksLoader: (String? siteId, int limit) async {
+              loadCount += 1;
+              if (loadCount == 1) {
+                return <Map<String, dynamic>>[
+                  <String, dynamic>{
+                    'id': 'pack-1',
+                    'title': 'March KPI Pack',
+                    'period': 'month',
+                    'recommendation': 'Keep evidence capture tight',
+                    'status': 'ready',
+                    'fidelityScore': 0.82,
+                    'portfolioQualityGrade': 'A',
+                    'updatedAt': '2026-03-18T10:00:00.000Z',
+                  },
+                ];
+              }
+              throw StateError('kpi refresh unavailable');
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('March KPI Pack'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Refresh'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Unable to refresh KPI packs right now. Showing the last successful data.'),
+      findsOneWidget,
+    );
+    expect(find.text('March KPI Pack'), findsOneWidget);
+    expect(find.text('No KPI packs yet'), findsNothing);
+  });
 }

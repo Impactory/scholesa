@@ -872,6 +872,7 @@ class WorkflowSurfaceI18n {
         '暫不支援自助變更方案。如需調整，請聯絡 HQ 計費支援。',
     'My Learners': '我的學習者',
     'Track progress and engagement': '追蹤進度與參與度',
+        'Retry': '重試',
     'Differentiation lane': '差異化路徑',
     'Recommended lane': '建議路徑',
     'Scaffolded lane': '支架路徑',

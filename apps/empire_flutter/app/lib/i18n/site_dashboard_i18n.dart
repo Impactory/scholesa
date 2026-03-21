@@ -50,6 +50,11 @@ class SiteDashboardI18n {
     'KPI Packs': 'KPI 包',
     'Latest KPI pack': '最新 KPI 包',
     'No KPI packs yet': '暂无 KPI 包',
+    'KPI packs are temporarily unavailable': 'KPI 包暂时不可用',
+    'We could not load KPI packs right now. Retry to check the current state.':
+      '我们暂时无法加载 KPI 包。请重试以检查当前状态。',
+    'Unable to refresh KPI packs right now. Showing the last successful data.':
+      '当前无法刷新 KPI 包。正在显示最近一次成功加载的数据。',
     'Generate Pack': '生成包',
     'Fidelity Score': '执行一致性分数',
     'Fidelity Score unavailable': '执行一致性分数不可用',
@@ -84,6 +89,8 @@ class SiteDashboardI18n {
     'No recent activity yet': '暂无最近活动',
     'Incident reported': '事件已上报',
     'Site operation event': '站点运营事件',
+    'Refresh': '刷新',
+    'Retry': '重试',
   };
 
   static const Map<String, String> _zhTw = <String, String>{
@@ -131,6 +138,11 @@ class SiteDashboardI18n {
     'KPI Packs': 'KPI 包',
     'Latest KPI pack': '最新 KPI 包',
     'No KPI packs yet': '目前沒有 KPI 包',
+    'KPI packs are temporarily unavailable': 'KPI 包暫時不可用',
+    'We could not load KPI packs right now. Retry to check the current state.':
+      '我們暫時無法載入 KPI 包。請重試以確認目前狀態。',
+    'Unable to refresh KPI packs right now. Showing the last successful data.':
+      '目前無法刷新 KPI 包。正在顯示最近一次成功載入的資料。',
     'Generate Pack': '產生包',
     'Fidelity Score': '執行一致性分數',
     'Fidelity Score unavailable': '執行一致性分數不可用',
@@ -165,6 +177,8 @@ class SiteDashboardI18n {
     'No recent activity yet': '目前沒有最近活動',
     'Incident reported': '事件已回報',
     'Site operation event': '站點營運事件',
+    'Refresh': '重新整理',
+    'Retry': '重試',
   };
 
   static String text(BuildContext context, String input) {
