@@ -64,13 +64,17 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await _restoreFilters();
+      await _refreshLearners();
       final EducatorService service = context.read<EducatorService>();
-      await service.loadLearners();
       if (!mounted || service.learners.isEmpty) {
         return;
       }
       _selectLoopLearner(service.learners.first);
     });
+  }
+
+  Future<void> _refreshLearners() async {
+    await context.read<EducatorService>().loadLearners();
   }
 
   @override
@@ -130,11 +134,25 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
         ),
         child: Consumer<EducatorService>(
           builder: (BuildContext context, EducatorService service, _) {
+            final List<EducatorLearner> filteredLearners =
+                _getFilteredLearners(service);
             return CustomScrollView(
               slivers: <Widget>[
                 SliverToBoxAdapter(child: _buildHeader()),
                 SliverToBoxAdapter(child: _buildSearchBar()),
                 SliverToBoxAdapter(child: _buildSessionFilter(service)),
+                if (service.error != null && service.learners.isNotEmpty)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                      child: _EducatorLearnerStatusBanner(
+                        message: _tEducatorLearners(
+                                context,
+                                'Unable to refresh learners right now. Showing the last successful data. ') +
+                            service.error!,
+                      ),
+                    ),
+                  ),
                 SliverToBoxAdapter(child: _buildStats(service)),
                 SliverToBoxAdapter(child: _buildLearnerLoopCard()),
                 SliverToBoxAdapter(
@@ -162,21 +180,35 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
                       ),
                     ),
                   )
+                else if (service.error != null && service.learners.isEmpty)
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: _buildRosterLoadErrorCard(service.error!),
+                    ),
+                  )
+                else if (filteredLearners.isEmpty)
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: _buildEmptyRosterCard(),
+                    ),
+                  )
                 else
                   SliverPadding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     sliver: SliverList(
                       delegate: SliverChildBuilderDelegate(
                         (BuildContext context, int index) {
-                          final List<EducatorLearner> learners =
-                              _getFilteredLearners(service);
-                          if (index >= learners.length) return null;
+                          if (index >= filteredLearners.length) return null;
                           return _LearnerCard(
-                            learner: learners[index],
-                            onTap: () => _openLearnerDetail(learners[index]),
+                            learner: filteredLearners[index],
+                            onTap: () => _openLearnerDetail(filteredLearners[index]),
                           );
                         },
-                        childCount: _getFilteredLearners(service).length,
+                        childCount: filteredLearners.length,
                       ),
                     ),
                   ),
@@ -250,6 +282,14 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
                 ],
               ),
             ),
+            IconButton(
+              tooltip: 'Refresh',
+              onPressed: _refreshLearners,
+              icon: const Icon(
+                Icons.refresh_rounded,
+                color: ScholesaColors.educator,
+              ),
+            ),
             const SizedBox(width: 12),
             SessionMenuHeaderAction(
               foregroundColor: ScholesaColors.educator,
@@ -257,6 +297,79 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildRosterLoadErrorCard(String error) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: ScholesaColors.error.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Text(
+            _tEducatorLearners(context, 'Unable to load learners'),
+            style: TextStyle(
+              color: context.schTextPrimary,
+              fontWeight: FontWeight.w700,
+              fontSize: 16,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _tEducatorLearners(context,
+                'We could not load learners right now. Retry to check the current state.'),
+            style: TextStyle(
+              color: context.schTextSecondary,
+              fontSize: 12,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            error,
+            style: TextStyle(
+              color: context.schTextSecondary,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyRosterCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Text(
+            _tEducatorLearners(context, 'No learners enrolled'),
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            _tEducatorLearners(context,
+                'Learners will appear here when enrollments sync to your roster.'),
+            style: TextStyle(color: Colors.grey[700], fontSize: 12),
+          ),
+        ],
       ),
     );
   }
@@ -587,6 +700,48 @@ class _PillarProgress extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _EducatorLearnerStatusBanner extends StatelessWidget {
+  const _EducatorLearnerStatusBanner({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: ScholesaColors.warning.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: ScholesaColors.warning.withValues(alpha: 0.25),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Icon(
+            Icons.info_outline,
+            size: 18,
+            color: ScholesaColors.warning,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(
+                color: context.schTextPrimary,
+                fontSize: 12,
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

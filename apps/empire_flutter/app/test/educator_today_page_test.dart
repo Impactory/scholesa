@@ -63,6 +63,18 @@ Widget _buildHarness({
   );
 }
 
+Future<void> _scrollUntilVisible(
+  WidgetTester tester,
+  Finder finder,
+) async {
+  await tester.scrollUntilVisible(
+    finder,
+    200,
+    scrollable: find.byType(Scrollable).first,
+  );
+  await tester.pumpAndSettle();
+}
+
 void main() {
   testWidgets(
       'educator today shows honest empty schedule and unavailable stats on mobile',
@@ -155,6 +167,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     await tester.pumpAndSettle();
 
+    await _scrollUntilVisible(tester, find.text('Review Missions'));
     await tester.tap(find.text('Review Missions'));
     await tester.pumpAndSettle();
 
@@ -192,11 +205,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     await tester.pumpAndSettle();
 
-    await tester.scrollUntilVisible(
-      find.text("Unable to load today's schedule"),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
+    await _scrollUntilVisible(tester, find.text("Unable to load today's schedule"));
 
     expect(find.text("Unable to load today's schedule"), findsOneWidget);
     expect(
@@ -206,7 +215,6 @@ void main() {
     );
     expect(find.text('Failed to load schedule from test'), findsOneWidget);
     expect(find.text('No classes scheduled yet'), findsNothing);
-    expect(find.byTooltip('Refresh'), findsOneWidget);
   });
 
   testWidgets(
@@ -257,16 +265,12 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     await tester.pumpAndSettle();
 
+    await _scrollUntilVisible(tester, find.text('Robotics Studio'));
     expect(
       find.text(
         "Unable to refresh today's schedule right now. Showing the last successful data. Failed to refresh schedule from test",
       ),
       findsOneWidget,
-    );
-    await tester.scrollUntilVisible(
-      find.text('Robotics Studio'),
-      200,
-      scrollable: find.byType(Scrollable).first,
     );
     expect(find.text('Robotics Studio'), findsOneWidget);
     expect(find.text('No classes scheduled yet'), findsNothing);

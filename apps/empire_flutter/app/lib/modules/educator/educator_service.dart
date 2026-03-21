@@ -18,6 +18,14 @@ class TodayScheduleSnapshot {
   final EducatorDayStats dayStats;
 }
 
+class EducatorLearnersSnapshot {
+  const EducatorLearnersSnapshot({
+    required this.learners,
+  });
+
+  final List<EducatorLearner> learners;
+}
+
 /// Service for educator-specific features - wired to Firebase
 class EducatorService extends ChangeNotifier {
   EducatorService({
@@ -25,10 +33,13 @@ class EducatorService extends ChangeNotifier {
     required this.educatorId,
     this.siteId,
     Future<TodayScheduleSnapshot> Function()? todayScheduleLoader,
+      Future<EducatorLearnersSnapshot> Function()? learnersLoader,
   })  : _firestoreService = firestoreService,
-        _todayScheduleLoader = todayScheduleLoader;
+      _todayScheduleLoader = todayScheduleLoader,
+      _learnersLoader = learnersLoader;
   final FirestoreService _firestoreService;
   final Future<TodayScheduleSnapshot> Function()? _todayScheduleLoader;
+    final Future<EducatorLearnersSnapshot> Function()? _learnersLoader;
   final String educatorId;
   final String? siteId;
   FirebaseFirestore get _firestore => _firestoreService.firestore;
@@ -799,55 +810,61 @@ class EducatorService extends ChangeNotifier {
   /// Load learners from Firebase
   Future<void> loadLearners() async {
     _isLoading = true;
+    _error = null;
     notifyListeners();
     try {
-      final Set<String> learnerIds = await _resolveLearnerIdsForEducator();
-
-      if (learnerIds.isEmpty) {
-        _learners = <EducatorLearner>[];
-        return;
-      }
-
-      // Fetch learner profiles
-      final List<EducatorLearner> loadedLearners = <EducatorLearner>[];
-      for (final String learnerId in learnerIds) {
-        final DocumentSnapshot<Map<String, dynamic>> doc =
-            await _firestore.collection('users').doc(learnerId).get();
-        if (doc.exists) {
-          final Map<String, dynamic> data = doc.data()!;
-          if (!_recordMatchesSite(data)) {
-            continue;
-          }
-          loadedLearners.add(EducatorLearner(
-            id: doc.id,
-            name: (data['displayName'] as String?)?.trim().isNotEmpty == true
-                ? (data['displayName'] as String).trim()
-                : _fallbackLearnerName,
-            email: data['email'] as String? ?? '',
-            attendanceRate: (data['attendanceRate'] as num?)?.toInt() ?? 0,
-            missionsCompleted: data['missionsCompleted'] as int? ?? 0,
-            pillarProgress: <String, double>{
-              'future_skills':
-                  (data['futureSkillsProgress'] as num?)?.toDouble() ?? 0,
-              'leadership':
-                  (data['leadershipProgress'] as num?)?.toDouble() ?? 0,
-              'impact': (data['impactProgress'] as num?)?.toDouble() ?? 0,
-            },
-            enrolledSessionIds: List<String>.from(
-                data['enrolledSessionIds'] as List<dynamic>? ?? <dynamic>[]),
-          ));
-        }
-      }
-      _learners = loadedLearners;
+      final EducatorLearnersSnapshot snapshot = _learnersLoader != null
+          ? await _learnersLoader()
+          : await _loadLearnersSnapshot();
+      _learners = snapshot.learners;
       debugPrint('Loaded ${_learners.length} learners for educator');
     } catch (e) {
       debugPrint('Error loading learners: $e');
       _error = 'Failed to load learners: $e';
-      _learners = <EducatorLearner>[];
     } finally {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  Future<EducatorLearnersSnapshot> _loadLearnersSnapshot() async {
+    final Set<String> learnerIds = await _resolveLearnerIdsForEducator();
+
+    if (learnerIds.isEmpty) {
+      return const EducatorLearnersSnapshot(learners: <EducatorLearner>[]);
+    }
+
+    final List<EducatorLearner> loadedLearners = <EducatorLearner>[];
+    for (final String learnerId in learnerIds) {
+      final DocumentSnapshot<Map<String, dynamic>> doc =
+          await _firestore.collection('users').doc(learnerId).get();
+      if (doc.exists) {
+        final Map<String, dynamic> data = doc.data()!;
+        if (!_recordMatchesSite(data)) {
+          continue;
+        }
+        loadedLearners.add(EducatorLearner(
+          id: doc.id,
+          name: (data['displayName'] as String?)?.trim().isNotEmpty == true
+              ? (data['displayName'] as String).trim()
+              : _fallbackLearnerName,
+          email: data['email'] as String? ?? '',
+          attendanceRate: (data['attendanceRate'] as num?)?.toInt() ?? 0,
+          missionsCompleted: data['missionsCompleted'] as int? ?? 0,
+          pillarProgress: <String, double>{
+            'future_skills':
+                (data['futureSkillsProgress'] as num?)?.toDouble() ?? 0,
+            'leadership':
+                (data['leadershipProgress'] as num?)?.toDouble() ?? 0,
+            'impact': (data['impactProgress'] as num?)?.toDouble() ?? 0,
+          },
+          enrolledSessionIds: List<String>.from(
+              data['enrolledSessionIds'] as List<dynamic>? ?? <dynamic>[]),
+        ));
+      }
+    }
+
+    return EducatorLearnersSnapshot(learners: loadedLearners);
   }
 
   Future<void> _appendSessionQueryResults({
