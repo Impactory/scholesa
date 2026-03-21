@@ -78,7 +78,7 @@ Highest-value remaining blind spots:
 | `/site/dashboard` | direct | `apps/empire_flutter/app/test/site_dashboard_page_test.dart` | — |
 | `/site/sessions` | direct | `apps/empire_flutter/app/test/site_sessions_page_test.dart`, `apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart` | Date-based reload and stale-data recovery are now isolated; create/edit depth still relies on broader workflow tests |
 | `/site/ops` | direct | `apps/empire_flutter/app/test/site_ops_page_test.dart`, `apps/empire_flutter/app/test/site_ops_honesty_test.dart` | Runtime rollout first-load outage, stale-refresh truth, and direct in-surface refresh/retry recovery are now proven; deeper activity mutation breadth still leans on the broader workflow tests |
-| `/site/incidents` | direct | `apps/empire_flutter/app/test/site_incidents_honesty_test.dart` | — |
+| `/site/incidents` | direct | `apps/empire_flutter/app/test/site_incidents_honesty_test.dart` | First-load outage, stale-refresh retention, identity fallback labels, and visible refresh-failure detail are directly proven; broader incident mutation depth is still outside the focused audit |
 | `/site/identity` | direct | `apps/empire_flutter/app/test/site_identity_page_test.dart` | First-load outage, stale-refresh retention, and visible refresh-failure detail are directly proven; deeper resolution-action breadth still extends beyond the focused audit |
 | `/site/pickup-auth` | direct | `apps/empire_flutter/app/test/site_pickup_auth_page_test.dart` | — |
 | `/site/consent` | direct | `apps/empire_flutter/app/test/site_consent_page_test.dart` | — |

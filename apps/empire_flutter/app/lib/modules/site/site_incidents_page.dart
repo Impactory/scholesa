@@ -733,6 +733,7 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage>
     setState(() {
       _isLoading = true;
       _loadError = null;
+      _loadErrorDetail = null;
     });
     try {
       final List<Map<String, dynamic>> rows;
@@ -795,13 +796,14 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage>
           (_Incident a, _Incident b) => b.reportedAt.compareTo(a.reportedAt));
       if (!mounted) return;
       setState(() => _incidents = loaded);
-    } catch (_) {
+    } catch (error) {
       if (!mounted) return;
       setState(() {
         _loadError = _tSiteIncidents(
           context,
           'We could not load incidents. Retry to check the current state.',
         );
+        _loadErrorDetail = error.toString();
       });
     } finally {
       if (mounted) {
