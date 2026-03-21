@@ -17,7 +17,14 @@ String _tHqCurriculum(BuildContext context, String input) {
 /// HQ Curriculum page for managing curriculum versions and rubrics
 /// Based on docs/45_CURRICULUM_VERSIONING_RUBRICS_SPEC.md
 class HqCurriculumPage extends StatefulWidget {
-  const HqCurriculumPage({super.key});
+  const HqCurriculumPage({
+    super.key,
+    this.curriculaLoader,
+    this.trainingCyclesLoader,
+  });
+
+  final Future<List<Map<String, dynamic>>> Function()? curriculaLoader;
+  final Future<List<Map<String, dynamic>>> Function()? trainingCyclesLoader;
 
   @override
   State<HqCurriculumPage> createState() => _HqCurriculumPageState();
@@ -129,6 +136,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
       WorkflowBridgeService.instance;
   late TabController _tabController;
   bool _isLoading = false;
+  String? _curriculaError;
+  String? _trainingCyclesError;
 
   List<_Curriculum> _curricula = <_Curriculum>[];
   List<_TrainingCycle> _trainingCycles = <_TrainingCycle>[];
@@ -141,6 +150,81 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
       _loadCurricula();
       _loadTrainingCycles();
     });
+  }
+
+  Future<void> _refreshCurriculumSurface() async {
+    await Future.wait<void>(<Future<void>>[
+      _loadCurricula(),
+      _loadTrainingCycles(),
+    ]);
+  }
+
+  Widget _buildLoadErrorState({
+    required String title,
+    required String message,
+    required VoidCallback onRetry,
+  }) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: ScholesaColors.error.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.error_outline_rounded,
+                size: 48,
+                color: ScholesaColors.error,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(title, style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: ScholesaColors.textSecondary),
+            ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh_rounded),
+              label: Text(_tHqCurriculum(context, 'Retry')),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStaleDataBanner(String message) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.orange.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(color: ScholesaColors.textPrimary),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -158,6 +242,11 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
         backgroundColor: ScholesaColors.hqGradient.colors.first,
         foregroundColor: Colors.white,
         actions: <Widget>[
+          IconButton(
+            onPressed: _refreshCurriculumSurface,
+            icon: const Icon(Icons.refresh_rounded),
+            tooltip: _tHqCurriculum(context, 'Refresh'),
+          ),
           IconButton(
             onPressed: _showTrainingCyclesSheet,
             icon: const Icon(Icons.school_rounded),
@@ -235,11 +324,29 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     final List<_Curriculum> filtered =
         _curricula.where((_Curriculum c) => c.status == status).toList();
 
+    if (_curriculaError != null && _curricula.isEmpty) {
+      return _buildLoadErrorState(
+        title: _tHqCurriculum(context, 'Curricula are temporarily unavailable'),
+        message: _curriculaError!,
+        onRetry: _refreshCurriculumSurface,
+      );
+    }
+
     if (filtered.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
+            if (_curriculaError != null)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: _buildStaleDataBanner(
+                  _tHqCurriculum(
+                    context,
+                    'Unable to refresh curricula right now. Showing the last successful data.',
+                  ),
+                ),
+              ),
             Icon(Icons.menu_book_rounded,
                 size: 64,
                 color: ScholesaColors.textSecondary.withValues(alpha: 0.5)),
@@ -254,9 +361,19 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
 
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: filtered.length,
-      itemBuilder: (BuildContext context, int index) =>
-          _buildCurriculumCard(filtered[index]),
+      itemCount: filtered.length + (_curriculaError != null ? 1 : 0),
+      itemBuilder: (BuildContext context, int index) {
+        if (_curriculaError != null && index == 0) {
+          return _buildStaleDataBanner(
+            _tHqCurriculum(
+              context,
+              'Unable to refresh curricula right now. Showing the last successful data.',
+            ),
+          );
+        }
+        final int curriculumIndex = index - (_curriculaError != null ? 1 : 0);
+        return _buildCurriculumCard(filtered[curriculumIndex]);
+      },
     );
   }
 
@@ -1411,6 +1528,13 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                     ),
                   ),
                   TextButton.icon(
+                    onPressed: () async {
+                      await _loadTrainingCycles();
+                    },
+                    icon: const Icon(Icons.refresh_rounded),
+                    label: Text(_tHqCurriculum(context, 'Refresh')),
+                  ),
+                  TextButton.icon(
                     onPressed: () {
                       Navigator.pop(context);
                       _showCreateTrainingCycleDialog();
@@ -1422,7 +1546,16 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                 ],
               ),
               const SizedBox(height: 12),
-              if (_trainingCycles.isEmpty)
+              if (_trainingCyclesError != null && _trainingCycles.isEmpty)
+                _buildLoadErrorState(
+                  title: _tHqCurriculum(
+                    context,
+                    'Training cycles are temporarily unavailable',
+                  ),
+                  message: _trainingCyclesError!,
+                  onRetry: _loadTrainingCycles,
+                )
+              else if (_trainingCycles.isEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 24),
                   child: Text(
@@ -1436,10 +1569,21 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                 Flexible(
                   child: ListView.separated(
                     shrinkWrap: true,
-                    itemCount: _trainingCycles.length,
+                    itemCount:
+                        _trainingCycles.length + (_trainingCyclesError != null ? 1 : 0),
                     separatorBuilder: (_, __) => const SizedBox(height: 8),
                     itemBuilder: (BuildContext context, int index) {
-                      final _TrainingCycle cycle = _trainingCycles[index];
+                      if (_trainingCyclesError != null && index == 0) {
+                        return _buildStaleDataBanner(
+                          _tHqCurriculum(
+                            context,
+                            'Unable to refresh training cycles right now. Showing the last successful data.',
+                          ),
+                        );
+                      }
+                      final int cycleIndex =
+                          index - (_trainingCyclesError != null ? 1 : 0);
+                      final _TrainingCycle cycle = _trainingCycles[cycleIndex];
                       return Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
