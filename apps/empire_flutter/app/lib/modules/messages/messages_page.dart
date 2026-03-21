@@ -138,6 +138,20 @@ class _MessagesPageState extends State<MessagesPage>
                 ],
               ),
               const Spacer(),
+              IconButton(
+                onPressed: () async {
+                  TelemetryService.instance.logEvent(
+                    event: 'cta.clicked',
+                    metadata: const <String, dynamic>{
+                      'cta': 'messages_refresh',
+                    },
+                  );
+                  await service.loadMessages();
+                },
+                icon: const Icon(Icons.refresh_rounded),
+                color: const Color(0xFF6366F1),
+                tooltip: _tMessages(context, 'Refresh'),
+              ),
               if (service.unreadCount > 0)
                 TextButton.icon(
                   onPressed: () {
@@ -186,12 +200,28 @@ class _MessagesPageState extends State<MessagesPage>
   }
 
   Widget _buildTabContent() {
-    return TabBarView(
-      controller: _tabController,
-      children: <Widget>[
-        _buildNotificationsList(),
-        _buildConversationsList(),
-      ],
+    return Consumer<MessageService>(
+      builder: (BuildContext context, MessageService service, _) {
+        final bool hasCachedData =
+            service.notificationMessages.isNotEmpty ||
+            service.conversations.isNotEmpty;
+
+        return Column(
+          children: <Widget>[
+            if (service.error != null && hasCachedData)
+              _buildStaleDataBanner(service.error!),
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: <Widget>[
+                  _buildNotificationsList(),
+                  _buildConversationsList(),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -366,6 +396,42 @@ class _MessagesPageState extends State<MessagesPage>
           Text(title, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
           Text(subtitle, style: TextStyle(color: context.schTextSecondary)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStaleDataBanner(String message) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFFDE68A)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Padding(
+            padding: EdgeInsets.only(top: 2),
+            child: Icon(
+              Icons.warning_amber_rounded,
+              color: Color(0xFFB45309),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              _tMessages(
+                    context,
+                    'Unable to refresh messages right now. Showing the last successful data. ',
+                  ) +
+                  message,
+              style: const TextStyle(color: Color(0xFF92400E)),
+            ),
+          ),
         ],
       ),
     );
