@@ -10,6 +10,7 @@ import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/modules/attendance/attendance_models.dart';
 import 'package:scholesa_app/modules/attendance/attendance_page.dart';
 import 'package:scholesa_app/modules/attendance/attendance_service.dart';
+import 'package:scholesa_app/offline/offline_queue.dart';
 import 'package:scholesa_app/offline/sync_coordinator.dart';
 import 'package:scholesa_app/services/api_client.dart';
 import 'package:scholesa_app/ui/common/error_state.dart';
@@ -166,6 +167,10 @@ Future<void> _seedAttendanceCouplingData(
 }
 
 void main() {
+  setUpAll(() {
+    registerFallbackValue(OpType.attendanceRecord);
+  });
+
   testWidgets('attendance page shows a recoverable missing-service state',
       (WidgetTester tester) async {
     final _MockSyncCoordinator syncCoordinator = _MockSyncCoordinator();
@@ -742,6 +747,78 @@ void main() {
       roster.every((RosterLearner learner) =>
           learner.currentAttendance?.status == AttendanceStatus.present),
       isTrue,
+    );
+  });
+
+  testWidgets('attendance page queues attendance when offline',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedAttendanceCouplingData(firestore);
+
+    final _MockSyncCoordinator syncCoordinator = _MockSyncCoordinator();
+    when(() => syncCoordinator.isOnline).thenReturn(false);
+    when(() => syncCoordinator.pendingCount).thenReturn(2);
+    when(() => syncCoordinator.isSyncing).thenReturn(false);
+    when(() => syncCoordinator.retryFailed()).thenAnswer((_) async {});
+    when(() => syncCoordinator.queueOperation(any(), any())).thenAnswer(
+      (_) async => QueuedOp(
+        type: OpType.attendanceRecord,
+        payload: const <String, dynamic>{},
+      ),
+    );
+
+    final AttendanceService attendanceService = AttendanceService(
+      apiClient: _MockApiClient(),
+      syncCoordinator: syncCoordinator,
+      firestore: firestore,
+      siteId: 'site-1',
+    );
+    final AppState appState = _buildAppState();
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: <SingleChildWidget>[
+          ChangeNotifierProvider<AppState>.value(value: appState),
+          ChangeNotifierProvider<SyncCoordinator>.value(value: syncCoordinator),
+          ChangeNotifierProvider<AttendanceService>.value(value: attendanceService),
+        ],
+        child: MaterialApp(
+          theme: ThemeData(
+            useMaterial3: true,
+            splashFactory: NoSplash.splashFactory,
+          ),
+          locale: const Locale('en'),
+          supportedLocales: const <Locale>[
+            Locale('en'),
+            Locale('zh', 'CN'),
+            Locale('zh', 'TW'),
+          ],
+          localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: const AttendancePage(),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Robotics Lab'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('All Present'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save Attendance (2/2)'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Attendance queued to sync'), findsOneWidget);
+    verify(() => syncCoordinator.queueOperation(OpType.attendanceRecord, any()))
+        .called(2);
+    expect(
+      (await firestore.collection('attendanceRecords').get()).docs,
+      isEmpty,
     );
   });
 }
