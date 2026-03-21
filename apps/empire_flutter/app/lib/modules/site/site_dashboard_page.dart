@@ -19,11 +19,14 @@ class SiteDashboardPage extends StatefulWidget {
     super.key,
     this.sharedPreferences,
     this.kpiPacksLoader,
+    this.recentActivityLoader,
   });
 
   final SharedPreferences? sharedPreferences;
   final Future<List<Map<String, dynamic>>> Function(String? siteId, int limit)?
       kpiPacksLoader;
+  final Future<List<Map<String, dynamic>>> Function(String siteId)?
+      recentActivityLoader;
 
   @override
   State<SiteDashboardPage> createState() => _SiteDashboardPageState();
@@ -46,6 +49,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
   bool _isLoadingActivities = true;
   String? _metricsError;
   String? _kpiPacksError;
+  String? _activitiesError;
   List<_KpiPackSummary> _kpiPacks = <_KpiPackSummary>[];
   List<_SiteActivity> _activities = <_SiteActivity>[];
 
@@ -507,6 +511,18 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
   }
 
   Widget _buildLoadErrorCard(String title, String message) {
+    return _buildRetryLoadErrorCard(
+      title: title,
+      message: message,
+      onRetry: _loadKpiPacks,
+    );
+  }
+
+  Widget _buildRetryLoadErrorCard({
+    required String title,
+    required String message,
+    required VoidCallback onRetry,
+  }) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: _dashboardCardDecoration(context, radius: 12),
@@ -528,7 +544,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
           ),
           const SizedBox(height: 12),
           FilledButton.icon(
-            onPressed: _loadKpiPacks,
+            onPressed: onRetry,
             icon: const Icon(Icons.refresh_rounded),
             label: Text(_t('Retry')),
           ),
@@ -980,7 +996,15 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                 ),
               ),
             ),
-          if (!_isLoadingActivities && _activities.isEmpty)
+          if (!_isLoadingActivities && _activitiesError != null && _activities.isEmpty)
+            _buildRetryLoadErrorCard(
+              title: _t('Recent activity is temporarily unavailable'),
+              message: _activitiesError!,
+              onRetry: _loadRecentActivity,
+            ),
+          if (!_isLoadingActivities && _activitiesError != null && _activities.isNotEmpty)
+            _buildStaleDataBanner(_activitiesError!),
+          if (!_isLoadingActivities && _activitiesError == null && _activities.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: Center(
@@ -1235,7 +1259,18 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
-            if (_activities.isEmpty)
+            if (_activitiesError != null && _activities.isEmpty)
+              _buildRetryLoadErrorCard(
+                title: _t('Recent activity is temporarily unavailable'),
+                message: _activitiesError!,
+                onRetry: () {
+                  Navigator.of(sheetContext).pop();
+                  _loadRecentActivity();
+                },
+              ),
+            if (_activitiesError != null && _activities.isNotEmpty)
+              _buildStaleDataBanner(_activitiesError!),
+            if (_activitiesError == null && _activities.isEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 child: Text(
@@ -1325,7 +1360,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
     }
 
     final String siteId = (appState.activeSiteId ??
-            (appState.siteIds.isNotEmpty ? appState.siteIds.first : ''))
+        (appState.siteIds.isNotEmpty ? appState.siteIds.first : ''))
         .trim();
 
     if (siteId.isNotEmpty) {
@@ -1353,27 +1388,50 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
 
   Future<void> _loadRecentActivity() async {
     final AppState? appState = _maybeAppState();
-    final FirestoreService? firestoreService = _maybeFirestoreService();
-    if (appState == null || firestoreService == null) {
-      if (!mounted) return;
-      setState(() {
-        _isLoadingActivities = false;
-        _activities = <_SiteActivity>[];
-      });
-      return;
-    }
-
-    final String siteId = (appState.activeSiteId ??
-            (appState.siteIds.isNotEmpty ? appState.siteIds.first : ''))
+    final String siteId = ((appState?.activeSiteId) ??
+        ((appState?.siteIds.isNotEmpty ?? false)
+          ? appState!.siteIds.first
+          : ''))
         .trim();
 
     if (!mounted) return;
-    setState(() => _isLoadingActivities = true);
+    setState(() {
+      _isLoadingActivities = true;
+      _activitiesError = null;
+    });
+    final bool hadActivities = _activities.isNotEmpty;
 
     try {
+      if (widget.recentActivityLoader != null) {
+        final List<Map<String, dynamic>> rows =
+            await widget.recentActivityLoader!(siteId);
+        if (!mounted) return;
+        setState(() {
+          _activities = rows
+              .map(_siteActivityFromLoaderRow)
+              .toList(growable: false);
+          _activitiesError = null;
+        });
+        return;
+      }
+
+      final FirestoreService? firestoreService = _maybeFirestoreService();
+      if (appState == null || firestoreService == null) {
+        if (!mounted) return;
+        setState(() {
+          _isLoadingActivities = false;
+          _activities = <_SiteActivity>[];
+          _activitiesError = null;
+        });
+        return;
+      }
+
       if (siteId.isEmpty) {
         if (!mounted) return;
-        setState(() => _activities = <_SiteActivity>[]);
+        setState(() {
+          _activities = <_SiteActivity>[];
+          _activitiesError = null;
+        });
         return;
       }
 
@@ -1471,11 +1529,65 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
           .toList();
 
       if (!mounted) return;
-      setState(() => _activities = activities);
+      setState(() {
+        _activities = activities;
+        _activitiesError = null;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _activitiesError = hadActivities
+            ? _t('Unable to refresh recent activity right now. Showing the last successful data.')
+            : _t('We could not load recent activity right now. Retry to check the current state.');
+      });
     } finally {
       if (mounted) {
         setState(() => _isLoadingActivities = false);
       }
+    }
+  }
+
+  _SiteActivity _siteActivityFromLoaderRow(Map<String, dynamic> row) {
+    return _SiteActivity(
+      icon: _activityIconFromKey((row['icon'] as String?)?.trim()),
+      title: (row['title'] as String?)?.trim().isNotEmpty == true
+          ? (row['title'] as String).trim()
+          : _t('Site operation event'),
+      subtitle: (row['subtitle'] as String?)?.trim().isNotEmpty == true
+          ? (row['subtitle'] as String).trim()
+          : _t('Site operation event'),
+      time: (row['time'] as String?)?.trim().isNotEmpty == true
+          ? (row['time'] as String).trim()
+          : _t('just now'),
+      color: _activityColorFromKey((row['color'] as String?)?.trim()),
+    );
+  }
+
+  IconData _activityIconFromKey(String? key) {
+    switch (key) {
+      case 'warning':
+        return Icons.warning_rounded;
+      case 'check-in':
+        return Icons.login_rounded;
+      case 'check-out':
+        return Icons.logout_rounded;
+      case 'download':
+        return Icons.download_done;
+      default:
+        return Icons.bolt_rounded;
+    }
+  }
+
+  Color _activityColorFromKey(String? key) {
+    switch (key) {
+      case 'warning':
+        return ScholesaColors.warning;
+      case 'success':
+        return ScholesaColors.success;
+      case 'site':
+        return ScholesaColors.site;
+      default:
+        return ScholesaColors.futureSkills;
     }
   }
 
