@@ -75,6 +75,62 @@ void main() {
     expect(find.text('Retry'), findsOneWidget);
   });
 
+  testWidgets(
+      'site integrations health page keeps stale connections visible after refresh failure',
+      (WidgetTester tester) async {
+    int loadCount = 0;
+
+    await tester.pumpWidget(
+      _buildHarness(
+        child: SiteIntegrationsHealthPage(
+          healthLoader: (_) async {
+            loadCount += 1;
+            if (loadCount == 1) {
+              return <String, dynamic>{
+                'connections': <Map<String, dynamic>>[
+                  <String, dynamic>{
+                    'id': 'google-classroom-1',
+                    'provider': 'google_classroom',
+                    'status': 'active',
+                  },
+                ],
+                'syncJobs': <Map<String, dynamic>>[
+                  <String, dynamic>{
+                    'provider': 'google_classroom',
+                    'status': 'completed',
+                    'createdAt': DateTime(2026, 3, 20, 9),
+                  },
+                ],
+              };
+            }
+            throw StateError('integrations refresh unavailable');
+          },
+          rosterImportRepository:
+              RosterImportRepository(firestore: FakeFirebaseFirestore()),
+        ),
+      ),
+    );
+
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Google Classroom'), findsOneWidget);
+    expect(find.text('No connected integrations found'), findsNothing);
+
+    await tester.tap(find.byIcon(Icons.refresh_rounded).first);
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Unable to refresh integrations health right now. Showing the last successful data.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Google Classroom'), findsOneWidget);
+    expect(find.text('No connected integrations found'), findsNothing);
+  });
+
   testWidgets('site integrations health page shows a visible error when connect fails',
       (WidgetTester tester) async {
     await tester.pumpWidget(

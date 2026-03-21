@@ -84,6 +84,10 @@ class SiteSurfaceI18n {
     'Unable to update integration right now.': '目前无法更新集成。',
     'Unable to queue sync right now.': '目前无法排队同步。',
     'Unable to mark roster row reviewed right now.': '目前无法将名单行标记为已审核。',
+    'Unable to load integrations health': '无法加载集成健康状态',
+    'Unable to load integrations health right now.': '当前无法加载集成健康状态。',
+    'Unable to refresh integrations health right now. Showing the last successful data.':
+        '当前无法刷新集成健康状态。正在显示最近一次成功加载的数据。',
     'connected': '已连接',
     'synced successfully': '同步成功',
     'Failed syncs retried successfully': '失败的同步已成功重试',
@@ -456,6 +460,10 @@ class SiteSurfaceI18n {
     'Unable to update integration right now.': '目前無法更新整合。',
     'Unable to queue sync right now.': '目前無法排入同步。',
     'Unable to mark roster row reviewed right now.': '目前無法將名冊列標記為已審核。',
+    'Unable to load integrations health': '無法載入整合健康狀態',
+    'Unable to load integrations health right now.': '目前無法載入整合健康狀態。',
+    'Unable to refresh integrations health right now. Showing the last successful data.':
+        '目前無法刷新整合健康狀態。正在顯示最近一次成功載入的資料。',
     'connected': '已連接',
     'synced successfully': '同步成功',
     'Failed syncs retried successfully': '失敗的同步已成功重試',
