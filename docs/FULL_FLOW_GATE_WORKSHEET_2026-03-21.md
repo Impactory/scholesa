@@ -125,6 +125,44 @@ Next proof task:
 2. Expand route-local proof beyond CTA telemetry into any persisted operator audit surfaces if the product expects them here.
 3. Close the remaining route-coupling gap between provisioning truth and the workflows that rely on provisioned learners, parents, and links.
 
+## Route: `/educator/attendance`
+
+Classification: `Full-flow partial`
+
+Proven gates:
+
+1. Gate A `State Truth`
+   - direct proof exists for first-load failure and stale-after-success visibility on the attendance list and roster
+2. Gate B `Real Mutation`
+   - direct route proof now exists that attendance save persists records to Firestore on the live path, fails with explicit route copy on backend failure, and queues truthfully when offline instead of faking a live save
+3. Gate C `Authoritative Reload`
+   - direct route proof now exists that reopening the roster re-reads saved attendance from Firestore rather than trusting only local widget state
+4. Gate D `Recovery`
+   - refresh and retry controls are directly proven for first-load failure and stale-after-success states, and offline save behavior degrades truthfully into queueing rather than silent loss
+5. Gate E `Scope And Permission Correctness`
+   - direct route proof now exists that `/educator/attendance` only allows `educator`, `site`, and `hq` roles
+6. Gate F `Accessibility And Discoverability`
+   - recovery controls are labeled and stale-state messaging is assistive-tech visible in the audited attendance surfaces
+
+Missing gates:
+
+1. Gate G `Telemetry And Auditability`
+   - telemetry or persisted operator audit traces for attendance saves are not yet directly proven in the focused route suite
+2. Gate H `Educational Truth`
+   - attendance remains operational rather than capability evidence by itself, but its downstream coupling to evidence-bearing session and learner-growth workflows is not yet certified here
+3. Gate I `AI Transparency`
+   - no AI claim is made on the route, but wider workflow coupling is still outside this focused route proof
+
+Blocking risk:
+
+- `/educator/attendance` now directly proves honest loading, stale recovery, live roster sourcing from active enrollments, save success, explicit save failure, authoritative reload on reopen, truthful offline queueing, and route-level access scope. Remaining risk is no longer route-local save or access honesty; it is wider educator workflow coupling and any missing audit trace requirements for attendance actions.
+
+Next proof task:
+
+1. Verify that session-linked evidence and follow-on educator workflows consume attendance truth without introducing fake completion or misleading learner-growth claims.
+2. Add direct auditability proof if attendance saves must surface operator traces or persisted audit records in-product.
+3. Keep attendance classified `Full-flow partial` until downstream capability/evidence coupling is verified end to end.
+
 ## Template
 
 Route or workflow:

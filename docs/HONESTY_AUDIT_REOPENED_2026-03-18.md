@@ -142,6 +142,7 @@ Interpretation rule:
 52. Added direct `/site/provisioning` auditability proof for create, edit, and delete mutation telemetry so the focused route suite now verifies operator traces for learner creation, parent editing, and guardian-link deletion.
 53. Fixed `/site/provisioning` success flows to re-load authoritative route data after create, edit, and delete mutations, and added direct proof that audited provisioning mutations settle on canonical source-of-truth state rather than local-only optimistic state.
 54. Added direct educator attendance route proof for real enrolled-learner roster coupling plus attendance save success/failure, fixed attendance roster disposal so saving no longer triggers listener notifications while the widget tree is locked, proved saved attendance reloads from Firestore when the roster is reopened, and proved offline attendance saves queue truthfully without writing Firestore until sync resumes.
+55. Added direct `/educator/attendance` route-gate proof that only educator, site, and HQ roles can access the route, so the remaining attendance risk is now broader workflow coupling rather than route-local access scope.
 
 ### Release and operations fixes
 
