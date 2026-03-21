@@ -158,6 +158,58 @@ void main() {
     expect(find.text('Unknown'), findsNothing);
   });
 
+      testWidgets('site incidents keep stale evidence visible after refresh failure',
+          (WidgetTester tester) async {
+        final FirestoreService firestoreService = FirestoreService(
+          firestore: FakeFirebaseFirestore(),
+          auth: _MockFirebaseAuth(),
+        );
+        int loadCount = 0;
+
+        await tester.pumpWidget(
+          _buildHarness(
+            appState: _buildSiteState(),
+            firestoreService: firestoreService,
+            child: SiteIncidentsPage(
+              incidentsLoader: (String _) async {
+                loadCount += 1;
+                if (loadCount == 1) {
+                  return <Map<String, dynamic>>[
+                    <String, dynamic>{
+                      'id': 'incident-1',
+                      'title': 'Playground incident',
+                      'severity': 'minor',
+                      'status': 'submitted',
+                      'learnerName': 'Learner One',
+                      'reportedByName': 'Staff One',
+                      'reportedAt': DateTime(2026, 3, 17, 9).millisecondsSinceEpoch,
+                    },
+                  ];
+                }
+                throw StateError('incidents refresh unavailable');
+              },
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Playground incident'), findsOneWidget);
+        expect(find.textContaining('No incidents'), findsNothing);
+
+        await tester.tap(find.byIcon(Icons.refresh_rounded).first);
+        await tester.pump();
+        await tester.pumpAndSettle();
+
+        expect(
+          find.text(
+            'Unable to refresh incidents right now. Showing the last successful data.',
+          ),
+          findsOneWidget,
+        );
+        expect(find.text('Playground incident'), findsOneWidget);
+        expect(find.textContaining('No incidents'), findsNothing);
+      });
+
   testWidgets('site incidents restores the selected status tab on reopen',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
