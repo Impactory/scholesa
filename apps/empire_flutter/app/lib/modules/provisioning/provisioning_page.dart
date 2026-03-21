@@ -1485,6 +1485,8 @@ class _CreateLinkDialogState extends State<_CreateLinkDialog> {
     setState(() => _isSubmitting = false);
 
     if (result != null) {
+      await service.loadGuardianLinks(siteId);
+      if (!mounted) return;
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
