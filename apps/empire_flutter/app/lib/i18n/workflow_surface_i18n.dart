@@ -90,6 +90,10 @@ class WorkflowSurfaceI18n {
         '我们暂时无法加载学习者。请重试以检查当前状态。',
     'Unable to refresh learners right now. Showing the last successful data. ':
         '目前无法刷新学习者数据。正在显示最近一次成功加载的数据。',
+    'We could not load learner supports right now. Retry to check the current state.':
+        '我们暂时无法加载学习支持。请重试以检查当前状态。',
+    'Unable to refresh learner supports right now. Showing the last successful data. ':
+        '目前无法刷新学习支持。正在显示最近一次成功加载的数据。',
     'We could not load sessions right now. Retry to check the current state.':
         '我们暂时无法加载课程。请重试以检查当前状态。',
     'Unable to refresh sessions right now. Showing the last successful data. ':
@@ -911,6 +915,10 @@ class WorkflowSurfaceI18n {
         '我們暫時無法載入學習者。請重試以確認目前狀態。',
     'Unable to refresh learners right now. Showing the last successful data. ':
         '目前無法刷新學習者資料。正在顯示最近一次成功載入的資料。',
+    'We could not load learner supports right now. Retry to check the current state.':
+        '我們暫時無法載入學習支持。請重試以確認目前狀態。',
+    'Unable to refresh learner supports right now. Showing the last successful data. ':
+        '目前無法刷新學習支持。正在顯示最近一次成功載入的資料。',
     'We could not load sessions right now. Retry to check the current state.':
         '我們暫時無法載入課程。請重試以確認目前狀態。',
     'Unable to refresh sessions right now. Showing the last successful data. ':

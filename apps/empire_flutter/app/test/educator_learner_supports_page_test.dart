@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +8,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
 import 'package:scholesa_app/auth/app_state.dart';
+import 'package:scholesa_app/modules/educator/educator_models.dart';
 import 'package:scholesa_app/modules/educator/educator_learner_supports_page.dart';
 import 'package:scholesa_app/modules/educator/educator_service.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
@@ -62,6 +64,7 @@ AppState _buildEducatorState() {
 Widget _buildHarness({
   required FirestoreService firestoreService,
   required EducatorService educatorService,
+  LearnerSupportPlansLoader? supportPlansLoader,
 }) {
   return MultiProvider(
     providers: <SingleChildWidget>[
@@ -82,8 +85,30 @@ Widget _buildHarness({
         Locale('zh', 'CN'),
         Locale('zh', 'TW'),
       ],
-      home: const EducatorLearnerSupportsPage(),
+      home: EducatorLearnerSupportsPage(
+        supportPlansLoader: supportPlansLoader,
+      ),
     ),
+  );
+}
+
+EducatorLearner _sampleLearner({
+  String id = 'learner-1',
+  String name = 'Learner One',
+  int attendanceRate = 58,
+}) {
+  return EducatorLearner(
+    id: id,
+    name: name,
+    email: '$id@scholesa.test',
+    attendanceRate: attendanceRate,
+    missionsCompleted: 3,
+    pillarProgress: const <String, double>{
+      'future_skills': 0.32,
+      'leadership': 0.48,
+      'impact': 0.41,
+    },
+    enrolledSessionIds: const <String>['session-1'],
   );
 }
 
@@ -158,6 +183,77 @@ void main() {
     expect(find.text('Academic'), findsOneWidget);
     expect(find.text('Check-in support'), findsOneWidget);
     expect(find.text('Peer buddy'), findsOneWidget);
+    expect(find.text('No support plans yet'), findsNothing);
+  });
+
+  testWidgets('educator learner supports page shows a blocking error when learner load fails on first load',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final EducatorService educatorService = EducatorService(
+      firestoreService: firestoreService,
+      educatorId: 'educator-1',
+      siteId: 'site-1',
+      learnersLoader: () async {
+        throw StateError('learner roster unavailable');
+      },
+    );
+
+    await tester.pumpWidget(
+      _buildHarness(
+        firestoreService: firestoreService,
+        educatorService: educatorService,
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(
+      find.text('We could not load learner supports right now. Retry to check the current state.'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Failed to load learners:'), findsOneWidget);
+    expect(find.text('No support plans yet'), findsNothing);
+    expect(find.text('Learner One'), findsNothing);
+  });
+
+  testWidgets('educator learner supports page shows a blocking error when saved support plans fail on first load',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final EducatorService educatorService = EducatorService(
+      firestoreService: firestoreService,
+      educatorId: 'educator-1',
+      siteId: 'site-1',
+      learnersLoader: () async => EducatorLearnersSnapshot(
+        learners: <EducatorLearner>[_sampleLearner()],
+      ),
+    );
+
+    await tester.pumpWidget(
+      _buildHarness(
+        firestoreService: firestoreService,
+        educatorService: educatorService,
+        supportPlansLoader: (_, __) async {
+          throw StateError('support plan query unavailable');
+        },
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(
+      find.text('We could not load learner supports right now. Retry to check the current state.'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Failed to load learner supports:'), findsOneWidget);
+    expect(find.text('Active Support Plans'), findsNothing);
     expect(find.text('No support plans yet'), findsNothing);
   });
 
@@ -346,5 +442,66 @@ void main() {
     expect(find.textContaining('Showing results for'), findsNothing);
     expect(find.text('Learner One'), findsOneWidget);
     expect(find.text('Learner Two'), findsOneWidget);
+  });
+
+  testWidgets('educator learner supports page keeps stale plans visible after a refresh failure',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    int supportPlanLoadCount = 0;
+    final EducatorService educatorService = EducatorService(
+      firestoreService: firestoreService,
+      educatorId: 'educator-1',
+      siteId: 'site-1',
+      learnersLoader: () async => EducatorLearnersSnapshot(
+        learners: <EducatorLearner>[_sampleLearner()],
+      ),
+    );
+
+    await tester.pumpWidget(
+      _buildHarness(
+        firestoreService: firestoreService,
+        educatorService: educatorService,
+        supportPlansLoader: (_, __) async {
+          supportPlanLoadCount += 1;
+          if (supportPlanLoadCount == 1) {
+            return <Map<String, dynamic>>[
+              <String, dynamic>{
+                'documentId': 'plan-1',
+                'learnerId': 'learner-1',
+                'supportType': 'Behavioral',
+                'accommodations': <String>['Visual checklist'],
+                'notes': 'Persisted plan note',
+                'priority': 'high',
+                'lastUpdated': Timestamp.fromDate(DateTime(2026, 1, 5)),
+              },
+            ];
+          }
+          throw StateError('saved support plans unavailable');
+        },
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('Learner One'), findsOneWidget);
+    expect(find.text('Behavioral'), findsOneWidget);
+    expect(find.text('Visual checklist'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.refresh_rounded).first);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(
+      find.textContaining('Unable to refresh learner supports right now. Showing the last successful data.'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Failed to load learner supports:'), findsOneWidget);
+    expect(find.text('Learner One'), findsOneWidget);
+    expect(find.text('Behavioral'), findsOneWidget);
+    expect(find.text('Visual checklist'), findsOneWidget);
   });
 }

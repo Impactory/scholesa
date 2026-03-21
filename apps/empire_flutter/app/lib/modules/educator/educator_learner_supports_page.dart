@@ -16,10 +16,20 @@ String _tEducatorLearnerSupports(BuildContext context, String input) {
   return WorkflowSurfaceI18n.text(context, input);
 }
 
+typedef LearnerSupportPlansLoader = Future<List<Map<String, dynamic>>> Function(
+  BuildContext context,
+  String siteId,
+);
+
 /// Educator learner supports page for tracking learner wellbeing & accommodations
 /// Based on docs/09_LEARNER_SUPPORT_ACCOMMODATIONS_SPEC.md
 class EducatorLearnerSupportsPage extends StatefulWidget {
-  const EducatorLearnerSupportsPage({super.key});
+  const EducatorLearnerSupportsPage({
+    this.supportPlansLoader,
+    super.key,
+  });
+
+  final LearnerSupportPlansLoader? supportPlansLoader;
 
   @override
   State<EducatorLearnerSupportsPage> createState() =>
@@ -34,6 +44,7 @@ class _EducatorLearnerSupportsPageState
   Map<String, _PersistedSupportPlan> _supportPlanOverrides =
       <String, _PersistedSupportPlan>{};
   String _searchQuery = '';
+  String? _loadError;
 
   @override
   void initState() {
@@ -66,20 +77,18 @@ class _EducatorLearnerSupportsPageState
       return;
     }
 
-    try {
-      final FirestoreService firestoreService = context.read<FirestoreService>();
-      final QuerySnapshot<Map<String, dynamic>> snapshot = await firestoreService
-          .firestore
-          .collection(_supportPlansCollection)
-          .where('siteId', isEqualTo: siteId)
-          .get();
+    setState(() {
+      _loadError = null;
+    });
 
+    try {
+      final List<Map<String, dynamic>> rows = widget.supportPlansLoader != null
+          ? await widget.supportPlansLoader!(context, siteId)
+          : await _loadPersistedSupportPlanRows(siteId);
       final Map<String, _PersistedSupportPlan> nextOverrides =
           <String, _PersistedSupportPlan>{};
-      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
-          in snapshot.docs) {
-        final _PersistedSupportPlan? plan =
-            _PersistedSupportPlan.fromDocument(doc);
+      for (final Map<String, dynamic> row in rows) {
+        final _PersistedSupportPlan? plan = _PersistedSupportPlan.fromMap(row);
         if (plan == null) {
           continue;
         }
@@ -91,10 +100,36 @@ class _EducatorLearnerSupportsPageState
       }
       setState(() {
         _supportPlanOverrides = nextOverrides;
+        _loadError = null;
       });
     } catch (error) {
       debugPrint('Failed to load learner support plans: $error');
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _loadError = 'Failed to load learner supports: $error';
+      });
     }
+  }
+
+  Future<List<Map<String, dynamic>>> _loadPersistedSupportPlanRows(
+    String siteId,
+  ) async {
+    final FirestoreService firestoreService = context.read<FirestoreService>();
+    final QuerySnapshot<Map<String, dynamic>> snapshot = await firestoreService
+        .firestore
+        .collection(_supportPlansCollection)
+        .where('siteId', isEqualTo: siteId)
+        .get();
+
+    return snapshot.docs
+        .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+          final Map<String, dynamic> row = Map<String, dynamic>.from(doc.data());
+          row['documentId'] = doc.id;
+          return row;
+        })
+        .toList(growable: false);
   }
 
   @override
@@ -106,6 +141,11 @@ class _EducatorLearnerSupportsPageState
         backgroundColor: ScholesaColors.educatorGradient.colors.first,
         foregroundColor: Colors.white,
         actions: <Widget>[
+          IconButton(
+            tooltip: _tEducatorLearnerSupports(context, 'Refresh'),
+            onPressed: _loadSupportPlansAndLearners,
+            icon: const Icon(Icons.refresh_rounded),
+          ),
           IconButton(
             icon: const Icon(Icons.search_rounded),
             onPressed: _showSearchDialog,
@@ -120,11 +160,25 @@ class _EducatorLearnerSupportsPageState
           final List<_LearnerSupport> supports = _supportsFromService(service);
           final List<_LearnerSupport> visibleSupports =
               _applySearchFilter(supports);
-          if (service.isLoading && supports.isEmpty) {
+          final String? effectiveError = service.error ?? _loadError;
+          final bool shouldBlockForLoadFailure =
+              (service.error != null && supports.isEmpty) ||
+                  (_loadError != null && _supportPlanOverrides.isEmpty);
+
+          if (service.isLoading && supports.isEmpty && effectiveError == null) {
             return Center(
               child: Text(
                 _tEducatorLearnerSupports(context, 'Loading...'),
                 style: const TextStyle(color: ScholesaColors.textSecondary),
+              ),
+            );
+          }
+
+          if (effectiveError != null && shouldBlockForLoadFailure) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: _buildLoadErrorState(effectiveError),
               ),
             );
           }
@@ -173,6 +227,11 @@ class _EducatorLearnerSupportsPageState
           return ListView(
             padding: const EdgeInsets.all(16),
             children: <Widget>[
+              if (effectiveError != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: _buildStaleDataBanner(effectiveError),
+                ),
               AiContextCoachSection(
                 title: _tEducatorLearnerSupports(context, 'Support AI Help'),
                 subtitle: _tEducatorLearnerSupports(
@@ -248,6 +307,85 @@ class _EducatorLearnerSupportsPageState
               });
             },
             child: Text(_tEducatorLearnerSupports(context, 'Clear Search')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoadErrorState(String message) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF4F4),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFFECACA)),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              const Icon(Icons.error_outline_rounded, color: ScholesaColors.error),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  _tEducatorLearnerSupports(
+                    context,
+                    'We could not load learner supports right now. Retry to check the current state.',
+                  ),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: ScholesaColors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            style: const TextStyle(color: ScholesaColors.textSecondary),
+          ),
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: _loadSupportPlansAndLearners,
+            icon: const Icon(Icons.refresh_rounded),
+            label: Text(_tEducatorLearnerSupports(context, 'Retry')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStaleDataBanner(String message) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFFDE68A)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Padding(
+            padding: EdgeInsets.only(top: 2),
+            child: Icon(Icons.warning_amber_rounded, color: Color(0xFFB45309)),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              _tEducatorLearnerSupports(
+                    context,
+                    'Unable to refresh learner supports right now. Showing the last successful data. ',
+                  ) +
+                  message,
+              style: const TextStyle(color: Color(0xFF92400E)),
+            ),
           ),
         ],
       ),
@@ -1324,12 +1462,10 @@ class _PersistedSupportPlan {
   final _Priority priority;
   final DateTime lastUpdated;
 
-  static _PersistedSupportPlan? fromDocument(
-    QueryDocumentSnapshot<Map<String, dynamic>> doc,
-  ) {
-    final Map<String, dynamic> data = doc.data();
+  static _PersistedSupportPlan? fromMap(Map<String, dynamic> data) {
+    final String documentId = (data['documentId'] as String? ?? '').trim();
     final String learnerId = (data['learnerId'] as String? ?? '').trim();
-    if (learnerId.isEmpty) {
+    if (documentId.isEmpty || learnerId.isEmpty) {
       return null;
     }
     final String supportType =
@@ -1342,15 +1478,20 @@ class _PersistedSupportPlan {
             .toList(growable: false);
     final String notes = (data['notes'] as String? ?? '').trim();
     final String priorityName = (data['priority'] as String? ?? 'medium').trim();
-    final Timestamp? lastUpdatedTimestamp = data['lastUpdated'] as Timestamp?;
+    final dynamic lastUpdatedRaw = data['lastUpdated'];
+    final DateTime lastUpdated = lastUpdatedRaw is Timestamp
+        ? lastUpdatedRaw.toDate()
+        : lastUpdatedRaw is DateTime
+            ? lastUpdatedRaw
+            : DateTime.now();
     return _PersistedSupportPlan(
-      documentId: doc.id,
+      documentId: documentId,
       learnerId: learnerId,
       supportType: supportType.isEmpty ? 'Academic' : supportType,
       accommodations: accommodations,
       notes: notes,
       priority: _priorityFromName(priorityName),
-      lastUpdated: lastUpdatedTimestamp?.toDate() ?? DateTime.now(),
+      lastUpdated: lastUpdated,
     );
   }
 
