@@ -53,7 +53,7 @@ Highest-value remaining blind spots:
 | `/educator/learners` | direct | `apps/empire_flutter/app/test/educator_learners_page_test.dart` | — |
 | `/educator/missions/review` | direct | `apps/empire_flutter/app/test/educator_mission_review_page_test.dart`, `apps/empire_flutter/app/test/educator_honesty_regression_test.dart`, `apps/empire_flutter/app/test/persistence_blockers_regression_test.dart` | Canonical review queue now runs on `missionAttempts` with direct load failure, active-site scoped retry, failed review submission, and canonical grading persistence proof; legacy `missionSubmissions` fallback is still transitional |
 | `/educator/mission-plans` | direct | `apps/empire_flutter/app/test/educator_mission_plans_page_test.dart` | Create, load-failure, create-failure, edit-persist, archive-persist, and archive-failure truth are directly proven; future assignment breadth remains separate |
-| `/educator/learner-supports` | direct | `apps/empire_flutter/app/test/educator_learner_supports_page_test.dart` | Live learner-derived support rendering is proven; failure-state handling is still indirect |
+| `/educator/learner-supports` | direct | `apps/empire_flutter/app/test/educator_learner_supports_page_test.dart` | First-load learner outage, saved-plan outage, persisted edit/save behavior, search filtering, and stale saved-plan refresh truth are directly proven |
 | `/educator/integrations` | direct | `apps/empire_flutter/app/test/educator_integrations_page_test.dart`, `apps/empire_flutter/app/test/district_provider_integration_test.dart` | Honest load failure, retry, and sync-action failure states are now isolated; broader provider breadth still relies on the district and provider workflow tests |
 
 ## Parent
@@ -92,7 +92,7 @@ Highest-value remaining blind spots:
 | --- | --- | --- | --- |
 | `/partner/listings` | direct | `apps/empire_flutter/app/test/partner_listings_page_test.dart` | Create-and-persist path is proven; edit flow still lacks direct proof |
 | `/partner/contracts` | direct | `apps/empire_flutter/app/test/partner_contracting_workflow_test.dart` | Happy-path contracts/launches and launch-failure honesty are proven; deeper mutation flows still rely on broader workflow tests |
-| `/partner/deliverables` | direct | `apps/empire_flutter/app/test/partner_deliverables_page_test.dart` | — |
+| `/partner/deliverables` | direct | `apps/empire_flutter/app/test/partner_deliverables_page_test.dart` | Honest first-load outage, stale-refresh retention, and submit flow are directly proven; deeper contract mutation breadth still lives on the contracts workflow |
 | `/partner/integrations` | direct | `apps/empire_flutter/app/test/partner_integrations_page_test.dart` | — |
 | `/partner/payouts` | direct | `apps/empire_flutter/app/test/partner_payouts_page_test.dart` | — |
 

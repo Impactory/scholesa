@@ -1,6 +1,6 @@
 # Full Honesty Audit
 
-Last updated: 2026-03-19
+Last updated: 2026-03-21
 Status: Beta ready, not gold ready
 Scope: Flutter app enabled routes, current runtime behavior, current test evidence, and release readiness
 
@@ -25,6 +25,7 @@ Scope: Flutter app enabled routes, current runtime behavior, current test eviden
 
 - Focused page, workflow, regression, placeholder-action, and honesty test coverage now backs nearly the full enabled Flutter route surface.
 - Fresh verification in this pass:
+  - educator learner supports and partner deliverables proof pass: 12 passed, 0 failed
   - educator mission plans proof pass: 6 passed, 0 failed
   - provisioning, site sessions, and learner today proof pass: 7 passed, 0 failed
   - educator sessions and partner contracts proof pass: 5 passed, 0 failed
@@ -46,11 +47,11 @@ Scope: Flutter app enabled routes, current runtime behavior, current test eviden
 | Learner portfolio and today | Yes | Mostly yes | Mostly yes | Partly proven | Mostly yes on audited mission/habit failure and stale-data states, partial on deeper onboarding/AI paths | Yes | Today now fails honestly under direct test; deeper secondary paths still rely on broader coverage | Strong for beta |
 | Educator learners and follow-up requests | Yes | Yes | Yes | Yes | Mostly yes | Yes | No obvious fake action in audited path | Strong for beta |
 | Educator attendance | Yes | Yes | Yes | Partly proven | Yes, now honest when unavailable | Yes | No obvious fake primary action | Strong for beta |
-| Educator sessions, mission plans, integrations, learner supports, today | Yes | Mostly yes | Likely | Partly proven | Mostly yes across the audited sessions, mission-plans, today, and integrations failure states; mission-plan edit/archive truth is now directly proven and remaining depth is narrower assignment breadth | Yes | No obvious fake primary action remains in the audited paths | Strong for beta |
+| Educator sessions, mission plans, integrations, learner supports, today | Yes | Mostly yes | Likely | Partly proven | Mostly yes across the audited sessions, mission-plans, today, learner-supports, and integrations failure states; learner-support first-load outage and stale saved-plan refresh truth are now directly proven and remaining depth is narrower assignment breadth | Yes | No obvious fake primary action remains in the audited paths | Strong for beta |
 | Parent summary, billing, schedule, portfolio, child view | Yes | Yes | Mostly yes | Support-request persistence is real where used | Mostly yes | Yes | Billing is honest summary only, not self-service | Strong for beta |
 | Site dashboard, billing, consent, pickup auth, ops, audit, provisioning, sessions | Yes | Yes | Mostly yes | Mostly yes | Mostly yes on audited provisioning and sessions failure/stale-data paths, partial on deeper create/edit depth | Yes | No obvious fake primary action remains in the audited paths | Strong for beta |
 | Site identity and incident/admin support surfaces | Yes | Mostly yes | Partly | Partly | Mostly yes on the audited identity, incidents, and integrations-health failure path, partial on the wider cluster | Yes | Less misleading than before, still not comprehensively proven | Beta-safe, not gold |
-| Partner contracts and deliverables | Yes | Mostly yes | Mostly yes | Mostly yes | Mostly yes on the audited contracts/launches failure path, partial on deeper mutation depth | Yes | No obvious fake primary action in audited path | Strong for beta |
+| Partner contracts and deliverables | Yes | Mostly yes | Mostly yes | Mostly yes | Mostly yes on the audited contracts/launches plus deliverables first-load and stale-refresh failure paths, partial on deeper mutation depth | Yes | No obvious fake primary action in audited path | Strong for beta |
 | Partner listings and payouts | Yes | Mostly yes | Partly | Partly | Mostly yes on the audited payouts path, partial on the wider cluster | Yes | Listings create-and-persist path is now directly proven; broader partner depth is still partial | Beta-safe, not gold |
 | HQ sites, role switcher, exports, analytics | Yes | Yes | Yes | Yes | Mostly yes | Yes | No obvious fake primary path in audited route tests | Strong for beta |
 | HQ billing, approvals, audit, safety, integrations health, feature flags, user admin | Yes | Mostly yes | Partly | Partly | Mostly yes on the audited billing, approvals, audit, and honest-empty feature-flags paths, partial across the wider cluster | Yes | Feature-flags empty-state proof now exists, but operator depth remains workflow-only in places | Beta-safe, not gold |

@@ -15,8 +15,19 @@ String _tPartnerIntegrations(BuildContext context, String input) {
   return WorkflowSurfaceI18n.text(context, input);
 }
 
+typedef PartnerConnectionsLoader =
+    Future<List<IntegrationConnectionModel>> Function(
+      FirestoreService firestoreService,
+      String partnerId,
+    );
+
 class PartnerIntegrationsPage extends StatefulWidget {
-  const PartnerIntegrationsPage({super.key});
+  const PartnerIntegrationsPage({
+    this.connectionsLoader,
+    super.key,
+  });
+
+  final PartnerConnectionsLoader? connectionsLoader;
 
   @override
   State<PartnerIntegrationsPage> createState() => _PartnerIntegrationsPageState();
@@ -58,7 +69,6 @@ class _PartnerIntegrationsPageState extends State<PartnerIntegrationsPage> {
     if (firestoreService == null) {
       setState(() {
         _error = _t('Integration storage unavailable right now.');
-        _connections = const <IntegrationConnectionModel>[];
         _isLoading = false;
       });
       return;
@@ -66,7 +76,6 @@ class _PartnerIntegrationsPageState extends State<PartnerIntegrationsPage> {
     if (partnerId.isEmpty) {
       setState(() {
         _error = _t('Partner identity unavailable right now.');
-        _connections = const <IntegrationConnectionModel>[];
         _isLoading = false;
       });
       return;
@@ -78,23 +87,32 @@ class _PartnerIntegrationsPageState extends State<PartnerIntegrationsPage> {
     });
 
     try {
-      final IntegrationConnectionRepository repository =
-          IntegrationConnectionRepository(firestore: firestoreService.firestore);
       final List<IntegrationConnectionModel> connections =
-          await repository.listByOwner(partnerId, limit: 50);
+          widget.connectionsLoader != null
+              ? await widget.connectionsLoader!(firestoreService, partnerId)
+              : await _loadConnectionsFromRepository(firestoreService, partnerId);
       if (!mounted) return;
       setState(() {
         _connections = connections;
+        _error = null;
         _isLoading = false;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _error = _t('Unable to load partner integrations right now.');
-        _connections = const <IntegrationConnectionModel>[];
         _isLoading = false;
       });
     }
+  }
+
+  Future<List<IntegrationConnectionModel>> _loadConnectionsFromRepository(
+    FirestoreService firestoreService,
+    String partnerId,
+  ) async {
+    final IntegrationConnectionRepository repository =
+        IntegrationConnectionRepository(firestore: firestoreService.firestore);
+    return repository.listByOwner(partnerId, limit: 50);
   }
 
   String _providerLabel(String provider) {
@@ -255,25 +273,14 @@ class _PartnerIntegrationsPageState extends State<PartnerIntegrationsPage> {
       ),
       body: Builder(
         builder: (BuildContext context) {
-          if (_isLoading) {
+          if (_isLoading && _connections.isEmpty) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (_error != null) {
+          if (_error != null && _connections.isEmpty) {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Text(_error!, textAlign: TextAlign.center),
-                    const SizedBox(height: 16),
-                    FilledButton.tonalIcon(
-                      onPressed: _loadConnections,
-                      icon: const Icon(Icons.refresh_rounded),
-                      label: Text(_t('Retry')),
-                    ),
-                  ],
-                ),
+                child: _buildLoadErrorState(),
               ),
             );
           }
@@ -290,6 +297,11 @@ class _PartnerIntegrationsPageState extends State<PartnerIntegrationsPage> {
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: <Widget>[
+                if (_error != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: _buildStaleDataBanner(),
+                  ),
                 Container(
                   padding: const EdgeInsets.all(16),
                   margin: const EdgeInsets.only(bottom: 16),
@@ -310,6 +322,79 @@ class _PartnerIntegrationsPageState extends State<PartnerIntegrationsPage> {
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildLoadErrorState() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF4F4),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFFECACA)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              const Icon(Icons.error_outline_rounded, color: ScholesaColors.error),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  _t('We could not load partner integrations right now. Retry to check the current state.'),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: ScholesaColors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _error ?? _t('Unable to load partner integrations right now.'),
+            style: TextStyle(color: context.schTextSecondary),
+          ),
+          const SizedBox(height: 16),
+          FilledButton.tonalIcon(
+            onPressed: _loadConnections,
+            icon: const Icon(Icons.refresh_rounded),
+            label: Text(_t('Retry')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStaleDataBanner() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFFDE68A)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Padding(
+            padding: EdgeInsets.only(top: 2),
+            child: Icon(Icons.warning_amber_rounded, color: Color(0xFFB45309)),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              _t('Unable to refresh partner integrations right now. Showing the last successful data.') +
+                  (_error == null ? '' : ' ${_error!}'),
+              style: const TextStyle(color: Color(0xFF92400E)),
+            ),
+          ),
+        ],
       ),
     );
   }

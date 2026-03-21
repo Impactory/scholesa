@@ -738,6 +738,10 @@ class WorkflowSurfaceI18n {
     'Unknown': '未知',
     'Integration storage unavailable right now.': '集成存储当前不可用。',
     'Unable to load partner integrations right now.': '目前无法加载合作方集成。',
+    'We could not load partner integrations right now. Retry to check the current state.':
+        '我们暂时无法加载合作方集成。请重试以检查当前状态。',
+    'Unable to refresh partner integrations right now. Showing the last successful data.':
+        '目前无法刷新合作方集成。正在显示最近一次成功加载的数据。',
     'Provider unavailable': '提供方不可用',
     'Connected': '已连接',
     'Error': '错误',
@@ -1423,6 +1427,10 @@ class WorkflowSurfaceI18n {
     'Unable to update integration right now.': '目前無法更新整合。',
     'Integration storage unavailable right now.': '整合儲存目前不可用。',
     'Unable to load partner integrations right now.': '目前無法載入合作夥伴整合。',
+    'We could not load partner integrations right now. Retry to check the current state.':
+        '我們暫時無法載入合作夥伴整合。請重試以確認目前狀態。',
+    'Unable to refresh partner integrations right now. Showing the last successful data.':
+        '目前無法刷新合作夥伴整合。正在顯示最近一次成功載入的資料。',
     'Provider unavailable': '供應方不可用',
     'Connected': '已連接',
     'Error': '錯誤',

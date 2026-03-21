@@ -1,6 +1,6 @@
 # Reopened Honesty Audit
 
-Last updated: 2026-03-19
+Last updated: 2026-03-21
 Status: Beta ready, not gold ready
 Scope: Flutter app plus release operations for web and native surfaces
 
@@ -67,6 +67,10 @@ This is the reopened honesty pass after blocker remediation, clean builds, live 
 10. Added protected-route inventory proof that every governed web workflow page stays under the shared sign-out layout.
 11. Fixed `SiteOpsPage` day-open inference so the screen uses freshly loaded presence data instead of stale prior state during initial load.
 12. Hardened the site-ops workflow fixture against midnight rollover by anchoring seeded “today” events to the current day instead of `now - N minutes`.
+13. Hardened educator learner supports so first-load learner or saved-plan failures block honestly instead of collapsing into `No support plans yet`.
+14. Added stale-data recovery messaging and refresh proof for educator learner supports when saved plans fail after prior success.
+15. Hardened partner deliverables so refresh failures preserve the last successful contracts and deliverables instead of wiping the page into a blocking outage.
+16. Added direct partner deliverables proof for first-load outage and stale-refresh behavior.
 
 ### Release and operations fixes
 
@@ -86,6 +90,7 @@ This is the reopened honesty pass after blocker remediation, clean builds, live 
 - Global session menu regressions passed: 2 passed, 0 failed.
 - Flutter shell logout mount regression passed: 1 passed, 0 failed.
 - Protected web logout shell regression passed: 3 passed, 0 failed.
+- Educator learner supports and partner deliverables honesty regressions passed: 12 passed, 0 failed.
 
 ### Full Flutter gate verification
 

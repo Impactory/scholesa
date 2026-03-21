@@ -8,6 +8,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
 import 'package:scholesa_app/auth/app_state.dart';
+import 'package:scholesa_app/domain/models.dart';
 import 'package:scholesa_app/modules/partner/partner_integrations_page.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
 
@@ -33,6 +34,7 @@ AppState _buildPartnerState({Locale locale = const Locale('en')}) {
 Widget _buildHarness({
   required AppState appState,
   required FirestoreService firestoreService,
+  PartnerConnectionsLoader? connectionsLoader,
   Locale locale = const Locale('en'),
 }) {
   return MultiProvider(
@@ -56,8 +58,26 @@ Widget _buildHarness({
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      home: const PartnerIntegrationsPage(),
+      home: PartnerIntegrationsPage(connectionsLoader: connectionsLoader),
     ),
+  );
+}
+
+IntegrationConnectionModel _sampleConnection({
+  String id = 'connection-1',
+  String provider = 'github',
+  String status = 'error',
+  String? lastError = 'Token refresh failed',
+}) {
+  return IntegrationConnectionModel(
+    id: id,
+    ownerUserId: 'partner-1',
+    provider: provider,
+    status: status,
+    scopesGranted: const <String>['repo', 'read:user'],
+    lastError: lastError,
+    createdAt: Timestamp.fromDate(DateTime(2026, 3, 15)),
+    updatedAt: Timestamp.fromDate(DateTime(2026, 3, 18)),
   );
 }
 
@@ -122,5 +142,69 @@ void main() {
       find.text('當合作夥伴自有連線完成設定後，已連接的整合會顯示在這裡。'),
       findsOneWidget,
     );
+  });
+
+  testWidgets('partner integrations page blocks on first-load outages instead of showing empty state',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+
+    await tester.pumpWidget(
+      _buildHarness(
+        appState: _buildPartnerState(),
+        firestoreService: firestoreService,
+        connectionsLoader: (_, __) async {
+          throw StateError('partner integrations unavailable');
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('We could not load partner integrations right now. Retry to check the current state.'),
+      findsOneWidget,
+    );
+    expect(find.text('No partner integrations connected yet'), findsNothing);
+  });
+
+  testWidgets('partner integrations page keeps stale connections visible after refresh failure',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    int loadCount = 0;
+
+    await tester.pumpWidget(
+      _buildHarness(
+        appState: _buildPartnerState(),
+        firestoreService: firestoreService,
+        connectionsLoader: (_, __) async {
+          loadCount += 1;
+          if (loadCount == 1) {
+            return <IntegrationConnectionModel>[_sampleConnection()];
+          }
+          throw StateError('partner integrations unavailable');
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('GitHub'), findsOneWidget);
+    expect(find.text('Last error: Token refresh failed'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.refresh_rounded));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.textContaining('Unable to refresh partner integrations right now. Showing the last successful data.'),
+      findsOneWidget,
+    );
+    expect(find.text('GitHub'), findsOneWidget);
+    expect(find.text('Last error: Token refresh failed'), findsOneWidget);
   });
 }
