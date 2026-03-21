@@ -120,6 +120,7 @@ class _SiteIntegrationsHealthPageState
         foregroundColor: Colors.white,
         actions: <Widget>[
           IconButton(
+            tooltip: _t('Refresh'),
             icon: const Icon(Icons.refresh_rounded),
             onPressed: () {
               TelemetryService.instance.logEvent(
@@ -449,29 +450,37 @@ class _SiteIntegrationsHealthPageState
   }
 
   Widget _buildStaleDataBanner(String message) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFFBEB),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFFDE68A)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          const Padding(
-            padding: EdgeInsets.only(top: 2),
-            child: Icon(Icons.warning_amber_rounded, color: Color(0xFFB45309)),
+    final String resolvedMessage = _t('Showing last loaded integrations data. ') + message;
+    return Semantics(
+      container: true,
+      liveRegion: true,
+      label: resolvedMessage,
+      child: ExcludeSemantics(
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFFBEB),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFFDE68A)),
           ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              _t('Showing last loaded integrations data. ') + message,
-              style: const TextStyle(color: Color(0xFF92400E)),
-            ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              const Padding(
+                padding: EdgeInsets.only(top: 2),
+                child: Icon(Icons.warning_amber_rounded, color: Color(0xFFB45309)),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  resolvedMessage,
+                  style: const TextStyle(color: Color(0xFF92400E)),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -913,13 +922,14 @@ class _SiteIntegrationsHealthPageState
         _rosterImports = rosterImports;
         _loadError = null;
       });
-    } catch (_) {
+    } catch (error) {
       if (!mounted) return;
       setState(() {
         _loadError = hadVisibleHealthData
             ? _t(
                 'Unable to refresh integrations health right now. Showing the last successful data.',
-              )
+              ) +
+                ' ${error.toString()}'
             : _t('Unable to load integrations health right now.');
       });
     } finally {

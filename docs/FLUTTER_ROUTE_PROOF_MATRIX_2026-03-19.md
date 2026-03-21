@@ -82,7 +82,7 @@ Highest-value remaining blind spots:
 | `/site/identity` | direct | `apps/empire_flutter/app/test/site_identity_page_test.dart` | First-load outage, stale-refresh retention, and visible refresh-failure detail are directly proven; deeper resolution-action breadth still extends beyond the focused audit |
 | `/site/pickup-auth` | direct | `apps/empire_flutter/app/test/site_pickup_auth_page_test.dart` | — |
 | `/site/consent` | direct | `apps/empire_flutter/app/test/site_consent_page_test.dart` | — |
-| `/site/integrations-health` | direct | `apps/empire_flutter/app/test/site_integrations_health_page_test.dart`, `apps/empire_flutter/app/test/district_provider_integration_test.dart` | Failure-state truth and basic provider rendering are proven; deeper action flows remain indirect |
+| `/site/integrations-health` | direct | `apps/empire_flutter/app/test/site_integrations_health_page_test.dart`, `apps/empire_flutter/app/test/district_provider_integration_test.dart` | Failure-state truth, stale-refresh detail visibility, labeled refresh control, and basic provider rendering are proven; deeper action flows remain indirect |
 | `/site/billing` | direct | `apps/empire_flutter/app/test/site_billing_page_test.dart`, `apps/empire_flutter/app/test/site_billing_marketplace_test.dart` | — |
 | `/site/audit` | direct | `apps/empire_flutter/app/test/site_audit_page_test.dart` | — |
 

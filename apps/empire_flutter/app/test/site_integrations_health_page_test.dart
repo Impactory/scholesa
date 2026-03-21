@@ -123,12 +123,13 @@ void main() {
 
     expect(
       find.text(
-        'Unable to refresh integrations health right now. Showing the last successful data.',
+        'Showing last loaded integrations data. Unable to refresh integrations health right now. Showing the last successful data. Bad state: integrations refresh unavailable',
       ),
       findsOneWidget,
     );
     expect(find.text('Google Classroom'), findsOneWidget);
     expect(find.text('No connected integrations found'), findsNothing);
+    expect(find.byTooltip('Refresh'), findsOneWidget);
   });
 
   testWidgets('site integrations health page shows a visible error when connect fails',
