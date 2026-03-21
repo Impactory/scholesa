@@ -1,9 +1,18 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/modules/site/site_sessions_page.dart';
+import 'package:scholesa_app/services/firestore_service.dart';
 import 'package:scholesa_app/ui/theme/scholesa_theme.dart';
+
+class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
 bool _isSameCalendarDate(DateTime left, DateTime right) {
   return left.year == right.year &&
@@ -11,7 +20,7 @@ bool _isSameCalendarDate(DateTime left, DateTime right) {
       left.day == right.day;
 }
 
-Widget _buildHarness({required SiteSessionsPage child}) {
+Widget _buildHarness({required Widget child}) {
   return MaterialApp(
     theme: ScholesaTheme.light.copyWith(
       splashFactory: NoSplash.splashFactory,
@@ -29,6 +38,35 @@ Widget _buildHarness({required SiteSessionsPage child}) {
     ],
     home: child,
   );
+}
+
+AppState _buildSiteState() {
+  final AppState state = AppState();
+  state.updateFromMeResponse(<String, dynamic>{
+    'userId': 'site-admin-1',
+    'email': 'site-admin-1@scholesa.test',
+    'displayName': 'Site Admin',
+    'role': 'site',
+    'activeSiteId': 'site-1',
+    'siteIds': <String>['site-1'],
+    'localeCode': 'en',
+    'entitlements': <Map<String, dynamic>>[],
+  });
+  return state;
+}
+
+Future<void> _seedSessionCreateOptions(FakeFirebaseFirestore firestore) async {
+  await firestore.collection('users').doc('educator-1').set(<String, dynamic>{
+    'displayName': 'Coach Ada',
+    'email': 'ada@scholesa.test',
+    'role': 'educator',
+    'activeSiteId': 'site-1',
+    'siteIds': <String>['site-1'],
+  });
+  await firestore.collection('rooms').doc('room-1').set(<String, dynamic>{
+    'siteId': 'site-1',
+    'name': 'Lab 1',
+  });
 }
 
 DateTime _sameMonthDifferentWeekDate(DateTime baseDate) {
@@ -311,5 +349,170 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Month Showcase'), findsOneWidget);
+  });
+
+  testWidgets(
+      'site sessions create persists and reloads the authoritative schedule state',
+      (WidgetTester tester) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 1600));
+
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedSessionCreateOptions(firestore);
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final AppState appState = _buildSiteState();
+    int loadCount = 0;
+
+    await tester.pumpWidget(
+      _buildHarness(
+        child: MultiProvider(
+          providers: <dynamic>[
+            Provider<FirestoreService>.value(value: firestoreService),
+            ChangeNotifierProvider<AppState>.value(value: appState),
+          ],
+          child: SiteSessionsPage(
+            sessionsLoader: (
+              BuildContext context,
+              DateTime selectedDate,
+            ) async {
+              loadCount += 1;
+              final QuerySnapshot<Map<String, dynamic>> snapshot =
+                  await firestore.collection('sessions').get();
+              final Map<String, List<SiteSessionData>> grouped =
+                  <String, List<SiteSessionData>>{};
+              for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+                  in snapshot.docs) {
+                final Map<String, dynamic> data = doc.data();
+                if ((data['siteId'] as String?) != 'site-1') {
+                  continue;
+                }
+                final Timestamp? startTime = data['startTime'] as Timestamp?;
+                final DateTime? sessionDate = startTime?.toDate();
+                if (sessionDate == null ||
+                    !_isSameCalendarDate(sessionDate, selectedDate)) {
+                  continue;
+                }
+                final String slot =
+                    (data['timeSlot'] as String?)?.trim().isNotEmpty == true
+                        ? (data['timeSlot'] as String).trim()
+                        : '4:00 PM';
+                grouped.putIfAbsent(slot, () => <SiteSessionData>[]).add(
+                      SiteSessionData(
+                        title: '${data['title']} (persisted)',
+                        educator:
+                            (data['educatorName'] as String?) ?? 'Unassigned',
+                        room: (data['room'] as String?) ?? 'Unassigned',
+                        learnerCount: data['learnerCount'] as int? ?? 0,
+                        pillar: (data['pillar'] as String?) ?? 'Future Skills',
+                      ),
+                    );
+              }
+              return grouped;
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    final int initialLoadCount = loadCount;
+
+    await tester.tap(find.text('New Session'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Session Title'),
+      'Evidence Studio',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Learner Count'),
+      '12',
+    );
+
+    final Finder createButton =
+        find.widgetWithText(ElevatedButton, 'Create Session');
+    await tester.ensureVisible(createButton);
+    await tester.tap(createButton);
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Evidence Studio (persisted)'), findsOneWidget);
+    expect(find.text('Session created successfully'), findsOneWidget);
+    expect(loadCount, greaterThan(initialLoadCount));
+
+    final QuerySnapshot<Map<String, dynamic>> persistedSessions =
+        await firestore
+            .collection('sessions')
+            .where('siteId', isEqualTo: 'site-1')
+            .get();
+    expect(persistedSessions.docs, hasLength(1));
+    expect(persistedSessions.docs.single.data()['title'], 'Evidence Studio');
+    expect(persistedSessions.docs.single.data()['createdBy'], 'site-admin-1');
+    expect(persistedSessions.docs.single.data()['room'], 'Lab 1');
+  });
+
+  testWidgets(
+      'site sessions create failure stays explicit and does not append a fake session',
+      (WidgetTester tester) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 1600));
+
+    final DateTime today = DateUtils.dateOnly(DateTime.now());
+    int loadCount = 0;
+
+    await tester.pumpWidget(
+      _buildHarness(
+        child: SiteSessionsPage(
+          sessionsLoader: (
+            BuildContext context,
+            DateTime selectedDate,
+          ) async {
+            loadCount += 1;
+            if (!_isSameCalendarDate(selectedDate, today)) {
+              return <String, List<SiteSessionData>>{};
+            }
+            return <String, List<SiteSessionData>>{
+              '9:00 AM': const <SiteSessionData>[
+                SiteSessionData(
+                  title: 'Existing Advisory',
+                  educator: 'Coach Ada',
+                  room: 'Lab 1',
+                  learnerCount: 14,
+                  pillar: 'Future Skills',
+                ),
+              ],
+            };
+          },
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Existing Advisory'), findsOneWidget);
+    final int initialLoadCount = loadCount;
+
+    await tester.tap(find.text('New Session'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Session Title'),
+      'Failed Session',
+    );
+
+    final Finder createButton =
+        find.widgetWithText(ElevatedButton, 'Create Session');
+    await tester.ensureVisible(createButton);
+    await tester.tap(createButton);
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Unable to create session right now'), findsOneWidget);
+    expect(find.text('Session created successfully'), findsNothing);
+    expect(find.text('Existing Advisory'), findsOneWidget);
+    expect(find.text('Failed Session'), findsNothing);
+    expect(loadCount, initialLoadCount);
   });
 }
