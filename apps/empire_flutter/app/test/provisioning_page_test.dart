@@ -131,6 +131,255 @@ class _FakeProvisioningService extends ProvisioningService {
   Future<void> loadCohortLaunches(String siteId) async {}
 }
 
+class _DeterministicProvisioningService extends ProvisioningService {
+  _DeterministicProvisioningService({
+    List<LearnerProfile>? learners,
+    List<ParentProfile>? parents,
+    List<GuardianLink>? guardianLinks,
+    List<CohortLaunch>? cohortLaunches,
+    this.failCreateLearner = false,
+    this.failCreateParent = false,
+    this.failCreateGuardianLink = false,
+    this.failCreateCohortLaunch = false,
+    this.failUpdateLearner = false,
+    this.failUpdateParent = false,
+    this.failDeleteGuardianLink = false,
+  })  : _learnersValue = List<LearnerProfile>.from(learners ?? const <LearnerProfile>[]),
+        _parentsValue = List<ParentProfile>.from(parents ?? const <ParentProfile>[]),
+        _guardianLinksValue = List<GuardianLink>.from(guardianLinks ?? const <GuardianLink>[]),
+        _cohortLaunchesValue = List<CohortLaunch>.from(cohortLaunches ?? const <CohortLaunch>[]),
+        super(
+          apiClient: ApiClient(
+            auth: _MockFirebaseAuth(),
+            baseUrl: 'http://localhost',
+          ),
+          firestore: FakeFirebaseFirestore(),
+          auth: _MockFirebaseAuth(),
+          useProvisioningApi: false,
+        );
+
+  final List<LearnerProfile> _learnersValue;
+  final List<ParentProfile> _parentsValue;
+  final List<GuardianLink> _guardianLinksValue;
+  final List<CohortLaunch> _cohortLaunchesValue;
+  final bool failCreateLearner;
+  final bool failCreateParent;
+  final bool failCreateGuardianLink;
+  final bool failCreateCohortLaunch;
+  final bool failUpdateLearner;
+  final bool failUpdateParent;
+  final bool failDeleteGuardianLink;
+
+  bool _isLoadingValue = false;
+  String? _errorValue;
+
+  @override
+  List<LearnerProfile> get learners => _learnersValue;
+
+  @override
+  List<ParentProfile> get parents => _parentsValue;
+
+  @override
+  List<GuardianLink> get guardianLinks => _guardianLinksValue;
+
+  @override
+  List<CohortLaunch> get cohortLaunches => _cohortLaunchesValue;
+
+  @override
+  bool get isLoading => _isLoadingValue;
+
+  @override
+  String? get error => _errorValue;
+
+  @override
+  Future<void> loadLearners(String siteId) async {}
+
+  @override
+  Future<void> loadParents(String siteId) async {}
+
+  @override
+  Future<void> loadGuardianLinks(String siteId) async {}
+
+  @override
+  Future<void> loadCohortLaunches(String siteId) async {}
+
+  @override
+  Future<LearnerProfile?> createLearner({
+    required String siteId,
+    required String email,
+    required String displayName,
+    int? gradeLevel,
+    DateTime? dateOfBirth,
+    String? notes,
+  }) async {
+    if (failCreateLearner) {
+      _errorValue = 'Failed to create learner from test';
+      notifyListeners();
+      return null;
+    }
+    return super.createLearner(
+      siteId: siteId,
+      email: email,
+      displayName: displayName,
+      gradeLevel: gradeLevel,
+      dateOfBirth: dateOfBirth,
+      notes: notes,
+    );
+  }
+
+  @override
+  Future<ParentProfile?> createParent({
+    required String siteId,
+    required String email,
+    required String displayName,
+    String? phone,
+  }) async {
+    if (failCreateParent) {
+      _errorValue = 'Failed to create parent from test';
+      notifyListeners();
+      return null;
+    }
+    return super.createParent(
+      siteId: siteId,
+      email: email,
+      displayName: displayName,
+      phone: phone,
+    );
+  }
+
+  @override
+  Future<GuardianLink?> createGuardianLink({
+    required String siteId,
+    required String parentId,
+    required String learnerId,
+    required String relationship,
+    bool isPrimary = false,
+  }) async {
+    if (failCreateGuardianLink) {
+      _errorValue = 'Failed to create guardian link from test';
+      notifyListeners();
+      return null;
+    }
+    return super.createGuardianLink(
+      siteId: siteId,
+      parentId: parentId,
+      learnerId: learnerId,
+      relationship: relationship,
+      isPrimary: isPrimary,
+    );
+  }
+
+  @override
+  Future<CohortLaunch?> createCohortLaunch({
+    required String siteId,
+    required String cohortName,
+    required String ageBand,
+    required String scheduleLabel,
+    required String programFormat,
+    required String curriculumTerm,
+    required String rosterStatus,
+    required String parentCommunicationStatus,
+    required String baselineSurveyStatus,
+    required String kickoffStatus,
+    int? learnerCount,
+    String? notes,
+  }) async {
+    if (failCreateCohortLaunch) {
+      _errorValue = 'Failed to create cohort launch from test';
+      notifyListeners();
+      return null;
+    }
+    return super.createCohortLaunch(
+      siteId: siteId,
+      cohortName: cohortName,
+      ageBand: ageBand,
+      scheduleLabel: scheduleLabel,
+      programFormat: programFormat,
+      curriculumTerm: curriculumTerm,
+      rosterStatus: rosterStatus,
+      parentCommunicationStatus: parentCommunicationStatus,
+      baselineSurveyStatus: baselineSurveyStatus,
+      kickoffStatus: kickoffStatus,
+      learnerCount: learnerCount,
+      notes: notes,
+    );
+  }
+
+  @override
+  Future<LearnerProfile?> updateLearner({
+    required String siteId,
+    required String learnerId,
+    required String displayName,
+    int? gradeLevel,
+    DateTime? dateOfBirth,
+    String? notes,
+  }) async {
+    if (failUpdateLearner) {
+      _errorValue = 'Failed to update learner from test';
+      notifyListeners();
+      return null;
+    }
+    final int index =
+        _learnersValue.indexWhere((LearnerProfile learner) => learner.id == learnerId);
+    if (index >= 0) {
+      _learnersValue[index] = LearnerProfile(
+        id: learnerId,
+        siteId: siteId,
+        userId: learnerId,
+        displayName: displayName,
+        gradeLevel: gradeLevel,
+        dateOfBirth: dateOfBirth,
+        notes: notes,
+      );
+      notifyListeners();
+      return _learnersValue[index];
+    }
+    return null;
+  }
+
+  @override
+  Future<ParentProfile?> updateParent({
+    required String siteId,
+    required String parentId,
+    required String displayName,
+    String? phone,
+    String? email,
+  }) async {
+    if (failUpdateParent) {
+      _errorValue = 'Failed to update parent from test';
+      notifyListeners();
+      return null;
+    }
+    final int index =
+        _parentsValue.indexWhere((ParentProfile parent) => parent.id == parentId);
+    if (index >= 0) {
+      _parentsValue[index] = ParentProfile(
+        id: parentId,
+        siteId: siteId,
+        userId: parentId,
+        displayName: displayName,
+        phone: phone,
+        email: email,
+      );
+      notifyListeners();
+      return _parentsValue[index];
+    }
+    return null;
+  }
+
+  @override
+  Future<bool> deleteGuardianLink(String linkId) async {
+    if (failDeleteGuardianLink) {
+      _errorValue = 'Failed to delete guardian link from test';
+      notifyListeners();
+      return false;
+    }
+    _guardianLinksValue.removeWhere((GuardianLink link) => link.id == linkId);
+    notifyListeners();
+    return true;
+  }
+}
+
 AppState _buildSiteState() {
   final AppState state = AppState();
   state.updateFromMeResponse(<String, dynamic>{
@@ -616,5 +865,230 @@ void main() {
     expect(userDoc.data()!['phone'], '+61 400 555 999');
     expect(profileDoc.data()!['displayName'], 'Parent Prime');
     expect(profileDoc.data()!['phone'], '+61 400 555 999');
+  });
+
+  testWidgets('provisioning page shows explicit learner create failure',
+      (WidgetTester tester) async {
+    final ProvisioningService service = _DeterministicProvisioningService(
+      failCreateLearner: true,
+    );
+
+    await pumpProvisioningPage(tester, service: service);
+
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).at(0), 'Failed Learner');
+    await tester.enterText(
+      find.byType(TextFormField).at(1),
+      'failed.learner@example.com',
+    );
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Create'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Failed to create learner from test'), findsOneWidget);
+    expect(find.text('Learner created successfully'), findsNothing);
+    expect(find.text('Failed Learner'), findsNothing);
+    expect(find.text('Add Learner'), findsOneWidget);
+  });
+
+  testWidgets('provisioning page shows explicit parent create failure',
+      (WidgetTester tester) async {
+    final ProvisioningService service = _DeterministicProvisioningService(
+      failCreateParent: true,
+    );
+
+    await pumpProvisioningPage(tester, service: service);
+
+    await tester.tap(find.text('Parents'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).at(0), 'Failed Parent');
+    await tester.enterText(
+      find.byType(TextFormField).at(1),
+      'failed.parent@example.com',
+    );
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Create'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Failed to create parent from test'), findsOneWidget);
+    expect(find.text('Parent created successfully'), findsNothing);
+    expect(find.text('Failed Parent'), findsNothing);
+    expect(find.text('Add Parent'), findsOneWidget);
+  });
+
+  testWidgets('provisioning page shows explicit guardian link create failure',
+      (WidgetTester tester) async {
+    final ProvisioningService service = _DeterministicProvisioningService(
+      learners: const <LearnerProfile>[
+        LearnerProfile(
+          id: 'learner-1',
+          siteId: 'site-1',
+          userId: 'learner-1',
+          displayName: 'Learner One',
+        ),
+      ],
+      parents: const <ParentProfile>[
+        ParentProfile(
+          id: 'parent-1',
+          siteId: 'site-1',
+          userId: 'parent-1',
+          displayName: 'Parent One',
+          email: 'parent1@example.com',
+        ),
+      ],
+      failCreateGuardianLink: true,
+    );
+
+    await pumpProvisioningPage(tester, service: service);
+
+    await tester.tap(find.text('Links'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(DropdownButtonFormField<String>).at(0));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Parent One').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(DropdownButtonFormField<String>).at(1));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Learner One').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Create Link'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Failed to create guardian link from test'), findsOneWidget);
+    expect(find.text('Guardian link created successfully'), findsNothing);
+    expect(find.text('Create Guardian Link'), findsOneWidget);
+    expect(find.text('Parent One → Learner One'), findsNothing);
+  });
+
+  testWidgets('provisioning page shows explicit cohort create failure',
+      (WidgetTester tester) async {
+    final ProvisioningService service = _DeterministicProvisioningService(
+      failCreateCohortLaunch: true,
+    );
+
+    await pumpProvisioningPage(tester, service: service);
+
+    await tester.tap(find.text('Cohorts'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byType(TextFormField).at(0),
+      'Failed Cohort',
+    );
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Create'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Failed to create cohort launch from test'), findsOneWidget);
+    expect(find.text('Cohort launch created successfully'), findsNothing);
+    expect(find.text('Failed Cohort'), findsNothing);
+    expect(find.text('Create Cohort Launch'), findsOneWidget);
+  });
+
+  testWidgets('provisioning page shows explicit learner edit failure',
+      (WidgetTester tester) async {
+    final ProvisioningService service = _DeterministicProvisioningService(
+      learners: const <LearnerProfile>[
+        LearnerProfile(
+          id: 'learner-1',
+          siteId: 'site-1',
+          userId: 'learner-1',
+          displayName: 'Learner One',
+          gradeLevel: 5,
+        ),
+      ],
+      failUpdateLearner: true,
+    );
+
+    await pumpProvisioningPage(tester, service: service);
+
+    await tester.tap(find.byIcon(Icons.more_vert).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Edit Learner'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).first, 'Learner Broken');
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Save'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Failed to update learner from test'), findsOneWidget);
+    expect(find.text('Learner updated'), findsNothing);
+    expect(find.text('Learner One'), findsOneWidget);
+    expect(find.text('Learner Broken'), findsNothing);
+    expect(find.text('Edit Learner'), findsOneWidget);
+  });
+
+  testWidgets('provisioning page shows explicit parent edit failure',
+      (WidgetTester tester) async {
+    final ProvisioningService service = _DeterministicProvisioningService(
+      parents: const <ParentProfile>[
+        ParentProfile(
+          id: 'parent-1',
+          siteId: 'site-1',
+          userId: 'parent-1',
+          displayName: 'Parent One',
+          email: 'parent1@example.com',
+          phone: '+61 400 555 100',
+        ),
+      ],
+      failUpdateParent: true,
+    );
+
+    await pumpProvisioningPage(tester, service: service);
+
+    await tester.tap(find.text('Parents'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.more_vert).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Edit Parent'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).first, 'Parent Broken');
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Save'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Failed to update parent from test'), findsOneWidget);
+    expect(find.text('Parent updated'), findsNothing);
+    expect(find.text('Parent One'), findsOneWidget);
+    expect(find.text('Parent Broken'), findsNothing);
+    expect(find.text('Edit Parent'), findsOneWidget);
+  });
+
+  testWidgets('provisioning page shows explicit guardian link delete failure',
+      (WidgetTester tester) async {
+    final ProvisioningService service = _DeterministicProvisioningService(
+      guardianLinks: <GuardianLink>[
+        GuardianLink(
+          id: 'link-1',
+          siteId: 'site-1',
+          parentId: 'parent-1',
+          learnerId: 'learner-1',
+          relationship: 'Parent',
+          isPrimary: true,
+          createdAt: DateTime(2026, 3, 21),
+          createdBy: 'site-admin-1',
+          parentName: 'Parent One',
+          learnerName: 'Learner One',
+        ),
+      ],
+      failDeleteGuardianLink: true,
+    );
+
+    await pumpProvisioningPage(tester, service: service);
+
+    await tester.tap(find.text('Links'));
+    await tester.pumpAndSettle();
+    expect(find.text('Parent One → Learner One'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.delete_outline).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Failed to delete guardian link from test'), findsOneWidget);
+    expect(find.text('Link removed'), findsNothing);
+    expect(find.text('Parent One → Learner One'), findsOneWidget);
   });
 }
