@@ -711,55 +711,117 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
         TextEditingController(text: listing.title);
     final TextEditingController descriptionController =
         TextEditingController(text: listing.description);
+    bool isSubmitting = false;
 
     showDialog<void>(
       context: context,
-      builder: (BuildContext dialogContext) => AlertDialog(
-        title: Text(_tPartnerListings(context, 'Edit Listing')),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            TextField(
-              controller: titleController,
-              decoration:
-                  InputDecoration(labelText: _tPartnerListings(context, 'Title')),
+      builder: (BuildContext dialogContext) => StatefulBuilder(
+        builder: (BuildContext context,
+                void Function(void Function()) setLocalState) =>
+            AlertDialog(
+          title: Text(_tPartnerListings(context, 'Edit Listing')),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              TextField(
+                controller: titleController,
+                decoration: InputDecoration(
+                    labelText: _tPartnerListings(context, 'Title')),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: descriptionController,
+                maxLines: 3,
+                decoration: InputDecoration(
+                    labelText: _tPartnerListings(context, 'Description')),
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: isSubmitting
+                  ? null
+                  : () {
+                      FocusScope.of(dialogContext).unfocus();
+                      Navigator.pop(dialogContext);
+                    },
+              child: Text(_tPartnerListings(context, 'Cancel')),
             ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: descriptionController,
-              maxLines: 3,
-              decoration: InputDecoration(
-                  labelText: _tPartnerListings(context, 'Description')),
+            ElevatedButton(
+              onPressed: isSubmitting
+                  ? null
+                  : () async {
+                      final String title = titleController.text.trim();
+                      final String description =
+                          descriptionController.text.trim();
+                      if (title.isEmpty || description.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(_tPartnerListings(
+                                context, 'Title and description are required')),
+                          ),
+                        );
+                        return;
+                      }
+
+                      TelemetryService.instance.logEvent(
+                        event: 'cta.clicked',
+                        metadata: <String, dynamic>{
+                          'module': 'partner_listings',
+                          'cta_id': 'save_edit_listing',
+                          'surface': 'edit_listing_dialog',
+                          'listing_id': listing.id,
+                        },
+                      );
+
+                      setLocalState(() => isSubmitting = true);
+                      final PartnerService service =
+                          context.read<PartnerService>();
+                      final MarketplaceListing? updated =
+                          await service.updateListing(
+                        listing: listing,
+                        title: title,
+                        description: description,
+                      );
+
+                      if (!context.mounted) {
+                        return;
+                      }
+
+                      setLocalState(() => isSubmitting = false);
+
+                      if (updated == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              service.error ??
+                                  _tPartnerListings(
+                                      context, 'Failed to update listing'),
+                            ),
+                          ),
+                        );
+                        return;
+                      }
+
+                      FocusScope.of(dialogContext).unfocus();
+                      Navigator.pop(dialogContext);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                              '${_tPartnerListings(context, 'Listing updated')}: ${updated.title}'),
+                        ),
+                      );
+                    },
+              child: isSubmitting
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Text(_tPartnerListings(context, 'Save')),
             ),
           ],
         ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: Text(_tPartnerListings(context, 'Cancel')),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              TelemetryService.instance.logEvent(
-                event: 'cta.clicked',
-                metadata: <String, dynamic>{
-                  'module': 'partner_listings',
-                  'cta_id': 'save_edit_listing',
-                  'surface': 'edit_listing_dialog',
-                  'listing_id': listing.id,
-                },
-              );
-              Navigator.pop(dialogContext);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                      '${_tPartnerListings(context, 'Listing updated')}: ${titleController.text.trim()}'),
-                ),
-              );
-            },
-            child: Text(_tPartnerListings(context, 'Save')),
-          ),
-        ],
       ),
     );
   }

@@ -132,6 +132,63 @@ class PartnerService extends ChangeNotifier {
     }
   }
 
+  /// Update an existing listing and reflect the canonical edit in local state.
+  Future<MarketplaceListing?> updateListing({
+    required MarketplaceListing listing,
+    required String title,
+    required String description,
+  }) async {
+    _error = null;
+    notifyListeners();
+
+    final String normalizedTitle = title.trim();
+    final String normalizedDescription = description.trim();
+
+    if (listing.partnerId != _partnerId) {
+      _error = 'Failed to update listing';
+      notifyListeners();
+      return null;
+    }
+
+    try {
+      await _firestoreService.updateDocument(
+        'marketplaceListings',
+        listing.id,
+        <String, dynamic>{
+          'title': normalizedTitle,
+          'description': normalizedDescription,
+        },
+      );
+
+      final MarketplaceListing updated = MarketplaceListing(
+        id: listing.id,
+        partnerId: listing.partnerId,
+        title: normalizedTitle,
+        description: normalizedDescription,
+        status: listing.status,
+        category: listing.category,
+        productId: listing.productId,
+        currency: listing.currency,
+        price: listing.price,
+        imageUrl: listing.imageUrl,
+        createdAt: listing.createdAt,
+        updatedAt: DateTime.now(),
+      );
+
+      _listings = _listings
+          .map((MarketplaceListing current) =>
+              current.id == listing.id ? updated : current)
+          .toList();
+      notifyListeners();
+      return updated;
+    } catch (e) {
+      debugPrint('Failed to update listing: $e');
+      _error = 'Failed to update listing';
+      notifyListeners();
+      return null;
+    }
+  }
+
   /// Load contracts for this partner
   Future<void> loadContracts() async {
     _isLoading = true;
