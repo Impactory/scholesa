@@ -373,7 +373,6 @@ class AttendanceService extends ChangeNotifier {
   /// Clear current occurrence
   void clearCurrentOccurrence() {
     _currentOccurrence = null;
-    notifyListeners();
   }
 
   DateTime? _parseTimestamp(dynamic value) {
