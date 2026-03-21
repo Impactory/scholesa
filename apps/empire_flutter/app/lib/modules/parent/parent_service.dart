@@ -17,9 +17,15 @@ class ParentService extends ChangeNotifier {
   ParentService({
     required FirestoreService firestoreService,
     required this.parentId,
-  }) : _firestoreService = firestoreService;
+    Future<List<LearnerSummary>> Function()? bundleLoader,
+    Future<BillingSummary?> Function()? billingLoader,
+  })  : _firestoreService = firestoreService,
+        _bundleLoader = bundleLoader,
+        _billingLoader = billingLoader;
   final FirestoreService _firestoreService;
   final String parentId;
+  final Future<List<LearnerSummary>> Function()? _bundleLoader;
+  final Future<BillingSummary?> Function()? _billingLoader;
   FirestoreService get firestoreService => _firestoreService;
   FirebaseFirestore get _firestore => _firestoreService.firestore;
 
@@ -41,8 +47,9 @@ class ParentService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final List<LearnerSummary> callableSummaries =
-          await _loadParentBundleFromCallable();
+      final List<LearnerSummary> callableSummaries = _bundleLoader != null
+          ? await _bundleLoader()
+          : await _loadParentBundleFromCallable();
       if (callableSummaries.isNotEmpty) {
         _learnerSummaries = callableSummaries;
       } else {
@@ -468,6 +475,10 @@ class ParentService extends ChangeNotifier {
 
   /// Load billing summary from Firebase
   Future<void> _loadBillingSummary() async {
+    if (_billingLoader != null) {
+      _billingSummary = await _billingLoader();
+      return;
+    }
     try {
       final HttpsCallable callable =
           FirebaseFunctions.instance.httpsCallable('getParentBillingSummary');

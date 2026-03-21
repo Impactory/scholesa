@@ -241,6 +241,8 @@ Future<void> _pumpPage(
       ParentService(
         firestoreService: firestoreService,
         parentId: 'parent-1',
+        bundleLoader: () async => <LearnerSummary>[],
+        billingLoader: () async => null,
       );
 
   await tester.pumpWidget(
@@ -284,6 +286,44 @@ void main() {
   });
 
   group('Parent surface workflows', () {
+    test('parent service fallback builds linked schedule and portfolio data',
+        () async {
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+      await _seedParentData(firestore);
+      await _seedParentSessionCouplingData(firestore);
+
+      final FirestoreService firestoreService = FirestoreService(
+        firestore: firestore,
+        auth: _MockFirebaseAuth(),
+      );
+      final ParentService service = ParentService(
+        firestoreService: firestoreService,
+        parentId: 'parent-1',
+        bundleLoader: () async => <LearnerSummary>[],
+        billingLoader: () async => null,
+      );
+
+      await service.loadParentData();
+
+      expect(service.error, isNull);
+      expect(service.learnerSummaries, hasLength(1));
+      expect(
+        service.learnerSummaries.first.upcomingEvents
+            .map((UpcomingEvent event) => event.title),
+        contains('Prototype Studio'),
+      );
+      expect(
+        service.learnerSummaries.first.upcomingEvents
+            .map((UpcomingEvent event) => event.title),
+        isNot(contains('Hidden Session')),
+      );
+      expect(
+        service.learnerSummaries.first.portfolioItemsPreview
+            .map((PortfolioPreviewItem item) => item.title),
+        contains('Build a Robot'),
+      );
+    });
+
     testWidgets('summary page only renders linked learner activity',
         (WidgetTester tester) async {
       final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
