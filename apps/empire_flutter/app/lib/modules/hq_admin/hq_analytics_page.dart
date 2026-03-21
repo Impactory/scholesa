@@ -17,6 +17,7 @@ class HqAnalyticsPage extends StatefulWidget {
   const HqAnalyticsPage({
     super.key,
     this.metricsLoader,
+    this.supplementalLoader,
     this.kpiPacksLoader,
     this.syntheticImportLoader,
   });
@@ -25,6 +26,9 @@ class HqAnalyticsPage extends StatefulWidget {
     String? siteId,
     String period,
   })? metricsLoader;
+  final Future<HqAnalyticsSupplementalSnapshot> Function({
+    String selectedSite,
+  })? supplementalLoader;
   final Future<List<Map<String, dynamic>>> Function({
     String? siteId,
     int limit,
@@ -33,6 +37,22 @@ class HqAnalyticsPage extends StatefulWidget {
 
   @override
   State<HqAnalyticsPage> createState() => _HqAnalyticsPageState();
+}
+
+class HqAnalyticsSupplementalSnapshot {
+  const HqAnalyticsSupplementalSnapshot({
+    this.siteOptions = const <Map<String, dynamic>>[],
+    this.pillarAnalytics = const <Map<String, dynamic>>[],
+    this.siteComparison = const <Map<String, dynamic>>[],
+    this.topPerformers = const <Map<String, dynamic>>[],
+    this.bosMiaFeedback,
+  });
+
+  final List<Map<String, dynamic>> siteOptions;
+  final List<Map<String, dynamic>> pillarAnalytics;
+  final List<Map<String, dynamic>> siteComparison;
+  final List<Map<String, dynamic>> topPerformers;
+  final Map<String, dynamic>? bosMiaFeedback;
 }
 
 class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
@@ -47,6 +67,9 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
   bool _isLoadingKpiPacks = true;
   bool _isLoadingSyntheticImport = true;
   String? _metricsError;
+  String? _supplementalError;
+  String? _kpiPacksError;
+  String? _syntheticImportError;
   List<_SiteFilterOption> _siteOptions = <_SiteFilterOption>[
     const _SiteFilterOption(id: 'all', name: 'All Sites'),
   ];
