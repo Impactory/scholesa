@@ -99,6 +99,8 @@ Proven gates:
    - direct proof exists for learner-tab first-load failure and stale-after-success visibility
 2. Gate B `Real Mutation`
    - direct route proof now exists for learner creation, parent creation, guardian-link creation, active-site guardian-link deletion, cohort-launch creation, learner edit persistence, parent edit persistence, and explicit create/edit/delete mutation failure handling
+3. Gate C `Authoritative Reload`
+   - direct route proof now exists that learner create, parent edit, and guardian-link delete flows re-read authoritative route data before success UI settles, rather than trusting only local mutation state
 3. Gate D `Recovery`
    - retry and refresh controls are directly proven for learner-tab failure and stale-after-success states
 4. Gate E `Scope And Permission Correctness`
@@ -108,22 +110,20 @@ Proven gates:
 
 Missing gates:
 
-1. Gate C `Authoritative Reload`
-   - cohort creation reloads through the bridge, but the wider route does not yet have direct focused proof that all create and edit paths re-query the authoritative source instead of relying only on in-memory mutation
-2. Gate H `Educational Truth`
+1. Gate H `Educational Truth`
    - this administrative route does not itself claim mastery or growth, but downstream evidence-bearing workflows that depend on provisioning are not yet certified here
-3. Gate I `AI Transparency`
+2. Gate I `AI Transparency`
    - no AI claim is made on the route, but wider downstream workflow coupling remains outside the focused proof
 
 Blocking risk:
 
-- `/site/provisioning` now directly proves honest learner-tab loading, stale recovery, core create mutations across all four tabs, learner and parent edit persistence, active-site guardian-link deletion, explicit create/edit/delete failure truth, direct create/edit/delete telemetry traces, and route-level access control. Remaining risk is authoritative reload breadth and downstream coupling, not whether the route’s primary provisioning actions exist.
+- `/site/provisioning` now directly proves honest learner-tab loading, stale recovery, core create mutations across all four tabs, learner and parent edit persistence, active-site guardian-link deletion, explicit create/edit/delete failure truth, direct create/edit/delete telemetry traces, authoritative reload on the audited mutation paths, and route-level access control. Remaining risk is downstream coupling, not whether the route’s primary provisioning actions exist.
 
 Next proof task:
 
 1. Verify downstream attendance, family access, and other site workflows consume the persisted provisioning state without fake completion.
-2. Add broader authoritative-reload proof so focused mutations are re-read from source-of-truth services, not only local state.
-3. Expand route-local proof beyond CTA telemetry into any persisted operator audit surfaces if the product expects them here.
+2. Expand route-local proof beyond CTA telemetry into any persisted operator audit surfaces if the product expects them here.
+3. Close the remaining route-coupling gap between provisioning truth and the workflows that rely on provisioned learners, parents, and links.
 
 ## Template
 
