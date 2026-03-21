@@ -140,6 +140,7 @@ Interpretation rule:
 50. Fixed `/site/provisioning` learner and parent edit persistence in Firestore fallback mode and added direct route proof that the edit dialogs now persist updated learner and parent data instead of depending on unavailable API patch calls.
 51. Added direct `/site/provisioning` mutation-failure proof for learner, parent, guardian-link, cohort, and guardian-link-delete flows, and fixed the route so guardian-link delete failures surface the real service error instead of a generic hidden-failure fallback.
 52. Added direct `/site/provisioning` auditability proof for create, edit, and delete mutation telemetry so the focused route suite now verifies operator traces for learner creation, parent editing, and guardian-link deletion.
+53. Fixed `/site/provisioning` success flows to re-load authoritative route data after create, edit, and delete mutations, and added direct proof that audited provisioning mutations settle on canonical source-of-truth state rather than local-only optimistic state.
 
 ### Release and operations fixes
 
