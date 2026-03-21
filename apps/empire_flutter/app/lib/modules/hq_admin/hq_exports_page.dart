@@ -330,6 +330,7 @@ class _HqExportsPageState extends State<HqExportsPage> {
       _isLoadingAnalytics = true;
       _analyticsError = null;
     });
+    final bool hadMetrics = _analyticsMetrics != null;
     try {
       final TelemetryDashboardMetrics metrics = widget.analyticsLoader != null
           ? await widget.analyticsLoader!()
@@ -345,9 +346,12 @@ class _HqExportsPageState extends State<HqExportsPage> {
         return;
       }
       setState(() {
-        _analyticsMetrics = null;
-        _analyticsError =
-            _tHqExports(context, 'Unable to load the analytics export bundle right now.');
+        _analyticsError = _tHqExports(
+          context,
+          hadMetrics
+              ? 'Unable to refresh the analytics export bundle right now. Showing the last successful bundle.'
+              : 'Unable to load the analytics export bundle right now.',
+        );
       });
     } finally {
       if (mounted) {
@@ -366,6 +370,7 @@ class _HqExportsPageState extends State<HqExportsPage> {
       _isLoadingBilling = true;
       _billingError = null;
     });
+    final bool hadBillingPayload = _billingPayload != null;
     try {
       final Map<String, dynamic> payload = widget.billingLoader != null
           ? await widget.billingLoader!()
@@ -381,9 +386,12 @@ class _HqExportsPageState extends State<HqExportsPage> {
         return;
       }
       setState(() {
-        _billingPayload = null;
-        _billingError =
-            _tHqExports(context, 'Unable to load the billing export bundle right now.');
+        _billingError = _tHqExports(
+          context,
+          hadBillingPayload
+              ? 'Unable to refresh the billing export bundle right now. Showing the last successful bundle.'
+              : 'Unable to load the billing export bundle right now.',
+        );
       });
     } finally {
       if (mounted) {
@@ -402,6 +410,7 @@ class _HqExportsPageState extends State<HqExportsPage> {
       _isLoadingAudit = true;
       _auditError = null;
     });
+    final bool hadAuditLogs = _auditLogs.isNotEmpty;
     try {
       final List<AuditLogModel> logs = widget.auditLoader != null
           ? await widget.auditLoader!()
@@ -417,9 +426,12 @@ class _HqExportsPageState extends State<HqExportsPage> {
         return;
       }
       setState(() {
-        _auditLogs = <AuditLogModel>[];
-        _auditError =
-            _tHqExports(context, 'Unable to load the audit export bundle right now.');
+        _auditError = _tHqExports(
+          context,
+          hadAuditLogs
+              ? 'Unable to refresh the audit export bundle right now. Showing the last successful bundle.'
+              : 'Unable to load the audit export bundle right now.',
+        );
       });
     } finally {
       if (mounted) {
@@ -438,6 +450,7 @@ class _HqExportsPageState extends State<HqExportsPage> {
       _isLoadingSafety = true;
       _safetyError = null;
     });
+    final bool hadSafetyPayload = _safetyPayload != null;
     try {
       final Map<String, dynamic> payload = widget.safetyLoader != null
           ? await widget.safetyLoader!()
@@ -453,9 +466,12 @@ class _HqExportsPageState extends State<HqExportsPage> {
         return;
       }
       setState(() {
-        _safetyPayload = null;
-        _safetyError =
-            _tHqExports(context, 'Unable to load the safety export bundle right now.');
+        _safetyError = _tHqExports(
+          context,
+          hadSafetyPayload
+              ? 'Unable to refresh the safety export bundle right now. Showing the last successful bundle.'
+              : 'Unable to load the safety export bundle right now.',
+        );
       });
     } finally {
       if (mounted) {
