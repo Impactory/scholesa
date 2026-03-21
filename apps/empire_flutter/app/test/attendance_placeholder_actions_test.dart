@@ -670,4 +670,78 @@ void main() {
     expect(find.text('Attendance saved successfully'), findsNothing);
     expect(find.text('Robotics Lab'), findsOneWidget);
   });
+
+  testWidgets('attendance page reloads saved attendance from Firestore',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedAttendanceCouplingData(firestore);
+
+    final _MockSyncCoordinator syncCoordinator = _MockSyncCoordinator();
+    when(() => syncCoordinator.isOnline).thenReturn(true);
+    when(() => syncCoordinator.pendingCount).thenReturn(0);
+    when(() => syncCoordinator.isSyncing).thenReturn(false);
+    when(() => syncCoordinator.retryFailed()).thenAnswer((_) async {});
+
+    final AttendanceService attendanceService = AttendanceService(
+      apiClient: _MockApiClient(),
+      syncCoordinator: syncCoordinator,
+      firestore: firestore,
+      siteId: 'site-1',
+    );
+    final AppState appState = _buildAppState();
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: <SingleChildWidget>[
+          ChangeNotifierProvider<AppState>.value(value: appState),
+          ChangeNotifierProvider<SyncCoordinator>.value(value: syncCoordinator),
+          ChangeNotifierProvider<AttendanceService>.value(value: attendanceService),
+        ],
+        child: MaterialApp(
+          theme: ThemeData(
+            useMaterial3: true,
+            splashFactory: NoSplash.splashFactory,
+          ),
+          locale: const Locale('en'),
+          supportedLocales: const <Locale>[
+            Locale('en'),
+            Locale('zh', 'CN'),
+            Locale('zh', 'TW'),
+          ],
+          localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: const AttendancePage(),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Robotics Lab'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('All Present'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save Attendance (2/2)'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Attendance saved successfully'), findsOneWidget);
+    expect(find.text('Robotics Lab'), findsOneWidget);
+
+    await tester.tap(find.text('Robotics Lab'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Save Attendance (2/2)'), findsOneWidget);
+    expect(attendanceService.currentOccurrence, isNotNull);
+    final List<RosterLearner> roster = attendanceService.currentOccurrence!.roster;
+    expect(roster, hasLength(2));
+    expect(
+      roster.every((RosterLearner learner) =>
+          learner.currentAttendance?.status == AttendanceStatus.present),
+      isTrue,
+    );
+  });
 }
