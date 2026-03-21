@@ -108,7 +108,9 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
   bool _isLoadingFlags = false;
   bool _isLoadingExperiments = false;
   String? _flagsError;
+  String? _flagsErrorDetail;
   String? _experimentsError;
+  String? _experimentsErrorDetail;
 
   WorkflowBridgeService get _workflowBridge =>
       widget._workflowBridge ?? WorkflowBridgeService.instance;
@@ -947,6 +949,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         foregroundColor: Colors.white,
         actions: <Widget>[
           IconButton(
+            tooltip: _tHqFeatureFlags(context, 'Refresh'),
             icon: const Icon(Icons.refresh_rounded),
             onPressed: () {
               TelemetryService.instance.logEvent(
@@ -961,6 +964,7 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
             },
           ),
           IconButton(
+            tooltip: _tHqFeatureFlags(context, 'Review change history'),
             icon: const Icon(Icons.history_rounded),
             onPressed: () {
               TelemetryService.instance.logEvent(
@@ -1011,7 +1015,10 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 context,
                 'Feature flags are temporarily unavailable',
               ),
-              message: _flagsError!,
+              message: _formatMessageWithDetail(
+                _flagsError!,
+                _flagsErrorDetail,
+              ),
             ),
           if (!_isLoadingFlags && _flags.isEmpty)
             if (_flagsError == null)
@@ -1026,9 +1033,12 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               ),
           if (!_isLoadingFlags && _flagsError != null && _flags.isNotEmpty)
             _buildStaleDataBanner(
-              _tHqFeatureFlags(
-                context,
-                'Unable to refresh feature flags right now. Showing the last successful data.',
+              _formatMessageWithDetail(
+                _tHqFeatureFlags(
+                  context,
+                  'Unable to refresh feature flags right now. Showing the last successful data.',
+                ),
+                _flagsErrorDetail,
               ),
             ),
           if (_flags.isNotEmpty)
@@ -1101,7 +1111,10 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
               context,
               'Federated-learning experiments are temporarily unavailable',
             ),
-            message: _experimentsError!,
+            message: _formatMessageWithDetail(
+              _experimentsError!,
+              _experimentsErrorDetail,
+            ),
           )
         else if (_experiments.isEmpty)
           Container(
@@ -1124,9 +1137,12 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
           ...<Widget>[
             if (_experimentsError != null) ...<Widget>[
               _buildStaleDataBanner(
-                _tHqFeatureFlags(
-                  context,
-                  'Unable to refresh federated-learning experiments right now. Showing the last successful data.',
+                _formatMessageWithDetail(
+                  _tHqFeatureFlags(
+                    context,
+                    'Unable to refresh federated-learning experiments right now. Showing the last successful data.',
+                  ),
+                  _experimentsErrorDetail,
                 ),
               ),
               const SizedBox(height: 12),
@@ -9070,28 +9086,41 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
   }
 
   Widget _buildStaleDataBanner(String message) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.orange.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.orange.withValues(alpha: 0.35)),
-      ),
-      child: Row(
-        children: <Widget>[
-          const Icon(Icons.warning_amber_rounded, color: Colors.orange),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              message,
-              style: const TextStyle(color: ScholesaColors.textPrimary),
+    return Semantics(
+      container: true,
+      liveRegion: true,
+      label: message,
+      child: Container(
+        width: double.infinity,
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.orange.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.orange.withValues(alpha: 0.35)),
+        ),
+        child: Row(
+          children: <Widget>[
+            const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(color: ScholesaColors.textPrimary),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
+  }
+
+  String _formatMessageWithDetail(String message, String? detail) {
+    final String normalizedDetail = detail?.trim() ?? '';
+    if (normalizedDetail.isEmpty) {
+      return message;
+    }
+    return '$message Details: $normalizedDetail';
   }
 
   Future<void> _loadFlags() async {
@@ -9107,14 +9136,16 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
       setState(() {
         _flags = loaded;
         _flagsError = null;
+        _flagsErrorDetail = null;
       });
-    } catch (_) {
+    } catch (error) {
       if (!mounted) return;
       setState(() {
         _flagsError = _tHqFeatureFlags(
           context,
           'We could not load feature flags right now. Retry to check the current state.',
         );
+        _flagsErrorDetail = error.toString();
       });
     } finally {
       if (mounted) {
@@ -9435,14 +9466,16 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         _promotionRevocationRecordsByPackageId = revocationsByPackageId;
         _updateSummariesById = summariesById;
         _experimentsError = null;
+        _experimentsErrorDetail = null;
       });
-    } catch (_) {
+    } catch (error) {
       if (!mounted) return;
       setState(() {
         _experimentsError = _tHqFeatureFlags(
           context,
           'We could not load federated-learning experiments right now. Retry to check the current state.',
         );
+        _experimentsErrorDetail = error.toString();
       });
     } finally {
       if (mounted) {

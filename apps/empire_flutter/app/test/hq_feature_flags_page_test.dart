@@ -251,6 +251,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
+  expect(find.byTooltip('Refresh'), findsOneWidget);
+  expect(find.byTooltip('Review change history'), findsOneWidget);
     expect(find.text('Feature Flags'), findsOneWidget);
     expect(find.text('No feature flags found'), findsOneWidget);
     expect(
@@ -366,7 +368,7 @@ void main() {
     expect(find.text('Feature flags are temporarily unavailable'), findsOneWidget);
     expect(
       find.text(
-        'We could not load feature flags right now. Retry to check the current state.',
+        'We could not load feature flags right now. Retry to check the current state. Details: Exception: feature flags load failed',
       ),
       findsOneWidget,
     );
@@ -395,13 +397,13 @@ void main() {
 
     expect(find.text('ai_help_loop'), findsOneWidget);
 
-    await tester.tap(find.byIcon(Icons.refresh_rounded).first);
+    await tester.tap(find.byTooltip('Refresh'));
     await tester.pump();
     await tester.pumpAndSettle();
 
     expect(
       find.text(
-        'Unable to refresh feature flags right now. Showing the last successful data.',
+        'Unable to refresh feature flags right now. Showing the last successful data. Details: Exception: feature flags load failed',
       ),
       findsOneWidget,
     );
@@ -426,7 +428,7 @@ void main() {
     );
     expect(
       find.text(
-        'We could not load federated-learning experiments right now. Retry to check the current state.',
+        'We could not load federated-learning experiments right now. Retry to check the current state. Details: Exception: experiments load failed',
       ),
       findsOneWidget,
     );
@@ -460,13 +462,13 @@ void main() {
 
     expect(find.text('Prototype Voice Loop'), findsOneWidget);
 
-    await tester.tap(find.byIcon(Icons.refresh_rounded).first);
+    await tester.tap(find.byTooltip('Refresh'));
     await tester.pump();
     await tester.pumpAndSettle();
 
     expect(
       find.text(
-        'Unable to refresh federated-learning experiments right now. Showing the last successful data.',
+        'Unable to refresh federated-learning experiments right now. Showing the last successful data. Details: Exception: experiments load failed',
       ),
       findsOneWidget,
     );
