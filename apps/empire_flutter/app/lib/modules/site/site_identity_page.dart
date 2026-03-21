@@ -55,8 +55,13 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
         title: Text(_tSiteIdentity(context, 'Identity Resolution')),
         backgroundColor: const Color(0xFF64748B),
         foregroundColor: Colors.white,
-        actions: const <Widget>[
-          SessionMenuButton(
+        actions: <Widget>[
+          IconButton(
+            tooltip: _tSiteIdentity(context, 'Refresh'),
+            icon: const Icon(Icons.refresh_rounded),
+            onPressed: _loadPendingMatches,
+          ),
+          const SessionMenuButton(
             foregroundColor: Colors.white,
           ),
         ],

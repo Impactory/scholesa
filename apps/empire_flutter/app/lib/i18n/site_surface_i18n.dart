@@ -36,6 +36,11 @@ class SiteSurfaceI18n {
     'Identity Resolution': '身份匹配处理',
     'Review and confirm matches between local accounts and external provider accounts.':
         '审核并确认本地账户与外部提供方账户之间的匹配。',
+        'Identity matches are temporarily unavailable': '身份匹配暂时不可用',
+        'We could not load the identity review queue. Retry to check the current state.':
+            '我们暂时无法加载身份审核队列。请重试以检查当前状态。',
+        'Unable to refresh identity matches right now. Showing the last successful data.':
+            '当前无法刷新身份匹配。正在显示最近一次成功加载的数据。',
     'All Identities Resolved': '所有身份均已处理',
     'No pending identity matches to review': '没有待审核的身份匹配',
     'Match confidence:': '匹配置信度：',
@@ -384,6 +389,11 @@ class SiteSurfaceI18n {
     'Identity Resolution': '身分匹配處理',
     'Review and confirm matches between local accounts and external provider accounts.':
         '檢視並確認本地帳戶與外部提供者帳戶之間的匹配。',
+        'Identity matches are temporarily unavailable': '身份比對暫時不可用',
+        'We could not load the identity review queue. Retry to check the current state.':
+            '我們暫時無法載入身份審核佇列。請重試以確認目前狀態。',
+        'Unable to refresh identity matches right now. Showing the last successful data.':
+            '目前無法刷新身份比對。正在顯示最近一次成功載入的資料。',
     'All Identities Resolved': '所有身分皆已處理',
     'No pending identity matches to review': '沒有待審核的身分匹配',
     'Match confidence:': '匹配信心：',
