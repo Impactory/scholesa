@@ -28,7 +28,7 @@ Highest-value remaining blind spots:
 
 1. wider federated-learning workflow certification beyond the route-level `/hq/feature-flags` proof
 2. wider site workflow coupling beyond the strengthened `/site/provisioning` and `/site/sessions` routes
-3. partner listings edit depth beyond create-and-persist proof
+3. broader educator workflow coupling beyond the strengthened `/educator/attendance` route
 4. root redirect proof is still stronger than direct home-surface rendering proof
 
 
@@ -101,7 +101,7 @@ Use this matrix together with the stricter full-flow gate in `docs/FULL_HONESTY_
 
 | Route | Proof | Primary evidence | Blind spot |
 | --- | --- | --- | --- |
-| `/partner/listings` | direct | `apps/empire_flutter/app/test/partner_listings_page_test.dart` | First-load outage, stale-refresh retention, and create-and-persist proof are direct; edit flow still lacks direct proof |
+| `/partner/listings` | direct | `apps/empire_flutter/app/test/partner_listings_page_test.dart` | First-load outage, stale-refresh retention, create-and-persist proof, and published listing edit persistence with site-marketplace visibility are now direct; broader partner workflow depth still extends beyond the route |
 | `/partner/contracts` | direct | `apps/empire_flutter/app/test/partner_contracting_workflow_test.dart` | Happy-path contracts/launches, launch-failure honesty, and stale contract/launch refresh truth are directly proven; deeper mutation flows still rely on broader workflow tests |
 | `/partner/deliverables` | direct | `apps/empire_flutter/app/test/partner_deliverables_page_test.dart` | Honest first-load outage, stale-refresh retention, and submit flow are directly proven; deeper contract mutation breadth still lives on the contracts workflow |
 | `/partner/integrations` | direct | `apps/empire_flutter/app/test/partner_integrations_page_test.dart` | First-load outage, stale-refresh retention, live connection rendering, and honest localized empty-state copy are directly proven |
@@ -146,7 +146,7 @@ Use this matrix together with the stricter full-flow gate in `docs/FULL_HONESTY_
 Prioritize direct proof next for:
 
 1. wider downstream site workflow coupling from `/site/provisioning` and `/site/sessions`
-2. partner listings edit depth beyond create-and-persist proof
+2. broader educator workflow coupling beyond the strengthened `/educator/attendance` route
 3. stronger direct rendering proof around the `/` entry surface beyond redirect behavior
 
 Then close the final workflow-only root-entry gap and deepen mutation and failure-path proof on the operationally risky routes before claiming gold.

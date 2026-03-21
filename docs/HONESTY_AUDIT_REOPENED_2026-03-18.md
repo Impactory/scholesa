@@ -144,6 +144,7 @@ Interpretation rule:
 54. Added direct educator attendance route proof for real enrolled-learner roster coupling plus attendance save success/failure, fixed attendance roster disposal so saving no longer triggers listener notifications while the widget tree is locked, proved saved attendance reloads from Firestore when the roster is reopened, and proved offline attendance saves queue truthfully without writing Firestore until sync resumes.
 55. Added direct `/educator/attendance` route-gate proof that only educator, site, and HQ roles can access the route, so the remaining attendance risk is now broader workflow coupling rather than route-local access scope.
 56. Added direct `/educator/attendance` telemetry proof that live saves emit `attendance.recorded` and offline saves emit `attendance.record_queued`, alongside the primary `attendance_save` CTA trace, so route-local auditability is now proven instead of inferred from implementation.
+57. Fixed `/partner/listings` so the edit dialog persists real listing updates instead of showing a fake success snackbar, and added direct proof that published listing edits update Firestore and become visible on the site marketplace surface.
 
 ### Release and operations fixes
 
