@@ -85,7 +85,7 @@ Use this matrix together with the stricter full-flow gate in `docs/FULL_HONESTY_
 | Route | Proof | Primary evidence | Blind spot |
 | --- | --- | --- | --- |
 | `/site/checkin` | direct | `apps/empire_flutter/app/test/checkin_placeholder_actions_test.dart` | — |
-| `/site/provisioning` | direct | `apps/empire_flutter/app/test/provisioning_page_test.dart`, `apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart` | Learner-tab failure and stale-data truth are now isolated; parent/link/cohort depth still leans on broader workflow tests |
+| `/site/provisioning` | direct | `apps/empire_flutter/app/test/provisioning_page_test.dart`, `apps/empire_flutter/app/test/provisioning_route_gate_test.dart`, `apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart` | Learner-tab failure and stale-data truth, learner/parent/link/cohort creation, active-site guardian-link deletion, and direct site/HQ route gating are now isolated on the route itself; deeper edit/failure/auditability depth still extends beyond the focused route proof |
 | `/site/dashboard` | direct | `apps/empire_flutter/app/test/site_dashboard_page_test.dart` | — |
 | `/site/sessions` | direct | `apps/empire_flutter/app/test/site_sessions_page_test.dart`, `apps/empire_flutter/app/test/site_sessions_route_gate_test.dart`, `apps/empire_flutter/app/test/site_ops_provisioning_workflow_test.dart` | Date-based reload, stale-data recovery, create persistence, authoritative reload, create failure, and direct site/HQ route gating are now isolated on the route itself; broader scheduling workflow depth still extends beyond this single page |
 | `/site/ops` | direct | `apps/empire_flutter/app/test/site_ops_page_test.dart`, `apps/empire_flutter/app/test/site_ops_honesty_test.dart` | Runtime rollout first-load outage, stale-refresh truth, and direct in-surface refresh/retry recovery are now proven; deeper activity mutation breadth still leans on the broader workflow tests |
@@ -145,7 +145,7 @@ Use this matrix together with the stricter full-flow gate in `docs/FULL_HONESTY_
 
 Prioritize direct proof next for:
 
-1. broader create, edit, and recovery depth on `/site/sessions` and `/site/provisioning`
+1. broader edit, failure, and auditability depth on `/site/provisioning` plus wider downstream site workflow coupling
 2. partner listings edit depth beyond create-and-persist proof
 3. stronger direct rendering proof around the `/` entry surface beyond redirect behavior
 

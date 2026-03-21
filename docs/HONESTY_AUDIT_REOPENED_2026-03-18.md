@@ -136,6 +136,7 @@ Interpretation rule:
 46. Added direct HQ feature flags rollout-audit proof so saved triage, rollout-control, and rollout-escalation mutations are visible through the route's own audit feed.
 47. Added direct `/site/sessions` create-path proof so the route now verifies persisted session creation, authoritative schedule reload from source-of-truth data, and explicit in-surface create failure without a fake appended session.
 48. Added direct `/site/sessions` route-gate proof so only `site` and `hq` roles can access the route and the `/site/scheduling` alias redirects back to the canonical path.
+49. Added direct `/site/provisioning` route proof so learner, parent, guardian-link, and cohort creation plus active-site guardian-link deletion are now verified in the focused page suite, and `/site/provisioning` now has direct site/HQ route-gate proof.
 
 ### Release and operations fixes
 
@@ -157,6 +158,7 @@ Interpretation rule:
 - Focused site incidents honesty regressions passed: 4 passed, 0 failed.
 - Focused site integrations health regressions passed: 4 passed, 0 failed.
 - Focused HQ feature flags regressions passed: 22 passed, 0 failed.
+- Focused site provisioning regressions passed: 9 passed, 0 failed.
 - Focused site sessions regressions passed: 9 passed, 0 failed.
 - Priority blocker page batch passed: 16 passed, 0 failed.
 - Settings logout and auth coverage passed: 26 passed, 0 failed.
