@@ -203,7 +203,7 @@ void main() {
 
         expect(
           find.text(
-            'Unable to refresh incidents right now. Showing the last successful data.',
+            'Unable to refresh incidents right now. Showing the last successful data. Bad state: incidents refresh unavailable',
           ),
           findsOneWidget,
         );
