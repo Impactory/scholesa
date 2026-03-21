@@ -173,8 +173,13 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage>
         title: Text(_tSiteIncidents(context, 'Safety & Incidents')),
         backgroundColor: ScholesaColors.safetyGradient.colors.first,
         foregroundColor: Colors.white,
-        actions: const <Widget>[
-          SessionMenuButton(
+        actions: <Widget>[
+          IconButton(
+            tooltip: _tSiteIncidents(context, 'Refresh'),
+            onPressed: _loadIncidents,
+            icon: const Icon(Icons.refresh_rounded),
+          ),
+          const SessionMenuButton(
             foregroundColor: Colors.white,
           ),
         ],

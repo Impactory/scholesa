@@ -112,6 +112,7 @@ void main() {
     );
     expect(find.textContaining('No incidents'), findsNothing);
     expect(find.text('Retry'), findsOneWidget);
+    expect(find.byTooltip('Refresh'), findsOneWidget);
   });
 
   testWidgets(
@@ -196,7 +197,7 @@ void main() {
         expect(find.text('Playground incident'), findsOneWidget);
         expect(find.textContaining('No incidents'), findsNothing);
 
-        await tester.tap(find.byIcon(Icons.refresh_rounded).first);
+        await tester.tap(find.byTooltip('Refresh'));
         await tester.pump();
         await tester.pumpAndSettle();
 
