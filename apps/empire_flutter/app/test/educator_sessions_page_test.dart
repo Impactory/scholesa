@@ -62,7 +62,6 @@ class _FakeEducatorService extends EducatorService {
     await Future<void>.delayed(Duration.zero);
 
     if (failSessionLoad) {
-      _sessionsValue = <EducatorSession>[];
       _errorValue = 'Failed to load sessions';
     } else {
       _sessionsValue = List<EducatorSession>.from(_seedSessions);
@@ -180,9 +179,69 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
-    expect(find.text('Unable to load sessions'), findsOneWidget);
+    expect(
+      find.text(
+        'We could not load sessions right now. Retry to check the current state.',
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Failed to load sessions'), findsOneWidget);
     expect(find.text('Retry'), findsOneWidget);
+    expect(find.text('No sessions yet'), findsNothing);
+  });
+
+  testWidgets('educator sessions page keeps stale sessions visible after refresh failure',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    int loadCount = 0;
+    final EducatorService educatorService = EducatorService(
+      firestoreService: firestoreService,
+      educatorId: 'educator-1',
+      siteId: 'site-1',
+      sessionsLoader: () async {
+        loadCount += 1;
+        if (loadCount == 1) {
+          return EducatorSessionsSnapshot(
+            sessions: <EducatorSession>[
+              _buildSession(
+                id: 'upcoming-1',
+                title: 'Robotics Warm-up',
+                pillar: 'future_skills',
+                status: 'upcoming',
+              ),
+            ],
+          );
+        }
+        throw Exception('network down');
+      },
+      learnersLoader: () async {
+        return const EducatorLearnersSnapshot(learners: <EducatorLearner>[]);
+      },
+    );
+
+    await tester.pumpWidget(
+      _buildHarness(educatorService: educatorService),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Robotics Warm-up'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Refresh'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Robotics Warm-up'), findsOneWidget);
+    expect(
+      find.text(
+        'Unable to refresh sessions right now. Showing the last successful data. Failed to load sessions: Exception: network down',
+      ),
+      findsOneWidget,
+    );
     expect(find.text('No sessions yet'), findsNothing);
   });
 

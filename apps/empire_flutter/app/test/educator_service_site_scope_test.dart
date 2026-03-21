@@ -109,6 +109,47 @@ void main() {
       expect(service.error, contains('Failed to load schedule'));
     });
 
+    test('loadSessions keeps stale sessions visible after refresh failure',
+        () async {
+      int loadCount = 0;
+      final EducatorService service = EducatorService(
+        firestoreService: FirestoreService(
+          firestore: FakeFirebaseFirestore(),
+          auth: _MockFirebaseAuth(),
+        ),
+        educatorId: 'educator-1',
+        siteId: 'site-a',
+        sessionsLoader: () async {
+          loadCount += 1;
+          if (loadCount == 1) {
+            return EducatorSessionsSnapshot(
+              sessions: <EducatorSession>[
+                EducatorSession(
+                  id: 'session-1',
+                  title: 'Launch Lab',
+                  pillar: 'future_skills',
+                  startTime: DateTime(2026, 3, 21, 9),
+                  endTime: DateTime(2026, 3, 21, 10),
+                  location: 'Studio A',
+                  enrolledCount: 12,
+                  maxCapacity: 16,
+                  status: 'upcoming',
+                ),
+              ],
+            );
+          }
+          throw Exception('network down');
+        },
+      );
+
+      await service.loadSessions();
+      await service.loadSessions();
+
+      expect(service.sessions, hasLength(1));
+      expect(service.sessions.single.title, 'Launch Lab');
+      expect(service.error, contains('Failed to load sessions'));
+    });
+
     test('loadLearners only includes learners in active site', () async {
       final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
       final FirestoreService firestoreService = FirestoreService(
