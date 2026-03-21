@@ -26,19 +26,21 @@ class AttendanceService extends ChangeNotifier {
   AttendanceService({
     required ApiClient apiClient,
     required SyncCoordinator syncCoordinator,
+    FirebaseFirestore? firestore,
     this.educatorId,
     this.siteId,
     Future<AttendanceOccurrencesSnapshot> Function()? occurrencesLoader,
   })  : _apiClient = apiClient,
         _syncCoordinator = syncCoordinator,
+        _firestore = firestore ?? FirebaseFirestore.instance,
         _occurrencesLoader = occurrencesLoader;
   // ignore: unused_field — reserved for future REST API migration
   final ApiClient _apiClient;
   final SyncCoordinator _syncCoordinator;
+  final FirebaseFirestore _firestore;
   final Future<AttendanceOccurrencesSnapshot> Function()? _occurrencesLoader;
   final String? educatorId;
   final String? siteId;
-  FirebaseFirestore get _firestore => FirebaseFirestore.instance;
 
   List<SessionOccurrence> _todayOccurrences = <SessionOccurrence>[];
   SessionOccurrence? _currentOccurrence;

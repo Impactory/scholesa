@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -92,6 +94,65 @@ AppState _buildAppState() {
     'entitlements': <Map<String, dynamic>>[],
   });
   return appState;
+}
+
+Future<void> _seedAttendanceCouplingData(
+  FakeFirebaseFirestore firestore,
+) async {
+  final DateTime now = DateTime.now();
+  final DateTime startTime = DateTime(now.year, now.month, now.day, 9, 0);
+  final DateTime endTime = startTime.add(const Duration(hours: 1));
+
+  await firestore.collection('sessionOccurrences').doc('occ-1').set(<String, dynamic>{
+    'sessionId': 'session-1',
+    'siteId': 'site-1',
+    'title': 'Robotics Lab',
+    'startTime': Timestamp.fromDate(startTime),
+    'endTime': Timestamp.fromDate(endTime),
+    'roomName': 'Studio A',
+  });
+
+  await firestore.collection('enrollments').doc('enrollment-1').set(<String, dynamic>{
+    'sessionId': 'session-1',
+    'learnerId': 'learner-1',
+    'status': 'active',
+  });
+  await firestore.collection('enrollments').doc('enrollment-2').set(<String, dynamic>{
+    'sessionId': 'session-1',
+    'learnerId': 'learner-2',
+    'status': 'active',
+  });
+  await firestore.collection('enrollments').doc('enrollment-3').set(<String, dynamic>{
+    'sessionId': 'session-1',
+    'learnerId': 'learner-3',
+    'status': 'inactive',
+  });
+  await firestore.collection('enrollments').doc('enrollment-4').set(<String, dynamic>{
+    'sessionId': 'session-2',
+    'learnerId': 'learner-4',
+    'status': 'active',
+  });
+
+  await firestore.collection('users').doc('learner-1').set(<String, dynamic>{
+    'displayName': 'Ava Learner',
+    'role': 'learner',
+    'siteIds': <String>['site-1'],
+  });
+  await firestore.collection('users').doc('learner-2').set(<String, dynamic>{
+    'displayName': 'Milo Builder',
+    'role': 'learner',
+    'siteIds': <String>['site-1'],
+  });
+  await firestore.collection('users').doc('learner-3').set(<String, dynamic>{
+    'displayName': 'Inactive Learner',
+    'role': 'learner',
+    'siteIds': <String>['site-1'],
+  });
+  await firestore.collection('users').doc('learner-4').set(<String, dynamic>{
+    'displayName': 'Other Session Learner',
+    'role': 'learner',
+    'siteIds': <String>['site-1'],
+  });
 }
 
 void main() {
@@ -318,6 +379,69 @@ void main() {
     );
     expect(find.text('Robotics Lab'), findsOneWidget);
     expect(find.text('No classes today'), findsNothing);
+  });
+
+  testWidgets('attendance page loads live roster from enrolled learners',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedAttendanceCouplingData(firestore);
+
+    final _MockSyncCoordinator syncCoordinator = _MockSyncCoordinator();
+    when(() => syncCoordinator.isOnline).thenReturn(true);
+    when(() => syncCoordinator.pendingCount).thenReturn(0);
+    when(() => syncCoordinator.isSyncing).thenReturn(false);
+    when(() => syncCoordinator.retryFailed()).thenAnswer((_) async {});
+
+    final AttendanceService attendanceService = AttendanceService(
+      apiClient: _MockApiClient(),
+      syncCoordinator: syncCoordinator,
+      firestore: firestore,
+      siteId: 'site-1',
+    );
+    final AppState appState = _buildAppState();
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: <SingleChildWidget>[
+          ChangeNotifierProvider<AppState>.value(value: appState),
+          ChangeNotifierProvider<SyncCoordinator>.value(value: syncCoordinator),
+          ChangeNotifierProvider<AttendanceService>.value(value: attendanceService),
+        ],
+        child: MaterialApp(
+          theme: ThemeData(
+            useMaterial3: true,
+            splashFactory: NoSplash.splashFactory,
+          ),
+          locale: const Locale('en'),
+          supportedLocales: const <Locale>[
+            Locale('en'),
+            Locale('zh', 'CN'),
+            Locale('zh', 'TW'),
+          ],
+          localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: const AttendancePage(),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Robotics Lab'), findsOneWidget);
+    expect(find.text('2 students'), findsOneWidget);
+
+    await tester.tap(find.text('Robotics Lab'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ava Learner'), findsOneWidget);
+    expect(find.text('Milo Builder'), findsOneWidget);
+    expect(find.text('Inactive Learner'), findsNothing);
+    expect(find.text('Other Session Learner'), findsNothing);
+    expect(find.text('Save Attendance (0/2)'), findsOneWidget);
   });
 
   testWidgets('attendance roster keeps stale learners visible after refresh failure',
