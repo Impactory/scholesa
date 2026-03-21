@@ -226,28 +226,8 @@ class ParentService extends ChangeNotifier {
       },
     ).toList();
 
-    final DateTime now = DateTime.now();
-    final QuerySnapshot<Map<String, dynamic>> eventsSnapshot = await _firestore
-        .collection('events')
-        .where('learnerId', isEqualTo: learnerId)
-        .where('dateTime', isGreaterThan: Timestamp.fromDate(now))
-        .orderBy('dateTime')
-        .limit(5)
-        .get();
-
-    final List<UpcomingEvent> events = eventsSnapshot.docs.map(
-      (QueryDocumentSnapshot<Map<String, dynamic>> doc) {
-        final Map<String, dynamic> data = doc.data();
-        return UpcomingEvent(
-          id: doc.id,
-          title: data['title'] as String? ?? '',
-          description: data['description'] as String?,
-          dateTime: _parseTimestamp(data['dateTime']) ?? DateTime.now(),
-          type: data['type'] as String? ?? 'event',
-          location: data['location'] as String?,
-        );
-      },
-    ).toList();
+    final List<UpcomingEvent> events =
+        await _loadUpcomingEventsForLearner(learnerId);
 
     QuerySnapshot<Map<String, dynamic>> attendanceSnapshot;
     try {
@@ -403,6 +383,87 @@ class ParentService extends ChangeNotifier {
       recentActivities: activities,
       upcomingEvents: events,
     );
+  }
+
+  Future<List<UpcomingEvent>> _loadUpcomingEventsForLearner(
+    String learnerId,
+  ) async {
+    final DateTime now = DateTime.now();
+    final QuerySnapshot<Map<String, dynamic>> enrollmentsSnapshot =
+        await _firestore
+            .collection('enrollments')
+            .where('learnerId', isEqualTo: learnerId)
+            .where('status', isEqualTo: 'active')
+            .get();
+
+    final Set<String> sessionIds = enrollmentsSnapshot.docs
+        .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
+            (doc.data()['sessionId'] as String? ?? '').trim())
+        .where((String sessionId) => sessionId.isNotEmpty)
+        .toSet();
+
+    final List<UpcomingEvent> sessionEvents = <UpcomingEvent>[];
+    for (final String sessionId in sessionIds) {
+      final QuerySnapshot<Map<String, dynamic>> occurrencesSnapshot =
+          await _firestore
+              .collection('sessionOccurrences')
+              .where('sessionId', isEqualTo: sessionId)
+              .limit(20)
+              .get();
+
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+          in occurrencesSnapshot.docs) {
+        final Map<String, dynamic> data = doc.data();
+        final DateTime? startTime =
+            _parseTimestamp(data['startTime']) ?? _parseTimestamp(data['date']);
+        if (startTime == null || startTime.isBefore(now)) {
+          continue;
+        }
+        sessionEvents.add(
+          UpcomingEvent(
+            id: doc.id,
+            title: data['title'] as String? ??
+                data['sessionTitle'] as String? ??
+                'Session',
+            description: data['description'] as String?,
+            dateTime: startTime,
+            type: 'session',
+            location:
+                data['roomName'] as String? ?? data['location'] as String?,
+          ),
+        );
+      }
+    }
+
+    sessionEvents.sort(
+      (UpcomingEvent left, UpcomingEvent right) =>
+          left.dateTime.compareTo(right.dateTime),
+    );
+    if (sessionEvents.isNotEmpty) {
+      return sessionEvents.take(5).toList();
+    }
+
+    final QuerySnapshot<Map<String, dynamic>> eventsSnapshot = await _firestore
+        .collection('events')
+        .where('learnerId', isEqualTo: learnerId)
+        .where('dateTime', isGreaterThan: Timestamp.fromDate(now))
+        .orderBy('dateTime')
+        .limit(5)
+        .get();
+
+    return eventsSnapshot.docs.map(
+      (QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+        final Map<String, dynamic> data = doc.data();
+        return UpcomingEvent(
+          id: doc.id,
+          title: data['title'] as String? ?? '',
+          description: data['description'] as String?,
+          dateTime: _parseTimestamp(data['dateTime']) ?? DateTime.now(),
+          type: data['type'] as String? ?? 'event',
+          location: data['location'] as String?,
+        );
+      },
+    ).toList();
   }
 
   /// Load billing summary from Firebase

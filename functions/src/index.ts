@@ -2470,30 +2470,7 @@ async function buildParentLearnerSummary(params: {
     recentActivities = [];
   }
 
-  let upcomingEvents: Array<Record<string, unknown>> = [];
-  try {
-    const eventsSnap = await admin
-      .firestore()
-      .collection('events')
-      .where('learnerId', '==', learnerId)
-      .where('dateTime', '>=', Timestamp.fromDate(now))
-      .orderBy('dateTime')
-      .limit(5)
-      .get();
-    upcomingEvents = eventsSnap.docs.map((doc) => {
-      const data = doc.data() as Record<string, unknown>;
-      return {
-        id: doc.id,
-        title: typeof data.title === 'string' ? data.title : 'Session',
-        description: typeof data.description === 'string' ? data.description : null,
-        dateTime: parseDateFromUnknown(data.dateTime)?.toISOString() ?? now.toISOString(),
-        type: typeof data.type === 'string' ? data.type : 'event',
-        location: typeof data.location === 'string' ? data.location : null,
-      };
-    });
-  } catch {
-    upcomingEvents = [];
-  }
+  const upcomingEvents = await loadParentUpcomingEvents({ learnerId, siteId, now });
 
   let attendanceRate: number | null = null;
   try {
@@ -2956,6 +2933,99 @@ async function buildParentLearnerSummary(params: {
     recentActivities,
     upcomingEvents,
   };
+}
+
+async function loadParentUpcomingEvents(params: {
+  learnerId: string;
+  siteId?: string;
+  now: Date;
+}): Promise<Array<Record<string, unknown>>> {
+  const { learnerId, siteId, now } = params;
+  try {
+    const enrollmentsSnap = await admin
+      .firestore()
+      .collection('enrollments')
+      .where('learnerId', '==', learnerId)
+      .where('status', '==', 'active')
+      .get();
+    const sessionIds = Array.from(
+      new Set(
+        enrollmentsSnap.docs
+          .map((doc) => (typeof doc.data().sessionId === 'string' ? doc.data().sessionId.trim() : ''))
+          .filter((sessionId) => sessionId.length > 0),
+      ),
+    );
+
+    const occurrenceEvents: Array<Record<string, unknown> & { timestamp: number }> = [];
+    for (const sessionId of sessionIds) {
+      const occurrencesSnap = await admin
+        .firestore()
+        .collection('sessionOccurrences')
+        .where('sessionId', '==', sessionId)
+        .limit(20)
+        .get();
+      for (const doc of occurrencesSnap.docs) {
+        const data = doc.data() as Record<string, unknown>;
+        const start = parseDateFromUnknown(data.startTime ?? data.date);
+        if (!start || start < now) continue;
+        if (siteId && typeof data.siteId === 'string' && data.siteId.trim().length > 0) {
+          if (data.siteId.trim() !== siteId) continue;
+        }
+        occurrenceEvents.push({
+          id: doc.id,
+          title:
+            typeof data.title === 'string' && data.title.trim().length > 0
+              ? data.title
+              : typeof data.sessionTitle === 'string' && data.sessionTitle.trim().length > 0
+              ? data.sessionTitle
+              : 'Session',
+          description: typeof data.description === 'string' ? data.description : null,
+          dateTime: start.toISOString(),
+          type: 'session',
+          location:
+            typeof data.roomName === 'string' && data.roomName.trim().length > 0
+              ? data.roomName
+              : typeof data.location === 'string'
+              ? data.location
+              : null,
+          timestamp: start.getTime(),
+        });
+      }
+    }
+
+    if (occurrenceEvents.length > 0) {
+      return occurrenceEvents
+        .sort((left, right) => left.timestamp - right.timestamp)
+        .slice(0, 5)
+        .map(({ timestamp, ...event }) => event);
+    }
+  } catch {
+    // Fall through to legacy events lookup.
+  }
+
+  try {
+    const eventsSnap = await admin
+      .firestore()
+      .collection('events')
+      .where('learnerId', '==', learnerId)
+      .where('dateTime', '>=', Timestamp.fromDate(now))
+      .orderBy('dateTime')
+      .limit(5)
+      .get();
+    return eventsSnap.docs.map((doc) => {
+      const data = doc.data() as Record<string, unknown>;
+      return {
+        id: doc.id,
+        title: typeof data.title === 'string' ? data.title : 'Session',
+        description: typeof data.description === 'string' ? data.description : null,
+        dateTime: parseDateFromUnknown(data.dateTime)?.toISOString() ?? now.toISOString(),
+        type: typeof data.type === 'string' ? data.type : 'event',
+        location: typeof data.location === 'string' ? data.location : null,
+      };
+    });
+  } catch {
+    return [];
+  }
 }
 
 export const getParentDashboardBundle = onCall(async (request: CallableRequest<{

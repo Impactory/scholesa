@@ -165,6 +165,61 @@ Future<void> _seedParentData(FakeFirebaseFirestore firestore) async {
   );
 }
 
+Future<void> _seedParentSessionCouplingData(
+  FakeFirebaseFirestore firestore,
+) async {
+  final DateTime now = DateTime.now();
+  final DateTime linkedStart = now.add(const Duration(days: 1, hours: 2));
+  final DateTime hiddenStart = now.add(const Duration(days: 1, hours: 4));
+
+  await firestore.collection('users').doc('parent-1').set(<String, dynamic>{
+    'role': 'parent',
+    'displayName': 'Parent One',
+    'learnerIds': <String>['learner-1'],
+  });
+  await firestore.collection('guardianLinks').doc('link-1').set(<String, dynamic>{
+    'parentId': 'parent-1',
+    'learnerId': 'learner-1',
+    'siteId': 'site-1',
+  });
+  await firestore.collection('users').doc('learner-1').set(<String, dynamic>{
+    'role': 'learner',
+    'displayName': 'Ava Learner',
+    'siteIds': <String>['site-1'],
+  });
+  await firestore.collection('users').doc('learner-2').set(<String, dynamic>{
+    'role': 'learner',
+    'displayName': 'Hidden Learner',
+    'siteIds': <String>['site-1'],
+  });
+  await firestore.collection('enrollments').doc('enrollment-1').set(<String, dynamic>{
+    'sessionId': 'session-1',
+    'learnerId': 'learner-1',
+    'status': 'active',
+  });
+  await firestore.collection('enrollments').doc('enrollment-2').set(<String, dynamic>{
+    'sessionId': 'session-2',
+    'learnerId': 'learner-2',
+    'status': 'active',
+  });
+  await firestore.collection('sessionOccurrences').doc('occ-1').set(<String, dynamic>{
+    'sessionId': 'session-1',
+    'siteId': 'site-1',
+    'title': 'Prototype Studio',
+    'startTime': Timestamp.fromDate(linkedStart),
+    'endTime': Timestamp.fromDate(linkedStart.add(const Duration(hours: 1))),
+    'roomName': 'Innovation Lab',
+  });
+  await firestore.collection('sessionOccurrences').doc('occ-2').set(<String, dynamic>{
+    'sessionId': 'session-2',
+    'siteId': 'site-1',
+    'title': 'Hidden Session',
+    'startTime': Timestamp.fromDate(hiddenStart),
+    'endTime': Timestamp.fromDate(hiddenStart.add(const Duration(hours: 1))),
+    'roomName': 'Hidden Lab',
+  });
+}
+
 Future<void> _pumpPage(
   WidgetTester tester, {
   required FakeFirebaseFirestore firestore,
@@ -293,6 +348,33 @@ void main() {
         ),
         isTrue,
       );
+    });
+
+    testWidgets('schedule page derives upcoming sessions from linked enrollments',
+        (WidgetTester tester) async {
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+      await _seedParentSessionCouplingData(firestore);
+
+      await _pumpPage(
+        tester,
+        firestore: firestore,
+        home: const ParentSchedulePage(),
+      );
+
+      expect(find.text('Prototype Studio'), findsOneWidget);
+      expect(find.text('Hidden Session'), findsNothing);
+
+      await tester.ensureVisible(find.text('Details'));
+      await tester.tap(find.text('Details'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Next Session Details'), findsOneWidget);
+      expect(
+        find.textContaining('Prototype Studio\nLocation: Innovation Lab'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Location: Innovation Lab'), findsOneWidget);
+      expect(find.textContaining('Hidden Lab'), findsNothing);
     });
 
     testWidgets('portfolio page persists portfolio share requests in app',
