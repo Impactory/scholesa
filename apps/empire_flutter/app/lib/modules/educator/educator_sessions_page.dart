@@ -449,6 +449,22 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
               ),
             ),
             const SizedBox(width: 12),
+            IconButton(
+              onPressed: () async {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: const <String, dynamic>{
+                    'cta': 'educator_sessions_refresh',
+                  },
+                );
+                await context.read<EducatorService>().loadSessions();
+              },
+              icon: const Icon(
+                Icons.refresh_rounded,
+                color: ScholesaColors.educator,
+              ),
+              tooltip: _tEducatorSessions(context, 'Refresh'),
+            ),
             SessionMenuHeaderAction(
               foregroundColor: ScholesaColors.educator,
               backgroundColor: Colors.white,
@@ -586,13 +602,16 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const Row(
+          Row(
             children: <Widget>[
-              Icon(Icons.error_outline_rounded, color: ScholesaColors.error),
-              SizedBox(width: 10),
+              const Icon(Icons.error_outline_rounded, color: ScholesaColors.error),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Unable to load sessions',
+                  _tEducatorSessions(
+                    context,
+                    'We could not load sessions right now. Retry to check the current state.',
+                  ),
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     color: ScholesaColors.textPrimary,
@@ -637,7 +656,9 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
           Expanded(
             child: Text(
               _tEducatorSessions(
-                      context, 'Showing last loaded session data. ') +
+                    context,
+                    'Unable to refresh sessions right now. Showing the last successful data. ',
+                  ) +
                   message,
               style: const TextStyle(color: Color(0xFF92400E)),
             ),

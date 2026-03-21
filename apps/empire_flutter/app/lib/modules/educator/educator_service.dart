@@ -26,6 +26,14 @@ class EducatorLearnersSnapshot {
   final List<EducatorLearner> learners;
 }
 
+class EducatorSessionsSnapshot {
+  const EducatorSessionsSnapshot({
+    required this.sessions,
+  });
+
+  final List<EducatorSession> sessions;
+}
+
 /// Service for educator-specific features - wired to Firebase
 class EducatorService extends ChangeNotifier {
   EducatorService({
@@ -33,13 +41,16 @@ class EducatorService extends ChangeNotifier {
     required this.educatorId,
     this.siteId,
     Future<TodayScheduleSnapshot> Function()? todayScheduleLoader,
-      Future<EducatorLearnersSnapshot> Function()? learnersLoader,
+    Future<EducatorSessionsSnapshot> Function()? sessionsLoader,
+    Future<EducatorLearnersSnapshot> Function()? learnersLoader,
   })  : _firestoreService = firestoreService,
-      _todayScheduleLoader = todayScheduleLoader,
-      _learnersLoader = learnersLoader;
+        _todayScheduleLoader = todayScheduleLoader,
+        _sessionsLoader = sessionsLoader,
+        _learnersLoader = learnersLoader;
   final FirestoreService _firestoreService;
   final Future<TodayScheduleSnapshot> Function()? _todayScheduleLoader;
-    final Future<EducatorLearnersSnapshot> Function()? _learnersLoader;
+  final Future<EducatorSessionsSnapshot> Function()? _sessionsLoader;
+  final Future<EducatorLearnersSnapshot> Function()? _learnersLoader;
   final String educatorId;
   final String? siteId;
   FirebaseFirestore get _firestore => _firestoreService.firestore;
@@ -656,66 +667,76 @@ class EducatorService extends ChangeNotifier {
   /// Load sessions from Firebase
   Future<void> loadSessions() async {
     _isLoading = true;
+    _error = null;
     notifyListeners();
     try {
-      final List<QueryDocumentSnapshot<Map<String, dynamic>>> sessionDocs =
-          await _loadEducatorSessionDocs();
+      final EducatorSessionsSnapshot snapshot = _sessionsLoader != null
+          ? await _sessionsLoader()
+          : await _loadSessionsSnapshot();
 
-      _sessions =
-          sessionDocs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
-        final Map<String, dynamic> data = doc.data();
-        final String pillar = _stringOrDefault(
-          data['pillar'],
-          (data['pillarCodes'] is List<dynamic> &&
-                  (data['pillarCodes'] as List<dynamic>).isNotEmpty)
-              ? data['pillarCodes'][0]
-              : null,
-          'future_skills',
-        );
-        final DateTime startTime = _parseTimestamp(data['startTime']) ??
-            _parseTimestamp(data['startDate']) ??
-            DateTime.now();
-        final DateTime endTime = _parseTimestamp(data['endTime']) ??
-            _parseTimestamp(data['endDate']) ??
-            startTime.add(const Duration(hours: 1));
-        return EducatorSession(
-          id: doc.id,
-          title: _stringOrDefault(data['title'], null, 'Session'),
-          description: _stringOrDefault(data['description'], null, ''),
-          pillar: pillar,
-          startTime: startTime,
-          endTime: endTime,
-          location: _stringOrDefault(data['location'], data['roomName'], ''),
-          enrolledCount: (data['enrolledCount'] as num?)?.toInt() ?? 0,
-          maxCapacity: (data['maxCapacity'] as num?)?.toInt() ?? 20,
-          status: _stringOrDefault(data['status'], null, 'upcoming'),
-          joinCode: (data['joinCode'] as String?)?.trim(),
-          teacherIds: _normalizedDistinctIds(
-            <String>[
-              ..._asStringIterable(data['teacherIds']),
-              if ((data['educatorId'] as String?)?.trim().isNotEmpty == true)
-                (data['educatorId'] as String).trim(),
-            ],
-          ),
-          coTeacherIds:
-              _normalizedDistinctIds(_asStringIterable(data['coTeacherIds'])),
-          aideIds: _normalizedDistinctIds(_asStringIterable(data['aideIds'])),
-        );
-      }).toList()
-            ..sort(
-              (EducatorSession a, EducatorSession b) =>
-                  b.startTime.compareTo(a.startTime),
-            );
+      _sessions = snapshot.sessions;
 
       debugPrint('Loaded ${_sessions.length} sessions for educator');
     } catch (e) {
       debugPrint('Error loading sessions: $e');
       _error = 'Failed to load sessions: $e';
-      _sessions = <EducatorSession>[];
     } finally {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  Future<EducatorSessionsSnapshot> _loadSessionsSnapshot() async {
+    final List<QueryDocumentSnapshot<Map<String, dynamic>>> sessionDocs =
+        await _loadEducatorSessionDocs();
+
+    final List<EducatorSession> sessions = sessionDocs
+        .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+      final Map<String, dynamic> data = doc.data();
+      final String pillar = _stringOrDefault(
+        data['pillar'],
+        (data['pillarCodes'] is List<dynamic> &&
+                (data['pillarCodes'] as List<dynamic>).isNotEmpty)
+            ? data['pillarCodes'][0]
+            : null,
+        'future_skills',
+      );
+      final DateTime startTime = _parseTimestamp(data['startTime']) ??
+          _parseTimestamp(data['startDate']) ??
+          DateTime.now();
+      final DateTime endTime = _parseTimestamp(data['endTime']) ??
+          _parseTimestamp(data['endDate']) ??
+          startTime.add(const Duration(hours: 1));
+      return EducatorSession(
+        id: doc.id,
+        title: _stringOrDefault(data['title'], null, 'Session'),
+        description: _stringOrDefault(data['description'], null, ''),
+        pillar: pillar,
+        startTime: startTime,
+        endTime: endTime,
+        location: _stringOrDefault(data['location'], data['roomName'], ''),
+        enrolledCount: (data['enrolledCount'] as num?)?.toInt() ?? 0,
+        maxCapacity: (data['maxCapacity'] as num?)?.toInt() ?? 20,
+        status: _stringOrDefault(data['status'], null, 'upcoming'),
+        joinCode: (data['joinCode'] as String?)?.trim(),
+        teacherIds: _normalizedDistinctIds(
+          <String>[
+            ..._asStringIterable(data['teacherIds']),
+            if ((data['educatorId'] as String?)?.trim().isNotEmpty == true)
+              (data['educatorId'] as String).trim(),
+          ],
+        ),
+        coTeacherIds:
+            _normalizedDistinctIds(_asStringIterable(data['coTeacherIds'])),
+        aideIds: _normalizedDistinctIds(_asStringIterable(data['aideIds'])),
+      );
+    }).toList()
+          ..sort(
+            (EducatorSession a, EducatorSession b) =>
+                b.startTime.compareTo(a.startTime),
+          );
+
+    return EducatorSessionsSnapshot(sessions: sessions);
   }
 
   /// Create a new session and reflect it immediately in local state
