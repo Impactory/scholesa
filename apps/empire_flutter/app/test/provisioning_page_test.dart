@@ -381,6 +381,152 @@ class _DeterministicProvisioningService extends ProvisioningService {
   }
 }
 
+class _AuthoritativeReloadProvisioningService extends ProvisioningService {
+  _AuthoritativeReloadProvisioningService({
+    List<LearnerProfile>? learners,
+    List<ParentProfile>? parents,
+    List<GuardianLink>? guardianLinks,
+  })  : _learnersValue = List<LearnerProfile>.from(learners ?? const <LearnerProfile>[]),
+        _parentsValue = List<ParentProfile>.from(parents ?? const <ParentProfile>[]),
+        _guardianLinksValue = List<GuardianLink>.from(guardianLinks ?? const <GuardianLink>[]),
+        super(
+          apiClient: ApiClient(
+            auth: _MockFirebaseAuth(),
+            baseUrl: 'http://localhost',
+          ),
+          firestore: FakeFirebaseFirestore(),
+          auth: _MockFirebaseAuth(),
+          useProvisioningApi: false,
+        );
+
+  final List<LearnerProfile> _learnersValue;
+  final List<ParentProfile> _parentsValue;
+  final List<GuardianLink> _guardianLinksValue;
+
+  String? _pendingLearnerCanonicalName;
+  String? _pendingParentCanonicalName;
+  String? _pendingDeleteLinkId;
+
+  @override
+  List<LearnerProfile> get learners => _learnersValue;
+
+  @override
+  List<ParentProfile> get parents => _parentsValue;
+
+  @override
+  List<GuardianLink> get guardianLinks => _guardianLinksValue;
+
+  @override
+  List<CohortLaunch> get cohortLaunches => const <CohortLaunch>[];
+
+  @override
+  Future<void> loadLearners(String siteId) async {
+    if (_pendingLearnerCanonicalName != null && _learnersValue.isNotEmpty) {
+      final LearnerProfile current = _learnersValue.first;
+      _learnersValue[0] = LearnerProfile(
+        id: current.id,
+        siteId: current.siteId,
+        userId: current.userId,
+        displayName: _pendingLearnerCanonicalName!,
+        gradeLevel: current.gradeLevel,
+        dateOfBirth: current.dateOfBirth,
+        notes: current.notes,
+      );
+      _pendingLearnerCanonicalName = null;
+      notifyListeners();
+    }
+  }
+
+  @override
+  Future<void> loadParents(String siteId) async {
+    if (_pendingParentCanonicalName != null && _parentsValue.isNotEmpty) {
+      final ParentProfile current = _parentsValue.first;
+      _parentsValue[0] = ParentProfile(
+        id: current.id,
+        siteId: current.siteId,
+        userId: current.userId,
+        displayName: _pendingParentCanonicalName!,
+        phone: current.phone,
+        email: current.email,
+      );
+      _pendingParentCanonicalName = null;
+      notifyListeners();
+    }
+  }
+
+  @override
+  Future<void> loadGuardianLinks(String siteId) async {
+    if (_pendingDeleteLinkId != null) {
+      _guardianLinksValue.removeWhere(
+        (GuardianLink link) => link.id == _pendingDeleteLinkId,
+      );
+      _pendingDeleteLinkId = null;
+      notifyListeners();
+    }
+  }
+
+  @override
+  Future<void> loadCohortLaunches(String siteId) async {}
+
+  @override
+  Future<LearnerProfile?> createLearner({
+    required String siteId,
+    required String email,
+    required String displayName,
+    int? gradeLevel,
+    DateTime? dateOfBirth,
+    String? notes,
+  }) async {
+    final LearnerProfile learner = LearnerProfile(
+      id: 'learner-created',
+      siteId: siteId,
+      userId: 'learner-created',
+      displayName: displayName,
+      gradeLevel: gradeLevel,
+      dateOfBirth: dateOfBirth,
+      notes: notes,
+    );
+    _learnersValue
+      ..clear()
+      ..add(learner);
+    _pendingLearnerCanonicalName = '$displayName (canonical)';
+    notifyListeners();
+    return learner;
+  }
+
+  @override
+  Future<ParentProfile?> updateParent({
+    required String siteId,
+    required String parentId,
+    required String displayName,
+    String? phone,
+    String? email,
+  }) async {
+    if (_parentsValue.isEmpty) {
+      return null;
+    }
+    final ParentProfile current = _parentsValue.first;
+    _parentsValue[0] = ParentProfile(
+      id: current.id,
+      siteId: current.siteId,
+      userId: current.userId,
+      displayName: displayName,
+      phone: phone ?? current.phone,
+      email: email ?? current.email,
+    );
+    _pendingParentCanonicalName = '$displayName (canonical)';
+    notifyListeners();
+    return _parentsValue.first;
+  }
+
+  @override
+  Future<bool> deleteGuardianLink(String linkId) async {
+    _pendingDeleteLinkId = linkId;
+    notifyListeners();
+    return true;
+  }
+}
+
 AppState _buildSiteState() {
   final AppState state = AppState();
   state.updateFromMeResponse(<String, dynamic>{
@@ -1243,5 +1389,91 @@ void main() {
       }),
       isTrue,
     );
+  });
+
+  testWidgets('provisioning page reloads authoritative learner data after create',
+      (WidgetTester tester) async {
+    final ProvisioningService service = _AuthoritativeReloadProvisioningService();
+
+    await pumpProvisioningPage(tester, service: service);
+
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).at(0), 'Reload Learner');
+    await tester.enterText(
+      find.byType(TextFormField).at(1),
+      'reload.learner@example.com',
+    );
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Create'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Reload Learner (canonical)'), findsOneWidget);
+    expect(find.text('Reload Learner'), findsNothing);
+  });
+
+  testWidgets('provisioning page reloads authoritative parent data after edit',
+      (WidgetTester tester) async {
+    final ProvisioningService service = _AuthoritativeReloadProvisioningService(
+      parents: const <ParentProfile>[
+        ParentProfile(
+          id: 'parent-1',
+          siteId: 'site-1',
+          userId: 'parent-1',
+          displayName: 'Parent One',
+          email: 'parent1@example.com',
+          phone: '+61 400 555 100',
+        ),
+      ],
+    );
+
+    await pumpProvisioningPage(tester, service: service);
+
+    await tester.tap(find.text('Parents'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.more_vert).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Edit Parent'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).first, 'Parent Reload');
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Save'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Parent Reload (canonical)'), findsOneWidget);
+    expect(find.text('Parent Reload'), findsNothing);
+    expect(find.text('Parent One'), findsNothing);
+  });
+
+  testWidgets('provisioning page reloads authoritative guardian links after delete',
+      (WidgetTester tester) async {
+    final ProvisioningService service = _AuthoritativeReloadProvisioningService(
+      guardianLinks: <GuardianLink>[
+        GuardianLink(
+          id: 'link-1',
+          siteId: 'site-1',
+          parentId: 'parent-1',
+          learnerId: 'learner-1',
+          relationship: 'Parent',
+          isPrimary: true,
+          createdAt: DateTime(2026, 3, 21),
+          createdBy: 'site-admin-1',
+          parentName: 'Parent One',
+          learnerName: 'Learner One',
+        ),
+      ],
+    );
+
+    await pumpProvisioningPage(tester, service: service);
+
+    await tester.tap(find.text('Links'));
+    await tester.pumpAndSettle();
+    expect(find.text('Parent One → Learner One'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.delete_outline).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Link removed'), findsOneWidget);
+    expect(find.text('Parent One → Learner One'), findsNothing);
   });
 }
