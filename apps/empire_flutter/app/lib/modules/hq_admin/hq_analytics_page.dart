@@ -106,6 +106,23 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
     _loadSyntheticImportSummary();
   }
 
+  Future<void> _refreshAnalytics() async {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'cta': 'hq_analytics_refresh',
+        'site': _selectedSite,
+        'period': _selectedPeriod,
+      },
+    );
+    await Future.wait<void>(<Future<void>>[
+      _loadMetrics(),
+      _loadSupplementalData(),
+      _loadKpiPacks(),
+      _loadSyntheticImportSummary(),
+    ]);
+  }
+
   Future<void> _loadMetrics() async {
     setState(() {
       _isLoadingMetrics = true;
@@ -133,7 +150,9 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
     } catch (error) {
       if (!mounted) return;
       setState(() {
-        _metricsError = error.toString();
+        _metricsError = _t(
+          'We could not load telemetry metrics right now. Retry to check the current state.',
+        );
         _isLoadingMetrics = false;
       });
     }
@@ -176,6 +195,91 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
         _kpiPacks.isNotEmpty ||
         _bosMiaFeedbackSummary != null ||
         _syntheticImportSummary != null;
+  }
+
+  bool _hasSupplementalData() {
+    return _pillarAnalyticsData.isNotEmpty ||
+        _siteComparisonData.isNotEmpty ||
+        _topPerformersData.isNotEmpty ||
+        (_bosMiaFeedbackSummary?.submissionCount ?? 0) > 0;
+  }
+
+  Widget _buildLoadErrorCard({
+    required String title,
+    required String message,
+    VoidCallback? onRetry,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: ScholesaColors.error.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: ScholesaColors.error.withValues(alpha: 0.25)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                const Icon(Icons.error_outline_rounded,
+                    color: ScholesaColors.error),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      color: ScholesaColors.error,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              style: const TextStyle(color: ScholesaColors.textSecondary),
+            ),
+            if (onRetry != null) ...<Widget>[
+              const SizedBox(height: 12),
+              FilledButton.icon(
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh_rounded),
+                label: Text(_t('Retry')),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStaleDataBanner(String message) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.orange.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        children: <Widget>[
+          const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(color: ScholesaColors.textPrimary),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   String _buildAnalyticsExport() {
@@ -385,6 +489,18 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
               ),
             ),
             IconButton(
+              onPressed: _refreshAnalytics,
+              icon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: ScholesaColors.warning.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.refresh_rounded,
+                    color: ScholesaColors.warning),
+              ),
+            ),
+            IconButton(
               onPressed: _openBosMiaFeedbackDialog,
               icon: Container(
                 padding: const EdgeInsets.all(8),
@@ -513,19 +629,13 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
       );
     }
 
-    if (_metricsError != null) {
+    if (_metricsError != null && _metrics == null) {
       return Padding(
         padding: const EdgeInsets.all(16),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: ScholesaColors.error.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Text(
-            '${_t('Unable to load telemetry metrics:')} $_metricsError',
-            style: const TextStyle(color: ScholesaColors.error),
-          ),
+        child: _buildLoadErrorCard(
+          title: _t('Telemetry metrics are temporarily unavailable'),
+          message: _metricsError!,
+          onRetry: _refreshAnalytics,
         ),
       );
     }
@@ -604,6 +714,12 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
+          if (_metricsError != null)
+            _buildStaleDataBanner(
+              _t(
+                'Unable to refresh telemetry metrics right now. Showing the last successful data.',
+              ),
+            ),
           Text(
             _t('Telemetry KPIs'),
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
@@ -700,18 +816,31 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
             const SizedBox(height: 12),
             if (_isLoadingKpiPacks)
               const Center(child: CircularProgressIndicator())
+            else if (_kpiPacksError != null && _kpiPacks.isEmpty)
+              Text(
+                _t('KPI packs are temporarily unavailable'),
+                style: const TextStyle(color: ScholesaColors.error),
+              )
             else if (_kpiPacks.isEmpty)
               Text(
                 _t('No KPI packs yet'),
                 style: TextStyle(color: Colors.grey[600]),
               )
             else
-              ..._kpiPacks.take(3).map(((_HqKpiPackSummary pack) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: _HqKpiPackCard(pack: pack),
-                );
-              })),
+              ...<Widget>[
+                if (_kpiPacksError != null)
+                  _buildStaleDataBanner(
+                    _t(
+                      'Unable to refresh KPI packs right now. Showing the last successful data.',
+                    ),
+                  ),
+                ..._kpiPacks.take(3).map(((_HqKpiPackSummary pack) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: _HqKpiPackCard(pack: pack),
+                  );
+                })),
+              ],
           ],
         ),
       ),
@@ -803,7 +932,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                   child: CircularProgressIndicator(color: ScholesaColors.hq),
                 ),
               )
-            else if (_metricsError != null)
+            else if (_metricsError != null && _metrics == null)
               SizedBox(
                 height: 150,
                 child: Center(
@@ -870,7 +999,15 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                   fontSize: 12,
                 ),
               ),
-            if (_metricsError != null)
+            if (_metricsError != null && _metrics != null)
+              Text(
+                _t('Showing last successful attendance trend'),
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 12,
+                ),
+              ),
+            if (_metricsError != null && _metrics == null)
               Text(
                 'Check Cloud Function logs for `getTelemetryDashboardMetrics`.',
                 style: TextStyle(
@@ -894,6 +1031,13 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
     }
 
     final _SyntheticDatasetImportSummary? summary = _syntheticImportSummary;
+    if (_syntheticImportError != null && summary == null) {
+      return _buildLoadErrorCard(
+        title: _t('Synthetic import metadata is temporarily unavailable'),
+        message: _syntheticImportError!,
+        onRetry: _refreshAnalytics,
+      );
+    }
     if (summary == null) {
       return Padding(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -907,6 +1051,12 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
+              if (_syntheticImportError != null)
+                _buildStaleDataBanner(
+                  _t(
+                    'Unable to refresh synthetic import metadata right now. Showing the last successful data.',
+                  ),
+                ),
               Text(
                 _t('Synthetic Data'),
                 style:
@@ -1137,6 +1287,13 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
     }
 
     final _BosMiaFeedbackSummary? summary = _bosMiaFeedbackSummary;
+    if (_supplementalError != null && !_hasSupplementalData()) {
+      return _buildLoadErrorCard(
+        title: _t('HQ AI help feedback is temporarily unavailable'),
+        message: _supplementalError!,
+        onRetry: _refreshAnalytics,
+      );
+    }
     if (summary == null || summary.submissionCount == 0) {
       return Padding(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -1183,6 +1340,12 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
+              if (_supplementalError != null)
+                _buildStaleDataBanner(
+                  _t(
+                    'Unable to refresh supplemental analytics right now. Showing the last successful data.',
+                  ),
+                ),
             Text(
               _t('HQ AI help feedback'),
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
@@ -1243,6 +1406,14 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
   Widget _buildPillarAnalytics() {
     final List<_PillarAnalyticsData> rows = _pillarAnalyticsData;
 
+    if (_supplementalError != null && !_hasSupplementalData()) {
+      return _buildLoadErrorCard(
+        title: _t('Supplemental analytics are temporarily unavailable'),
+        message: _supplementalError!,
+        onRetry: _refreshAnalytics,
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Container(
@@ -1255,6 +1426,12 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
+            if (_supplementalError != null && _hasSupplementalData())
+              _buildStaleDataBanner(
+                _t(
+                  'Unable to refresh supplemental analytics right now. Showing the last successful data.',
+                ),
+              ),
             Text(
               _t('Pillar Performance'),
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
@@ -1293,6 +1470,14 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
             style: const TextStyle(color: ScholesaColors.textSecondary),
           ),
         ),
+      );
+    }
+
+    if (_supplementalError != null && _siteComparisonData.isEmpty) {
+      return _buildLoadErrorCard(
+        title: _t('Site comparison is temporarily unavailable'),
+        message: _supplementalError!,
+        onRetry: _refreshAnalytics,
       );
     }
 
@@ -1356,6 +1541,14 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
             style: const TextStyle(color: ScholesaColors.textSecondary),
           ),
         ),
+      );
+    }
+
+    if (_supplementalError != null && _topPerformersData.isEmpty) {
+      return _buildLoadErrorCard(
+        title: _t('Top performers are temporarily unavailable'),
+        message: _supplementalError!,
+        onRetry: _refreshAnalytics,
       );
     }
 
@@ -1816,23 +2009,128 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
   }
 
   Future<void> _loadSupplementalData() async {
+    if (widget.supplementalLoader != null) {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingSupplemental = true;
+        _supplementalError = null;
+      });
+      try {
+        final HqAnalyticsSupplementalSnapshot snapshot =
+            await widget.supplementalLoader!(selectedSite: _selectedSite);
+        if (!mounted) return;
+        setState(() {
+          _siteOptions = <_SiteFilterOption>[
+            const _SiteFilterOption(id: 'all', name: 'All Sites'),
+            ...snapshot.siteOptions.map(
+              (Map<String, dynamic> row) => _SiteFilterOption(
+                id: (row['id'] as String?) ?? 'unknown',
+                name: (row['name'] as String?) ??
+                    ((row['id'] as String?) ?? 'unknown'),
+              ),
+            ),
+          ];
+          if (!_siteOptions
+              .any((_SiteFilterOption option) => option.id == _selectedSite)) {
+            _selectedSite = 'all';
+          }
+          _pillarAnalyticsData = snapshot.pillarAnalytics
+              .map(
+                (Map<String, dynamic> row) => _PillarAnalyticsData(
+                  pillar: (row['pillar'] as String?) ?? 'Future Skills',
+                  progress: ((row['progress'] as num?) ?? 0).toDouble(),
+                  learners: (row['learners'] as num?)?.toInt() ?? 0,
+                  missions: (row['missions'] as num?)?.toInt() ?? 0,
+                ),
+              )
+              .toList(growable: false);
+          _siteComparisonData = snapshot.siteComparison
+              .map(
+                (Map<String, dynamic> row) => _SiteComparisonData(
+                  siteId: (row['siteId'] as String?) ?? 'site',
+                  name: (row['name'] as String?) ?? 'Site',
+                  learners: (row['learners'] as num?)?.toInt() ?? 0,
+                  attendance: (row['attendance'] as num?)?.toInt() ?? 0,
+                  engagement: (row['engagement'] as num?)?.toInt() ?? 0,
+                ),
+              )
+              .toList(growable: false);
+          _topPerformersData = snapshot.topPerformers
+              .map(
+                (Map<String, dynamic> row) => _TopPerformerData(
+                  rank: (row['rank'] as num?)?.toInt() ?? 1,
+                  name: (row['name'] as String?) ?? 'Learner',
+                  site: (row['site'] as String?) ?? _t('All Sites'),
+                  missionsCompleted:
+                      (row['missionsCompleted'] as num?)?.toInt() ?? 0,
+                  streak: (row['streak'] as num?)?.toInt() ?? 0,
+                ),
+              )
+              .toList(growable: false);
+          _bosMiaFeedbackSummary = snapshot.bosMiaFeedback == null
+              ? null
+              : _BosMiaFeedbackSummary(
+                  submissionCount:
+                      (snapshot.bosMiaFeedback!['submissionCount'] as num?)
+                              ?.toInt() ??
+                          0,
+                  avgUsability:
+                      ((snapshot.bosMiaFeedback!['avgUsability'] as num?) ?? 0)
+                          .toDouble(),
+                  avgUsefulness:
+                      ((snapshot.bosMiaFeedback!['avgUsefulness'] as num?) ?? 0)
+                          .toDouble(),
+                  avgReliability:
+                      ((snapshot.bosMiaFeedback!['avgReliability'] as num?) ?? 0)
+                          .toDouble(),
+                  avgVoiceQuality:
+                      ((snapshot.bosMiaFeedback!['avgVoiceQuality'] as num?) ?? 0)
+                          .toDouble(),
+                  topRecommendation:
+                      (snapshot.bosMiaFeedback!['topRecommendation']
+                              as String?) ??
+                          'scale_with_guardrails',
+                  topIssue:
+                      (snapshot.bosMiaFeedback!['topIssue'] as String?) ??
+                          'telemetry_gaps',
+                );
+          _supplementalError = null;
+        });
+      } catch (_) {
+        if (!mounted) return;
+        setState(() {
+          _supplementalError = _t(
+            'We could not load supplemental analytics right now. Retry to check the current state.',
+          );
+        });
+      } finally {
+        if (mounted) {
+          setState(() => _isLoadingSupplemental = false);
+        }
+      }
+      return;
+    }
+
     final FirestoreService? firestoreService = _maybeFirestoreService();
     if (firestoreService == null) {
       if (!mounted) return;
       setState(() {
         _isLoadingSupplemental = false;
+        _supplementalError = _t(
+          'We could not load supplemental analytics right now. Retry to check the current state.',
+        );
         _siteOptions = <_SiteFilterOption>[
           const _SiteFilterOption(id: 'all', name: 'All Sites')
         ];
-        _pillarAnalyticsData = <_PillarAnalyticsData>[];
-        _siteComparisonData = <_SiteComparisonData>[];
-        _topPerformersData = <_TopPerformerData>[];
       });
       return;
     }
 
     if (!mounted) return;
-    setState(() => _isLoadingSupplemental = true);
+    setState(() {
+      _isLoadingSupplemental = true;
+      _supplementalError = null;
+    });
 
     try {
       final QuerySnapshot<Map<String, dynamic>> sitesSnapshot =
@@ -2046,14 +2344,14 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
         _siteComparisonData = comparisonTop;
         _topPerformersData = performers;
         _bosMiaFeedbackSummary = summary;
+        _supplementalError = null;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _pillarAnalyticsData = <_PillarAnalyticsData>[];
-        _siteComparisonData = <_SiteComparisonData>[];
-        _topPerformersData = <_TopPerformerData>[];
-        _bosMiaFeedbackSummary = null;
+        _supplementalError = _t(
+          'We could not load supplemental analytics right now. Retry to check the current state.',
+        );
       });
     } finally {
       if (mounted) {
@@ -2064,7 +2362,10 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
 
   Future<void> _loadKpiPacks() async {
     if (!mounted) return;
-    setState(() => _isLoadingKpiPacks = true);
+    setState(() {
+      _isLoadingKpiPacks = true;
+      _kpiPacksError = null;
+    });
     try {
       final String? siteId = _selectedSite == 'all'
           ? null
@@ -2095,10 +2396,17 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                   b.updatedAt.compareTo(a.updatedAt),
             );
       if (!mounted) return;
-      setState(() => _kpiPacks = packs);
+      setState(() {
+        _kpiPacks = packs;
+        _kpiPacksError = null;
+      });
     } catch (_) {
       if (!mounted) return;
-      setState(() => _kpiPacks = <_HqKpiPackSummary>[]);
+      setState(() {
+        _kpiPacksError = _t(
+          'We could not load KPI packs right now. Retry to check the current state.',
+        );
+      });
     } finally {
       if (mounted) {
         setState(() => _isLoadingKpiPacks = false);
@@ -2119,7 +2427,10 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
 
   Future<void> _loadSyntheticImportSummary() async {
     if (!mounted) return;
-    setState(() => _isLoadingSyntheticImport = true);
+    setState(() {
+      _isLoadingSyntheticImport = true;
+      _syntheticImportError = null;
+    });
     try {
       Map<String, dynamic>? payload = widget.syntheticImportLoader != null
           ? await widget.syntheticImportLoader!()
@@ -2143,10 +2454,17 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
           ? null
           : _SyntheticDatasetImportSummary.fromMap(payload, _toDateTime);
       if (!mounted) return;
-      setState(() => _syntheticImportSummary = summary);
+      setState(() {
+        _syntheticImportSummary = summary;
+        _syntheticImportError = null;
+      });
     } catch (_) {
       if (!mounted) return;
-      setState(() => _syntheticImportSummary = null);
+      setState(() {
+        _syntheticImportError = _t(
+          'We could not load synthetic import metadata right now. Retry to check the current state.',
+        );
+      });
     } finally {
       if (mounted) {
         setState(() => _isLoadingSyntheticImport = false);

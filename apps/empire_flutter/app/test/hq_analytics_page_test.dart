@@ -114,6 +114,25 @@ Future<void> _seedAnalyticsData(FakeFirebaseFirestore firestore) async {
   });
 }
 
+Widget _buildAnalyticsHarness({
+  required FirestoreService firestoreService,
+  required Widget child,
+}) {
+  return MultiProvider(
+    providers: <SingleChildWidget>[
+      Provider<FirestoreService>.value(value: firestoreService),
+      ChangeNotifierProvider<AppState>.value(value: _buildHqState()),
+    ],
+    child: MaterialApp(
+      theme: ThemeData(
+        useMaterial3: true,
+        splashFactory: NoSplash.splashFactory,
+      ),
+      home: child,
+    ),
+  );
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -467,5 +486,358 @@ void main() {
     expect(find.text('HQ analytics export copied to clipboard.'), findsOneWidget);
     expect(copiedText, contains('Export HQ Analytics'));
     expect(copiedText, contains('Weekly accountability adherence: 91.0%'));
+  });
+
+  testWidgets('hq analytics shows explicit unavailable state when telemetry metrics fail to load',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+
+    await tester.pumpWidget(
+      _buildAnalyticsHarness(
+        firestoreService: firestoreService,
+        child: HqAnalyticsPage(
+          metricsLoader: ({String? siteId, String period = 'month'}) async {
+            throw Exception('metrics down');
+          },
+          supplementalLoader: ({String selectedSite = 'all'}) async =>
+              const HqAnalyticsSupplementalSnapshot(),
+          kpiPacksLoader: ({String? siteId, int limit = 24}) async =>
+              const <Map<String, dynamic>>[],
+          syntheticImportLoader: () async => null,
+        ),
+      ),
+    );
+
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Telemetry metrics are temporarily unavailable'), findsOneWidget);
+    expect(
+      find.text('We could not load telemetry metrics right now. Retry to check the current state.'),
+      findsOneWidget,
+    );
+    expect(find.text('Waiting for first app telemetry sync.'), findsNothing);
+  });
+
+  testWidgets('hq analytics keeps stale telemetry metrics visible after refresh failure',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    int metricsCalls = 0;
+
+    await tester.pumpWidget(
+      _buildAnalyticsHarness(
+        firestoreService: firestoreService,
+        child: HqAnalyticsPage(
+          metricsLoader: ({String? siteId, String period = 'month'}) async {
+            metricsCalls += 1;
+            if (metricsCalls > 1) {
+              throw Exception('metrics refresh failed');
+            }
+            return const TelemetryDashboardMetrics(
+              weeklyAccountabilityAdherenceRate: 91.0,
+              educatorReviewTurnaroundHoursAvg: 18.5,
+              educatorReviewWithinSlaRate: 87.0,
+              educatorReviewSlaHours: 48,
+              interventionHelpedRate: 72.0,
+              interventionTotal: 11,
+              attendanceTrend: <AttendanceTrendPoint>[
+                AttendanceTrendPoint(
+                  date: '2026-03-10',
+                  records: 20,
+                  events: 2,
+                  presentRate: 88,
+                ),
+              ],
+            );
+          },
+          supplementalLoader: ({String selectedSite = 'all'}) async =>
+              const HqAnalyticsSupplementalSnapshot(),
+          kpiPacksLoader: ({String? siteId, int limit = 24}) async =>
+              const <Map<String, dynamic>>[],
+          syntheticImportLoader: () async => null,
+        ),
+      ),
+    );
+
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('91.0%'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.refresh_rounded).first);
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Unable to refresh telemetry metrics right now. Showing the last successful data.'),
+      findsOneWidget,
+    );
+
+    await tester.scrollUntilVisible(
+      find.text('Attendance Trend'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Showing last successful attendance trend'), findsOneWidget);
+    expect(find.text('Attendance data unavailable'), findsNothing);
+  });
+
+  testWidgets('hq analytics shows explicit unavailable state when supplemental analytics fail to load',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+
+    await tester.pumpWidget(
+      _buildAnalyticsHarness(
+        firestoreService: firestoreService,
+        child: HqAnalyticsPage(
+          metricsLoader: ({String? siteId, String period = 'month'}) async {
+            return const TelemetryDashboardMetrics(
+              weeklyAccountabilityAdherenceRate: 91.0,
+              educatorReviewTurnaroundHoursAvg: 18.5,
+              educatorReviewWithinSlaRate: 87.0,
+              educatorReviewSlaHours: 48,
+              interventionHelpedRate: 72.0,
+              interventionTotal: 11,
+              attendanceTrend: <AttendanceTrendPoint>[],
+            );
+          },
+          supplementalLoader: ({String selectedSite = 'all'}) async {
+            throw Exception('supplemental down');
+          },
+          kpiPacksLoader: ({String? siteId, int limit = 24}) async =>
+              const <Map<String, dynamic>>[],
+          syntheticImportLoader: () async => null,
+        ),
+      ),
+    );
+
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Supplemental analytics are temporarily unavailable'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Supplemental analytics are temporarily unavailable'), findsOneWidget);
+    expect(
+      find.text('We could not load supplemental analytics right now. Retry to check the current state.'),
+      findsWidgets,
+    );
+    expect(find.text('No pillar data available'), findsNothing);
+    expect(find.text('No comparison data available'), findsNothing);
+    expect(find.text('No top performers available'), findsNothing);
+  });
+
+  testWidgets('hq analytics keeps stale supplemental analytics visible after refresh failure',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    int supplementalCalls = 0;
+
+    await tester.pumpWidget(
+      _buildAnalyticsHarness(
+        firestoreService: firestoreService,
+        child: HqAnalyticsPage(
+          metricsLoader: ({String? siteId, String period = 'month'}) async {
+            return const TelemetryDashboardMetrics(
+              weeklyAccountabilityAdherenceRate: 91.0,
+              educatorReviewTurnaroundHoursAvg: 18.5,
+              educatorReviewWithinSlaRate: 87.0,
+              educatorReviewSlaHours: 48,
+              interventionHelpedRate: 72.0,
+              interventionTotal: 11,
+              attendanceTrend: <AttendanceTrendPoint>[],
+            );
+          },
+          supplementalLoader: ({String selectedSite = 'all'}) async {
+            supplementalCalls += 1;
+            if (supplementalCalls > 1) {
+              throw Exception('supplemental refresh failed');
+            }
+            return const HqAnalyticsSupplementalSnapshot(
+              pillarAnalytics: <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'pillar': 'Future Skills',
+                  'progress': 0.75,
+                  'learners': 14,
+                  'missions': 6,
+                },
+              ],
+              siteComparison: <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'siteId': 'site-1',
+                  'name': 'North Hub',
+                  'learners': 40,
+                  'attendance': 96,
+                  'engagement': 84,
+                },
+              ],
+              topPerformers: <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'rank': 1,
+                  'name': 'Luna Learner',
+                  'site': 'North Hub',
+                  'missionsCompleted': 12,
+                  'streak': 4,
+                },
+              ],
+              bosMiaFeedback: <String, dynamic>{
+                'submissionCount': 3,
+                'avgUsability': 4.2,
+                'avgUsefulness': 4.3,
+                'avgReliability': 4.1,
+                'avgVoiceQuality': 4.4,
+                'topRecommendation': 'scale_with_guardrails',
+                'topIssue': 'telemetry_gaps',
+              },
+            );
+          },
+          kpiPacksLoader: ({String? siteId, int limit = 24}) async =>
+              const <Map<String, dynamic>>[],
+          syntheticImportLoader: () async => null,
+        ),
+      ),
+    );
+
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Top Performers'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Luna Learner'), findsOneWidget);
+
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, 1200));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.refresh_rounded).first);
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Top Performers'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Unable to refresh supplemental analytics right now. Showing the last successful data.'),
+      findsWidgets,
+    );
+    expect(find.text('Luna Learner'), findsOneWidget);
+    expect(find.text('North Hub'), findsWidgets);
+  });
+
+  testWidgets('hq analytics shows explicit unavailable state when KPI packs fail to load',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+
+    await tester.pumpWidget(
+      _buildAnalyticsHarness(
+        firestoreService: firestoreService,
+        child: HqAnalyticsPage(
+          metricsLoader: ({String? siteId, String period = 'month'}) async {
+            return const TelemetryDashboardMetrics(
+              weeklyAccountabilityAdherenceRate: 91.0,
+              educatorReviewTurnaroundHoursAvg: 18.5,
+              educatorReviewWithinSlaRate: 87.0,
+              educatorReviewSlaHours: 48,
+              interventionHelpedRate: 72.0,
+              interventionTotal: 11,
+              attendanceTrend: <AttendanceTrendPoint>[],
+            );
+          },
+          supplementalLoader: ({String selectedSite = 'all'}) async =>
+              const HqAnalyticsSupplementalSnapshot(),
+          kpiPacksLoader: ({String? siteId, int limit = 24}) async {
+            throw Exception('kpi down');
+          },
+          syntheticImportLoader: () async => null,
+        ),
+      ),
+    );
+
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('KPI packs are temporarily unavailable'), findsOneWidget);
+    expect(find.text('No KPI packs yet'), findsNothing);
+  });
+
+  testWidgets('hq analytics shows explicit unavailable state when synthetic import metadata fails to load',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+
+    await tester.pumpWidget(
+      _buildAnalyticsHarness(
+        firestoreService: firestoreService,
+        child: HqAnalyticsPage(
+          metricsLoader: ({String? siteId, String period = 'month'}) async {
+            return const TelemetryDashboardMetrics(
+              weeklyAccountabilityAdherenceRate: 91.0,
+              educatorReviewTurnaroundHoursAvg: 18.5,
+              educatorReviewWithinSlaRate: 87.0,
+              educatorReviewSlaHours: 48,
+              interventionHelpedRate: 72.0,
+              interventionTotal: 11,
+              attendanceTrend: <AttendanceTrendPoint>[],
+            );
+          },
+          supplementalLoader: ({String selectedSite = 'all'}) async =>
+              const HqAnalyticsSupplementalSnapshot(),
+          kpiPacksLoader: ({String? siteId, int limit = 24}) async =>
+              const <Map<String, dynamic>>[],
+          syntheticImportLoader: () async {
+            throw Exception('synthetic down');
+          },
+        ),
+      ),
+    );
+
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Synthetic import metadata is temporarily unavailable'),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Synthetic import metadata is temporarily unavailable'), findsOneWidget);
+    expect(find.text('No synthetic import metadata yet'), findsNothing);
   });
 }

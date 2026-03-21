@@ -73,21 +73,46 @@ class SharedRoleSurfaceI18n {
     'This Quarter': '本季度',
     'This Year': '今年',
     'Unable to load telemetry metrics:': '无法加载遥测指标：',
+      'Retry': '重试',
     'Telemetry KPIs': '遥测 KPI',
+      'Telemetry metrics are temporarily unavailable': '遥测指标暂时不可用',
+      'We could not load telemetry metrics right now. Retry to check the current state.':
+        '我们暂时无法加载遥测指标。请重试以检查当前状态。',
+      'Unable to refresh telemetry metrics right now. Showing the last successful data.':
+        '目前无法刷新遥测指标。正在显示最近一次成功加载的数据。',
     'Telemetry feed pending': '遥测流待接入',
     'Waiting for first app telemetry sync.': '正在等待应用遥测的首次数据同步。',
     '7-day': '7 天',
+      'Showing last successful attendance trend': '正在显示最近一次成功加载的出勤趋势',
     'Weekly Accountability': '每周问责',
     'Review SLA': '审核 SLA',
+      'Supplemental analytics are temporarily unavailable': '补充分析暂时不可用',
+      'We could not load supplemental analytics right now. Retry to check the current state.':
+        '我们暂时无法加载补充分析。请重试以检查当前状态。',
+      'Unable to refresh supplemental analytics right now. Showing the last successful data.':
+        '目前无法刷新补充分析。正在显示最近一次成功加载的数据。',
     'within SLA': '在 SLA 内',
+      'Site comparison is temporarily unavailable': '站点对比暂时不可用',
     'Avg Review Turnaround': '平均审核时长',
+      'Top performers are temporarily unavailable': '最佳表现者暂时不可用',
     'hours': '小时',
     'Interventions Helped': '干预成效',
     'outcomes': '结果',
+      'KPI packs are temporarily unavailable': 'KPI 包暂时不可用',
+      'We could not load KPI packs right now. Retry to check the current state.':
+        '我们暂时无法加载 KPI 包。请重试以检查当前状态。',
+      'Unable to refresh KPI packs right now. Showing the last successful data.':
+        '目前无法刷新 KPI 包。正在显示最近一次成功加载的数据。',
     'Attendance Trend': '出勤趋势',
     'Attendance data unavailable': '出勤数据不可用',
+      'HQ AI help feedback is temporarily unavailable': 'HQ AI 帮助反馈暂时不可用',
     'Attendance rate unavailable for this period': '此期间的出勤率不可用',
     'No attendance telemetry for this period': '此期间没有出勤遥测数据',
+      'Synthetic import metadata is temporarily unavailable': '合成导入元数据暂时不可用',
+      'We could not load synthetic import metadata right now. Retry to check the current state.':
+        '我们暂时无法加载合成导入元数据。请重试以检查当前状态。',
+      'Unable to refresh synthetic import metadata right now. Showing the last successful data.':
+        '目前无法刷新合成导入元数据。正在显示最近一次成功加载的数据。',
     'Latest attendance:': '最新出勤：',
     'Capture attendance records to render this trend.': '记录出勤后即可显示此趋势。',
     'Pillar Performance': '支柱表现',
@@ -305,21 +330,46 @@ class SharedRoleSurfaceI18n {
     'This Quarter': '本季',
     'This Year': '今年',
     'Unable to load telemetry metrics:': '無法載入遙測指標：',
+      'Retry': '重試',
     'Telemetry KPIs': '遙測 KPI',
+      'Telemetry metrics are temporarily unavailable': '遙測指標暫時不可用',
+      'We could not load telemetry metrics right now. Retry to check the current state.':
+        '我們暫時無法載入遙測指標。請重試以檢查目前狀態。',
+      'Unable to refresh telemetry metrics right now. Showing the last successful data.':
+        '目前無法重新整理遙測指標。正在顯示最近一次成功載入的資料。',
     'Telemetry feed pending': '遙測資料流待接入',
     'Waiting for first app telemetry sync.': '正在等待應用程式遙測的首次資料同步。',
     '7-day': '7 天',
+      'Showing last successful attendance trend': '正在顯示最近一次成功載入的出勤趨勢',
     'Weekly Accountability': '每週問責',
     'Review SLA': '審核 SLA',
+      'Supplemental analytics are temporarily unavailable': '補充分析暫時不可用',
+      'We could not load supplemental analytics right now. Retry to check the current state.':
+        '我們暫時無法載入補充分析。請重試以檢查目前狀態。',
+      'Unable to refresh supplemental analytics right now. Showing the last successful data.':
+        '目前無法重新整理補充分析。正在顯示最近一次成功載入的資料。',
     'within SLA': '在 SLA 內',
+      'Site comparison is temporarily unavailable': '站點比較暫時不可用',
     'Avg Review Turnaround': '平均審核時長',
+      'Top performers are temporarily unavailable': '最佳表現者暫時不可用',
     'hours': '小時',
     'Interventions Helped': '介入成效',
     'outcomes': '結果',
+      'KPI packs are temporarily unavailable': 'KPI 包暫時不可用',
+      'We could not load KPI packs right now. Retry to check the current state.':
+        '我們暫時無法載入 KPI 包。請重試以檢查目前狀態。',
+      'Unable to refresh KPI packs right now. Showing the last successful data.':
+        '目前無法重新整理 KPI 包。正在顯示最近一次成功載入的資料。',
     'Attendance Trend': '出勤趨勢',
     'Attendance data unavailable': '出勤資料不可用',
+      'HQ AI help feedback is temporarily unavailable': 'HQ AI 幫助回饋暫時不可用',
     'Attendance rate unavailable for this period': '此期間的出勤率不可用',
     'No attendance telemetry for this period': '此期間沒有出勤遙測資料',
+      'Synthetic import metadata is temporarily unavailable': '合成匯入中繼資料暫時不可用',
+      'We could not load synthetic import metadata right now. Retry to check the current state.':
+        '我們暫時無法載入合成匯入中繼資料。請重試以檢查目前狀態。',
+      'Unable to refresh synthetic import metadata right now. Showing the last successful data.':
+        '目前無法重新整理合成匯入中繼資料。正在顯示最近一次成功載入的資料。',
     'Latest attendance:': '最新出勤：',
     'Capture attendance records to render this trend.': '記錄出勤後即可顯示此趨勢。',
     'Pillar Performance': '支柱表現',
