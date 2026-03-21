@@ -79,7 +79,7 @@ Because of this stricter standard, references below to direct proof or honest st
   - site identity honesty proof pass: 2 passed, 0 failed
   - site incidents honesty proof pass: 4 passed, 0 failed
   - site integrations health proof pass: 4 passed, 0 failed
-  - HQ feature flags proof pass: 19 passed, 0 failed
+  - HQ feature flags proof pass: 21 passed, 0 failed
   - HQ user-admin audit-log proof pass: 12 passed, 0 failed
   - partner listings, integrations, and deliverables proof pass: 12 passed, 0 failed
   - partner integrations proof pass: 4 passed, 0 failed
@@ -112,7 +112,8 @@ Because of this stricter standard, references below to direct proof or honest st
 | Partner contracts and deliverables | Yes | Mostly yes | Mostly yes | Mostly yes | Mostly yes on the audited contracts/launches plus deliverables first-load and stale-refresh failure paths, including preserved stale contracts and launches on refresh failure; stale-state warnings now announce accessibly, but deeper mutation depth is still partial | Yes | No obvious fake primary action in audited path | Operationally honest, broader mutation depth partial |
 | Partner listings and payouts | Yes | Mostly yes | Partly | Partly | Mostly yes on the audited payouts path plus listings first-load and stale-refresh failure paths, partial on the wider cluster | Yes | Listings create-and-persist path is now directly proven and no longer degrades outages into fake empty state; broader partner depth is still partial | Operationally honest, full-flow partial and not gold |
 | HQ sites, role switcher, exports, analytics | Yes | Yes | Yes | Yes | Mostly yes | Yes | No obvious fake primary path in audited route tests | Operationally honest, broader operator workflow depth partial |
-| HQ billing, approvals, audit, safety, integrations health, feature flags, user admin | Yes | Mostly yes | Partly | Partly | Mostly yes on the audited billing, approvals, audit, feature-flags, and user-admin audit-log failure and stale-data paths; feature flags now also have direct rollout-alert triage success/failure proof, alert-history reflection of saved triage/control/escalation state, and rollout-control and rollout-escalation validation, save-and-reload, and backend-failure proof, but the wider governance cluster is still only partially proven | Yes | Feature-flags route proof is stronger, but scope certification remains partial | Operationally honest, full-flow partial and not gold |
+| HQ billing, approvals, audit, safety, integrations health, feature flags, user admin | Yes | Mostly yes | Partly | Partly | Mostly yes on the audited billing, approvals, audit, feature-flags, and user-admin audit-log failure and stale-data paths; feature flags now also have direct HQ-only route gating, HQ-bounded delivery context in governance dialogs, rollout-alert triage success/failure proof, alert-history reflection of saved triage/control/escalation state, and rollout-control and rollout-escalation validation, save-and-reload, and backend-failure proof, but the wider governance cluster is still only partially proven | Yes | Feature-flags route proof is stronger; the remaining gap is educational-truth and AI-transparency certification rather than route scope | Operationally honest, full-flow partial and not gold |
+| HQ billing, approvals, audit, safety, integrations health, feature flags, user admin | Yes | Mostly yes | Partly | Partly | Mostly yes on the audited billing, approvals, audit, feature-flags, and user-admin audit-log failure and stale-data paths; feature flags now also have direct HQ-only route gating, HQ-bounded delivery context in governance dialogs, rollout-alert triage success/failure proof, alert-history reflection of saved triage/control/escalation state, rollout-control and rollout-escalation validation, save-and-reload, and backend-failure proof, plus explicit route copy that rollout status is not learner evidence, mastery, Passport, or AI-use disclosure truth | Yes | Feature-flags route proof is stronger; the remaining gap is audit-source certification rather than scope or silent pedagogy drift | Operationally honest, full-flow partial and not gold |
 | Cross-role messages, notifications, profile, settings | Yes | Yes | Yes | Yes | Mostly yes | Yes | No obvious fake primary action | Operationally honest, deeper cross-role action breadth partial |
 
 ## B. Gold Blockers
@@ -148,7 +149,7 @@ Current truth:
 
 Risk concentration:
 
-- scope proof on HQ feature flags and related operator controls after consequential governance mutations.
+- audit-source proof on HQ feature flags and related federated-learning governance after consequential operator mutations.
 - broader mutation and recovery depth on site sessions and site provisioning.
 - partner listings edit depth remains thinner than create-and-persist proof.
 - the root entry surface is still proven more by redirect behavior than by direct surface rendering.

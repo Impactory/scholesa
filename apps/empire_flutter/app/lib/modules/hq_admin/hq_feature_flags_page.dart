@@ -1089,6 +1089,17 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                       color: ScholesaColors.textSecondary,
                     ),
                   ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _tHqFeatureFlags(
+                      context,
+                      'Rollout status does not certify learner growth, capability mastery, portfolio evidence, Passport claims, or AI-use disclosure. Verify those in evidence-bearing surfaces.',
+                    ),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: ScholesaColors.textSecondary,
+                    ),
+                  ),
                 ],
               ),
             ),

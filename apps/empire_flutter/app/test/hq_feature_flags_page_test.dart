@@ -728,6 +728,12 @@ void main() {
       find.text('No federated-learning experiments are configured yet.'),
       findsOneWidget,
     );
+    expect(
+      find.text(
+        'Rollout status does not certify learner growth, capability mastery, portfolio evidence, Passport claims, or AI-use disclosure. Verify those in evidence-bearing surfaces.',
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('hq feature flags page persists a toggle change',
@@ -782,7 +788,8 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
-    expect(find.text('ai_help_loop'), findsOneWidget);
+    expect(find.byType(Switch), findsOneWidget);
+    expect(tester.widget<Switch>(find.byType(Switch)).value, isFalse);
     expect(find.text('miloos_loop'), findsNothing);
 
     await tester.tap(find.byType(Switch));
@@ -864,7 +871,15 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
-    expect(find.text('ai_help_loop'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.byType(Switch),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(Switch), findsOneWidget);
+    expect(tester.widget<Switch>(find.byType(Switch)).value, isTrue);
 
     await tester.tap(find.byTooltip('Refresh'));
     await tester.pump();
@@ -876,7 +891,8 @@ void main() {
       ),
       findsOneWidget,
     );
-    expect(find.text('ai_help_loop'), findsOneWidget);
+    expect(find.byType(Switch), findsOneWidget);
+    expect(tester.widget<Switch>(find.byType(Switch)).value, isTrue);
     expect(find.text('No feature flags found'), findsNothing);
   });
 

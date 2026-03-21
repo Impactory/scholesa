@@ -26,7 +26,7 @@ Interpretation:
 
 Highest-value remaining blind spots:
 
-1. scope certification for consequential governance actions on `/hq/feature-flags`
+1. audit-source certification depth for `/hq/feature-flags` beyond the alert-history surface
 2. broader mutation depth on `/site/sessions` and `/site/provisioning`
 3. partner listings edit depth beyond create-and-persist proof
 4. root redirect proof is still stronger than direct home-surface rendering proof
@@ -121,7 +121,7 @@ Use this matrix together with the stricter full-flow gate in `docs/FULL_HONESTY_
 | `/hq/exports` | direct | `apps/empire_flutter/app/test/hq_exports_page_test.dart` | — |
 | `/hq/integrations-health` | direct | `apps/empire_flutter/app/test/hq_admin_placeholder_actions_test.dart` | Direct proof is narrower than full aggregation behavior |
 | `/hq/curriculum` | direct | `apps/empire_flutter/app/test/hq_curriculum_workflow_test.dart` | — |
-| `/hq/feature-flags` | direct | `apps/empire_flutter/app/test/hq_feature_flags_page_test.dart` | Honest empty-state, first-load failure detail, stale-refresh detail visibility, labeled app-bar recovery controls, flag-toggle persistence, failed-save truth, rollout-alert triage save-plus-reload and failure truth, rollout-control validation/save-plus-reload plus failure truth, rollout-escalation validation/save-plus-reload plus failure truth, and alert-history reflection of saved triage/control/escalation state are directly proven; scope certification still leans on the large prototype workflow suite |
+| `/hq/feature-flags` | direct | `apps/empire_flutter/app/test/hq_feature_flags_page_test.dart`, `apps/empire_flutter/app/test/hq_feature_flags_route_gate_test.dart` | Honest empty-state, first-load failure detail, stale-refresh detail visibility, labeled app-bar recovery controls, flag-toggle persistence, failed-save truth, HQ-only route gating, HQ-bounded dialog context, rollout-alert triage save-plus-reload and failure truth, rollout-control validation/save-plus-reload plus failure truth, rollout-escalation validation/save-plus-reload plus failure truth, alert-history reflection of saved triage/control/escalation state, and explicit copy that rollout status is not learner evidence, mastery, Passport, or AI-use disclosure truth are directly proven; broader audit-source certification still leans on the wider federated-learning workflow suite |
 
 ## Cross-Role
 
@@ -144,7 +144,7 @@ Use this matrix together with the stricter full-flow gate in `docs/FULL_HONESTY_
 
 Prioritize direct proof next for:
 
-1. scope proof on `/hq/feature-flags` after consequential governance mutations
+1. audit-source proof on `/hq/feature-flags` after consequential governance mutations
 2. broader create, edit, and recovery depth on `/site/sessions` and `/site/provisioning`
 3. partner listings edit depth beyond create-and-persist proof
 4. stronger direct rendering proof around the `/` entry surface beyond redirect behavior

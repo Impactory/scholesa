@@ -22,34 +22,33 @@ Proven gates:
    - direct proof now exists that rollout-escalation save triggers authoritative experiment reload
 4. Gate D `Recovery`
    - app-bar refresh exists and stale states preserve last successful data with visible failure detail
-5. Gate F `Accessibility And Discoverability`
+5. Gate E `Scope And Permission Correctness`
+   - direct route proof now exists that `/hq/feature-flags` is RoleGate-bound to HQ users
+   - direct dialog proof now exists that rollout alert, escalation, and control actions surface HQ-bounded delivery context before save
+6. Gate F `Accessibility And Discoverability`
    - stale warnings are assistive-tech visible and app-bar controls are labeled
-6. Gate G `Telemetry And Auditability`
+7. Gate G `Telemetry And Auditability`
    - refresh and history app-bar actions emit telemetry; rollout governance surfaces expose audit and history dialogs in implementation
    - direct proof now exists that the alert-history surface reflects saved rollout-triage, rollout-control, and rollout-escalation state
+8. Gate H `Educational Truth`
+   - direct route proof now exists that rollout status is explicitly separated from learner growth, capability mastery, portfolio evidence, and Passport claims
+9. Gate I `AI Transparency`
+   - direct route proof now exists that rollout status is explicitly separated from AI-use disclosure and points operators back to evidence-bearing surfaces
 
 Missing gates:
 
-1. Gate B `Real Mutation`
-   - focused route proof still does not verify that history/audit surfaces reflect those consequential governance mutations after save
-2. Gate E `Scope And Permission Correctness`
-   - no focused route proof yet shows governance actions are correctly bounded to HQ/operator scope and delivery context
-3. Gate G `Telemetry And Auditability`
+1. Gate G `Telemetry And Auditability`
    - route proof still does not verify every audit trail source beyond the alert-history surface itself
-4. Gate H `Educational Truth`
-   - the wider federated-learning governance workflow still needs proof that runtime and candidate decisions do not overstate learner or capability claims outside verified evidence chains
-5. Gate I `AI Transparency`
-   - no focused route proof yet verifies AI-related disclosure expectations across the governance workflow where candidate/runtime decisions may affect AI-assisted educational surfaces
 
 Blocking risk:
 
-- The route now directly proves rollout-alert triage, rollout-control, and rollout-escalation mutation behavior across success, validation, reload, and backend-failure paths, and the alert-history surface reflects saved governance state for all three, but scope correctness remains uncertified at the focused route level.
+- The route now directly proves HQ-only access, HQ-bounded delivery context, rollout-alert triage, rollout-control, and rollout-escalation mutation behavior across success, validation, reload, and backend-failure paths, and it explicitly separates rollout state from learner-evidence and AI-disclosure claims. Remaining risk is now concentrated in audit-source certification beyond the alert-history surface.
 
 Next proof task:
 
-1. Certify scope correctness by proving the route surfaces the right HQ-bounded delivery context while governance actions are opened and saved.
-2. Decide whether the existing alert-history surface is sufficient auditability for this route or whether a separate audit-surface proof is still required for certification.
-3. Then decide whether `/hq/feature-flags` can move from `Full-flow partial` to `Full-flow verified` or whether wider federated-learning governance still blocks it.
+1. Decide whether the existing alert-history surface is sufficient auditability for this route or whether a separate audit-surface proof is still required for certification.
+2. If not, add direct proof for the broader rollout-audit surface or record explicitly why alert history is the authoritative traceability boundary for this route.
+3. Then decide whether `/hq/feature-flags` can move from `Full-flow partial` to `Full-flow verified` or whether wider federated-learning workflow coupling still blocks it.
 
 ## Template
 
