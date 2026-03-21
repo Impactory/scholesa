@@ -162,4 +162,113 @@ void main() {
     expect(find.text('You have 0 missions pending review today.'), findsOneWidget);
     expect(find.text('Open Queue'), findsOneWidget);
   });
+
+  testWidgets(
+      'educator today shows schedule load failure instead of fake empty schedule',
+      (WidgetTester tester) async {
+    final AppState appState = _buildAppState();
+    final _MockEducatorService educatorService = _MockEducatorService();
+
+    when(() => educatorService.loadTodaySchedule()).thenAnswer((_) async {});
+    when(() => educatorService.loadLearners()).thenAnswer((_) async {});
+    when(() => educatorService.isLoading).thenReturn(false);
+    when(() => educatorService.todayClasses).thenReturn(const <TodayClass>[]);
+    when(() => educatorService.currentClass).thenReturn(null);
+    when(() => educatorService.learners)
+        .thenReturn(const <EducatorLearner>[]);
+    when(() => educatorService.dayStats).thenReturn(null);
+    when(() => educatorService.error)
+        .thenReturn('Failed to load schedule from test');
+    when(() => educatorService.siteId).thenReturn('site-1');
+
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    await tester.pumpWidget(
+      _buildHarness(
+        appState: appState,
+        educatorService: educatorService,
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text("Unable to load today's schedule"),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+
+    expect(find.text("Unable to load today's schedule"), findsOneWidget);
+    expect(
+      find.text(
+          "We could not load today's schedule right now. Retry to check the current state."),
+      findsOneWidget,
+    );
+    expect(find.text('Failed to load schedule from test'), findsOneWidget);
+    expect(find.text('No classes scheduled yet'), findsNothing);
+    expect(find.byTooltip('Refresh'), findsOneWidget);
+  });
+
+  testWidgets(
+      'educator today keeps stale schedule visible after refresh failure',
+      (WidgetTester tester) async {
+    final AppState appState = _buildAppState();
+    final _MockEducatorService educatorService = _MockEducatorService();
+    final TodayClass staleClass = TodayClass(
+      id: 'occ-1',
+      sessionId: 'session-1',
+      title: 'Robotics Studio',
+      startTime: DateTime(2026, 3, 21, 9),
+      endTime: DateTime(2026, 3, 21, 10),
+      enrolledCount: 12,
+      presentCount: 10,
+      status: 'upcoming',
+    );
+
+    when(() => educatorService.loadTodaySchedule()).thenAnswer((_) async {});
+    when(() => educatorService.loadLearners()).thenAnswer((_) async {});
+    when(() => educatorService.isLoading).thenReturn(false);
+    when(() => educatorService.todayClasses).thenReturn(<TodayClass>[staleClass]);
+    when(() => educatorService.currentClass).thenReturn(null);
+    when(() => educatorService.learners)
+        .thenReturn(const <EducatorLearner>[]);
+    when(() => educatorService.dayStats).thenReturn(
+      const EducatorDayStats(
+        totalClasses: 1,
+        completedClasses: 0,
+        totalLearners: 12,
+        presentLearners: 10,
+        missionsToReview: 1,
+        unreadMessages: 0,
+      ),
+    );
+    when(() => educatorService.error)
+        .thenReturn('Failed to refresh schedule from test');
+    when(() => educatorService.siteId).thenReturn('site-1');
+
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    await tester.pumpWidget(
+      _buildHarness(
+        appState: appState,
+        educatorService: educatorService,
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        "Unable to refresh today's schedule right now. Showing the last successful data. Failed to refresh schedule from test",
+      ),
+      findsOneWidget,
+    );
+    await tester.scrollUntilVisible(
+      find.text('Robotics Studio'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('Robotics Studio'), findsOneWidget);
+    expect(find.text('No classes scheduled yet'), findsNothing);
+  });
 }

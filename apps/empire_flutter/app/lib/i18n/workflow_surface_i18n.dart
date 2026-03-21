@@ -436,6 +436,11 @@ class WorkflowSurfaceI18n {
         '我们暂时无法加载账单记录。请重试以检查当前状态。',
     'Unable to refresh billing right now. Showing the last successful data.':
         '目前无法刷新账单。正在显示最近一次成功加载的数据。',
+    'Unable to load today\'s schedule': '目前无法加载今日课表',
+    'We could not load today\'s schedule right now. Retry to check the current state.':
+        '我们暂时无法加载今日课表。请重试以检查当前状态。',
+    'Unable to refresh today\'s schedule right now. Showing the last successful data. ':
+        '目前无法刷新今日课表。正在显示最近一次成功加载的数据。',
     'Invoices are temporarily unavailable': '发票暂时不可用',
     'Payments are temporarily unavailable': '付款暂时不可用',
     'Subscriptions are temporarily unavailable': '订阅暂时不可用',
@@ -1187,6 +1192,11 @@ class WorkflowSurfaceI18n {
         '我們暫時無法載入帳務記錄。請重試以確認目前狀態。',
     'Unable to refresh billing right now. Showing the last successful data.':
         '目前無法刷新帳務資料。正在顯示最近一次成功載入的資料。',
+    'Unable to load today\'s schedule': '目前無法載入今日課表',
+    'We could not load today\'s schedule right now. Retry to check the current state.':
+        '我們暫時無法載入今日課表。請重試以確認目前狀態。',
+    'Unable to refresh today\'s schedule right now. Showing the last successful data. ':
+        '目前無法刷新今日課表。正在顯示最近一次成功載入的資料。',
     'Invoices are temporarily unavailable': '發票暫時不可用',
     'Payments are temporarily unavailable': '付款暫時不可用',
     'Subscriptions are temporarily unavailable': '訂閱暫時不可用',

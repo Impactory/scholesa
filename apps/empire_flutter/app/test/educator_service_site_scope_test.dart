@@ -60,6 +60,55 @@ void main() {
       expect(service.todayClasses.first.title, 'Site A class');
     });
 
+    test('loadTodaySchedule keeps stale classes visible after refresh failure', () async {
+      int loadCount = 0;
+      final EducatorService service = EducatorService(
+        firestoreService: FirestoreService(
+          firestore: FakeFirebaseFirestore(),
+          auth: _MockFirebaseAuth(),
+        ),
+        educatorId: 'educator-1',
+        siteId: 'site-a',
+        todayScheduleLoader: () async {
+          loadCount += 1;
+          if (loadCount == 1) {
+            return TodayScheduleSnapshot(
+              todayClasses: <TodayClass>[
+                TodayClass(
+                  id: 'occ-site-a',
+                  sessionId: 'session-1',
+                  title: 'Site A class',
+                  startTime: DateTime(2026, 3, 21, 9),
+                  endTime: DateTime(2026, 3, 21, 10),
+                  enrolledCount: 12,
+                  presentCount: 9,
+                  status: 'upcoming',
+                ),
+              ],
+              dayStats: const EducatorDayStats(
+                totalClasses: 1,
+                completedClasses: 0,
+                totalLearners: 12,
+                presentLearners: 9,
+                missionsToReview: 2,
+                unreadMessages: 1,
+              ),
+            );
+          }
+          throw Exception('network down');
+        },
+      );
+
+      await service.loadTodaySchedule();
+      await service.loadTodaySchedule();
+
+      expect(service.todayClasses, hasLength(1));
+      expect(service.todayClasses.single.title, 'Site A class');
+      expect(service.dayStats, isNotNull);
+      expect(service.dayStats?.totalClasses, 1);
+      expect(service.error, contains('Failed to load schedule'));
+    });
+
     test('loadLearners only includes learners in active site', () async {
       final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
       final FirestoreService firestoreService = FirestoreService(

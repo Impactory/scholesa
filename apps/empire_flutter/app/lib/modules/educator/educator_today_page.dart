@@ -30,13 +30,17 @@ class EducatorTodayPage extends StatefulWidget {
 class _EducatorTodayPageState extends State<EducatorTodayPage> {
   bool _showAiCoach = false;
 
+  Future<void> _refreshEducatorData() async {
+    final EducatorService service = context.read<EducatorService>();
+    await service.loadTodaySchedule();
+    await service.loadLearners();
+  }
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final EducatorService service = context.read<EducatorService>();
-      await service.loadTodaySchedule();
-      await service.loadLearners();
+      await _refreshEducatorData();
     });
   }
 
@@ -86,9 +90,27 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
                 ),
                 SliverToBoxAdapter(child: _buildQuickStats(service)),
                 SliverToBoxAdapter(child: _buildQuickActions()),
+                if (service.error != null && service.todayClasses.isNotEmpty)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                      child: _EducatorStatusBanner(
+                        message: _tEducatorToday(context,
+                                'Unable to refresh today\'s schedule right now. Showing the last successful data. ') +
+                            service.error!,
+                      ),
+                    ),
+                  ),
                 SliverToBoxAdapter(child: _buildCurrentClass(service)),
                 SliverToBoxAdapter(child: _buildScheduleHeader()),
-                if (service.todayClasses.isEmpty)
+                if (service.error != null && service.todayClasses.isEmpty)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                      child: _buildScheduleLoadErrorCard(service.error!),
+                    ),
+                  )
+                else if (service.todayClasses.isEmpty)
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
@@ -250,6 +272,7 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
                               crossAxisAlignment: WrapCrossAlignment.center,
                               children: <Widget>[
                                 datePill,
+                                _buildRefreshAction(),
                                 sessionAction,
                               ],
                             ),
@@ -282,6 +305,8 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
                             const SizedBox(width: 12),
                             datePill,
                             const SizedBox(width: 12),
+                            _buildRefreshAction(),
+                            const SizedBox(width: 12),
                             sessionAction,
                           ],
                         ),
@@ -290,6 +315,57 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
             );
           },
         ),
+      ),
+    );
+  }
+
+  Widget _buildRefreshAction() {
+    return IconButton(
+      tooltip: 'Refresh',
+      onPressed: _refreshEducatorData,
+      icon: const Icon(
+        Icons.refresh_rounded,
+        color: ScholesaColors.educator,
+      ),
+    );
+  }
+
+  Widget _buildScheduleLoadErrorCard(String error) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: ScholesaColors.error.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            _tEducatorToday(context, 'Unable to load today\'s schedule'),
+            style: TextStyle(
+              color: context.schTextPrimary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            _tEducatorToday(context,
+                'We could not load today\'s schedule right now. Retry to check the current state.'),
+            style: TextStyle(
+              color: context.schTextSecondary,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            error,
+            style: TextStyle(
+              color: context.schTextSecondary,
+              fontSize: 12,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -994,6 +1070,48 @@ class _StatCard extends StatelessWidget {
             style: TextStyle(
               fontSize: 11,
               color: context.schTextSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EducatorStatusBanner extends StatelessWidget {
+  const _EducatorStatusBanner({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: ScholesaColors.warning.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: ScholesaColors.warning.withValues(alpha: 0.25),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Icon(
+            Icons.info_outline,
+            size: 18,
+            color: ScholesaColors.warning,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(
+                color: context.schTextPrimary,
+                fontSize: 12,
+                height: 1.4,
+              ),
             ),
           ),
         ],

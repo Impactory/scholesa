@@ -8,14 +8,27 @@ import 'educator_models.dart';
 
 const String _fallbackLearnerName = 'Learner unavailable';
 
+class TodayScheduleSnapshot {
+  const TodayScheduleSnapshot({
+    required this.todayClasses,
+    required this.dayStats,
+  });
+
+  final List<TodayClass> todayClasses;
+  final EducatorDayStats dayStats;
+}
+
 /// Service for educator-specific features - wired to Firebase
 class EducatorService extends ChangeNotifier {
   EducatorService({
     required FirestoreService firestoreService,
     required this.educatorId,
     this.siteId,
-  }) : _firestoreService = firestoreService;
+    Future<TodayScheduleSnapshot> Function()? todayScheduleLoader,
+  })  : _firestoreService = firestoreService,
+        _todayScheduleLoader = todayScheduleLoader;
   final FirestoreService _firestoreService;
+  final Future<TodayScheduleSnapshot> Function()? _todayScheduleLoader;
   final String educatorId;
   final String? siteId;
   FirebaseFirestore get _firestore => _firestoreService.firestore;
@@ -42,61 +55,67 @@ class EducatorService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final DateTime now = DateTime.now();
-      final DateTime startOfDay = DateTime(now.year, now.month, now.day);
-      final DateTime endOfDay = startOfDay.add(const Duration(days: 1));
+      final TodayScheduleSnapshot snapshot = _todayScheduleLoader != null
+          ? await _todayScheduleLoader()
+          : await _loadTodayScheduleSnapshot();
 
-      final List<QueryDocumentSnapshot<Map<String, dynamic>>> occurrenceDocs =
-          await _loadTodayOccurrenceDocs(
-        startOfDay: startOfDay,
-        endOfDay: endOfDay,
-      );
-
-      _todayClasses = occurrenceDocs
-          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
-        final Map<String, dynamic> data = doc.data();
-        final DateTime startTime = _parseTimestamp(data['startTime']) ??
-            _parseTimestamp(data['date']) ??
-            DateTime.now();
-        final DateTime endTime = _parseTimestamp(data['endTime']) ??
-            startTime.add(const Duration(hours: 1));
-        return TodayClass(
-          id: doc.id,
-          sessionId: data['sessionId'] as String? ?? '',
-          title:
-              _stringOrDefault(data['title'], data['sessionTitle'], 'Session'),
-          description: _stringOrDefault(data['description'], null, ''),
-          startTime: startTime,
-          endTime: endTime,
-          location: _stringOrDefault(data['location'], data['roomName'], ''),
-          enrolledCount: (data['enrolledCount'] as num?)?.toInt() ?? 0,
-          presentCount: (data['presentCount'] as num?)?.toInt() ?? 0,
-          status: _stringOrDefault(data['status'], null, 'upcoming'),
-          learners: const <EnrolledLearner>[],
-        );
-      }).toList()
-        ..sort(
-            (TodayClass a, TodayClass b) => a.startTime.compareTo(b.startTime));
-
-      _dayStats = _calculateStats();
+      _todayClasses = snapshot.todayClasses;
+      _dayStats = snapshot.dayStats;
       debugPrint(
           'Loaded ${_todayClasses.length} classes for educator $educatorId');
     } catch (e) {
       debugPrint('Error loading educator schedule: $e');
       _error = 'Failed to load schedule: $e';
-      _todayClasses = <TodayClass>[];
-      _dayStats = const EducatorDayStats(
-        totalClasses: 0,
-        completedClasses: 0,
-        totalLearners: 0,
-        presentLearners: 0,
-        missionsToReview: 0,
-        unreadMessages: 0,
-      );
     } finally {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  Future<TodayScheduleSnapshot> _loadTodayScheduleSnapshot() async {
+    final DateTime now = DateTime.now();
+    final DateTime startOfDay = DateTime(now.year, now.month, now.day);
+    final DateTime endOfDay = startOfDay.add(const Duration(days: 1));
+
+    final List<QueryDocumentSnapshot<Map<String, dynamic>>> occurrenceDocs =
+        await _loadTodayOccurrenceDocs(
+      startOfDay: startOfDay,
+      endOfDay: endOfDay,
+    );
+
+    final List<TodayClass> todayClasses = occurrenceDocs
+        .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+      final Map<String, dynamic> data = doc.data();
+      final DateTime startTime = _parseTimestamp(data['startTime']) ??
+          _parseTimestamp(data['date']) ??
+          DateTime.now();
+      final DateTime endTime = _parseTimestamp(data['endTime']) ??
+          startTime.add(const Duration(hours: 1));
+      return TodayClass(
+        id: doc.id,
+        sessionId: data['sessionId'] as String? ?? '',
+        title: _stringOrDefault(data['title'], data['sessionTitle'], 'Session'),
+        description: _stringOrDefault(data['description'], null, ''),
+        startTime: startTime,
+        endTime: endTime,
+        location: _stringOrDefault(data['location'], data['roomName'], ''),
+        enrolledCount: (data['enrolledCount'] as num?)?.toInt() ?? 0,
+        presentCount: (data['presentCount'] as num?)?.toInt() ?? 0,
+        status: _stringOrDefault(data['status'], null, 'upcoming'),
+        learners: const <EnrolledLearner>[],
+      );
+    }).toList()
+      ..sort((TodayClass a, TodayClass b) => a.startTime.compareTo(b.startTime));
+
+    final List<TodayClass> previousClasses = _todayClasses;
+    _todayClasses = todayClasses;
+    final EducatorDayStats dayStats = _calculateStats();
+    _todayClasses = previousClasses;
+
+    return TodayScheduleSnapshot(
+      todayClasses: todayClasses,
+      dayStats: dayStats,
+    );
   }
 
   DateTime? _parseTimestamp(dynamic value) {
