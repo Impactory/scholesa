@@ -14,8 +14,8 @@ Proven gates:
 2. Gate B `Real Mutation`
    - direct proof exists for feature-flag toggle persistence and failed-save handling
    - direct proof now exists for rollout-alert triage successful save behavior and explicit backend-failure handling
-   - direct proof now exists for rollout-control validation and successful save behavior
-   - direct proof now exists for rollout-escalation validation and successful save behavior
+   - direct proof now exists for rollout-control validation, successful save behavior, and explicit backend-failure handling
+   - direct proof now exists for rollout-escalation validation, successful save behavior, and explicit backend-failure handling
 3. Gate C `Authoritative Reload`
    - direct proof now exists that rollout-alert triage save triggers authoritative experiment reload
    - direct proof now exists that rollout-control save triggers authoritative experiment reload
@@ -30,7 +30,7 @@ Proven gates:
 Missing gates:
 
 1. Gate B `Real Mutation`
-   - focused route proof does not yet cover rollout-control or rollout-escalation backend failure handling
+   - focused route proof still does not verify that history/audit surfaces reflect those consequential governance mutations after save
 2. Gate E `Scope And Permission Correctness`
    - no focused route proof yet shows governance actions are correctly bounded to HQ/operator scope and delivery context
 3. Gate G `Telemetry And Auditability`
@@ -42,13 +42,13 @@ Missing gates:
 
 Blocking risk:
 
-- The route now directly proves rollout-alert triage, rollout-control, and rollout-escalation validation plus save-and-reload, but rollout-control and rollout-escalation backend-failure handling plus scope/auditability certification still lack focused proof.
+- The route now directly proves rollout-alert triage, rollout-control, and rollout-escalation mutation behavior across success, validation, reload, and backend-failure paths, but scope correctness and mutation traceability remain uncertified at the focused route level.
 
 Next proof task:
 
-1. Add a focused failure-path test for `Rollout control failed` on `/hq/feature-flags`.
-2. Add a focused failure-path test for `Rollout escalation failed` on `/hq/feature-flags`.
-3. After that, certify scope and auditability by proving the route surfaces the right operator-bounded context and mutation traceability cues after governance actions.
+1. Certify scope correctness by proving the route surfaces the right HQ-bounded delivery context while governance actions are opened and saved.
+2. Certify auditability by proving the route exposes mutation traceability cues after governance actions, not just implementation hooks.
+3. Then decide whether `/hq/feature-flags` can move from `Full-flow partial` to `Full-flow verified` or whether wider federated-learning governance still blocks it.
 
 ## Template
 
