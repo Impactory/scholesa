@@ -366,17 +366,12 @@ void main() {
     );
 
     expect(find.text('This Week'), findsOneWidget);
+    expect(find.text('Design Studio @ Room A'), findsOneWidget);
 
     await tester.tap(find.byTooltip('Refresh'));
     await tester.pumpAndSettle();
 
-    await tester.scrollUntilVisible(
-      find.text('Design Studio'),
-      300,
-      scrollable: find.byType(Scrollable).last,
-    );
-
-    expect(find.text('Design Studio'), findsWidgets);
+    expect(find.text('Design Studio @ Room A'), findsOneWidget);
     expect(
       find.text(
         'Unable to refresh family dashboard right now. Showing the last successful data.',
