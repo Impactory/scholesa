@@ -91,6 +91,82 @@ void main() {
     expect(find.text('Retry'), findsWidgets);
   });
 
+  testWidgets(
+      'HQ billing keeps stale finance data visible after refresh failure',
+      (WidgetTester tester) async {
+    int loadCount = 0;
+
+    await tester.pumpWidget(
+      _buildHarness(
+        HqBillingPage(
+          billingLoader: () async {
+            loadCount += 1;
+            if (loadCount == 1) {
+              return <String, dynamic>{
+                'siteOptions': <Map<String, dynamic>>[
+                  <String, dynamic>{'id': 'all', 'label': 'All Sites'},
+                ],
+                'invoices': <Map<String, dynamic>>[
+                  <String, dynamic>{
+                    'id': 'INV-300',
+                    'parent': 'Parent One',
+                    'learner': 'Learner One',
+                    'site': 'Harbor Studio',
+                    'date': '2026-03-20',
+                    'amount': 120.0,
+                    'status': 'paid',
+                  },
+                ],
+                'payments': <Map<String, dynamic>>[
+                  <String, dynamic>{
+                    'id': 'PAY-300',
+                    'from': 'Parent One',
+                    'amount': 120.0,
+                    'method': 'Card',
+                    'invoice': 'INV-300',
+                    'date': '2026-03-21',
+                  },
+                ],
+                'subscriptions': <Map<String, dynamic>>[
+                  <String, dynamic>{
+                    'id': 'SUB-300',
+                    'parent': 'Parent One',
+                    'learners': 1,
+                    'plan': 'Studio',
+                    'amount': 49.0,
+                    'status': 'active',
+                    'nextBilling': '2026-04-01',
+                  },
+                ],
+              };
+            }
+
+            throw StateError('billing refresh unavailable');
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('INV-300'), findsOneWidget);
+    expect(find.text('No invoices found'), findsNothing);
+
+    await tester.tap(find.text('This Month'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('This Quarter').last);
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Unable to refresh billing right now. Showing the last successful data.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('INV-300'), findsOneWidget);
+    expect(find.text('No invoices found'), findsNothing);
+  });
+
   testWidgets('HQ billing creates invoices from the sheet with live form data',
       (WidgetTester tester) async {
     final List<Map<String, dynamic>> createdInvoices = <Map<String, dynamic>>[];

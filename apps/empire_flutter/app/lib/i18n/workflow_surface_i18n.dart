@@ -431,6 +431,14 @@ class WorkflowSurfaceI18n {
     'Unavailable': '不可用',
     'Payment source unavailable': '付款来源不可用',
     'Subscription owner unavailable': '订阅归属方不可用',
+    'Billing data is temporarily unavailable': '账单数据暂时不可用',
+    'We could not load billing records. Retry to check the current state.':
+        '我们暂时无法加载账单记录。请重试以检查当前状态。',
+    'Unable to refresh billing right now. Showing the last successful data.':
+        '目前无法刷新账单。正在显示最近一次成功加载的数据。',
+    'Invoices are temporarily unavailable': '发票暂时不可用',
+    'Payments are temporarily unavailable': '付款暂时不可用',
+    'Subscriptions are temporarily unavailable': '订阅暂时不可用',
     'Plan': '方案',
     'Safety Overview': '安全概览',
     'Open': '打开',
@@ -1093,28 +1101,6 @@ class WorkflowSurfaceI18n {
     'Unavailable': '不可用',
     'Payment source unavailable': '付款來源不可用',
     'Subscription owner unavailable': '訂閱歸屬方不可用',
-    'Billing data is temporarily unavailable': '账单数据暂时不可用',
-    'We could not load billing records. Retry to check the current state.':
-        '我们暂时无法加载账单记录。请重试以检查当前状态。',
-    'Unable to refresh billing right now. Showing the last successful data.':
-        '目前无法刷新账单。正在显示最近一次成功加载的数据。',
-    'Invoices are temporarily unavailable': '发票暂时不可用',
-    'Payments are temporarily unavailable': '付款暂时不可用',
-    'Subscriptions are temporarily unavailable': '订阅暂时不可用',
-    'No invoices found': '未找到发票',
-    'No payments found': '未找到付款记录',
-    'No subscriptions found': '未找到订阅',
-    'Billing data is temporarily unavailable': '帳務資料暫時不可用',
-    'We could not load billing records. Retry to check the current state.':
-        '我們暫時無法載入帳務記錄。請重試以確認目前狀態。',
-    'Unable to refresh billing right now. Showing the last successful data.':
-        '目前無法刷新帳務資料。正在顯示最近一次成功載入的資料。',
-    'Invoices are temporarily unavailable': '發票暫時不可用',
-    'Payments are temporarily unavailable': '付款暫時不可用',
-    'Subscriptions are temporarily unavailable': '訂閱暫時不可用',
-    'No invoices found': '未找到發票',
-    'No payments found': '未找到付款記錄',
-    'No subscriptions found': '未找到訂閱',
     'Feature Flags': '功能旗標',
     'Approvals': '審批',
     'Role Impersonation': '角色模擬',
@@ -1185,6 +1171,14 @@ class WorkflowSurfaceI18n {
         '請稍後再試，或在連線穩定後重新整理。',
     'Audit activity will appear here after user administration actions are recorded.':
         '使用者管理操作記錄後，稽核活動會顯示在這裡。',
+    'Billing data is temporarily unavailable': '帳務資料暫時不可用',
+    'We could not load billing records. Retry to check the current state.':
+        '我們暫時無法載入帳務記錄。請重試以確認目前狀態。',
+    'Unable to refresh billing right now. Showing the last successful data.':
+        '目前無法刷新帳務資料。正在顯示最近一次成功載入的資料。',
+    'Invoices are temporarily unavailable': '發票暫時不可用',
+    'Payments are temporarily unavailable': '付款暫時不可用',
+    'Subscriptions are temporarily unavailable': '訂閱暫時不可用',
     'No invoices found': '找不到發票',
     'No payments found': '找不到付款紀錄',
     'No subscriptions found': '找不到訂閱紀錄',
