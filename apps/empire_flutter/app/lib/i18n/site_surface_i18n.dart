@@ -312,6 +312,8 @@ class SiteSurfaceI18n {
     'Manage media capture and research consent flags for each learner using live site records.':
         '使用实时站点记录为每位学习者管理媒体采集和研究同意标记。',
     'Unable to load consent records right now': '当前无法加载同意记录',
+    'Unable to refresh consent records right now. Showing the last successful data.':
+        '当前无法刷新同意记录。正在显示最近一次成功加载的数据。',
     'Learners': '学习者',
     'Media Configured': '媒体已配置',
     'Research Configured': '研究已配置',
@@ -667,6 +669,8 @@ class SiteSurfaceI18n {
     'Manage media capture and research consent flags for each learner using live site records.':
         '使用即時站點紀錄為每位學習者管理媒體擷取與研究同意旗標。',
     'Unable to load consent records right now': '目前無法載入同意紀錄',
+    'Unable to refresh consent records right now. Showing the last successful data.':
+        '目前無法刷新同意紀錄。正在顯示最近一次成功載入的資料。',
     'Learners': '學習者',
     'Media Configured': '媒體已設定',
     'Research Configured': '研究已設定',

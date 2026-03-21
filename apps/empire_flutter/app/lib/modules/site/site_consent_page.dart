@@ -457,6 +457,7 @@ class _SiteConsentPageState extends State<SiteConsentPage> {
       _isLoading = true;
       _loadError = null;
     });
+    final bool hadRecords = _records.isNotEmpty;
 
     try {
       final List<SiteConsentRecord> records = await _service.listRecords(siteId);
@@ -471,8 +472,12 @@ class _SiteConsentPageState extends State<SiteConsentPage> {
         return;
       }
       setState(() {
-        _loadError =
-            _tSiteConsent(context, 'Unable to load consent records right now');
+        _loadError = hadRecords
+            ? _tSiteConsent(
+                context,
+                'Unable to refresh consent records right now. Showing the last successful data.',
+              )
+            : _tSiteConsent(context, 'Unable to load consent records right now');
       });
     } finally {
       if (mounted) {
