@@ -499,6 +499,7 @@ class _SitePickupAuthPageState extends State<SitePickupAuthPage> {
       _siteId = siteId;
       _loadError = null;
     });
+    final bool hadRecords = _records.isNotEmpty;
 
     try {
       final List<dynamic> results = await Future.wait<dynamic>(<Future<dynamic>>[
@@ -519,7 +520,9 @@ class _SitePickupAuthPageState extends State<SitePickupAuthPage> {
       setState(() {
         _loadError = _tSitePickupAuth(
           context,
-          'Unable to load pickup authorizations right now',
+          hadRecords
+              ? 'Unable to refresh pickup authorizations right now. Showing the last successful data.'
+              : 'Unable to load pickup authorizations right now',
         );
       });
     } finally {

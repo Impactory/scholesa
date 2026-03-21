@@ -271,6 +271,8 @@ class SiteSurfaceI18n {
     'Explicit pickup authorization saved for this learner.': '已为该学习者保存明确的接走授权。',
     'Site context unavailable right now': '当前无法获取站点上下文',
     'Unable to load pickup authorizations right now': '当前无法加载接走授权',
+    'Unable to refresh pickup authorizations right now. Showing the last successful data.':
+        '当前无法刷新接走授权。正在显示最近一次成功加载的数据。',
     'Pickup authorizations saved': '接走授权已保存',
     'Unable to save pickup authorizations right now': '当前无法保存接走授权',
     'Add Pickup Authorization': '新增接走授权',
@@ -628,6 +630,8 @@ class SiteSurfaceI18n {
     'Explicit pickup authorization saved for this learner.': '已為此學習者儲存明確的接回授權。',
     'Site context unavailable right now': '目前無法取得站點內容',
     'Unable to load pickup authorizations right now': '目前無法載入接回授權',
+    'Unable to refresh pickup authorizations right now. Showing the last successful data.':
+        '目前無法刷新接回授權。正在顯示最近一次成功載入的資料。',
     'Pickup authorizations saved': '接回授權已儲存',
     'Unable to save pickup authorizations right now': '目前無法儲存接回授權',
     'Add Pickup Authorization': '新增接回授權',

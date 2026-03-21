@@ -18,6 +18,29 @@ class _ThrowingSiteConsentService extends SiteConsentService {
   }
 }
 
+class _SequencedSiteConsentService extends SiteConsentService {
+  _SequencedSiteConsentService({required this.snapshots})
+      : super(firestore: FakeFirebaseFirestore());
+
+  final List<Object> snapshots;
+  int _callCount = 0;
+
+  @override
+  Future<List<SiteConsentRecord>> listRecords(String siteId) async {
+    final Object snapshot = _callCount < snapshots.length
+        ? snapshots[_callCount]
+        : snapshots.last;
+    _callCount += 1;
+    if (snapshot is Exception) {
+      throw snapshot;
+    }
+    if (snapshot is Error) {
+      throw snapshot;
+    }
+    return List<SiteConsentRecord>.from(snapshot as List<SiteConsentRecord>);
+  }
+}
+
 AppState _buildSiteState() {
   final AppState state = AppState();
   state.updateFromMeResponse(<String, dynamic>{
@@ -227,5 +250,45 @@ void main() {
     expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Unable to load consent records right now'), findsOneWidget);
     expect(find.text('Retry'), findsOneWidget);
+  });
+
+  testWidgets('site consent keeps stale records visible after refresh failure',
+      (WidgetTester tester) async {
+    final _SequencedSiteConsentService service = _SequencedSiteConsentService(
+      snapshots: <Object>[
+        <SiteConsentRecord>[
+          SiteConsentRecord(
+            learnerId: 'learner-1',
+            learnerName: 'Ava Stone',
+            guardians: const <SiteConsentGuardianOption>[],
+          ),
+        ],
+        StateError('consent refresh unavailable'),
+      ],
+    );
+
+    await tester.binding.setSurfaceSize(const Size(1024, 1400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      _buildHarness(
+        appState: _buildSiteState(),
+        child: SiteConsentPage(service: service),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ava Stone'), findsOneWidget);
+    expect(find.text('No learner consent records are available for this site yet.'), findsNothing);
+
+    await tester.tap(find.byTooltip('Refresh'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Unable to refresh consent records right now. Showing the last successful data.'),
+      findsOneWidget,
+    );
+    expect(find.text('Ava Stone'), findsOneWidget);
+    expect(find.text('No learner consent records are available for this site yet.'), findsNothing);
   });
 }

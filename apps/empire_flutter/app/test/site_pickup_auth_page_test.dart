@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
 import 'package:scholesa_app/auth/app_state.dart';
+import 'package:scholesa_app/modules/checkin/checkin_models.dart';
 import 'package:scholesa_app/modules/site/site_pickup_auth_page.dart';
 import 'package:scholesa_app/modules/site/site_pickup_auth_service.dart';
 
@@ -24,6 +25,42 @@ class _ThrowingPickupAuthorizationService
   @override
   Future<List<SitePickupAuthorizationRecord>> listRecords(String siteId) async {
     throw StateError('pickup authorizations unavailable');
+  }
+}
+
+class _SequencedPickupAuthorizationService
+    extends SitePickupAuthorizationService {
+  _SequencedPickupAuthorizationService({
+    required this.recordSnapshots,
+    required this.learners,
+  }) : super(firestore: FakeFirebaseFirestore());
+
+  final List<Object> recordSnapshots;
+  final List<SitePickupAuthorizationLearnerOption> learners;
+  int _recordCallCount = 0;
+
+  @override
+  Future<List<SitePickupAuthorizationLearnerOption>> listLearners(
+    String siteId,
+  ) async {
+    return List<SitePickupAuthorizationLearnerOption>.from(learners);
+  }
+
+  @override
+  Future<List<SitePickupAuthorizationRecord>> listRecords(String siteId) async {
+    final Object snapshot = _recordCallCount < recordSnapshots.length
+        ? recordSnapshots[_recordCallCount]
+        : recordSnapshots.last;
+    _recordCallCount += 1;
+    if (snapshot is Exception) {
+      throw snapshot;
+    }
+    if (snapshot is Error) {
+      throw snapshot;
+    }
+    return List<SitePickupAuthorizationRecord>.from(
+      snapshot as List<SitePickupAuthorizationRecord>,
+    );
   }
 }
 
@@ -221,5 +258,66 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Retry'), findsOneWidget);
+  });
+
+  testWidgets('site pickup auth keeps stale coverage visible after refresh failure',
+      (WidgetTester tester) async {
+    final _SequencedPickupAuthorizationService service =
+        _SequencedPickupAuthorizationService(
+      learners: const <SitePickupAuthorizationLearnerOption>[
+        SitePickupAuthorizationLearnerOption(
+          learnerId: 'learner-1',
+          learnerName: 'Ava Stone',
+        ),
+      ],
+      recordSnapshots: <Object>[
+        <SitePickupAuthorizationRecord>[
+          SitePickupAuthorizationRecord(
+            id: 'pickup-1',
+            siteId: 'site-1',
+            learnerId: 'learner-1',
+            learnerName: 'Ava Stone',
+            pickups: const <AuthorizedPickup>[
+              AuthorizedPickup(
+                id: 'pickup-person-1',
+                learnerId: 'learner-1',
+                name: 'Alex Stone',
+                relationship: 'Mother',
+                phone: '555-0100',
+                verificationCode: 'AVA-123',
+                isPrimaryContact: true,
+              ),
+            ],
+            updatedBy: 'site-1-admin',
+            source: 'explicit',
+          ),
+        ],
+        StateError('pickup authorization refresh unavailable'),
+      ],
+    );
+
+    await tester.binding.setSurfaceSize(const Size(1024, 1400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      _buildHarness(
+        appState: _buildSiteState(),
+        child: SitePickupAuthPage(service: service),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ava Stone'), findsOneWidget);
+    expect(find.text('No pickup authorizations found'), findsNothing);
+
+    await tester.tap(find.byTooltip('Refresh'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Unable to refresh pickup authorizations right now. Showing the last successful data.'),
+      findsOneWidget,
+    );
+    expect(find.text('Ava Stone'), findsOneWidget);
+    expect(find.text('No pickup authorizations found'), findsNothing);
   });
 }
