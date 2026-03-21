@@ -160,7 +160,6 @@ class PartnerService extends ChangeNotifier {
     } catch (e) {
       debugPrint('Failed to load contracts: $e');
       _error = 'Failed to load contracts';
-      _contracts = <PartnerContract>[];
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -211,7 +210,6 @@ class PartnerService extends ChangeNotifier {
     } catch (e) {
       debugPrint('Failed to load partner launches: $e');
       _error = 'Failed to load partner launches';
-      _partnerLaunches = <PartnerLaunch>[];
     } finally {
       _isLoading = false;
       notifyListeners();

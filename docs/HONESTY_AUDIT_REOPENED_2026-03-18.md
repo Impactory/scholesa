@@ -77,6 +77,8 @@ This is the reopened honesty pass after blocker remediation, clean builds, live 
 20. Added direct partner listings proof for first-load outage and stale-refresh behavior.
 21. Hardened HQ user-admin audit logs so first-load failures expose a retryable error state and refresh failures keep the last successful audit history visible with a stale banner.
 22. Added direct HQ user-admin audit-log proof for stale-refresh honesty.
+23. Hardened partner contracts and launches so refresh failures preserve the last successful workflow data instead of clearing contracts or launch plans.
+24. Added direct partner contracting proof for stale contract and stale launch refresh behavior.
 
 ### Release and operations fixes
 
@@ -100,6 +102,7 @@ This is the reopened honesty pass after blocker remediation, clean builds, live 
 - Partner integrations honesty regressions passed: 4 passed, 0 failed.
 - Partner listings, integrations, and deliverables honesty regressions passed: 12 passed, 0 failed.
 - HQ user-admin audit-log honesty regressions passed: 12 passed, 0 failed.
+- Partner contracting workflow honesty regressions passed: 6 passed, 0 failed.
 
 ### Full Flutter gate verification
 
