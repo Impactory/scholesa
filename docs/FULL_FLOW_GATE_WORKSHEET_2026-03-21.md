@@ -14,9 +14,11 @@ Proven gates:
 2. Gate B `Real Mutation`
    - direct proof exists for feature-flag toggle persistence and failed-save handling
    - direct proof now exists for rollout-control validation and successful save behavior
-   - implementation exists for rollout alert triage and rollout escalation mutations
+   - direct proof now exists for rollout-escalation validation and successful save behavior
+   - implementation still exists for rollout alert triage mutations
 3. Gate C `Authoritative Reload`
    - direct proof now exists that rollout-control save triggers authoritative experiment reload
+   - direct proof now exists that rollout-escalation save triggers authoritative experiment reload
 4. Gate D `Recovery`
    - app-bar refresh exists and stale states preserve last successful data with visible failure detail
 5. Gate F `Accessibility And Discoverability`
@@ -27,8 +29,8 @@ Proven gates:
 Missing gates:
 
 1. Gate B `Real Mutation`
-   - focused route proof does not yet exercise rollout alert triage or rollout escalation saves and failures
-   - focused route proof does not yet cover rollout-control backend failure handling
+   - focused route proof does not yet exercise rollout alert triage saves and failures
+   - focused route proof does not yet cover rollout-control or rollout-escalation backend failure handling
 2. Gate E `Scope And Permission Correctness`
    - no focused route proof yet shows governance actions are correctly bounded to HQ/operator scope and delivery context
 3. Gate G `Telemetry And Auditability`
@@ -40,15 +42,15 @@ Missing gates:
 
 Blocking risk:
 
-- The route now directly proves rollout-control validation and save-plus-reload, but other high-consequence governance actions still lack focused route proof and scope/auditability certification.
+- The route now directly proves rollout-control and rollout-escalation validation and save-plus-reload, but rollout alert triage and explicit backend-failure handling still lack focused route proof and scope/auditability certification.
 
 Next proof task:
 
-1. Add a focused widget test for `Escalate alert` on `/hq/feature-flags`.
+1. Add a focused widget test for rollout alert triage on `/hq/feature-flags`.
 2. Prove both:
-   - validation failure when an active escalation is saved without an owner
-   - successful save path with authoritative reload and visible success state
-3. After that, add a failure-path proof for `Rollout control failed` so the mutation surface has both success and backend-failure coverage.
+   - a consequential alert action persists through the route surface
+   - the route reloads authoritatively and exposes the visible success state
+3. After that, add failure-path proof for `Rollout control failed` and `Rollout escalation failed` so the governance mutation surface has both success and backend-failure coverage.
 
 ## Template
 
