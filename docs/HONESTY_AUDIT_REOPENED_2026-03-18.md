@@ -142,6 +142,7 @@ Interpretation rule:
 51. Added direct `/site/provisioning` mutation-failure proof for learner, parent, guardian-link, cohort, and guardian-link-delete flows, and fixed the route so guardian-link delete failures surface the real service error instead of a generic hidden-failure fallback.
 52. Added direct `/site/provisioning` auditability proof for create, edit, and delete mutation telemetry so the focused route suite now verifies operator traces for learner creation, parent editing, and guardian-link deletion.
 53. Fixed `/site/provisioning` success flows to re-load authoritative route data after create, edit, and delete mutations, and added direct proof that audited provisioning mutations settle on canonical source-of-truth state rather than local-only optimistic state.
+54. Added direct educator attendance route proof for real enrolled-learner roster coupling plus attendance save success/failure, fixed attendance roster disposal so saving no longer triggers listener notifications while the widget tree is locked, and proved saved attendance reloads from Firestore when the roster is reopened.
 
 ### Release and operations fixes
 
@@ -156,7 +157,7 @@ Interpretation rule:
 
 - Focused regressions passed after the first remediation wave: 17 passed, 0 failed.
 - Focused educator follow-up regressions passed: 10 passed, 0 failed.
-- Focused attendance honesty regressions passed: 8 passed, 0 failed.
+- Focused attendance honesty regressions passed: 9 passed, 0 failed.
 - Focused operator accessibility follow-up suites passed: 29 passed, 0 failed.
 - Focused site ops recovery suites passed: 6 passed, 0 failed.
 - Focused site identity honesty regressions passed: 2 passed, 0 failed.
