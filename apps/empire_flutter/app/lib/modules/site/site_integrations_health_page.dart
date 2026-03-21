@@ -162,14 +162,14 @@ class _SiteIntegrationsHealthPageState
                 ),
               ),
             ),
-          if (!_isLoading && _loadError != null && _integrations.isNotEmpty)
+          if (!_isLoading && _loadError != null && _hasVisibleHealthData)
             Padding(
               padding: const EdgeInsets.only(bottom: 16),
               child: _buildStaleDataBanner(_loadError!),
             ),
-          if (!_isLoading && _loadError != null && _integrations.isEmpty)
+          if (!_isLoading && _loadError != null && !_hasVisibleHealthData)
             _buildLoadErrorState(_loadError!),
-          if (!_isLoading && _loadError == null && _integrations.isEmpty)
+          if (!_isLoading && _loadError == null && !_hasVisibleHealthData)
             Center(
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 20),
@@ -414,13 +414,13 @@ class _SiteIntegrationsHealthPageState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const Row(
+          Row(
             children: <Widget>[
               Icon(Icons.error_outline_rounded, color: ScholesaColors.error),
               SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Unable to load integrations health',
+                  _t('Unable to load integrations health'),
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     color: ScholesaColors.textPrimary,
@@ -808,6 +808,7 @@ class _SiteIntegrationsHealthPageState
   }
 
   Future<void> _loadIntegrations() async {
+    final bool hadVisibleHealthData = _hasVisibleHealthData;
     final AppState appState = context.read<AppState>();
     final String siteId = (appState.activeSiteId ??
             (appState.siteIds.isNotEmpty ? appState.siteIds.first : ''))
@@ -915,7 +916,11 @@ class _SiteIntegrationsHealthPageState
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _loadError = _t('Unable to load integrations health right now.');
+        _loadError = hadVisibleHealthData
+            ? _t(
+                'Unable to refresh integrations health right now. Showing the last successful data.',
+              )
+            : _t('Unable to load integrations health right now.');
       });
     } finally {
       if (mounted) {
@@ -923,6 +928,9 @@ class _SiteIntegrationsHealthPageState
       }
     }
   }
+
+  bool get _hasVisibleHealthData =>
+      _integrations.isNotEmpty || _rosterImports.isNotEmpty;
 
   Future<Map<String, dynamic>> _fetchHealthPayload(String siteId) async {
     final HttpsCallable callable =
