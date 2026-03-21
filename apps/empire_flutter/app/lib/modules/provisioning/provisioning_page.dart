@@ -843,6 +843,12 @@ class _LinksTab extends StatelessWidget {
               Navigator.pop(context);
               final bool success = await service.deleteGuardianLink(link.id);
               if (context.mounted) {
+                if (success) {
+                  final String? siteId = context.read<AppState>().activeSiteId;
+                  if (siteId != null) {
+                    await service.loadGuardianLinks(siteId);
+                  }
+                }
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(success
@@ -1692,6 +1698,8 @@ class _CreateCohortDialogState extends State<_CreateCohortDialog> {
     setState(() => _isSubmitting = false);
 
     if (result != null) {
+      await service.loadCohortLaunches(siteId);
+      if (!mounted) return;
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1987,6 +1995,8 @@ class _EditLearnerDialogState extends State<_EditLearnerDialog> {
     setState(() => _isSubmitting = false);
 
     if (result != null) {
+      await service.loadLearners(siteId);
+      if (!mounted) return;
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(_tProvisioning(context, 'Learner updated'))),
