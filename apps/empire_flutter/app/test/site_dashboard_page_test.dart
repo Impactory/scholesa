@@ -37,6 +37,7 @@ Widget _buildHarness({
   required FirestoreService firestoreService,
   required AppState appState,
   SharedPreferences? sharedPreferences,
+  Widget? page,
 }) {
   return MultiProvider(
     providers: <SingleChildWidget>[
@@ -45,7 +46,7 @@ Widget _buildHarness({
     ],
     child: MaterialApp(
       theme: ScholesaTheme.light,
-      home: SiteDashboardPage(sharedPreferences: sharedPreferences),
+      home: page ?? SiteDashboardPage(sharedPreferences: sharedPreferences),
     ),
   );
 }
@@ -332,5 +333,83 @@ void main() {
     );
     expect(find.text('March KPI Pack'), findsOneWidget);
     expect(find.text('No KPI packs yet'), findsNothing);
+  });
+
+  testWidgets('site dashboard shows recent activity unavailable instead of fake emptiness',
+      (WidgetTester tester) async {
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: FakeFirebaseFirestore(),
+      auth: _MockFirebaseAuth(),
+    );
+
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
+    await tester.pumpWidget(
+      _buildHarness(
+        firestoreService: firestoreService,
+        appState: _buildSiteState(),
+        page: SiteDashboardPage(
+          recentActivityLoader: (String siteId) async {
+            throw StateError('activity unavailable');
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Recent activity is temporarily unavailable'), findsOneWidget);
+    expect(
+      find.text('We could not load recent activity right now. Retry to check the current state.'),
+      findsOneWidget,
+    );
+    expect(find.text('No recent activity yet'), findsNothing);
+    expect(find.text('Retry'), findsWidgets);
+  });
+
+  testWidgets('site dashboard keeps stale recent activity visible after refresh failure',
+      (WidgetTester tester) async {
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: FakeFirebaseFirestore(),
+      auth: _MockFirebaseAuth(),
+    );
+    int loadCount = 0;
+
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
+    await tester.pumpWidget(
+      _buildHarness(
+        firestoreService: firestoreService,
+        appState: _buildSiteState(),
+        page: SiteDashboardPage(
+          recentActivityLoader: (String siteId) async {
+            loadCount += 1;
+            if (loadCount == 1) {
+              return <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'icon': 'warning',
+                  'color': 'warning',
+                  'title': 'Incident reported',
+                  'subtitle': 'Microscope kit spill in Studio B',
+                  'time': 'just now',
+                },
+              ];
+            }
+            throw StateError('activity refresh unavailable');
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Microscope kit spill in Studio B'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Refresh'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Unable to refresh recent activity right now. Showing the last successful data.'),
+      findsOneWidget,
+    );
+    expect(find.text('Microscope kit spill in Studio B'), findsOneWidget);
+    expect(find.text('No recent activity yet'), findsNothing);
   });
 }

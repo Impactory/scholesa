@@ -87,6 +87,11 @@ class SiteDashboardI18n {
     'All Recent Activity': '全部最近活动',
     'Loading...': '加载中...',
     'No recent activity yet': '暂无最近活动',
+    'Recent activity is temporarily unavailable': '最近活动暂时不可用',
+    'We could not load recent activity right now. Retry to check the current state.':
+      '我们暂时无法加载最近活动。请重试以检查当前状态。',
+    'Unable to refresh recent activity right now. Showing the last successful data.':
+      '当前无法刷新最近活动。正在显示最近一次成功加载的数据。',
     'Incident reported': '事件已上报',
     'Site operation event': '站点运营事件',
     'Refresh': '刷新',
@@ -175,6 +180,11 @@ class SiteDashboardI18n {
     'All Recent Activity': '全部最近活動',
     'Loading...': '載入中...',
     'No recent activity yet': '目前沒有最近活動',
+    'Recent activity is temporarily unavailable': '最近活動暫時不可用',
+    'We could not load recent activity right now. Retry to check the current state.':
+      '我們暫時無法載入最近活動。請重試以確認目前狀態。',
+    'Unable to refresh recent activity right now. Showing the last successful data.':
+      '目前無法刷新最近活動。正在顯示最近一次成功載入的資料。',
     'Incident reported': '事件已回報',
     'Site operation event': '站點營運事件',
     'Refresh': '重新整理',
