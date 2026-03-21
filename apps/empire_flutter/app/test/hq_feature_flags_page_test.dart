@@ -743,9 +743,15 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
-    expect(find.text('Rollout control'), findsOneWidget);
+    final Finder rolloutControlButton =
+      find.widgetWithText(TextButton, 'Rollout control');
 
-    await tester.tap(find.widgetWithText(TextButton, 'Rollout control'));
+    await tester.ensureVisible(rolloutControlButton);
+    await tester.pumpAndSettle();
+
+    expect(rolloutControlButton, findsOneWidget);
+
+    await tester.tap(rolloutControlButton);
     await tester.pumpAndSettle();
 
     await tester.tap(find.byType(DropdownButtonFormField<String>).last);
@@ -775,9 +781,15 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(workflowBridge.experimentsLoadCount, 1);
-    expect(find.text('Rollout control'), findsOneWidget);
+    final Finder rolloutControlButton =
+      find.widgetWithText(TextButton, 'Rollout control');
 
-    await tester.tap(find.widgetWithText(TextButton, 'Rollout control'));
+    await tester.ensureVisible(rolloutControlButton);
+    await tester.pumpAndSettle();
+
+    expect(rolloutControlButton, findsOneWidget);
+
+    await tester.tap(rolloutControlButton);
     await tester.pumpAndSettle();
 
     await tester.tap(find.byType(DropdownButtonFormField<String>).last);
