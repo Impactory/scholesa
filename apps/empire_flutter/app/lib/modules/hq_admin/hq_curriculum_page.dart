@@ -1816,15 +1816,77 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
   }
 
   Future<void> _loadCurricula() async {
-    final FirestoreService? firestoreService = _maybeFirestoreService();
-    if (firestoreService == null) {
-      if (!mounted) return;
-      setState(() => _curricula = <_Curriculum>[]);
+    if (!mounted) return;
+    setState(() {
+      _isLoading = true;
+      _curriculaError = null;
+    });
+
+    if (widget.curriculaLoader != null) {
+      try {
+        final List<Map<String, dynamic>> rows = await widget.curriculaLoader!();
+        final List<_Curriculum> loaded =
+            rows.map((Map<String, dynamic> data) {
+          final String id = (data['id'] as String?) ?? 'curriculum';
+          final String title =
+              (data['title'] as String?)?.trim().isNotEmpty == true
+                  ? (data['title'] as String).trim()
+                  : 'Curriculum';
+          final DateTime lastUpdated = _toDateTime(data['updatedAt']) ??
+              _toDateTime(data['createdAt']) ??
+              DateTime.now();
+          return _Curriculum(
+            id: id,
+            title: title,
+            description: (data['description'] as String? ?? '').trim(),
+            pillar: _pillarFromData(data),
+            template: (data['template'] as String? ?? 'Project sprint').trim(),
+            difficulty: (data['difficulty'] as String? ?? 'Intermediate').trim(),
+            misconceptionTags: _parseStringList(data['misconceptionTags']),
+            mediaFormat: (data['mediaFormat'] as String? ?? 'Mixed media').trim(),
+            capabilityIds: _parseStringList(data['capabilityIds']),
+            capabilityTitles: _parseStringList(data['capabilityTitles']),
+            version: (data['version'] as String?) ?? '1.0',
+            approvalStatus: (data['approvalStatus'] as String? ?? 'draft').trim(),
+            status: _parseCurriculumStatus(data['status'] as String?),
+            lastUpdated: lastUpdated,
+          );
+        }).toList()
+              ..sort((_Curriculum a, _Curriculum b) =>
+                  b.lastUpdated.compareTo(a.lastUpdated));
+        if (!mounted) return;
+        setState(() {
+          _curricula = loaded;
+          _curriculaError = null;
+        });
+      } catch (_) {
+        if (!mounted) return;
+        setState(() {
+          _curriculaError = _tHqCurriculum(
+            context,
+            'We could not load curricula right now. Retry to check the current state.',
+          );
+        });
+      } finally {
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
+      }
       return;
     }
 
-    if (!mounted) return;
-    setState(() => _isLoading = true);
+    final FirestoreService? firestoreService = _maybeFirestoreService();
+    if (firestoreService == null) {
+      setState(() {
+        _curriculaError = _tHqCurriculum(
+          context,
+          'We could not load curricula right now. Retry to check the current state.',
+        );
+        _isLoading = false;
+      });
+      return;
+    }
+
     try {
       QuerySnapshot<Map<String, dynamic>> snapshot;
       try {
@@ -1874,10 +1936,18 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
           b.lastUpdated.compareTo(a.lastUpdated));
 
       if (!mounted) return;
-      setState(() => _curricula = loaded);
+      setState(() {
+        _curricula = loaded;
+        _curriculaError = null;
+      });
     } catch (_) {
       if (!mounted) return;
-      setState(() => _curricula = <_Curriculum>[]);
+      setState(() {
+        _curriculaError = _tHqCurriculum(
+          context,
+          'We could not load curricula right now. Retry to check the current state.',
+        );
+      });
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -1886,6 +1956,48 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
   }
 
   Future<void> _loadTrainingCycles() async {
+    if (widget.trainingCyclesLoader != null) {
+      try {
+        final List<Map<String, dynamic>> rows =
+            await widget.trainingCyclesLoader!();
+        final List<_TrainingCycle> cycles = rows.map((Map<String, dynamic> row) {
+          return _TrainingCycle(
+            id: row['id'] as String? ?? '',
+            title: row['title'] as String? ?? 'Training Cycle',
+            trainingType: row['trainingType'] as String? ?? 'term_launch',
+            audience: row['audience'] as String? ?? 'educators',
+            termLabel: row['termLabel'] as String? ?? 'Current term',
+            status: row['status'] as String? ?? 'scheduled',
+            updatedAt: WorkflowBridgeService.toDateTime(row['updatedAt']) ??
+                WorkflowBridgeService.toDateTime(row['createdAt']) ??
+                WorkflowBridgeService.toDateTime(row['startsAt']) ??
+                DateTime.now(),
+            siteId: row['siteId'] as String?,
+            startsAt: WorkflowBridgeService.toDateTime(row['startsAt']),
+            notes: row['notes'] as String?,
+          );
+        }).toList(growable: false)
+          ..sort(
+            (_TrainingCycle a, _TrainingCycle b) =>
+                b.updatedAt.compareTo(a.updatedAt),
+          );
+        if (!mounted) return;
+        setState(() {
+          _trainingCycles = cycles;
+          _trainingCyclesError = null;
+        });
+      } catch (_) {
+        if (!mounted) return;
+        setState(() {
+          _trainingCyclesError = _tHqCurriculum(
+            context,
+            'We could not load training cycles right now. Retry to check the current state.',
+          );
+        });
+      }
+      return;
+    }
+
     try {
       final List<Map<String, dynamic>> rows =
           await _workflowBridgeService.listTrainingCycles(limit: 80);
@@ -1911,10 +2023,18 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
               b.updatedAt.compareTo(a.updatedAt),
         );
       if (!mounted) return;
-      setState(() => _trainingCycles = cycles);
+      setState(() {
+        _trainingCycles = cycles;
+        _trainingCyclesError = null;
+      });
     } catch (_) {
       if (!mounted) return;
-      setState(() => _trainingCycles = <_TrainingCycle>[]);
+      setState(() {
+        _trainingCyclesError = _tHqCurriculum(
+          context,
+          'We could not load training cycles right now. Retry to check the current state.',
+        );
+      });
     }
   }
 

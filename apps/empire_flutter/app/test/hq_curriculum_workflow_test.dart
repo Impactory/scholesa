@@ -35,6 +35,7 @@ Future<void> _pumpPage(
   WidgetTester tester, {
   required FakeFirebaseFirestore firestore,
   required AppState appState,
+  Widget page = const HqCurriculumPage(),
 }) async {
   final FirestoreService firestoreService = FirestoreService(
     firestore: firestore,
@@ -48,7 +49,7 @@ Future<void> _pumpPage(
       ],
       child: MaterialApp(
         theme: _testTheme,
-        home: const HqCurriculumPage(),
+        home: page,
       ),
     ),
   );
@@ -278,6 +279,146 @@ void main() {
         data['misconceptionTags'],
         <String>['fractions', 'sequencing'],
       );
+    });
+
+    testWidgets('curriculum page shows explicit unavailable state on failed first load',
+        (WidgetTester tester) async {
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+      final AppState appState = _buildHqState();
+      await _pumpPage(
+        tester,
+        firestore: firestore,
+        appState: appState,
+        page: HqCurriculumPage(
+          curriculaLoader: () async {
+            throw Exception('curricula unavailable');
+          },
+          trainingCyclesLoader: () async => const <Map<String, dynamic>>[],
+        ),
+      );
+
+      expect(find.text('Curricula are temporarily unavailable'), findsOneWidget);
+      expect(
+        find.text('We could not load curricula right now. Retry to check the current state.'),
+        findsOneWidget,
+      );
+      expect(find.text('No published curricula'), findsNothing);
+    });
+
+    testWidgets('curriculum page keeps stale curricula visible after refresh failure',
+        (WidgetTester tester) async {
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+      final AppState appState = _buildHqState();
+      int curriculaCalls = 0;
+      await _pumpPage(
+        tester,
+        firestore: firestore,
+        appState: appState,
+        page: HqCurriculumPage(
+          curriculaLoader: () async {
+            curriculaCalls += 1;
+            if (curriculaCalls > 1) {
+              throw Exception('curricula refresh failed');
+            }
+            return <Map<String, dynamic>>[
+              <String, dynamic>{
+                'id': 'curriculum-1',
+                'title': 'Published Capability Sprint',
+                'description': 'Capability-first published curriculum',
+                'pillar': 'Future Skills',
+                'template': 'Project sprint',
+                'difficulty': 'Intermediate',
+                'mediaFormat': 'Mixed media',
+                'version': '1.0',
+                'approvalStatus': 'approved',
+                'status': 'published',
+                'updatedAt': DateTime(2026, 3, 20).toIso8601String(),
+              },
+            ];
+          },
+          trainingCyclesLoader: () async => const <Map<String, dynamic>>[],
+        ),
+      );
+
+      expect(find.text('Published Capability Sprint'), findsOneWidget);
+
+      await tester.tap(find.byIcon(Icons.refresh_rounded).first);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Unable to refresh curricula right now. Showing the last successful data.'),
+        findsOneWidget,
+      );
+      expect(find.text('Published Capability Sprint'), findsOneWidget);
+    });
+
+    testWidgets('training cycles sheet shows explicit unavailable state on failed load',
+        (WidgetTester tester) async {
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+      final AppState appState = _buildHqState();
+      await _pumpPage(
+        tester,
+        firestore: firestore,
+        appState: appState,
+        page: HqCurriculumPage(
+          curriculaLoader: () async => const <Map<String, dynamic>>[],
+          trainingCyclesLoader: () async {
+            throw Exception('training cycles unavailable');
+          },
+        ),
+      );
+
+      await tester.tap(find.byIcon(Icons.school_rounded));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Training cycles are temporarily unavailable'), findsOneWidget);
+      expect(
+        find.text('We could not load training cycles right now. Retry to check the current state.'),
+        findsOneWidget,
+      );
+      expect(find.text('No training cycles yet'), findsNothing);
+    });
+
+    testWidgets('training cycles sheet keeps stale cycles visible after refresh failure',
+        (WidgetTester tester) async {
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+      final AppState appState = _buildHqState();
+      int cycleCalls = 0;
+      await _pumpPage(
+        tester,
+        firestore: firestore,
+        appState: appState,
+        page: HqCurriculumPage(
+          curriculaLoader: () async => const <Map<String, dynamic>>[],
+          trainingCyclesLoader: () async {
+            cycleCalls += 1;
+            if (cycleCalls > 1) {
+              throw Exception('training cycle refresh failed');
+            }
+            return <Map<String, dynamic>>[
+              <String, dynamic>{
+                'id': 'cycle-1',
+                'title': 'Term Launch Cohort',
+                'trainingType': 'term_launch',
+                'audience': 'educators',
+                'termLabel': 'Term 2',
+                'status': 'scheduled',
+                'updatedAt': DateTime(2026, 3, 20).toIso8601String(),
+              },
+            ];
+          },
+        ),
+      );
+
+      await tester.tap(find.byIcon(Icons.school_rounded));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Term Launch Cohort'), findsOneWidget);
+      expect(
+        find.text('Unable to refresh training cycles right now. Showing the last successful data.'),
+        findsOneWidget,
+      );
+      expect(find.text('Term Launch Cohort'), findsOneWidget);
     });
   });
 }

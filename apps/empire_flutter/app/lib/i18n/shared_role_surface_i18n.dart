@@ -185,6 +185,11 @@ class SharedRoleSurfaceI18n {
     'HQ analytics report prepared for export': 'HQ 分析报告已准备好导出',
     'Export': '导出',
     'Curriculum Manager': '课程管理',
+    'Curricula are temporarily unavailable': '课程暂时不可用',
+    'We could not load curricula right now. Retry to check the current state.':
+      '我们暂时无法加载课程。请重试以检查当前状态。',
+    'Unable to refresh curricula right now. Showing the last successful data.':
+      '目前无法刷新课程。正在显示最近一次成功加载的数据。',
     'Published': '已发布',
     'In Review': '审核中',
     'Drafts': '草稿',
@@ -251,6 +256,11 @@ class SharedRoleSurfaceI18n {
     'Transition failed': '状态流转失败',
     'Training Cycles': '培训周期',
     'No training cycles yet': '暂无培训周期',
+    'Training cycles are temporarily unavailable': '培训周期暂时不可用',
+    'We could not load training cycles right now. Retry to check the current state.':
+      '我们暂时无法加载培训周期。请重试以检查当前状态。',
+    'Unable to refresh training cycles right now. Showing the last successful data.':
+      '目前无法刷新培训周期。正在显示最近一次成功加载的数据。',
     'Create Training Cycle': '创建培训周期',
     'Training Type': '培训类型',
     'Audience': '受众',
@@ -442,6 +452,11 @@ class SharedRoleSurfaceI18n {
     'HQ analytics report prepared for export': 'HQ 分析報告已準備好匯出',
     'Export': '匯出',
     'Curriculum Manager': '課程管理',
+    'Curricula are temporarily unavailable': '課程暫時不可用',
+    'We could not load curricula right now. Retry to check the current state.':
+      '我們暫時無法載入課程。請重試以檢查目前狀態。',
+    'Unable to refresh curricula right now. Showing the last successful data.':
+      '目前無法重新整理課程。正在顯示最近一次成功載入的資料。',
     'Published': '已發佈',
     'In Review': '審核中',
     'Drafts': '草稿',
@@ -508,6 +523,11 @@ class SharedRoleSurfaceI18n {
     'Transition failed': '狀態轉換失敗',
     'Training Cycles': '培訓週期',
     'No training cycles yet': '目前沒有培訓週期',
+    'Training cycles are temporarily unavailable': '培訓週期暫時不可用',
+    'We could not load training cycles right now. Retry to check the current state.':
+      '我們暫時無法載入培訓週期。請重試以檢查目前狀態。',
+    'Unable to refresh training cycles right now. Showing the last successful data.':
+      '目前無法重新整理培訓週期。正在顯示最近一次成功載入的資料。',
     'Create Training Cycle': '建立培訓週期',
     'Training Type': '培訓類型',
     'Audience': '受眾',
