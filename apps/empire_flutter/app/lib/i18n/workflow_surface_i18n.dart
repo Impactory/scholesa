@@ -163,6 +163,11 @@ class WorkflowSurfaceI18n {
     'Unable to update site day status right now.': '目前无法更新站点日状态。',
     'Unable to update kit checklist right now.': '目前无法更新设备检查清单。',
     'Unable to update this approval right now.': '目前无法更新此审批。',
+    'Users are temporarily unavailable': '用户暂时不可用',
+    'We could not load users right now. Retry to check the current state.':
+        '我们暂时无法加载用户。请重试以检查当前状态。',
+    'Unable to refresh users right now. Showing the last successful data.':
+        '目前无法刷新用户。正在显示最近一次成功加载的数据。',
     'Sites are temporarily unavailable': '站点暂时不可用',
     'We could not load sites right now. Retry to check the current state.':
         '我们暂时无法加载站点。请重试以检查当前状态。',
@@ -173,6 +178,17 @@ class WorkflowSurfaceI18n {
         '我们暂时无法加载安全事件。请重试以检查当前状态。',
     'Unable to refresh safety incidents right now. Showing the last successful data.':
         '目前无法刷新安全事件。正在显示最近一次成功加载的数据。',
+    'Feature flags are temporarily unavailable': '功能标记暂时不可用',
+    'We could not load feature flags right now. Retry to check the current state.':
+        '我们暂时无法加载功能标记。请重试以检查当前状态。',
+    'Unable to refresh feature flags right now. Showing the last successful data.':
+        '目前无法刷新功能标记。正在显示最近一次成功加载的数据。',
+    'Federated-learning experiments are temporarily unavailable':
+        '联邦学习实验暂时不可用',
+    'We could not load federated-learning experiments right now. Retry to check the current state.':
+        '我们暂时无法加载联邦学习实验。请重试以检查当前状态。',
+    'Unable to refresh federated-learning experiments right now. Showing the last successful data.':
+        '目前无法刷新联邦学习实验。正在显示最近一次成功加载的数据。',
     'Mission Planning AI Help': '任务规划 AI 帮助',
     'See support ideas while designing missions for each learner':
         '在为每位学习者设计任务时查看支持建议',
@@ -921,6 +937,11 @@ class WorkflowSurfaceI18n {
     'Unable to update site day status right now.': '目前無法更新站點日狀態。',
     'Unable to update kit checklist right now.': '目前無法更新設備檢查清單。',
     'Unable to update this approval right now.': '目前無法更新此審批。',
+    'Users are temporarily unavailable': '使用者暫時不可用',
+    'We could not load users right now. Retry to check the current state.':
+        '我們暫時無法載入使用者。請重試以檢查目前狀態。',
+    'Unable to refresh users right now. Showing the last successful data.':
+        '目前無法重新整理使用者。正在顯示最近一次成功載入的資料。',
     'Sites are temporarily unavailable': '站點暫時不可用',
     'We could not load sites right now. Retry to check the current state.':
         '我們暫時無法載入站點。請重試以檢查目前狀態。',
@@ -931,6 +952,17 @@ class WorkflowSurfaceI18n {
         '我們暫時無法載入安全事件。請重試以檢查目前狀態。',
     'Unable to refresh safety incidents right now. Showing the last successful data.':
         '目前無法重新整理安全事件。正在顯示最近一次成功載入的資料。',
+    'Feature flags are temporarily unavailable': '功能旗標暫時不可用',
+    'We could not load feature flags right now. Retry to check the current state.':
+        '我們暫時無法載入功能旗標。請重試以檢查目前狀態。',
+    'Unable to refresh feature flags right now. Showing the last successful data.':
+        '目前無法重新整理功能旗標。正在顯示最近一次成功載入的資料。',
+    'Federated-learning experiments are temporarily unavailable':
+        '聯邦學習實驗暫時不可用',
+    'We could not load federated-learning experiments right now. Retry to check the current state.':
+        '我們暫時無法載入聯邦學習實驗。請重試以檢查目前狀態。',
+    'Unable to refresh federated-learning experiments right now. Showing the last successful data.':
+        '目前無法重新整理聯邦學習實驗。正在顯示最近一次成功載入的資料。',
     'Mission Planning AI Help': '任務規劃 AI 幫助',
     'See support ideas while designing missions for each learner':
         '在為每位學習者設計任務時查看支持建議',

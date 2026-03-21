@@ -17,10 +17,13 @@ class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
 class _FakeUserAdminService extends UserAdminService {
   _FakeUserAdminService({
     List<UserModel>? users,
+    List<SiteModel>? sites,
     List<AuditLogEntry>? auditLogs,
+    String? error,
     this.hasLoadedAuditLogs = true,
     this.isLoadingAuditLogs = false,
     this.auditLogError,
+    this.onLoadUsers,
   })  : _fakeAuditLogs =
             List<AuditLogEntry>.from(auditLogs ?? const <AuditLogEntry>[]),
         _fakeUsers = List<UserModel>.from(
@@ -37,6 +40,8 @@ class _FakeUserAdminService extends UserAdminService {
                 ),
               ],
         ),
+        _fakeSites = List<SiteModel>.from(sites ?? const <SiteModel>[]),
+        _error = error,
         super(
           firestoreService: FirestoreService(
             firestore: FakeFirebaseFirestore(),
@@ -48,6 +53,7 @@ class _FakeUserAdminService extends UserAdminService {
   String? lastUpdatedUserId;
   String? lastUpdatedDisplayName;
   int loadAuditLogsCallCount = 0;
+  final Future<void> Function(_FakeUserAdminService service)? onLoadUsers;
   @override
   final String? auditLogError;
   @override
@@ -56,13 +62,18 @@ class _FakeUserAdminService extends UserAdminService {
   final bool isLoadingAuditLogs;
 
   final List<UserModel> _fakeUsers;
+  final List<SiteModel> _fakeSites;
   final List<AuditLogEntry> _fakeAuditLogs;
+  String? _error;
 
   @override
   List<UserModel> get users => List<UserModel>.unmodifiable(_fakeUsers);
 
   @override
-  List<SiteModel> get sites => const <SiteModel>[];
+  List<SiteModel> get sites => List<SiteModel>.unmodifiable(_fakeSites);
+
+  @override
+  String? get error => _error;
 
   @override
   List<AuditLogEntry> get auditLogs => List<AuditLogEntry>.unmodifiable(_fakeAuditLogs);
@@ -85,6 +96,9 @@ class _FakeUserAdminService extends UserAdminService {
   @override
   Future<void> loadUsers() async {
     loadUsersCalled = true;
+    if (onLoadUsers != null) {
+      await onLoadUsers!(this);
+    }
   }
 
   @override
@@ -99,6 +113,25 @@ class _FakeUserAdminService extends UserAdminService {
     _fakeUsers[0] = _fakeUsers[0].copyWith(displayName: displayName);
     notifyListeners();
     return true;
+  }
+
+  void setLoadState({
+    String? error,
+    List<UserModel>? users,
+    List<SiteModel>? sites,
+  }) {
+    _error = error;
+    if (users != null) {
+      _fakeUsers
+        ..clear()
+        ..addAll(users);
+    }
+    if (sites != null) {
+      _fakeSites
+        ..clear()
+        ..addAll(sites);
+    }
+    notifyListeners();
   }
 }
 
@@ -347,5 +380,131 @@ void main() {
       findsOneWidget,
     );
     expect(find.byType(CircularProgressIndicator), findsNothing);
+  });
+
+  testWidgets('hq user admin users tab shows explicit unavailable state on failed load',
+      (WidgetTester tester) async {
+    final _FakeUserAdminService service = _FakeUserAdminService(
+      users: const <UserModel>[],
+      error: 'Unable to load users right now',
+    );
+
+    await tester.binding.setSurfaceSize(const Size(1440, 2000));
+    await tester.pumpWidget(
+      _buildHarness(
+        providers: <SingleChildWidget>[
+          ChangeNotifierProvider<UserAdminService>.value(value: service),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Users are temporarily unavailable'), findsOneWidget);
+    expect(
+      find.text('We could not load users right now. Retry to check the current state.'),
+      findsOneWidget,
+    );
+    expect(find.text('No users found'), findsNothing);
+  });
+
+  testWidgets('hq user admin users tab keeps stale users visible after refresh failure',
+      (WidgetTester tester) async {
+    final _FakeUserAdminService service = _FakeUserAdminService(
+      onLoadUsers: (_FakeUserAdminService current) async {
+        current.setLoadState(error: 'Unable to load users right now');
+      },
+    );
+
+    await tester.binding.setSurfaceSize(const Size(1440, 2000));
+    await tester.pumpWidget(
+      _buildHarness(
+        providers: <SingleChildWidget>[
+          ChangeNotifierProvider<UserAdminService>.value(value: service),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ava Learner'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.refresh));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Unable to refresh users right now. Showing the last successful data.'),
+      findsOneWidget,
+    );
+    expect(find.text('Ava Learner'), findsOneWidget);
+    expect(find.text('No users found'), findsNothing);
+  });
+
+  testWidgets('hq user admin sites tab shows explicit unavailable state on failed load',
+      (WidgetTester tester) async {
+    final _FakeUserAdminService service = _FakeUserAdminService(
+      sites: const <SiteModel>[],
+      error: 'Unable to load sites right now',
+    );
+
+    await tester.binding.setSurfaceSize(const Size(1440, 2000));
+    await tester.pumpWidget(
+      _buildHarness(
+        providers: <SingleChildWidget>[
+          ChangeNotifierProvider<UserAdminService>.value(value: service),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Sites'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sites are temporarily unavailable'), findsOneWidget);
+    expect(
+      find.text('We could not load sites right now. Retry to check the current state.'),
+      findsOneWidget,
+    );
+    expect(find.text('No sites available'), findsNothing);
+  });
+
+  testWidgets('hq user admin sites tab keeps stale sites visible after refresh failure',
+      (WidgetTester tester) async {
+    final _FakeUserAdminService service = _FakeUserAdminService(
+      sites: <SiteModel>[
+        SiteModel(
+          id: 'site-1',
+          name: 'Studio One',
+          createdAt: DateTime(2026, 1, 1),
+          location: 'Cape Town',
+        ),
+      ],
+      onLoadUsers: (_FakeUserAdminService current) async {
+        current.setLoadState(error: 'Unable to load sites right now');
+      },
+    );
+
+    await tester.binding.setSurfaceSize(const Size(1440, 2000));
+    await tester.pumpWidget(
+      _buildHarness(
+        providers: <SingleChildWidget>[
+          ChangeNotifierProvider<UserAdminService>.value(value: service),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Sites'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Studio One'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.refresh));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Unable to refresh sites right now. Showing the last successful data.'),
+      findsOneWidget,
+    );
+    expect(find.text('Studio One'), findsOneWidget);
+    expect(find.text('No sites available'), findsNothing);
   });
 }

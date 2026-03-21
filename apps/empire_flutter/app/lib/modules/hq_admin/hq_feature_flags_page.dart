@@ -107,6 +107,8 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
       <String, FederatedLearningUpdateSummaryModel>{};
   bool _isLoadingFlags = false;
   bool _isLoadingExperiments = false;
+  String? _flagsError;
+  String? _experimentsError;
 
   WorkflowBridgeService get _workflowBridge =>
       widget._workflowBridge ?? WorkflowBridgeService.instance;
@@ -945,6 +947,20 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         foregroundColor: Colors.white,
         actions: <Widget>[
           IconButton(
+            icon: const Icon(Icons.refresh_rounded),
+            onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: const <String, dynamic>{
+                  'module': 'hq_feature_flags',
+                  'cta_id': 'refresh_feature_flags_page',
+                  'surface': 'appbar',
+                },
+              );
+              _loadData();
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.history_rounded),
             onPressed: () {
               TelemetryService.instance.logEvent(
@@ -989,14 +1005,30 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
                 ),
               ),
             ),
+          if (!_isLoadingFlags && _flagsError != null && _flags.isEmpty)
+            _buildLoadErrorCard(
+              title: _tHqFeatureFlags(
+                context,
+                'Feature flags are temporarily unavailable',
+              ),
+              message: _flagsError!,
+            ),
           if (!_isLoadingFlags && _flags.isEmpty)
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 20),
-                child: Text(
-                  _tHqFeatureFlags(context, 'No feature flags found'),
-                  style: const TextStyle(color: ScholesaColors.textSecondary),
+            if (_flagsError == null)
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  child: Text(
+                    _tHqFeatureFlags(context, 'No feature flags found'),
+                    style: const TextStyle(color: ScholesaColors.textSecondary),
+                  ),
                 ),
+              ),
+          if (!_isLoadingFlags && _flagsError != null && _flags.isNotEmpty)
+            _buildStaleDataBanner(
+              _tHqFeatureFlags(
+                context,
+                'Unable to refresh feature flags right now. Showing the last successful data.',
               ),
             ),
           if (_flags.isNotEmpty)
@@ -1063,6 +1095,14 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
             padding: EdgeInsets.symmetric(vertical: 12),
             child: LinearProgressIndicator(minHeight: 3),
           )
+        else if (_experimentsError != null && _experiments.isEmpty)
+          _buildLoadErrorCard(
+            title: _tHqFeatureFlags(
+              context,
+              'Federated-learning experiments are temporarily unavailable',
+            ),
+            message: _experimentsError!,
+          )
         else if (_experiments.isEmpty)
           Container(
             width: double.infinity,
@@ -1082,6 +1122,15 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
           )
         else
           ...<Widget>[
+            if (_experimentsError != null) ...<Widget>[
+              _buildStaleDataBanner(
+                _tHqFeatureFlags(
+                  context,
+                  'Unable to refresh federated-learning experiments right now. Showing the last successful data.',
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
             if (rolloutGovernanceQueue is! SizedBox) ...<Widget>[
               rolloutGovernanceQueue,
               const SizedBox(height: 12),
@@ -8973,6 +9022,78 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
     ]);
   }
 
+  Widget _buildLoadErrorCard({
+    required String title,
+    required String message,
+  }) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: ScholesaColors.error.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: ScholesaColors.error.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              const Icon(Icons.error_outline_rounded, color: ScholesaColors.error),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: ScholesaColors.error,
+                      ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            style: const TextStyle(color: ScholesaColors.textSecondary),
+          ),
+          const SizedBox(height: 12),
+          FilledButton.icon(
+            onPressed: _loadData,
+            icon: const Icon(Icons.refresh_rounded),
+            label: Text(_tHqFeatureFlags(context, 'Retry')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStaleDataBanner(String message) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.orange.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        children: <Widget>[
+          const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(color: ScholesaColors.textPrimary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _loadFlags() async {
     if (!mounted) return;
     setState(() => _isLoadingFlags = true);
@@ -8985,10 +9106,16 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
       if (!mounted) return;
       setState(() {
         _flags = loaded;
+        _flagsError = null;
       });
     } catch (_) {
       if (!mounted) return;
-      setState(() => _flags = <_FeatureFlag>[]);
+      setState(() {
+        _flagsError = _tHqFeatureFlags(
+          context,
+          'We could not load feature flags right now. Retry to check the current state.',
+        );
+      });
     } finally {
       if (mounted) {
         setState(() => _isLoadingFlags = false);
@@ -9307,40 +9434,15 @@ class _HqFeatureFlagsPageState extends State<HqFeatureFlagsPage> {
         _promotionRecordsByPackageId = promotionsByPackageId;
         _promotionRevocationRecordsByPackageId = revocationsByPackageId;
         _updateSummariesById = summariesById;
+        _experimentsError = null;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _experiments = <FederatedLearningExperimentModel>[];
-        _aggregationRunsByExperiment =
-            <String, List<FederatedLearningAggregationRunModel>>{};
-        _mergeArtifactsByExperiment =
-            <String, List<FederatedLearningMergeArtifactModel>>{};
-        _candidatePackagesByExperiment =
-            <String, List<FederatedLearningCandidateModelPackageModel>>{};
-        _pilotEvidenceRecordsByPackageId =
-            <String, FederatedLearningPilotEvidenceRecordModel>{};
-        _pilotApprovalRecordsByPackageId =
-            <String, FederatedLearningPilotApprovalRecordModel>{};
-        _pilotExecutionRecordsByPackageId =
-            <String, FederatedLearningPilotExecutionRecordModel>{};
-        _runtimeDeliveryRecordsByPackageId =
-            <String, FederatedLearningRuntimeDeliveryRecordModel>{};
-        _runtimeActivationRecordsByPackageId =
-            <String, List<FederatedLearningRuntimeActivationRecordModel>>{};
-        _runtimeRolloutAlertsByDeliveryId =
-            <String, FederatedLearningRuntimeRolloutAlertRecordModel>{};
-        _runtimeRolloutEscalationsByDeliveryId =
-            <String, FederatedLearningRuntimeRolloutEscalationRecordModel>{};
-        _runtimeRolloutControlsByDeliveryId =
-            <String, FederatedLearningRuntimeRolloutControlRecordModel>{};
-        _experimentReviewRecordsByExperimentId =
-            <String, FederatedLearningExperimentReviewRecordModel>{};
-        _promotionRecordsByPackageId =
-            <String, FederatedLearningCandidatePromotionRecordModel>{};
-        _promotionRevocationRecordsByPackageId = <String,
-            FederatedLearningCandidatePromotionRevocationRecordModel>{};
-        _updateSummariesById = <String, FederatedLearningUpdateSummaryModel>{};
+        _experimentsError = _tHqFeatureFlags(
+          context,
+          'We could not load federated-learning experiments right now. Retry to check the current state.',
+        );
       });
     } finally {
       if (mounted) {
