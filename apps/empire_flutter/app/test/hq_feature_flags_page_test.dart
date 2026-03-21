@@ -570,6 +570,7 @@ class _FakeUpdateSummaryRepository
 void main() {
   _FakeWorkflowBridgeService buildRolloutGovernanceHarness({
     bool failOnUpsertRolloutAlert = false,
+    bool failOnUpsertRolloutEscalation = false,
     bool failOnUpsertRolloutControl = false,
   }) {
     return _FakeWorkflowBridgeService(
@@ -661,7 +662,7 @@ void main() {
       runtimeRolloutEscalations: const <Map<String, dynamic>>[],
       runtimeRolloutControls: const <Map<String, dynamic>>[],
       failOnUpsertRolloutAlert: failOnUpsertRolloutAlert,
-      failOnUpsertRolloutEscalation: false,
+      failOnUpsertRolloutEscalation: failOnUpsertRolloutEscalation,
       failOnUpsertRolloutControl: failOnUpsertRolloutControl,
     );
   }
@@ -1102,6 +1103,52 @@ void main() {
   });
 
   testWidgets(
+      'hq feature flags rollout control shows explicit failure when save fails',
+      (WidgetTester tester) async {
+    final _FakeWorkflowBridgeService workflowBridge =
+        buildRolloutGovernanceHarness(failOnUpsertRolloutControl: true);
+
+    await tester.pumpWidget(buildHarness(workflowBridge: workflowBridge));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(workflowBridge.experimentsLoadCount, 1);
+    final Finder rolloutControlButton =
+        find.widgetWithText(TextButton, 'Rollout control');
+
+    await tester.ensureVisible(rolloutControlButton);
+    await tester.pumpAndSettle();
+
+    expect(rolloutControlButton, findsOneWidget);
+
+    await tester.tap(rolloutControlButton);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(DropdownButtonFormField<String>).last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('restricted').last);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Owner user ID'),
+      'hq-operator-1',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Control reason'),
+      'HQ tried to restrict rollout while backend mutation failed.',
+    );
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(workflowBridge.recordedRolloutControlUpdates, isEmpty);
+    expect(workflowBridge.experimentsLoadCount, 1);
+    expect(find.text('Rollout control failed'), findsOneWidget);
+    expect(find.text('Rollout control'), findsOneWidget);
+  });
+
+  testWidgets(
       'hq feature flags escalation requires an owner while issue remains active',
       (WidgetTester tester) async {
     final _FakeWorkflowBridgeService workflowBridge =
@@ -1183,5 +1230,47 @@ void main() {
     expect(workflowBridge.experimentsLoadCount, 2);
     expect(find.text('Rollout escalation saved'), findsOneWidget);
     expect(find.text('Update escalation'), findsOneWidget);
+  });
+
+  testWidgets(
+      'hq feature flags escalation shows explicit failure when save fails',
+      (WidgetTester tester) async {
+    final _FakeWorkflowBridgeService workflowBridge =
+        buildRolloutGovernanceHarness(failOnUpsertRolloutEscalation: true);
+
+    await tester.pumpWidget(buildHarness(workflowBridge: workflowBridge));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(workflowBridge.experimentsLoadCount, 1);
+
+    final Finder escalateAlertButton =
+        find.widgetWithText(TextButton, 'Escalate alert');
+
+    await tester.ensureVisible(escalateAlertButton);
+    await tester.pumpAndSettle();
+
+    expect(escalateAlertButton, findsOneWidget);
+
+    await tester.tap(escalateAlertButton);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Owner user ID'),
+      'hq-escalation-owner',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Escalation notes'),
+      'HQ attempted to escalate the rollout issue but the backend write failed.',
+    );
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(workflowBridge.recordedRolloutEscalationUpdates, isEmpty);
+    expect(workflowBridge.experimentsLoadCount, 1);
+    expect(find.text('Rollout escalation failed'), findsOneWidget);
+    expect(find.text('Escalate alert'), findsOneWidget);
   });
 }
