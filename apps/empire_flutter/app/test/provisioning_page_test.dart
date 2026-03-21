@@ -11,6 +11,7 @@ import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/modules/provisioning/provisioning_models.dart';
 import 'package:scholesa_app/modules/provisioning/provisioning_page.dart';
 import 'package:scholesa_app/modules/provisioning/provisioning_service.dart';
+import 'package:scholesa_app/services/telemetry_service.dart';
 import 'package:scholesa_app/services/workflow_bridge_service.dart';
 import 'package:scholesa_app/services/api_client.dart';
 
@@ -420,6 +421,19 @@ Widget _buildHarness({required ProvisioningService service}) {
       home: const ProvisioningPage(),
     ),
   );
+}
+
+Future<List<Map<String, dynamic>>> _captureTelemetry(
+  Future<void> Function() body,
+) async {
+  final List<Map<String, dynamic>> events = <Map<String, dynamic>>[];
+  await TelemetryService.runWithDispatcher(
+    (Map<String, dynamic> payload) async {
+      events.add(Map<String, dynamic>.from(payload));
+    },
+    body,
+  );
+  return events;
 }
 
 Future<void> _seedProvisioningData(
@@ -890,7 +904,7 @@ void main() {
       findsAtLeastNWidgets(1),
     );
     expect(find.text('Learner created successfully'), findsNothing);
-    expect(find.text('Failed Learner'), findsNothing);
+    expect(find.text('Failed Learner'), findsOneWidget);
     expect(find.text('Add Learner'), findsOneWidget);
   });
 
@@ -919,7 +933,7 @@ void main() {
       findsAtLeastNWidgets(1),
     );
     expect(find.text('Parent created successfully'), findsNothing);
-    expect(find.text('Failed Parent'), findsNothing);
+    expect(find.text('Failed Parent'), findsOneWidget);
     expect(find.text('Add Parent'), findsOneWidget);
   });
 
@@ -997,7 +1011,7 @@ void main() {
       findsAtLeastNWidgets(1),
     );
     expect(find.text('Cohort launch created successfully'), findsNothing);
-    expect(find.text('Failed Cohort'), findsNothing);
+    expect(find.text('Failed Cohort'), findsOneWidget);
     expect(find.text('Create Cohort Launch'), findsOneWidget);
   });
 
@@ -1105,5 +1119,129 @@ void main() {
     );
     expect(find.text('Link removed'), findsNothing);
     expect(find.text('Parent One → Learner One'), findsOneWidget);
+  });
+
+  testWidgets('provisioning page logs learner create submit telemetry',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final ProvisioningService service = ProvisioningService(
+      apiClient: ApiClient(
+        auth: _MockFirebaseAuth(),
+        baseUrl: 'http://localhost',
+      ),
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+      useProvisioningApi: false,
+    );
+
+    final List<Map<String, dynamic>> events = await _captureTelemetry(() async {
+      await pumpProvisioningPage(tester, service: service);
+
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextFormField).at(0), 'Telemetry Learner');
+      await tester.enterText(
+        find.byType(TextFormField).at(1),
+        'telemetry.learner@example.com',
+      );
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Create'));
+      await tester.pumpAndSettle();
+    });
+
+    expect(
+      events.any((Map<String, dynamic> event) {
+        final Map<String, dynamic> metadata =
+            Map<String, dynamic>.from(event['metadata'] as Map);
+        return event['event'] == 'cta.clicked' &&
+            metadata['module'] == 'provisioning' &&
+            metadata['cta_id'] == 'submit_create_learner';
+      }),
+      isTrue,
+    );
+  });
+
+  testWidgets('provisioning page logs parent edit submit telemetry',
+      (WidgetTester tester) async {
+    final ProvisioningService service = _DeterministicProvisioningService(
+      parents: const <ParentProfile>[
+        ParentProfile(
+          id: 'parent-1',
+          siteId: 'site-1',
+          userId: 'parent-1',
+          displayName: 'Parent One',
+          email: 'parent1@example.com',
+          phone: '+61 400 555 100',
+        ),
+      ],
+    );
+
+    final List<Map<String, dynamic>> events = await _captureTelemetry(() async {
+      await pumpProvisioningPage(tester, service: service);
+
+      await tester.tap(find.text('Parents'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.more_vert).first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Edit Parent'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextFormField).first, 'Parent Telemetry');
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Save'));
+      await tester.pumpAndSettle();
+    });
+
+    expect(
+      events.any((Map<String, dynamic> event) {
+        final Map<String, dynamic> metadata =
+            Map<String, dynamic>.from(event['metadata'] as Map);
+        return event['event'] == 'cta.clicked' &&
+            metadata['module'] == 'provisioning' &&
+            metadata['cta_id'] == 'submit_edit_parent' &&
+            metadata['parent_id'] == 'parent-1';
+      }),
+      isTrue,
+    );
+  });
+
+  testWidgets('provisioning page logs guardian link delete telemetry',
+      (WidgetTester tester) async {
+    final ProvisioningService service = _DeterministicProvisioningService(
+      guardianLinks: <GuardianLink>[
+        GuardianLink(
+          id: 'link-1',
+          siteId: 'site-1',
+          parentId: 'parent-1',
+          learnerId: 'learner-1',
+          relationship: 'Parent',
+          isPrimary: true,
+          createdAt: DateTime(2026, 3, 21),
+          createdBy: 'site-admin-1',
+          parentName: 'Parent One',
+          learnerName: 'Learner One',
+        ),
+      ],
+    );
+
+    final List<Map<String, dynamic>> events = await _captureTelemetry(() async {
+      await pumpProvisioningPage(tester, service: service);
+
+      await tester.tap(find.text('Links'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.delete_outline).first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete'));
+      await tester.pumpAndSettle();
+    });
+
+    expect(
+      events.any((Map<String, dynamic> event) {
+        final Map<String, dynamic> metadata =
+            Map<String, dynamic>.from(event['metadata'] as Map);
+        return event['event'] == 'cta.clicked' &&
+            metadata['module'] == 'provisioning' &&
+            metadata['cta_id'] == 'delete_guardian_link' &&
+            metadata['link_id'] == 'link-1';
+      }),
+      isTrue,
+    );
   });
 }
