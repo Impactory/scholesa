@@ -139,6 +139,7 @@ Interpretation rule:
 49. Added direct `/site/provisioning` route proof so learner, parent, guardian-link, and cohort creation plus active-site guardian-link deletion are now verified in the focused page suite, and `/site/provisioning` now has direct site/HQ route-gate proof.
 50. Fixed `/site/provisioning` learner and parent edit persistence in Firestore fallback mode and added direct route proof that the edit dialogs now persist updated learner and parent data instead of depending on unavailable API patch calls.
 51. Added direct `/site/provisioning` mutation-failure proof for learner, parent, guardian-link, cohort, and guardian-link-delete flows, and fixed the route so guardian-link delete failures surface the real service error instead of a generic hidden-failure fallback.
+52. Added direct `/site/provisioning` auditability proof for create, edit, and delete mutation telemetry so the focused route suite now verifies operator traces for learner creation, parent editing, and guardian-link deletion.
 
 ### Release and operations fixes
 
