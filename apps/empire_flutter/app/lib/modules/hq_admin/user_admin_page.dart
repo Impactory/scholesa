@@ -505,11 +505,10 @@ class _UserAdminPageState extends State<UserAdminPage>
           itemBuilder: (BuildContext context, int index) {
             if (service.auditLogError != null && index == 0) {
               return _buildStaleDataBanner(
-                _tUserAdmin(
+                '${_tUserAdmin(
                       context,
                       'Unable to refresh audit logs right now. Showing the last successful data.',
-                    ) +
-                    ' ${service.auditLogError!}',
+                    )} ${service.auditLogError!}',
               );
             }
             final int logIndex =

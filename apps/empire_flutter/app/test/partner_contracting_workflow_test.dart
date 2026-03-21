@@ -67,8 +67,8 @@ class _FakePartnerService extends PartnerService {
   final bool failLaunches;
   final bool failContractsOnRefresh;
   final bool failLaunchesOnRefresh;
-  List<PartnerContract> _contractsValue;
-  List<PartnerLaunch> _launchesValue;
+  final List<PartnerContract> _contractsValue;
+  final List<PartnerLaunch> _launchesValue;
   bool _isLoadingValue = false;
   String? _errorValue;
   int _contractsLoadCount = 0;
