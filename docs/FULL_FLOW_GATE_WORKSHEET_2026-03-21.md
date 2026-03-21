@@ -143,25 +143,24 @@ Proven gates:
    - direct route proof now exists that `/educator/attendance` only allows `educator`, `site`, and `hq` roles
 6. Gate F `Accessibility And Discoverability`
    - recovery controls are labeled and stale-state messaging is assistive-tech visible in the audited attendance surfaces
+7. Gate G `Telemetry And Auditability`
+   - direct route proof now exists that the primary attendance save emits the `attendance_save` CTA trace, that live saves emit `attendance.recorded`, and that offline saves emit `attendance.record_queued`
 
 Missing gates:
 
-1. Gate G `Telemetry And Auditability`
-   - telemetry or persisted operator audit traces for attendance saves are not yet directly proven in the focused route suite
-2. Gate H `Educational Truth`
+1. Gate H `Educational Truth`
    - attendance remains operational rather than capability evidence by itself, but its downstream coupling to evidence-bearing session and learner-growth workflows is not yet certified here
-3. Gate I `AI Transparency`
+2. Gate I `AI Transparency`
    - no AI claim is made on the route, but wider workflow coupling is still outside this focused route proof
 
 Blocking risk:
 
-- `/educator/attendance` now directly proves honest loading, stale recovery, live roster sourcing from active enrollments, save success, explicit save failure, authoritative reload on reopen, truthful offline queueing, and route-level access scope. Remaining risk is no longer route-local save or access honesty; it is wider educator workflow coupling and any missing audit trace requirements for attendance actions.
+- `/educator/attendance` now directly proves honest loading, stale recovery, live roster sourcing from active enrollments, save success, explicit save failure, authoritative reload on reopen, truthful offline queueing, route-level access scope, and route-local attendance telemetry on both live-save and offline-queue paths. Remaining risk is no longer route-local save, access, or auditability honesty; it is wider educator workflow coupling.
 
 Next proof task:
 
 1. Verify that session-linked evidence and follow-on educator workflows consume attendance truth without introducing fake completion or misleading learner-growth claims.
-2. Add direct auditability proof if attendance saves must surface operator traces or persisted audit records in-product.
-3. Keep attendance classified `Full-flow partial` until downstream capability/evidence coupling is verified end to end.
+2. Keep attendance classified `Full-flow partial` until downstream capability/evidence coupling is verified end to end.
 
 ## Template
 
