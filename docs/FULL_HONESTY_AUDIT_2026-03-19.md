@@ -25,6 +25,7 @@ Scope: Flutter app enabled routes, current runtime behavior, current test eviden
 
 - Focused page, workflow, regression, placeholder-action, and honesty test coverage now backs nearly the full enabled Flutter route surface.
 - Fresh verification in this pass:
+  - partner listings, integrations, and deliverables proof pass: 12 passed, 0 failed
   - partner integrations proof pass: 4 passed, 0 failed
   - educator learner supports and partner deliverables proof pass: 12 passed, 0 failed
   - educator mission plans proof pass: 6 passed, 0 failed
@@ -53,7 +54,7 @@ Scope: Flutter app enabled routes, current runtime behavior, current test eviden
 | Site dashboard, billing, consent, pickup auth, ops, audit, provisioning, sessions | Yes | Yes | Mostly yes | Mostly yes | Mostly yes on audited provisioning and sessions failure/stale-data paths, partial on deeper create/edit depth | Yes | No obvious fake primary action remains in the audited paths | Strong for beta |
 | Site identity and incident/admin support surfaces | Yes | Mostly yes | Partly | Partly | Mostly yes on the audited identity, incidents, and integrations-health failure path, partial on the wider cluster | Yes | Less misleading than before, still not comprehensively proven | Beta-safe, not gold |
 | Partner contracts and deliverables | Yes | Mostly yes | Mostly yes | Mostly yes | Mostly yes on the audited contracts/launches plus deliverables first-load and stale-refresh failure paths, partial on deeper mutation depth | Yes | No obvious fake primary action in audited path | Strong for beta |
-| Partner listings and payouts | Yes | Mostly yes | Partly | Partly | Mostly yes on the audited payouts path, partial on the wider cluster | Yes | Listings create-and-persist path is now directly proven; broader partner depth is still partial | Beta-safe, not gold |
+| Partner listings and payouts | Yes | Mostly yes | Partly | Partly | Mostly yes on the audited payouts path plus listings first-load and stale-refresh failure paths, partial on the wider cluster | Yes | Listings create-and-persist path is now directly proven and no longer degrades outages into fake empty state; broader partner depth is still partial | Beta-safe, not gold |
 | HQ sites, role switcher, exports, analytics | Yes | Yes | Yes | Yes | Mostly yes | Yes | No obvious fake primary path in audited route tests | Strong for beta |
 | HQ billing, approvals, audit, safety, integrations health, feature flags, user admin | Yes | Mostly yes | Partly | Partly | Mostly yes on the audited billing, approvals, audit, and honest-empty feature-flags paths, partial across the wider cluster | Yes | Feature-flags empty-state proof now exists, but operator depth remains workflow-only in places | Beta-safe, not gold |
 | Cross-role messages, notifications, profile, settings | Yes | Yes | Yes | Yes | Mostly yes | Yes | No obvious fake primary action | Strong for beta |

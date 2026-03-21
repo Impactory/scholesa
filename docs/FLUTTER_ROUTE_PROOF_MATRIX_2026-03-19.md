@@ -90,7 +90,7 @@ Highest-value remaining blind spots:
 
 | Route | Proof | Primary evidence | Blind spot |
 | --- | --- | --- | --- |
-| `/partner/listings` | direct | `apps/empire_flutter/app/test/partner_listings_page_test.dart` | Create-and-persist path is proven; edit flow still lacks direct proof |
+| `/partner/listings` | direct | `apps/empire_flutter/app/test/partner_listings_page_test.dart` | First-load outage, stale-refresh retention, and create-and-persist proof are direct; edit flow still lacks direct proof |
 | `/partner/contracts` | direct | `apps/empire_flutter/app/test/partner_contracting_workflow_test.dart` | Happy-path contracts/launches and launch-failure honesty are proven; deeper mutation flows still rely on broader workflow tests |
 | `/partner/deliverables` | direct | `apps/empire_flutter/app/test/partner_deliverables_page_test.dart` | Honest first-load outage, stale-refresh retention, and submit flow are directly proven; deeper contract mutation breadth still lives on the contracts workflow |
 | `/partner/integrations` | direct | `apps/empire_flutter/app/test/partner_integrations_page_test.dart` | First-load outage, stale-refresh retention, live connection rendering, and honest localized empty-state copy are directly proven |
