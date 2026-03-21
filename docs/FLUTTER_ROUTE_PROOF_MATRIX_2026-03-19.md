@@ -100,7 +100,7 @@ Highest-value remaining blind spots:
 
 | Route | Proof | Primary evidence | Blind spot |
 | --- | --- | --- | --- |
-| `/hq/user-admin` | direct | `apps/empire_flutter/app/test/hq_user_admin_profile_edit_test.dart` | — |
+| `/hq/user-admin` | direct | `apps/empire_flutter/app/test/hq_user_admin_profile_edit_test.dart` | Users, sites, audit-log first-load failure, and stale audit-log refresh truth are directly proven; deeper user mutation breadth is still wider than the focused audit-log proof |
 | `/hq/role-switcher` | direct | `apps/empire_flutter/app/test/hq_role_switcher_page_test.dart` | — |
 | `/hq/sites` | direct | `apps/empire_flutter/app/test/hq_sites_page_test.dart` | — |
 | `/hq/analytics` | direct | `apps/empire_flutter/app/test/hq_analytics_page_test.dart` | — |

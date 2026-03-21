@@ -75,6 +75,8 @@ This is the reopened honesty pass after blocker remediation, clean builds, live 
 18. Added direct partner integrations proof for first-load outage and stale-refresh behavior.
 19. Hardened partner listings so listing outages no longer collapse into `No Listings Yet` and refresh failures keep the last successful marketplace inventory visible.
 20. Added direct partner listings proof for first-load outage and stale-refresh behavior.
+21. Hardened HQ user-admin audit logs so first-load failures expose a retryable error state and refresh failures keep the last successful audit history visible with a stale banner.
+22. Added direct HQ user-admin audit-log proof for stale-refresh honesty.
 
 ### Release and operations fixes
 
@@ -97,6 +99,7 @@ This is the reopened honesty pass after blocker remediation, clean builds, live 
 - Educator learner supports and partner deliverables honesty regressions passed: 12 passed, 0 failed.
 - Partner integrations honesty regressions passed: 4 passed, 0 failed.
 - Partner listings, integrations, and deliverables honesty regressions passed: 12 passed, 0 failed.
+- HQ user-admin audit-log honesty regressions passed: 12 passed, 0 failed.
 
 ### Full Flutter gate verification
 
