@@ -32,15 +32,16 @@ class AttendanceService extends ChangeNotifier {
     Future<AttendanceOccurrencesSnapshot> Function()? occurrencesLoader,
   })  : _apiClient = apiClient,
         _syncCoordinator = syncCoordinator,
-        _firestore = firestore ?? FirebaseFirestore.instance,
+        _firestore = firestore,
         _occurrencesLoader = occurrencesLoader;
   // ignore: unused_field — reserved for future REST API migration
   final ApiClient _apiClient;
   final SyncCoordinator _syncCoordinator;
-  final FirebaseFirestore _firestore;
+  final FirebaseFirestore? _firestore;
   final Future<AttendanceOccurrencesSnapshot> Function()? _occurrencesLoader;
   final String? educatorId;
   final String? siteId;
+  FirebaseFirestore get firestoreInstance => _firestore ?? FirebaseFirestore.instance;
 
   List<SessionOccurrence> _todayOccurrences = <SessionOccurrence>[];
   SessionOccurrence? _currentOccurrence;
@@ -93,7 +94,7 @@ class AttendanceService extends ChangeNotifier {
         final Map<String, dynamic> data = doc.data();
 
         final QuerySnapshot<Map<String, dynamic>> enrollmentsSnapshot =
-            await _firestore
+            await firestoreInstance
                 .collection('enrollments')
                 .where('sessionId', isEqualTo: data['sessionId'])
                 .where('status', isEqualTo: 'active')
@@ -127,7 +128,7 @@ class AttendanceService extends ChangeNotifier {
 
     try {
       // Get occurrence details
-      final DocumentSnapshot<Map<String, dynamic>> occDoc = await _firestore
+        final DocumentSnapshot<Map<String, dynamic>> occDoc = await firestoreInstance
           .collection('sessionOccurrences')
           .doc(occurrenceId)
           .get();
@@ -144,7 +145,7 @@ class AttendanceService extends ChangeNotifier {
 
       // Get enrollments for this session
       final QuerySnapshot<Map<String, dynamic>> enrollmentsSnapshot =
-          await _firestore
+            await firestoreInstance
               .collection('enrollments')
               .where('sessionId', isEqualTo: sessionId)
               .where('status', isEqualTo: 'active')
@@ -152,7 +153,7 @@ class AttendanceService extends ChangeNotifier {
 
       // Get existing attendance records for this occurrence
       final QuerySnapshot<Map<String, dynamic>> attendanceSnapshot =
-          await _firestore
+            await firestoreInstance
               .collection('attendanceRecords')
               .where('occurrenceId', isEqualTo: occurrenceId)
               .get();
@@ -177,7 +178,7 @@ class AttendanceService extends ChangeNotifier {
 
           // Get learner details
           final DocumentSnapshot<Map<String, dynamic>> learnerDoc =
-              await _firestore.collection('users').doc(learnerId).get();
+              await firestoreInstance.collection('users').doc(learnerId).get();
 
           final Map<String, dynamic>? learnerData = learnerDoc.data();
           final Map<String, dynamic>? existingAttendance =
@@ -235,7 +236,7 @@ class AttendanceService extends ChangeNotifier {
   Future<void> recordAttendance(AttendanceRecord record) async {
     try {
       if (_syncCoordinator.isOnline) {
-        await _firestore.collection('attendanceRecords').add(<String, dynamic>{
+        await firestoreInstance.collection('attendanceRecords').add(<String, dynamic>{
           'occurrenceId': record.occurrenceId,
           'learnerId': record.learnerId,
           'status': record.status.name,
@@ -298,11 +299,11 @@ class AttendanceService extends ChangeNotifier {
     try {
       final AttendanceBatchSaveResult result;
       if (_syncCoordinator.isOnline) {
-        final WriteBatch batch = _firestore.batch();
+        final WriteBatch batch = firestoreInstance.batch();
 
         for (final AttendanceRecord record in records) {
           final DocumentReference<Map<String, dynamic>> docRef =
-              _firestore.collection('attendanceRecords').doc();
+              firestoreInstance.collection('attendanceRecords').doc();
           batch.set(docRef, <String, dynamic>{
             'occurrenceId': record.occurrenceId,
             'learnerId': record.learnerId,
@@ -463,7 +464,7 @@ class AttendanceService extends ChangeNotifier {
 
     if (educatorId != null && educatorId!.isNotEmpty) {
       await _appendOccurrenceQuery(
-        query: _firestore
+        query: firestoreInstance
             .collection('sessionOccurrences')
             .where('startTime', isGreaterThanOrEqualTo: startTs)
             .where('startTime', isLessThan: endTs)
@@ -473,7 +474,7 @@ class AttendanceService extends ChangeNotifier {
       );
     } else if (siteId != null && siteId!.isNotEmpty) {
       await _appendOccurrenceQuery(
-        query: _firestore
+        query: firestoreInstance
             .collection('sessionOccurrences')
             .where('startTime', isGreaterThanOrEqualTo: startTs)
             .where('startTime', isLessThan: endTs)
@@ -485,7 +486,7 @@ class AttendanceService extends ChangeNotifier {
 
     if (merged.isEmpty) {
       await _appendOccurrenceQuery(
-        query: _firestore
+        query: firestoreInstance
             .collection('sessionOccurrences')
             .where('startTime', isGreaterThanOrEqualTo: startTs)
             .where('startTime', isLessThan: endTs)
@@ -497,7 +498,7 @@ class AttendanceService extends ChangeNotifier {
 
     if (merged.isEmpty) {
       await _appendOccurrenceQuery(
-        query: _firestore
+        query: firestoreInstance
             .collection('sessionOccurrences')
             .where('date', isGreaterThanOrEqualTo: startTs)
             .where('date', isLessThan: endTs)
