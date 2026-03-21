@@ -67,6 +67,11 @@ class LearnerSurfaceI18n {
     'Unable to load credentials right now.': '暂时无法加载凭证。',
     'Unable to refresh credentials right now. Showing the last successful data.':
         '当前无法刷新凭证。正在显示最近一次成功加载的数据。',
+    'Portfolio data unavailable right now.': '目前无法访问作品集数据。',
+    'We could not load portfolio data right now. Retry to check the current state.':
+        '我们暂时无法加载作品集数据。请重试以检查当前状态。',
+    'Unable to refresh portfolio right now. Showing the last successful data.':
+        '当前无法刷新作品集。正在显示最近一次成功加载的数据。',
     'Credential title unavailable': '凭证标题不可用',
     'Retry': '重试',
     'Refresh': '刷新',
@@ -267,6 +272,11 @@ class LearnerSurfaceI18n {
     'Unable to load credentials right now.': '暫時無法載入憑證。',
     'Unable to refresh credentials right now. Showing the last successful data.':
         '目前無法刷新憑證。正在顯示最近一次成功載入的資料。',
+    'Portfolio data unavailable right now.': '目前無法存取作品集資料。',
+    'We could not load portfolio data right now. Retry to check the current state.':
+        '我們暫時無法載入作品集資料。請重試以確認目前狀態。',
+    'Unable to refresh portfolio right now. Showing the last successful data.':
+        '目前無法刷新作品集。正在顯示最近一次成功載入的資料。',
     'Credential title unavailable': '憑證標題不可用',
     'Retry': '重試',
     'Refresh': '重新整理',

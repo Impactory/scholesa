@@ -19,11 +19,29 @@ String _tLearnerPortfolio(BuildContext context, String input) {
   return LearnerSurfaceI18n.text(context, input);
 }
 
+class LearnerPortfolioSnapshot {
+  const LearnerPortfolioSnapshot({
+    this.profile,
+    this.items = const <PortfolioItemModel>[],
+    this.credentials = const <CredentialModel>[],
+  });
+
+  final LearnerProfileModel? profile;
+  final List<PortfolioItemModel> items;
+  final List<CredentialModel> credentials;
+}
+
 /// Learner Portfolio Page - Achievements, badges, and skill showcase
 class LearnerPortfolioPage extends StatefulWidget {
-  const LearnerPortfolioPage({super.key, this.sharedPreferences});
+  const LearnerPortfolioPage({
+    super.key,
+    this.sharedPreferences,
+    this.portfolioStateLoader,
+  });
 
   final SharedPreferences? sharedPreferences;
+  final Future<LearnerPortfolioSnapshot> Function(String learnerId, String siteId)?
+      portfolioStateLoader;
 
   @override
   State<LearnerPortfolioPage> createState() => _LearnerPortfolioPageState();
@@ -44,6 +62,7 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
   List<PortfolioItemModel> _portfolioItems = const <PortfolioItemModel>[];
   List<CredentialModel> _credentials = const <CredentialModel>[];
   bool _isPortfolioLoading = false;
+  String? _portfolioLoadError;
 
   String _t(String input) => _tLearnerPortfolio(context, input);
 
@@ -222,45 +241,34 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
     final FirestoreService? firestoreService = _maybeFirestoreService();
     final String learnerId = appState.userId?.trim() ?? '';
     final String siteId = _activeSiteId(appState);
+    final bool hadVisibleData = _hasVisiblePortfolioData;
 
     if (firestoreService == null || learnerId.isEmpty || siteId.isEmpty) {
       if (!mounted) return;
       setState(() {
-        _learnerProfile = null;
-        _portfolioItems = const <PortfolioItemModel>[];
-        _credentials = const <CredentialModel>[];
+        _portfolioLoadError = _t('Portfolio data unavailable right now.');
         _isPortfolioLoading = false;
       });
       return;
     }
 
-    setState(() => _isPortfolioLoading = true);
+    setState(() {
+      _isPortfolioLoading = true;
+      _portfolioLoadError = null;
+    });
     final FirebaseFirestore firestore = firestoreService.firestore;
-    final LearnerProfileRepository profileRepository =
-        LearnerProfileRepository(firestore: firestore);
-    final PortfolioItemRepository portfolioItemRepository =
-        PortfolioItemRepository(firestore: firestore);
-    final CredentialRepository credentialRepository =
-        CredentialRepository(firestore: firestore);
 
     try {
-      final List<Object?> results =
-          await Future.wait<Object?>(<Future<Object?>>[
-        profileRepository.getByLearnerAndSite(
-          learnerId: learnerId,
-          siteId: siteId,
-        ),
-        portfolioItemRepository.listByLearner(learnerId),
-        credentialRepository.listByLearner(
-          learnerId,
-          siteId: siteId,
-          limit: 50,
-        ),
-      ]);
-      final LearnerProfileModel? profile =
-          results.first as LearnerProfileModel?;
-      final List<PortfolioItemModel> items = (results[1]
-              as List<PortfolioItemModel>)
+      final LearnerPortfolioSnapshot snapshot =
+          await (widget.portfolioStateLoader != null
+              ? widget.portfolioStateLoader!(learnerId, siteId)
+              : _loadPortfolioSnapshot(
+                  firestore: firestore,
+                  learnerId: learnerId,
+                  siteId: siteId,
+                ));
+      final LearnerProfileModel? profile = snapshot.profile;
+      final List<PortfolioItemModel> items = snapshot.items
           .where((PortfolioItemModel item) => item.siteId.trim() == siteId)
           .toList(growable: false)
         ..sort((PortfolioItemModel a, PortfolioItemModel b) {
@@ -271,21 +279,117 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
           return bMillis.compareTo(aMillis);
         });
       final List<CredentialModel> credentials =
-          (results.last as List<CredentialModel>).toList(growable: false);
+          snapshot.credentials.toList(growable: false);
       if (!mounted) return;
       setState(() {
         _learnerProfile = profile;
         _portfolioItems = items;
         _credentials = credentials;
+        _portfolioLoadError = null;
         _isPortfolioLoading = false;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _credentials = const <CredentialModel>[];
+        _portfolioLoadError = hadVisibleData
+            ? _t(
+                'Unable to refresh portfolio right now. Showing the last successful data.',
+              )
+            : _t(
+                'We could not load portfolio data right now. Retry to check the current state.',
+              );
         _isPortfolioLoading = false;
       });
     }
+  }
+
+  Future<LearnerPortfolioSnapshot> _loadPortfolioSnapshot({
+    required FirebaseFirestore firestore,
+    required String learnerId,
+    required String siteId,
+  }) async {
+    final LearnerProfileRepository profileRepository =
+        LearnerProfileRepository(firestore: firestore);
+    final PortfolioItemRepository portfolioItemRepository =
+        PortfolioItemRepository(firestore: firestore);
+    final CredentialRepository credentialRepository =
+        CredentialRepository(firestore: firestore);
+
+    final List<Object?> results = await Future.wait<Object?>(<Future<Object?>>[
+      profileRepository.getByLearnerAndSite(
+        learnerId: learnerId,
+        siteId: siteId,
+      ),
+      portfolioItemRepository.listByLearner(learnerId),
+      credentialRepository.listByLearner(
+        learnerId,
+        siteId: siteId,
+        limit: 50,
+      ),
+    ]);
+
+    return LearnerPortfolioSnapshot(
+      profile: results.first as LearnerProfileModel?,
+      items: (results[1] as List<PortfolioItemModel>).toList(growable: false),
+      credentials: (results.last as List<CredentialModel>).toList(growable: false),
+    );
+  }
+
+  bool get _hasVisiblePortfolioData =>
+      _learnerProfile != null ||
+      _portfolioItems.isNotEmpty ||
+      _credentials.isNotEmpty;
+
+  Widget _buildPortfolioBanner(String message) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.orange.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.orange.withValues(alpha: 0.35)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(color: ScholesaColors.textPrimary),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPortfolioLoadErrorState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Text(
+              _portfolioLoadError!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 16),
+            FilledButton.tonalIcon(
+              onPressed: _loadPortfolioState,
+              icon: const Icon(Icons.refresh_rounded),
+              label: Text(_t('Retry')),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   int _savedPortfolioSignalCount() {
@@ -531,6 +635,10 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
           headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
             return <Widget>[
               SliverToBoxAdapter(child: _buildHeader()),
+              if (_portfolioLoadError != null)
+                SliverToBoxAdapter(
+                  child: _buildPortfolioBanner(_portfolioLoadError!),
+                ),
               SliverToBoxAdapter(child: _buildProfileCard()),
               SliverToBoxAdapter(child: _buildLevelProgress()),
               SliverToBoxAdapter(child: _buildPillarStats()),
@@ -608,6 +716,21 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
                         color: context.schTextSecondary, fontSize: 14),
                   ),
                 ],
+              ),
+            ),
+            IconButton(
+              tooltip: _t('Refresh'),
+              onPressed: _loadPortfolioState,
+              icon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: ScholesaColors.learner.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.refresh_rounded,
+                  color: ScholesaColors.learner,
+                ),
               ),
             ),
             IconButton(
@@ -943,6 +1066,10 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
       return const Center(child: CircularProgressIndicator());
     }
 
+    if (_portfolioLoadError != null && !_hasVisiblePortfolioData) {
+      return _buildPortfolioLoadErrorState();
+    }
+
     if (_credentials.isNotEmpty) {
       return ListView.builder(
         padding: const EdgeInsets.all(16),
@@ -1044,6 +1171,9 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
     if (_isPortfolioLoading) {
       return const Center(child: CircularProgressIndicator());
     }
+    if (_portfolioLoadError != null && !_hasVisiblePortfolioData) {
+      return _buildPortfolioLoadErrorState();
+    }
     if (signals.isEmpty) {
       return _buildEmptyTabState(
         icon: Icons.auto_awesome_outlined,
@@ -1066,6 +1196,9 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
   Widget _buildProjectsList() {
     if (_isPortfolioLoading) {
       return const Center(child: CircularProgressIndicator());
+    }
+    if (_portfolioLoadError != null && !_hasVisiblePortfolioData) {
+      return _buildPortfolioLoadErrorState();
     }
     if (_portfolioItems.isEmpty) {
       return _buildEmptyTabState(

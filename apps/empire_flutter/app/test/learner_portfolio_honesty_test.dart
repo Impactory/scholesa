@@ -9,6 +9,7 @@ import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:scholesa_app/auth/app_state.dart';
+import 'package:scholesa_app/domain/models.dart';
 import 'package:scholesa_app/modules/learner/learner_portfolio_page.dart';
 import 'package:scholesa_app/runtime/learning_runtime_provider.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
@@ -37,6 +38,7 @@ Widget _buildHarness({
   required AppState appState,
   FirestoreService? firestoreService,
   SharedPreferences? sharedPreferences,
+  LearnerPortfolioPage? child,
 }) {
   final List<SingleChildWidget> providers = <SingleChildWidget>[
     ChangeNotifierProvider<AppState>.value(value: appState),
@@ -64,7 +66,7 @@ Widget _buildHarness({
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      home: LearnerPortfolioPage(sharedPreferences: sharedPreferences),
+      home: child ?? LearnerPortfolioPage(sharedPreferences: sharedPreferences),
     ),
   );
 }
@@ -210,5 +212,88 @@ void main() {
 
     expect(find.text('AI guidance unavailable right now.'), findsOneWidget);
     expect(find.byIcon(Icons.expand_less), findsOneWidget);
+  });
+
+  testWidgets(
+      'learner portfolio keeps stale evidence visible after refresh failure',
+      (WidgetTester tester) async {
+    int loadCount = 0;
+
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      _buildHarness(
+        appState: _buildLearnerState(),
+        firestoreService: FirestoreService(
+          firestore: FakeFirebaseFirestore(),
+          auth: _MockFirebaseAuth(),
+        ),
+        child: LearnerPortfolioPage(
+          portfolioStateLoader: (String learnerId, String siteId) async {
+            loadCount += 1;
+            if (loadCount == 1) {
+              return LearnerPortfolioSnapshot(
+                profile: LearnerProfileModel(
+                  id: 'profile-1',
+                  learnerId: learnerId,
+                  siteId: siteId,
+                  onboardingCompleted: true,
+                  portfolioHeadline: 'Impact builder in progress',
+                  portfolioGoal: 'Ship one verified artifact each week',
+                  portfolioHighlight: 'Latest highlight: Water prototype',
+                  strengths: const <String>['Collaboration'],
+                  interests: const <String>['Robotics'],
+                  goals: const <String>['Prototype testing'],
+                ),
+                items: <PortfolioItemModel>[
+                  PortfolioItemModel(
+                    id: 'portfolio-1',
+                    learnerId: learnerId,
+                    siteId: siteId,
+                    title: 'Water prototype',
+                    description: 'Built and documented a first prototype.',
+                    pillarCodes: const <String>['impact'],
+                    capabilityTitles: const <String>['Systems Thinking'],
+                    evidenceRecordIds: const <String>['evidence-1'],
+                    createdAt: Timestamp.fromDate(DateTime(2026, 3, 18)),
+                    updatedAt: Timestamp.fromDate(DateTime(2026, 3, 19)),
+                  ),
+                ],
+                credentials: <CredentialModel>[
+                  CredentialModel(
+                    id: 'credential-1',
+                    siteId: siteId,
+                    learnerId: learnerId,
+                    title: 'Impact Builder',
+                    issuedAt: Timestamp.fromDate(DateTime(2026, 3, 18)),
+                    pillarCodes: const <String>['impact'],
+                    skillIds: const <String>['prototype'],
+                  ),
+                ],
+              );
+            }
+            throw StateError('portfolio refresh unavailable');
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Impact Builder'), findsOneWidget);
+    expect(find.text('Water prototype'), findsNothing);
+
+    await tester.tap(find.byTooltip('Refresh'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Unable to refresh portfolio right now. Showing the last successful data.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Impact Builder'), findsOneWidget);
+    expect(find.text('No badges earned yet'), findsNothing);
   });
 }
