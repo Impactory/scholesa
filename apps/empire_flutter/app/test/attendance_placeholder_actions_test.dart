@@ -16,7 +16,11 @@ class _MockApiClient extends Mock implements ApiClient {}
 class _MockSyncCoordinator extends Mock implements SyncCoordinator {}
 
 class _FakeAttendanceService extends AttendanceService {
-  _FakeAttendanceService({required SessionOccurrence rosterOccurrence})
+  _FakeAttendanceService({
+    required SessionOccurrence rosterOccurrence,
+    List<SessionOccurrence>? occurrences,
+    this.loadError,
+  })  : _occurrences = occurrences,
       : _rosterOccurrence = rosterOccurrence,
         super(
           apiClient: _MockApiClient(),
@@ -26,9 +30,13 @@ class _FakeAttendanceService extends AttendanceService {
         );
 
   final SessionOccurrence _rosterOccurrence;
+  final List<SessionOccurrence>? _occurrences;
+  final String? loadError;
 
   @override
-  List<SessionOccurrence> get todayOccurrences => <SessionOccurrence>[
+  List<SessionOccurrence> get todayOccurrences =>
+      _occurrences ??
+      <SessionOccurrence>[
         SessionOccurrence(
           id: _rosterOccurrence.id,
           sessionId: _rosterOccurrence.sessionId,
@@ -50,7 +58,7 @@ class _FakeAttendanceService extends AttendanceService {
   bool get isLoading => false;
 
   @override
-  String? get error => null;
+  String? get error => loadError;
 
   @override
   Future<void> loadTodayOccurrences() async {
@@ -199,5 +207,115 @@ void main() {
 
     expect(find.text('学习者信息不可用'), findsOneWidget);
     expect(find.text('Unknown'), findsNothing);
+  });
+
+  testWidgets('attendance page shows load failure instead of fake empty classes',
+      (WidgetTester tester) async {
+    final _FakeAttendanceService attendanceService = _FakeAttendanceService(
+      rosterOccurrence: SessionOccurrence(
+        id: 'occ-1',
+        sessionId: 'session-1',
+        siteId: 'site-1',
+        title: 'Robotics Lab',
+        startTime: DateTime(2026, 3, 17, 9),
+      ),
+      occurrences: const <SessionOccurrence>[],
+      loadError: 'Failed to load occurrences from test',
+    );
+    final _MockSyncCoordinator syncCoordinator = _MockSyncCoordinator();
+    when(() => syncCoordinator.isOnline).thenReturn(true);
+    when(() => syncCoordinator.pendingCount).thenReturn(0);
+    when(() => syncCoordinator.isSyncing).thenReturn(false);
+    when(() => syncCoordinator.retryFailed()).thenAnswer((_) async {});
+    final AppState appState = _buildAppState();
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: <SingleChildWidget>[
+          ChangeNotifierProvider<AppState>.value(value: appState),
+          ChangeNotifierProvider<SyncCoordinator>.value(value: syncCoordinator),
+          ChangeNotifierProvider<AttendanceService>.value(value: attendanceService),
+        ],
+        child: MaterialApp(
+          theme: ThemeData(useMaterial3: true, splashFactory: NoSplash.splashFactory),
+          locale: const Locale('en'),
+          supportedLocales: const <Locale>[
+            Locale('en'),
+            Locale('zh', 'CN'),
+            Locale('zh', 'TW'),
+          ],
+          localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: const AttendancePage(),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('We could not load attendance sessions right now. Retry to check the current state.'),
+      findsOneWidget,
+    );
+    expect(find.text('No classes today'), findsNothing);
+  });
+
+  testWidgets('attendance page keeps stale occurrences visible after refresh failure',
+      (WidgetTester tester) async {
+    final _FakeAttendanceService attendanceService = _FakeAttendanceService(
+      rosterOccurrence: SessionOccurrence(
+        id: 'occ-1',
+        sessionId: 'session-1',
+        siteId: 'site-1',
+        title: 'Robotics Lab',
+        startTime: DateTime(2026, 3, 17, 9),
+      ),
+      loadError: 'Failed to load occurrences from test',
+    );
+    final _MockSyncCoordinator syncCoordinator = _MockSyncCoordinator();
+    when(() => syncCoordinator.isOnline).thenReturn(true);
+    when(() => syncCoordinator.pendingCount).thenReturn(0);
+    when(() => syncCoordinator.isSyncing).thenReturn(false);
+    when(() => syncCoordinator.retryFailed()).thenAnswer((_) async {});
+    final AppState appState = _buildAppState();
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: <SingleChildWidget>[
+          ChangeNotifierProvider<AppState>.value(value: appState),
+          ChangeNotifierProvider<SyncCoordinator>.value(value: syncCoordinator),
+          ChangeNotifierProvider<AttendanceService>.value(value: attendanceService),
+        ],
+        child: MaterialApp(
+          theme: ThemeData(useMaterial3: true, splashFactory: NoSplash.splashFactory),
+          locale: const Locale('en'),
+          supportedLocales: const <Locale>[
+            Locale('en'),
+            Locale('zh', 'CN'),
+            Locale('zh', 'TW'),
+          ],
+          localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: const AttendancePage(),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Unable to refresh attendance sessions right now. Showing the last successful data. Failed to load occurrences from test',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Robotics Lab'), findsOneWidget);
+    expect(find.text('No classes today'), findsNothing);
   });
 }

@@ -58,6 +58,11 @@ class _AttendancePageState extends State<AttendancePage> {
       appBar: AppBar(
         title: Text(_tAttendance(context, 'Take Attendance')),
         actions: <Widget>[
+          IconButton(
+            tooltip: 'Refresh',
+            onPressed: _loadOccurrences,
+            icon: const Icon(Icons.refresh_rounded),
+          ),
           const SyncStatusIndicator(),
           const SizedBox(width: 8),
           const SessionMenuButton(),
@@ -107,9 +112,10 @@ class _AttendancePageState extends State<AttendancePage> {
       return const LoadingWidget();
     }
 
-    if (service.error != null) {
+    if (service.error != null && service.todayOccurrences.isEmpty) {
       return ErrorState(
-        message: service.error!,
+        message:
+            _tAttendance(context, 'We could not load attendance sessions right now. Retry to check the current state.'),
         onRetry: () async {
           TelemetryService.instance.logEvent(
             event: 'cta.clicked',
@@ -125,6 +131,7 @@ class _AttendancePageState extends State<AttendancePage> {
 
     return _OccurrenceSelector(
       occurrences: service.todayOccurrences,
+      error: service.error,
       onRefresh: _loadOccurrences,
     );
   }
@@ -134,10 +141,12 @@ class _AttendancePageState extends State<AttendancePage> {
 class _OccurrenceSelector extends StatelessWidget {
   const _OccurrenceSelector({
     required this.occurrences,
+    required this.error,
     required this.onRefresh,
   });
 
   final List<SessionOccurrence> occurrences;
+  final String? error;
   final Future<void> Function() onRefresh;
 
   @override
@@ -178,9 +187,21 @@ class _OccurrenceSelector extends StatelessWidget {
       },
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
-        itemCount: occurrences.length,
+        itemCount: occurrences.length + (error != null ? 1 : 0),
         itemBuilder: (BuildContext context, int index) {
-          final SessionOccurrence occ = occurrences[index];
+          if (error != null && index == 0) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _AttendanceStatusBanner(
+                message: _tAttendance(
+                        context,
+                        'Unable to refresh attendance sessions right now. Showing the last successful data. ') +
+                    error!,
+              ),
+            );
+          }
+          final int occurrenceIndex = index - (error != null ? 1 : 0);
+          final SessionOccurrence occ = occurrences[occurrenceIndex];
           final String timeStr = DateFormat.jm().format(occ.startTime);
           final String endTimeStr = occ.endTime != null
               ? ' - ${DateFormat.jm().format(occ.endTime!)}'
@@ -218,6 +239,45 @@ class _OccurrenceSelector extends StatelessWidget {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _AttendanceStatusBanner extends StatelessWidget {
+  const _AttendanceStatusBanner({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.tertiaryContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Icon(
+            Icons.info_outline,
+            size: 18,
+            color: Theme.of(context).colorScheme.onTertiaryContainer,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onTertiaryContainer,
+                fontSize: 12,
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

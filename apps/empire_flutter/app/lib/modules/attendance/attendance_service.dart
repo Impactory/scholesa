@@ -13,6 +13,14 @@ enum AttendanceBatchSaveResult {
 
 const String _fallbackLearnerName = 'Learner unavailable';
 
+class AttendanceOccurrencesSnapshot {
+  const AttendanceOccurrencesSnapshot({
+    required this.occurrences,
+  });
+
+  final List<SessionOccurrence> occurrences;
+}
+
 /// Service for attendance operations
 class AttendanceService extends ChangeNotifier {
   AttendanceService({
@@ -20,11 +28,14 @@ class AttendanceService extends ChangeNotifier {
     required SyncCoordinator syncCoordinator,
     this.educatorId,
     this.siteId,
+    Future<AttendanceOccurrencesSnapshot> Function()? occurrencesLoader,
   })  : _apiClient = apiClient,
-        _syncCoordinator = syncCoordinator;
+        _syncCoordinator = syncCoordinator,
+        _occurrencesLoader = occurrencesLoader;
   // ignore: unused_field — reserved for future REST API migration
   final ApiClient _apiClient;
   final SyncCoordinator _syncCoordinator;
+  final Future<AttendanceOccurrencesSnapshot> Function()? _occurrencesLoader;
   final String? educatorId;
   final String? siteId;
   FirebaseFirestore get _firestore => FirebaseFirestore.instance;
@@ -46,56 +57,64 @@ class AttendanceService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final DateTime now = DateTime.now();
-      final DateTime startOfDay = DateTime(now.year, now.month, now.day);
-      final DateTime endOfDay = startOfDay.add(const Duration(days: 1));
-      final Timestamp startTs = Timestamp.fromDate(startOfDay);
-      final Timestamp endTs = Timestamp.fromDate(endOfDay);
+      final AttendanceOccurrencesSnapshot snapshot = _occurrencesLoader != null
+          ? await _occurrencesLoader()
+          : await _loadTodayOccurrencesSnapshot();
 
-      final List<QueryDocumentSnapshot<Map<String, dynamic>>> docs =
-          await _fetchTodayOccurrenceDocs(
-        startTs: startTs,
-        endTs: endTs,
-      );
-
-      _todayOccurrences = await Future.wait(
-        docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) async {
-          final Map<String, dynamic> data = doc.data();
-
-          // Count enrolled learners
-          final QuerySnapshot<Map<String, dynamic>> enrollmentsSnapshot =
-              await _firestore
-                  .collection('enrollments')
-                  .where('sessionId', isEqualTo: data['sessionId'])
-                  .where('status', isEqualTo: 'active')
-                  .get();
-
-          return SessionOccurrence(
-            id: doc.id,
-            sessionId: data['sessionId'] as String? ?? '',
-            siteId: data['siteId'] as String? ?? '',
-            title: _stringOrDefault(
-                data['title'], data['sessionTitle'], 'Untitled Session'),
-            startTime: _parseTimestamp(data['startTime']) ??
-                _parseTimestamp(data['date']) ??
-                DateTime.now(),
-            endTime: _parseTimestamp(data['endTime']),
-            roomName: _stringOrDefault(data['roomName'], data['location'], ''),
-            roster: const <RosterLearner>[], // Roster loaded separately
-            learnerCount: enrollmentsSnapshot.docs.length,
-          );
-        }),
-      );
+      _todayOccurrences = snapshot.occurrences;
 
       debugPrint('Loaded ${_todayOccurrences.length} occurrences for today');
     } catch (e) {
       _error = 'Failed to load occurrences: $e';
       debugPrint(_error);
-      _todayOccurrences = <SessionOccurrence>[];
     } finally {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  Future<AttendanceOccurrencesSnapshot> _loadTodayOccurrencesSnapshot() async {
+    final DateTime now = DateTime.now();
+    final DateTime startOfDay = DateTime(now.year, now.month, now.day);
+    final DateTime endOfDay = startOfDay.add(const Duration(days: 1));
+    final Timestamp startTs = Timestamp.fromDate(startOfDay);
+    final Timestamp endTs = Timestamp.fromDate(endOfDay);
+
+    final List<QueryDocumentSnapshot<Map<String, dynamic>>> docs =
+        await _fetchTodayOccurrenceDocs(
+      startTs: startTs,
+      endTs: endTs,
+    );
+
+    final List<SessionOccurrence> occurrences = await Future.wait(
+      docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) async {
+        final Map<String, dynamic> data = doc.data();
+
+        final QuerySnapshot<Map<String, dynamic>> enrollmentsSnapshot =
+            await _firestore
+                .collection('enrollments')
+                .where('sessionId', isEqualTo: data['sessionId'])
+                .where('status', isEqualTo: 'active')
+                .get();
+
+        return SessionOccurrence(
+          id: doc.id,
+          sessionId: data['sessionId'] as String? ?? '',
+          siteId: data['siteId'] as String? ?? '',
+          title: _stringOrDefault(
+              data['title'], data['sessionTitle'], 'Untitled Session'),
+          startTime: _parseTimestamp(data['startTime']) ??
+              _parseTimestamp(data['date']) ??
+              DateTime.now(),
+          endTime: _parseTimestamp(data['endTime']),
+          roomName: _stringOrDefault(data['roomName'], data['location'], ''),
+          roster: const <RosterLearner>[],
+          learnerCount: enrollmentsSnapshot.docs.length,
+        );
+      }),
+    );
+
+    return AttendanceOccurrencesSnapshot(occurrences: occurrences);
   }
 
   /// Load roster for a specific occurrence from Firebase

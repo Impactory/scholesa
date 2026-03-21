@@ -20,6 +20,10 @@ class WorkflowSurfaceI18n {
     'Take Attendance': '记录出勤',
     'Attendance service not available': '出勤服务不可用',
     'Attendance is temporarily unavailable': '出勤功能暂时不可用',
+    'We could not load attendance sessions right now. Retry to check the current state.':
+        '我们暂时无法加载出勤课次。请重试以检查当前状态。',
+    'Unable to refresh attendance sessions right now. Showing the last successful data. ':
+        '目前无法刷新出勤课次。正在显示最近一次成功加载的数据。',
     'No classes today': '今天没有课程',
     'Refresh': '刷新',
     'students': '学生',
@@ -792,6 +796,10 @@ class WorkflowSurfaceI18n {
     'Take Attendance': '記錄出勤',
     'Attendance service not available': '出勤服務不可用',
     'Attendance is temporarily unavailable': '出勤功能暫時不可用',
+    'We could not load attendance sessions right now. Retry to check the current state.':
+        '我們暫時無法載入出勤課次。請重試以確認目前狀態。',
+    'Unable to refresh attendance sessions right now. Showing the last successful data. ':
+        '目前無法刷新出勤課次。正在顯示最近一次成功載入的資料。',
     'No classes today': '今天沒有課程',
     'Refresh': '重新整理',
     'students': '學生',

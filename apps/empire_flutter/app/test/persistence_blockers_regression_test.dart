@@ -3,17 +3,25 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:scholesa_app/modules/attendance/attendance_models.dart';
+import 'package:scholesa_app/modules/attendance/attendance_service.dart';
 import 'package:scholesa_app/modules/checkin/checkin_service.dart';
 import 'package:scholesa_app/modules/habits/habit_models.dart';
 import 'package:scholesa_app/modules/habits/habit_service.dart';
 import 'package:scholesa_app/modules/missions/mission_models.dart';
 import 'package:scholesa_app/modules/missions/mission_service.dart';
+import 'package:scholesa_app/offline/sync_coordinator.dart';
+import 'package:scholesa_app/services/api_client.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
 import 'package:scholesa_app/services/telemetry_service.dart';
 
 class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
 class _MockUser extends Mock implements User {}
+
+class _MockApiClient extends Mock implements ApiClient {}
+
+class _MockSyncCoordinator extends Mock implements SyncCoordinator {}
 
 void main() {
   group('Persistence blockers regression', () {
@@ -788,6 +796,43 @@ void main() {
       final QuerySnapshot<Map<String, dynamic>> conversations =
           await firestore.collection('conversations').get();
       expect(conversations.docs, isEmpty);
+    });
+
+    test('attendance service keeps stale occurrences visible after refresh failure',
+        () async {
+      int loadCount = 0;
+      final AttendanceService service = AttendanceService(
+        apiClient: _MockApiClient(),
+        syncCoordinator: _MockSyncCoordinator(),
+        educatorId: 'educator-1',
+        siteId: 'site-1',
+        occurrencesLoader: () async {
+          loadCount += 1;
+          if (loadCount == 1) {
+            return AttendanceOccurrencesSnapshot(
+              occurrences: <SessionOccurrence>[
+                SessionOccurrence(
+                  id: 'occ-1',
+                  sessionId: 'session-1',
+                  siteId: 'site-1',
+                  title: 'Robotics Lab',
+                  startTime: DateTime(2026, 3, 21, 9),
+                  endTime: DateTime(2026, 3, 21, 10),
+                  learnerCount: 12,
+                ),
+              ],
+            );
+          }
+          throw Exception('network down');
+        },
+      );
+
+      await service.loadTodayOccurrences();
+      await service.loadTodayOccurrences();
+
+      expect(service.todayOccurrences, hasLength(1));
+      expect(service.todayOccurrences.single.title, 'Robotics Lab');
+      expect(service.error, contains('Failed to load occurrences'));
     });
   });
 }
