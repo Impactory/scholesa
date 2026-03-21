@@ -137,6 +137,7 @@ Interpretation rule:
 47. Added direct `/site/sessions` create-path proof so the route now verifies persisted session creation, authoritative schedule reload from source-of-truth data, and explicit in-surface create failure without a fake appended session.
 48. Added direct `/site/sessions` route-gate proof so only `site` and `hq` roles can access the route and the `/site/scheduling` alias redirects back to the canonical path.
 49. Added direct `/site/provisioning` route proof so learner, parent, guardian-link, and cohort creation plus active-site guardian-link deletion are now verified in the focused page suite, and `/site/provisioning` now has direct site/HQ route-gate proof.
+50. Fixed `/site/provisioning` learner and parent edit persistence in Firestore fallback mode and added direct route proof that the edit dialogs now persist updated learner and parent data instead of depending on unavailable API patch calls.
 
 ### Release and operations fixes
 
@@ -158,7 +159,7 @@ Interpretation rule:
 - Focused site incidents honesty regressions passed: 4 passed, 0 failed.
 - Focused site integrations health regressions passed: 4 passed, 0 failed.
 - Focused HQ feature flags regressions passed: 22 passed, 0 failed.
-- Focused site provisioning regressions passed: 9 passed, 0 failed.
+- Focused site provisioning regressions passed: 11 passed, 0 failed.
 - Focused site sessions regressions passed: 9 passed, 0 failed.
 - Priority blocker page batch passed: 16 passed, 0 failed.
 - Settings logout and auth coverage passed: 26 passed, 0 failed.

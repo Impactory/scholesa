@@ -577,6 +577,28 @@ class ProvisioningService extends ChangeNotifier {
     notifyListeners();
 
     try {
+      if (!_useProvisioningApi) {
+        final LearnerProfile updated = await _updateLearnerInFirestore(
+          siteId: siteId,
+          learnerId: learnerId,
+          displayName: displayName,
+          gradeLevel: gradeLevel,
+          dateOfBirth: dateOfBirth,
+          notes: notes,
+        );
+        final int idx =
+            _learners.indexWhere((LearnerProfile l) => l.id == learnerId);
+        if (idx >= 0) {
+          _learners[idx] = updated;
+        } else {
+          _learners.add(updated);
+        }
+        _learners.sort((LearnerProfile a, LearnerProfile b) =>
+            a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()));
+        notifyListeners();
+        return updated;
+      }
+
       final Map<String, dynamic> response = await _apiClient.patch(
         '/v1/sites/$siteId/learners/$learnerId',
         body: <String, dynamic>{
@@ -597,9 +619,32 @@ class ProvisioningService extends ChangeNotifier {
       notifyListeners();
       return updated;
     } catch (e) {
-      _error = 'Failed to update learner: $e';
-      debugPrint(_error);
-      return null;
+      debugPrint('Failed to update learner via API, falling back: $e');
+      try {
+        final LearnerProfile updated = await _updateLearnerInFirestore(
+          siteId: siteId,
+          learnerId: learnerId,
+          displayName: displayName,
+          gradeLevel: gradeLevel,
+          dateOfBirth: dateOfBirth,
+          notes: notes,
+        );
+        final int idx =
+            _learners.indexWhere((LearnerProfile l) => l.id == learnerId);
+        if (idx >= 0) {
+          _learners[idx] = updated;
+        } else {
+          _learners.add(updated);
+        }
+        _learners.sort((LearnerProfile a, LearnerProfile b) =>
+            a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()));
+        notifyListeners();
+        return updated;
+      } catch (fallbackError) {
+        _error = 'Failed to update learner: $fallbackError';
+        debugPrint(_error);
+        return null;
+      }
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -619,6 +664,27 @@ class ProvisioningService extends ChangeNotifier {
     notifyListeners();
 
     try {
+      if (!_useProvisioningApi) {
+        final ParentProfile updated = await _updateParentInFirestore(
+          siteId: siteId,
+          parentId: parentId,
+          displayName: displayName,
+          phone: phone,
+          email: email,
+        );
+        final int idx =
+            _parents.indexWhere((ParentProfile p) => p.id == parentId);
+        if (idx >= 0) {
+          _parents[idx] = updated;
+        } else {
+          _parents.add(updated);
+        }
+        _parents.sort((ParentProfile a, ParentProfile b) =>
+            a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()));
+        notifyListeners();
+        return updated;
+      }
+
       final Map<String, dynamic> response = await _apiClient.patch(
         '/v1/sites/$siteId/parents/$parentId',
         body: <String, dynamic>{
@@ -637,9 +703,31 @@ class ProvisioningService extends ChangeNotifier {
       notifyListeners();
       return updated;
     } catch (e) {
-      _error = 'Failed to update parent: $e';
-      debugPrint(_error);
-      return null;
+      debugPrint('Failed to update parent via API, falling back: $e');
+      try {
+        final ParentProfile updated = await _updateParentInFirestore(
+          siteId: siteId,
+          parentId: parentId,
+          displayName: displayName,
+          phone: phone,
+          email: email,
+        );
+        final int idx =
+            _parents.indexWhere((ParentProfile p) => p.id == parentId);
+        if (idx >= 0) {
+          _parents[idx] = updated;
+        } else {
+          _parents.add(updated);
+        }
+        _parents.sort((ParentProfile a, ParentProfile b) =>
+            a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()));
+        notifyListeners();
+        return updated;
+      } catch (fallbackError) {
+        _error = 'Failed to update parent: $fallbackError';
+        debugPrint(_error);
+        return null;
+      }
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -924,6 +1012,53 @@ class ProvisioningService extends ChangeNotifier {
     );
   }
 
+  Future<LearnerProfile> _updateLearnerInFirestore({
+    required String siteId,
+    required String learnerId,
+    required String displayName,
+    int? gradeLevel,
+    DateTime? dateOfBirth,
+    String? notes,
+  }) async {
+    final DocumentReference<Map<String, dynamic>> userRef =
+        _firestore.collection('users').doc(learnerId);
+    await userRef.set(<String, dynamic>{
+      'displayName': displayName.trim(),
+      if (gradeLevel != null) 'gradeLevel': gradeLevel,
+      if (dateOfBirth != null)
+        'dateOfBirth': dateOfBirth.millisecondsSinceEpoch,
+      if (notes != null && notes.trim().isNotEmpty) 'notes': notes.trim(),
+      'role': 'learner',
+      'activeSiteId': siteId,
+      'siteIds': FieldValue.arrayUnion(<String>[siteId]),
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+
+    final DocumentReference<Map<String, dynamic>> profileRef =
+        _firestore.collection('learnerProfiles').doc(learnerId);
+    await profileRef.set(<String, dynamic>{
+      'siteId': siteId,
+      'learnerId': learnerId,
+      'userId': learnerId,
+      'displayName': displayName.trim(),
+      if (gradeLevel != null) 'gradeLevel': gradeLevel,
+      if (dateOfBirth != null)
+        'dateOfBirth': dateOfBirth.millisecondsSinceEpoch,
+      if (notes != null && notes.trim().isNotEmpty) 'notes': notes.trim(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+
+    return LearnerProfile(
+      id: learnerId,
+      siteId: siteId,
+      userId: learnerId,
+      displayName: displayName.trim(),
+      gradeLevel: gradeLevel,
+      dateOfBirth: dateOfBirth,
+      notes: notes?.trim().isNotEmpty == true ? notes!.trim() : null,
+    );
+  }
+
   Future<ParentProfile> _createOrLinkParentInFirestore({
     required String siteId,
     required String email,
@@ -968,6 +1103,49 @@ class ProvisioningService extends ChangeNotifier {
       if (phone != null && phone.trim().isNotEmpty) 'phone': phone.trim(),
       'updatedAt': FieldValue.serverTimestamp(),
       'createdAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+
+    return ParentProfile(
+      id: parentId,
+      siteId: siteId,
+      userId: parentId,
+      displayName: displayName.trim(),
+      phone: phone?.trim().isNotEmpty == true ? phone!.trim() : null,
+      email: normalizedEmail,
+    );
+  }
+
+  Future<ParentProfile> _updateParentInFirestore({
+    required String siteId,
+    required String parentId,
+    required String displayName,
+    String? phone,
+    String? email,
+  }) async {
+    final String? normalizedEmail =
+        email?.trim().isNotEmpty == true ? email!.trim().toLowerCase() : null;
+    final DocumentReference<Map<String, dynamic>> userRef =
+        _firestore.collection('users').doc(parentId);
+    await userRef.set(<String, dynamic>{
+      'displayName': displayName.trim(),
+      if (normalizedEmail != null) 'email': normalizedEmail,
+      if (phone != null && phone.trim().isNotEmpty) 'phone': phone.trim(),
+      'role': 'parent',
+      'activeSiteId': siteId,
+      'siteIds': FieldValue.arrayUnion(<String>[siteId]),
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+
+    final DocumentReference<Map<String, dynamic>> profileRef =
+        _firestore.collection('parentProfiles').doc(parentId);
+    await profileRef.set(<String, dynamic>{
+      'siteId': siteId,
+      'parentId': parentId,
+      'userId': parentId,
+      'displayName': displayName.trim(),
+      if (normalizedEmail != null) 'email': normalizedEmail,
+      if (phone != null && phone.trim().isNotEmpty) 'phone': phone.trim(),
+      'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
 
     return ParentProfile(

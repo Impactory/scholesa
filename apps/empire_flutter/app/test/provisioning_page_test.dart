@@ -227,6 +227,43 @@ Future<QueryDocumentSnapshot<Map<String, dynamic>>> _findUserByEmail(
   return snapshot.docs.first;
 }
 
+Future<void> _seedEditableProvisioningProfiles(
+  FakeFirebaseFirestore firestore,
+) async {
+  await firestore.collection('users').doc('learner-1').set(<String, dynamic>{
+    'displayName': 'Learner One',
+    'email': 'learner1@example.com',
+    'role': 'learner',
+    'siteIds': <String>['site-1'],
+    'activeSiteId': 'site-1',
+    'gradeLevel': 5,
+  });
+  await firestore.collection('learnerProfiles').doc('learner-1').set(<String, dynamic>{
+    'siteId': 'site-1',
+    'learnerId': 'learner-1',
+    'userId': 'learner-1',
+    'displayName': 'Learner One',
+    'gradeLevel': 5,
+  });
+
+  await firestore.collection('users').doc('parent-1').set(<String, dynamic>{
+    'displayName': 'Parent One',
+    'email': 'parent1@example.com',
+    'phone': '+61 400 555 100',
+    'role': 'parent',
+    'siteIds': <String>['site-1'],
+    'activeSiteId': 'site-1',
+  });
+  await firestore.collection('parentProfiles').doc('parent-1').set(<String, dynamic>{
+    'siteId': 'site-1',
+    'parentId': 'parent-1',
+    'userId': 'parent-1',
+    'displayName': 'Parent One',
+    'email': 'parent1@example.com',
+    'phone': '+61 400 555 100',
+  });
+}
+
 void main() {
   Future<void> pumpProvisioningPage(
     WidgetTester tester, {
@@ -492,5 +529,92 @@ void main() {
     expect(find.text('Launch Cohort Alpha'), findsOneWidget);
     expect(find.text('Learner Count: 24'), findsOneWidget);
     expect(find.text('Parent kickoff scheduled.'), findsOneWidget);
+  });
+
+  testWidgets('provisioning page edits a learner and persists the change',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedEditableProvisioningProfiles(firestore);
+    final _MockFirebaseAuth auth = _MockFirebaseAuth();
+    final ProvisioningService service = ProvisioningService(
+      apiClient: ApiClient(auth: auth, baseUrl: 'http://localhost'),
+      firestore: firestore,
+      auth: auth,
+      workflowBridgeService: _FakeWorkflowBridgeService(),
+      useProvisioningApi: false,
+    );
+
+    await pumpProvisioningPage(tester, service: service);
+
+    expect(find.text('Learner One'), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.more_vert).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Edit Learner'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextFormField).first, 'Learner Prime');
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Save'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Learner updated'), findsOneWidget);
+    expect(find.text('Learner Prime'), findsOneWidget);
+    expect(find.text('Learner One'), findsNothing);
+
+    final DocumentSnapshot<Map<String, dynamic>> userDoc =
+        await firestore.collection('users').doc('learner-1').get();
+    final DocumentSnapshot<Map<String, dynamic>> profileDoc = await firestore
+        .collection('learnerProfiles')
+        .doc('learner-1')
+        .get();
+    expect(userDoc.data()!['displayName'], 'Learner Prime');
+    expect(profileDoc.data()!['displayName'], 'Learner Prime');
+  });
+
+  testWidgets('provisioning page edits a parent and persists the change',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedEditableProvisioningProfiles(firestore);
+    final _MockFirebaseAuth auth = _MockFirebaseAuth();
+    final ProvisioningService service = ProvisioningService(
+      apiClient: ApiClient(auth: auth, baseUrl: 'http://localhost'),
+      firestore: firestore,
+      auth: auth,
+      workflowBridgeService: _FakeWorkflowBridgeService(),
+      useProvisioningApi: false,
+    );
+
+    await pumpProvisioningPage(tester, service: service);
+
+    await tester.tap(find.text('Parents'));
+    await tester.pumpAndSettle();
+    expect(find.text('Parent One'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.more_vert).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Edit Parent'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextFormField).first, 'Parent Prime');
+    await tester.enterText(
+      find.byType(TextFormField).at(2),
+      '+61 400 555 999',
+    );
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Save'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Parent updated'), findsOneWidget);
+    expect(find.text('Parent Prime'), findsOneWidget);
+    expect(find.text('Parent One'), findsNothing);
+
+    final DocumentSnapshot<Map<String, dynamic>> userDoc =
+        await firestore.collection('users').doc('parent-1').get();
+    final DocumentSnapshot<Map<String, dynamic>> profileDoc = await firestore
+        .collection('parentProfiles')
+        .doc('parent-1')
+        .get();
+    expect(userDoc.data()!['displayName'], 'Parent Prime');
+    expect(userDoc.data()!['phone'], '+61 400 555 999');
+    expect(profileDoc.data()!['displayName'], 'Parent Prime');
+    expect(profileDoc.data()!['phone'], '+61 400 555 999');
   });
 }

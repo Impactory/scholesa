@@ -98,7 +98,7 @@ Proven gates:
 1. Gate A `State Truth`
    - direct proof exists for learner-tab first-load failure and stale-after-success visibility
 2. Gate B `Real Mutation`
-   - direct route proof now exists for learner creation, parent creation, guardian-link creation, active-site guardian-link deletion, and cohort-launch creation
+   - direct route proof now exists for learner creation, parent creation, guardian-link creation, active-site guardian-link deletion, cohort-launch creation, learner edit persistence, and parent edit persistence
 3. Gate D `Recovery`
    - retry and refresh controls are directly proven for learner-tab failure and stale-after-success states
 4. Gate E `Scope And Permission Correctness`
@@ -123,7 +123,7 @@ Blocking risk:
 
 Next proof task:
 
-1. Add focused edit and failure-path proof for learner and parent mutation dialogs.
+1. Add focused failure-path proof for learner, parent, guardian-link, and cohort mutations.
 2. Add direct auditability proof where provisioning writes are expected to leave operator traces.
 3. Verify downstream attendance, family access, and other site workflows consume the persisted provisioning state without fake completion.
 
