@@ -76,7 +76,6 @@ class PartnerService extends ChangeNotifier {
     } catch (e) {
       debugPrint('Failed to load listings: $e');
       _error = 'Failed to load listings';
-      _listings = <MarketplaceListing>[];
     } finally {
       _isLoading = false;
       notifyListeners();

@@ -698,6 +698,10 @@ class WorkflowSurfaceI18n {
     'View': '查看',
     'Pay Now': '立即支付',
     'My Listings': '我的列表',
+    'We could not load listings right now. Retry to check the current state.':
+        '我们暂时无法加载列表。请重试以检查当前状态。',
+    'Unable to refresh listings right now. Showing the last successful data. ':
+        '目前无法刷新列表。正在显示最近一次成功加载的数据。',
     'Create Listing': '创建列表',
     'Published': '已发布',
     'Partner Workflows': '合作伙伴工作流',
@@ -1390,6 +1394,10 @@ class WorkflowSurfaceI18n {
     'Unable to update study flow right now': '目前無法更新學習流程',
     'Billing & Payments': '帳單與付款',
     'My Listings': '我的列表',
+    'We could not load listings right now. Retry to check the current state.':
+        '我們暫時無法載入列表。請重試以確認目前狀態。',
+    'Unable to refresh listings right now. Showing the last successful data. ':
+        '目前無法刷新列表。正在顯示最近一次成功載入的資料。',
     'Partner Workflows': '合作夥伴工作流程',
     'Partner Deliverables': '合作夥伴交付項',
     'Partner Integrations': '合作夥伴整合',

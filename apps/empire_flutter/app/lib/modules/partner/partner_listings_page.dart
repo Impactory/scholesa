@@ -55,6 +55,21 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
         foregroundColor: Colors.white,
         actions: <Widget>[
           IconButton(
+            tooltip: _tPartnerListings(context, 'Refresh'),
+            icon: const Icon(Icons.refresh_rounded),
+            onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'module': 'partner_listings',
+                  'cta_id': 'refresh_listings',
+                  'surface': 'appbar',
+                },
+              );
+              context.read<PartnerService>().loadListings();
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.add_rounded),
             onPressed: () {
               TelemetryService.instance.logEvent(
@@ -75,8 +90,12 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
       ),
       body: Consumer<PartnerService>(
         builder: (BuildContext context, PartnerService service, _) {
-          if (service.isLoading) {
+          if (service.isLoading && service.listings.isEmpty) {
             return const Center(child: CircularProgressIndicator());
+          }
+
+          if (service.error != null && service.listings.isEmpty) {
+            return _buildLoadErrorState(service);
           }
 
           if (service.listings.isEmpty) {
@@ -97,13 +116,106 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
             },
             child: ListView.builder(
               padding: const EdgeInsets.all(16),
-              itemCount: service.listings.length,
+              itemCount: service.listings.length + (service.error != null ? 1 : 0),
               itemBuilder: (BuildContext context, int index) {
-                return _buildListingCard(service.listings[index]);
+                if (service.error != null && index == 0) {
+                  return _buildStaleDataBanner(
+                    _tPartnerListings(
+                          context,
+                          'Unable to refresh listings right now. Showing the last successful data. ',
+                        ) +
+                        service.error!,
+                  );
+                }
+                final int listingIndex =
+                    service.error != null ? index - 1 : index;
+                return _buildListingCard(service.listings[listingIndex]);
               },
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildLoadErrorState(PartnerService service) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFF4F4),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFFECACA)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Row(
+                children: <Widget>[
+                  const Icon(Icons.error_outline_rounded,
+                      color: ScholesaColors.error),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      _tPartnerListings(
+                        context,
+                        'We could not load listings right now. Retry to check the current state.',
+                      ),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: ScholesaColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                service.error!,
+                style: const TextStyle(color: ScholesaColors.textSecondary),
+              ),
+              const SizedBox(height: 16),
+              OutlinedButton.icon(
+                onPressed: service.loadListings,
+                icon: const Icon(Icons.refresh_rounded),
+                label: Text(_tPartnerListings(context, 'Retry')),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStaleDataBanner(String message) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFFDE68A)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Padding(
+            padding: EdgeInsets.only(top: 2),
+            child: Icon(Icons.warning_amber_rounded, color: Color(0xFFB45309)),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(color: Color(0xFF92400E)),
+            ),
+          ),
+        ],
       ),
     );
   }
