@@ -112,7 +112,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('Unable to refresh identity matches right now. Showing the last successful data.'),
+      find.text(
+        'Unable to refresh identity matches right now. Showing the last successful data. Bad state: identity refresh unavailable',
+      ),
       findsOneWidget,
     );
     expect(find.text('Ava Stone'), findsOneWidget);

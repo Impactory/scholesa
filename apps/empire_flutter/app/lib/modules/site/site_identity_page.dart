@@ -38,6 +38,7 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
   List<_IdentityMatch> _pendingMatches = <_IdentityMatch>[];
   bool _isLoading = false;
   String? _loadError;
+  String? _loadErrorDetail;
 
   @override
   void initState() {
@@ -86,7 +87,11 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
                   children: <Widget>[
                     if (_loadError != null)
                       _buildStaleDataBanner(
-                        _tSiteIdentity(context, 'Unable to refresh identity matches right now. Showing the last successful data.'),
+                        _tSiteIdentity(context, 'Unable to refresh identity matches right now. Showing the last successful data.') +
+                            (_loadErrorDetail == null ||
+                                    _loadErrorDetail!.trim().isEmpty
+                                ? ''
+                                : ' ${_loadErrorDetail!.trim()}'),
                       ),
                     _buildHeader(),
                     const SizedBox(height: 16),
@@ -204,26 +209,33 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
   }
 
   Widget _buildStaleDataBanner(String message) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.orange.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.orange.withValues(alpha: 0.35)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          const Icon(Icons.warning_amber_rounded, color: Colors.orange),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              message,
-              style: const TextStyle(color: ScholesaColors.textPrimary),
-            ),
+    return Semantics(
+      container: true,
+      liveRegion: true,
+      label: message,
+      child: ExcludeSemantics(
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.orange.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.orange.withValues(alpha: 0.35)),
           ),
-        ],
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  message,
+                  style: const TextStyle(color: ScholesaColors.textPrimary),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -529,6 +541,7 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
     setState(() {
       _isLoading = true;
       _loadError = null;
+      _loadErrorDetail = null;
     });
 
     try {
@@ -576,13 +589,14 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
 
       if (!mounted) return;
       setState(() => _pendingMatches = loaded);
-    } catch (_) {
+    } catch (error) {
       if (!mounted) return;
       setState(() {
         _loadError = _tSiteIdentity(
           context,
           'We could not load the identity review queue. Retry to check the current state.',
         );
+        _loadErrorDetail = error.toString();
       });
     } finally {
       if (mounted) {

@@ -84,6 +84,8 @@ This is the reopened honesty pass after blocker remediation, clean builds, live 
 27. Hardened recent attendance, partner, and HQ audit surfaces for accessibility so stale-data warnings announce as live status updates and icon-only recovery or creation actions stay labeled for assistive technology.
 28. Hardened site ops runtime rollout recovery so operators can refresh the page from the app bar and retry runtime rollout outages directly from the affected card.
 29. Added direct site ops runtime rollout recovery proof for first-load outage recovery and stale partial-outage retry visibility.
+30. Hardened site identity stale-refresh behavior so operators keep seeing the last successful identity queue with the refresh failure detail still visible and assistive-tech announced.
+31. Refreshed direct site identity proof for stale-refresh detail visibility.
 
 ### Release and operations fixes
 
@@ -101,6 +103,7 @@ This is the reopened honesty pass after blocker remediation, clean builds, live 
 - Focused attendance honesty regressions passed: 5 passed, 0 failed.
 - Focused operator accessibility follow-up suites passed: 29 passed, 0 failed.
 - Focused site ops recovery suites passed: 6 passed, 0 failed.
+- Focused site identity honesty regressions passed: 2 passed, 0 failed.
 - Priority blocker page batch passed: 16 passed, 0 failed.
 - Settings logout and auth coverage passed: 26 passed, 0 failed.
 - Global session menu regressions passed: 2 passed, 0 failed.
