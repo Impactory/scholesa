@@ -115,7 +115,6 @@ Interpretation rule:
 25. Hardened educator attendance roster rendering so refresh failures preserve the last successful class roster instead of masking it behind a blocking error state.
 26. Added direct educator attendance roster proof for stale-refresh honesty.
 27. Hardened recent attendance, partner, and HQ audit surfaces for accessibility so stale-data warnings announce as live status updates and icon-only recovery or creation actions stay labeled for assistive technology.
-54. Added direct educator attendance route proof for real enrolled-learner roster coupling plus attendance save success/failure, and fixed attendance roster disposal so saving no longer triggers listener notifications while the widget tree is locked.
 28. Hardened site ops runtime rollout recovery so operators can refresh the page from the app bar and retry runtime rollout outages directly from the affected card.
 29. Added direct site ops runtime rollout recovery proof for first-load outage recovery and stale partial-outage retry visibility.
 30. Hardened site identity stale-refresh behavior so operators keep seeing the last successful identity queue with the refresh failure detail still visible and assistive-tech announced.
@@ -142,7 +141,7 @@ Interpretation rule:
 51. Added direct `/site/provisioning` mutation-failure proof for learner, parent, guardian-link, cohort, and guardian-link-delete flows, and fixed the route so guardian-link delete failures surface the real service error instead of a generic hidden-failure fallback.
 52. Added direct `/site/provisioning` auditability proof for create, edit, and delete mutation telemetry so the focused route suite now verifies operator traces for learner creation, parent editing, and guardian-link deletion.
 53. Fixed `/site/provisioning` success flows to re-load authoritative route data after create, edit, and delete mutations, and added direct proof that audited provisioning mutations settle on canonical source-of-truth state rather than local-only optimistic state.
-54. Added direct educator attendance route proof for real enrolled-learner roster coupling plus attendance save success/failure, fixed attendance roster disposal so saving no longer triggers listener notifications while the widget tree is locked, and proved saved attendance reloads from Firestore when the roster is reopened.
+54. Added direct educator attendance route proof for real enrolled-learner roster coupling plus attendance save success/failure, fixed attendance roster disposal so saving no longer triggers listener notifications while the widget tree is locked, proved saved attendance reloads from Firestore when the roster is reopened, and proved offline attendance saves queue truthfully without writing Firestore until sync resumes.
 
 ### Release and operations fixes
 
