@@ -74,4 +74,48 @@ void main() {
     expect(find.text('All Identities Resolved'), findsNothing);
     expect(find.text('Retry'), findsOneWidget);
   });
+
+  testWidgets('site identity keeps stale matches visible after refresh failure',
+      (WidgetTester tester) async {
+    int loadCount = 0;
+
+    await tester.pumpWidget(
+      _buildHarness(
+        SiteIdentityPage(
+          identityLoader: (String _) async {
+            loadCount += 1;
+            if (loadCount == 1) {
+              return <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'id': 'match-1',
+                  'status': 'unmatched',
+                  'scholesaUserName': 'Ava Stone',
+                  'providerUserId': 'ava.stone@classroom.test',
+                  'provider': 'google_classroom',
+                  'confidence': 0.91,
+                  'scholesaUserId': 'learner-1',
+                },
+              ];
+            }
+            throw StateError('identity refresh unavailable');
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ava Stone'), findsOneWidget);
+    expect(find.text('No pending identity matches to review'), findsNothing);
+
+    await tester.tap(find.byTooltip('Refresh'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Unable to refresh identity matches right now. Showing the last successful data.'),
+      findsOneWidget,
+    );
+    expect(find.text('Ava Stone'), findsOneWidget);
+    expect(find.text('No pending identity matches to review'), findsNothing);
+  });
 }
