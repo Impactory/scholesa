@@ -3,6 +3,9 @@
 Date: 2026-03-19
 Status: Not gold-ready
 
+This is a failure-against-the-gold-gate verification artifact, not a gold certification note.
+The title reflects the gate being tested, not the outcome achieved.
+
 This matrix applies the release gate in `.github/copilot-instructions.md` to the current repo state.
 Only active product code paths were considered. A workflow is not "verified" unless the chain is real, connected, and evidence-backed end to end.
 

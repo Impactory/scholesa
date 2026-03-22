@@ -437,7 +437,7 @@ const ids = await seedDefaultRubrics('admin-user-id');
 ### Provider Settings
 - **Gemini**: Disable training, use enterprise tier
 - **OpenAI**: Set `user_id` to hashed learner ID (no PII)
-- **Claude**: TBD (when added)
+- **Claude**: Not part of the current supported production stack; define equivalent redaction and retention controls only if the provider is explicitly added later
 
 ### Audit Trail
 - Every AI call logged with redaction audit

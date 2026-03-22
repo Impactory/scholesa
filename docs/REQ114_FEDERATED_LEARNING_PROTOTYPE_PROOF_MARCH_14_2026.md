@@ -3,6 +3,9 @@
 Date: 2026-03-14
 Status: Partial prototype slice implemented
 
+This document proves bounded prototype behavior only.
+Detailed HQ, rollout, and audit capabilities described below refer to the prototype operator slice and must not be read as production federated-learning readiness, pilot approval, or fleet-scale rollout proof.
+
 ## Scope proved
 
 REQ-114 is still not a shipped federated-learning capability, but the repo now contains a real prototype workstream slice instead of governance docs only.

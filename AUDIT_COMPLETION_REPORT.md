@@ -103,6 +103,8 @@ firebase deploy --only firestore:indexes
 
 #### **BLOCKER #2: i18n Architecture Mismatch** ✅ FIXED (Partial - 6 Pages Pending)
 
+> Historical remediation snapshot only. The partial migration note below describes the December 26 state, not the later RC3 launch baseline.
+
 **Status**: 🟢 Partially fixed (Dec 26); 6 pages remain
 
 **Issue**: Flutter + Next.js have separate, disconnected i18n systems.
