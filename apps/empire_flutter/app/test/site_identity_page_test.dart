@@ -5,6 +5,7 @@ import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
 import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/modules/site/site_identity_page.dart';
+import 'package:scholesa_app/services/telemetry_service.dart';
 
 AppState _buildSiteState() {
   final AppState state = AppState();
@@ -45,6 +46,19 @@ Widget _buildHarness(Widget child) {
       home: child,
     ),
   );
+}
+
+Future<List<Map<String, dynamic>>> _captureTelemetry(
+  Future<void> Function() body,
+) async {
+  final List<Map<String, dynamic>> events = <Map<String, dynamic>>[];
+  await TelemetryService.runWithDispatcher(
+    (Map<String, dynamic> payload) async {
+      events.add(Map<String, dynamic>.from(payload));
+    },
+    body,
+  );
+  return events;
 }
 
 void main() {
@@ -231,6 +245,57 @@ void main() {
         'Match update was submitted, but the queue could not be reloaded. Retry to verify the current state.',
       ),
       findsOneWidget,
+    );
+  });
+
+  testWidgets('site identity logs approve telemetry with match context',
+      (WidgetTester tester) async {
+    final List<Map<String, dynamic>> events = await _captureTelemetry(() async {
+      await tester.pumpWidget(
+        _buildHarness(
+          SiteIdentityPage(
+            identityLoader: (String _) async => <Map<String, dynamic>>[
+              <String, dynamic>{
+                'id': 'match-1',
+                'status': 'unmatched',
+                'scholesaUserName': 'Ava Stone',
+                'providerUserId': 'ava.stone@classroom.test',
+                'provider': 'google_classroom',
+                'confidence': 0.91,
+                'scholesaUserId': 'learner-1',
+              },
+            ],
+            identityResolver: (
+              String id,
+              String _,
+              String decision,
+              String? __,
+            ) async {
+              expect(id, 'match-1');
+              expect(decision, 'link');
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Approve Match'));
+      await tester.pump();
+      await tester.pumpAndSettle();
+    });
+
+    expect(
+      events.any((Map<String, dynamic> event) {
+        final Map<String, dynamic> metadata =
+            Map<String, dynamic>.from(event['metadata'] as Map);
+        return event['event'] == 'cta.clicked' &&
+            metadata['module'] == 'site_identity' &&
+            metadata['cta_id'] == 'approve_identity_match' &&
+            metadata['surface'] == 'identity_match_card' &&
+            metadata['match_id'] == 'match-1' &&
+            metadata['provider'] == 'Google Classroom';
+      }),
+      isTrue,
     );
   });
 }
