@@ -358,16 +358,11 @@ void main() {
 
     final QuerySnapshot<Map<String, dynamic>> attempts =
         await firestore.collection('missionAttempts').get();
-    final QuerySnapshot<Map<String, dynamic>> submissions =
-        await firestore.collection('missionSubmissions').get();
     expect(attempts.docs, hasLength(1));
-    expect(submissions.docs, hasLength(1));
 
     final QueryDocumentSnapshot<Map<String, dynamic>> attemptDoc =
         attempts.docs.single;
     final Map<String, dynamic> attempt = attemptDoc.data();
-    final Map<String, dynamic> submission = submissions.docs.single.data();
-    expect(submissions.docs.single.id, attemptDoc.id);
     expect(attempt['missionId'], 'mission-1');
     expect(attempt['learnerId'], 'learner-1');
     expect(attempt['siteId'], 'site-1');
@@ -388,8 +383,7 @@ void main() {
       (attempt['proofBundleSummary'] as Map<String, dynamic>)['aiAssistanceUsed'],
       isFalse,
     );
-    expect(submission['status'], 'submitted');
-    expect(submission['missionTitle'], 'Mission ready for review');
+      expect(attempt['missionTitle'], 'Mission ready for review');
 
     final DocumentSnapshot<Map<String, dynamic>> assignment = await firestore
         .collection('missionAssignments')

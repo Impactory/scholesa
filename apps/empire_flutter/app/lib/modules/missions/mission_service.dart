@@ -986,8 +986,6 @@ class MissionService extends ChangeNotifier {
             assignmentDoc?.data()['sessionOccurrenceId'] as String?;
         final DocumentReference<Map<String, dynamic>> attemptRef =
             _firestore.collection('missionAttempts').doc();
-        final DocumentReference<Map<String, dynamic>> submissionRef =
-            _firestore.collection('missionSubmissions').doc(attemptRef.id);
         final String submissionText =
             'Mission "${mission.title}" submitted for educator review.';
         final Map<String, dynamic> canonicalAttempt = <String, dynamic>{
@@ -1025,11 +1023,6 @@ class MissionService extends ChangeNotifier {
 
         final WriteBatch batch = _firestore.batch();
         batch.set(attemptRef, canonicalAttempt);
-        batch.set(
-          submissionRef,
-          canonicalAttempt,
-          SetOptions(merge: true),
-        );
         if (assignmentDoc != null) {
           batch.update(assignmentDoc.reference, <String, dynamic>{
             'status': 'submitted',
@@ -1795,7 +1788,7 @@ class MissionService extends ChangeNotifier {
           },
           SetOptions(merge: true));
 
-      if (submissionSnapshot.exists || submissionId == canonicalAttemptRef.id) {
+      if (submissionSnapshot.exists) {
         batch.set(
             submissionRef,
             <String, dynamic>{

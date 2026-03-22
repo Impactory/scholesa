@@ -210,13 +210,6 @@ void main() {
       isFalse,
     );
 
-    final QuerySnapshot<Map<String, dynamic>> submissions =
-        await firestore.collection('missionSubmissions').get();
-    expect(submissions.docs, hasLength(1));
-    expect(submissions.docs.first.id, attempts.docs.first.id);
-    expect(
-        submissions.docs.first.data()['proofBundleId'], 'learner-1_mission-1');
-
     final DocumentSnapshot<Map<String, dynamic>> assignmentDoc =
         await firestore.collection('missionAssignments').doc('assignment-1').get();
     expect(assignmentDoc.data()?['status'], 'submitted');
