@@ -1587,6 +1587,231 @@ void main() {
       expect(_savedFileContent, contains('Mission Attempt ID:'));
     });
 
+    testWidgets(
+        'child passport shows reviewed claims created through live learner and educator workflow for provisioning-linked families',
+        (WidgetTester tester) async {
+      ExportService.instance.debugSaveTextFile = ({
+        required String fileName,
+        required String content,
+        required String mimeType,
+      }) async {
+        _savedFileName = fileName;
+        _savedFileContent = content;
+        return '/tmp/$fileName';
+      };
+
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+
+      await _pumpProvisioningPage(tester, firestore: firestore);
+
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byType(TextFormField).at(0),
+        'Nia Passport Evidence',
+      );
+      await tester.enterText(
+        find.byType(TextFormField).at(1),
+        'nia.passport-evidence@example.com',
+      );
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Create'));
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Parents').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextFormField).at(0), 'Pat Passport Evidence');
+      await tester.enterText(
+        find.byType(TextFormField).at(1),
+        'pat.passport-evidence@example.com',
+      );
+      await tester.enterText(find.byType(TextFormField).at(2), '555-0121');
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Create'));
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      final QuerySnapshot<Map<String, dynamic>> learnerUsers = await firestore
+          .collection('users')
+          .where('email', isEqualTo: 'nia.passport-evidence@example.com')
+          .get();
+      expect(learnerUsers.docs, hasLength(1));
+      final String learnerId = learnerUsers.docs.single.id;
+
+      final QuerySnapshot<Map<String, dynamic>> parentUsers = await firestore
+          .collection('users')
+          .where('email', isEqualTo: 'pat.passport-evidence@example.com')
+          .get();
+      expect(parentUsers.docs, hasLength(1));
+      final String parentId = parentUsers.docs.single.id;
+
+      await tester.tap(find.text('Links').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(DropdownButtonFormField<String>).at(0));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Pat Passport Evidence').last);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(DropdownButtonFormField<String>).at(1));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Nia Passport Evidence').last);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Create Link'));
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      await _seedMissionReviewData(firestore, learnerId: learnerId);
+      await firestore.collection('users').doc('hidden-passport-learner').set(
+        <String, dynamic>{
+          'role': 'learner',
+          'displayName': 'Hidden Passport Learner',
+          'siteIds': <String>['site-1'],
+        },
+      );
+      await firestore
+          .collection('capabilityMastery')
+          .doc('hidden-passport-learner_hidden-capability')
+          .set(
+        <String, dynamic>{
+          'learnerId': 'hidden-passport-learner',
+          'siteId': 'site-1',
+          'capabilityId': 'hidden-capability',
+          'pillarCode': 'future_skills',
+          'latestLevel': 4,
+          'highestLevel': 4,
+          'latestMissionAttemptId': 'hidden-attempt',
+          'updatedAt': Timestamp.fromDate(DateTime(2026, 3, 18, 10, 0)),
+        },
+      );
+      await firestore.collection('evidenceRecords').doc('hidden-evidence').set(
+        <String, dynamic>{
+          'learnerId': 'hidden-passport-learner',
+          'siteId': 'site-1',
+          'capabilityId': 'hidden-capability',
+          'capabilityLabel': 'Hidden reviewed capability',
+          'linkedMissionAttemptId': 'hidden-attempt',
+          'observedAt': Timestamp.fromDate(DateTime(2026, 3, 18, 9, 0)),
+        },
+      );
+      await firestore.collection('portfolioItems').doc('hidden-passport-item').set(
+        <String, dynamic>{
+          'learnerId': 'hidden-passport-learner',
+          'title': 'Hidden passport artifact',
+          'description': 'Should stay hidden from the linked parent.',
+          'pillarCodes': const <String>['future_skills'],
+          'capabilityIds': const <String>['hidden-capability'],
+          'capabilityTitles': const <String>['Hidden reviewed capability'],
+          'verificationStatus': 'reviewed',
+          'missionAttemptId': 'hidden-attempt',
+          'proofOfLearningStatus': 'verified',
+          'aiDisclosureStatus': 'learner-ai-not-used',
+          'createdAt': Timestamp.fromDate(DateTime(2026, 3, 18, 9, 5)),
+          'updatedAt': Timestamp.fromDate(DateTime(2026, 3, 18, 9, 10)),
+        },
+      );
+      await firestore.collection('missionAttempts').doc('hidden-attempt').set(
+        <String, dynamic>{
+          'learnerId': 'hidden-passport-learner',
+          'missionId': 'hidden-mission',
+          'sessionOccurrenceId': 'hidden-occurrence',
+          'proofBundleSummary': <String, dynamic>{
+            'hasExplainItBack': true,
+            'hasOralCheck': true,
+            'hasMiniRebuild': true,
+            'hasLearnerAiDisclosure': true,
+            'aiAssistanceUsed': false,
+          },
+        },
+      );
+
+      final FirestoreService firestoreService = FirestoreService(
+        firestore: firestore,
+        auth: _MockFirebaseAuth(),
+      );
+
+      await _submitMissionForReview(
+        tester,
+        firestore: firestore,
+        learnerState: _buildLearnerWorkflowState(
+          userId: learnerId,
+          email: 'nia.passport-evidence@example.com',
+          displayName: 'Nia Passport Evidence',
+        ),
+        missionService: MissionService(
+          firestoreService: firestoreService,
+          learnerId: learnerId,
+        ),
+      );
+
+      await _approveSubmittedMission(
+        tester,
+        firestore: firestore,
+        missionService: MissionService(
+          firestoreService: firestoreService,
+          learnerId: 'educator-1',
+        ),
+      );
+
+      final QuerySnapshot<Map<String, dynamic>> missionAttempts = await firestore
+          .collection('missionAttempts')
+          .where('learnerId', isEqualTo: learnerId)
+          .get();
+      expect(missionAttempts.docs, hasLength(1));
+      final String missionAttemptId = missionAttempts.docs.single.id;
+
+      final QuerySnapshot<Map<String, dynamic>> portfolioItems = await firestore
+          .collection('portfolioItems')
+          .where('learnerId', isEqualTo: learnerId)
+          .where('missionAttemptId', isEqualTo: missionAttemptId)
+          .get();
+      expect(portfolioItems.docs, hasLength(1));
+      final String portfolioItemId = portfolioItems.docs.single.id;
+
+      final ParentService parentService = ParentService(
+        firestoreService: firestoreService,
+        parentId: parentId,
+        bundleLoader: () async => <LearnerSummary>[],
+        billingLoader: () async => null,
+      );
+
+      await _pumpPage(
+        tester,
+        firestore: firestore,
+        appState: _buildParentState(
+          userId: parentId,
+          email: 'pat.passport-evidence@example.com',
+          displayName: 'Pat Passport Evidence',
+        ),
+        parentService: parentService,
+        home: ParentChildPage(learnerId: learnerId),
+      );
+
+      expect(find.text('Nia Passport Evidence'), findsOneWidget);
+      expect(find.text('Ideation Passport'), findsOneWidget);
+      expect(find.text('Prototype evidence'), findsWidgets);
+      expect(find.text('Hidden reviewed capability'), findsNothing);
+      expect(
+        find.textContaining(
+          'Proof of Learning: Verified • AI Disclosure: Learner declared no AI support used',
+        ),
+        findsWidgets,
+      );
+
+      await tester.tap(find.text('Export Passport'));
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      expect(_savedFileName, 'ideation-passport-$learnerId.txt');
+      expect(_savedFileContent, contains('Prototype evidence'));
+      expect(_savedFileContent, contains('Portfolio Item IDs: $portfolioItemId'));
+      expect(_savedFileContent, contains('Mission Attempt IDs: $missionAttemptId'));
+    });
+
     testWidgets('portfolio page downloads a real summary file',
         (WidgetTester tester) async {
       ExportService.instance.debugSaveTextFile = ({

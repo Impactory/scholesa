@@ -243,6 +243,7 @@ Interpretation rule:
 - Focused educator mission review regressions passed after the live rubric growth-linkage proof: 4 passed, 0 failed.
 - Focused learner portfolio honesty regressions passed after the reviewed-artifact portfolio proof: 6 passed, 0 failed.
 - Focused parent surface workflow regressions passed after the reviewed-artifact family portfolio proof: 16 passed, 0 failed.
+- Focused parent surface workflow regressions passed after the reviewed-artifact family Passport proof: 17 passed, 0 failed.
 
 ### Full Flutter gate verification
 
