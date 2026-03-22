@@ -386,6 +386,144 @@ void main() {
     );
   });
 
+  testWidgets(
+      'parent consent page persists consent review requests for provisioning-linked families',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _FakeFirebaseAuth(),
+    );
+
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await _pumpProvisioningPage(tester, firestore: firestore);
+
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).at(0), 'Nia Consent');
+    await tester.enterText(
+      find.byType(TextFormField).at(1),
+      'nia.consent-review@example.com',
+    );
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Create'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Parents').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).at(0), 'Pat Consent');
+    await tester.enterText(
+      find.byType(TextFormField).at(1),
+      'pat.consent-review@example.com',
+    );
+    await tester.enterText(find.byType(TextFormField).at(2), '555-0120');
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Create'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    final QuerySnapshot<Map<String, dynamic>> learnerUsers = await firestore
+        .collection('users')
+        .where('email', isEqualTo: 'nia.consent-review@example.com')
+        .get();
+    expect(learnerUsers.docs, hasLength(1));
+    final String learnerId = learnerUsers.docs.single.id;
+
+    final QuerySnapshot<Map<String, dynamic>> parentUsers = await firestore
+        .collection('users')
+        .where('email', isEqualTo: 'pat.consent-review@example.com')
+        .get();
+    expect(parentUsers.docs, hasLength(1));
+    final String parentId = parentUsers.docs.single.id;
+
+    await tester.tap(find.text('Links').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(DropdownButtonFormField<String>).at(0));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Pat Consent').last);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(DropdownButtonFormField<String>).at(1));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Nia Consent').last);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Create Link'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await firestore.collection('mediaConsents').doc('media-linked-1').set(
+      <String, dynamic>{
+        'siteId': 'site-1',
+        'learnerId': learnerId,
+        'photoCaptureAllowed': true,
+        'shareWithLinkedParents': true,
+        'marketingUseAllowed': false,
+        'consentStatus': 'active',
+        'consentStartDate': '2026-03-01',
+      },
+    );
+    await firestore.collection('researchConsents').doc('research-linked-1').set(
+      <String, dynamic>{
+        'siteId': 'site-1',
+        'learnerId': learnerId,
+        'parentId': parentId,
+        'consentGiven': true,
+        'dataShareScope': 'pseudonymised',
+        'consentVersion': 'v2',
+      },
+    );
+
+    await tester.pumpWidget(
+      _buildHarness(
+        appState: (() {
+          final AppState state = AppState();
+          state.updateFromMeResponse(<String, dynamic>{
+            'userId': parentId,
+            'email': 'pat.consent-review@example.com',
+            'displayName': 'Pat Consent',
+            'role': 'parent',
+            'activeSiteId': 'site-1',
+            'siteIds': <String>['site-1'],
+            'entitlements': const <dynamic>[],
+          });
+          return state;
+        })(),
+        firestoreService: firestoreService,
+        child: ParentConsentPage(
+          service: ParentConsentService(firestore: firestore),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Request Consent Review').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Consent review request submitted.'), findsOneWidget);
+    final QuerySnapshot<Map<String, dynamic>> requests =
+        await firestore.collection('supportRequests').get();
+    expect(requests.docs, hasLength(1));
+    final Map<String, dynamic> request = requests.docs.single.data();
+    expect(request['requestType'], 'parent_consent_review');
+    expect(request['source'], 'parent_consent_request_review');
+    expect(request['userId'], parentId);
+    expect(
+      (request['metadata'] as Map<String, dynamic>)['learnerId'],
+      learnerId,
+    );
+    expect(
+      (request['metadata'] as Map<String, dynamic>)['learnerName'],
+      'Nia Consent',
+    );
+  });
+
   testWidgets('parent consent page fails closed when support requests are unavailable',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
