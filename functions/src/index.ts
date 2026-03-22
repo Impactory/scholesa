@@ -2515,7 +2515,7 @@ async function buildParentLearnerSummary(params: {
     .map((doc) => doc.data() as Record<string, unknown>)
     .filter(includeForSite);
   const growthRows = growthSnap.docs
-    .map((doc) => doc.data() as Record<string, unknown>)
+    .map((doc) => ({ id: doc.id, ...(doc.data() as Record<string, unknown>) }))
     .filter(includeForSite);
   const reflectionRows = reflectionsSnap.docs
     .map((doc) => doc.data() as Record<string, unknown>)
@@ -2526,6 +2526,77 @@ async function buildParentLearnerSummary(params: {
   const interactionEventRows = interactionEventsSnap.docs
     .map((doc) => ({ id: doc.id, ...(doc.data() as Record<string, unknown>) }))
     .filter(includeForSite);
+
+  const reviewerIds = Array.from(
+    new Set(
+      [
+        ...growthRows.map((row) => (typeof row.educatorId === 'string' ? row.educatorId.trim() : '')),
+        ...portfolioRows.map((row) => (typeof row.educatorId === 'string' ? row.educatorId.trim() : '')),
+        ...missionAttemptRows.map((row) => (typeof row.reviewedBy === 'string' ? row.reviewedBy.trim() : '')),
+      ].filter(Boolean),
+    ),
+  );
+  const reviewerNameEntries = await Promise.all(
+    reviewerIds.map(async (reviewerId) => {
+      try {
+        const reviewerSnap = await admin.firestore().collection('users').doc(reviewerId).get();
+        const reviewerData = reviewerSnap.data() as Record<string, unknown> | undefined;
+        const displayName = typeof reviewerData?.displayName === 'string' ? reviewerData.displayName.trim() : '';
+        const email = typeof reviewerData?.email === 'string' ? reviewerData.email.trim() : '';
+        return [reviewerId, displayName || email] as const;
+      } catch {
+        return [reviewerId, ''] as const;
+      }
+    }),
+  );
+  const reviewerNames = Object.fromEntries(
+    reviewerNameEntries.filter((entry) => Boolean(entry[1])),
+  ) as Record<string, string>;
+
+  const proofBundleIds = Array.from(
+    new Set(
+      [
+        ...missionAttemptRows.map((row) => (typeof row.proofBundleId === 'string' ? row.proofBundleId.trim() : '')),
+        ...portfolioRows.map((row) => (typeof row.proofBundleId === 'string' ? row.proofBundleId.trim() : '')),
+      ].filter(Boolean),
+    ),
+  );
+  const proofBundleEntries = await Promise.all(
+    proofBundleIds.map(async (proofBundleId) => {
+      try {
+        const proofBundleSnap = await admin
+          .firestore()
+          .collection('proofOfLearningBundles')
+          .doc(proofBundleId)
+          .get();
+        if (!proofBundleSnap.exists) {
+          return [proofBundleId, null] as const;
+        }
+        return [proofBundleId, { id: proofBundleSnap.id, ...(proofBundleSnap.data() as Record<string, unknown>) }] as const;
+      } catch {
+        return [proofBundleId, null] as const;
+      }
+    }),
+  );
+  const proofBundleDetails = Object.fromEntries(
+    proofBundleEntries.filter((entry) => entry[1] != null),
+  ) as Record<string, Record<string, unknown>>;
+
+  const buildProofCheckpoints = (
+    proofBundle: Record<string, unknown> | undefined,
+  ): Array<Record<string, unknown>> => {
+    const versionHistory = Array.isArray(proofBundle?.versionHistory) ? proofBundle.versionHistory : [];
+    return versionHistory
+      .filter((entry): entry is Record<string, unknown> => Boolean(entry) && typeof entry === 'object')
+      .map((entry) => ({
+        id: typeof entry.id === 'string' ? entry.id.trim() : '',
+        summary: typeof entry.summary === 'string' ? entry.summary.trim() : '',
+        artifactNote: typeof entry.artifactNote === 'string' && entry.artifactNote.trim() ? entry.artifactNote.trim() : null,
+        createdAt: parseDateFromUnknown(entry.createdAt)?.toISOString() ?? null,
+      }))
+      .filter((entry) => Boolean(entry.id) || Boolean(entry.summary))
+      .sort((left, right) => Date.parse(String(left.createdAt ?? '1970-01-01')) - Date.parse(String(right.createdAt ?? '1970-01-01')));
+  };
 
   const evidenceDates = evidenceRows
     .map((row) => parseDateFromUnknown(row.observedAt ?? row.growthUpdatedAt ?? row.createdAt))
@@ -2646,9 +2717,19 @@ async function buildParentLearnerSummary(params: {
           )
         : [];
       const proofBundleSummary = matchingMissionAttempt?.proofBundleSummary as Record<string, unknown> | undefined;
+      const proofBundleId = typeof row.proofBundleId === 'string' && row.proofBundleId.trim()
+        ? row.proofBundleId.trim()
+        : typeof matchingMissionAttempt?.proofBundleId === 'string' && matchingMissionAttempt.proofBundleId.trim()
+        ? matchingMissionAttempt.proofBundleId.trim()
+        : '';
+      const proofBundle = proofBundleId ? proofBundleDetails[proofBundleId] : undefined;
+      const proofCheckpoints = buildProofCheckpoints(proofBundle);
       const hasExplainItBack = proofBundleSummary?.hasExplainItBack === true;
       const hasOralCheck = proofBundleSummary?.hasOralCheck === true;
       const hasMiniRebuild = proofBundleSummary?.hasMiniRebuild === true;
+      const proofCheckpointCount = typeof proofBundleSummary?.checkpointCount === 'number'
+        ? proofBundleSummary.checkpointCount
+        : proofCheckpoints.length;
       const hasLearnerAiDisclosure = proofBundleSummary?.hasLearnerAiDisclosure === true;
       const learnerAiDeclaredUsed = proofBundleSummary?.aiAssistanceUsed === true;
       const directProofOfLearningStatus = typeof row.proofOfLearningStatus === 'string'
@@ -2676,6 +2757,56 @@ async function buildParentLearnerSummary(params: {
       const directAiDisclosureStatus = typeof row.aiDisclosureStatus === 'string'
         ? row.aiDisclosureStatus.trim()
         : '';
+      const aiAssistanceDetails = typeof row.aiAssistanceDetails === 'string' && row.aiAssistanceDetails.trim()
+        ? row.aiAssistanceDetails.trim()
+        : typeof matchingMissionAttempt?.aiAssistanceDetails === 'string' && matchingMissionAttempt.aiAssistanceDetails.trim()
+        ? matchingMissionAttempt.aiAssistanceDetails.trim()
+        : typeof proofBundle?.aiAssistanceDetails === 'string' && proofBundle.aiAssistanceDetails.trim()
+        ? proofBundle.aiAssistanceDetails.trim()
+        : null;
+      const growthEventIds = Array.isArray(row.growthEventIds)
+        ? row.growthEventIds.filter((value): value is string => typeof value === 'string' && value.trim().length > 0).map((value) => value.trim())
+        : [];
+      const matchingGrowth = growthRows
+        .filter((entry) => {
+          const growthId = typeof entry.id === 'string' ? entry.id.trim() : '';
+          const growthMissionAttemptId = typeof entry.missionAttemptId === 'string' ? entry.missionAttemptId.trim() : '';
+          return (growthId && growthEventIds.includes(growthId)) || (missionAttemptId && growthMissionAttemptId === missionAttemptId);
+        })
+        .sort((left, right) => {
+          const leftTime = parseDateFromUnknown(left.createdAt)?.getTime() ?? 0;
+          const rightTime = parseDateFromUnknown(right.createdAt)?.getTime() ?? 0;
+          return rightTime - leftTime;
+        });
+      const latestGrowth = matchingGrowth[0];
+      const reviewerId = latestGrowth
+        ? (typeof latestGrowth.educatorId === 'string' ? latestGrowth.educatorId.trim() : '')
+        : typeof row.educatorId === 'string' && row.educatorId.trim()
+        ? row.educatorId.trim()
+        : typeof matchingMissionAttempt?.reviewedBy === 'string' && matchingMissionAttempt.reviewedBy.trim()
+        ? matchingMissionAttempt.reviewedBy.trim()
+        : '';
+      const reviewerName = reviewerId ? reviewerNames[reviewerId] ?? null : null;
+      const reviewedAt = latestGrowth
+        ? parseDateFromUnknown(latestGrowth.createdAt)?.toISOString() ?? null
+        : parseDateFromUnknown(row.updatedAt ?? row.reviewedAt ?? matchingMissionAttempt?.reviewedAt)?.toISOString() ?? null;
+      const rubricRawScore = latestGrowth
+        ? (typeof latestGrowth.rawScore === 'number' && Number.isFinite(latestGrowth.rawScore) ? latestGrowth.rawScore : null)
+        : typeof row.rubricTotalScore === 'number' && Number.isFinite(row.rubricTotalScore)
+        ? row.rubricTotalScore
+        : typeof matchingMissionAttempt?.rubricTotalScore === 'number' && Number.isFinite(matchingMissionAttempt.rubricTotalScore)
+        ? matchingMissionAttempt.rubricTotalScore
+        : null;
+      const rubricMaxScore = latestGrowth
+        ? (typeof latestGrowth.maxScore === 'number' && Number.isFinite(latestGrowth.maxScore) ? latestGrowth.maxScore : null)
+        : typeof row.rubricMaxScore === 'number' && Number.isFinite(row.rubricMaxScore)
+        ? row.rubricMaxScore
+        : typeof matchingMissionAttempt?.rubricMaxScore === 'number' && Number.isFinite(matchingMissionAttempt.rubricMaxScore)
+        ? matchingMissionAttempt.rubricMaxScore
+        : null;
+      const rubricLevel = latestGrowth && typeof latestGrowth.level === 'number' && Number.isFinite(latestGrowth.level)
+        ? latestGrowth.level
+        : null;
       const aiDisclosureStatus = directAiDisclosureStatus
         ? directAiDisclosureStatus
         : hasLearnerAiDisclosure
@@ -2715,6 +2846,34 @@ async function buildParentLearnerSummary(params: {
         verificationPrompt: typeof row.verificationPrompt === 'string' && row.verificationPrompt.trim() ? row.verificationPrompt.trim() : null,
         proofOfLearningStatus,
         aiDisclosureStatus,
+        proofHasExplainItBack: hasExplainItBack,
+        proofHasOralCheck: hasOralCheck,
+        proofHasMiniRebuild: hasMiniRebuild,
+        proofCheckpointCount,
+        proofExplainItBackExcerpt:
+          typeof proofBundle?.explainItBack === 'string' && proofBundle.explainItBack.trim()
+            ? proofBundle.explainItBack.trim()
+            : null,
+        proofOralCheckExcerpt:
+          typeof proofBundle?.oralCheckResponse === 'string' && proofBundle.oralCheckResponse.trim()
+            ? proofBundle.oralCheckResponse.trim()
+            : null,
+        proofMiniRebuildExcerpt:
+          typeof proofBundle?.miniRebuildPlan === 'string' && proofBundle.miniRebuildPlan.trim()
+            ? proofBundle.miniRebuildPlan.trim()
+            : null,
+        proofCheckpoints,
+        aiHasLearnerDisclosure: hasLearnerAiDisclosure,
+        aiLearnerDeclaredUsed: learnerAiDeclaredUsed,
+        aiHelpEventCount: learnerAiEventCount,
+        aiHasExplainItBackEvidence: hasExplainItBack || hasLearnerExplainBackEvent,
+        aiHasEducatorAiFeedback: hasAiFeedbackSignal,
+        aiAssistanceDetails,
+        reviewingEducatorName: reviewerName,
+        reviewedAt,
+        rubricRawScore,
+        rubricMaxScore,
+        rubricLevel,
       };
     })
     .sort((left, right) => Date.parse(String(right.completedAt)) - Date.parse(String(left.completedAt)));
@@ -2829,6 +2988,63 @@ async function buildParentLearnerSummary(params: {
         : matchingMissionAttempts.length > 0
         ? 'no-learner-ai-signal'
         : 'not-available';
+      const matchingGrowthByRecency = [...matchingGrowth].sort((left, right) => {
+        const leftTime = parseDateFromUnknown(left.createdAt)?.getTime() ?? 0;
+        const rightTime = parseDateFromUnknown(right.createdAt)?.getTime() ?? 0;
+        return rightTime - leftTime;
+      });
+      const latestGrowth = matchingGrowthByRecency[0];
+      const latestMissionAttempt = matchingMissionAttempts[0];
+      const latestPortfolio = [...matchingPortfolio].sort((left, right) => {
+        const leftTime = parseDateFromUnknown(left.updatedAt ?? left.createdAt)?.getTime() ?? 0;
+        const rightTime = parseDateFromUnknown(right.updatedAt ?? right.createdAt)?.getTime() ?? 0;
+        return rightTime - leftTime;
+      })[0];
+      const proofBundleId = typeof latestPortfolio?.proofBundleId === 'string' && latestPortfolio.proofBundleId.trim()
+        ? latestPortfolio.proofBundleId.trim()
+        : typeof latestMissionAttempt?.proofBundleId === 'string' && latestMissionAttempt.proofBundleId.trim()
+        ? latestMissionAttempt.proofBundleId.trim()
+        : '';
+      const proofBundle = proofBundleId ? proofBundleDetails[proofBundleId] : undefined;
+      const proofCheckpoints = buildProofCheckpoints(proofBundle);
+      const proofCheckpointCount = matchingMissionAttempts
+        .map((entry) => {
+          const summary = entry.proofBundleSummary as Record<string, unknown> | undefined;
+          return typeof summary?.checkpointCount === 'number' ? summary.checkpointCount : 0;
+        })
+        .reduce((max, value) => Math.max(max, value), 0);
+      const reviewerId = latestGrowth
+        ? (typeof latestGrowth.educatorId === 'string' ? latestGrowth.educatorId.trim() : '')
+        : typeof latestPortfolio?.educatorId === 'string' && latestPortfolio.educatorId.trim()
+        ? latestPortfolio.educatorId.trim()
+        : typeof latestMissionAttempt?.reviewedBy === 'string' && latestMissionAttempt.reviewedBy.trim()
+        ? latestMissionAttempt.reviewedBy.trim()
+        : '';
+      const reviewerName = reviewerId ? reviewerNames[reviewerId] ?? null : null;
+      const reviewedAt = latestGrowth
+        ? parseDateFromUnknown(latestGrowth.createdAt)?.toISOString() ?? null
+        : parseDateFromUnknown(latestPortfolio?.updatedAt ?? latestPortfolio?.reviewedAt ?? latestMissionAttempt?.reviewedAt)?.toISOString() ?? null;
+      const rubricRawScore = latestGrowth
+        ? (typeof latestGrowth.rawScore === 'number' && Number.isFinite(latestGrowth.rawScore) ? latestGrowth.rawScore : null)
+        : typeof latestPortfolio?.rubricTotalScore === 'number' && Number.isFinite(latestPortfolio.rubricTotalScore)
+        ? latestPortfolio.rubricTotalScore
+        : typeof latestMissionAttempt?.rubricTotalScore === 'number' && Number.isFinite(latestMissionAttempt.rubricTotalScore)
+        ? latestMissionAttempt.rubricTotalScore
+        : null;
+      const rubricMaxScore = latestGrowth
+        ? (typeof latestGrowth.maxScore === 'number' && Number.isFinite(latestGrowth.maxScore) ? latestGrowth.maxScore : null)
+        : typeof latestPortfolio?.rubricMaxScore === 'number' && Number.isFinite(latestPortfolio.rubricMaxScore)
+        ? latestPortfolio.rubricMaxScore
+        : typeof latestMissionAttempt?.rubricMaxScore === 'number' && Number.isFinite(latestMissionAttempt.rubricMaxScore)
+        ? latestMissionAttempt.rubricMaxScore
+        : null;
+      const aiAssistanceDetails = typeof latestPortfolio?.aiAssistanceDetails === 'string' && latestPortfolio.aiAssistanceDetails.trim()
+        ? latestPortfolio.aiAssistanceDetails.trim()
+        : typeof latestMissionAttempt?.aiAssistanceDetails === 'string' && latestMissionAttempt.aiAssistanceDetails.trim()
+        ? latestMissionAttempt.aiAssistanceDetails.trim()
+        : typeof proofBundle?.aiAssistanceDetails === 'string' && proofBundle.aiAssistanceDetails.trim()
+        ? proofBundle.aiAssistanceDetails.trim()
+        : null;
       return {
         capabilityId,
         title: String(title),
@@ -2847,6 +3063,33 @@ async function buildParentLearnerSummary(params: {
         aiDisclosureStatus,
         latestEvidenceAt: latestEvidenceAt?.toISOString() ?? null,
         verificationStatus: verifiedArtifactCount > 0 ? 'reviewed' : matchingEvidence.length > 0 ? 'captured' : null,
+        proofHasExplainItBack: hasExplainItBack,
+        proofHasOralCheck: hasOralCheck,
+        proofHasMiniRebuild: hasMiniRebuild,
+        proofCheckpointCount,
+        proofExplainItBackExcerpt:
+          typeof proofBundle?.explainItBack === 'string' && proofBundle.explainItBack.trim()
+            ? proofBundle.explainItBack.trim()
+            : null,
+        proofOralCheckExcerpt:
+          typeof proofBundle?.oralCheckResponse === 'string' && proofBundle.oralCheckResponse.trim()
+            ? proofBundle.oralCheckResponse.trim()
+            : null,
+        proofMiniRebuildExcerpt:
+          typeof proofBundle?.miniRebuildPlan === 'string' && proofBundle.miniRebuildPlan.trim()
+            ? proofBundle.miniRebuildPlan.trim()
+            : null,
+        proofCheckpoints,
+        aiHasLearnerDisclosure: hasLearnerAiDisclosure,
+        aiLearnerDeclaredUsed: learnerAiDeclaredUsed,
+        aiHelpEventCount: learnerAiEventCount,
+        aiHasExplainItBackEvidence: hasExplainItBack || hasLearnerExplainBackEvent,
+        aiHasEducatorAiFeedback: hasAiFeedbackSignal,
+        aiAssistanceDetails,
+        reviewingEducatorName: reviewerName,
+        reviewedAt,
+        rubricRawScore,
+        rubricMaxScore,
       };
     })
     .filter((value): value is Record<string, unknown> => Boolean(value))
@@ -2873,10 +3116,55 @@ async function buildParentLearnerSummary(params: {
     lastReflectionAt: reflectionDates[0]?.toISOString() ?? null,
     generatedAt: now.toISOString(),
     summary: passportClaims.length
-      ? `${passportClaims.length} capability claims are backed by reviewed evidence and verified artifacts.`
+      ? `${passportClaims.length} capability claims are backed by reviewed evidence and reviewed or verified artifacts.`
       : 'No verified capability claims are available yet.',
     claims: passportClaims,
   };
+
+  const capabilityTitlesById = new Map<string, string>();
+  evidenceRows.forEach((row) => {
+    const capabilityId = typeof row.capabilityId === 'string' ? row.capabilityId.trim() : '';
+    const capabilityLabel = typeof row.capabilityLabel === 'string' ? row.capabilityLabel.trim() : '';
+    if (capabilityId && capabilityLabel) {
+      capabilityTitlesById.set(capabilityId, capabilityLabel);
+    }
+  });
+  portfolioRows.forEach((row) => {
+    const capabilityIds = Array.isArray(row.capabilityIds)
+      ? row.capabilityIds.filter((value): value is string => typeof value === 'string')
+      : [];
+    const capabilityTitles = Array.isArray(row.capabilityTitles)
+      ? row.capabilityTitles.filter((value): value is string => typeof value === 'string')
+      : [];
+    capabilityIds.forEach((capabilityId, index) => {
+      const trimmedCapabilityId = capabilityId.trim();
+      const capabilityTitle = capabilityTitles[index]?.trim() ?? '';
+      if (trimmedCapabilityId && capabilityTitle) {
+        capabilityTitlesById.set(trimmedCapabilityId, capabilityTitle);
+      }
+    });
+  });
+  const growthTimeline = growthRows
+    .map((row) => {
+      const capabilityId = typeof row.capabilityId === 'string' ? row.capabilityId.trim() : '';
+      if (!capabilityId) {
+        return null;
+      }
+      const reviewerId = typeof row.educatorId === 'string' ? row.educatorId.trim() : '';
+      return {
+        capabilityId,
+        title: capabilityTitlesById.get(capabilityId) ?? capabilityId,
+        pillar: parentPillarLabelFromCodes([row.pillarCode]),
+        level: typeof row.level === 'number' && Number.isFinite(row.level) ? row.level : 0,
+        occurredAt: parseDateFromUnknown(row.createdAt)?.toISOString() ?? null,
+        reviewingEducatorName: reviewerId ? reviewerNames[reviewerId] ?? null : null,
+        rubricRawScore: typeof row.rawScore === 'number' && Number.isFinite(row.rawScore) ? row.rawScore : null,
+        rubricMaxScore: typeof row.maxScore === 'number' && Number.isFinite(row.maxScore) ? row.maxScore : null,
+        missionAttemptId: typeof row.missionAttemptId === 'string' && row.missionAttemptId.trim() ? row.missionAttemptId.trim() : null,
+      };
+    })
+    .filter((value): value is Record<string, unknown> => value !== null)
+    .sort((left, right) => Date.parse(String(right.occurredAt ?? now.toISOString())) - Date.parse(String(left.occurredAt ?? now.toISOString())));
 
   const currentLevel =
     averageLevel != null && averageLevel > 0
@@ -2927,6 +3215,7 @@ async function buildParentLearnerSummary(params: {
     },
     evidenceSummary,
     growthSummary,
+    growthTimeline,
     portfolioSnapshot,
     portfolioItemsPreview,
     ideationPassport,

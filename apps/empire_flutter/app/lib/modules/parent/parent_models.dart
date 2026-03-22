@@ -22,6 +22,7 @@ class LearnerSummary extends Equatable {
     this.portfolioSnapshot = const PortfolioSnapshot(),
     this.portfolioItemsPreview = const [],
     this.ideationPassport = const IdeationPassport(),
+    this.growthTimeline = const [],
   });
   final String learnerId;
   final String learnerName;
@@ -40,6 +41,7 @@ class LearnerSummary extends Equatable {
   final PortfolioSnapshot portfolioSnapshot;
   final List<PortfolioPreviewItem> portfolioItemsPreview;
   final IdeationPassport ideationPassport;
+  final List<GrowthTimelineEntry> growthTimeline;
 
   @override
   List<Object?> get props => <Object?>[
@@ -60,6 +62,7 @@ class LearnerSummary extends Equatable {
         portfolioSnapshot,
         portfolioItemsPreview,
         ideationPassport,
+        growthTimeline,
       ];
 }
 
@@ -110,6 +113,65 @@ class GrowthSummary extends Equatable {
         averageLevel,
         latestLevel,
         latestGrowthAt,
+      ];
+}
+
+class GrowthTimelineEntry extends Equatable {
+  const GrowthTimelineEntry({
+    required this.capabilityId,
+    required this.title,
+    required this.pillar,
+    required this.level,
+    this.occurredAt,
+    this.reviewingEducatorName,
+    this.rubricRawScore,
+    this.rubricMaxScore,
+    this.missionAttemptId,
+  });
+
+  final String capabilityId;
+  final String title;
+  final String pillar;
+  final int level;
+  final DateTime? occurredAt;
+  final String? reviewingEducatorName;
+  final int? rubricRawScore;
+  final int? rubricMaxScore;
+  final String? missionAttemptId;
+
+  @override
+  List<Object?> get props => <Object?>[
+        capabilityId,
+        title,
+        pillar,
+        level,
+        occurredAt,
+        reviewingEducatorName,
+        rubricRawScore,
+        rubricMaxScore,
+        missionAttemptId,
+      ];
+}
+
+class ProofCheckpointPreview extends Equatable {
+  const ProofCheckpointPreview({
+    required this.id,
+    required this.summary,
+    this.artifactNote,
+    this.createdAt,
+  });
+
+  final String id;
+  final String summary;
+  final String? artifactNote;
+  final DateTime? createdAt;
+
+  @override
+  List<Object?> get props => <Object?>[
+        id,
+        summary,
+        artifactNote,
+        createdAt,
       ];
 }
 
@@ -193,6 +255,17 @@ class PortfolioPreviewItem extends Equatable {
     this.aiHelpEventCount = 0,
     this.aiHasExplainItBackEvidence = false,
     this.aiHasEducatorAiFeedback = false,
+    this.proofCheckpointCount = 0,
+    this.proofExplainItBackExcerpt,
+    this.proofOralCheckExcerpt,
+    this.proofMiniRebuildExcerpt,
+    this.proofCheckpoints = const [],
+    this.aiAssistanceDetails,
+    this.reviewingEducatorName,
+    this.reviewedAt,
+    this.rubricRawScore,
+    this.rubricMaxScore,
+    this.rubricLevel,
   });
 
   final String id;
@@ -212,11 +285,22 @@ class PortfolioPreviewItem extends Equatable {
   final bool proofHasExplainItBack;
   final bool proofHasOralCheck;
   final bool proofHasMiniRebuild;
+  final int proofCheckpointCount;
+  final String? proofExplainItBackExcerpt;
+  final String? proofOralCheckExcerpt;
+  final String? proofMiniRebuildExcerpt;
+  final List<ProofCheckpointPreview> proofCheckpoints;
   final bool aiHasLearnerDisclosure;
   final bool aiLearnerDeclaredUsed;
   final int aiHelpEventCount;
   final bool aiHasExplainItBackEvidence;
   final bool aiHasEducatorAiFeedback;
+  final String? aiAssistanceDetails;
+  final String? reviewingEducatorName;
+  final DateTime? reviewedAt;
+  final int? rubricRawScore;
+  final int? rubricMaxScore;
+  final int? rubricLevel;
 
   @override
   List<Object?> get props => <Object?>[
@@ -242,6 +326,17 @@ class PortfolioPreviewItem extends Equatable {
         aiHelpEventCount,
         aiHasExplainItBackEvidence,
         aiHasEducatorAiFeedback,
+        proofCheckpointCount,
+        proofExplainItBackExcerpt,
+        proofOralCheckExcerpt,
+        proofMiniRebuildExcerpt,
+        proofCheckpoints,
+        aiAssistanceDetails,
+        reviewingEducatorName,
+        reviewedAt,
+        rubricRawScore,
+        rubricMaxScore,
+        rubricLevel,
       ];
 }
 
@@ -300,11 +395,21 @@ class PassportClaim extends Equatable {
     this.proofHasExplainItBack = false,
     this.proofHasOralCheck = false,
     this.proofHasMiniRebuild = false,
+    this.proofCheckpointCount = 0,
+    this.proofExplainItBackExcerpt,
+    this.proofOralCheckExcerpt,
+    this.proofMiniRebuildExcerpt,
+    this.proofCheckpoints = const [],
     this.aiHasLearnerDisclosure = false,
     this.aiLearnerDeclaredUsed = false,
     this.aiHelpEventCount = 0,
     this.aiHasExplainItBackEvidence = false,
     this.aiHasEducatorAiFeedback = false,
+    this.aiAssistanceDetails,
+    this.reviewingEducatorName,
+    this.reviewedAt,
+    this.rubricRawScore,
+    this.rubricMaxScore,
   });
 
   final String capabilityId;
@@ -323,11 +428,21 @@ class PassportClaim extends Equatable {
   final bool proofHasExplainItBack;
   final bool proofHasOralCheck;
   final bool proofHasMiniRebuild;
+  final int proofCheckpointCount;
+  final String? proofExplainItBackExcerpt;
+  final String? proofOralCheckExcerpt;
+  final String? proofMiniRebuildExcerpt;
+  final List<ProofCheckpointPreview> proofCheckpoints;
   final bool aiHasLearnerDisclosure;
   final bool aiLearnerDeclaredUsed;
   final int aiHelpEventCount;
   final bool aiHasExplainItBackEvidence;
   final bool aiHasEducatorAiFeedback;
+  final String? aiAssistanceDetails;
+  final String? reviewingEducatorName;
+  final DateTime? reviewedAt;
+  final int? rubricRawScore;
+  final int? rubricMaxScore;
 
   @override
   List<Object?> get props => <Object?>[
@@ -347,11 +462,21 @@ class PassportClaim extends Equatable {
         proofHasExplainItBack,
         proofHasOralCheck,
         proofHasMiniRebuild,
+        proofCheckpointCount,
+        proofExplainItBackExcerpt,
+        proofOralCheckExcerpt,
+        proofMiniRebuildExcerpt,
+        proofCheckpoints,
         aiHasLearnerDisclosure,
         aiLearnerDeclaredUsed,
         aiHelpEventCount,
         aiHasExplainItBackEvidence,
         aiHasEducatorAiFeedback,
+        aiAssistanceDetails,
+        reviewingEducatorName,
+        reviewedAt,
+        rubricRawScore,
+        rubricMaxScore,
       ];
 }
 

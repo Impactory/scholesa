@@ -585,6 +585,16 @@ class _ParentChildPageState extends State<ParentChildPage> {
                           ),
                         ),
                       ],
+                      if (_buildReviewDetail(claim).isNotEmpty) ...<Widget>[
+                        const SizedBox(height: 4),
+                        Text(
+                          _buildReviewDetail(claim),
+                          style: const TextStyle(
+                            color: ScholesaColors.textSecondary,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
                       if (claim.evidenceRecordIds.isNotEmpty ||
                           claim.portfolioItemIds.isNotEmpty) ...<Widget>[
                         const SizedBox(height: 8),
@@ -702,6 +712,9 @@ class _ParentChildPageState extends State<ParentChildPage> {
       );
       if (_buildAiDetail(claim).isNotEmpty) {
         lines.add('  ${_t('AI Detail')}: ${_buildAiDetail(claim)}');
+      }
+      if (_buildReviewDetail(claim).isNotEmpty) {
+        lines.add('  ${_t('Review Detail')}: ${_buildReviewDetail(claim)}');
       }
       if (claim.latestEvidenceAt != null) {
         lines.add(
@@ -883,14 +896,40 @@ class _ParentChildPageState extends State<ParentChildPage> {
   String _buildProofDetail(PassportClaim claim) {
     if (!claim.proofHasExplainItBack &&
         !claim.proofHasOralCheck &&
-        !claim.proofHasMiniRebuild) {
+        !claim.proofHasMiniRebuild &&
+        claim.proofCheckpoints.isEmpty) {
       return '';
     }
     return <String>[
       '${_t('Explain-it-back')}: ${claim.proofHasExplainItBack ? _t('Yes') : _t('No')}',
       '${_t('Oral check')}: ${claim.proofHasOralCheck ? _t('Yes') : _t('No')}',
       '${_t('Mini-rebuild')}: ${claim.proofHasMiniRebuild ? _t('Yes') : _t('No')}',
+      if (claim.proofCheckpointCount > 0)
+        '${_t('Version checkpoints')}: ${claim.proofCheckpointCount}',
+      if (claim.proofExplainItBackExcerpt?.trim().isNotEmpty == true)
+        '${_t('Explain-it-back note')}: ${claim.proofExplainItBackExcerpt}',
+      if (claim.proofOralCheckExcerpt?.trim().isNotEmpty == true)
+        '${_t('Oral check note')}: ${claim.proofOralCheckExcerpt}',
+      if (claim.proofMiniRebuildExcerpt?.trim().isNotEmpty == true)
+        '${_t('Mini-rebuild note')}: ${claim.proofMiniRebuildExcerpt}',
+      ...claim.proofCheckpoints.map(_formatCheckpointLine),
     ].join(' • ');
+  }
+
+  String _formatCheckpointLine(ProofCheckpointPreview checkpoint) {
+    final List<String> parts = <String>[];
+    if (checkpoint.createdAt != null) {
+      final DateTime value = checkpoint.createdAt!;
+      parts.add(
+          '${value.month.toString().padLeft(2, '0')}/${value.day.toString().padLeft(2, '0')}/${value.year}');
+    }
+    if (checkpoint.summary.trim().isNotEmpty) {
+      parts.add(checkpoint.summary.trim());
+    }
+    if (checkpoint.artifactNote?.trim().isNotEmpty == true) {
+      parts.add('${_t('artifact note')}: ${checkpoint.artifactNote}');
+    }
+    return '${_t('Checkpoint')}: ${parts.join(' - ')}';
   }
 
   String _buildAiDetail(PassportClaim claim) {
@@ -908,7 +947,25 @@ class _ParentChildPageState extends State<ParentChildPage> {
       '${_t('AI help events')}: ${claim.aiHelpEventCount}',
       if (claim.aiHasEducatorAiFeedback)
         '${_t('Educator AI feedback')}: ${_t('Present')}',
+      if (claim.aiAssistanceDetails?.trim().isNotEmpty == true)
+        '${_t('Learner AI details')}: ${claim.aiAssistanceDetails}',
     ].join(' • ');
+  }
+
+  String _buildReviewDetail(PassportClaim claim) {
+    final List<String> parts = <String>[];
+    if (claim.reviewingEducatorName?.trim().isNotEmpty == true) {
+      parts.add('${_t('Reviewed by')}: ${claim.reviewingEducatorName}');
+    }
+    if (claim.reviewedAt != null) {
+      parts.add(
+          '${_t('Review date')}: ${claim.reviewedAt!.month.toString().padLeft(2, '0')}/${claim.reviewedAt!.day.toString().padLeft(2, '0')}/${claim.reviewedAt!.year}');
+    }
+    if ((claim.rubricRawScore ?? 0) > 0 && (claim.rubricMaxScore ?? 0) > 0) {
+      parts.add(
+          '${_t('Rubric score')}: ${claim.rubricRawScore}/${claim.rubricMaxScore}');
+    }
+    return parts.join(' • ');
   }
 
   String _formatAiDisclosure(String? value) {

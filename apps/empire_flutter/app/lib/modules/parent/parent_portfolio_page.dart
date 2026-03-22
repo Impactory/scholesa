@@ -770,6 +770,17 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
               const SizedBox(height: 8),
               Text(_buildAiDetail(item), style: const TextStyle(fontSize: 14)),
             ],
+            if (_buildReviewDetail(item).isNotEmpty) ...<Widget>[
+              const SizedBox(height: 16),
+              Text(
+                _t('Review Detail'),
+                style:
+                    const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 8),
+              Text(_buildReviewDetail(item),
+                  style: const TextStyle(fontSize: 14)),
+            ],
             const SizedBox(height: 24),
             LayoutBuilder(
               builder: (BuildContext context, BoxConstraints constraints) {
@@ -1005,6 +1016,8 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
       '${_t('AI Disclosure')}: ${_formatAiDisclosure(item.aiDisclosureStatus)}',
       if (_buildAiDetail(item).isNotEmpty)
         '${_t('AI Detail')}: ${_buildAiDetail(item)}',
+      if (_buildReviewDetail(item).isNotEmpty)
+        '${_t('Review Detail')}: ${_buildReviewDetail(item)}',
       if (item.capabilityTitles.isNotEmpty)
         '${_t('Capability Evidence')}: ${item.capabilityTitles.join(', ')}',
       if (item.verificationPrompt?.trim().isNotEmpty == true)
@@ -1045,11 +1058,22 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
             proofHasExplainItBack: item.proofHasExplainItBack,
             proofHasOralCheck: item.proofHasOralCheck,
             proofHasMiniRebuild: item.proofHasMiniRebuild,
+            proofCheckpointCount: item.proofCheckpointCount,
+            proofExplainItBackExcerpt: item.proofExplainItBackExcerpt,
+            proofOralCheckExcerpt: item.proofOralCheckExcerpt,
+            proofMiniRebuildExcerpt: item.proofMiniRebuildExcerpt,
+            proofCheckpoints: item.proofCheckpoints,
             aiHasLearnerDisclosure: item.aiHasLearnerDisclosure,
             aiLearnerDeclaredUsed: item.aiLearnerDeclaredUsed,
             aiHelpEventCount: item.aiHelpEventCount,
             aiHasExplainItBackEvidence: item.aiHasExplainItBackEvidence,
             aiHasEducatorAiFeedback: item.aiHasEducatorAiFeedback,
+            aiAssistanceDetails: item.aiAssistanceDetails,
+            reviewingEducatorName: item.reviewingEducatorName,
+            reviewedAt: item.reviewedAt,
+            rubricRawScore: item.rubricRawScore,
+            rubricMaxScore: item.rubricMaxScore,
+            rubricLevel: item.rubricLevel,
           ),
         );
       }
@@ -1112,14 +1136,38 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
   String _buildProofDetail(_PortfolioItem item) {
     if (!item.proofHasExplainItBack &&
         !item.proofHasOralCheck &&
-        !item.proofHasMiniRebuild) {
+        !item.proofHasMiniRebuild &&
+        item.proofCheckpoints.isEmpty) {
       return '';
     }
     return <String>[
       '${_t('Explain-it-back')}: ${item.proofHasExplainItBack ? _t('Yes') : _t('No')}',
       '${_t('Oral check')}: ${item.proofHasOralCheck ? _t('Yes') : _t('No')}',
       '${_t('Mini-rebuild')}: ${item.proofHasMiniRebuild ? _t('Yes') : _t('No')}',
+      if (item.proofCheckpointCount > 0)
+        '${_t('Version checkpoints')}: ${item.proofCheckpointCount}',
+      if (item.proofExplainItBackExcerpt?.trim().isNotEmpty == true)
+        '${_t('Explain-it-back note')}: ${item.proofExplainItBackExcerpt}',
+      if (item.proofOralCheckExcerpt?.trim().isNotEmpty == true)
+        '${_t('Oral check note')}: ${item.proofOralCheckExcerpt}',
+      if (item.proofMiniRebuildExcerpt?.trim().isNotEmpty == true)
+        '${_t('Mini-rebuild note')}: ${item.proofMiniRebuildExcerpt}',
+      ...item.proofCheckpoints.map(_formatCheckpointLine),
     ].join(' • ');
+  }
+
+  String _formatCheckpointLine(ProofCheckpointPreview checkpoint) {
+    final List<String> parts = <String>[];
+    if (checkpoint.createdAt != null) {
+      parts.add(_formatDate(checkpoint.createdAt!));
+    }
+    if (checkpoint.summary.trim().isNotEmpty) {
+      parts.add(checkpoint.summary.trim());
+    }
+    if (checkpoint.artifactNote?.trim().isNotEmpty == true) {
+      parts.add('${_t('artifact note')}: ${checkpoint.artifactNote}');
+    }
+    return '${_t('Checkpoint')}: ${parts.join(' - ')}';
   }
 
   String _buildAiDetail(_PortfolioItem item) {
@@ -1137,7 +1185,27 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
       '${_t('AI help events')}: ${item.aiHelpEventCount}',
       if (item.aiHasEducatorAiFeedback)
         '${_t('Educator AI feedback')}: ${_t('Present')}',
+      if (item.aiAssistanceDetails?.trim().isNotEmpty == true)
+        '${_t('Learner AI details')}: ${item.aiAssistanceDetails}',
     ].join(' • ');
+  }
+
+  String _buildReviewDetail(_PortfolioItem item) {
+    final List<String> parts = <String>[];
+    if (item.reviewingEducatorName?.trim().isNotEmpty == true) {
+      parts.add('${_t('Reviewed by')}: ${item.reviewingEducatorName}');
+    }
+    if (item.reviewedAt != null) {
+      parts.add('${_t('Review date')}: ${_formatDate(item.reviewedAt!)}');
+    }
+    if ((item.rubricRawScore ?? 0) > 0 && (item.rubricMaxScore ?? 0) > 0) {
+      parts.add(
+          '${_t('Rubric score')}: ${item.rubricRawScore}/${item.rubricMaxScore}');
+    }
+    if ((item.rubricLevel ?? 0) > 0) {
+      parts.add('${_t('Rubric level')}: ${item.rubricLevel}/4');
+    }
+    return parts.join(' • ');
   }
 
   Color _getBandColor(String value) {
@@ -1303,11 +1371,22 @@ class _PortfolioItem {
     this.proofHasExplainItBack = false,
     this.proofHasOralCheck = false,
     this.proofHasMiniRebuild = false,
+    this.proofCheckpointCount = 0,
+    this.proofExplainItBackExcerpt,
+    this.proofOralCheckExcerpt,
+    this.proofMiniRebuildExcerpt,
+    this.proofCheckpoints = const <ProofCheckpointPreview>[],
     this.aiHasLearnerDisclosure = false,
     this.aiLearnerDeclaredUsed = false,
     this.aiHelpEventCount = 0,
     this.aiHasExplainItBackEvidence = false,
     this.aiHasEducatorAiFeedback = false,
+    this.aiAssistanceDetails,
+    this.reviewingEducatorName,
+    this.reviewedAt,
+    this.rubricRawScore,
+    this.rubricMaxScore,
+    this.rubricLevel,
   });
 
   final String id;
@@ -1328,9 +1407,20 @@ class _PortfolioItem {
   final bool proofHasExplainItBack;
   final bool proofHasOralCheck;
   final bool proofHasMiniRebuild;
+  final int proofCheckpointCount;
+  final String? proofExplainItBackExcerpt;
+  final String? proofOralCheckExcerpt;
+  final String? proofMiniRebuildExcerpt;
+  final List<ProofCheckpointPreview> proofCheckpoints;
   final bool aiHasLearnerDisclosure;
   final bool aiLearnerDeclaredUsed;
   final int aiHelpEventCount;
   final bool aiHasExplainItBackEvidence;
   final bool aiHasEducatorAiFeedback;
+  final String? aiAssistanceDetails;
+  final String? reviewingEducatorName;
+  final DateTime? reviewedAt;
+  final int? rubricRawScore;
+  final int? rubricMaxScore;
+  final int? rubricLevel;
 }

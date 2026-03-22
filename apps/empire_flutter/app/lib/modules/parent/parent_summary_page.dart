@@ -437,7 +437,7 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${learner.portfolioSnapshot.verifiedArtifactCount} ${_t('verified artifacts')} • ${_formatAverageCapabilityLevel(learner.growthSummary.averageLevel)}',
+                      '${learner.portfolioSnapshot.verifiedArtifactCount} ${_t('reviewed or verified artifacts')} • ${_formatAverageCapabilityLevel(learner.growthSummary.averageLevel)}',
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.9),
                         fontSize: 14,
@@ -460,7 +460,7 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
               _ProgressStat(
                 icon: Icons.workspace_premium_rounded,
                 value: '${learner.portfolioSnapshot.verifiedArtifactCount}',
-                label: _t('Verified Artifacts'),
+                label: _t('Reviewed/Verified Artifacts'),
               ),
               _ProgressStat(
                 icon: Icons.check_circle,
@@ -574,6 +574,46 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
               value:
                   '${learner.growthSummary.updatedCapabilityCount} ${_t('capabilities updated')}, ${_formatAverageCapabilityLevel(learner.growthSummary.averageLevel)}, ${_formatLatestGrowthNote(learner.growthSummary.latestGrowthAt)}',
             ),
+            if (learner.growthTimeline.isNotEmpty) ...<Widget>[
+              const SizedBox(height: 12),
+              Text(
+                _t('Recent growth timeline'),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 8),
+              ...learner.growthTimeline.take(4).map(
+                    (GrowthTimelineEntry entry) => Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Container(
+                            width: 8,
+                            height: 8,
+                            margin: const EdgeInsets.only(top: 6),
+                            decoration: const BoxDecoration(
+                              color: ScholesaColors.parent,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              _formatGrowthTimelineEntry(entry),
+                              style: TextStyle(
+                                color: Colors.grey[700],
+                                height: 1.35,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+            ],
             const SizedBox(height: 12),
             _FamilyAnswerRow(
               icon: Icons.forward_to_inbox_rounded,
@@ -609,6 +649,26 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
     final String month = value.month.toString().padLeft(2, '0');
     final String day = value.day.toString().padLeft(2, '0');
     return '${_t('latest update')}: $month/$day/${value.year}';
+  }
+
+  String _formatGrowthTimelineEntry(GrowthTimelineEntry entry) {
+    final List<String> parts = <String>[
+      entry.title,
+      '${_t('level')} ${entry.level}/4',
+    ];
+    if ((entry.rubricRawScore ?? 0) > 0 && (entry.rubricMaxScore ?? 0) > 0) {
+      parts.add(
+          '${_t('rubric')} ${entry.rubricRawScore}/${entry.rubricMaxScore}');
+    }
+    if (entry.reviewingEducatorName?.trim().isNotEmpty == true) {
+      parts.add('${_t('reviewed by')} ${entry.reviewingEducatorName}');
+    }
+    if (entry.occurredAt != null) {
+      final DateTime value = entry.occurredAt!;
+      parts.add(
+          '${value.month.toString().padLeft(2, '0')}/${value.day.toString().padLeft(2, '0')}/${value.year}');
+    }
+    return parts.join(' • ');
   }
 
   Widget _buildPillarProgress(LearnerSummary learner) {

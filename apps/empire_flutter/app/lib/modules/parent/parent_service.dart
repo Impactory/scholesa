@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
+import 'dart:math' as math;
 import '../../services/firestore_service.dart';
 import 'parent_models.dart';
 
@@ -126,6 +127,7 @@ class ParentService extends ChangeNotifier {
                 _parsePortfolioItemsPreview(learner['portfolioItemsPreview']),
             ideationPassport:
                 _parseIdeationPassport(learner['ideationPassport']),
+            growthTimeline: _parseGrowthTimeline(learner['growthTimeline']),
             recentActivities: activities,
             upcomingEvents: events,
           ),
@@ -196,6 +198,69 @@ class ParentService extends ChangeNotifier {
     }
 
     return learnerIds.toList();
+  }
+
+  Future<Map<String, String>> _loadUserDisplayNames(
+      Iterable<String> userIds) async {
+    final Map<String, String> names = <String, String>{};
+    for (final String userId in userIds) {
+      final String trimmed = userId.trim();
+      if (trimmed.isEmpty) {
+        continue;
+      }
+      try {
+        final DocumentSnapshot<Map<String, dynamic>> doc =
+            await _firestore.collection('users').doc(trimmed).get();
+        final Map<String, dynamic>? data = doc.data();
+        final String displayName =
+            (data?['displayName'] as String? ?? '').trim();
+        final String email = (data?['email'] as String? ?? '').trim();
+        final String resolved = displayName.isNotEmpty
+            ? displayName
+            : email.isNotEmpty
+                ? email
+                : '';
+        if (resolved.isNotEmpty) {
+          names[trimmed] = resolved;
+        }
+      } catch (_) {
+        // Keep the parent surface honest by omitting missing reviewer identity
+        // rather than fabricating one.
+      }
+    }
+    return names;
+  }
+
+  Future<Map<String, Map<String, dynamic>>> _loadProofBundleDetails(
+      Iterable<String> proofBundleIds) async {
+    final Map<String, Map<String, dynamic>> details =
+        <String, Map<String, dynamic>>{};
+    for (final String proofBundleId in proofBundleIds) {
+      final String trimmed = proofBundleId.trim();
+      if (trimmed.isEmpty) {
+        continue;
+      }
+      try {
+        final DocumentSnapshot<Map<String, dynamic>> doc = await _firestore
+            .collection('proofOfLearningBundles')
+            .doc(trimmed)
+            .get();
+        if (doc.exists && doc.data() != null) {
+          details[trimmed] = <String, dynamic>{...doc.data()!, 'id': doc.id};
+        }
+      } catch (_) {
+        // Omit missing proof detail instead of synthesizing it.
+      }
+    }
+    return details;
+  }
+
+  String? _excerpt(String? value) {
+    final String trimmed = (value ?? '').trim();
+    if (trimmed.isEmpty) {
+      return null;
+    }
+    return trimmed;
   }
 
   Future<LearnerSummary?> _buildLearnerSummary(String learnerId) async {
@@ -293,9 +358,9 @@ class ParentService extends ChangeNotifier {
             .limit(120)
             .get();
     final List<Map<String, dynamic>> growthRows = capabilityGrowthSnapshot.docs
-        .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) => doc.data())
+        .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
+            <String, dynamic>{...doc.data(), 'id': doc.id})
         .toList(growable: false);
-
     final QuerySnapshot<Map<String, dynamic>> portfolioSnapshot =
         await _firestore
             .collection('portfolioItems')
@@ -328,6 +393,21 @@ class ParentService extends ChangeNotifier {
             .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
                 <String, dynamic>{...doc.data(), 'id': doc.id})
             .toList(growable: false);
+    final Map<String, String> reviewerNames =
+        await _loadUserDisplayNames(<String>{
+      ...growthRows
+          .map(
+              (Map<String, dynamic> row) => _asTrimmedString(row['educatorId']))
+          .where((String value) => value.isNotEmpty),
+      ...portfolioRows
+          .map(
+              (Map<String, dynamic> row) => _asTrimmedString(row['educatorId']))
+          .where((String value) => value.isNotEmpty),
+      ...missionAttemptRows
+          .map(
+              (Map<String, dynamic> row) => _asTrimmedString(row['reviewedBy']))
+          .where((String value) => value.isNotEmpty),
+    });
 
     final QuerySnapshot<Map<String, dynamic>> interactionEventsSnapshot =
         await _firestore
@@ -340,10 +420,28 @@ class ParentService extends ChangeNotifier {
             .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
                 <String, dynamic>{...doc.data(), 'id': doc.id})
             .toList(growable: false);
+    final Map<String, Map<String, dynamic>> proofBundleDetails =
+        await _loadProofBundleDetails(<String>{
+      ...missionAttemptRows
+          .map((Map<String, dynamic> row) =>
+              _asTrimmedString(row['proofBundleId']))
+          .where((String value) => value.isNotEmpty),
+      ...portfolioRows
+          .map((Map<String, dynamic> row) =>
+              _asTrimmedString(row['proofBundleId']))
+          .where((String value) => value.isNotEmpty),
+    });
 
     final EvidenceSummary evidenceSummary = _buildEvidenceSummary(evidenceRows);
     final GrowthSummary growthSummary =
         _buildGrowthSummary(masteryRows, growthRows);
+    final List<GrowthTimelineEntry> growthTimeline = _buildGrowthTimeline(
+      masteryRows,
+      evidenceRows,
+      growthRows,
+      portfolioRows,
+      reviewerNames,
+    );
     final CapabilitySnapshot capabilitySnapshot =
         _buildCapabilitySnapshot(masteryRows);
     final PortfolioSnapshot portfolioSummary =
@@ -353,6 +451,9 @@ class ParentService extends ChangeNotifier {
       portfolioRows,
       missionAttemptRows,
       interactionEventRows,
+      growthRows,
+      reviewerNames,
+      proofBundleDetails,
     );
     final IdeationPassport ideationPassport = _buildIdeationPassport(
       missionAttemptRows,
@@ -362,6 +463,8 @@ class ParentService extends ChangeNotifier {
       masteryRows,
       growthRows,
       portfolioRows,
+      reviewerNames,
+      proofBundleDetails,
     );
 
     return LearnerSummary(
@@ -387,6 +490,7 @@ class ParentService extends ChangeNotifier {
       portfolioSnapshot: portfolioSummary,
       portfolioItemsPreview: portfolioItemsPreview,
       ideationPassport: ideationPassport,
+      growthTimeline: growthTimeline,
       recentActivities: activities,
       upcomingEvents: events,
     );
@@ -648,6 +752,52 @@ class ParentService extends ChangeNotifier {
     );
   }
 
+  List<GrowthTimelineEntry> _parseGrowthTimeline(dynamic value) {
+    if (value is! List) return const <GrowthTimelineEntry>[];
+    return value
+        .whereType<Map>()
+        .map((Map item) => GrowthTimelineEntry(
+              capabilityId: _asTrimmedString(item['capabilityId']),
+              title: _asTrimmedString(item['title']).isEmpty
+                  ? _asTrimmedString(item['capabilityId'])
+                  : _asTrimmedString(item['title']),
+              pillar: _asTrimmedString(item['pillar']).isEmpty
+                  ? 'Future Skills'
+                  : _asTrimmedString(item['pillar']),
+              level: _toInt(item['level']) ?? 0,
+              occurredAt: _parseTimestamp(item['occurredAt']),
+              reviewingEducatorName:
+                  _asTrimmedString(item['reviewingEducatorName']).isEmpty
+                      ? null
+                      : _asTrimmedString(item['reviewingEducatorName']),
+              rubricRawScore: _toInt(item['rubricRawScore']),
+              rubricMaxScore: _toInt(item['rubricMaxScore']),
+              missionAttemptId:
+                  _asTrimmedString(item['missionAttemptId']).isEmpty
+                      ? null
+                      : _asTrimmedString(item['missionAttemptId']),
+            ))
+        .where((GrowthTimelineEntry entry) => entry.capabilityId.isNotEmpty)
+        .toList(growable: false);
+  }
+
+  List<ProofCheckpointPreview> _parseProofCheckpoints(dynamic value) {
+    if (value is! List) return const <ProofCheckpointPreview>[];
+    return value
+        .whereType<Map>()
+        .map((Map item) => ProofCheckpointPreview(
+              id: _asTrimmedString(item['id']),
+              summary: _asTrimmedString(item['summary']),
+              artifactNote: _asTrimmedString(item['artifactNote']).isEmpty
+                  ? null
+                  : _asTrimmedString(item['artifactNote']),
+              createdAt: _parseTimestamp(item['createdAt']),
+            ))
+        .where((ProofCheckpointPreview checkpoint) =>
+            checkpoint.id.isNotEmpty || checkpoint.summary.isNotEmpty)
+        .toList(growable: false);
+  }
+
   List<PortfolioPreviewItem> _parsePortfolioItemsPreview(dynamic value) {
     if (value is! List) return const <PortfolioPreviewItem>[];
     return value
@@ -691,6 +841,42 @@ class ParentService extends ChangeNotifier {
                   _asTrimmedString(item['aiDisclosureStatus']).isEmpty
                       ? null
                       : _asTrimmedString(item['aiDisclosureStatus']),
+              proofHasExplainItBack: item['proofHasExplainItBack'] == true,
+              proofHasOralCheck: item['proofHasOralCheck'] == true,
+              proofHasMiniRebuild: item['proofHasMiniRebuild'] == true,
+              proofCheckpointCount: _toInt(item['proofCheckpointCount']) ?? 0,
+              proofExplainItBackExcerpt:
+                  _asTrimmedString(item['proofExplainItBackExcerpt']).isEmpty
+                      ? null
+                      : _asTrimmedString(item['proofExplainItBackExcerpt']),
+              proofOralCheckExcerpt:
+                  _asTrimmedString(item['proofOralCheckExcerpt']).isEmpty
+                      ? null
+                      : _asTrimmedString(item['proofOralCheckExcerpt']),
+              proofMiniRebuildExcerpt:
+                  _asTrimmedString(item['proofMiniRebuildExcerpt']).isEmpty
+                      ? null
+                      : _asTrimmedString(item['proofMiniRebuildExcerpt']),
+              proofCheckpoints:
+                  _parseProofCheckpoints(item['proofCheckpoints']),
+              aiHasLearnerDisclosure: item['aiHasLearnerDisclosure'] == true,
+              aiLearnerDeclaredUsed: item['aiLearnerDeclaredUsed'] == true,
+              aiHelpEventCount: _toInt(item['aiHelpEventCount']) ?? 0,
+              aiHasExplainItBackEvidence:
+                  item['aiHasExplainItBackEvidence'] == true,
+              aiHasEducatorAiFeedback: item['aiHasEducatorAiFeedback'] == true,
+              aiAssistanceDetails:
+                  _asTrimmedString(item['aiAssistanceDetails']).isEmpty
+                      ? null
+                      : _asTrimmedString(item['aiAssistanceDetails']),
+              reviewingEducatorName:
+                  _asTrimmedString(item['reviewingEducatorName']).isEmpty
+                      ? null
+                      : _asTrimmedString(item['reviewingEducatorName']),
+              reviewedAt: _parseTimestamp(item['reviewedAt']),
+              rubricRawScore: _toInt(item['rubricRawScore']),
+              rubricMaxScore: _toInt(item['rubricMaxScore']),
+              rubricLevel: _toInt(item['rubricLevel']),
             ))
         .toList(growable: false);
   }
@@ -749,6 +935,41 @@ class ParentService extends ChangeNotifier {
                   _asTrimmedString(item['verificationStatus']).isEmpty
                       ? null
                       : _asTrimmedString(item['verificationStatus']),
+              proofHasExplainItBack: item['proofHasExplainItBack'] == true,
+              proofHasOralCheck: item['proofHasOralCheck'] == true,
+              proofHasMiniRebuild: item['proofHasMiniRebuild'] == true,
+              proofCheckpointCount: _toInt(item['proofCheckpointCount']) ?? 0,
+              proofExplainItBackExcerpt:
+                  _asTrimmedString(item['proofExplainItBackExcerpt']).isEmpty
+                      ? null
+                      : _asTrimmedString(item['proofExplainItBackExcerpt']),
+              proofOralCheckExcerpt:
+                  _asTrimmedString(item['proofOralCheckExcerpt']).isEmpty
+                      ? null
+                      : _asTrimmedString(item['proofOralCheckExcerpt']),
+              proofMiniRebuildExcerpt:
+                  _asTrimmedString(item['proofMiniRebuildExcerpt']).isEmpty
+                      ? null
+                      : _asTrimmedString(item['proofMiniRebuildExcerpt']),
+              proofCheckpoints:
+                  _parseProofCheckpoints(item['proofCheckpoints']),
+              aiHasLearnerDisclosure: item['aiHasLearnerDisclosure'] == true,
+              aiLearnerDeclaredUsed: item['aiLearnerDeclaredUsed'] == true,
+              aiHelpEventCount: _toInt(item['aiHelpEventCount']) ?? 0,
+              aiHasExplainItBackEvidence:
+                  item['aiHasExplainItBackEvidence'] == true,
+              aiHasEducatorAiFeedback: item['aiHasEducatorAiFeedback'] == true,
+              aiAssistanceDetails:
+                  _asTrimmedString(item['aiAssistanceDetails']).isEmpty
+                      ? null
+                      : _asTrimmedString(item['aiAssistanceDetails']),
+              reviewingEducatorName:
+                  _asTrimmedString(item['reviewingEducatorName']).isEmpty
+                      ? null
+                      : _asTrimmedString(item['reviewingEducatorName']),
+              reviewedAt: _parseTimestamp(item['reviewedAt']),
+              rubricRawScore: _toInt(item['rubricRawScore']),
+              rubricMaxScore: _toInt(item['rubricMaxScore']),
             ))
         .where((PassportClaim claim) => claim.capabilityId.isNotEmpty)
         .toList(growable: false);
@@ -816,6 +1037,108 @@ class ParentService extends ChangeNotifier {
       latestLevel: latestLevels.isEmpty ? 0 : latestLevels.first,
       latestGrowthAt: growthDates.isEmpty ? null : growthDates.first,
     );
+  }
+
+  List<GrowthTimelineEntry> _buildGrowthTimeline(
+    List<Map<String, dynamic>> masteryRows,
+    List<Map<String, dynamic>> evidenceRows,
+    List<Map<String, dynamic>> growthRows,
+    List<Map<String, dynamic>> portfolioRows,
+    Map<String, String> reviewerNames,
+  ) {
+    final Map<String, String> masteryPillars = <String, String>{
+      for (final Map<String, dynamic> row in masteryRows)
+        _asTrimmedString(row['capabilityId']): _pillarLabelFromCodes(<String>[
+          _asTrimmedString(row['pillarCode']),
+        ]),
+    };
+    final Map<String, String> evidenceTitles = <String, String>{
+      for (final Map<String, dynamic> row in evidenceRows)
+        if (_asTrimmedString(row['capabilityId']).isNotEmpty &&
+            _asTrimmedString(row['capabilityLabel']).isNotEmpty)
+          _asTrimmedString(row['capabilityId']):
+              _asTrimmedString(row['capabilityLabel']),
+    };
+    final Map<String, String> portfolioTitles = <String, String>{};
+    for (final Map<String, dynamic> row in portfolioRows) {
+      final List<String> capabilityIds =
+          List<String>.from(row['capabilityIds'] as List? ?? const <String>[]);
+      final List<String> capabilityTitles = List<String>.from(
+        row['capabilityTitles'] as List? ?? const <String>[],
+      );
+      for (int index = 0; index < capabilityIds.length; index++) {
+        final String capabilityId = capabilityIds[index].trim();
+        if (capabilityId.isEmpty) {
+          continue;
+        }
+        final String title = index < capabilityTitles.length
+            ? capabilityTitles[index].trim()
+            : '';
+        if (title.isNotEmpty) {
+          portfolioTitles[capabilityId] = title;
+        }
+      }
+    }
+    final List<GrowthTimelineEntry> entries = growthRows
+        .map((Map<String, dynamic> row) {
+          final String capabilityId = _asTrimmedString(row['capabilityId']);
+          final String title = portfolioTitles[capabilityId] ??
+              evidenceTitles[capabilityId] ??
+              capabilityId;
+          final String pillar = _pillarLabelFromCodes(<String>[
+            _asTrimmedString(row['pillarCode']),
+            masteryPillars[capabilityId] ?? '',
+          ]);
+          final String reviewerId = _asTrimmedString(row['educatorId']);
+          return GrowthTimelineEntry(
+            capabilityId: capabilityId,
+            title: title,
+            pillar: pillar,
+            level: _toInt(row['level']) ?? 0,
+            occurredAt: _parseTimestamp(row['createdAt']),
+            reviewingEducatorName: reviewerNames[reviewerId],
+            rubricRawScore: _toInt(row['rawScore']),
+            rubricMaxScore: _toInt(row['maxScore']),
+            missionAttemptId: _asTrimmedString(row['missionAttemptId']).isEmpty
+                ? null
+                : _asTrimmedString(row['missionAttemptId']),
+          );
+        })
+        .where((GrowthTimelineEntry entry) => entry.capabilityId.isNotEmpty)
+        .toList(growable: false)
+      ..sort((GrowthTimelineEntry a, GrowthTimelineEntry b) {
+        final DateTime aDate = a.occurredAt ?? DateTime(1970);
+        final DateTime bDate = b.occurredAt ?? DateTime(1970);
+        return bDate.compareTo(aDate);
+      });
+    return entries;
+  }
+
+  List<ProofCheckpointPreview> _buildProofCheckpoints(
+      Map<String, dynamic>? proofBundle) {
+    if (proofBundle == null) {
+      return const <ProofCheckpointPreview>[];
+    }
+    final List<ProofCheckpointPreview> checkpoints =
+        ((proofBundle['versionHistory'] as List?) ?? const <dynamic>[])
+            .whereType<Map>()
+            .map((Map item) => ProofCheckpointPreview(
+                  id: _asTrimmedString(item['id']),
+                  summary: _asTrimmedString(item['summary']),
+                  artifactNote: _asTrimmedString(item['artifactNote']).isEmpty
+                      ? null
+                      : _asTrimmedString(item['artifactNote']),
+                  createdAt: _parseTimestamp(item['createdAt']),
+                ))
+            .where((ProofCheckpointPreview checkpoint) =>
+                checkpoint.id.isNotEmpty || checkpoint.summary.isNotEmpty)
+            .toList(growable: false)
+          ..sort((ProofCheckpointPreview a, ProofCheckpointPreview b) {
+            final DateTime aDate = a.createdAt ?? DateTime(1970);
+            final DateTime bDate = b.createdAt ?? DateTime(1970);
+            return aDate.compareTo(bDate);
+          });
+    return checkpoints;
   }
 
   CapabilitySnapshot _buildCapabilitySnapshot(List<Map<String, dynamic>> rows) {
@@ -897,6 +1220,9 @@ class ParentService extends ChangeNotifier {
     List<Map<String, dynamic>> rows,
     List<Map<String, dynamic>> missionAttemptRows,
     List<Map<String, dynamic>> interactionEventRows,
+    List<Map<String, dynamic>> growthRows,
+    Map<String, String> reviewerNames,
+    Map<String, Map<String, dynamic>> proofBundleDetails,
   ) {
     final List<PortfolioPreviewItem> items =
         rows.map((Map<String, dynamic> row) {
@@ -925,10 +1251,21 @@ class ParentService extends ChangeNotifier {
               ? null
               : matchingMissionAttempt['proofBundleSummary']
                   as Map<dynamic, dynamic>?;
+      final String proofBundleId = _asTrimmedString(
+        row['proofBundleId'] ??
+            (matchingMissionAttempt == null
+                ? null
+                : matchingMissionAttempt['proofBundleId']),
+      );
+      final Map<String, dynamic>? proofBundle =
+          proofBundleId.isEmpty ? null : proofBundleDetails[proofBundleId];
       final bool hasExplainItBack =
           proofBundleSummary?['hasExplainItBack'] == true;
       final bool hasOralCheck = proofBundleSummary?['hasOralCheck'] == true;
       final bool hasMiniRebuild = proofBundleSummary?['hasMiniRebuild'] == true;
+      final int proofCheckpointCount =
+          _toInt(proofBundleSummary?['checkpointCount']) ??
+              ((proofBundle?['versionHistory'] as List?)?.length ?? 0);
       final bool hasLearnerAiDisclosure =
           proofBundleSummary?['hasLearnerAiDisclosure'] == true;
       final bool learnerAiDeclaredUsed =
@@ -962,6 +1299,70 @@ class ParentService extends ChangeNotifier {
               .isNotEmpty;
       final String directAiDisclosureStatus =
           _asTrimmedString(row['aiDisclosureStatus']);
+      final String aiAssistanceDetails = _asTrimmedString(
+        row['aiAssistanceDetails'] ??
+            (matchingMissionAttempt == null
+                ? null
+                : matchingMissionAttempt['aiAssistanceDetails']) ??
+            proofBundle?['aiAssistanceDetails'],
+      );
+      final List<String> growthEventIds = List<String>.from(
+        row['growthEventIds'] as List? ?? const <String>[],
+      );
+      final List<Map<String, dynamic>> matchingGrowth =
+          growthRows.where((Map<String, dynamic> event) {
+        final String growthId = _asTrimmedString(event['id']);
+        final String growthMissionAttemptId =
+            _asTrimmedString(event['missionAttemptId']);
+        return (growthId.isNotEmpty && growthEventIds.contains(growthId)) ||
+            (missionAttemptId.isNotEmpty &&
+                growthMissionAttemptId == missionAttemptId);
+      }).toList(growable: false)
+            ..sort((Map<String, dynamic> a, Map<String, dynamic> b) {
+              final DateTime aTimestamp =
+                  _parseTimestamp(a['createdAt']) ?? DateTime(1970);
+              final DateTime bTimestamp =
+                  _parseTimestamp(b['createdAt']) ?? DateTime(1970);
+              return bTimestamp.compareTo(aTimestamp);
+            });
+      final Map<String, dynamic>? latestGrowth =
+          matchingGrowth.isEmpty ? null : matchingGrowth.first;
+      final String reviewerId = latestGrowth == null
+          ? _asTrimmedString(
+              row['educatorId'] ??
+                  (matchingMissionAttempt == null
+                      ? null
+                      : matchingMissionAttempt['reviewedBy']),
+            )
+          : _asTrimmedString(latestGrowth['educatorId']);
+      final String reviewerName = reviewerNames[reviewerId] ?? '';
+      final DateTime? reviewedAt = latestGrowth == null
+          ? _parseTimestamp(
+              row['updatedAt'] ??
+                  row['reviewedAt'] ??
+                  (matchingMissionAttempt == null
+                      ? null
+                      : matchingMissionAttempt['reviewedAt']),
+            )
+          : _parseTimestamp(latestGrowth['createdAt']);
+      final int? rubricRawScore = latestGrowth == null
+          ? _toInt(
+              row['rubricTotalScore'] ??
+                  (matchingMissionAttempt == null
+                      ? null
+                      : matchingMissionAttempt['rubricTotalScore']),
+            )
+          : _toInt(latestGrowth['rawScore']);
+      final int? rubricMaxScore = latestGrowth == null
+          ? _toInt(
+              row['rubricMaxScore'] ??
+                  (matchingMissionAttempt == null
+                      ? null
+                      : matchingMissionAttempt['rubricMaxScore']),
+            )
+          : _toInt(latestGrowth['maxScore']);
+      final int? rubricLevel =
+          latestGrowth == null ? null : _toInt(latestGrowth['level']);
       final String aiDisclosureStatus = directAiDisclosureStatus.isNotEmpty
           ? directAiDisclosureStatus
           : hasLearnerAiDisclosure
@@ -1017,12 +1418,34 @@ class ParentService extends ChangeNotifier {
         proofHasExplainItBack: hasExplainItBack,
         proofHasOralCheck: hasOralCheck,
         proofHasMiniRebuild: hasMiniRebuild,
+        proofCheckpointCount: proofCheckpointCount,
+        proofExplainItBackExcerpt: _excerpt(
+          proofBundle == null ? null : proofBundle['explainItBack'] as String?,
+        ),
+        proofOralCheckExcerpt: _excerpt(
+          proofBundle == null
+              ? null
+              : proofBundle['oralCheckResponse'] as String?,
+        ),
+        proofMiniRebuildExcerpt: _excerpt(
+          proofBundle == null
+              ? null
+              : proofBundle['miniRebuildPlan'] as String?,
+        ),
+        proofCheckpoints: _buildProofCheckpoints(proofBundle),
         aiHasLearnerDisclosure: hasLearnerAiDisclosure,
         aiLearnerDeclaredUsed: learnerAiDeclaredUsed,
         aiHelpEventCount: learnerAiEventCount,
         aiHasExplainItBackEvidence:
             hasExplainItBack || hasLearnerExplainBackEvent,
         aiHasEducatorAiFeedback: hasAiFeedbackSignal,
+        aiAssistanceDetails:
+            aiAssistanceDetails.isEmpty ? null : aiAssistanceDetails,
+        reviewingEducatorName: reviewerName.isEmpty ? null : reviewerName,
+        reviewedAt: reviewedAt,
+        rubricRawScore: rubricRawScore,
+        rubricMaxScore: rubricMaxScore,
+        rubricLevel: rubricLevel,
       );
     }).toList(growable: false);
     items.sort((PortfolioPreviewItem a, PortfolioPreviewItem b) =>
@@ -1038,6 +1461,8 @@ class ParentService extends ChangeNotifier {
     List<Map<String, dynamic>> masteryRows,
     List<Map<String, dynamic>> growthRows,
     List<Map<String, dynamic>> portfolioRows,
+    Map<String, String> reviewerNames,
+    Map<String, Map<String, dynamic>> proofBundleDetails,
   ) {
     final int completedMissions =
         missionAttemptRows.where((Map<String, dynamic> row) {
@@ -1069,6 +1494,8 @@ class ParentService extends ChangeNotifier {
       masteryRows,
       growthRows,
       portfolioRows,
+      reviewerNames,
+      proofBundleDetails,
     );
     return IdeationPassport(
       missionAttempts: missionAttemptRows.length,
@@ -1092,6 +1519,8 @@ class ParentService extends ChangeNotifier {
     List<Map<String, dynamic>> masteryRows,
     List<Map<String, dynamic>> growthRows,
     List<Map<String, dynamic>> portfolioRows,
+    Map<String, String> reviewerNames,
+    Map<String, Map<String, dynamic>> proofBundleDetails,
   ) {
     final List<PassportClaim> claims = <PassportClaim>[];
     for (final Map<String, dynamic> mastery in masteryRows) {
@@ -1111,7 +1540,14 @@ class ParentService extends ChangeNotifier {
       final List<Map<String, dynamic>> matchingGrowth = growthRows
           .where((Map<String, dynamic> row) =>
               _asTrimmedString(row['capabilityId']) == capabilityId)
-          .toList(growable: false);
+          .toList(growable: false)
+        ..sort((Map<String, dynamic> a, Map<String, dynamic> b) {
+          final DateTime aTimestamp =
+              _parseTimestamp(a['createdAt']) ?? DateTime(1970);
+          final DateTime bTimestamp =
+              _parseTimestamp(b['createdAt']) ?? DateTime(1970);
+          return bTimestamp.compareTo(aTimestamp);
+        });
       final List<Map<String, dynamic>> matchingPortfolioByRecency =
           List<Map<String, dynamic>>.from(matchingPortfolio)
             ..sort((Map<String, dynamic> a, Map<String, dynamic> b) {
@@ -1268,6 +1704,59 @@ class ParentService extends ChangeNotifier {
                       : matchingMissionAttempts.isNotEmpty
                           ? 'no-learner-ai-signal'
                           : 'not-available';
+      final Map<String, dynamic>? latestGrowth =
+          matchingGrowth.isEmpty ? null : matchingGrowth.first;
+      final Map<String, dynamic>? latestMissionAttempt =
+          matchingMissionAttempts.isEmpty
+              ? null
+              : matchingMissionAttempts.first;
+      final Map<String, dynamic>? latestPortfolio =
+          matchingPortfolioByRecency.isEmpty
+              ? null
+              : matchingPortfolioByRecency.first;
+      final String proofBundleId = _asTrimmedString(
+        latestPortfolio?['proofBundleId'] ??
+            latestMissionAttempt?['proofBundleId'],
+      );
+      final Map<String, dynamic>? proofBundle =
+          proofBundleId.isEmpty ? null : proofBundleDetails[proofBundleId];
+      final int proofCheckpointCount =
+          matchingMissionAttempts.map((Map<String, dynamic> row) {
+        final Map<dynamic, dynamic>? summary =
+            row['proofBundleSummary'] as Map<dynamic, dynamic>?;
+        return _toInt(summary?['checkpointCount']) ?? 0;
+      }).fold<int>(0, math.max);
+      final String reviewerId = latestGrowth == null
+          ? _asTrimmedString(
+              latestPortfolio?['educatorId'] ??
+                  latestMissionAttempt?['reviewedBy'],
+            )
+          : _asTrimmedString(latestGrowth['educatorId']);
+      final String reviewerName = reviewerNames[reviewerId] ?? '';
+      final DateTime? reviewedAt = latestGrowth == null
+          ? _parseTimestamp(
+              latestPortfolio?['updatedAt'] ??
+                  latestPortfolio?['reviewedAt'] ??
+                  latestMissionAttempt?['reviewedAt'],
+            )
+          : _parseTimestamp(latestGrowth['createdAt']);
+      final int? rubricRawScore = latestGrowth == null
+          ? _toInt(
+              latestPortfolio?['rubricTotalScore'] ??
+                  latestMissionAttempt?['rubricTotalScore'],
+            )
+          : _toInt(latestGrowth['rawScore']);
+      final int? rubricMaxScore = latestGrowth == null
+          ? _toInt(
+              latestPortfolio?['rubricMaxScore'] ??
+                  latestMissionAttempt?['rubricMaxScore'],
+            )
+          : _toInt(latestGrowth['maxScore']);
+      final String aiAssistanceDetails = _asTrimmedString(
+        latestPortfolio?['aiAssistanceDetails'] ??
+            latestMissionAttempt?['aiAssistanceDetails'] ??
+            proofBundle?['aiAssistanceDetails'],
+      );
       claims.add(
         PassportClaim(
           capabilityId: capabilityId,
@@ -1298,12 +1787,35 @@ class ParentService extends ChangeNotifier {
           proofHasExplainItBack: hasExplainItBack,
           proofHasOralCheck: hasOralCheck,
           proofHasMiniRebuild: hasMiniRebuild,
+          proofCheckpointCount: proofCheckpointCount,
+          proofExplainItBackExcerpt: _excerpt(
+            proofBundle == null
+                ? null
+                : proofBundle['explainItBack'] as String?,
+          ),
+          proofOralCheckExcerpt: _excerpt(
+            proofBundle == null
+                ? null
+                : proofBundle['oralCheckResponse'] as String?,
+          ),
+          proofMiniRebuildExcerpt: _excerpt(
+            proofBundle == null
+                ? null
+                : proofBundle['miniRebuildPlan'] as String?,
+          ),
+          proofCheckpoints: _buildProofCheckpoints(proofBundle),
           aiHasLearnerDisclosure: hasLearnerAiDisclosure,
           aiLearnerDeclaredUsed: learnerAiDeclaredUsed,
           aiHelpEventCount: learnerAiEventCount,
           aiHasExplainItBackEvidence:
               hasExplainItBack || hasLearnerExplainBackEvent,
           aiHasEducatorAiFeedback: hasAiFeedbackSignal,
+          aiAssistanceDetails:
+              aiAssistanceDetails.isEmpty ? null : aiAssistanceDetails,
+          reviewingEducatorName: reviewerName.isEmpty ? null : reviewerName,
+          reviewedAt: reviewedAt,
+          rubricRawScore: rubricRawScore,
+          rubricMaxScore: rubricMaxScore,
         ),
       );
     }
