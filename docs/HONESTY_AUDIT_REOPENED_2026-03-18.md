@@ -177,6 +177,7 @@ Interpretation rule:
 87. Added direct educator evidence-consumption workflow proof that a canonical mission attempt created through the real `/learner/missions` submission flow appears on the real `/educator/missions/review` route and can be approved there, confirming the live educator review queue consumes learner-created `missionAttempts` instead of depending on seeded review records alone.
 88. Added direct educator growth-linkage workflow proof that a rubric-scored approval submitted through the real `/educator/missions/review` page writes `rubricApplications`, updates `capabilityMastery`, emits `capabilityGrowthEvents`, links matching `evidenceRecords`, and materializes a `portfolioItems` artifact from the reviewed learner evidence, confirming the live educator route drives capability growth and portfolio linkage instead of leaving those outcomes only to service-level regression coverage.
 89. Added direct learner portfolio workflow proof that a reviewed artifact created through the live `/learner/missions` submission flow and approved through the live `/educator/missions/review` page appears on the real `/learner/portfolio` route with project-card evidence linkage and capability labeling, confirming portfolio surfaces consume educator-reviewed artifacts instead of only seeded portfolio fixtures or route-local loaders.
+90. Added direct parent portfolio workflow proof that a reviewed artifact created through the live `/learner/missions` submission flow and approved through the live `/educator/missions/review` page appears on the real `/parent/portfolio` route for a provisioning-linked family, with family-visible evidence linkage, proof-of-learning and AI-disclosure chips, capability metadata, verification prompt context, and exported summary metadata, confirming the parent portfolio surface consumes reviewed learner artifacts instead of only seeded family fixtures.
 
 ### Release and operations fixes
 
@@ -241,6 +242,7 @@ Interpretation rule:
 - Focused educator mission review regressions passed after the live learner-to-educator review handoff proof: 3 passed, 0 failed.
 - Focused educator mission review regressions passed after the live rubric growth-linkage proof: 4 passed, 0 failed.
 - Focused learner portfolio honesty regressions passed after the reviewed-artifact portfolio proof: 6 passed, 0 failed.
+- Focused parent surface workflow regressions passed after the reviewed-artifact family portfolio proof: 16 passed, 0 failed.
 
 ### Full Flutter gate verification
 

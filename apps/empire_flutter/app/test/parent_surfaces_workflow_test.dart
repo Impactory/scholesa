@@ -1413,6 +1413,16 @@ void main() {
     testWidgets(
         'portfolio page shows reviewed artifacts created through live learner and educator workflow for provisioning-linked families',
         (WidgetTester tester) async {
+      ExportService.instance.debugSaveTextFile = ({
+        required String fileName,
+        required String content,
+        required String mimeType,
+      }) async {
+        _savedFileName = fileName;
+        _savedFileContent = content;
+        return '/tmp/$fileName';
+      };
+
       final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
 
       await _pumpProvisioningPage(tester, firestore: firestore);
@@ -1568,7 +1578,13 @@ void main() {
         find.text('Explain why this prototype path best matched the evidence.'),
         findsOneWidget,
       );
-      expect(find.textContaining('Mission Attempt ID:'), findsOneWidget);
+
+      await tester.tap(find.text('Download Summary'));
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      expect(_savedFileName, isNotNull);
+      expect(_savedFileContent, contains('Mission Attempt ID:'));
     });
 
     testWidgets('portfolio page downloads a real summary file',
