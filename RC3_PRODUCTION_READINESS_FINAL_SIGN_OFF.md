@@ -1,6 +1,9 @@
 # RC3 PRODUCTION READINESS – FINAL SIGN-OFF
 ## All Blockers Resolved | Ready for Launch
 
+> Launch-readiness artifact. This document records that launch-blocking engineering issues were resolved for RC3 release acceptance.
+> It does not mean all package debt or operational polish is eliminated; for example, `next-pwa` 2.x still emits known non-blocking build warnings tracked in `DEPENDENCY_BASELINE_SCHOLESA.md`.
+
 **Status**: ✅ **PRODUCTION READY**  
 **Date**: March 8, 2026  
 **Approval**: User Confirmed (Mar 3, 15:30 UTC)
@@ -15,6 +18,7 @@
 - `npm run rc3:preflight` is green on the March 12 codebase after Next 16 config cleanup and legacy runtime quarantine
 - BOS/MIA learner AI is now internal-inference only, enforces a `0.97` autonomous confidence threshold, and escalates safely when confidence or consent requirements are not met
 - No mocked or fake runtime path remains in the active RC3 release path; dormant TypeScript simulation code is quarantined outside the active source tree
+- Production build cleanliness remains release-acceptable rather than perfect: the approved `next-pwa` 2.x baseline still emits known non-blocking warnings during build.
 - Final step for literal `100% against gate`: complete the manual browser cutover in `RC3_BIG_BANG_CUTOVER_CHECKLIST_MARCH_12_2026.md`
 
 ---

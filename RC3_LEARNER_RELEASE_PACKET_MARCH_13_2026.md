@@ -27,6 +27,8 @@ Accepted as ship-ready with bounded residual risk:
 Reasoning:
 - The implemented learner path is now persisted, telemetry-covered, regression-covered, and live-canary-covered where applicable.
 - Remaining gaps are bounded residuals around sophistication, parity, or external proof depth, not release-blocking defects in the current learner flow.
+- REQ-081 specifically still lacks a live third-party push-delivery receipt beyond the typed provider contract and queue-generation proof.
+- REQ-084 specifically still relies on heuristic confusability weighting rather than a fully authored curriculum graph.
 
 ---
 

@@ -1,6 +1,10 @@
 # GLOBAL POST-IMPLEMENTATION AUDIT (Stage 4)
 **Scholesa Platform – BOS/MIA & AI Help Integration**
 
+> Historical pre-remediation snapshot only. This December 26 audit records the state before the later blocker-remediation and RC3 readiness passes.
+> Current truth for Firestore indexes, i18n architecture, and launch readiness is captured in `BLOCKER_REMEDIATION_FINAL_STATUS.md`, `RC3_LAUNCH_READINESS_REPORT.md`, and `RC3_PRODUCTION_READINESS_FINAL_SIGN_OFF.md`.
+> Findings below that mark BOS/MIA partial because of missing indexes or i18n mismatch are no longer the current repo state.
+
 **Audit Date**: December 26, 2025  
 **Scope**: 19,730 source files (Dart + TypeScript)  
 **Focus Areas**: Schema, Auth, AI Safety, Surfaces (7 educator + 3 parent), Backend, PWA/Offline, i18n

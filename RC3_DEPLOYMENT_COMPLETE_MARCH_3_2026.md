@@ -4,6 +4,7 @@
 > Current live signoff is captured in `RC3_LIVE_E2E_SIGNOFF_MARCH_8_2026.md`, `RC3_PRODUCTION_READINESS_FINAL_SIGN_OFF.md`, and `RC3_LAUNCH_READINESS_REPORT.md`.
 > Current operator entry point: `npm run rc3:big-bang:guide`.
 > Historical references below to `en, es, zh`, locale removals, and other March 3 deployment assumptions are not the current RC3 baseline.
+> Later RC3 remediation and launch-readiness evidence superseded the March 3 locale snapshot on launch-critical paths: current RC3 launch-critical runtime coverage is `en`, `zh-CN`, and `zh-TW`; Thai remains deferred beyond RC3.
 
 **Status**: ✅ **LIVE IN PRODUCTION**  
 **Deployment Date**: March 3, 2026, 18:45 UTC  
@@ -31,6 +32,7 @@
     - `src/lib/i18n/messages.ts`
     - `src/lib/ai/modelAdapter.ts`
     - `src/lib/ai/multilingualGuardrails.ts`
+   - Historical note: this March 3 consolidation was later superseded for launch-critical RC3 runtime coverage by the verified `en` / `zh-CN` / `zh-TW` baseline documented in the later March 8-12 signoff artifacts.
 
 - ✅ **Flutter Module**: educator_learners_page.dart
   - Integrated BosCoachingI18n for centralized translations
@@ -115,8 +117,9 @@ edc587f4 ai tweaks RC3
 ## Known Limitations & Notes
 
 1. **Locale Support**: 
-   - Currently live: English (en), Spanish (es), Simplified Chinese (zh)
-   - Traditional Chinese (zh-TW) and Thai (th) deferred to RC3.2
+   - At the March 3 deployment snapshot: English (en), Spanish (es), Simplified Chinese (zh)
+   - This locale note was later superseded on launch-critical RC3 paths by the verified English (en), Simplified Chinese (zh-CN), and Traditional Chinese (zh-TW) runtime baseline in the March 8-12 readiness artifacts
+   - Thai (th) remained deferred beyond RC3
    - Fallback to English for unsupported locales
 
 2. **Educator Pages**:
