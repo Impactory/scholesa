@@ -46,7 +46,7 @@ If your actual collection names differ:
 | missionSnapshots | scoped readers | server only | snapshot_immutable; client_write_deny |
 | portfolios | learner own; parent safe; educator scoped; HQ | per consent policy | consent_gate_read; consent_gate_write |
 | portfolioItems | learner; parent safe; educator scoped; HQ | educator/learner per rules | parent_safe_read; educator_write |
-| credentials | learner; parent safe; educator scoped; HQ | educator/admin | credential_issue; parent_write_deny |
+| credentials | learner own; educator scoped | educator/admin | credential_issue; parent_write_deny; broader_read_scope_unproven |
 | accountability* | scope members; HQ | allowed roles | wrong_role_deny; cross_site_deny |
 | auditLogs | HQ/site admin (scoped) | server only | audit_client_write_deny; audit_scoped_read |
 | billing* | owner + HQ | server/webhooks/HQ | client_write_deny; owner_read |
