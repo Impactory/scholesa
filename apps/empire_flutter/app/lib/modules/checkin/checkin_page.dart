@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
+import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import 'checkin_models.dart';
 import 'checkin_service.dart';
@@ -134,6 +135,10 @@ class _CheckinPageState extends State<CheckinPage>
             },
             icon: const Icon(Icons.refresh, color: Color(0xFF3B82F6)),
             tooltip: _tCheckin(context, 'Refresh'),
+          ),
+          const SizedBox(width: 4),
+          const SessionMenuHeaderAction(
+            foregroundColor: Color(0xFF3B82F6),
           ),
         ],
       ),

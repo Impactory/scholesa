@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/modules/parent/parent_billing_page.dart';
 import 'package:scholesa_app/modules/parent/parent_child_page.dart';
@@ -280,6 +281,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUp(() {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
     _savedFileName = null;
     _savedFileContent = null;
     ExportService.instance.debugSaveTextFile = null;

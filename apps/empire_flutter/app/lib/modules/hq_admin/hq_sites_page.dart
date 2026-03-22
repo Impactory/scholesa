@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
+import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 String _tHqSites(BuildContext context, String input) {
@@ -125,6 +126,10 @@ class _HqSitesPageState extends State<HqSitesPage> {
               onPressed: _loadSites,
               icon: const Icon(Icons.refresh, color: ScholesaColors.hq),
               tooltip: _tHqSites(context, 'Refresh'),
+            ),
+            const SizedBox(width: 4),
+            const SessionMenuHeaderAction(
+              foregroundColor: ScholesaColors.hq,
             ),
           ],
         ),

@@ -6,6 +6,7 @@ import '../../auth/app_state.dart';
 import '../../i18n/site_surface_i18n.dart';
 import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
+import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 String _tSiteSessions(BuildContext context, String input) {
@@ -352,6 +353,10 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
                   ),
                 ],
               ),
+            ),
+            const SizedBox(width: 12),
+            const SessionMenuHeaderAction(
+              foregroundColor: ScholesaColors.site,
             ),
           ],
         ),

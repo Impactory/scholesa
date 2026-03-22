@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../i18n/workflow_surface_i18n.dart';
 import '../../auth/app_state.dart' show UserRole, UserRoleExtension;
 import '../../services/telemetry_service.dart';
+import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../ui/widgets/cards.dart';
 import 'user_models.dart';
@@ -159,6 +160,10 @@ class _UserAdminPageState extends State<UserAdminPage>
             },
             icon: const Icon(Icons.refresh, color: ScholesaColors.hq),
             tooltip: _tUserAdmin(context, 'Refresh'),
+          ),
+          const SizedBox(width: 4),
+          const SessionMenuHeaderAction(
+            foregroundColor: ScholesaColors.hq,
           ),
         ],
       ),
