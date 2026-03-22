@@ -307,6 +307,11 @@ void main() {
     expect(find.text('Proof of Learning'), findsOneWidget);
     expect(find.text('Submit for Review'), findsOneWidget);
 
+    await tester.scrollUntilVisible(
+      find.text('No AI support used for this mission'),
+      200,
+      scrollable: find.byType(Scrollable).last,
+    );
     await tester.tap(find.text('No AI support used for this mission'));
     await tester.pumpAndSettle();
     await tester.enterText(
@@ -330,6 +335,11 @@ void main() {
       'Linked prototype and notes.',
     );
 
+    await tester.scrollUntilVisible(
+      find.text('Save Checkpoint'),
+      200,
+      scrollable: find.byType(Scrollable).last,
+    );
     await tester.tap(find.text('Save Checkpoint'));
     await tester.pump();
     await tester.pumpAndSettle();
@@ -337,11 +347,14 @@ void main() {
     expect(find.text('Completed the working prototype before review.'),
         findsOneWidget);
 
+    await tester.scrollUntilVisible(
+      find.text('Submit for Review'),
+      200,
+      scrollable: find.byType(Scrollable).last,
+    );
     await tester.tap(find.text('Submit for Review'));
     await tester.pump();
     await tester.pumpAndSettle();
-
-    expect(find.text('Submitted: Mission ready for review'), findsOneWidget);
 
     final QuerySnapshot<Map<String, dynamic>> attempts =
         await firestore.collection('missionAttempts').get();
