@@ -10,6 +10,9 @@ import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:scholesa_app/auth/app_state.dart';
+import 'package:scholesa_app/modules/educator/educator_mission_review_page.dart';
+import 'package:scholesa_app/modules/missions/mission_service.dart';
+import 'package:scholesa_app/modules/missions/missions_page.dart';
 import 'package:scholesa_app/modules/provisioning/provisioning_page.dart';
 import 'package:scholesa_app/modules/provisioning/provisioning_service.dart';
 import 'package:scholesa_app/modules/parent/parent_billing_page.dart';
@@ -87,6 +90,38 @@ AppState _buildSiteState() {
     'siteIds': <String>['site-1'],
     'localeCode': 'en',
     'entitlements': const <Map<String, dynamic>>[],
+  });
+  return state;
+}
+
+AppState _buildLearnerWorkflowState({
+  required String userId,
+  required String email,
+  required String displayName,
+}) {
+  final AppState state = AppState();
+  state.updateFromMeResponse(<String, dynamic>{
+    'userId': userId,
+    'email': email,
+    'displayName': displayName,
+    'role': 'learner',
+    'activeSiteId': 'site-1',
+    'siteIds': <String>['site-1'],
+    'entitlements': <dynamic>[],
+  });
+  return state;
+}
+
+AppState _buildEducatorWorkflowState() {
+  final AppState state = AppState();
+  state.updateFromMeResponse(<String, dynamic>{
+    'userId': 'educator-1',
+    'email': 'educator-1@scholesa.test',
+    'displayName': 'Educator One',
+    'role': 'educator',
+    'activeSiteId': 'site-1',
+    'siteIds': <String>['site-1'],
+    'entitlements': <dynamic>[],
   });
   return state;
 }
@@ -339,6 +374,229 @@ Future<void> _pumpProvisioningPage(
 
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 400));
+  await tester.pumpAndSettle();
+}
+
+Future<void> _pumpMissionWorkflowPage(
+  WidgetTester tester, {
+  required FakeFirebaseFirestore firestore,
+  required AppState appState,
+  required MissionService missionService,
+  required Widget home,
+}) async {
+  final FirestoreService firestoreService = FirestoreService(
+    firestore: firestore,
+    auth: _MockFirebaseAuth(),
+  );
+
+  await tester.pumpWidget(
+    MultiProvider(
+      providers: <SingleChildWidget>[
+        ChangeNotifierProvider<AppState>.value(value: appState),
+        Provider<FirestoreService>.value(value: firestoreService),
+        ChangeNotifierProvider<MissionService>.value(value: missionService),
+        Provider<LearningRuntimeProvider?>.value(value: null),
+      ],
+      child: MaterialApp(
+        theme: _workflowTheme,
+        supportedLocales: const <Locale>[
+          Locale('en'),
+          Locale('zh', 'CN'),
+          Locale('zh', 'TW'),
+        ],
+        localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        home: home,
+      ),
+    ),
+  );
+
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 400));
+  await tester.pumpAndSettle();
+}
+
+Future<void> _seedMissionReviewData(
+  FakeFirebaseFirestore firestore, {
+  required String learnerId,
+}) async {
+  await firestore.collection('missionAssignments').doc('assignment-1').set(
+    <String, dynamic>{
+      'missionId': 'mission-1',
+      'learnerId': learnerId,
+      'siteId': 'site-1',
+      'status': 'in_progress',
+      'progress': 1.0,
+    },
+  );
+  await firestore.collection('missions').doc('mission-1').set(
+    <String, dynamic>{
+      'title': 'Mission ready for review',
+      'description': 'Capture proof of learning before review.',
+      'pillarCode': 'future_skills',
+      'difficulty': 'beginner',
+      'xpReward': 120,
+      'rubricId': 'rubric-1',
+      'rubricTitle': 'Prototype Rubric',
+    },
+  );
+  await firestore
+      .collection('missions')
+      .doc('mission-1')
+      .collection('steps')
+      .doc('step-1')
+      .set(
+    <String, dynamic>{
+      'title': 'Prototype',
+      'order': 1,
+      'isCompleted': true,
+      'completedAt': '2026-03-18T10:00:00.000Z',
+    },
+  );
+  await firestore.collection('rubrics').doc('rubric-1').set(
+    <String, dynamic>{
+      'title': 'Prototype Rubric',
+      'criteria': <Map<String, dynamic>>[
+        <String, dynamic>{
+          'criterionId': 'evidence',
+          'label': 'Evidence',
+          'capabilityId': 'cap-prototype-evidence',
+          'capabilityTitle': 'Prototype evidence',
+          'pillarCode': 'future_skills',
+          'maxScore': 4,
+        },
+        <String, dynamic>{
+          'criterionId': 'reflection',
+          'label': 'Reflection',
+          'capabilityId': 'cap-prototype-evidence',
+          'capabilityTitle': 'Prototype evidence',
+          'pillarCode': 'future_skills',
+          'maxScore': 4,
+        },
+      ],
+    },
+  );
+  await firestore.collection('evidenceRecords').doc('evidence-1').set(
+    <String, dynamic>{
+      'learnerId': learnerId,
+      'siteId': 'site-1',
+      'capabilityId': 'cap-prototype-evidence',
+      'capabilityLabel': 'Prototype evidence',
+      'capabilityPillarCode': 'future_skills',
+      'observationNote':
+          'Learner connected prototype choices to observed tradeoffs.',
+      'artifactUrls': const <String>['https://example.com/prototype.png'],
+      'nextVerificationPrompt':
+          'Explain why this prototype path best matched the evidence.',
+      'portfolioCandidate': true,
+      'growthStatus': 'captured',
+      'observedAt': Timestamp.fromDate(DateTime(2026, 3, 18, 8, 45)),
+    },
+  );
+}
+
+Future<void> _submitMissionForReview(
+  WidgetTester tester, {
+  required FakeFirebaseFirestore firestore,
+  required AppState learnerState,
+  required MissionService missionService,
+}) async {
+  await _pumpMissionWorkflowPage(
+    tester,
+    firestore: firestore,
+    appState: learnerState,
+    missionService: missionService,
+    home: const MissionsPage(),
+  );
+
+  await tester.tap(find.text('In Progress'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('Mission ready for review').first);
+  await tester.pumpAndSettle();
+
+  await tester.scrollUntilVisible(
+    find.text('No AI support used for this mission'),
+    200,
+    scrollable: find.byType(Scrollable).last,
+  );
+  await tester.tap(find.text('No AI support used for this mission'));
+  await tester.pumpAndSettle();
+  await tester.enterText(
+    find.widgetWithText(TextField, 'Explain-it-back summary'),
+    'I explained how the control loop reacts to sensor input.',
+  );
+  await tester.enterText(
+    find.widgetWithText(TextField, 'Oral check reflection'),
+    'I described the trade-off between speed and stability.',
+  );
+  await tester.enterText(
+    find.widgetWithText(TextField, 'Mini-rebuild plan'),
+    'I would rebuild the sensor branch first and retest the response.',
+  );
+  await tester.enterText(
+    find.widgetWithText(TextField, 'Version checkpoint summary'),
+    'Completed the working prototype before review.',
+  );
+
+  await tester.scrollUntilVisible(
+    find.text('Save Checkpoint'),
+    200,
+    scrollable: find.byType(Scrollable).last,
+  );
+  await tester.tap(find.text('Save Checkpoint'));
+  await tester.pump();
+  await tester.pumpAndSettle();
+
+  await tester.scrollUntilVisible(
+    find.text('Submit for Review'),
+    200,
+    scrollable: find.byType(Scrollable).last,
+  );
+  await tester.tap(find.text('Submit for Review'));
+  await tester.pump();
+  await tester.pumpAndSettle();
+}
+
+Future<void> _approveSubmittedMission(
+  WidgetTester tester, {
+  required FakeFirebaseFirestore firestore,
+  required MissionService missionService,
+}) async {
+  await _pumpMissionWorkflowPage(
+    tester,
+    firestore: firestore,
+    appState: _buildEducatorWorkflowState(),
+    missionService: missionService,
+    home: const EducatorMissionReviewPage(),
+  );
+
+  await tester.tap(find.text('Mission ready for review').first);
+  await tester.pumpAndSettle();
+
+  await tester.scrollUntilVisible(
+    find.text('Reflection'),
+    200,
+    scrollable: find.byType(Scrollable).last,
+  );
+  await tester.tap(find.text('4/4').first);
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('3/4').at(1));
+  await tester.pumpAndSettle();
+  await tester.enterText(
+    find.byType(TextField).last,
+    'Great iteration. Tighten the evidence trail and explain the tradeoffs in your next revision.',
+  );
+
+  await tester.scrollUntilVisible(
+    find.text('Approve'),
+    250,
+    scrollable: find.byType(Scrollable).last,
+  );
+  await tester.tap(find.text('Approve'));
+  await tester.pump();
   await tester.pumpAndSettle();
 }
 
@@ -1150,6 +1408,167 @@ void main() {
         ),
         isTrue,
       );
+    });
+
+    testWidgets(
+        'portfolio page shows reviewed artifacts created through live learner and educator workflow for provisioning-linked families',
+        (WidgetTester tester) async {
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+
+      await _pumpProvisioningPage(tester, firestore: firestore);
+
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byType(TextFormField).at(0),
+        'Nia Reviewed Portfolio',
+      );
+      await tester.enterText(
+        find.byType(TextFormField).at(1),
+        'nia.reviewed-portfolio@example.com',
+      );
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Create'));
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Parents').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byType(TextFormField).at(0),
+        'Pat Reviewed Portfolio',
+      );
+      await tester.enterText(
+        find.byType(TextFormField).at(1),
+        'pat.reviewed-portfolio@example.com',
+      );
+      await tester.enterText(find.byType(TextFormField).at(2), '555-0120');
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Create'));
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      final QuerySnapshot<Map<String, dynamic>> learnerUsers = await firestore
+          .collection('users')
+          .where('email', isEqualTo: 'nia.reviewed-portfolio@example.com')
+          .get();
+      expect(learnerUsers.docs, hasLength(1));
+      final String learnerId = learnerUsers.docs.single.id;
+
+      final QuerySnapshot<Map<String, dynamic>> parentUsers = await firestore
+          .collection('users')
+          .where('email', isEqualTo: 'pat.reviewed-portfolio@example.com')
+          .get();
+      expect(parentUsers.docs, hasLength(1));
+      final String parentId = parentUsers.docs.single.id;
+
+      await tester.tap(find.text('Links').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(DropdownButtonFormField<String>).at(0));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Pat Reviewed Portfolio').last);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(DropdownButtonFormField<String>).at(1));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Nia Reviewed Portfolio').last);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Create Link'));
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      await _seedMissionReviewData(firestore, learnerId: learnerId);
+      await firestore.collection('users').doc('hidden-reviewed-learner').set(
+        <String, dynamic>{
+          'role': 'learner',
+          'displayName': 'Hidden Reviewed Learner',
+          'siteIds': <String>['site-1'],
+        },
+      );
+      await firestore.collection('portfolioItems').doc('hidden-reviewed-artifact').set(
+        <String, dynamic>{
+          'learnerId': 'hidden-reviewed-learner',
+          'title': 'Hidden reviewed artifact',
+          'description': 'Should stay hidden from the linked parent.',
+          'pillarCodes': const <String>['impact'],
+          'verificationStatus': 'reviewed',
+          'createdAt': Timestamp.fromDate(DateTime.now()),
+          'updatedAt': Timestamp.fromDate(DateTime.now()),
+        },
+      );
+
+      final FirestoreService firestoreService = FirestoreService(
+        firestore: firestore,
+        auth: _MockFirebaseAuth(),
+      );
+
+      await _submitMissionForReview(
+        tester,
+        firestore: firestore,
+        learnerState: _buildLearnerWorkflowState(
+          userId: learnerId,
+          email: 'nia.reviewed-portfolio@example.com',
+          displayName: 'Nia Reviewed Portfolio',
+        ),
+        missionService: MissionService(
+          firestoreService: firestoreService,
+          learnerId: learnerId,
+        ),
+      );
+
+      await _approveSubmittedMission(
+        tester,
+        firestore: firestore,
+        missionService: MissionService(
+          firestoreService: firestoreService,
+          learnerId: 'educator-1',
+        ),
+      );
+
+      final ParentService parentService = ParentService(
+        firestoreService: firestoreService,
+        parentId: parentId,
+        bundleLoader: () async => <LearnerSummary>[],
+        billingLoader: () async => null,
+      );
+
+      await _pumpPage(
+        tester,
+        firestore: firestore,
+        appState: _buildParentState(
+          userId: parentId,
+          email: 'pat.reviewed-portfolio@example.com',
+          displayName: 'Pat Reviewed Portfolio',
+        ),
+        parentService: parentService,
+        home: const ParentPortfolioPage(),
+      );
+
+      expect(
+        find.text('Mission ready for review • Prototype evidence'),
+        findsOneWidget,
+      );
+      expect(find.text('Hidden reviewed artifact'), findsNothing);
+      expect(find.text('Evidence linked'), findsWidgets);
+      expect(find.text('Reviewed'), findsWidgets);
+      expect(find.text('Proof verified'), findsWidgets);
+      expect(find.text('Learner declared no AI support used'), findsWidgets);
+
+      await tester.tap(find.text('Mission ready for review • Prototype evidence').first);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Capability Evidence'), findsOneWidget);
+      expect(find.text('Prototype evidence'), findsWidgets);
+      expect(find.text('Verification Prompt'), findsOneWidget);
+      expect(
+        find.text('Explain why this prototype path best matched the evidence.'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Mission Attempt ID:'), findsOneWidget);
     });
 
     testWidgets('portfolio page downloads a real summary file',
