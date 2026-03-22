@@ -41,7 +41,7 @@ This prevents build failures while features are implemented incrementally.
 | learner_today | Today | `SessionOccurrence`, `Enrollment` | open today schedule | `44_SCHEDULING_CALENDAR_ROOMS_SPEC.md`, `02A_SCHEMA_V3.ts` (sessions/occurrences) |
 | learner_missions | My Missions | `MissionPlan`, `MissionAttempt`, `MissionSnapshot` | start/continue/submit attempt | `01_SUPREME_SPEC_EMPIRE_PLATFORM.md`, `45_CURRICULUM_VERSIONING_RUBRICS_SPEC.md`, `02A_SCHEMA_V3.ts` |
 | learner_habits | Habit Coach | habit engine entities + `TelemetryEvent` | do-now, snooze, reflect | `21_PILLAR_HABIT_ENGINE_POPUPS_SPEC.md`, `22_LEARNER_INTELLIGENCE_PERSONALIZATION_SPEC.md` |
-| learner_portfolio | Portfolio | `PortfolioItem`, `Credential` | add highlight, share parent-safe | `01_SUPREME_SPEC_EMPIRE_PLATFORM.md`, `02A_SCHEMA_V3.ts` |
+| learner_portfolio | Portfolio | `PortfolioItem`, `Credential` (learner-visible today) | add highlight, share parent-safe portfolio items | `01_SUPREME_SPEC_EMPIRE_PLATFORM.md`, `02A_SCHEMA_V3.ts` |
 
 ---
 
@@ -68,6 +68,7 @@ This prevents build failures while features are implemented incrementally.
 Non-negotiable:
 - Never show teacher-only intelligence collections to parents.
 - GuardianLink creation remains admin-only.
+- Parent-safe portfolio sharing should not be read as direct `credentials` collection visibility; current proven family surfaces derive from parent-visible `portfolioItems`, not raw credential reads.
 
 ---
 
