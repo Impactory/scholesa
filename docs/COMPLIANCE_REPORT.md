@@ -2,7 +2,7 @@
 
 ## Status Summary
 - Deferred items logged in DEFERMENT_LOG.md, but the locale-first web track is active and validated for routing, protected access, and tri-locale entry coverage.
-- Schema parity: Flutter models/repos implemented for core LMS (users, sessions, occurrences, enrollments, attendance, missions, attempts, portfolios, accountability, audit logs); active web routing and dashboard entry coverage is validated, while some broader web requirements remain deferred.
+- Schema parity: Flutter models/repos implemented for core LMS (users, sessions, occurrences, enrollments, attendance, missions, attempts, portfolios, accountability, audit logs); active web routing and dashboard entry coverage is validated, while broader web data-access layers remain deferred and there is no implemented `src/repositories/` layer in the current repo.
 - Role routing (web): implemented with tests (✅).
 - Dashboards (web): protected role entry and redirects validated end-to-end; Flutter dashboards (learner/educator/parent/site/partner/hq) styled and live (✅ for Flutter UI, data wiring partial).
 - Offline: Flutter connectivity banner + persistent queue with dedup + auto-flush (✅ in app); web offline queue remains partially deferred.
@@ -24,7 +24,7 @@
 - Flutter dashboards/auth/theme: apps/empire_flutter/app/lib/features/* and app/lib/app.dart
 
 ## Blockers / Next
-- Complete pending web repos (Skill, SkillMastery, MissionPlan, Portfolio, Credential) or formally defer.
+- Formally defer or implement the missing web data-access layer for domains previously described as pending web repos (Skill, SkillMastery, MissionPlan, Portfolio, Credential); there is no current `src/repositories/` implementation to complete incrementally.
 - Add more unit roundtrips (web) and Flutter widget/unit tests.
 - Execute QA runbook and attach evidence for broader non-routing web surfaces.
 - Run remaining broad web/unit/build gates and add sustained `flutter test`/`flutter build` pipeline coverage.
