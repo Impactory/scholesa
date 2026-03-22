@@ -487,7 +487,7 @@ void main() {
       attemptDoc.data()?['feedback'],
       'Your explanation matches the prototype evidence. Keep tracing tradeoffs.',
     );
-    expect(submissionDoc.data()?['status'], 'approved');
+    expect(submissionDoc.exists, isFalse);
     expect(
       assignmentDoc.data()?['reviewStatus'],
       'approved',
@@ -596,8 +596,7 @@ void main() {
     expect(attemptDoc.data()?['rubricTitle'], 'Prototype Rubric');
     expect(attemptDoc.data()?['rubricTotalScore'], 7);
     expect(attemptDoc.data()?['rubricMaxScore'], 8);
-    expect(submissionDoc.data()?['status'], 'approved');
-    expect(submissionDoc.data()?['rubricTotalScore'], 7);
+    expect(submissionDoc.exists, isFalse);
     expect(assignmentDoc.data()?['reviewStatus'], 'approved');
     expect(assignmentDoc.data()?['rubricTotalScore'], 7);
     expect(rubricApplicationDoc.exists, isTrue);
