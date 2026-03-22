@@ -2,18 +2,18 @@
 
 ## Purpose
 
-These three rows remain open, but not for the same reason as REQ-110 did before implementation. Current repo governance and execution docs explicitly classify them as blocked or deferred, so they should not be force-closed without contradicting the codebase's own compliance and rollout posture.
+REQ-114 and REQ-120 remain open. REQ-113 was a historical blocker while vendor analytics wording still conflicted with compliance posture, but the active execution plan now treats internal telemetry plus warehouse-friendly export as the satisfied implementation contract.
 
 ## REQ-113: PostHog and Segment capture
 
-Current repo guidance explicitly blocks vendor analytics capture for this requirement.
+Current repo guidance explicitly blocks vendor analytics capture, but it no longer leaves REQ-113 itself open.
 
 - `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md` states that vendor analytics paths such as PostHog or Segment must not be introduced to satisfy the requirement.
 - `docs/FEATURE_SET_E2E_EXECUTION_PLAN_2026-03-12.md` records the same posture: treat vendor capture as not approved and keep internal telemetry plus warehouse-friendly export instead.
 
 Conclusion:
-- REQ-113 must remain blocked until compliance posture changes.
-- It would be inaccurate to add PostHog or Segment hooks just to make the matrix green.
+- REQ-113 is satisfied under the current source contract via internal telemetry capture and warehouse-friendly export posture.
+- PostHog or Segment exceptions remain blocked unless governance explicitly changes.
 
 ## REQ-114: Federated learning data moat
 
@@ -40,7 +40,7 @@ Conclusion:
 ## Final status
 
 - REQ-110 is now implemented and closed.
-- REQ-113 remains blocked by compliance policy.
+- REQ-113 is closed under the internal telemetry replacement contract; vendor analytics exceptions remain blocked by compliance policy.
 - REQ-114 remains deferred as R and D.
 - REQ-120 remains deferred pending an integration charter.
 

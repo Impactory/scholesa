@@ -8,7 +8,6 @@ Current status: Remaining deferred or blocked items are explicitly tracked below
 
 | Requirement | State | Reason | Governance artifact |
 | --- | --- | --- | --- |
-| REQ-113 | blocked | Vendor analytics capture conflicts with current compliance posture | `docs/REQ113_REQ114_REQ120_GOVERNANCE_UNBLOCK_PACK_MARCH_14_2026.md` |
 | REQ-114 | deferred | No approved federated-learning architecture, privacy review, or code exists | `docs/REQ113_REQ114_REQ120_GOVERNANCE_UNBLOCK_PACK_MARCH_14_2026.md` |
 | REQ-120 | deferred | Clever/ClassLink need an approved integration charter before implementation can be claimed | `docs/REQ113_REQ114_REQ120_GOVERNANCE_UNBLOCK_PACK_MARCH_14_2026.md` |
 

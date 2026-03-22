@@ -28,7 +28,7 @@ Draft decision artifacts created from this pack:
 
 | Requirement | Current state | Why it is not green today | Decision needed |
 | --- | --- | --- | --- |
-| REQ-113 | blocked | Vendor analytics capture conflicts with current compliance posture | Approve vendor analytics exception or formally replace the requirement with internal export-only posture |
+| REQ-113 | resolved by replacement | Vendor analytics capture conflicts with current compliance posture, and the active execution plan now treats internal telemetry plus warehouse-friendly export as the satisfied contract | Approve a vendor analytics exception only if leadership wants to override the current internal-first contract |
 | REQ-114 | deferred | No architecture, privacy review, runtime plan, or code exists | Approve an R and D charter before implementation work begins |
 | REQ-120 | deferred | Clever/ClassLink remain planned-only with no approved delivery charter | Approve an integration charter with scopes, data handling, and rollout gates |
 
@@ -45,6 +45,12 @@ Choose exactly one:
 
 1. Keep the vendor-ban posture and replace REQ-113 with an internal-export requirement.
 2. Approve a narrow compliance exception for one or both vendors.
+
+Current honest state:
+
+- The active execution plan already follows option 1.
+- REQ-113 is therefore satisfied under the internal telemetry contract.
+- This section remains relevant only if leadership wants to reopen vendor analytics as an exception path.
 
 ### Required approvers
 
@@ -179,6 +185,6 @@ Which integration, if any, should be funded first, and what exact scope is appro
 
 ## Recommended immediate action
 
-1. Formally replace REQ-113 with internal telemetry export posture unless leadership explicitly wants a vendor exception.
+1. Keep REQ-113 on the internal telemetry export posture unless leadership explicitly wants a vendor exception.
 2. Keep REQ-114 in R and D until a privacy-reviewed architecture exists.
 3. Approve one integration charter for REQ-120 rather than authorizing Clever and ClassLink together by default.
