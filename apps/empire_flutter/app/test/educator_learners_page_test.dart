@@ -9,14 +9,31 @@ import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:scholesa_app/auth/app_state.dart';
+import 'package:scholesa_app/modules/educator/educator_sessions_page.dart';
 import 'package:scholesa_app/modules/educator/educator_learners_page.dart';
 import 'package:scholesa_app/modules/educator/educator_models.dart';
 import 'package:scholesa_app/modules/educator/educator_service.dart';
+import 'package:scholesa_app/modules/provisioning/provisioning_page.dart';
+import 'package:scholesa_app/modules/provisioning/provisioning_service.dart';
 import 'package:scholesa_app/runtime/runtime.dart';
+import 'package:scholesa_app/services/api_client.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
+import 'package:scholesa_app/services/workflow_bridge_service.dart';
 import 'package:scholesa_app/ui/theme/scholesa_theme.dart';
 
 class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
+
+class _FakeWorkflowBridgeService extends WorkflowBridgeService {
+  _FakeWorkflowBridgeService() : super(functions: null);
+
+  @override
+  Future<List<Map<String, dynamic>>> listCohortLaunches({
+    String? siteId,
+    int limit = 80,
+  }) async {
+    return const <Map<String, dynamic>>[];
+  }
+}
 
 class _FailingLaneOverrideFirestoreService extends FirestoreService {
   _FailingLaneOverrideFirestoreService({
@@ -50,6 +67,21 @@ AppState _buildEducatorState() {
     'email': 'educator-1@scholesa.test',
     'displayName': 'Educator One',
     'role': 'educator',
+    'activeSiteId': 'site-1',
+    'siteIds': <String>['site-1'],
+    'localeCode': 'en',
+    'entitlements': <Map<String, dynamic>>[],
+  });
+  return state;
+}
+
+AppState _buildSiteState() {
+  final AppState state = AppState();
+  state.updateFromMeResponse(<String, dynamic>{
+    'userId': 'site-admin-1',
+    'email': 'site-admin-1@scholesa.test',
+    'displayName': 'Site Admin',
+    'role': 'site',
     'activeSiteId': 'site-1',
     'siteIds': <String>['site-1'],
     'localeCode': 'en',
@@ -103,7 +135,10 @@ Future<void> _seedLearner(FakeFirebaseFirestore firestore) async {
     'impactProgress': 0.41,
     'enrolledSessionIds': <String>['session-1'],
   });
-  await firestore.collection('enrollments').doc('enrollment-1').set(<String, dynamic>{
+  await firestore
+      .collection('enrollments')
+      .doc('enrollment-1')
+      .set(<String, dynamic>{
     'siteId': 'site-1',
     'learnerId': 'learner-1',
     'educatorId': 'educator-1',
@@ -123,7 +158,10 @@ Future<void> _seedLearnerTwo(FakeFirebaseFirestore firestore) async {
     'impactProgress': 0.61,
     'enrolledSessionIds': <String>['session-2'],
   });
-  await firestore.collection('enrollments').doc('enrollment-2').set(<String, dynamic>{
+  await firestore
+      .collection('enrollments')
+      .doc('enrollment-2')
+      .set(<String, dynamic>{
     'siteId': 'site-1',
     'learnerId': 'learner-2',
     'educatorId': 'educator-1',
@@ -146,7 +184,30 @@ Future<void> _seedSessions(FakeFirebaseFirestore firestore) async {
   });
 }
 
-Future<void> _seedLearnerWithoutDisplayName(FakeFirebaseFirestore firestore) async {
+Future<void> _seedRosterImportSessionData(
+    FakeFirebaseFirestore firestore) async {
+  final DateTime now = DateTime.now();
+  final DateTime startTime = DateTime(now.year, now.month, now.day, 9, 0);
+  final DateTime endTime = startTime.add(const Duration(hours: 1));
+
+  await firestore.collection('sessions').doc('session-roster-1').set(
+    <String, dynamic>{
+      'siteId': 'site-1',
+      'educatorId': 'educator-1',
+      'educatorIds': <String>['educator-1'],
+      'title': 'Launch Lab',
+      'pillar': 'future_skills',
+      'startTime': Timestamp.fromDate(startTime),
+      'endTime': Timestamp.fromDate(endTime),
+      'location': 'Studio A',
+      'status': 'upcoming',
+      'enrolledCount': 0,
+    },
+  );
+}
+
+Future<void> _seedLearnerWithoutDisplayName(
+    FakeFirebaseFirestore firestore) async {
   await firestore.collection('users').doc('learner-1').set(<String, dynamic>{
     'email': 'learner-1@scholesa.test',
     'siteId': 'site-1',
@@ -157,7 +218,10 @@ Future<void> _seedLearnerWithoutDisplayName(FakeFirebaseFirestore firestore) asy
     'impactProgress': 0.41,
     'enrolledSessionIds': <String>['session-1'],
   });
-  await firestore.collection('enrollments').doc('enrollment-1').set(<String, dynamic>{
+  await firestore
+      .collection('enrollments')
+      .doc('enrollment-1')
+      .set(<String, dynamic>{
     'siteId': 'site-1',
     'learnerId': 'learner-1',
     'educatorId': 'educator-1',
@@ -224,7 +288,8 @@ void main() {
     expect(find.text('Learner follow-up request submitted.'), findsWidgets);
     final supportRequests = await firestore.collection('supportRequests').get();
     expect(supportRequests.docs.length, 1);
-    expect(supportRequests.docs.first.data()['requestType'], 'learner_follow_up');
+    expect(
+        supportRequests.docs.first.data()['requestType'], 'learner_follow_up');
   });
 
   testWidgets('educator learners page shows learner unavailable label',
@@ -276,7 +341,8 @@ void main() {
           required String siteId,
           required String learnerId,
           required int lookbackDays,
-        }) async => <String, dynamic>{
+        }) async =>
+            <String, dynamic>{
           'synthetic': true,
           'state': <String, dynamic>{
             'cognition': 0.73,
@@ -314,7 +380,8 @@ void main() {
     );
   });
 
-  testWidgets('educator learners page saves lane taps immediately and reloads overrides',
+  testWidgets(
+      'educator learners page saves lane taps immediately and reloads overrides',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     await _seedLearner(firestore);
@@ -340,8 +407,14 @@ void main() {
     await tester.tap(find.text('Learner One'));
     await tester.pumpAndSettle();
 
-    expect(tester.widget<ChoiceChip>(_laneChip('Scaffolded lane')).selected, isTrue);
-    expect(tester.widget<ElevatedButton>(find.widgetWithText(ElevatedButton, 'Save lane override')).enabled, isFalse);
+    expect(tester.widget<ChoiceChip>(_laneChip('Scaffolded lane')).selected,
+        isTrue);
+    expect(
+        tester
+            .widget<ElevatedButton>(
+                find.widgetWithText(ElevatedButton, 'Save lane override'))
+            .enabled,
+        isFalse);
 
     await tester.ensureVisible(_laneChip('Stretch lane'));
     await tester.pumpAndSettle();
@@ -355,8 +428,14 @@ void main() {
     expect(savedPlan.exists, isTrue);
     expect(savedPlan.data()?['selectedLane'], 'stretch');
     expect(find.text('Differentiation lane saved'), findsOneWidget);
-    expect(tester.widget<ChoiceChip>(_laneChip('Stretch lane')).selected, isTrue);
-    expect(tester.widget<ElevatedButton>(find.widgetWithText(ElevatedButton, 'Save lane override')).enabled, isFalse);
+    expect(
+        tester.widget<ChoiceChip>(_laneChip('Stretch lane')).selected, isTrue);
+    expect(
+        tester
+            .widget<ElevatedButton>(
+                find.widgetWithText(ElevatedButton, 'Save lane override'))
+            .enabled,
+        isFalse);
 
     await tester.tapAt(const Offset(16, 16));
     await tester.pumpAndSettle();
@@ -364,15 +443,19 @@ void main() {
     await tester.tap(find.text('Learner One'));
     await tester.pumpAndSettle();
 
-    expect(tester.widget<ChoiceChip>(_laneChip('Stretch lane')).selected, isTrue);
-    expect(tester.widget<ChoiceChip>(_laneChip('Scaffolded lane')).selected, isFalse);
+    expect(
+        tester.widget<ChoiceChip>(_laneChip('Stretch lane')).selected, isTrue);
+    expect(tester.widget<ChoiceChip>(_laneChip('Scaffolded lane')).selected,
+        isFalse);
   });
 
-  testWidgets('educator learners page reverts lane selection when immediate save fails',
+  testWidgets(
+      'educator learners page reverts lane selection when immediate save fails',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     await _seedLearner(firestore);
-    final FirestoreService firestoreService = _FailingLaneOverrideFirestoreService(
+    final FirestoreService firestoreService =
+        _FailingLaneOverrideFirestoreService(
       firestore: firestore,
       auth: _MockFirebaseAuth(),
     );
@@ -394,7 +477,8 @@ void main() {
     await tester.tap(find.text('Learner One'));
     await tester.pumpAndSettle();
 
-    expect(tester.widget<ChoiceChip>(_laneChip('Scaffolded lane')).selected, isTrue);
+    expect(tester.widget<ChoiceChip>(_laneChip('Scaffolded lane')).selected,
+        isTrue);
 
     await tester.ensureVisible(_laneChip('Stretch lane'));
     await tester.pumpAndSettle();
@@ -406,12 +490,16 @@ void main() {
         .doc('learner-1_site-1')
         .get();
     expect(savedPlan.exists, isFalse);
-    expect(find.text('Unable to save lane override right now.'), findsOneWidget);
-    expect(tester.widget<ChoiceChip>(_laneChip('Scaffolded lane')).selected, isTrue);
-    expect(tester.widget<ChoiceChip>(_laneChip('Stretch lane')).selected, isFalse);
+    expect(
+        find.text('Unable to save lane override right now.'), findsOneWidget);
+    expect(tester.widget<ChoiceChip>(_laneChip('Scaffolded lane')).selected,
+        isTrue);
+    expect(
+        tester.widget<ChoiceChip>(_laneChip('Stretch lane')).selected, isFalse);
   });
 
-  testWidgets('educator learners page restores search and session filters on reopen',
+  testWidgets(
+      'educator learners page restores search and session filters on reopen',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     await _seedLearner(firestore);
@@ -474,7 +562,8 @@ void main() {
     expect(find.widgetWithText(TextField, 'Two'), findsOneWidget);
   });
 
-  testWidgets('educator learners page shows roster load failure instead of blank roster',
+  testWidgets(
+      'educator learners page shows roster load failure instead of blank roster',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     final FirestoreService firestoreService = FirestoreService(
@@ -502,17 +591,20 @@ void main() {
 
     expect(find.text('Unable to load learners'), findsOneWidget);
     expect(
-      find.text('We could not load learners right now. Retry to check the current state.'),
+      find.text(
+          'We could not load learners right now. Retry to check the current state.'),
       findsOneWidget,
     );
     expect(
-      find.textContaining('Failed to load learners: Bad state: load failed from test'),
+      find.textContaining(
+          'Failed to load learners: Bad state: load failed from test'),
       findsOneWidget,
     );
     expect(find.text('No learners enrolled'), findsNothing);
   });
 
-  testWidgets('educator learners page keeps stale roster visible after refresh failure',
+  testWidgets(
+      'educator learners page keeps stale roster visible after refresh failure',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     final FirestoreService firestoreService = FirestoreService(
@@ -577,6 +669,155 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Learner One'), findsOneWidget);
+    expect(find.text('No learners enrolled'), findsNothing);
+  });
+
+  testWidgets(
+      'educator learners page shows learners provisioned from queued roster imports',
+      (WidgetTester tester) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 1600));
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedRosterImportSessionData(firestore);
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+
+    final EducatorService educatorSessionsService = EducatorService(
+      firestoreService: firestoreService,
+      educatorId: 'educator-1',
+      siteId: 'site-1',
+    );
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: <SingleChildWidget>[
+          Provider<FirestoreService>.value(value: firestoreService),
+          ChangeNotifierProvider<AppState>.value(value: _buildEducatorState()),
+          ChangeNotifierProvider<EducatorService>.value(
+            value: educatorSessionsService,
+          ),
+        ],
+        child: MaterialApp(
+          theme: ScholesaTheme.light,
+          locale: const Locale('en'),
+          localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const <Locale>[
+            Locale('en'),
+            Locale('zh', 'CN'),
+            Locale('zh', 'TW'),
+          ],
+          home: EducatorSessionsPage(sharedPreferences: prefs),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Launch Lab').first);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Import Roster CSV'),
+      200,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.text('Import Roster CSV'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byType(TextField).last,
+      'name,email\nWorkflow Learner,workflow@example.com',
+    );
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Import'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Roster import complete: 0 enrolled, 1 queued for provisioning',
+      ),
+      findsOneWidget,
+    );
+
+    final _MockFirebaseAuth provisioningAuth = _MockFirebaseAuth();
+    when(() => provisioningAuth.currentUser).thenReturn(null);
+    final ProvisioningService provisioningService = ProvisioningService(
+      apiClient: ApiClient(auth: provisioningAuth, baseUrl: 'http://localhost'),
+      firestore: firestore,
+      auth: provisioningAuth,
+      workflowBridgeService: _FakeWorkflowBridgeService(),
+      useProvisioningApi: false,
+    );
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: <SingleChildWidget>[
+          ChangeNotifierProvider<AppState>.value(value: _buildSiteState()),
+          ChangeNotifierProvider<ProvisioningService>.value(
+            value: provisioningService,
+          ),
+        ],
+        child: MaterialApp(
+          theme: ScholesaTheme.light,
+          locale: const Locale('en'),
+          localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const <Locale>[
+            Locale('en'),
+            Locale('zh', 'CN'),
+            Locale('zh', 'TW'),
+          ],
+          home: const ProvisioningPage(),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+        find.byType(TextFormField).at(0), 'Workflow Learner');
+    await tester.enterText(
+      find.byType(TextFormField).at(1),
+      'workflow@example.com',
+    );
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Create'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Learner created successfully'), findsOneWidget);
+
+    final EducatorService educatorLearnersService = EducatorService(
+      firestoreService: firestoreService,
+      educatorId: 'educator-1',
+      siteId: 'site-1',
+    );
+
+    await tester.pumpWidget(
+      _buildHarness(
+        firestoreService: firestoreService,
+        educatorService: educatorLearnersService,
+        sharedPreferences: prefs,
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Workflow Learner'), findsOneWidget);
     expect(find.text('No learners enrolled'), findsNothing);
   });
 }
