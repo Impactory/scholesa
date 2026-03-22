@@ -29,7 +29,7 @@ Draft decision artifacts created from this pack:
 | Requirement | Current state | Why it is not green today | Decision needed |
 | --- | --- | --- | --- |
 | REQ-113 | resolved by replacement | Vendor analytics capture conflicts with current compliance posture, and the active execution plan now treats internal telemetry plus warehouse-friendly export as the satisfied contract | Approve a vendor analytics exception only if leadership wants to override the current internal-first contract |
-| REQ-114 | deferred | No architecture, privacy review, runtime plan, or code exists | Approve an R and D charter before implementation work begins |
+| REQ-114 | deferred | A bounded prototype exists, but there is still no approved production architecture, privacy review, or pilot sign-off for release-grade claims | Approve an R and D charter and production guardrails before moving beyond prototype status |
 | REQ-120 | deferred | Clever/ClassLink remain planned-only with no approved delivery charter | Approve an integration charter with scopes, data handling, and rollout gates |
 
 ## REQ-113: PostHog and Segment Capture
@@ -89,7 +89,13 @@ Current honest state:
 ### Existing repo policy
 
 - `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md` states unimplemented features such as federated learning must remain planned or deferred until code and tests exist.
-- `docs/FEATURE_SET_E2E_EXECUTION_PLAN_2026-03-12.md` states there is no implementation, infrastructure, or compliance review and instructs the team to treat it as R and D.
+- `docs/FEATURE_SET_E2E_EXECUTION_PLAN_2026-03-12.md` states the item must stay partial until architecture, privacy review, runtime code, and broader tests are all real and approved.
+
+Current honest state:
+
+- A bounded federated-learning prototype now exists in the repo.
+- That prototype is not yet enough to claim shipped federated-learning delivery, production rollout, or privacy-approved pilot readiness.
+- Governance is still required before the requirement can move beyond deferred or prototype status.
 
 ### Governance question
 
