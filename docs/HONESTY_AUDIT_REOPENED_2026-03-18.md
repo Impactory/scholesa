@@ -153,6 +153,7 @@ Interpretation rule:
 63. Added direct `/educator/learner-supports` and `/educator/integrations` route-gate and telemetry proof so both routes now verify educator/site/HQ access boundaries in focused tests and emit auditable route-local traces for support-plan updates and integration sync menu actions instead of leaving scope and auditability inferred from implementation.
 64. Added direct `/site/identity` route-gate and telemetry proof so the route now verifies site/HQ-only access in a focused test and emits auditable approve-match and ignore-match CTA traces with match context instead of leaving route-local scope and operator-decision auditability inferred from implementation.
 65. Added direct `/site/integrations-health` route-gate and telemetry proof so the route now verifies site/HQ-only access in a focused test and emits auditable `connect_integration`, `force_sync_integration`, `disconnect_integration`, and `retry_failed_syncs` CTA traces from the integration card and option sheet instead of leaving route-local scope and key connection-action auditability inferred from implementation.
+66. Added direct `/site/ops` workflow-composition proof so the route now verifies same-site check-ins and same-day sessions compose into the live present count and timetable, ignore cross-site data, and refresh back to source-of-truth state after new check-in and checkout events are written.
 
 ### Release and operations fixes
 
@@ -169,7 +170,7 @@ Interpretation rule:
 - Focused educator follow-up regressions passed: 10 passed, 0 failed.
 - Focused attendance honesty regressions passed: 9 passed, 0 failed.
 - Focused operator accessibility follow-up suites passed: 29 passed, 0 failed.
-- Focused site ops recovery suites passed: 6 passed, 0 failed.
+- Focused site ops recovery suites passed: 8 passed, 0 failed.
 - Focused site identity honesty regressions passed: 2 passed, 0 failed.
 - Focused site incidents honesty regressions passed: 4 passed, 0 failed.
 - Focused site integrations health regressions passed: 4 passed, 0 failed.

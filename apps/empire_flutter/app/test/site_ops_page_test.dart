@@ -158,7 +158,178 @@ Future<void> _pumpPage(WidgetTester tester, {required FakeFirebaseFirestore fire
   await tester.pumpAndSettle();
 }
 
+Future<void> _seedSiteOpsWorkflowData(FakeFirebaseFirestore firestore) async {
+  final DateTime now = DateTime.now();
+  final DateTime dayStart = DateTime(now.year, now.month, now.day);
+
+  await firestore.collection('learners').doc('learner-a').set(<String, dynamic>{
+    'siteId': 'site-1',
+    'displayName': 'Ava Stone',
+  });
+  await firestore.collection('learners').doc('learner-b').set(<String, dynamic>{
+    'siteId': 'site-1',
+    'displayName': 'Ben Lake',
+  });
+  await firestore.collection('learners').doc('learner-c').set(<String, dynamic>{
+    'siteId': 'site-1',
+    'displayName': 'Cora Vale',
+  });
+  await firestore.collection('learners').doc('learner-z').set(<String, dynamic>{
+    'siteId': 'site-2',
+    'displayName': 'Other Site Learner',
+  });
+
+  await firestore.collection('enrollments').doc('enrollment-a').set(<String, dynamic>{
+    'siteId': 'site-1',
+    'learnerId': 'learner-a',
+    'sessionId': 'session-site-1',
+  });
+  await firestore.collection('enrollments').doc('enrollment-b').set(<String, dynamic>{
+    'siteId': 'site-1',
+    'learnerId': 'learner-b',
+    'sessionId': 'session-site-1',
+  });
+  await firestore.collection('enrollments').doc('enrollment-c').set(<String, dynamic>{
+    'siteId': 'site-1',
+    'learnerId': 'learner-c',
+    'sessionId': 'session-site-1',
+  });
+
+  await firestore.collection('sessions').doc('session-site-1').set(<String, dynamic>{
+    'siteId': 'site-1',
+    'title': 'Robotics Studio',
+    'startTime': Timestamp.fromDate(dayStart.add(const Duration(hours: 10))),
+    'educatorName': 'Coach Ada',
+    'room': 'Lab 1',
+    'learnerCount': 3,
+  });
+  await firestore.collection('sessions').doc('session-site-1-later').set(<String, dynamic>{
+    'siteId': 'site-1',
+    'title': 'Design Lab',
+    'startTime': Timestamp.fromDate(dayStart.add(const Duration(hours: 14))),
+    'educatorName': 'Coach Lin',
+    'room': 'Maker Bay',
+    'learnerCount': 2,
+  });
+  await firestore.collection('sessions').doc('session-site-2').set(<String, dynamic>{
+    'siteId': 'site-2',
+    'title': 'Other Site Session',
+    'startTime': Timestamp.fromDate(dayStart.add(const Duration(hours: 11))),
+    'educatorName': 'Coach Elsewhere',
+    'room': 'Remote Room',
+    'learnerCount': 99,
+  });
+
+  await firestore.collection('checkins').doc('checkin-a').set(<String, dynamic>{
+    'siteId': 'site-1',
+    'learnerId': 'learner-a',
+    'type': 'checkin',
+    'timestamp': Timestamp.fromDate(dayStart.add(const Duration(hours: 8, minutes: 5))),
+  });
+  await firestore.collection('checkins').doc('checkin-b').set(<String, dynamic>{
+    'siteId': 'site-1',
+    'learnerId': 'learner-b',
+    'type': 'checkin',
+    'timestamp': Timestamp.fromDate(dayStart.add(const Duration(hours: 8, minutes: 12))),
+  });
+  await firestore.collection('checkins').doc('checkin-z').set(<String, dynamic>{
+    'siteId': 'site-2',
+    'learnerId': 'learner-z',
+    'type': 'checkin',
+    'timestamp': Timestamp.fromDate(dayStart.add(const Duration(hours: 8, minutes: 20))),
+  });
+}
+
 void main() {
+  testWidgets('site ops page composes same-site checkins and today sessions into live ops status',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedSiteOpsWorkflowData(firestore);
+
+    await _pumpPage(
+      tester,
+      firestore: firestore,
+      workflowBridge: _SequencedRuntimeWorkflowBridgeService(
+        snapshots: const <_RuntimeLoadSnapshot>[ _RuntimeLoadSnapshot() ],
+      ),
+    );
+
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
+    expect(find.text('Site is OPEN'), findsOneWidget);
+    expect(find.text('Robotics Studio'), findsOneWidget);
+    expect(find.text('Design Lab'), findsOneWidget);
+    expect(find.text('Other Site Session'), findsNothing);
+    expect(find.text('3 learners'), findsOneWidget);
+    expect(find.text('2'), findsOneWidget);
+    expect(find.text('Present'), findsOneWidget);
+
+    final DateTime now = DateTime.now();
+    final DateTime dayStart = DateTime(now.year, now.month, now.day);
+    await firestore.collection('checkins').doc('checkin-c').set(<String, dynamic>{
+      'siteId': 'site-1',
+      'learnerId': 'learner-c',
+      'type': 'checkin',
+      'timestamp': Timestamp.fromDate(dayStart.add(const Duration(hours: 8, minutes: 35))),
+    });
+
+    await tester.tap(find.byTooltip('Refresh'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+
+    expect(find.text('3'), findsWidgets);
+    expect(find.text('Present'), findsOneWidget);
+  });
+
+  testWidgets('site ops page removes checked-out same-site learners from live present status',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedSiteOpsWorkflowData(firestore);
+
+    await _pumpPage(
+      tester,
+      firestore: firestore,
+      workflowBridge: _SequencedRuntimeWorkflowBridgeService(
+        snapshots: const <_RuntimeLoadSnapshot>[_RuntimeLoadSnapshot()],
+      ),
+    );
+
+    expect(find.text('Site is OPEN'), findsOneWidget);
+    expect(find.text('Other Site Session'), findsNothing);
+
+    final DateTime now = DateTime.now();
+    final DateTime dayStart = DateTime(now.year, now.month, now.day);
+    await firestore.collection('checkins').doc('checkout-a').set(<String, dynamic>{
+      'siteId': 'site-1',
+      'learnerId': 'learner-a',
+      'type': 'checkout',
+      'timestamp': Timestamp.fromDate(dayStart.add(const Duration(hours: 15, minutes: 5))),
+    });
+    await firestore.collection('checkins').doc('checkout-b').set(<String, dynamic>{
+      'siteId': 'site-1',
+      'learnerId': 'learner-b',
+      'type': 'checkout',
+      'timestamp': Timestamp.fromDate(dayStart.add(const Duration(hours: 15, minutes: 10))),
+    });
+    await firestore.collection('checkins').doc('checkin-z-late').set(<String, dynamic>{
+      'siteId': 'site-2',
+      'learnerId': 'learner-z',
+      'type': 'checkin',
+      'timestamp': Timestamp.fromDate(dayStart.add(const Duration(hours: 15, minutes: 12))),
+    });
+
+    await tester.tap(find.byTooltip('Refresh'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Site is CLOSED'), findsOneWidget);
+    expect(find.text('Toggle switch to open the day'), findsOneWidget);
+    expect(find.text('0'), findsWidgets);
+    expect(find.text('Present'), findsOneWidget);
+    expect(find.text('Other Site Session'), findsNothing);
+  });
+
   testWidgets('site ops page shows unavailable runtime copy and can retry from the same screen',
       (WidgetTester tester) async {
     final _SequencedRuntimeWorkflowBridgeService workflowBridge =
