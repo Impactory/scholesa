@@ -208,6 +208,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(service.loadUsersCalled, isTrue);
     expect(find.text('Ava Learner'), findsOneWidget);
 

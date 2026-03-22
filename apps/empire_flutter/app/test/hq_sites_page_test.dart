@@ -80,6 +80,7 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
+      expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Sites Management'), findsOneWidget);
     expect(find.text('Alpha Studio'), findsOneWidget);
     expect(find.text('Beta Studio'), findsOneWidget);
@@ -168,6 +169,7 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
+      expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Sites are temporarily unavailable'), findsOneWidget);
     expect(
       find.text('We could not load sites right now. Retry to check the current state.'),

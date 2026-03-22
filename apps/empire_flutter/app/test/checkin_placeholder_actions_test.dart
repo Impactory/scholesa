@@ -149,6 +149,7 @@ void main() {
     await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
 
+      expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Quick Pickup'), findsWidgets);
     final Finder dialog = find.byType(AlertDialog);
     await tester.enterText(

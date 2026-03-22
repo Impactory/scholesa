@@ -127,6 +127,7 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
+      expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Unable to load sessions'), findsOneWidget);
     expect(
       find.text('We could not load sessions right now. Retry to check the current state.'),
@@ -185,6 +186,7 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
+      expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Today Advisory'), findsOneWidget);
     expect(find.text('Next Week Lab'), findsNothing);
 
