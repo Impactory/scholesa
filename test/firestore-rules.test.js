@@ -165,6 +165,14 @@ beforeEach(async () => {
       status: 'draft',
     });
 
+    await setDoc(doc(db, 'credentials', 'credential-1'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      title: 'Studio Systems Badge',
+      issuerId: educatorUser.uid,
+      status: 'issued',
+    });
+
     await setDoc(doc(db, 'messageThreads', 'thread-1'), {
       participantIds: [educatorUser.uid, parentUser.uid],
       participantNames: ['Educator One', 'Parent One'],
@@ -1117,6 +1125,39 @@ describe('Portfolio Access', () => {
   test('unlinked parent cannot read learner portfolio item', async () => {
     const db = testEnv.authenticatedContext(otherParentUser.uid).firestore();
     await assertFails(getDoc(doc(db, 'portfolioItems', 'portfolio-1')));
+  });
+});
+
+describe('Credentials Access', () => {
+  test('learner can read their own credential', async () => {
+    const db = testEnv.authenticatedContext(learnerUser.uid).firestore();
+    await assertSucceeds(getDoc(doc(db, 'credentials', 'credential-1')));
+  });
+
+  test('educator can read learner credential', async () => {
+    const db = testEnv.authenticatedContext(educatorUser.uid).firestore();
+    await assertSucceeds(getDoc(doc(db, 'credentials', 'credential-1')));
+  });
+
+  test('educator can issue credential for learner', async () => {
+    const db = testEnv.authenticatedContext(educatorUser.uid).firestore();
+    await assertSucceeds(setDoc(doc(db, 'credentials', 'credential-2'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      title: 'Capability Evidence Verified',
+      issuerId: educatorUser.uid,
+      status: 'issued',
+    }));
+  });
+
+  test('parent cannot read learner credential', async () => {
+    const db = testEnv.authenticatedContext(parentUser.uid).firestore();
+    await assertFails(getDoc(doc(db, 'credentials', 'credential-1')));
+  });
+
+  test('hq can read learner credential directly', async () => {
+    const db = testEnv.authenticatedContext(hqUser.uid).firestore();
+    await assertSucceeds(getDoc(doc(db, 'credentials', 'credential-1')));
   });
 });
 
