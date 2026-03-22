@@ -228,6 +228,58 @@ Future<void> _seedCompletedMissionReadyForReview(
   );
 }
 
+Future<void> _seedReviewRubricAndEvidence(
+  FakeFirebaseFirestore firestore,
+) async {
+  await firestore.collection('missions').doc('mission-1').set(
+    <String, dynamic>{
+      'rubricId': 'rubric-1',
+      'rubricTitle': 'Prototype Rubric',
+    },
+    SetOptions(merge: true),
+  );
+  await firestore.collection('rubrics').doc('rubric-1').set(
+    <String, dynamic>{
+      'title': 'Prototype Rubric',
+      'criteria': <Map<String, dynamic>>[
+        <String, dynamic>{
+          'criterionId': 'evidence',
+          'label': 'Evidence',
+          'capabilityId': 'cap-prototype-evidence',
+          'capabilityTitle': 'Prototype evidence',
+          'pillarCode': 'future_skills',
+          'maxScore': 4,
+        },
+        <String, dynamic>{
+          'criterionId': 'reflection',
+          'label': 'Reflection',
+          'capabilityId': 'cap-prototype-evidence',
+          'capabilityTitle': 'Prototype evidence',
+          'pillarCode': 'future_skills',
+          'maxScore': 4,
+        },
+      ],
+    },
+  );
+  await firestore.collection('evidenceRecords').doc('evidence-1').set(
+    <String, dynamic>{
+      'learnerId': 'learner-1',
+      'siteId': 'site-1',
+      'capabilityId': 'cap-prototype-evidence',
+      'capabilityLabel': 'Prototype evidence',
+      'capabilityPillarCode': 'future_skills',
+      'observationNote':
+          'Learner connected prototype choices to observed tradeoffs.',
+      'artifactUrls': const <String>['https://example.com/prototype.png'],
+      'nextVerificationPrompt':
+          'Explain why this prototype path best matched the evidence.',
+      'portfolioCandidate': true,
+      'growthStatus': 'captured',
+      'observedAt': Timestamp.fromDate(DateTime(2026, 3, 18, 8, 45)),
+    },
+  );
+}
+
 Future<String> _submitMissionForReview(
   WidgetTester tester, {
   required FirestoreService firestoreService,
@@ -441,5 +493,127 @@ void main() {
       'approved',
     );
     expect(assignmentDoc.data()?['lastSubmissionId'], attemptId);
+  });
+
+  testWidgets(
+      'educator mission review applies rubric scoring and growth linkage from the live review page',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedCompletedMissionReadyForReview(firestore);
+    await _seedReviewRubricAndEvidence(firestore);
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final MissionService learnerMissionService = MissionService(
+      firestoreService: firestoreService,
+      learnerId: 'learner-1',
+    );
+
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final String attemptId = await _submitMissionForReview(
+      tester,
+      firestoreService: firestoreService,
+      missionService: learnerMissionService,
+    );
+
+    final MissionService educatorMissionService = MissionService(
+      firestoreService: firestoreService,
+      learnerId: 'educator-1',
+    );
+
+    await tester.pumpWidget(_buildHarness(educatorMissionService));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Mission ready for review').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Prototype Rubric'), findsOneWidget);
+    expect(find.text('Evidence'), findsOneWidget);
+    expect(find.text('Reflection'), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.text('Reflection'),
+      200,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.text('4/4').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('3/4').at(1));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byType(TextField).last,
+      'Great iteration. Tighten the evidence trail and explain the tradeoffs in your next revision.',
+    );
+    await tester.scrollUntilVisible(
+      find.text('Approve'),
+      250,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.text('Approve'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    final DocumentSnapshot<Map<String, dynamic>> attemptDoc = await firestore
+        .collection('missionAttempts')
+        .doc(attemptId)
+        .get();
+    final DocumentSnapshot<Map<String, dynamic>> submissionDoc = await firestore
+        .collection('missionSubmissions')
+        .doc(attemptId)
+        .get();
+    final DocumentSnapshot<Map<String, dynamic>> assignmentDoc = await firestore
+        .collection('missionAssignments')
+        .doc('assignment-1')
+        .get();
+    final DocumentSnapshot<Map<String, dynamic>> rubricApplicationDoc =
+        await firestore.collection('rubricApplications').doc(attemptId).get();
+    final DocumentSnapshot<Map<String, dynamic>> masteryDoc = await firestore
+        .collection('capabilityMastery')
+        .doc('learner-1_cap-prototype-evidence')
+        .get();
+    final QuerySnapshot<Map<String, dynamic>> growthEvents = await firestore
+        .collection('capabilityGrowthEvents')
+        .where('missionAttemptId', isEqualTo: attemptId)
+        .get();
+    final DocumentSnapshot<Map<String, dynamic>> evidenceDoc = await firestore
+        .collection('evidenceRecords')
+        .doc('evidence-1')
+        .get();
+    final DocumentSnapshot<Map<String, dynamic>> portfolioDoc = await firestore
+        .collection('portfolioItems')
+        .doc('evidence-1')
+        .get();
+
+    expect(attemptDoc.data()?['status'], 'reviewed');
+    expect(attemptDoc.data()?['reviewStatus'], 'approved');
+    expect(attemptDoc.data()?['rubricId'], 'rubric-1');
+    expect(attemptDoc.data()?['rubricTitle'], 'Prototype Rubric');
+    expect(attemptDoc.data()?['rubricTotalScore'], 7);
+    expect(attemptDoc.data()?['rubricMaxScore'], 8);
+    expect(submissionDoc.data()?['status'], 'approved');
+    expect(submissionDoc.data()?['rubricTotalScore'], 7);
+    expect(assignmentDoc.data()?['reviewStatus'], 'approved');
+    expect(assignmentDoc.data()?['rubricTotalScore'], 7);
+    expect(rubricApplicationDoc.exists, isTrue);
+    expect(rubricApplicationDoc.data()?['missionAttemptId'], attemptId);
+    expect((rubricApplicationDoc.data()?['scores'] as List?)?.length, 2);
+    expect(masteryDoc.exists, isTrue);
+    expect(masteryDoc.data()?['latestMissionAttemptId'], attemptId);
+    expect(masteryDoc.data()?['latestLevel'], 4);
+    expect(growthEvents.docs, hasLength(1));
+    expect(growthEvents.docs.single.data()['level'], 4);
+    expect(evidenceDoc.data()?['growthStatus'], 'updated');
+    expect(evidenceDoc.data()?['linkedMissionAttemptId'], attemptId);
+    expect(portfolioDoc.exists, isTrue);
+    expect(portfolioDoc.data()?['missionAttemptId'], attemptId);
+    expect(portfolioDoc.data()?['proofOfLearningStatus'], 'verified');
+    expect(portfolioDoc.data()?['aiAssistanceUsed'], isFalse);
+    expect(portfolioDoc.data()?['aiDisclosureStatus'], 'learner-ai-not-used');
   });
 }
