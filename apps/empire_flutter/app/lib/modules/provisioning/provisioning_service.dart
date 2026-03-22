@@ -1001,6 +1001,13 @@ class ProvisioningService extends ChangeNotifier {
       'createdAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
 
+    await _reconcilePendingRosterImports(
+      siteId: siteId,
+      learnerId: learnerId,
+      email: normalizedEmail,
+      displayName: displayName.trim(),
+    );
+
     return LearnerProfile(
       id: learnerId,
       siteId: siteId,
@@ -1010,6 +1017,157 @@ class ProvisioningService extends ChangeNotifier {
       dateOfBirth: dateOfBirth,
       notes: notes?.trim().isNotEmpty == true ? notes!.trim() : null,
     );
+  }
+
+  Future<void> _reconcilePendingRosterImports({
+    required String siteId,
+    required String learnerId,
+    required String email,
+    required String displayName,
+  }) async {
+    final String normalizedEmail = email.trim().toLowerCase();
+    if (siteId.trim().isEmpty || normalizedEmail.isEmpty) {
+      return;
+    }
+
+    final QuerySnapshot<Map<String, dynamic>> snapshot = await _firestore
+        .collection('rosterImports')
+        .where('siteId', isEqualTo: siteId)
+        .where('status', isEqualTo: 'pending_provisioning')
+        .get();
+
+    final List<QueryDocumentSnapshot<Map<String, dynamic>>> matchingRows =
+        snapshot.docs.where((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+      final String queuedEmail =
+          (doc.data()['email'] as String? ?? '').trim().toLowerCase();
+      return queuedEmail == normalizedEmail;
+    }).toList(growable: false);
+
+    if (matchingRows.isEmpty) {
+      return;
+    }
+
+    final WriteBatch batch = _firestore.batch();
+    final String actorId = _auth.currentUser?.uid ?? 'system';
+    final Map<String, int> sessionEnrollmentIncrements = <String, int>{};
+    final Map<String, DocumentSnapshot<Map<String, dynamic>>> sessionDocs =
+        <String, DocumentSnapshot<Map<String, dynamic>>>{};
+
+    for (final QueryDocumentSnapshot<Map<String, dynamic>> row in matchingRows) {
+      final Map<String, dynamic> data = row.data();
+      final String sessionId = (data['sessionId'] as String? ?? '').trim();
+      if (sessionId.isEmpty) {
+        continue;
+      }
+
+      if (await _enrollmentExists(sessionId: sessionId, learnerId: learnerId)) {
+        batch.set(row.reference, <String, dynamic>{
+          'status': 'provisioned',
+          'learnerId': learnerId,
+          'provisionedBy': actorId,
+          'provisionedAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+        continue;
+      }
+
+      final DocumentSnapshot<Map<String, dynamic>> sessionDoc =
+          sessionDocs.putIfAbsent(
+        sessionId,
+        () => _firestore.collection('sessions').doc(sessionId).get(),
+      ) as DocumentSnapshot<Map<String, dynamic>>;
+      final Map<String, dynamic> sessionData =
+          sessionDoc.data() ?? <String, dynamic>{};
+      final String resolvedSiteId =
+          (sessionData['siteId'] as String?)?.trim().isNotEmpty == true
+              ? (sessionData['siteId'] as String).trim()
+              : siteId;
+      final String primaryEducatorId =
+          (data['educatorId'] as String? ?? '').trim().isNotEmpty
+              ? (data['educatorId'] as String).trim()
+              : (sessionData['educatorId'] as String? ?? '').trim();
+      final List<String> educatorIds = _distinctNonEmptyStrings(<String>[
+        primaryEducatorId,
+        ..._asStringList(sessionData['educatorIds']),
+      ]);
+
+      final DocumentReference<Map<String, dynamic>> enrollmentRef =
+          _firestore.collection('enrollments').doc();
+      batch.set(enrollmentRef, <String, dynamic>{
+        'siteId': resolvedSiteId,
+        'sessionId': sessionId,
+        'learnerId': learnerId,
+        if (primaryEducatorId.isNotEmpty) 'educatorId': primaryEducatorId,
+        'educatorIds': educatorIds,
+        'status': 'active',
+        'source': 'roster_import_provisioning',
+        'displayName':
+            (data['displayName'] as String?)?.trim().isNotEmpty == true
+                ? (data['displayName'] as String).trim()
+                : displayName,
+        'email': normalizedEmail,
+        'importedAt': FieldValue.serverTimestamp(),
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      batch.set(row.reference, <String, dynamic>{
+        'status': 'provisioned',
+        'learnerId': learnerId,
+        'provisionedBy': actorId,
+        'provisionedAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      sessionEnrollmentIncrements.update(sessionId, (int value) => value + 1,
+          ifAbsent: () => 1);
+    }
+
+    sessionEnrollmentIncrements.forEach((String sessionId, int increment) {
+      batch.set(_firestore.collection('sessions').doc(sessionId), <String, dynamic>{
+        'lastRosterSyncAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'enrolledCount': FieldValue.increment(increment),
+      }, SetOptions(merge: true));
+    });
+
+    await batch.commit();
+  }
+
+  Future<bool> _enrollmentExists({
+    required String sessionId,
+    required String learnerId,
+  }) async {
+    final QuerySnapshot<Map<String, dynamic>> snapshot = await _firestore
+        .collection('enrollments')
+        .where('sessionId', isEqualTo: sessionId)
+        .where('learnerId', isEqualTo: learnerId)
+        .limit(1)
+        .get();
+    return snapshot.docs.isNotEmpty;
+  }
+
+  List<String> _asStringList(Object? value) {
+    if (value is! Iterable) {
+      return const <String>[];
+    }
+    return value
+        .whereType<Object>()
+        .map((Object item) => item.toString().trim())
+        .where((String item) => item.isNotEmpty)
+        .toList(growable: false);
+  }
+
+  List<String> _distinctNonEmptyStrings(Iterable<String?> values) {
+    final Set<String> seen = <String>{};
+    final List<String> results = <String>[];
+    for (final String? value in values) {
+      final String normalized = (value ?? '').trim();
+      if (normalized.isEmpty || !seen.add(normalized)) {
+        continue;
+      }
+      results.add(normalized);
+    }
+    return results;
   }
 
   Future<LearnerProfile> _updateLearnerInFirestore({
