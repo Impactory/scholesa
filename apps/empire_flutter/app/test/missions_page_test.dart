@@ -129,6 +129,42 @@ Future<void> _seedMission(FakeFirebaseFirestore firestore) async {
   );
 }
 
+Future<void> _seedCompletedMissionReadyForReview(
+  FakeFirebaseFirestore firestore,
+) async {
+  await firestore.collection('missionAssignments').doc('assignment-1').set(
+    <String, dynamic>{
+      'missionId': 'mission-1',
+      'learnerId': 'learner-1',
+      'siteId': 'site-1',
+      'status': 'in_progress',
+      'progress': 1.0,
+    },
+  );
+  await firestore.collection('missions').doc('mission-1').set(
+    <String, dynamic>{
+      'title': 'Mission ready for review',
+      'description': 'Capture proof of learning before review.',
+      'pillarCode': 'future_skills',
+      'difficulty': 'beginner',
+      'xpReward': 120,
+    },
+  );
+  await firestore
+      .collection('missions')
+      .doc('mission-1')
+      .collection('steps')
+      .doc('step-1')
+      .set(
+    <String, dynamic>{
+      'title': 'Prototype',
+      'order': 1,
+      'isCompleted': true,
+      'completedAt': '2026-03-18T10:00:00.000Z',
+    },
+  );
+}
+
 void main() {
   testWidgets('missions page shows empty available-state copy', (WidgetTester tester) async {
     final FirestoreService firestoreService = FirestoreService(
@@ -236,6 +272,128 @@ void main() {
     expect(
       find.text('Ask for hints, explanations, or debugging help'),
       findsOneWidget,
+    );
+  });
+
+  testWidgets('missions page submits learner evidence into canonical review collections',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedCompletedMissionReadyForReview(firestore);
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final MissionService missionService = MissionService(
+      firestoreService: firestoreService,
+      learnerId: 'learner-1',
+    );
+
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
+    await tester.pumpWidget(
+      _buildHarness(
+        firestoreService: firestoreService,
+        missionService: missionService,
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('In Progress'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Mission ready for review').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Proof of Learning'), findsOneWidget);
+    expect(find.text('Submit for Review'), findsOneWidget);
+
+    await tester.tap(find.text('No AI support used for this mission'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Explain-it-back summary'),
+      'I explained how the control loop reacts to sensor input.',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Oral check reflection'),
+      'I described the trade-off between speed and stability.',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Mini-rebuild plan'),
+      'I would rebuild the sensor branch first and retest the response.',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Version checkpoint summary'),
+      'Completed the working prototype before review.',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Artifact note (optional)'),
+      'Linked prototype and notes.',
+    );
+
+    await tester.tap(find.text('Save Checkpoint'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Completed the working prototype before review.'),
+        findsOneWidget);
+
+    await tester.tap(find.text('Submit for Review'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Submitted: Mission ready for review'), findsOneWidget);
+
+    final QuerySnapshot<Map<String, dynamic>> attempts =
+        await firestore.collection('missionAttempts').get();
+    final QuerySnapshot<Map<String, dynamic>> submissions =
+        await firestore.collection('missionSubmissions').get();
+    expect(attempts.docs, hasLength(1));
+    expect(submissions.docs, hasLength(1));
+
+    final QueryDocumentSnapshot<Map<String, dynamic>> attemptDoc =
+        attempts.docs.single;
+    final Map<String, dynamic> attempt = attemptDoc.data();
+    final Map<String, dynamic> submission = submissions.docs.single.data();
+    expect(submissions.docs.single.id, attemptDoc.id);
+    expect(attempt['missionId'], 'mission-1');
+    expect(attempt['learnerId'], 'learner-1');
+    expect(attempt['siteId'], 'site-1');
+    expect(attempt['status'], 'submitted');
+    expect(attempt['content'],
+        'Mission "Mission ready for review" submitted for educator review.');
+    expect((attempt['proofBundleSummary'] as Map<String, dynamic>)['isReady'],
+        isTrue);
+    expect(
+      (attempt['proofBundleSummary'] as Map<String, dynamic>)['checkpointCount'],
+      1,
+    );
+    expect(
+      (attempt['proofBundleSummary'] as Map<String, dynamic>)['hasExplainItBack'],
+      isTrue,
+    );
+    expect(
+      (attempt['proofBundleSummary'] as Map<String, dynamic>)['aiAssistanceUsed'],
+      isFalse,
+    );
+    expect(submission['status'], 'submitted');
+    expect(submission['missionTitle'], 'Mission ready for review');
+
+    final DocumentSnapshot<Map<String, dynamic>> assignment = await firestore
+        .collection('missionAssignments')
+        .doc('assignment-1')
+        .get();
+    expect(assignment.data()?['status'], 'submitted');
+    expect(assignment.data()?['lastSubmissionId'], attemptDoc.id);
+
+    final DocumentSnapshot<Map<String, dynamic>> proofBundle = await firestore
+        .collection('proofOfLearningBundles')
+        .doc('learner-1_mission-1')
+        .get();
+    expect(proofBundle.exists, isTrue);
+    expect(proofBundle.data()?['missionId'], 'mission-1');
+    expect(
+      (proofBundle.data()?['versionHistory'] as List<dynamic>).length,
+      1,
     );
   });
 }
