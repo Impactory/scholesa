@@ -246,7 +246,8 @@ void main() {
     expect(find.text('View Consent'), findsOneWidget);
   });
 
-  testWidgets('parent child page exports ideation passport with a real file save',
+  testWidgets(
+      'parent child page exports ideation passport with a real file save',
       (WidgetTester tester) async {
     String? savedFileName;
     String? savedFileContent;
@@ -276,9 +277,11 @@ void main() {
     expect(savedFileName, 'ideation-passport-learner-1.txt');
     expect(savedFileContent, contains('Ideation Passport'));
     expect(savedFileContent, contains('Ava Learner'));
+    expect(savedFileContent, contains('Reviewed/Verified Artifacts'));
   });
 
-  testWidgets('parent child page copies passport when file export is unsupported',
+  testWidgets(
+      'parent child page copies passport when file export is unsupported',
       (WidgetTester tester) async {
     String? copiedText;
     tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
@@ -318,13 +321,14 @@ void main() {
     await tester.tap(find.text('Export Passport'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Ideation Passport copied for sharing.'),
-        findsOneWidget);
+    expect(find.text('Ideation Passport copied for sharing.'), findsOneWidget);
     expect(copiedText, contains('Ideation Passport'));
     expect(copiedText, contains('Learner: Ava Learner'));
+    expect(copiedText, contains('Reviewed/Verified Artifacts'));
   });
 
-  testWidgets('parent child page fails closed when passport export hits a non-export error',
+  testWidgets(
+      'parent child page fails closed when passport export hits a non-export error',
       (WidgetTester tester) async {
     ExportService.instance.debugSaveTextFile = ({
       required String fileName,
@@ -378,14 +382,18 @@ void main() {
     await tester.tap(find.text('Request Linking Review'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Linked learner review request submitted.'), findsOneWidget);
+    expect(
+        find.text('Linked learner review request submitted.'), findsOneWidget);
     final requests = await firestore.collection('supportRequests').get();
     expect(requests.docs, hasLength(1));
-    expect(requests.docs.single.data()['requestType'], 'parent_linked_learner_review');
-    expect(requests.docs.single.data()['source'], 'parent_child_request_linked_learner_review');
+    expect(requests.docs.single.data()['requestType'],
+        'parent_linked_learner_review');
+    expect(requests.docs.single.data()['source'],
+        'parent_child_request_linked_learner_review');
   });
 
-  testWidgets('parent child page shows an explicit unavailable state when learner details fail to load',
+  testWidgets(
+      'parent child page shows an explicit unavailable state when learner details fail to load',
       (WidgetTester tester) async {
     await _pumpPage(
       tester,
@@ -398,15 +406,19 @@ void main() {
       child: const ParentChildPage(learnerId: 'learner-1'),
     );
 
-    expect(find.text('Unable to load learner details right now'), findsOneWidget);
     expect(
-      find.text('We could not load this learner right now. Retry to check the current state.'),
+        find.text('Unable to load learner details right now'), findsOneWidget);
+    expect(
+      find.text(
+          'We could not load this learner right now. Retry to check the current state.'),
       findsOneWidget,
     );
-    expect(find.text('This learner is not linked to your account right now.'), findsNothing);
+    expect(find.text('This learner is not linked to your account right now.'),
+        findsNothing);
   });
 
-  testWidgets('parent child page keeps stale learner details visible when refresh fails',
+  testWidgets(
+      'parent child page keeps stale learner details visible when refresh fails',
       (WidgetTester tester) async {
     final _SequencedParentService parentService = _SequencedParentService(
       parentId: 'parent-1',

@@ -680,7 +680,7 @@ class _ParentChildPageState extends State<ParentChildPage> {
       '${_t('Generated')}: ${(passport.generatedAt ?? DateTime.now()).toIso8601String()}',
       '${_t('Summary')}: ${passport.summary ?? _t('No passport summary yet.')}',
       '${_t('Reviewed Evidence')}: ${learner.evidenceSummary.reviewedCount}',
-      '${_t('Verified Artifacts')}: ${learner.portfolioSnapshot.verifiedArtifactCount}',
+      '${_t('Reviewed/Verified Artifacts')}: ${learner.portfolioSnapshot.verifiedArtifactCount}',
       '${_t('Reflections')}: ${passport.reflectionsSubmitted}',
       '',
       _t('Claims'),
@@ -696,8 +696,9 @@ class _ParentChildPageState extends State<ParentChildPage> {
       lines.add('  ${_t('Pillar')}: ${_t(claim.pillar)}');
       lines.add('  ${_t('Level')}: ${claim.latestLevel}/4');
       lines.add('  ${_t('Evidence Count')}: ${claim.evidenceCount}');
-      lines
-          .add('  ${_t('Verified Artifacts')}: ${claim.verifiedArtifactCount}');
+      lines.add(
+        '  ${_t('Reviewed/Verified Artifacts')}: ${claim.verifiedArtifactCount}',
+      );
       lines.add(
         '  ${_t('Verification Status')}: ${claim.verificationStatus?.trim().isNotEmpty == true ? _titleCase(claim.verificationStatus!) : _t('Pending')}',
       );

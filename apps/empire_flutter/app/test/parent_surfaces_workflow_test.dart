@@ -1808,6 +1808,14 @@ void main() {
 
       expect(_savedFileName, 'ideation-passport-$learnerId.txt');
       expect(_savedFileContent, contains('Prototype evidence'));
+      expect(
+        _savedFileContent,
+        contains('Reviewed/Verified Artifacts'),
+      );
+      expect(
+        _savedFileContent,
+        contains('Verification Status: Reviewed'),
+      );
       expect(_savedFileContent, contains('Portfolio Item IDs: $portfolioItemId'));
       expect(_savedFileContent, contains('Mission Attempt IDs: $missionAttemptId'));
     });
