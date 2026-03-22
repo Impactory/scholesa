@@ -1053,7 +1053,8 @@ class ProvisioningService extends ChangeNotifier {
     final Map<String, DocumentSnapshot<Map<String, dynamic>>> sessionDocs =
         <String, DocumentSnapshot<Map<String, dynamic>>>{};
 
-    for (final QueryDocumentSnapshot<Map<String, dynamic>> row in matchingRows) {
+    for (final QueryDocumentSnapshot<Map<String, dynamic>> row
+        in matchingRows) {
       final Map<String, dynamic> data = row.data();
       final String sessionId = (data['sessionId'] as String? ?? '').trim();
       if (sessionId.isEmpty) {
@@ -1061,21 +1062,24 @@ class ProvisioningService extends ChangeNotifier {
       }
 
       if (await _enrollmentExists(sessionId: sessionId, learnerId: learnerId)) {
-        batch.set(row.reference, <String, dynamic>{
-          'status': 'provisioned',
-          'learnerId': learnerId,
-          'provisionedBy': actorId,
-          'provisionedAt': FieldValue.serverTimestamp(),
-          'updatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
+        batch.set(
+            row.reference,
+            <String, dynamic>{
+              'status': 'provisioned',
+              'learnerId': learnerId,
+              'provisionedBy': actorId,
+              'provisionedAt': FieldValue.serverTimestamp(),
+              'updatedAt': FieldValue.serverTimestamp(),
+            },
+            SetOptions(merge: true));
         continue;
       }
 
-      final DocumentSnapshot<Map<String, dynamic>> sessionDoc =
-          sessionDocs.putIfAbsent(
-        sessionId,
-        () => _firestore.collection('sessions').doc(sessionId).get(),
-      ) as DocumentSnapshot<Map<String, dynamic>>;
+      DocumentSnapshot<Map<String, dynamic>>? sessionDoc =
+          sessionDocs[sessionId];
+      sessionDoc ??=
+          await _firestore.collection('sessions').doc(sessionId).get();
+      sessionDocs[sessionId] = sessionDoc;
       final Map<String, dynamic> sessionData =
           sessionDoc.data() ?? <String, dynamic>{};
       final String resolvedSiteId =
@@ -1111,23 +1115,29 @@ class ProvisioningService extends ChangeNotifier {
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
-      batch.set(row.reference, <String, dynamic>{
-        'status': 'provisioned',
-        'learnerId': learnerId,
-        'provisionedBy': actorId,
-        'provisionedAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      batch.set(
+          row.reference,
+          <String, dynamic>{
+            'status': 'provisioned',
+            'learnerId': learnerId,
+            'provisionedBy': actorId,
+            'provisionedAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true));
       sessionEnrollmentIncrements.update(sessionId, (int value) => value + 1,
           ifAbsent: () => 1);
     }
 
     sessionEnrollmentIncrements.forEach((String sessionId, int increment) {
-      batch.set(_firestore.collection('sessions').doc(sessionId), <String, dynamic>{
-        'lastRosterSyncAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-        'enrolledCount': FieldValue.increment(increment),
-      }, SetOptions(merge: true));
+      batch.set(
+          _firestore.collection('sessions').doc(sessionId),
+          <String, dynamic>{
+            'lastRosterSyncAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+            'enrolledCount': FieldValue.increment(increment),
+          },
+          SetOptions(merge: true));
     });
 
     await batch.commit();

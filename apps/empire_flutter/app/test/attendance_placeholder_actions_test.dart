@@ -140,7 +140,10 @@ Future<void> _seedAttendanceCouplingData(
   final DateTime startTime = DateTime(now.year, now.month, now.day, 9, 0);
   final DateTime endTime = startTime.add(const Duration(hours: 1));
 
-  await firestore.collection('sessionOccurrences').doc('occ-1').set(<String, dynamic>{
+  await firestore
+      .collection('sessionOccurrences')
+      .doc('occ-1')
+      .set(<String, dynamic>{
     'sessionId': 'session-1',
     'siteId': 'site-1',
     'title': 'Robotics Lab',
@@ -149,22 +152,34 @@ Future<void> _seedAttendanceCouplingData(
     'roomName': 'Studio A',
   });
 
-  await firestore.collection('enrollments').doc('enrollment-1').set(<String, dynamic>{
+  await firestore
+      .collection('enrollments')
+      .doc('enrollment-1')
+      .set(<String, dynamic>{
     'sessionId': 'session-1',
     'learnerId': 'learner-1',
     'status': 'active',
   });
-  await firestore.collection('enrollments').doc('enrollment-2').set(<String, dynamic>{
+  await firestore
+      .collection('enrollments')
+      .doc('enrollment-2')
+      .set(<String, dynamic>{
     'sessionId': 'session-1',
     'learnerId': 'learner-2',
     'status': 'active',
   });
-  await firestore.collection('enrollments').doc('enrollment-3').set(<String, dynamic>{
+  await firestore
+      .collection('enrollments')
+      .doc('enrollment-3')
+      .set(<String, dynamic>{
     'sessionId': 'session-1',
     'learnerId': 'learner-3',
     'status': 'inactive',
   });
-  await firestore.collection('enrollments').doc('enrollment-4').set(<String, dynamic>{
+  await firestore
+      .collection('enrollments')
+      .doc('enrollment-4')
+      .set(<String, dynamic>{
     'sessionId': 'session-2',
     'learnerId': 'learner-4',
     'status': 'active',
@@ -403,7 +418,8 @@ void main() {
     expect(find.text('Unknown'), findsNothing);
   });
 
-  testWidgets('attendance page shows load failure instead of fake empty classes',
+  testWidgets(
+      'attendance page shows load failure instead of fake empty classes',
       (WidgetTester tester) async {
     final _FakeAttendanceService attendanceService = _FakeAttendanceService(
       rosterOccurrence: SessionOccurrence(
@@ -428,10 +444,12 @@ void main() {
         providers: <SingleChildWidget>[
           ChangeNotifierProvider<AppState>.value(value: appState),
           ChangeNotifierProvider<SyncCoordinator>.value(value: syncCoordinator),
-          ChangeNotifierProvider<AttendanceService>.value(value: attendanceService),
+          ChangeNotifierProvider<AttendanceService>.value(
+              value: attendanceService),
         ],
         child: MaterialApp(
-          theme: ThemeData(useMaterial3: true, splashFactory: NoSplash.splashFactory),
+          theme: ThemeData(
+              useMaterial3: true, splashFactory: NoSplash.splashFactory),
           locale: const Locale('en'),
           supportedLocales: const <Locale>[
             Locale('en'),
@@ -451,13 +469,15 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('We could not load attendance sessions right now. Retry to check the current state.'),
+      find.text(
+          'We could not load attendance sessions right now. Retry to check the current state.'),
       findsOneWidget,
     );
     expect(find.text('No classes today'), findsNothing);
   });
 
-  testWidgets('attendance page keeps stale occurrences visible after refresh failure',
+  testWidgets(
+      'attendance page keeps stale occurrences visible after refresh failure',
       (WidgetTester tester) async {
     final _FakeAttendanceService attendanceService = _FakeAttendanceService(
       rosterOccurrence: SessionOccurrence(
@@ -481,10 +501,12 @@ void main() {
         providers: <SingleChildWidget>[
           ChangeNotifierProvider<AppState>.value(value: appState),
           ChangeNotifierProvider<SyncCoordinator>.value(value: syncCoordinator),
-          ChangeNotifierProvider<AttendanceService>.value(value: attendanceService),
+          ChangeNotifierProvider<AttendanceService>.value(
+              value: attendanceService),
         ],
         child: MaterialApp(
-          theme: ThemeData(useMaterial3: true, splashFactory: NoSplash.splashFactory),
+          theme: ThemeData(
+              useMaterial3: true, splashFactory: NoSplash.splashFactory),
           locale: const Locale('en'),
           supportedLocales: const <Locale>[
             Locale('en'),
@@ -537,7 +559,8 @@ void main() {
         providers: <SingleChildWidget>[
           ChangeNotifierProvider<AppState>.value(value: appState),
           ChangeNotifierProvider<SyncCoordinator>.value(value: syncCoordinator),
-          ChangeNotifierProvider<AttendanceService>.value(value: attendanceService),
+          ChangeNotifierProvider<AttendanceService>.value(
+              value: attendanceService),
         ],
         child: MaterialApp(
           theme: ThemeData(
@@ -871,7 +894,8 @@ void main() {
     await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextFormField).at(0), 'Queued Learner');
-    await tester.enterText(find.byType(TextFormField).at(1), 'queued@example.com');
+    await tester.enterText(
+        find.byType(TextFormField).at(1), 'queued@example.com');
     await tester.tap(find.widgetWithText(ElevatedButton, 'Create'));
     await tester.pump();
     await tester.pumpAndSettle();
@@ -889,7 +913,8 @@ void main() {
     final QuerySnapshot<Map<String, dynamic>> enrollmentsAfterProvisioning =
         await firestore.collection('enrollments').get();
     expect(enrollmentsAfterProvisioning.docs, hasLength(1));
-    expect(enrollmentsAfterProvisioning.docs.single.data()['learnerId'], learnerId);
+    expect(enrollmentsAfterProvisioning.docs.single.data()['learnerId'],
+        learnerId);
     expect(
       enrollmentsAfterProvisioning.docs.single.data()['sessionId'],
       'session-roster-1',
@@ -945,7 +970,8 @@ void main() {
     expect(find.text('Save Attendance (0/1)'), findsOneWidget);
   });
 
-  testWidgets('attendance roster keeps stale learners visible after refresh failure',
+  testWidgets(
+      'attendance roster keeps stale learners visible after refresh failure',
       (WidgetTester tester) async {
     final _FakeAttendanceService attendanceService = _FakeAttendanceService(
       rosterOccurrence: SessionOccurrence(
@@ -977,10 +1003,12 @@ void main() {
         providers: <SingleChildWidget>[
           ChangeNotifierProvider<AppState>.value(value: appState),
           ChangeNotifierProvider<SyncCoordinator>.value(value: syncCoordinator),
-          ChangeNotifierProvider<AttendanceService>.value(value: attendanceService),
+          ChangeNotifierProvider<AttendanceService>.value(
+              value: attendanceService),
         ],
         child: MaterialApp(
-          theme: ThemeData(useMaterial3: true, splashFactory: NoSplash.splashFactory),
+          theme: ThemeData(
+              useMaterial3: true, splashFactory: NoSplash.splashFactory),
           locale: const Locale('en'),
           supportedLocales: const <Locale>[
             Locale('en'),
@@ -1036,7 +1064,8 @@ void main() {
         providers: <SingleChildWidget>[
           ChangeNotifierProvider<AppState>.value(value: appState),
           ChangeNotifierProvider<SyncCoordinator>.value(value: syncCoordinator),
-          ChangeNotifierProvider<AttendanceService>.value(value: attendanceService),
+          ChangeNotifierProvider<AttendanceService>.value(
+              value: attendanceService),
         ],
         child: MaterialApp(
           theme: ThemeData(
@@ -1211,7 +1240,8 @@ void main() {
         providers: <SingleChildWidget>[
           ChangeNotifierProvider<AppState>.value(value: appState),
           ChangeNotifierProvider<SyncCoordinator>.value(value: syncCoordinator),
-          ChangeNotifierProvider<AttendanceService>.value(value: attendanceService),
+          ChangeNotifierProvider<AttendanceService>.value(
+              value: attendanceService),
         ],
         child: MaterialApp(
           theme: ThemeData(
@@ -1273,7 +1303,8 @@ void main() {
         providers: <SingleChildWidget>[
           ChangeNotifierProvider<AppState>.value(value: appState),
           ChangeNotifierProvider<SyncCoordinator>.value(value: syncCoordinator),
-          ChangeNotifierProvider<AttendanceService>.value(value: attendanceService),
+          ChangeNotifierProvider<AttendanceService>.value(
+              value: attendanceService),
         ],
         child: MaterialApp(
           theme: ThemeData(
@@ -1314,7 +1345,8 @@ void main() {
 
     expect(find.text('Save Attendance (2/2)'), findsOneWidget);
     expect(attendanceService.currentOccurrence, isNotNull);
-    final List<RosterLearner> roster = attendanceService.currentOccurrence!.roster;
+    final List<RosterLearner> roster =
+        attendanceService.currentOccurrence!.roster;
     expect(roster, hasLength(2));
     expect(
       roster.every((RosterLearner learner) =>
@@ -1353,7 +1385,8 @@ void main() {
         providers: <SingleChildWidget>[
           ChangeNotifierProvider<AppState>.value(value: appState),
           ChangeNotifierProvider<SyncCoordinator>.value(value: syncCoordinator),
-          ChangeNotifierProvider<AttendanceService>.value(value: attendanceService),
+          ChangeNotifierProvider<AttendanceService>.value(
+              value: attendanceService),
         ],
         child: MaterialApp(
           theme: ThemeData(
