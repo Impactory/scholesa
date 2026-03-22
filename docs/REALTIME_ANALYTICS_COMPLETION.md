@@ -320,7 +320,7 @@ NEXT_PUBLIC_FIREBASE_API_KEY=...        # For Firestore
 
 **Total New Code:** ~500 lines  
 **Total Modified Code:** ~200 lines  
-**Production-Ready:** 75%
+**Production-Ready:** 75% for the historical telemetry/dashboard slice; broader evidence-backed growth and reporting claims remain partial
 
 ---
 
@@ -329,7 +329,7 @@ NEXT_PUBLIC_FIREBASE_API_KEY=...        # For Firestore
 
 <!-- TELEMETRY_WIRING:START -->
 ## Telemetry & End-to-End Wiring
-- Wired end-to-end: yes
+- Wired end-to-end: partial (mission and core telemetry events are wired; broader capability-growth and Passport/report consumption remain incomplete)
 - Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
 - Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
 - Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`

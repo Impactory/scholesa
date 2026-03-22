@@ -1,8 +1,8 @@
-# Analytics & Intelligence Implementation - Complete
+# Analytics & Intelligence Implementation - Historical Snapshot
 
 ## ✅ Implementation Status
 
-All specifications from `analytics.json` have been **fully implemented** with Gemini AI integration.
+This document records a historical implementation milestone for the `analytics.json` skeleton and Gemini-backed insight wiring. It should not be read as current proof that analytics, capability growth aggregation, leaderboard evidence chains, or Passport/report consumption are fully implemented end to end.
 
 ---
 
@@ -351,7 +351,7 @@ Examples and test cases provided in:
 
 <!-- TELEMETRY_WIRING:START -->
 ## Telemetry & End-to-End Wiring
-- Wired end-to-end: yes
+- Wired end-to-end: partial for current honesty purposes (core telemetry and analytics skeleton implemented; broader learner-growth and reporting evidence chains remain incomplete)
 - Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
 - Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
 - Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`

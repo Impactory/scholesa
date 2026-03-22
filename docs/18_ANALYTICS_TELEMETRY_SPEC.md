@@ -2,6 +2,8 @@
 
 Telemetry answers: “Is the Education 2.0 loop happening?”
 
+Telemetry completeness note: mission-attempt activity events and core operational telemetry are wired, but capability-growth aggregation and Passport/report provenance consumption are not yet fully wired end to end. Do not read this spec alone as proof that learner growth claims are fully evidenced across reporting surfaces.
+
 ## Required events
 - auth.login, auth.logout
 - attendance.recorded
@@ -66,7 +68,7 @@ For March 12 feature coverage, telemetry is not complete unless:
 
 <!-- TELEMETRY_WIRING:START -->
 ## Telemetry & End-to-End Wiring
-- Wired end-to-end: yes
+- Wired end-to-end: partial (core telemetry events yes; broader capability-growth/reporting provenance still incomplete)
 - Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
 - Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
 - Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`

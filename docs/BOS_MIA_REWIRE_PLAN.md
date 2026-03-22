@@ -3,7 +3,7 @@
 **Date:** 2026-02-07  
 **Purpose:** Rewire Scholesa so the product architecture directly supports the BOS+MIA research paper (closed-loop orchestration + metacognitive integrity), while remaining deployable in real classrooms.
 
-**Current production status (March 12, 2026):** the BOS/MIA runtime is live for learner-facing web, callable, and voice surfaces. Autonomous learner help is allowed only when certified confidence is `>= 0.97`; otherwise the runtime escalates safely for educator review or retry.
+**Current production status (March 12, 2026):** the BOS/MIA runtime is live for learner-facing web, callable, and voice surfaces. Voice and text autonomy remain bounded: autonomous learner help is allowed only when certified confidence is `>= 0.97`; otherwise the runtime escalates safely for educator review or retry instead of presenting low-confidence help as autonomous output.
 
 ---
 

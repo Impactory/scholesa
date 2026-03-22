@@ -1,7 +1,9 @@
-# 🎯 Analytics & Telemetry Implementation - COMPLETE
+# 🎯 Analytics & Telemetry Implementation - Historical Snapshot
 
 **Date:** January 17, 2026  
-**Status:** ✅ Production Ready
+**Status:** Historical implementation milestone; not a blanket current production-readiness or evidence-provenance certification
+
+> Historical note: this document records the January real-time telemetry/dashboard implementation wave. It should not be read as current proof that analytics, learner-growth aggregation, Passport consumption, or family-facing evidence chains are universally complete.
 
 ---
 
@@ -495,7 +497,7 @@ NEXT_PUBLIC_OPENAI_API_KEY=sk-...  # For AI Help embeddings
 
 **Total New Code:** ~342 lines (useRealtimeAnalytics.ts)  
 **Total Modified Code:** ~340 lines (dashboard conversions + mission tracking)  
-**Production-Ready:** 100%
+**Production-Ready:** Historical implementation milestone only; not current proof that broader learner-growth and reporting evidence chains are 100% complete
 
 ---
 
@@ -520,7 +522,7 @@ NEXT_PUBLIC_OPENAI_API_KEY=sk-...  # For AI Help embeddings
 ✅ TypeScript strict mode compliance  
 ✅ Consistent hook patterns  
 ✅ Comprehensive error handling  
-✅ Production-ready architecture  
+✅ Historical architecture milestone recorded  
 
 ---
 
@@ -549,7 +551,7 @@ Evidence:
 
 <!-- TELEMETRY_WIRING:START -->
 ## Telemetry & End-to-End Wiring
-- Wired end-to-end: yes
+- Wired end-to-end: partial for current honesty purposes (canonical telemetry events verified; broader capability-growth and reporting provenance still not universally complete)
 - Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
 - Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
 - Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`
