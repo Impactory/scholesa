@@ -12,6 +12,7 @@ import 'package:scholesa_app/modules/educator/educator_models.dart';
 import 'package:scholesa_app/modules/educator/educator_learner_supports_page.dart';
 import 'package:scholesa_app/modules/educator/educator_service.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
+import 'package:scholesa_app/services/telemetry_service.dart';
 import 'package:scholesa_app/ui/theme/scholesa_theme.dart';
 
 class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
@@ -150,6 +151,19 @@ Future<void> _seedSecondLearner(FakeFirebaseFirestore firestore) async {
     'educatorId': 'educator-1',
     'sessionId': 'session-2',
   });
+}
+
+Future<List<Map<String, dynamic>>> _captureTelemetry(
+  Future<void> Function() body,
+) async {
+  final List<Map<String, dynamic>> events = <Map<String, dynamic>>[];
+  await TelemetryService.runWithDispatcher(
+    (Map<String, dynamic> payload) async {
+      events.add(Map<String, dynamic>.from(payload));
+    },
+    body,
+  );
+  return events;
 }
 
 void main() {
@@ -529,6 +543,79 @@ void main() {
     expect(find.text('Unable to update support plan right now.'), findsOneWidget);
     expect(find.text('Log Support Outcome'), findsNothing);
     expect(find.text('Edit Support Plan'), findsOneWidget);
+  });
+
+  testWidgets('educator learner supports page logs support plan update telemetry',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedLearner(firestore);
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final EducatorService educatorService = EducatorService(
+      firestoreService: firestoreService,
+      educatorId: 'educator-1',
+      siteId: 'site-1',
+    );
+
+    final List<Map<String, dynamic>> events = await _captureTelemetry(() async {
+      await tester.binding.setSurfaceSize(const Size(1280, 1800));
+      await tester.pumpWidget(
+        _buildHarness(
+          firestoreService: firestoreService,
+          educatorService: educatorService,
+        ),
+      );
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Learner One').first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Edit Plan'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(DropdownButtonFormField<String>).first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Behavioral').last);
+      await tester.pumpAndSettle();
+
+      final Finder priorityField = find.byWidgetPredicate(
+        (Widget widget) =>
+            widget is DropdownButtonFormField &&
+            widget.decoration.labelText == 'Priority',
+      );
+      await tester.tap(priorityField);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Medium').last);
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.byType(TextField).at(0),
+        'Visual checklist, Teacher conference',
+      );
+      await tester.enterText(
+        find.byType(TextField).at(1),
+        'Telemetry support note.',
+      );
+
+      await tester.tap(find.text('Save').last);
+      await tester.pumpAndSettle();
+    });
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    expect(
+      events.any((Map<String, dynamic> event) {
+        final Map<String, dynamic> metadata =
+            Map<String, dynamic>.from(event['metadata'] as Map);
+        return event['event'] == 'support.plan_updated' &&
+            metadata['learner_id'] == 'learner-1' &&
+            metadata['support_type'] == 'Behavioral' &&
+            metadata['priority'] == 'medium' &&
+            metadata['accommodation_count'] == 2;
+      }),
+      isTrue,
+    );
   });
 
   testWidgets('educator learner supports search filters the visible inventory',

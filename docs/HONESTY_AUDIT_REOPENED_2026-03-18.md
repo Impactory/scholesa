@@ -150,6 +150,7 @@ Interpretation rule:
 60. Fixed `/site/identity` approve and ignore actions so the route re-reads the authoritative queue before claiming success, and added direct proof that successful identity resolution disappears only after reload while reload failures keep stale matches visible with explicit verification-required copy instead of fake completion.
 61. Fixed `/educator/learner-supports` support-plan saves so the route re-loads persisted support-plan state before claiming success, and added direct proof that verified saves only settle after persisted reload while reload failures fail closed with explicit verification-required copy instead of opening outcome logging on unverified state.
 62. Fixed `/educator/integrations` sync honesty so queued syncs are no longer reported as failed just because the post-queue refresh fails, preserved stale integration cards on reload failure instead of blanking the route, and added direct proof that the route distinguishes queue failure from verification-required refresh failure.
+63. Added direct `/educator/learner-supports` and `/educator/integrations` route-gate and telemetry proof so both routes now verify educator/site/HQ access boundaries in focused tests and emit auditable route-local traces for support-plan updates and integration sync menu actions instead of leaving scope and auditability inferred from implementation.
 
 ### Release and operations fixes
 
@@ -183,6 +184,7 @@ Interpretation rule:
 - Partner listings, integrations, and deliverables honesty regressions passed: 13 passed, 0 failed.
 - HQ user-admin audit-log honesty regressions passed: 12 passed, 0 failed.
 - Partner contracting workflow honesty regressions passed: 6 passed, 0 failed.
+- Focused educator route-gate and telemetry regressions passed: 18 passed, 0 failed.
 
 ### Full Flutter gate verification
 

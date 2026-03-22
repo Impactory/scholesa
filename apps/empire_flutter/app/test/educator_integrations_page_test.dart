@@ -9,6 +9,7 @@ import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/modules/educator/educator_integrations_page.dart';
 import 'package:scholesa_app/modules/educator/educator_service.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
+import 'package:scholesa_app/services/telemetry_service.dart';
 
 class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
@@ -56,6 +57,19 @@ EducatorService _buildEducatorService() {
     educatorId: 'educator-1',
     siteId: 'site-1',
   );
+}
+
+Future<List<Map<String, dynamic>>> _captureTelemetry(
+  Future<void> Function() body,
+) async {
+  final List<Map<String, dynamic>> events = <Map<String, dynamic>>[];
+  await TelemetryService.runWithDispatcher(
+    (Map<String, dynamic> payload) async {
+      events.add(Map<String, dynamic>.from(payload));
+    },
+    body,
+  );
+  return events;
 }
 
 void main() {
@@ -221,5 +235,60 @@ void main() {
     );
     expect(find.text('Unable to queue sync right now.'), findsNothing);
     expect(find.textContaining('sync queued'), findsNothing);
+  });
+
+  testWidgets('educator integrations page logs sync menu telemetry',
+      (WidgetTester tester) async {
+    final EducatorService educatorService = _buildEducatorService();
+
+    final List<Map<String, dynamic>> events = await _captureTelemetry(() async {
+      await tester.pumpWidget(
+        _buildHarness(
+          educatorService: educatorService,
+          child: EducatorIntegrationsPage(
+            healthLoader: (String siteId) async => <String, dynamic>{
+              'connections': <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'id': 'classlink-1',
+                  'provider': 'classlink',
+                  'status': 'active',
+                  'siteId': siteId,
+                },
+              ],
+              'syncJobs': <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'id': 'job-1',
+                  'provider': 'classlink',
+                  'status': 'completed',
+                  'updatedAt': DateTime.now().millisecondsSinceEpoch,
+                },
+              ],
+            },
+            syncJobTrigger: (_, __) async {},
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.more_vert_rounded));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Sync Now'));
+      await tester.pump();
+      await tester.pumpAndSettle();
+    });
+
+    expect(
+      events.any((Map<String, dynamic> event) {
+        final Map<String, dynamic> metadata =
+            Map<String, dynamic>.from(event['metadata'] as Map);
+        return event['event'] == 'cta.clicked' &&
+            metadata['module'] == 'educator_integrations' &&
+            metadata['cta_id'] == 'integration_menu_action' &&
+            metadata['integration_name'] == 'ClassLink' &&
+            metadata['action'] == 'Sync';
+      }),
+      isTrue,
+    );
   });
 }

@@ -1,6 +1,6 @@
 # Flutter Route Proof Matrix
 
-Last updated: 2026-03-19
+Last updated: 2026-03-21
 Scope: enabled Flutter routes from `apps/empire_flutter/app/lib/router/app_router.dart`
 
 Proof levels:
@@ -64,8 +64,8 @@ Use this matrix together with the stricter full-flow gate in `docs/FULL_HONESTY_
 | `/educator/learners` | direct | `apps/empire_flutter/app/test/educator_learners_page_test.dart` | — |
 | `/educator/missions/review` | direct | `apps/empire_flutter/app/test/educator_mission_review_page_test.dart`, `apps/empire_flutter/app/test/educator_honesty_regression_test.dart`, `apps/empire_flutter/app/test/persistence_blockers_regression_test.dart` | Canonical review queue now runs on `missionAttempts` with direct load failure, active-site scoped retry, failed review submission, and canonical grading persistence proof; legacy `missionSubmissions` fallback is still transitional |
 | `/educator/mission-plans` | direct | `apps/empire_flutter/app/test/educator_mission_plans_page_test.dart` | Create, load-failure, create-failure, edit-persist, archive-persist, and archive-failure truth are directly proven; future assignment breadth remains separate |
-| `/educator/learner-supports` | direct | `apps/empire_flutter/app/test/educator_learner_supports_page_test.dart` | First-load learner outage, saved-plan outage, stale saved-plan refresh truth, persisted save verification via authoritative reload, fail-closed reload-failure behavior after save, and search filtering are directly proven |
-| `/educator/integrations` | direct | `apps/empire_flutter/app/test/educator_integrations_page_test.dart`, `apps/empire_flutter/app/test/district_provider_integration_test.dart` | Honest load failure, retry, sync-action failure, stale retention after queued-sync refresh failure, and explicit verification-required copy for queued-but-unverified syncs are now isolated; broader provider breadth still relies on the district and provider workflow tests |
+| `/educator/learner-supports` | direct | `apps/empire_flutter/app/test/educator_learner_supports_page_test.dart`, `apps/empire_flutter/app/test/educator_learner_supports_route_gate_test.dart` | First-load learner outage, saved-plan outage, stale saved-plan refresh truth, persisted save verification via authoritative reload, fail-closed reload-failure behavior after save, support-plan update telemetry, route-gate proof that only educator, site, and HQ roles can access the route, and search filtering are directly proven; remaining risk is broader educator workflow coupling rather than route-local scope or auditability |
+| `/educator/integrations` | direct | `apps/empire_flutter/app/test/educator_integrations_page_test.dart`, `apps/empire_flutter/app/test/educator_integrations_route_gate_test.dart`, `apps/empire_flutter/app/test/district_provider_integration_test.dart` | Honest load failure, retry, sync-action failure, stale retention after queued-sync refresh failure, explicit verification-required copy for queued-but-unverified syncs, sync-menu telemetry, and route-gate proof that only educator, site, and HQ roles can access the route are now isolated; broader provider breadth still relies on the district and provider workflow tests |
 
 ## Parent
 
