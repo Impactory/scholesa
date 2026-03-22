@@ -35,7 +35,7 @@
 ### Phase 3: Production Deployment ✅
 - 8 production commits successfully pushed
 - Clean working tree verified
-- All systems operational
+- All launch-path systems operational for the RC3 release-blocker scope
 - Zero rollbacks required
 
 ### Bonus: Infrastructure Setup ✅
@@ -262,7 +262,7 @@ As a historical March 2026 launch snapshot, the Scholesa RC3 release path was co
 ✅ **Users**: Authenticated and role-based access working  
 ✅ **Localization**: English, Spanish, and Chinese supported  
 ✅ **Monitoring**: Comprehensive alerts and dashboards live  
-✅ **Documentation**: Complete operational and roadmap docs  
+✅ **Documentation**: Complete operational and roadmap docs for launch scope; broader capability-first roadmap remains in progress  
 
 **The team could proceed on the launch-path scope captured in this snapshot, while broader full-flow and capability-first gold readiness remained a stricter later gate.**
 

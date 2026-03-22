@@ -20,8 +20,8 @@ class LearnerCredentialsPage extends StatefulWidget {
     this.credentialsLoader,
   });
 
-  final Future<List<CredentialModel>> Function(String learnerId, String? siteId)?
-      credentialsLoader;
+  final Future<List<CredentialModel>> Function(
+      String learnerId, String? siteId)? credentialsLoader;
 
   @override
   State<LearnerCredentialsPage> createState() => _LearnerCredentialsPageState();
@@ -356,6 +356,42 @@ class _LearnerCredentialsPageState extends State<LearnerCredentialsPage> {
     );
   }
 
+  Widget _buildCredentialScopeNotice() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: ScholesaColors.learner.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Padding(
+            padding: EdgeInsets.only(top: 2),
+            child: Icon(
+              Icons.info_outline_rounded,
+              size: 18,
+              color: ScholesaColors.learner,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              _t(
+                'This view shows issued credential records. Evidence, rubric, and growth links are not shown on this screen yet.',
+              ),
+              style: TextStyle(
+                color: context.schTextSecondary,
+                height: 1.35,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -400,6 +436,7 @@ class _LearnerCredentialsPageState extends State<LearnerCredentialsPage> {
               padding: const EdgeInsets.all(16),
               children: <Widget>[
                 if (_error != null) _buildStaleDataBanner(),
+                _buildCredentialScopeNotice(),
                 ..._credentials.map(_buildCredentialCard),
               ],
             ),

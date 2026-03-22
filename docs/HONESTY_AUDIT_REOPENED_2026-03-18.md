@@ -203,6 +203,10 @@ Interpretation rule:
 113. Corrected the closing summary of the RC3 launch-readiness report so its conclusion and final status now match the scoped header language instead of reverting to a blanket `PRODUCTION READY` claim at the end of the document.
 114. Corrected the historical RC3 post-launch summary so its conclusion no longer reads as a current blanket `production-ready and live` certification. The closing note now preserves the original launch-snapshot meaning while explicitly deferring broader capability-first gold readiness to the stricter later gate.
 115. Corrected the historical RC3 deployment-complete note so its final sign-off no longer states `Platform ready for production use` without temporal or scope qualification. It now reads as the March 3 deployment snapshot rather than competing current truth.
+116. Corrected the remaining unscoped `All systems operational` and `Complete documentation` wording in the historical RC3 post-launch summary so those checklist lines now stay bounded to launch-scope truth instead of sounding like broad capability-first closure.
+117. Corrected Passport/report wording drift where the gold-ready verification artifact still said `verified portfolio artifacts` even though the current chain is better described as reviewed artifacts with rubric-linked provenance when available.
+118. Corrected the historical analytics completion report's SDT coverage line so the `7/9` coverage figure no longer reads like a broader learner-growth or Passport/report completeness claim.
+119. Corrected live learner credential and learner portfolio badge views so they now tell the learner the honest scope of those surfaces: issued credential records are shown, but evidence, rubric, and growth links are not yet displayed in those views.
 
 ### Release and operations fixes
 

@@ -41,8 +41,8 @@ class LearnerPortfolioPage extends StatefulWidget {
   });
 
   final SharedPreferences? sharedPreferences;
-  final Future<LearnerPortfolioSnapshot> Function(String learnerId, String siteId)?
-      portfolioStateLoader;
+  final Future<LearnerPortfolioSnapshot> Function(
+      String learnerId, String siteId)? portfolioStateLoader;
 
   @override
   State<LearnerPortfolioPage> createState() => _LearnerPortfolioPageState();
@@ -332,7 +332,8 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
     return LearnerPortfolioSnapshot(
       profile: results.first as LearnerProfileModel?,
       items: (results[1] as List<PortfolioItemModel>).toList(growable: false),
-      credentials: (results.last as List<CredentialModel>).toList(growable: false),
+      credentials:
+          (results.last as List<CredentialModel>).toList(growable: false),
     );
   }
 
@@ -1099,89 +1100,123 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
     }
 
     if (_credentials.isNotEmpty) {
-      return ListView.builder(
+      return ListView(
         padding: const EdgeInsets.all(16),
-        itemCount: _credentials.length,
-        itemBuilder: (BuildContext context, int index) {
-          final CredentialModel credential = _credentials[index];
-          return Card(
-            margin: const EdgeInsets.only(bottom: 12),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Row(
-                    children: <Widget>[
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: ScholesaColors.learner.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
+        children: <Widget>[
+          Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: ScholesaColors.learner.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                const Padding(
+                  padding: EdgeInsets.only(top: 2),
+                  child: Icon(
+                    Icons.info_outline_rounded,
+                    size: 18,
+                    color: ScholesaColors.learner,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    _t(
+                      'These badges reflect issued credentials. Evidence, rubric, and growth links are not shown in this tab yet.',
+                    ),
+                    style: TextStyle(
+                      color: context.schTextSecondary,
+                      height: 1.35,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ..._credentials.map((CredentialModel credential) {
+            return Card(
+              margin: const EdgeInsets.only(bottom: 12),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Row(
+                      children: <Widget>[
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color:
+                                ScholesaColors.learner.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.workspace_premium_rounded,
+                            color: ScholesaColors.learner,
+                          ),
                         ),
-                        child: const Icon(
-                          Icons.workspace_premium_rounded,
-                          color: ScholesaColors.learner,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Text(
-                              credential.title.trim().isEmpty
-                                  ? _t('Credential title unavailable')
-                                  : credential.title.trim(),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 16,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text(
+                                credential.title.trim().isEmpty
+                                    ? _t('Credential title unavailable')
+                                    : credential.title.trim(),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 16,
+                                ),
                               ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '${_t('Issued')} ${_formatCredentialDate(credential)}',
+                                style: TextStyle(
+                                  color: context.schTextSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (credential.pillarCodes.isNotEmpty) ...<Widget>[
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: credential.pillarCodes.map((String code) {
+                          final Color color = _credentialPillarColor(code);
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '${_t('Issued')} ${_formatCredentialDate(credential)}',
+                            decoration: BoxDecoration(
+                              color: color.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              _credentialPillarLabel(code),
                               style: TextStyle(
-                                color: context.schTextSecondary,
+                                color: color,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
-                          ],
-                        ),
+                          );
+                        }).toList(growable: false),
                       ),
                     ],
-                  ),
-                  if (credential.pillarCodes.isNotEmpty) ...<Widget>[
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: credential.pillarCodes.map((String code) {
-                        final Color color = _credentialPillarColor(code);
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: color.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: Text(
-                            _credentialPillarLabel(code),
-                            style: TextStyle(
-                              color: color,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        );
-                      }).toList(growable: false),
-                    ),
                   ],
-                ],
+                ),
               ),
-            ),
-          );
-        },
+            );
+          }),
+        ],
       );
     }
 
@@ -1804,7 +1839,8 @@ class _ProjectCard extends StatelessWidget {
                     style: TextStyle(
                         color: context.schTextSecondary, fontSize: 14),
                   ),
-                  if (evidenceLinked || capabilityTitles.isNotEmpty) ...<Widget>[
+                  if (evidenceLinked ||
+                      capabilityTitles.isNotEmpty) ...<Widget>[
                     const SizedBox(height: 12),
                     Wrap(
                       spacing: 8,
@@ -1818,11 +1854,11 @@ class _ProjectCard extends StatelessWidget {
                             color: project['color'] as Color,
                           ),
                         ...capabilityTitles.take(3).map(
-                          (String value) => _ProjectMetaChip(
-                            label: value,
-                            color: project['color'] as Color,
-                          ),
-                        ),
+                              (String value) => _ProjectMetaChip(
+                                label: value,
+                                color: project['color'] as Color,
+                              ),
+                            ),
                       ],
                     ),
                   ],

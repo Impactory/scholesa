@@ -431,7 +431,7 @@ NEXT_PUBLIC_OPENAI_API_KEY=sk-...  # For AI Help embeddings
 | Collaborate on project | `collaboration_started` | Belonging | (Not yet implemented) |
 | Badge earned | `badge_earned` | Competence | (Auto-triggered) |
 
-**Coverage:** 7/9 core interactions tracked (78%)
+**Coverage:** 7/9 core interactions tracked (78%) for the historical SDT telemetry slice; this is not a claim that growth reporting or Passport/report provenance coverage is complete.
 
 ---
 
