@@ -225,6 +225,59 @@ void main() {
     );
   });
 
+  testWidgets('site integrations health page logs force sync telemetry',
+      (WidgetTester tester) async {
+    final List<Map<String, dynamic>> events = await _captureTelemetry(() async {
+      await tester.pumpWidget(
+        _buildHarness(
+          child: SiteIntegrationsHealthPage(
+            healthLoader: (_) async => <String, dynamic>{
+              'connections': <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'id': 'google-classroom-1',
+                  'provider': 'google_classroom',
+                  'status': 'active',
+                },
+              ],
+              'syncJobs': <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'provider': 'google_classroom',
+                  'status': 'completed',
+                  'createdAt': DateTime(2026, 3, 20, 9),
+                },
+              ],
+            },
+            syncJobTrigger: (_, __) async {},
+            rosterImportRepository:
+                RosterImportRepository(firestore: FakeFirebaseFirestore()),
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.more_vert_rounded));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Force Sync'));
+      await tester.pump();
+      await tester.pumpAndSettle();
+    });
+
+    expect(
+      events.any((Map<String, dynamic> event) {
+        final Map<String, dynamic> metadata =
+            Map<String, dynamic>.from(event['metadata'] as Map);
+        return event['event'] == 'cta.clicked' &&
+            metadata['module'] == 'site_integrations_health' &&
+            metadata['cta_id'] == 'force_sync_integration' &&
+            metadata['surface'] == 'integration_options_sheet' &&
+            metadata['integration_id'] == 'google-classroom-1';
+      }),
+      isTrue,
+    );
+  });
+
   testWidgets('site integrations health page shows a visible error when roster review fails',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
