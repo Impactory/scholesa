@@ -148,6 +148,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 250));
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('No missions available'), findsOneWidget);
     expect(find.text('Check back soon for new challenges!'), findsOneWidget);
   });
@@ -175,6 +176,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 250));
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     await tester.tap(find.text('In Progress'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Mission with verification gate').first);

@@ -96,6 +96,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Future Innovator • Site unavailable'), findsOneWidget);
     expect(find.text('site-1'), findsNothing);
   });
@@ -131,6 +132,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Impact Builder'), findsOneWidget);
     expect(find.text('Issued 3/18/2026'), findsOneWidget);
     expect(find.text('No badges earned yet'), findsNothing);

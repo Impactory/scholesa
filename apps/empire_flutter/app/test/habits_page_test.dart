@@ -93,6 +93,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 250));
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Start building your habits!'), findsOneWidget);
     expect(find.text('Tap + to create your first habit'), findsOneWidget);
   });
@@ -121,6 +122,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 250));
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Read for 10 minutes'), findsOneWidget);
     await tester.tap(find.byIcon(Icons.play_arrow_rounded).first);
     await tester.pumpAndSettle();
@@ -155,6 +157,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 250));
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     await tester.tap(find.text('Read for 10 minutes'));
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Reflect with AI'));
