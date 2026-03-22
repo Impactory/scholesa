@@ -17,7 +17,7 @@
 | MissionAttempt | src/types/schema.ts | src/repositories/missionAttemptRepository.ts | missionAttempts |
 | Portfolio | src/types/schema.ts | src/repositories/portfolioRepository.ts | portfolios |
 | PortfolioItem | src/types/schema.ts | src/repositories/portfolioItemRepository.ts | portfolioItems |
-| Credential | src/types/schema.ts | src/repositories/credentialRepository.ts | credentials |
+| Credential | src/types/schema.ts | deferred in web; Flutter repository exists at apps/empire_flutter/app/lib/domain/repositories.dart | credentials |
 | AccountabilityCycle | src/types/schema.ts | src/repositories/accountabilityRepository.ts | accountabilityCycles |
 | AccountabilityKPI | src/types/schema.ts | src/repositories/accountabilityRepository.ts | accountabilityKPIs |
 | AccountabilityCommitment | src/types/schema.ts | src/repositories/accountabilityRepository.ts | accountabilityCommitments |
@@ -26,7 +26,8 @@
 
 ## Notes
 - Web stack repositories remain scaffolded; full wiring paused.
-- Flutter app (apps/empire_flutter/app) uses the same Firestore collections (users, sessions, occurrences, enrollments, attendanceRecords, missions, missionAttempts, portfolioItems) with site-scoped queries and offline queue support.
+- The web `Credential` repository is not present under `src/` today and should be treated as deferred rather than implemented.
+- Flutter app (apps/empire_flutter/app) uses the same Firestore collections (users, sessions, occurrences, enrollments, attendanceRecords, missions, missionAttempts, portfolioItems, credentials) with site-scoped queries and offline queue support.
 
 <!-- TELEMETRY_WIRING:START -->
 ## Telemetry & End-to-End Wiring

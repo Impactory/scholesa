@@ -179,6 +179,8 @@ Credentials:
 - POST `/v1/credentials`
 - DELETE `/v1/credentials/:id`
 
+Current repo status: catalog only. No implementation for these credential endpoints was found in `src/` or `functions/src/` as of 2026-03-22, so this section should be read as planned API surface rather than shipped server behavior.
+
 ---
 
 # 7) Accountability
