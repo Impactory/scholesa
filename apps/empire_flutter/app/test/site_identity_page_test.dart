@@ -298,4 +298,55 @@ void main() {
       isTrue,
     );
   });
+
+  testWidgets('site identity logs ignore telemetry with match context',
+      (WidgetTester tester) async {
+    final List<Map<String, dynamic>> events = await _captureTelemetry(() async {
+      await tester.pumpWidget(
+        _buildHarness(
+          SiteIdentityPage(
+            identityLoader: (String _) async => <Map<String, dynamic>>[
+              <String, dynamic>{
+                'id': 'match-1',
+                'status': 'unmatched',
+                'scholesaUserName': 'Ava Stone',
+                'providerUserId': 'ava.stone@classroom.test',
+                'provider': 'google_classroom',
+                'confidence': 0.91,
+                'scholesaUserId': 'learner-1',
+              },
+            ],
+            identityResolver: (
+              String id,
+              String _,
+              String decision,
+              String? __,
+            ) async {
+              expect(id, 'match-1');
+              expect(decision, 'ignore');
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.widgetWithText(OutlinedButton, 'Ignore'));
+      await tester.pump();
+      await tester.pumpAndSettle();
+    });
+
+    expect(
+      events.any((Map<String, dynamic> event) {
+        final Map<String, dynamic> metadata =
+            Map<String, dynamic>.from(event['metadata'] as Map);
+        return event['event'] == 'cta.clicked' &&
+            metadata['module'] == 'site_identity' &&
+            metadata['cta_id'] == 'ignore_identity_match' &&
+            metadata['surface'] == 'identity_match_card' &&
+            metadata['match_id'] == 'match-1' &&
+            metadata['provider'] == 'Google Classroom';
+      }),
+      isTrue,
+    );
+  });
 }

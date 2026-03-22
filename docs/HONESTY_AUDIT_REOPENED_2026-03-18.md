@@ -151,7 +151,8 @@ Interpretation rule:
 61. Fixed `/educator/learner-supports` support-plan saves so the route re-loads persisted support-plan state before claiming success, and added direct proof that verified saves only settle after persisted reload while reload failures fail closed with explicit verification-required copy instead of opening outcome logging on unverified state.
 62. Fixed `/educator/integrations` sync honesty so queued syncs are no longer reported as failed just because the post-queue refresh fails, preserved stale integration cards on reload failure instead of blanking the route, and added direct proof that the route distinguishes queue failure from verification-required refresh failure.
 63. Added direct `/educator/learner-supports` and `/educator/integrations` route-gate and telemetry proof so both routes now verify educator/site/HQ access boundaries in focused tests and emit auditable route-local traces for support-plan updates and integration sync menu actions instead of leaving scope and auditability inferred from implementation.
-64. Added direct `/site/identity` route-gate and telemetry proof so the route now verifies site/HQ-only access in a focused test and emits an auditable approve-match CTA trace with match context instead of leaving route-local scope and approve-action auditability inferred from implementation.
+64. Added direct `/site/identity` route-gate and telemetry proof so the route now verifies site/HQ-only access in a focused test and emits auditable approve-match and ignore-match CTA traces with match context instead of leaving route-local scope and operator-decision auditability inferred from implementation.
+65. Added direct `/site/integrations-health` route-gate and telemetry proof so the route now verifies site/HQ-only access in a focused test and emits an auditable `connect_integration` CTA trace from the integration card instead of leaving route-local scope and connection-action auditability inferred from implementation.
 
 ### Release and operations fixes
 
@@ -186,7 +187,8 @@ Interpretation rule:
 - HQ user-admin audit-log honesty regressions passed: 12 passed, 0 failed.
 - Partner contracting workflow honesty regressions passed: 6 passed, 0 failed.
 - Focused educator route-gate and telemetry regressions passed: 18 passed, 0 failed.
-- Focused site identity route-gate and telemetry regressions passed: 7 passed, 0 failed.
+- Focused site identity route-gate and telemetry regressions passed: 8 passed, 0 failed.
+- Focused site integrations health route-gate and telemetry regressions passed: 7 passed, 0 failed.
 
 ### Full Flutter gate verification
 

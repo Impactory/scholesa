@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/domain/repositories.dart';
 import 'package:scholesa_app/modules/site/site_integrations_health_page.dart';
+import 'package:scholesa_app/services/telemetry_service.dart';
 import 'package:scholesa_app/ui/theme/scholesa_theme.dart';
 
 class _FailingRosterImportRepository extends RosterImportRepository {
@@ -47,6 +48,19 @@ Widget _buildHarness({required Widget child}) {
       home: child,
     ),
   );
+}
+
+Future<List<Map<String, dynamic>>> _captureTelemetry(
+  Future<void> Function() body,
+) async {
+  final List<Map<String, dynamic>> events = <Map<String, dynamic>>[];
+  await TelemetryService.runWithDispatcher(
+    (Map<String, dynamic> payload) async {
+      events.add(Map<String, dynamic>.from(payload));
+    },
+    body,
+  );
+  return events;
 }
 
 void main() {
@@ -164,6 +178,51 @@ void main() {
 
     expect(find.text('Unable to update integration right now.'), findsOneWidget);
     expect(find.text('Google Classroom connected'), findsNothing);
+  });
+
+  testWidgets('site integrations health page logs connect integration telemetry',
+      (WidgetTester tester) async {
+    final List<Map<String, dynamic>> events = await _captureTelemetry(() async {
+      await tester.pumpWidget(
+        _buildHarness(
+          child: SiteIntegrationsHealthPage(
+            healthLoader: (_) async => <String, dynamic>{
+              'connections': <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'id': 'google-classroom-1',
+                  'provider': 'google_classroom',
+                  'status': 'disconnected',
+                },
+              ],
+              'syncJobs': <Map<String, dynamic>>[],
+            },
+            connectionStatusUpdater: (_, __) async {},
+            rosterImportRepository:
+                RosterImportRepository(firestore: FakeFirebaseFirestore()),
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Connect'));
+      await tester.pump();
+      await tester.pumpAndSettle();
+    });
+
+    expect(
+      events.any((Map<String, dynamic> event) {
+        final Map<String, dynamic> metadata =
+            Map<String, dynamic>.from(event['metadata'] as Map);
+        return event['event'] == 'cta.clicked' &&
+            metadata['module'] == 'site_integrations_health' &&
+            metadata['cta_id'] == 'connect_integration' &&
+            metadata['surface'] == 'integration_card' &&
+            metadata['integration_id'] == 'google-classroom-1';
+      }),
+      isTrue,
+    );
   });
 
   testWidgets('site integrations health page shows a visible error when roster review fails',
