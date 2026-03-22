@@ -3,12 +3,15 @@ import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
 import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/modules/hq_admin/hq_analytics_page.dart';
+import 'package:scholesa_app/modules/missions/mission_service.dart';
+import 'package:scholesa_app/modules/missions/missions_page.dart';
 import 'package:scholesa_app/services/analytics_service.dart';
 import 'package:scholesa_app/services/export_service.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
@@ -27,6 +30,24 @@ AppState _buildHqState() {
     'role': 'hq',
     'activeSiteId': 'site-1',
     'siteIds': <String>['site-1', 'site-2'],
+    'entitlements': <dynamic>[],
+  });
+  return state;
+}
+
+AppState _buildLearnerState({
+  String userId = 'learner-analytics-1',
+  String email = 'nia.analytics@example.com',
+  String displayName = 'Nia Analytics',
+}) {
+  final AppState state = AppState();
+  state.updateFromMeResponse(<String, dynamic>{
+    'userId': userId,
+    'email': email,
+    'displayName': displayName,
+    'role': 'learner',
+    'activeSiteId': 'site-1',
+    'siteIds': <String>['site-1'],
     'entitlements': <dynamic>[],
   });
   return state;
@@ -112,6 +133,151 @@ Future<void> _seedAnalyticsData(FakeFirebaseFirestore firestore) async {
       'top_issues': <String>['Need more drilldowns'],
     },
   });
+}
+
+Future<void> _seedMissionReadyForReviewData(
+  FakeFirebaseFirestore firestore, {
+  required String learnerId,
+  required String learnerName,
+}) async {
+  await firestore.collection('sites').doc('site-1').set(<String, dynamic>{
+    'name': 'North Hub',
+    'learnerCount': 1,
+    'educatorCount': 1,
+    'healthScore': 94,
+  });
+  await firestore.collection('users').doc(learnerId).set(<String, dynamic>{
+    'uid': learnerId,
+    'displayName': learnerName,
+    'role': 'learner',
+    'siteIds': <String>['site-1'],
+  });
+  await firestore.collection('missionAssignments').doc('assignment-1').set(
+    <String, dynamic>{
+      'missionId': 'mission-1',
+      'learnerId': learnerId,
+      'siteId': 'site-1',
+      'status': 'in_progress',
+      'progress': 1.0,
+    },
+  );
+  await firestore.collection('missions').doc('mission-1').set(<String, dynamic>{
+    'siteId': 'site-1',
+    'title': 'Mission ready for review',
+    'description': 'Capture proof of learning before review.',
+    'pillarCode': 'future_skills',
+    'difficulty': 'beginner',
+    'xpReward': 120,
+  });
+  await firestore
+      .collection('missions')
+      .doc('mission-1')
+      .collection('steps')
+      .doc('step-1')
+      .set(
+    <String, dynamic>{
+      'title': 'Prototype',
+      'order': 1,
+      'isCompleted': true,
+      'completedAt': '2026-03-18T10:00:00.000Z',
+    },
+  );
+}
+
+Widget _buildLearnerMissionHarness({
+  required FirestoreService firestoreService,
+  required MissionService missionService,
+  required AppState appState,
+}) {
+  return MultiProvider(
+    providers: <SingleChildWidget>[
+      ChangeNotifierProvider<AppState>.value(value: appState),
+      Provider<FirestoreService>.value(value: firestoreService),
+      ChangeNotifierProvider<MissionService>.value(value: missionService),
+    ],
+    child: MaterialApp(
+      theme: ThemeData(
+        useMaterial3: true,
+        splashFactory: NoSplash.splashFactory,
+      ),
+      localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const <Locale>[
+        Locale('en'),
+        Locale('zh', 'CN'),
+        Locale('zh', 'TW'),
+      ],
+      home: const MissionsPage(),
+    ),
+  );
+}
+
+Future<void> _submitMissionForReviewViaPage(
+  WidgetTester tester, {
+  required FirestoreService firestoreService,
+  required MissionService missionService,
+  required AppState appState,
+}) async {
+  await tester.pumpWidget(
+    _buildLearnerMissionHarness(
+      firestoreService: firestoreService,
+      missionService: missionService,
+      appState: appState,
+    ),
+  );
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 250));
+  await tester.pumpAndSettle();
+
+  await tester.tap(find.text('In Progress'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('Mission ready for review').first);
+  await tester.pumpAndSettle();
+
+  await tester.scrollUntilVisible(
+    find.text('No AI support used for this mission'),
+    200,
+    scrollable: find.byType(Scrollable).last,
+  );
+  await tester.tap(find.text('No AI support used for this mission'));
+  await tester.pumpAndSettle();
+  await tester.enterText(
+    find.widgetWithText(TextField, 'Explain-it-back summary'),
+    'I explained how the prototype responded to the evidence.',
+  );
+  await tester.enterText(
+    find.widgetWithText(TextField, 'Oral check reflection'),
+    'I described why this version was more stable.',
+  );
+  await tester.enterText(
+    find.widgetWithText(TextField, 'Mini-rebuild plan'),
+    'I would rebuild the sensing step first and retest.',
+  );
+  await tester.enterText(
+    find.widgetWithText(TextField, 'Version checkpoint summary'),
+    'Completed the working prototype before review.',
+  );
+
+  await tester.scrollUntilVisible(
+    find.text('Save Checkpoint'),
+    200,
+    scrollable: find.byType(Scrollable).last,
+  );
+  await tester.tap(find.text('Save Checkpoint'));
+  await tester.pump();
+  await tester.pumpAndSettle();
+
+  await tester.scrollUntilVisible(
+    find.text('Submit for Review'),
+    200,
+    scrollable: find.byType(Scrollable).last,
+  );
+  await tester.tap(find.text('Submit for Review'));
+  await tester.pump();
+  await tester.pumpAndSettle();
 }
 
 Widget _buildAnalyticsHarness({
@@ -283,6 +449,76 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('HQ AI help feedback'), findsOneWidget);
+  });
+
+  testWidgets(
+      'hq analytics supplemental data reflects live learner mission submissions from the canonical route',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedMissionReadyForReviewData(
+      firestore,
+      learnerId: 'learner-analytics-1',
+      learnerName: 'Nia Analytics',
+    );
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+
+    await _submitMissionForReviewViaPage(
+      tester,
+      firestoreService: firestoreService,
+      missionService: MissionService(
+        firestoreService: firestoreService,
+        learnerId: 'learner-analytics-1',
+      ),
+      appState: _buildLearnerState(),
+    );
+
+    final QuerySnapshot<Map<String, dynamic>> attempts = await firestore
+        .collection('missionAttempts')
+        .where('learnerId', isEqualTo: 'learner-analytics-1')
+        .get();
+    expect(attempts.docs, hasLength(1));
+
+    await tester.pumpWidget(
+      _buildAnalyticsHarness(
+        firestoreService: firestoreService,
+        child: HqAnalyticsPage(
+          metricsLoader: ({String? siteId, String period = 'month'}) async {
+            return const TelemetryDashboardMetrics(
+              weeklyAccountabilityAdherenceRate: 91.0,
+              educatorReviewTurnaroundHoursAvg: 18.5,
+              educatorReviewWithinSlaRate: 87.0,
+              educatorReviewSlaHours: 48,
+              interventionHelpedRate: 72.0,
+              interventionTotal: 11,
+              attendanceTrend: <AttendanceTrendPoint>[],
+            );
+          },
+          kpiPacksLoader: ({String? siteId, int limit = 24}) async =>
+              <Map<String, dynamic>>[],
+          syntheticImportLoader: () async => null,
+        ),
+      ),
+    );
+
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Top Performers'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Top Performers'), findsOneWidget);
+    expect(find.text('Nia Analytics'), findsOneWidget);
+    expect(find.text('North Hub'), findsWidgets);
+    expect(find.text('1 days'), findsOneWidget);
+    expect(find.text('No top performers available'), findsNothing);
   });
 
   testWidgets(

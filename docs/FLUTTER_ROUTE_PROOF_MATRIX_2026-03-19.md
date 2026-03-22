@@ -114,7 +114,7 @@ Use this matrix together with the stricter full-flow gate in `docs/FULL_HONESTY_
 | `/hq/user-admin` | direct | `apps/empire_flutter/app/test/hq_user_admin_profile_edit_test.dart` | Users, sites, audit-log first-load failure, and stale audit-log refresh truth are directly proven; deeper user mutation breadth is still wider than the focused audit-log proof |
 | `/hq/role-switcher` | direct | `apps/empire_flutter/app/test/hq_role_switcher_page_test.dart` | — |
 | `/hq/sites` | direct | `apps/empire_flutter/app/test/hq_sites_page_test.dart` | — |
-| `/hq/analytics` | direct | `apps/empire_flutter/app/test/hq_analytics_page_test.dart` | — |
+| `/hq/analytics` | direct | `apps/empire_flutter/app/test/hq_analytics_page_test.dart` | KPI export/fallback honesty, telemetry and supplemental unavailable-state truth, stale supplemental retention, synthetic-import disclosure boundaries, and direct downstream proof that a canonical mission attempt created through the live `/learner/missions` route appears in the HQ supplemental top-performer aggregation are now covered; broader analytics claims beyond mission-attempt activity still require deeper evidence and growth aggregation proof |
 | `/hq/billing` | direct | `apps/empire_flutter/app/test/hq_billing_page_test.dart`, `apps/empire_flutter/app/test/hq_admin_placeholder_actions_test.dart` | — |
 | `/hq/approvals` | direct | `apps/empire_flutter/app/test/hq_approvals_page_test.dart` | — |
 | `/hq/audit` | direct | `apps/empire_flutter/app/test/hq_audit_page_test.dart`, `apps/empire_flutter/app/test/hq_audit_page_localization_test.dart` | — |
