@@ -455,6 +455,22 @@ void main() {
     expect(persistedSessions.docs.single.data()['title'], 'Evidence Studio');
     expect(persistedSessions.docs.single.data()['createdBy'], 'site-admin-1');
     expect(persistedSessions.docs.single.data()['learnerCount'], 12);
+
+    final QuerySnapshot<Map<String, dynamic>> persistedOccurrences =
+        await firestore
+            .collection('sessionOccurrences')
+            .where('siteId', isEqualTo: 'site-1')
+            .get();
+    expect(persistedOccurrences.docs, hasLength(1));
+    expect(
+      persistedOccurrences.docs.single.data()['sessionId'],
+      persistedSessions.docs.single.id,
+    );
+    expect(persistedOccurrences.docs.single.data()['title'], 'Evidence Studio');
+    expect(
+      persistedOccurrences.docs.single.data()['roomName'],
+      persistedSessions.docs.single.data()['room'],
+    );
   });
 
   testWidgets(

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -10,13 +11,17 @@ import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/modules/attendance/attendance_models.dart';
 import 'package:scholesa_app/modules/attendance/attendance_page.dart';
 import 'package:scholesa_app/modules/attendance/attendance_service.dart';
+import 'package:scholesa_app/modules/site/site_sessions_page.dart';
 import 'package:scholesa_app/offline/offline_queue.dart';
 import 'package:scholesa_app/offline/sync_coordinator.dart';
 import 'package:scholesa_app/services/api_client.dart';
+import 'package:scholesa_app/services/firestore_service.dart';
 import 'package:scholesa_app/services/telemetry_service.dart';
 import 'package:scholesa_app/ui/common/error_state.dart';
 
 class _MockApiClient extends Mock implements ApiClient {}
+
+class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
 class _MockSyncCoordinator extends Mock implements SyncCoordinator {}
 
@@ -165,6 +170,41 @@ Future<void> _seedAttendanceCouplingData(
     'role': 'learner',
     'siteIds': <String>['site-1'],
   });
+}
+
+Future<void> _seedSessionCreateOptions(FakeFirebaseFirestore firestore) async {
+  await firestore.collection('users').doc('educator-1').set(<String, dynamic>{
+    'displayName': 'Educator One',
+    'email': 'educator-1@scholesa.test',
+    'role': 'educator',
+    'activeSiteId': 'site-1',
+    'siteIds': <String>['site-1'],
+  });
+  await firestore.collection('rooms').doc('room-1').set(<String, dynamic>{
+    'siteId': 'site-1',
+    'name': 'Lab 1',
+  });
+}
+
+Widget _buildTestMaterialApp({required Widget child}) {
+  return MaterialApp(
+    theme: ThemeData(
+      useMaterial3: true,
+      splashFactory: NoSplash.splashFactory,
+    ),
+    locale: const Locale('en'),
+    supportedLocales: const <Locale>[
+      Locale('en'),
+      Locale('zh', 'CN'),
+      Locale('zh', 'TW'),
+    ],
+    localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+      GlobalMaterialLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate,
+    ],
+    home: child,
+  );
 }
 
 Future<List<Map<String, dynamic>>> _captureTelemetry(
@@ -471,6 +511,91 @@ void main() {
     expect(find.text('Inactive Learner'), findsNothing);
     expect(find.text('Other Session Learner'), findsNothing);
     expect(find.text('Save Attendance (0/2)'), findsOneWidget);
+  });
+
+  testWidgets(
+      'attendance page shows a class created through site sessions via the generated occurrence',
+      (WidgetTester tester) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 1600));
+
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedSessionCreateOptions(firestore);
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final AppState appState = _buildAppState();
+
+    await tester.pumpWidget(
+      _buildTestMaterialApp(
+        child: MultiProvider(
+          providers: <SingleChildWidget>[
+            Provider<FirestoreService>.value(value: firestoreService),
+            ChangeNotifierProvider<AppState>.value(value: appState),
+          ],
+          child: const SiteSessionsPage(),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('New Session'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Session Title'),
+      'Evidence Studio',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Learner Count'),
+      '0',
+    );
+
+    final Finder createButton =
+        find.widgetWithText(ElevatedButton, 'Create Session');
+    await tester.ensureVisible(createButton);
+    await tester.tap(createButton);
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    final _MockSyncCoordinator syncCoordinator = _MockSyncCoordinator();
+    when(() => syncCoordinator.isOnline).thenReturn(true);
+    when(() => syncCoordinator.pendingCount).thenReturn(0);
+    when(() => syncCoordinator.isSyncing).thenReturn(false);
+    when(() => syncCoordinator.retryFailed()).thenAnswer((_) async {});
+
+    final AttendanceService attendanceService = AttendanceService(
+      apiClient: _MockApiClient(),
+      syncCoordinator: syncCoordinator,
+      firestore: firestore,
+      siteId: 'site-1',
+    );
+
+    await tester.pumpWidget(
+      _buildTestMaterialApp(
+        child: MultiProvider(
+          providers: <SingleChildWidget>[
+            ChangeNotifierProvider<AppState>.value(value: appState),
+            ChangeNotifierProvider<SyncCoordinator>.value(
+              value: syncCoordinator,
+            ),
+            ChangeNotifierProvider<AttendanceService>.value(
+              value: attendanceService,
+            ),
+          ],
+          child: const AttendancePage(),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Evidence Studio'), findsOneWidget);
+    expect(find.text('0 students'), findsOneWidget);
+    expect(find.text('No classes today'), findsNothing);
   });
 
   testWidgets('attendance roster keeps stale learners visible after refresh failure',

@@ -1053,9 +1053,11 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
     try {
       final DateTime? startTime =
           _dateWithTimeLabel(_selectedDate, result.time);
-      await firestoreService.firestore
-          .collection('sessions')
-          .add(<String, dynamic>{
+      final WriteBatch batch = firestoreService.firestore.batch();
+      final CollectionReference<Map<String, dynamic>> sessions =
+          firestoreService.firestore.collection('sessions');
+      final DocumentReference<Map<String, dynamic>> sessionRef = sessions.doc();
+      batch.set(sessionRef, <String, dynamic>{
         'siteId': siteId,
         'title': result.session.title,
         'educatorName': result.session.educator,
@@ -1068,6 +1070,25 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
         'createdAt': FieldValue.serverTimestamp(),
         'createdBy': appState.userId,
       });
+
+      if (startTime != null) {
+        final DocumentReference<Map<String, dynamic>> occurrenceRef =
+            firestoreService.firestore.collection('sessionOccurrences').doc();
+        batch.set(occurrenceRef, <String, dynamic>{
+          'sessionId': sessionRef.id,
+          'siteId': siteId,
+          'title': result.session.title,
+          'startTime': Timestamp.fromDate(startTime),
+          'endTime': Timestamp.fromDate(
+            startTime.add(const Duration(hours: 1)),
+          ),
+          'roomName': result.session.room,
+          'createdAt': FieldValue.serverTimestamp(),
+          'createdBy': appState.userId,
+        });
+      }
+
+      await batch.commit();
       return true;
     } catch (_) {
       return false;
