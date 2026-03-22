@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../i18n/workflow_surface_i18n.dart';
 import '../../auth/app_state.dart';
 import '../../services/telemetry_service.dart';
+import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 String _tHqRoleSwitcher(BuildContext context, String input) {
@@ -108,6 +109,10 @@ class HqRoleSwitcherPage extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+          const SizedBox(width: 12),
+          const SessionMenuHeaderAction(
+            foregroundColor: ScholesaColors.hq,
           ),
         ],
       ),

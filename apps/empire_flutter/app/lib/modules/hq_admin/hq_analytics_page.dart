@@ -10,6 +10,7 @@ import '../../services/export_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../services/workflow_bridge_service.dart';
+import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 /// HQ Analytics Page - Platform-wide analytics and insights
@@ -522,6 +523,10 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                 ),
                 child: const Icon(Icons.download, color: ScholesaColors.hq),
               ),
+            ),
+            const SizedBox(width: 4),
+            const SessionMenuHeaderAction(
+              foregroundColor: ScholesaColors.hq,
             ),
           ],
         ),

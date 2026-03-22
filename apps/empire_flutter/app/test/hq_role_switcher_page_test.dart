@@ -79,6 +79,7 @@ void main() {
     await tester.tap(find.text('Open role switcher'));
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Role Impersonation'), findsOneWidget);
     expect(find.text('Your actual role'), findsOneWidget);
     expect(find.text('HQ'), findsOneWidget);
@@ -101,6 +102,7 @@ void main() {
     await tester.tap(find.text('Open role switcher'));
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Viewing as educator'), findsOneWidget);
     expect(find.text('Active'), findsOneWidget);
 

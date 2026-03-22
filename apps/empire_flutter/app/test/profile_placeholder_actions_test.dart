@@ -113,6 +113,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     await tester.tap(_tileTapTarget('Notifications'));
     await tester.pumpAndSettle();
 
@@ -238,6 +239,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     await tester.tap(find.byIcon(Icons.edit));
     await tester.pumpAndSettle();
 

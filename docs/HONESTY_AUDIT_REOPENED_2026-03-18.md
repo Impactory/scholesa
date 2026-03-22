@@ -146,6 +146,7 @@ Interpretation rule:
 56. Added direct `/educator/attendance` telemetry proof that live saves emit `attendance.recorded` and offline saves emit `attendance.record_queued`, alongside the primary `attendance_save` CTA trace, so route-local auditability is now proven instead of inferred from implementation.
 57. Fixed `/partner/listings` so the edit dialog persists real listing updates instead of showing a fake success snackbar, and added direct proof that published listing edits update Firestore and become visible on the site marketplace surface.
 58. Added direct account-menu placement proof on learner missions, habits, and portfolio surfaces, and hardened additional Flutter-web headers on messages, site sessions, check-in, HQ user admin, and HQ sites so logout discoverability no longer depends only on the global overlay menu.
+59. Fixed learner-missions MVL gate proof by restoring support for learner-level unresolved `mvlEpisodes` that are not tied to a specific `sessionOccurrenceId`, added runtime coverage for that contract, and hardened direct account-menu placement on profile, shared settings routes, HQ analytics, HQ billing, and HQ role switcher surfaces.
 
 ### Release and operations fixes
 

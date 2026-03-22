@@ -5,6 +5,7 @@ import '../../i18n/workflow_surface_i18n.dart';
 import '../../auth/app_state.dart';
 import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
+import '../../ui/auth/global_session_menu.dart';
 import '../../ui/auth/sign_out_flow.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
@@ -82,6 +83,7 @@ class ProfilePage extends StatelessWidget {
                   ),
             ),
             const Spacer(),
+            SessionMenuHeaderAction(foregroundColor: roleColor),
             IconButton(
               onPressed: () {
                 TelemetryService.instance.logEvent(

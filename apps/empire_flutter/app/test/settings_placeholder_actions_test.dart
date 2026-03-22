@@ -193,6 +193,7 @@ void main() {
 
       expect(find.text('Settings'), findsOneWidget);
       expect(find.text('Access Denied'), findsNothing);
+      expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
       await tester.scrollUntilVisible(
         find.text('Sign Out'),
         300,
@@ -252,6 +253,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     await tester.scrollUntilVisible(
       find.text('Sign Out'),
       300,

@@ -78,6 +78,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(
         find.text('Billing data is temporarily unavailable'), findsOneWidget);
     expect(
@@ -148,6 +149,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('INV-300'), findsOneWidget);
     expect(find.text('No invoices found'), findsNothing);
 
@@ -203,6 +205,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     await tester.tap(find.text('New Invoice'));
     await tester.pumpAndSettle();
 

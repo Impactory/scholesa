@@ -13,6 +13,7 @@ import '../../auth/auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/theme_service.dart';
 import '../../services/telemetry_service.dart';
+import '../../ui/auth/global_session_menu.dart';
 import '../../ui/auth/sign_out_flow.dart';
 import '../../ui/localization/inline_locale_text.dart';
 import '../../ui/theme/scholesa_theme.dart';
@@ -406,6 +407,10 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                 ],
               ),
+            ),
+            const SizedBox(width: 12),
+            SessionMenuHeaderAction(
+              foregroundColor: colorScheme.primary,
             ),
           ],
         ),

@@ -239,6 +239,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 250));
     await tester.pumpAndSettle();
 
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Platform Analytics'), findsOneWidget);
     expect(find.text('Telemetry KPIs'), findsOneWidget);
     expect(find.text('91.0%'), findsOneWidget);
@@ -647,6 +648,7 @@ void main() {
 
   testWidgets('hq analytics keeps stale supplemental analytics visible after refresh failure',
       (WidgetTester tester) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 1800));
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     final FirestoreService firestoreService = FirestoreService(
       firestore: firestore,
@@ -734,7 +736,11 @@ void main() {
     await tester.drag(find.byType(Scrollable).first, const Offset(0, 1200));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byIcon(Icons.refresh_rounded).first);
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -1600));
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.byIcon(Icons.refresh_rounded).first);
+    await tester.tap(find.byIcon(Icons.refresh_rounded).first, warnIfMissed: false);
     await tester.pump();
     await tester.pumpAndSettle();
 

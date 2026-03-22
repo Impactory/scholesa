@@ -7,6 +7,7 @@ import '../../i18n/workflow_surface_i18n.dart';
 import '../../auth/app_state.dart';
 import '../../services/export_service.dart';
 import '../../services/telemetry_service.dart';
+import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
 String _tHqBilling(BuildContext context, String input) {
@@ -163,6 +164,10 @@ class _HqBillingPageState extends State<HqBillingPage>
                 ),
                 child: const Icon(Icons.download, color: ScholesaColors.hq),
               ),
+            ),
+            const SizedBox(width: 4),
+            const SessionMenuHeaderAction(
+              foregroundColor: ScholesaColors.hq,
             ),
           ],
         ),
