@@ -986,6 +986,206 @@ void main() {
   });
 
   testWidgets(
+      'cross-site existing learners are linked into the new site and appear in attendance after provisioning',
+      (WidgetTester tester) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 1600));
+    SharedPreferences.setMockInitialValues(const <String, Object>{});
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedEducatorRosterImportData(firestore);
+    await firestore.collection('users').doc('learner-other-site-1').set(
+      <String, dynamic>{
+        'displayName': 'Cross Site Learner',
+        'email': 'cross-site@example.com',
+        'role': 'learner',
+        'activeSiteId': 'site-2',
+        'siteIds': <String>['site-2'],
+      },
+    );
+
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final AppState educatorAppState = _buildAppState();
+    final EducatorService educatorService = EducatorService(
+      firestoreService: firestoreService,
+      educatorId: 'educator-1',
+      siteId: 'site-1',
+    );
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: <SingleChildWidget>[
+          Provider<FirestoreService>.value(value: firestoreService),
+          ChangeNotifierProvider<AppState>.value(value: educatorAppState),
+          ChangeNotifierProvider<EducatorService>.value(value: educatorService),
+        ],
+        child: _buildTestMaterialApp(
+          child: EducatorSessionsPage(sharedPreferences: prefs),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Launch Lab').first);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Import Roster CSV'),
+      200,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.text('Import Roster CSV'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byType(TextField).last,
+      'name,email\nCross Site Learner,cross-site@example.com',
+    );
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Import'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+          'Roster import complete: 0 enrolled, 1 queued for provisioning'),
+      findsOneWidget,
+    );
+
+    final QuerySnapshot<Map<String, dynamic>> queuedImports =
+        await firestore.collection('rosterImports').get();
+    expect(queuedImports.docs, hasLength(1));
+    expect(queuedImports.docs.single.data()['status'], 'pending_provisioning');
+
+    final QuerySnapshot<Map<String, dynamic>> usersBeforeProvisioning =
+        await firestore
+            .collection('users')
+            .where('email', isEqualTo: 'cross-site@example.com')
+            .get();
+    expect(usersBeforeProvisioning.docs, hasLength(1));
+    expect(usersBeforeProvisioning.docs.single.id, 'learner-other-site-1');
+
+    final AppState siteAppState = _buildSiteAppState();
+    final _MockFirebaseAuth provisioningAuth = _MockFirebaseAuth();
+    when(() => provisioningAuth.currentUser).thenReturn(null);
+    final ProvisioningService provisioningService = ProvisioningService(
+      apiClient: ApiClient(auth: provisioningAuth, baseUrl: 'http://localhost'),
+      firestore: firestore,
+      auth: provisioningAuth,
+      workflowBridgeService: _FakeWorkflowBridgeService(),
+      useProvisioningApi: false,
+    );
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: <SingleChildWidget>[
+          ChangeNotifierProvider<AppState>.value(value: siteAppState),
+          ChangeNotifierProvider<ProvisioningService>.value(
+            value: provisioningService,
+          ),
+        ],
+        child: _buildTestMaterialApp(
+          child: const ProvisioningPage(),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byType(TextFormField).at(0),
+      'Cross Site Learner',
+    );
+    await tester.enterText(
+      find.byType(TextFormField).at(1),
+      'cross-site@example.com',
+    );
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Create'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Learner created successfully'), findsOneWidget);
+
+    final QuerySnapshot<Map<String, dynamic>> usersAfterProvisioning =
+        await firestore
+            .collection('users')
+            .where('email', isEqualTo: 'cross-site@example.com')
+            .get();
+    expect(usersAfterProvisioning.docs, hasLength(1));
+    expect(usersAfterProvisioning.docs.single.id, 'learner-other-site-1');
+    expect(
+      usersAfterProvisioning.docs.single.data()['siteIds'],
+      containsAll(<String>['site-1', 'site-2']),
+    );
+
+    final QuerySnapshot<Map<String, dynamic>> enrollmentsAfterProvisioning =
+        await firestore.collection('enrollments').get();
+    expect(enrollmentsAfterProvisioning.docs, hasLength(1));
+    expect(
+      enrollmentsAfterProvisioning.docs.single.data()['learnerId'],
+      'learner-other-site-1',
+    );
+    expect(
+      enrollmentsAfterProvisioning.docs.single.data()['sessionId'],
+      'session-roster-1',
+    );
+
+    final QuerySnapshot<Map<String, dynamic>> reconciledImports =
+        await firestore.collection('rosterImports').get();
+    expect(reconciledImports.docs.single.data()['status'], 'provisioned');
+    expect(
+      reconciledImports.docs.single.data()['learnerId'],
+      'learner-other-site-1',
+    );
+
+    final _MockSyncCoordinator syncCoordinator = _MockSyncCoordinator();
+    when(() => syncCoordinator.isOnline).thenReturn(true);
+    when(() => syncCoordinator.pendingCount).thenReturn(0);
+    when(() => syncCoordinator.isSyncing).thenReturn(false);
+    when(() => syncCoordinator.retryFailed()).thenAnswer((_) async {});
+
+    final AttendanceService attendanceService = AttendanceService(
+      apiClient: _MockApiClient(),
+      syncCoordinator: syncCoordinator,
+      firestore: firestore,
+      siteId: 'site-1',
+    );
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: <SingleChildWidget>[
+          ChangeNotifierProvider<AppState>.value(value: educatorAppState),
+          ChangeNotifierProvider<SyncCoordinator>.value(value: syncCoordinator),
+          ChangeNotifierProvider<AttendanceService>.value(
+            value: attendanceService,
+          ),
+        ],
+        child: _buildTestMaterialApp(
+          child: const AttendancePage(),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Launch Lab'), findsOneWidget);
+    expect(find.text('1 students'), findsOneWidget);
+
+    await tester.tap(find.text('Launch Lab').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Cross Site Learner'), findsOneWidget);
+    expect(find.text('Save Attendance (0/1)'), findsOneWidget);
+  });
+
+  testWidgets(
       'attendance roster keeps stale learners visible after refresh failure',
       (WidgetTester tester) async {
     final _FakeAttendanceService attendanceService = _FakeAttendanceService(

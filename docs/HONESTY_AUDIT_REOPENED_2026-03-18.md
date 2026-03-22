@@ -158,6 +158,7 @@ Interpretation rule:
 68. Patched `/site/sessions` create persistence to write same-day `sessionOccurrences` alongside the canonical `sessions` record, and added direct proof that a class created through the real sessions route now appears in `/educator/attendance` as a live class for the active site instead of remaining invisible to the attendance workflow.
 69. Added direct downstream educator workflow proof that importing a known learner through the real `/educator/sessions` roster-import dialog creates an active enrollment that appears in the `/educator/attendance` roster for the same class, and patched the educator session detail sheet so long values wrap instead of overflowing and obscuring lower actions in smaller viewports.
 70. Patched `/site/provisioning` learner creation to reconcile matching `pending_provisioning` roster-import rows into active `enrollments`, mark those queue rows as provisioned, and added direct cross-route proof that an unknown learner imported through the real `/educator/sessions` roster dialog appears in `/educator/attendance` after the learner is created through the real `/site/provisioning` flow.
+71. Added direct cross-route proof that when a learner already exists on another site, the real `/site/provisioning` learner-create flow links that existing user into the active site instead of duplicating them, reconciles the queued roster-import row, and makes the learner appear in `/educator/attendance` for the original class.
 
 ### Release and operations fixes
 
@@ -198,6 +199,7 @@ Interpretation rule:
 - Focused site sessions and attendance downstream workflow regressions passed: 19 passed, 0 failed.
 - Focused educator sessions and attendance downstream workflow regressions passed: 17 passed, 0 failed.
 - Focused provisioning, educator sessions, and attendance downstream workflow regressions passed: 40 passed, 0 failed.
+- Focused provisioning, educator sessions, and attendance downstream workflow regressions passed after the cross-site learner-linking proof and workflow-bridge cleanup: 41 passed, 0 failed.
 
 ### Full Flutter gate verification
 

@@ -145,10 +145,14 @@ class _DeterministicProvisioningService extends ProvisioningService {
     this.failUpdateLearner = false,
     this.failUpdateParent = false,
     this.failDeleteGuardianLink = false,
-  })  : _learnersValue = List<LearnerProfile>.from(learners ?? const <LearnerProfile>[]),
-        _parentsValue = List<ParentProfile>.from(parents ?? const <ParentProfile>[]),
-        _guardianLinksValue = List<GuardianLink>.from(guardianLinks ?? const <GuardianLink>[]),
-        _cohortLaunchesValue = List<CohortLaunch>.from(cohortLaunches ?? const <CohortLaunch>[]),
+  })  : _learnersValue =
+            List<LearnerProfile>.from(learners ?? const <LearnerProfile>[]),
+        _parentsValue =
+            List<ParentProfile>.from(parents ?? const <ParentProfile>[]),
+        _guardianLinksValue =
+            List<GuardianLink>.from(guardianLinks ?? const <GuardianLink>[]),
+        _cohortLaunchesValue =
+            List<CohortLaunch>.from(cohortLaunches ?? const <CohortLaunch>[]),
         super(
           apiClient: ApiClient(
             auth: _MockFirebaseAuth(),
@@ -320,8 +324,8 @@ class _DeterministicProvisioningService extends ProvisioningService {
       notifyListeners();
       return null;
     }
-    final int index =
-        _learnersValue.indexWhere((LearnerProfile learner) => learner.id == learnerId);
+    final int index = _learnersValue
+        .indexWhere((LearnerProfile learner) => learner.id == learnerId);
     if (index >= 0) {
       _learnersValue[index] = LearnerProfile(
         id: learnerId,
@@ -351,8 +355,8 @@ class _DeterministicProvisioningService extends ProvisioningService {
       notifyListeners();
       return null;
     }
-    final int index =
-        _parentsValue.indexWhere((ParentProfile parent) => parent.id == parentId);
+    final int index = _parentsValue
+        .indexWhere((ParentProfile parent) => parent.id == parentId);
     if (index >= 0) {
       _parentsValue[index] = ParentProfile(
         id: parentId,
@@ -386,9 +390,12 @@ class _AuthoritativeReloadProvisioningService extends ProvisioningService {
     List<LearnerProfile>? learners,
     List<ParentProfile>? parents,
     List<GuardianLink>? guardianLinks,
-  })  : _learnersValue = List<LearnerProfile>.from(learners ?? const <LearnerProfile>[]),
-        _parentsValue = List<ParentProfile>.from(parents ?? const <ParentProfile>[]),
-        _guardianLinksValue = List<GuardianLink>.from(guardianLinks ?? const <GuardianLink>[]),
+  })  : _learnersValue =
+            List<LearnerProfile>.from(learners ?? const <LearnerProfile>[]),
+        _parentsValue =
+            List<ParentProfile>.from(parents ?? const <ParentProfile>[]),
+        _guardianLinksValue =
+            List<GuardianLink>.from(guardianLinks ?? const <GuardianLink>[]),
         super(
           apiClient: ApiClient(
             auth: _MockFirebaseAuth(),
@@ -602,7 +609,10 @@ Future<void> _seedProvisioningData(
     'parentIds': includeParentIds ? <String>['parent-1'] : <String>[],
   });
   if (includeGuardianLinks) {
-    await firestore.collection('guardianLinks').doc('link-1').set(<String, dynamic>{
+    await firestore
+        .collection('guardianLinks')
+        .doc('link-1')
+        .set(<String, dynamic>{
       'siteId': 'site-1',
       'parentId': 'parent-1',
       'learnerId': 'learner-1',
@@ -611,7 +621,10 @@ Future<void> _seedProvisioningData(
       'createdAt': Timestamp.fromDate(now),
       'createdBy': 'site-admin-1',
     });
-    await firestore.collection('guardianLinks').doc('link-2').set(<String, dynamic>{
+    await firestore
+        .collection('guardianLinks')
+        .doc('link-2')
+        .set(<String, dynamic>{
       'siteId': 'site-2',
       'parentId': 'parent-2',
       'learnerId': 'learner-2',
@@ -647,7 +660,10 @@ Future<void> _seedEditableProvisioningProfiles(
     'activeSiteId': 'site-1',
     'gradeLevel': 5,
   });
-  await firestore.collection('learnerProfiles').doc('learner-1').set(<String, dynamic>{
+  await firestore
+      .collection('learnerProfiles')
+      .doc('learner-1')
+      .set(<String, dynamic>{
     'siteId': 'site-1',
     'learnerId': 'learner-1',
     'userId': 'learner-1',
@@ -663,7 +679,10 @@ Future<void> _seedEditableProvisioningProfiles(
     'siteIds': <String>['site-1'],
     'activeSiteId': 'site-1',
   });
-  await firestore.collection('parentProfiles').doc('parent-1').set(<String, dynamic>{
+  await firestore
+      .collection('parentProfiles')
+      .doc('parent-1')
+      .set(<String, dynamic>{
     'siteId': 'site-1',
     'parentId': 'parent-1',
     'userId': 'parent-1',
@@ -901,7 +920,8 @@ void main() {
     );
   });
 
-  testWidgets('provisioning page creates a cohort launch from the cohort dialog',
+  testWidgets(
+      'provisioning page creates a cohort launch from the cohort dialog',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     final _MockFirebaseAuth auth = _MockFirebaseAuth();
@@ -971,10 +991,8 @@ void main() {
 
     final DocumentSnapshot<Map<String, dynamic>> userDoc =
         await firestore.collection('users').doc('learner-1').get();
-    final DocumentSnapshot<Map<String, dynamic>> profileDoc = await firestore
-        .collection('learnerProfiles')
-        .doc('learner-1')
-        .get();
+    final DocumentSnapshot<Map<String, dynamic>> profileDoc =
+        await firestore.collection('learnerProfiles').doc('learner-1').get();
     expect(userDoc.data()!['displayName'], 'Learner Prime');
     expect(profileDoc.data()!['displayName'], 'Learner Prime');
   });
@@ -1017,10 +1035,8 @@ void main() {
 
     final DocumentSnapshot<Map<String, dynamic>> userDoc =
         await firestore.collection('users').doc('parent-1').get();
-    final DocumentSnapshot<Map<String, dynamic>> profileDoc = await firestore
-        .collection('parentProfiles')
-        .doc('parent-1')
-        .get();
+    final DocumentSnapshot<Map<String, dynamic>> profileDoc =
+        await firestore.collection('parentProfiles').doc('parent-1').get();
     expect(userDoc.data()!['displayName'], 'Parent Prime');
     expect(userDoc.data()!['phone'], '+61 400 555 999');
     expect(profileDoc.data()!['displayName'], 'Parent Prime');
@@ -1277,6 +1293,7 @@ void main() {
       ),
       firestore: firestore,
       auth: _MockFirebaseAuth(),
+      workflowBridgeService: _FakeWorkflowBridgeService(),
       useProvisioningApi: false,
     );
 
@@ -1285,7 +1302,8 @@ void main() {
 
       await tester.tap(find.byType(FloatingActionButton));
       await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextFormField).at(0), 'Telemetry Learner');
+      await tester.enterText(
+          find.byType(TextFormField).at(0), 'Telemetry Learner');
       await tester.enterText(
         find.byType(TextFormField).at(1),
         'telemetry.learner@example.com',
@@ -1330,7 +1348,8 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Edit Parent'));
       await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextFormField).first, 'Parent Telemetry');
+      await tester.enterText(
+          find.byType(TextFormField).first, 'Parent Telemetry');
       await tester.tap(find.widgetWithText(ElevatedButton, 'Save'));
       await tester.pumpAndSettle();
     });
@@ -1391,9 +1410,11 @@ void main() {
     );
   });
 
-  testWidgets('provisioning page reloads authoritative learner data after create',
+  testWidgets(
+      'provisioning page reloads authoritative learner data after create',
       (WidgetTester tester) async {
-    final ProvisioningService service = _AuthoritativeReloadProvisioningService();
+    final ProvisioningService service =
+        _AuthoritativeReloadProvisioningService();
 
     await pumpProvisioningPage(tester, service: service);
 
@@ -1443,7 +1464,8 @@ void main() {
     expect(find.text('Parent One'), findsNothing);
   });
 
-  testWidgets('provisioning page reloads authoritative guardian links after delete',
+  testWidgets(
+      'provisioning page reloads authoritative guardian links after delete',
       (WidgetTester tester) async {
     final ProvisioningService service = _AuthoritativeReloadProvisioningService(
       guardianLinks: <GuardianLink>[
