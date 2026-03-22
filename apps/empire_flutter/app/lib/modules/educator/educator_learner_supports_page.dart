@@ -71,10 +71,10 @@ class _EducatorLearnerSupportsPageState
     return siteId;
   }
 
-  Future<void> _loadPersistedSupportPlans() async {
+  Future<bool> _loadPersistedSupportPlans() async {
     final String siteId = _activeSiteId();
     if (siteId.isEmpty || !mounted) {
-      return;
+      return false;
     }
 
     setState(() {
@@ -96,20 +96,22 @@ class _EducatorLearnerSupportsPageState
       }
 
       if (!mounted) {
-        return;
+        return false;
       }
       setState(() {
         _supportPlanOverrides = nextOverrides;
         _loadError = null;
       });
+      return true;
     } catch (error) {
       debugPrint('Failed to load learner support plans: $error');
       if (!mounted) {
-        return;
+        return false;
       }
       setState(() {
         _loadError = 'Failed to load learner supports: $error';
       });
+      return false;
     }
   }
 
@@ -1246,17 +1248,45 @@ class _EducatorLearnerSupportsPageState
         );
       }
 
-      setState(() {
-        _supportPlanOverrides[support.learnerId] = _PersistedSupportPlan(
-          documentId: documentId,
-          learnerId: support.learnerId,
-          supportType: support.supportType,
-          accommodations: support.accommodations,
-          notes: support.notes,
-          priority: support.priority,
-          lastUpdated: support.lastUpdated,
+      final bool reloaded = await _loadPersistedSupportPlans();
+      if (!mounted) {
+        return false;
+      }
+      final _PersistedSupportPlan? persistedPlan =
+          _supportPlanOverrides[support.learnerId];
+      if (!reloaded) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _tEducatorLearnerSupports(
+                context,
+                'Support plan was submitted, but persisted support data could not be reloaded. Retry to verify the current state.',
+              ),
+            ),
+          ),
         );
-      });
+        return false;
+      }
+      if (persistedPlan == null ||
+          persistedPlan.supportType != support.supportType ||
+          persistedPlan.priority != support.priority ||
+          persistedPlan.notes != support.notes ||
+          !_listEquals(
+            persistedPlan.accommodations,
+            support.accommodations,
+          )) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _tEducatorLearnerSupports(
+                context,
+                'The saved support plan did not match the latest persisted record. Retry to verify the current state.',
+              ),
+            ),
+          ),
+        );
+        return false;
+      }
 
       TelemetryService.instance.logEvent(
         event: 'support.plan_updated',
@@ -1285,6 +1315,18 @@ class _EducatorLearnerSupportsPageState
       );
       return false;
     }
+  }
+
+  bool _listEquals(List<String> left, List<String> right) {
+    if (left.length != right.length) {
+      return false;
+    }
+    for (int index = 0; index < left.length; index++) {
+      if (left[index] != right[index]) {
+        return false;
+      }
+    }
+    return true;
   }
 
   List<_LearnerSupport> _supportsFromService(EducatorService service) {

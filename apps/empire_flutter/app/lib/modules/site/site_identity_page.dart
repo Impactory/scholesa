@@ -60,7 +60,7 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
           IconButton(
             tooltip: _tSiteIdentity(context, 'Refresh'),
             icon: const Icon(Icons.refresh_rounded),
-            onPressed: _loadPendingMatches,
+            onPressed: _refreshPendingMatches,
           ),
           const SessionMenuButton(
             foregroundColor: Colors.white,
@@ -198,7 +198,7 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
             ),
             const SizedBox(height: 16),
             FilledButton.icon(
-              onPressed: _loadPendingMatches,
+              onPressed: _retryLoadPendingMatches,
               icon: const Icon(Icons.refresh_rounded),
               label: Text(_tSiteIdentity(context, 'Retry')),
             ),
@@ -476,9 +476,34 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
     try {
       await _resolveMatch(match, 'link');
       if (!mounted) return;
-      setState(() {
-        _pendingMatches.removeWhere((_IdentityMatch m) => m.id == match.id);
-      });
+      final bool reloaded = await _loadPendingMatches();
+      if (!mounted) return;
+      final bool removedFromQueue =
+          !_pendingMatches.any((_IdentityMatch m) => m.id == match.id);
+      if (!reloaded) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_tSiteIdentity(
+              context,
+              'Match update was submitted, but the queue could not be reloaded. Retry to verify the current state.',
+            )),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+      if (!removedFromQueue) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_tSiteIdentity(
+              context,
+              'The identity queue did not update after save. Retry to verify the current state.',
+            )),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -511,9 +536,34 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
     try {
       await _resolveMatch(match, 'ignore');
       if (!mounted) return;
-      setState(() {
-        _pendingMatches.removeWhere((_IdentityMatch m) => m.id == match.id);
-      });
+      final bool reloaded = await _loadPendingMatches();
+      if (!mounted) return;
+      final bool removedFromQueue =
+          !_pendingMatches.any((_IdentityMatch m) => m.id == match.id);
+      if (!reloaded) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_tSiteIdentity(
+              context,
+              'Match update was submitted, but the queue could not be reloaded. Retry to verify the current state.',
+            )),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+      if (!removedFromQueue) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_tSiteIdentity(
+              context,
+              'The identity queue did not update after save. Retry to verify the current state.',
+            )),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(_tSiteIdentity(context, 'Match ignored')),
@@ -531,24 +581,38 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
     }
   }
 
-  Future<void> _loadPendingMatches() async {
+  Future<void> _refreshPendingMatches() async {
+    await _loadPendingMatches();
+  }
+
+  Future<void> _retryLoadPendingMatches() async {
+    await _loadPendingMatches(clearStaleState: true);
+  }
+
+  Future<bool> _loadPendingMatches({bool clearStaleState = false}) async {
     final AppState appState = context.read<AppState>();
     final String siteId = (appState.activeSiteId ??
             (appState.siteIds.isNotEmpty ? appState.siteIds.first : ''))
         .trim();
 
-    if (!mounted) return;
+    if (!mounted) return false;
     setState(() {
       _isLoading = true;
-      _loadError = null;
-      _loadErrorDetail = null;
+      if (clearStaleState || _pendingMatches.isEmpty) {
+        _loadError = null;
+        _loadErrorDetail = null;
+      }
     });
 
     try {
       if (siteId.isEmpty) {
-        if (!mounted) return;
-        setState(() => _pendingMatches = <_IdentityMatch>[]);
-        return;
+        if (!mounted) return false;
+        setState(() {
+          _pendingMatches = <_IdentityMatch>[];
+          _loadError = null;
+          _loadErrorDetail = null;
+        });
+        return true;
       }
 
       final List<dynamic> rows = widget.identityLoader != null
@@ -587,10 +651,15 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
         );
       }).toList();
 
-      if (!mounted) return;
-      setState(() => _pendingMatches = loaded);
+      if (!mounted) return false;
+      setState(() {
+        _pendingMatches = loaded;
+        _loadError = null;
+        _loadErrorDetail = null;
+      });
+      return true;
     } catch (error) {
-      if (!mounted) return;
+      if (!mounted) return false;
       setState(() {
         _loadError = _tSiteIdentity(
           context,
@@ -598,6 +667,7 @@ class _SiteIdentityPageState extends State<SiteIdentityPage> {
         );
         _loadErrorDetail = error.toString();
       });
+      return false;
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);

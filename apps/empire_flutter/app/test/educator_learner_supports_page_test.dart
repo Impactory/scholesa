@@ -356,6 +356,143 @@ void main() {
     expect(find.text('Flexible seating'), findsOneWidget);
   });
 
+  testWidgets('educator learner supports page re-reads persisted plan before settling success',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedLearner(firestore);
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final EducatorService educatorService = EducatorService(
+      firestoreService: firestoreService,
+      educatorId: 'educator-1',
+      siteId: 'site-1',
+    );
+    int supportPlanLoadCount = 0;
+
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      _buildHarness(
+        firestoreService: firestoreService,
+        educatorService: educatorService,
+        supportPlansLoader: (_, __) async {
+          supportPlanLoadCount += 1;
+          if (supportPlanLoadCount == 1) {
+            return <Map<String, dynamic>>[];
+          }
+          return <Map<String, dynamic>>[
+            <String, dynamic>{
+              'documentId': 'plan-1',
+              'learnerId': 'learner-1',
+              'supportType': 'Behavioral',
+              'accommodations': <String>['Visual checklist', 'Teacher conference'],
+              'notes': 'Persisted canonical support plan.',
+              'priority': 'medium',
+              'lastUpdated': Timestamp.fromDate(DateTime(2026, 3, 21, 10)),
+            },
+          ];
+        },
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Learner One').first);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Edit Plan'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(DropdownButtonFormField<String>).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Behavioral').last);
+    await tester.pumpAndSettle();
+
+    final Finder priorityField = find.byWidgetPredicate(
+      (Widget widget) =>
+          widget is DropdownButtonFormField &&
+          widget.decoration.labelText == 'Priority',
+    );
+    await tester.tap(priorityField);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Medium').last);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byType(TextField).at(0),
+      'Visual checklist, Flexible seating',
+    );
+    await tester.enterText(
+      find.byType(TextField).at(1),
+      'Local edited support plan pending verification.',
+    );
+
+    await tester.tap(find.text('Save').last);
+    await tester.pumpAndSettle();
+
+    expect(supportPlanLoadCount, 2);
+    expect(find.text('Support plan updated.'), findsOneWidget);
+    expect(find.text('Log Support Outcome'), findsOneWidget);
+    expect(find.text('Teacher conference'), findsOneWidget);
+    expect(find.text('Flexible seating'), findsNothing);
+  });
+
+  testWidgets('educator learner supports page fails closed when persisted reload fails after save',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedLearner(firestore);
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final EducatorService educatorService = EducatorService(
+      firestoreService: firestoreService,
+      educatorId: 'educator-1',
+      siteId: 'site-1',
+    );
+    int supportPlanLoadCount = 0;
+
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      _buildHarness(
+        firestoreService: firestoreService,
+        educatorService: educatorService,
+        supportPlansLoader: (_, __) async {
+          supportPlanLoadCount += 1;
+          if (supportPlanLoadCount == 1) {
+            return <Map<String, dynamic>>[];
+          }
+          throw StateError('persisted support plan reload unavailable');
+        },
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Learner One').first);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Edit Plan'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Save').last);
+    await tester.pumpAndSettle();
+
+    expect(supportPlanLoadCount, 2);
+    expect(find.text('Support plan updated.'), findsNothing);
+    expect(find.text('Log Support Outcome'), findsNothing);
+    expect(find.text('Edit Support Plan'), findsOneWidget);
+    expect(
+      find.text(
+        'Support plan was submitted, but persisted support data could not be reloaded. Retry to verify the current state.',
+      ),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('educator learner supports page fails closed when support plan save fails',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();

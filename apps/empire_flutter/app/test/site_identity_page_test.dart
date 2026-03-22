@@ -120,4 +120,117 @@ void main() {
     expect(find.text('Ava Stone'), findsOneWidget);
     expect(find.text('No pending identity matches to review'), findsNothing);
   });
+
+  testWidgets('site identity approve action re-reads authoritative queue before settling success',
+      (WidgetTester tester) async {
+    int loadCount = 0;
+    final List<Map<String, dynamic>> backendRows = <Map<String, dynamic>>[
+      <String, dynamic>{
+        'id': 'match-1',
+        'status': 'unmatched',
+        'scholesaUserName': 'Ava Stone',
+        'providerUserId': 'ava.stone@classroom.test',
+        'provider': 'google_classroom',
+        'confidence': 0.91,
+        'scholesaUserId': 'learner-1',
+      },
+    ];
+
+    await tester.pumpWidget(
+      _buildHarness(
+        SiteIdentityPage(
+          identityLoader: (String _) async {
+            loadCount += 1;
+            return backendRows
+                .map((Map<String, dynamic> row) => Map<String, dynamic>.from(row))
+                .toList(growable: false);
+          },
+          identityResolver: (
+            String id,
+            String _,
+            String decision,
+            String? __,
+          ) async {
+            expect(id, 'match-1');
+            expect(decision, 'link');
+            backendRows[0]['status'] = 'linked';
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ava Stone'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Approve Match'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(loadCount, 2);
+    expect(find.text('Ava Stone'), findsNothing);
+    expect(find.text('All Identities Resolved'), findsOneWidget);
+    expect(
+      find.text('Matched Ava Stone with ava.stone@classroom.test'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('site identity keeps stale queue visible when reload fails after approve',
+      (WidgetTester tester) async {
+    int loadCount = 0;
+
+    await tester.pumpWidget(
+      _buildHarness(
+        SiteIdentityPage(
+          identityLoader: (String _) async {
+            loadCount += 1;
+            if (loadCount == 1) {
+              return <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'id': 'match-1',
+                  'status': 'unmatched',
+                  'scholesaUserName': 'Ava Stone',
+                  'providerUserId': 'ava.stone@classroom.test',
+                  'provider': 'google_classroom',
+                  'confidence': 0.91,
+                  'scholesaUserId': 'learner-1',
+                },
+              ];
+            }
+            throw StateError('identity queue reload unavailable');
+          },
+          identityResolver: (
+            String id,
+            String _,
+            String decision,
+            String? __,
+          ) async {
+            expect(id, 'match-1');
+            expect(decision, 'link');
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Approve Match'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(loadCount, 2);
+    expect(find.text('Ava Stone'), findsOneWidget);
+    expect(find.text('All Identities Resolved'), findsNothing);
+    expect(
+      find.text(
+        'Unable to refresh identity matches right now. Showing the last successful data. Bad state: identity queue reload unavailable',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Match update was submitted, but the queue could not be reloaded. Retry to verify the current state.',
+      ),
+      findsOneWidget,
+    );
+  });
 }
