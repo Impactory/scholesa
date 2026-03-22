@@ -1,6 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:nested/nested.dart';
@@ -8,7 +10,9 @@ import 'package:provider/provider.dart';
 import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/modules/educator/educator_mission_review_page.dart';
 import 'package:scholesa_app/modules/missions/mission_service.dart';
+import 'package:scholesa_app/modules/missions/missions_page.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
+import 'package:scholesa_app/ui/theme/scholesa_theme.dart';
 
 class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
@@ -110,6 +114,20 @@ AppState _buildAppState() {
   return state;
 }
 
+AppState _buildLearnerState() {
+  final AppState state = AppState();
+  state.updateFromMeResponse(<String, dynamic>{
+    'userId': 'learner-1',
+    'email': 'learner-1@scholesa.test',
+    'displayName': 'Avery Chen',
+    'role': 'learner',
+    'activeSiteId': 'site-1',
+    'siteIds': <String>['site-1'],
+    'entitlements': const <dynamic>[],
+  });
+  return state;
+}
+
 MissionSubmission _submission() {
   return MissionSubmission(
     id: 'submission-1',
@@ -138,6 +156,144 @@ Widget _buildHarness(MissionService missionService) {
       home: const EducatorMissionReviewPage(),
     ),
   );
+}
+
+Widget _buildLearnerHarness({
+  required FirestoreService firestoreService,
+  required MissionService missionService,
+}) {
+  return MultiProvider(
+    providers: <SingleChildWidget>[
+      ChangeNotifierProvider<AppState>.value(value: _buildLearnerState()),
+      Provider<FirestoreService>.value(value: firestoreService),
+      ChangeNotifierProvider<MissionService>.value(value: missionService),
+    ],
+    child: MaterialApp(
+      theme: ScholesaTheme.light,
+      localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const <Locale>[
+        Locale('en'),
+        Locale('zh', 'CN'),
+        Locale('zh', 'TW'),
+      ],
+      home: const MissionsPage(),
+    ),
+  );
+}
+
+Future<void> _seedCompletedMissionReadyForReview(
+  FakeFirebaseFirestore firestore,
+) async {
+  await firestore.collection('users').doc('learner-1').set(
+    <String, dynamic>{
+      'displayName': 'Avery Chen',
+      'role': 'learner',
+      'siteIds': <String>['site-1'],
+    },
+  );
+  await firestore.collection('missionAssignments').doc('assignment-1').set(
+    <String, dynamic>{
+      'missionId': 'mission-1',
+      'learnerId': 'learner-1',
+      'siteId': 'site-1',
+      'status': 'in_progress',
+      'progress': 1.0,
+    },
+  );
+  await firestore.collection('missions').doc('mission-1').set(
+    <String, dynamic>{
+      'title': 'Mission ready for review',
+      'description': 'Capture proof of learning before review.',
+      'pillarCode': 'future_skills',
+      'difficulty': 'beginner',
+      'xpReward': 120,
+    },
+  );
+  await firestore
+      .collection('missions')
+      .doc('mission-1')
+      .collection('steps')
+      .doc('step-1')
+      .set(
+    <String, dynamic>{
+      'title': 'Prototype',
+      'order': 1,
+      'isCompleted': true,
+      'completedAt': '2026-03-18T10:00:00.000Z',
+    },
+  );
+}
+
+Future<String> _submitMissionForReview(
+  WidgetTester tester, {
+  required FirestoreService firestoreService,
+  required MissionService missionService,
+}) async {
+  await tester.pumpWidget(
+    _buildLearnerHarness(
+      firestoreService: firestoreService,
+      missionService: missionService,
+    ),
+  );
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 250));
+  await tester.pumpAndSettle();
+
+  await tester.tap(find.text('In Progress'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('Mission ready for review').first);
+  await tester.pumpAndSettle();
+
+  await tester.scrollUntilVisible(
+    find.text('No AI support used for this mission'),
+    200,
+    scrollable: find.byType(Scrollable).last,
+  );
+  await tester.tap(find.text('No AI support used for this mission'));
+  await tester.pumpAndSettle();
+  await tester.enterText(
+    find.widgetWithText(TextField, 'Explain-it-back summary'),
+    'I explained how the control loop reacts to sensor input.',
+  );
+  await tester.enterText(
+    find.widgetWithText(TextField, 'Oral check reflection'),
+    'I described the trade-off between speed and stability.',
+  );
+  await tester.enterText(
+    find.widgetWithText(TextField, 'Mini-rebuild plan'),
+    'I would rebuild the sensor branch first and retest the response.',
+  );
+  await tester.enterText(
+    find.widgetWithText(TextField, 'Version checkpoint summary'),
+    'Completed the working prototype before review.',
+  );
+
+  await tester.scrollUntilVisible(
+    find.text('Save Checkpoint'),
+    200,
+    scrollable: find.byType(Scrollable).last,
+  );
+  await tester.tap(find.text('Save Checkpoint'));
+  await tester.pump();
+  await tester.pumpAndSettle();
+
+  await tester.scrollUntilVisible(
+    find.text('Submit for Review'),
+    200,
+    scrollable: find.byType(Scrollable).last,
+  );
+  await tester.tap(find.text('Submit for Review'));
+  await tester.pump();
+  await tester.pumpAndSettle();
+
+  final QuerySnapshot<Map<String, dynamic>> attempts =
+      await firestoreService.firestore.collection('missionAttempts').get();
+  expect(attempts.docs, hasLength(1));
+  return attempts.docs.single.id;
 }
 
 Future<void> _pumpPage(
@@ -206,5 +362,84 @@ void main() {
     expect(find.text('Unable to submit review right now.'), findsOneWidget);
     expect(find.text('Mission approved!'), findsNothing);
     expect(find.text('Request Revision'), findsOneWidget);
+  });
+
+  testWidgets(
+      'educator mission review consumes learner-submitted canonical attempts from the live learner route',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedCompletedMissionReadyForReview(firestore);
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final MissionService learnerMissionService = MissionService(
+      firestoreService: firestoreService,
+      learnerId: 'learner-1',
+    );
+
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final String attemptId = await _submitMissionForReview(
+      tester,
+      firestoreService: firestoreService,
+      missionService: learnerMissionService,
+    );
+
+    final MissionService educatorMissionService = MissionService(
+      firestoreService: firestoreService,
+      learnerId: 'educator-1',
+    );
+
+    await tester.pumpWidget(_buildHarness(educatorMissionService));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Mission ready for review'), findsOneWidget);
+    expect(find.text('Avery Chen'), findsWidgets);
+
+    await tester.tap(find.text('Mission ready for review').first);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byType(TextField).last,
+      'Your explanation matches the prototype evidence. Keep tracing tradeoffs.',
+    );
+    await tester.scrollUntilVisible(
+      find.text('Approve'),
+      250,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.text('Approve'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    final DocumentSnapshot<Map<String, dynamic>> attemptDoc = await firestore
+        .collection('missionAttempts')
+        .doc(attemptId)
+        .get();
+    final DocumentSnapshot<Map<String, dynamic>> submissionDoc = await firestore
+        .collection('missionSubmissions')
+        .doc(attemptId)
+        .get();
+    final DocumentSnapshot<Map<String, dynamic>> assignmentDoc = await firestore
+        .collection('missionAssignments')
+        .doc('assignment-1')
+        .get();
+
+    expect(attemptDoc.data()?['reviewStatus'], 'approved');
+    expect(attemptDoc.data()?['status'], 'reviewed');
+    expect(
+      attemptDoc.data()?['feedback'],
+      'Your explanation matches the prototype evidence. Keep tracing tradeoffs.',
+    );
+    expect(submissionDoc.data()?['status'], 'approved');
+    expect(
+      assignmentDoc.data()?['reviewStatus'],
+      'approved',
+    );
+    expect(assignmentDoc.data()?['lastSubmissionId'], attemptId);
   });
 }
