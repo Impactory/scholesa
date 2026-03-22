@@ -196,6 +196,10 @@ Interpretation rule:
 106. Corrected BOS/MIA voice-runtime wording drift so the rewire plan no longer reads as if voice autonomy is unbounded. The doc now states explicitly that both text and voice learner help remain confidence-gated and escalate safely below the certified threshold.
 107. Corrected the RC3 readiness sign-off header so it records launch-blocking engineering closure and operational honesty, not blanket gold-ready or universally complete system certification.
 108. Corrected remaining stale analytics summary and telemetry-footer wording inside the historical analytics milestone docs. Those files no longer say `100%` or `wired end to end` without qualification when the current honesty gate still treats learner-growth and Passport/report evidence consumption as partial.
+109. Corrected the older analytics completion report so it now reads as a December 2025 prototype-era implementation snapshot rather than current proof of comprehensive analytics and end-to-end telemetry readiness.
+110. Corrected the SDT telemetry deployment guide's internal contradiction. It previously claimed `Production-ready` and `wired end to end` while separately admitting that aggregate deployment was missing and prototype shortcuts were in use; it now states the narrower historical prototype truth.
+111. Corrected the RC3 launch-readiness report so its headline status is scoped to launch-blocking engineering readiness, not a blanket capability-first gold-ready claim over the entire product.
+112. Corrected the blocker-remediation final status so it no longer implies all remaining work is optional while the operator-only manual browser big-bang cutover step is still explicitly pending in the handoff packet.
 
 ### Release and operations fixes
 

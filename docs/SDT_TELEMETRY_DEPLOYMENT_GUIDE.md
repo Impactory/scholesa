@@ -394,11 +394,11 @@ For issues during deployment:
 
 **Last updated:** December 2024  
 **Version:** 1.0  
-**Status:** Production-ready
+**Status:** Historical prototype framework; production deployment still requires real aggregates and current release-gate evidence
 
 <!-- TELEMETRY_WIRING:START -->
 ## Telemetry & End-to-End Wiring
-- Wired end-to-end: yes
+- Wired end-to-end: no for current honesty purposes (this guide itself notes missing aggregate deployment and prototype shortcuts)
 - Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
 - Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
 - Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`

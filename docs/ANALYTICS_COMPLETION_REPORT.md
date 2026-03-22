@@ -1,7 +1,9 @@
 # Analytics Dashboards & AI/Telemetry Integration - Completion Report
 
 **Date:** December 2025  
-**Status:** ✅ All Tasks Completed
+**Status:** Historical prototype milestone; not current proof of end-to-end analytics, learner-growth, or Passport/report readiness
+
+> Historical note: this report captures a December 2025 implementation wave. Current capability-first honesty status is governed by the March 2026 audit and gold-ready verification artifacts, not by this prototype-era completion wording.
 
 ## Executive Summary
 
@@ -399,7 +401,7 @@ Check `firestore.indexes.json` for composite indexes on:
 
 <!-- TELEMETRY_WIRING:START -->
 ## Telemetry & End-to-End Wiring
-- Wired end-to-end: yes
+- Wired end-to-end: no for current honesty purposes (prototype/mock aggregate era document; see current telemetry and gold-ready audit artifacts for supported live scope)
 - Canonical telemetry contract: `docs/infrastructure/telemetry/VIBE_TELEMETRY_AUDIT_MASTER.md`
 - Canonical events/spec: `docs/18_ANALYTICS_TELEMETRY_SPEC.md`
 - Validation gates: `npm run qa:vibe-telemetry:audit` and `npm run qa:vibe-telemetry:blockers`

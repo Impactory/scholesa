@@ -3,8 +3,10 @@
 
 **Date**: March 8, 2026  
 **Current Phase**: RC3 Release Candidate 3  
-**Overall Status**: 🟢 **PRODUCTION READY**  
+**Overall Status**: 🟢 **Launch-blocking engineering ready for RC3 cutover; not a blanket capability-first gold-ready certification**  
 **Confidence Level**: **HIGH**
+
+> Scope note: this document records RC3 launch readiness for the BOS/MIA and release-blocker remediation path. It does not supersede the later full workflow and capability-first gold gate, where core workflows still remain partial rather than universally end-to-end certified.
 
 ---
 
