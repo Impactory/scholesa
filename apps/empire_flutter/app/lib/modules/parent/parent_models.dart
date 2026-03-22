@@ -185,6 +185,14 @@ class PortfolioPreviewItem extends Equatable {
     this.verificationPrompt,
     this.proofOfLearningStatus,
     this.aiDisclosureStatus,
+    this.proofHasExplainItBack = false,
+    this.proofHasOralCheck = false,
+    this.proofHasMiniRebuild = false,
+    this.aiHasLearnerDisclosure = false,
+    this.aiLearnerDeclaredUsed = false,
+    this.aiHelpEventCount = 0,
+    this.aiHasExplainItBackEvidence = false,
+    this.aiHasEducatorAiFeedback = false,
   });
 
   final String id;
@@ -201,6 +209,14 @@ class PortfolioPreviewItem extends Equatable {
   final String? verificationPrompt;
   final String? proofOfLearningStatus;
   final String? aiDisclosureStatus;
+  final bool proofHasExplainItBack;
+  final bool proofHasOralCheck;
+  final bool proofHasMiniRebuild;
+  final bool aiHasLearnerDisclosure;
+  final bool aiLearnerDeclaredUsed;
+  final int aiHelpEventCount;
+  final bool aiHasExplainItBackEvidence;
+  final bool aiHasEducatorAiFeedback;
 
   @override
   List<Object?> get props => <Object?>[
@@ -218,6 +234,14 @@ class PortfolioPreviewItem extends Equatable {
         verificationPrompt,
         proofOfLearningStatus,
         aiDisclosureStatus,
+        proofHasExplainItBack,
+        proofHasOralCheck,
+        proofHasMiniRebuild,
+        aiHasLearnerDisclosure,
+        aiLearnerDeclaredUsed,
+        aiHelpEventCount,
+        aiHasExplainItBackEvidence,
+        aiHasEducatorAiFeedback,
       ];
 }
 
@@ -273,6 +297,14 @@ class PassportClaim extends Equatable {
     this.aiDisclosureStatus,
     this.latestEvidenceAt,
     this.verificationStatus,
+    this.proofHasExplainItBack = false,
+    this.proofHasOralCheck = false,
+    this.proofHasMiniRebuild = false,
+    this.aiHasLearnerDisclosure = false,
+    this.aiLearnerDeclaredUsed = false,
+    this.aiHelpEventCount = 0,
+    this.aiHasExplainItBackEvidence = false,
+    this.aiHasEducatorAiFeedback = false,
   });
 
   final String capabilityId;
@@ -288,6 +320,14 @@ class PassportClaim extends Equatable {
   final String? aiDisclosureStatus;
   final DateTime? latestEvidenceAt;
   final String? verificationStatus;
+  final bool proofHasExplainItBack;
+  final bool proofHasOralCheck;
+  final bool proofHasMiniRebuild;
+  final bool aiHasLearnerDisclosure;
+  final bool aiLearnerDeclaredUsed;
+  final int aiHelpEventCount;
+  final bool aiHasExplainItBackEvidence;
+  final bool aiHasEducatorAiFeedback;
 
   @override
   List<Object?> get props => <Object?>[
@@ -304,6 +344,14 @@ class PassportClaim extends Equatable {
         aiDisclosureStatus,
         latestEvidenceAt,
         verificationStatus,
+        proofHasExplainItBack,
+        proofHasOralCheck,
+        proofHasMiniRebuild,
+        aiHasLearnerDisclosure,
+        aiLearnerDeclaredUsed,
+        aiHelpEventCount,
+        aiHasExplainItBackEvidence,
+        aiHasEducatorAiFeedback,
       ];
 }
 

@@ -1014,6 +1014,15 @@ class ParentService extends ChangeNotifier {
             : _asTrimmedString(row['verificationPrompt']),
         proofOfLearningStatus: proofOfLearningStatus,
         aiDisclosureStatus: aiDisclosureStatus,
+        proofHasExplainItBack: hasExplainItBack,
+        proofHasOralCheck: hasOralCheck,
+        proofHasMiniRebuild: hasMiniRebuild,
+        aiHasLearnerDisclosure: hasLearnerAiDisclosure,
+        aiLearnerDeclaredUsed: learnerAiDeclaredUsed,
+        aiHelpEventCount: learnerAiEventCount,
+        aiHasExplainItBackEvidence:
+            hasExplainItBack || hasLearnerExplainBackEvent,
+        aiHasEducatorAiFeedback: hasAiFeedbackSignal,
       );
     }).toList(growable: false);
     items.sort((PortfolioPreviewItem a, PortfolioPreviewItem b) =>
@@ -1071,7 +1080,7 @@ class ParentService extends ChangeNotifier {
       generatedAt: DateTime.now(),
       summary: claims.isEmpty
           ? 'No verified capability claims are available yet.'
-          : '${claims.length} capability claims are backed by reviewed evidence and verified artifacts.',
+          : '${claims.length} capability claims are backed by reviewed evidence and reviewed or verified artifacts.',
       claims: claims,
     );
   }
@@ -1286,6 +1295,15 @@ class ParentService extends ChangeNotifier {
               : matchingEvidence.isNotEmpty
                   ? 'captured'
                   : null,
+          proofHasExplainItBack: hasExplainItBack,
+          proofHasOralCheck: hasOralCheck,
+          proofHasMiniRebuild: hasMiniRebuild,
+          aiHasLearnerDisclosure: hasLearnerAiDisclosure,
+          aiLearnerDeclaredUsed: learnerAiDeclaredUsed,
+          aiHelpEventCount: learnerAiEventCount,
+          aiHasExplainItBackEvidence:
+              hasExplainItBack || hasLearnerExplainBackEvent,
+          aiHasEducatorAiFeedback: hasAiFeedbackSignal,
         ),
       );
     }

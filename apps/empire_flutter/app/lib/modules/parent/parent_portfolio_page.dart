@@ -749,6 +749,27 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
               Text(item.verificationPrompt!,
                   style: const TextStyle(fontSize: 14)),
             ],
+            if (_buildProofDetail(item).isNotEmpty) ...<Widget>[
+              const SizedBox(height: 16),
+              Text(
+                _t('Proof Detail'),
+                style:
+                    const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 8),
+              Text(_buildProofDetail(item),
+                  style: const TextStyle(fontSize: 14)),
+            ],
+            if (_buildAiDetail(item).isNotEmpty) ...<Widget>[
+              const SizedBox(height: 16),
+              Text(
+                _t('AI Detail'),
+                style:
+                    const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 8),
+              Text(_buildAiDetail(item), style: const TextStyle(fontSize: 14)),
+            ],
             const SizedBox(height: 24),
             LayoutBuilder(
               builder: (BuildContext context, BoxConstraints constraints) {
@@ -979,7 +1000,11 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
       '${_t('Evidence Linked')}: ${item.evidenceLinked ? _t('Yes') : _t('No')}',
       '${_t('Verification Status')}: ${item.verificationStatus?.trim().isNotEmpty == true ? _titleCaseBand(item.verificationStatus!) : _t('Pending')}',
       '${_t('Proof of Learning')}: ${_formatProofStatus(item.proofOfLearningStatus)}',
+      if (_buildProofDetail(item).isNotEmpty)
+        '${_t('Proof Detail')}: ${_buildProofDetail(item)}',
       '${_t('AI Disclosure')}: ${_formatAiDisclosure(item.aiDisclosureStatus)}',
+      if (_buildAiDetail(item).isNotEmpty)
+        '${_t('AI Detail')}: ${_buildAiDetail(item)}',
       if (item.capabilityTitles.isNotEmpty)
         '${_t('Capability Evidence')}: ${item.capabilityTitles.join(', ')}',
       if (item.verificationPrompt?.trim().isNotEmpty == true)
@@ -1017,6 +1042,14 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
             verificationPrompt: item.verificationPrompt,
             proofOfLearningStatus: item.proofOfLearningStatus,
             aiDisclosureStatus: item.aiDisclosureStatus,
+            proofHasExplainItBack: item.proofHasExplainItBack,
+            proofHasOralCheck: item.proofHasOralCheck,
+            proofHasMiniRebuild: item.proofHasMiniRebuild,
+            aiHasLearnerDisclosure: item.aiHasLearnerDisclosure,
+            aiLearnerDeclaredUsed: item.aiLearnerDeclaredUsed,
+            aiHelpEventCount: item.aiHelpEventCount,
+            aiHasExplainItBackEvidence: item.aiHasExplainItBackEvidence,
+            aiHasEducatorAiFeedback: item.aiHasEducatorAiFeedback,
           ),
         );
       }
@@ -1074,6 +1107,37 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
       default:
         return _t('AI status unknown');
     }
+  }
+
+  String _buildProofDetail(_PortfolioItem item) {
+    if (!item.proofHasExplainItBack &&
+        !item.proofHasOralCheck &&
+        !item.proofHasMiniRebuild) {
+      return '';
+    }
+    return <String>[
+      '${_t('Explain-it-back')}: ${item.proofHasExplainItBack ? _t('Yes') : _t('No')}',
+      '${_t('Oral check')}: ${item.proofHasOralCheck ? _t('Yes') : _t('No')}',
+      '${_t('Mini-rebuild')}: ${item.proofHasMiniRebuild ? _t('Yes') : _t('No')}',
+    ].join(' • ');
+  }
+
+  String _buildAiDetail(_PortfolioItem item) {
+    final bool hasAnyAiDetail = item.aiHasLearnerDisclosure ||
+        item.aiHelpEventCount > 0 ||
+        item.aiHasEducatorAiFeedback ||
+        item.aiHasExplainItBackEvidence;
+    if (!hasAnyAiDetail) {
+      return '';
+    }
+    return <String>[
+      '${_t('Learner disclosure')}: ${item.aiHasLearnerDisclosure ? _t('Present') : _t('Not recorded')}',
+      '${_t('Learner said AI used')}: ${item.aiLearnerDeclaredUsed ? _t('Yes') : _t('No')}',
+      '${_t('Explain-it-back evidence')}: ${item.aiHasExplainItBackEvidence ? _t('Yes') : _t('No')}',
+      '${_t('AI help events')}: ${item.aiHelpEventCount}',
+      if (item.aiHasEducatorAiFeedback)
+        '${_t('Educator AI feedback')}: ${_t('Present')}',
+    ].join(' • ');
   }
 
   Color _getBandColor(String value) {
@@ -1236,6 +1300,14 @@ class _PortfolioItem {
     this.verificationPrompt,
     this.proofOfLearningStatus,
     this.aiDisclosureStatus,
+    this.proofHasExplainItBack = false,
+    this.proofHasOralCheck = false,
+    this.proofHasMiniRebuild = false,
+    this.aiHasLearnerDisclosure = false,
+    this.aiLearnerDeclaredUsed = false,
+    this.aiHelpEventCount = 0,
+    this.aiHasExplainItBackEvidence = false,
+    this.aiHasEducatorAiFeedback = false,
   });
 
   final String id;
@@ -1253,4 +1325,12 @@ class _PortfolioItem {
   final String? verificationPrompt;
   final String? proofOfLearningStatus;
   final String? aiDisclosureStatus;
+  final bool proofHasExplainItBack;
+  final bool proofHasOralCheck;
+  final bool proofHasMiniRebuild;
+  final bool aiHasLearnerDisclosure;
+  final bool aiLearnerDeclaredUsed;
+  final int aiHelpEventCount;
+  final bool aiHasExplainItBackEvidence;
+  final bool aiHasEducatorAiFeedback;
 }

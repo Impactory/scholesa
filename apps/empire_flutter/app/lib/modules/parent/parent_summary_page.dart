@@ -565,7 +565,7 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
               icon: Icons.fact_check_rounded,
               label: _t('What evidence proves it?'),
               value:
-                  '${learner.evidenceSummary.reviewedCount} ${_t('reviewed observations')}, ${learner.portfolioSnapshot.verifiedArtifactCount} ${_t('reviewed or verified artifacts')}, ${learner.ideationPassport.reflectionsSubmitted} ${_t('reflections')}',
+                  '${learner.evidenceSummary.reviewedCount} ${_t('reviewed observations')}, ${learner.portfolioSnapshot.verifiedArtifactCount} ${_t('reviewed or verified artifacts')}, ${learner.ideationPassport.reflectionsSubmitted} ${_t('reflections')}${learner.evidenceSummary.verificationPromptCount > 0 ? ', ${learner.evidenceSummary.verificationPromptCount} ${_t('verification prompts pending')}' : ''}',
             ),
             const SizedBox(height: 12),
             _FamilyAnswerRow(

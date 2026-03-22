@@ -214,6 +214,8 @@ Interpretation rule:
 124. Corrected the family summary evidence-and-growth answer block so attendance is no longer presented as part of the answer to `How are they growing?`; growth is now described with capability updates, average level, and latest growth timing while attendance remains a separate participation metric.
 125. Corrected the parent portfolio AI-guidance entry copy so it now discloses that the guidance is experimental and does not replace the learner evidence record.
 126. Corrected parent child detail and Passport fallback copy so those surfaces now describe currently linked evidence and reviewed artifacts rather than stronger blanket `verified artifacts` wording.
+127. Reduced parent provenance collapse by threading proof-of-learning component facts and AI-disclosure component facts through the parent models, portfolio detail sheet, portfolio export, Passport cards, and Passport export instead of showing only a single collapsed enum label.
+128. Corrected the family summary evidence answer so pending verification prompts are now visible directly in the evidence summary instead of remaining implicit behind a count-only next-step message.
 
 ### Release and operations fixes
 

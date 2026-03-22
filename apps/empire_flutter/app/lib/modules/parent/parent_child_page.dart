@@ -565,6 +565,26 @@ class _ParentChildPageState extends State<ParentChildPage> {
                           fontSize: 12,
                         ),
                       ),
+                      if (_buildProofDetail(claim).isNotEmpty) ...<Widget>[
+                        const SizedBox(height: 6),
+                        Text(
+                          _buildProofDetail(claim),
+                          style: const TextStyle(
+                            color: ScholesaColors.textSecondary,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                      if (_buildAiDetail(claim).isNotEmpty) ...<Widget>[
+                        const SizedBox(height: 4),
+                        Text(
+                          _buildAiDetail(claim),
+                          style: const TextStyle(
+                            color: ScholesaColors.textSecondary,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
                       if (claim.evidenceRecordIds.isNotEmpty ||
                           claim.portfolioItemIds.isNotEmpty) ...<Widget>[
                         const SizedBox(height: 8),
@@ -674,9 +694,15 @@ class _ParentChildPageState extends State<ParentChildPage> {
       lines.add(
         '  ${_t('Proof of Learning')}: ${_titleCase(claim.proofOfLearningStatus ?? 'missing')}',
       );
+      if (_buildProofDetail(claim).isNotEmpty) {
+        lines.add('  ${_t('Proof Detail')}: ${_buildProofDetail(claim)}');
+      }
       lines.add(
         '  ${_t('AI Disclosure')}: ${_formatAiDisclosure(claim.aiDisclosureStatus)}',
       );
+      if (_buildAiDetail(claim).isNotEmpty) {
+        lines.add('  ${_t('AI Detail')}: ${_buildAiDetail(claim)}');
+      }
       if (claim.latestEvidenceAt != null) {
         lines.add(
           '  ${_t('Latest Evidence At')}: ${claim.latestEvidenceAt!.toIso8601String()}',
@@ -852,6 +878,37 @@ class _ParentChildPageState extends State<ParentChildPage> {
             ? part
             : '${part[0].toUpperCase()}${part.substring(1).toLowerCase()}')
         .join(' ');
+  }
+
+  String _buildProofDetail(PassportClaim claim) {
+    if (!claim.proofHasExplainItBack &&
+        !claim.proofHasOralCheck &&
+        !claim.proofHasMiniRebuild) {
+      return '';
+    }
+    return <String>[
+      '${_t('Explain-it-back')}: ${claim.proofHasExplainItBack ? _t('Yes') : _t('No')}',
+      '${_t('Oral check')}: ${claim.proofHasOralCheck ? _t('Yes') : _t('No')}',
+      '${_t('Mini-rebuild')}: ${claim.proofHasMiniRebuild ? _t('Yes') : _t('No')}',
+    ].join(' • ');
+  }
+
+  String _buildAiDetail(PassportClaim claim) {
+    final bool hasAnyAiDetail = claim.aiHasLearnerDisclosure ||
+        claim.aiHelpEventCount > 0 ||
+        claim.aiHasEducatorAiFeedback ||
+        claim.aiHasExplainItBackEvidence;
+    if (!hasAnyAiDetail) {
+      return '';
+    }
+    return <String>[
+      '${_t('Learner disclosure')}: ${claim.aiHasLearnerDisclosure ? _t('Present') : _t('Not recorded')}',
+      '${_t('Learner said AI used')}: ${claim.aiLearnerDeclaredUsed ? _t('Yes') : _t('No')}',
+      '${_t('Explain-it-back evidence')}: ${claim.aiHasExplainItBackEvidence ? _t('Yes') : _t('No')}',
+      '${_t('AI help events')}: ${claim.aiHelpEventCount}',
+      if (claim.aiHasEducatorAiFeedback)
+        '${_t('Educator AI feedback')}: ${_t('Present')}',
+    ].join(' • ');
   }
 
   String _formatAiDisclosure(String? value) {
