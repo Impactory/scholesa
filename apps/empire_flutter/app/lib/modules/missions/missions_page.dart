@@ -128,7 +128,10 @@ class _MissionsPageState extends State<MissionsPage>
                       ),
                 ),
                 Text(
-                  _tMissions(context, 'Learn, grow, and level up!'),
+                  _tMissions(
+                    context,
+                    'Track your engagement while educator-reviewed evidence builds your real growth record.',
+                  ),
                   style:
                       TextStyle(color: context.schTextSecondary, fontSize: 14),
                 ),
@@ -252,6 +255,19 @@ class _MissionsPageState extends State<MissionsPage>
                     label: _tMissions(context, 'Active'),
                   ),
                 ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                _tMissions(
+                  context,
+                  'XP, levels, and streaks show activity. Capability growth comes from reviewed evidence and rubric feedback.',
+                ),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.85),
+                  fontSize: 12,
+                  height: 1.3,
+                ),
               ),
             ],
           ),
@@ -775,14 +791,14 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
       TextEditingController();
   final TextEditingController _oralCheckController = TextEditingController();
   final TextEditingController _miniRebuildController = TextEditingController();
-    final TextEditingController _aiDisclosureController = TextEditingController();
+  final TextEditingController _aiDisclosureController = TextEditingController();
   final TextEditingController _checkpointSummaryController =
       TextEditingController();
   final TextEditingController _checkpointArtifactController =
       TextEditingController();
   List<MissionProofCheckpoint> _versionHistory =
       const <MissionProofCheckpoint>[];
-    bool? _aiAssistanceUsed;
+  bool? _aiAssistanceUsed;
 
   bool get _keyboardOnlyEnabled =>
       _learnerProfile?.keyboardOnlyEnabled ?? false;
@@ -1005,7 +1021,8 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
                 _aiDisclosureController.clear();
               });
             },
-            title: Text(_tMissions(context, 'No AI support used for this mission')),
+            title: Text(
+                _tMissions(context, 'No AI support used for this mission')),
             contentPadding: EdgeInsets.zero,
           ),
           RadioListTile<bool>(
@@ -1016,7 +1033,8 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
                 _aiAssistanceUsed = value;
               });
             },
-            title: Text(_tMissions(context, 'AI supported part of this mission')),
+            title:
+                Text(_tMissions(context, 'AI supported part of this mission')),
             subtitle: Text(
               _tMissions(
                 context,

@@ -1510,7 +1510,11 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
                 color: ScholesaColors.learner,
               ),
               title: Text(_t('Reflect on Progress')),
-              subtitle: Text(_t('Get AI insights on your achievements')),
+              subtitle: Text(
+                _t(
+                  'Get experimental AI insights on your achievements. These notes do not replace your evidence record.',
+                ),
+              ),
               trailing: IconButton(
                 icon: Icon(
                   _showAiCoach ? Icons.expand_less : Icons.expand_more,

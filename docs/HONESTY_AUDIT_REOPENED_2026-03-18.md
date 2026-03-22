@@ -207,6 +207,9 @@ Interpretation rule:
 117. Corrected Passport/report wording drift where the gold-ready verification artifact still said `verified portfolio artifacts` even though the current chain is better described as reviewed artifacts with rubric-linked provenance when available.
 118. Corrected the historical analytics completion report's SDT coverage line so the `7/9` coverage figure no longer reads like a broader learner-growth or Passport/report completeness claim.
 119. Corrected live learner credential and learner portfolio badge views so they now tell the learner the honest scope of those surfaces: issued credential records are shown, but evidence, rubric, and growth links are not yet displayed in those views.
+120. Corrected the last unscoped release summary lines in the March 3 deployment and RC3 sign-off artifacts so `all systems operational` and `production-ready` now stay explicitly bounded to RC3 launch-blocking scope rather than sounding like blanket capability-first certification.
+121. Corrected the learner portfolio AI-coach entry copy so it now discloses that the AI reflection note is experimental and does not replace the learner's evidence record.
+122. Corrected the missions progress card so XP, levels, and streaks are explicitly framed as engagement metrics, while capability growth is tied to reviewed evidence and rubric feedback.
 
 ### Release and operations fixes
 

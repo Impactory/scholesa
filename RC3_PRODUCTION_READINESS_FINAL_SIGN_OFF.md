@@ -67,7 +67,7 @@
 
 Decision read:
 
-- Engineering state is green and production-ready.
+- Engineering state is green and production-ready for RC3 launch-blocking scope, not as a blanket capability-first gold-ready certification.
 - No mocked or fake runtime dependency remains in the active RC3 release path.
 - Remaining gap is the manual six-role browser cutover, not an unresolved engineering blocker.
 
