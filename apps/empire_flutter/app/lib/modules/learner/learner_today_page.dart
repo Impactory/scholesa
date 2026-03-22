@@ -160,273 +160,264 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
 
   Widget _buildHeader() {
     final ColorScheme scheme = Theme.of(context).colorScheme;
-    return SafeArea(
-      bottom: false,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Row(
-          children: <Widget>[
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: <Color>[ScholesaColors.learner, Color(0xFF059669)],
-                ),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: <BoxShadow>[
-                  BoxShadow(
-                    color: ScholesaColors.learner.withValues(alpha: 0.3),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: const Icon(Icons.wb_sunny, color: Colors.white, size: 28),
-            ),
-            const SizedBox(width: 16),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  _getGreeting(),
-                  style: TextStyle(
-                    color: scheme.onSurfaceVariant,
-                    child: LayoutBuilder(
-                      builder: (BuildContext context, BoxConstraints constraints) {
-                        final bool compactHeader = constraints.maxWidth < 420;
 
-                        final Widget identityBlock = Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: <Widget>[
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: <Color>[
-                                    ScholesaColors.learner,
-                                    Color(0xFF059669),
-                                  ],
-                                ),
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: <BoxShadow>[
-                                  BoxShadow(
-                                    color: ScholesaColors.learner.withValues(alpha: 0.3),
-                                    blurRadius: 12,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                              child: const Icon(
-                                Icons.wb_sunny,
-                                color: Colors.white,
-                                size: 28,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: <Widget>[
-                                Text(
-                                  _getGreeting(),
-                                  style: TextStyle(
-                                    color: scheme.onSurfaceVariant,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                Text(
-                                  _t('Today'),
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .headlineSmall
-                                      ?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color: scheme.onSurface,
-                                      ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        );
-
-                        final Widget notificationsAction = Consumer<MessageService>(
-                          builder: (BuildContext context, MessageService service, _) {
-                            final int unreadCount = service.unreadNotificationCount;
-                            return IconButton(
-                              onPressed: () {
-                                TelemetryService.instance.logEvent(
-                                  event: 'cta.clicked',
-                                  metadata: <String, dynamic>{
-                                    'cta': 'learner_today_open_notifications',
-                                    'unread_count': unreadCount,
-                                  },
-                                );
-                                context.push('/notifications');
-                              },
-                              icon: Stack(
-                                clipBehavior: Clip.none,
-                                children: <Widget>[
-                                  Icon(
-                                    unreadCount > 0
-                                        ? Icons.notifications_active_rounded
-                                        : Icons.notifications_outlined,
-                                    color: context.schTextSecondary,
-                                    size: 28,
-                                  ),
-                                  if (unreadCount > 0)
-                                    Positioned(
-                                      right: -6,
-                                      top: -4,
-                                      child: Container(
-                                        constraints: const BoxConstraints(
-                                          minWidth: 18,
-                                          minHeight: 18,
-                                        ),
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 5,
-                                          vertical: 2,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: ScholesaColors.error,
-                                          borderRadius: BorderRadius.circular(10),
-                                        ),
-                                        child: Text(
-                                          unreadCount > 99 ? '99+' : '$unreadCount',
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                          textAlign: TextAlign.center,
-                                        ),
-            ),
-          BoxShadow(
-                                ],
-            blurRadius: 20,
-                            );
-                          },
-                        );
-
-                        final Widget sessionAction = SessionMenuHeaderAction(
-                          foregroundColor: scheme.onSurface,
-                        );
-
-                        if (compactHeader) {
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: <Widget>[
-                                  Expanded(child: identityBlock),
-                                  const SizedBox(width: 12),
-                                  Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: <Widget>[
-                                      notificationsAction,
-                                      const SizedBox(width: 4),
-                                      sessionAction,
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ],
-                          );
-                        }
-
-                        return Row(
-                          children: <Widget>[
-                            Expanded(child: identityBlock),
-                            notificationsAction,
-                            const SizedBox(width: 4),
-                            sessionAction,
-                          ],
-                        );
-                      },
-      child: Stack(
+    Widget buildIdentityBlock() {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: <Color>[
-                    Colors.black.withValues(alpha: 0.08),
-                    Colors.black.withValues(alpha: 0.18),
-                  ],
-                ),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: <Color>[ScholesaColors.learner, Color(0xFF059669)],
               ),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: <BoxShadow>[
+                BoxShadow(
+                  color: ScholesaColors.learner.withValues(alpha: 0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
+            child: const Icon(Icons.wb_sunny, color: Colors.white, size: 28),
           ),
-          Row(
+          const SizedBox(width: 16),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      _t('🌟 Keep Going!'),
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _t(
-                        "You're making amazing progress. Complete today's habits to maintain your streak!",
-                      ),
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.96),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
+              Text(
+                _getGreeting(),
+                style: TextStyle(
+                  color: scheme.onSurfaceVariant,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
-              const SizedBox(width: 16),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.22),
-                  borderRadius: BorderRadius.circular(16),
-                  border:
-                      Border.all(color: Colors.white.withValues(alpha: 0.34)),
-                ),
-                child: Consumer<HabitService>(
-                  builder: (BuildContext context, HabitService service, _) {
-                    return Column(
-                      children: <Widget>[
-                        const Text(
-                          '🔥',
-                          style: TextStyle(fontSize: 32),
-                        ),
-                        Text(
-                          '${service.totalStreak}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          _t('day streak'),
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.88),
-                            fontSize: 11,
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
+              Text(
+                _t('Today'),
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: scheme.onSurface,
+                    ),
               ),
             ],
           ),
         ],
+      );
+    }
+
+    Widget buildNotificationsAction() {
+      return Consumer<MessageService>(
+        builder: (BuildContext context, MessageService service, _) {
+          final int unreadCount = service.unreadNotificationCount;
+          return IconButton(
+            onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'cta': 'learner_today_open_notifications',
+                  'unread_count': unreadCount,
+                },
+              );
+              context.push('/notifications');
+            },
+            icon: Stack(
+              clipBehavior: Clip.none,
+              children: <Widget>[
+                Icon(
+                  unreadCount > 0
+                      ? Icons.notifications_active_rounded
+                      : Icons.notifications_outlined,
+                  color: context.schTextSecondary,
+                  size: 28,
+                ),
+                if (unreadCount > 0)
+                  Positioned(
+                    right: -6,
+                    top: -4,
+                    child: Container(
+                      constraints: const BoxConstraints(
+                        minWidth: 18,
+                        minHeight: 18,
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: ScholesaColors.error,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        unreadCount > 99 ? '99+' : '$unreadCount',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          );
+        },
+      );
+    }
+
+    final Widget sessionAction = SessionMenuHeaderAction(
+      foregroundColor: scheme.onSurface,
+    );
+
+    return SafeArea(
+      bottom: false,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: LayoutBuilder(
+          builder: (BuildContext context, BoxConstraints constraints) {
+            final bool compactHeader = constraints.maxWidth < 420;
+            final Widget identityBlock = buildIdentityBlock();
+            final Widget notificationsAction = buildNotificationsAction();
+
+            if (compactHeader) {
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Expanded(child: identityBlock),
+                  const SizedBox(width: 12),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      notificationsAction,
+                      const SizedBox(width: 4),
+                      sessionAction,
+                    ],
+                  ),
+                ],
+              );
+            }
+
+            return Row(
+              children: <Widget>[
+                Expanded(child: identityBlock),
+                notificationsAction,
+                const SizedBox(width: 4),
+                sessionAction,
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGreetingCard() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: <Color>[Color(0xFF10B981), Color(0xFF047857)],
+          ),
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: <BoxShadow>[
+            BoxShadow(
+              color: const Color(0xFF10B981).withValues(alpha: 0.25),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Stack(
+          children: <Widget>[
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: <Color>[
+                      Colors.black.withValues(alpha: 0.08),
+                      Colors.black.withValues(alpha: 0.18),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        _t('🌟 Keep Going!'),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _t(
+                          "You're making amazing progress. Complete today's habits to maintain your streak!",
+                        ),
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.96),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.22),
+                    borderRadius: BorderRadius.circular(16),
+                    border:
+                        Border.all(color: Colors.white.withValues(alpha: 0.34)),
+                  ),
+                  child: Consumer<HabitService>(
+                    builder: (BuildContext context, HabitService service, _) {
+                      return Column(
+                        children: <Widget>[
+                          const Text(
+                            '🔥',
+                            style: TextStyle(fontSize: 32),
+                          ),
+                          Text(
+                            '${service.totalStreak}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            _t('day streak'),
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.88),
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
