@@ -49,11 +49,11 @@ If any of these are missing, the feature remains partial.
 - Interleaving implementation beyond content structure.
 - Accessibility completeness, especially keyboard-only, drag alternatives, and formal WCAG gate automation.
 - Educator authoring, rubric-driven grading, messaging, analytics dashboards, and selected operations modules.
-- Google Classroom and GitHub integration surfaces with incomplete backend wiring.
+- GitHub integration surfaces remain less complete than the other shipped education-system integrations.
 
 ### 3.3 Missing or explicitly future-state
 
-- LTI 1.3, grade passback, Clever/ClassLink sync, and enterprise SAML/OIDC.
+- Clever/ClassLink sync and broader district-provider rollout beyond governed scaffolding.
 - SEP-based hallucination detection and a true keystroke/pointer FDM implementation.
 - Federated learning and gradient aggregation infrastructure.
 - Full live session mode with polls, cold-calls, exit tickets, and misconception alerting.
@@ -66,7 +66,7 @@ These blockers must be resolved at the planning layer before implementation clai
 | --- | --- | --- |
 | Source feature file mixes shipped and future-state items | Causes false confidence and unclear release scope | Every item in the March 12 file must be marked as `shipped`, `partial`, `planned`, or `deferred` in traceability updates |
 | Historical PostHog/Segment wording in early feature drafts | Current compliance posture bans ad-tech style vendor analytics paths, and the source contract now uses internal telemetry capture plus warehouse-friendly export posture | Keep vendor capture unapproved unless governance explicitly changes; treat internal telemetry as the satisfied implementation contract |
-| SAML/OIDC listed as baseline security | Current codebase supports Firebase auth baseline, not enterprise SSO parity | Split into a dedicated enterprise auth workstream with separate acceptance gates |
+| SAML/OIDC listed as baseline security | This was previously a planning mismatch; enterprise SSO is now implemented as a dedicated workstream with separate acceptance evidence | Keep the requirement tied to its dedicated proof and avoid folding it back into baseline-auth assumptions |
 | Federated learning listed as moat | Only a bounded backend prototype slice exists; no device runtime, aggregation infrastructure, approvals, or pilot evidence exist yet | Keep the item partial and pre-pilot until the architecture brief, privacy review, sign-off materials, runtime code, and broader tests are all real and approved |
 | WCAG 2.2 AA stated as global fact | Current repo has accessibility intent but not full automated enforcement | Add automated accessibility gates before claiming compliance completeness |
 | Optional live session mode listed inside core educator features | Optional items cannot be counted toward mandatory release completion | Keep as a separate workstream, not a blocker for core platform completion |
@@ -180,10 +180,10 @@ Work items:
 
 | Area | Current gap | Required implementation |
 | --- | --- | --- |
-| Google Classroom | Partial surface, incomplete backend wiring | Finish OAuth, sync jobs, course mapping, submission sync, and educator/admin controls |
-| SAML and OIDC | Not implemented as enterprise auth parity | Implement identity provider configuration, role mapping, JIT provisioning, logout, and audit trails |
-| LTI 1.3 | No implementation found | Build launch, deep linking, roster or line item handling, and assignment return workflows |
-| Grade passback | Not implemented | Add grade sync contract and retry-safe export jobs with audit logs |
+| Google Classroom | Canonical first-wave implementation is now evidenced | Maintain auth, sync, telemetry, and audit coverage if scope expands beyond the current shipped contract |
+| SAML and OIDC | Canonical enterprise SSO path is now evidenced | Maintain provider governance, role/site mapping, logout, and audit coverage if enterprise scope expands |
+| LTI 1.3 | Canonical launch handling is now evidenced | Maintain launch verification, resource-link mapping, and audit coverage if scope expands |
+| Grade passback | Retry-safe queueing is now evidenced through the LTI workstream | Maintain grade sync idempotency, auditability, and failure handling if downstream delivery scope expands |
 | SIS CSV | Mentioned but not complete | Implement robust import validation, preview, error reporting, and audit evidence |
 | Clever and ClassLink | Planned only | Keep deferred unless a full integration charter is approved |
 
