@@ -122,6 +122,9 @@ class GrowthTimelineEntry extends Equatable {
     required this.title,
     required this.pillar,
     required this.level,
+    this.linkedEvidenceRecordIds = const [],
+    this.linkedPortfolioItemIds = const [],
+    this.proofOfLearningStatus,
     this.occurredAt,
     this.reviewingEducatorName,
     this.rubricRawScore,
@@ -133,6 +136,9 @@ class GrowthTimelineEntry extends Equatable {
   final String title;
   final String pillar;
   final int level;
+  final List<String> linkedEvidenceRecordIds;
+  final List<String> linkedPortfolioItemIds;
+  final String? proofOfLearningStatus;
   final DateTime? occurredAt;
   final String? reviewingEducatorName;
   final int? rubricRawScore;
@@ -145,6 +151,9 @@ class GrowthTimelineEntry extends Equatable {
         title,
         pillar,
         level,
+        linkedEvidenceRecordIds,
+        linkedPortfolioItemIds,
+        proofOfLearningStatus,
         occurredAt,
         reviewingEducatorName,
         rubricRawScore,
@@ -158,12 +167,16 @@ class ProofCheckpointPreview extends Equatable {
     required this.id,
     required this.summary,
     this.artifactNote,
+    this.actorId,
+    this.actorRole,
     this.createdAt,
   });
 
   final String id;
   final String summary;
   final String? artifactNote;
+  final String? actorId;
+  final String? actorRole;
   final DateTime? createdAt;
 
   @override
@@ -171,6 +184,8 @@ class ProofCheckpointPreview extends Equatable {
         id,
         summary,
         artifactNote,
+        actorId,
+        actorRole,
         createdAt,
       ];
 }
@@ -266,6 +281,8 @@ class PortfolioPreviewItem extends Equatable {
     this.rubricRawScore,
     this.rubricMaxScore,
     this.rubricLevel,
+    this.aiFeedbackEducatorName,
+    this.aiFeedbackAt,
   });
 
   final String id;
@@ -301,6 +318,8 @@ class PortfolioPreviewItem extends Equatable {
   final int? rubricRawScore;
   final int? rubricMaxScore;
   final int? rubricLevel;
+  final String? aiFeedbackEducatorName;
+  final DateTime? aiFeedbackAt;
 
   @override
   List<Object?> get props => <Object?>[
@@ -336,6 +355,8 @@ class PortfolioPreviewItem extends Equatable {
         reviewedAt,
         rubricRawScore,
         rubricMaxScore,
+        aiFeedbackEducatorName,
+        aiFeedbackAt,
         rubricLevel,
       ];
 }
@@ -410,6 +431,8 @@ class PassportClaim extends Equatable {
     this.reviewedAt,
     this.rubricRawScore,
     this.rubricMaxScore,
+    this.aiFeedbackEducatorName,
+    this.aiFeedbackAt,
   });
 
   final String capabilityId;
@@ -443,6 +466,8 @@ class PassportClaim extends Equatable {
   final DateTime? reviewedAt;
   final int? rubricRawScore;
   final int? rubricMaxScore;
+  final String? aiFeedbackEducatorName;
+  final DateTime? aiFeedbackAt;
 
   @override
   List<Object?> get props => <Object?>[
@@ -477,6 +502,8 @@ class PassportClaim extends Equatable {
         reviewedAt,
         rubricRawScore,
         rubricMaxScore,
+        aiFeedbackEducatorName,
+        aiFeedbackAt,
       ];
 }
 

@@ -1074,6 +1074,8 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
             rubricRawScore: item.rubricRawScore,
             rubricMaxScore: item.rubricMaxScore,
             rubricLevel: item.rubricLevel,
+            aiFeedbackEducatorName: item.aiFeedbackEducatorName,
+            aiFeedbackAt: item.aiFeedbackAt,
           ),
         );
       }
@@ -1097,6 +1099,19 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
       default:
         return 'Emerging';
     }
+  }
+
+  String _titleCase(String value) {
+    final String normalized = value.trim();
+    if (normalized.isEmpty) {
+      return normalized;
+    }
+    return normalized
+        .split(RegExp(r'[_\s]+'))
+        .map((String part) => part.isEmpty
+            ? part
+            : '${part[0].toUpperCase()}${part.substring(1).toLowerCase()}')
+        .join(' ');
   }
 
   String _formatProofStatus(String? value) {
@@ -1161,6 +1176,9 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
     if (checkpoint.createdAt != null) {
       parts.add(_formatDate(checkpoint.createdAt!));
     }
+    if (checkpoint.actorRole?.trim().isNotEmpty == true) {
+      parts.add('${_t('actor')}: ${_titleCase(checkpoint.actorRole!)}');
+    }
     if (checkpoint.summary.trim().isNotEmpty) {
       parts.add(checkpoint.summary.trim());
     }
@@ -1185,6 +1203,10 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
       '${_t('AI help events')}: ${item.aiHelpEventCount}',
       if (item.aiHasEducatorAiFeedback)
         '${_t('Educator AI feedback')}: ${_t('Present')}',
+      if (item.aiFeedbackEducatorName?.trim().isNotEmpty == true)
+        '${_t('AI feedback by')}: ${item.aiFeedbackEducatorName}',
+      if (item.aiFeedbackAt != null)
+        '${_t('AI feedback date')}: ${_formatDate(item.aiFeedbackAt!)}',
       if (item.aiAssistanceDetails?.trim().isNotEmpty == true)
         '${_t('Learner AI details')}: ${item.aiAssistanceDetails}',
     ].join(' • ');
@@ -1387,6 +1409,8 @@ class _PortfolioItem {
     this.rubricRawScore,
     this.rubricMaxScore,
     this.rubricLevel,
+    this.aiFeedbackEducatorName,
+    this.aiFeedbackAt,
   });
 
   final String id;
@@ -1423,4 +1447,6 @@ class _PortfolioItem {
   final int? rubricRawScore;
   final int? rubricMaxScore;
   final int? rubricLevel;
+  final String? aiFeedbackEducatorName;
+  final DateTime? aiFeedbackAt;
 }

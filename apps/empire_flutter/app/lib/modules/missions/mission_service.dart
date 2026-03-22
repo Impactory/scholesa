@@ -15,12 +15,16 @@ class MissionProofCheckpoint {
     required this.id,
     required this.summary,
     this.artifactNote,
+    this.actorId,
+    this.actorRole,
     this.createdAt,
   });
 
   final String id;
   final String summary;
   final String? artifactNote;
+  final String? actorId;
+  final String? actorRole;
   final DateTime? createdAt;
 
   factory MissionProofCheckpoint.fromMap(Map<String, dynamic> data) {
@@ -28,6 +32,8 @@ class MissionProofCheckpoint {
       id: data['id'] as String? ?? '',
       summary: data['summary'] as String? ?? '',
       artifactNote: data['artifactNote'] as String?,
+      actorId: data['actorId'] as String?,
+      actorRole: data['actorRole'] as String?,
       createdAt: data['createdAt'] is Timestamp
           ? (data['createdAt'] as Timestamp).toDate()
           : null,
@@ -39,6 +45,8 @@ class MissionProofCheckpoint {
         'summary': summary,
         if (artifactNote != null && artifactNote!.isNotEmpty)
           'artifactNote': artifactNote,
+        if (actorId != null && actorId!.isNotEmpty) 'actorId': actorId,
+        if (actorRole != null && actorRole!.isNotEmpty) 'actorRole': actorRole,
         'createdAt': createdAt == null
             ? FieldValue.serverTimestamp()
             : Timestamp.fromDate(createdAt!),
@@ -95,8 +103,8 @@ class MissionProofBundle {
       explainItBack: data['explainItBack'] as String?,
       oralCheckResponse: data['oralCheckResponse'] as String?,
       miniRebuildPlan: data['miniRebuildPlan'] as String?,
-        aiAssistanceUsed: data['aiAssistanceUsed'] as bool?,
-        aiAssistanceDetails: data['aiAssistanceDetails'] as String?,
+      aiAssistanceUsed: data['aiAssistanceUsed'] as bool?,
+      aiAssistanceDetails: data['aiAssistanceDetails'] as String?,
       versionHistory: rawHistory
           .whereType<Map<dynamic, dynamic>>()
           .map((Map<dynamic, dynamic> entry) =>
@@ -297,7 +305,8 @@ class MissionService extends ChangeNotifier {
             assignData['recommendedInterleavingMissionIds'] as List? ??
                 const <String>[],
           ),
-          confusabilityBand: assignData['confusabilityBand'] as String? ?? 'low',
+          confusabilityBand:
+              assignData['confusabilityBand'] as String? ?? 'low',
           workedExampleShown:
               assignData['workedExampleShown'] as bool? ?? false,
           workedExampleFadeStage:
@@ -363,12 +372,11 @@ class MissionService extends ChangeNotifier {
     final String rebuild =
         miniRebuildPlan?.trim() ?? existing?.miniRebuildPlan ?? '';
     final bool? resolvedAiAssistanceUsed =
-      aiAssistanceUsed ?? existing?.aiAssistanceUsed;
-    final String? resolvedAiAssistanceDetails =
-      aiAssistanceDetails != null
+        aiAssistanceUsed ?? existing?.aiAssistanceUsed;
+    final String? resolvedAiAssistanceDetails = aiAssistanceDetails != null
         ? (aiAssistanceDetails.trim().isEmpty
-          ? null
-          : aiAssistanceDetails.trim())
+            ? null
+            : aiAssistanceDetails.trim())
         : existing?.aiAssistanceDetails;
     final List<Map<String, dynamic>> versionHistory = existing == null
         ? <Map<String, dynamic>>[]
@@ -426,8 +434,8 @@ class MissionService extends ChangeNotifier {
       explainItBack: explain,
       oralCheckResponse: oral,
       miniRebuildPlan: rebuild,
-        aiAssistanceUsed: resolvedAiAssistanceUsed,
-        aiAssistanceDetails: resolvedAiAssistanceDetails,
+      aiAssistanceUsed: resolvedAiAssistanceUsed,
+      aiAssistanceDetails: resolvedAiAssistanceDetails,
       versionHistory:
           existing?.versionHistory ?? const <MissionProofCheckpoint>[],
       createdAt: existing?.createdAt ?? DateTime.now(),
@@ -453,6 +461,8 @@ class MissionService extends ChangeNotifier {
       summary: trimmedSummary,
       artifactNote:
           artifactNote?.trim().isNotEmpty == true ? artifactNote!.trim() : null,
+      actorId: learnerId,
+      actorRole: 'learner',
       createdAt: DateTime.now(),
     );
     final List<MissionProofCheckpoint> versionHistory =
@@ -1017,7 +1027,7 @@ class MissionService extends ChangeNotifier {
               'hasLearnerAiDisclosure': proofBundle.aiAssistanceUsed != null,
               'aiAssistanceUsed': proofBundle.aiAssistanceUsed == true,
               'hasAiAssistanceDetails':
-                proofBundle.aiAssistanceDetails?.trim().isNotEmpty ?? false,
+                  proofBundle.aiAssistanceDetails?.trim().isNotEmpty ?? false,
             },
         };
 
@@ -1036,6 +1046,8 @@ class MissionService extends ChangeNotifier {
             'feedback': FieldValue.delete(),
             'aiFeedbackDraft': FieldValue.delete(),
             'aiFeedbackEdited': FieldValue.delete(),
+            'aiFeedbackBy': FieldValue.delete(),
+            'aiFeedbackAt': FieldValue.delete(),
             'rubricId': FieldValue.delete(),
             'rubricTitle': FieldValue.delete(),
             'rubricScores': FieldValue.delete(),
@@ -1677,38 +1689,52 @@ class MissionService extends ChangeNotifier {
       final String? trimmedAiDraft = aiFeedbackDraft?.trim().isNotEmpty == true
           ? aiFeedbackDraft!.trim()
           : null;
+      final Map<String, dynamic> aiFeedbackWrite = trimmedAiDraft == null
+          ? <String, dynamic>{
+              'aiFeedbackDraft': FieldValue.delete(),
+              'aiFeedbackEdited': FieldValue.delete(),
+              'aiFeedbackBy': FieldValue.delete(),
+              'aiFeedbackAt': FieldValue.delete(),
+            }
+          : <String, dynamic>{
+              'aiFeedbackDraft': trimmedAiDraft,
+              'aiFeedbackEdited': trimmedAiDraft != trimmedFeedback,
+              'aiFeedbackBy': reviewerId,
+              'aiFeedbackAt': FieldValue.serverTimestamp(),
+            };
       final String resolvedRubricId = rubricId?.trim().isNotEmpty == true
           ? rubricId!.trim()
           : submissionData['rubricId'] as String? ?? '';
       final String? resolvedRubricTitle = rubricTitle?.trim().isNotEmpty == true
           ? rubricTitle!.trim()
           : submissionData['rubricTitle'] as String?;
-        final String missionTitle =
+      final String missionTitle =
           (submissionData['missionTitle'] as String? ?? '').trim();
-        final String submissionText =
+      final String submissionText =
           (submissionData['submissionText'] as String? ?? '').trim();
-        final List<String> submissionAttachmentUrls = List<String>.from(
+      final List<String> submissionAttachmentUrls = List<String>.from(
         submissionData['attachmentUrls'] as List? ?? const <String>[],
-        );
-        final String? proofBundleId =
+      );
+      final String? proofBundleId =
           (submissionData['proofBundleId'] as String?)?.trim().isNotEmpty ==
-              true
-            ? (submissionData['proofBundleId'] as String).trim()
-            : null;
-        final Map<String, dynamic>? proofBundleSummary =
-            submissionData['proofBundleSummary'] is Map
-                ? Map<String, dynamic>.from(
-                    submissionData['proofBundleSummary'] as Map,
-                  )
-                : null;
-        final String proofBundleAiAssistanceDetails = proofBundleId == null
+                  true
+              ? (submissionData['proofBundleId'] as String).trim()
+              : null;
+      final Map<String, dynamic>? proofBundleSummary =
+          submissionData['proofBundleSummary'] is Map
+              ? Map<String, dynamic>.from(
+                  submissionData['proofBundleSummary'] as Map,
+                )
+              : null;
+      final String proofBundleAiAssistanceDetails = proofBundleId == null
           ? ''
           : (((await _firestore
-                  .collection('proofOfLearningBundles')
-                  .doc(proofBundleId)
-                  .get())
-                .data()?['aiAssistanceDetails'] as String?) ?? '')
-            .trim();
+                          .collection('proofOfLearningBundles')
+                          .doc(proofBundleId)
+                          .get())
+                      .data()?['aiAssistanceDetails'] as String?) ??
+                  '')
+              .trim();
       final List<Map<String, dynamic>> normalizedRubricScores = rubricScores
           .map((Map<String, dynamic> score) => <String, dynamic>{
                 ...score,
@@ -1728,93 +1754,76 @@ class MissionService extends ChangeNotifier {
       );
       final WriteBatch batch = _firestore.batch();
 
-      batch.set(
-          canonicalAttemptRef,
-          <String, dynamic>{
-            'missionId': missionId,
-            if ((submissionData['missionTitle'] as String?)
-                    ?.trim()
-                    .isNotEmpty ==
-                true)
-              'missionTitle': (submissionData['missionTitle'] as String).trim(),
-            'learnerId': reviewLearnerId,
-            if (reviewSiteId != null && reviewSiteId.isNotEmpty)
-              'siteId': reviewSiteId,
-            if ((submissionData['sessionOccurrenceId'] as String?)
-                    ?.trim()
-                    .isNotEmpty ==
-                true)
-              'sessionOccurrenceId':
-                  (submissionData['sessionOccurrenceId'] as String).trim(),
-            'status': 'reviewed',
-            'reviewStatus': status,
-            'rating': rating,
-            'feedback': trimmedFeedback,
-            'reviewNotes': trimmedFeedback,
-            'reviewedBy': reviewerId,
-            'reviewedAt': FieldValue.serverTimestamp(),
-            'gradedBy': reviewerId,
-            'gradedAt': FieldValue.serverTimestamp(),
-            'updatedAt': FieldValue.serverTimestamp(),
-            if ((submissionData['submittedAt']) != null)
-              'submittedAt': submissionData['submittedAt'],
-            if ((submissionData['createdAt']) != null)
-              'createdAt': submissionData['createdAt'],
-            if ((submissionData['content'] as String?)?.trim().isNotEmpty ==
-                true)
-              'content': (submissionData['content'] as String).trim(),
-            if ((submissionData['submissionText'] as String?)
-                    ?.trim()
-                    .isNotEmpty ==
-                true)
-              'submissionText':
-                  (submissionData['submissionText'] as String).trim(),
-            if (submissionData['attachmentUrls'] is List)
-              'attachmentUrls': List<String>.from(
-                submissionData['attachmentUrls'] as List,
-              ),
-            if (trimmedAiDraft != null) 'aiFeedbackDraft': trimmedAiDraft,
-            if (trimmedAiDraft != null)
-              'aiFeedbackEdited': trimmedAiDraft != trimmedFeedback,
-            if (resolvedRubricId.isNotEmpty) 'rubricId': resolvedRubricId,
-            if (resolvedRubricTitle != null && resolvedRubricTitle.isNotEmpty)
-              'rubricTitle': resolvedRubricTitle,
-            if (normalizedRubricScores.isNotEmpty)
-              'rubricScores': normalizedRubricScores,
-            if (normalizedRubricScores.isNotEmpty)
-              'rubricTotalScore': rubricTotalScore,
-            if (normalizedRubricScores.isNotEmpty)
-              'rubricMaxScore': rubricMaxScore,
-          },
-          SetOptions(merge: true));
+      batch.update(canonicalAttemptRef, <String, dynamic>{
+        'missionId': missionId,
+        if ((submissionData['missionTitle'] as String?)?.trim().isNotEmpty ==
+            true)
+          'missionTitle': (submissionData['missionTitle'] as String).trim(),
+        'learnerId': reviewLearnerId,
+        if (reviewSiteId != null && reviewSiteId.isNotEmpty)
+          'siteId': reviewSiteId,
+        if ((submissionData['sessionOccurrenceId'] as String?)
+                ?.trim()
+                .isNotEmpty ==
+            true)
+          'sessionOccurrenceId':
+              (submissionData['sessionOccurrenceId'] as String).trim(),
+        'status': 'reviewed',
+        'reviewStatus': status,
+        'rating': rating,
+        'feedback': trimmedFeedback,
+        'reviewNotes': trimmedFeedback,
+        'reviewedBy': reviewerId,
+        'reviewedAt': FieldValue.serverTimestamp(),
+        'gradedBy': reviewerId,
+        'gradedAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        if ((submissionData['submittedAt']) != null)
+          'submittedAt': submissionData['submittedAt'],
+        if ((submissionData['createdAt']) != null)
+          'createdAt': submissionData['createdAt'],
+        if ((submissionData['content'] as String?)?.trim().isNotEmpty == true)
+          'content': (submissionData['content'] as String).trim(),
+        if ((submissionData['submissionText'] as String?)?.trim().isNotEmpty ==
+            true)
+          'submissionText': (submissionData['submissionText'] as String).trim(),
+        if (submissionData['attachmentUrls'] is List)
+          'attachmentUrls': List<String>.from(
+            submissionData['attachmentUrls'] as List,
+          ),
+        ...aiFeedbackWrite,
+        if (resolvedRubricId.isNotEmpty) 'rubricId': resolvedRubricId,
+        if (resolvedRubricTitle != null && resolvedRubricTitle.isNotEmpty)
+          'rubricTitle': resolvedRubricTitle,
+        if (normalizedRubricScores.isNotEmpty)
+          'rubricScores': normalizedRubricScores,
+        if (normalizedRubricScores.isNotEmpty)
+          'rubricTotalScore': rubricTotalScore,
+        if (normalizedRubricScores.isNotEmpty) 'rubricMaxScore': rubricMaxScore,
+      });
 
       if (submissionSnapshot.exists) {
-        batch.set(
-            submissionRef,
-            <String, dynamic>{
-              'missionId': missionId,
-              'learnerId': reviewLearnerId,
-              if (reviewSiteId != null && reviewSiteId.isNotEmpty)
-                'siteId': reviewSiteId,
-              'status': status,
-              'rating': rating,
-              'feedback': trimmedFeedback,
-              'reviewedBy': reviewerId,
-              'reviewedAt': FieldValue.serverTimestamp(),
-              if (trimmedAiDraft != null) 'aiFeedbackDraft': trimmedAiDraft,
-              if (trimmedAiDraft != null)
-                'aiFeedbackEdited': trimmedAiDraft != trimmedFeedback,
-              if (resolvedRubricId.isNotEmpty) 'rubricId': resolvedRubricId,
-              if (resolvedRubricTitle != null && resolvedRubricTitle.isNotEmpty)
-                'rubricTitle': resolvedRubricTitle,
-              if (normalizedRubricScores.isNotEmpty)
-                'rubricScores': normalizedRubricScores,
-              if (normalizedRubricScores.isNotEmpty)
-                'rubricTotalScore': rubricTotalScore,
-              if (normalizedRubricScores.isNotEmpty)
-                'rubricMaxScore': rubricMaxScore,
-            },
-            SetOptions(merge: true));
+        batch.update(submissionRef, <String, dynamic>{
+          'missionId': missionId,
+          'learnerId': reviewLearnerId,
+          if (reviewSiteId != null && reviewSiteId.isNotEmpty)
+            'siteId': reviewSiteId,
+          'status': status,
+          'rating': rating,
+          'feedback': trimmedFeedback,
+          'reviewedBy': reviewerId,
+          'reviewedAt': FieldValue.serverTimestamp(),
+          ...aiFeedbackWrite,
+          if (resolvedRubricId.isNotEmpty) 'rubricId': resolvedRubricId,
+          if (resolvedRubricTitle != null && resolvedRubricTitle.isNotEmpty)
+            'rubricTitle': resolvedRubricTitle,
+          if (normalizedRubricScores.isNotEmpty)
+            'rubricScores': normalizedRubricScores,
+          if (normalizedRubricScores.isNotEmpty)
+            'rubricTotalScore': rubricTotalScore,
+          if (normalizedRubricScores.isNotEmpty)
+            'rubricMaxScore': rubricMaxScore,
+        });
       }
 
       if (missionId.isNotEmpty && reviewLearnerId.isNotEmpty) {
@@ -1840,9 +1849,7 @@ class MissionService extends ChangeNotifier {
             'gradedAt': FieldValue.serverTimestamp(),
             'rating': rating,
             'feedback': trimmedFeedback,
-            if (trimmedAiDraft != null) 'aiFeedbackDraft': trimmedAiDraft,
-            if (trimmedAiDraft != null)
-              'aiFeedbackEdited': trimmedAiDraft != trimmedFeedback,
+            ...aiFeedbackWrite,
             if (resolvedRubricId.isNotEmpty) 'rubricId': resolvedRubricId,
             if (resolvedRubricTitle != null && resolvedRubricTitle.isNotEmpty)
               'rubricTitle': resolvedRubricTitle,
@@ -1903,7 +1910,6 @@ class MissionService extends ChangeNotifier {
           }
           learnerEvidenceSnapshot = await evidenceQuery.get();
         }
-
         for (final MapEntry<String, List<Map<String, dynamic>>> entry
             in rubricScoresByCapability.entries) {
           final String capabilityId = entry.key;
@@ -2003,11 +2009,21 @@ class MissionService extends ChangeNotifier {
                 (data['capabilityId'] as String? ?? '').trim();
             final String growthStatus =
                 (data['growthStatus'] as String? ?? '').trim().toLowerCase();
+            final String linkedMissionAttemptId =
+                (data['linkedMissionAttemptId'] as String? ?? '').trim();
             return evidenceCapabilityId == capabilityId &&
                 (growthStatus.isEmpty ||
                     growthStatus == 'pending' ||
-                    growthStatus == 'captured');
+                    growthStatus == 'captured' ||
+                    (growthStatus == 'updated' &&
+                        linkedMissionAttemptId == canonicalAttemptRef.id));
           });
+          final List<String> linkedEvidenceRecordIds = matchingEvidenceDocs
+              .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) => doc.id)
+              .where((String value) => value.isNotEmpty)
+              .toList(growable: false);
+          final List<String> linkedPortfolioItemIds = <String>[];
+          final Set<String> verificationPrompts = <String>{};
 
           for (final QueryDocumentSnapshot<Map<String, dynamic>> evidenceDoc
               in matchingEvidenceDocs) {
@@ -2071,77 +2087,96 @@ class MissionService extends ChangeNotifier {
             final String verificationPrompt =
                 (evidenceData['nextVerificationPrompt'] as String? ?? '')
                     .trim();
+            if (verificationPrompt.isNotEmpty) {
+              verificationPrompts.add(verificationPrompt);
+            }
             final bool hasExplainItBack =
-              proofBundleSummary?['hasExplainItBack'] == true;
+                proofBundleSummary?['hasExplainItBack'] == true;
             final bool hasOralCheck =
-              proofBundleSummary?['hasOralCheck'] == true;
+                proofBundleSummary?['hasOralCheck'] == true;
             final bool hasMiniRebuild =
-              proofBundleSummary?['hasMiniRebuild'] == true;
+                proofBundleSummary?['hasMiniRebuild'] == true;
             final bool hasLearnerAiDisclosure =
-              proofBundleSummary?['hasLearnerAiDisclosure'] == true;
+                proofBundleSummary?['hasLearnerAiDisclosure'] == true;
             final bool aiAssistanceUsed =
-              proofBundleSummary?['aiAssistanceUsed'] == true;
-            final String proofOfLearningStatus =
-              proofBundleSummary == null
+                proofBundleSummary?['aiAssistanceUsed'] == true;
+            final String proofOfLearningStatus = proofBundleSummary == null
                 ? 'not-available'
                 : hasExplainItBack && hasOralCheck && hasMiniRebuild
-                  ? 'verified'
-                  : hasExplainItBack || hasOralCheck || hasMiniRebuild
-                    ? 'partial'
-                    : 'missing';
+                    ? 'verified'
+                    : hasExplainItBack || hasOralCheck || hasMiniRebuild
+                        ? 'partial'
+                        : 'missing';
             final String aiDisclosureStatus = hasLearnerAiDisclosure
-              ? aiAssistanceUsed
-                ? hasExplainItBack
-                  ? 'learner-ai-verified'
-                  : 'learner-ai-verification-gap'
-                : 'learner-ai-not-used'
-              : trimmedAiDraft != null
-                ? 'educator-feedback-ai'
-                : 'no-learner-ai-signal';
+                ? aiAssistanceUsed
+                    ? hasExplainItBack
+                        ? 'learner-ai-verified'
+                        : 'learner-ai-verification-gap'
+                    : 'learner-ai-not-used'
+                : trimmedAiDraft != null
+                    ? 'educator-feedback-ai'
+                    : 'no-learner-ai-signal';
             final DocumentReference<Map<String, dynamic>> portfolioItemRef =
                 _firestore.collection('portfolioItems').doc(evidenceDoc.id);
-            batch.set(
-              portfolioItemRef,
-              <String, dynamic>{
-                if (reviewSiteId != null && reviewSiteId.isNotEmpty)
-                  'siteId': reviewSiteId,
-                'learnerId': reviewLearnerId,
-                'title': portfolioTitle.isNotEmpty
-                    ? portfolioTitle
-                    : 'Reviewed evidence artifact',
-                'description': portfolioDescription,
-                'artifactUrls': mergedArtifactUrls,
-                'pillarCodes': mergedPillarCodes,
-                'skillIds': const <String>[],
-                'evidenceRecordIds': FieldValue.arrayUnion(<String>[
-                  evidenceDoc.id,
-                ]),
-                'capabilityIds': FieldValue.arrayUnion(<String>[capabilityId]),
-                'capabilityTitles': FieldValue.arrayUnion(<String>[
-                  capabilityTitle,
-                ]),
-                'growthEventIds': FieldValue.arrayUnion(<String>[
-                  growthEventRef.id,
-                ]),
-                'missionAttemptId': canonicalAttemptRef.id,
-                'rubricApplicationId': rubricApplicationRef.id,
-                if (proofBundleId != null) 'proofBundleId': proofBundleId,
-                'proofOfLearningStatus': proofOfLearningStatus,
-                if (hasLearnerAiDisclosure) 'aiAssistanceUsed': aiAssistanceUsed,
-                if (proofBundleAiAssistanceDetails.isNotEmpty)
-                  'aiAssistanceDetails': proofBundleAiAssistanceDetails,
-                'aiDisclosureStatus': aiDisclosureStatus,
-                'educatorId': reviewerId,
-                if (verificationPrompt.isNotEmpty)
-                  'verificationPrompt': verificationPrompt,
-                'verificationStatus': 'reviewed',
-                'source': 'educator_review_linkage',
-                if (evidenceData['observedAt'] != null)
-                  'createdAt': evidenceData['observedAt'],
-                'updatedAt': FieldValue.serverTimestamp(),
-              },
-              SetOptions(merge: true),
-            );
+            final DocumentSnapshot<Map<String, dynamic>>
+                existingPortfolioItemSnapshot = await portfolioItemRef.get();
+            linkedPortfolioItemIds.add(portfolioItemRef.id);
+            final Map<String, dynamic> portfolioItemWrite = <String, dynamic>{
+              if (reviewSiteId != null && reviewSiteId.isNotEmpty)
+                'siteId': reviewSiteId,
+              'learnerId': reviewLearnerId,
+              'title': portfolioTitle.isNotEmpty
+                  ? portfolioTitle
+                  : 'Reviewed evidence artifact',
+              'description': portfolioDescription,
+              'artifactUrls': mergedArtifactUrls,
+              'pillarCodes': mergedPillarCodes,
+              'skillIds': const <String>[],
+              'evidenceRecordIds': FieldValue.arrayUnion(<String>[
+                evidenceDoc.id,
+              ]),
+              'capabilityIds': FieldValue.arrayUnion(<String>[capabilityId]),
+              'capabilityTitles': FieldValue.arrayUnion(<String>[
+                capabilityTitle,
+              ]),
+              'growthEventIds': FieldValue.arrayUnion(<String>[
+                growthEventRef.id,
+              ]),
+              'missionAttemptId': canonicalAttemptRef.id,
+              'rubricApplicationId': rubricApplicationRef.id,
+              if (proofBundleId != null) 'proofBundleId': proofBundleId,
+              'proofOfLearningStatus': proofOfLearningStatus,
+              if (hasLearnerAiDisclosure) 'aiAssistanceUsed': aiAssistanceUsed,
+              if (proofBundleAiAssistanceDetails.isNotEmpty)
+                'aiAssistanceDetails': proofBundleAiAssistanceDetails,
+              'aiDisclosureStatus': aiDisclosureStatus,
+              if (trimmedAiDraft != null) 'aiFeedbackBy': reviewerId,
+              if (trimmedAiDraft != null)
+                'aiFeedbackAt': FieldValue.serverTimestamp(),
+              if (trimmedAiDraft == null &&
+                  existingPortfolioItemSnapshot.exists)
+                'aiFeedbackBy': FieldValue.delete(),
+              if (trimmedAiDraft == null &&
+                  existingPortfolioItemSnapshot.exists)
+                'aiFeedbackAt': FieldValue.delete(),
+              'educatorId': reviewerId,
+              if (verificationPrompt.isNotEmpty)
+                'verificationPrompt': verificationPrompt,
+              'verificationStatus': 'reviewed',
+              'source': 'educator_review_linkage',
+              if (evidenceData['observedAt'] != null)
+                'createdAt': evidenceData['observedAt'],
+              'updatedAt': FieldValue.serverTimestamp(),
+            };
+            if (existingPortfolioItemSnapshot.exists) {
+              batch.update(portfolioItemRef, portfolioItemWrite);
+            } else {
+              batch.set(
+                portfolioItemRef,
+                portfolioItemWrite,
+                SetOptions(merge: true),
+              );
+            }
 
             batch.set(
               evidenceDoc.reference,
@@ -2152,6 +2187,43 @@ class MissionService extends ChangeNotifier {
               SetOptions(merge: true),
             );
           }
+
+          batch.set(
+            growthEventRef,
+            <String, dynamic>{
+              'learnerId': reviewLearnerId,
+              'capabilityId': capabilityId,
+              if (reviewSiteId != null && reviewSiteId.isNotEmpty)
+                'siteId': reviewSiteId,
+              'pillarCode': pillarCode,
+              'level': nextLevel,
+              'rawScore': capabilityRawScore,
+              'maxScore': capabilityMaxScore,
+              'evidenceId': canonicalAttemptRef.id,
+              'missionAttemptId': canonicalAttemptRef.id,
+              'rubricApplicationId': canonicalAttemptRef.id,
+              'educatorId': reviewerId,
+              'linkedEvidenceRecordIds': linkedEvidenceRecordIds,
+              'linkedPortfolioItemIds': linkedPortfolioItemIds,
+              if (proofBundleId != null) 'proofBundleId': proofBundleId,
+              'proofOfLearningStatus': proofBundleSummary == null
+                  ? 'not-available'
+                  : (proofBundleSummary['hasExplainItBack'] == true &&
+                          proofBundleSummary['hasOralCheck'] == true &&
+                          proofBundleSummary['hasMiniRebuild'] == true)
+                      ? 'verified'
+                      : (proofBundleSummary['hasExplainItBack'] == true ||
+                              proofBundleSummary['hasOralCheck'] == true ||
+                              proofBundleSummary['hasMiniRebuild'] == true)
+                          ? 'partial'
+                          : 'missing',
+              if (verificationPrompts.isNotEmpty)
+                'verificationPrompts':
+                    verificationPrompts.toList(growable: false),
+              'createdAt': FieldValue.serverTimestamp(),
+            },
+            SetOptions(merge: true),
+          );
         }
       }
 
@@ -2201,22 +2273,39 @@ class MissionService extends ChangeNotifier {
               .where('learnerId', isEqualTo: reviewLearnerId)
               .where('missionId', isEqualTo: missionId)
               .get();
-      final Iterable<QueryDocumentSnapshot<Map<String, dynamic>>> candidates =
-          missionAttemptSnapshot.docs.where((attemptDoc) {
+      final Iterable<QueryDocumentSnapshot<Map<String, dynamic>>>
+          siteCandidates = missionAttemptSnapshot.docs.where((attemptDoc) {
         final Map<String, dynamic> data = attemptDoc.data();
         final String? attemptSiteId = data['siteId'] as String?;
+        final bool siteMatches = reviewSiteId == null ||
+            reviewSiteId.isEmpty ||
+            attemptSiteId == reviewSiteId;
+        return siteMatches;
+      });
+      final Iterable<QueryDocumentSnapshot<Map<String, dynamic>>>
+          pendingCandidates = siteCandidates.where((attemptDoc) {
+        final Map<String, dynamic> data = attemptDoc.data();
         final String normalizedStatus = _normalizedReviewQueueStatus(
           status: data['status'] as String?,
           reviewStatus: data['reviewStatus'] as String?,
         );
-        final bool siteMatches = reviewSiteId == null ||
-            reviewSiteId.isEmpty ||
-            attemptSiteId == reviewSiteId;
-        return siteMatches && normalizedStatus == 'pending';
+        return normalizedStatus == 'pending';
       });
-      if (candidates.isNotEmpty) {
+      if (pendingCandidates.isNotEmpty) {
         final List<QueryDocumentSnapshot<Map<String, dynamic>>>
-            sortedCandidates = candidates.toList()
+            sortedCandidates = pendingCandidates.toList()
+              ..sort((a, b) {
+                final DateTime aSubmitted =
+                    _parseTimestamp(a.data()['submittedAt']) ?? DateTime(1970);
+                final DateTime bSubmitted =
+                    _parseTimestamp(b.data()['submittedAt']) ?? DateTime(1970);
+                return bSubmitted.compareTo(aSubmitted);
+              });
+        return sortedCandidates.first.reference;
+      }
+      if (siteCandidates.isNotEmpty) {
+        final List<QueryDocumentSnapshot<Map<String, dynamic>>>
+            sortedCandidates = siteCandidates.toList()
               ..sort((a, b) {
                 final DateTime aSubmitted =
                     _parseTimestamp(a.data()['submittedAt']) ?? DateTime(1970);

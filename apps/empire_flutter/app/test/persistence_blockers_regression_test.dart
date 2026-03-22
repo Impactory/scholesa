@@ -192,14 +192,18 @@ void main() {
         },
       );
 
-      await firestore.collection('proofOfLearningBundles').doc('learner-1_mission-1').set(
+      await firestore
+          .collection('proofOfLearningBundles')
+          .doc('learner-1_mission-1')
+          .set(
         <String, dynamic>{
           'missionId': 'mission-1',
           'learnerId': 'learner-1',
           'siteId': 'site-1',
           'explainItBack': 'I can explain why I chose this prototype path.',
           'oralCheckResponse': 'I can talk through the reasoning aloud.',
-          'miniRebuildPlan': 'I would rebuild the tradeoff test with a second example.',
+          'miniRebuildPlan':
+              'I would rebuild the tradeoff test with a second example.',
           'aiAssistanceUsed': true,
           'aiAssistanceDetails':
               'AI helped brainstorm alternatives, but I chose and explained the final design.',
@@ -231,9 +235,11 @@ void main() {
           'capabilityId': 'cap-prototype-evidence',
           'capabilityLabel': 'Prototype evidence',
           'capabilityPillarCode': 'future_skills',
-          'observationNote': 'Learner connected prototype choices to observed tradeoffs.',
+          'observationNote':
+              'Learner connected prototype choices to observed tradeoffs.',
           'artifactUrls': const <String>['https://example.com/prototype.png'],
-          'nextVerificationPrompt': 'Explain why this prototype path best matched the evidence.',
+          'nextVerificationPrompt':
+              'Explain why this prototype path best matched the evidence.',
           'portfolioCandidate': true,
           'growthStatus': 'captured',
           'observedAt': Timestamp.now(),
@@ -288,8 +294,11 @@ void main() {
       expect(submissionDoc.data()?['rubricTitle'], 'Prototype Rubric');
       expect(submissionDoc.data()?['rubricTotalScore'], 7);
       expect(submissionDoc.data()?['rubricMaxScore'], 8);
-      expect(submissionDoc.data()?['aiFeedbackDraft'], contains('evidence trail'));
+      expect(
+          submissionDoc.data()?['aiFeedbackDraft'], contains('evidence trail'));
       expect(submissionDoc.data()?['aiFeedbackEdited'], isTrue);
+      expect(submissionDoc.data()?['aiFeedbackBy'], 'educator-9');
+      expect(submissionDoc.data()?['aiFeedbackAt'], isNotNull);
 
       final DocumentSnapshot<Map<String, dynamic>> assignmentDoc =
           await firestore
@@ -300,16 +309,18 @@ void main() {
       expect(assignmentDoc.data()?['lastSubmissionId'], 'attempt-1');
       expect(assignmentDoc.data()?['gradedBy'], 'educator-9');
       expect(assignmentDoc.data()?['rubricTotalScore'], 7);
+      expect(assignmentDoc.data()?['aiFeedbackBy'], 'educator-9');
+      expect(assignmentDoc.data()?['aiFeedbackAt'], isNotNull);
 
-      final DocumentSnapshot<Map<String, dynamic>> attemptDoc = await firestore
-          .collection('missionAttempts')
-          .doc('attempt-1')
-          .get();
+      final DocumentSnapshot<Map<String, dynamic>> attemptDoc =
+          await firestore.collection('missionAttempts').doc('attempt-1').get();
       expect(attemptDoc.data()?['status'], 'reviewed');
       expect(attemptDoc.data()?['reviewStatus'], 'approved');
       expect(attemptDoc.data()?['reviewedBy'], 'educator-9');
       expect(attemptDoc.data()?['rubricId'], 'rubric-1');
       expect(attemptDoc.data()?['aiFeedbackEdited'], isTrue);
+      expect(attemptDoc.data()?['aiFeedbackBy'], 'educator-9');
+      expect(attemptDoc.data()?['aiFeedbackAt'], isNotNull);
 
       final DocumentSnapshot<Map<String, dynamic>> rubricApplicationDoc =
           await firestore
@@ -324,18 +335,141 @@ void main() {
         2,
       );
 
-      final DocumentSnapshot<Map<String, dynamic>> portfolioDoc = await firestore
-          .collection('portfolioItems')
-          .doc('evidence-1')
-          .get();
+      final DocumentSnapshot<Map<String, dynamic>> portfolioDoc =
+          await firestore.collection('portfolioItems').doc('evidence-1').get();
       expect(portfolioDoc.exists, isTrue);
       expect(portfolioDoc.data()?['proofOfLearningStatus'], 'verified');
       expect(portfolioDoc.data()?['aiAssistanceUsed'], isTrue);
+      expect(portfolioDoc.data()?['aiFeedbackBy'], 'educator-9');
+      expect(portfolioDoc.data()?['aiFeedbackAt'], isNotNull);
       expect(
         portfolioDoc.data()?['aiAssistanceDetails'],
         contains('brainstorm alternatives'),
       );
       expect(portfolioDoc.data()?['aiDisclosureStatus'], 'learner-ai-verified');
+
+      final bool humanOnlyReviewed = await service.submitReview(
+        submissionId: 'submission-1',
+        rating: 4,
+        feedback:
+            'Human-only follow-up. Keep tightening the evidence trail with one more concrete example.',
+        reviewerId: 'educator-9',
+        status: 'approved',
+        rubricId: 'rubric-1',
+        rubricTitle: 'Prototype Rubric',
+        rubricScores: const <Map<String, dynamic>>[
+          <String, dynamic>{
+            'criterionId': 'evidence',
+            'label': 'Evidence',
+            'capabilityId': 'cap-prototype-evidence',
+            'capabilityTitle': 'Prototype evidence',
+            'pillarCode': 'future_skills',
+            'score': 4,
+            'maxScore': 4,
+          },
+          <String, dynamic>{
+            'criterionId': 'reflection',
+            'label': 'Reflection',
+            'capabilityId': 'cap-prototype-evidence',
+            'capabilityTitle': 'Prototype evidence',
+            'pillarCode': 'future_skills',
+            'score': 3,
+            'maxScore': 4,
+          },
+        ],
+      );
+
+      if (!humanOnlyReviewed) {
+        fail(service.error ?? 'second submitReview returned false');
+      }
+
+      final DocumentSnapshot<Map<String, dynamic>> submissionDocAfterClear =
+          await firestore
+              .collection('missionSubmissions')
+              .doc('submission-1')
+              .get();
+      expect(
+        submissionDocAfterClear.data()?['aiFeedbackDraft'],
+        isNull,
+        reason: 'submission aiFeedbackDraft should clear',
+      );
+      expect(
+        submissionDocAfterClear.data()?['aiFeedbackEdited'],
+        isNull,
+        reason: 'submission aiFeedbackEdited should clear',
+      );
+      expect(
+        submissionDocAfterClear.data()?['aiFeedbackBy'],
+        isNull,
+        reason: 'submission aiFeedbackBy should clear',
+      );
+      expect(
+        submissionDocAfterClear.data()?['aiFeedbackAt'],
+        isNull,
+        reason: 'submission aiFeedbackAt should clear',
+      );
+
+      final DocumentSnapshot<Map<String, dynamic>> assignmentDocAfterClear =
+          await firestore
+              .collection('missionAssignments')
+              .doc('assignment-1')
+              .get();
+      expect(
+        assignmentDocAfterClear.data()?['aiFeedbackDraft'],
+        isNull,
+        reason: 'assignment aiFeedbackDraft should clear',
+      );
+      expect(
+        assignmentDocAfterClear.data()?['aiFeedbackEdited'],
+        isNull,
+        reason: 'assignment aiFeedbackEdited should clear',
+      );
+      expect(
+        assignmentDocAfterClear.data()?['aiFeedbackBy'],
+        isNull,
+        reason: 'assignment aiFeedbackBy should clear',
+      );
+      expect(
+        assignmentDocAfterClear.data()?['aiFeedbackAt'],
+        isNull,
+        reason: 'assignment aiFeedbackAt should clear',
+      );
+
+      final DocumentSnapshot<Map<String, dynamic>> attemptDocAfterClear =
+          await firestore.collection('missionAttempts').doc('attempt-1').get();
+      expect(
+        attemptDocAfterClear.data()?['aiFeedbackDraft'],
+        isNull,
+        reason: 'attempt aiFeedbackDraft should clear',
+      );
+      expect(
+        attemptDocAfterClear.data()?['aiFeedbackEdited'],
+        isNull,
+        reason: 'attempt aiFeedbackEdited should clear',
+      );
+      expect(
+        attemptDocAfterClear.data()?['aiFeedbackBy'],
+        isNull,
+        reason: 'attempt aiFeedbackBy should clear',
+      );
+      expect(
+        attemptDocAfterClear.data()?['aiFeedbackAt'],
+        isNull,
+        reason: 'attempt aiFeedbackAt should clear',
+      );
+
+      final DocumentSnapshot<Map<String, dynamic>> portfolioDocAfterClear =
+          await firestore.collection('portfolioItems').doc('evidence-1').get();
+      expect(
+        portfolioDocAfterClear.data()?['aiFeedbackBy'],
+        isNull,
+        reason: 'portfolio aiFeedbackBy should clear',
+      );
+      expect(
+        portfolioDocAfterClear.data()?['aiFeedbackAt'],
+        isNull,
+        reason: 'portfolio aiFeedbackAt should clear',
+      );
     });
 
     test(
@@ -506,12 +640,13 @@ void main() {
       final Map<String, dynamic>? data = assignmentDoc.data();
 
       expect(data?['fsrsLastRating'], 'good');
-    expect(data?['fsrsQueueState'], 'suspended');
-    expect(data?.containsKey('nextReviewAt'), isFalse);
+      expect(data?['fsrsQueueState'], 'suspended');
+      expect(data?.containsKey('nextReviewAt'), isFalse);
       expect(data?['interleavingMode'], 'scaffoldedMixed');
       expect(data?['recommendedInterleavingMissionIds'], contains('mission-2'));
-      expect((data?['recommendedInterleavingMissionIds'] as List<dynamic>).first,
-        'mission-2');
+      expect(
+          (data?['recommendedInterleavingMissionIds'] as List<dynamic>).first,
+          'mission-2');
       expect(data?['workedExampleShown'], true);
       expect(data?['workedExampleFadeStage'], 2);
       expect(data?['workedExamplePromptLevel'], 'partialSteps');
@@ -534,16 +669,17 @@ void main() {
       expect(fsrsPayload['role'], 'learner');
       expect(fsrsPayload['metadata']['rating'], 'good');
 
-      final Map<String, dynamic> interleavingPayload = telemetryPayloads.firstWhere(
+      final Map<String, dynamic> interleavingPayload =
+          telemetryPayloads.firstWhere(
         (Map<String, dynamic> payload) =>
             payload['event'] == 'interleaving.mode.changed',
       );
       expect(interleavingPayload['metadata']['mode'], 'scaffoldedMixed');
-      expect(interleavingPayload['metadata']['recommended_count'], greaterThan(0));
+      expect(
+          interleavingPayload['metadata']['recommended_count'], greaterThan(0));
     });
 
-    test(
-        'worked example support decays after sustained correct FSRS ratings',
+    test('worked example support decays after sustained correct FSRS ratings',
         () async {
       final MissionService service = MissionService(
         firestoreService: firestoreService,
@@ -610,10 +746,11 @@ void main() {
         },
       );
 
-      final DocumentSnapshot<Map<String, dynamic>> assignmentDoc = await firestore
-          .collection('missionAssignments')
-          .doc('assignment-1')
-          .get();
+      final DocumentSnapshot<Map<String, dynamic>> assignmentDoc =
+          await firestore
+              .collection('missionAssignments')
+              .doc('assignment-1')
+              .get();
       final Map<String, dynamic>? data = assignmentDoc.data();
 
       expect(data?['workedExampleFadeStage'], 2);
@@ -706,7 +843,8 @@ void main() {
       expect(service.isLoading, isFalse);
     });
 
-    test('mission service keeps stale missions and progress after refresh failure',
+    test(
+        'mission service keeps stale missions and progress after refresh failure',
         () async {
       int loadCount = 0;
       final Mission seededMission = Mission(
@@ -799,7 +937,8 @@ void main() {
       expect(conversations.docs, isEmpty);
     });
 
-    test('attendance service keeps stale occurrences visible after refresh failure',
+    test(
+        'attendance service keeps stale occurrences visible after refresh failure',
         () async {
       int loadCount = 0;
       final AttendanceService service = AttendanceService(
@@ -836,7 +975,8 @@ void main() {
       expect(service.error, contains('Failed to load occurrences'));
     });
 
-    test('checkin service keeps stale learner summaries visible after refresh failure',
+    test(
+        'checkin service keeps stale learner summaries visible after refresh failure',
         () async {
       int loadCount = 0;
       final CheckinService service = CheckinService(

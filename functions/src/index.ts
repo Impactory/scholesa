@@ -2592,6 +2592,8 @@ async function buildParentLearnerSummary(params: {
         id: typeof entry.id === 'string' ? entry.id.trim() : '',
         summary: typeof entry.summary === 'string' ? entry.summary.trim() : '',
         artifactNote: typeof entry.artifactNote === 'string' && entry.artifactNote.trim() ? entry.artifactNote.trim() : null,
+        actorId: typeof entry.actorId === 'string' && entry.actorId.trim() ? entry.actorId.trim() : null,
+        actorRole: typeof entry.actorRole === 'string' && entry.actorRole.trim() ? entry.actorRole.trim() : null,
         createdAt: parseDateFromUnknown(entry.createdAt)?.toISOString() ?? null,
       }))
       .filter((entry) => Boolean(entry.id) || Boolean(entry.summary))
@@ -2752,8 +2754,16 @@ async function buildParentLearnerSummary(params: {
         const eventType = typeof entry.eventType === 'string' ? entry.eventType.trim().toLowerCase() : '';
         return eventType === 'explain_it_back_submitted';
       });
-      const hasAiFeedbackSignal = typeof matchingMissionAttempt?.aiFeedbackDraft === 'string'
-        && matchingMissionAttempt.aiFeedbackDraft.trim().length > 0;
+      const hasAiFeedbackSignal = (typeof row.aiFeedbackDraft === 'string'
+        && row.aiFeedbackDraft.trim().length > 0)
+        || (typeof row.aiFeedbackBy === 'string'
+        && row.aiFeedbackBy.trim().length > 0)
+        || parseDateFromUnknown(row.aiFeedbackAt) != null
+        || (typeof matchingMissionAttempt?.aiFeedbackDraft === 'string'
+        && matchingMissionAttempt.aiFeedbackDraft.trim().length > 0)
+        || (typeof matchingMissionAttempt?.aiFeedbackBy === 'string'
+        && matchingMissionAttempt.aiFeedbackBy.trim().length > 0)
+        || parseDateFromUnknown(matchingMissionAttempt?.aiFeedbackAt) != null;
       const directAiDisclosureStatus = typeof row.aiDisclosureStatus === 'string'
         ? row.aiDisclosureStatus.trim()
         : '';
@@ -2807,6 +2817,18 @@ async function buildParentLearnerSummary(params: {
       const rubricLevel = latestGrowth && typeof latestGrowth.level === 'number' && Number.isFinite(latestGrowth.level)
         ? latestGrowth.level
         : null;
+      const aiFeedbackEducatorId = typeof row.aiFeedbackBy === 'string' && row.aiFeedbackBy.trim()
+        ? row.aiFeedbackBy.trim()
+        : typeof matchingMissionAttempt?.aiFeedbackBy === 'string' && matchingMissionAttempt.aiFeedbackBy.trim()
+        ? matchingMissionAttempt.aiFeedbackBy.trim()
+        : '';
+      const aiFeedbackEducatorName = aiFeedbackEducatorId
+        ? reviewerNames[aiFeedbackEducatorId] ?? reviewerName
+        : hasAiFeedbackSignal
+        ? reviewerName
+        : null;
+      const aiFeedbackAt = parseDateFromUnknown(row.aiFeedbackAt ?? matchingMissionAttempt?.aiFeedbackAt)?.toISOString()
+        ?? (hasAiFeedbackSignal ? reviewedAt : null);
       const aiDisclosureStatus = directAiDisclosureStatus
         ? directAiDisclosureStatus
         : hasLearnerAiDisclosure
@@ -2874,6 +2896,8 @@ async function buildParentLearnerSummary(params: {
         rubricRawScore,
         rubricMaxScore,
         rubricLevel,
+        aiFeedbackEducatorName,
+        aiFeedbackAt,
       };
     })
     .sort((left, right) => Date.parse(String(right.completedAt)) - Date.parse(String(left.completedAt)));
@@ -2963,7 +2987,13 @@ async function buildParentLearnerSummary(params: {
         ? 'partial'
         : 'missing';
       const hasAiFeedbackSignal = matchingMissionAttempts.some((entry) =>
-        typeof entry.aiFeedbackDraft === 'string' && entry.aiFeedbackDraft.trim().length > 0,
+        (typeof entry.aiFeedbackDraft === 'string' && entry.aiFeedbackDraft.trim().length > 0)
+        || (typeof entry.aiFeedbackBy === 'string' && entry.aiFeedbackBy.trim().length > 0)
+        || parseDateFromUnknown(entry.aiFeedbackAt) != null,
+      ) || matchingPortfolio.some((entry) =>
+        (typeof entry.aiFeedbackDraft === 'string' && entry.aiFeedbackDraft.trim().length > 0)
+        || (typeof entry.aiFeedbackBy === 'string' && entry.aiFeedbackBy.trim().length > 0)
+        || parseDateFromUnknown(entry.aiFeedbackAt) != null,
       );
       const learnerAiEventCount = matchingInteractionEvents.filter((entry) => {
         const eventType = typeof entry.eventType === 'string' ? entry.eventType.trim().toLowerCase() : '';
@@ -3038,6 +3068,18 @@ async function buildParentLearnerSummary(params: {
         : typeof latestMissionAttempt?.rubricMaxScore === 'number' && Number.isFinite(latestMissionAttempt.rubricMaxScore)
         ? latestMissionAttempt.rubricMaxScore
         : null;
+      const aiFeedbackEducatorId = typeof latestPortfolio?.aiFeedbackBy === 'string' && latestPortfolio.aiFeedbackBy.trim()
+        ? latestPortfolio.aiFeedbackBy.trim()
+        : typeof latestMissionAttempt?.aiFeedbackBy === 'string' && latestMissionAttempt.aiFeedbackBy.trim()
+        ? latestMissionAttempt.aiFeedbackBy.trim()
+        : '';
+      const aiFeedbackEducatorName = aiFeedbackEducatorId
+        ? reviewerNames[aiFeedbackEducatorId] ?? reviewerName
+        : hasAiFeedbackSignal
+        ? reviewerName
+        : null;
+      const aiFeedbackAt = parseDateFromUnknown(latestPortfolio?.aiFeedbackAt ?? latestMissionAttempt?.aiFeedbackAt)?.toISOString()
+        ?? (hasAiFeedbackSignal ? reviewedAt : null);
       const aiAssistanceDetails = typeof latestPortfolio?.aiAssistanceDetails === 'string' && latestPortfolio.aiAssistanceDetails.trim()
         ? latestPortfolio.aiAssistanceDetails.trim()
         : typeof latestMissionAttempt?.aiAssistanceDetails === 'string' && latestMissionAttempt.aiAssistanceDetails.trim()
@@ -3090,6 +3132,8 @@ async function buildParentLearnerSummary(params: {
         reviewedAt,
         rubricRawScore,
         rubricMaxScore,
+        aiFeedbackEducatorName,
+        aiFeedbackAt,
       };
     })
     .filter((value): value is Record<string, unknown> => Boolean(value))
@@ -3156,6 +3200,16 @@ async function buildParentLearnerSummary(params: {
         title: capabilityTitlesById.get(capabilityId) ?? capabilityId,
         pillar: parentPillarLabelFromCodes([row.pillarCode]),
         level: typeof row.level === 'number' && Number.isFinite(row.level) ? row.level : 0,
+        linkedEvidenceRecordIds: Array.isArray(row.linkedEvidenceRecordIds)
+          ? row.linkedEvidenceRecordIds.filter((value): value is string => typeof value === 'string')
+          : [],
+        linkedPortfolioItemIds: Array.isArray(row.linkedPortfolioItemIds)
+          ? row.linkedPortfolioItemIds.filter((value): value is string => typeof value === 'string')
+          : [],
+        proofOfLearningStatus:
+          typeof row.proofOfLearningStatus === 'string' && row.proofOfLearningStatus.trim()
+            ? row.proofOfLearningStatus.trim()
+            : null,
         occurredAt: parseDateFromUnknown(row.createdAt)?.toISOString() ?? null,
         reviewingEducatorName: reviewerId ? reviewerNames[reviewerId] ?? null : null,
         rubricRawScore: typeof row.rawScore === 'number' && Number.isFinite(row.rawScore) ? row.rawScore : null,

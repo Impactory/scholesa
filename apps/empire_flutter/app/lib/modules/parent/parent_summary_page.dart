@@ -663,12 +663,38 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
     if (entry.reviewingEducatorName?.trim().isNotEmpty == true) {
       parts.add('${_t('reviewed by')} ${entry.reviewingEducatorName}');
     }
+    if (entry.linkedEvidenceRecordIds.isNotEmpty) {
+      parts.add(
+          '${entry.linkedEvidenceRecordIds.length} ${_t('evidence records linked')}');
+    }
+    if (entry.linkedPortfolioItemIds.isNotEmpty) {
+      parts.add(
+          '${entry.linkedPortfolioItemIds.length} ${_t('portfolio artifacts linked')}');
+    }
+    if (entry.proofOfLearningStatus?.trim().isNotEmpty == true) {
+      parts.add('${_t('proof')} ${_formatTimelineProofStatus(entry.proofOfLearningStatus!)}');
+    }
     if (entry.occurredAt != null) {
       final DateTime value = entry.occurredAt!;
       parts.add(
           '${value.month.toString().padLeft(2, '0')}/${value.day.toString().padLeft(2, '0')}/${value.year}');
     }
     return parts.join(' • ');
+  }
+
+  String _formatTimelineProofStatus(String value) {
+    switch (value.trim().toLowerCase()) {
+      case 'verified':
+        return _t('verified');
+      case 'partial':
+        return _t('partial');
+      case 'missing':
+        return _t('missing');
+      case 'not-available':
+        return _t('not available');
+      default:
+        return value.trim();
+    }
   }
 
   Widget _buildPillarProgress(LearnerSummary learner) {

@@ -765,6 +765,16 @@ class ParentService extends ChangeNotifier {
                   ? 'Future Skills'
                   : _asTrimmedString(item['pillar']),
               level: _toInt(item['level']) ?? 0,
+              linkedEvidenceRecordIds: List<String>.from(
+                item['linkedEvidenceRecordIds'] as List? ?? const <String>[],
+              ),
+              linkedPortfolioItemIds: List<String>.from(
+                item['linkedPortfolioItemIds'] as List? ?? const <String>[],
+              ),
+              proofOfLearningStatus:
+                  _asTrimmedString(item['proofOfLearningStatus']).isEmpty
+                      ? null
+                      : _asTrimmedString(item['proofOfLearningStatus']),
               occurredAt: _parseTimestamp(item['occurredAt']),
               reviewingEducatorName:
                   _asTrimmedString(item['reviewingEducatorName']).isEmpty
@@ -791,6 +801,12 @@ class ParentService extends ChangeNotifier {
               artifactNote: _asTrimmedString(item['artifactNote']).isEmpty
                   ? null
                   : _asTrimmedString(item['artifactNote']),
+              actorId: _asTrimmedString(item['actorId']).isEmpty
+                  ? null
+                  : _asTrimmedString(item['actorId']),
+              actorRole: _asTrimmedString(item['actorRole']).isEmpty
+                  ? null
+                  : _asTrimmedString(item['actorRole']),
               createdAt: _parseTimestamp(item['createdAt']),
             ))
         .where((ProofCheckpointPreview checkpoint) =>
@@ -877,6 +893,11 @@ class ParentService extends ChangeNotifier {
               rubricRawScore: _toInt(item['rubricRawScore']),
               rubricMaxScore: _toInt(item['rubricMaxScore']),
               rubricLevel: _toInt(item['rubricLevel']),
+              aiFeedbackEducatorName:
+                  _asTrimmedString(item['aiFeedbackEducatorName']).isEmpty
+                      ? null
+                      : _asTrimmedString(item['aiFeedbackEducatorName']),
+              aiFeedbackAt: _parseTimestamp(item['aiFeedbackAt']),
             ))
         .toList(growable: false);
   }
@@ -970,6 +991,11 @@ class ParentService extends ChangeNotifier {
               reviewedAt: _parseTimestamp(item['reviewedAt']),
               rubricRawScore: _toInt(item['rubricRawScore']),
               rubricMaxScore: _toInt(item['rubricMaxScore']),
+              aiFeedbackEducatorName:
+                  _asTrimmedString(item['aiFeedbackEducatorName']).isEmpty
+                      ? null
+                      : _asTrimmedString(item['aiFeedbackEducatorName']),
+              aiFeedbackAt: _parseTimestamp(item['aiFeedbackAt']),
             ))
         .where((PassportClaim claim) => claim.capabilityId.isNotEmpty)
         .toList(growable: false);
@@ -1095,6 +1121,16 @@ class ParentService extends ChangeNotifier {
             title: title,
             pillar: pillar,
             level: _toInt(row['level']) ?? 0,
+            linkedEvidenceRecordIds: List<String>.from(
+              row['linkedEvidenceRecordIds'] as List? ?? const <String>[],
+            ),
+            linkedPortfolioItemIds: List<String>.from(
+              row['linkedPortfolioItemIds'] as List? ?? const <String>[],
+            ),
+            proofOfLearningStatus:
+                _asTrimmedString(row['proofOfLearningStatus']).isEmpty
+                    ? null
+                    : _asTrimmedString(row['proofOfLearningStatus']),
             occurredAt: _parseTimestamp(row['createdAt']),
             reviewingEducatorName: reviewerNames[reviewerId],
             rubricRawScore: _toInt(row['rawScore']),
@@ -1128,6 +1164,12 @@ class ParentService extends ChangeNotifier {
                   artifactNote: _asTrimmedString(item['artifactNote']).isEmpty
                       ? null
                       : _asTrimmedString(item['artifactNote']),
+                  actorId: _asTrimmedString(item['actorId']).isEmpty
+                      ? null
+                      : _asTrimmedString(item['actorId']),
+                  actorRole: _asTrimmedString(item['actorRole']).isEmpty
+                      ? null
+                      : _asTrimmedString(item['actorRole']),
                   createdAt: _parseTimestamp(item['createdAt']),
                 ))
             .where((ProofCheckpointPreview checkpoint) =>
@@ -1294,9 +1336,18 @@ class ParentService extends ChangeNotifier {
             _asTrimmedString(event['eventType']).toLowerCase() ==
             'explain_it_back_submitted',
       );
-      final bool hasAiFeedbackSignal = matchingMissionAttempt != null &&
-          _asTrimmedString(matchingMissionAttempt['aiFeedbackDraft'])
-              .isNotEmpty;
+      final bool hasAiFeedbackSignal =
+          _asTrimmedString(row['aiFeedbackDraft']).isNotEmpty ||
+              _asTrimmedString(row['aiFeedbackBy']).isNotEmpty ||
+              _parseTimestamp(row['aiFeedbackAt']) != null ||
+              (matchingMissionAttempt != null &&
+                  (_asTrimmedString(
+                              matchingMissionAttempt['aiFeedbackDraft'])
+                          .isNotEmpty ||
+                      _asTrimmedString(matchingMissionAttempt['aiFeedbackBy'])
+                          .isNotEmpty ||
+                      _parseTimestamp(matchingMissionAttempt['aiFeedbackAt']) !=
+                          null));
       final String directAiDisclosureStatus =
           _asTrimmedString(row['aiDisclosureStatus']);
       final String aiAssistanceDetails = _asTrimmedString(
@@ -1363,6 +1414,25 @@ class ParentService extends ChangeNotifier {
           : _toInt(latestGrowth['maxScore']);
       final int? rubricLevel =
           latestGrowth == null ? null : _toInt(latestGrowth['level']);
+      final String aiFeedbackEducatorId = _asTrimmedString(
+        row['aiFeedbackBy'] ??
+            (matchingMissionAttempt == null
+                ? null
+                : matchingMissionAttempt['aiFeedbackBy']),
+      );
+      final String? aiFeedbackEducatorName = aiFeedbackEducatorId.isEmpty
+          ? (hasAiFeedbackSignal && reviewerName.isNotEmpty
+              ? reviewerName
+              : null)
+          : reviewerNames[aiFeedbackEducatorId] ??
+              (reviewerName.isEmpty ? null : reviewerName);
+      final DateTime? aiFeedbackAt = _parseTimestamp(
+            row['aiFeedbackAt'] ??
+                (matchingMissionAttempt == null
+                    ? null
+                    : matchingMissionAttempt['aiFeedbackAt']),
+          ) ??
+          (hasAiFeedbackSignal ? reviewedAt : null);
       final String aiDisclosureStatus = directAiDisclosureStatus.isNotEmpty
           ? directAiDisclosureStatus
           : hasLearnerAiDisclosure
@@ -1446,6 +1516,8 @@ class ParentService extends ChangeNotifier {
         rubricRawScore: rubricRawScore,
         rubricMaxScore: rubricMaxScore,
         rubricLevel: rubricLevel,
+        aiFeedbackEducatorName: aiFeedbackEducatorName,
+        aiFeedbackAt: aiFeedbackAt,
       );
     }).toList(growable: false);
     items.sort((PortfolioPreviewItem a, PortfolioPreviewItem b) =>
@@ -1672,9 +1744,17 @@ class ParentService extends ChangeNotifier {
                       ? 'partial'
                       : 'missing';
       final bool hasAiFeedbackSignal = matchingMissionAttempts.any(
-        (Map<String, dynamic> row) =>
-            _asTrimmedString(row['aiFeedbackDraft']).isNotEmpty,
-      );
+            (Map<String, dynamic> row) =>
+                _asTrimmedString(row['aiFeedbackDraft']).isNotEmpty ||
+                _asTrimmedString(row['aiFeedbackBy']).isNotEmpty ||
+                _parseTimestamp(row['aiFeedbackAt']) != null,
+          ) ||
+          matchingPortfolioByRecency.any(
+            (Map<String, dynamic> row) =>
+                _asTrimmedString(row['aiFeedbackDraft']).isNotEmpty ||
+                _asTrimmedString(row['aiFeedbackBy']).isNotEmpty ||
+                _parseTimestamp(row['aiFeedbackAt']) != null,
+          );
       final int learnerAiEventCount = matchingInteractionEvents.where(
         (Map<String, dynamic> row) {
           final String eventType =
@@ -1752,6 +1832,21 @@ class ParentService extends ChangeNotifier {
                   latestMissionAttempt?['rubricMaxScore'],
             )
           : _toInt(latestGrowth['maxScore']);
+      final String aiFeedbackEducatorId = _asTrimmedString(
+        latestPortfolio?['aiFeedbackBy'] ??
+            latestMissionAttempt?['aiFeedbackBy'],
+      );
+      final String? aiFeedbackEducatorName = aiFeedbackEducatorId.isEmpty
+          ? (hasAiFeedbackSignal && reviewerName.isNotEmpty
+              ? reviewerName
+              : null)
+          : reviewerNames[aiFeedbackEducatorId] ??
+              (reviewerName.isEmpty ? null : reviewerName);
+      final DateTime? aiFeedbackAt = _parseTimestamp(
+            latestPortfolio?['aiFeedbackAt'] ??
+                latestMissionAttempt?['aiFeedbackAt'],
+          ) ??
+          (hasAiFeedbackSignal ? reviewedAt : null);
       final String aiAssistanceDetails = _asTrimmedString(
         latestPortfolio?['aiAssistanceDetails'] ??
             latestMissionAttempt?['aiAssistanceDetails'] ??
@@ -1816,6 +1911,8 @@ class ParentService extends ChangeNotifier {
           reviewedAt: reviewedAt,
           rubricRawScore: rubricRawScore,
           rubricMaxScore: rubricMaxScore,
+          aiFeedbackEducatorName: aiFeedbackEducatorName,
+          aiFeedbackAt: aiFeedbackAt,
         ),
       );
     }

@@ -923,6 +923,9 @@ class _ParentChildPageState extends State<ParentChildPage> {
       parts.add(
           '${value.month.toString().padLeft(2, '0')}/${value.day.toString().padLeft(2, '0')}/${value.year}');
     }
+    if (checkpoint.actorRole?.trim().isNotEmpty == true) {
+      parts.add('${_t('actor')}: ${_titleCase(checkpoint.actorRole!)}');
+    }
     if (checkpoint.summary.trim().isNotEmpty) {
       parts.add(checkpoint.summary.trim());
     }
@@ -947,6 +950,10 @@ class _ParentChildPageState extends State<ParentChildPage> {
       '${_t('AI help events')}: ${claim.aiHelpEventCount}',
       if (claim.aiHasEducatorAiFeedback)
         '${_t('Educator AI feedback')}: ${_t('Present')}',
+      if (claim.aiFeedbackEducatorName?.trim().isNotEmpty == true)
+        '${_t('AI feedback by')}: ${claim.aiFeedbackEducatorName}',
+      if (claim.aiFeedbackAt != null)
+        '${_t('AI feedback date')}: ${claim.aiFeedbackAt!.month.toString().padLeft(2, '0')}/${claim.aiFeedbackAt!.day.toString().padLeft(2, '0')}/${claim.aiFeedbackAt!.year}',
       if (claim.aiAssistanceDetails?.trim().isNotEmpty == true)
         '${_t('Learner AI details')}: ${claim.aiAssistanceDetails}',
     ].join(' • ');
