@@ -156,6 +156,7 @@ Interpretation rule:
 66. Added direct `/site/ops` workflow-composition proof so the route now verifies same-site check-ins and same-day sessions compose into the live present count and timetable, ignore cross-site data, and refresh back to source-of-truth state after new check-in and checkout events are written.
 67. Added direct downstream site workflow proof from `/site/sessions` into `/site/ops` so a session created through the real sessions route now has focused widget evidence that it persists for the active site and immediately appears in the Site Ops timetable while cross-site sessions stay excluded.
 68. Patched `/site/sessions` create persistence to write same-day `sessionOccurrences` alongside the canonical `sessions` record, and added direct proof that a class created through the real sessions route now appears in `/educator/attendance` as a live class for the active site instead of remaining invisible to the attendance workflow.
+69. Added direct downstream educator workflow proof that importing a known learner through the real `/educator/sessions` roster-import dialog creates an active enrollment that appears in the `/educator/attendance` roster for the same class, and patched the educator session detail sheet so long values wrap instead of overflowing and obscuring lower actions in smaller viewports.
 
 ### Release and operations fixes
 
@@ -194,6 +195,7 @@ Interpretation rule:
 - Focused site integrations health route-gate and telemetry regressions passed: 10 passed, 0 failed.
 - Focused site ops, sessions, and provisioning workflow regressions passed: 13 passed, 0 failed.
 - Focused site sessions and attendance downstream workflow regressions passed: 19 passed, 0 failed.
+- Focused educator sessions and attendance downstream workflow regressions passed: 17 passed, 0 failed.
 
 ### Full Flutter gate verification
 
