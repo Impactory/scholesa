@@ -175,6 +175,7 @@ Interpretation rule:
 85. Added direct downstream family workflow proof that a learner, parent, and guardian link created through the real `/site/provisioning` flow can submit a persisted `parent_consent_review` support request from the real `/parent/consent` route once the linked learner's live consent records resolve, confirming the consent review request path also uses the same provisioning-linked family graph instead of only seeded fixtures.
 86. Added direct learner evidence workflow proof that the real `/learner/missions` route persists proof-of-learning drafts, version checkpoints, canonical `missionAttempts`, canonical `missionSubmissions`, and `missionAssignments.lastSubmissionId` updates when a learner submits a completed mission for educator review, confirming learner-originated review evidence now writes through the live route instead of relying on seeded review fixtures alone.
 87. Added direct educator evidence-consumption workflow proof that a canonical mission attempt created through the real `/learner/missions` submission flow appears on the real `/educator/missions/review` route and can be approved there, confirming the live educator review queue consumes learner-created `missionAttempts` instead of depending on seeded review records alone.
+88. Added direct educator growth-linkage workflow proof that a rubric-scored approval submitted through the real `/educator/missions/review` page writes `rubricApplications`, updates `capabilityMastery`, emits `capabilityGrowthEvents`, links matching `evidenceRecords`, and materializes a `portfolioItems` artifact from the reviewed learner evidence, confirming the live educator route drives capability growth and portfolio linkage instead of leaving those outcomes only to service-level regression coverage.
 
 ### Release and operations fixes
 
@@ -237,6 +238,7 @@ Interpretation rule:
 - Focused parent family workflow regressions passed after the provisioning-to-parent-consent review-request proof: 21 passed, 0 failed.
 - Focused learner missions regressions passed after the canonical review submission proof: 4 passed, 0 failed.
 - Focused educator mission review regressions passed after the live learner-to-educator review handoff proof: 3 passed, 0 failed.
+- Focused educator mission review regressions passed after the live rubric growth-linkage proof: 4 passed, 0 failed.
 
 ### Full Flutter gate verification
 
