@@ -2218,7 +2218,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
       final QuerySnapshot<Map<String, dynamic>> attemptsSnapshot =
           await attemptsQuery.limit(500).get();
 
-      final Map<String, int> attemptsByLearner = <String, int>{};
+      final Map<String, int> completedAttemptsByLearner = <String, int>{};
       final Map<String, String> learnerSite = <String, String>{};
       final Map<String, Set<String>> learnerDays = <String, Set<String>>{};
       final Map<String, int> attemptsByPillar = <String, int>{
@@ -2243,17 +2243,8 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
         final String learnerId = ((data['learnerId'] as String?) ?? '').trim();
         if (learnerId.isEmpty) continue;
 
-        attemptsByLearner[learnerId] = (attemptsByLearner[learnerId] ?? 0) + 1;
         final String siteId = ((data['siteId'] as String?) ?? '').trim();
         if (siteId.isNotEmpty) learnerSite[learnerId] = siteId;
-
-        final DateTime? createdAt =
-            _toDateTime(data['createdAt']) ?? _toDateTime(data['submittedAt']);
-        if (createdAt != null) {
-          final String dayKey =
-              '${createdAt.year}-${createdAt.month}-${createdAt.day}';
-          learnerDays.putIfAbsent(learnerId, () => <String>{}).add(dayKey);
-        }
 
         final String missionId = ((data['missionId'] as String?) ?? '').trim();
         final String pillar =
@@ -2261,11 +2252,26 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
         attemptsByPillar[pillar] = (attemptsByPillar[pillar] ?? 0) + 1;
         learnersByPillar.putIfAbsent(pillar, () => <String>{}).add(learnerId);
         final String status = ((data['status'] as String?) ?? '').toLowerCase();
+        final String reviewStatus =
+            ((data['reviewStatus'] as String?) ?? '').toLowerCase();
         final bool completed = status == 'completed' ||
             status == 'passed' ||
             status == 'mastered' ||
-            status == 'done';
+            status == 'done' ||
+            status == 'reviewed' ||
+            status == 'approved' ||
+            reviewStatus == 'approved' ||
+            reviewStatus == 'reviewed';
         if (completed) {
+          completedAttemptsByLearner[learnerId] =
+              (completedAttemptsByLearner[learnerId] ?? 0) + 1;
+          final DateTime? createdAt =
+              _toDateTime(data['createdAt']) ?? _toDateTime(data['submittedAt']);
+          if (createdAt != null) {
+            final String dayKey =
+                '${createdAt.year}-${createdAt.month}-${createdAt.day}';
+            learnerDays.putIfAbsent(learnerId, () => <String>{}).add(dayKey);
+          }
           completedByPillar[pillar] = (completedByPillar[pillar] ?? 0) + 1;
         }
       }
@@ -2294,7 +2300,8 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
         ),
       ];
 
-      final List<MapEntry<String, int>> ranked = attemptsByLearner.entries
+        final List<MapEntry<String, int>> ranked =
+          completedAttemptsByLearner.entries
           .toList()
         ..sort((MapEntry<String, int> a, MapEntry<String, int> b) =>
             b.value.compareTo(a.value));

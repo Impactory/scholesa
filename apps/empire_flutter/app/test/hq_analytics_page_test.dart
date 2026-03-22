@@ -9,6 +9,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
 import 'package:scholesa_app/auth/app_state.dart';
+import 'package:scholesa_app/modules/educator/educator_mission_review_page.dart';
 import 'package:scholesa_app/modules/hq_admin/hq_analytics_page.dart';
 import 'package:scholesa_app/modules/missions/mission_service.dart';
 import 'package:scholesa_app/modules/missions/missions_page.dart';
@@ -46,6 +47,20 @@ AppState _buildLearnerState({
     'email': email,
     'displayName': displayName,
     'role': 'learner',
+    'activeSiteId': 'site-1',
+    'siteIds': <String>['site-1'],
+    'entitlements': <dynamic>[],
+  });
+  return state;
+}
+
+AppState _buildEducatorState() {
+  final AppState state = AppState();
+  state.updateFromMeResponse(<String, dynamic>{
+    'userId': 'educator-1',
+    'email': 'educator-1@scholesa.test',
+    'displayName': 'Educator One',
+    'role': 'educator',
     'activeSiteId': 'site-1',
     'siteIds': <String>['site-1'],
     'entitlements': <dynamic>[],
@@ -215,6 +230,24 @@ Widget _buildLearnerMissionHarness({
   );
 }
 
+Widget _buildEducatorReviewHarness({
+  required MissionService missionService,
+}) {
+  return MultiProvider(
+    providers: <SingleChildWidget>[
+      ChangeNotifierProvider<AppState>.value(value: _buildEducatorState()),
+      ChangeNotifierProvider<MissionService>.value(value: missionService),
+    ],
+    child: MaterialApp(
+      theme: ThemeData(
+        useMaterial3: true,
+        splashFactory: NoSplash.splashFactory,
+      ),
+      home: const EducatorMissionReviewPage(),
+    ),
+  );
+}
+
 Future<void> _submitMissionForReviewViaPage(
   WidgetTester tester, {
   required FirestoreService firestoreService,
@@ -276,6 +309,34 @@ Future<void> _submitMissionForReviewViaPage(
     scrollable: find.byType(Scrollable).last,
   );
   await tester.tap(find.text('Submit for Review'));
+  await tester.pump();
+  await tester.pumpAndSettle();
+}
+
+Future<void> _approveMissionViaReviewPage(
+  WidgetTester tester, {
+  required MissionService missionService,
+}) async {
+  await tester.pumpWidget(
+    _buildEducatorReviewHarness(missionService: missionService),
+  );
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 300));
+  await tester.pumpAndSettle();
+
+  await tester.tap(find.text('Mission ready for review').first);
+  await tester.pumpAndSettle();
+
+  await tester.enterText(
+    find.byType(TextField).last,
+    'Your explanation matched the evidence and review requirements.',
+  );
+  await tester.scrollUntilVisible(
+    find.text('Approve'),
+    250,
+    scrollable: find.byType(Scrollable).last,
+  );
+  await tester.tap(find.text('Approve'));
   await tester.pump();
   await tester.pumpAndSettle();
 }
@@ -452,13 +513,31 @@ void main() {
   });
 
   testWidgets(
-      'hq analytics supplemental data reflects live learner mission submissions from the canonical route',
+      'hq analytics top performers reflect reviewed learner work from the live learner and educator workflow',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     await _seedMissionReadyForReviewData(
       firestore,
       learnerId: 'learner-analytics-1',
       learnerName: 'Nia Analytics',
+    );
+    await firestore.collection('users').doc('learner-unfinished-1').set(
+      <String, dynamic>{
+        'uid': 'learner-unfinished-1',
+        'displayName': 'Uma Unfinished',
+        'role': 'learner',
+        'siteIds': <String>['site-1'],
+      },
+    );
+    await firestore.collection('missionAttempts').doc('unfinished-attempt-1').set(
+      <String, dynamic>{
+        'siteId': 'site-1',
+        'learnerId': 'learner-unfinished-1',
+        'missionId': 'mission-1',
+        'status': 'submitted',
+        'submittedAt': Timestamp.fromDate(DateTime(2026, 3, 18, 11)),
+        'createdAt': Timestamp.fromDate(DateTime(2026, 3, 18, 11)),
+      },
     );
     final FirestoreService firestoreService = FirestoreService(
       firestore: firestore,
@@ -475,11 +554,20 @@ void main() {
       appState: _buildLearnerState(),
     );
 
+    await _approveMissionViaReviewPage(
+      tester,
+      missionService: MissionService(
+        firestoreService: firestoreService,
+        learnerId: 'educator-1',
+      ),
+    );
+
     final QuerySnapshot<Map<String, dynamic>> attempts = await firestore
         .collection('missionAttempts')
         .where('learnerId', isEqualTo: 'learner-analytics-1')
         .get();
     expect(attempts.docs, hasLength(1));
+    expect(attempts.docs.single.data()['status'], 'reviewed');
 
     await tester.pumpWidget(
       _buildAnalyticsHarness(
@@ -518,6 +606,7 @@ void main() {
     expect(find.text('Nia Analytics'), findsOneWidget);
     expect(find.text('North Hub'), findsWidgets);
     expect(find.text('1 days'), findsOneWidget);
+    expect(find.text('Uma Unfinished'), findsNothing);
     expect(find.text('No top performers available'), findsNothing);
   });
 
