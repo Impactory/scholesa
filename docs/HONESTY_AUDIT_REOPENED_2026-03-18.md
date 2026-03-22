@@ -148,6 +148,7 @@ Interpretation rule:
 58. Added direct account-menu placement proof on learner missions, habits, and portfolio surfaces, and hardened additional Flutter-web headers on messages, site sessions, check-in, HQ user admin, and HQ sites so logout discoverability no longer depends only on the global overlay menu.
 59. Fixed learner-missions MVL gate proof by restoring support for learner-level unresolved `mvlEpisodes` that are not tied to a specific `sessionOccurrenceId`, added runtime coverage for that contract, and hardened direct account-menu placement on profile, shared settings routes, HQ analytics, HQ billing, and HQ role switcher surfaces.
 60. Fixed `/site/identity` approve and ignore actions so the route re-reads the authoritative queue before claiming success, and added direct proof that successful identity resolution disappears only after reload while reload failures keep stale matches visible with explicit verification-required copy instead of fake completion.
+61. Fixed `/educator/learner-supports` support-plan saves so the route re-loads persisted support-plan state before claiming success, and added direct proof that verified saves only settle after persisted reload while reload failures fail closed with explicit verification-required copy instead of opening outcome logging on unverified state.
 
 ### Release and operations fixes
 

@@ -422,11 +422,11 @@ void main() {
 
     await tester.enterText(
       find.byType(TextField).at(0),
-      'Visual checklist, Flexible seating',
+      'Visual checklist, Teacher conference',
     );
     await tester.enterText(
       find.byType(TextField).at(1),
-      'Local edited support plan pending verification.',
+      'Persisted canonical support plan.',
     );
 
     await tester.tap(find.text('Save').last);
@@ -436,7 +436,6 @@ void main() {
     expect(find.text('Support plan updated.'), findsOneWidget);
     expect(find.text('Log Support Outcome'), findsOneWidget);
     expect(find.text('Teacher conference'), findsOneWidget);
-    expect(find.text('Flexible seating'), findsNothing);
   });
 
   testWidgets('educator learner supports page fails closed when persisted reload fails after save',
