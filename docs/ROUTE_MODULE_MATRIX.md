@@ -12,6 +12,7 @@ For current Flutter route proof status and remaining blind spots, see `docs/FLUT
 - Role root pages such as `/learner` and `/hq` are redirect shells.
 - Most protected workflow pages are thin wrappers over `src/features/workflows/WorkflowRoutePage.tsx`.
 - Canonical web workflow metadata lives in `src/lib/routing/workflowRoutes.ts`.
+- In normal runtime those workflow routes load through `src/features/workflows/workflowData.ts` against Firestore and callable backends. The browser E2E harness switches that same layer into the explicit fake backend when `NEXT_PUBLIC_E2E_TEST_MODE=1`.
 
 ## Web Public and Redirect Routes
 

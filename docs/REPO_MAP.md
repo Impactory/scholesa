@@ -8,7 +8,7 @@ This is the current source-of-truth map for the Scholesa repository. It replaces
 
 | Product | Entry points | Primary code roots | Notes |
 | --- | --- | --- | --- |
-| Web platform | `npm run dev`, `npm run build`, `npm run test:e2e:web` | `app/`, `src/`, `public/`, `locales/` | Next.js App Router product with locale-first protected workflows |
+| Web platform | `npm run dev`, `npm run build`, `npm run test:e2e:web` | `app/`, `src/`, `public/`, `locales/` | Next.js App Router product with locale-first protected workflows; `test:e2e:web` runs the browser harness in explicit fake-backend mode |
 | Flutter app | `flutter run`, `flutter analyze`, `flutter test` from `apps/empire_flutter/app` | `apps/empire_flutter/app/lib/`, `apps/empire_flutter/app/test/` | Mobile and multi-platform client with role routing and offline queue |
 | Firebase backend | `npm --prefix functions run build`, `firebase deploy --only functions` | `functions/src/` | Functions v2 on Node 24 for workflows, billing, runtime, voice, telemetry |
 | Compliance operator | `npm run compliance:serve`, `npm run compliance:run`, `npm run compliance:scan` | `services/scholesa-compliance/src/` | Separate CI and operator-facing compliance service |

@@ -37,3 +37,4 @@ Results:
 
 - The web build and Playwright webServer build still emit the known non-blocking `next-pwa` / Workbox deprecation warnings already captured in `DEPENDENCY_BASELINE_SCHOLESA.md`.
 - Those warnings did not fail the build and are package debt, not a current Scholesa config regression.
+- The Playwright route suite runs with `NEXT_PUBLIC_E2E_TEST_MODE=1`, so this proof covers browser routing, locale handling, and generic workflow parity against `src/testing/e2e/fakeWebBackend.ts`; it does not by itself certify live Firestore or callable behavior on the web workflow layer.
