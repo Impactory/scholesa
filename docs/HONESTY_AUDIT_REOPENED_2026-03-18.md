@@ -163,6 +163,11 @@ Interpretation rule:
 73. Added direct downstream educator workflow proof that an existing learner from another site appears in the real `/educator/learners` roster after the real `/site/provisioning` learner-create flow links that user into the active site instead of duplicating them, closing the cross-site branch for the learner-roster consumer as well.
 74. Added direct downstream site workflow proof that a guardian link created through the real `/site/provisioning` flow appears on the real `/site/pickup-auth` route via guardian-fallback coverage, and patched pickup-authorization learner-name resolution so provisioning-created learner profiles use `displayName` when `preferredName` and `legalName` are absent instead of collapsing to learner IDs.
 75. Added direct downstream site workflow proof that a learner, parent, and guardian link created through the real `/site/provisioning` flow feed the real `/site/checkin` quick-pickup path, so guardian-link fallback can resolve a live present learner by parent phone and complete the actual checkout flow without any hand-seeded pickup-authorization document.
+76. Added direct downstream educator and site-operations workflow proof that a queued roster import marked reviewed through the real `/site/integrations-health` queue remains terminal: later creating a matching learner through the real `/site/provisioning` flow does not reconcile the row into an enrollment and does not make that learner appear in `/educator/attendance`.
+77. Added direct downstream family workflow proof that a learner, parent, and guardian link created through the real `/site/provisioning` flow appear on the real `/parent/summary` route via `ParentService` guardian-link resolution, and that the summary only shows activity for the linked learner rather than unrelated learner activity from the same site.
+78. Added direct downstream family workflow proof that a learner, parent, and guardian link created through the real `/site/provisioning` flow appear on the real `/parent/consent` route via live guardian-link resolution, and that the consent surface only shows records for the linked learner rather than unrelated consent records from the same site.
+79. Added direct downstream family workflow proof that a learner, parent, and guardian link created through the real `/site/provisioning` flow appear on the real `/parent/child/:learnerId` route via `ParentService` learner-summary loading, and that the child detail surface shows only the linked learner's activity, upcoming session, and passport context rather than unrelated site learner data.
+80. Added direct downstream site consent workflow proof that a learner, parent, and guardian link created through the real `/site/provisioning` flow appear on the real `/site/consent` route, and patched `SiteConsentService` name resolution to honor provisioning-created learner and parent profile `displayName` values when `preferredName` and `legalName` are absent.
 
 ### Release and operations fixes
 
@@ -206,9 +211,15 @@ Interpretation rule:
 - Focused provisioning, educator sessions, and attendance downstream workflow regressions passed after the cross-site learner-linking proof and workflow-bridge cleanup: 41 passed, 0 failed.
 - Focused provisioning, educator sessions, educator learners, and attendance downstream workflow regressions passed: 50 passed, 0 failed.
 - Focused provisioning, educator sessions, educator learners, and attendance downstream workflow regressions passed after adding the cross-site learner-roster proof: 51 passed, 0 failed.
+- Focused attendance downstream workflow regressions passed after proving reviewed roster imports stay terminal: 17 passed, 0 failed.
+- Focused provisioning, educator sessions, educator learners, and attendance downstream workflow regressions passed after proving reviewed roster imports stay terminal: 52 passed, 0 failed.
 - Focused site pickup authorization regressions passed after the provisioning-to-pickup fallback proof and learner-name fix: 4 passed, 0 failed.
 - Focused site check-in regressions passed after the provisioning-to-checkin guardian-fallback proof: 7 passed, 0 failed.
 - Focused provisioning, site ops workflow, pickup authorization, and check-in regressions passed after the provisioning-to-checkin guardian-fallback proof: 46 passed, 0 failed.
+- Focused parent surface workflow regressions passed after the provisioning-to-parent-child guardian-link proof: 13 passed, 0 failed.
+- Focused parent consent regressions passed after the provisioning-to-parent-consent guardian-link proof: 5 passed, 0 failed.
+- Focused site consent regressions passed after the provisioning-to-site-consent guardian-link proof and profile-name fallback fix: 4 passed, 0 failed.
+- Focused provisioning, site consent, pickup authorization, and check-in regressions passed after the provisioning-to-site-consent guardian-link proof: 28 passed, 0 failed.
 
 ### Full Flutter gate verification
 

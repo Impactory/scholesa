@@ -10,6 +10,8 @@ import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:scholesa_app/auth/app_state.dart';
+import 'package:scholesa_app/modules/provisioning/provisioning_page.dart';
+import 'package:scholesa_app/modules/provisioning/provisioning_service.dart';
 import 'package:scholesa_app/modules/parent/parent_billing_page.dart';
 import 'package:scholesa_app/modules/parent/parent_child_page.dart';
 import 'package:scholesa_app/modules/parent/parent_models.dart';
@@ -18,6 +20,7 @@ import 'package:scholesa_app/modules/parent/parent_schedule_page.dart';
 import 'package:scholesa_app/modules/parent/parent_service.dart';
 import 'package:scholesa_app/modules/parent/parent_summary_page.dart';
 import 'package:scholesa_app/runtime/learning_runtime_provider.dart';
+import 'package:scholesa_app/services/api_client.dart';
 import 'package:scholesa_app/services/export_service.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
 
@@ -55,16 +58,35 @@ class _StubParentService extends ParentService {
   Future<void> loadParentData() async {}
 }
 
-AppState _buildParentState() {
+AppState _buildParentState({
+  String userId = 'parent-1',
+  String email = 'parent001.demo@scholesa.org',
+  String displayName = 'Parent One',
+}) {
   final AppState state = AppState();
   state.updateFromMeResponse(<String, dynamic>{
-    'userId': 'parent-1',
-    'email': 'parent001.demo@scholesa.org',
-    'displayName': 'Parent One',
+    'userId': userId,
+    'email': email,
+    'displayName': displayName,
     'role': 'parent',
     'activeSiteId': 'site-1',
     'siteIds': <String>['site-1'],
     'entitlements': <dynamic>[],
+  });
+  return state;
+}
+
+AppState _buildSiteState() {
+  final AppState state = AppState();
+  state.updateFromMeResponse(<String, dynamic>{
+    'userId': 'site-1-admin',
+    'email': 'site-admin@scholesa.test',
+    'displayName': 'Site Admin',
+    'role': 'site',
+    'activeSiteId': 'site-1',
+    'siteIds': <String>['site-1'],
+    'localeCode': 'en',
+    'entitlements': const <Map<String, dynamic>>[],
   });
   return state;
 }
@@ -226,6 +248,7 @@ Future<void> _pumpPage(
   required FakeFirebaseFirestore firestore,
   required Widget home,
   ParentService? parentService,
+  AppState? appState,
 }) async {
   tester.view.physicalSize = const Size(1440, 2200);
   tester.view.devicePixelRatio = 1.0;
@@ -249,7 +272,9 @@ Future<void> _pumpPage(
   await tester.pumpWidget(
     MultiProvider(
       providers: <SingleChildWidget>[
-        ChangeNotifierProvider<AppState>.value(value: _buildParentState()),
+        ChangeNotifierProvider<AppState>.value(
+          value: appState ?? _buildParentState(),
+        ),
         Provider<FirestoreService>.value(value: firestoreService),
         ChangeNotifierProvider<ParentService>.value(
             value: resolvedParentService),
@@ -268,6 +293,46 @@ Future<void> _pumpPage(
           GlobalCupertinoLocalizations.delegate,
         ],
         home: home,
+      ),
+    ),
+  );
+
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 400));
+  await tester.pumpAndSettle();
+}
+
+Future<void> _pumpProvisioningPage(
+  WidgetTester tester, {
+  required FakeFirebaseFirestore firestore,
+}) async {
+  final _MockFirebaseAuth auth = _MockFirebaseAuth();
+  final ProvisioningService service = ProvisioningService(
+    apiClient: ApiClient(auth: auth, baseUrl: 'http://localhost'),
+    firestore: firestore,
+    auth: auth,
+    useProvisioningApi: false,
+  );
+
+  await tester.pumpWidget(
+    MultiProvider(
+      providers: <SingleChildWidget>[
+        ChangeNotifierProvider<AppState>.value(value: _buildSiteState()),
+        ChangeNotifierProvider<ProvisioningService>.value(value: service),
+      ],
+      child: MaterialApp(
+        theme: _workflowTheme,
+        supportedLocales: const <Locale>[
+          Locale('en'),
+          Locale('zh', 'CN'),
+          Locale('zh', 'TW'),
+        ],
+        localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        home: const ProvisioningPage(),
       ),
     ),
   );
@@ -343,6 +408,292 @@ void main() {
       expect(find.text('View Child Detail'), findsOneWidget);
       expect(find.text('View Consent'), findsOneWidget);
       expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
+    });
+
+    testWidgets(
+        'child page shows learners linked through provisioning guardian links',
+        (WidgetTester tester) async {
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+      final DateTime now = DateTime.now();
+
+      await _pumpProvisioningPage(tester, firestore: firestore);
+
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byType(TextFormField).at(0),
+        'Nia Passport',
+      );
+      await tester.enterText(
+        find.byType(TextFormField).at(1),
+        'nia.passport@example.com',
+      );
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Create'));
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Parents').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextFormField).at(0), 'Pat Passport');
+      await tester.enterText(
+        find.byType(TextFormField).at(1),
+        'pat.passport@example.com',
+      );
+      await tester.enterText(find.byType(TextFormField).at(2), '555-0115');
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Create'));
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      final QuerySnapshot<Map<String, dynamic>> learnerUsers = await firestore
+          .collection('users')
+          .where('email', isEqualTo: 'nia.passport@example.com')
+          .get();
+      expect(learnerUsers.docs, hasLength(1));
+      final String learnerId = learnerUsers.docs.single.id;
+
+      final QuerySnapshot<Map<String, dynamic>> parentUsers = await firestore
+          .collection('users')
+          .where('email', isEqualTo: 'pat.passport@example.com')
+          .get();
+      expect(parentUsers.docs, hasLength(1));
+      final String parentId = parentUsers.docs.single.id;
+
+      await tester.tap(find.text('Links').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(DropdownButtonFormField<String>).at(0));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Pat Passport').last);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(DropdownButtonFormField<String>).at(1));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Nia Passport').last);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Create Link'));
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      await firestore.collection('learnerProgress').doc(learnerId).set(
+        <String, dynamic>{
+          'level': 4,
+          'totalXp': 980,
+          'missionsCompleted': 6,
+          'currentStreak': 5,
+          'futureSkillsProgress': 0.7,
+          'leadershipProgress': 0.55,
+          'impactProgress': 0.45,
+        },
+      );
+      await firestore.collection('activities').doc('linked-activity-1').set(
+        <String, dynamic>{
+          'learnerId': learnerId,
+          'title': 'Prototype Reflection',
+          'description': 'Linked through provisioning',
+          'type': 'reflection',
+          'emoji': '🧠',
+          'timestamp': Timestamp.fromDate(now),
+        },
+      );
+      await firestore.collection('events').doc('linked-event-1').set(
+        <String, dynamic>{
+          'learnerId': learnerId,
+          'title': 'Studio Review',
+          'description': 'Evidence conference',
+          'dateTime': Timestamp.fromDate(now.add(const Duration(days: 1))),
+          'type': 'session',
+          'location': 'Lab 2',
+        },
+      );
+      await firestore.collection('portfolioItems').doc('linked-artifact-1').set(
+        <String, dynamic>{
+          'learnerId': learnerId,
+          'title': 'Prototype Artifact',
+          'description': 'Verified artifact',
+          'verificationStatus': 'reviewed',
+          'createdAt': Timestamp.fromDate(now.subtract(const Duration(hours: 2))),
+          'updatedAt': Timestamp.fromDate(now.subtract(const Duration(hours: 1))),
+        },
+      );
+
+      await firestore.collection('users').doc('hidden-learner-1').set(
+        <String, dynamic>{
+          'role': 'learner',
+          'displayName': 'Hidden Learner',
+          'siteIds': <String>['site-1'],
+        },
+      );
+      await firestore.collection('activities').doc('hidden-activity-1').set(
+        <String, dynamic>{
+          'learnerId': 'hidden-learner-1',
+          'title': 'Hidden Project',
+          'description': 'Should not appear',
+          'type': 'mission',
+          'emoji': '🕶',
+          'timestamp': Timestamp.fromDate(now.add(const Duration(minutes: 1))),
+        },
+      );
+
+      final FirestoreService firestoreService = FirestoreService(
+        firestore: firestore,
+        auth: _MockFirebaseAuth(),
+      );
+      final ParentService parentService = ParentService(
+        firestoreService: firestoreService,
+        parentId: parentId,
+        bundleLoader: () async => <LearnerSummary>[],
+        billingLoader: () async => null,
+      );
+
+      await _pumpPage(
+        tester,
+        firestore: firestore,
+        appState: _buildParentState(
+          userId: parentId,
+          email: 'pat.passport@example.com',
+          displayName: 'Pat Passport',
+        ),
+        parentService: parentService,
+        home: ParentChildPage(learnerId: learnerId),
+      );
+
+      expect(find.text('Nia Passport'), findsOneWidget);
+      expect(find.text('Prototype Reflection'), findsOneWidget);
+      expect(find.text('Studio Review'), findsOneWidget);
+      expect(find.text('Hidden Project'), findsNothing);
+      expect(find.text('Export Passport'), findsOneWidget);
+      expect(find.text('View Consent'), findsOneWidget);
+    });
+
+    testWidgets(
+        'summary page shows learners and activity linked through provisioning guardian links',
+        (WidgetTester tester) async {
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+      final DateTime now = DateTime.now();
+
+      await _pumpProvisioningPage(tester, firestore: firestore);
+
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byType(TextFormField).at(0),
+        'Nia Evidence',
+      );
+      await tester.enterText(
+        find.byType(TextFormField).at(1),
+        'nia.parent-summary@example.com',
+      );
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Create'));
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Parents').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextFormField).at(0), 'Pat Guardian');
+      await tester.enterText(
+        find.byType(TextFormField).at(1),
+        'pat.parent-summary@example.com',
+      );
+      await tester.enterText(find.byType(TextFormField).at(2), '555-0113');
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Create'));
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      final QuerySnapshot<Map<String, dynamic>> learnerUsers = await firestore
+          .collection('users')
+          .where('email', isEqualTo: 'nia.parent-summary@example.com')
+          .get();
+      expect(learnerUsers.docs, hasLength(1));
+      final String learnerId = learnerUsers.docs.single.id;
+
+      final QuerySnapshot<Map<String, dynamic>> parentUsers = await firestore
+          .collection('users')
+          .where('email', isEqualTo: 'pat.parent-summary@example.com')
+          .get();
+      expect(parentUsers.docs, hasLength(1));
+      final String parentId = parentUsers.docs.single.id;
+
+      await tester.tap(find.text('Links').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(DropdownButtonFormField<String>).at(0));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Pat Guardian').last);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(DropdownButtonFormField<String>).at(1));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Nia Evidence').last);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Create Link'));
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      await firestore.collection('activities').doc('linked-activity-1').set(
+        <String, dynamic>{
+          'learnerId': learnerId,
+          'title': 'Prototype Reflection',
+          'description': 'Linked through provisioning',
+          'type': 'reflection',
+          'emoji': '🧠',
+          'timestamp': Timestamp.fromDate(now),
+        },
+      );
+      await firestore.collection('users').doc('hidden-learner-1').set(
+        <String, dynamic>{
+          'role': 'learner',
+          'displayName': 'Hidden Learner',
+          'siteIds': <String>['site-1'],
+        },
+      );
+      await firestore.collection('activities').doc('hidden-activity-1').set(
+        <String, dynamic>{
+          'learnerId': 'hidden-learner-1',
+          'title': 'Hidden Project',
+          'description': 'Should not appear',
+          'type': 'mission',
+          'emoji': '🕶',
+          'timestamp': Timestamp.fromDate(now.add(const Duration(minutes: 1))),
+        },
+      );
+
+      final FirestoreService firestoreService = FirestoreService(
+        firestore: firestore,
+        auth: _MockFirebaseAuth(),
+      );
+      final ParentService parentService = ParentService(
+        firestoreService: firestoreService,
+        parentId: parentId,
+        bundleLoader: () async => <LearnerSummary>[],
+        billingLoader: () async => null,
+      );
+
+      await _pumpPage(
+        tester,
+        firestore: firestore,
+        appState: _buildParentState(
+          userId: parentId,
+          email: 'pat.parent-summary@example.com',
+          displayName: 'Pat Guardian',
+        ),
+        parentService: parentService,
+        home: const ParentSummaryPage(),
+      );
+
+      expect(find.text('Nia Evidence'), findsOneWidget);
+      expect(find.text('Prototype Reflection'), findsOneWidget);
+      expect(find.text('Hidden Project'), findsNothing);
+      expect(find.text('View Child Detail'), findsOneWidget);
     });
 
     testWidgets('schedule page shows linked session details and reminder flow',

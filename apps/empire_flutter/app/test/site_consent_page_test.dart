@@ -1,13 +1,25 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
 import 'package:scholesa_app/auth/app_state.dart';
+import 'package:scholesa_app/modules/provisioning/provisioning_page.dart';
+import 'package:scholesa_app/modules/provisioning/provisioning_service.dart';
 import 'package:scholesa_app/modules/site/site_consent_page.dart';
 import 'package:scholesa_app/modules/site/site_consent_service.dart';
+import 'package:scholesa_app/services/api_client.dart';
+
+class _FakeFirebaseAuth implements FirebaseAuth {
+  @override
+  User? get currentUser => null;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
 
 class _ThrowingSiteConsentService extends SiteConsentService {
   _ThrowingSiteConsentService() : super(firestore: FakeFirebaseFirestore());
@@ -59,10 +71,12 @@ AppState _buildSiteState() {
 Widget _buildHarness({
   required AppState appState,
   required Widget child,
+  List<SingleChildWidget> providers = const <SingleChildWidget>[],
 }) {
   return MultiProvider(
     providers: <SingleChildWidget>[
       ChangeNotifierProvider<AppState>.value(value: appState),
+      ...providers,
     ],
     child: MaterialApp(
       theme: ThemeData(
@@ -83,6 +97,32 @@ Widget _buildHarness({
       home: child,
     ),
   );
+}
+
+Future<void> _pumpProvisioningPage(
+  WidgetTester tester, {
+  required FakeFirebaseFirestore firestore,
+}) async {
+  final _FakeFirebaseAuth auth = _FakeFirebaseAuth();
+  final ProvisioningService service = ProvisioningService(
+    apiClient: ApiClient(auth: auth, baseUrl: 'http://localhost'),
+    firestore: firestore,
+    auth: auth,
+    useProvisioningApi: false,
+  );
+
+  await tester.pumpWidget(
+    _buildHarness(
+      appState: _buildSiteState(),
+      providers: <SingleChildWidget>[
+        ChangeNotifierProvider<ProvisioningService>.value(value: service),
+      ],
+      child: const ProvisioningPage(),
+    ),
+  );
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 400));
+  await tester.pumpAndSettle();
 }
 
 Future<void> _seedConsentData(FakeFirebaseFirestore firestore) async {
@@ -231,6 +271,130 @@ void main() {
         'consent.research.updated',
       ]),
     );
+  });
+
+  testWidgets(
+      'site consent shows provisioning-linked learners and parents in the live consent workflow',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+
+    await tester.binding.setSurfaceSize(const Size(1280, 2200));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await _pumpProvisioningPage(tester, firestore: firestore);
+
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).at(0), 'Nia Consent');
+    await tester.enterText(
+      find.byType(TextFormField).at(1),
+      'nia.site.consent@example.com',
+    );
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Create'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Parents').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).at(0), 'Pat Consent');
+    await tester.enterText(
+      find.byType(TextFormField).at(1),
+      'pat.site.consent@example.com',
+    );
+    await tester.enterText(find.byType(TextFormField).at(2), '555-0126');
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Create'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    final QuerySnapshot<Map<String, dynamic>> learnerUsers = await firestore
+        .collection('users')
+        .where('email', isEqualTo: 'nia.site.consent@example.com')
+        .get();
+    expect(learnerUsers.docs, hasLength(1));
+    final String learnerId = learnerUsers.docs.single.id;
+
+    final QuerySnapshot<Map<String, dynamic>> parentUsers = await firestore
+        .collection('users')
+        .where('email', isEqualTo: 'pat.site.consent@example.com')
+        .get();
+    expect(parentUsers.docs, hasLength(1));
+    final String parentId = parentUsers.docs.single.id;
+
+    await tester.tap(find.text('Links').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(DropdownButtonFormField<String>).at(0));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Pat Consent').last);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(DropdownButtonFormField<String>).at(1));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Nia Consent').last);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Create Link'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await firestore.collection('mediaConsents').doc('media-live-1').set(
+      <String, dynamic>{
+        'siteId': 'site-1',
+        'learnerId': learnerId,
+        'photoCaptureAllowed': true,
+        'shareWithLinkedParents': true,
+        'marketingUseAllowed': false,
+        'consentStatus': 'active',
+        'consentStartDate': '2026-03-01',
+      },
+    );
+    await firestore.collection('researchConsents').doc('research-live-1').set(
+      <String, dynamic>{
+        'siteId': 'site-1',
+        'learnerId': learnerId,
+        'parentId': parentId,
+        'consentGiven': true,
+        'dataShareScope': 'pseudonymised',
+        'consentVersion': 'v1',
+      },
+    );
+    await firestore.collection('learnerProfiles').doc('other-site-profile-1').set(
+      <String, dynamic>{
+        'learnerId': 'other-site-learner-1',
+        'siteId': 'site-2',
+        'preferredName': 'Other Site Learner',
+      },
+    );
+    await firestore.collection('researchConsents').doc('research-other-site').set(
+      <String, dynamic>{
+        'siteId': 'site-2',
+        'learnerId': 'other-site-learner-1',
+        'parentId': 'other-parent',
+        'consentGiven': true,
+        'dataShareScope': 'identifiable',
+        'consentVersion': 'secret',
+      },
+    );
+
+    await tester.pumpWidget(
+      _buildHarness(
+        appState: _buildSiteState(),
+        child: SiteConsentPage(
+          service: SiteConsentService(firestore: firestore),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Nia Consent'), findsOneWidget);
+    expect(find.textContaining('Pat Consent'), findsOneWidget);
+    expect(find.text('Other Site Learner'), findsNothing);
+    expect(find.textContaining('Photo capture: Allowed'), findsOneWidget);
+    expect(find.textContaining('Consent version: v1'), findsOneWidget);
   });
 
   testWidgets('site consent shows explicit error state when loading fails',

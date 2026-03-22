@@ -292,7 +292,9 @@ class SiteConsentService {
         continue;
       }
       names[learnerId] = _nonEmptyOrFallback(
-        _optionalString(data['preferredName']) ?? _optionalString(data['legalName']),
+        _optionalString(data['preferredName']) ??
+            _optionalString(data['legalName']) ??
+            _optionalString(data['displayName']),
         learnerId,
       );
     }
@@ -357,6 +359,7 @@ class SiteConsentService {
     return _nonEmptyOrFallback(
       _optionalString(parentProfile['preferredName']) ??
           _optionalString(parentProfile['legalName']) ??
+          _optionalString(parentProfile['displayName']) ??
           userDisplayNames[parentId],
       parentId,
     );
