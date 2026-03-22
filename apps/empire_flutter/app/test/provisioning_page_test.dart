@@ -175,7 +175,7 @@ class _DeterministicProvisioningService extends ProvisioningService {
   final bool failUpdateParent;
   final bool failDeleteGuardianLink;
 
-  bool _isLoadingValue = false;
+  final bool _isLoadingValue = false;
   String? _errorValue;
 
   @override
