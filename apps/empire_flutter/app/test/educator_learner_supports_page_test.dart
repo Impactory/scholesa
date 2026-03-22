@@ -7,15 +7,33 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/modules/educator/educator_models.dart';
 import 'package:scholesa_app/modules/educator/educator_learner_supports_page.dart';
+import 'package:scholesa_app/modules/educator/educator_sessions_page.dart';
 import 'package:scholesa_app/modules/educator/educator_service.dart';
+import 'package:scholesa_app/modules/provisioning/provisioning_page.dart';
+import 'package:scholesa_app/modules/provisioning/provisioning_service.dart';
+import 'package:scholesa_app/services/api_client.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
 import 'package:scholesa_app/services/telemetry_service.dart';
+import 'package:scholesa_app/services/workflow_bridge_service.dart';
 import 'package:scholesa_app/ui/theme/scholesa_theme.dart';
 
 class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
+
+class _FakeWorkflowBridgeService extends WorkflowBridgeService {
+  _FakeWorkflowBridgeService() : super(functions: null);
+
+  @override
+  Future<List<Map<String, dynamic>>> listCohortLaunches({
+    String? siteId,
+    int limit = 80,
+  }) async {
+    return const <Map<String, dynamic>>[];
+  }
+}
 
 class _FailingSupportPlanFirestoreService extends FirestoreService {
   _FailingSupportPlanFirestoreService({
@@ -54,6 +72,21 @@ AppState _buildEducatorState() {
     'email': 'educator-1@scholesa.test',
     'displayName': 'Educator One',
     'role': 'educator',
+    'activeSiteId': 'site-1',
+    'siteIds': <String>['site-1'],
+    'localeCode': 'en',
+    'entitlements': <Map<String, dynamic>>[],
+  });
+  return state;
+}
+
+AppState _buildSiteState() {
+  final AppState state = AppState();
+  state.updateFromMeResponse(<String, dynamic>{
+    'userId': 'site-admin-1',
+    'email': 'site-admin-1@scholesa.test',
+    'displayName': 'Site Admin',
+    'role': 'site',
     'activeSiteId': 'site-1',
     'siteIds': <String>['site-1'],
     'localeCode': 'en',
@@ -153,6 +186,71 @@ Future<void> _seedSecondLearner(FakeFirebaseFirestore firestore) async {
   });
 }
 
+Future<void> _seedRosterImportSessionData(
+  FakeFirebaseFirestore firestore,
+) async {
+  final DateTime now = DateTime.now();
+  final DateTime startTime = DateTime(now.year, now.month, now.day, 9, 0);
+  final DateTime endTime = startTime.add(const Duration(hours: 1));
+
+  await firestore.collection('sessions').doc('session-roster-1').set(
+    <String, dynamic>{
+      'siteId': 'site-1',
+      'educatorId': 'educator-1',
+      'educatorIds': <String>['educator-1'],
+      'title': 'Launch Lab',
+      'pillar': 'future_skills',
+      'startTime': Timestamp.fromDate(startTime),
+      'endTime': Timestamp.fromDate(endTime),
+      'location': 'Studio A',
+      'status': 'upcoming',
+      'enrolledCount': 0,
+    },
+  );
+}
+
+Future<void> _pumpProvisioningPage(
+  WidgetTester tester, {
+  required FakeFirebaseFirestore firestore,
+}) async {
+  final _MockFirebaseAuth auth = _MockFirebaseAuth();
+  when(() => auth.currentUser).thenReturn(null);
+  final ProvisioningService service = ProvisioningService(
+    apiClient: ApiClient(auth: auth, baseUrl: 'http://localhost'),
+    firestore: firestore,
+    auth: auth,
+    workflowBridgeService: _FakeWorkflowBridgeService(),
+    useProvisioningApi: false,
+  );
+
+  await tester.pumpWidget(
+    MultiProvider(
+      providers: <SingleChildWidget>[
+        ChangeNotifierProvider<AppState>.value(value: _buildSiteState()),
+        ChangeNotifierProvider<ProvisioningService>.value(value: service),
+      ],
+      child: MaterialApp(
+        theme: ScholesaTheme.light,
+        locale: const Locale('en'),
+        localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const <Locale>[
+          Locale('en'),
+          Locale('zh', 'CN'),
+          Locale('zh', 'TW'),
+        ],
+        home: const ProvisioningPage(),
+      ),
+    ),
+  );
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 400));
+  await tester.pumpAndSettle();
+}
+
 Future<List<Map<String, dynamic>>> _captureTelemetry(
   Future<void> Function() body,
 ) async {
@@ -167,6 +265,131 @@ Future<List<Map<String, dynamic>>> _captureTelemetry(
 }
 
 void main() {
+  testWidgets(
+      'educator learner supports page shows learners created through provisioning reconciliation',
+      (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedRosterImportSessionData(firestore);
+
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final EducatorService educatorSessionsService = EducatorService(
+      firestoreService: firestoreService,
+      educatorId: 'educator-1',
+      siteId: 'site-1',
+    );
+
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: <SingleChildWidget>[
+          Provider<FirestoreService>.value(value: firestoreService),
+          ChangeNotifierProvider<AppState>.value(value: _buildEducatorState()),
+          ChangeNotifierProvider<EducatorService>.value(
+            value: educatorSessionsService,
+          ),
+        ],
+        child: MaterialApp(
+          theme: ScholesaTheme.light,
+          locale: const Locale('en'),
+          localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const <Locale>[
+            Locale('en'),
+            Locale('zh', 'CN'),
+            Locale('zh', 'TW'),
+          ],
+          home: EducatorSessionsPage(sharedPreferences: prefs),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Launch Lab').first);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Import Roster CSV'),
+      200,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.text('Import Roster CSV'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byType(TextField).last,
+      'name,email\nWorkflow Learner,workflow.support@example.com',
+    );
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Import'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Roster import complete: 0 enrolled, 1 queued for provisioning',
+      ),
+      findsOneWidget,
+    );
+
+    await _pumpProvisioningPage(tester, firestore: firestore);
+
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byType(TextFormField).at(0),
+      'Workflow Learner',
+    );
+    await tester.enterText(
+      find.byType(TextFormField).at(1),
+      'workflow.support@example.com',
+    );
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Create'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Learner created successfully'), findsOneWidget);
+
+    final QuerySnapshot<Map<String, dynamic>> enrollments = await firestore
+        .collection('enrollments')
+        .where('sessionId', isEqualTo: 'session-roster-1')
+        .get();
+    expect(enrollments.docs, hasLength(1));
+
+    final EducatorService educatorSupportsService = EducatorService(
+      firestoreService: firestoreService,
+      educatorId: 'educator-1',
+      siteId: 'site-1',
+    );
+
+    await tester.pumpWidget(
+      _buildHarness(
+        firestoreService: firestoreService,
+        educatorService: educatorSupportsService,
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
+    expect(find.text('Active Support Plans'), findsOneWidget);
+    expect(find.text('Workflow Learner'), findsOneWidget);
+    expect(find.text('High'), findsOneWidget);
+    expect(find.text('Academic'), findsOneWidget);
+    expect(find.text('Check-in support'), findsOneWidget);
+    expect(find.text('Peer buddy'), findsOneWidget);
+    expect(find.text('No support plans yet'), findsNothing);
+  });
+
   testWidgets('educator learner supports page renders support plan from live learner data',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();

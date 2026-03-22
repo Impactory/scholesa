@@ -168,6 +168,10 @@ Interpretation rule:
 78. Added direct downstream family workflow proof that a learner, parent, and guardian link created through the real `/site/provisioning` flow appear on the real `/parent/consent` route via live guardian-link resolution, and that the consent surface only shows records for the linked learner rather than unrelated consent records from the same site.
 79. Added direct downstream family workflow proof that a learner, parent, and guardian link created through the real `/site/provisioning` flow appear on the real `/parent/child/:learnerId` route via `ParentService` learner-summary loading, and that the child detail surface shows only the linked learner's activity, upcoming session, and passport context rather than unrelated site learner data.
 80. Added direct downstream site consent workflow proof that a learner, parent, and guardian link created through the real `/site/provisioning` flow appear on the real `/site/consent` route, and patched `SiteConsentService` name resolution to honor provisioning-created learner and parent profile `displayName` values when `preferredName` and `legalName` are absent.
+81. Added direct downstream educator workflow proof that a learner queued through the real `/educator/sessions` roster-import flow appears on the real `/educator/learner-supports` route after the learner is created through the real `/site/provisioning` flow, confirming the supports route consumes the same reconciled educator roster contract instead of seeded learner-only fixtures.
+82. Added direct downstream educator workflow proof that a learner queued through the real `/educator/sessions` roster-import flow can submit a persisted `learner_follow_up` support request from the real `/educator/learners` route after the learner is created through the real `/site/provisioning` flow, confirming support-request evidence uses the same reconciled roster handoff instead of only seeded learner fixtures.
+83. Added direct downstream family workflow proof that a learner, parent, and guardian link created through the real `/site/provisioning` flow can submit a persisted `session_reminder` support request from the real `/parent/schedule` route once a live upcoming session is derived from the learner's active enrollment and `sessionOccurrences`, confirming parent support-request evidence now uses the same provisioning-linked family graph instead of only seeded fixtures.
+84. Added direct downstream family workflow proof that a learner, parent, and guardian link created through the real `/site/provisioning` flow can submit a persisted `portfolio_share` support request from the real `/parent/portfolio` route once the linked learner's live `portfolioItems` resolve through `ParentService`, confirming the portfolio share path also uses the same provisioning-linked family graph instead of only seeded fixtures.
 
 ### Release and operations fixes
 
@@ -220,6 +224,12 @@ Interpretation rule:
 - Focused parent consent regressions passed after the provisioning-to-parent-consent guardian-link proof: 5 passed, 0 failed.
 - Focused site consent regressions passed after the provisioning-to-site-consent guardian-link proof and profile-name fallback fix: 4 passed, 0 failed.
 - Focused provisioning, site consent, pickup authorization, and check-in regressions passed after the provisioning-to-site-consent guardian-link proof: 28 passed, 0 failed.
+- Focused educator learner supports regressions passed after the provisioning-to-supports roster proof: 11 passed, 0 failed.
+- Focused educator learners, learner supports, and attendance downstream workflow regressions passed after the provisioning-to-supports roster proof: 40 passed, 0 failed.
+- Focused educator learners regressions passed after the provisioning-to-follow-up support-request proof: 11 passed, 0 failed.
+- Focused educator learners, learner supports, and attendance downstream workflow regressions passed after the provisioning-to-follow-up support-request proof: 41 passed, 0 failed.
+- Focused parent surface workflow regressions passed after the provisioning-to-parent-schedule reminder-request proof: 14 passed, 0 failed.
+- Focused parent surface workflow regressions passed after the provisioning-to-parent-portfolio share-request proof: 15 passed, 0 failed.
 
 ### Full Flutter gate verification
 

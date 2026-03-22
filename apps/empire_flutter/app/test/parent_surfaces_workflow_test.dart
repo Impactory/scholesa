@@ -770,6 +770,190 @@ void main() {
       expect(find.textContaining('Hidden Lab'), findsNothing);
     });
 
+    testWidgets(
+        'schedule page submits reminder requests for provisioning-linked families',
+        (WidgetTester tester) async {
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+      final DateTime now = DateTime.now();
+
+      await _pumpProvisioningPage(tester, firestore: firestore);
+
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byType(TextFormField).at(0),
+        'Nia Schedule',
+      );
+      await tester.enterText(
+        find.byType(TextFormField).at(1),
+        'nia.parent-schedule@example.com',
+      );
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Create'));
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Parents').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextFormField).at(0), 'Pat Schedule');
+      await tester.enterText(
+        find.byType(TextFormField).at(1),
+        'pat.parent-schedule@example.com',
+      );
+      await tester.enterText(find.byType(TextFormField).at(2), '555-0117');
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Create'));
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      final QuerySnapshot<Map<String, dynamic>> learnerUsers = await firestore
+          .collection('users')
+          .where('email', isEqualTo: 'nia.parent-schedule@example.com')
+          .get();
+      expect(learnerUsers.docs, hasLength(1));
+      final String learnerId = learnerUsers.docs.single.id;
+
+      final QuerySnapshot<Map<String, dynamic>> parentUsers = await firestore
+          .collection('users')
+          .where('email', isEqualTo: 'pat.parent-schedule@example.com')
+          .get();
+      expect(parentUsers.docs, hasLength(1));
+      final String parentId = parentUsers.docs.single.id;
+
+      await tester.tap(find.text('Links').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(DropdownButtonFormField<String>).at(0));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Pat Schedule').last);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(DropdownButtonFormField<String>).at(1));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Nia Schedule').last);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Create Link'));
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      await firestore.collection('enrollments').doc('enrollment-linked-1').set(
+        <String, dynamic>{
+          'sessionId': 'session-linked-1',
+          'learnerId': learnerId,
+          'status': 'active',
+        },
+      );
+      await firestore
+          .collection('sessionOccurrences')
+          .doc('occurrence-linked-1')
+          .set(
+        <String, dynamic>{
+          'sessionId': 'session-linked-1',
+          'siteId': 'site-1',
+          'title': 'Prototype Studio',
+          'startTime': Timestamp.fromDate(now.add(const Duration(days: 1))),
+          'endTime': Timestamp.fromDate(
+            now.add(const Duration(days: 1, hours: 1)),
+          ),
+          'roomName': 'Innovation Lab',
+        },
+      );
+      await firestore.collection('users').doc('hidden-learner-1').set(
+        <String, dynamic>{
+          'role': 'learner',
+          'displayName': 'Hidden Learner',
+          'siteIds': <String>['site-1'],
+        },
+      );
+      await firestore.collection('enrollments').doc('enrollment-hidden-1').set(
+        <String, dynamic>{
+          'sessionId': 'session-hidden-1',
+          'learnerId': 'hidden-learner-1',
+          'status': 'active',
+        },
+      );
+      await firestore
+          .collection('sessionOccurrences')
+          .doc('occurrence-hidden-1')
+          .set(
+        <String, dynamic>{
+          'sessionId': 'session-hidden-1',
+          'siteId': 'site-1',
+          'title': 'Hidden Session',
+          'startTime': Timestamp.fromDate(
+            now.add(const Duration(days: 1, hours: 2)),
+          ),
+          'endTime': Timestamp.fromDate(
+            now.add(const Duration(days: 1, hours: 3)),
+          ),
+          'roomName': 'Hidden Lab',
+        },
+      );
+
+      final FirestoreService firestoreService = FirestoreService(
+        firestore: firestore,
+        auth: _MockFirebaseAuth(),
+      );
+      final ParentService parentService = ParentService(
+        firestoreService: firestoreService,
+        parentId: parentId,
+        bundleLoader: () async => <LearnerSummary>[],
+        billingLoader: () async => null,
+      );
+
+      await _pumpPage(
+        tester,
+        firestore: firestore,
+        appState: _buildParentState(
+          userId: parentId,
+          email: 'pat.parent-schedule@example.com',
+          displayName: 'Pat Schedule',
+        ),
+        parentService: parentService,
+        home: const ParentSchedulePage(),
+      );
+
+      expect(find.text('Hidden Session'), findsNothing);
+      await tester.ensureVisible(find.text('Details'));
+      await tester.tap(find.text('Details'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Next Session Details'), findsOneWidget);
+      expect(
+        find.textContaining('Prototype Studio\nLocation: Innovation Lab'),
+        findsOneWidget,
+      );
+      expect(find.widgetWithText(TextButton, 'Request Reminder'), findsOneWidget);
+
+      await tester.tap(find.widgetWithText(TextButton, 'Request Reminder'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Session reminder request submitted.'), findsOneWidget);
+
+      final List<Map<String, dynamic>> supportRequests = (await firestore
+              .collection('supportRequests')
+              .get())
+          .docs
+          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) => doc.data())
+          .toList();
+      expect(
+        supportRequests.any(
+          (Map<String, dynamic> request) =>
+              request['requestType'] == 'session_reminder' &&
+              request['source'] ==
+                  'parent_schedule_request_session_reminder' &&
+              request['userId'] == parentId &&
+              request['metadata']?['sessionTitle'] == 'Prototype Studio' &&
+              request['metadata']?['location'] == 'Innovation Lab' &&
+              request['metadata']?['learnerName'] == 'Nia Schedule',
+        ),
+        isTrue,
+      );
+    });
+
     testWidgets('portfolio page persists portfolio share requests in app',
         (WidgetTester tester) async {
       final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
@@ -809,6 +993,160 @@ void main() {
               request['requestType'] == 'portfolio_share' &&
               request['source'] == 'parent_portfolio_request_share' &&
               request['metadata']?['itemTitle'] == 'Build a Robot',
+        ),
+        isTrue,
+      );
+    });
+
+    testWidgets(
+        'portfolio page submits share requests for provisioning-linked families',
+        (WidgetTester tester) async {
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+      final DateTime now = DateTime.now();
+
+      await _pumpProvisioningPage(tester, firestore: firestore);
+
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byType(TextFormField).at(0),
+        'Nia Portfolio',
+      );
+      await tester.enterText(
+        find.byType(TextFormField).at(1),
+        'nia.parent-portfolio@example.com',
+      );
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Create'));
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Parents').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextFormField).at(0), 'Pat Portfolio');
+      await tester.enterText(
+        find.byType(TextFormField).at(1),
+        'pat.parent-portfolio@example.com',
+      );
+      await tester.enterText(find.byType(TextFormField).at(2), '555-0119');
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Create'));
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      final QuerySnapshot<Map<String, dynamic>> learnerUsers = await firestore
+          .collection('users')
+          .where('email', isEqualTo: 'nia.parent-portfolio@example.com')
+          .get();
+      expect(learnerUsers.docs, hasLength(1));
+      final String learnerId = learnerUsers.docs.single.id;
+
+      final QuerySnapshot<Map<String, dynamic>> parentUsers = await firestore
+          .collection('users')
+          .where('email', isEqualTo: 'pat.parent-portfolio@example.com')
+          .get();
+      expect(parentUsers.docs, hasLength(1));
+      final String parentId = parentUsers.docs.single.id;
+
+      await tester.tap(find.text('Links').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(DropdownButtonFormField<String>).at(0));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Pat Portfolio').last);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(DropdownButtonFormField<String>).at(1));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Nia Portfolio').last);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Create Link'));
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      await firestore.collection('portfolioItems').doc('linked-artifact-1').set(
+        <String, dynamic>{
+          'learnerId': learnerId,
+          'title': 'Prototype Artifact',
+          'description': 'Provisioning-linked portfolio evidence',
+          'pillarCodes': const <String>['future_skills'],
+          'verificationStatus': 'reviewed',
+          'createdAt': Timestamp.fromDate(now.subtract(const Duration(hours: 2))),
+          'updatedAt': Timestamp.fromDate(now.subtract(const Duration(hours: 1))),
+        },
+      );
+      await firestore.collection('portfolioItems').doc('hidden-artifact-1').set(
+        <String, dynamic>{
+          'learnerId': 'hidden-learner-1',
+          'title': 'Hidden Project',
+          'description': 'Should not appear',
+          'pillarCodes': const <String>['impact'],
+          'verificationStatus': 'reviewed',
+          'createdAt': Timestamp.fromDate(now.subtract(const Duration(hours: 3))),
+          'updatedAt': Timestamp.fromDate(now.subtract(const Duration(hours: 2))),
+        },
+      );
+      await firestore.collection('users').doc('hidden-learner-1').set(
+        <String, dynamic>{
+          'role': 'learner',
+          'displayName': 'Hidden Learner',
+          'siteIds': <String>['site-1'],
+        },
+      );
+
+      final FirestoreService firestoreService = FirestoreService(
+        firestore: firestore,
+        auth: _MockFirebaseAuth(),
+      );
+      final ParentService parentService = ParentService(
+        firestoreService: firestoreService,
+        parentId: parentId,
+        bundleLoader: () async => <LearnerSummary>[],
+        billingLoader: () async => null,
+      );
+
+      await _pumpPage(
+        tester,
+        firestore: firestore,
+        appState: _buildParentState(
+          userId: parentId,
+          email: 'pat.parent-portfolio@example.com',
+          displayName: 'Pat Portfolio',
+        ),
+        parentService: parentService,
+        home: const ParentPortfolioPage(),
+      );
+
+      expect(find.text('Prototype Artifact'), findsOneWidget);
+      expect(find.text('Hidden Project'), findsNothing);
+
+      await tester.ensureVisible(find.text('Prototype Artifact').first);
+      await tester.tap(find.text('Prototype Artifact').first);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Request Share'), findsOneWidget);
+      await tester.tap(find.text('Request Share'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Portfolio share request submitted.'), findsOneWidget);
+
+      final List<Map<String, dynamic>> supportRequests = (await firestore
+              .collection('supportRequests')
+              .get())
+          .docs
+          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) => doc.data())
+          .toList();
+      expect(
+        supportRequests.any(
+          (Map<String, dynamic> request) =>
+              request['requestType'] == 'portfolio_share' &&
+              request['source'] == 'parent_portfolio_request_share' &&
+              request['userId'] == parentId &&
+              request['metadata']?['itemTitle'] == 'Prototype Artifact' &&
+              request['metadata']?['itemId'] == 'linked-artifact-1',
         ),
         isTrue,
       );
