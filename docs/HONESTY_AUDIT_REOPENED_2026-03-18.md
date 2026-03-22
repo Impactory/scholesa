@@ -1,6 +1,6 @@
 # Reopened Honesty Audit
 
-Last updated: 2026-03-21
+Last updated: 2026-03-22
 Status: Beta ready, not gold ready
 Scope: Flutter app plus release operations for web and native surfaces
 
@@ -157,6 +157,7 @@ Interpretation rule:
 67. Added direct downstream site workflow proof from `/site/sessions` into `/site/ops` so a session created through the real sessions route now has focused widget evidence that it persists for the active site and immediately appears in the Site Ops timetable while cross-site sessions stay excluded.
 68. Patched `/site/sessions` create persistence to write same-day `sessionOccurrences` alongside the canonical `sessions` record, and added direct proof that a class created through the real sessions route now appears in `/educator/attendance` as a live class for the active site instead of remaining invisible to the attendance workflow.
 69. Added direct downstream educator workflow proof that importing a known learner through the real `/educator/sessions` roster-import dialog creates an active enrollment that appears in the `/educator/attendance` roster for the same class, and patched the educator session detail sheet so long values wrap instead of overflowing and obscuring lower actions in smaller viewports.
+70. Patched `/site/provisioning` learner creation to reconcile matching `pending_provisioning` roster-import rows into active `enrollments`, mark those queue rows as provisioned, and added direct cross-route proof that an unknown learner imported through the real `/educator/sessions` roster dialog appears in `/educator/attendance` after the learner is created through the real `/site/provisioning` flow.
 
 ### Release and operations fixes
 
@@ -196,6 +197,7 @@ Interpretation rule:
 - Focused site ops, sessions, and provisioning workflow regressions passed: 13 passed, 0 failed.
 - Focused site sessions and attendance downstream workflow regressions passed: 19 passed, 0 failed.
 - Focused educator sessions and attendance downstream workflow regressions passed: 17 passed, 0 failed.
+- Focused provisioning, educator sessions, and attendance downstream workflow regressions passed: 40 passed, 0 failed.
 
 ### Full Flutter gate verification
 

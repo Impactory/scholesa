@@ -22,6 +22,7 @@ import 'package:scholesa_app/offline/sync_coordinator.dart';
 import 'package:scholesa_app/services/api_client.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
 import 'package:scholesa_app/services/telemetry_service.dart';
+import 'package:scholesa_app/services/workflow_bridge_service.dart';
 import 'package:scholesa_app/ui/common/error_state.dart';
 
 class _MockApiClient extends Mock implements ApiClient {}
@@ -29,6 +30,18 @@ class _MockApiClient extends Mock implements ApiClient {}
 class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
 class _MockSyncCoordinator extends Mock implements SyncCoordinator {}
+
+class _FakeWorkflowBridgeService extends WorkflowBridgeService {
+  _FakeWorkflowBridgeService() : super(functions: null);
+
+  @override
+  Future<List<Map<String, dynamic>>> listCohortLaunches({
+    String? siteId,
+    int limit = 80,
+  }) async {
+    return const <Map<String, dynamic>>[];
+  }
+}
 
 class _FakeAttendanceService extends AttendanceService {
   _FakeAttendanceService({
@@ -872,6 +885,7 @@ void main() {
       apiClient: ApiClient(auth: provisioningAuth, baseUrl: 'http://localhost'),
       firestore: firestore,
       auth: provisioningAuth,
+      workflowBridgeService: _FakeWorkflowBridgeService(),
       useProvisioningApi: false,
     );
 
