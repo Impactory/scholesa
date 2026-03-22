@@ -6,6 +6,7 @@ import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
+import '../../ui/auth/global_session_menu.dart';
 import '../../runtime/runtime.dart';
 import '../../auth/app_state.dart';
 import 'mission_models.dart';
@@ -115,21 +116,28 @@ class _MissionsPageState extends State<MissionsPage>
                 const Icon(Icons.rocket_launch, color: Colors.white, size: 28),
           ),
           const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                _tMissions(context, 'My Missions'),
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFFF59E0B),
-                    ),
-              ),
-              Text(
-                _tMissions(context, 'Learn, grow, and level up!'),
-                style: TextStyle(color: context.schTextSecondary, fontSize: 14),
-              ),
-            ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  _tMissions(context, 'My Missions'),
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFFF59E0B),
+                      ),
+                ),
+                Text(
+                  _tMissions(context, 'Learn, grow, and level up!'),
+                  style:
+                      TextStyle(color: context.schTextSecondary, fontSize: 14),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          const SessionMenuHeaderAction(
+            foregroundColor: Color(0xFFF59E0B),
           ),
         ],
       ),

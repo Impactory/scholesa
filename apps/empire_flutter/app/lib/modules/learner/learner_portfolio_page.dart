@@ -11,6 +11,7 @@ import '../../domain/repositories.dart';
 import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
+import '../../ui/auth/global_session_menu.dart';
 import '../../runtime/runtime.dart';
 import '../../auth/app_state.dart';
 import '../../i18n/learner_surface_i18n.dart';
@@ -758,6 +759,10 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
                 ),
               ),
             ),
+            const SizedBox(width: 4),
+            const SessionMenuHeaderAction(
+              foregroundColor: ScholesaColors.learner,
+            ),
             IconButton(
               onPressed: () {
                 TelemetryService.instance.logEvent(
@@ -787,46 +792,40 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
 
   Widget _buildProfileCard() {
     final AppState appState = context.watch<AppState>();
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
+          gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: <Color>[
-              ScholesaColors.learner,
-              ScholesaColors.learner.withValues(alpha: 0.8),
-            ],
+            colors: <Color>[Color(0xFF0F766E), Color(0xFF115E59)],
           ),
           borderRadius: BorderRadius.circular(24),
           boxShadow: <BoxShadow>[
             BoxShadow(
-              color: ScholesaColors.learner.withValues(alpha: 0.3),
-              blurRadius: 16,
+              color: const Color(0xFF115E59).withValues(alpha: 0.24),
+              blurRadius: 18,
               offset: const Offset(0, 8),
             ),
           ],
+          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
         ),
         child: Row(
           children: <Widget>[
             Container(
-              width: 80,
-              height: 80,
+              width: 64,
+              height: 64,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
+                color: Colors.white.withValues(alpha: 0.16),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.3), width: 2),
               ),
-              child: Text(
-                _learnerName(appState).characters.first.toUpperCase(),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                ),
+              child: const Icon(
+                Icons.workspace_premium_rounded,
+                color: Colors.white,
+                size: 32,
               ),
             ),
             const SizedBox(width: 16),
@@ -836,11 +835,10 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
                 children: <Widget>[
                   Text(
                     _learnerName(appState),
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -863,19 +861,21 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
                   const SizedBox(height: 8),
                   Row(
                     children: <Widget>[
-                      Icon(Icons.local_fire_department,
+                      const Icon(Icons.local_fire_department,
                           color: Colors.orange, size: 18),
-                      SizedBox(width: 4),
+                      const SizedBox(width: 4),
                       Text(
                         '${_t('Goals')}: ${_goalCount()}',
-                        style: TextStyle(color: Colors.white, fontSize: 12),
+                        style:
+                            const TextStyle(color: Colors.white, fontSize: 12),
                       ),
-                      SizedBox(width: 16),
-                      Icon(Icons.star, color: Colors.amber, size: 18),
-                      SizedBox(width: 4),
+                      const SizedBox(width: 16),
+                      const Icon(Icons.star, color: Colors.amber, size: 18),
+                      const SizedBox(width: 4),
                       Text(
                         '${_t('Projects')}: ${_portfolioItems.length}',
-                        style: TextStyle(color: Colors.white, fontSize: 12),
+                        style:
+                            const TextStyle(color: Colors.white, fontSize: 12),
                       ),
                     ],
                   ),
@@ -887,6 +887,34 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.8),
                       fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: scheme.surface.withValues(alpha: 0.18),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Text(
+                    '${_credentials.length}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    _t('Credentials'),
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.8),
+                      fontSize: 11,
                     ),
                   ),
                 ],

@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../i18n/shared_role_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
+import '../../ui/auth/global_session_menu.dart';
 import 'message_models.dart';
 import 'message_service.dart';
 
@@ -151,6 +152,10 @@ class _MessagesPageState extends State<MessagesPage>
                 icon: const Icon(Icons.refresh_rounded),
                 color: const Color(0xFF6366F1),
                 tooltip: _tMessages(context, 'Refresh'),
+              ),
+              const SizedBox(width: 4),
+              const SessionMenuHeaderAction(
+                foregroundColor: Color(0xFF6366F1),
               ),
               if (service.unreadCount > 0)
                 TextButton.icon(

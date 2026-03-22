@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
+import '../../ui/auth/global_session_menu.dart';
 import '../../runtime/runtime.dart';
 import '../../auth/app_state.dart';
 import 'habit_models.dart';
@@ -105,6 +106,10 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
                       icon: const Icon(Icons.arrow_back, color: Colors.white),
                     ),
                     const Spacer(),
+                    const SessionMenuHeaderAction(
+                      foregroundColor: Colors.white,
+                    ),
+                    const SizedBox(width: 12),
                     _buildTodayProgressBadge(service),
                   ],
                 ),
