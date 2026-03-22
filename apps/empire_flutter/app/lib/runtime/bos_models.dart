@@ -859,12 +859,11 @@ class MvlEpisode {
     }
     final String? siteId = _readTrimmedString(m, 'siteId');
     final String? learnerId = _readTrimmedString(m, 'learnerId');
-    final String? sessionOccurrenceId =
-        _readTrimmedString(m, 'sessionOccurrenceId');
+    final String sessionOccurrenceId =
+        (m['sessionOccurrenceId'] as String? ?? '').trim();
     final String? triggerReason = _readTrimmedString(m, 'triggerReason');
     if (siteId == null ||
         learnerId == null ||
-        sessionOccurrenceId == null ||
         triggerReason == null) {
       return null;
     }

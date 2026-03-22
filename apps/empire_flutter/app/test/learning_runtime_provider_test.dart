@@ -146,5 +146,38 @@ void main() {
       expect(provider.hasMvlGate, isFalse);
       expect(provider.activeMvl, isNull);
     });
+
+    test('hydrates learner-level active MVL without session occurrence linkage',
+        () async {
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+      final DateTime now = DateTime.now();
+
+      await firestore.collection('mvlEpisodes').doc('mvl-1').set(
+        <String, dynamic>{
+          'siteId': 'site-1',
+          'learnerId': 'learner-1',
+          'sessionOccurrenceId': null,
+          'triggerReason': 'verification_gap',
+          'resolution': null,
+          'createdAt': Timestamp.fromDate(now),
+        },
+      );
+
+      final LearningRuntimeProvider provider = LearningRuntimeProvider(
+        siteId: 'site-1',
+        learnerId: 'learner-1',
+        gradeBand: GradeBand.g4_6,
+        firestore: firestore,
+      );
+      addTearDown(provider.dispose);
+
+      provider.startListening();
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+
+      expect(provider.hasMvlGate, isTrue);
+      expect(provider.activeMvl, isNotNull);
+      expect(provider.activeMvl!.sessionOccurrenceId, isEmpty);
+      expect(provider.activeMvl!.triggerReason, 'verification_gap');
+    });
   });
 }

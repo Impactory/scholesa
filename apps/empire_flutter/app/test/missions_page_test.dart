@@ -94,6 +94,8 @@ Future<void> _seedMissionAndGate(FakeFirebaseFirestore firestore) async {
         'riskScore': 0.72,
         'threshold': 0.5,
       },
+      'evidenceEventIds': <String>[],
+      'resolution': null,
       'createdAt': Timestamp.fromDate(DateTime(2026, 3, 18)),
     },
   );
@@ -138,6 +140,7 @@ void main() {
       learnerId: 'learner-1',
     );
 
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
     await tester.pumpWidget(
       _buildHarness(
         firestoreService: firestoreService,
