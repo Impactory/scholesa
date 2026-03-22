@@ -10,6 +10,9 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/domain/models.dart';
+import 'package:scholesa_app/modules/educator/educator_mission_review_page.dart';
+import 'package:scholesa_app/modules/missions/mission_service.dart';
+import 'package:scholesa_app/modules/missions/missions_page.dart';
 import 'package:scholesa_app/modules/learner/learner_portfolio_page.dart';
 import 'package:scholesa_app/runtime/learning_runtime_provider.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
@@ -29,6 +32,20 @@ AppState _buildLearnerState({
     'activeSiteId': activeSiteId,
     'siteIds': siteIds,
     'localeCode': 'en',
+    'entitlements': const <Map<String, dynamic>>[],
+  });
+  return state;
+}
+
+AppState _buildEducatorState() {
+  final AppState state = AppState();
+  state.updateFromMeResponse(<String, dynamic>{
+    'userId': 'educator-1',
+    'email': 'educator-1@scholesa.test',
+    'displayName': 'Educator One',
+    'role': 'educator',
+    'activeSiteId': 'site-1',
+    'siteIds': <String>['site-1'],
     'entitlements': const <Map<String, dynamic>>[],
   });
   return state;
@@ -69,6 +86,267 @@ Widget _buildHarness({
       home: child ?? LearnerPortfolioPage(sharedPreferences: sharedPreferences),
     ),
   );
+}
+
+Widget _buildLearnerMissionHarness({
+  required FirestoreService firestoreService,
+  required MissionService missionService,
+}) {
+  return MultiProvider(
+    providers: <SingleChildWidget>[
+      ChangeNotifierProvider<AppState>.value(value: _buildLearnerState()),
+      Provider<FirestoreService>.value(value: firestoreService),
+      ChangeNotifierProvider<MissionService>.value(value: missionService),
+    ],
+    child: MaterialApp(
+      theme: ThemeData(
+        useMaterial3: true,
+        splashFactory: NoSplash.splashFactory,
+      ),
+      locale: const Locale('en'),
+      supportedLocales: const <Locale>[
+        Locale('en'),
+        Locale('zh', 'CN'),
+        Locale('zh', 'TW'),
+      ],
+      localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      home: const MissionsPage(),
+    ),
+  );
+}
+
+Widget _buildEducatorReviewHarness({
+  required FirestoreService firestoreService,
+  required MissionService missionService,
+}) {
+  return MultiProvider(
+    providers: <SingleChildWidget>[
+      ChangeNotifierProvider<AppState>.value(value: _buildEducatorState()),
+      Provider<FirestoreService>.value(value: firestoreService),
+      ChangeNotifierProvider<MissionService>.value(value: missionService),
+    ],
+    child: MaterialApp(
+      theme: ThemeData(
+        useMaterial3: true,
+        splashFactory: NoSplash.splashFactory,
+      ),
+      locale: const Locale('en'),
+      supportedLocales: const <Locale>[
+        Locale('en'),
+        Locale('zh', 'CN'),
+        Locale('zh', 'TW'),
+      ],
+      localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      home: const EducatorMissionReviewPage(),
+    ),
+  );
+}
+
+Future<void> _seedCompletedMissionReadyForReview(
+  FakeFirebaseFirestore firestore,
+) async {
+  await firestore.collection('users').doc('learner-1').set(
+    <String, dynamic>{
+      'displayName': 'Test User',
+      'role': 'learner',
+      'siteIds': <String>['site-1'],
+    },
+  );
+  await firestore.collection('missionAssignments').doc('assignment-1').set(
+    <String, dynamic>{
+      'missionId': 'mission-1',
+      'learnerId': 'learner-1',
+      'siteId': 'site-1',
+      'status': 'in_progress',
+      'progress': 1.0,
+    },
+  );
+  await firestore.collection('missions').doc('mission-1').set(
+    <String, dynamic>{
+      'title': 'Mission ready for review',
+      'description': 'Capture proof of learning before review.',
+      'pillarCode': 'future_skills',
+      'difficulty': 'beginner',
+      'xpReward': 120,
+    },
+  );
+  await firestore
+      .collection('missions')
+      .doc('mission-1')
+      .collection('steps')
+      .doc('step-1')
+      .set(
+    <String, dynamic>{
+      'title': 'Prototype',
+      'order': 1,
+      'isCompleted': true,
+      'completedAt': '2026-03-18T10:00:00.000Z',
+    },
+  );
+}
+
+Future<void> _seedReviewRubricAndEvidence(
+  FakeFirebaseFirestore firestore,
+) async {
+  await firestore.collection('missions').doc('mission-1').set(
+    <String, dynamic>{
+      'rubricId': 'rubric-1',
+      'rubricTitle': 'Prototype Rubric',
+    },
+    SetOptions(merge: true),
+  );
+  await firestore.collection('rubrics').doc('rubric-1').set(
+    <String, dynamic>{
+      'title': 'Prototype Rubric',
+      'criteria': <Map<String, dynamic>>[
+        <String, dynamic>{
+          'criterionId': 'evidence',
+          'label': 'Evidence',
+          'capabilityId': 'cap-prototype-evidence',
+          'capabilityTitle': 'Prototype evidence',
+          'pillarCode': 'future_skills',
+          'maxScore': 4,
+        },
+        <String, dynamic>{
+          'criterionId': 'reflection',
+          'label': 'Reflection',
+          'capabilityId': 'cap-prototype-evidence',
+          'capabilityTitle': 'Prototype evidence',
+          'pillarCode': 'future_skills',
+          'maxScore': 4,
+        },
+      ],
+    },
+  );
+  await firestore.collection('evidenceRecords').doc('evidence-1').set(
+    <String, dynamic>{
+      'learnerId': 'learner-1',
+      'siteId': 'site-1',
+      'capabilityId': 'cap-prototype-evidence',
+      'capabilityLabel': 'Prototype evidence',
+      'capabilityPillarCode': 'future_skills',
+      'observationNote':
+          'Learner connected prototype choices to observed tradeoffs.',
+      'artifactUrls': const <String>['https://example.com/prototype.png'],
+      'nextVerificationPrompt':
+          'Explain why this prototype path best matched the evidence.',
+      'portfolioCandidate': true,
+      'growthStatus': 'captured',
+      'observedAt': Timestamp.fromDate(DateTime(2026, 3, 18, 8, 45)),
+    },
+  );
+}
+
+Future<void> _submitMissionForReview(
+  WidgetTester tester, {
+  required FirestoreService firestoreService,
+  required MissionService missionService,
+}) async {
+  await tester.pumpWidget(
+    _buildLearnerMissionHarness(
+      firestoreService: firestoreService,
+      missionService: missionService,
+    ),
+  );
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 250));
+  await tester.pumpAndSettle();
+
+  await tester.tap(find.text('In Progress'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('Mission ready for review').first);
+  await tester.pumpAndSettle();
+
+  await tester.scrollUntilVisible(
+    find.text('No AI support used for this mission'),
+    200,
+    scrollable: find.byType(Scrollable).last,
+  );
+  await tester.tap(find.text('No AI support used for this mission'));
+  await tester.pumpAndSettle();
+  await tester.enterText(
+    find.widgetWithText(TextField, 'Explain-it-back summary'),
+    'I explained how the control loop reacts to sensor input.',
+  );
+  await tester.enterText(
+    find.widgetWithText(TextField, 'Oral check reflection'),
+    'I described the trade-off between speed and stability.',
+  );
+  await tester.enterText(
+    find.widgetWithText(TextField, 'Mini-rebuild plan'),
+    'I would rebuild the sensor branch first and retest the response.',
+  );
+  await tester.enterText(
+    find.widgetWithText(TextField, 'Version checkpoint summary'),
+    'Completed the working prototype before review.',
+  );
+
+  await tester.scrollUntilVisible(
+    find.text('Save Checkpoint'),
+    200,
+    scrollable: find.byType(Scrollable).last,
+  );
+  await tester.tap(find.text('Save Checkpoint'));
+  await tester.pump();
+  await tester.pumpAndSettle();
+
+  await tester.scrollUntilVisible(
+    find.text('Submit for Review'),
+    200,
+    scrollable: find.byType(Scrollable).last,
+  );
+  await tester.tap(find.text('Submit for Review'));
+  await tester.pump();
+  await tester.pumpAndSettle();
+}
+
+Future<void> _approveMissionWithRubric(
+  WidgetTester tester, {
+  required FirestoreService firestoreService,
+  required MissionService missionService,
+}) async {
+  await tester.pumpWidget(
+    _buildEducatorReviewHarness(
+      firestoreService: firestoreService,
+      missionService: missionService,
+    ),
+  );
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 300));
+  await tester.pumpAndSettle();
+
+  await tester.tap(find.text('Mission ready for review').first);
+  await tester.pumpAndSettle();
+
+  await tester.scrollUntilVisible(
+    find.text('Reflection'),
+    200,
+    scrollable: find.byType(Scrollable).last,
+  );
+  await tester.tap(find.text('4/4').first);
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('3/4').at(1));
+  await tester.pumpAndSettle();
+  await tester.enterText(
+    find.byType(TextField).last,
+    'Great iteration. Tighten the evidence trail and explain the tradeoffs in your next revision.',
+  );
+  await tester.scrollUntilVisible(
+    find.text('Approve'),
+    250,
+    scrollable: find.byType(Scrollable).last,
+  );
+  await tester.tap(find.text('Approve'));
+  await tester.pump();
+  await tester.pumpAndSettle();
 }
 
 void main() {
@@ -297,5 +575,62 @@ void main() {
     );
     expect(find.text('Impact Builder'), findsOneWidget);
     expect(find.text('No badges earned yet'), findsNothing);
+  });
+
+  testWidgets(
+      'learner portfolio renders reviewed artifacts created by the live educator mission review flow',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    await _seedCompletedMissionReadyForReview(firestore);
+    await _seedReviewRubricAndEvidence(firestore);
+
+    final MissionService learnerMissionService = MissionService(
+      firestoreService: firestoreService,
+      learnerId: 'learner-1',
+    );
+    final MissionService educatorMissionService = MissionService(
+      firestoreService: firestoreService,
+      learnerId: 'educator-1',
+    );
+
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await _submitMissionForReview(
+      tester,
+      firestoreService: firestoreService,
+      missionService: learnerMissionService,
+    );
+    await _approveMissionWithRubric(
+      tester,
+      firestoreService: firestoreService,
+      missionService: educatorMissionService,
+    );
+
+    await tester.pumpWidget(
+      _buildHarness(
+        appState: _buildLearnerState(),
+        firestoreService: firestoreService,
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.widgetWithText(Tab, 'Projects'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Mission ready for review • Prototype evidence'), findsOneWidget);
+    expect(
+      find.text('Learner connected prototype choices to observed tradeoffs.'),
+      findsOneWidget,
+    );
+    expect(find.text('Future Skills'), findsWidgets);
+    expect(find.text('Evidence linked • Reviewed'), findsOneWidget);
+    expect(find.text('Prototype evidence'), findsOneWidget);
+    expect(find.text('No projects added yet'), findsNothing);
   });
 }
