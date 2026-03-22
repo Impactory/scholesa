@@ -850,7 +850,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('Roster import complete: 0 enrolled, 0 already present'),
+      find.text(
+          'Roster import complete: 0 enrolled, 1 queued for provisioning'),
       findsOneWidget,
     );
 
