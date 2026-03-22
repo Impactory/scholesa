@@ -162,4 +162,64 @@ void main() {
     expect(find.textContaining('sync queued'), findsNothing);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+      'educator integrations page keeps stale integrations visible when sync queues but refresh fails',
+      (WidgetTester tester) async {
+    final EducatorService educatorService = _buildEducatorService();
+    int loadCalls = 0;
+
+    await tester.pumpWidget(
+      _buildHarness(
+        educatorService: educatorService,
+        child: EducatorIntegrationsPage(
+          healthLoader: (String siteId) async {
+            loadCalls += 1;
+            if (loadCalls == 1) {
+              return <String, dynamic>{
+                'connections': <Map<String, dynamic>>[
+                  <String, dynamic>{
+                    'id': 'classlink-1',
+                    'provider': 'classlink',
+                    'status': 'active',
+                    'siteId': siteId,
+                  },
+                ],
+                'syncJobs': <Map<String, dynamic>>[
+                  <String, dynamic>{
+                    'id': 'job-1',
+                    'provider': 'classlink',
+                    'status': 'completed',
+                    'updatedAt': DateTime.now().millisecondsSinceEpoch,
+                  },
+                ],
+              };
+            }
+            throw Exception('integrations refresh unavailable');
+          },
+          syncJobTrigger: (_, __) async {},
+        ),
+      ),
+    );
+
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('ClassLink'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.more_vert_rounded));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Sync Now'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(loadCalls, 2);
+    expect(find.text('ClassLink'), findsOneWidget);
+    expect(
+      find.text('Sync was queued, but integrations could not be refreshed. Retry to verify the current state.'),
+      findsOneWidget,
+    );
+    expect(find.text('Unable to queue sync right now.'), findsNothing);
+    expect(find.textContaining('sync queued'), findsNothing);
+  });
 }

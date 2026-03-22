@@ -107,6 +107,11 @@ class _EducatorIntegrationsPageState extends State<EducatorIntegrationsPage> {
                 ),
               ),
               const SizedBox(height: 12),
+              if (!_isLoading && _loadError != null && _integrations.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: _buildStaleDataBanner(_loadError!),
+                ),
               if (_isLoading)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 24),
@@ -171,6 +176,30 @@ class _EducatorIntegrationsPageState extends State<EducatorIntegrationsPage> {
             onPressed: _loadIntegrations,
             icon: const Icon(Icons.refresh_rounded),
             label: Text(_tEducatorIntegrations(context, 'Retry')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStaleDataBanner(String message) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.orange.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(color: ScholesaColors.textPrimary),
+            ),
           ),
         ],
       ),
@@ -332,14 +361,14 @@ class _EducatorIntegrationsPageState extends State<EducatorIntegrationsPage> {
     );
   }
 
-  Future<void> _loadIntegrations() async {
+  Future<bool> _loadIntegrations() async {
     final AppState appState = context.read<AppState>();
     final String siteId = (appState.activeSiteId ??
             (appState.siteIds.isNotEmpty ? appState.siteIds.first : ''))
         .trim();
     _siteId = siteId;
 
-    if (!mounted) return;
+    if (!mounted) return false;
     setState(() {
       _isLoading = true;
       _loadError = null;
@@ -431,20 +460,21 @@ class _EducatorIntegrationsPageState extends State<EducatorIntegrationsPage> {
         ..sort((_EducatorIntegration a, _EducatorIntegration b) =>
             a.name.compareTo(b.name));
 
-      if (!mounted) return;
+      if (!mounted) return false;
       setState(() {
         _integrations = loaded;
         _loadError = null;
       });
+      return true;
     } catch (_) {
-      if (!mounted) return;
+      if (!mounted) return false;
       setState(() {
-        _integrations = <_EducatorIntegration>[];
         _loadError = _tEducatorIntegrations(
           context,
           'Unable to load integrations right now.',
         );
       });
+      return false;
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -476,8 +506,21 @@ class _EducatorIntegrationsPageState extends State<EducatorIntegrationsPage> {
           'provider': integration.providerKey,
         });
       }
-      await _loadIntegrations();
+      final bool reloaded = await _loadIntegrations();
       if (!mounted) return;
+      if (!reloaded) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _tEducatorIntegrations(
+                context,
+                'Sync was queued, but integrations could not be refreshed. Retry to verify the current state.',
+              ),
+            ),
+          ),
+        );
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -512,8 +555,21 @@ class _EducatorIntegrationsPageState extends State<EducatorIntegrationsPage> {
           'status': status,
         });
       }
-      await _loadIntegrations();
+      final bool reloaded = await _loadIntegrations();
       if (!mounted) return;
+      if (!reloaded) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _tEducatorIntegrations(
+                context,
+                'Connection status changed, but integrations could not be refreshed. Retry to verify the current state.',
+              ),
+            ),
+          ),
+        );
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(

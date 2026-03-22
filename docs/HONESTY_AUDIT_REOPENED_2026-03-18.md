@@ -149,6 +149,7 @@ Interpretation rule:
 59. Fixed learner-missions MVL gate proof by restoring support for learner-level unresolved `mvlEpisodes` that are not tied to a specific `sessionOccurrenceId`, added runtime coverage for that contract, and hardened direct account-menu placement on profile, shared settings routes, HQ analytics, HQ billing, and HQ role switcher surfaces.
 60. Fixed `/site/identity` approve and ignore actions so the route re-reads the authoritative queue before claiming success, and added direct proof that successful identity resolution disappears only after reload while reload failures keep stale matches visible with explicit verification-required copy instead of fake completion.
 61. Fixed `/educator/learner-supports` support-plan saves so the route re-loads persisted support-plan state before claiming success, and added direct proof that verified saves only settle after persisted reload while reload failures fail closed with explicit verification-required copy instead of opening outcome logging on unverified state.
+62. Fixed `/educator/integrations` sync honesty so queued syncs are no longer reported as failed just because the post-queue refresh fails, preserved stale integration cards on reload failure instead of blanking the route, and added direct proof that the route distinguishes queue failure from verification-required refresh failure.
 
 ### Release and operations fixes
 
