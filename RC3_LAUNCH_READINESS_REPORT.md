@@ -511,7 +511,7 @@ All 4 identified blockers resolved. Platform ready for RC3 launch.
 
 ## CONCLUSION
 
-**The Scholesa BOS/MIA + AI Help platform is PRODUCTION READY for RC3 launch.**
+**The Scholesa BOS/MIA + AI help release path is launch-blocking ready for RC3 cutover. This is not a blanket capability-first gold-ready certification for every workflow.**
 
 All 4 critical blockers have been successfully resolved:
 - ✅ **Blocker #1** (Indexes): Deployed & live
@@ -529,11 +529,11 @@ All 4 critical blockers have been successfully resolved:
 
 ### Confidence Level: **HIGH** 🟢
 
-Recommend proceeding to RC3 hardening and launch preparation.
+Recommend proceeding to the remaining operator cutover step and RC3 launch preparation, while treating broader capability-first gold readiness as a separate, stricter gate.
 
 ---
 
 **Report Date**: March 3, 2026  
 **Prepared By**: Agent (Scholesa Platform)  
 **Current Branch**: main  
-**Status**: ✅ **PRODUCTION READY**
+**Status**: ✅ **Launch-blocking engineering ready for RC3 cutover**
