@@ -255,7 +255,7 @@
 
 ## Closing Notes
 
-The Scholesa RC3 platform is now **production-ready and live**. All critical systems are operational:
+As a historical March 2026 launch snapshot, the Scholesa RC3 release path was considered live for the release-blocker scope at that time. This should not be read as a later blanket capability-first gold-ready certification. The launch-path systems listed below were operational for that release snapshot:
 
 ✅ **Platform**: Running smoothly across web and mobile  
 ✅ **Data**: Firestore secure and indexed  
@@ -264,7 +264,7 @@ The Scholesa RC3 platform is now **production-ready and live**. All critical sys
 ✅ **Monitoring**: Comprehensive alerts and dashboards live  
 ✅ **Documentation**: Complete operational and roadmap docs  
 
-**The team should feel confident in the platform's stability and scalability.**
+**The team could proceed on the launch-path scope captured in this snapshot, while broader full-flow and capability-first gold readiness remained a stricter later gate.**
 
 ---
 

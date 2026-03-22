@@ -201,6 +201,8 @@ Interpretation rule:
 111. Corrected the RC3 launch-readiness report so its headline status is scoped to launch-blocking engineering readiness, not a blanket capability-first gold-ready claim over the entire product.
 112. Corrected the blocker-remediation final status so it no longer implies all remaining work is optional while the operator-only manual browser big-bang cutover step is still explicitly pending in the handoff packet.
 113. Corrected the closing summary of the RC3 launch-readiness report so its conclusion and final status now match the scoped header language instead of reverting to a blanket `PRODUCTION READY` claim at the end of the document.
+114. Corrected the historical RC3 post-launch summary so its conclusion no longer reads as a current blanket `production-ready and live` certification. The closing note now preserves the original launch-snapshot meaning while explicitly deferring broader capability-first gold readiness to the stricter later gate.
+115. Corrected the historical RC3 deployment-complete note so its final sign-off no longer states `Platform ready for production use` without temporal or scope qualification. It now reads as the March 3 deployment snapshot rather than competing current truth.
 
 ### Release and operations fixes
 
