@@ -159,6 +159,10 @@ Interpretation rule:
 69. Added direct downstream educator workflow proof that importing a known learner through the real `/educator/sessions` roster-import dialog creates an active enrollment that appears in the `/educator/attendance` roster for the same class, and patched the educator session detail sheet so long values wrap instead of overflowing and obscuring lower actions in smaller viewports.
 70. Patched `/site/provisioning` learner creation to reconcile matching `pending_provisioning` roster-import rows into active `enrollments`, mark those queue rows as provisioned, and added direct cross-route proof that an unknown learner imported through the real `/educator/sessions` roster dialog appears in `/educator/attendance` after the learner is created through the real `/site/provisioning` flow.
 71. Added direct cross-route proof that when a learner already exists on another site, the real `/site/provisioning` learner-create flow links that existing user into the active site instead of duplicating them, reconciles the queued roster-import row, and makes the learner appear in `/educator/attendance` for the original class.
+72. Added direct downstream educator workflow proof that a learner queued through the real `/educator/sessions` roster-import dialog appears in the real `/educator/learners` roster after the learner is created through the real `/site/provisioning` flow, closing the next educator-side consumer of provisioning and enrollment truth beyond attendance.
+73. Added direct downstream educator workflow proof that an existing learner from another site appears in the real `/educator/learners` roster after the real `/site/provisioning` learner-create flow links that user into the active site instead of duplicating them, closing the cross-site branch for the learner-roster consumer as well.
+74. Added direct downstream site workflow proof that a guardian link created through the real `/site/provisioning` flow appears on the real `/site/pickup-auth` route via guardian-fallback coverage, and patched pickup-authorization learner-name resolution so provisioning-created learner profiles use `displayName` when `preferredName` and `legalName` are absent instead of collapsing to learner IDs.
+75. Added direct downstream site workflow proof that a learner, parent, and guardian link created through the real `/site/provisioning` flow feed the real `/site/checkin` quick-pickup path, so guardian-link fallback can resolve a live present learner by parent phone and complete the actual checkout flow without any hand-seeded pickup-authorization document.
 
 ### Release and operations fixes
 
@@ -200,6 +204,11 @@ Interpretation rule:
 - Focused educator sessions and attendance downstream workflow regressions passed: 17 passed, 0 failed.
 - Focused provisioning, educator sessions, and attendance downstream workflow regressions passed: 40 passed, 0 failed.
 - Focused provisioning, educator sessions, and attendance downstream workflow regressions passed after the cross-site learner-linking proof and workflow-bridge cleanup: 41 passed, 0 failed.
+- Focused provisioning, educator sessions, educator learners, and attendance downstream workflow regressions passed: 50 passed, 0 failed.
+- Focused provisioning, educator sessions, educator learners, and attendance downstream workflow regressions passed after adding the cross-site learner-roster proof: 51 passed, 0 failed.
+- Focused site pickup authorization regressions passed after the provisioning-to-pickup fallback proof and learner-name fix: 4 passed, 0 failed.
+- Focused site check-in regressions passed after the provisioning-to-checkin guardian-fallback proof: 7 passed, 0 failed.
+- Focused provisioning, site ops workflow, pickup authorization, and check-in regressions passed after the provisioning-to-checkin guardian-fallback proof: 46 passed, 0 failed.
 
 ### Full Flutter gate verification
 

@@ -820,4 +820,184 @@ void main() {
     expect(find.text('Workflow Learner'), findsOneWidget);
     expect(find.text('No learners enrolled'), findsNothing);
   });
+
+  testWidgets(
+      'educator learners page shows cross-site learners after they are linked through provisioning',
+      (WidgetTester tester) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 1600));
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedRosterImportSessionData(firestore);
+    await firestore.collection('users').doc('learner-other-site-1').set(
+      <String, dynamic>{
+        'displayName': 'Cross Site Learner',
+        'email': 'cross-site@example.com',
+        'role': 'learner',
+        'activeSiteId': 'site-2',
+        'siteIds': <String>['site-2'],
+      },
+    );
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+
+    final EducatorService educatorSessionsService = EducatorService(
+      firestoreService: firestoreService,
+      educatorId: 'educator-1',
+      siteId: 'site-1',
+    );
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: <SingleChildWidget>[
+          Provider<FirestoreService>.value(value: firestoreService),
+          ChangeNotifierProvider<AppState>.value(value: _buildEducatorState()),
+          ChangeNotifierProvider<EducatorService>.value(
+            value: educatorSessionsService,
+          ),
+        ],
+        child: MaterialApp(
+          theme: ScholesaTheme.light,
+          locale: const Locale('en'),
+          localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const <Locale>[
+            Locale('en'),
+            Locale('zh', 'CN'),
+            Locale('zh', 'TW'),
+          ],
+          home: EducatorSessionsPage(sharedPreferences: prefs),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Launch Lab').first);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Import Roster CSV'),
+      200,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.text('Import Roster CSV'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byType(TextField).last,
+      'name,email\nCross Site Learner,cross-site@example.com',
+    );
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Import'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Roster import complete: 0 enrolled, 1 queued for provisioning',
+      ),
+      findsOneWidget,
+    );
+
+    final QuerySnapshot<Map<String, dynamic>> usersBeforeProvisioning =
+        await firestore
+            .collection('users')
+            .where('email', isEqualTo: 'cross-site@example.com')
+            .get();
+    expect(usersBeforeProvisioning.docs, hasLength(1));
+    expect(usersBeforeProvisioning.docs.single.id, 'learner-other-site-1');
+
+    final _MockFirebaseAuth provisioningAuth = _MockFirebaseAuth();
+    when(() => provisioningAuth.currentUser).thenReturn(null);
+    final ProvisioningService provisioningService = ProvisioningService(
+      apiClient: ApiClient(auth: provisioningAuth, baseUrl: 'http://localhost'),
+      firestore: firestore,
+      auth: provisioningAuth,
+      workflowBridgeService: _FakeWorkflowBridgeService(),
+      useProvisioningApi: false,
+    );
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: <SingleChildWidget>[
+          ChangeNotifierProvider<AppState>.value(value: _buildSiteState()),
+          ChangeNotifierProvider<ProvisioningService>.value(
+            value: provisioningService,
+          ),
+        ],
+        child: MaterialApp(
+          theme: ScholesaTheme.light,
+          locale: const Locale('en'),
+          localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const <Locale>[
+            Locale('en'),
+            Locale('zh', 'CN'),
+            Locale('zh', 'TW'),
+          ],
+          home: const ProvisioningPage(),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byType(TextFormField).at(0),
+      'Cross Site Learner',
+    );
+    await tester.enterText(
+      find.byType(TextFormField).at(1),
+      'cross-site@example.com',
+    );
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Create'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Learner created successfully'), findsOneWidget);
+
+    final QuerySnapshot<Map<String, dynamic>> usersAfterProvisioning =
+        await firestore
+            .collection('users')
+            .where('email', isEqualTo: 'cross-site@example.com')
+            .get();
+    expect(usersAfterProvisioning.docs, hasLength(1));
+    expect(usersAfterProvisioning.docs.single.id, 'learner-other-site-1');
+    expect(
+      usersAfterProvisioning.docs.single.data()['siteIds'],
+      containsAll(<String>['site-1', 'site-2']),
+    );
+
+    final EducatorService educatorLearnersService = EducatorService(
+      firestoreService: firestoreService,
+      educatorId: 'educator-1',
+      siteId: 'site-1',
+    );
+
+    await tester.pumpWidget(
+      _buildHarness(
+        firestoreService: firestoreService,
+        educatorService: educatorLearnersService,
+        sharedPreferences: prefs,
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Cross Site Learner'), findsOneWidget);
+    expect(find.text('No learners enrolled'), findsNothing);
+  });
 }

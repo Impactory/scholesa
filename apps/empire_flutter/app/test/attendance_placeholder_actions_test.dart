@@ -9,6 +9,7 @@ import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:scholesa_app/auth/app_state.dart';
+import 'package:scholesa_app/domain/repositories.dart';
 import 'package:scholesa_app/modules/attendance/attendance_models.dart';
 import 'package:scholesa_app/modules/attendance/attendance_page.dart';
 import 'package:scholesa_app/modules/attendance/attendance_service.dart';
@@ -16,6 +17,7 @@ import 'package:scholesa_app/modules/educator/educator_service.dart';
 import 'package:scholesa_app/modules/educator/educator_sessions_page.dart';
 import 'package:scholesa_app/modules/provisioning/provisioning_page.dart';
 import 'package:scholesa_app/modules/provisioning/provisioning_service.dart';
+import 'package:scholesa_app/modules/site/site_integrations_health_page.dart';
 import 'package:scholesa_app/modules/site/site_sessions_page.dart';
 import 'package:scholesa_app/offline/offline_queue.dart';
 import 'package:scholesa_app/offline/sync_coordinator.dart';
@@ -1183,6 +1185,208 @@ void main() {
 
     expect(find.text('Cross Site Learner'), findsOneWidget);
     expect(find.text('Save Attendance (0/1)'), findsOneWidget);
+  });
+
+  testWidgets(
+      'reviewed roster imports stay terminal and do not reconcile into attendance after provisioning',
+      (WidgetTester tester) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 1600));
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedEducatorRosterImportData(firestore);
+
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final AppState educatorAppState = _buildAppState();
+    final EducatorService educatorService = EducatorService(
+      firestoreService: firestoreService,
+      educatorId: 'educator-1',
+      siteId: 'site-1',
+    );
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: <SingleChildWidget>[
+          Provider<FirestoreService>.value(value: firestoreService),
+          ChangeNotifierProvider<AppState>.value(value: educatorAppState),
+          ChangeNotifierProvider<EducatorService>.value(value: educatorService),
+        ],
+        child: _buildTestMaterialApp(
+          child: EducatorSessionsPage(sharedPreferences: prefs),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Launch Lab').first);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Import Roster CSV'),
+      200,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.text('Import Roster CSV'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byType(TextField).last,
+      'name,email\nReviewed Learner,reviewed@example.com',
+    );
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Import'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+          'Roster import complete: 0 enrolled, 1 queued for provisioning'),
+      findsOneWidget,
+    );
+
+    final QuerySnapshot<Map<String, dynamic>> queuedImports =
+        await firestore.collection('rosterImports').get();
+    expect(queuedImports.docs, hasLength(1));
+    expect(queuedImports.docs.single.data()['status'], 'pending_provisioning');
+
+    final AppState siteAppState = _buildSiteAppState();
+    final RosterImportRepository rosterImportRepository =
+        RosterImportRepository(firestore: firestore);
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: <SingleChildWidget>[
+          ChangeNotifierProvider<AppState>.value(value: siteAppState),
+        ],
+        child: _buildTestMaterialApp(
+          child: SiteIntegrationsHealthPage(
+            healthLoader: (_) async => <String, dynamic>{
+              'connections': <Map<String, dynamic>>[],
+              'syncJobs': <Map<String, dynamic>>[],
+            },
+            rosterImportRepository: rosterImportRepository,
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Reviewed Learner'), findsOneWidget);
+    await tester.tap(find.text('Mark reviewed'));
+    await tester.pumpAndSettle();
+
+    final DocumentSnapshot<Map<String, dynamic>> reviewedImport =
+        await firestore
+            .collection('rosterImports')
+            .doc(queuedImports.docs.single.id)
+            .get();
+    expect(reviewedImport.data()?['status'], 'reviewed');
+    expect(find.text('Reviewed Learner'), findsNothing);
+
+    final _MockFirebaseAuth provisioningAuth = _MockFirebaseAuth();
+    when(() => provisioningAuth.currentUser).thenReturn(null);
+    final ProvisioningService provisioningService = ProvisioningService(
+      apiClient: ApiClient(auth: provisioningAuth, baseUrl: 'http://localhost'),
+      firestore: firestore,
+      auth: provisioningAuth,
+      workflowBridgeService: _FakeWorkflowBridgeService(),
+      useProvisioningApi: false,
+    );
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: <SingleChildWidget>[
+          ChangeNotifierProvider<AppState>.value(value: siteAppState),
+          ChangeNotifierProvider<ProvisioningService>.value(
+            value: provisioningService,
+          ),
+        ],
+        child: _buildTestMaterialApp(
+          child: const ProvisioningPage(),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byType(TextFormField).at(0),
+      'Reviewed Learner',
+    );
+    await tester.enterText(
+      find.byType(TextFormField).at(1),
+      'reviewed@example.com',
+    );
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Create'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Learner created successfully'), findsOneWidget);
+
+    final QuerySnapshot<Map<String, dynamic>> users = await firestore
+        .collection('users')
+        .where('email', isEqualTo: 'reviewed@example.com')
+        .limit(1)
+        .get();
+    expect(users.docs, hasLength(1));
+
+    final QuerySnapshot<Map<String, dynamic>> enrollmentsAfterProvisioning =
+        await firestore.collection('enrollments').get();
+    expect(enrollmentsAfterProvisioning.docs, isEmpty);
+
+    final QuerySnapshot<Map<String, dynamic>> reviewedImportsAfterProvisioning =
+        await firestore.collection('rosterImports').get();
+    expect(
+      reviewedImportsAfterProvisioning.docs.single.data()['status'],
+      'reviewed',
+    );
+    expect(
+      reviewedImportsAfterProvisioning.docs.single.data()['learnerId'],
+      isNull,
+    );
+
+    final _MockSyncCoordinator syncCoordinator = _MockSyncCoordinator();
+    when(() => syncCoordinator.isOnline).thenReturn(true);
+    when(() => syncCoordinator.pendingCount).thenReturn(0);
+    when(() => syncCoordinator.isSyncing).thenReturn(false);
+    when(() => syncCoordinator.retryFailed()).thenAnswer((_) async {});
+
+    final AttendanceService attendanceService = AttendanceService(
+      apiClient: _MockApiClient(),
+      syncCoordinator: syncCoordinator,
+      firestore: firestore,
+      siteId: 'site-1',
+    );
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: <SingleChildWidget>[
+          ChangeNotifierProvider<AppState>.value(value: educatorAppState),
+          ChangeNotifierProvider<SyncCoordinator>.value(value: syncCoordinator),
+          ChangeNotifierProvider<AttendanceService>.value(
+            value: attendanceService,
+          ),
+        ],
+        child: _buildTestMaterialApp(
+          child: const AttendancePage(),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Launch Lab'), findsOneWidget);
+    expect(find.text('Reviewed Learner'), findsNothing);
+    expect(find.text('0 students'), findsOneWidget);
   });
 
   testWidgets(

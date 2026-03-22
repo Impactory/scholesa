@@ -7,9 +7,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
+import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/modules/checkin/checkin_models.dart';
 import 'package:scholesa_app/modules/checkin/checkin_page.dart';
 import 'package:scholesa_app/modules/checkin/checkin_service.dart';
+import 'package:scholesa_app/modules/provisioning/provisioning_page.dart';
+import 'package:scholesa_app/modules/provisioning/provisioning_service.dart';
+import 'package:scholesa_app/services/api_client.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
 
 class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
@@ -54,6 +58,65 @@ CheckinDaySnapshot _buildCheckinSnapshot() {
   );
 }
 
+AppState _buildSiteState() {
+  final AppState state = AppState();
+  state.updateFromMeResponse(<String, dynamic>{
+    'userId': 'site-1-admin',
+    'email': 'site-admin@scholesa.test',
+    'displayName': 'Site Admin',
+    'role': 'site',
+    'activeSiteId': 'site-1',
+    'siteIds': <String>['site-1'],
+    'localeCode': 'en',
+    'entitlements': const <Map<String, dynamic>>[],
+  });
+  return state;
+}
+
+Future<void> _pumpProvisioningPage(
+  WidgetTester tester, {
+  required FakeFirebaseFirestore firestore,
+}) async {
+  final _MockFirebaseAuth auth = _MockFirebaseAuth();
+  final ProvisioningService service = ProvisioningService(
+    apiClient: ApiClient(auth: auth, baseUrl: 'http://localhost'),
+    firestore: firestore,
+    auth: auth,
+    useProvisioningApi: false,
+  );
+
+  await tester.pumpWidget(
+    MultiProvider(
+      providers: <SingleChildWidget>[
+        ChangeNotifierProvider<AppState>.value(value: _buildSiteState()),
+        ChangeNotifierProvider<ProvisioningService>.value(value: service),
+      ],
+      child: MaterialApp(
+        theme: ThemeData(
+          useMaterial3: true,
+          splashFactory: NoSplash.splashFactory,
+        ),
+        locale: const Locale('en'),
+        supportedLocales: const <Locale>[
+          Locale('en'),
+          Locale('zh', 'CN'),
+          Locale('zh', 'TW'),
+        ],
+        localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        home: const ProvisioningPage(),
+      ),
+    ),
+  );
+
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 400));
+  await tester.pumpAndSettle();
+}
+
 Future<void> _pumpCheckinPage(
   WidgetTester tester, {
   required FakeFirebaseFirestore firestore,
@@ -64,8 +127,7 @@ Future<void> _pumpCheckinPage(
     firestore: firestore,
     auth: _MockFirebaseAuth(),
   );
-  final CheckinService resolvedCheckinService =
-      checkinService ??
+  final CheckinService resolvedCheckinService = checkinService ??
       CheckinService(
         firestoreService: firestoreService,
         siteId: 'site-1',
@@ -122,7 +184,8 @@ void main() {
         'learnerId': 'learner-1',
         'learnerName': 'Ava Learner',
         'type': 'checkin',
-        'timestamp': Timestamp.fromDate(now.subtract(const Duration(minutes: 5))),
+        'timestamp':
+            Timestamp.fromDate(now.subtract(const Duration(minutes: 5))),
         'recordedBy': 'pickup-1',
         'recorderName': 'Parent One',
       },
@@ -149,14 +212,15 @@ void main() {
     await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
 
-      expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Quick Pickup'), findsWidgets);
     final Finder dialog = find.byType(AlertDialog);
     await tester.enterText(
       find.descendant(of: dialog, matching: find.byType(TextField)),
       'AVA123',
     );
-    await tester.tap(find.descendant(of: dialog, matching: find.text('Find pickup')));
+    await tester
+        .tap(find.descendant(of: dialog, matching: find.text('Find pickup')));
     await tester.pumpAndSettle();
 
     expect(find.text('Check Out'), findsWidgets);
@@ -179,6 +243,122 @@ void main() {
     expect(checkoutRecords, hasLength(1));
     expect(checkoutRecords.first['learnerId'], 'learner-1');
     expect(checkoutRecords.first['recordedBy'], 'pickup-1');
+  });
+
+  testWidgets(
+      'quick pickup resolves guardian-link fallback created through provisioning',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final DateTime now = DateTime.now();
+
+    await _pumpProvisioningPage(tester, firestore: firestore);
+
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).at(0), 'Nia Evidence');
+    await tester.enterText(
+      find.byType(TextFormField).at(1),
+      'nia.evidence@example.com',
+    );
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Create'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Parents').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).at(0), 'Pat Guardian');
+    await tester.enterText(
+      find.byType(TextFormField).at(1),
+      'pat.guardian@example.com',
+    );
+    await tester.enterText(find.byType(TextFormField).at(2), '555-0112');
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Create'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    final QuerySnapshot<Map<String, dynamic>> learnerUsers = await firestore
+        .collection('users')
+        .where('email', isEqualTo: 'nia.evidence@example.com')
+        .get();
+    expect(learnerUsers.docs, hasLength(1));
+    final String learnerId = learnerUsers.docs.single.id;
+
+    await tester.tap(find.text('Links').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(DropdownButtonFormField<String>).at(0));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Pat Guardian').last);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(DropdownButtonFormField<String>).at(1));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Nia Evidence').last);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Create Link'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    final QuerySnapshot<Map<String, dynamic>> guardianLinks = await firestore
+        .collection('guardianLinks')
+        .where('siteId', isEqualTo: 'site-1')
+        .get();
+    expect(guardianLinks.docs, hasLength(1));
+    final String guardianLinkId = guardianLinks.docs.single.id;
+
+    await firestore.collection('checkins').doc('checkin-1').set(
+      <String, dynamic>{
+        'siteId': 'site-1',
+        'learnerId': learnerId,
+        'learnerName': 'Nia Evidence',
+        'type': 'checkin',
+        'timestamp':
+            Timestamp.fromDate(now.subtract(const Duration(minutes: 5))),
+        'recordedBy': 'site-1-admin',
+        'recorderName': 'Site Admin',
+      },
+    );
+
+    await _pumpCheckinPage(tester, firestore: firestore);
+
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+
+    final Finder dialog = find.byType(AlertDialog);
+    await tester.enterText(
+      find.descendant(of: dialog, matching: find.byType(TextField)),
+      '5550112',
+    );
+    await tester
+        .tap(find.descendant(of: dialog, matching: find.text('Find pickup')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Check Out'), findsWidgets);
+    expect(find.text('Nia Evidence'), findsWidgets);
+    expect(find.text('Pat Guardian'), findsWidgets);
+
+    final Finder confirmButton =
+        find.widgetWithText(ElevatedButton, 'Confirm Check Out');
+    expect(confirmButton, findsOneWidget);
+
+    await tester.ensureVisible(confirmButton);
+    await tester.tap(confirmButton);
+    await tester.pumpAndSettle();
+
+    final QuerySnapshot<Map<String, dynamic>> records =
+        await firestore.collection('checkins').get();
+    expect(records.docs.length, 2);
+    final Iterable<Map<String, dynamic>> checkoutRecords = records.docs
+        .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) => doc.data())
+        .where((Map<String, dynamic> data) => data['type'] == 'checkout');
+    expect(checkoutRecords, hasLength(1));
+    expect(checkoutRecords.first['learnerId'], learnerId);
+    expect(checkoutRecords.first['recordedBy'], guardianLinkId);
   });
 
   testWidgets('checkin page labels missing learner names as unavailable',
@@ -215,7 +395,8 @@ void main() {
         'learnerId': 'learner-1',
         'learnerName': 'Ava Learner',
         'type': 'checkin',
-        'timestamp': Timestamp.fromDate(now.subtract(const Duration(minutes: 5))),
+        'timestamp':
+            Timestamp.fromDate(now.subtract(const Duration(minutes: 5))),
       },
     );
 
@@ -273,7 +454,8 @@ void main() {
     expect(find.text('No learners found'), findsNothing);
   });
 
-  testWidgets('checkin page keeps stale learner data visible after refresh failure',
+  testWidgets(
+      'checkin page keeps stale learner data visible after refresh failure',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     final FirestoreService firestoreService = FirestoreService(
@@ -315,7 +497,8 @@ void main() {
     expect(find.text('No learners found'), findsNothing);
   });
 
-  test('checkin service loads guardian-link pickups when pickup auth docs are absent',
+  test(
+      'checkin service loads guardian-link pickups when pickup auth docs are absent',
       () async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     final DateTime now = DateTime.now();
@@ -356,7 +539,8 @@ void main() {
         'learnerId': 'learner-1',
         'learnerName': 'Ava Learner',
         'type': 'checkin',
-        'timestamp': Timestamp.fromDate(now.subtract(const Duration(minutes: 10))),
+        'timestamp':
+            Timestamp.fromDate(now.subtract(const Duration(minutes: 10))),
       },
     );
 

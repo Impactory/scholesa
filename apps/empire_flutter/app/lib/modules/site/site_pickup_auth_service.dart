@@ -49,12 +49,22 @@ class SitePickupAuthorizationService {
   ) async {
     final List<QuerySnapshot<Map<String, dynamic>>> snapshots =
         await Future.wait(<Future<QuerySnapshot<Map<String, dynamic>>>>[
-      _firestore.collection('learnerProfiles').where('siteId', isEqualTo: siteId).get(),
-      _firestore.collection('pickupAuthorizations').where('siteId', isEqualTo: siteId).get(),
-      _firestore.collection('guardianLinks').where('siteId', isEqualTo: siteId).get(),
+      _firestore
+          .collection('learnerProfiles')
+          .where('siteId', isEqualTo: siteId)
+          .get(),
+      _firestore
+          .collection('pickupAuthorizations')
+          .where('siteId', isEqualTo: siteId)
+          .get(),
+      _firestore
+          .collection('guardianLinks')
+          .where('siteId', isEqualTo: siteId)
+          .get(),
     ]);
     final QuerySnapshot<Map<String, dynamic>> learnerProfiles = snapshots[0];
-    final QuerySnapshot<Map<String, dynamic>> explicitAuthorizations = snapshots[1];
+    final QuerySnapshot<Map<String, dynamic>> explicitAuthorizations =
+        snapshots[1];
     final QuerySnapshot<Map<String, dynamic>> guardianLinks = snapshots[2];
 
     final Map<String, String> learnerNames =
@@ -62,13 +72,16 @@ class SitePickupAuthorizationService {
     final Set<String> learnerIds = <String>{
       ...learnerNames.keys,
       ...explicitAuthorizations.docs
-          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) => _optionalString(doc.data()['learnerId']))
+          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
+              _optionalString(doc.data()['learnerId']))
           .whereType<String>(),
       ...guardianLinks.docs
-          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) => _optionalString(doc.data()['learnerId']))
+          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
+              _optionalString(doc.data()['learnerId']))
           .whereType<String>(),
     };
-    final Map<String, String> userNames = await _loadUserDisplayNames(learnerIds);
+    final Map<String, String> userNames =
+        await _loadUserDisplayNames(learnerIds);
 
     final List<SitePickupAuthorizationLearnerOption> learners = learnerIds
         .map(
@@ -94,24 +107,37 @@ class SitePickupAuthorizationService {
   Future<List<SitePickupAuthorizationRecord>> listRecords(String siteId) async {
     final List<QuerySnapshot<Map<String, dynamic>>> snapshots =
         await Future.wait(<Future<QuerySnapshot<Map<String, dynamic>>>>[
-      _firestore.collection('pickupAuthorizations').where('siteId', isEqualTo: siteId).get(),
-      _firestore.collection('guardianLinks').where('siteId', isEqualTo: siteId).get(),
-      _firestore.collection('learnerProfiles').where('siteId', isEqualTo: siteId).get(),
+      _firestore
+          .collection('pickupAuthorizations')
+          .where('siteId', isEqualTo: siteId)
+          .get(),
+      _firestore
+          .collection('guardianLinks')
+          .where('siteId', isEqualTo: siteId)
+          .get(),
+      _firestore
+          .collection('learnerProfiles')
+          .where('siteId', isEqualTo: siteId)
+          .get(),
     ]);
 
     final QuerySnapshot<Map<String, dynamic>> explicitSnapshot = snapshots[0];
-    final QuerySnapshot<Map<String, dynamic>> guardianLinksSnapshot = snapshots[1];
-    final QuerySnapshot<Map<String, dynamic>> learnerProfilesSnapshot = snapshots[2];
+    final QuerySnapshot<Map<String, dynamic>> guardianLinksSnapshot =
+        snapshots[1];
+    final QuerySnapshot<Map<String, dynamic>> learnerProfilesSnapshot =
+        snapshots[2];
 
     final Map<String, String> learnerNames =
         _buildLearnerNamesFromProfiles(learnerProfilesSnapshot.docs);
     final Set<String> learnerIds = <String>{
       ...learnerNames.keys,
       ...explicitSnapshot.docs
-          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) => _optionalString(doc.data()['learnerId']))
+          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
+              _optionalString(doc.data()['learnerId']))
           .whereType<String>(),
       ...guardianLinksSnapshot.docs
-          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) => _optionalString(doc.data()['learnerId']))
+          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
+              _optionalString(doc.data()['learnerId']))
           .whereType<String>(),
     };
     final Map<String, String> learnerUserNames =
@@ -160,8 +186,8 @@ class SitePickupAuthorizationService {
           pickups: pickups,
           updatedBy: _optionalString(data['updatedBy']) ?? '',
           source: 'explicit',
-          updatedAt:
-              _parseTimestamp(data['updatedAt']) ?? _parseTimestamp(data['createdAt']),
+          updatedAt: _parseTimestamp(data['updatedAt']) ??
+              _parseTimestamp(data['createdAt']),
         ),
       );
     }
@@ -191,16 +217,15 @@ class SitePickupAuthorizationService {
 
     final Map<String, Map<String, dynamic>> parentProfiles =
         await _loadParentProfiles(parentIds);
-    final Map<String, String> parentNames = await _loadUserDisplayNames(parentIds);
+    final Map<String, String> parentNames =
+        await _loadUserDisplayNames(parentIds);
 
     guardianLinksByLearner.forEach((
       String learnerId,
       List<QueryDocumentSnapshot<Map<String, dynamic>>> links,
     ) {
-      final List<AuthorizedPickup> pickups = links
-          .asMap()
-          .entries
-          .map((MapEntry<int, QueryDocumentSnapshot<Map<String, dynamic>>> entry) {
+      final List<AuthorizedPickup> pickups = links.asMap().entries.map(
+          (MapEntry<int, QueryDocumentSnapshot<Map<String, dynamic>>> entry) {
         final Map<String, dynamic> data = entry.value.data();
         final String parentId = _optionalString(data['parentId']) ?? '';
         final Map<String, dynamic> parentProfile =
@@ -256,13 +281,13 @@ class SitePickupAuthorizationService {
       );
     });
 
-    records.sort((SitePickupAuthorizationRecord a, SitePickupAuthorizationRecord b) {
+    records.sort(
+        (SitePickupAuthorizationRecord a, SitePickupAuthorizationRecord b) {
       if (a.isFallback != b.isFallback) {
         return a.isFallback ? 1 : -1;
       }
-      final int updatedAtComparison =
-          (b.updatedAt?.millisecondsSinceEpoch ?? 0)
-              .compareTo(a.updatedAt?.millisecondsSinceEpoch ?? 0);
+      final int updatedAtComparison = (b.updatedAt?.millisecondsSinceEpoch ?? 0)
+          .compareTo(a.updatedAt?.millisecondsSinceEpoch ?? 0);
       if (updatedAtComparison != 0) {
         return updatedAtComparison;
       }
@@ -277,12 +302,13 @@ class SitePickupAuthorizationService {
     required List<AuthorizedPickup> pickups,
     required String updatedBy,
   }) async {
-    final QuerySnapshot<Map<String, dynamic>> existingSnapshot = await _firestore
-        .collection('pickupAuthorizations')
-        .where('siteId', isEqualTo: siteId)
-        .where('learnerId', isEqualTo: learnerId)
-        .limit(1)
-        .get();
+    final QuerySnapshot<Map<String, dynamic>> existingSnapshot =
+        await _firestore
+            .collection('pickupAuthorizations')
+            .where('siteId', isEqualTo: siteId)
+            .where('learnerId', isEqualTo: learnerId)
+            .limit(1)
+            .get();
     final DocumentReference<Map<String, dynamic>> docRef =
         existingSnapshot.docs.isNotEmpty
             ? existingSnapshot.docs.first.reference
@@ -295,8 +321,9 @@ class SitePickupAuthorizationService {
           .map((AuthorizedPickup pickup) => _authorizedPickupToMap(pickup))
           .toList(growable: false),
       'updatedBy': updatedBy,
-      'createdAt':
-          existingSnapshot.docs.isNotEmpty ? existingSnapshot.docs.first.data()['createdAt'] ?? now : now,
+      'createdAt': existingSnapshot.docs.isNotEmpty
+          ? existingSnapshot.docs.first.data()['createdAt'] ?? now
+          : now,
       'updatedAt': now,
     }, SetOptions(merge: true));
   }
@@ -312,7 +339,9 @@ class SitePickupAuthorizationService {
         continue;
       }
       names[learnerId] = _nonEmptyOrFallback(
-        _optionalString(data['preferredName']) ?? _optionalString(data['legalName']),
+        _optionalString(data['preferredName']) ??
+            _optionalString(data['legalName']) ??
+            _optionalString(data['displayName']),
         learnerId,
       );
     }
@@ -327,7 +356,8 @@ class SitePickupAuthorizationService {
     }
     final List<Future<DocumentSnapshot<Map<String, dynamic>>>> reads = parentIds
         .map(
-          (String parentId) => _firestore.collection('parentProfiles').doc(parentId).get(),
+          (String parentId) =>
+              _firestore.collection('parentProfiles').doc(parentId).get(),
         )
         .toList(growable: false);
     final List<DocumentSnapshot<Map<String, dynamic>>> snapshots =
@@ -382,11 +412,9 @@ class SitePickupAuthorizationService {
       ),
       phone: _optionalString(raw['phone']),
       email: _optionalString(raw['email']),
-      relationship:
-          _optionalString(raw['relationship']) ?? 'Authorized pickup',
+      relationship: _optionalString(raw['relationship']) ?? 'Authorized pickup',
       photoUrl: _optionalString(raw['photoUrl']),
-      isPrimaryContact:
-          raw['isPrimaryContact'] == true ||
+      isPrimaryContact: raw['isPrimaryContact'] == true ||
           raw['isPrimary'] == true ||
           fallbackPrimary,
       expiresAt: _parseTimestamp(raw['expiresAt']),
