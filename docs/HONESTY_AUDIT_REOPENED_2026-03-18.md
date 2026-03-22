@@ -154,6 +154,7 @@ Interpretation rule:
 64. Added direct `/site/identity` route-gate and telemetry proof so the route now verifies site/HQ-only access in a focused test and emits auditable approve-match and ignore-match CTA traces with match context instead of leaving route-local scope and operator-decision auditability inferred from implementation.
 65. Added direct `/site/integrations-health` route-gate and telemetry proof so the route now verifies site/HQ-only access in a focused test and emits auditable `connect_integration`, `force_sync_integration`, `disconnect_integration`, and `retry_failed_syncs` CTA traces from the integration card and option sheet instead of leaving route-local scope and key connection-action auditability inferred from implementation.
 66. Added direct `/site/ops` workflow-composition proof so the route now verifies same-site check-ins and same-day sessions compose into the live present count and timetable, ignore cross-site data, and refresh back to source-of-truth state after new check-in and checkout events are written.
+67. Added direct downstream site workflow proof from `/site/sessions` into `/site/ops` so a session created through the real sessions route now has focused widget evidence that it persists for the active site and immediately appears in the Site Ops timetable while cross-site sessions stay excluded.
 
 ### Release and operations fixes
 
@@ -190,6 +191,7 @@ Interpretation rule:
 - Focused educator route-gate and telemetry regressions passed: 18 passed, 0 failed.
 - Focused site identity route-gate and telemetry regressions passed: 8 passed, 0 failed.
 - Focused site integrations health route-gate and telemetry regressions passed: 10 passed, 0 failed.
+- Focused site ops, sessions, and provisioning workflow regressions passed: 13 passed, 0 failed.
 
 ### Full Flutter gate verification
 

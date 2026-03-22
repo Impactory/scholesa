@@ -10,6 +10,7 @@ import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/modules/provisioning/provisioning_page.dart';
 import 'package:scholesa_app/modules/provisioning/provisioning_service.dart';
 import 'package:scholesa_app/modules/site/site_ops_page.dart';
+import 'package:scholesa_app/modules/site/site_sessions_page.dart';
 import 'package:scholesa_app/services/api_client.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
 import 'package:scholesa_app/services/workflow_bridge_service.dart';
@@ -351,6 +352,20 @@ Future<void> _seedProvisioningData(
   }
 }
 
+Future<void> _seedSessionCreateOptions(FakeFirebaseFirestore firestore) async {
+  await firestore.collection('users').doc('educator-1').set(<String, dynamic>{
+    'displayName': 'Coach Ada',
+    'email': 'ada@scholesa.test',
+    'role': 'educator',
+    'activeSiteId': 'site-1',
+    'siteIds': <String>['site-1'],
+  });
+  await firestore.collection('rooms').doc('room-1').set(<String, dynamic>{
+    'siteId': 'site-1',
+    'name': 'Lab 1',
+  });
+}
+
 Future<QueryDocumentSnapshot<Map<String, dynamic>>> _findUserByEmail(
   FakeFirebaseFirestore firestore,
   String email,
@@ -459,6 +474,92 @@ Future<void> _pumpProvisioningPage(
           GlobalCupertinoLocalizations.delegate,
         ],
         home: const ProvisioningPage(),
+      ),
+    ),
+  );
+
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 400));
+  await tester.pumpAndSettle();
+}
+
+Future<void> _pumpSiteSessionsPage(
+  WidgetTester tester, {
+  required FakeFirebaseFirestore firestore,
+}) async {
+  tester.view.physicalSize = const Size(1440, 2200);
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(() {
+    tester.view.resetPhysicalSize();
+    tester.view.resetDevicePixelRatio();
+  });
+
+  final FirestoreService firestoreService = FirestoreService(
+    firestore: firestore,
+    auth: _MockFirebaseAuth(),
+  );
+
+  await tester.pumpWidget(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider<AppState>.value(value: _buildSiteState()),
+        Provider<FirestoreService>.value(value: firestoreService),
+      ],
+      child: MaterialApp(
+        theme: _testTheme,
+        locale: const Locale('en'),
+        supportedLocales: const <Locale>[
+          Locale('en'),
+          Locale('zh', 'CN'),
+          Locale('zh', 'TW'),
+        ],
+        localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        home: SiteSessionsPage(
+          sessionsLoader: (
+            BuildContext context,
+            DateTime selectedDate,
+          ) async {
+            final QuerySnapshot<Map<String, dynamic>> snapshot =
+                await firestore.collection('sessions').get();
+            final Map<String, List<SiteSessionData>> grouped =
+                <String, List<SiteSessionData>>{};
+            for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+                in snapshot.docs) {
+              final Map<String, dynamic> data = doc.data();
+              if ((data['siteId'] as String?) != 'site-1') {
+                continue;
+              }
+              final Timestamp? startTime = data['startTime'] as Timestamp?;
+              final DateTime? sessionDate = startTime?.toDate();
+              if (sessionDate == null ||
+                  sessionDate.year != selectedDate.year ||
+                  sessionDate.month != selectedDate.month ||
+                  sessionDate.day != selectedDate.day) {
+                continue;
+              }
+              final String slot =
+                  (data['timeSlot'] as String?)?.trim().isNotEmpty == true
+                      ? (data['timeSlot'] as String).trim()
+                      : '4:00 PM';
+              grouped.putIfAbsent(slot, () => <SiteSessionData>[]).add(
+                    SiteSessionData(
+                      title: '${data['title']} (persisted)',
+                      educator:
+                          (data['educatorName'] as String?) ?? 'Unassigned',
+                      room: (data['room'] as String?) ?? 'Unassigned',
+                      learnerCount: data['learnerCount'] as int? ?? 0,
+                      pillar:
+                          (data['pillar'] as String?) ?? 'Future Skills',
+                    ),
+                  );
+            }
+            return grouped;
+          },
+        ),
       ),
     ),
   );
@@ -658,6 +759,57 @@ void main() {
           find.textContaining(
               'Lifecycle reason: Revoked after bounded regression review.'),
           findsOneWidget);
+    });
+
+    testWidgets(
+        'site sessions creation flows into the site ops timetable for the active site',
+        (WidgetTester tester) async {
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+      await _seedSessionCreateOptions(firestore);
+      final DateTime now = DateTime.now();
+      final DateTime dayStart = DateTime(now.year, now.month, now.day);
+      await firestore.collection('sessions').doc('other-site-session').set(
+        <String, dynamic>{
+          'siteId': 'site-2',
+          'title': 'Ignore Other Site',
+          'educatorName': 'Coach Lin',
+          'room': 'Lab 9',
+          'learnerCount': 10,
+          'startTime': Timestamp.fromDate(
+            dayStart.add(const Duration(hours: 11)),
+          ),
+        },
+      );
+
+      await _pumpSiteSessionsPage(tester, firestore: firestore);
+
+      await tester.tap(find.text('New Session'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Session Title'),
+        'Evidence Studio',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Learner Count'),
+        '12',
+      );
+
+      final Finder createButton =
+          find.widgetWithText(ElevatedButton, 'Create Session');
+      await tester.ensureVisible(createButton);
+      await tester.tap(createButton);
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Evidence Studio (persisted)'), findsOneWidget);
+
+      await _pumpSiteOpsPage(tester, firestore: firestore);
+
+      expect(find.text('Today Timetable'), findsOneWidget);
+      expect(find.text('Evidence Studio'), findsOneWidget);
+      expect(find.text('Ignore Other Site'), findsNothing);
+      expect(find.text('No sessions scheduled today'), findsNothing);
     });
 
     testWidgets(
