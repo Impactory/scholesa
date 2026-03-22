@@ -75,9 +75,8 @@ class _ParentChildPageState extends State<ParentChildPage> {
                 tooltip: _t('Refresh'),
               ),
               TextButton.icon(
-                onPressed: learner == null
-                    ? null
-                    : () => _exportPassport(learner),
+                onPressed:
+                    learner == null ? null : () => _exportPassport(learner),
                 icon: const Icon(Icons.download_rounded),
                 label: Text(_t('Export Passport')),
                 style: TextButton.styleFrom(foregroundColor: Colors.white),
@@ -286,7 +285,8 @@ class _ParentChildPageState extends State<ParentChildPage> {
             : 'Not set',
         role: appState.role?.name ?? 'unknown',
         subject: 'Parent guardian link review request',
-        message: 'Please review the guardian link for the requested learner detail route.',
+        message:
+            'Please review the guardian link for the requested learner detail route.',
         metadata: <String, dynamic>{
           'requestedLearnerId': widget.learnerId,
           'activeSiteId': appState.activeSiteId,
@@ -309,7 +309,8 @@ class _ParentChildPageState extends State<ParentChildPage> {
       if (!mounted) return;
       messenger.showSnackBar(
         SnackBar(
-          content: Text(_t('Unable to submit linked learner review right now.')),
+          content:
+              Text(_t('Unable to submit linked learner review right now.')),
         ),
       );
     }
@@ -347,7 +348,7 @@ class _ParentChildPageState extends State<ParentChildPage> {
           ),
           const SizedBox(height: 6),
           Text(
-            '${learner.evidenceSummary.reviewedCount} ${_t('reviewed evidence records')} • ${learner.portfolioSnapshot.verifiedArtifactCount} ${_t('verified artifacts')}',
+            '${learner.evidenceSummary.reviewedCount} ${_t('reviewed evidence records')} • ${learner.portfolioSnapshot.verifiedArtifactCount} ${_t('reviewed or verified artifacts')}',
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.92),
             ),
@@ -362,7 +363,7 @@ class _ParentChildPageState extends State<ParentChildPage> {
                 value: '${learner.growthSummary.updatedCapabilityCount}',
               ),
               _buildHeroStat(
-                label: _t('Verified Artifacts'),
+                label: _t('Reviewed/Verified Artifacts'),
                 value: '${learner.portfolioSnapshot.verifiedArtifactCount}',
               ),
               _buildHeroStat(
@@ -424,7 +425,7 @@ class _ParentChildPageState extends State<ParentChildPage> {
           value: '${learner.evidenceSummary.reviewedCount}',
         ),
         _buildSnapshotCard(
-          label: _t('Verified Artifacts'),
+          label: _t('Reviewed/Verified Artifacts'),
           value: '${learner.portfolioSnapshot.verifiedArtifactCount}',
         ),
         _buildSnapshotCard(
@@ -518,64 +519,67 @@ class _ParentChildPageState extends State<ParentChildPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            passport.summary ?? _t('Capability claims backed by evidence.'),
+            passport.summary ??
+                _t('Capability claims built from currently linked evidence and reviewed artifacts.'),
             style: const TextStyle(color: ScholesaColors.textSecondary),
           ),
           const SizedBox(height: 12),
           ...passport.claims.take(3).map(
-            (PassportClaim claim) => Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: ScholesaColors.background,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: ScholesaColors.parent.withValues(alpha: 0.14),
+                (PassportClaim claim) => Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: ScholesaColors.background,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: ScholesaColors.parent.withValues(alpha: 0.14),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        claim.title,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: ScholesaColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${_t(claim.pillar)} • ${_t('Level')} ${claim.latestLevel}/4',
+                        style: const TextStyle(
+                            color: ScholesaColors.textSecondary),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '${claim.evidenceCount} ${_t('evidence records')} • ${claim.verifiedArtifactCount} ${_t('reviewed or verified artifacts')}',
+                        style: const TextStyle(
+                            color: ScholesaColors.textSecondary),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '${_t('Proof of Learning')}: ${_titleCase(claim.proofOfLearningStatus ?? 'missing')} • ${_t('AI Disclosure')}: ${_formatAiDisclosure(claim.aiDisclosureStatus)}',
+                        style: const TextStyle(
+                          color: ScholesaColors.textSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
+                      if (claim.evidenceRecordIds.isNotEmpty ||
+                          claim.portfolioItemIds.isNotEmpty) ...<Widget>[
+                        const SizedBox(height: 8),
+                        Text(
+                          '${_t('Evidence IDs')}: ${claim.evidenceRecordIds.take(2).join(', ')}${claim.evidenceRecordIds.length > 2 ? '…' : ''}',
+                          style: const TextStyle(
+                            color: ScholesaColors.textSecondary,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    claim.title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      color: ScholesaColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${_t(claim.pillar)} • ${_t('Level')} ${claim.latestLevel}/4',
-                    style: const TextStyle(color: ScholesaColors.textSecondary),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '${claim.evidenceCount} ${_t('evidence records')} • ${claim.verifiedArtifactCount} ${_t('verified artifacts')}',
-                    style: const TextStyle(color: ScholesaColors.textSecondary),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '${_t('Proof of Learning')}: ${_titleCase(claim.proofOfLearningStatus ?? 'missing')} • ${_t('AI Disclosure')}: ${_formatAiDisclosure(claim.aiDisclosureStatus)}',
-                    style: const TextStyle(
-                      color: ScholesaColors.textSecondary,
-                      fontSize: 12,
-                    ),
-                  ),
-                  if (claim.evidenceRecordIds.isNotEmpty ||
-                      claim.portfolioItemIds.isNotEmpty) ...<Widget>[
-                    const SizedBox(height: 8),
-                    Text(
-                      '${_t('Evidence IDs')}: ${claim.evidenceRecordIds.take(2).join(', ')}${claim.evidenceRecordIds.length > 2 ? '…' : ''}',
-                      style: const TextStyle(
-                        color: ScholesaColors.textSecondary,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
         ],
       ),
     );
@@ -662,7 +666,8 @@ class _ParentChildPageState extends State<ParentChildPage> {
       lines.add('  ${_t('Pillar')}: ${_t(claim.pillar)}');
       lines.add('  ${_t('Level')}: ${claim.latestLevel}/4');
       lines.add('  ${_t('Evidence Count')}: ${claim.evidenceCount}');
-      lines.add('  ${_t('Verified Artifacts')}: ${claim.verifiedArtifactCount}');
+      lines
+          .add('  ${_t('Verified Artifacts')}: ${claim.verifiedArtifactCount}');
       lines.add(
         '  ${_t('Verification Status')}: ${claim.verificationStatus?.trim().isNotEmpty == true ? _titleCase(claim.verificationStatus!) : _t('Pending')}',
       );

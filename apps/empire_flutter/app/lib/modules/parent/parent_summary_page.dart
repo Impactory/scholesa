@@ -49,7 +49,8 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
     try {
       final AppState appState = context.read<AppState>();
       final ParentService parentService = context.read<ParentService>();
-      final String requestId = await parentService.firestoreService.submitSupportRequest(
+      final String requestId =
+          await parentService.firestoreService.submitSupportRequest(
         requestType: 'parent_linked_learner_review',
         source: 'parent_summary_request_linked_learner_review',
         siteId: appState.activeSiteId?.trim().isNotEmpty == true
@@ -86,7 +87,8 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
       if (!mounted) return;
       messenger.showSnackBar(
         SnackBar(
-          content: Text(_t('Unable to submit linked learner review right now.')),
+          content:
+              Text(_t('Unable to submit linked learner review right now.')),
         ),
       );
     }
@@ -152,8 +154,7 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
                 SliverToBoxAdapter(
                   child: AiContextCoachSection(
                     title: _t('Family AI Help'),
-                    subtitle:
-                        _t('See support ideas for each child’s progress'),
+                    subtitle: _t('See support ideas for each child’s progress'),
                     module: 'parent_summary',
                     surface: 'family_dashboard',
                     actorRole: UserRole.parent,
@@ -482,7 +483,8 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
                       'learner_id': learner.learnerId,
                     },
                   );
-                  context.go('/parent/child/${Uri.encodeComponent(learner.learnerId)}');
+                  context.go(
+                      '/parent/child/${Uri.encodeComponent(learner.learnerId)}');
                 },
                 icon: const Icon(Icons.open_in_new_rounded),
                 label: Text(_t('View Child Detail')),
@@ -511,15 +513,16 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
   Widget _buildFamilyEvidenceAnswers(LearnerSummary learner) {
     final int capabilityPercent =
         (learner.capabilitySnapshot.overall * 100).round();
-    final int attendancePercent = (learner.attendanceRate * 100).round();
     final String nextFocus = learner.evidenceSummary.verificationPromptCount > 0
-      ? _t('Follow up on the latest educator verification prompts during the next studio check-in.')
-      : learner.portfolioSnapshot.artifactCount == 0
-        ? _t('Capture a first portfolio artifact from current studio work.')
-      : learner.portfolioSnapshot.verifiedArtifactCount <
-                learner.portfolioSnapshot.artifactCount
-            ? _t('Publish the strongest recent artifact with reflection.')
-            : _t('Keep adding checkpoints, reflections, and educator evidence next week.');
+        ? _t(
+            'Follow up on the latest educator verification prompts during the next studio check-in.')
+        : learner.portfolioSnapshot.artifactCount == 0
+            ? _t('Capture a first portfolio artifact from current studio work.')
+            : learner.portfolioSnapshot.verifiedArtifactCount <
+                    learner.portfolioSnapshot.artifactCount
+                ? _t('Publish the strongest recent artifact with reflection.')
+                : _t(
+                    'Keep adding checkpoints, reflections, and educator evidence next week.');
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -555,21 +558,21 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
               icon: Icons.workspace_premium_rounded,
               label: _t('What can this learner do now?'),
               value:
-              '${learner.capabilitySnapshot.band} • ${learner.growthSummary.capabilityCount} ${_t('capabilities with current evidence')} • $capabilityPercent% ${_t('coverage confidence')}',
+                  '${learner.capabilitySnapshot.band} • ${learner.growthSummary.capabilityCount} ${_t('capabilities with current evidence')} • $capabilityPercent% ${_t('coverage confidence')}',
             ),
             const SizedBox(height: 12),
             _FamilyAnswerRow(
               icon: Icons.fact_check_rounded,
               label: _t('What evidence proves it?'),
               value:
-              '${learner.evidenceSummary.reviewedCount} ${_t('reviewed observations')}, ${learner.portfolioSnapshot.verifiedArtifactCount} ${_t('verified artifacts')}, ${learner.ideationPassport.reflectionsSubmitted} ${_t('reflections')}',
+                  '${learner.evidenceSummary.reviewedCount} ${_t('reviewed observations')}, ${learner.portfolioSnapshot.verifiedArtifactCount} ${_t('reviewed or verified artifacts')}, ${learner.ideationPassport.reflectionsSubmitted} ${_t('reflections')}',
             ),
             const SizedBox(height: 12),
             _FamilyAnswerRow(
               icon: Icons.timeline_rounded,
               label: _t('How are they growing?'),
               value:
-              '${learner.growthSummary.updatedCapabilityCount} ${_t('capabilities updated')}, ${_formatAverageCapabilityLevel(learner.growthSummary.averageLevel)}, $attendancePercent% ${_t('attendance')}',
+                  '${learner.growthSummary.updatedCapabilityCount} ${_t('capabilities updated')}, ${_formatAverageCapabilityLevel(learner.growthSummary.averageLevel)}, ${_formatLatestGrowthNote(learner.growthSummary.latestGrowthAt)}',
             ),
             const SizedBox(height: 12),
             _FamilyAnswerRow(
@@ -579,7 +582,7 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
             ),
             const SizedBox(height: 12),
             Text(
-              _t('This family view now prioritizes reviewed observations, verified artifacts, and capability growth over gamified progress counters.'),
+              _t('This family view prioritizes reviewed observations, reviewed or verified artifacts, and capability growth over gamified progress counters. Attendance is shown elsewhere as participation, not capability growth.'),
               style: TextStyle(
                 color: Colors.grey[600],
                 fontSize: 12,
@@ -597,6 +600,15 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
       return _t('No capability level yet');
     }
     return '${value.toStringAsFixed(1)}/4 ${_t('average capability level')}';
+  }
+
+  String _formatLatestGrowthNote(DateTime? value) {
+    if (value == null) {
+      return _t('latest growth update pending');
+    }
+    final String month = value.month.toString().padLeft(2, '0');
+    final String day = value.day.toString().padLeft(2, '0');
+    return '${_t('latest update')}: $month/$day/${value.year}';
   }
 
   Widget _buildPillarProgress(LearnerSummary learner) {

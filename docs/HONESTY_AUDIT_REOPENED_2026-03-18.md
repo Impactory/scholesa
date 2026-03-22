@@ -210,6 +210,10 @@ Interpretation rule:
 120. Corrected the last unscoped release summary lines in the March 3 deployment and RC3 sign-off artifacts so `all systems operational` and `production-ready` now stay explicitly bounded to RC3 launch-blocking scope rather than sounding like blanket capability-first certification.
 121. Corrected the learner portfolio AI-coach entry copy so it now discloses that the AI reflection note is experimental and does not replace the learner's evidence record.
 122. Corrected the missions progress card so XP, levels, and streaks are explicitly framed as engagement metrics, while capability growth is tied to reviewed evidence and rubric feedback.
+123. Corrected parent-facing artifact counts so UI labels no longer call mixed `reviewed` plus `verified` portfolio totals simply `verified`, matching the actual parent service semantics.
+124. Corrected the family summary evidence-and-growth answer block so attendance is no longer presented as part of the answer to `How are they growing?`; growth is now described with capability updates, average level, and latest growth timing while attendance remains a separate participation metric.
+125. Corrected the parent portfolio AI-guidance entry copy so it now discloses that the guidance is experimental and does not replace the learner evidence record.
+126. Corrected parent child detail and Passport fallback copy so those surfaces now describe currently linked evidence and reviewed artifacts rather than stronger blanket `verified artifacts` wording.
 
 ### Release and operations fixes
 

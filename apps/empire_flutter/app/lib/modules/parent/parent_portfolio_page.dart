@@ -320,7 +320,7 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
                   _t(_titleCaseBand(learner.capabilitySnapshot.band)), accent),
               const SizedBox(width: 8),
               _buildSnapshotChip(
-                _t('Verified Portfolio'),
+                _t('Reviewed Portfolio'),
                 '${learner.portfolioSnapshot.verifiedArtifactCount}',
                 ScholesaColors.parentGradient.colors.first,
               ),
@@ -336,7 +336,7 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
             '${learner.portfolioSnapshot.evidenceLinkedArtifactCount}',
           ),
           _buildSnapshotMetric(
-            _t('Verified'),
+            _t('Reviewed/Verified'),
             '${learner.portfolioSnapshot.verifiedArtifactCount}',
           ),
           _buildSnapshotMetric(
@@ -509,7 +509,8 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
                   ),
                   if (item.evidenceLinked ||
                       (item.verificationStatus?.trim().isNotEmpty ?? false) ||
-                      (item.proofOfLearningStatus?.trim().isNotEmpty ?? false) ||
+                      (item.proofOfLearningStatus?.trim().isNotEmpty ??
+                          false) ||
                       (item.aiDisclosureStatus?.trim().isNotEmpty ?? false))
                     Padding(
                       padding: const EdgeInsets.only(top: 8),
@@ -522,17 +523,20 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
                               _t('Evidence linked'),
                               _getPillarColor(item.pillar),
                             ),
-                          if (item.verificationStatus?.trim().isNotEmpty ?? false)
+                          if (item.verificationStatus?.trim().isNotEmpty ??
+                              false)
                             _buildMetaChip(
                               _titleCaseBand(item.verificationStatus!),
                               Colors.teal,
                             ),
-                          if (item.proofOfLearningStatus?.trim().isNotEmpty ?? false)
+                          if (item.proofOfLearningStatus?.trim().isNotEmpty ??
+                              false)
                             _buildMetaChip(
                               _formatProofStatus(item.proofOfLearningStatus),
                               Colors.indigo,
                             ),
-                          if (item.aiDisclosureStatus?.trim().isNotEmpty ?? false)
+                          if (item.aiDisclosureStatus?.trim().isNotEmpty ??
+                              false)
                             _buildMetaChip(
                               _formatAiDisclosure(item.aiDisclosureStatus),
                               Colors.deepOrange,
@@ -685,7 +689,8 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
             if (item.evidenceLinked ||
                 (item.verificationStatus?.trim().isNotEmpty ?? false) ||
                 (item.proofOfLearningStatus?.trim().isNotEmpty ?? false) ||
-                (item.aiDisclosureStatus?.trim().isNotEmpty ?? false)) ...<Widget>[
+                (item.aiDisclosureStatus?.trim().isNotEmpty ??
+                    false)) ...<Widget>[
               const SizedBox(height: 16),
               Wrap(
                 spacing: 8,
@@ -718,7 +723,8 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
               const SizedBox(height: 16),
               Text(
                 _t('Capability Evidence'),
-                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                style:
+                    const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 8),
               Wrap(
@@ -731,14 +737,17 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
                     .toList(growable: false),
               ),
             ],
-            if (item.verificationPrompt?.trim().isNotEmpty ?? false) ...<Widget>[
+            if (item.verificationPrompt?.trim().isNotEmpty ??
+                false) ...<Widget>[
               const SizedBox(height: 16),
               Text(
                 _t('Verification Prompt'),
-                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                style:
+                    const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 8),
-              Text(item.verificationPrompt!, style: const TextStyle(fontSize: 14)),
+              Text(item.verificationPrompt!,
+                  style: const TextStyle(fontSize: 14)),
             ],
             const SizedBox(height: 24),
             LayoutBuilder(
@@ -1106,8 +1115,8 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
                 color: parentColor,
               ),
               title: Text(_t('Getting AI Guidance')),
-              subtitle: Text(
-                  _t('Get personalized coaching on supporting your child')),
+              subtitle: Text(_t(
+                  'Get experimental coaching on supporting your child. It does not replace the learner evidence record')),
               trailing: IconButton(
                 icon: Icon(
                   _showAiCoach ? Icons.expand_less : Icons.expand_more,
