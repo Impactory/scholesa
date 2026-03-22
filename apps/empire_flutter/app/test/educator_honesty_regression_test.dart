@@ -279,15 +279,15 @@ void main() {
       'pillarCode': 'future_skills',
     });
     await firestore
-        .collection('missionSubmissions')
+        .collection('missionAttempts')
         .doc('submission-1')
         .set(<String, dynamic>{
       'missionId': 'mission-1',
       'learnerId': 'learner-1',
       'siteId': 'site-1',
-      'status': 'pending',
+      'status': 'submitted',
       'submittedAt': Timestamp.fromDate(DateTime(2026, 3, 17, 9, 30)),
-      'submissionText': 'I built a loop that reads the sensor twice.',
+      'content': 'I built a loop that reads the sensor twice.',
     });
 
     await tester.binding.setSurfaceSize(const Size(1280, 1800));

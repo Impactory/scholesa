@@ -1481,12 +1481,6 @@ class MissionService extends ChangeNotifier {
     try {
       final QuerySnapshot<Map<String, dynamic>> canonicalSnapshot =
           await _pendingReviewAttemptsQuery(siteId: siteId).limit(50).get();
-      final Set<String> canonicalIds =
-          canonicalSnapshot.docs.map((doc) => doc.id).toSet();
-      final QuerySnapshot<Map<String, dynamic>> legacySnapshot =
-          await _legacyPendingReviewSubmissionsQuery(siteId: siteId)
-              .limit(50)
-              .get();
 
       final List<MissionSubmission> canonicalReviews = await Future.wait(
         canonicalSnapshot.docs.map(
@@ -1494,19 +1488,9 @@ class MissionService extends ChangeNotifier {
               _hydrateMissionSubmission(docId: doc.id, data: doc.data()),
         ),
       );
-      final List<MissionSubmission> legacyReviews = await Future.wait(
-        legacySnapshot.docs
-            .where((QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
-                !canonicalIds.contains(doc.id))
-            .map(
-              (QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
-                  _hydrateMissionSubmission(docId: doc.id, data: doc.data()),
-            ),
-      );
 
       _pendingReviews = <MissionSubmission>[
         ...canonicalReviews,
-        ...legacyReviews,
       ]..sort((MissionSubmission a, MissionSubmission b) =>
           b.submittedAt.compareTo(a.submittedAt));
 
@@ -1522,21 +1506,6 @@ class MissionService extends ChangeNotifier {
             reviewedStatus == 'approved' ||
             reviewedStatus == 'revision';
       }).length;
-
-      if (_reviewedToday == 0) {
-        final QuerySnapshot<Map<String, dynamic>> legacyReviewedSnapshot =
-            await _legacyReviewedSubmissionsQuery(siteId: siteId).get();
-        _reviewedToday = legacyReviewedSnapshot.docs.where((doc) {
-          final Map<String, dynamic> data = doc.data();
-          final String reviewedStatus = _normalizedReviewQueueStatus(
-            status: data['status'] as String?,
-            reviewStatus: data['reviewStatus'] as String?,
-          );
-          return reviewedStatus == 'reviewed' ||
-              reviewedStatus == 'approved' ||
-              reviewedStatus == 'revision';
-        }).length;
-      }
 
       debugPrint('Loaded ${_pendingReviews.length} pending reviews');
     } catch (e) {
@@ -1564,43 +1533,11 @@ class MissionService extends ChangeNotifier {
     return query;
   }
 
-  Query<Map<String, dynamic>> _legacyPendingReviewSubmissionsQuery({
-    String? siteId,
-  }) {
-    Query<Map<String, dynamic>> query = _firestore
-        .collection('missionSubmissions')
-        .where('status', whereIn: const <String>[
-      'pending',
-      'submitted'
-    ]).orderBy('submittedAt', descending: true);
-
-    if (siteId != null && siteId.isNotEmpty) {
-      query = query.where('siteId', isEqualTo: siteId);
-    }
-    return query;
-  }
-
   Query<Map<String, dynamic>> _reviewedMissionAttemptsQuery({String? siteId}) {
     final DateTime today = DateTime.now();
     final DateTime startOfDay = DateTime(today.year, today.month, today.day);
     Query<Map<String, dynamic>> query =
         _firestore.collection('missionAttempts').where(
-              'reviewedAt',
-              isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay),
-            );
-    if (siteId != null && siteId.isNotEmpty) {
-      query = query.where('siteId', isEqualTo: siteId);
-    }
-    return query;
-  }
-
-  Query<Map<String, dynamic>> _legacyReviewedSubmissionsQuery({
-    String? siteId,
-  }) {
-    final DateTime today = DateTime.now();
-    final DateTime startOfDay = DateTime(today.year, today.month, today.day);
-    Query<Map<String, dynamic>> query =
-        _firestore.collection('missionSubmissions').where(
               'reviewedAt',
               isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay),
             );

@@ -241,6 +241,7 @@ Interpretation rule:
 - Focused learner missions regressions passed after the canonical review submission proof: 4 passed, 0 failed.
 - Focused educator mission review regressions passed after the live learner-to-educator review handoff proof: 3 passed, 0 failed.
 - Focused educator mission review regressions passed after the live rubric growth-linkage proof: 4 passed, 0 failed.
+- Focused educator review regressions passed after removing legacy missionSubmissions queue reads from the live review source: 19 passed, 0 failed.
 - Focused learner portfolio honesty regressions passed after the reviewed-artifact portfolio proof: 6 passed, 0 failed.
 - Focused parent surface workflow regressions passed after the reviewed-artifact family portfolio proof: 16 passed, 0 failed.
 - Focused parent surface workflow regressions passed after the reviewed-artifact family Passport proof: 17 passed, 0 failed.
