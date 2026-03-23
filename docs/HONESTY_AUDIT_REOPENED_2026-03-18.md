@@ -226,6 +226,8 @@ Interpretation rule:
 136. Corrected the remaining parent passport export wording drift by renaming mixed artifact totals from `Verified Artifacts` to `Reviewed/Verified Artifacts`, keeping downloaded and copied family exports aligned with the in-app semantics instead of overstating the review state of every linked artifact.
 137. Hardened the parent child family view against honesty-driven copy growth by allowing the longer `Reviewed/Verified Artifacts` hero-stat label to wrap safely instead of overflowing the layout, so the UI no longer depends on shorter, less accurate wording to stay renderable in workflow tests or real usage.
 138. Fixed the remaining workflow blocker in educator mission review by making the `All caught up` empty state scroll and honor constrained remaining height, so approving the last pending submission no longer throws a RenderFlex overflow before the linked parent passport workflow can complete and validate its export honesty assertions.
+139. Fixed the remaining learner missions workflow overflow by compacting the fixed header stack on short viewports and preserving truncation in the progress summary, so the provisioning-linked parent passport workflow now completes its live learner-submit to educator-review to parent-passport chain without a late RenderFlex failure masking the export honesty assertions.
+140. Corrected the parent passport empty-summary wording so the no-claims state now says no capability claims backed by reviewed evidence are available yet, aligning the empty-state semantics with the non-empty summary instead of overstating those family-facing claims as already verified.
 
 ### Release and operations fixes
 

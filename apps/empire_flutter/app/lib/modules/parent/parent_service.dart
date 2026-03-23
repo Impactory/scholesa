@@ -1578,7 +1578,7 @@ class ParentService extends ChangeNotifier {
       lastReflectionAt: reflectionDates.isEmpty ? null : reflectionDates.first,
       generatedAt: DateTime.now(),
       summary: claims.isEmpty
-          ? 'No verified capability claims are available yet.'
+          ? 'No capability claims backed by reviewed evidence are available yet.'
           : '${claims.length} capability claims are backed by reviewed evidence and reviewed or verified artifacts.',
       claims: claims,
     );

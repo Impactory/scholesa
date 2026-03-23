@@ -26,6 +26,8 @@ class ParentChildPage extends StatefulWidget {
 }
 
 class _ParentChildPageState extends State<ParentChildPage> {
+  bool _pendingInitialLoad = false;
+
   String _t(String input) => ParentSurfaceI18n.text(context, input);
 
   FirestoreService? _maybeFirestoreService() {
@@ -39,11 +41,18 @@ class _ParentChildPageState extends State<ParentChildPage> {
   @override
   void initState() {
     super.initState();
+    final ParentService service = context.read<ParentService>();
+    _pendingInitialLoad =
+        service.learnerSummaries.isEmpty && !service.isLoading;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) {
         return;
       }
-      final ParentService service = context.read<ParentService>();
+      if (_pendingInitialLoad) {
+        setState(() {
+          _pendingInitialLoad = false;
+        });
+      }
       if (service.learnerSummaries.isEmpty && !service.isLoading) {
         service.loadParentData();
       }
@@ -62,45 +71,47 @@ class _ParentChildPageState extends State<ParentChildPage> {
               orElse: () => null,
             );
 
+        final List<Widget> appBarActions = <Widget>[
+          IconButton(
+            onPressed: service.loadParentData,
+            icon: const Icon(Icons.refresh_rounded),
+            tooltip: _t('Refresh'),
+          ),
+          TextButton.icon(
+            onPressed: learner == null ? null : () => _exportPassport(learner),
+            icon: const Icon(Icons.download_rounded),
+            label: Text(_t('Export Passport')),
+            style: TextButton.styleFrom(foregroundColor: Colors.white),
+          ),
+          TextButton.icon(
+            onPressed: () {
+              TelemetryService.instance.logEvent(
+                event: 'cta.clicked',
+                metadata: <String, dynamic>{
+                  'cta': 'parent_child_view_consent',
+                  'learner_id': widget.learnerId,
+                },
+              );
+              context.go('/parent/consent');
+            },
+            icon: const Icon(Icons.verified_user_outlined),
+            label: Text(_t('View Consent')),
+            style: TextButton.styleFrom(foregroundColor: Colors.white),
+          ),
+          const SessionMenuButton(
+            foregroundColor: Colors.white,
+            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          ),
+        ];
+
         return Scaffold(
           backgroundColor: ScholesaColors.background,
           appBar: AppBar(
+            toolbarHeight: 64,
             title: Text(_t('Child Detail')),
             backgroundColor: ScholesaColors.parent,
             foregroundColor: Colors.white,
-            actions: <Widget>[
-              IconButton(
-                onPressed: service.loadParentData,
-                icon: const Icon(Icons.refresh_rounded),
-                tooltip: _t('Refresh'),
-              ),
-              TextButton.icon(
-                onPressed:
-                    learner == null ? null : () => _exportPassport(learner),
-                icon: const Icon(Icons.download_rounded),
-                label: Text(_t('Export Passport')),
-                style: TextButton.styleFrom(foregroundColor: Colors.white),
-              ),
-              TextButton.icon(
-                onPressed: () {
-                  TelemetryService.instance.logEvent(
-                    event: 'cta.clicked',
-                    metadata: <String, dynamic>{
-                      'cta': 'parent_child_view_consent',
-                      'learner_id': widget.learnerId,
-                    },
-                  );
-                  context.go('/parent/consent');
-                },
-                icon: const Icon(Icons.verified_user_outlined),
-                label: Text(_t('View Consent')),
-                style: TextButton.styleFrom(foregroundColor: Colors.white),
-              ),
-              const SessionMenuButton(
-                foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              ),
-            ],
+            actions: appBarActions,
           ),
           body: _buildBody(service: service, learner: learner),
         );
@@ -112,10 +123,7 @@ class _ParentChildPageState extends State<ParentChildPage> {
     required ParentService service,
     required LearnerSummary? learner,
   }) {
-    final bool debugSkipHeroAndSnapshot = widget.learnerId == '__debug_skip_hero__';
-    final bool debugSkipPassportSection = widget.learnerId == '__debug_skip_passport__';
-
-    if (service.isLoading && learner == null) {
+    if ((service.isLoading || _pendingInitialLoad) && learner == null) {
       return Center(
         child: Text(
           _t('Loading...'),
@@ -155,16 +163,11 @@ class _ParentChildPageState extends State<ParentChildPage> {
           _buildStaleDataBanner(),
           const SizedBox(height: 16),
         ],
-        if (!debugSkipHeroAndSnapshot) ...<Widget>[
-          _buildHeroCard(learner),
-          const SizedBox(height: 16),
-          _buildSnapshotGrid(learner),
-          const SizedBox(height: 16),
-        ],
-        if (!debugSkipPassportSection) ...<Widget>[
-          _buildPassportSection(learner),
-          const SizedBox(height: 16),
-        ],
+        _buildHeroCard(learner),
+        const SizedBox(height: 16),
+        _buildSnapshotGrid(learner),
+        const SizedBox(height: 16),
+        _buildPassportSection(learner),
         const SizedBox(height: 16),
         _buildPillarSection(learner),
         const SizedBox(height: 16),

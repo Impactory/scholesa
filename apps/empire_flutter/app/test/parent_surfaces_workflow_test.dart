@@ -526,11 +526,15 @@ Future<void> _submitMissionForReview(
     missionService: missionService,
     home: const MissionsPage(),
   );
+  expect(tester.takeException(), isNull);
 
   await tester.tap(find.text('In Progress'));
   await tester.pumpAndSettle();
+  expect(tester.takeException(), isNull);
+
   await tester.tap(find.text('Mission ready for review').first);
   await tester.pumpAndSettle();
+  expect(tester.takeException(), isNull);
 
   await tester.scrollUntilVisible(
     find.text('No AI support used for this mission'),
@@ -564,6 +568,7 @@ Future<void> _submitMissionForReview(
   await tester.tap(find.text('Save Checkpoint'));
   await tester.pump();
   await tester.pumpAndSettle();
+  expect(tester.takeException(), isNull);
 
   await tester.scrollUntilVisible(
     find.text('Submit for Review'),
@@ -573,6 +578,7 @@ Future<void> _submitMissionForReview(
   await tester.tap(find.text('Submit for Review'));
   await tester.pump();
   await tester.pumpAndSettle();
+  expect(tester.takeException(), isNull);
 }
 
 Future<void> _approveSubmittedMission(
@@ -1781,6 +1787,8 @@ void main() {
           learnerId: learnerId,
         ),
       );
+      final Object? learnerReviewFlowException = tester.takeException();
+      expect(learnerReviewFlowException, isNull);
 
       await _approveSubmittedMission(
         tester,
@@ -1790,6 +1798,8 @@ void main() {
           learnerId: 'educator-1',
         ),
       );
+      final Object? educatorReviewFlowException = tester.takeException();
+      expect(educatorReviewFlowException, isNull);
 
       final QuerySnapshot<Map<String, dynamic>> missionAttempts =
           await firestore
@@ -1825,26 +1835,7 @@ void main() {
         parentService: parentService,
         home: ParentChildPage(learnerId: learnerId),
       );
-      if (parentService.learnerSummaries.isNotEmpty) {
-        final LearnerSummary learnerSummary = parentService.learnerSummaries.first;
-        debugPrint(
-          'parent learner summary: claims=${learnerSummary.ideationPassport.claims.length}, '
-          'recentActivities=${learnerSummary.recentActivities.length}, '
-          'upcomingEvents=${learnerSummary.upcomingEvents.length}, '
-          'serviceError=${parentService.error}',
-        );
-      }
       final Object? parentChildPumpException = tester.takeException();
-      if (parentChildPumpException != null) {
-        debugPrint('parentChildPumpException: $parentChildPumpException');
-        if (parentChildPumpException is FlutterError) {
-          for (final DiagnosticsNode diagnostic
-              in parentChildPumpException.diagnostics) {
-            debugPrint(diagnostic.toStringDeep());
-          }
-        }
-        debugDumpRenderTree();
-      }
       expect(parentChildPumpException, isNull);
 
       expect(find.text('Nia Passport Evidence'), findsOneWidget);
