@@ -1756,6 +1756,8 @@ void main() {
           learnerId: 'educator-1',
         ),
       );
+      final Object? workflowPreParentException = tester.takeException();
+      expect(workflowPreParentException, isNull);
 
       final QuerySnapshot<Map<String, dynamic>> missionAttempts = await firestore
           .collection('missionAttempts')
