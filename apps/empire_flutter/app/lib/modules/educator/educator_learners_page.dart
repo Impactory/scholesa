@@ -84,8 +84,8 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
   }
 
   Future<SharedPreferences> _prefs() async {
-    return _prefsCache ??= widget.sharedPreferences ??
-        await SharedPreferences.getInstance();
+    return _prefsCache ??=
+        widget.sharedPreferences ?? await SharedPreferences.getInstance();
   }
 
   String _searchQueryPrefsKey() => 'educator_learners.search_query';
@@ -146,8 +146,7 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                       child: _EducatorLearnerStatusBanner(
-                        message: _tEducatorLearners(
-                                context,
+                        message: _tEducatorLearners(context,
                                 'Unable to refresh learners right now. Showing the last successful data. ') +
                             service.error!,
                       ),
@@ -205,7 +204,8 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
                           if (index >= filteredLearners.length) return null;
                           return _LearnerCard(
                             learner: filteredLearners[index],
-                            onTap: () => _openLearnerDetail(filteredLearners[index]),
+                            onTap: () =>
+                                _openLearnerDetail(filteredLearners[index]),
                           );
                         },
                         childCount: filteredLearners.length,
@@ -978,7 +978,8 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
     }
 
     try {
-      final FirestoreService firestoreService = context.read<FirestoreService>();
+      final FirestoreService firestoreService =
+          context.read<FirestoreService>();
       final DocumentSnapshot<Map<String, dynamic>> doc = await firestoreService
           .firestore
           .collection(_differentiationPlansCollection)
@@ -990,7 +991,8 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
       final Map<String, dynamic> data = doc.data() ?? <String, dynamic>{};
       final String savedLane =
           (data['selectedLane'] as String? ?? _recommendedLane).trim();
-      final String savedReason = (data['overrideReason'] as String? ?? '').trim();
+      final String savedReason =
+          (data['overrideReason'] as String? ?? '').trim();
       setState(() {
         _selectedLane = savedLane.isEmpty ? _recommendedLane : savedLane;
         _savedLane = _selectedLane;
@@ -1039,15 +1041,15 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
         _differentiationPlansCollection,
         '${learner.id}_$siteId',
         <String, dynamic>{
-        'siteId': siteId,
-        'learnerId': learner.id,
-        'educatorId': educatorId,
-        'recommendedLane': _recommendedLane,
-        'selectedLane': _selectedLane,
-        'overrideReason': _overrideReasonController.text.trim(),
-        'teacherOverride': _selectedLane != _recommendedLane,
-        'printablePracticePlan': _buildPrintablePracticePlan(),
-        'updatedAt': DateTime.now().toIso8601String(),
+          'siteId': siteId,
+          'learnerId': learner.id,
+          'educatorId': educatorId,
+          'recommendedLane': _recommendedLane,
+          'selectedLane': _selectedLane,
+          'overrideReason': _overrideReasonController.text.trim(),
+          'teacherOverride': _selectedLane != _recommendedLane,
+          'printablePracticePlan': _buildPrintablePracticePlan(),
+          'updatedAt': DateTime.now().toIso8601String(),
         },
         merge: true,
       );
@@ -1232,7 +1234,11 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
     final String userEmail = appState?.email?.trim() ?? '';
     final String userName = appState?.displayName?.trim() ?? '';
     final UserRole? role = appState?.role;
-    if (siteId.isEmpty || userId.isEmpty || userEmail.isEmpty || userName.isEmpty || role == null) {
+    if (siteId.isEmpty ||
+        userId.isEmpty ||
+        userEmail.isEmpty ||
+        userName.isEmpty ||
+        role == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -1248,7 +1254,8 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
 
     setState(() => _isSubmittingFollowUp = true);
     try {
-      final FirestoreService firestoreService = context.read<FirestoreService>();
+      final FirestoreService firestoreService =
+          context.read<FirestoreService>();
       final String requestId = await firestoreService.submitSupportRequest(
         requestType: 'learner_follow_up',
         source: 'educator_learner_detail_request_follow_up',
@@ -1257,7 +1264,8 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
         userEmail: userEmail,
         userName: userName,
         role: role.name,
-        subject: 'Learner follow-up request: ${_displayLearnerName(context, learner.name)}',
+        subject:
+            'Learner follow-up request: ${_displayLearnerName(context, learner.name)}',
         message: details,
         metadata: <String, dynamic>{
           'learnerId': learner.id,
@@ -1478,9 +1486,10 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton.icon(
-                          onPressed: _isSavingOverride || !_hasPendingOverrideChanges
-                            ? null
-                            : _saveLaneOverride,
+                            onPressed:
+                                _isSavingOverride || !_hasPendingOverrideChanges
+                                    ? null
+                                    : _saveLaneOverride,
                             icon: _isSavingOverride
                                 ? const SizedBox(
                                     width: 16,
@@ -1566,7 +1575,8 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
                             context,
                             'Request family or support-team follow-up for this learner.',
                           ),
-                          style: TextStyle(color: Colors.grey[700], height: 1.4),
+                          style:
+                              TextStyle(color: Colors.grey[700], height: 1.4),
                         ),
                         const SizedBox(height: 12),
                         TextField(

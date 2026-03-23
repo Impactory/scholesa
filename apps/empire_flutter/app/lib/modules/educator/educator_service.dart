@@ -127,7 +127,8 @@ class EducatorService extends ChangeNotifier {
         learners: const <EnrolledLearner>[],
       );
     }).toList()
-      ..sort((TodayClass a, TodayClass b) => a.startTime.compareTo(b.startTime));
+      ..sort(
+          (TodayClass a, TodayClass b) => a.startTime.compareTo(b.startTime));
 
     final List<TodayClass> previousClasses = _todayClasses;
     _todayClasses = todayClasses;
@@ -217,7 +218,9 @@ class EducatorService extends ChangeNotifier {
         continue;
       }
       if (!inQuotes && (char == '\n' || char == '\r')) {
-        if (char == '\r' && index + 1 < source.length && source[index + 1] == '\n') {
+        if (char == '\r' &&
+            index + 1 < source.length &&
+            source[index + 1] == '\n') {
           index += 1;
         }
         commitRow();
@@ -339,15 +342,19 @@ class EducatorService extends ChangeNotifier {
           row,
           const <String>['email', 'email_address', 'mail'],
         );
-        final String displayName =
-            _readRowValue(
-                  headerIndex,
-                  row,
-                  const <String>['name', 'display_name', 'learner_name', 'full_name'],
-                ) ??
-                emailValue ??
-                learnerIdValue ??
-                'Learner $rowIndex';
+        final String displayName = _readRowValue(
+              headerIndex,
+              row,
+              const <String>[
+                'name',
+                'display_name',
+                'learner_name',
+                'full_name'
+              ],
+            ) ??
+            emailValue ??
+            learnerIdValue ??
+            'Learner $rowIndex';
 
         String? resolvedLearnerId = learnerIdValue?.trim();
         if ((resolvedLearnerId == null || resolvedLearnerId.isEmpty) &&
@@ -413,11 +420,15 @@ class EducatorService extends ChangeNotifier {
         importedCount += 1;
       }
 
-      batch.set(sessionDoc.reference, <String, dynamic>{
-        'lastRosterSyncAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-        if (importedCount > 0) 'enrolledCount': FieldValue.increment(importedCount),
-      }, SetOptions(merge: true));
+      batch.set(
+          sessionDoc.reference,
+          <String, dynamic>{
+            'lastRosterSyncAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+            if (importedCount > 0)
+              'enrolledCount': FieldValue.increment(importedCount),
+          },
+          SetOptions(merge: true));
 
       await batch.commit();
 
@@ -704,8 +715,8 @@ class EducatorService extends ChangeNotifier {
     final List<QueryDocumentSnapshot<Map<String, dynamic>>> sessionDocs =
         await _loadEducatorSessionDocs();
 
-    final List<EducatorSession> sessions = sessionDocs
-        .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+    final List<EducatorSession> sessions =
+        sessionDocs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
       final Map<String, dynamic> data = doc.data();
       final String pillar = _stringOrDefault(
         data['pillar'],
@@ -912,7 +923,8 @@ class EducatorService extends ChangeNotifier {
       'impact': <double>[],
     };
 
-    for (final QueryDocumentSnapshot<Map<String, dynamic>> doc in snapshot.docs) {
+    for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+        in snapshot.docs) {
       final Map<String, dynamic> data = doc.data();
       if (!_recordMatchesSite(data)) {
         continue;

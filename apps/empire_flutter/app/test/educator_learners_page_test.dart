@@ -594,6 +594,75 @@ void main() {
   });
 
   testWidgets(
+      'educator learners page recommends scaffolded lane from reviewed mastery instead of legacy progress',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedLearner(firestore);
+    await firestore.collection('users').doc('learner-1').set(
+      <String, dynamic>{
+        'displayName': 'Learner One',
+        'email': 'learner-1@scholesa.test',
+        'siteId': 'site-1',
+        'attendanceRate': 82,
+        'missionsCompleted': 12,
+        'futureSkillsProgress': 0.97,
+        'leadershipProgress': 0.96,
+        'impactProgress': 0.94,
+        'enrolledSessionIds': <String>['session-1'],
+      },
+      SetOptions(merge: true),
+    );
+    await _seedCapabilityMastery(
+      firestore,
+      learnerId: 'learner-1',
+      capabilityId: 'future-capability',
+      pillarCode: 'future_skills',
+      latestLevel: 1,
+    );
+    await _seedCapabilityMastery(
+      firestore,
+      learnerId: 'learner-1',
+      capabilityId: 'leadership-capability',
+      pillarCode: 'leadership',
+      latestLevel: 1,
+    );
+    await _seedCapabilityMastery(
+      firestore,
+      learnerId: 'learner-1',
+      capabilityId: 'impact-capability',
+      pillarCode: 'impact',
+      latestLevel: 1,
+    );
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final EducatorService educatorService = EducatorService(
+      firestoreService: firestoreService,
+      educatorId: 'educator-1',
+      siteId: 'site-1',
+    );
+
+    await tester.pumpWidget(
+      _buildHarness(
+        firestoreService: firestoreService,
+        educatorService: educatorService,
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    await tester.tap(find.text('Learner One'));
+    await tester.pumpAndSettle();
+
+    expect(tester.widget<ChoiceChip>(_laneChip('Scaffolded lane')).selected,
+        isTrue);
+    expect(tester.widget<ChoiceChip>(_laneChip('Core lane')).selected, isFalse);
+    expect(
+        tester.widget<ChoiceChip>(_laneChip('Stretch lane')).selected, isFalse);
+  });
+
+  testWidgets(
       'educator learners page saves lane taps immediately and reloads overrides',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
