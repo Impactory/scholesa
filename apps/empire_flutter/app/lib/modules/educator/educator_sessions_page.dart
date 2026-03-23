@@ -1849,6 +1849,86 @@ class _QuickEvidenceDialogState extends State<_QuickEvidenceDialog> {
     return 'FS';
   }
 
+  Future<String?> _resolveSessionOccurrenceId(
+    FirestoreService firestoreService,
+    String siteId,
+    String educatorId,
+  ) async {
+    final QuerySnapshot<Map<String, dynamic>> snapshot = await firestoreService
+        .firestore
+        .collection('sessionOccurrences')
+        .where('sessionId', isEqualTo: widget.session.id)
+        .limit(20)
+        .get();
+
+    final List<QueryDocumentSnapshot<Map<String, dynamic>>> matches = snapshot
+        .docs
+        .where((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+      final Map<String, dynamic> data = doc.data();
+      final String occurrenceSiteId = (data['siteId'] as String?)?.trim() ?? '';
+      if (occurrenceSiteId.isNotEmpty && occurrenceSiteId != siteId) {
+        return false;
+      }
+      final String directEducatorId =
+          (data['educatorId'] as String?)?.trim() ?? '';
+      final List<String> educatorIds = <String>[
+        directEducatorId,
+        ...((data['educatorIds'] as List?) ?? const <dynamic>[])
+            .whereType<String>()
+            .map((String value) => value.trim()),
+        ...((data['teacherIds'] as List?) ?? const <dynamic>[])
+            .whereType<String>()
+            .map((String value) => value.trim()),
+      ].where((String value) => value.isNotEmpty).toList(growable: false);
+      return educatorIds.isEmpty || educatorIds.contains(educatorId);
+    }).toList(growable: false);
+
+    if (matches.isEmpty) {
+      return null;
+    }
+
+    int rankStatus(String status) {
+      switch (status.trim().toLowerCase()) {
+        case 'in_progress':
+        case 'ongoing':
+          return 0;
+        case 'upcoming':
+          return 1;
+        case 'completed':
+          return 2;
+        default:
+          return 3;
+      }
+    }
+
+    DateTime resolveStart(Map<String, dynamic> data) {
+      final dynamic raw = data['startTime'] ?? data['startDate'];
+      if (raw is Timestamp) {
+        return raw.toDate();
+      }
+      return widget.session.startTime;
+    }
+
+    final DateTime now = DateTime.now();
+    matches.sort((
+      QueryDocumentSnapshot<Map<String, dynamic>> a,
+      QueryDocumentSnapshot<Map<String, dynamic>> b,
+    ) {
+      final Map<String, dynamic> aData = a.data();
+      final Map<String, dynamic> bData = b.data();
+      final int statusRank = rankStatus(aData['status'] as String? ?? '') -
+          rankStatus(bData['status'] as String? ?? '');
+      if (statusRank != 0) {
+        return statusRank;
+      }
+      final Duration aDistance = resolveStart(aData).difference(now).abs();
+      final Duration bDistance = resolveStart(bData).difference(now).abs();
+      return aDistance.compareTo(bDistance);
+    });
+
+    return matches.first.id;
+  }
+
   Future<void> _loadCapabilities() async {
     final FirestoreService firestoreService = context.read<FirestoreService>();
     final AppState appState = context.read<AppState>();
@@ -1985,6 +2065,11 @@ class _QuickEvidenceDialogState extends State<_QuickEvidenceDialog> {
           (rawRoleName != null && rawRoleName.isNotEmpty)
               ? rawRoleName
               : 'educator';
+      final String? sessionOccurrenceId = await _resolveSessionOccurrenceId(
+        firestoreService,
+        siteId,
+        appState.userId ?? educatorService.educatorId,
+      );
       await firestoreService.createDocument(
         'evidenceRecords',
         <String, dynamic>{
@@ -1993,7 +2078,7 @@ class _QuickEvidenceDialogState extends State<_QuickEvidenceDialog> {
           'learnerName': learner.name,
           'sessionId': widget.session.id,
           'sessionTitle': widget.session.title,
-          'sessionOccurrenceId': null,
+          if (sessionOccurrenceId != null) 'sessionOccurrenceId': sessionOccurrenceId,
           'educatorId': appState.userId ?? educatorService.educatorId,
           'educatorRole': educatorRole,
           'phaseKey': _selectedPhaseKey,
@@ -2022,6 +2107,8 @@ class _QuickEvidenceDialogState extends State<_QuickEvidenceDialog> {
         siteId: siteId,
         metadata: <String, dynamic>{
           'sessionId': widget.session.id,
+          if (sessionOccurrenceId != null)
+            'sessionOccurrenceId': sessionOccurrenceId,
           'learnerId': learner.id,
           'phaseKey': _selectedPhaseKey,
           'capabilityId': selectedCapability?.id,
