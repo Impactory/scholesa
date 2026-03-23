@@ -85,6 +85,59 @@ const List<_StudioFlowStep> _studioFlowSteps = <_StudioFlowStep>[
   ),
 ];
 
+String _activeSiteIdForAppState(AppState appState) {
+  if (appState.activeSiteId?.trim().isNotEmpty == true) {
+    return appState.activeSiteId!.trim();
+  }
+  return appState.siteIds.isNotEmpty ? appState.siteIds.first.trim() : '';
+}
+
+String _pillarCodeForSession(String pillarLabel) {
+  final String normalized = pillarLabel.trim().toLowerCase();
+  if (normalized.contains('leadership')) {
+    return 'LEAD';
+  }
+  if (normalized.contains('impact')) {
+    return 'IMP';
+  }
+  return 'FS';
+}
+
+Future<List<_CapabilityOption>> _loadCapabilityOptionsForSession({
+  required FirestoreService firestoreService,
+  required String activeSiteId,
+  required String pillarLabel,
+}) async {
+  final QuerySnapshot<Map<String, dynamic>> snapshot =
+      await firestoreService.firestore
+          .collection('capabilities')
+          .where(
+            'pillarCode',
+            isEqualTo: _pillarCodeForSession(pillarLabel),
+          )
+          .limit(100)
+          .get();
+
+  final List<_CapabilityOption> options = snapshot.docs
+      .map((doc) => _CapabilityOption.fromDoc(doc))
+      .where((_CapabilityOption option) {
+    final String optionSiteId = option.siteId?.trim() ?? '';
+    return optionSiteId.isEmpty ||
+        activeSiteId.isEmpty ||
+        optionSiteId == activeSiteId;
+  }).toList()
+    ..sort((_CapabilityOption a, _CapabilityOption b) {
+      final int siteBias = (b.siteId?.trim().isNotEmpty == true ? 1 : 0) -
+          (a.siteId?.trim().isNotEmpty == true ? 1 : 0);
+      if (siteBias != 0) {
+        return siteBias;
+      }
+      return a.title.toLowerCase().compareTo(b.title.toLowerCase());
+    });
+
+  return options;
+}
+
 /// Educator Sessions Page - Manage and view all sessions
 class EducatorSessionsPage extends StatefulWidget {
   const EducatorSessionsPage({super.key, this.sharedPreferences});
@@ -1575,6 +1628,9 @@ class _StudioLaunchCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final EducatorService educatorService = context.read<EducatorService>();
+    final FirestoreService firestoreService = context.read<FirestoreService>();
+    final AppState appState = context.read<AppState>();
+    final String activeSiteId = _activeSiteIdForAppState(appState);
     final List<EducatorLearner> scopedLearners = educatorService.learners
         .where((EducatorLearner learner) =>
             learner.enrolledSessionIds.contains(session.id))
@@ -1701,54 +1757,141 @@ class _StudioLaunchCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: FilledButton.icon(
-                  onPressed: () {
-                    TelemetryService.instance.logEvent(
-                      event: 'cta.clicked',
-                      metadata: <String, dynamic>{
-                        'cta': 'educator_sessions_open_attendance_from_studio',
-                        'session_id': session.id,
-                      },
-                    );
-                    Navigator.of(context).pop();
-                    context.go('/educator/attendance');
-                  },
-                  style: FilledButton.styleFrom(
-                    backgroundColor: ScholesaColors.educator,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+          FutureBuilder<List<_CapabilityOption>>(
+            future: _loadCapabilityOptionsForSession(
+              firestoreService: firestoreService,
+              activeSiteId: activeSiteId,
+              pillarLabel: session.pillar,
+            ),
+            builder: (
+              BuildContext context,
+              AsyncSnapshot<List<_CapabilityOption>> snapshot,
+            ) {
+              final bool isCheckingCapabilities =
+                  snapshot.connectionState != ConnectionState.done;
+              final bool capabilityLookupFailed = snapshot.hasError;
+              final bool hasMappedCapabilities =
+                  (snapshot.data?.isNotEmpty ?? false);
+              final bool liveEvidenceBlocked =
+                  !isCheckingCapabilities && !hasMappedCapabilities;
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  if (isCheckingCapabilities)
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: 12),
+                      child: LinearProgressIndicator(minHeight: 3),
+                    ),
+                  if (capabilityLookupFailed)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Text(
+                        _tEducatorSessions(
+                          context,
+                          'We could not verify mapped capabilities for this session right now. Refresh before relying on live evidence capture.',
+                        ),
+                        style: TextStyle(
+                          color: ScholesaColors.error,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    )
+                  else if (liveEvidenceBlocked)
+                    Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF7ED),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFF59E0B)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            _tEducatorSessions(
+                                context, 'Capability mapping required'),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF9A3412),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            _tEducatorSessions(
+                              context,
+                              'This session pillar has no mapped capabilities yet, so live evidence cannot flow cleanly into growth or portfolio review. Add capability mappings before studio capture.',
+                            ),
+                            style: const TextStyle(
+                              color: Color(0xFF9A3412),
+                              height: 1.35,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: FilledButton.icon(
+                          onPressed: () {
+                            TelemetryService.instance.logEvent(
+                              event: 'cta.clicked',
+                              metadata: <String, dynamic>{
+                                'cta':
+                                    'educator_sessions_open_attendance_from_studio',
+                                'session_id': session.id,
+                              },
+                            );
+                            Navigator.of(context).pop();
+                            context.go('/educator/attendance');
+                          },
+                          style: FilledButton.styleFrom(
+                            backgroundColor: ScholesaColors.educator,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                          icon: const Icon(Icons.how_to_reg_rounded),
+                          label: Text(
+                              _tEducatorSessions(context, 'Take Attendance')),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: isCheckingCapabilities ||
+                                  capabilityLookupFailed ||
+                                  liveEvidenceBlocked
+                              ? null
+                              : () {
+                                  TelemetryService.instance.logEvent(
+                                    event: 'cta.clicked',
+                                    metadata: <String, dynamic>{
+                                      'cta':
+                                          'educator_sessions_open_live_evidence',
+                                      'session_id': session.id,
+                                    },
+                                  );
+                                  showDialog<void>(
+                                    context: context,
+                                    builder: (BuildContext dialogContext) =>
+                                        _QuickEvidenceDialog(session: session),
+                                  );
+                                },
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                          icon: const Icon(Icons.note_add_rounded),
+                          label:
+                              Text(_tEducatorSessions(context, 'Log Evidence')),
+                        ),
+                      ),
+                    ],
                   ),
-                  icon: const Icon(Icons.how_to_reg_rounded),
-                  label: Text(_tEducatorSessions(context, 'Take Attendance')),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    TelemetryService.instance.logEvent(
-                      event: 'cta.clicked',
-                      metadata: <String, dynamic>{
-                        'cta': 'educator_sessions_open_live_evidence',
-                        'session_id': session.id,
-                      },
-                    );
-                    showDialog<void>(
-                      context: context,
-                      builder: (BuildContext dialogContext) =>
-                          _QuickEvidenceDialog(session: session),
-                    );
-                  },
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  icon: const Icon(Icons.note_add_rounded),
-                  label: Text(_tEducatorSessions(context, 'Log Evidence')),
-                ),
-              ),
-            ],
+                ],
+              );
+            },
           ),
         ],
       ),
@@ -1895,17 +2038,6 @@ class _QuickEvidenceDialogState extends State<_QuickEvidenceDialog> {
     }
   }
 
-  String _pillarCodeForSession(String pillarLabel) {
-    final String normalized = pillarLabel.trim().toLowerCase();
-    if (normalized.contains('leadership')) {
-      return 'LEAD';
-    }
-    if (normalized.contains('impact')) {
-      return 'IMP';
-    }
-    return 'FS';
-  }
-
   Future<String?> _resolveSessionOccurrenceId(
     FirestoreService firestoreService,
     String siteId,
@@ -1988,39 +2120,16 @@ class _QuickEvidenceDialogState extends State<_QuickEvidenceDialog> {
   Future<void> _loadCapabilities() async {
     final FirestoreService firestoreService = context.read<FirestoreService>();
     final AppState appState = context.read<AppState>();
-    final String activeSiteId = (appState.activeSiteId?.trim().isNotEmpty ??
-            false)
-        ? appState.activeSiteId!.trim()
-        : (appState.siteIds.isNotEmpty ? appState.siteIds.first.trim() : '');
+    final String activeSiteId = _activeSiteIdForAppState(appState);
 
     setState(() => _isLoadingCapabilities = true);
     try {
-      final QuerySnapshot<Map<String, dynamic>> snapshot =
-          await firestoreService.firestore
-              .collection('capabilities')
-              .where(
-                'pillarCode',
-                isEqualTo: _pillarCodeForSession(widget.session.pillar),
-              )
-              .limit(100)
-              .get();
-
-      final List<_CapabilityOption> options = snapshot.docs
-          .map((doc) => _CapabilityOption.fromDoc(doc))
-          .where((_CapabilityOption option) {
-        final String optionSiteId = option.siteId?.trim() ?? '';
-        return optionSiteId.isEmpty ||
-            activeSiteId.isEmpty ||
-            optionSiteId == activeSiteId;
-      }).toList()
-        ..sort((_CapabilityOption a, _CapabilityOption b) {
-          final int siteBias = (b.siteId?.trim().isNotEmpty == true ? 1 : 0) -
-              (a.siteId?.trim().isNotEmpty == true ? 1 : 0);
-          if (siteBias != 0) {
-            return siteBias;
-          }
-          return a.title.toLowerCase().compareTo(b.title.toLowerCase());
-        });
+      final List<_CapabilityOption> options =
+          await _loadCapabilityOptionsForSession(
+        firestoreService: firestoreService,
+        activeSiteId: activeSiteId,
+        pillarLabel: widget.session.pillar,
+      );
 
       if (!mounted) {
         return;

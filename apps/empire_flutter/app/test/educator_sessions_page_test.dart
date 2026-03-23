@@ -375,7 +375,13 @@ void main() {
             DateTime.now().add(const Duration(hours: 1, minutes: 20))),
       },
     );
-
+    await firestore.collection('capabilities').doc('capability-1').set(
+      <String, dynamic>{
+        'title': 'Prototype evidence',
+        'pillarCode': 'FS',
+        'siteId': 'site-1',
+      },
+    );
     await tester.pumpWidget(
       _buildHarness(
         educatorService: educatorService,
@@ -399,10 +405,15 @@ void main() {
     await tester.tap(find.text('Ava Stone').last);
     await tester.pumpAndSettle();
 
-    await tester.enterText(
-      find.widgetWithText(TextFormField, 'Capability focus'),
-      'Clear debugging explanation',
+    final Finder dialogDropdowns = find.descendant(
+      of: find.byType(AlertDialog),
+      matching: find.byType(DropdownButtonFormField<String>),
     );
+    await tester.tap(dialogDropdowns.at(2));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Prototype evidence').last);
+    await tester.pumpAndSettle();
+
     await tester.enterText(
       find.widgetWithText(TextFormField, 'What evidence did you see?'),
       'Explained each debugging step and corrected the sensor logic live.',
@@ -534,11 +545,8 @@ void main() {
   });
 
   testWidgets(
-      'educator sessions quick evidence capture persists structured artifact, checkpoint, and AI disclosure fields',
+      'educator sessions studio card blocks live evidence when mapped capabilities are missing',
       (WidgetTester tester) async {
-    await tester.binding.setSurfaceSize(const Size(900, 1400));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     final FirestoreService firestoreService = FirestoreService(
       firestore: firestore,
@@ -584,6 +592,83 @@ void main() {
     await tester.tap(find.text('Robotics Warm-up').first);
     await tester.pumpAndSettle();
 
+    expect(find.text('Capability mapping required'), findsOneWidget);
+    expect(
+      find.text(
+        'This session pillar has no mapped capabilities yet, so live evidence cannot flow cleanly into growth or portfolio review. Add capability mappings before studio capture.',
+      ),
+      findsOneWidget,
+    );
+
+    final OutlinedButton logEvidenceButton = tester.widget<OutlinedButton>(
+      find.widgetWithText(OutlinedButton, 'Log Evidence'),
+    );
+    expect(logEvidenceButton.onPressed, isNull);
+
+    final FilledButton takeAttendanceButton = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, 'Take Attendance'),
+    );
+    expect(takeAttendanceButton.onPressed, isNotNull);
+  });
+
+  testWidgets(
+      'educator sessions quick evidence capture persists structured artifact, checkpoint, and AI disclosure fields',
+      (WidgetTester tester) async {
+    await tester.binding.setSurfaceSize(const Size(900, 1400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final EducatorService educatorService = _FakeEducatorService(
+      firestoreService: firestoreService,
+      failSessionLoad: false,
+      sessions: <EducatorSession>[
+        _buildSession(
+          id: 'session-1',
+          title: 'Robotics Warm-up',
+          pillar: 'future_skills',
+          status: 'upcoming',
+        ),
+      ],
+      learners: const <EducatorLearner>[
+        EducatorLearner(
+          id: 'learner-1',
+          name: 'Ava Stone',
+          email: 'ava@scholesa.test',
+          attendanceRate: 92,
+          missionsCompleted: 2,
+          pillarProgress: <String, double>{
+            'future_skills': 0.2,
+            'leadership': 0.1,
+            'impact': 0.0,
+          },
+          enrolledSessionIds: <String>['session-1'],
+        ),
+      ],
+    );
+    await firestore.collection('capabilities').doc('capability-1').set(
+      <String, dynamic>{
+        'title': 'Prototype evidence',
+        'pillarCode': 'FS',
+        'siteId': 'site-1',
+      },
+    );
+
+    await tester.pumpWidget(
+      _buildHarness(
+        educatorService: educatorService,
+        firestoreService: firestoreService,
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Robotics Warm-up').first);
+    await tester.pumpAndSettle();
+
     final Finder logEvidenceButton =
         find.widgetWithText(OutlinedButton, 'Log Evidence');
     await tester.ensureVisible(logEvidenceButton);
@@ -600,10 +685,11 @@ void main() {
     await tester.tap(find.text('Checkpoint').last);
     await tester.pumpAndSettle();
 
-    await tester.enterText(
-      find.widgetWithText(TextFormField, 'Capability focus'),
-      'Clear debugging explanation',
-    );
+    await tester.tap(dialogDropdowns.at(2));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Prototype evidence').last);
+    await tester.pumpAndSettle();
+
     await tester.enterText(
       find.widgetWithText(TextFormField, 'Checkpoint captured'),
       'Learner explained why the sensor threshold needed recalibration.',
@@ -622,7 +708,7 @@ void main() {
       150,
       scrollable: find.byType(Scrollable).last,
     );
-    await tester.tap(dialogDropdowns.at(2));
+    await tester.tap(dialogDropdowns.at(3));
     await tester.pumpAndSettle();
     await tester.tap(find.text('AI support observed').last);
     await tester.pumpAndSettle();
