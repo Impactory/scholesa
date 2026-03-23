@@ -3162,7 +3162,7 @@ async function buildParentLearnerSummary(params: {
     generatedAt: now.toISOString(),
     summary: passportClaims.length
       ? `${passportClaims.length} capability claims are backed by reviewed evidence and reviewed or verified artifacts.`
-      : 'No verified capability claims are available yet.',
+      : 'No capability claims backed by reviewed evidence are available yet.',
     claims: passportClaims,
   };
 
