@@ -91,8 +91,9 @@ class _StubMissionService extends MissionService {
       notifyListeners();
       return false;
     }
-    _submissions =
-        _submissions.where((MissionSubmission item) => item.id != submissionId).toList();
+    _submissions = _submissions
+        .where((MissionSubmission item) => item.id != submissionId)
+        .toList();
     _reviewedTodayState += 1;
     _errorState = null;
     notifyListeners();
@@ -200,6 +201,7 @@ Future<void> _seedCompletedMissionReadyForReview(
       'missionId': 'mission-1',
       'learnerId': 'learner-1',
       'siteId': 'site-1',
+      'sessionOccurrenceId': 'occurrence-1',
       'status': 'in_progress',
       'progress': 1.0,
     },
@@ -265,6 +267,7 @@ Future<void> _seedReviewRubricAndEvidence(
     <String, dynamic>{
       'learnerId': 'learner-1',
       'siteId': 'site-1',
+      'sessionOccurrenceId': 'occurrence-1',
       'capabilityId': 'cap-prototype-evidence',
       'capabilityLabel': 'Prototype evidence',
       'capabilityPillarCode': 'future_skills',
@@ -276,6 +279,23 @@ Future<void> _seedReviewRubricAndEvidence(
       'portfolioCandidate': true,
       'growthStatus': 'captured',
       'observedAt': Timestamp.fromDate(DateTime(2026, 3, 18, 8, 45)),
+    },
+  );
+  await firestore.collection('evidenceRecords').doc('evidence-stale').set(
+    <String, dynamic>{
+      'learnerId': 'learner-1',
+      'siteId': 'site-1',
+      'sessionOccurrenceId': 'occurrence-older',
+      'capabilityId': 'cap-prototype-evidence',
+      'capabilityLabel': 'Prototype evidence',
+      'capabilityPillarCode': 'future_skills',
+      'observationNote':
+          'Older observation that should stay outside this review.',
+      'artifactUrls': const <String>['https://example.com/older.png'],
+      'nextVerificationPrompt': 'Revisit the previous prototype evidence.',
+      'portfolioCandidate': true,
+      'growthStatus': 'captured',
+      'observedAt': Timestamp.fromDate(DateTime(2026, 3, 11, 8, 45)),
     },
   );
 }
@@ -468,14 +488,10 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
-    final DocumentSnapshot<Map<String, dynamic>> attemptDoc = await firestore
-        .collection('missionAttempts')
-        .doc(attemptId)
-        .get();
-    final DocumentSnapshot<Map<String, dynamic>> submissionDoc = await firestore
-        .collection('missionSubmissions')
-        .doc(attemptId)
-        .get();
+    final DocumentSnapshot<Map<String, dynamic>> attemptDoc =
+        await firestore.collection('missionAttempts').doc(attemptId).get();
+    final DocumentSnapshot<Map<String, dynamic>> submissionDoc =
+        await firestore.collection('missionSubmissions').doc(attemptId).get();
     final DocumentSnapshot<Map<String, dynamic>> assignmentDoc = await firestore
         .collection('missionAssignments')
         .doc('assignment-1')
@@ -559,14 +575,10 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
-    final DocumentSnapshot<Map<String, dynamic>> attemptDoc = await firestore
-        .collection('missionAttempts')
-        .doc(attemptId)
-        .get();
-    final DocumentSnapshot<Map<String, dynamic>> submissionDoc = await firestore
-        .collection('missionSubmissions')
-        .doc(attemptId)
-        .get();
+    final DocumentSnapshot<Map<String, dynamic>> attemptDoc =
+        await firestore.collection('missionAttempts').doc(attemptId).get();
+    final DocumentSnapshot<Map<String, dynamic>> submissionDoc =
+        await firestore.collection('missionSubmissions').doc(attemptId).get();
     final DocumentSnapshot<Map<String, dynamic>> assignmentDoc = await firestore
         .collection('missionAssignments')
         .doc('assignment-1')
@@ -581,14 +593,10 @@ void main() {
         .collection('capabilityGrowthEvents')
         .where('missionAttemptId', isEqualTo: attemptId)
         .get();
-    final DocumentSnapshot<Map<String, dynamic>> evidenceDoc = await firestore
-        .collection('evidenceRecords')
-        .doc('evidence-1')
-        .get();
-    final DocumentSnapshot<Map<String, dynamic>> portfolioDoc = await firestore
-        .collection('portfolioItems')
-        .doc('evidence-1')
-        .get();
+    final DocumentSnapshot<Map<String, dynamic>> evidenceDoc =
+        await firestore.collection('evidenceRecords').doc('evidence-1').get();
+    final DocumentSnapshot<Map<String, dynamic>> portfolioDoc =
+        await firestore.collection('portfolioItems').doc('evidence-1').get();
 
     expect(attemptDoc.data()?['status'], 'reviewed');
     expect(attemptDoc.data()?['reviewStatus'], 'approved');
@@ -614,5 +622,95 @@ void main() {
     expect(portfolioDoc.data()?['proofOfLearningStatus'], 'verified');
     expect(portfolioDoc.data()?['aiAssistanceUsed'], isFalse);
     expect(portfolioDoc.data()?['aiDisclosureStatus'], 'learner-ai-not-used');
+  });
+
+  testWidgets(
+      'educator mission review excludes stale live evidence from other session occurrences',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedCompletedMissionReadyForReview(firestore);
+    await _seedReviewRubricAndEvidence(firestore);
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final MissionService learnerMissionService = MissionService(
+      firestoreService: firestoreService,
+      learnerId: 'learner-1',
+    );
+
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final String attemptId = await _submitMissionForReview(
+      tester,
+      firestoreService: firestoreService,
+      missionService: learnerMissionService,
+    );
+
+    final MissionService educatorMissionService = MissionService(
+      firestoreService: firestoreService,
+      learnerId: 'educator-1',
+    );
+
+    await tester.pumpWidget(_buildHarness(educatorMissionService));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Mission ready for review').first);
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Reflection'),
+      200,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.text('4/4').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('3/4').at(1));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byType(TextField).last,
+      'Growth should only link the live evidence from the reviewed session.',
+    );
+    await tester.scrollUntilVisible(
+      find.text('Approve'),
+      250,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.text('Approve'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    final DocumentSnapshot<Map<String, dynamic>> currentEvidence =
+        await firestore.collection('evidenceRecords').doc('evidence-1').get();
+    final DocumentSnapshot<Map<String, dynamic>> staleEvidence = await firestore
+        .collection('evidenceRecords')
+        .doc('evidence-stale')
+        .get();
+    final DocumentSnapshot<Map<String, dynamic>> stalePortfolio =
+        await firestore
+            .collection('portfolioItems')
+            .doc('evidence-stale')
+            .get();
+    final QuerySnapshot<Map<String, dynamic>> growthEvents = await firestore
+        .collection('capabilityGrowthEvents')
+        .where('missionAttemptId', isEqualTo: attemptId)
+        .get();
+
+    expect(currentEvidence.data()?['linkedMissionAttemptId'], attemptId);
+    expect(staleEvidence.data()?['growthStatus'], 'captured');
+    expect(staleEvidence.data()?['linkedMissionAttemptId'], isNull);
+    expect(stalePortfolio.exists, isFalse);
+    expect(
+      growthEvents.docs.single.data()['linkedEvidenceRecordIds'],
+      contains('evidence-1'),
+    );
+    expect(
+      growthEvents.docs.single.data()['linkedEvidenceRecordIds'],
+      isNot(contains('evidence-stale')),
+    );
   });
 }

@@ -243,6 +243,7 @@ Interpretation rule:
 153. Corrected the learner artifact handoff leak by adding first-class artifact links to the proof bundle, saving them from the learner proof UI, carrying them into canonical `missionAttempts` as `attachmentUrls`, and merging them into reviewed portfolio artifacts so learner-provided artifact evidence no longer disappears between submission and educator review unless it was separately recaptured by an educator observation.
 154. Corrected the educator sessions live-capture provenance leak by resolving the matching `sessionOccurrences` record before the sessions-page quick evidence dialog writes an `evidenceRecords` document, then added direct widget proof that the real `Log Evidence` flow persists the resolved `sessionOccurrenceId` instead of storing null provenance from the session shell.
 155. Corrected the learner missions progress leak by replacing the XP, activity-level, streak, and hardcoded pillar summary in the learner missions header with reviewed `capabilityMastery`, reviewed `portfolioItems`, and awaiting-review submission counts scoped to the active site, then added focused regression proof that contradictory legacy XP totals no longer drive learner growth claims on the missions surface.
+156. Corrected the educator review evidence-linkage leak by requiring reviewed live evidence to match the submission's `sessionOccurrenceId` when that provenance exists, then added direct review-page proof that stale observations from other session occurrences no longer get pulled into the current rubric application, capability growth event, or reviewed portfolio artifact.
 
 ### Release and operations fixes
 
@@ -295,6 +296,7 @@ Interpretation rule:
 - Focused learner proof handoff regressions passed after preserving checkpoint and AI-disclosure detail in canonical submissions and reviewed portfolio evidence: 23 passed, 0 failed.
 - Focused learner artifact handoff regressions passed after saving proof-bundle artifact links into canonical submissions and reviewed portfolio evidence: 15 passed, 0 failed.
 - Focused learner missions evidence-progress and persistence regressions passed after replacing legacy XP totals with reviewed-evidence progress: 17 passed, 0 failed.
+- Focused educator mission review linkage regressions passed after scoping live evidence to the reviewed session occurrence: 5 passed, 0 failed.
 - Focused attendance downstream workflow regressions passed after proving reviewed roster imports stay terminal: 17 passed, 0 failed.
 - Focused provisioning, educator sessions, educator learners, and attendance downstream workflow regressions passed after proving reviewed roster imports stay terminal: 52 passed, 0 failed.
 - Focused site pickup authorization regressions passed after the provisioning-to-pickup fallback proof and learner-name fix: 4 passed, 0 failed.

@@ -1923,6 +1923,8 @@ class MissionService extends ChangeNotifier {
       final String proofBundleAiAssistanceDetails = proofBundleId == null
           ? ''
           : ((proofBundle?['aiAssistanceDetails'] as String?) ?? '').trim();
+      final String submissionSessionOccurrenceId =
+          ((submissionData['sessionOccurrenceId'] as String?) ?? '').trim();
       final List<Map<String, dynamic>> proofCheckpoints =
           ((proofBundle?['versionHistory'] as List?) ?? const <dynamic>[])
               .whereType<Map>()
@@ -2200,11 +2202,16 @@ class MissionService extends ChangeNotifier {
             final Map<String, dynamic> data = doc.data();
             final String evidenceCapabilityId =
                 (data['capabilityId'] as String? ?? '').trim();
+            final String evidenceSessionOccurrenceId =
+                (data['sessionOccurrenceId'] as String? ?? '').trim();
             final String growthStatus =
                 (data['growthStatus'] as String? ?? '').trim().toLowerCase();
             final String linkedMissionAttemptId =
                 (data['linkedMissionAttemptId'] as String? ?? '').trim();
+            final bool sameOccurrence = submissionSessionOccurrenceId.isEmpty ||
+                evidenceSessionOccurrenceId == submissionSessionOccurrenceId;
             return evidenceCapabilityId == capabilityId &&
+                sameOccurrence &&
                 (growthStatus.isEmpty ||
                     growthStatus == 'pending' ||
                     growthStatus == 'captured' ||
