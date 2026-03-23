@@ -532,4 +532,117 @@ void main() {
     expect(evidenceSnapshot.docs.first.data()['capabilityId'], 'capability-1');
     expect(evidenceSnapshot.docs.first.data()['capabilityMapped'], isTrue);
   });
+
+  testWidgets(
+      'educator sessions quick evidence capture persists structured artifact, checkpoint, and AI disclosure fields',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final EducatorService educatorService = _FakeEducatorService(
+      firestoreService: firestoreService,
+      failSessionLoad: false,
+      sessions: <EducatorSession>[
+        _buildSession(
+          id: 'session-1',
+          title: 'Robotics Warm-up',
+          pillar: 'future_skills',
+          status: 'upcoming',
+        ),
+      ],
+      learners: const <EducatorLearner>[
+        EducatorLearner(
+          id: 'learner-1',
+          name: 'Ava Stone',
+          email: 'ava@scholesa.test',
+          attendanceRate: 92,
+          missionsCompleted: 2,
+          pillarProgress: <String, double>{
+            'future_skills': 0.2,
+            'leadership': 0.1,
+            'impact': 0.0,
+          },
+          enrolledSessionIds: <String>['session-1'],
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      _buildHarness(
+        educatorService: educatorService,
+        firestoreService: firestoreService,
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Robotics Warm-up').first);
+    await tester.pumpAndSettle();
+
+    final Finder logEvidenceButton =
+        find.widgetWithText(OutlinedButton, 'Log Evidence');
+    await tester.ensureVisible(logEvidenceButton);
+    await tester.tap(logEvidenceButton);
+    await tester.pumpAndSettle();
+
+    final Finder dialogDropdowns = find.descendant(
+      of: find.byType(AlertDialog),
+      matching: find.byType(DropdownButtonFormField<String>),
+    );
+
+    await tester.tap(dialogDropdowns.at(1));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Checkpoint').last);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Capability focus'),
+      'Clear debugging explanation',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Checkpoint captured'),
+      'Learner explained why the sensor threshold needed recalibration.',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'What evidence did you see?'),
+      'Explained each debugging step and corrected the sensor logic live.',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Artifact links'),
+      'https://example.com/debug-log\nhttps://example.com/fixed-sensor-video',
+    );
+
+    await tester.tap(dialogDropdowns.at(2));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('AI support observed').last);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'AI support details'),
+      'AI suggested two threshold options, but the learner tested and chose the final value.',
+    );
+
+    await tester.tap(find.text('Capture Evidence'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    final QuerySnapshot<Map<String, dynamic>> evidenceSnapshot =
+        await firestore.collection('evidenceRecords').get();
+    expect(evidenceSnapshot.docs, hasLength(1));
+
+    final Map<String, dynamic> evidence = evidenceSnapshot.docs.first.data();
+    expect(evidence['checkpointSummary'],
+        'Learner explained why the sensor threshold needed recalibration.');
+    expect(evidence['artifactUrls'], <String>[
+      'https://example.com/debug-log',
+      'https://example.com/fixed-sensor-video',
+    ]);
+    expect(evidence['aiAssistanceUsed'], isTrue);
+    expect(
+      evidence['aiAssistanceDetails'],
+      'AI suggested two threshold options, but the learner tested and chose the final value.',
+    );
+  });
 }
