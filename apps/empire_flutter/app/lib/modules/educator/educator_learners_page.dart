@@ -890,7 +890,7 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
     if (learner.attendanceRate < 75 || averageProgress < 0.45) {
       return 'scaffolded';
     }
-    if (averageProgress >= 0.75 && learner.missionsCompleted >= 8) {
+    if (averageProgress >= 0.75) {
       return 'stretch';
     }
     return 'core';

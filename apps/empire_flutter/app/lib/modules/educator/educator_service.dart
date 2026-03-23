@@ -491,6 +491,20 @@ class EducatorService extends ChangeNotifier {
     return siteIds.contains(normalizedSiteId);
   }
 
+  String _normalizePillarKey(String? value) {
+    switch ((value ?? '').trim()) {
+      case 'futureSkills':
+      case 'future_skills':
+        return 'future_skills';
+      case 'leadership':
+        return 'leadership';
+      case 'impact':
+        return 'impact';
+      default:
+        return '';
+    }
+  }
+
   Future<void> _appendOccurrenceQueryResults({
     required Query<Map<String, dynamic>> query,
     required Map<String, QueryDocumentSnapshot<Map<String, dynamic>>> sink,
@@ -864,6 +878,8 @@ class EducatorService extends ChangeNotifier {
         if (!_recordMatchesSite(data)) {
           continue;
         }
+        final Map<String, double> evidencePillarProgress =
+            await _loadEvidencePillarProgress(learnerId);
         loadedLearners.add(EducatorLearner(
           id: doc.id,
           name: (data['displayName'] as String?)?.trim().isNotEmpty == true
@@ -872,13 +888,7 @@ class EducatorService extends ChangeNotifier {
           email: data['email'] as String? ?? '',
           attendanceRate: (data['attendanceRate'] as num?)?.toInt() ?? 0,
           missionsCompleted: data['missionsCompleted'] as int? ?? 0,
-          pillarProgress: <String, double>{
-            'future_skills':
-                (data['futureSkillsProgress'] as num?)?.toDouble() ?? 0,
-            'leadership':
-                (data['leadershipProgress'] as num?)?.toDouble() ?? 0,
-            'impact': (data['impactProgress'] as num?)?.toDouble() ?? 0,
-          },
+          pillarProgress: evidencePillarProgress,
           enrolledSessionIds: List<String>.from(
               data['enrolledSessionIds'] as List<dynamic>? ?? <dynamic>[]),
         ));
@@ -886,6 +896,49 @@ class EducatorService extends ChangeNotifier {
     }
 
     return EducatorLearnersSnapshot(learners: loadedLearners);
+  }
+
+  Future<Map<String, double>> _loadEvidencePillarProgress(
+    String learnerId,
+  ) async {
+    final QuerySnapshot<Map<String, dynamic>> snapshot = await _firestore
+        .collection('capabilityMastery')
+        .where('learnerId', isEqualTo: learnerId)
+        .get();
+
+    final Map<String, List<double>> progressByPillar = <String, List<double>>{
+      'future_skills': <double>[],
+      'leadership': <double>[],
+      'impact': <double>[],
+    };
+
+    for (final QueryDocumentSnapshot<Map<String, dynamic>> doc in snapshot.docs) {
+      final Map<String, dynamic> data = doc.data();
+      if (!_recordMatchesSite(data)) {
+        continue;
+      }
+      final String pillar = _normalizePillarKey(data['pillarCode'] as String?);
+      if (!progressByPillar.containsKey(pillar)) {
+        continue;
+      }
+      final double normalizedLevel =
+          (((data['latestLevel'] as num?)?.toDouble() ?? 0) / 4)
+              .clamp(0, 1)
+              .toDouble();
+      if (normalizedLevel <= 0) {
+        continue;
+      }
+      progressByPillar[pillar]!.add(normalizedLevel);
+    }
+
+    return progressByPillar.map(
+      (String pillar, List<double> values) => MapEntry<String, double>(
+        pillar,
+        values.isEmpty
+            ? 0
+            : values.reduce((double a, double b) => a + b) / values.length,
+      ),
+    );
   }
 
   Future<void> _appendSessionQueryResults({
