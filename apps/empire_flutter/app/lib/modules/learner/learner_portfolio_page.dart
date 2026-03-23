@@ -713,7 +713,7 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
                         ),
                   ),
                   Text(
-                    _t('Showcase your achievements'),
+                    _t('Showcase your saved work and credentials'),
                     style: TextStyle(
                         color: context.schTextSecondary, fontSize: 14),
                   ),
@@ -1512,7 +1512,7 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
               title: Text(_t('Reflect on Progress')),
               subtitle: Text(
                 _t(
-                  'Get experimental AI insights on your achievements. These notes do not replace your evidence record.',
+                  'Get experimental AI insights on your saved work and goals. These notes do not replace your evidence record.',
                 ),
               ),
               trailing: IconButton(

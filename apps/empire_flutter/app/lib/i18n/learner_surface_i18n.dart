@@ -28,11 +28,12 @@ class LearnerSurfaceI18n {
     'No habits scheduled yet': '还没有安排习惯',
     'Set up a habit to start your daily streak.': '设置一个习惯，开始你的每日连续记录。',
     'No active missions yet': '还没有进行中的任务',
-    'Start a mission to build real learning evidence today.': '开始一个任务，建立今天真实的学习证据。',
+    'Start a mission to build real learning evidence today.':
+        '开始一个任务，建立今天真实的学习证据。',
     'AI help is loading': 'AI 帮助正在加载',
     'Runtime context is syncing. Try again in a moment.': '运行时上下文正在同步。请稍后再试。',
     'My Portfolio': '我的作品集',
-    'Showcase your achievements': '展示你的成就',
+    'Showcase your saved work and credentials': '展示你已保存的作品与凭证',
     'Future Innovator': '未来创新者',
     'Future Innovator • Singapore': '未来创新者 • 新加坡',
     'Portfolio readiness': '作品集准备度',
@@ -134,7 +135,9 @@ class LearnerSurfaceI18n {
     'Level': '等级',
     'to next level': '距离下一级',
     'Reflect on Progress': '反思进展',
-    'Get AI insights on your achievements': '获取关于你成就的 AI 洞察',
+    'Get AI insights on your saved work and goals': '获取关于你已保存作品与目标的 AI 洞察',
+    'Get experimental AI insights on your saved work and goals. These notes do not replace your evidence record.':
+        '获取关于你已保存作品与目标的实验性 AI 洞察。这些提示不能替代你的证据记录。',
     'AI guidance unavailable right now.': '目前无法使用 AI 指导。',
     'Your saved badges, skills, and projects are still available while AI reflection reconnects.':
         '在 AI 反思恢复连接期间，你已保存的徽章、技能和项目仍然可用。',
@@ -233,11 +236,12 @@ class LearnerSurfaceI18n {
     'No habits scheduled yet': '尚未安排習慣',
     'Set up a habit to start your daily streak.': '設定一個習慣，開始你的每日連續紀錄。',
     'No active missions yet': '尚未有進行中的任務',
-    'Start a mission to build real learning evidence today.': '開始一個任務，建立今天真實的學習證據。',
+    'Start a mission to build real learning evidence today.':
+        '開始一個任務，建立今天真實的學習證據。',
     'AI help is loading': 'AI 幫助正在載入',
     'Runtime context is syncing. Try again in a moment.': '執行階段內容正在同步。請稍後再試。',
     'My Portfolio': '我的作品集',
-    'Showcase your achievements': '展示你的成就',
+    'Showcase your saved work and credentials': '展示你已儲存的作品與憑證',
     'Future Innovator': '未來創新者',
     'Future Innovator • Singapore': '未來創新者 • 新加坡',
     'Portfolio readiness': '作品集準備度',
@@ -339,7 +343,9 @@ class LearnerSurfaceI18n {
     'Level': '等級',
     'to next level': '距離下一級',
     'Reflect on Progress': '反思進展',
-    'Get AI insights on your achievements': '取得關於你成就的 AI 洞察',
+    'Get AI insights on your saved work and goals': '取得關於你已儲存作品與目標的 AI 洞察',
+    'Get experimental AI insights on your saved work and goals. These notes do not replace your evidence record.':
+        '取得關於你已儲存作品與目標的實驗性 AI 洞察。這些提示不能取代你的證據記錄。',
     'AI guidance unavailable right now.': '目前無法使用 AI 指導。',
     'Your saved badges, skills, and projects are still available while AI reflection reconnects.':
         '在 AI 反思重新連線期間，你已儲存的徽章、技能與專案仍然可用。',

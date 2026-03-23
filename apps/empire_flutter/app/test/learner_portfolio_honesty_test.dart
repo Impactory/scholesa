@@ -465,6 +465,15 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(
+        find.text('Showcase your saved work and credentials'), findsOneWidget);
+    expect(find.text('Showcase your achievements'), findsNothing);
+    expect(
+      find.text(
+        'Get experimental AI insights on your saved work and goals. These notes do not replace your evidence record.',
+      ),
+      findsOneWidget,
+    );
     expect(find.text('AI guidance unavailable right now.'), findsNothing);
 
     await tester.tap(find.byIcon(Icons.expand_more));
@@ -623,7 +632,8 @@ void main() {
     await tester.tap(find.widgetWithText(Tab, 'Projects'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Mission ready for review • Prototype evidence'), findsOneWidget);
+    expect(find.text('Mission ready for review • Prototype evidence'),
+        findsOneWidget);
     expect(
       find.text('Learner connected prototype choices to observed tradeoffs.'),
       findsOneWidget,
