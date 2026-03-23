@@ -1769,9 +1769,15 @@ class _QuickEvidenceDialogState extends State<_QuickEvidenceDialog> {
   final TextEditingController _capabilityController = TextEditingController();
   final TextEditingController _observationController = TextEditingController();
   final TextEditingController _nextExplainController = TextEditingController();
+  final TextEditingController _phaseEvidenceController =
+      TextEditingController();
+  final TextEditingController _artifactLinksController =
+      TextEditingController();
+  final TextEditingController _aiDisclosureController = TextEditingController();
   String _selectedLearnerId = '';
   String _selectedCapabilityId = '';
   String _selectedPhaseKey = _studioFlowSteps[2].key;
+  String _selectedAiUsage = '';
   bool _markForPortfolio = true;
   bool _isSubmitting = false;
   bool _isLoadingCapabilities = false;
@@ -1798,6 +1804,9 @@ class _QuickEvidenceDialogState extends State<_QuickEvidenceDialog> {
     _capabilityController.dispose();
     _observationController.dispose();
     _nextExplainController.dispose();
+    _phaseEvidenceController.dispose();
+    _artifactLinksController.dispose();
+    _aiDisclosureController.dispose();
     super.dispose();
   }
 
@@ -1835,6 +1844,54 @@ class _QuickEvidenceDialogState extends State<_QuickEvidenceDialog> {
       case 'build_sprint':
       default:
         return 'build_observation';
+    }
+  }
+
+  String? _phaseEvidenceLabel(BuildContext context) {
+    switch (_selectedPhaseKey) {
+      case 'checkpoint':
+        return _tEducatorSessions(context, 'Checkpoint captured');
+      case 'reflection':
+        return _tEducatorSessions(context, 'Learner reflection');
+      default:
+        return null;
+    }
+  }
+
+  String? _phaseEvidenceHint(BuildContext context) {
+    switch (_selectedPhaseKey) {
+      case 'checkpoint':
+        return _tEducatorSessions(
+          context,
+          'What checkpoint response, artifact, or explanation proved current understanding?',
+        );
+      case 'reflection':
+        return _tEducatorSessions(
+          context,
+          'Capture what the learner said they improved, understood, or still need to verify.',
+        );
+      default:
+        return null;
+    }
+  }
+
+  List<String> _artifactUrls() {
+    return _artifactLinksController.text
+        .split(RegExp(r'\r?\n'))
+        .map((String value) => value.trim())
+        .where((String value) => value.isNotEmpty)
+        .toSet()
+        .toList(growable: false);
+  }
+
+  bool? _selectedAiAssistanceUsed() {
+    switch (_selectedAiUsage) {
+      case 'used':
+        return true;
+      case 'not_used':
+        return false;
+      default:
+        return null;
     }
   }
 
@@ -2014,6 +2071,10 @@ class _QuickEvidenceDialogState extends State<_QuickEvidenceDialog> {
     final String capabilityFocus =
         selectedCapability?.title ?? _capabilityController.text.trim();
     final String observation = _observationController.text.trim();
+    final String phaseEvidence = _phaseEvidenceController.text.trim();
+    final List<String> artifactUrls = _artifactUrls();
+    final bool? aiAssistanceUsed = _selectedAiAssistanceUsed();
+    final String aiAssistanceDetails = _aiDisclosureController.text.trim();
     final String siteId = (educatorService.siteId?.trim().isNotEmpty ?? false)
         ? educatorService.siteId!.trim()
         : (appState.activeSiteId?.trim() ?? '');
@@ -2093,9 +2154,17 @@ class _QuickEvidenceDialogState extends State<_QuickEvidenceDialog> {
           'capabilityPillarCode': selectedCapability?.pillarCode ??
               _pillarCodeForSession(widget.session.pillar),
           'observationNote': observation,
+          if (_selectedPhaseKey == 'checkpoint' && phaseEvidence.isNotEmpty)
+            'checkpointSummary': phaseEvidence,
+          if (_selectedPhaseKey == 'reflection' && phaseEvidence.isNotEmpty)
+            'reflectionNote': phaseEvidence,
+          if (artifactUrls.isNotEmpty) 'artifactUrls': artifactUrls,
           'nextVerificationPrompt': _nextExplainController.text.trim().isEmpty
               ? null
               : _nextExplainController.text.trim(),
+          if (aiAssistanceUsed != null) 'aiAssistanceUsed': aiAssistanceUsed,
+          if (aiAssistanceUsed == true && aiAssistanceDetails.isNotEmpty)
+            'aiAssistanceDetails': aiAssistanceDetails,
           'portfolioCandidate': _markForPortfolio,
           'rubricStatus': 'pending',
           'growthStatus': 'pending',
@@ -2116,6 +2185,8 @@ class _QuickEvidenceDialogState extends State<_QuickEvidenceDialog> {
           'phaseKey': _selectedPhaseKey,
           'capabilityId': selectedCapability?.id,
           'capabilityMapped': selectedCapability != null,
+          'hasArtifactLinks': artifactUrls.isNotEmpty,
+          'hasAiDisclosure': aiAssistanceUsed != null,
           'portfolioCandidate': _markForPortfolio,
         },
       );
@@ -2219,7 +2290,12 @@ class _QuickEvidenceDialogState extends State<_QuickEvidenceDialog> {
                     .toList(),
                 onChanged: (String? value) {
                   if (value != null) {
-                    setState(() => _selectedPhaseKey = value);
+                    setState(() {
+                      _selectedPhaseKey = value;
+                      if (value != 'checkpoint' && value != 'reflection') {
+                        _phaseEvidenceController.clear();
+                      }
+                    });
                   }
                 },
               ),
@@ -2271,6 +2347,17 @@ class _QuickEvidenceDialogState extends State<_QuickEvidenceDialog> {
                     ),
                   ),
                 ),
+              if (_phaseEvidenceLabel(context) != null) ...<Widget>[
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _phaseEvidenceController,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    labelText: _phaseEvidenceLabel(context),
+                    hintText: _phaseEvidenceHint(context),
+                  ),
+                ),
+              ],
               const SizedBox(height: 12),
               TextFormField(
                 controller: _observationController,
@@ -2284,6 +2371,25 @@ class _QuickEvidenceDialogState extends State<_QuickEvidenceDialog> {
                   ),
                 ),
               ),
+              if (_markForPortfolio || _selectedPhaseKey == 'portfolio_artifact')
+                ...<Widget>[
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _artifactLinksController,
+                    maxLines: 3,
+                    decoration: InputDecoration(
+                      labelText: _tEducatorSessions(context, 'Artifact links'),
+                      helperText: _tEducatorSessions(
+                        context,
+                        'Optional: paste one artifact URL per line so portfolio review keeps the original evidence.',
+                      ),
+                      hintText: _tEducatorSessions(
+                        context,
+                        'https://example.com/artifact-1\nhttps://example.com/artifact-2',
+                      ),
+                    ),
+                  ),
+                ],
               const SizedBox(height: 12),
               TextFormField(
                 controller: _nextExplainController,
@@ -2297,6 +2403,56 @@ class _QuickEvidenceDialogState extends State<_QuickEvidenceDialog> {
                   ),
                 ),
               ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                initialValue:
+                    _selectedAiUsage.isEmpty ? null : _selectedAiUsage,
+                decoration: InputDecoration(
+                  labelText:
+                      _tEducatorSessions(context, 'AI support observed'),
+                  helperText: _tEducatorSessions(
+                    context,
+                    'Optional: record whether the learner used AI during this live evidence moment.',
+                  ),
+                ),
+                items: <DropdownMenuItem<String>>[
+                  DropdownMenuItem<String>(
+                    value: 'not_used',
+                    child: Text(
+                      _tEducatorSessions(context, 'No AI support observed'),
+                    ),
+                  ),
+                  DropdownMenuItem<String>(
+                    value: 'used',
+                    child: Text(
+                      _tEducatorSessions(context, 'AI support observed'),
+                    ),
+                  ),
+                ],
+                onChanged: (String? value) {
+                  setState(() {
+                    _selectedAiUsage = value ?? '';
+                    if (_selectedAiUsage != 'used') {
+                      _aiDisclosureController.clear();
+                    }
+                  });
+                },
+              ),
+              if (_selectedAiUsage == 'used') ...<Widget>[
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _aiDisclosureController,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    labelText:
+                        _tEducatorSessions(context, 'AI support details'),
+                    helperText: _tEducatorSessions(
+                      context,
+                      'Record what AI helped with and what the learner still explained or decided independently.',
+                    ),
+                  ),
+                ),
+              ],
               const SizedBox(height: 12),
               SwitchListTile.adaptive(
                 value: _markForPortfolio,

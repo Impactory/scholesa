@@ -2285,6 +2285,10 @@ class MissionService extends ChangeNotifier {
             ].where((String value) => value.isNotEmpty).join(' • ');
             final String observationNote =
                 (evidenceData['observationNote'] as String? ?? '').trim();
+            final String checkpointSummary =
+              (evidenceData['checkpointSummary'] as String? ?? '').trim();
+            final String reflectionNote =
+              (evidenceData['reflectionNote'] as String? ?? '').trim();
             final String latestCheckpointSummary = proofCheckpoints.isEmpty
                 ? ''
                 : ((proofCheckpoints.last['summary'] as String?) ?? '').trim();
@@ -2294,6 +2298,8 @@ class MissionService extends ChangeNotifier {
                     .trim();
             final List<String> portfolioDescriptionParts = <String>[
               observationNote,
+              checkpointSummary,
+              reflectionNote,
               trimmedFeedback,
               latestCheckpointSummary,
               latestCheckpointArtifactNote,
@@ -2331,6 +2337,12 @@ class MissionService extends ChangeNotifier {
                 proofBundleSummary?['hasLearnerAiDisclosure'] == true;
             final bool aiAssistanceUsed =
                 proofBundleSummary?['aiAssistanceUsed'] == true;
+            final bool educatorObservedAiDisclosure =
+              evidenceData['aiAssistanceUsed'] is bool;
+            final bool educatorObservedAiUse =
+              evidenceData['aiAssistanceUsed'] == true;
+            final String educatorObservedAiDetails =
+              (evidenceData['aiAssistanceDetails'] as String? ?? '').trim();
             final String proofOfLearningStatus = proofBundleSummary == null
                 ? 'not-available'
                 : hasExplainItBack && hasOralCheck && hasMiniRebuild
@@ -2344,6 +2356,10 @@ class MissionService extends ChangeNotifier {
                         ? 'learner-ai-verified'
                         : 'learner-ai-verification-gap'
                     : 'learner-ai-not-used'
+              : educatorObservedAiDisclosure
+                ? educatorObservedAiUse
+                  ? 'educator-observed-ai-use'
+                  : 'educator-observed-no-ai-use'
                 : trimmedAiDraft != null
                     ? 'educator-feedback-ai'
                     : 'no-learner-ai-signal';
@@ -2379,9 +2395,17 @@ class MissionService extends ChangeNotifier {
               'proofCheckpointCount': proofCheckpoints.length,
               'proofOfLearningStatus': proofOfLearningStatus,
               if (hasLearnerAiDisclosure) 'aiAssistanceUsed': aiAssistanceUsed,
+              if (!hasLearnerAiDisclosure && educatorObservedAiDisclosure)
+                'aiAssistanceUsed': educatorObservedAiUse,
               if (proofBundleAiAssistanceDetails.isNotEmpty)
                 'aiAssistanceDetails': proofBundleAiAssistanceDetails,
+              if (proofBundleAiAssistanceDetails.isEmpty &&
+                  educatorObservedAiDetails.isNotEmpty)
+                'aiAssistanceDetails': educatorObservedAiDetails,
               'aiDisclosureStatus': aiDisclosureStatus,
+              if (checkpointSummary.isNotEmpty)
+                'checkpointSummary': checkpointSummary,
+              if (reflectionNote.isNotEmpty) 'reflectionNote': reflectionNote,
               if (trimmedAiDraft != null) 'aiFeedbackBy': reviewerId,
               if (trimmedAiDraft != null)
                 'aiFeedbackAt': FieldValue.serverTimestamp(),
