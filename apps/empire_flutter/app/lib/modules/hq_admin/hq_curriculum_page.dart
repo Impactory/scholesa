@@ -22,11 +22,13 @@ class HqCurriculumPage extends StatefulWidget {
     this.curriculaLoader,
     this.trainingCyclesLoader,
     this.sessionReadinessLoader,
+    this.mappingRequestLoader,
   });
 
   final Future<List<Map<String, dynamic>>> Function()? curriculaLoader;
   final Future<List<Map<String, dynamic>>> Function()? trainingCyclesLoader;
   final Future<List<Map<String, dynamic>>> Function()? sessionReadinessLoader;
+  final Future<List<Map<String, dynamic>>> Function()? mappingRequestLoader;
 
   @override
   State<HqCurriculumPage> createState() => _HqCurriculumPageState();
@@ -140,6 +142,30 @@ class _SessionCapabilityReadiness {
   bool get isBlocked => mappedCapabilityCount <= 0;
 }
 
+class _SessionCapabilityMappingRequest {
+  const _SessionCapabilityMappingRequest({
+    required this.id,
+    required this.sessionId,
+    required this.sessionTitle,
+    required this.pillar,
+    required this.siteId,
+    required this.requesterName,
+    required this.requesterRole,
+    required this.submittedAt,
+    this.message,
+  });
+
+  final String id;
+  final String sessionId;
+  final String sessionTitle;
+  final String pillar;
+  final String siteId;
+  final String requesterName;
+  final String requesterRole;
+  final DateTime submittedAt;
+  final String? message;
+}
+
 class _HqCurriculumPageState extends State<HqCurriculumPage>
     with SingleTickerProviderStateMixin {
   static const List<String> _templateOptions = <String>[
@@ -166,11 +192,16 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
   String? _trainingCyclesError;
   bool _isLoadingSessionReadiness = false;
   String? _sessionReadinessError;
+    bool _isLoadingMappingRequests = false;
+    String? _mappingRequestError;
+    final Set<String> _resolvingMappingRequestIds = <String>{};
 
   List<_Curriculum> _curricula = <_Curriculum>[];
   List<_TrainingCycle> _trainingCycles = <_TrainingCycle>[];
   List<_SessionCapabilityReadiness> _sessionReadiness =
       <_SessionCapabilityReadiness>[];
+    List<_SessionCapabilityMappingRequest> _mappingRequests =
+      <_SessionCapabilityMappingRequest>[];
 
   @override
   void initState() {
@@ -180,6 +211,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
       _loadCurricula();
       _loadTrainingCycles();
       _loadSessionReadiness();
+      _loadMappingRequests();
     });
   }
 
@@ -188,6 +220,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
       _loadCurricula(),
       _loadTrainingCycles(),
       _loadSessionReadiness(),
+      _loadMappingRequests(),
     ]);
   }
 
@@ -340,7 +373,12 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
               ConstrainedBox(
                 constraints: BoxConstraints(maxHeight: maxPanelHeight),
                 child: SingleChildScrollView(
-                  child: _buildSessionCapabilityReadinessPanel(),
+                  child: Column(
+                    children: <Widget>[
+                      _buildSessionCapabilityReadinessPanel(),
+                      _buildCapabilityMappingRequestsPanel(),
+                    ],
+                  ),
                 ),
               ),
               Expanded(
@@ -687,6 +725,238 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
           fontWeight: FontWeight.w700,
           fontSize: 12,
         ),
+      ),
+    );
+  }
+
+  Widget _buildCapabilityMappingRequestsPanel() {
+    if (_isLoadingMappingRequests && _mappingRequests.isEmpty) {
+      return Container(
+        width: double.infinity,
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: ScholesaColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: ScholesaColors.border),
+        ),
+        child: Row(
+          children: <Widget>[
+            const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                _tHqCurriculum(context, 'Loading HQ mapping requests...'),
+                style: const TextStyle(color: ScholesaColors.textSecondary),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_mappingRequestError != null && _mappingRequests.isEmpty) {
+      return Container(
+        width: double.infinity,
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF4F4),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFFECACA)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              _tHqCurriculum(
+                context,
+                'HQ mapping request queue is temporarily unavailable',
+              ),
+              style: const TextStyle(
+                color: ScholesaColors.textPrimary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _mappingRequestError!,
+              style: const TextStyle(color: ScholesaColors.textSecondary),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_mappingRequests.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: ScholesaColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: ScholesaColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            _tHqCurriculum(context, 'HQ mapping requests'),
+            style: const TextStyle(
+              color: ScholesaColors.textPrimary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${_mappingRequests.length} ${_tHqCurriculum(context, 'open school escalations are waiting for curriculum mapping follow-through.')}',
+            style: const TextStyle(color: ScholesaColors.textSecondary),
+          ),
+          if (_mappingRequestError != null) ...<Widget>[
+            const SizedBox(height: 12),
+            _buildStaleDataBanner(
+              _tHqCurriculum(
+                context,
+                'Unable to refresh HQ mapping requests right now. Showing the last successful data.',
+              ),
+            ),
+          ],
+          const SizedBox(height: 12),
+          ..._mappingRequests.map(_buildMappingRequestRow),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMappingRequestRow(_SessionCapabilityMappingRequest request) {
+    final _SessionCapabilityReadiness? readiness =
+        _readinessForSessionId(request.sessionId);
+    final bool isResolving = _resolvingMappingRequestIds.contains(request.id);
+    final bool canResolve = readiness == null || !readiness.isBlocked;
+    final String statusLabel = readiness == null
+        ? _tHqCurriculum(context, 'Needs manual review')
+        : readiness.isBlocked
+            ? _tHqCurriculum(context, 'Awaiting mapping')
+            : _tHqCurriculum(context, 'Ready to resolve');
+    final Color statusColor = readiness == null
+        ? ScholesaColors.primary
+        : readiness.isBlocked
+            ? Colors.orange
+            : Colors.green;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: ScholesaColors.surfaceVariant,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: ScholesaColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  request.sessionTitle,
+                  style: const TextStyle(
+                    color: ScholesaColors.textPrimary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  statusLabel,
+                  style: TextStyle(
+                    color: statusColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '${_tHqCurriculum(context, request.pillar)} • ${_tHqCurriculum(context, 'Site')}: ${request.siteId}',
+            style: const TextStyle(
+              color: ScholesaColors.textSecondary,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${_tHqCurriculum(context, 'Requested by')} ${request.requesterName} (${request.requesterRole}) • ${_formatTime(request.submittedAt)}',
+            style: const TextStyle(
+              color: ScholesaColors.textSecondary,
+              fontSize: 12,
+            ),
+          ),
+          if ((request.message ?? '').trim().isNotEmpty) ...<Widget>[
+            const SizedBox(height: 8),
+            Text(
+              request.message!.trim(),
+              style: const TextStyle(
+                color: ScholesaColors.textSecondary,
+                fontSize: 12,
+              ),
+            ),
+          ],
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: <Widget>[
+              OutlinedButton.icon(
+                onPressed: () => _openCapabilityMappingWorkflowForRequest(request),
+                icon: const Icon(Icons.edit_rounded),
+                label: Text(_tHqCurriculum(context, 'Open mapping workflow')),
+              ),
+              FilledButton.icon(
+                onPressed: isResolving || !canResolve
+                    ? null
+                    : () => _resolveMappingRequest(request),
+                icon: isResolving
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.check_rounded),
+                label: Text(_tHqCurriculum(context, 'Resolve request')),
+              ),
+            ],
+          ),
+          if (!canResolve) ...<Widget>[
+            const SizedBox(height: 8),
+            Text(
+              _tHqCurriculum(
+                context,
+                'This request cannot be resolved until mapped capability coverage is available for the session pillar.',
+              ),
+              style: const TextStyle(
+                color: ScholesaColors.textSecondary,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -1903,6 +2173,96 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     _showCreateDialog(initialPillar: readiness.pillar);
   }
 
+  void _openCapabilityMappingWorkflowForRequest(
+    _SessionCapabilityMappingRequest request,
+  ) {
+    final _Curriculum? recommendedCurriculum =
+        _recommendedCurriculumForPillar(request.pillar);
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'module': 'hq_curriculum',
+        'cta_id': recommendedCurriculum == null
+            ? 'create_mapped_curriculum_from_mapping_request'
+            : 'open_curriculum_editor_from_mapping_request',
+        'surface': 'hq_mapping_requests',
+        'request_id': request.id,
+        'session_id': request.sessionId,
+      },
+    );
+    if (recommendedCurriculum != null) {
+      _showEditDialog(recommendedCurriculum);
+      return;
+    }
+    _tabController.animateTo(2);
+    _showCreateDialog(initialPillar: request.pillar);
+  }
+
+  Future<void> _resolveMappingRequest(
+    _SessionCapabilityMappingRequest request,
+  ) async {
+    final FirestoreService? firestoreService = _maybeFirestoreService();
+    final AppState? appState = _maybeAppState();
+    if (firestoreService == null) {
+      return;
+    }
+    setState(() {
+      _resolvingMappingRequestIds.add(request.id);
+    });
+    try {
+      await firestoreService.updateDocument(
+        'supportRequests',
+        request.id,
+        <String, dynamic>{
+          'status': 'resolved',
+          'resolvedAt': FieldValue.serverTimestamp(),
+          'resolvedBy': appState?.userId,
+          'resolvedByRole': appState?.role?.name,
+          'resolutionType': 'capability_mapping_completed',
+          'updatedAt': FieldValue.serverTimestamp(),
+        },
+      );
+      TelemetryService.instance.logEvent(
+        event: 'hq.session_capability_mapping_request.resolved',
+        metadata: <String, dynamic>{
+          'request_id': request.id,
+          'session_id': request.sessionId,
+        },
+      );
+      if (!mounted) return;
+      setState(() {
+        _mappingRequests = _mappingRequests
+            .where(
+              (_SessionCapabilityMappingRequest entry) => entry.id != request.id,
+            )
+            .toList(growable: false);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_tHqCurriculum(context, 'Mapping request resolved')),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tHqCurriculum(
+              context,
+              'Unable to resolve mapping request right now.',
+            ),
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _resolvingMappingRequestIds.remove(request.id);
+        });
+      }
+    }
+  }
+
   Future<void> _showTrainingCyclesSheet() async {
     await _loadTrainingCycles();
     if (!mounted) return;
@@ -2590,6 +2950,117 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     } finally {
       if (mounted) {
         setState(() => _isLoadingSessionReadiness = false);
+      }
+    }
+  }
+
+  Future<void> _loadMappingRequests() async {
+    if (!mounted) return;
+    setState(() {
+      _isLoadingMappingRequests = true;
+      _mappingRequestError = null;
+    });
+
+    if (widget.mappingRequestLoader != null) {
+      try {
+        final List<Map<String, dynamic>> rows =
+            await widget.mappingRequestLoader!();
+        final List<_SessionCapabilityMappingRequest> requests =
+            _mapMappingRequests(rows);
+        if (!mounted) return;
+        setState(() {
+          _mappingRequests = requests;
+          _mappingRequestError = null;
+        });
+      } catch (_) {
+        if (!mounted) return;
+        setState(() {
+          _mappingRequestError = _tHqCurriculum(
+            context,
+            'We could not load HQ mapping requests right now. Retry to check the current state.',
+          );
+        });
+      } finally {
+        if (mounted) {
+          setState(() => _isLoadingMappingRequests = false);
+        }
+      }
+      return;
+    }
+
+    final FirestoreService? firestoreService = _maybeFirestoreService();
+    if (firestoreService == null) {
+      if (!mounted) return;
+      setState(() {
+        _mappingRequestError = _tHqCurriculum(
+          context,
+          'We could not load HQ mapping requests right now. Retry to check the current state.',
+        );
+        _isLoadingMappingRequests = false;
+      });
+      return;
+    }
+
+    try {
+      QuerySnapshot<Map<String, dynamic>> snapshot;
+      try {
+        snapshot = await firestoreService.firestore
+            .collection('supportRequests')
+            .where('requestType', isEqualTo: 'session_capability_mapping')
+            .orderBy('submittedAt', descending: true)
+            .limit(80)
+            .get();
+      } catch (_) {
+        snapshot = await firestoreService.firestore
+            .collection('supportRequests')
+            .where('requestType', isEqualTo: 'session_capability_mapping')
+            .limit(80)
+            .get();
+      }
+
+      final List<Map<String, dynamic>> rows = snapshot.docs
+          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+            final Map<String, dynamic> data = doc.data();
+            final String status = (data['status'] as String? ?? 'open').trim();
+            if (status == 'resolved' || status == 'closed') {
+              return <String, dynamic>{};
+            }
+            final Map<String, dynamic> metadata = Map<String, dynamic>.from(
+              data['metadata'] as Map? ?? <String, dynamic>{},
+            );
+            return <String, dynamic>{
+              'id': doc.id,
+              'sessionId': metadata['sessionId'],
+              'sessionTitle': metadata['sessionTitle'] ?? data['subject'],
+              'pillar': metadata['pillar'],
+              'siteId': data['siteId'],
+              'requesterName': data['userName'],
+              'requesterRole': data['role'],
+              'submittedAt': data['submittedAt'],
+              'message': data['message'],
+            };
+          })
+          .where((Map<String, dynamic> row) => row.isNotEmpty)
+          .toList(growable: false);
+
+      final List<_SessionCapabilityMappingRequest> requests =
+          _mapMappingRequests(rows);
+      if (!mounted) return;
+      setState(() {
+        _mappingRequests = requests;
+        _mappingRequestError = null;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _mappingRequestError = _tHqCurriculum(
+          context,
+          'We could not load HQ mapping requests right now. Retry to check the current state.',
+        );
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingMappingRequests = false);
       }
     }
   }
