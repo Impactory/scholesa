@@ -458,12 +458,25 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
   }
 
   int _projectsForPillar(String pillarKey) {
-    return _portfolioItems.where((PortfolioItemModel item) {
+    return _reviewedPortfolioItems.where((PortfolioItemModel item) {
       return item.pillarCodes
           .map(_normalizePillarKey)
           .contains(_normalizePillarKey(pillarKey));
     }).length;
   }
+
+  bool _isReviewedPortfolioItem(PortfolioItemModel item) {
+    final String verificationStatus =
+        (item.verificationStatus ?? '').trim().toLowerCase();
+    return verificationStatus == 'reviewed' || verificationStatus == 'verified';
+  }
+
+  List<PortfolioItemModel> get _reviewedPortfolioItems =>
+      _portfolioItems.where(_isReviewedPortfolioItem).toList(growable: false);
+
+  List<PortfolioItemModel> get _awaitingReviewPortfolioItems => _portfolioItems
+      .where((PortfolioItemModel item) => !_isReviewedPortfolioItem(item))
+      .toList(growable: false);
 
   String _primaryPillarLabel(PortfolioItemModel item) {
     for (final String code in item.pillarCodes) {
@@ -874,7 +887,7 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
                       const Icon(Icons.star, color: Colors.amber, size: 18),
                       const SizedBox(width: 4),
                       Text(
-                        '${_t('Projects')}: ${_portfolioItems.length}',
+                        '${_t('Projects')}: ${_reviewedPortfolioItems.length}',
                         style:
                             const TextStyle(color: Colors.white, fontSize: 12),
                       ),
@@ -1257,43 +1270,108 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
   }
 
   Widget _buildProjectsList() {
+    final List<PortfolioItemModel> reviewedItems = _reviewedPortfolioItems;
+    final List<PortfolioItemModel> awaitingReviewItems =
+        _awaitingReviewPortfolioItems;
     if (_isPortfolioLoading) {
       return const Center(child: CircularProgressIndicator());
     }
     if (_portfolioLoadError != null && !_hasVisiblePortfolioData) {
       return _buildPortfolioLoadErrorState();
     }
-    if (_portfolioItems.isEmpty) {
+    if (reviewedItems.isEmpty && awaitingReviewItems.isEmpty) {
       return _buildEmptyTabState(
         icon: Icons.folder_open_outlined,
-        title: _t('No projects added yet'),
+        title: _t('No reviewed projects yet'),
         message: _t(
-          'Projects you complete or share will appear here once they are saved to your portfolio.',
+          'Reviewed projects appear here after educator review links evidence, rubric feedback, and proof of learning.',
         ),
       );
     }
 
-    return ListView.builder(
+    final List<Widget> children = <Widget>[
+      if (reviewedItems.isEmpty)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: _buildEmptyTabState(
+            icon: Icons.verified_outlined,
+            title: _t('No reviewed projects yet'),
+            message: _t(
+              'Reviewed projects appear here after educator review links evidence, rubric feedback, and proof of learning.',
+            ),
+          ),
+        ),
+      ...reviewedItems.map(
+        (PortfolioItemModel item) => _ProjectCard(
+          project: _projectCardData(
+            item,
+            statusLabel: (item.verificationStatus?.trim().isNotEmpty ?? false)
+                ? '${_t('Evidence linked')} • ${_titleCase(item.verificationStatus!.trim())}'
+                : _t('Evidence linked'),
+          ),
+        ),
+      ),
+      if (awaitingReviewItems.isNotEmpty) ...<Widget>[
+        Padding(
+          padding: const EdgeInsets.only(top: 8, bottom: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                _t('Awaiting educator review'),
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                _t('These saved submissions are not part of your reviewed portfolio yet.'),
+                style: TextStyle(
+                  color: context.schTextSecondary,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+        ),
+        ...awaitingReviewItems.map(
+          (PortfolioItemModel item) => _ProjectCard(
+            project: _projectCardData(
+              item,
+              statusLabel: _t('Awaiting educator review'),
+              fallbackDescription: _t(
+                'Saved submission awaiting educator review before it becomes portfolio evidence.',
+              ),
+            ),
+          ),
+        ),
+      ],
+    ];
+
+    return ListView(
       padding: const EdgeInsets.all(16),
-      itemCount: _portfolioItems.length,
-      itemBuilder: (BuildContext context, int index) {
-        final PortfolioItemModel item = _portfolioItems[index];
-        final Map<String, dynamic> project = <String, dynamic>{
-          'title': item.title.trim(),
-          'description': (item.description?.trim().isNotEmpty ?? false)
-              ? item.description!.trim()
-              : _t('Saved to your portfolio.'),
-          'pillar': _primaryPillarLabel(item),
-          'date': _formatProjectDate(item),
-          'capabilityTitles': item.capabilityTitles,
-          'evidenceLinked': item.evidenceRecordIds.isNotEmpty,
-          'verificationStatus': (item.verificationStatus ?? '').trim(),
-          'image': null,
-          'color': _projectColor(item),
-        };
-        return _ProjectCard(project: project);
-      },
+      children: children,
     );
+  }
+
+  Map<String, dynamic> _projectCardData(
+    PortfolioItemModel item, {
+    required String statusLabel,
+    String? fallbackDescription,
+  }) {
+    return <String, dynamic>{
+      'title': item.title.trim(),
+      'description': (item.description?.trim().isNotEmpty ?? false)
+          ? item.description!.trim()
+          : (fallbackDescription ?? _t('Saved to your portfolio.')),
+      'pillar': _primaryPillarLabel(item),
+      'date': _formatProjectDate(item),
+      'capabilityTitles': item.capabilityTitles,
+      'evidenceLinked': item.evidenceRecordIds.isNotEmpty,
+      'statusLabel': statusLabel,
+      'image': null,
+      'color': _projectColor(item),
+    };
   }
 
   void _editProfile() {
@@ -1762,9 +1840,7 @@ class _ProjectCard extends StatelessWidget {
                 const <String>[])
             .where((String value) => value.trim().isNotEmpty)
             .toList(growable: false);
-    final bool evidenceLinked = project['evidenceLinked'] == true;
-    final String verificationStatus =
-        (project['verificationStatus'] as String? ?? '').trim();
+    final String statusLabel = (project['statusLabel'] as String? ?? '').trim();
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Container(
@@ -1843,18 +1919,16 @@ class _ProjectCard extends StatelessWidget {
                     style: TextStyle(
                         color: context.schTextSecondary, fontSize: 14),
                   ),
-                  if (evidenceLinked ||
+                  if (statusLabel.isNotEmpty ||
                       capabilityTitles.isNotEmpty) ...<Widget>[
                     const SizedBox(height: 12),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       children: <Widget>[
-                        if (evidenceLinked)
+                        if (statusLabel.isNotEmpty)
                           _ProjectMetaChip(
-                            label: verificationStatus.isNotEmpty
-                                ? 'Evidence linked • ${_titleCase(verificationStatus)}'
-                                : 'Evidence linked',
+                            label: statusLabel,
                             color: project['color'] as Color,
                           ),
                         ...capabilityTitles.take(3).map(

@@ -643,4 +643,77 @@ void main() {
     expect(find.text('Prototype evidence'), findsOneWidget);
     expect(find.text('No projects added yet'), findsNothing);
   });
+
+  testWidgets(
+      'learner portfolio keeps pending submissions out of reviewed portfolio counts and labels them awaiting educator review',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    await firestore.collection('learnerProfiles').doc('profile-1').set(
+      <String, dynamic>{
+        'learnerId': 'learner-1',
+        'siteId': 'site-1',
+        'portfolioHeadline': 'Evidence builder',
+        'createdAt': Timestamp.fromDate(DateTime(2026, 3, 18, 8)),
+        'updatedAt': Timestamp.fromDate(DateTime(2026, 3, 18, 9)),
+      },
+    );
+    await firestore.collection('portfolioItems').doc('reviewed-project').set(
+      <String, dynamic>{
+        'siteId': 'site-1',
+        'learnerId': 'learner-1',
+        'title': 'Reviewed robot prototype',
+        'description': 'Reviewed evidence-backed prototype artifact.',
+        'pillarCodes': const <String>['future_skills'],
+        'evidenceRecordIds': const <String>['evidence-1'],
+        'capabilityTitles': const <String>['Prototype evidence'],
+        'verificationStatus': 'reviewed',
+        'createdAt': Timestamp.fromDate(DateTime(2026, 3, 18, 10)),
+        'updatedAt': Timestamp.fromDate(DateTime(2026, 3, 18, 11)),
+      },
+    );
+    await firestore.collection('portfolioItems').doc('pending-project').set(
+      <String, dynamic>{
+        'siteId': 'site-1',
+        'learnerId': 'learner-1',
+        'title': 'Draft field notes',
+        'description': 'Saved after class and still awaiting educator review.',
+        'pillarCodes': const <String>['impact'],
+        'verificationStatus': 'pending',
+        'createdAt': Timestamp.fromDate(DateTime(2026, 3, 18, 12)),
+        'updatedAt': Timestamp.fromDate(DateTime(2026, 3, 18, 13)),
+      },
+    );
+
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      _buildHarness(
+        appState: _buildLearnerState(),
+        firestoreService: firestoreService,
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Projects: 1'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(Tab, 'Projects'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Reviewed robot prototype'), findsOneWidget);
+    expect(find.text('Evidence linked • Reviewed'), findsOneWidget);
+    expect(find.text('Draft field notes'), findsOneWidget);
+    expect(find.text('Awaiting educator review'), findsWidgets);
+    expect(
+      find.text(
+        'These saved submissions are not part of your reviewed portfolio yet.',
+      ),
+      findsOneWidget,
+    );
+  });
 }

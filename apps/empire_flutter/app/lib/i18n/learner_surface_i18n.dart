@@ -82,6 +82,15 @@ class LearnerSurfaceI18n {
     'No projects added yet': '还没有添加项目',
     'Projects you complete or share will appear here once they are saved to your portfolio.':
         '你完成或分享的项目在保存到作品集后，会显示在这里。',
+    'No reviewed projects yet': '还没有已审核项目',
+    'Reviewed projects appear here after educator review links evidence, rubric feedback, and proof of learning.':
+        '当教育者审核并关联证据、量规反馈与学习证明后，已审核项目会显示在这里。',
+    'Awaiting educator review': '等待教育者审核',
+    'These saved submissions are not part of your reviewed portfolio yet.':
+        '这些已保存的提交内容还不属于你已审核的作品集。',
+    'Saved submission awaiting educator review before it becomes portfolio evidence.':
+        '这份已保存的提交内容正在等待教育者审核，审核后才会成为作品集证据。',
+    'Evidence linked': '已关联证据',
     'Strength': '优势',
     'Interest': '兴趣',
     'Goal': '目标',
@@ -290,6 +299,15 @@ class LearnerSurfaceI18n {
     'No projects added yet': '還沒有加入專案',
     'Projects you complete or share will appear here once they are saved to your portfolio.':
         '你完成或分享的專案在儲存到作品集後，會顯示在這裡。',
+    'No reviewed projects yet': '還沒有已審查專案',
+    'Reviewed projects appear here after educator review links evidence, rubric feedback, and proof of learning.':
+        '當教育者審查並連結證據、量規回饋與學習證明後，已審查專案會顯示在這裡。',
+    'Awaiting educator review': '等待教育者審查',
+    'These saved submissions are not part of your reviewed portfolio yet.':
+        '這些已儲存的提交內容還不屬於你已審查的作品集。',
+    'Saved submission awaiting educator review before it becomes portfolio evidence.':
+        '這份已儲存的提交內容正在等待教育者審查，審查後才會成為作品集證據。',
+    'Evidence linked': '已連結證據',
     'Strength': '優勢',
     'Interest': '興趣',
     'Goal': '目標',
