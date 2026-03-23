@@ -2286,9 +2286,9 @@ class MissionService extends ChangeNotifier {
             final String observationNote =
                 (evidenceData['observationNote'] as String? ?? '').trim();
             final String checkpointSummary =
-              (evidenceData['checkpointSummary'] as String? ?? '').trim();
+                (evidenceData['checkpointSummary'] as String? ?? '').trim();
             final String reflectionNote =
-              (evidenceData['reflectionNote'] as String? ?? '').trim();
+                (evidenceData['reflectionNote'] as String? ?? '').trim();
             final String latestCheckpointSummary = proofCheckpoints.isEmpty
                 ? ''
                 : ((proofCheckpoints.last['summary'] as String?) ?? '').trim();
@@ -2338,11 +2338,11 @@ class MissionService extends ChangeNotifier {
             final bool aiAssistanceUsed =
                 proofBundleSummary?['aiAssistanceUsed'] == true;
             final bool educatorObservedAiDisclosure =
-              evidenceData['aiAssistanceUsed'] is bool;
+                evidenceData['aiAssistanceUsed'] is bool;
             final bool educatorObservedAiUse =
-              evidenceData['aiAssistanceUsed'] == true;
+                evidenceData['aiAssistanceUsed'] == true;
             final String educatorObservedAiDetails =
-              (evidenceData['aiAssistanceDetails'] as String? ?? '').trim();
+                (evidenceData['aiAssistanceDetails'] as String? ?? '').trim();
             final String proofOfLearningStatus = proofBundleSummary == null
                 ? 'not-available'
                 : hasExplainItBack && hasOralCheck && hasMiniRebuild
@@ -2356,13 +2356,13 @@ class MissionService extends ChangeNotifier {
                         ? 'learner-ai-verified'
                         : 'learner-ai-verification-gap'
                     : 'learner-ai-not-used'
-              : educatorObservedAiDisclosure
-                ? educatorObservedAiUse
-                  ? 'educator-observed-ai-use'
-                  : 'educator-observed-no-ai-use'
-                : trimmedAiDraft != null
-                    ? 'educator-feedback-ai'
-                    : 'no-learner-ai-signal';
+                : educatorObservedAiDisclosure
+                    ? educatorObservedAiUse
+                        ? 'educator-observed-ai-use'
+                        : 'educator-observed-no-ai-use'
+                    : trimmedAiDraft != null
+                        ? 'educator-feedback-ai'
+                        : 'no-learner-ai-signal';
             final DocumentReference<Map<String, dynamic>> portfolioItemRef =
                 _firestore.collection('portfolioItems').doc(evidenceDoc.id);
             final DocumentSnapshot<Map<String, dynamic>>

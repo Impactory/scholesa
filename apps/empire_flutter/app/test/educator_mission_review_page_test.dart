@@ -738,6 +738,116 @@ void main() {
   });
 
   testWidgets(
+      'educator mission review carries structured live evidence into reviewed portfolio output when learner proof is absent',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedCompletedMissionReadyForReview(firestore);
+    await _seedReviewRubricAndEvidence(firestore);
+    await firestore.collection('evidenceRecords').doc('evidence-1').set(
+      <String, dynamic>{
+        'checkpointSummary':
+            'Checkpoint response connected the threshold choice to observed test data.',
+        'reflectionNote':
+            'Learner said they now understand why the slower calibration was more stable.',
+        'aiAssistanceUsed': true,
+        'aiAssistanceDetails':
+            'AI suggested two calibration approaches, but the learner tested both and justified the final selection.',
+      },
+      SetOptions(merge: true),
+    );
+    await firestore
+        .collection('missionAttempts')
+        .doc('attempt-live-evidence')
+        .set(
+      <String, dynamic>{
+        'missionId': 'mission-1',
+        'missionTitle': 'Mission ready for review',
+        'learnerId': 'learner-1',
+        'siteId': 'site-1',
+        'sessionOccurrenceId': 'occurrence-1',
+        'status': 'submitted',
+        'submittedAt': Timestamp.fromDate(DateTime(2026, 3, 18, 10, 15)),
+        'submissionText': 'Educator-captured evidence is ready for review.',
+      },
+    );
+
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final MissionService educatorMissionService = MissionService(
+      firestoreService: firestoreService,
+      learnerId: 'educator-1',
+    );
+
+    await _pumpPage(tester, educatorMissionService);
+
+    await tester.tap(find.text('Mission ready for review').first);
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Reflection'),
+      200,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.text('4/4').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('3/4').at(1));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byType(TextField).last,
+      'Reviewing educator-captured checkpoint and AI disclosure evidence.',
+    );
+    await tester.scrollUntilVisible(
+      find.text('Approve'),
+      250,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.text('Approve'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    final DocumentSnapshot<Map<String, dynamic>> evidenceDoc =
+        await firestore.collection('evidenceRecords').doc('evidence-1').get();
+    final DocumentSnapshot<Map<String, dynamic>> portfolioDoc =
+        await firestore.collection('portfolioItems').doc('evidence-1').get();
+
+    expect(
+        evidenceDoc.data()?['linkedMissionAttemptId'], 'attempt-live-evidence');
+    expect(portfolioDoc.exists, isTrue);
+    expect(portfolioDoc.data()?['missionAttemptId'], 'attempt-live-evidence');
+    expect(portfolioDoc.data()?['proofOfLearningStatus'], 'not-available');
+    expect(portfolioDoc.data()?['artifactUrls'],
+        contains('https://example.com/prototype.png'));
+    expect(portfolioDoc.data()?['aiAssistanceUsed'], isTrue);
+    expect(
+        portfolioDoc.data()?['aiDisclosureStatus'], 'educator-observed-ai-use');
+    expect(
+      portfolioDoc.data()?['aiAssistanceDetails'],
+      'AI suggested two calibration approaches, but the learner tested both and justified the final selection.',
+    );
+    expect(
+      portfolioDoc.data()?['checkpointSummary'],
+      'Checkpoint response connected the threshold choice to observed test data.',
+    );
+    expect(
+      portfolioDoc.data()?['reflectionNote'],
+      'Learner said they now understand why the slower calibration was more stable.',
+    );
+    expect(
+      portfolioDoc.data()?['description'],
+      contains(
+          'Checkpoint response connected the threshold choice to observed test data.'),
+    );
+    expect(
+      portfolioDoc.data()?['description'],
+      contains(
+          'Learner said they now understand why the slower calibration was more stable.'),
+    );
+  });
+
+  testWidgets(
       'educator mission review maps current-occurrence unmapped live evidence into the reviewed capability',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();

@@ -536,6 +536,9 @@ void main() {
   testWidgets(
       'educator sessions quick evidence capture persists structured artifact, checkpoint, and AI disclosure fields',
       (WidgetTester tester) async {
+    await tester.binding.setSurfaceSize(const Size(900, 1400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     final FirestoreService firestoreService = FirestoreService(
       firestore: firestore,
@@ -614,6 +617,11 @@ void main() {
       'https://example.com/debug-log\nhttps://example.com/fixed-sensor-video',
     );
 
+    await tester.scrollUntilVisible(
+      find.text('AI support observed'),
+      150,
+      scrollable: find.byType(Scrollable).last,
+    );
     await tester.tap(dialogDropdowns.at(2));
     await tester.pumpAndSettle();
     await tester.tap(find.text('AI support observed').last);

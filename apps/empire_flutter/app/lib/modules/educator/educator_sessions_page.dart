@@ -2371,25 +2371,25 @@ class _QuickEvidenceDialogState extends State<_QuickEvidenceDialog> {
                   ),
                 ),
               ),
-              if (_markForPortfolio || _selectedPhaseKey == 'portfolio_artifact')
-                ...<Widget>[
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _artifactLinksController,
-                    maxLines: 3,
-                    decoration: InputDecoration(
-                      labelText: _tEducatorSessions(context, 'Artifact links'),
-                      helperText: _tEducatorSessions(
-                        context,
-                        'Optional: paste one artifact URL per line so portfolio review keeps the original evidence.',
-                      ),
-                      hintText: _tEducatorSessions(
-                        context,
-                        'https://example.com/artifact-1\nhttps://example.com/artifact-2',
-                      ),
+              if (_markForPortfolio ||
+                  _selectedPhaseKey == 'portfolio_artifact') ...<Widget>[
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _artifactLinksController,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    labelText: _tEducatorSessions(context, 'Artifact links'),
+                    helperText: _tEducatorSessions(
+                      context,
+                      'Optional: paste one artifact URL per line so portfolio review keeps the original evidence.',
+                    ),
+                    hintText: _tEducatorSessions(
+                      context,
+                      'https://example.com/artifact-1\nhttps://example.com/artifact-2',
                     ),
                   ),
-                ],
+                ),
+              ],
               const SizedBox(height: 12),
               TextFormField(
                 controller: _nextExplainController,
@@ -2408,8 +2408,7 @@ class _QuickEvidenceDialogState extends State<_QuickEvidenceDialog> {
                 initialValue:
                     _selectedAiUsage.isEmpty ? null : _selectedAiUsage,
                 decoration: InputDecoration(
-                  labelText:
-                      _tEducatorSessions(context, 'AI support observed'),
+                  labelText: _tEducatorSessions(context, 'AI support observed'),
                   helperText: _tEducatorSessions(
                     context,
                     'Optional: record whether the learner used AI during this live evidence moment.',
