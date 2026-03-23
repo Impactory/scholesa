@@ -300,6 +300,29 @@ Future<void> _seedReviewRubricAndEvidence(
   );
 }
 
+Future<void> _seedUnmappedReviewEvidence(
+  FakeFirebaseFirestore firestore,
+) async {
+  await firestore.collection('evidenceRecords').doc('evidence-unmapped').set(
+    <String, dynamic>{
+      'learnerId': 'learner-1',
+      'siteId': 'site-1',
+      'sessionOccurrenceId': 'occurrence-1',
+      'capabilityLabel': 'Prototype evidence',
+      'capabilityMapped': false,
+      'capabilityPillarCode': 'future_skills',
+      'observationNote':
+          'Unmapped live observation captured before HQ mapping was available.',
+      'artifactUrls': const <String>['https://example.com/unmapped.png'],
+      'nextVerificationPrompt':
+          'Connect this observation to the review rubric.',
+      'portfolioCandidate': true,
+      'growthStatus': 'captured',
+      'observedAt': Timestamp.fromDate(DateTime(2026, 3, 18, 8, 55)),
+    },
+  );
+}
+
 Future<String> _submitMissionForReview(
   WidgetTester tester, {
   required FirestoreService firestoreService,
@@ -711,6 +734,94 @@ void main() {
     expect(
       growthEvents.docs.single.data()['linkedEvidenceRecordIds'],
       isNot(contains('evidence-stale')),
+    );
+  });
+
+  testWidgets(
+      'educator mission review maps current-occurrence unmapped live evidence into the reviewed capability',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedCompletedMissionReadyForReview(firestore);
+    await _seedReviewRubricAndEvidence(firestore);
+    await _seedUnmappedReviewEvidence(firestore);
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final MissionService learnerMissionService = MissionService(
+      firestoreService: firestoreService,
+      learnerId: 'learner-1',
+    );
+
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final String attemptId = await _submitMissionForReview(
+      tester,
+      firestoreService: firestoreService,
+      missionService: learnerMissionService,
+    );
+
+    final MissionService educatorMissionService = MissionService(
+      firestoreService: firestoreService,
+      learnerId: 'educator-1',
+    );
+
+    await tester.pumpWidget(_buildHarness(educatorMissionService));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Mission ready for review').first);
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Reflection'),
+      200,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.text('4/4').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('3/4').at(1));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byType(TextField).last,
+      'The unmapped live evidence from this occurrence should be claimed into the rubric capability.',
+    );
+    await tester.scrollUntilVisible(
+      find.text('Approve'),
+      250,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.text('Approve'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    final DocumentSnapshot<Map<String, dynamic>> unmappedEvidence =
+        await firestore
+            .collection('evidenceRecords')
+            .doc('evidence-unmapped')
+            .get();
+    final DocumentSnapshot<Map<String, dynamic>> unmappedPortfolio =
+        await firestore
+            .collection('portfolioItems')
+            .doc('evidence-unmapped')
+            .get();
+    final QuerySnapshot<Map<String, dynamic>> growthEvents = await firestore
+        .collection('capabilityGrowthEvents')
+        .where('missionAttemptId', isEqualTo: attemptId)
+        .get();
+
+    expect(unmappedEvidence.data()?['capabilityId'], 'cap-prototype-evidence');
+    expect(unmappedEvidence.data()?['capabilityMapped'], isTrue);
+    expect(unmappedEvidence.data()?['linkedMissionAttemptId'], attemptId);
+    expect(unmappedEvidence.data()?['growthStatus'], 'updated');
+    expect(unmappedPortfolio.exists, isTrue);
+    expect(unmappedPortfolio.data()?['missionAttemptId'], attemptId);
+    expect(
+      growthEvents.docs.single.data()['linkedEvidenceRecordIds'],
+      contains('evidence-unmapped'),
     );
   });
 }

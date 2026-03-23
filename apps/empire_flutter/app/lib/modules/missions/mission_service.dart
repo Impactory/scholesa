@@ -2109,6 +2109,13 @@ class MissionService extends ChangeNotifier {
             in rubricScoresByCapability.entries) {
           final String capabilityId = entry.key;
           final List<Map<String, dynamic>> capabilityScores = entry.value;
+          final String rubricCapabilityTitle = capabilityScores
+              .map((Map<String, dynamic> score) =>
+                  (score['capabilityTitle'] as String? ?? '').trim())
+              .firstWhere(
+                (String value) => value.isNotEmpty,
+                orElse: () => '',
+              );
           final int capabilityRawScore = capabilityScores.fold<int>(
             0,
             (int total, Map<String, dynamic> score) =>
@@ -2202,6 +2209,8 @@ class MissionService extends ChangeNotifier {
             final Map<String, dynamic> data = doc.data();
             final String evidenceCapabilityId =
                 (data['capabilityId'] as String? ?? '').trim();
+            final String evidenceCapabilityLabel =
+                (data['capabilityLabel'] as String? ?? '').trim();
             final String evidenceSessionOccurrenceId =
                 (data['sessionOccurrenceId'] as String? ?? '').trim();
             final String growthStatus =
@@ -2210,7 +2219,14 @@ class MissionService extends ChangeNotifier {
                 (data['linkedMissionAttemptId'] as String? ?? '').trim();
             final bool sameOccurrence = submissionSessionOccurrenceId.isEmpty ||
                 evidenceSessionOccurrenceId == submissionSessionOccurrenceId;
-            return evidenceCapabilityId == capabilityId &&
+            final bool capabilityMatches =
+                evidenceCapabilityId == capabilityId ||
+                    (evidenceCapabilityId.isEmpty &&
+                        evidenceCapabilityLabel.isNotEmpty &&
+                        rubricCapabilityTitle.isNotEmpty &&
+                        evidenceCapabilityLabel.toLowerCase() ==
+                            rubricCapabilityTitle.toLowerCase());
+            return capabilityMatches &&
                 sameOccurrence &&
                 (growthStatus.isEmpty ||
                     growthStatus == 'pending' ||
@@ -2231,6 +2247,10 @@ class MissionService extends ChangeNotifier {
             batch.set(
               evidenceDoc.reference,
               <String, dynamic>{
+                'capabilityId': capabilityId,
+                'capabilityMapped': true,
+                if (rubricCapabilityTitle.isNotEmpty)
+                  'capabilityLabel': rubricCapabilityTitle,
                 'rubricStatus': 'linked',
                 'growthStatus': 'updated',
                 'linkedMissionAttemptId': canonicalAttemptRef.id,
