@@ -343,8 +343,7 @@ class Mission extends Equatable {
         orElse: () => InterleavingMode.focusOnly,
       ),
       recommendedInterleavingMissionIds: List<String>.from(
-        json['recommendedInterleavingMissionIds'] as List? ??
-            const <String>[],
+        json['recommendedInterleavingMissionIds'] as List? ?? const <String>[],
       ),
       confusabilityBand: json['confusabilityBand'] as String? ?? 'low',
       workedExampleShown: json['workedExampleShown'] as bool? ?? false,
@@ -463,12 +462,11 @@ class Mission extends Equatable {
       reflectionPrompt: reflectionPrompt ?? this.reflectionPrompt,
       fsrsLastRating: fsrsLastRating ?? this.fsrsLastRating,
       nextReviewAt: nextReviewAt ?? this.nextReviewAt,
-        fsrsQueueState: fsrsQueueState ?? this.fsrsQueueState,
+      fsrsQueueState: fsrsQueueState ?? this.fsrsQueueState,
       interleavingMode: interleavingMode ?? this.interleavingMode,
-        recommendedInterleavingMissionIds:
-          recommendedInterleavingMissionIds ??
-            this.recommendedInterleavingMissionIds,
-        confusabilityBand: confusabilityBand ?? this.confusabilityBand,
+      recommendedInterleavingMissionIds: recommendedInterleavingMissionIds ??
+          this.recommendedInterleavingMissionIds,
+      confusabilityBand: confusabilityBand ?? this.confusabilityBand,
       workedExampleShown: workedExampleShown ?? this.workedExampleShown,
       workedExampleFadeStage:
           workedExampleFadeStage ?? this.workedExampleFadeStage,
@@ -532,10 +530,9 @@ class LearnerProgress extends Equatable {
           (json['averageCapabilityLevel'] as num?)?.toDouble() ??
               (json['currentLevel'] as num?)?.toDouble() ??
               0,
-      reviewedCapabilities:
-          json['reviewedCapabilities'] as int? ??
-              json['missionsCompleted'] as int? ??
-              0,
+      reviewedCapabilities: json['reviewedCapabilities'] as int? ??
+          json['missionsCompleted'] as int? ??
+          0,
       reviewedArtifacts: json['reviewedArtifacts'] as int? ?? 0,
       awaitingReview: json['awaitingReview'] as int? ?? 0,
       pillarProgress: (json['pillarProgress'] as Map<String, dynamic>).map(

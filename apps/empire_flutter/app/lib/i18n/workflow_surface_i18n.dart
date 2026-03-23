@@ -627,8 +627,10 @@ class WorkflowSurfaceI18n {
     'No reviewed capability evidence yet': '尚无已审查的能力证据',
     '{count} awaiting educator review': '{count} 项等待导师审查',
     'Ready for first educator review': '准备进入首次导师审查',
-    '{count} capabilities with educator-reviewed growth': '{count} 项能力已有导师审查的成长记录',
-    'Complete proof-of-learning and submit for educator review.': '先完成学习证明，再提交给导师审查。',
+    '{count} capabilities with educator-reviewed growth':
+        '{count} 项能力已有导师审查的成长记录',
+    'Complete proof-of-learning and submit for educator review.':
+        '先完成学习证明，再提交给导师审查。',
     'Reviewed Capabilities': '已审查能力',
     'Reviewed Artifacts': '已审查作品',
     'Awaiting Review': '等待审查',
@@ -1345,8 +1347,10 @@ class WorkflowSurfaceI18n {
     'No reviewed capability evidence yet': '尚無已審查的能力證據',
     '{count} awaiting educator review': '{count} 項等待導師審查',
     'Ready for first educator review': '準備進入首次導師審查',
-    '{count} capabilities with educator-reviewed growth': '{count} 項能力已有導師審查的成長紀錄',
-    'Complete proof-of-learning and submit for educator review.': '先完成學習證明，再提交給導師審查。',
+    '{count} capabilities with educator-reviewed growth':
+        '{count} 項能力已有導師審查的成長紀錄',
+    'Complete proof-of-learning and submit for educator review.':
+        '先完成學習證明，再提交給導師審查。',
     'Reviewed Capabilities': '已審查能力',
     'Reviewed Artifacts': '已審查作品',
     'Awaiting Review': '等待審查',

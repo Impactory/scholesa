@@ -224,7 +224,7 @@ class MissionService extends ChangeNotifier {
           ..clear()
           ..addAll(snapshot.missionProfiles);
       }
-          _progress = await _calculateProgress();
+      _progress = await _calculateProgress();
 
       debugPrint('Loaded ${_missions.length} missions for learner');
     } catch (e) {
@@ -1036,9 +1036,8 @@ class MissionService extends ChangeNotifier {
       levelsByPillar.putIfAbsent(pillar, () => <int>[]).add(latestLevel);
     }
 
-    final double averageCapabilityLevel = reviewedCapabilities == 0
-        ? 0
-        : totalLevels / reviewedCapabilities;
+    final double averageCapabilityLevel =
+        reviewedCapabilities == 0 ? 0 : totalLevels / reviewedCapabilities;
     final int currentLevel = reviewedCapabilities == 0
         ? 0
         : averageCapabilityLevel.round().clamp(1, 4);
@@ -1062,9 +1061,11 @@ class MissionService extends ChangeNotifier {
       },
     ).length;
 
-    final int awaitingReview = _missions.where(
-      (Mission mission) => mission.status == MissionStatus.submitted,
-    ).length;
+    final int awaitingReview = _missions
+        .where(
+          (Mission mission) => mission.status == MissionStatus.submitted,
+        )
+        .length;
 
     return LearnerProgress(
       currentLevel: currentLevel,
@@ -1074,14 +1075,14 @@ class MissionService extends ChangeNotifier {
       awaitingReview: awaitingReview,
       pillarProgress: <Pillar, int>{
         for (final Pillar pillar in Pillar.values)
-          pillar: levelsByPillar[pillar] == null || levelsByPillar[pillar]!.isEmpty
-              ? 0
-              : (((levelsByPillar[pillar]!
-                                  .reduce((int a, int b) => a + b) /
-                              levelsByPillar[pillar]!.length) /
-                          4) *
-                      100)
-                  .round(),
+          pillar:
+              levelsByPillar[pillar] == null || levelsByPillar[pillar]!.isEmpty
+                  ? 0
+                  : (((levelsByPillar[pillar]!.reduce((int a, int b) => a + b) /
+                                  levelsByPillar[pillar]!.length) /
+                              4) *
+                          100)
+                      .round(),
       },
     );
   }

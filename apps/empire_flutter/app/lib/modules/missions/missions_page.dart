@@ -281,8 +281,7 @@ class _MissionsPageState extends State<MissionsPage>
                                   context,
                                   '{count} capabilities with educator-reviewed growth',
                                   placeholders: <String, String>{
-                                    'count':
-                                        '${progress.reviewedCapabilities}',
+                                    'count': '${progress.reviewedCapabilities}',
                                   },
                                 )
                               : _tMissions(
