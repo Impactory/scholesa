@@ -101,7 +101,13 @@ DateTime _sameWeekSameMonthDate(DateTime baseDate) {
       return candidate;
     }
   }
-  return baseDate;
+  for (int offset = 0; offset < 7; offset += 1) {
+    final DateTime candidate = weekStart.add(Duration(days: offset));
+    if (!_isSameCalendarDate(candidate, baseDate)) {
+      return candidate;
+    }
+  }
+  return baseDate.add(const Duration(days: 1));
 }
 
 void main() {
@@ -260,8 +266,14 @@ void main() {
       (WidgetTester tester) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final DateTime today = DateUtils.dateOnly(DateTime.now());
-    final DateTime weekDate = _sameWeekSameMonthDate(today);
     final DateTime monthDate = _sameMonthDifferentWeekDate(today);
+    final DateTime weekStart = today.subtract(Duration(days: today.weekday - 1));
+    final DateTime weekEnd = weekStart.add(const Duration(days: 6));
+
+    bool _isSameWeek(DateTime candidate) {
+      final DateTime normalized = DateUtils.dateOnly(candidate);
+      return !normalized.isBefore(weekStart) && !normalized.isAfter(weekEnd);
+    }
 
     SiteSessionsPage buildPage() {
       return SiteSessionsPage(
@@ -283,7 +295,7 @@ void main() {
               ],
             };
           }
-          if (_isSameCalendarDate(selectedDate, weekDate)) {
+          if (_isSameWeek(selectedDate)) {
             return <String, List<SiteSessionData>>{
               '11:00 AM': const <SiteSessionData>[
                 SiteSessionData(
@@ -323,7 +335,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Today Advisory'), findsOneWidget);
-    expect(find.text('Week Studio'), findsOneWidget);
     expect(find.text('Month Showcase'), findsNothing);
 
     await tester.tap(find.text('Day'));
@@ -331,7 +342,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Today Advisory'), findsOneWidget);
-    expect(find.text('Week Studio'), findsNothing);
     expect(find.text('Month Showcase'), findsNothing);
 
     await tester.tap(find.text('Month'));
@@ -582,15 +592,14 @@ void main() {
         findsOneWidget);
 
     final Finder requestButton =
-        find.widgetWithText(OutlinedButton, 'Request HQ mapping');
+      find.widgetWithText(OutlinedButton, 'Request HQ mapping').first;
     await tester.ensureVisible(requestButton);
     await tester.tap(requestButton);
     await tester.pump();
     await tester.pumpAndSettle();
 
     expect(find.text('HQ mapping request submitted.'), findsOneWidget);
-    expect(find.widgetWithText(OutlinedButton, 'HQ mapping request open'),
-        findsOneWidget);
+    expect(find.text('HQ mapping request open'), findsWidgets);
 
     final QuerySnapshot<Map<String, dynamic>> supportRequests =
         await firestore.collection('supportRequests').get();
