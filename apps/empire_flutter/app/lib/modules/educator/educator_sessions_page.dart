@@ -171,8 +171,9 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
 
   String _selectionPrefsScope() {
     final AppState appState = context.read<AppState>();
-    final String userKey =
-        appState.userId?.trim().isNotEmpty == true ? appState.userId!.trim() : 'anonymous';
+    final String userKey = appState.userId?.trim().isNotEmpty == true
+        ? appState.userId!.trim()
+        : 'anonymous';
     final String siteKey = appState.activeSiteId?.trim().isNotEmpty == true
         ? appState.activeSiteId!.trim()
         : 'no-site';
@@ -220,8 +221,8 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
     final SharedPreferences prefs = await _prefs();
     final String restoredFilterStatus =
         _normalizeFilterStatus(prefs.getString(_filterStatusPrefsKey()));
-    final int restoredTabIndex =
-        _tabIndexForName(prefs.getString(_selectedTabPrefsKey()) ?? _tabs.first);
+    final int restoredTabIndex = _tabIndexForName(
+        prefs.getString(_selectedTabPrefsKey()) ?? _tabs.first);
     if (!mounted) {
       return;
     }
@@ -604,7 +605,8 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
         children: <Widget>[
           Row(
             children: <Widget>[
-              const Icon(Icons.error_outline_rounded, color: ScholesaColors.error),
+              const Icon(Icons.error_outline_rounded,
+                  color: ScholesaColors.error),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -677,8 +679,7 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
       if (_filterStatus == 'all') {
         return true;
       }
-      return session.pillar.toLowerCase().replaceAll(' ', '_') ==
-          _filterStatus;
+      return session.pillar.toLowerCase().replaceAll(' ', '_') == _filterStatus;
     }).toList();
   }
 
@@ -1079,8 +1080,7 @@ class _SessionCard extends StatelessWidget {
                         _formatSchedule(),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style:
-                            TextStyle(color: Colors.grey[600], fontSize: 12),
+                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -1861,9 +1861,8 @@ class _QuickEvidenceDialogState extends State<_QuickEvidenceDialog> {
         .limit(20)
         .get();
 
-    final List<QueryDocumentSnapshot<Map<String, dynamic>>> matches = snapshot
-        .docs
-        .where((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+    final List<QueryDocumentSnapshot<Map<String, dynamic>>> matches =
+        snapshot.docs.where((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
       final Map<String, dynamic> data = doc.data();
       final String occurrenceSiteId = (data['siteId'] as String?)?.trim() ?? '';
       if (occurrenceSiteId.isNotEmpty && occurrenceSiteId != siteId) {
@@ -1971,8 +1970,11 @@ class _QuickEvidenceDialogState extends State<_QuickEvidenceDialog> {
       }
       setState(() {
         _availableCapabilities = options;
-        if (_selectedCapabilityId.isEmpty && options.isNotEmpty) {
-          _selectedCapabilityId = options.first.id;
+        if (_selectedCapabilityId.isNotEmpty &&
+            options.every(
+              (_CapabilityOption option) => option.id != _selectedCapabilityId,
+            )) {
+          _selectedCapabilityId = '';
         }
       });
     } catch (_) {
@@ -2078,7 +2080,8 @@ class _QuickEvidenceDialogState extends State<_QuickEvidenceDialog> {
           'learnerName': learner.name,
           'sessionId': widget.session.id,
           'sessionTitle': widget.session.title,
-          if (sessionOccurrenceId != null) 'sessionOccurrenceId': sessionOccurrenceId,
+          if (sessionOccurrenceId != null)
+            'sessionOccurrenceId': sessionOccurrenceId,
           'educatorId': appState.userId ?? educatorService.educatorId,
           'educatorRole': educatorRole,
           'phaseKey': _selectedPhaseKey,

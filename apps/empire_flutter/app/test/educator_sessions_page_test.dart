@@ -189,7 +189,8 @@ void main() {
     expect(find.text('No sessions yet'), findsNothing);
   });
 
-  testWidgets('educator sessions page keeps stale sessions visible after refresh failure',
+  testWidgets(
+      'educator sessions page keeps stale sessions visible after refresh failure',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     final FirestoreService firestoreService = FirestoreService(
@@ -368,8 +369,10 @@ void main() {
         'siteId': 'site-1',
         'educatorId': 'educator-1',
         'status': 'upcoming',
-        'startTime': Timestamp.fromDate(DateTime.now().add(const Duration(minutes: 20))),
-        'endTime': Timestamp.fromDate(DateTime.now().add(const Duration(hours: 1, minutes: 20))),
+        'startTime':
+            Timestamp.fromDate(DateTime.now().add(const Duration(minutes: 20))),
+        'endTime': Timestamp.fromDate(
+            DateTime.now().add(const Duration(hours: 1, minutes: 20))),
       },
     );
 
@@ -386,7 +389,7 @@ void main() {
     await tester.pumpAndSettle();
 
     final Finder logEvidenceButton =
-      find.widgetWithText(OutlinedButton, 'Log Evidence');
+        find.widgetWithText(OutlinedButton, 'Log Evidence');
     await tester.ensureVisible(logEvidenceButton);
     await tester.tap(logEvidenceButton);
     await tester.pumpAndSettle();
@@ -418,5 +421,115 @@ void main() {
       evidenceSnapshot.docs.first.data()['sessionOccurrenceId'],
       'occurrence-1',
     );
+  });
+
+  testWidgets(
+      'educator sessions quick evidence capture requires explicit mapped capability selection when available',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final EducatorService educatorService = _FakeEducatorService(
+      firestoreService: firestoreService,
+      failSessionLoad: false,
+      sessions: <EducatorSession>[
+        _buildSession(
+          id: 'session-1',
+          title: 'Robotics Warm-up',
+          pillar: 'future_skills',
+          status: 'upcoming',
+        ),
+      ],
+      learners: const <EducatorLearner>[
+        EducatorLearner(
+          id: 'learner-1',
+          name: 'Ava Stone',
+          email: 'ava@scholesa.test',
+          attendanceRate: 92,
+          missionsCompleted: 2,
+          pillarProgress: <String, double>{
+            'future_skills': 0.2,
+            'leadership': 0.1,
+            'impact': 0.0,
+          },
+          enrolledSessionIds: <String>['session-1'],
+        ),
+      ],
+    );
+
+    await firestore.collection('capabilities').doc('capability-1').set(
+      <String, dynamic>{
+        'title': 'Prototype evidence',
+        'pillarCode': 'FS',
+        'siteId': 'site-1',
+      },
+    );
+
+    await tester.pumpWidget(
+      _buildHarness(
+        educatorService: educatorService,
+        firestoreService: firestoreService,
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Robotics Warm-up').first);
+    await tester.pumpAndSettle();
+
+    final Finder logEvidenceButton =
+        find.widgetWithText(OutlinedButton, 'Log Evidence');
+    await tester.ensureVisible(logEvidenceButton);
+    await tester.tap(logEvidenceButton);
+    await tester.pumpAndSettle();
+
+    expect(
+        find.widgetWithText(TextFormField, 'Capability focus'), findsNothing);
+    expect(find.text('Prototype evidence'), findsNothing);
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'What evidence did you see?'),
+      'Explained each debugging step and corrected the sensor logic live.',
+    );
+
+    await tester.tap(find.text('Capture Evidence'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Choose a learner, add a capability focus, and capture what you observed.',
+      ),
+      findsOneWidget,
+    );
+
+    QuerySnapshot<Map<String, dynamic>> evidenceSnapshot =
+        await firestore.collection('evidenceRecords').get();
+    expect(evidenceSnapshot.docs, isEmpty);
+
+    final Finder dialogDropdowns = find.descendant(
+      of: find.byType(AlertDialog),
+      matching: find.byType(DropdownButtonFormField<String>),
+    );
+
+    await tester.tap(dialogDropdowns.at(2));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Prototype evidence').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Prototype evidence'), findsOneWidget);
+
+    await tester.tap(find.text('Capture Evidence'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AlertDialog), findsNothing);
+
+    evidenceSnapshot = await firestore.collection('evidenceRecords').get();
+    expect(evidenceSnapshot.docs, hasLength(1));
+    expect(evidenceSnapshot.docs.first.data()['capabilityId'], 'capability-1');
+    expect(evidenceSnapshot.docs.first.data()['capabilityMapped'], isTrue);
   });
 }
