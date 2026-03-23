@@ -1790,6 +1790,8 @@ void main() {
         parentService: parentService,
         home: ParentChildPage(learnerId: learnerId),
       );
+      final Object? parentChildPumpException = tester.takeException();
+      expect(parentChildPumpException, isNull);
 
       expect(find.text('Nia Passport Evidence'), findsOneWidget);
       expect(find.text('Ideation Passport'), findsOneWidget);
