@@ -230,6 +230,7 @@ Interpretation rule:
 140. Corrected the parent passport empty-summary wording so the no-claims state now says no capability claims backed by reviewed evidence are available yet, aligning the empty-state semantics with the non-empty summary instead of overstating those family-facing claims as already verified.
 141. Corrected BOS insight-card wording drift across learner, educator, and family snapshot copy by replacing `verified learning signals` phrasing with `current learning signals` and `current growth signals`, so those support snapshots no longer overstate the epistemic certainty of BOS-derived indicators; direct BOS insights, runtime localization, and BOS role-analytics widget coverage now pass against the aligned copy.
 142. Corrected the parent portfolio snapshot-card label so the mixed reviewed-plus-verified portfolio count now renders as `Reviewed/Verified Portfolio` instead of `Reviewed Portfolio`, and added direct English plus zh-CN page coverage so that family-facing portfolio summary copy no longer compresses a mixed evidence state into a review-only label.
+143. Added parent-surface translations for proof-status labels such as `Proof verified` and the underlying `verified`/`partial`/`missing` states, then extended the zh-CN parent portfolio localization fixture to render a real proof-status chip, so family-facing portfolio evidence metadata no longer falls back to English when localized parent surfaces display reviewed work.
 
 ### Release and operations fixes
 

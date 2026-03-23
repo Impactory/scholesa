@@ -132,6 +132,18 @@ LearnerSummary _sampleLearner({String learnerName = 'Ava Learner'}) {
         location: 'Lab 1',
       ),
     ],
+    portfolioItemsPreview: <PortfolioPreviewItem>[
+      PortfolioPreviewItem(
+        id: 'portfolio-1',
+        title: 'Prototype Evidence',
+        description: 'Evidence-backed prototype reflection',
+        pillar: 'Impact',
+        type: 'project',
+        completedAt: now.subtract(const Duration(days: 1)),
+        evidenceLinked: true,
+        proofOfLearningStatus: 'verified',
+      ),
+    ],
   );
 }
 
@@ -238,6 +250,7 @@ void main() {
       expect(find.text('项目'), findsOneWidget);
       expect(find.text('能力快照'), findsOneWidget);
       expect(find.text('已审阅/已验证作品集'), findsOneWidget);
+      expect(find.text('证据已验证'), findsOneWidget);
     });
 
     testWidgets('parent child detail renders zh-CN strings',
