@@ -420,5 +420,89 @@ void main() {
       );
       expect(find.text('Term Launch Cohort'), findsOneWidget);
     });
+
+    testWidgets('session capability readiness shows blocked and ready sessions',
+        (WidgetTester tester) async {
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+      final AppState appState = _buildHqState();
+      await _pumpPage(
+        tester,
+        firestore: firestore,
+        appState: appState,
+        page: HqCurriculumPage(
+          curriculaLoader: () async => const <Map<String, dynamic>>[],
+          trainingCyclesLoader: () async => const <Map<String, dynamic>>[],
+          sessionReadinessLoader: () async => <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 'session-blocked',
+              'title': 'Impact Studio',
+              'pillar': 'Impact & Innovation',
+              'pillarCode': 'IMP',
+              'siteId': 'site-1',
+              'educatorName': 'A. Educator',
+              'startTime': DateTime(2026, 4, 12, 9).toIso8601String(),
+              'mappedCapabilityCount': 0,
+            },
+            <String, dynamic>{
+              'id': 'session-ready',
+              'title': 'Systems Lab',
+              'pillar': 'Future Skills',
+              'pillarCode': 'FS',
+              'siteId': 'site-1',
+              'educatorName': 'B. Educator',
+              'startTime': DateTime(2026, 4, 12, 11).toIso8601String(),
+              'mappedCapabilityCount': 2,
+            },
+          ],
+        ),
+      );
+
+      expect(find.text('Upcoming session capability coverage'), findsOneWidget);
+      expect(find.text('Impact Studio'), findsOneWidget);
+      expect(find.text('Systems Lab'), findsOneWidget);
+      expect(find.text('Blocked'), findsOneWidget);
+      expect(find.text('Ready'), findsOneWidget);
+      expect(find.text('0 mapped capabilities'), findsOneWidget);
+      expect(find.text('2 mapped capabilities'), findsOneWidget);
+      expect(find.widgetWithText(OutlinedButton, 'Create mapped curriculum'),
+          findsOneWidget);
+    });
+
+    testWidgets('blocked session action opens mapped curriculum workflow',
+        (WidgetTester tester) async {
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+      final AppState appState = _buildHqState();
+      await _pumpPage(
+        tester,
+        firestore: firestore,
+        appState: appState,
+        page: HqCurriculumPage(
+          curriculaLoader: () async => const <Map<String, dynamic>>[],
+          trainingCyclesLoader: () async => const <Map<String, dynamic>>[],
+          sessionReadinessLoader: () async => <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 'session-blocked',
+              'title': 'Agency Seminar',
+              'pillar': 'Leadership & Agency',
+              'pillarCode': 'LEAD',
+              'siteId': 'site-1',
+              'educatorName': 'C. Educator',
+              'startTime': DateTime(2026, 4, 12, 9).toIso8601String(),
+              'mappedCapabilityCount': 0,
+            },
+          ],
+        ),
+      );
+
+      final Finder createButton =
+          find.widgetWithText(OutlinedButton, 'Create mapped curriculum');
+      await tester.ensureVisible(createButton);
+      await tester.tap(createButton);
+      await tester.pumpAndSettle();
+
+      expect(find.text('New Curriculum'), findsWidgets);
+      expect(find.text('Title'), findsOneWidget);
+      expect(find.text('Description'), findsOneWidget);
+    });
   });
 }

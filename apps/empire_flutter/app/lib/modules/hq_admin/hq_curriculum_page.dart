@@ -21,10 +21,12 @@ class HqCurriculumPage extends StatefulWidget {
     super.key,
     this.curriculaLoader,
     this.trainingCyclesLoader,
+    this.sessionReadinessLoader,
   });
 
   final Future<List<Map<String, dynamic>>> Function()? curriculaLoader;
   final Future<List<Map<String, dynamic>>> Function()? trainingCyclesLoader;
+  final Future<List<Map<String, dynamic>>> Function()? sessionReadinessLoader;
 
   @override
   State<HqCurriculumPage> createState() => _HqCurriculumPageState();
@@ -114,6 +116,30 @@ class _TrainingCycle {
   final String? notes;
 }
 
+class _SessionCapabilityReadiness {
+  const _SessionCapabilityReadiness({
+    required this.id,
+    required this.title,
+    required this.pillar,
+    required this.pillarCode,
+    required this.startTime,
+    required this.mappedCapabilityCount,
+    this.siteId,
+    this.educator,
+  });
+
+  final String id;
+  final String title;
+  final String pillar;
+  final String pillarCode;
+  final DateTime startTime;
+  final int mappedCapabilityCount;
+  final String? siteId;
+  final String? educator;
+
+  bool get isBlocked => mappedCapabilityCount <= 0;
+}
+
 class _HqCurriculumPageState extends State<HqCurriculumPage>
     with SingleTickerProviderStateMixin {
   static const List<String> _templateOptions = <String>[
@@ -138,9 +164,13 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
   bool _isLoading = false;
   String? _curriculaError;
   String? _trainingCyclesError;
+  bool _isLoadingSessionReadiness = false;
+  String? _sessionReadinessError;
 
   List<_Curriculum> _curricula = <_Curriculum>[];
   List<_TrainingCycle> _trainingCycles = <_TrainingCycle>[];
+  List<_SessionCapabilityReadiness> _sessionReadiness =
+      <_SessionCapabilityReadiness>[];
 
   @override
   void initState() {
@@ -149,6 +179,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadCurricula();
       _loadTrainingCycles();
+      _loadSessionReadiness();
     });
   }
 
@@ -156,6 +187,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     await Future.wait<void>(<Future<void>>[
       _loadCurricula(),
       _loadTrainingCycles(),
+      _loadSessionReadiness(),
     ]);
   }
 
@@ -300,13 +332,361 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
         icon: const Icon(Icons.add_rounded),
         label: Text(_tHqCurriculum(context, 'New Curriculum')),
       ),
-      body: TabBarView(
-        controller: _tabController,
+      body: LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+          final double maxPanelHeight = constraints.maxHeight * 0.45;
+          return Column(
+            children: <Widget>[
+              ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: maxPanelHeight),
+                child: SingleChildScrollView(
+                  child: _buildSessionCapabilityReadinessPanel(),
+                ),
+              ),
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: <Widget>[
+                    _buildCurriculumList(_CurriculumStatus.published),
+                    _buildCurriculumList(_CurriculumStatus.review),
+                    _buildCurriculumList(_CurriculumStatus.draft),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildSessionCapabilityReadinessPanel() {
+    if (_isLoadingSessionReadiness && _sessionReadiness.isEmpty) {
+      return Container(
+        width: double.infinity,
+        margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: ScholesaColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: ScholesaColors.border),
+        ),
+        child: Row(
+          children: <Widget>[
+            const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                _tHqCurriculum(
+                  context,
+                  'Checking upcoming session capability coverage...',
+                ),
+                style: const TextStyle(color: ScholesaColors.textSecondary),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_sessionReadinessError != null && _sessionReadiness.isEmpty) {
+      return Container(
+        width: double.infinity,
+        margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF4F4),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFFECACA)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                const Icon(
+                  Icons.error_outline_rounded,
+                  color: ScholesaColors.error,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    _tHqCurriculum(
+                      context,
+                      'Session capability coverage is temporarily unavailable',
+                    ),
+                    style: const TextStyle(
+                      color: ScholesaColors.textPrimary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _sessionReadinessError!,
+              style: const TextStyle(color: ScholesaColors.textSecondary),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_sessionReadiness.isEmpty) {
+      return Container(
+        width: double.infinity,
+        margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: ScholesaColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: ScholesaColors.border),
+        ),
+        child: Text(
+          _tHqCurriculum(
+            context,
+            'No upcoming sessions need capability coverage review right now.',
+          ),
+          style: const TextStyle(color: ScholesaColors.textSecondary),
+        ),
+      );
+    }
+
+    final List<_SessionCapabilityReadiness> visibleSessions =
+        _sessionReadiness.take(6).toList(growable: false);
+    final int blockedCount = _sessionReadiness
+        .where((_SessionCapabilityReadiness entry) => entry.isBlocked)
+        .length;
+    final int readyCount = _sessionReadiness.length - blockedCount;
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: ScholesaColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: blockedCount > 0
+              ? Colors.orange.withValues(alpha: 0.4)
+              : ScholesaColors.border,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          _buildCurriculumList(_CurriculumStatus.published),
-          _buildCurriculumList(_CurriculumStatus.review),
-          _buildCurriculumList(_CurriculumStatus.draft),
+          Row(
+            children: <Widget>[
+              Icon(
+                blockedCount > 0
+                    ? Icons.warning_amber_rounded
+                    : Icons.verified_rounded,
+                color: blockedCount > 0 ? Colors.orange : Colors.green,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      _tHqCurriculum(
+                        context,
+                        'Upcoming session capability coverage',
+                      ),
+                      style: const TextStyle(
+                        color: ScholesaColors.textPrimary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      blockedCount > 0
+                          ? '$blockedCount ${_tHqCurriculum(context, 'blocked')} • $readyCount ${_tHqCurriculum(context, 'ready')}'
+                          : _tHqCurriculum(
+                              context,
+                              'All upcoming sessions currently have mapped capability coverage.',
+                            ),
+                      style: const TextStyle(
+                        color: ScholesaColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (_sessionReadinessError != null) ...<Widget>[
+            const SizedBox(height: 12),
+            _buildStaleDataBanner(
+              _tHqCurriculum(
+                context,
+                'Unable to refresh session capability coverage right now. Showing the last successful data.',
+              ),
+            ),
+          ],
+          const SizedBox(height: 12),
+          ...visibleSessions.map(_buildSessionReadinessRow),
+          if (_sessionReadiness.length > visibleSessions.length) ...<Widget>[
+            const SizedBox(height: 8),
+            Text(
+              '${_tHqCurriculum(context, 'Showing next')} ${visibleSessions.length} ${_tHqCurriculum(context, 'of')} ${_sessionReadiness.length} ${_tHqCurriculum(context, 'upcoming sessions')}',
+              style: const TextStyle(
+                color: ScholesaColors.textSecondary,
+                fontSize: 12,
+              ),
+            ),
+          ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildSessionReadinessRow(_SessionCapabilityReadiness readiness) {
+    final _Curriculum? recommendedCurriculum =
+        _recommendedCurriculumForPillar(readiness.pillar);
+    final String coverageLabel = readiness.mappedCapabilityCount == 1
+        ? _tHqCurriculum(context, '1 mapped capability')
+        : '${readiness.mappedCapabilityCount} ${_tHqCurriculum(context, 'mapped capabilities')}';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: readiness.isBlocked
+            ? Colors.orange.withValues(alpha: 0.08)
+            : Colors.green.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: readiness.isBlocked
+              ? Colors.orange.withValues(alpha: 0.25)
+              : Colors.green.withValues(alpha: 0.25),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      readiness.title,
+                      style: const TextStyle(
+                        color: ScholesaColors.textPrimary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${_tHqCurriculum(context, readiness.pillar)} • ${_formatSessionStart(readiness.startTime)}',
+                      style: const TextStyle(
+                        color: ScholesaColors.textSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
+                    if ((readiness.educator ?? '').trim().isNotEmpty) ...<Widget>[
+                      const SizedBox(height: 4),
+                      Text(
+                        '${_tHqCurriculum(context, 'Educator')}: ${readiness.educator!.trim()}',
+                        style: const TextStyle(
+                          color: ScholesaColors.textSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                    if ((readiness.siteId ?? '').trim().isNotEmpty) ...<Widget>[
+                      const SizedBox(height: 4),
+                      Text(
+                        '${_tHqCurriculum(context, 'Site')}: ${readiness.siteId!.trim()}',
+                        style: const TextStyle(
+                          color: ScholesaColors.textSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              _buildCoverageStatusBadge(readiness),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            coverageLabel,
+            style: TextStyle(
+              color: readiness.isBlocked
+                  ? const Color(0xFF9A3412)
+                  : const Color(0xFF166534),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          if (readiness.isBlocked) ...<Widget>[
+            const SizedBox(height: 8),
+            Text(
+              _tHqCurriculum(
+                context,
+                'Educators will be blocked from live evidence capture until this pillar has at least one mapped capability.',
+              ),
+              style: const TextStyle(
+                color: ScholesaColors.textSecondary,
+                fontSize: 12,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton.icon(
+                onPressed: () => _openCapabilityMappingWorkflow(
+                  readiness,
+                  recommendedCurriculum: recommendedCurriculum,
+                ),
+                icon: Icon(
+                  recommendedCurriculum == null
+                      ? Icons.add_task_rounded
+                      : Icons.edit_rounded,
+                ),
+                label: Text(
+                  recommendedCurriculum == null
+                      ? _tHqCurriculum(context, 'Create mapped curriculum')
+                      : _tHqCurriculum(context, 'Open mapping workflow'),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCoverageStatusBadge(_SessionCapabilityReadiness readiness) {
+    final Color foreground =
+        readiness.isBlocked ? const Color(0xFF9A3412) : const Color(0xFF166534);
+    final Color background =
+        readiness.isBlocked ? const Color(0xFFFFEDD5) : const Color(0xFFDCFCE7);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        readiness.isBlocked
+            ? _tHqCurriculum(context, 'Blocked')
+            : _tHqCurriculum(context, 'Ready'),
+        style: TextStyle(
+          color: foreground,
+          fontWeight: FontWeight.w700,
+          fontSize: 12,
+        ),
       ),
     );
   }
@@ -1214,14 +1594,14 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
         .toList();
   }
 
-  void _showCreateDialog() {
+  void _showCreateDialog({String? initialPillar}) {
     final TextEditingController titleController = TextEditingController();
     final TextEditingController descriptionController = TextEditingController();
     final TextEditingController misconceptionTagsController =
         TextEditingController();
     final TextEditingController capabilityMappingsController =
         TextEditingController();
-    String selectedPillar = 'Future Skills';
+    String selectedPillar = initialPillar ?? 'Future Skills';
     String selectedTemplate = _templateOptions.first;
     String selectedDifficulty = _difficultyOptions[1];
     String selectedMediaFormat = _mediaFormatOptions.first;
@@ -1497,6 +1877,30 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
         },
       ),
     );
+  }
+
+  void _openCapabilityMappingWorkflow(
+    _SessionCapabilityReadiness readiness, {
+    required _Curriculum? recommendedCurriculum,
+  }) {
+    TelemetryService.instance.logEvent(
+      event: 'cta.clicked',
+      metadata: <String, dynamic>{
+        'module': 'hq_curriculum',
+        'cta_id': recommendedCurriculum == null
+            ? 'create_mapped_curriculum_from_session_readiness'
+            : 'open_curriculum_editor_from_session_readiness',
+        'surface': 'session_capability_readiness',
+        'session_id': readiness.id,
+        'pillar_code': readiness.pillarCode,
+      },
+    );
+    if (recommendedCurriculum != null) {
+      _showEditDialog(recommendedCurriculum);
+      return;
+    }
+    _tabController.animateTo(2);
+    _showCreateDialog(initialPillar: readiness.pillar);
   }
 
   Future<void> _showTrainingCyclesSheet() async {
@@ -2035,6 +2439,158 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
           'We could not load training cycles right now. Retry to check the current state.',
         );
       });
+    }
+  }
+
+  Future<void> _loadSessionReadiness() async {
+    if (!mounted) return;
+    setState(() {
+      _isLoadingSessionReadiness = true;
+      _sessionReadinessError = null;
+    });
+
+    if (widget.sessionReadinessLoader != null) {
+      try {
+        final List<Map<String, dynamic>> rows =
+            await widget.sessionReadinessLoader!();
+        final List<_SessionCapabilityReadiness> readiness =
+            _mapSessionReadiness(rows);
+        if (!mounted) return;
+        setState(() {
+          _sessionReadiness = readiness;
+          _sessionReadinessError = null;
+        });
+      } catch (_) {
+        if (!mounted) return;
+        setState(() {
+          _sessionReadinessError = _tHqCurriculum(
+            context,
+            'We could not load upcoming session capability coverage right now. Retry to check the current state.',
+          );
+        });
+      } finally {
+        if (mounted) {
+          setState(() => _isLoadingSessionReadiness = false);
+        }
+      }
+      return;
+    }
+
+    final FirestoreService? firestoreService = _maybeFirestoreService();
+    if (firestoreService == null) {
+      if (!mounted) return;
+      setState(() {
+        _sessionReadinessError = _tHqCurriculum(
+          context,
+          'We could not load upcoming session capability coverage right now. Retry to check the current state.',
+        );
+        _isLoadingSessionReadiness = false;
+      });
+      return;
+    }
+
+    try {
+      QuerySnapshot<Map<String, dynamic>> sessionSnapshot;
+      try {
+        sessionSnapshot = await firestoreService.firestore
+            .collection('sessions')
+            .orderBy('startTime')
+            .limit(160)
+            .get();
+      } catch (_) {
+        try {
+          sessionSnapshot = await firestoreService.firestore
+              .collection('sessions')
+              .orderBy('createdAt', descending: true)
+              .limit(160)
+              .get();
+        } catch (_) {
+          sessionSnapshot = await firestoreService.firestore
+              .collection('sessions')
+              .limit(160)
+              .get();
+        }
+      }
+
+      final QuerySnapshot<Map<String, dynamic>> capabilitySnapshot =
+          await firestoreService.firestore
+              .collection('capabilities')
+              .limit(500)
+              .get();
+
+      final DateTime cutoff = DateTime.now().subtract(const Duration(hours: 4));
+      final Map<String, int> scopedCounts = <String, int>{};
+      final Map<String, int> globalCounts = <String, int>{};
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+          in capabilitySnapshot.docs) {
+        final Map<String, dynamic> capability = doc.data();
+        final String pillarCode = _capabilityPillarCode(capability);
+        if (pillarCode.isEmpty) {
+          continue;
+        }
+        final String siteId = (capability['siteId'] as String? ?? '').trim();
+        if (siteId.isEmpty) {
+          globalCounts[pillarCode] = (globalCounts[pillarCode] ?? 0) + 1;
+        } else {
+          final String key = '$siteId|$pillarCode';
+          scopedCounts[key] = (scopedCounts[key] ?? 0) + 1;
+        }
+      }
+
+      final List<Map<String, dynamic>> rows = <Map<String, dynamic>>[];
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+          in sessionSnapshot.docs) {
+        final Map<String, dynamic> data = doc.data();
+        final DateTime? startTime = _toDateTime(data['startTime']) ??
+            _toDateTime(data['startDate']) ??
+            _toDateTime(data['date']);
+        if (startTime == null || startTime.isBefore(cutoff)) {
+          continue;
+        }
+        final String pillar = _pillarFromData(data);
+        final String pillarCode = _pillarCodeFromLabel(pillar);
+        final String siteId = (data['siteId'] as String? ?? '').trim();
+        final int mappedCapabilityCount =
+            (scopedCounts['$siteId|$pillarCode'] ?? 0) +
+                (globalCounts[pillarCode] ?? 0);
+        final String title =
+            ((data['title'] as String?) ?? (data['name'] as String?) ?? '')
+                .trim();
+        rows.add(<String, dynamic>{
+          'id': doc.id,
+          'title': title.isNotEmpty ? title : doc.id,
+          'pillar': pillar,
+          'pillarCode': pillarCode,
+          'siteId': siteId,
+          'educatorName': ((data['educatorName'] as String?) ??
+                  (data['educatorDisplayName'] as String?) ??
+                  (data['educatorId'] as String?) ??
+                  '')
+              .trim(),
+          'startTime': startTime.toIso8601String(),
+          'mappedCapabilityCount': mappedCapabilityCount,
+        });
+      }
+
+      final List<_SessionCapabilityReadiness> readiness =
+          _mapSessionReadiness(rows);
+      if (!mounted) return;
+      setState(() {
+        _sessionReadiness = readiness;
+        _sessionReadinessError = null;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _sessionReadinessError = _tHqCurriculum(
+          context,
+          'We could not load upcoming session capability coverage right now. Retry to check the current state.',
+        );
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingSessionReadiness = false);
+      }
     }
   }
 
@@ -2686,6 +3242,71 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     return 'Future Skills';
   }
 
+  List<_SessionCapabilityReadiness> _mapSessionReadiness(
+    List<Map<String, dynamic>> rows,
+  ) {
+    final List<_SessionCapabilityReadiness> readiness = rows
+        .map((Map<String, dynamic> data) {
+          final DateTime? startTime = _toDateTime(data['startTime']) ??
+              _toDateTime(data['startDate']) ??
+              _toDateTime(data['date']) ??
+              _toDateTime(data['scheduledAt']);
+          if (startTime == null) {
+            return null;
+          }
+          final String pillar = _pillarFromData(data);
+          final dynamic rawCount = data['mappedCapabilityCount'];
+          final int mappedCapabilityCount = rawCount is int
+              ? rawCount
+              : rawCount is num
+                  ? rawCount.toInt()
+                  : int.tryParse(rawCount?.toString() ?? '') ?? 0;
+          return _SessionCapabilityReadiness(
+            id: (data['id'] as String?) ?? 'session',
+            title: ((data['title'] as String?) ?? 'Session').trim(),
+            pillar: pillar,
+            pillarCode:
+                (data['pillarCode'] as String?)?.trim().isNotEmpty == true
+                    ? (data['pillarCode'] as String).trim()
+                    : _pillarCodeFromLabel(pillar),
+            startTime: startTime,
+            mappedCapabilityCount: mappedCapabilityCount,
+            siteId: data['siteId'] as String?,
+            educator: ((data['educatorName'] as String?) ??
+                    (data['educatorDisplayName'] as String?) ??
+                    (data['educatorId'] as String?))
+                ?.trim(),
+          );
+        })
+        .whereType<_SessionCapabilityReadiness>()
+        .toList(growable: false)
+      ..sort((_SessionCapabilityReadiness a, _SessionCapabilityReadiness b) {
+        final int blockedCompare = (a.isBlocked ? 0 : 1).compareTo(
+          b.isBlocked ? 0 : 1,
+        );
+        if (blockedCompare != 0) {
+          return blockedCompare;
+        }
+        return a.startTime.compareTo(b.startTime);
+      });
+    return readiness;
+  }
+
+  _Curriculum? _recommendedCurriculumForPillar(String pillar) {
+    for (final _Curriculum curriculum in _curricula) {
+      if (curriculum.pillar == pillar &&
+          curriculum.status == _CurriculumStatus.draft) {
+        return curriculum;
+      }
+    }
+    for (final _Curriculum curriculum in _curricula) {
+      if (curriculum.pillar == pillar) {
+        return curriculum;
+      }
+    }
+    return null;
+  }
+
   List<String> _parseStringList(dynamic value) {
     return List<String>.from(value as List<dynamic>? ?? const <String>[])
         .map((String entry) => entry.trim())
@@ -2808,6 +3429,32 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     if (value.contains('leadership')) return 'LEAD';
     if (value.contains('impact')) return 'IMP';
     return 'FS';
+  }
+
+  String _capabilityPillarCode(Map<String, dynamic> data) {
+    final String direct = (data['pillarCode'] as String? ?? '').trim();
+    if (direct.isNotEmpty) {
+      return direct.toUpperCase();
+    }
+    final String label = (data['pillarLabel'] as String? ?? '').trim();
+    if (label.isNotEmpty) {
+      return _pillarCodeFromLabel(label);
+    }
+    return '';
+  }
+
+  String _formatSessionStart(DateTime startTime) {
+    final DateTime local = startTime.toLocal();
+    final String month = local.month.toString().padLeft(2, '0');
+    final String day = local.day.toString().padLeft(2, '0');
+    final int hour = local.hour == 0
+        ? 12
+        : local.hour > 12
+            ? local.hour - 12
+            : local.hour;
+    final String minute = local.minute.toString().padLeft(2, '0');
+    final String suffix = local.hour >= 12 ? 'PM' : 'AM';
+    return '$month/$day • $hour:$minute $suffix';
   }
 
   String _incrementVersion(String rawVersion) {
