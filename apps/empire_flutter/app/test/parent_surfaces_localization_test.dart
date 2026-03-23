@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
 import 'package:scholesa_app/auth/app_state.dart';
@@ -14,19 +15,29 @@ import 'package:scholesa_app/modules/parent/parent_schedule_page.dart';
 import 'package:scholesa_app/modules/parent/parent_service.dart';
 import 'package:scholesa_app/modules/parent/parent_summary_page.dart';
 import 'package:scholesa_app/runtime/learning_runtime_provider.dart';
+import 'package:scholesa_app/services/firestore_service.dart';
 
 final ThemeData _testTheme = ThemeData(
   useMaterial3: true,
   splashFactory: InkRipple.splashFactory,
 );
 
+class _FakeFirebaseAuth extends Fake implements FirebaseAuth {}
+
 class _FakeParentService extends ChangeNotifier implements ParentService {
   _FakeParentService({
     required this.parentId,
     required List<LearnerSummary> learnerSummaries,
-  }) : _learnerSummaries = learnerSummaries;
+  })  : _learnerSummaries = learnerSummaries,
+        firestoreService = FirestoreService(
+          firestore: FakeFirebaseFirestore(),
+          auth: _FakeFirebaseAuth(),
+        );
 
   final List<LearnerSummary> _learnerSummaries;
+
+  @override
+  final FirestoreService firestoreService;
 
   @override
   final String parentId;
@@ -226,6 +237,7 @@ void main() {
       expect(find.text('作品集'), findsOneWidget);
       expect(find.text('项目'), findsOneWidget);
       expect(find.text('能力快照'), findsOneWidget);
+      expect(find.text('已审阅/已验证作品集'), findsOneWidget);
     });
 
     testWidgets('parent child detail renders zh-CN strings',
