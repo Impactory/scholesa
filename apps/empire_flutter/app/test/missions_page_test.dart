@@ -385,8 +385,26 @@ void main() {
     expect(attempt['learnerId'], 'learner-1');
     expect(attempt['siteId'], 'site-1');
     expect(attempt['status'], 'submitted');
-    expect(attempt['content'],
-        'Mission "Mission ready for review" submitted for educator review.');
+    expect(
+      attempt['content'],
+      contains(
+          'Mission "Mission ready for review" submitted for educator review.'),
+    );
+    expect(
+      attempt['content'],
+      contains(
+        'Explain-it-back: I explained how the control loop reacts to sensor input.',
+      ),
+    );
+    expect(
+      attempt['content'],
+      contains(
+          'Latest checkpoint: Completed the working prototype before review.'),
+    );
+    expect(
+      attempt['content'],
+      contains('Artifact note: Linked prototype and notes.'),
+    );
     expect((attempt['proofBundleSummary'] as Map<String, dynamic>)['isReady'],
         isTrue);
     expect(
@@ -394,6 +412,8 @@ void main() {
           as Map<String, dynamic>)['checkpointCount'],
       1,
     );
+    expect(attempt['proofCheckpointCount'], 1);
+    expect((attempt['proofCheckpoints'] as List<dynamic>).length, 1);
     expect(
       (attempt['proofBundleSummary']
           as Map<String, dynamic>)['hasExplainItBack'],

@@ -620,6 +620,15 @@ void main() {
       missionService: educatorMissionService,
     );
 
+    final DocumentSnapshot<Map<String, dynamic>> portfolioDoc =
+        await firestore.collection('portfolioItems').doc('evidence-1').get();
+    expect(portfolioDoc.exists, isTrue);
+    expect(portfolioDoc.data()?['proofCheckpointCount'], 1);
+    expect(
+      portfolioDoc.data()?['description'],
+      contains('Completed the working prototype before review.'),
+    );
+
     await tester.pumpWidget(
       _buildHarness(
         appState: _buildLearnerState(),
@@ -634,10 +643,6 @@ void main() {
 
     expect(find.text('Mission ready for review • Prototype evidence'),
         findsOneWidget);
-    expect(
-      find.text('Learner connected prototype choices to observed tradeoffs.'),
-      findsOneWidget,
-    );
     expect(find.text('Future Skills'), findsWidgets);
     expect(find.text('Evidence linked • Reviewed'), findsOneWidget);
     expect(find.text('Prototype evidence'), findsOneWidget);

@@ -1799,13 +1799,13 @@ class MissionService extends ChangeNotifier {
                   true
               ? (submissionData['proofBundleId'] as String).trim()
               : null;
-        final Map<String, dynamic>? proofBundle = proofBundleId == null
+      final Map<String, dynamic>? proofBundle = proofBundleId == null
           ? null
           : (await _firestore
-              .collection('proofOfLearningBundles')
-              .doc(proofBundleId)
-              .get())
-            .data();
+                  .collection('proofOfLearningBundles')
+                  .doc(proofBundleId)
+                  .get())
+              .data();
       final Map<String, dynamic>? proofBundleSummary =
           submissionData['proofBundleSummary'] is Map
               ? Map<String, dynamic>.from(
@@ -1814,14 +1814,12 @@ class MissionService extends ChangeNotifier {
               : null;
       final String proofBundleAiAssistanceDetails = proofBundleId == null
           ? ''
-          : ((proofBundle?['aiAssistanceDetails'] as String?) ??
-                  '')
-              .trim();
-        final List<Map<String, dynamic>> proofCheckpoints =
+          : ((proofBundle?['aiAssistanceDetails'] as String?) ?? '').trim();
+      final List<Map<String, dynamic>> proofCheckpoints =
           ((proofBundle?['versionHistory'] as List?) ?? const <dynamic>[])
-            .whereType<Map>()
-            .map((Map checkpoint) => Map<String, dynamic>.from(checkpoint))
-            .toList(growable: false);
+              .whereType<Map>()
+              .map((Map checkpoint) => Map<String, dynamic>.from(checkpoint))
+              .toList(growable: false);
       final List<Map<String, dynamic>> normalizedRubricScores = rubricScores
           .map((Map<String, dynamic> score) => <String, dynamic>{
                 ...score,
@@ -2159,16 +2157,18 @@ class MissionService extends ChangeNotifier {
                 ? ''
                 : ((proofCheckpoints.last['artifactNote'] as String?) ?? '')
                     .trim();
-            final String portfolioDescription = <String>[
+            final List<String> portfolioDescriptionParts = <String>[
               observationNote,
               trimmedFeedback,
-              submissionText,
               latestCheckpointSummary,
               latestCheckpointArtifactNote,
-            ].firstWhere(
-              (String value) => value.isNotEmpty,
-              orElse: () => 'Reviewed evidence linked to learner growth.',
-            );
+            ].where((String value) => value.isNotEmpty).toList(growable: false);
+            final String portfolioDescription =
+                portfolioDescriptionParts.isEmpty
+                    ? (submissionText.isNotEmpty
+                        ? submissionText
+                        : 'Reviewed evidence linked to learner growth.')
+                    : portfolioDescriptionParts.join('\n');
             final List<String> mergedArtifactUrls = <String>{
               ...submissionAttachmentUrls,
               ...List<String>.from(

@@ -239,6 +239,7 @@ Interpretation rule:
 149. Corrected the parent callable learner-profile level leak by removing the backend fallback from reviewed capability average to legacy `progressData.level`, adding a focused function test that proves no level is emitted when reviewed capability evidence is absent, and hardening the Flutter callable parser so a missing callable `currentLevel` stays empty instead of becoming a fake level `1` on family-facing surfaces.
 150. Corrected the learner portfolio verification leak by counting only reviewed or verified portfolio items in learner-facing project totals and portfolio pillar summaries, and by separating pending submissions into an explicit `Awaiting educator review` section so saved learner work no longer appears as portfolio evidence before educator review links the evidence, rubric feedback, and proof-of-learning chain.
 151. Corrected the educator learner-roster mastery leak by replacing teacher-facing pillar progress in the learner roster with reviewed `capabilityMastery` aggregation instead of legacy user progress fields, and by removing mission-completion gating from default lane recommendations so live educator support lanes now reflect reviewed capability evidence and attendance rather than inflated completion-era progress data.
+152. Corrected the educator-to-learner proof handoff leak by carrying the learner’s actual explain-it-back, oral check, mini-rebuild, checkpoint, artifact note, and AI disclosure forward into the canonical `missionAttempts` submission record, then preserving checkpoint evidence in reviewed portfolio artifacts so the submission-to-review-to-portfolio chain no longer collapses into a generic “submitted for review” placeholder that drops learner proof detail.
 
 ### Release and operations fixes
 
@@ -287,6 +288,7 @@ Interpretation rule:
 - Focused parent callable current-level Flutter parser regression passed: 1 passed, 0 failed.
 - Focused learner portfolio honesty regressions passed after separating reviewed evidence from awaiting-review submissions: 7 passed, 0 failed.
 - Focused educator learner evidence regressions passed after replacing legacy roster progress with reviewed capability mastery: 20 passed, 0 failed.
+- Focused learner proof handoff regressions passed after preserving checkpoint and AI-disclosure detail in canonical submissions and reviewed portfolio evidence: 23 passed, 0 failed.
 - Focused attendance downstream workflow regressions passed after proving reviewed roster imports stay terminal: 17 passed, 0 failed.
 - Focused provisioning, educator sessions, educator learners, and attendance downstream workflow regressions passed after proving reviewed roster imports stay terminal: 52 passed, 0 failed.
 - Focused site pickup authorization regressions passed after the provisioning-to-pickup fallback proof and learner-name fix: 4 passed, 0 failed.
