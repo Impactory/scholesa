@@ -224,6 +224,7 @@ Interpretation rule:
 134. Reduced the remaining parent proof and AI provenance collapse by storing actor metadata on proof checkpoints, threading checkpoint actor role through both fallback and callable parent bundle paths, and surfacing AI feedback author and date on portfolio and Passport detail views so families can distinguish learner-authored proof steps from educator review-time AI feedback context.
 135. Reduced write-path AI provenance drift by persisting explicit `aiFeedbackBy` and `aiFeedbackAt` metadata during educator review, preferring those explicit fields in parent fallback and callable aggregation, and allowing same-attempt re-reviews to revisit already linked evidence so stale artifact-level AI feedback provenance is cleared instead of surviving after a later human-only review.
 136. Corrected the remaining parent passport export wording drift by renaming mixed artifact totals from `Verified Artifacts` to `Reviewed/Verified Artifacts`, keeping downloaded and copied family exports aligned with the in-app semantics instead of overstating the review state of every linked artifact.
+137. Hardened the parent child family view against honesty-driven copy growth by allowing the longer `Reviewed/Verified Artifacts` hero-stat label to wrap safely instead of overflowing the layout, so the UI no longer depends on shorter, less accurate wording to stay renderable in workflow tests or real usage.
 
 ### Release and operations fixes
 

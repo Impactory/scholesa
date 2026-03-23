@@ -405,6 +405,8 @@ class _ParentChildPageState extends State<ParentChildPage> {
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.88),
             ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

@@ -391,22 +391,18 @@ void main() {
       expect(
         submissionDocAfterClear.data()?['aiFeedbackDraft'],
         isNull,
-        reason: 'submission aiFeedbackDraft should clear',
       );
       expect(
         submissionDocAfterClear.data()?['aiFeedbackEdited'],
         isNull,
-        reason: 'submission aiFeedbackEdited should clear',
       );
       expect(
         submissionDocAfterClear.data()?['aiFeedbackBy'],
         isNull,
-        reason: 'submission aiFeedbackBy should clear',
       );
       expect(
         submissionDocAfterClear.data()?['aiFeedbackAt'],
         isNull,
-        reason: 'submission aiFeedbackAt should clear',
       );
 
       final DocumentSnapshot<Map<String, dynamic>> assignmentDocAfterClear =
@@ -417,22 +413,18 @@ void main() {
       expect(
         assignmentDocAfterClear.data()?['aiFeedbackDraft'],
         isNull,
-        reason: 'assignment aiFeedbackDraft should clear',
       );
       expect(
         assignmentDocAfterClear.data()?['aiFeedbackEdited'],
         isNull,
-        reason: 'assignment aiFeedbackEdited should clear',
       );
       expect(
         assignmentDocAfterClear.data()?['aiFeedbackBy'],
         isNull,
-        reason: 'assignment aiFeedbackBy should clear',
       );
       expect(
         assignmentDocAfterClear.data()?['aiFeedbackAt'],
         isNull,
-        reason: 'assignment aiFeedbackAt should clear',
       );
 
       final DocumentSnapshot<Map<String, dynamic>> attemptDocAfterClear =
@@ -440,22 +432,18 @@ void main() {
       expect(
         attemptDocAfterClear.data()?['aiFeedbackDraft'],
         isNull,
-        reason: 'attempt aiFeedbackDraft should clear',
       );
       expect(
         attemptDocAfterClear.data()?['aiFeedbackEdited'],
         isNull,
-        reason: 'attempt aiFeedbackEdited should clear',
       );
       expect(
         attemptDocAfterClear.data()?['aiFeedbackBy'],
         isNull,
-        reason: 'attempt aiFeedbackBy should clear',
       );
       expect(
         attemptDocAfterClear.data()?['aiFeedbackAt'],
         isNull,
-        reason: 'attempt aiFeedbackAt should clear',
       );
 
       final DocumentSnapshot<Map<String, dynamic>> portfolioDocAfterClear =
@@ -463,12 +451,10 @@ void main() {
       expect(
         portfolioDocAfterClear.data()?['aiFeedbackBy'],
         isNull,
-        reason: 'portfolio aiFeedbackBy should clear',
       );
       expect(
         portfolioDocAfterClear.data()?['aiFeedbackAt'],
         isNull,
-        reason: 'portfolio aiFeedbackAt should clear',
       );
     });
 
