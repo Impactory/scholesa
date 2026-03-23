@@ -99,11 +99,10 @@ void main() {
     const _LocaleCase(
       locale: Locale('en'),
       signInLabel: 'Sign In',
-        learnerLoopTitle: 'Learning Support Snapshot',
-        learnerLoopSubtitle: 'Latest verified learning signals for this learner',
-        sessionLoopTitle: 'Session Support Snapshot',
-      sessionLoopSubtitle:
-          'Latest verified learning signals for this session',
+      learnerLoopTitle: 'Learning Support Snapshot',
+      learnerLoopSubtitle: 'Current learning signals for this learner',
+      sessionLoopTitle: 'Session Support Snapshot',
+      sessionLoopSubtitle: 'Current learning signals for this session',
       learnerUnavailable: 'Learner unavailable',
       accessDeniedTitle: 'Access Denied',
       accessDeniedBody: "You don't have permission to access this page.",
@@ -112,9 +111,9 @@ void main() {
       locale: Locale('zh', 'CN'),
       signInLabel: '登录',
       learnerLoopTitle: '学习支持概览',
-      learnerLoopSubtitle: '该学习者最新已验证学习信号',
+      learnerLoopSubtitle: '该学习者当前学习信号',
       sessionLoopTitle: '课堂支持概览',
-      sessionLoopSubtitle: '本次课堂最新已验证学习信号',
+      sessionLoopSubtitle: '本次课堂当前学习信号',
       learnerUnavailable: '学习者信息不可用',
       accessDeniedTitle: '拒绝访问',
       accessDeniedBody: '你没有权限访问此页面。',
@@ -134,7 +133,7 @@ void main() {
 
   group('Runtime localization', () {
     for (final _LocaleCase localeCase in cases) {
-        testWidgets(
+      testWidgets(
           'resolves auth, AI help, and role-gate copy for ${localeCase.locale}',
           (WidgetTester tester) async {
         final AppState appState = AppState()

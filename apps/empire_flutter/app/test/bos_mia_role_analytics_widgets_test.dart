@@ -94,7 +94,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Learning Support Snapshot'), findsOneWidget);
-      expect(find.textContaining('Latest verified learning signals for this learner'),
+      expect(find.textContaining('Current learning signals for this learner'),
           findsOneWidget);
     });
 
@@ -157,7 +157,8 @@ void main() {
 
       expect(find.text('Class Support Snapshot'), findsOneWidget);
       expect(
-        find.textContaining('Verified class learning signals, learners who may need support'),
+        find.textContaining(
+            'Verified class learning signals, learners who may need support'),
         findsOneWidget,
       );
     });

@@ -14,16 +14,16 @@ import 'package:flutter/material.dart';
 class BosCoachingI18n {
   static const Map<String, String> _zhCnTranslations = <String, String>{
     'learnerLoopTitle': '学习支持概览',
-    'learnerLoopSubtitle': '该学习者最新已验证学习信号',
+    'learnerLoopSubtitle': '该学习者当前学习信号',
     'learnerLoopEmpty': '暂无学习支持概览',
     'sessionLoopTitle': '课堂支持概览',
-    'sessionLoopSubtitle': '本次课堂最新已验证学习信号',
+    'sessionLoopSubtitle': '本次课堂当前学习信号',
     'sessionLoopEmpty': '暂无课堂支持概览',
     'classInsightsTitle': '班级支持概览',
-    'classInsightsSubtitle': '本课堂已验证学习信号、需要支持的学习者与进行中的理解检查',
+    'classInsightsSubtitle': '本课堂当前学习信号、需要支持的学习者与进行中的理解检查',
     'classInsightsEmpty': '暂无班级支持概览',
     'familyLearningTitle': '家庭学习概览',
-    'familyLearningSubtitle': '你孩子的学习准备度与已验证成长信号',
+    'familyLearningSubtitle': '你孩子的学习准备度与当前成长信号',
     'familyLearningEmpty': '暂无家庭学习概览',
     'familyScheduleTitle': '家庭日程概览',
     'familyScheduleSubtitle': '你孩子的学习准备度与出勤信号',
@@ -51,23 +51,23 @@ class BosCoachingI18n {
     'watchlistClear': '目前没有需要立即跟进的学习者',
     'supportRecommended': '建议优先提供支持给以下学习者',
     'learnerUnavailable': '学习者信息不可用',
-    'signalUnavailable': '暂无已验证学习信号',
-    'partialSignals': '部分学习信号缺失，仅显示已验证信息',
+    'signalUnavailable': '暂无当前学习信号',
+    'partialSignals': '部分学习信号缺失，仅显示当前可用信息',
     'syntheticPreview': '当前为合成预览数据，请勿视为真实课堂证据或成长记录',
   };
 
   static const Map<String, String> _zhTwTranslations = <String, String>{
     'learnerLoopTitle': '學習支持概覽',
-    'learnerLoopSubtitle': '該學習者最新已驗證學習訊號',
+    'learnerLoopSubtitle': '該學習者目前學習訊號',
     'learnerLoopEmpty': '目前沒有學習支持概覽',
     'sessionLoopTitle': '課堂支持概覽',
-    'sessionLoopSubtitle': '本次課堂最新已驗證學習訊號',
+    'sessionLoopSubtitle': '本次課堂目前學習訊號',
     'sessionLoopEmpty': '目前沒有課堂支持概覽',
     'classInsightsTitle': '班級支持概覽',
-    'classInsightsSubtitle': '本課堂已驗證學習訊號、需要支持的學習者與進行中的理解檢查',
+    'classInsightsSubtitle': '本課堂目前學習訊號、需要支持的學習者與進行中的理解檢查',
     'classInsightsEmpty': '目前沒有班級支持概覽',
     'familyLearningTitle': '家庭學習概覽',
-    'familyLearningSubtitle': '你孩子的學習準備度與已驗證成長訊號',
+    'familyLearningSubtitle': '你孩子的學習準備度與目前成長訊號',
     'familyLearningEmpty': '目前沒有家庭學習概覽',
     'familyScheduleTitle': '家庭日程概覽',
     'familyScheduleSubtitle': '你孩子的學習準備度與出勤訊號',
@@ -95,26 +95,25 @@ class BosCoachingI18n {
     'watchlistClear': '目前沒有需要立即跟進的學習者',
     'supportRecommended': '建議優先提供支持給以下學習者',
     'learnerUnavailable': '學習者資訊不可用',
-    'signalUnavailable': '目前沒有已驗證學習訊號',
-    'partialSignals': '部分學習訊號缺失，僅顯示已驗證資訊',
+    'signalUnavailable': '目前沒有學習訊號',
+    'partialSignals': '部分學習訊號缺失，僅顯示目前可用資訊',
     'syntheticPreview': '目前顯示的是合成預覽資料，請勿視為真實課堂證據或成長紀錄',
   };
 
   static const Map<String, String> _enTranslations = <String, String>{
     'learnerLoopTitle': 'Learning Support Snapshot',
-    'learnerLoopSubtitle': 'Latest verified learning signals for this learner',
+    'learnerLoopSubtitle': 'Current learning signals for this learner',
     'learnerLoopEmpty': 'No learning support snapshot yet',
     'sessionLoopTitle': 'Session Support Snapshot',
-    'sessionLoopSubtitle':
-        'Latest verified learning signals for this session',
+    'sessionLoopSubtitle': 'Current learning signals for this session',
     'sessionLoopEmpty': 'No session support snapshot yet',
     'classInsightsTitle': 'Class Support Snapshot',
     'classInsightsSubtitle':
-        'Verified class learning signals, learners who may need support, and active understanding checks',
+        'Current class learning signals, learners who may need support, and active understanding checks',
     'classInsightsEmpty': 'No class support snapshot yet',
     'familyLearningTitle': 'Family Learning Snapshot',
     'familyLearningSubtitle':
-        'Your child\'s learning readiness and verified growth signals',
+        'Your child\'s learning readiness and current growth signals',
     'familyLearningEmpty': 'No family learning snapshot yet',
     'familyScheduleTitle': 'Family Schedule Snapshot',
     'familyScheduleSubtitle':
@@ -143,13 +142,14 @@ class BosCoachingI18n {
     'watchlistClear': 'No learners need immediate follow-up right now',
     'supportRecommended': 'Support recommended for these learners',
     'learnerUnavailable': 'Learner unavailable',
-    'signalUnavailable': 'No verified learning signals yet',
-    'partialSignals': 'Some learning signals are missing; showing only verified information',
+    'signalUnavailable': 'No current learning signals yet',
+    'partialSignals':
+        'Some learning signals are missing; showing only currently available information',
     'syntheticPreview':
         'Synthetic preview only. Do not treat this as classroom evidence or learner growth.',
   };
 
-    /// Get an AI help key in the user's locale
+  /// Get an AI help key in the user's locale
   /// Returns English default if locale not supported
   static String get(BuildContext context, String key) {
     final Locale locale = Localizations.localeOf(context);

@@ -39,7 +39,7 @@ void main() {
             home: Scaffold(
               body: BosLearnerLoopInsightsCard(
                 title: 'Learning Support Snapshot',
-                subtitle: 'Latest verified learning signals for this learner',
+                subtitle: 'Current learning signals for this learner',
                 emptyLabel: 'No learning support snapshot yet',
                 learnerId: 'learner-1',
                 learnerName: 'Avery Chen',
@@ -47,7 +47,8 @@ void main() {
                   required String siteId,
                   required String learnerId,
                   required int lookbackDays,
-                }) async => <String, dynamic>{
+                }) async =>
+                    <String, dynamic>{
                   'state': <String, dynamic>{
                     'cognition': 'bad',
                   },
@@ -74,12 +75,13 @@ void main() {
       await tester.pump(const Duration(milliseconds: 50));
       await tester.pumpAndSettle();
 
-      expect(find.text('No verified learning signals yet'), findsOneWidget);
+      expect(find.text('No current learning signals yet'), findsOneWidget);
       expect(find.textContaining('Mastery Validation 0/0/0'), findsNothing);
       expect(find.textContaining('Growth Trend'), findsNothing);
     });
 
-    testWidgets('class insights renders unavailable counts for malformed payload',
+    testWidgets(
+        'class insights renders unavailable counts for malformed payload',
         (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
@@ -87,8 +89,8 @@ void main() {
           home: Scaffold(
             body: BosClassInsightsCard(
               title: 'Class Support Snapshot',
-                subtitle:
-                  'Verified class learning signals, learners who may need support, and active understanding checks',
+              subtitle:
+                  'Current class learning signals, learners who may need support, and active understanding checks',
               emptyLabel: 'No class support snapshot yet',
               sessionOccurrenceId: 'occ-1',
               siteId: 'site-1',
@@ -96,7 +98,8 @@ void main() {
               insightsLoader: ({
                 required String sessionOccurrenceId,
                 required String siteId,
-              }) async => <String, dynamic>{
+              }) async =>
+                  <String, dynamic>{
                 'learnerCount': 'bad',
                 'activeMvlCount': 'bad',
                 'averages': <String, dynamic>{
@@ -126,17 +129,18 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.textContaining('Learners Tracked No verified learning signals yet'),
+        find.textContaining('Learners Tracked No current learning signals yet'),
         findsOneWidget,
       );
       expect(
-        find.textContaining('Active Understanding Checks No verified learning signals yet'),
+        find.textContaining(
+            'Active Understanding Checks No current learning signals yet'),
         findsOneWidget,
       );
       expect(find.text('Learners Who May Need Support'), findsOneWidget);
       expect(find.textContaining('Cognition 41%'), findsWidgets);
       expect(
-        find.textContaining('Engagement No verified learning signals yet'),
+        find.textContaining('Engagement No current learning signals yet'),
         findsWidgets,
       );
     });
@@ -153,7 +157,7 @@ void main() {
             home: Scaffold(
               body: BosLearnerLoopInsightsCard(
                 title: 'Learning Support Snapshot',
-                subtitle: 'Latest verified learning signals for this learner',
+                subtitle: 'Current learning signals for this learner',
                 emptyLabel: 'No learning support snapshot yet',
                 learnerId: 'learner-1',
                 learnerName: 'Avery Chen',
@@ -161,7 +165,8 @@ void main() {
                   required String siteId,
                   required String learnerId,
                   required int lookbackDays,
-                }) async => <String, dynamic>{
+                }) async =>
+                    <String, dynamic>{
                   'synthetic': true,
                   'state': <String, dynamic>{
                     'cognition': 0.72,
@@ -211,7 +216,7 @@ void main() {
           home: Scaffold(
             body: BosClassInsightsCard(
               title: 'Class Support Snapshot',
-                subtitle:
+              subtitle:
                   'Verified class learning signals, learners who may need support, and active understanding checks',
               emptyLabel: 'No class support snapshot yet',
               sessionOccurrenceId: 'occ-1',
@@ -222,7 +227,8 @@ void main() {
               insightsLoader: ({
                 required String sessionOccurrenceId,
                 required String siteId,
-              }) async => <String, dynamic>{
+              }) async =>
+                  <String, dynamic>{
                 'synthetic': true,
                 'learnerCount': 1,
                 'activeMvlCount': 0,
