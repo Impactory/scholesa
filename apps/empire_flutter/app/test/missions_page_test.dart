@@ -29,7 +29,9 @@ AppState _buildLearnerState() {
   return appState;
 }
 
-Widget _buildHarness({required FirestoreService firestoreService, required MissionService missionService}) {
+Widget _buildHarness(
+    {required FirestoreService firestoreService,
+    required MissionService missionService}) {
   return MultiProvider(
     providers: <SingleChildWidget>[
       ChangeNotifierProvider<AppState>.value(value: _buildLearnerState()),
@@ -43,7 +45,11 @@ Widget _buildHarness({required FirestoreService firestoreService, required Missi
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales: const <Locale>[Locale('en'), Locale('zh', 'CN'), Locale('zh', 'TW')],
+      supportedLocales: const <Locale>[
+        Locale('en'),
+        Locale('zh', 'CN'),
+        Locale('zh', 'TW')
+      ],
       home: const MissionsPage(),
     ),
   );
@@ -68,7 +74,12 @@ Future<void> _seedMissionAndGate(FakeFirebaseFirestore firestore) async {
       'xpReward': 120,
     },
   );
-  await firestore.collection('missions').doc('mission-1').collection('steps').doc('step-1').set(
+  await firestore
+      .collection('missions')
+      .doc('mission-1')
+      .collection('steps')
+      .doc('step-1')
+      .set(
     <String, dynamic>{
       'title': 'Prototype',
       'order': 1,
@@ -120,7 +131,12 @@ Future<void> _seedMission(FakeFirebaseFirestore firestore) async {
       'xpReward': 120,
     },
   );
-  await firestore.collection('missions').doc('mission-1').collection('steps').doc('step-1').set(
+  await firestore
+      .collection('missions')
+      .doc('mission-1')
+      .collection('steps')
+      .doc('step-1')
+      .set(
     <String, dynamic>{
       'title': 'Prototype',
       'order': 1,
@@ -166,7 +182,8 @@ Future<void> _seedCompletedMissionReadyForReview(
 }
 
 void main() {
-  testWidgets('missions page shows empty available-state copy', (WidgetTester tester) async {
+  testWidgets('missions page shows empty available-state copy',
+      (WidgetTester tester) async {
     final FirestoreService firestoreService = FirestoreService(
       firestore: FakeFirebaseFirestore(),
       auth: _MockFirebaseAuth(),
@@ -251,7 +268,7 @@ void main() {
 
     await tester.tap(find.text('In Progress'));
     await tester.pumpAndSettle();
-  await tester.tap(find.text('Mission with AI fallback').first);
+    await tester.tap(find.text('Mission with AI fallback').first);
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Get AI Help'));
     await tester.tap(find.byKey(const Key('mission-ai-toggle')));
@@ -275,7 +292,8 @@ void main() {
     );
   });
 
-  testWidgets('missions page submits learner evidence into canonical review collections',
+  testWidgets(
+      'missions page submits learner evidence into canonical review collections',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     await _seedCompletedMissionReadyForReview(firestore);
@@ -372,18 +390,21 @@ void main() {
     expect((attempt['proofBundleSummary'] as Map<String, dynamic>)['isReady'],
         isTrue);
     expect(
-      (attempt['proofBundleSummary'] as Map<String, dynamic>)['checkpointCount'],
+      (attempt['proofBundleSummary']
+          as Map<String, dynamic>)['checkpointCount'],
       1,
     );
     expect(
-      (attempt['proofBundleSummary'] as Map<String, dynamic>)['hasExplainItBack'],
+      (attempt['proofBundleSummary']
+          as Map<String, dynamic>)['hasExplainItBack'],
       isTrue,
     );
     expect(
-      (attempt['proofBundleSummary'] as Map<String, dynamic>)['aiAssistanceUsed'],
+      (attempt['proofBundleSummary']
+          as Map<String, dynamic>)['aiAssistanceUsed'],
       isFalse,
     );
-      expect(attempt['missionTitle'], 'Mission ready for review');
+    expect(attempt['missionTitle'], 'Mission ready for review');
 
     final DocumentSnapshot<Map<String, dynamic>> assignment = await firestore
         .collection('missionAssignments')
@@ -402,5 +423,37 @@ void main() {
       (proofBundle.data()?['versionHistory'] as List<dynamic>).length,
       1,
     );
+  });
+
+  testWidgets('missions page labels learner-finished work as finished',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedCompletedMissionReadyForReview(firestore);
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final MissionService missionService = MissionService(
+      firestoreService: firestoreService,
+      learnerId: 'learner-1',
+    );
+
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      _buildHarness(
+        firestoreService: firestoreService,
+        missionService: missionService,
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Finished'), findsWidgets);
+    expect(find.text('Completed'), findsNothing);
+    expect(find.textContaining('Activity XP'), findsOneWidget);
+    expect(find.textContaining('to next activity level'), findsOneWidget);
   });
 }

@@ -218,7 +218,7 @@ class _MissionsPageState extends State<MissionsPage>
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: <Widget>[
                             Text(
-                              '${progress.totalXp} XP',
+                              '${progress.totalXp} ${_tMissions(context, 'Activity XP')}',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
@@ -227,7 +227,7 @@ class _MissionsPageState extends State<MissionsPage>
                             ),
                             Flexible(
                               child: Text(
-                                '${progress.xpToNextLevel} ${_tMissions(context, 'to next level')}',
+                                '${progress.xpToNextLevel} ${_tMissions(context, 'to next activity level')}',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 textAlign: TextAlign.end,
@@ -262,7 +262,7 @@ class _MissionsPageState extends State<MissionsPage>
                   _ProgressStat(
                     icon: Icons.check_circle,
                     value: '${progress.missionsCompleted}',
-                    label: _tMissions(context, 'Completed'),
+                    label: _tMissions(context, 'Finished'),
                   ),
                   _ProgressStat(
                     icon: Icons.local_fire_department,
@@ -371,7 +371,7 @@ class _MissionsPageState extends State<MissionsPage>
         tabs: <Widget>[
           Tab(text: _tMissions(context, 'Available')),
           Tab(text: _tMissions(context, 'In Progress')),
-          Tab(text: _tMissions(context, 'Completed')),
+          Tab(text: _tMissions(context, 'Finished')),
         ],
       ),
     );
@@ -441,8 +441,8 @@ class _MissionsPageState extends State<MissionsPage>
             _tMissions(context, 'Start a mission to begin your journey!');
         icon = Icons.play_circle_outline;
       case MissionStatus.completed:
-        title = _tMissions(context, 'No completed missions yet');
-        subtitle = _tMissions(context, 'Complete missions to see them here!');
+        title = _tMissions(context, 'No finished missions yet');
+        subtitle = _tMissions(context, 'Finish missions to see them here!');
         icon = Icons.emoji_events_outlined;
       default:
         title = _tMissions(context, 'No missions');

@@ -210,8 +210,7 @@ class WorkflowSurfaceI18n {
         '我们暂时无法加载功能标记。请重试以检查当前状态。',
     'Unable to refresh feature flags right now. Showing the last successful data.':
         '目前无法刷新功能标记。正在显示最近一次成功加载的数据。',
-    'Federated-learning experiments are temporarily unavailable':
-        '联邦学习实验暂时不可用',
+    'Federated-learning experiments are temporarily unavailable': '联邦学习实验暂时不可用',
     'We could not load federated-learning experiments right now. Retry to check the current state.':
         '我们暂时无法加载联邦学习实验。请重试以检查当前状态。',
     'Unable to refresh federated-learning experiments right now. Showing the last successful data.':
@@ -621,8 +620,13 @@ class WorkflowSurfaceI18n {
         '目前无法刷新通知。正在显示最近一次成功加载的数据。',
     'My Missions': '我的任务',
     'Completed': '已完成',
+    'Finished': '已完成',
     'Available': '可用',
     'In Progress': '进行中',
+    'Activity XP': '活动 XP',
+    'to next activity level': '到下一个活动等级',
+    'No finished missions yet': '尚无已完成的任务',
+    'Finish missions to see them here!': '完成任务后会在这里显示！',
     'Steps': '步骤',
     'Proof of Learning': '学习证据包',
     'Capture an explain-it-back, version history, oral check, and mini-rebuild before review.':
@@ -945,7 +949,7 @@ class WorkflowSurfaceI18n {
         '目前無法刷新任務計畫。正在顯示最近一次成功載入的資料。',
     'Learners will appear here when enrollments sync to your roster.':
         '當報名資料同步到名冊後，學習者會顯示在這裡。',
-        'Retry': '重試',
+    'Retry': '重試',
     'Differentiation lane': '差異化路徑',
     'Recommended lane': '建議路徑',
     'Scaffolded lane': '支架路徑',
@@ -1052,8 +1056,7 @@ class WorkflowSurfaceI18n {
         '我們暫時無法載入功能旗標。請重試以檢查目前狀態。',
     'Unable to refresh feature flags right now. Showing the last successful data.':
         '目前無法重新整理功能旗標。正在顯示最近一次成功載入的資料。',
-    'Federated-learning experiments are temporarily unavailable':
-        '聯邦學習實驗暫時不可用',
+    'Federated-learning experiments are temporarily unavailable': '聯邦學習實驗暫時不可用',
     'We could not load federated-learning experiments right now. Retry to check the current state.':
         '我們暫時無法載入聯邦學習實驗。請重試以檢查目前狀態。',
     'Unable to refresh federated-learning experiments right now. Showing the last successful data.':
@@ -1324,8 +1327,13 @@ class WorkflowSurfaceI18n {
         '目前無法重新整理通知。正在顯示最近一次成功載入的資料。',
     'My Missions': '我的任務',
     'Completed': '已完成',
+    'Finished': '已完成',
     'Available': '可用',
     'In Progress': '進行中',
+    'Activity XP': '活動 XP',
+    'to next activity level': '到下一個活動等級',
+    'No finished missions yet': '尚無已完成的任務',
+    'Finish missions to see them here!': '完成任務後會在這裡顯示！',
     'Steps': '步驟',
     'Proof of Learning': '學習證據包',
     'Capture an explain-it-back, version history, oral check, and mini-rebuild before review.':
