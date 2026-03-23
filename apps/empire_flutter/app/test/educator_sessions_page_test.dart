@@ -1,4 +1,5 @@
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -95,14 +96,9 @@ AppState _buildEducatorState() {
 
 Widget _buildHarness({
   required EducatorService educatorService,
+  required FirestoreService firestoreService,
   SharedPreferences? sharedPreferences,
 }) {
-  final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
-  final FirestoreService firestoreService = FirestoreService(
-    firestore: firestore,
-    auth: _MockFirebaseAuth(),
-  );
-
   return MultiProvider(
     providers: <SingleChildWidget>[
       Provider<FirestoreService>.value(value: firestoreService),
@@ -174,7 +170,10 @@ void main() {
         _FakeEducatorService(firestoreService: firestoreService);
 
     await tester.pumpWidget(
-      _buildHarness(educatorService: educatorService),
+      _buildHarness(
+        educatorService: educatorService,
+        firestoreService: firestoreService,
+      ),
     );
     await tester.pump();
     await tester.pumpAndSettle();
@@ -224,7 +223,10 @@ void main() {
     );
 
     await tester.pumpWidget(
-      _buildHarness(educatorService: educatorService),
+      _buildHarness(
+        educatorService: educatorService,
+        firestoreService: firestoreService,
+      ),
     );
     await tester.pump();
     await tester.pumpAndSettle();
@@ -282,6 +284,7 @@ void main() {
     await tester.pumpWidget(
       _buildHarness(
         educatorService: educatorService,
+        firestoreService: firestoreService,
         sharedPreferences: prefs,
       ),
     );
@@ -311,6 +314,7 @@ void main() {
     await tester.pumpWidget(
       _buildHarness(
         educatorService: educatorService,
+        firestoreService: firestoreService,
         sharedPreferences: prefs,
       ),
     );
@@ -320,5 +324,99 @@ void main() {
     expect(find.text('Leadership Circle'), findsOneWidget);
     expect(find.text('Robotics Warm-up'), findsNothing);
     expect(find.text('Impact Expo'), findsNothing);
+  });
+
+  testWidgets(
+      'educator sessions quick evidence capture stores the resolved session occurrence id',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final EducatorService educatorService = _FakeEducatorService(
+      firestoreService: firestoreService,
+      failSessionLoad: false,
+      sessions: <EducatorSession>[
+        _buildSession(
+          id: 'session-1',
+          title: 'Robotics Warm-up',
+          pillar: 'future_skills',
+          status: 'upcoming',
+        ),
+      ],
+      learners: const <EducatorLearner>[
+        EducatorLearner(
+          id: 'learner-1',
+          name: 'Ava Stone',
+          email: 'ava@scholesa.test',
+          attendanceRate: 92,
+          missionsCompleted: 2,
+          pillarProgress: <String, double>{
+            'future_skills': 0.2,
+            'leadership': 0.1,
+            'impact': 0.0,
+          },
+          enrolledSessionIds: <String>['session-1'],
+        ),
+      ],
+    );
+
+    await firestore.collection('sessionOccurrences').doc('occurrence-1').set(
+      <String, dynamic>{
+        'sessionId': 'session-1',
+        'siteId': 'site-1',
+        'educatorId': 'educator-1',
+        'status': 'upcoming',
+        'startTime': Timestamp.fromDate(DateTime.now().add(const Duration(minutes: 20))),
+        'endTime': Timestamp.fromDate(DateTime.now().add(const Duration(hours: 1, minutes: 20))),
+      },
+    );
+
+    await tester.pumpWidget(
+      _buildHarness(
+        educatorService: educatorService,
+        firestoreService: firestoreService,
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Robotics Warm-up').first);
+    await tester.pumpAndSettle();
+
+    final Finder logEvidenceButton =
+      find.widgetWithText(OutlinedButton, 'Log Evidence');
+    await tester.ensureVisible(logEvidenceButton);
+    await tester.tap(logEvidenceButton);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(DropdownButtonFormField<String>).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Ava Stone').last);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Capability focus'),
+      'Clear debugging explanation',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'What evidence did you see?'),
+      'Explained each debugging step and corrected the sensor logic live.',
+    );
+
+    await tester.tap(find.text('Capture Evidence'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Live evidence captured for Ava Stone'), findsOneWidget);
+
+    final QuerySnapshot<Map<String, dynamic>> evidenceSnapshot =
+        await firestore.collection('evidenceRecords').get();
+    expect(evidenceSnapshot.docs, hasLength(1));
+    expect(
+      evidenceSnapshot.docs.first.data()['sessionOccurrenceId'],
+      'occurrence-1',
+    );
   });
 }

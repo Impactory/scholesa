@@ -241,6 +241,7 @@ Interpretation rule:
 151. Corrected the educator learner-roster mastery leak by replacing teacher-facing pillar progress in the learner roster with reviewed `capabilityMastery` aggregation instead of legacy user progress fields, and by removing mission-completion gating from default lane recommendations so live educator support lanes now reflect reviewed capability evidence and attendance rather than inflated completion-era progress data.
 152. Corrected the educator-to-learner proof handoff leak by carrying the learner’s actual explain-it-back, oral check, mini-rebuild, checkpoint, artifact note, and AI disclosure forward into the canonical `missionAttempts` submission record, then preserving checkpoint evidence in reviewed portfolio artifacts so the submission-to-review-to-portfolio chain no longer collapses into a generic “submitted for review” placeholder that drops learner proof detail.
 153. Corrected the learner artifact handoff leak by adding first-class artifact links to the proof bundle, saving them from the learner proof UI, carrying them into canonical `missionAttempts` as `attachmentUrls`, and merging them into reviewed portfolio artifacts so learner-provided artifact evidence no longer disappears between submission and educator review unless it was separately recaptured by an educator observation.
+154. Corrected the educator sessions live-capture provenance leak by resolving the matching `sessionOccurrences` record before the sessions-page quick evidence dialog writes an `evidenceRecords` document, then added direct widget proof that the real `Log Evidence` flow persists the resolved `sessionOccurrenceId` instead of storing null provenance from the session shell.
 
 ### Release and operations fixes
 
@@ -258,6 +259,7 @@ Interpretation rule:
 - Focused attendance honesty regressions passed: 9 passed, 0 failed.
 - Focused operator accessibility follow-up suites passed: 29 passed, 0 failed.
 - Focused site ops recovery suites passed: 8 passed, 0 failed.
+- Focused educator sessions provenance regressions passed: 4 passed, 0 failed.
 - Focused site identity honesty regressions passed: 2 passed, 0 failed.
 - Focused site incidents honesty regressions passed: 4 passed, 0 failed.
 - Focused site integrations health regressions passed: 4 passed, 0 failed.
