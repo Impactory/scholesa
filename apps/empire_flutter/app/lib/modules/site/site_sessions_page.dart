@@ -45,6 +45,7 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
   SharedPreferences? _prefsCache;
   final Map<String, List<SiteSessionData>> _sessionsByTime =
       <String, List<SiteSessionData>>{};
+  final Set<String> _submittingCapabilityRequestIds = <String>{};
   bool _isLoading = false;
   String? _loadError;
 
@@ -240,6 +241,7 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
             SliverToBoxAdapter(child: _buildViewToggle()),
             SliverToBoxAdapter(child: _buildCalendarStrip()),
             SliverToBoxAdapter(child: _buildSessionsHeader()),
+            SliverToBoxAdapter(child: _buildCapabilityCoverageBanner()),
             if (!_isLoading && _loadError != null && _sessionsByTime.isNotEmpty)
               SliverToBoxAdapter(
                 child: Padding(
@@ -292,6 +294,9 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
                     return _SessionTimeSlot(
                       time: slot.key,
                       sessions: slot.value,
+                      onRequestCapabilityMapping: _requestCapabilityMapping,
+                      submittingCapabilityRequestIds:
+                          _submittingCapabilityRequestIds,
                     );
                   },
                   childCount: timeSlots.length,
@@ -648,6 +653,69 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
     );
   }
 
+  Widget _buildCapabilityCoverageBanner() {
+    final List<SiteSessionData> blockedSessions = _blockedSessions();
+    if (blockedSessions.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final int openRequestCount = blockedSessions
+        .where((SiteSessionData session) => session.hasOpenCapabilityRequest)
+        .length;
+    final int pendingRequestCount = blockedSessions.length - openRequestCount;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFFBEB),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFFDE68A)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                const Icon(
+                  Icons.warning_amber_rounded,
+                  color: Color(0xFFB45309),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    _tSiteSessions(
+                      context,
+                      'Upcoming sessions blocked by capability mapping',
+                    ),
+                    style: const TextStyle(
+                      color: ScholesaColors.textPrimary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '${blockedSessions.length} ${_tSiteSessions(context, 'sessions are currently waiting on HQ capability mappings before educators can log live evidence.')}',
+              style: const TextStyle(color: ScholesaColors.textSecondary),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '${openRequestCount} ${_tSiteSessions(context, 'request open')} • $pendingRequestCount ${_tSiteSessions(context, 'not yet requested')}',
+              style: const TextStyle(
+                color: ScholesaColors.textSecondary,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showFilterSheet() {
     showModalBottomSheet<void>(
       context: context,
@@ -940,6 +1008,54 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
       }
     }
 
+    final QuerySnapshot<Map<String, dynamic>> capabilitySnapshot =
+        await firestoreService.firestore.collection('capabilities').limit(500).get();
+    final Map<String, int> scopedCapabilityCounts = <String, int>{};
+    final Map<String, int> globalCapabilityCounts = <String, int>{};
+    for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+        in capabilitySnapshot.docs) {
+      final Map<String, dynamic> capability = doc.data();
+      final String pillarCode =
+          _capabilityMappingPillarCode(capability['pillarCode'] as String? ?? '');
+      if (pillarCode.isEmpty) {
+        continue;
+      }
+      final String capabilitySiteId =
+          (capability['siteId'] as String? ?? '').trim();
+      if (capabilitySiteId.isEmpty) {
+        globalCapabilityCounts[pillarCode] =
+            (globalCapabilityCounts[pillarCode] ?? 0) + 1;
+      } else {
+        final String key = '$capabilitySiteId|$pillarCode';
+        scopedCapabilityCounts[key] = (scopedCapabilityCounts[key] ?? 0) + 1;
+      }
+    }
+
+    final QuerySnapshot<Map<String, dynamic>> supportRequestSnapshot =
+        await firestoreService.firestore
+            .collection('supportRequests')
+            .where('siteId', isEqualTo: siteId)
+            .limit(200)
+            .get();
+    final Set<String> openCapabilityRequestSessionIds = <String>{};
+    for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+        in supportRequestSnapshot.docs) {
+      final Map<String, dynamic> request = doc.data();
+      if ((request['requestType'] as String? ?? '').trim() !=
+          'session_capability_mapping') {
+        continue;
+      }
+      if ((request['status'] as String? ?? 'open').trim() == 'closed') {
+        continue;
+      }
+      final Map<String, dynamic> metadata =
+          Map<String, dynamic>.from(request['metadata'] as Map? ?? <String, dynamic>{});
+      final String sessionId = (metadata['sessionId'] as String? ?? '').trim();
+      if (sessionId.isNotEmpty) {
+        openCapabilityRequestSessionIds.add(sessionId);
+      }
+    }
+
     final Map<String, List<SiteSessionData>> grouped =
         <String, List<SiteSessionData>>{};
     for (final QueryDocumentSnapshot<Map<String, dynamic>> doc in snapshot.docs) {
@@ -952,16 +1068,153 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
         continue;
       }
       final String slot = _sessionTimeSlot(data);
+      final String capabilityPillarCode =
+          _capabilityMappingPillarCode(_sessionPillar(data));
+      final int mappedCapabilityCount =
+          (scopedCapabilityCounts['$siteId|$capabilityPillarCode'] ?? 0) +
+              (globalCapabilityCounts[capabilityPillarCode] ?? 0);
       final SiteSessionData session = SiteSessionData(
+        id: doc.id,
         title: _sessionTitle(data, doc.id),
         educator: _sessionEducator(data),
         room: _sessionRoom(data),
         learnerCount: _sessionLearnerCount(data),
         pillar: _sessionPillar(data),
+        mappedCapabilityCount: mappedCapabilityCount,
+        hasOpenCapabilityRequest: openCapabilityRequestSessionIds.contains(doc.id),
       );
       grouped.putIfAbsent(slot, () => <SiteSessionData>[]).add(session);
     }
     return grouped;
+  }
+
+  List<SiteSessionData> _blockedSessions() {
+    return _sessionsByTime.values
+        .expand((List<SiteSessionData> sessions) => sessions)
+        .where((SiteSessionData session) => session.mappedCapabilityCount <= 0)
+        .toList(growable: false);
+  }
+
+  Future<void> _requestCapabilityMapping(SiteSessionData session) async {
+    if (session.id.isEmpty ||
+        _submittingCapabilityRequestIds.contains(session.id) ||
+        session.hasOpenCapabilityRequest) {
+      return;
+    }
+    final FirestoreService? firestoreService = _maybeFirestoreService();
+    final AppState? appState = _maybeAppState();
+    final String siteId = (appState?.activeSiteId ??
+            (appState?.siteIds.isNotEmpty == true ? appState!.siteIds.first : ''))
+        .trim();
+    final String userId = (appState?.userId ?? '').trim();
+    final String userEmail = (appState?.email ?? '').trim();
+    final String userName = (appState?.displayName ?? '').trim();
+    final String role = appState?.role?.name ?? '';
+    if (firestoreService == null ||
+        siteId.isEmpty ||
+        userId.isEmpty ||
+        userEmail.isEmpty ||
+        userName.isEmpty ||
+        role.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tSiteSessions(
+              context,
+              'Unable to submit HQ mapping request right now. Refresh your session and try again.',
+            ),
+          ),
+          backgroundColor: ScholesaColors.error,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _submittingCapabilityRequestIds.add(session.id);
+    });
+    try {
+      final String requestId = await firestoreService.submitSupportRequest(
+        requestType: 'session_capability_mapping',
+        source: 'site_sessions_request_capability_mapping',
+        siteId: siteId,
+        userId: userId,
+        userEmail: userEmail,
+        userName: userName,
+        role: role,
+        subject: 'Session capability mapping request: ${session.title}',
+        message:
+            'Educators are blocked from live evidence capture until HQ maps at least one capability for the ${session.pillar} pillar.',
+        metadata: <String, dynamic>{
+          'sessionId': session.id,
+          'sessionTitle': session.title,
+          'pillar': session.pillar,
+          'educator': session.educator,
+          'room': session.room,
+          'learnerCount': session.learnerCount,
+          'mappedCapabilityCount': session.mappedCapabilityCount,
+        },
+      );
+      TelemetryService.instance.logEvent(
+        event: 'site.session_capability_mapping_request.submitted',
+        metadata: <String, dynamic>{
+          'request_id': requestId,
+          'session_id': session.id,
+          'pillar': session.pillar,
+        },
+      );
+      if (!mounted) return;
+      setState(() {
+        _markCapabilityRequestOpen(session.id);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tSiteSessions(context, 'HQ mapping request submitted.'),
+          ),
+          backgroundColor: ScholesaColors.success,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      TelemetryService.instance.logEvent(
+        event: 'site.session_capability_mapping_request.failed',
+        metadata: <String, dynamic>{
+          'session_id': session.id,
+          'pillar': session.pillar,
+        },
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tSiteSessions(
+              context,
+              'Unable to submit HQ mapping request right now.',
+            ),
+          ),
+          backgroundColor: ScholesaColors.error,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _submittingCapabilityRequestIds.remove(session.id);
+        });
+      }
+    }
+  }
+
+  void _markCapabilityRequestOpen(String sessionId) {
+    _sessionsByTime.updateAll(
+      (String key, List<SiteSessionData> value) => value
+          .map(
+            (SiteSessionData session) => session.id == sessionId
+                ? session.copyWith(hasOpenCapabilityRequest: true)
+                : session,
+          )
+          .toList(growable: false),
+    );
   }
 
   Widget _buildLoadErrorState(String message) {
@@ -1255,6 +1508,20 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
         return 'future_skills';
     }
   }
+
+  String _capabilityMappingPillarCode(String pillar) {
+    switch (pillar.trim().toLowerCase()) {
+      case 'leadership':
+      case 'leadership & agency':
+        return 'LEAD';
+      case 'impact':
+      case 'impact & innovation':
+        return 'IMP';
+      case 'future skills':
+      default:
+        return 'FS';
+    }
+  }
 }
 
 class _NewSessionResult {
@@ -1306,23 +1573,59 @@ class _ViewToggleButton extends StatelessWidget {
 
 class SiteSessionData {
   const SiteSessionData({
+    this.id = '',
     required this.title,
     required this.educator,
     required this.room,
     required this.learnerCount,
     required this.pillar,
+    this.mappedCapabilityCount = 0,
+    this.hasOpenCapabilityRequest = false,
   });
+  final String id;
   final String title;
   final String educator;
   final String room;
   final int learnerCount;
   final String pillar;
+  final int mappedCapabilityCount;
+  final bool hasOpenCapabilityRequest;
+
+  SiteSessionData copyWith({
+    String? id,
+    String? title,
+    String? educator,
+    String? room,
+    int? learnerCount,
+    String? pillar,
+    int? mappedCapabilityCount,
+    bool? hasOpenCapabilityRequest,
+  }) {
+    return SiteSessionData(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      educator: educator ?? this.educator,
+      room: room ?? this.room,
+      learnerCount: learnerCount ?? this.learnerCount,
+      pillar: pillar ?? this.pillar,
+      mappedCapabilityCount: mappedCapabilityCount ?? this.mappedCapabilityCount,
+      hasOpenCapabilityRequest:
+          hasOpenCapabilityRequest ?? this.hasOpenCapabilityRequest,
+    );
+  }
 }
 
 class _SessionTimeSlot extends StatelessWidget {
-  const _SessionTimeSlot({required this.time, required this.sessions});
+  const _SessionTimeSlot({
+    required this.time,
+    required this.sessions,
+    required this.onRequestCapabilityMapping,
+    required this.submittingCapabilityRequestIds,
+  });
   final String time;
   final List<SiteSessionData> sessions;
+  final ValueChanged<SiteSessionData> onRequestCapabilityMapping;
+  final Set<String> submittingCapabilityRequestIds;
 
   @override
   Widget build(BuildContext context) {
@@ -1348,7 +1651,14 @@ class _SessionTimeSlot extends StatelessWidget {
           Expanded(
             child: Column(
               children: sessions
-                  .map((SiteSessionData session) => _SessionCard(session: session))
+                  .map(
+                    (SiteSessionData session) => _SessionCard(
+                      session: session,
+                      onRequestCapabilityMapping: onRequestCapabilityMapping,
+                      isSubmittingCapabilityRequest:
+                          submittingCapabilityRequestIds.contains(session.id),
+                    ),
+                  )
                   .toList(),
             ),
           ),
@@ -1359,8 +1669,14 @@ class _SessionTimeSlot extends StatelessWidget {
 }
 
 class _SessionCard extends StatelessWidget {
-  const _SessionCard({required this.session});
+  const _SessionCard({
+    required this.session,
+    required this.onRequestCapabilityMapping,
+    required this.isSubmittingCapabilityRequest,
+  });
   final SiteSessionData session;
+  final ValueChanged<SiteSessionData> onRequestCapabilityMapping;
+  final bool isSubmittingCapabilityRequest;
 
   Color get _pillarColor {
     switch (session.pillar.toLowerCase()) {
@@ -1458,16 +1774,121 @@ class _SessionCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
+            _buildCapabilityStatus(context),
+            const SizedBox(height: 12),
             Align(
               alignment: Alignment.centerRight,
-              child: TextButton.icon(
-                onPressed: () => _showAssignSubstituteSheet(context),
-                icon: const Icon(Icons.swap_horiz_rounded, size: 16),
-                label: Text(_tSiteSessions(context, 'Assign Substitute')),
+              child: Wrap(
+                alignment: WrapAlignment.end,
+                spacing: 8,
+                runSpacing: 8,
+                children: <Widget>[
+                  if (session.mappedCapabilityCount <= 0)
+                    OutlinedButton.icon(
+                      onPressed: session.hasOpenCapabilityRequest ||
+                              isSubmittingCapabilityRequest
+                          ? null
+                          : () => onRequestCapabilityMapping(session),
+                      icon: isSubmittingCapabilityRequest
+                          ? const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Icon(
+                              session.hasOpenCapabilityRequest
+                                  ? Icons.check_circle_outline_rounded
+                                  : Icons.mail_outline_rounded,
+                              size: 16,
+                            ),
+                      label: Text(
+                        session.hasOpenCapabilityRequest
+                            ? _tSiteSessions(context, 'HQ mapping request open')
+                            : _tSiteSessions(context, 'Request HQ mapping'),
+                      ),
+                    ),
+                  TextButton.icon(
+                    onPressed: () => _showAssignSubstituteSheet(context),
+                    icon: const Icon(Icons.swap_horiz_rounded, size: 16),
+                    label: Text(_tSiteSessions(context, 'Assign Substitute')),
+                  ),
+                ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildCapabilityStatus(BuildContext context) {
+    final bool blocked = session.mappedCapabilityCount <= 0;
+    final Color badgeColor = blocked ? const Color(0xFF9A3412) : const Color(0xFF166534);
+    final Color badgeBackground =
+        blocked ? const Color(0xFFFFEDD5) : const Color(0xFFDCFCE7);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: badgeBackground,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.8),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  blocked
+                      ? _tSiteSessions(context, 'Blocked')
+                      : _tSiteSessions(context, 'Ready'),
+                  style: TextStyle(
+                    color: badgeColor,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  session.mappedCapabilityCount == 1
+                      ? _tSiteSessions(context, '1 mapped capability')
+                      : '${session.mappedCapabilityCount} ${_tSiteSessions(context, 'mapped capabilities')}',
+                  style: TextStyle(
+                    color: badgeColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            blocked
+                ? _tSiteSessions(
+                    context,
+                    session.hasOpenCapabilityRequest
+                        ? 'HQ already has an open mapping request for this session. Educators stay blocked until the mapping is added and schedule data refreshes.'
+                        : 'Educators are blocked from live evidence capture until HQ maps at least one capability for this session pillar.',
+                  )
+                : _tSiteSessions(
+                    context,
+                    'Educators can log live evidence for this session because mapped capability coverage is available.',
+                  ),
+            style: const TextStyle(
+              color: ScholesaColors.textSecondary,
+              fontSize: 12,
+            ),
+          ),
+        ],
       ),
     );
   }

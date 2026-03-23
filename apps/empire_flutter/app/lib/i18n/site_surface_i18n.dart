@@ -239,6 +239,27 @@ class SiteSurfaceI18n {
     'Future Skills': '未来技能',
     'Leadership': '领导力',
     'Impact': '影响力',
+    'Upcoming sessions blocked by capability mapping': '即将开始的课程因能力映射而受阻',
+    'sessions are currently waiting on HQ capability mappings before educators can log live evidence.':
+        '这些课程目前正在等待 HQ 完成能力映射，教育者之后才能记录现场证据。',
+    'request open': '请求已开启',
+    'not yet requested': '尚未请求',
+    'Blocked': '受阻',
+    'Ready': '就绪',
+    '1 mapped capability': '1 个已映射能力',
+    'mapped capabilities': '个已映射能力',
+    'HQ already has an open mapping request for this session. Educators stay blocked until the mapping is added and schedule data refreshes.':
+        'HQ 已为这节课开启能力映射请求。在添加映射并刷新课表之前，教育者仍会被阻止记录现场证据。',
+    'Educators are blocked from live evidence capture until HQ maps at least one capability for this session pillar.':
+        '在 HQ 为该课程支柱至少映射一个能力之前，教育者将无法记录现场证据。',
+    'Educators can log live evidence for this session because mapped capability coverage is available.':
+        '由于已有能力映射覆盖，教育者现在可以为这节课记录现场证据。',
+    'Request HQ mapping': '请求 HQ 映射',
+    'HQ mapping request open': 'HQ 映射请求已开启',
+    'HQ mapping request submitted.': 'HQ 映射请求已提交。',
+    'Unable to submit HQ mapping request right now. Refresh your session and try again.':
+        '目前无法提交 HQ 映射请求。请刷新后重试。',
+    'Unable to submit HQ mapping request right now.': '目前无法提交 HQ 映射请求。',
     'Assign Substitute': '指派代课老师',
     'Substitute Pool A': '代课资源池 A',
     'Substitute Pool B': '代课资源池 B',
@@ -615,6 +636,27 @@ class SiteSurfaceI18n {
     'Future Skills': '未來技能',
     'Leadership': '領導力',
     'Impact': '影響力',
+    'Upcoming sessions blocked by capability mapping': '即將開始的課程因能力映射而受阻',
+    'sessions are currently waiting on HQ capability mappings before educators can log live evidence.':
+        '這些課程目前正在等待 HQ 完成能力映射，教育者之後才能記錄現場證據。',
+    'request open': '請求已開啟',
+    'not yet requested': '尚未請求',
+    'Blocked': '受阻',
+    'Ready': '就緒',
+    '1 mapped capability': '1 個已映射能力',
+    'mapped capabilities': '個已映射能力',
+    'HQ already has an open mapping request for this session. Educators stay blocked until the mapping is added and schedule data refreshes.':
+        'HQ 已為這節課開啟能力映射請求。在新增映射並刷新課表之前，教育者仍會被阻止記錄現場證據。',
+    'Educators are blocked from live evidence capture until HQ maps at least one capability for this session pillar.':
+        '在 HQ 為此課程支柱至少映射一個能力之前，教育者將無法記錄現場證據。',
+    'Educators can log live evidence for this session because mapped capability coverage is available.':
+        '由於已有能力映射覆蓋，教育者現在可以為這節課記錄現場證據。',
+    'Request HQ mapping': '請求 HQ 映射',
+    'HQ mapping request open': 'HQ 映射請求已開啟',
+    'HQ mapping request submitted.': 'HQ 映射請求已提交。',
+    'Unable to submit HQ mapping request right now. Refresh your session and try again.':
+        '目前無法提交 HQ 映射請求。請重新整理後再試。',
+    'Unable to submit HQ mapping request right now.': '目前無法提交 HQ 映射請求。',
     'Assign Substitute': '指派代課教師',
     'Substitute Pool A': '代課資源池 A',
     'Substitute Pool B': '代課資源池 B',

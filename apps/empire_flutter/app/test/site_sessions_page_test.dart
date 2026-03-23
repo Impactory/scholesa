@@ -534,4 +534,79 @@ void main() {
     expect(find.text('Failed Session'), findsNothing);
     expect(loadCount, initialLoadCount);
   });
+
+  testWidgets(
+      'site sessions submits a persisted HQ mapping request for blocked sessions',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final AppState appState = _buildSiteState();
+
+    await tester.pumpWidget(
+      _buildHarness(
+        child: MultiProvider(
+          providers: <SingleChildWidget>[
+            Provider<FirestoreService>.value(value: firestoreService),
+            ChangeNotifierProvider<AppState>.value(value: appState),
+          ],
+          child: SiteSessionsPage(
+            sessionsLoader: (
+              BuildContext context,
+              DateTime selectedDate,
+            ) async {
+              return <String, List<SiteSessionData>>{
+                '9:00 AM': const <SiteSessionData>[
+                  SiteSessionData(
+                    id: 'session-1',
+                    title: 'Impact Studio',
+                    educator: 'Coach Ada',
+                    room: 'Lab 1',
+                    learnerCount: 14,
+                    pillar: 'Impact',
+                    mappedCapabilityCount: 0,
+                  ),
+                ],
+              };
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Upcoming sessions blocked by capability mapping'),
+        findsOneWidget);
+
+    final Finder requestButton =
+        find.widgetWithText(OutlinedButton, 'Request HQ mapping');
+    await tester.ensureVisible(requestButton);
+    await tester.tap(requestButton);
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('HQ mapping request submitted.'), findsOneWidget);
+    expect(find.widgetWithText(OutlinedButton, 'HQ mapping request open'),
+        findsOneWidget);
+
+    final QuerySnapshot<Map<String, dynamic>> supportRequests =
+        await firestore.collection('supportRequests').get();
+    expect(supportRequests.docs, hasLength(1));
+    expect(
+      supportRequests.docs.single.data()['requestType'],
+      'session_capability_mapping',
+    );
+    expect(
+      supportRequests.docs.single.data()['subject'],
+      'Session capability mapping request: Impact Studio',
+    );
+    expect(
+      (supportRequests.docs.single.data()['metadata'] as Map<String, dynamic>)[
+          'sessionId'],
+      'session-1',
+    );
+  });
 }

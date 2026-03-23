@@ -12,6 +12,7 @@ import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/modules/educator/educator_models.dart';
 import 'package:scholesa_app/modules/educator/educator_service.dart';
 import 'package:scholesa_app/modules/educator/educator_sessions_page.dart';
+import 'package:scholesa_app/modules/hq_admin/hq_curriculum_page.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
 import 'package:scholesa_app/ui/theme/scholesa_theme.dart';
 
@@ -94,6 +95,21 @@ AppState _buildEducatorState() {
   return state;
 }
 
+AppState _buildHqState() {
+  final AppState state = AppState();
+  state.updateFromMeResponse(<String, dynamic>{
+    'userId': 'hq-user-1',
+    'email': 'hq@scholesa.test',
+    'displayName': 'HQ Admin',
+    'role': 'hq',
+    'activeSiteId': 'site-1',
+    'siteIds': <String>['site-1'],
+    'localeCode': 'en',
+    'entitlements': <Map<String, dynamic>>[],
+  });
+  return state;
+}
+
 Widget _buildHarness({
   required EducatorService educatorService,
   required FirestoreService firestoreService,
@@ -121,6 +137,45 @@ Widget _buildHarness({
       home: EducatorSessionsPage(sharedPreferences: sharedPreferences),
     ),
   );
+}
+
+Widget _buildHqHarness({required FirestoreService firestoreService}) {
+  return MultiProvider(
+    providers: <SingleChildWidget>[
+      Provider<FirestoreService>.value(value: firestoreService),
+      ChangeNotifierProvider<AppState>.value(value: _buildHqState()),
+    ],
+    child: MaterialApp(
+      theme: ScholesaTheme.light,
+      locale: const Locale('en'),
+      localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const <Locale>[
+        Locale('en'),
+        Locale('zh', 'CN'),
+        Locale('zh', 'TW'),
+      ],
+      home: const HqCurriculumPage(),
+    ),
+  );
+}
+
+Future<void> _enterHqDialogTextField(
+  WidgetTester tester,
+  int index,
+  String value,
+) async {
+  final Finder dialogFields = find.descendant(
+    of: find.byType(AlertDialog),
+    matching: find.byType(TextField),
+  );
+  final Finder field = dialogFields.at(index);
+  await tester.ensureVisible(field);
+  await tester.enterText(field, value);
+  await tester.pump();
 }
 
 EducatorSession _buildSession({
@@ -738,5 +793,112 @@ void main() {
       evidence['aiAssistanceDetails'],
       'AI suggested two threshold options, but the learner tested and chose the final value.',
     );
+  });
+
+  testWidgets(
+      'HQ capability mapping clears readiness and unblocks educator live evidence on reload',
+      (WidgetTester tester) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 1600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+
+    await firestore.collection('sessions').doc('session-1').set(
+      <String, dynamic>{
+        'siteId': 'site-1',
+        'title': 'Robotics Warm-up',
+        'pillar': 'Future Skills',
+        'educatorName': 'Educator One',
+        'startTime': Timestamp.fromDate(
+          DateTime.now().add(const Duration(days: 1)),
+        ),
+      },
+    );
+
+    await tester.pumpWidget(
+      _buildHqHarness(firestoreService: firestoreService),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Robotics Warm-up'), findsOneWidget);
+    expect(find.text('Blocked'), findsOneWidget);
+
+    final Finder createMappedCurriculum =
+        find.widgetWithText(OutlinedButton, 'Create mapped curriculum');
+    await tester.ensureVisible(createMappedCurriculum);
+    await tester.tap(createMappedCurriculum);
+    await tester.pumpAndSettle();
+
+    await _enterHqDialogTextField(tester, 0, 'Future Skills Studio Map');
+    await _enterHqDialogTextField(
+      tester,
+      1,
+      'Curriculum created from a blocked live session readiness row.',
+    );
+    await _enterHqDialogTextField(tester, 3, 'Prototype evidence');
+
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Create'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Curriculum created'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.refresh_rounded).first);
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ready'), findsOneWidget);
+    expect(find.text('1 mapped capability'), findsOneWidget);
+
+    final EducatorService educatorService = _FakeEducatorService(
+      firestoreService: firestoreService,
+      failSessionLoad: false,
+      sessions: <EducatorSession>[
+        _buildSession(
+          id: 'session-1',
+          title: 'Robotics Warm-up',
+          pillar: 'future_skills',
+          status: 'upcoming',
+        ),
+      ],
+      learners: const <EducatorLearner>[
+        EducatorLearner(
+          id: 'learner-1',
+          name: 'Ava Stone',
+          email: 'ava@scholesa.test',
+          attendanceRate: 92,
+          missionsCompleted: 2,
+          pillarProgress: <String, double>{
+            'future_skills': 0.2,
+            'leadership': 0.1,
+            'impact': 0.0,
+          },
+          enrolledSessionIds: <String>['session-1'],
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      _buildHarness(
+        educatorService: educatorService,
+        firestoreService: firestoreService,
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Robotics Warm-up').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Capability mapping required'), findsNothing);
+    final OutlinedButton logEvidenceButton = tester.widget<OutlinedButton>(
+      find.widgetWithText(OutlinedButton, 'Log Evidence'),
+    );
+    expect(logEvidenceButton.onPressed, isNotNull);
   });
 }
