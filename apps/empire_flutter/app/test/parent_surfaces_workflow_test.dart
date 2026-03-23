@@ -235,7 +235,10 @@ Future<void> _seedParentSessionCouplingData(
     'displayName': 'Parent One',
     'learnerIds': <String>['learner-1'],
   });
-  await firestore.collection('guardianLinks').doc('link-1').set(<String, dynamic>{
+  await firestore
+      .collection('guardianLinks')
+      .doc('link-1')
+      .set(<String, dynamic>{
     'parentId': 'parent-1',
     'learnerId': 'learner-1',
     'siteId': 'site-1',
@@ -250,17 +253,26 @@ Future<void> _seedParentSessionCouplingData(
     'displayName': 'Hidden Learner',
     'siteIds': <String>['site-1'],
   });
-  await firestore.collection('enrollments').doc('enrollment-1').set(<String, dynamic>{
+  await firestore
+      .collection('enrollments')
+      .doc('enrollment-1')
+      .set(<String, dynamic>{
     'sessionId': 'session-1',
     'learnerId': 'learner-1',
     'status': 'active',
   });
-  await firestore.collection('enrollments').doc('enrollment-2').set(<String, dynamic>{
+  await firestore
+      .collection('enrollments')
+      .doc('enrollment-2')
+      .set(<String, dynamic>{
     'sessionId': 'session-2',
     'learnerId': 'learner-2',
     'status': 'active',
   });
-  await firestore.collection('sessionOccurrences').doc('occ-1').set(<String, dynamic>{
+  await firestore
+      .collection('sessionOccurrences')
+      .doc('occ-1')
+      .set(<String, dynamic>{
     'sessionId': 'session-1',
     'siteId': 'site-1',
     'title': 'Prototype Studio',
@@ -268,7 +280,10 @@ Future<void> _seedParentSessionCouplingData(
     'endTime': Timestamp.fromDate(linkedStart.add(const Duration(hours: 1))),
     'roomName': 'Innovation Lab',
   });
-  await firestore.collection('sessionOccurrences').doc('occ-2').set(<String, dynamic>{
+  await firestore
+      .collection('sessionOccurrences')
+      .doc('occ-2')
+      .set(<String, dynamic>{
     'sessionId': 'session-2',
     'siteId': 'site-1',
     'title': 'Hidden Session',
@@ -774,8 +789,10 @@ void main() {
           'title': 'Prototype Artifact',
           'description': 'Verified artifact',
           'verificationStatus': 'reviewed',
-          'createdAt': Timestamp.fromDate(now.subtract(const Duration(hours: 2))),
-          'updatedAt': Timestamp.fromDate(now.subtract(const Duration(hours: 1))),
+          'createdAt':
+              Timestamp.fromDate(now.subtract(const Duration(hours: 2))),
+          'updatedAt':
+              Timestamp.fromDate(now.subtract(const Duration(hours: 1))),
         },
       );
 
@@ -1001,7 +1018,8 @@ void main() {
       );
     });
 
-    testWidgets('schedule page derives upcoming sessions from linked enrollments',
+    testWidgets(
+        'schedule page derives upcoming sessions from linked enrollments',
         (WidgetTester tester) async {
       final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
       await _seedParentSessionCouplingData(firestore);
@@ -1184,7 +1202,8 @@ void main() {
         find.textContaining('Prototype Studio\nLocation: Innovation Lab'),
         findsOneWidget,
       );
-      expect(find.widgetWithText(TextButton, 'Request Reminder'), findsOneWidget);
+      expect(
+          find.widgetWithText(TextButton, 'Request Reminder'), findsOneWidget);
 
       await tester.tap(find.widgetWithText(TextButton, 'Request Reminder'));
       await tester.pumpAndSettle();
@@ -1201,8 +1220,7 @@ void main() {
         supportRequests.any(
           (Map<String, dynamic> request) =>
               request['requestType'] == 'session_reminder' &&
-              request['source'] ==
-                  'parent_schedule_request_session_reminder' &&
+              request['source'] == 'parent_schedule_request_session_reminder' &&
               request['userId'] == parentId &&
               request['metadata']?['sessionTitle'] == 'Prototype Studio' &&
               request['metadata']?['location'] == 'Innovation Lab' &&
@@ -1332,8 +1350,10 @@ void main() {
           'description': 'Provisioning-linked portfolio evidence',
           'pillarCodes': const <String>['future_skills'],
           'verificationStatus': 'reviewed',
-          'createdAt': Timestamp.fromDate(now.subtract(const Duration(hours: 2))),
-          'updatedAt': Timestamp.fromDate(now.subtract(const Duration(hours: 1))),
+          'createdAt':
+              Timestamp.fromDate(now.subtract(const Duration(hours: 2))),
+          'updatedAt':
+              Timestamp.fromDate(now.subtract(const Duration(hours: 1))),
         },
       );
       await firestore.collection('portfolioItems').doc('hidden-artifact-1').set(
@@ -1343,8 +1363,10 @@ void main() {
           'description': 'Should not appear',
           'pillarCodes': const <String>['impact'],
           'verificationStatus': 'reviewed',
-          'createdAt': Timestamp.fromDate(now.subtract(const Duration(hours: 3))),
-          'updatedAt': Timestamp.fromDate(now.subtract(const Duration(hours: 2))),
+          'createdAt':
+              Timestamp.fromDate(now.subtract(const Duration(hours: 3))),
+          'updatedAt':
+              Timestamp.fromDate(now.subtract(const Duration(hours: 2))),
         },
       );
       await firestore.collection('users').doc('hidden-learner-1').set(
@@ -1499,7 +1521,10 @@ void main() {
           'siteIds': <String>['site-1'],
         },
       );
-      await firestore.collection('portfolioItems').doc('hidden-reviewed-artifact').set(
+      await firestore
+          .collection('portfolioItems')
+          .doc('hidden-reviewed-artifact')
+          .set(
         <String, dynamic>{
           'learnerId': 'hidden-reviewed-learner',
           'title': 'Hidden reviewed artifact',
@@ -1529,6 +1554,8 @@ void main() {
           learnerId: learnerId,
         ),
       );
+      final Object? learnerReviewFlowException = tester.takeException();
+      expect(learnerReviewFlowException, isNull);
 
       await _approveSubmittedMission(
         tester,
@@ -1538,6 +1565,8 @@ void main() {
           learnerId: 'educator-1',
         ),
       );
+      final Object? educatorReviewFlowException = tester.takeException();
+      expect(educatorReviewFlowException, isNull);
 
       final ParentService parentService = ParentService(
         firestoreService: firestoreService,
@@ -1568,7 +1597,8 @@ void main() {
       expect(find.text('Proof verified'), findsWidgets);
       expect(find.text('Learner declared no AI support used'), findsWidgets);
 
-      await tester.tap(find.text('Mission ready for review • Prototype evidence').first);
+      await tester.tap(
+          find.text('Mission ready for review • Prototype evidence').first);
       await tester.pumpAndSettle();
 
       expect(find.text('Capability Evidence'), findsOneWidget);
@@ -1622,7 +1652,8 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byType(FloatingActionButton));
       await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextFormField).at(0), 'Pat Passport Evidence');
+      await tester.enterText(
+          find.byType(TextFormField).at(0), 'Pat Passport Evidence');
       await tester.enterText(
         find.byType(TextFormField).at(1),
         'pat.passport-evidence@example.com',
@@ -1698,7 +1729,10 @@ void main() {
           'observedAt': Timestamp.fromDate(DateTime(2026, 3, 18, 9, 0)),
         },
       );
-      await firestore.collection('portfolioItems').doc('hidden-passport-item').set(
+      await firestore
+          .collection('portfolioItems')
+          .doc('hidden-passport-item')
+          .set(
         <String, dynamic>{
           'learnerId': 'hidden-passport-learner',
           'title': 'Hidden passport artifact',
@@ -1756,13 +1790,12 @@ void main() {
           learnerId: 'educator-1',
         ),
       );
-      final Object? workflowPreParentException = tester.takeException();
-      expect(workflowPreParentException, isNull);
 
-      final QuerySnapshot<Map<String, dynamic>> missionAttempts = await firestore
-          .collection('missionAttempts')
-          .where('learnerId', isEqualTo: learnerId)
-          .get();
+      final QuerySnapshot<Map<String, dynamic>> missionAttempts =
+          await firestore
+              .collection('missionAttempts')
+              .where('learnerId', isEqualTo: learnerId)
+              .get();
       expect(missionAttempts.docs, hasLength(1));
       final String missionAttemptId = missionAttempts.docs.single.id;
 
@@ -1792,7 +1825,25 @@ void main() {
         parentService: parentService,
         home: ParentChildPage(learnerId: learnerId),
       );
+      if (parentService.learnerSummaries.isNotEmpty) {
+        final LearnerSummary learnerSummary = parentService.learnerSummaries.first;
+        debugPrint(
+          'parent learner summary: claims=${learnerSummary.ideationPassport.claims.length}, '
+          'recentActivities=${learnerSummary.recentActivities.length}, '
+          'upcomingEvents=${learnerSummary.upcomingEvents.length}, '
+          'serviceError=${parentService.error}',
+        );
+      }
       final Object? parentChildPumpException = tester.takeException();
+      if (parentChildPumpException != null) {
+        debugPrint('parentChildPumpException: $parentChildPumpException');
+        if (parentChildPumpException is FlutterError) {
+          for (final DiagnosticsNode diagnostic
+              in parentChildPumpException.diagnostics) {
+            debugPrint(diagnostic.toStringDeep());
+          }
+        }
+      }
       expect(parentChildPumpException, isNull);
 
       expect(find.text('Nia Passport Evidence'), findsOneWidget);
@@ -1820,8 +1871,10 @@ void main() {
         _savedFileContent,
         contains('Verification Status: Reviewed'),
       );
-      expect(_savedFileContent, contains('Portfolio Item IDs: $portfolioItemId'));
-      expect(_savedFileContent, contains('Mission Attempt IDs: $missionAttemptId'));
+      expect(
+          _savedFileContent, contains('Portfolio Item IDs: $portfolioItemId'));
+      expect(_savedFileContent,
+          contains('Mission Attempt IDs: $missionAttemptId'));
     });
 
     testWidgets('portfolio page downloads a real summary file',
@@ -1886,7 +1939,8 @@ void main() {
         required String content,
         required String mimeType,
       }) async {
-        throw UnsupportedError('File export is not supported on this platform.');
+        throw UnsupportedError(
+            'File export is not supported on this platform.');
       };
 
       final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
@@ -1905,7 +1959,8 @@ void main() {
       await tester.tap(find.text('Download Summary'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Portfolio summary copied for sharing.'), findsOneWidget);
+      expect(
+          find.text('Portfolio summary copied for sharing.'), findsOneWidget);
       expect(copiedText, contains('Portfolio Item ID: learner-1-activity-1'));
       expect(copiedText, contains('Title: Build a Robot'));
       expect(copiedText, contains('Description: Linked Update'));

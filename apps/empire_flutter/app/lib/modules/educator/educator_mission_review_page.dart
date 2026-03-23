@@ -334,38 +334,48 @@ class _EducatorMissionReviewPageState extends State<EducatorMissionReviewPage> {
   }
 
   Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: ScholesaColors.educator.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.check_circle_outline,
-              size: 64,
-              color: ScholesaColors.educator.withValues(alpha: 0.5),
-            ),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            _tEducatorMissionReview(context, 'All caught up!'),
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: ScholesaColors.educator,
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: ScholesaColors.educator.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.check_circle_outline,
+                    size: 64,
+                    color: ScholesaColors.educator.withValues(alpha: 0.5),
+                  ),
                 ),
+                const SizedBox(height: 24),
+                Text(
+                  _tEducatorMissionReview(context, 'All caught up!'),
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: ScholesaColors.educator,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _tEducatorMissionReview(
+                      context, 'No submissions matching this filter'),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey[600]),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            _tEducatorMissionReview(
-                context, 'No submissions matching this filter'),
-            style: TextStyle(color: Colors.grey[600]),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 

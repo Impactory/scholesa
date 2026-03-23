@@ -802,8 +802,17 @@ class _ParentChildPageState extends State<ParentChildPage> {
                       ScholesaColors.parent.withValues(alpha: 0.12),
                   child: Text(activity.emoji),
                 ),
-                title: Text(activity.title),
-                subtitle: Text(activity.description),
+                title: Text(
+                  activity.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                subtitle: Text(
+                  activity.description,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                isThreeLine: true,
               ),
             )
             .toList(growable: false),
@@ -833,13 +842,19 @@ class _ParentChildPageState extends State<ParentChildPage> {
                   Icons.event_rounded,
                   color: ScholesaColors.parent,
                 ),
-                title: Text(event.title),
+                title: Text(
+                  event.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 subtitle: Text(
                   event.location?.trim().isNotEmpty == true
                       ? '${event.description ?? ''}\n${_t('Location')}: ${event.location}'
                       : event.description ?? '',
+                  maxLines: event.location?.trim().isNotEmpty == true ? 3 : 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                isThreeLine: event.location?.trim().isNotEmpty == true,
+                isThreeLine: true,
               ),
             )
             .toList(growable: false),
