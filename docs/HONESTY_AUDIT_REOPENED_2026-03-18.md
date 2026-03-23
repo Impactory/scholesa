@@ -1,6 +1,6 @@
 # Reopened Honesty Audit
 
-Last updated: 2026-03-22
+Last updated: 2026-03-23
 Status: Beta ready, not gold ready
 Scope: Flutter app plus release operations for web and native surfaces
 
@@ -235,6 +235,7 @@ Interpretation rule:
 145. Clarified learner missions progress wording by renaming the learner-facing `Completed` mission label, tab, and empty-state copy to `Finished`, then added zh-CN and zh-TW workflow translations plus focused missions coverage so the activity card no longer reads like educator-reviewed evidence when it is only tracking learner-finished mission work.
 146. Clarified the learner missions XP header by renaming the visible progress row from bare `XP` and `to next level` wording to `Activity XP` and `to next activity level`, then added zh-CN and zh-TW workflow translations plus focused missions coverage so compact-layout learner progress no longer reads like a capability mastery level when it is only tracking engagement activity.
 147. Clarified learner portfolio framing by renaming the header subtitle from `Showcase your achievements` to `Showcase your saved work and credentials`, and by updating the AI reflection subtitle to describe experimental insights on saved work and goals instead of generic achievements, then added zh-CN and zh-TW learner-surface translations plus focused honesty coverage so the learner portfolio no longer markets saved artifacts and issued credentials as broad mastery claims.
+148. Corrected the parent fallback evidence-chain leak by deriving family-facing pillar progress and fallback current level from reviewed capability mastery instead of legacy learner-progress XP fields whenever reviewed mastery exists, then extended the direct Firestore parent workflow test to seed contradictory legacy progress values and prove the fallback summary now shows evidence-backed pillar values and an evidence-backed rounded current level rather than the old completion-era progress data.
 
 ### Release and operations fixes
 
@@ -278,6 +279,7 @@ Interpretation rule:
 - Focused provisioning, educator sessions, and attendance downstream workflow regressions passed after the cross-site learner-linking proof and workflow-bridge cleanup: 41 passed, 0 failed.
 - Focused provisioning, educator sessions, educator learners, and attendance downstream workflow regressions passed: 50 passed, 0 failed.
 - Focused provisioning, educator sessions, educator learners, and attendance downstream workflow regressions passed after adding the cross-site learner-roster proof: 51 passed, 0 failed.
+- Focused parent fallback evidence-chain regression passed: 1 passed, 0 failed.
 - Focused attendance downstream workflow regressions passed after proving reviewed roster imports stay terminal: 17 passed, 0 failed.
 - Focused provisioning, educator sessions, educator learners, and attendance downstream workflow regressions passed after proving reviewed roster imports stay terminal: 52 passed, 0 failed.
 - Focused site pickup authorization regressions passed after the provisioning-to-pickup fallback proof and learner-name fix: 4 passed, 0 failed.

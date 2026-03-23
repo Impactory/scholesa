@@ -221,6 +221,42 @@ Future<void> _seedParentData(FakeFirebaseFirestore firestore) async {
           Timestamp.fromDate(anchor.subtract(const Duration(hours: 1))),
     },
   );
+  await firestore
+      .collection('capabilityMastery')
+      .doc('learner-1-future-capability')
+      .set(<String, dynamic>{
+    'learnerId': 'learner-1',
+    'siteId': 'site-1',
+    'capabilityId': 'future-capability',
+    'pillarCode': 'future_skills',
+    'latestLevel': 4,
+    'highestLevel': 4,
+    'updatedAt': Timestamp.fromDate(anchor.subtract(const Duration(days: 1))),
+  });
+  await firestore
+      .collection('capabilityMastery')
+      .doc('learner-1-leadership-capability')
+      .set(<String, dynamic>{
+    'learnerId': 'learner-1',
+    'siteId': 'site-1',
+    'capabilityId': 'leadership-capability',
+    'pillarCode': 'leadership',
+    'latestLevel': 2,
+    'highestLevel': 2,
+    'updatedAt': Timestamp.fromDate(anchor.subtract(const Duration(days: 2))),
+  });
+  await firestore
+      .collection('capabilityMastery')
+      .doc('learner-1-impact-capability')
+      .set(<String, dynamic>{
+    'learnerId': 'learner-1',
+    'siteId': 'site-1',
+    'capabilityId': 'impact-capability',
+    'pillarCode': 'impact',
+    'latestLevel': 1,
+    'highestLevel': 1,
+    'updatedAt': Timestamp.fromDate(anchor.subtract(const Duration(days: 3))),
+  });
 }
 
 Future<void> _seedParentSessionCouplingData(
@@ -653,21 +689,25 @@ void main() {
 
       expect(service.error, isNull);
       expect(service.learnerSummaries, hasLength(1));
+      final LearnerSummary learner = service.learnerSummaries.first;
       expect(
-        service.learnerSummaries.first.upcomingEvents
-            .map((UpcomingEvent event) => event.title),
+        learner.upcomingEvents.map((UpcomingEvent event) => event.title),
         contains('Prototype Studio'),
       );
       expect(
-        service.learnerSummaries.first.upcomingEvents
-            .map((UpcomingEvent event) => event.title),
+        learner.upcomingEvents.map((UpcomingEvent event) => event.title),
         isNot(contains('Hidden Session')),
       );
       expect(
-        service.learnerSummaries.first.portfolioItemsPreview
+        learner.portfolioItemsPreview
             .map((PortfolioPreviewItem item) => item.title),
         contains('Build a Robot'),
       );
+      expect(learner.currentLevel, 2);
+      expect(learner.growthSummary.averageLevel, closeTo(7 / 3, 0.001));
+      expect(learner.pillarProgress['futureSkills'], closeTo(1.0, 0.001));
+      expect(learner.pillarProgress['leadership'], closeTo(0.5, 0.001));
+      expect(learner.pillarProgress['impact'], closeTo(0.25, 0.001));
     });
 
     testWidgets('summary page only renders linked learner activity',

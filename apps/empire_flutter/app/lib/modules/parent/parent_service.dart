@@ -466,6 +466,9 @@ class ParentService extends ChangeNotifier {
       reviewerNames,
       proofBundleDetails,
     );
+    final int evidenceBackedCurrentLevel = growthSummary.averageLevel > 0
+        ? math.max(1, growthSummary.averageLevel.round())
+        : (_toInt(progressData?['level']) ?? 1);
 
     return LearnerSummary(
       learnerId: learnerId,
@@ -474,15 +477,15 @@ class ParentService extends ChangeNotifier {
               ? (learnerData['displayName'] as String).trim()
               : _fallbackLearnerName,
       photoUrl: learnerData['photoUrl'] as String?,
-      currentLevel: _toInt(progressData?['level']) ?? 1,
+      currentLevel: evidenceBackedCurrentLevel,
       totalXp: _toInt(progressData?['totalXp']) ?? 0,
       missionsCompleted: _toInt(progressData?['missionsCompleted']) ?? 0,
       currentStreak: _toInt(progressData?['currentStreak']) ?? 0,
       attendanceRate: attendanceRate,
       pillarProgress: <String, double>{
-        'futureSkills': _toDouble(progressData?['futureSkillsProgress']) ?? 0.0,
-        'leadership': _toDouble(progressData?['leadershipProgress']) ?? 0.0,
-        'impact': _toDouble(progressData?['impactProgress']) ?? 0.0,
+        'futureSkills': capabilitySnapshot.futureSkills,
+        'leadership': capabilitySnapshot.leadership,
+        'impact': capabilitySnapshot.impact,
       },
       capabilitySnapshot: capabilitySnapshot,
       evidenceSummary: evidenceSummary,
