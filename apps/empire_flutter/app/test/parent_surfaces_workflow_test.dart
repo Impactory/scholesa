@@ -1843,6 +1843,7 @@ void main() {
             debugPrint(diagnostic.toStringDeep());
           }
         }
+        debugDumpRenderTree();
       }
       expect(parentChildPumpException, isNull);
 

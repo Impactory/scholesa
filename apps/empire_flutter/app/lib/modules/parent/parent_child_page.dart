@@ -112,6 +112,9 @@ class _ParentChildPageState extends State<ParentChildPage> {
     required ParentService service,
     required LearnerSummary? learner,
   }) {
+    final bool debugSkipHeroAndSnapshot = widget.learnerId == '__debug_skip_hero__';
+    final bool debugSkipPassportSection = widget.learnerId == '__debug_skip_passport__';
+
     if (service.isLoading && learner == null) {
       return Center(
         child: Text(
@@ -152,11 +155,16 @@ class _ParentChildPageState extends State<ParentChildPage> {
           _buildStaleDataBanner(),
           const SizedBox(height: 16),
         ],
-        _buildHeroCard(learner),
-        const SizedBox(height: 16),
-        _buildSnapshotGrid(learner),
-        const SizedBox(height: 16),
-        _buildPassportSection(learner),
+        if (!debugSkipHeroAndSnapshot) ...<Widget>[
+          _buildHeroCard(learner),
+          const SizedBox(height: 16),
+          _buildSnapshotGrid(learner),
+          const SizedBox(height: 16),
+        ],
+        if (!debugSkipPassportSection) ...<Widget>[
+          _buildPassportSection(learner),
+          const SizedBox(height: 16),
+        ],
         const SizedBox(height: 16),
         _buildPillarSection(learner),
         const SizedBox(height: 16),
