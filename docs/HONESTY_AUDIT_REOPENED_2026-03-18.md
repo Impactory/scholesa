@@ -246,6 +246,7 @@ Interpretation rule:
 156. Corrected the educator review evidence-linkage leak by requiring reviewed live evidence to match the submission's `sessionOccurrenceId` when that provenance exists, then added direct review-page proof that stale observations from other session occurrences no longer get pulled into the current rubric application, capability growth event, or reviewed portfolio artifact.
 157. Corrected the unmapped live-evidence handoff leak by allowing educator review to claim same-occurrence live observations into the reviewed rubric capability when the evidence record is still unmapped but its capability label matches the rubric capability title, then added focused review-page proof that those observations now update `evidenceRecords`, flow into the capability growth event, and materialize reviewed portfolio evidence instead of stalling at `captured`.
 158. Corrected the educator live-capture mapped-capability leak by removing the default first-capability auto-selection from the sessions quick evidence dialog and requiring an explicit mapped capability choice whenever mapped capabilities exist for the pillar, while preserving free-text unmapped capture only for the honest fallback where no mapped capabilities are available yet.
+159. Corrected the educator live-evidence structure leak by persisting checkpoint summaries, reflection notes, artifact links, and educator-observed AI disclosure on session-captured `evidenceRecords`, then carrying those fields through educator review into reviewed `portfolioItems` when no stronger learner proof bundle signal exists so live educator evidence no longer collapses into a generic observation before portfolio linkage.
 
 ### Release and operations fixes
 
@@ -301,6 +302,8 @@ Interpretation rule:
 - Focused educator mission review linkage regressions passed after scoping live evidence to the reviewed session occurrence: 5 passed, 0 failed.
 - Focused educator mission review unmapped-evidence regressions passed after mapping same-occurrence live observations into the reviewed capability: 6 passed, 0 failed.
 - Focused educator sessions mapped-capability regressions passed after requiring explicit mapped capability selection during live capture: 5 passed, 0 failed.
+- Focused educator sessions structured live-evidence regressions passed after persisting checkpoint, artifact, and AI disclosure fields: 6 passed, 0 failed.
+- Focused educator mission review structured live-evidence regressions passed after carrying educator-captured artifact and AI signal into reviewed portfolio output: 7 passed, 0 failed.
 - Focused attendance downstream workflow regressions passed after proving reviewed roster imports stay terminal: 17 passed, 0 failed.
 - Focused provisioning, educator sessions, educator learners, and attendance downstream workflow regressions passed after proving reviewed roster imports stay terminal: 52 passed, 0 failed.
 - Focused site pickup authorization regressions passed after the provisioning-to-pickup fallback proof and learner-name fix: 4 passed, 0 failed.
