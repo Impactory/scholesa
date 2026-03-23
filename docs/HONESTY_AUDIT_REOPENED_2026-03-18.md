@@ -228,6 +228,7 @@ Interpretation rule:
 138. Fixed the remaining workflow blocker in educator mission review by making the `All caught up` empty state scroll and honor constrained remaining height, so approving the last pending submission no longer throws a RenderFlex overflow before the linked parent passport workflow can complete and validate its export honesty assertions.
 139. Fixed the remaining learner missions workflow overflow by compacting the fixed header stack on short viewports and preserving truncation in the progress summary, so the provisioning-linked parent passport workflow now completes its live learner-submit to educator-review to parent-passport chain without a late RenderFlex failure masking the export honesty assertions.
 140. Corrected the parent passport empty-summary wording so the no-claims state now says no capability claims backed by reviewed evidence are available yet, aligning the empty-state semantics with the non-empty summary instead of overstating those family-facing claims as already verified.
+141. Corrected BOS insight-card wording drift across learner, educator, and family snapshot copy by replacing `verified learning signals` phrasing with `current learning signals` and `current growth signals`, so those support snapshots no longer overstate the epistemic certainty of BOS-derived indicators; direct BOS insights, runtime localization, and BOS role-analytics widget coverage now pass against the aligned copy.
 
 ### Release and operations fixes
 

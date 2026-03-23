@@ -158,7 +158,7 @@ void main() {
       expect(find.text('Class Support Snapshot'), findsOneWidget);
       expect(
         find.textContaining(
-            'Verified class learning signals, learners who may need support'),
+            'Current class learning signals, learners who may need support'),
         findsOneWidget,
       );
     });

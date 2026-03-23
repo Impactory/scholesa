@@ -217,7 +217,7 @@ void main() {
             body: BosClassInsightsCard(
               title: 'Class Support Snapshot',
               subtitle:
-                  'Verified class learning signals, learners who may need support, and active understanding checks',
+                  'Current class learning signals, learners who may need support, and active understanding checks',
               emptyLabel: 'No class support snapshot yet',
               sessionOccurrenceId: 'occ-1',
               siteId: 'site-1',
