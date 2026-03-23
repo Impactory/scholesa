@@ -227,6 +227,24 @@ class SharedRoleSurfaceI18n {
     'Parent summary marked ready for sharing': '家长摘要已标记为可分享',
     'Mark Parent Summary Ready': '将家长摘要标记为可分享',
     'Create Snapshot': '创建快照',
+    'Loading HQ mapping requests...': '正在加载 HQ 映射请求...',
+    'HQ mapping request queue is temporarily unavailable': 'HQ 映射请求队列暂时不可用',
+    'We could not load HQ mapping requests right now. Retry to check the current state.':
+      '我们暂时无法加载 HQ 映射请求。请重试以检查当前状态。',
+    'HQ mapping requests': 'HQ 映射请求',
+    'open school escalations are waiting for curriculum mapping follow-through.':
+      '个学校端升级请求正在等待课程映射跟进。',
+    'Unable to refresh HQ mapping requests right now. Showing the last successful data.':
+      '当前无法刷新 HQ 映射请求。正在显示最近一次成功加载的数据。',
+    'Needs manual review': '需要人工复核',
+    'Awaiting mapping': '等待映射',
+    'Ready to resolve': '可立即解决',
+    'Requested by': '请求人',
+    'Resolve request': '解决请求',
+    'This request cannot be resolved until mapped capability coverage is available for the session pillar.':
+      '在该课程支柱具备映射能力覆盖之前，此请求无法解决。',
+    'Mapping request resolved': '映射请求已解决',
+    'Unable to resolve mapping request right now.': '目前无法解决映射请求。',
     'Snapshot created': '快照已创建',
     'Snapshot create failed': '创建快照失败',
     'Create Rubric': '创建评分量表',
@@ -497,6 +515,24 @@ class SharedRoleSurfaceI18n {
     'Parent summary marked ready for sharing': '家長摘要已標記為可分享',
     'Mark Parent Summary Ready': '將家長摘要標記為可分享',
     'Create Snapshot': '建立快照',
+    'Loading HQ mapping requests...': '正在載入 HQ 映射請求...',
+    'HQ mapping request queue is temporarily unavailable': 'HQ 映射請求佇列暫時不可用',
+    'We could not load HQ mapping requests right now. Retry to check the current state.':
+      '我們暫時無法載入 HQ 映射請求。請重試以檢查目前狀態。',
+    'HQ mapping requests': 'HQ 映射請求',
+    'open school escalations are waiting for curriculum mapping follow-through.':
+      '個學校端升級請求正在等待課程映射跟進。',
+    'Unable to refresh HQ mapping requests right now. Showing the last successful data.':
+      '目前無法重新整理 HQ 映射請求。正在顯示最近一次成功載入的資料。',
+    'Needs manual review': '需要人工複核',
+    'Awaiting mapping': '等待映射',
+    'Ready to resolve': '可立即解決',
+    'Requested by': '請求人',
+    'Resolve request': '解決請求',
+    'This request cannot be resolved until mapped capability coverage is available for the session pillar.':
+      '在該課程支柱具備映射能力覆蓋之前，此請求無法解決。',
+    'Mapping request resolved': '映射請求已解決',
+    'Unable to resolve mapping request right now.': '目前無法解決映射請求。',
     'Snapshot created': '快照已建立',
     'Snapshot create failed': '建立快照失敗',
     'Create Rubric': '建立評量規準',

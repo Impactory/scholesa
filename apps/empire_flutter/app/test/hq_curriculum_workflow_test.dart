@@ -504,5 +504,120 @@ void main() {
       expect(find.text('Title'), findsOneWidget);
       expect(find.text('Description'), findsOneWidget);
     });
+
+    testWidgets('HQ mapping request queue shows open school escalations',
+        (WidgetTester tester) async {
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+      final AppState appState = _buildHqState();
+      await _pumpPage(
+        tester,
+        firestore: firestore,
+        appState: appState,
+        page: HqCurriculumPage(
+          curriculaLoader: () async => const <Map<String, dynamic>>[],
+          trainingCyclesLoader: () async => const <Map<String, dynamic>>[],
+          sessionReadinessLoader: () async => <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 'session-blocked',
+              'title': 'Impact Studio',
+              'pillar': 'Impact & Innovation',
+              'pillarCode': 'IMP',
+              'siteId': 'site-1',
+              'startTime': DateTime(2026, 4, 12, 9).toIso8601String(),
+              'mappedCapabilityCount': 0,
+            },
+          ],
+          mappingRequestLoader: () async => <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 'request-1',
+              'sessionId': 'session-blocked',
+              'sessionTitle': 'Impact Studio',
+              'pillar': 'Impact & Innovation',
+              'siteId': 'site-1',
+              'requesterName': 'Site Admin',
+              'requesterRole': 'site',
+              'submittedAt': DateTime(2026, 4, 11, 8).toIso8601String(),
+              'message': 'Educators are blocked from live evidence capture until mapping is added.',
+            },
+          ],
+        ),
+      );
+
+      expect(find.text('HQ mapping requests'), findsOneWidget);
+      expect(find.text('Impact Studio'), findsNWidgets(2));
+      expect(find.text('Awaiting mapping'), findsOneWidget);
+      expect(find.widgetWithText(OutlinedButton, 'Open mapping workflow'),
+          findsOneWidget);
+    });
+
+    testWidgets('HQ mapping request resolution updates support request status',
+        (WidgetTester tester) async {
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+      final AppState appState = _buildHqState();
+      await firestore.collection('supportRequests').doc('request-1').set(
+        <String, dynamic>{
+          'requestType': 'session_capability_mapping',
+          'siteId': 'site-1',
+          'userName': 'Site Admin',
+          'role': 'site',
+          'subject': 'Session capability mapping request: Future Skills Lab',
+          'message': 'Mapping needed before studio capture.',
+          'status': 'open',
+          'submittedAt': Timestamp.fromDate(DateTime(2026, 4, 11, 8)),
+          'metadata': <String, dynamic>{
+            'sessionId': 'session-ready',
+            'sessionTitle': 'Future Skills Lab',
+            'pillar': 'Future Skills',
+          },
+        },
+      );
+
+      await _pumpPage(
+        tester,
+        firestore: firestore,
+        appState: appState,
+        page: const HqCurriculumPage(
+          curriculaLoader: null,
+          trainingCyclesLoader: null,
+          sessionReadinessLoader: null,
+        ),
+      );
+
+      await firestore.collection('sessions').doc('session-ready').set(
+        <String, dynamic>{
+          'siteId': 'site-1',
+          'title': 'Future Skills Lab',
+          'pillar': 'Future Skills',
+          'startTime': Timestamp.fromDate(DateTime.now().add(const Duration(days: 1))),
+        },
+      );
+      await firestore.collection('capabilities').doc('capability-1').set(
+        <String, dynamic>{
+          'title': 'Systems thinking',
+          'pillarCode': 'FS',
+          'siteId': 'site-1',
+        },
+      );
+
+      await tester.tap(find.byIcon(Icons.refresh_rounded).first);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Ready to resolve'), findsOneWidget);
+
+      final Finder resolveButton =
+          find.widgetWithText(FilledButton, 'Resolve request');
+      await tester.ensureVisible(resolveButton);
+      await tester.tap(resolveButton);
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Mapping request resolved'), findsOneWidget);
+      expect(find.text('Future Skills Lab'), findsOneWidget);
+
+      final DocumentSnapshot<Map<String, dynamic>> requestDoc =
+          await firestore.collection('supportRequests').doc('request-1').get();
+      expect(requestDoc.data()?['status'], 'resolved');
+      expect(requestDoc.data()?['resolvedBy'], 'hq-user-1');
+    });
   });
 }

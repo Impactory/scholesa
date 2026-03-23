@@ -3763,6 +3763,50 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     return readiness;
   }
 
+  List<_SessionCapabilityMappingRequest> _mapMappingRequests(
+    List<Map<String, dynamic>> rows,
+  ) {
+    final List<_SessionCapabilityMappingRequest> requests = rows
+        .map((Map<String, dynamic> data) {
+          final DateTime submittedAt = _toDateTime(data['submittedAt']) ??
+              _toDateTime(data['createdAt']) ??
+              DateTime.now();
+          final String sessionId = (data['sessionId'] as String? ?? '').trim();
+          if (sessionId.isEmpty) {
+            return null;
+          }
+          return _SessionCapabilityMappingRequest(
+            id: (data['id'] as String? ?? '').trim(),
+            sessionId: sessionId,
+            sessionTitle:
+                ((data['sessionTitle'] as String?) ?? 'Session').trim(),
+            pillar: ((data['pillar'] as String?) ?? 'Future Skills').trim(),
+            siteId: ((data['siteId'] as String?) ?? '').trim(),
+            requesterName:
+                ((data['requesterName'] as String?) ?? 'Unknown').trim(),
+            requesterRole:
+                ((data['requesterRole'] as String?) ?? 'site').trim(),
+            submittedAt: submittedAt,
+            message: (data['message'] as String?)?.trim(),
+          );
+        })
+        .whereType<_SessionCapabilityMappingRequest>()
+        .toList(growable: false)
+      ..sort((_SessionCapabilityMappingRequest a,
+              _SessionCapabilityMappingRequest b) =>
+          b.submittedAt.compareTo(a.submittedAt));
+    return requests;
+  }
+
+  _SessionCapabilityReadiness? _readinessForSessionId(String sessionId) {
+    for (final _SessionCapabilityReadiness readiness in _sessionReadiness) {
+      if (readiness.id == sessionId) {
+        return readiness;
+      }
+    }
+    return null;
+  }
+
   _Curriculum? _recommendedCurriculumForPillar(String pillar) {
     for (final _Curriculum curriculum in _curricula) {
       if (curriculum.pillar == pillar &&
