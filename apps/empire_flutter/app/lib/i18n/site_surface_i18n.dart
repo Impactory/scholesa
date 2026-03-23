@@ -44,11 +44,11 @@ class SiteSurfaceI18n {
     'Identity Resolution': '身份匹配处理',
     'Review and confirm matches between local accounts and external provider accounts.':
         '审核并确认本地账户与外部提供方账户之间的匹配。',
-        'Identity matches are temporarily unavailable': '身份匹配暂时不可用',
-        'We could not load the identity review queue. Retry to check the current state.':
-            '我们暂时无法加载身份审核队列。请重试以检查当前状态。',
-        'Unable to refresh identity matches right now. Showing the last successful data.':
-            '当前无法刷新身份匹配。正在显示最近一次成功加载的数据。',
+    'Identity matches are temporarily unavailable': '身份匹配暂时不可用',
+    'We could not load the identity review queue. Retry to check the current state.':
+        '我们暂时无法加载身份审核队列。请重试以检查当前状态。',
+    'Unable to refresh identity matches right now. Showing the last successful data.':
+        '当前无法刷新身份匹配。正在显示最近一次成功加载的数据。',
     'All Identities Resolved': '所有身份均已处理',
     'No pending identity matches to review': '没有待审核的身份匹配',
     'Match confidence:': '匹配置信度：',
@@ -253,6 +253,14 @@ class SiteSurfaceI18n {
         '在 HQ 为该课程支柱至少映射一个能力之前，教育者将无法记录现场证据。',
     'Educators can log live evidence for this session because mapped capability coverage is available.':
         '由于已有能力映射覆盖，教育者现在可以为这节课记录现场证据。',
+    'HQ reviewing': 'HQ 审核中',
+    'HQ resolved': 'HQ 已解决',
+    'HQ resolved request': 'HQ 已解决请求',
+    'HQ marked this request resolved, but this schedule still shows no mapped capability coverage. Refresh the schedule and review the session mapping.':
+        'HQ 已将此请求标记为已解决，但当前课表仍未显示能力映射覆盖。请刷新课表并复核课程映射。',
+    'HQ resolved this request. Confirmed capabilities:': 'HQ 已解决此请求。已确认的能力：',
+    'HQ resolved this request and confirmed mapped capability coverage for educators.':
+        'HQ 已解决此请求，并确认教育者所需的能力映射覆盖已经可用。',
     'Request HQ mapping': '请求 HQ 映射',
     'HQ mapping request open': 'HQ 映射请求已开启',
     'HQ mapping request submitted.': 'HQ 映射请求已提交。',
@@ -440,11 +448,11 @@ class SiteSurfaceI18n {
     'Identity Resolution': '身分匹配處理',
     'Review and confirm matches between local accounts and external provider accounts.':
         '檢視並確認本地帳戶與外部提供者帳戶之間的匹配。',
-        'Identity matches are temporarily unavailable': '身份比對暫時不可用',
-        'We could not load the identity review queue. Retry to check the current state.':
-            '我們暫時無法載入身份審核佇列。請重試以確認目前狀態。',
-        'Unable to refresh identity matches right now. Showing the last successful data.':
-            '目前無法刷新身份比對。正在顯示最近一次成功載入的資料。',
+    'Identity matches are temporarily unavailable': '身份比對暫時不可用',
+    'We could not load the identity review queue. Retry to check the current state.':
+        '我們暫時無法載入身份審核佇列。請重試以確認目前狀態。',
+    'Unable to refresh identity matches right now. Showing the last successful data.':
+        '目前無法刷新身份比對。正在顯示最近一次成功載入的資料。',
     'All Identities Resolved': '所有身分皆已處理',
     'No pending identity matches to review': '沒有待審核的身分匹配',
     'Match confidence:': '匹配信心：',
@@ -649,6 +657,14 @@ class SiteSurfaceI18n {
         '在 HQ 為此課程支柱至少映射一個能力之前，教育者將無法記錄現場證據。',
     'Educators can log live evidence for this session because mapped capability coverage is available.':
         '由於已有能力映射覆蓋，教育者現在可以為這節課記錄現場證據。',
+    'HQ reviewing': 'HQ 審核中',
+    'HQ resolved': 'HQ 已解決',
+    'HQ resolved request': 'HQ 已解決請求',
+    'HQ marked this request resolved, but this schedule still shows no mapped capability coverage. Refresh the schedule and review the session mapping.':
+        'HQ 已將此請求標記為已解決，但目前課表仍未顯示能力映射覆蓋。請重新整理課表並檢查課程映射。',
+    'HQ resolved this request. Confirmed capabilities:': 'HQ 已解決此請求。已確認的能力：',
+    'HQ resolved this request and confirmed mapped capability coverage for educators.':
+        'HQ 已解決此請求，並確認教育者所需的能力映射覆蓋已可使用。',
     'Request HQ mapping': '請求 HQ 映射',
     'HQ mapping request open': 'HQ 映射請求已開啟',
     'HQ mapping request submitted.': 'HQ 映射請求已提交。',

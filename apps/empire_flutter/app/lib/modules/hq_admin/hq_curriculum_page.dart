@@ -166,6 +166,22 @@ class _SessionCapabilityMappingRequest {
   final String? message;
 }
 
+class _MappingResolutionDetails {
+  const _MappingResolutionDetails({
+    required this.summary,
+    required this.supportingCapabilityCount,
+    required this.supportingCapabilityIds,
+    required this.supportingCapabilityTitles,
+    required this.pillarCode,
+  });
+
+  final String summary;
+  final int supportingCapabilityCount;
+  final List<String> supportingCapabilityIds;
+  final List<String> supportingCapabilityTitles;
+  final String pillarCode;
+}
+
 class _HqCurriculumPageState extends State<HqCurriculumPage>
     with SingleTickerProviderStateMixin {
   static const List<String> _templateOptions = <String>[
@@ -192,15 +208,15 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
   String? _trainingCyclesError;
   bool _isLoadingSessionReadiness = false;
   String? _sessionReadinessError;
-    bool _isLoadingMappingRequests = false;
-    String? _mappingRequestError;
-    final Set<String> _resolvingMappingRequestIds = <String>{};
+  bool _isLoadingMappingRequests = false;
+  String? _mappingRequestError;
+  final Set<String> _resolvingMappingRequestIds = <String>{};
 
   List<_Curriculum> _curricula = <_Curriculum>[];
   List<_TrainingCycle> _trainingCycles = <_TrainingCycle>[];
   List<_SessionCapabilityReadiness> _sessionReadiness =
       <_SessionCapabilityReadiness>[];
-    List<_SessionCapabilityMappingRequest> _mappingRequests =
+  List<_SessionCapabilityMappingRequest> _mappingRequests =
       <_SessionCapabilityMappingRequest>[];
 
   @override
@@ -630,7 +646,9 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                         fontSize: 12,
                       ),
                     ),
-                    if ((readiness.educator ?? '').trim().isNotEmpty) ...<Widget>[
+                    if ((readiness.educator ?? '')
+                        .trim()
+                        .isNotEmpty) ...<Widget>[
                       const SizedBox(height: 4),
                       Text(
                         '${_tHqCurriculum(context, 'Educator')}: ${readiness.educator!.trim()}',
@@ -875,8 +893,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                 ),
               ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: statusColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(999),
@@ -924,7 +941,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
             runSpacing: 8,
             children: <Widget>[
               OutlinedButton.icon(
-                onPressed: () => _openCapabilityMappingWorkflowForRequest(request),
+                onPressed: () =>
+                    _openCapabilityMappingWorkflowForRequest(request),
                 icon: const Icon(Icons.edit_rounded),
                 label: Text(_tHqCurriculum(context, 'Open mapping workflow')),
               ),
@@ -2203,6 +2221,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
   ) async {
     final FirestoreService? firestoreService = _maybeFirestoreService();
     final AppState? appState = _maybeAppState();
+    final _SessionCapabilityReadiness? readiness =
+        _readinessForSessionId(request.sessionId);
     if (firestoreService == null) {
       return;
     }
@@ -2210,6 +2230,12 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
       _resolvingMappingRequestIds.add(request.id);
     });
     try {
+      final _MappingResolutionDetails resolutionDetails =
+          await _buildMappingResolutionDetails(
+        firestoreService: firestoreService,
+        request: request,
+        readiness: readiness,
+      );
       await firestoreService.updateDocument(
         'supportRequests',
         request.id,
@@ -2219,6 +2245,14 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
           'resolvedBy': appState?.userId,
           'resolvedByRole': appState?.role?.name,
           'resolutionType': 'capability_mapping_completed',
+          'resolutionSummary': resolutionDetails.summary,
+          'resolutionSupportingCapabilityCount':
+              resolutionDetails.supportingCapabilityCount,
+          'resolutionSupportingCapabilityIds':
+              resolutionDetails.supportingCapabilityIds,
+          'resolutionSupportingCapabilityTitles':
+              resolutionDetails.supportingCapabilityTitles,
+          'resolutionPillarCode': resolutionDetails.pillarCode,
           'updatedAt': FieldValue.serverTimestamp(),
         },
       );
@@ -2233,7 +2267,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
       setState(() {
         _mappingRequests = _mappingRequests
             .where(
-              (_SessionCapabilityMappingRequest entry) => entry.id != request.id,
+              (_SessionCapabilityMappingRequest entry) =>
+                  entry.id != request.id,
             )
             .toList(growable: false);
       });
@@ -2261,6 +2296,63 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
         });
       }
     }
+  }
+
+  Future<_MappingResolutionDetails> _buildMappingResolutionDetails({
+    required FirestoreService firestoreService,
+    required _SessionCapabilityMappingRequest request,
+    required _SessionCapabilityReadiness? readiness,
+  }) async {
+    final String pillarCode = readiness?.pillarCode.trim().isNotEmpty == true
+        ? readiness!.pillarCode.trim()
+        : _pillarCodeFromLabel(request.pillar);
+    final String scopedSiteId = readiness?.siteId?.trim().isNotEmpty == true
+        ? readiness!.siteId!.trim()
+        : request.siteId.trim();
+    if (readiness == null) {
+      return _MappingResolutionDetails(
+        summary:
+            'HQ resolved this request after manual review. Refresh the session readiness surface before educator capture resumes.',
+        supportingCapabilityCount: 0,
+        supportingCapabilityIds: const <String>[],
+        supportingCapabilityTitles: const <String>[],
+        pillarCode: pillarCode,
+      );
+    }
+
+    final List<_CapabilityRef> supportingCapabilities =
+        await _loadSupportingCapabilityRefs(
+      firestoreService: firestoreService,
+      pillarCode: pillarCode,
+      siteId: scopedSiteId,
+    );
+    final int supportingCapabilityCount = readiness.mappedCapabilityCount > 0
+        ? readiness.mappedCapabilityCount
+        : supportingCapabilities.length;
+    final List<String> supportingCapabilityIds = supportingCapabilities
+        .map((_CapabilityRef capability) => capability.id)
+        .toList(growable: false);
+    final List<String> supportingCapabilityTitles = supportingCapabilities
+        .map((_CapabilityRef capability) => capability.title)
+        .toList(growable: false);
+    final List<String> previewTitles =
+        supportingCapabilityTitles.take(3).toList(growable: false);
+    final int extraCount = supportingCapabilityCount > previewTitles.length
+        ? supportingCapabilityCount - previewTitles.length
+        : 0;
+    final String capabilityNoun =
+        supportingCapabilityCount == 1 ? 'capability' : 'capabilities';
+    final String summary = previewTitles.isEmpty
+        ? 'HQ resolved this request after confirming $supportingCapabilityCount mapped $capabilityNoun for ${request.pillar}.'
+        : 'HQ resolved this request after confirming $supportingCapabilityCount mapped $capabilityNoun for ${request.pillar}: ${previewTitles.join(', ')}${extraCount > 0 ? ', +$extraCount more' : ''}.';
+
+    return _MappingResolutionDetails(
+      summary: summary,
+      supportingCapabilityCount: supportingCapabilityCount,
+      supportingCapabilityIds: supportingCapabilityIds,
+      supportingCapabilityTitles: supportingCapabilityTitles,
+      pillarCode: pillarCode,
+    );
   }
 
   Future<void> _showTrainingCyclesSheet() async {
@@ -2333,8 +2425,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                 Flexible(
                   child: ListView.separated(
                     shrinkWrap: true,
-                    itemCount:
-                        _trainingCycles.length + (_trainingCyclesError != null ? 1 : 0),
+                    itemCount: _trainingCycles.length +
+                        (_trainingCyclesError != null ? 1 : 0),
                     separatorBuilder: (_, __) => const SizedBox(height: 8),
                     itemBuilder: (BuildContext context, int index) {
                       if (_trainingCyclesError != null && index == 0) {
@@ -2589,8 +2681,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     if (widget.curriculaLoader != null) {
       try {
         final List<Map<String, dynamic>> rows = await widget.curriculaLoader!();
-        final List<_Curriculum> loaded =
-            rows.map((Map<String, dynamic> data) {
+        final List<_Curriculum> loaded = rows.map((Map<String, dynamic> data) {
           final String id = (data['id'] as String?) ?? 'curriculum';
           final String title =
               (data['title'] as String?)?.trim().isNotEmpty == true
@@ -2605,19 +2696,22 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
             description: (data['description'] as String? ?? '').trim(),
             pillar: _pillarFromData(data),
             template: (data['template'] as String? ?? 'Project sprint').trim(),
-            difficulty: (data['difficulty'] as String? ?? 'Intermediate').trim(),
+            difficulty:
+                (data['difficulty'] as String? ?? 'Intermediate').trim(),
             misconceptionTags: _parseStringList(data['misconceptionTags']),
-            mediaFormat: (data['mediaFormat'] as String? ?? 'Mixed media').trim(),
+            mediaFormat:
+                (data['mediaFormat'] as String? ?? 'Mixed media').trim(),
             capabilityIds: _parseStringList(data['capabilityIds']),
             capabilityTitles: _parseStringList(data['capabilityTitles']),
             version: (data['version'] as String?) ?? '1.0',
-            approvalStatus: (data['approvalStatus'] as String? ?? 'draft').trim(),
+            approvalStatus:
+                (data['approvalStatus'] as String? ?? 'draft').trim(),
             status: _parseCurriculumStatus(data['status'] as String?),
             lastUpdated: lastUpdated,
           );
         }).toList()
-              ..sort((_Curriculum a, _Curriculum b) =>
-                  b.lastUpdated.compareTo(a.lastUpdated));
+          ..sort((_Curriculum a, _Curriculum b) =>
+              b.lastUpdated.compareTo(a.lastUpdated));
         if (!mounted) return;
         setState(() {
           _curricula = loaded;
@@ -2724,7 +2818,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
       try {
         final List<Map<String, dynamic>> rows =
             await widget.trainingCyclesLoader!();
-        final List<_TrainingCycle> cycles = rows.map((Map<String, dynamic> row) {
+        final List<_TrainingCycle> cycles =
+            rows.map((Map<String, dynamic> row) {
           return _TrainingCycle(
             id: row['id'] as String? ?? '',
             title: row['title'] as String? ?? 'Training Cycle',
@@ -2741,10 +2836,10 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
             notes: row['notes'] as String?,
           );
         }).toList(growable: false)
-          ..sort(
-            (_TrainingCycle a, _TrainingCycle b) =>
-                b.updatedAt.compareTo(a.updatedAt),
-          );
+              ..sort(
+                (_TrainingCycle a, _TrainingCycle b) =>
+                    b.updatedAt.compareTo(a.updatedAt),
+              );
         if (!mounted) return;
         setState(() {
           _trainingCycles = cycles;
@@ -3796,6 +3891,52 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
               _SessionCapabilityMappingRequest b) =>
           b.submittedAt.compareTo(a.submittedAt));
     return requests;
+  }
+
+  Future<List<_CapabilityRef>> _loadSupportingCapabilityRefs({
+    required FirestoreService firestoreService,
+    required String pillarCode,
+    required String? siteId,
+  }) async {
+    final String scopedSiteId = (siteId ?? '').trim();
+    final QuerySnapshot<Map<String, dynamic>> snapshot = await firestoreService
+        .firestore
+        .collection('capabilities')
+        .where('pillarCode', isEqualTo: pillarCode)
+        .limit(100)
+        .get();
+
+    final List<_CapabilityRef> capabilities =
+        snapshot.docs.where((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+      final String existingSiteId =
+          (doc.data()['siteId'] as String? ?? '').trim();
+      if (scopedSiteId.isEmpty) {
+        return existingSiteId.isEmpty;
+      }
+      return existingSiteId.isEmpty || existingSiteId == scopedSiteId;
+    }).map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+      final Map<String, dynamic> data = doc.data();
+      return _CapabilityRef(
+        id: doc.id,
+        title: (data['title'] as String? ?? 'Capability').trim(),
+        normalizedTitle: (data['normalizedTitle'] as String? ?? '').trim(),
+        pillarCode: pillarCode,
+        siteId: data['siteId'] as String?,
+        descriptor: data['descriptor'] as String?,
+      );
+    }).toList(growable: false)
+          ..sort((_CapabilityRef a, _CapabilityRef b) {
+            final String leftSiteId = (a.siteId ?? '').trim();
+            final String rightSiteId = (b.siteId ?? '').trim();
+            final int scopedCompare = (leftSiteId == scopedSiteId ? 0 : 1)
+                .compareTo(rightSiteId == scopedSiteId ? 0 : 1);
+            if (scopedCompare != 0) {
+              return scopedCompare;
+            }
+            return a.title.toLowerCase().compareTo(b.title.toLowerCase());
+          });
+
+    return capabilities;
   }
 
   _SessionCapabilityReadiness? _readinessForSessionId(String sessionId) {

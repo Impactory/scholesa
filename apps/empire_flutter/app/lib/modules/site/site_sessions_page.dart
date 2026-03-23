@@ -13,7 +13,8 @@ String _tSiteSessions(BuildContext context, String input) {
   return SiteSurfaceI18n.text(context, input);
 }
 
-typedef SiteSessionsLoader = Future<Map<String, List<SiteSessionData>>> Function(
+typedef SiteSessionsLoader = Future<Map<String, List<SiteSessionData>>>
+    Function(
   BuildContext context,
   DateTime selectedDate,
 );
@@ -597,8 +598,9 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
               );
               await _updateSelectedDate(
                 _nextRangeDate(),
-                trigger:
-                    _viewMode == 'day' ? 'navigate_next_day' : 'navigate_next_week',
+                trigger: _viewMode == 'day'
+                    ? 'navigate_next_day'
+                    : 'navigate_next_week',
               );
             },
             icon: const Icon(Icons.chevron_right),
@@ -826,8 +828,10 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
       final DateTime weekStart =
           _selectedDate.subtract(Duration(days: _selectedDate.weekday - 1));
       final DateTime weekEnd = weekStart.add(const Duration(days: 6));
-      final String startMonth = _tSiteSessions(context, months[weekStart.month - 1]);
-      final String endMonth = _tSiteSessions(context, months[weekEnd.month - 1]);
+      final String startMonth =
+          _tSiteSessions(context, months[weekStart.month - 1]);
+      final String endMonth =
+          _tSiteSessions(context, months[weekEnd.month - 1]);
       if (weekStart.month == weekEnd.month) {
         return '$startMonth ${weekStart.day}-${weekEnd.day}, ${weekEnd.year}';
       }
@@ -940,8 +944,9 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
           final String slotLabel = _viewMode == 'day'
               ? timeLabel
               : _slotLabelForDate(date, timeLabel);
-          grouped.putIfAbsent(slotLabel, () => <SiteSessionData>[])
-            .addAll(sessions);
+          grouped
+              .putIfAbsent(slotLabel, () => <SiteSessionData>[])
+              .addAll(sessions);
         });
       }
 
@@ -999,24 +1004,25 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
       snapshot = await query.orderBy('startTime').limit(300).get();
     } catch (_) {
       try {
-        snapshot = await query
-            .orderBy('createdAt', descending: true)
-            .limit(300)
-            .get();
+        snapshot =
+            await query.orderBy('createdAt', descending: true).limit(300).get();
       } catch (_) {
         snapshot = await query.limit(300).get();
       }
     }
 
     final QuerySnapshot<Map<String, dynamic>> capabilitySnapshot =
-        await firestoreService.firestore.collection('capabilities').limit(500).get();
+        await firestoreService.firestore
+            .collection('capabilities')
+            .limit(500)
+            .get();
     final Map<String, int> scopedCapabilityCounts = <String, int>{};
     final Map<String, int> globalCapabilityCounts = <String, int>{};
     for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
         in capabilitySnapshot.docs) {
       final Map<String, dynamic> capability = doc.data();
-      final String pillarCode =
-          _capabilityMappingPillarCode(capability['pillarCode'] as String? ?? '');
+      final String pillarCode = _capabilityMappingPillarCode(
+          capability['pillarCode'] as String? ?? '');
       if (pillarCode.isEmpty) {
         continue;
       }
@@ -1051,8 +1057,8 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
       if (status == 'closed') {
         continue;
       }
-      final Map<String, dynamic> metadata =
-          Map<String, dynamic>.from(request['metadata'] as Map? ?? <String, dynamic>{});
+      final Map<String, dynamic> metadata = Map<String, dynamic>.from(
+          request['metadata'] as Map? ?? <String, dynamic>{});
       final String sessionId = (metadata['sessionId'] as String? ?? '').trim();
       if (sessionId.isEmpty) {
         continue;
@@ -1091,7 +1097,8 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
 
     final Map<String, List<SiteSessionData>> grouped =
         <String, List<SiteSessionData>>{};
-    for (final QueryDocumentSnapshot<Map<String, dynamic>> doc in snapshot.docs) {
+    for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+        in snapshot.docs) {
       final Map<String, dynamic> data = doc.data();
       final DateTime? sessionDate = _toDateTime(data['startTime']) ??
           _toDateTime(data['startDate']) ??
@@ -1115,20 +1122,20 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
         pillar: _sessionPillar(data),
         mappedCapabilityCount: mappedCapabilityCount,
         hasOpenCapabilityRequest:
-          capabilityRequestsBySessionId[doc.id]?.status == 'open',
+            capabilityRequestsBySessionId[doc.id]?.status == 'open',
         capabilityRequestStatus:
-          capabilityRequestsBySessionId[doc.id]?.status ?? '',
+            capabilityRequestsBySessionId[doc.id]?.status ?? '',
         capabilityRequestResolutionSummary:
-          capabilityRequestsBySessionId[doc.id]?.resolutionSummary,
+            capabilityRequestsBySessionId[doc.id]?.resolutionSummary,
         capabilityRequestResolvedAt:
-          capabilityRequestsBySessionId[doc.id]?.resolvedAt,
+            capabilityRequestsBySessionId[doc.id]?.resolvedAt,
         capabilityRequestResolvedSupportingCapabilityCount:
-          capabilityRequestsBySessionId[doc.id]
-            ?.resolutionSupportingCapabilityCount,
+            capabilityRequestsBySessionId[doc.id]
+                ?.resolutionSupportingCapabilityCount,
         capabilityRequestResolvedSupportingCapabilityTitles:
-          capabilityRequestsBySessionId[doc.id]
-              ?.resolutionSupportingCapabilityTitles ??
-            const <String>[],
+            capabilityRequestsBySessionId[doc.id]
+                    ?.resolutionSupportingCapabilityTitles ??
+                const <String>[],
       );
       grouped.putIfAbsent(slot, () => <SiteSessionData>[]).add(session);
     }
@@ -1151,7 +1158,9 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
     final FirestoreService? firestoreService = _maybeFirestoreService();
     final AppState? appState = _maybeAppState();
     final String siteId = (appState?.activeSiteId ??
-            (appState?.siteIds.isNotEmpty == true ? appState!.siteIds.first : ''))
+            (appState?.siteIds.isNotEmpty == true
+                ? appState!.siteIds.first
+                : ''))
         .trim();
     final String userId = (appState?.userId ?? '').trim();
     final String userEmail = (appState?.email ?? '').trim();
@@ -1260,11 +1269,10 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
                 ? session.copyWith(
                     hasOpenCapabilityRequest: true,
                     capabilityRequestStatus: 'open',
-                    capabilityRequestResolutionSummary: null,
+                    capabilityRequestResolutionSummary: '',
                     capabilityRequestResolvedAt: null,
                     capabilityRequestResolvedSupportingCapabilityCount: null,
-                    capabilityRequestResolvedSupportingCapabilityTitles:
-                        const <String>[],
+                    capabilityRequestResolvedSupportingCapabilityTitles: const <String>[],
                   )
                 : session,
           )
@@ -1640,8 +1648,7 @@ class SiteSessionData {
     this.capabilityRequestResolutionSummary,
     this.capabilityRequestResolvedAt,
     this.capabilityRequestResolvedSupportingCapabilityCount,
-    this.capabilityRequestResolvedSupportingCapabilityTitles =
-        const <String>[],
+    this.capabilityRequestResolvedSupportingCapabilityTitles = const <String>[],
   });
   final String id;
   final String title;
@@ -1657,7 +1664,8 @@ class SiteSessionData {
   final int? capabilityRequestResolvedSupportingCapabilityCount;
   final List<String> capabilityRequestResolvedSupportingCapabilityTitles;
 
-  bool get hasResolvedCapabilityRequest => capabilityRequestStatus == 'resolved';
+  bool get hasResolvedCapabilityRequest =>
+      capabilityRequestStatus == 'resolved';
 
   SiteSessionData copyWith({
     String? id,
@@ -1681,13 +1689,14 @@ class SiteSessionData {
       room: room ?? this.room,
       learnerCount: learnerCount ?? this.learnerCount,
       pillar: pillar ?? this.pillar,
-      mappedCapabilityCount: mappedCapabilityCount ?? this.mappedCapabilityCount,
+      mappedCapabilityCount:
+          mappedCapabilityCount ?? this.mappedCapabilityCount,
       hasOpenCapabilityRequest:
           hasOpenCapabilityRequest ?? this.hasOpenCapabilityRequest,
       capabilityRequestStatus:
           capabilityRequestStatus ?? this.capabilityRequestStatus,
-      capabilityRequestResolutionSummary:
-          capabilityRequestResolutionSummary,
+      capabilityRequestResolutionSummary: capabilityRequestResolutionSummary ??
+          this.capabilityRequestResolutionSummary,
       capabilityRequestResolvedAt:
           capabilityRequestResolvedAt ?? this.capabilityRequestResolvedAt,
       capabilityRequestResolvedSupportingCapabilityCount:
@@ -1732,9 +1741,6 @@ class _SessionTimeSlot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool blocked = session.mappedCapabilityCount <= 0;
-    final bool resolvedWhileBlocked =
-        blocked && session.hasResolvedCapabilityRequest;
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(
@@ -1799,6 +1805,9 @@ class _SessionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool blocked = session.mappedCapabilityCount <= 0;
+    final bool resolvedWhileBlocked =
+        blocked && session.hasResolvedCapabilityRequest;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Container(
@@ -1906,16 +1915,17 @@ class _SessionCard extends StatelessWidget {
                               resolvedWhileBlocked
                                   ? Icons.task_alt_rounded
                                   : session.hasOpenCapabilityRequest
-                                  ? Icons.check_circle_outline_rounded
-                                  : Icons.mail_outline_rounded,
+                                      ? Icons.check_circle_outline_rounded
+                                      : Icons.mail_outline_rounded,
                               size: 16,
                             ),
                       label: Text(
                         resolvedWhileBlocked
                             ? _tSiteSessions(context, 'HQ resolved request')
                             : session.hasOpenCapabilityRequest
-                            ? _tSiteSessions(context, 'HQ mapping request open')
-                            : _tSiteSessions(context, 'Request HQ mapping'),
+                                ? _tSiteSessions(
+                                    context, 'HQ mapping request open')
+                                : _tSiteSessions(context, 'Request HQ mapping'),
                       ),
                     ),
                   TextButton.icon(
@@ -1934,18 +1944,19 @@ class _SessionCard extends StatelessWidget {
 
   Widget _buildCapabilityStatus(BuildContext context) {
     final bool blocked = session.mappedCapabilityCount <= 0;
-    final Color badgeColor = blocked ? const Color(0xFF9A3412) : const Color(0xFF166534);
+    final Color badgeColor =
+        blocked ? const Color(0xFF9A3412) : const Color(0xFF166534);
     final Color badgeBackground =
         blocked ? const Color(0xFFFFEDD5) : const Color(0xFFDCFCE7);
     final bool resolved = session.hasResolvedCapabilityRequest;
     final List<String> supportingCapabilities =
-      session.capabilityRequestResolvedSupportingCapabilityTitles;
+        session.capabilityRequestResolvedSupportingCapabilityTitles;
     final String resolvedMessage = supportingCapabilities.isNotEmpty
-      ? '${_tSiteSessions(context, 'HQ resolved this request. Confirmed capabilities:')} ${supportingCapabilities.join(', ')}'
-      : _tSiteSessions(
-        context,
-        'HQ resolved this request and confirmed mapped capability coverage for educators.',
-        );
+        ? '${_tSiteSessions(context, 'HQ resolved this request. Confirmed capabilities:')} ${supportingCapabilities.join(', ')}'
+        : _tSiteSessions(
+            context,
+            'HQ resolved this request and confirmed mapped capability coverage for educators.',
+          );
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
@@ -1959,8 +1970,7 @@ class _SessionCard extends StatelessWidget {
           Row(
             children: <Widget>[
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.8),
                   borderRadius: BorderRadius.circular(999),
@@ -2020,7 +2030,7 @@ class _SessionCard extends StatelessWidget {
                         ? 'HQ already has an open mapping request for this session. Educators stay blocked until the mapping is added and schedule data refreshes.'
                         : resolved
                             ? 'HQ marked this request resolved, but this schedule still shows no mapped capability coverage. Refresh the schedule and review the session mapping.'
-                        : 'Educators are blocked from live evidence capture until HQ maps at least one capability for this session pillar.',
+                            : 'Educators are blocked from live evidence capture until HQ maps at least one capability for this session pillar.',
                   )
                 : resolved
                     ? resolvedMessage

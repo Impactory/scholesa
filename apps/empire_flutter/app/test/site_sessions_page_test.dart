@@ -81,33 +81,14 @@ DateTime _sameMonthDifferentWeekDate(DateTime baseDate) {
     }
     final bool sameWeek =
         candidate.subtract(Duration(days: candidate.weekday - 1)).day ==
-            baseDate.subtract(Duration(days: baseDate.weekday - 1)).day &&
-        candidate.subtract(Duration(days: candidate.weekday - 1)).month ==
-            baseDate.subtract(Duration(days: baseDate.weekday - 1)).month;
+                baseDate.subtract(Duration(days: baseDate.weekday - 1)).day &&
+            candidate.subtract(Duration(days: candidate.weekday - 1)).month ==
+                baseDate.subtract(Duration(days: baseDate.weekday - 1)).month;
     if (!sameWeek) {
       return candidate;
     }
   }
   return baseDate.add(const Duration(days: 14));
-}
-
-DateTime _sameWeekSameMonthDate(DateTime baseDate) {
-  final DateTime weekStart =
-      baseDate.subtract(Duration(days: baseDate.weekday - 1));
-  for (int offset = 0; offset < 7; offset += 1) {
-    final DateTime candidate = weekStart.add(Duration(days: offset));
-    if (!_isSameCalendarDate(candidate, baseDate) &&
-        candidate.month == baseDate.month) {
-      return candidate;
-    }
-  }
-  for (int offset = 0; offset < 7; offset += 1) {
-    final DateTime candidate = weekStart.add(Duration(days: offset));
-    if (!_isSameCalendarDate(candidate, baseDate)) {
-      return candidate;
-    }
-  }
-  return baseDate.add(const Duration(days: 1));
 }
 
 void main() {
@@ -133,10 +114,11 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
-      expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Unable to load sessions'), findsOneWidget);
     expect(
-      find.text('We could not load sessions right now. Retry to check the current state.'),
+      find.text(
+          'We could not load sessions right now. Retry to check the current state.'),
       findsOneWidget,
     );
     expect(find.text('Retry'), findsOneWidget);
@@ -192,7 +174,7 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
-      expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Today Advisory'), findsOneWidget);
     expect(find.text('Next Week Lab'), findsNothing);
 
@@ -267,7 +249,8 @@ void main() {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final DateTime today = DateUtils.dateOnly(DateTime.now());
     final DateTime monthDate = _sameMonthDifferentWeekDate(today);
-    final DateTime weekStart = today.subtract(Duration(days: today.weekday - 1));
+    final DateTime weekStart =
+        today.subtract(Duration(days: today.weekday - 1));
     final DateTime weekEnd = weekStart.add(const Duration(days: 6));
 
     bool _isSameWeek(DateTime candidate) {
@@ -592,7 +575,7 @@ void main() {
         findsOneWidget);
 
     final Finder requestButton =
-      find.widgetWithText(OutlinedButton, 'Request HQ mapping').first;
+        find.widgetWithText(OutlinedButton, 'Request HQ mapping').first;
     await tester.ensureVisible(requestButton);
     await tester.tap(requestButton);
     await tester.pump();
@@ -613,9 +596,85 @@ void main() {
       'Session capability mapping request: Impact Studio',
     );
     expect(
-      (supportRequests.docs.single.data()['metadata'] as Map<String, dynamic>)[
-          'sessionId'],
+      (supportRequests.docs.single.data()['metadata']
+          as Map<String, dynamic>)['sessionId'],
       'session-1',
     );
+  });
+
+  testWidgets(
+      'site sessions surface a resolved HQ mapping handoff once capability coverage is available',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final AppState appState = _buildSiteState();
+    final DateTime today = DateUtils.dateOnly(DateTime.now());
+
+    await firestore.collection('sessions').doc('session-ready').set(
+      <String, dynamic>{
+        'siteId': 'site-1',
+        'title': 'Future Skills Lab',
+        'educatorName': 'Coach Ada',
+        'room': 'Lab 1',
+        'learnerCount': 16,
+        'pillar': 'Future Skills',
+        'startTime': Timestamp.fromDate(today.add(const Duration(hours: 9))),
+      },
+    );
+    await firestore.collection('capabilities').doc('capability-1').set(
+      <String, dynamic>{
+        'title': 'Systems thinking',
+        'pillarCode': 'FS',
+        'siteId': 'site-1',
+      },
+    );
+    await firestore.collection('supportRequests').doc('request-1').set(
+      <String, dynamic>{
+        'requestType': 'session_capability_mapping',
+        'siteId': 'site-1',
+        'userName': 'Site Admin',
+        'role': 'site',
+        'subject': 'Session capability mapping request: Future Skills Lab',
+        'status': 'resolved',
+        'submittedAt':
+            Timestamp.fromDate(today.subtract(const Duration(days: 1))),
+        'resolvedAt': Timestamp.fromDate(today),
+        'updatedAt': Timestamp.fromDate(today),
+        'resolutionSupportingCapabilityCount': 1,
+        'resolutionSupportingCapabilityTitles': <String>['Systems thinking'],
+        'metadata': <String, dynamic>{
+          'sessionId': 'session-ready',
+          'sessionTitle': 'Future Skills Lab',
+          'pillar': 'Future Skills',
+        },
+      },
+    );
+
+    await tester.pumpWidget(
+      _buildHarness(
+        child: MultiProvider(
+          providers: <SingleChildWidget>[
+            Provider<FirestoreService>.value(value: firestoreService),
+            ChangeNotifierProvider<AppState>.value(value: appState),
+          ],
+          child: const SiteSessionsPage(),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Future Skills Lab'), findsOneWidget);
+    expect(find.text('HQ resolved'), findsOneWidget);
+    expect(
+      find.text(
+          'HQ resolved this request. Confirmed capabilities: Systems thinking'),
+      findsOneWidget,
+    );
+    expect(find.widgetWithText(OutlinedButton, 'Request HQ mapping'),
+        findsNothing);
   });
 }

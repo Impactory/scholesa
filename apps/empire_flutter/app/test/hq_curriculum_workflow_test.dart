@@ -281,7 +281,8 @@ void main() {
       );
     });
 
-    testWidgets('curriculum page shows explicit unavailable state on failed first load',
+    testWidgets(
+        'curriculum page shows explicit unavailable state on failed first load',
         (WidgetTester tester) async {
       final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
       final AppState appState = _buildHqState();
@@ -297,15 +298,18 @@ void main() {
         ),
       );
 
-      expect(find.text('Curricula are temporarily unavailable'), findsOneWidget);
       expect(
-        find.text('We could not load curricula right now. Retry to check the current state.'),
+          find.text('Curricula are temporarily unavailable'), findsOneWidget);
+      expect(
+        find.text(
+            'We could not load curricula right now. Retry to check the current state.'),
         findsOneWidget,
       );
       expect(find.text('No published curricula'), findsNothing);
     });
 
-    testWidgets('curriculum page keeps stale curricula visible after refresh failure',
+    testWidgets(
+        'curriculum page keeps stale curricula visible after refresh failure',
         (WidgetTester tester) async {
       final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
       final AppState appState = _buildHqState();
@@ -346,13 +350,15 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.text('Unable to refresh curricula right now. Showing the last successful data.'),
+        find.text(
+            'Unable to refresh curricula right now. Showing the last successful data.'),
         findsOneWidget,
       );
       expect(find.text('Published Capability Sprint'), findsOneWidget);
     });
 
-    testWidgets('training cycles sheet shows explicit unavailable state on failed load',
+    testWidgets(
+        'training cycles sheet shows explicit unavailable state on failed load',
         (WidgetTester tester) async {
       final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
       final AppState appState = _buildHqState();
@@ -371,15 +377,18 @@ void main() {
       await tester.tap(find.byIcon(Icons.school_rounded));
       await tester.pumpAndSettle();
 
-      expect(find.text('Training cycles are temporarily unavailable'), findsOneWidget);
+      expect(find.text('Training cycles are temporarily unavailable'),
+          findsOneWidget);
       expect(
-        find.text('We could not load training cycles right now. Retry to check the current state.'),
+        find.text(
+            'We could not load training cycles right now. Retry to check the current state.'),
         findsOneWidget,
       );
       expect(find.text('No training cycles yet'), findsNothing);
     });
 
-    testWidgets('training cycles sheet keeps stale cycles visible after refresh failure',
+    testWidgets(
+        'training cycles sheet keeps stale cycles visible after refresh failure',
         (WidgetTester tester) async {
       final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
       final AppState appState = _buildHqState();
@@ -415,7 +424,8 @@ void main() {
 
       expect(find.text('Term Launch Cohort'), findsOneWidget);
       expect(
-        find.text('Unable to refresh training cycles right now. Showing the last successful data.'),
+        find.text(
+            'Unable to refresh training cycles right now. Showing the last successful data.'),
         findsOneWidget,
       );
       expect(find.text('Term Launch Cohort'), findsOneWidget);
@@ -537,7 +547,8 @@ void main() {
               'requesterName': 'Site Admin',
               'requesterRole': 'site',
               'submittedAt': DateTime(2026, 4, 11, 8).toIso8601String(),
-              'message': 'Educators are blocked from live evidence capture until mapping is added.',
+              'message':
+                  'Educators are blocked from live evidence capture until mapping is added.',
             },
           ],
         ),
@@ -588,7 +599,8 @@ void main() {
           'siteId': 'site-1',
           'title': 'Future Skills Lab',
           'pillar': 'Future Skills',
-          'startTime': Timestamp.fromDate(DateTime.now().add(const Duration(days: 1))),
+          'startTime':
+              Timestamp.fromDate(DateTime.now().add(const Duration(days: 1))),
         },
       );
       await firestore.collection('capabilities').doc('capability-1').set(
@@ -596,6 +608,12 @@ void main() {
           'title': 'Systems thinking',
           'pillarCode': 'FS',
           'siteId': 'site-1',
+        },
+      );
+      await firestore.collection('capabilities').doc('capability-2').set(
+        <String, dynamic>{
+          'title': 'Reflection',
+          'pillarCode': 'FS',
         },
       );
 
@@ -618,6 +636,15 @@ void main() {
           await firestore.collection('supportRequests').doc('request-1').get();
       expect(requestDoc.data()?['status'], 'resolved');
       expect(requestDoc.data()?['resolvedBy'], 'hq-user-1');
+      expect(requestDoc.data()?['resolutionSupportingCapabilityCount'], 2);
+      expect(
+        requestDoc.data()?['resolutionSupportingCapabilityTitles'],
+        containsAll(<String>['Systems thinking', 'Reflection']),
+      );
+      expect(
+        requestDoc.data()?['resolutionSummary'],
+        contains('2 mapped capabilities'),
+      );
     });
   });
 }
