@@ -343,6 +343,76 @@ class MissionService extends ChangeNotifier {
     return _proofBundleRef(missionId).collection('versionHistory').doc().id;
   }
 
+  String _buildMissionSubmissionText({
+    required String missionTitle,
+    MissionProofBundle? proofBundle,
+  }) {
+    if (proofBundle == null) {
+      return 'Mission "$missionTitle" submitted for educator review.';
+    }
+
+    final MissionProofCheckpoint? latestCheckpoint =
+        proofBundle.versionHistory.isEmpty
+            ? null
+            : proofBundle.versionHistory.last;
+    final List<String> parts = <String>[
+      'Mission "$missionTitle" submitted for educator review.',
+    ];
+    final String explain = proofBundle.explainItBack?.trim() ?? '';
+    final String oral = proofBundle.oralCheckResponse?.trim() ?? '';
+    final String rebuild = proofBundle.miniRebuildPlan?.trim() ?? '';
+    final String checkpointSummary = latestCheckpoint?.summary.trim() ?? '';
+    final String checkpointArtifactNote =
+        latestCheckpoint?.artifactNote?.trim() ?? '';
+    final String aiDetails = proofBundle.aiAssistanceDetails?.trim() ?? '';
+
+    if (explain.isNotEmpty) {
+      parts.add('Explain-it-back: $explain');
+    }
+    if (oral.isNotEmpty) {
+      parts.add('Oral check: $oral');
+    }
+    if (rebuild.isNotEmpty) {
+      parts.add('Mini-rebuild plan: $rebuild');
+    }
+    if (checkpointSummary.isNotEmpty) {
+      parts.add('Latest checkpoint: $checkpointSummary');
+    }
+    if (checkpointArtifactNote.isNotEmpty) {
+      parts.add('Artifact note: $checkpointArtifactNote');
+    }
+    if (proofBundle.aiAssistanceUsed != null) {
+      parts.add(
+        proofBundle.aiAssistanceUsed == true
+            ? 'AI support declared by learner.'
+            : 'Learner declared no AI support used.',
+      );
+    }
+    if (aiDetails.isNotEmpty) {
+      parts.add('AI disclosure: $aiDetails');
+    }
+
+    return parts.join('\n');
+  }
+
+  List<Map<String, dynamic>> _proofCheckpointPayload(
+    MissionProofBundle? proofBundle,
+  ) {
+    if (proofBundle == null) {
+      return const <Map<String, dynamic>>[];
+    }
+    return proofBundle.versionHistory
+        .map((MissionProofCheckpoint checkpoint) => <String, dynamic>{
+              'id': checkpoint.id,
+              'summary': checkpoint.summary,
+              if (checkpoint.artifactNote?.trim().isNotEmpty == true)
+                'artifactNote': checkpoint.artifactNote!.trim(),
+              if (checkpoint.createdAt != null)
+                'createdAt': Timestamp.fromDate(checkpoint.createdAt!),
+            })
+        .toList(growable: false);
+  }
+
   Future<MissionProofBundle?> loadProofBundle(String missionId) async {
     final DocumentSnapshot<Map<String, dynamic>> snapshot =
         await _proofBundleRef(missionId).get();
@@ -996,8 +1066,12 @@ class MissionService extends ChangeNotifier {
             assignmentDoc?.data()['sessionOccurrenceId'] as String?;
         final DocumentReference<Map<String, dynamic>> attemptRef =
             _firestore.collection('missionAttempts').doc();
-        final String submissionText =
-            'Mission "${mission.title}" submitted for educator review.';
+        final String submissionText = _buildMissionSubmissionText(
+          missionTitle: mission.title,
+          proofBundle: proofBundle,
+        );
+        final List<Map<String, dynamic>> proofCheckpoints =
+            _proofCheckpointPayload(proofBundle);
         final Map<String, dynamic> canonicalAttempt = <String, dynamic>{
           'missionId': missionId,
           'missionTitle': mission.title,
@@ -1014,6 +1088,11 @@ class MissionService extends ChangeNotifier {
           'submissionText': submissionText,
           'attachmentUrls': const <String>[],
           if (proofBundle != null) 'proofBundleId': proofBundle.id,
+          if (proofBundle != null)
+            'proofCheckpointCount': proofBundle.versionHistory.length,
+          if (proofCheckpoints.isNotEmpty) 'proofCheckpoints': proofCheckpoints,
+          if (proofBundle?.aiAssistanceDetails?.trim().isNotEmpty == true)
+            'aiAssistanceDetails': proofBundle!.aiAssistanceDetails!.trim(),
           if (proofBundle != null)
             'proofBundleSummary': <String, dynamic>{
               'isReady': proofBundle.isReady,
@@ -1720,6 +1799,13 @@ class MissionService extends ChangeNotifier {
                   true
               ? (submissionData['proofBundleId'] as String).trim()
               : null;
+        final Map<String, dynamic>? proofBundle = proofBundleId == null
+          ? null
+          : (await _firestore
+              .collection('proofOfLearningBundles')
+              .doc(proofBundleId)
+              .get())
+            .data();
       final Map<String, dynamic>? proofBundleSummary =
           submissionData['proofBundleSummary'] is Map
               ? Map<String, dynamic>.from(
@@ -1728,13 +1814,14 @@ class MissionService extends ChangeNotifier {
               : null;
       final String proofBundleAiAssistanceDetails = proofBundleId == null
           ? ''
-          : (((await _firestore
-                          .collection('proofOfLearningBundles')
-                          .doc(proofBundleId)
-                          .get())
-                      .data()?['aiAssistanceDetails'] as String?) ??
+          : ((proofBundle?['aiAssistanceDetails'] as String?) ??
                   '')
               .trim();
+        final List<Map<String, dynamic>> proofCheckpoints =
+          ((proofBundle?['versionHistory'] as List?) ?? const <dynamic>[])
+            .whereType<Map>()
+            .map((Map checkpoint) => Map<String, dynamic>.from(checkpoint))
+            .toList(growable: false);
       final List<Map<String, dynamic>> normalizedRubricScores = rubricScores
           .map((Map<String, dynamic> score) => <String, dynamic>{
                 ...score,
@@ -2065,10 +2152,19 @@ class MissionService extends ChangeNotifier {
             ].where((String value) => value.isNotEmpty).join(' • ');
             final String observationNote =
                 (evidenceData['observationNote'] as String? ?? '').trim();
+            final String latestCheckpointSummary = proofCheckpoints.isEmpty
+                ? ''
+                : ((proofCheckpoints.last['summary'] as String?) ?? '').trim();
+            final String latestCheckpointArtifactNote = proofCheckpoints.isEmpty
+                ? ''
+                : ((proofCheckpoints.last['artifactNote'] as String?) ?? '')
+                    .trim();
             final String portfolioDescription = <String>[
               observationNote,
               trimmedFeedback,
               submissionText,
+              latestCheckpointSummary,
+              latestCheckpointArtifactNote,
             ].firstWhere(
               (String value) => value.isNotEmpty,
               orElse: () => 'Reviewed evidence linked to learner growth.',
@@ -2145,6 +2241,7 @@ class MissionService extends ChangeNotifier {
               'missionAttemptId': canonicalAttemptRef.id,
               'rubricApplicationId': rubricApplicationRef.id,
               if (proofBundleId != null) 'proofBundleId': proofBundleId,
+              'proofCheckpointCount': proofCheckpoints.length,
               'proofOfLearningStatus': proofOfLearningStatus,
               if (hasLearnerAiDisclosure) 'aiAssistanceUsed': aiAssistanceUsed,
               if (proofBundleAiAssistanceDetails.isNotEmpty)
