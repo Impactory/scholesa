@@ -194,6 +194,8 @@ void main() {
       sharedPreferences: prefs,
     );
 
+    expect(find.text('Reviewed/Verified Portfolio'), findsOneWidget);
+    expect(find.text('Reviewed/Verified'), findsOneWidget);
     expect(find.text('Solar Oven Prototype'), findsOneWidget);
     expect(find.text('Community Helper Badge'), findsOneWidget);
     expect(find.text('AI guidance unavailable right now.'), findsNothing);

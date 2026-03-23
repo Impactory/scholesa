@@ -320,7 +320,7 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
                   _t(_titleCaseBand(learner.capabilitySnapshot.band)), accent),
               const SizedBox(width: 8),
               _buildSnapshotChip(
-                _t('Reviewed Portfolio'),
+                _t('Reviewed/Verified Portfolio'),
                 '${learner.portfolioSnapshot.verifiedArtifactCount}',
                 ScholesaColors.parentGradient.colors.first,
               ),
