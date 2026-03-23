@@ -146,6 +146,27 @@ Future<void> _seedLearner(FakeFirebaseFirestore firestore) async {
   });
 }
 
+Future<void> _seedCapabilityMastery(
+  FakeFirebaseFirestore firestore, {
+  required String learnerId,
+  required String capabilityId,
+  required String pillarCode,
+  required int latestLevel,
+}) async {
+  await firestore
+      .collection('capabilityMastery')
+      .doc('$learnerId-$capabilityId')
+      .set(<String, dynamic>{
+    'learnerId': learnerId,
+    'siteId': 'site-1',
+    'capabilityId': capabilityId,
+    'pillarCode': pillarCode,
+    'latestLevel': latestLevel,
+    'highestLevel': latestLevel,
+    'updatedAt': Timestamp.fromDate(DateTime(2026, 3, 23)),
+  });
+}
+
 Future<void> _seedLearnerTwo(FakeFirebaseFirestore firestore) async {
   await firestore.collection('users').doc('learner-2').set(<String, dynamic>{
     'displayName': 'Learner Two',

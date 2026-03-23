@@ -202,6 +202,73 @@ void main() {
       expect(service.learners.first.name, 'Learner A');
     });
 
+    test('loadLearners uses reviewed capability mastery for pillar progress',
+        () async {
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+      final FirestoreService firestoreService = FirestoreService(
+        firestore: firestore,
+        auth: _MockFirebaseAuth(),
+      );
+
+      await firestore.collection('enrollments').doc('enr-1').set(
+        <String, dynamic>{
+          'educatorId': 'educator-1',
+          'learnerId': 'learner-a',
+          'siteId': 'site-a',
+        },
+      );
+
+      await firestore.collection('users').doc('learner-a').set(
+        <String, dynamic>{
+          'displayName': 'Learner A',
+          'email': 'a@test.dev',
+          'siteIds': <String>['site-a'],
+          'futureSkillsProgress': 0.95,
+          'leadershipProgress': 0.91,
+          'impactProgress': 0.89,
+        },
+      );
+
+      await firestore.collection('capabilityMastery').doc('mastery-future').set(
+        <String, dynamic>{
+          'learnerId': 'learner-a',
+          'siteId': 'site-a',
+          'capabilityId': 'future-capability',
+          'pillarCode': 'future_skills',
+          'latestLevel': 1,
+          'highestLevel': 1,
+          'updatedAt': Timestamp.fromDate(DateTime(2026, 3, 23)),
+        },
+      );
+      await firestore
+          .collection('capabilityMastery')
+          .doc('mastery-leadership')
+          .set(
+        <String, dynamic>{
+          'learnerId': 'learner-a',
+          'siteId': 'site-a',
+          'capabilityId': 'leadership-capability',
+          'pillarCode': 'leadership',
+          'latestLevel': 2,
+          'highestLevel': 2,
+          'updatedAt': Timestamp.fromDate(DateTime(2026, 3, 23)),
+        },
+      );
+
+      final EducatorService service = EducatorService(
+        firestoreService: firestoreService,
+        educatorId: 'educator-1',
+        siteId: 'site-a',
+      );
+
+      await service.loadLearners();
+
+      expect(service.learners, hasLength(1));
+      expect(service.learners.single.futureSkillsProgress, 0.25);
+      expect(service.learners.single.leadershipProgress, 0.5);
+      expect(service.learners.single.impactProgress, 0);
+    });
+
     test('loadLearners keeps stale learners visible after refresh failure', () async {
       int loadCount = 0;
       final EducatorService service = EducatorService(
