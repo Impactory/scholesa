@@ -820,6 +820,7 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
   final TextEditingController _oralCheckController = TextEditingController();
   final TextEditingController _miniRebuildController = TextEditingController();
   final TextEditingController _aiDisclosureController = TextEditingController();
+  final TextEditingController _artifactUrlsController = TextEditingController();
   final TextEditingController _checkpointSummaryController =
       TextEditingController();
   final TextEditingController _checkpointArtifactController =
@@ -848,6 +849,7 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
     _oralCheckController.dispose();
     _miniRebuildController.dispose();
     _aiDisclosureController.dispose();
+    _artifactUrlsController.dispose();
     _checkpointSummaryController.dispose();
     _checkpointArtifactController.dispose();
     super.dispose();
@@ -914,6 +916,7 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
       _miniRebuildController.text = bundle.miniRebuildPlan ?? '';
       _aiAssistanceUsed = bundle.aiAssistanceUsed;
       _aiDisclosureController.text = bundle.aiAssistanceDetails ?? '';
+      _artifactUrlsController.text = bundle.artifactUrls.join('\n');
       _versionHistory = bundle.versionHistory;
     });
   }
@@ -921,6 +924,11 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
   Future<void> _saveProofBundle() async {
     setState(() => _isSavingProofBundle = true);
     final MissionService missionService = context.read<MissionService>();
+    final List<String> artifactUrls = _artifactUrlsController.text
+        .split(RegExp(r'\r?\n'))
+        .map((String value) => value.trim())
+        .where((String value) => value.isNotEmpty)
+        .toList(growable: false);
     final MissionProofBundle? bundle =
         await missionService.saveProofBundleDraft(
       missionId: widget.mission.id,
@@ -929,6 +937,7 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
       miniRebuildPlan: _miniRebuildController.text,
       aiAssistanceUsed: _aiAssistanceUsed,
       aiAssistanceDetails: _aiDisclosureController.text,
+      artifactUrls: artifactUrls,
     );
     if (!mounted) {
       return;
@@ -1114,6 +1123,20 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
             onChanged: (_) => setState(() {}),
             decoration: InputDecoration(
               labelText: _tMissions(context, 'Mini-rebuild plan'),
+              border: const OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _artifactUrlsController,
+            maxLines: 3,
+            onChanged: (_) => setState(() {}),
+            decoration: InputDecoration(
+              labelText: _tMissions(context, 'Artifact links (one per line)'),
+              helperText: _tMissions(
+                context,
+                'Paste direct links to learner artifacts that should travel with this review.',
+              ),
               border: const OutlineInputBorder(),
             ),
           ),

@@ -345,6 +345,10 @@ void main() {
       'I would rebuild the sensor branch first and retest the response.',
     );
     await tester.enterText(
+      find.widgetWithText(TextField, 'Artifact links (one per line)'),
+      'https://example.com/prototype.png',
+    );
+    await tester.enterText(
       find.widgetWithText(TextField, 'Version checkpoint summary'),
       'Completed the working prototype before review.',
     );
@@ -414,6 +418,10 @@ void main() {
     );
     expect(attempt['proofCheckpointCount'], 1);
     expect((attempt['proofCheckpoints'] as List<dynamic>).length, 1);
+    expect(
+      attempt['attachmentUrls'],
+      <String>['https://example.com/prototype.png'],
+    );
     expect(
       (attempt['proofBundleSummary']
           as Map<String, dynamic>)['hasExplainItBack'],

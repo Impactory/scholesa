@@ -285,6 +285,10 @@ Future<void> _submitMissionForReview(
     'I would rebuild the sensor branch first and retest the response.',
   );
   await tester.enterText(
+    find.widgetWithText(TextField, 'Artifact links (one per line)'),
+    'https://example.com/prototype.png',
+  );
+  await tester.enterText(
     find.widgetWithText(TextField, 'Version checkpoint summary'),
     'Completed the working prototype before review.',
   );
@@ -624,6 +628,10 @@ void main() {
         await firestore.collection('portfolioItems').doc('evidence-1').get();
     expect(portfolioDoc.exists, isTrue);
     expect(portfolioDoc.data()?['proofCheckpointCount'], 1);
+    expect(
+      portfolioDoc.data()?['artifactUrls'],
+      contains('https://example.com/prototype.png'),
+    );
     expect(
       portfolioDoc.data()?['description'],
       contains('Completed the working prototype before review.'),

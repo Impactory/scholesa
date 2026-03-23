@@ -134,13 +134,22 @@ void main() {
 
     expect(find.text('Proof of Learning'), findsOneWidget);
 
-    final Finder textFields = find.byType(TextField);
     await tester.enterText(
-        textFields.at(0), 'I can explain the build loop in my own words.');
+      find.widgetWithText(TextField, 'Explain-it-back summary'),
+      'I can explain the build loop in my own words.',
+    );
     await tester.enterText(
-        textFields.at(1), 'I said the steps out loud and corrected one gap.');
-    await tester.enterText(textFields.at(2),
-        'I would rebuild the sensor flow, test inputs, then refactor outputs.');
+      find.widgetWithText(TextField, 'Oral check reflection'),
+      'I said the steps out loud and corrected one gap.',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Mini-rebuild plan'),
+      'I would rebuild the sensor flow, test inputs, then refactor outputs.',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Artifact links (one per line)'),
+      'https://example.com/prototype-one\nhttps://example.com/prototype-two',
+    );
     await tester.scrollUntilVisible(
       find.text('No AI support used for this mission'),
       250,
@@ -149,9 +158,13 @@ void main() {
     await tester.tap(find.text('No AI support used for this mission'));
     await tester.pumpAndSettle();
     await tester.enterText(
-        textFields.at(3), 'Checkpoint after fixing the motor timing.');
+      find.widgetWithText(TextField, 'Version checkpoint summary'),
+      'Checkpoint after fixing the motor timing.',
+    );
     await tester.enterText(
-        textFields.at(4), 'Attached a note about the final timing tweak.');
+      find.widgetWithText(TextField, 'Artifact note (optional)'),
+      'Attached a note about the final timing tweak.',
+    );
 
     await tester.scrollUntilVisible(
       find.text('Save Checkpoint'),
@@ -186,6 +199,13 @@ void main() {
     expect(proofBundleDoc.data()?['explainItBack'], contains('build loop'));
     expect(proofBundleDoc.data()?['aiAssistanceUsed'], isFalse);
     expect(
+      proofBundleDoc.data()?['artifactUrls'],
+      <String>[
+        'https://example.com/prototype-one',
+        'https://example.com/prototype-two',
+      ],
+    );
+    expect(
         (proofBundleDoc.data()?['versionHistory'] as List<dynamic>).length, 1);
 
     final QuerySnapshot<Map<String, dynamic>> attempts =
@@ -193,6 +213,13 @@ void main() {
     expect(attempts.docs, hasLength(1));
     expect(attempts.docs.first.data()['status'], 'submitted');
     expect(attempts.docs.first.data()['proofBundleId'], 'learner-1_mission-1');
+    expect(
+      attempts.docs.first.data()['attachmentUrls'],
+      <String>[
+        'https://example.com/prototype-one',
+        'https://example.com/prototype-two',
+      ],
+    );
     expect(
       attempts.docs.first.data()['proofBundleSummary']['checkpointCount'],
       1,
@@ -202,7 +229,8 @@ void main() {
       isTrue,
     );
     expect(
-      attempts.docs.first.data()['proofBundleSummary']['hasLearnerAiDisclosure'],
+      attempts.docs.first.data()['proofBundleSummary']
+          ['hasLearnerAiDisclosure'],
       isTrue,
     );
     expect(
@@ -210,13 +238,16 @@ void main() {
       isFalse,
     );
 
-    final DocumentSnapshot<Map<String, dynamic>> assignmentDoc =
-        await firestore.collection('missionAssignments').doc('assignment-1').get();
+    final DocumentSnapshot<Map<String, dynamic>> assignmentDoc = await firestore
+        .collection('missionAssignments')
+        .doc('assignment-1')
+        .get();
     expect(assignmentDoc.data()?['status'], 'submitted');
     expect(assignmentDoc.data()?['lastSubmissionId'], attempts.docs.first.id);
   });
 
-  test('mission proof bundle checkpoints use generated ids instead of timestamps',
+  test(
+      'mission proof bundle checkpoints use generated ids instead of timestamps',
       () async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     await _seedMission(firestore);
@@ -301,11 +332,22 @@ void main() {
     await tester.tap(find.text('Proof bundle mission').first);
     await tester.pumpAndSettle();
 
-    final Finder textFields = find.byType(TextField);
-    await tester.enterText(textFields.at(0), 'Explain the offline loop.');
     await tester.enterText(
-        textFields.at(1), 'Talked through the concept aloud.');
-    await tester.enterText(textFields.at(2), 'Rebuild using a second example.');
+      find.widgetWithText(TextField, 'Explain-it-back summary'),
+      'Explain the offline loop.',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Oral check reflection'),
+      'Talked through the concept aloud.',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Mini-rebuild plan'),
+      'Rebuild using a second example.',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Artifact links (one per line)'),
+      'https://example.com/offline-proof',
+    );
 
     await tester.scrollUntilVisible(
       find.text('Save Proof Bundle'),

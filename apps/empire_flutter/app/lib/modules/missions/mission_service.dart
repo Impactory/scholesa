@@ -65,6 +65,7 @@ class MissionProofBundle {
     this.miniRebuildPlan,
     this.aiAssistanceUsed,
     this.aiAssistanceDetails,
+    this.artifactUrls = const <String>[],
     this.versionHistory = const <MissionProofCheckpoint>[],
     this.createdAt,
     this.updatedAt,
@@ -79,6 +80,7 @@ class MissionProofBundle {
   final String? miniRebuildPlan;
   final bool? aiAssistanceUsed;
   final String? aiAssistanceDetails;
+  final List<String> artifactUrls;
   final List<MissionProofCheckpoint> versionHistory;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -105,6 +107,9 @@ class MissionProofBundle {
       miniRebuildPlan: data['miniRebuildPlan'] as String?,
       aiAssistanceUsed: data['aiAssistanceUsed'] as bool?,
       aiAssistanceDetails: data['aiAssistanceDetails'] as String?,
+      artifactUrls: List<String>.from(
+        data['artifactUrls'] as List<dynamic>? ?? <dynamic>[],
+      ),
       versionHistory: rawHistory
           .whereType<Map<dynamic, dynamic>>()
           .map((Map<dynamic, dynamic> entry) =>
@@ -365,6 +370,7 @@ class MissionService extends ChangeNotifier {
     final String checkpointArtifactNote =
         latestCheckpoint?.artifactNote?.trim() ?? '';
     final String aiDetails = proofBundle.aiAssistanceDetails?.trim() ?? '';
+    final int artifactCount = proofBundle.artifactUrls.length;
 
     if (explain.isNotEmpty) {
       parts.add('Explain-it-back: $explain');
@@ -380,6 +386,9 @@ class MissionService extends ChangeNotifier {
     }
     if (checkpointArtifactNote.isNotEmpty) {
       parts.add('Artifact note: $checkpointArtifactNote');
+    }
+    if (artifactCount > 0) {
+      parts.add('Artifact links attached: $artifactCount');
     }
     if (proofBundle.aiAssistanceUsed != null) {
       parts.add(
@@ -429,6 +438,7 @@ class MissionService extends ChangeNotifier {
     String? miniRebuildPlan,
     bool? aiAssistanceUsed,
     String? aiAssistanceDetails,
+    List<String>? artifactUrls,
   }) async {
     final MissionProofBundle? existing = await loadProofBundle(missionId);
     final String? siteId =
@@ -441,6 +451,8 @@ class MissionService extends ChangeNotifier {
         oralCheckResponse?.trim() ?? existing?.oralCheckResponse ?? '';
     final String rebuild =
         miniRebuildPlan?.trim() ?? existing?.miniRebuildPlan ?? '';
+    final List<String> resolvedArtifactUrls =
+        artifactUrls ?? existing?.artifactUrls ?? const <String>[];
     final bool? resolvedAiAssistanceUsed =
         aiAssistanceUsed ?? existing?.aiAssistanceUsed;
     final String? resolvedAiAssistanceDetails = aiAssistanceDetails != null
@@ -462,6 +474,7 @@ class MissionService extends ChangeNotifier {
         'explainItBack': explain,
         'oralCheckResponse': oral,
         'miniRebuildPlan': rebuild,
+        'artifactUrls': resolvedArtifactUrls,
         if (resolvedAiAssistanceUsed != null)
           'aiAssistanceUsed': resolvedAiAssistanceUsed,
         if (resolvedAiAssistanceDetails != null)
@@ -487,6 +500,7 @@ class MissionService extends ChangeNotifier {
         'explainItBack': explain,
         'oralCheckResponse': oral,
         'miniRebuildPlan': rebuild,
+        'artifactUrls': resolvedArtifactUrls,
         if (resolvedAiAssistanceUsed != null)
           'aiAssistanceUsed': resolvedAiAssistanceUsed,
         if (resolvedAiAssistanceDetails != null)
@@ -504,6 +518,7 @@ class MissionService extends ChangeNotifier {
       explainItBack: explain,
       oralCheckResponse: oral,
       miniRebuildPlan: rebuild,
+      artifactUrls: resolvedArtifactUrls,
       aiAssistanceUsed: resolvedAiAssistanceUsed,
       aiAssistanceDetails: resolvedAiAssistanceDetails,
       versionHistory:
@@ -548,6 +563,7 @@ class MissionService extends ChangeNotifier {
       'explainItBack': existing?.explainItBack ?? '',
       'oralCheckResponse': existing?.oralCheckResponse ?? '',
       'miniRebuildPlan': existing?.miniRebuildPlan ?? '',
+      'artifactUrls': existing?.artifactUrls ?? const <String>[],
       if (existing?.aiAssistanceUsed != null)
         'aiAssistanceUsed': existing!.aiAssistanceUsed,
       if (existing?.aiAssistanceDetails?.trim().isNotEmpty == true)
@@ -1072,6 +1088,8 @@ class MissionService extends ChangeNotifier {
         );
         final List<Map<String, dynamic>> proofCheckpoints =
             _proofCheckpointPayload(proofBundle);
+        final List<String> proofArtifactUrls =
+            proofBundle?.artifactUrls ?? const <String>[];
         final Map<String, dynamic> canonicalAttempt = <String, dynamic>{
           'missionId': missionId,
           'missionTitle': mission.title,
@@ -1086,7 +1104,7 @@ class MissionService extends ChangeNotifier {
           // Keep submission payload privacy-minimized.
           'content': submissionText,
           'submissionText': submissionText,
-          'attachmentUrls': const <String>[],
+          'attachmentUrls': proofArtifactUrls,
           if (proofBundle != null) 'proofBundleId': proofBundle.id,
           if (proofBundle != null)
             'proofCheckpointCount': proofBundle.versionHistory.length,
