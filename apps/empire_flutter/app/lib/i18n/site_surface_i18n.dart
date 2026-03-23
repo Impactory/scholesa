@@ -261,6 +261,7 @@ class SiteSurfaceI18n {
     'HQ resolved this request. Confirmed capabilities:': 'HQ 已解决此请求。已确认的能力：',
     'HQ resolved this request and confirmed mapped capability coverage for educators.':
         'HQ 已解决此请求，并确认教育者所需的能力映射覆盖已经可用。',
+    'Mapped curriculum records:': '已映射的课程记录：',
     'Request HQ mapping': '请求 HQ 映射',
     'HQ mapping request open': 'HQ 映射请求已开启',
     'HQ mapping request submitted.': 'HQ 映射请求已提交。',
@@ -665,6 +666,7 @@ class SiteSurfaceI18n {
     'HQ resolved this request. Confirmed capabilities:': 'HQ 已解決此請求。已確認的能力：',
     'HQ resolved this request and confirmed mapped capability coverage for educators.':
         'HQ 已解決此請求，並確認教育者所需的能力映射覆蓋已可使用。',
+    'Mapped curriculum records:': '已映射的課程記錄：',
     'Request HQ mapping': '請求 HQ 映射',
     'HQ mapping request open': 'HQ 映射請求已開啟',
     'HQ mapping request submitted.': 'HQ 映射請求已提交。',

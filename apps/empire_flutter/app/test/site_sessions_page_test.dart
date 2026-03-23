@@ -645,6 +645,9 @@ void main() {
         'updatedAt': Timestamp.fromDate(today),
         'resolutionSupportingCapabilityCount': 1,
         'resolutionSupportingCapabilityTitles': <String>['Systems thinking'],
+        'resolutionSupportingCurriculumTitles': <String>[
+          'Future Skills Mission'
+        ],
         'metadata': <String, dynamic>{
           'sessionId': 'session-ready',
           'sessionTitle': 'Future Skills Lab',
@@ -672,6 +675,10 @@ void main() {
     expect(
       find.text(
           'HQ resolved this request. Confirmed capabilities: Systems thinking'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Mapped curriculum records: Future Skills Mission'),
       findsOneWidget,
     );
     expect(find.widgetWithText(OutlinedButton, 'Request HQ mapping'),

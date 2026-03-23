@@ -616,6 +616,17 @@ void main() {
           'pillarCode': 'FS',
         },
       );
+      await firestore.collection('missions').doc('mission-1').set(
+        <String, dynamic>{
+          'title': 'Future Skills Mission',
+          'pillar': 'Future Skills',
+          'pillarCode': 'FS',
+          'siteId': 'site-1',
+          'capabilityIds': <String>['capability-1'],
+          'capabilityTitles': <String>['Systems thinking'],
+          'status': 'draft',
+        },
+      );
 
       await tester.tap(find.byIcon(Icons.refresh_rounded).first);
       await tester.pumpAndSettle();
@@ -644,6 +655,14 @@ void main() {
       expect(
         requestDoc.data()?['resolutionSummary'],
         contains('2 mapped capabilities'),
+      );
+      expect(
+        requestDoc.data()?['resolutionSupportingCurriculumTitles'],
+        contains('Future Skills Mission'),
+      );
+      expect(
+        requestDoc.data()?['resolutionSupportingCurriculumIds'],
+        contains('mission-1'),
       );
     });
   });

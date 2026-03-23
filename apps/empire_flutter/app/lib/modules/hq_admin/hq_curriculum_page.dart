@@ -2266,9 +2266,9 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
               resolutionDetails.supportingCapabilityIds,
           'resolutionSupportingCapabilityTitles':
               resolutionDetails.supportingCapabilityTitles,
-            'resolutionSupportingCurriculumIds':
+          'resolutionSupportingCurriculumIds':
               resolutionDetails.supportingCurriculumIds,
-            'resolutionSupportingCurriculumTitles':
+          'resolutionSupportingCurriculumTitles':
               resolutionDetails.supportingCurriculumTitles,
           'resolutionPillarCode': resolutionDetails.pillarCode,
           'updatedAt': FieldValue.serverTimestamp(),
@@ -2352,16 +2352,16 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     final List<String> supportingCapabilityTitles = supportingCapabilities
         .map((_CapabilityRef capability) => capability.title)
         .toList(growable: false);
-      final List<_CurriculumEvidenceRef> supportingCurricula =
+    final List<_CurriculumEvidenceRef> supportingCurricula =
         await _loadSupportingCurriculumRefs(
-        firestoreService: firestoreService,
-        pillarCode: pillarCode,
-        pillar: request.pillar,
-        siteId: scopedSiteId,
-        supportingCapabilityIds: supportingCapabilityIds,
-        supportingCapabilityTitles: supportingCapabilityTitles,
-      );
-      final int supportingCapabilityCount = readiness.mappedCapabilityCount > 0
+      firestoreService: firestoreService,
+      pillarCode: pillarCode,
+      pillar: request.pillar,
+      siteId: scopedSiteId,
+      supportingCapabilityIds: supportingCapabilityIds,
+      supportingCapabilityTitles: supportingCapabilityTitles,
+    );
+    final int supportingCapabilityCount = readiness.mappedCapabilityCount > 0
         ? readiness.mappedCapabilityCount
         : supportingCapabilities.length;
     final List<String> previewTitles =
@@ -3998,8 +3998,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     final List<_CurriculumEvidenceRef> curricula = snapshot.docs
         .where((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
       final Map<String, dynamic> data = doc.data();
-      final String existingSiteId =
-          (data['siteId'] as String? ?? '').trim();
+      final String existingSiteId = (data['siteId'] as String? ?? '').trim();
       final bool siteMatches = scopedSiteId.isEmpty
           ? existingSiteId.isEmpty
           : existingSiteId.isEmpty || existingSiteId == scopedSiteId;
