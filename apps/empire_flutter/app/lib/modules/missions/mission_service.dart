@@ -130,6 +130,7 @@ class MissionService extends ChangeNotifier {
   MissionService({
     required FirestoreService firestoreService,
     required this.learnerId,
+    this.activeSiteId,
     SyncCoordinator? syncCoordinator,
     Future<List<Mission>> Function()? missionsLoader,
   })  : _firestoreService = firestoreService,
@@ -139,12 +140,14 @@ class MissionService extends ChangeNotifier {
   final SyncCoordinator? _syncCoordinator;
   final Future<List<Mission>> Function()? _missionsLoader;
   final String learnerId;
+  final String? activeSiteId;
   FirebaseFirestore get _firestore => _firestoreService.firestore;
   bool get isOnline => _syncCoordinator?.isOnline ?? true;
 
   List<Mission> _missions = <Mission>[];
   final Map<String, _MissionConfusabilityProfile> _missionProfiles =
       <String, _MissionConfusabilityProfile>{};
+  final Set<String> _loadedAssignmentSiteIds = <String>{};
   LearnerProgress? _progress;
   bool _isLoading = false;
   String? _error;
@@ -221,7 +224,7 @@ class MissionService extends ChangeNotifier {
           ..clear()
           ..addAll(snapshot.missionProfiles);
       }
-      _progress = _calculateProgress();
+          _progress = await _calculateProgress();
 
       debugPrint('Loaded ${_missions.length} missions for learner');
     } catch (e) {
@@ -243,11 +246,17 @@ class MissionService extends ChangeNotifier {
     final List<Mission> loadedMissions = <Mission>[];
     final Map<String, _MissionConfusabilityProfile> loadedProfiles =
         <String, _MissionConfusabilityProfile>{};
+    _loadedAssignmentSiteIds.clear();
 
     for (final QueryDocumentSnapshot<Map<String, dynamic>> assignDoc
         in assignmentsSnapshot.docs) {
       final Map<String, dynamic> assignData = assignDoc.data();
       final String missionId = assignData['missionId'] as String? ?? '';
+      final String assignmentSiteId =
+          (assignData['siteId'] as String? ?? '').trim();
+      if (assignmentSiteId.isNotEmpty) {
+        _loadedAssignmentSiteIds.add(assignmentSiteId);
+      }
 
       final DocumentSnapshot<Map<String, dynamic>> missionDoc =
           await _firestore.collection('missions').doc(missionId).get();
@@ -966,24 +975,113 @@ class MissionService extends ChangeNotifier {
     return WorkedExamplePromptLevel.fullModel;
   }
 
-  LearnerProgress _calculateProgress() {
-    final int totalXp = _missions
-        .where((Mission m) => m.status == MissionStatus.completed)
-        .fold(0, (int sum, Mission m) => sum + m.xpReward);
-    final int completed = _missions
-        .where((Mission m) => m.status == MissionStatus.completed)
-        .length;
-    final int level = (totalXp / 1000).floor() + 1;
+  String? _effectiveProgressSiteId() {
+    final String normalizedActiveSiteId = activeSiteId?.trim() ?? '';
+    if (normalizedActiveSiteId.isNotEmpty) {
+      return normalizedActiveSiteId;
+    }
+    if (_loadedAssignmentSiteIds.length == 1) {
+      return _loadedAssignmentSiteIds.first;
+    }
+    return null;
+  }
+
+  Pillar _pillarFromCapabilityCode(String? pillarCode) {
+    switch ((pillarCode ?? '').trim().toLowerCase()) {
+      case 'future_skills':
+      case 'future skills':
+      case 'fs':
+        return Pillar.futureSkills;
+      case 'leadership':
+      case 'leadership_agency':
+      case 'leadership & agency':
+        return Pillar.leadership;
+      case 'impact':
+      case 'impact_innovation':
+      case 'impact & innovation':
+        return Pillar.impact;
+      default:
+        return Pillar.futureSkills;
+    }
+  }
+
+  Future<LearnerProgress> _calculateProgress() async {
+    final String? siteId = _effectiveProgressSiteId();
+    Query<Map<String, dynamic>> masteryQuery = _firestore
+        .collection('capabilityMastery')
+        .where('learnerId', isEqualTo: learnerId);
+    if (siteId != null && siteId.isNotEmpty) {
+      masteryQuery = masteryQuery.where('siteId', isEqualTo: siteId);
+    }
+    final QuerySnapshot<Map<String, dynamic>> masterySnapshot =
+        await masteryQuery.get();
+
+    final Map<Pillar, List<int>> levelsByPillar = <Pillar, List<int>>{};
+    int totalLevels = 0;
+    int reviewedCapabilities = 0;
+
+    for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+        in masterySnapshot.docs) {
+      final Map<String, dynamic> data = doc.data();
+      final int latestLevel = (data['latestLevel'] as num?)?.toInt() ??
+          (data['highestLevel'] as num?)?.toInt() ??
+          0;
+      if (latestLevel <= 0) {
+        continue;
+      }
+      reviewedCapabilities += 1;
+      totalLevels += latestLevel;
+      final Pillar pillar =
+          _pillarFromCapabilityCode(data['pillarCode'] as String?);
+      levelsByPillar.putIfAbsent(pillar, () => <int>[]).add(latestLevel);
+    }
+
+    final double averageCapabilityLevel = reviewedCapabilities == 0
+        ? 0
+        : totalLevels / reviewedCapabilities;
+    final int currentLevel = reviewedCapabilities == 0
+        ? 0
+        : averageCapabilityLevel.round().clamp(1, 4);
+
+    Query<Map<String, dynamic>> portfolioQuery = _firestore
+        .collection('portfolioItems')
+        .where('learnerId', isEqualTo: learnerId);
+    if (siteId != null && siteId.isNotEmpty) {
+      portfolioQuery = portfolioQuery.where('siteId', isEqualTo: siteId);
+    }
+    final QuerySnapshot<Map<String, dynamic>> portfolioSnapshot =
+        await portfolioQuery.get();
+    final int reviewedArtifacts = portfolioSnapshot.docs.where(
+      (QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+        final String verificationStatus =
+            (doc.data()['verificationStatus'] as String? ?? '')
+                .trim()
+                .toLowerCase();
+        return verificationStatus == 'reviewed' ||
+            verificationStatus == 'verified';
+      },
+    ).length;
+
+    final int awaitingReview = _missions.where(
+      (Mission mission) => mission.status == MissionStatus.submitted,
+    ).length;
+
     return LearnerProgress(
-      totalXp: totalXp,
-      currentLevel: level,
-      xpToNextLevel: (level * 1000) - totalXp,
-      missionsCompleted: completed,
-      currentStreak: 5,
-      pillarProgress: const <Pillar, int>{
-        Pillar.futureSkills: 60,
-        Pillar.leadership: 40,
-        Pillar.impact: 50,
+      currentLevel: currentLevel,
+      averageCapabilityLevel: averageCapabilityLevel,
+      reviewedCapabilities: reviewedCapabilities,
+      reviewedArtifacts: reviewedArtifacts,
+      awaitingReview: awaitingReview,
+      pillarProgress: <Pillar, int>{
+        for (final Pillar pillar in Pillar.values)
+          pillar: levelsByPillar[pillar] == null || levelsByPillar[pillar]!.isEmpty
+              ? 0
+              : (((levelsByPillar[pillar]!
+                                  .reduce((int a, int b) => a + b) /
+                              levelsByPillar[pillar]!.length) /
+                          4) *
+                      100)
+                  .round(),
       },
     );
   }
@@ -1158,6 +1256,7 @@ class MissionService extends ChangeNotifier {
         _missions[index] = _missions[index].copyWith(
           status: MissionStatus.submitted,
         );
+        _progress = await _calculateProgress();
         notifyListeners();
         return attemptRef.id;
       }
@@ -1216,17 +1315,7 @@ class MissionService extends ChangeNotifier {
           });
         }
 
-        // Update progress
-        if (_progress != null) {
-          _progress = LearnerProgress(
-            totalXp: _progress!.totalXp + mission.xpReward,
-            currentLevel: _progress!.currentLevel,
-            xpToNextLevel: _progress!.xpToNextLevel - mission.xpReward,
-            missionsCompleted: _progress!.missionsCompleted + 1,
-            currentStreak: _progress!.currentStreak,
-            pillarProgress: _progress!.pillarProgress,
-          );
-        }
+        _progress = await _calculateProgress();
 
         notifyListeners();
         return true;

@@ -428,6 +428,7 @@ class _ScholesaAppState extends State<ScholesaApp> {
           create: (_) => MissionService(
             firestoreService: _firestoreService,
             learnerId: '',
+            activeSiteId: null,
             syncCoordinator: _syncCoordinator,
           ),
           update: (_, AppState appState, MissionService? previousMission) {
@@ -439,6 +440,7 @@ class _ScholesaAppState extends State<ScholesaApp> {
             final MissionService service = MissionService(
               firestoreService: _firestoreService,
               learnerId: learnerId,
+              activeSiteId: _normalizeContextValue(appState.activeSiteId),
               syncCoordinator: _syncCoordinator,
             );
             if (learnerId.isNotEmpty &&

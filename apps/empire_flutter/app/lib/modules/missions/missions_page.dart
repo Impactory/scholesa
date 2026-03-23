@@ -12,8 +12,16 @@ import '../../auth/app_state.dart';
 import 'mission_models.dart';
 import 'mission_service.dart';
 
-String _tMissions(BuildContext context, String input) {
-  return WorkflowSurfaceI18n.text(context, input);
+String _tMissions(
+  BuildContext context,
+  String input, {
+  Map<String, String> placeholders = const <String, String>{},
+}) {
+  return WorkflowSurfaceI18n.textWithPlaceholders(
+    context,
+    input,
+    placeholders: placeholders,
+  );
 }
 
 /// Learner Missions Page
@@ -200,7 +208,9 @@ class _MissionsPageState extends State<MissionsPage>
                     ),
                     child: Center(
                       child: Text(
-                        'Lv ${progress.currentLevel}',
+                        progress.hasReviewedEvidence
+                            ? 'L${progress.currentLevel}'
+                            : '--',
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -217,17 +227,42 @@ class _MissionsPageState extends State<MissionsPage>
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: <Widget>[
-                            Text(
-                              '${progress.totalXp} ${_tMissions(context, 'Activity XP')}',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: compactLayout ? 16 : 18,
+                            Expanded(
+                              child: Text(
+                                progress.hasReviewedEvidence
+                                    ? _tMissions(
+                                        context,
+                                        'Reviewed level {level}',
+                                        placeholders: <String, String>{
+                                          'level': '${progress.currentLevel}',
+                                        },
+                                      )
+                                    : _tMissions(
+                                        context,
+                                        'No reviewed capability evidence yet',
+                                      ),
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: compactLayout ? 16 : 18,
+                                ),
                               ),
                             ),
+                            const SizedBox(width: 12),
                             Flexible(
                               child: Text(
-                                '${progress.xpToNextLevel} ${_tMissions(context, 'to next activity level')}',
+                                progress.awaitingReview > 0
+                                    ? _tMissions(
+                                        context,
+                                        '{count} awaiting educator review',
+                                        placeholders: <String, String>{
+                                          'count': '${progress.awaitingReview}',
+                                        },
+                                      )
+                                    : _tMissions(
+                                        context,
+                                        'Ready for first educator review',
+                                      ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 textAlign: TextAlign.end,
@@ -238,6 +273,27 @@ class _MissionsPageState extends State<MissionsPage>
                               ),
                             ),
                           ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          progress.hasReviewedEvidence
+                              ? _tMissions(
+                                  context,
+                                  '{count} capabilities with educator-reviewed growth',
+                                  placeholders: <String, String>{
+                                    'count':
+                                        '${progress.reviewedCapabilities}',
+                                  },
+                                )
+                              : _tMissions(
+                                  context,
+                                  'Complete proof-of-learning and submit for educator review.',
+                                ),
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.88),
+                            fontSize: compactLayout ? 11 : 12,
+                            height: 1.3,
+                          ),
                         ),
                         const SizedBox(height: 8),
                         ClipRRect(
@@ -260,19 +316,19 @@ class _MissionsPageState extends State<MissionsPage>
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: <Widget>[
                   _ProgressStat(
-                    icon: Icons.check_circle,
-                    value: '${progress.missionsCompleted}',
-                    label: _tMissions(context, 'Finished'),
+                    icon: Icons.verified_outlined,
+                    value: '${progress.reviewedCapabilities}',
+                    label: _tMissions(context, 'Reviewed Capabilities'),
                   ),
                   _ProgressStat(
-                    icon: Icons.local_fire_department,
-                    value: '${progress.currentStreak}',
-                    label: _tMissions(context, 'Day Streak'),
+                    icon: Icons.collections_bookmark_outlined,
+                    value: '${progress.reviewedArtifacts}',
+                    label: _tMissions(context, 'Reviewed Artifacts'),
                   ),
                   _ProgressStat(
-                    icon: Icons.play_circle,
-                    value: '${service.activeMissions.length}',
-                    label: _tMissions(context, 'Active'),
+                    icon: Icons.rate_review_outlined,
+                    value: '${progress.awaitingReview}',
+                    label: _tMissions(context, 'Awaiting Review'),
                   ),
                 ],
               ),
@@ -281,7 +337,7 @@ class _MissionsPageState extends State<MissionsPage>
                 Text(
                   _tMissions(
                     context,
-                    'XP, levels, and streaks show activity. Capability growth comes from reviewed evidence and rubric feedback.',
+                    'This summary only counts educator-reviewed capability evidence, linked portfolio artifacts, and submissions still awaiting review.',
                   ),
                   textAlign: TextAlign.center,
                   style: TextStyle(

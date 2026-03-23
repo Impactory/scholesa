@@ -517,21 +517,27 @@ class Mission extends Equatable {
 /// Learner's progress summary
 class LearnerProgress extends Equatable {
   const LearnerProgress({
-    required this.totalXp,
     required this.currentLevel,
-    required this.xpToNextLevel,
-    required this.missionsCompleted,
-    required this.currentStreak,
+    required this.averageCapabilityLevel,
+    required this.reviewedCapabilities,
+    required this.reviewedArtifacts,
+    required this.awaitingReview,
     required this.pillarProgress,
   });
 
   factory LearnerProgress.fromJson(Map<String, dynamic> json) {
     return LearnerProgress(
-      totalXp: json['totalXp'] as int,
-      currentLevel: json['currentLevel'] as int,
-      xpToNextLevel: json['xpToNextLevel'] as int,
-      missionsCompleted: json['missionsCompleted'] as int,
-      currentStreak: json['currentStreak'] as int,
+      currentLevel: json['currentLevel'] as int? ?? 0,
+      averageCapabilityLevel:
+          (json['averageCapabilityLevel'] as num?)?.toDouble() ??
+              (json['currentLevel'] as num?)?.toDouble() ??
+              0,
+      reviewedCapabilities:
+          json['reviewedCapabilities'] as int? ??
+              json['missionsCompleted'] as int? ??
+              0,
+      reviewedArtifacts: json['reviewedArtifacts'] as int? ?? 0,
+      awaitingReview: json['awaitingReview'] as int? ?? 0,
       pillarProgress: (json['pillarProgress'] as Map<String, dynamic>).map(
         (key, value) => MapEntry(
           Pillar.values.firstWhere((p) => p.name == key),
@@ -540,22 +546,29 @@ class LearnerProgress extends Equatable {
       ),
     );
   }
-  final int totalXp;
   final int currentLevel;
-  final int xpToNextLevel;
-  final int missionsCompleted;
-  final int currentStreak;
+  final double averageCapabilityLevel;
+  final int reviewedCapabilities;
+  final int reviewedArtifacts;
+  final int awaitingReview;
   final Map<Pillar, int> pillarProgress;
 
-  double get levelProgress => 1 - (xpToNextLevel / (totalXp + xpToNextLevel));
+  bool get hasReviewedEvidence => reviewedCapabilities > 0;
+
+  double get levelProgress {
+    if (averageCapabilityLevel <= 0) {
+      return 0;
+    }
+    return (averageCapabilityLevel / 4).clamp(0.0, 1.0);
+  }
 
   @override
   List<Object?> get props => <Object?>[
-        totalXp,
         currentLevel,
-        xpToNextLevel,
-        missionsCompleted,
-        currentStreak,
+        averageCapabilityLevel,
+        reviewedCapabilities,
+        reviewedArtifacts,
+        awaitingReview,
         pillarProgress,
       ];
 }

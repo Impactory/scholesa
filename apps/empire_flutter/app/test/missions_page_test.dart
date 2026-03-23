@@ -181,6 +181,77 @@ Future<void> _seedCompletedMissionReadyForReview(
   );
 }
 
+Future<void> _seedReviewedMissionProgressContext(
+  FakeFirebaseFirestore firestore,
+) async {
+  await firestore.collection('missionAssignments').doc('assignment-2').set(
+    <String, dynamic>{
+      'missionId': 'mission-2',
+      'learnerId': 'learner-1',
+      'siteId': 'site-1',
+      'status': 'completed',
+      'progress': 1.0,
+    },
+  );
+  await firestore.collection('missions').doc('mission-2').set(
+    <String, dynamic>{
+      'title': 'Mission with legacy XP drift',
+      'description': 'A completed mission that should not drive growth claims.',
+      'pillarCode': 'future_skills',
+      'difficulty': 'intermediate',
+      'xpReward': 2400,
+    },
+  );
+  await firestore
+      .collection('missions')
+      .doc('mission-2')
+      .collection('steps')
+      .doc('step-1')
+      .set(
+    <String, dynamic>{
+      'title': 'Ship a build',
+      'order': 1,
+      'isCompleted': true,
+    },
+  );
+  await firestore.collection('missionAssignments').doc('assignment-3').set(
+    <String, dynamic>{
+      'missionId': 'mission-3',
+      'learnerId': 'learner-1',
+      'siteId': 'site-1',
+      'status': 'submitted',
+      'progress': 1.0,
+    },
+  );
+  await firestore.collection('missions').doc('mission-3').set(
+    <String, dynamic>{
+      'title': 'Mission awaiting review',
+      'description': 'Waiting for educator review.',
+      'pillarCode': 'impact',
+      'difficulty': 'beginner',
+      'xpReward': 150,
+    },
+  );
+  await firestore.collection('capabilityMastery').doc('learner-1_cap-1').set(
+    <String, dynamic>{
+      'learnerId': 'learner-1',
+      'siteId': 'site-1',
+      'capabilityId': 'cap-1',
+      'pillarCode': 'future_skills',
+      'latestLevel': 2,
+      'highestLevel': 2,
+    },
+  );
+  await firestore.collection('portfolioItems').doc('portfolio-1').set(
+    <String, dynamic>{
+      'learnerId': 'learner-1',
+      'siteId': 'site-1',
+      'verificationStatus': 'reviewed',
+      'title': 'Reviewed robot artifact',
+    },
+  );
+}
+
 void main() {
   testWidgets('missions page shows empty available-state copy',
       (WidgetTester tester) async {
@@ -481,7 +552,50 @@ void main() {
 
     expect(find.text('Finished'), findsWidgets);
     expect(find.text('Completed'), findsNothing);
-    expect(find.textContaining('Activity XP'), findsOneWidget);
-    expect(find.textContaining('to next activity level'), findsOneWidget);
+    expect(find.text('No reviewed capability evidence yet'), findsOneWidget);
+    expect(find.textContaining('Activity XP'), findsNothing);
+    expect(find.textContaining('to next activity level'), findsNothing);
+  });
+
+  testWidgets(
+      'missions page progress card uses reviewed capability evidence instead of legacy XP totals',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedCompletedMissionReadyForReview(firestore);
+    await _seedReviewedMissionProgressContext(firestore);
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final MissionService missionService = MissionService(
+      firestoreService: firestoreService,
+      learnerId: 'learner-1',
+      activeSiteId: 'site-1',
+    );
+
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      _buildHarness(
+        firestoreService: firestoreService,
+        missionService: missionService,
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Reviewed level 2'), findsOneWidget);
+    expect(
+      find.text('1 capabilities with educator-reviewed growth'),
+      findsOneWidget,
+    );
+    expect(find.text('1 awaiting educator review'), findsOneWidget);
+    expect(find.text('Reviewed Capabilities'), findsOneWidget);
+    expect(find.text('Reviewed Artifacts'), findsOneWidget);
+    expect(find.text('Awaiting Review'), findsOneWidget);
+    expect(find.textContaining('Activity XP'), findsNothing);
+    expect(find.textContaining('to next activity level'), findsNothing);
   });
 }

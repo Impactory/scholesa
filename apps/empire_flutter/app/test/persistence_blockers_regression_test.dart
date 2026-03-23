@@ -878,7 +878,10 @@ void main() {
       expect(service.missions.single.recommendedInterleavingMissionIds,
           contains('mission-2'));
       expect(service.progress, isNotNull);
-      expect(service.progress?.totalXp, initialProgress?.totalXp);
+      expect(
+        service.progress?.reviewedCapabilities,
+        initialProgress?.reviewedCapabilities,
+      );
       expect(service.error, contains('Failed to load missions'));
       expect(service.isLoading, isFalse);
     });
