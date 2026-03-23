@@ -30,6 +30,18 @@ class ParentService extends ChangeNotifier {
   FirestoreService get firestoreService => _firestoreService;
   FirebaseFirestore get _firestore => _firestoreService.firestore;
 
+  @visibleForTesting
+  static int currentLevelFromBundleValue(dynamic value) {
+    if (value is int) {
+      return value > 0 ? value : 0;
+    }
+    if (value is num && value.isFinite) {
+      final int rounded = value.round();
+      return rounded > 0 ? rounded : 0;
+    }
+    return 0;
+  }
+
   List<LearnerSummary> _learnerSummaries = <LearnerSummary>[];
   BillingSummary? _billingSummary;
   bool _isLoading = false;
@@ -111,7 +123,7 @@ class ParentService extends ChangeNotifier {
             learnerId: learnerId,
             learnerName: learnerName,
             photoUrl: learner['photoUrl'] as String?,
-            currentLevel: _toInt(learner['currentLevel']) ?? 1,
+            currentLevel: currentLevelFromBundleValue(learner['currentLevel']),
             totalXp: _toInt(learner['totalXp']) ?? 0,
             missionsCompleted: _toInt(learner['missionsCompleted']) ?? 0,
             currentStreak: _toInt(learner['currentStreak']) ?? 0,

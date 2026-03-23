@@ -20,6 +20,7 @@ import { persistLogoutAuditRecord } from './logoutAudit';
 import { ANALYTICS_REPAIR_AUDIT_ACTIONS, buildAnalyticsRepairRunRecord } from './analyticsRepairRuns';
 import { matchesAuditLogFilters, normalizeAuditLogFilters } from './auditLogFilters';
 import { classifySepEntropyBand, summarizeVerificationSignalType } from './sepVerification';
+import { resolveParentCurrentLevel } from './parentDashboardSummary';
 import {
   handleVoiceApi,
   handleCopilotMessage,
@@ -3220,12 +3221,7 @@ async function buildParentLearnerSummary(params: {
     .filter((value): value is Record<string, unknown> => value !== null)
     .sort((left, right) => Date.parse(String(right.occurredAt ?? now.toISOString())) - Date.parse(String(left.occurredAt ?? now.toISOString())));
 
-  const currentLevel =
-    averageLevel != null && averageLevel > 0
-      ? Math.max(1, Math.round(averageLevel))
-      : typeof progressData.level === 'number' && Number.isFinite(progressData.level)
-      ? Math.round(progressData.level)
-      : null;
+  const currentLevel = resolveParentCurrentLevel(averageLevel);
   const totalXp =
     typeof progressData.totalXp === 'number' && Number.isFinite(progressData.totalXp)
       ? Math.round(progressData.totalXp)

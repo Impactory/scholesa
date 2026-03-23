@@ -668,6 +668,13 @@ void main() {
   });
 
   group('Parent surface workflows', () {
+    test('parent callable parser leaves missing current level empty', () {
+      expect(ParentService.currentLevelFromBundleValue(null), 0);
+      expect(ParentService.currentLevelFromBundleValue(0), 0);
+      expect(ParentService.currentLevelFromBundleValue(-2), 0);
+      expect(ParentService.currentLevelFromBundleValue(2.6), 3);
+    });
+
     test('parent service fallback builds linked schedule and portfolio data',
         () async {
       final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
