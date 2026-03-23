@@ -172,6 +172,8 @@ class _MappingResolutionDetails {
     required this.supportingCapabilityCount,
     required this.supportingCapabilityIds,
     required this.supportingCapabilityTitles,
+    required this.supportingCurriculumIds,
+    required this.supportingCurriculumTitles,
     required this.pillarCode,
   });
 
@@ -179,7 +181,19 @@ class _MappingResolutionDetails {
   final int supportingCapabilityCount;
   final List<String> supportingCapabilityIds;
   final List<String> supportingCapabilityTitles;
+  final List<String> supportingCurriculumIds;
+  final List<String> supportingCurriculumTitles;
   final String pillarCode;
+}
+
+class _CurriculumEvidenceRef {
+  const _CurriculumEvidenceRef({
+    required this.id,
+    required this.title,
+  });
+
+  final String id;
+  final String title;
 }
 
 class _HqCurriculumPageState extends State<HqCurriculumPage>
@@ -2252,6 +2266,10 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
               resolutionDetails.supportingCapabilityIds,
           'resolutionSupportingCapabilityTitles':
               resolutionDetails.supportingCapabilityTitles,
+            'resolutionSupportingCurriculumIds':
+              resolutionDetails.supportingCurriculumIds,
+            'resolutionSupportingCurriculumTitles':
+              resolutionDetails.supportingCurriculumTitles,
           'resolutionPillarCode': resolutionDetails.pillarCode,
           'updatedAt': FieldValue.serverTimestamp(),
         },
@@ -2316,6 +2334,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
         supportingCapabilityCount: 0,
         supportingCapabilityIds: const <String>[],
         supportingCapabilityTitles: const <String>[],
+        supportingCurriculumIds: const <String>[],
+        supportingCurriculumTitles: const <String>[],
         pillarCode: pillarCode,
       );
     }
@@ -2326,15 +2346,24 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
       pillarCode: pillarCode,
       siteId: scopedSiteId,
     );
-    final int supportingCapabilityCount = readiness.mappedCapabilityCount > 0
-        ? readiness.mappedCapabilityCount
-        : supportingCapabilities.length;
     final List<String> supportingCapabilityIds = supportingCapabilities
         .map((_CapabilityRef capability) => capability.id)
         .toList(growable: false);
     final List<String> supportingCapabilityTitles = supportingCapabilities
         .map((_CapabilityRef capability) => capability.title)
         .toList(growable: false);
+      final List<_CurriculumEvidenceRef> supportingCurricula =
+        await _loadSupportingCurriculumRefs(
+        firestoreService: firestoreService,
+        pillarCode: pillarCode,
+        pillar: request.pillar,
+        siteId: scopedSiteId,
+        supportingCapabilityIds: supportingCapabilityIds,
+        supportingCapabilityTitles: supportingCapabilityTitles,
+      );
+      final int supportingCapabilityCount = readiness.mappedCapabilityCount > 0
+        ? readiness.mappedCapabilityCount
+        : supportingCapabilities.length;
     final List<String> previewTitles =
         supportingCapabilityTitles.take(3).toList(growable: false);
     final int extraCount = supportingCapabilityCount > previewTitles.length
@@ -2351,6 +2380,12 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
       supportingCapabilityCount: supportingCapabilityCount,
       supportingCapabilityIds: supportingCapabilityIds,
       supportingCapabilityTitles: supportingCapabilityTitles,
+      supportingCurriculumIds: supportingCurricula
+          .map((_CurriculumEvidenceRef curriculum) => curriculum.id)
+          .toList(growable: false),
+      supportingCurriculumTitles: supportingCurricula
+          .map((_CurriculumEvidenceRef curriculum) => curriculum.title)
+          .toList(growable: false),
       pillarCode: pillarCode,
     );
   }
@@ -3937,6 +3972,78 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
           });
 
     return capabilities;
+  }
+
+  Future<List<_CurriculumEvidenceRef>> _loadSupportingCurriculumRefs({
+    required FirestoreService firestoreService,
+    required String pillarCode,
+    required String pillar,
+    required String? siteId,
+    required List<String> supportingCapabilityIds,
+    required List<String> supportingCapabilityTitles,
+  }) async {
+    final String scopedSiteId = (siteId ?? '').trim();
+    final Set<String> capabilityIdSet = supportingCapabilityIds.toSet();
+    final Set<String> capabilityTitleSet = supportingCapabilityTitles
+        .map((String title) => title.trim().toLowerCase())
+        .where((String title) => title.isNotEmpty)
+        .toSet();
+
+    final QuerySnapshot<Map<String, dynamic>> snapshot = await firestoreService
+        .firestore
+        .collection('missions')
+        .limit(120)
+        .get();
+
+    final List<_CurriculumEvidenceRef> curricula = snapshot.docs
+        .where((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+      final Map<String, dynamic> data = doc.data();
+      final String existingSiteId =
+          (data['siteId'] as String? ?? '').trim();
+      final bool siteMatches = scopedSiteId.isEmpty
+          ? existingSiteId.isEmpty
+          : existingSiteId.isEmpty || existingSiteId == scopedSiteId;
+      if (!siteMatches) {
+        return false;
+      }
+
+      final String missionPillarCode =
+          (data['pillarCode'] as String? ?? '').trim();
+      final String missionPillar = _pillarFromData(data).trim().toLowerCase();
+      final bool pillarMatches = missionPillarCode == pillarCode ||
+          missionPillar == pillar.trim().toLowerCase();
+      if (!pillarMatches) {
+        return false;
+      }
+
+      final List<String> missionCapabilityIds = _parseStringList(
+        data['capabilityIds'],
+      );
+      if (capabilityIdSet.isNotEmpty &&
+          missionCapabilityIds.any(capabilityIdSet.contains)) {
+        return true;
+      }
+
+      final List<String> missionCapabilityTitles = _parseStringList(
+        data['capabilityTitles'],
+      ).map((String title) => title.toLowerCase()).toList(growable: false);
+      if (capabilityTitleSet.isNotEmpty &&
+          missionCapabilityTitles.any(capabilityTitleSet.contains)) {
+        return true;
+      }
+
+      return capabilityIdSet.isEmpty && capabilityTitleSet.isEmpty;
+    }).map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+      final Map<String, dynamic> data = doc.data();
+      return _CurriculumEvidenceRef(
+        id: doc.id,
+        title: (data['title'] as String? ?? 'Curriculum').trim(),
+      );
+    }).toList(growable: false)
+      ..sort((_CurriculumEvidenceRef a, _CurriculumEvidenceRef b) =>
+          a.title.toLowerCase().compareTo(b.title.toLowerCase()));
+
+    return curricula;
   }
 
   _SessionCapabilityReadiness? _readinessForSessionId(String sessionId) {
