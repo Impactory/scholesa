@@ -1861,7 +1861,7 @@ void main() {
       );
       expect(
         _savedFileContent,
-        contains('Verification Status: Reviewed'),
+        contains('Artifact Review Status: Reviewed'),
       );
       expect(
           _savedFileContent, contains('Portfolio Item IDs: $portfolioItemId'));

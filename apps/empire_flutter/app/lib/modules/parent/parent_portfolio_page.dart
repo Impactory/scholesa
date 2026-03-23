@@ -1009,7 +1009,7 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
       '${_t('Title')}: ${item.title}',
       '${_t('Description')}: ${item.description}',
       '${_t('Evidence Linked')}: ${item.evidenceLinked ? _t('Yes') : _t('No')}',
-      '${_t('Verification Status')}: ${item.verificationStatus?.trim().isNotEmpty == true ? _titleCaseBand(item.verificationStatus!) : _t('Pending')}',
+      '${_t('Artifact Review Status')}: ${item.verificationStatus?.trim().isNotEmpty == true ? _titleCaseBand(item.verificationStatus!) : _t('Pending')}',
       '${_t('Proof of Learning')}: ${_formatProofStatus(item.proofOfLearningStatus)}',
       if (_buildProofDetail(item).isNotEmpty)
         '${_t('Proof Detail')}: ${_buildProofDetail(item)}',

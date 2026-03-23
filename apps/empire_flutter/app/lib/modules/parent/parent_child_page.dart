@@ -713,7 +713,7 @@ class _ParentChildPageState extends State<ParentChildPage> {
         '  ${_t('Reviewed/Verified Artifacts')}: ${claim.verifiedArtifactCount}',
       );
       lines.add(
-        '  ${_t('Verification Status')}: ${claim.verificationStatus?.trim().isNotEmpty == true ? _titleCase(claim.verificationStatus!) : _t('Pending')}',
+        '  ${_t('Artifact Review Status')}: ${claim.verificationStatus?.trim().isNotEmpty == true ? _titleCase(claim.verificationStatus!) : _t('Pending')}',
       );
       lines.add(
         '  ${_t('Proof of Learning')}: ${_titleCase(claim.proofOfLearningStatus ?? 'missing')}',
