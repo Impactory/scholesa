@@ -839,6 +839,8 @@ class CapabilityGrowthEventModel {
     this.missionAttemptId,
     this.rubricApplicationId,
     this.educatorId,
+    this.progressionDescriptors = const <String>[],
+    this.checkpointMappings = const <Map<String, dynamic>>[],
     this.createdAt,
   });
 
@@ -855,6 +857,8 @@ class CapabilityGrowthEventModel {
   final String? missionAttemptId;
   final String? rubricApplicationId;
   final String? educatorId;
+  final List<String> progressionDescriptors;
+  final List<Map<String, dynamic>> checkpointMappings;
   final Timestamp? createdAt;
 
   factory CapabilityGrowthEventModel.fromDoc(
@@ -875,6 +879,14 @@ class CapabilityGrowthEventModel {
       missionAttemptId: data['missionAttemptId'] as String?,
       rubricApplicationId: data['rubricApplicationId'] as String?,
       educatorId: data['educatorId'] as String?,
+      progressionDescriptors: List<String>.from(
+        data['progressionDescriptors'] as List? ?? const <String>[],
+      ),
+      checkpointMappings: (data['checkpointMappings'] as List?)
+              ?.whereType<Map>()
+              .map((Map entry) => Map<String, dynamic>.from(entry))
+              .toList() ??
+          const <Map<String, dynamic>>[],
       createdAt: data['createdAt'] as Timestamp?,
     );
   }
@@ -892,6 +904,8 @@ class CapabilityGrowthEventModel {
         'missionAttemptId': missionAttemptId,
         'rubricApplicationId': rubricApplicationId,
         'educatorId': educatorId,
+        'progressionDescriptors': progressionDescriptors,
+        'checkpointMappings': checkpointMappings,
         'createdAt': createdAt ?? Timestamp.now(),
       };
 }
@@ -1139,7 +1153,10 @@ class PortfolioItemModel {
     this.aiDisclosureStatus,
     this.educatorId,
     this.verificationPrompt,
+    this.verificationPromptSource,
     this.verificationStatus,
+    this.progressionDescriptors = const <String>[],
+    this.checkpointMappings = const <Map<String, dynamic>>[],
     this.source,
     this.createdAt,
     this.updatedAt,
@@ -1175,7 +1192,10 @@ class PortfolioItemModel {
   final String? aiDisclosureStatus;
   final String? educatorId;
   final String? verificationPrompt;
+  final String? verificationPromptSource;
   final String? verificationStatus;
+  final List<String> progressionDescriptors;
+  final List<Map<String, dynamic>> checkpointMappings;
   final String? source;
   final Timestamp? createdAt;
   final Timestamp? updatedAt;
@@ -1224,7 +1244,16 @@ class PortfolioItemModel {
       aiDisclosureStatus: data['aiDisclosureStatus'] as String?,
       educatorId: data['educatorId'] as String?,
       verificationPrompt: data['verificationPrompt'] as String?,
+      verificationPromptSource: data['verificationPromptSource'] as String?,
       verificationStatus: data['verificationStatus'] as String?,
+      progressionDescriptors: List<String>.from(
+        data['progressionDescriptors'] as List? ?? const <String>[],
+      ),
+      checkpointMappings: (data['checkpointMappings'] as List?)
+              ?.whereType<Map>()
+              .map((Map entry) => Map<String, dynamic>.from(entry))
+              .toList() ??
+          const <Map<String, dynamic>>[],
       source: data['source'] as String?,
       createdAt: data['createdAt'] as Timestamp?,
       updatedAt: data['updatedAt'] as Timestamp?,
@@ -1261,7 +1290,10 @@ class PortfolioItemModel {
         'aiDisclosureStatus': aiDisclosureStatus,
         'educatorId': educatorId,
         'verificationPrompt': verificationPrompt,
+        'verificationPromptSource': verificationPromptSource,
         'verificationStatus': verificationStatus,
+        'progressionDescriptors': progressionDescriptors,
+        'checkpointMappings': checkpointMappings,
         'source': source,
         'createdAt': createdAt ?? Timestamp.now(),
         'updatedAt': updatedAt ?? Timestamp.now(),
@@ -1298,7 +1330,10 @@ class PortfolioItemModel {
     String? aiDisclosureStatus,
     String? educatorId,
     String? verificationPrompt,
+    String? verificationPromptSource,
     String? verificationStatus,
+    List<String>? progressionDescriptors,
+    List<Map<String, dynamic>>? checkpointMappings,
     String? source,
     Timestamp? createdAt,
     Timestamp? updatedAt,
@@ -1339,7 +1374,12 @@ class PortfolioItemModel {
       aiDisclosureStatus: aiDisclosureStatus ?? this.aiDisclosureStatus,
       educatorId: educatorId ?? this.educatorId,
       verificationPrompt: verificationPrompt ?? this.verificationPrompt,
+        verificationPromptSource:
+          verificationPromptSource ?? this.verificationPromptSource,
       verificationStatus: verificationStatus ?? this.verificationStatus,
+        progressionDescriptors:
+          progressionDescriptors ?? this.progressionDescriptors,
+        checkpointMappings: checkpointMappings ?? this.checkpointMappings,
       source: source ?? this.source,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

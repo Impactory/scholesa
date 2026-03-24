@@ -237,12 +237,34 @@ Future<void> _seedReviewRubricAndEvidence(
     <String, dynamic>{
       'rubricId': 'rubric-1',
       'rubricTitle': 'Prototype Rubric',
+      'progressionDescriptors': <String>[
+        'Secure: explain how the prototype evidence supports the claim.',
+      ],
+      'checkpointMappings': <Map<String, dynamic>>[
+        <String, dynamic>{
+          'phaseKey': 'checkpoint',
+          'phaseLabel': 'Checkpoint',
+          'guidance':
+              'Ask the learner to identify the exact artifact that proves current understanding.',
+        },
+      ],
     },
     SetOptions(merge: true),
   );
   await firestore.collection('rubrics').doc('rubric-1').set(
     <String, dynamic>{
       'title': 'Prototype Rubric',
+      'progressionDescriptors': <String>[
+        'Secure: explain how the prototype evidence supports the claim.',
+      ],
+      'checkpointMappings': <Map<String, dynamic>>[
+        <String, dynamic>{
+          'phaseKey': 'checkpoint',
+          'phaseLabel': 'Checkpoint',
+          'guidance':
+              'Ask the learner to identify the exact artifact that proves current understanding.',
+        },
+      ],
       'criteria': <Map<String, dynamic>>[
         <String, dynamic>{
           'criterionId': 'evidence',
@@ -572,6 +594,18 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Prototype Rubric'), findsOneWidget);
+    expect(find.text('Progression descriptors'), findsOneWidget);
+    expect(
+      find.text(
+          'Secure: explain how the prototype evidence supports the claim.'),
+      findsOneWidget,
+    );
+    expect(find.text('Verification criteria'), findsOneWidget);
+    expect(
+      find.text(
+          'Checkpoint: Ask the learner to identify the exact artifact that proves current understanding.'),
+      findsOneWidget,
+    );
     expect(find.text('Evidence'), findsOneWidget);
     expect(find.text('Reflection'), findsOneWidget);
 
@@ -633,6 +667,11 @@ void main() {
     expect(rubricApplicationDoc.exists, isTrue);
     expect(rubricApplicationDoc.data()?['missionAttemptId'], attemptId);
     expect((rubricApplicationDoc.data()?['scores'] as List?)?.length, 2);
+    expect(rubricApplicationDoc.data()?['progressionDescriptors'], <String>[
+      'Secure: explain how the prototype evidence supports the claim.',
+    ]);
+    expect((rubricApplicationDoc.data()?['checkpointMappings'] as List?)?.length,
+        1);
     expect(masteryDoc.exists, isTrue);
     expect(masteryDoc.data()?['latestMissionAttemptId'], attemptId);
     expect(masteryDoc.data()?['latestLevel'], 4);
@@ -641,13 +680,104 @@ void main() {
     expect(growthEvents.docs.single.data()['capabilityTitle'],
         'Prototype evidence');
     expect(growthEvents.docs.single.data()['level'], 4);
+    expect(growthEvents.docs.single.data()['progressionDescriptors'], <String>[
+      'Secure: explain how the prototype evidence supports the claim.',
+    ]);
+    expect((growthEvents.docs.single.data()['checkpointMappings'] as List?)?.length,
+        1);
+    expect(
+      growthEvents.docs.single.data()['verificationPrompts'],
+      contains(
+          'Checkpoint: Ask the learner to identify the exact artifact that proves current understanding.'),
+    );
     expect(evidenceDoc.data()?['growthStatus'], 'updated');
     expect(evidenceDoc.data()?['linkedMissionAttemptId'], attemptId);
     expect(portfolioDoc.exists, isTrue);
     expect(portfolioDoc.data()?['missionAttemptId'], attemptId);
     expect(portfolioDoc.data()?['proofOfLearningStatus'], 'verified');
+    expect(portfolioDoc.data()?['progressionDescriptors'], <String>[
+      'Secure: explain how the prototype evidence supports the claim.',
+    ]);
+    expect((portfolioDoc.data()?['checkpointMappings'] as List?)?.length, 1);
     expect(portfolioDoc.data()?['aiAssistanceUsed'], isFalse);
     expect(portfolioDoc.data()?['aiDisclosureStatus'], 'learner-ai-not-used');
+  });
+
+  testWidgets(
+      'educator mission review falls back to HQ checkpoint guidance when live evidence prompt is absent',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedCompletedMissionReadyForReview(firestore);
+    await _seedReviewRubricAndEvidence(firestore);
+    await firestore.collection('evidenceRecords').doc('evidence-1').set(
+      <String, dynamic>{
+        'nextVerificationPrompt': FieldValue.delete(),
+      },
+      SetOptions(merge: true),
+    );
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final MissionService learnerMissionService = MissionService(
+      firestoreService: firestoreService,
+      learnerId: 'learner-1',
+    );
+
+    final String attemptId = await _submitMissionForReview(
+      tester,
+      firestoreService: firestoreService,
+      missionService: learnerMissionService,
+    );
+
+    final MissionService educatorMissionService = MissionService(
+      firestoreService: firestoreService,
+      learnerId: 'educator-1',
+    );
+
+    await _pumpPage(tester, educatorMissionService);
+
+    await tester.tap(find.text('Mission ready for review').first);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Reflection'),
+      200,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.text('4/4').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('3/4').at(1));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).last, 'Use HQ criteria.');
+    await tester.scrollUntilVisible(
+      find.text('Approve'),
+      250,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.text('Approve'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    final DocumentSnapshot<Map<String, dynamic>> portfolioDoc =
+        await firestore.collection('portfolioItems').doc('evidence-1').get();
+    final QuerySnapshot<Map<String, dynamic>> growthEvents = await firestore
+        .collection('capabilityGrowthEvents')
+        .where('missionAttemptId', isEqualTo: attemptId)
+        .get();
+
+    expect(
+      portfolioDoc.data()?['verificationPrompt'],
+      'Checkpoint: Ask the learner to identify the exact artifact that proves current understanding.',
+    );
+    expect(
+      portfolioDoc.data()?['verificationPromptSource'],
+      'hq_checkpoint_mapping',
+    );
+    expect(
+      growthEvents.docs.single.data()['verificationPrompts'],
+      contains(
+          'Checkpoint: Ask the learner to identify the exact artifact that proves current understanding.'),
+    );
   });
 
   testWidgets(

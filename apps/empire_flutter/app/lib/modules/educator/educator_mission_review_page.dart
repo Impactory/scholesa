@@ -1209,6 +1209,58 @@ class _ReviewSheetState extends State<_ReviewSheet> {
                         style: TextStyle(color: Colors.grey[600]),
                       ),
                     ],
+                    if (widget.submission.progressionDescriptors.isNotEmpty) ...<Widget>[
+                      const SizedBox(height: 12),
+                      Text(
+                        _tEducatorMissionReview(
+                            context, 'Progression descriptors'),
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 6),
+                      ...widget.submission.progressionDescriptors.map(
+                        (String descriptor) => Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Text(
+                            descriptor,
+                            style: TextStyle(color: Colors.grey[700]),
+                          ),
+                        ),
+                      ),
+                    ],
+                    if (widget.submission.checkpointMappings.isNotEmpty) ...<Widget>[
+                      const SizedBox(height: 12),
+                      Text(
+                        _tEducatorMissionReview(context, 'Verification criteria'),
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 6),
+                      ...widget.submission.checkpointMappings.map(
+                        (Map<String, dynamic> mapping) {
+                          final String phaseLabel =
+                              (mapping['phaseLabel'] as String? ??
+                                      mapping['phaseKey'] as String? ??
+                                      '')
+                                  .trim();
+                          final String guidance =
+                              (mapping['guidance'] as String? ??
+                                      mapping['prompt'] as String? ??
+                                      '')
+                                  .trim();
+                          if (guidance.isEmpty) {
+                            return const SizedBox.shrink();
+                          }
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: Text(
+                              phaseLabel.isEmpty
+                                  ? guidance
+                                  : '$phaseLabel: $guidance',
+                              style: TextStyle(color: Colors.grey[700]),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
                     const SizedBox(height: 12),
                     ...widget.submission.rubricCriteria
                         .map((Map<String, dynamic> criterion) {

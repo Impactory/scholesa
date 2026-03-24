@@ -1527,6 +1527,7 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
     final List<String> detailLines = <String>[
       ..._growthDetailLines(item),
       ..._proofDetailLines(item),
+      ..._verificationDetailLines(item),
       ..._reflectionDetailLines(item),
       ..._artifactDetailLines(item),
       ..._aiDetailLines(item),
@@ -1593,6 +1594,41 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
     return lines;
   }
 
+  List<String> _verificationDetailLines(PortfolioItemModel item) {
+    final List<String> lines = <String>[];
+    if ((item.verificationPrompt?.trim().isNotEmpty ?? false)) {
+      lines.add(
+        '${_t('Verification prompt')}: ${item.verificationPrompt!.trim()}',
+      );
+    }
+    if (item.checkpointMappings.isNotEmpty) {
+      final List<String> criteria = item.checkpointMappings
+          .map((Map<String, dynamic> mapping) {
+            final String phaseLabel =
+                (mapping['phaseLabel'] as String? ?? mapping['phaseKey'] as String? ?? '')
+                    .trim();
+            final String guidance =
+                (mapping['guidance'] as String? ?? mapping['prompt'] as String? ?? '')
+                    .trim();
+            if (guidance.isEmpty) {
+              return '';
+            }
+            return phaseLabel.isEmpty ? guidance : '$phaseLabel: $guidance';
+          })
+          .where((String value) => value.isNotEmpty)
+          .toList(growable: false);
+      if (criteria.isNotEmpty) {
+        lines.add('${_t('Verification criteria')}: ${criteria.join(' | ')}');
+      }
+    }
+    if (item.progressionDescriptors.isNotEmpty) {
+      lines.add(
+        '${_t('Progression descriptors')}: ${item.progressionDescriptors.join(' | ')}',
+      );
+    }
+    return lines;
+  }
+
   List<String> _growthDetailLines(PortfolioItemModel item) {
     final List<CapabilityGrowthEventModel> growthEvents = item.growthEventIds
         .map((String growthEventId) => _growthEventsById[growthEventId.trim()])
@@ -1612,7 +1648,14 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
         '${_t('Level')} ${growthEvent.level}',
         '${_t('Reviewed score')} ${growthEvent.rawScore}/${growthEvent.maxScore}',
       ];
-      return '${_t('Capability update')}: ${parts.join(' • ')}';
+      final List<String> lines = <String>[
+        '${_t('Capability update')}: ${parts.join(' • ')}',
+      ];
+      if (growthEvent.progressionDescriptors.isNotEmpty) {
+        lines.add(
+            '${_t('Progression descriptors')}: ${growthEvent.progressionDescriptors.join(' | ')}');
+      }
+      return lines.join('\n');
     }).toList(growable: false);
   }
 
