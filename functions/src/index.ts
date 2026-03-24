@@ -2866,6 +2866,16 @@ async function buildParentLearnerSummary(params: {
         : matchingMissionAttempt
         ? 'no-learner-ai-signal'
         : 'not-available';
+      const progressionDescriptors = stringListFromUnknown(row.progressionDescriptors).length > 0
+        ? stringListFromUnknown(row.progressionDescriptors)
+        : latestGrowth
+        ? stringListFromUnknown(latestGrowth.progressionDescriptors)
+        : [];
+      const checkpointMappings = checkpointMappingsFromUnknown(row.checkpointMappings).length > 0
+        ? checkpointMappingsFromUnknown(row.checkpointMappings)
+        : latestGrowth
+        ? checkpointMappingsFromUnknown(latestGrowth.checkpointMappings)
+        : [];
       return {
         id: typeof row.id === 'string' ? row.id : randomUUID(),
         title: typeof row.title === 'string' && row.title.trim() ? row.title.trim() : 'Portfolio artifact',
@@ -2886,6 +2896,8 @@ async function buildParentLearnerSummary(params: {
         evidenceRecordIds: Array.isArray(row.evidenceRecordIds) ? row.evidenceRecordIds.filter((value) => typeof value === 'string') : [],
         missionAttemptId: missionAttemptId || null,
         verificationPrompt: typeof row.verificationPrompt === 'string' && row.verificationPrompt.trim() ? row.verificationPrompt.trim() : null,
+        progressionDescriptors,
+        checkpointMappings,
         proofOfLearningStatus,
         aiDisclosureStatus,
         proofHasExplainItBack: hasExplainItBack,
@@ -3107,6 +3119,12 @@ async function buildParentLearnerSummary(params: {
         : typeof proofBundle?.aiAssistanceDetails === 'string' && proofBundle.aiAssistanceDetails.trim()
         ? proofBundle.aiAssistanceDetails.trim()
         : null;
+      const progressionDescriptors = stringListFromUnknown(latestPortfolio?.progressionDescriptors).length > 0
+        ? stringListFromUnknown(latestPortfolio?.progressionDescriptors)
+        : stringListFromUnknown(latestGrowth?.progressionDescriptors);
+      const checkpointMappings = checkpointMappingsFromUnknown(latestPortfolio?.checkpointMappings).length > 0
+        ? checkpointMappingsFromUnknown(latestPortfolio?.checkpointMappings)
+        : checkpointMappingsFromUnknown(latestGrowth?.checkpointMappings);
       return {
         capabilityId,
         title: String(title),
@@ -3121,6 +3139,8 @@ async function buildParentLearnerSummary(params: {
           .map((entry) => (typeof entry.id === 'string' ? entry.id : ''))
           .filter(Boolean),
         missionAttemptIds: Array.from(missionAttemptIds),
+        progressionDescriptors,
+        checkpointMappings,
         proofOfLearningStatus,
         aiDisclosureStatus,
         latestEvidenceAt: latestEvidenceAt?.toISOString() ?? null,
