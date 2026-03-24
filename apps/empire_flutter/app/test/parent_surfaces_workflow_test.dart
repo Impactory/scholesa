@@ -215,6 +215,15 @@ Future<void> _seedParentData(FakeFirebaseFirestore firestore) async {
       'description': 'Linked Update',
       'pillarCodes': const <String>['future_skills'],
       'verificationStatus': 'reviewed',
+      'progressionDescriptors': const <String>[
+        'Learner justifies prototype choices with direct evidence.',
+      ],
+      'checkpointMappings': const <Map<String, dynamic>>[
+        <String, dynamic>{
+          'phase': 'review',
+          'guidance': 'Confirm the learner can explain the tradeoff independently.',
+        },
+      ],
       'createdAt':
           Timestamp.fromDate(anchor.subtract(const Duration(hours: 2))),
       'updatedAt':
@@ -492,6 +501,16 @@ Future<void> _seedMissionReviewData(
       'xpReward': 120,
       'rubricId': 'rubric-1',
       'rubricTitle': 'Prototype Rubric',
+      'progressionDescriptors': const <String>[
+        'Learner explains why the prototype choice fits the observed evidence.',
+        'Learner identifies a tradeoff and defends the decision with examples.',
+      ],
+      'checkpointMappings': const <Map<String, dynamic>>[
+        <String, dynamic>{
+          'phase': 'review',
+          'guidance': 'Ask the learner to justify the prototype path without prompts.',
+        },
+      ],
     },
   );
   await firestore
@@ -510,6 +529,16 @@ Future<void> _seedMissionReviewData(
   await firestore.collection('rubrics').doc('rubric-1').set(
     <String, dynamic>{
       'title': 'Prototype Rubric',
+      'progressionDescriptors': const <String>[
+        'Learner explains why the prototype choice fits the observed evidence.',
+        'Learner identifies a tradeoff and defends the decision with examples.',
+      ],
+      'checkpointMappings': const <Map<String, dynamic>>[
+        <String, dynamic>{
+          'phase': 'review',
+          'guidance': 'Ask the learner to justify the prototype path without prompts.',
+        },
+      ],
       'criteria': <Map<String, dynamic>>[
         <String, dynamic>{
           'criterionId': 'evidence',
@@ -1661,6 +1690,18 @@ void main() {
         find.text('Explain why this prototype path best matched the evidence.'),
         findsOneWidget,
       );
+      expect(find.text('Verification Criteria'), findsOneWidget);
+      expect(
+        find.text('Review: Ask the learner to justify the prototype path without prompts.'),
+        findsOneWidget,
+      );
+      expect(find.text('Progression Descriptors'), findsOneWidget);
+      expect(
+        find.text(
+          'Learner explains why the prototype choice fits the observed evidence. • Learner identifies a tradeoff and defends the decision with examples.',
+        ),
+        findsOneWidget,
+      );
 
       await tester.tap(find.text('Download Summary'));
       await tester.pump();
@@ -1668,6 +1709,16 @@ void main() {
 
       expect(_savedFileName, isNotNull);
       expect(_savedFileContent, contains('Mission Attempt ID:'));
+      expect(
+        _savedFileContent,
+        contains(
+            'Verification Criteria: Review: Ask the learner to justify the prototype path without prompts.'),
+      );
+      expect(
+        _savedFileContent,
+        contains(
+            'Progression Descriptors: Learner explains why the prototype choice fits the observed evidence. • Learner identifies a tradeoff and defends the decision with examples.'),
+      );
     });
 
     testWidgets(
@@ -1895,6 +1946,16 @@ void main() {
         ),
         findsWidgets,
       );
+      expect(
+        find.textContaining(
+            'Verification Criteria: Review: Ask the learner to justify the prototype path without prompts.'),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining(
+            'Progression Descriptors: Learner explains why the prototype choice fits the observed evidence. • Learner identifies a tradeoff and defends the decision with examples.'),
+        findsOneWidget,
+      );
 
       await tester.tap(find.text('Export Passport'));
       await tester.pump();
@@ -1909,6 +1970,16 @@ void main() {
       expect(
         _savedFileContent,
         contains('Artifact Review Status: Reviewed'),
+      );
+      expect(
+        _savedFileContent,
+        contains(
+            'Verification Criteria: Review: Ask the learner to justify the prototype path without prompts.'),
+      );
+      expect(
+        _savedFileContent,
+        contains(
+            'Progression Descriptors: Learner explains why the prototype choice fits the observed evidence. • Learner identifies a tradeoff and defends the decision with examples.'),
       );
       expect(
           _savedFileContent, contains('Portfolio Item IDs: $portfolioItemId'));
@@ -2026,6 +2097,15 @@ void main() {
           'missionAttemptId': 'attempt-1',
           'verificationPrompt':
               'Explain why this prototype path best matched the evidence.',
+          'progressionDescriptors': const <String>[
+            'Learner explains why the prototype path fits the collected evidence.',
+          ],
+          'checkpointMappings': const <Map<String, dynamic>>[
+            <String, dynamic>{
+              'phase': 'review',
+              'guidance': 'Verify the learner can defend the choice without scaffolds.',
+            },
+          ],
           'proofOfLearningStatus': 'verified',
           'aiDisclosureStatus': 'learner-ai-not-used',
           'createdAt': Timestamp.fromDate(anchor),
@@ -2083,6 +2163,17 @@ void main() {
         find.text('Explain why this prototype path best matched the evidence.'),
         findsOneWidget,
       );
+      expect(find.text('Verification Criteria'), findsOneWidget);
+      expect(
+        find.text('Review: Verify the learner can defend the choice without scaffolds.'),
+        findsOneWidget,
+      );
+      expect(find.text('Progression Descriptors'), findsOneWidget);
+      expect(
+        find.text(
+            'Learner explains why the prototype path fits the collected evidence.'),
+        findsOneWidget,
+      );
     });
 
     testWidgets(
@@ -2132,6 +2223,15 @@ void main() {
           'capabilityTitles': const <String>['Prototype evidence'],
           'verificationStatus': 'reviewed',
           'missionAttemptId': 'attempt-1',
+          'progressionDescriptors': const <String>[
+            'Learner explains why the prototype path fits the collected evidence.',
+          ],
+          'checkpointMappings': const <Map<String, dynamic>>[
+            <String, dynamic>{
+              'phase': 'review',
+              'guidance': 'Verify the learner can defend the choice without scaffolds.',
+            },
+          ],
           'proofOfLearningStatus': 'verified',
           'aiDisclosureStatus': 'learner-ai-not-used',
           'createdAt': Timestamp.fromDate(anchor),
@@ -2179,6 +2279,16 @@ void main() {
           'Proof of Learning: Verified • AI Disclosure: Learner declared no AI support used',
         ),
         findsWidgets,
+      );
+      expect(
+        find.textContaining(
+            'Verification Criteria: Review: Verify the learner can defend the choice without scaffolds.'),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining(
+            'Progression Descriptors: Learner explains why the prototype path fits the collected evidence.'),
+        findsOneWidget,
       );
       expect(
         find.textContaining(
