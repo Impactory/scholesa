@@ -261,6 +261,7 @@ Interpretation rule:
 171. Corrected the educator-review guidance leak by hydrating rubric-linked progression descriptors and checkpoint mappings into the educator review queue, showing that guidance on the live review sheet, persisting it onto rubric applications, reviewed mission attempts, growth events, and portfolio artifacts, and falling back to HQ checkpoint guidance when live evidence lacks its own verification prompt so the Admin-HQ authoring contract now survives educator review and reaches learner-facing portfolio evidence instead of collapsing after studio capture.
 172. Corrected the family-interpretation provenance leak by threading the reviewed artifact's saved progression descriptors and checkpoint mappings through parent portfolio and Passport models, callable parsing, Firestore fallback aggregation, detail views, and exports, then proving those HQ-authored verification criteria reach parent-facing summaries for both live review workflows and direct reviewed artifacts instead of collapsing back to a bare verification prompt and proof-status label.
 173. Corrected the remaining parent callable-bundle provenance leak by adding the reviewed artifact's progression descriptors and checkpoint mappings to the backend `portfolioItemsPreview` and `ideationPassport.claims` payloads with the same row-then-growth fallback used by the family Firestore aggregator, so the production callable path now preserves HQ-authored verification criteria instead of silently regressing parent-facing summaries behind the already-patched Flutter models and views.
+174. Corrected the guardian landing-summary interpretation leak by rebuilding the parent summary evidence block from the linked Passport claim and reviewed portfolio preview, surfacing progression descriptors, verification criteria, proof-of-learning context, and an evidence-backed next-focus answer directly on the family dashboard, and extending tri-locale parent coverage so the guardian overview no longer compresses capability interpretation back into aggregate counters after the detail and callable paths were fixed.
 
 ### Release and operations fixes
 
@@ -309,6 +310,7 @@ Interpretation rule:
 - Focused parent callable current-level backend regression passed: 2 passed, 0 failed.
 - Focused parent callable provenance honesty regression passed: 2 passed, 0 failed.
 - Focused parent callable current-level Flutter parser regression passed: 1 passed, 0 failed.
+- Focused parent summary and localization regressions passed after surfacing evidence-backed capability detail on the guardian landing page: 11 passed, 0 failed.
 - Focused learner portfolio honesty regressions passed after separating reviewed evidence from awaiting-review submissions: 7 passed, 0 failed.
 - Focused educator learner evidence regressions passed after replacing legacy roster progress with reviewed capability mastery: 20 passed, 0 failed.
 - Focused learner proof handoff regressions passed after preserving checkpoint and AI-disclosure detail in canonical submissions and reviewed portfolio evidence: 23 passed, 0 failed.
@@ -338,6 +340,7 @@ Interpretation rule:
 - Focused parent surface workflow regressions passed after the provisioning-to-parent-portfolio share-request proof: 15 passed, 0 failed.
 - Focused parent consent regressions passed after the provisioning-to-parent-consent review-request proof: 6 passed, 0 failed.
 - Focused parent family workflow regressions passed after the provisioning-to-parent-consent review-request proof: 21 passed, 0 failed.
+- Focused parent family workflow regressions passed after rebuilding the guardian landing summary from claim and portfolio provenance: 18 passed, 0 failed.
 - Focused learner missions regressions passed after the canonical review submission proof: 4 passed, 0 failed.
 - Focused educator mission review regressions passed after the live learner-to-educator review handoff proof: 3 passed, 0 failed.
 - Focused educator mission review regressions passed after the live rubric growth-linkage proof: 4 passed, 0 failed.
