@@ -190,6 +190,22 @@ class ProofCheckpointPreview extends Equatable {
       ];
 }
 
+class VerificationCheckpointMapping extends Equatable {
+  const VerificationCheckpointMapping({
+    required this.phase,
+    required this.guidance,
+  });
+
+  final String phase;
+  final String guidance;
+
+  @override
+  List<Object?> get props => <Object?>[
+        phase,
+        guidance,
+      ];
+}
+
 class CapabilitySnapshot extends Equatable {
   const CapabilitySnapshot({
     this.futureSkills = 0,
@@ -260,6 +276,8 @@ class PortfolioPreviewItem extends Equatable {
     this.evidenceRecordIds = const [],
     this.missionAttemptId,
     this.verificationPrompt,
+    this.progressionDescriptors = const <String>[],
+    this.checkpointMappings = const <VerificationCheckpointMapping>[],
     this.proofOfLearningStatus,
     this.aiDisclosureStatus,
     this.proofHasExplainItBack = false,
@@ -297,6 +315,8 @@ class PortfolioPreviewItem extends Equatable {
   final List<String> evidenceRecordIds;
   final String? missionAttemptId;
   final String? verificationPrompt;
+  final List<String> progressionDescriptors;
+  final List<VerificationCheckpointMapping> checkpointMappings;
   final String? proofOfLearningStatus;
   final String? aiDisclosureStatus;
   final bool proofHasExplainItBack;
@@ -335,6 +355,8 @@ class PortfolioPreviewItem extends Equatable {
         evidenceRecordIds,
         missionAttemptId,
         verificationPrompt,
+        progressionDescriptors,
+        checkpointMappings,
         proofOfLearningStatus,
         aiDisclosureStatus,
         proofHasExplainItBack,
@@ -409,6 +431,8 @@ class PassportClaim extends Equatable {
     this.evidenceRecordIds = const [],
     this.portfolioItemIds = const [],
     this.missionAttemptIds = const [],
+    this.progressionDescriptors = const [],
+    this.checkpointMappings = const [],
     this.proofOfLearningStatus,
     this.aiDisclosureStatus,
     this.latestEvidenceAt,
@@ -444,6 +468,8 @@ class PassportClaim extends Equatable {
   final List<String> evidenceRecordIds;
   final List<String> portfolioItemIds;
   final List<String> missionAttemptIds;
+  final List<String> progressionDescriptors;
+  final List<VerificationCheckpointMapping> checkpointMappings;
   final String? proofOfLearningStatus;
   final String? aiDisclosureStatus;
   final DateTime? latestEvidenceAt;
@@ -480,6 +506,8 @@ class PassportClaim extends Equatable {
         evidenceRecordIds,
         portfolioItemIds,
         missionAttemptIds,
+        progressionDescriptors,
+        checkpointMappings,
         proofOfLearningStatus,
         aiDisclosureStatus,
         latestEvidenceAt,
