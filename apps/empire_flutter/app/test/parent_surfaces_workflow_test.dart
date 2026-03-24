@@ -1707,6 +1707,11 @@ void main() {
         findsOneWidget,
       );
 
+      await tester.scrollUntilVisible(
+        find.text('Download Summary'),
+        200,
+        scrollable: find.byType(Scrollable).last,
+      );
       await tester.tap(find.text('Download Summary'));
       await tester.pump();
       await tester.pumpAndSettle();

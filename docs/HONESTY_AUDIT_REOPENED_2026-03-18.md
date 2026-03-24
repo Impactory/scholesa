@@ -1,6 +1,6 @@
 # Reopened Honesty Audit
 
-Last updated: 2026-03-23
+Last updated: 2026-03-24
 Status: Beta ready, not gold ready
 Scope: Flutter app plus release operations for web and native surfaces
 
@@ -259,6 +259,7 @@ Interpretation rule:
 169. Corrected the reviewed-evidence-to-growth visibility leak by persisting the reviewed capability title on both `capabilityMastery` and `capabilityGrowthEvents`, then resolving linked `growthEventIds` on learner portfolio cards into learner-readable capability update lines with current level and reviewed score so learners can see which capability update was produced by the reviewed artifact instead of seeing proof and portfolio evidence with no explicit growth consequence.
 170. Corrected the Admin-HQ-to-educator teaching-guidance leak by persisting rubric-linked progression descriptors and checkpoint mappings on both `rubrics` and `missions`, enriching educator `sessions` from linked mission records by direct mission id or originating `sessionId`, and surfacing that HQ-authored guidance on the live studio card and quick evidence dialog so saved curriculum handoff now changes real classroom capture prompts instead of stopping at generic capability-mapping readiness.
 171. Corrected the educator-review guidance leak by hydrating rubric-linked progression descriptors and checkpoint mappings into the educator review queue, showing that guidance on the live review sheet, persisting it onto rubric applications, reviewed mission attempts, growth events, and portfolio artifacts, and falling back to HQ checkpoint guidance when live evidence lacks its own verification prompt so the Admin-HQ authoring contract now survives educator review and reaches learner-facing portfolio evidence instead of collapsing after studio capture.
+172. Corrected the family-interpretation provenance leak by threading the reviewed artifact's saved progression descriptors and checkpoint mappings through parent portfolio and Passport models, callable parsing, Firestore fallback aggregation, detail views, and exports, then proving those HQ-authored verification criteria reach parent-facing summaries for both live review workflows and direct reviewed artifacts instead of collapsing back to a bare verification prompt and proof-status label.
 
 ### Release and operations fixes
 
@@ -323,6 +324,7 @@ Interpretation rule:
 - Focused site check-in regressions passed after the provisioning-to-checkin guardian-fallback proof: 7 passed, 0 failed.
 - Focused provisioning, site ops workflow, pickup authorization, and check-in regressions passed after the provisioning-to-checkin guardian-fallback proof: 46 passed, 0 failed.
 - Focused parent surface workflow regressions passed after the provisioning-to-parent-child guardian-link proof: 13 passed, 0 failed.
+- Focused parent surface workflow regressions passed after threading HQ-authored verification criteria and progression descriptors into portfolio and Passport family views: 18 passed, 0 failed.
 - Focused parent consent regressions passed after the provisioning-to-parent-consent guardian-link proof: 5 passed, 0 failed.
 - Focused site consent regressions passed after the provisioning-to-site-consent guardian-link proof and profile-name fallback fix: 4 passed, 0 failed.
 - Focused provisioning, site consent, pickup authorization, and check-in regressions passed after the provisioning-to-site-consent guardian-link proof: 28 passed, 0 failed.

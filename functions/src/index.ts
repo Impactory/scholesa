@@ -2270,6 +2270,25 @@ function parseDateFromUnknown(value: unknown): Date | null {
   return null;
 }
 
+function stringListFromUnknown(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((entry): entry is string => typeof entry === 'string')
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
+function checkpointMappingsFromUnknown(value: unknown): Array<Record<string, string>> {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((entry): entry is Record<string, unknown> => !!entry && typeof entry === 'object' && !Array.isArray(entry))
+    .map((entry) => ({
+      phase: typeof entry.phase === 'string' ? entry.phase.trim() : '',
+      guidance: typeof entry.guidance === 'string' ? entry.guidance.trim() : '',
+    }))
+    .filter((entry) => entry.phase.length > 0 || entry.guidance.length > 0);
+}
+
 function normalizeParentPillarKey(value: unknown): 'futureSkills' | 'leadership' | 'impact' | null {
   if (typeof value !== 'string') return null;
   const normalized = value.trim().toLowerCase();
