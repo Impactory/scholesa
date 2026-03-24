@@ -195,6 +195,20 @@ void main() {
         find.widgetWithText(TextField, 'Criteria (comma-separated)'),
         'Clarity, Agency, Impact',
       );
+      await tester.enterText(
+        find.widgetWithText(
+          TextField,
+          'Progression descriptors (one per line)',
+        ),
+        'Emerging: needs prompting to connect evidence to the claim.\nSecure: explains how the artifact proves the capability.\nAdvanced: transfers the capability to a new build challenge.',
+      );
+      await tester.enterText(
+        find.widgetWithText(
+          TextField,
+          'Checkpoint mappings (phase: guidance)',
+        ),
+        'checkpoint: Ask the learner to point to the exact artifact that proves current understanding.\nreflection: Capture what they would improve before portfolio curation.',
+      );
       await tester.tap(find.widgetWithText(ElevatedButton, 'Apply Rubric'));
       await tester.pumpAndSettle();
 
@@ -202,11 +216,45 @@ void main() {
           await firestore.collection('rubrics').get();
       expect(rubrics.docs.length, 1);
       expect(rubrics.docs.first.data()['title'], 'HQ Rubric A');
+      expect(rubrics.docs.first.data()['progressionDescriptors'], <String>[
+        'Emerging: needs prompting to connect evidence to the claim.',
+        'Secure: explains how the artifact proves the capability.',
+        'Advanced: transfers the capability to a new build challenge.',
+      ]);
+      expect(rubrics.docs.first.data()['checkpointMappings'], <Map<String, dynamic>>[
+        <String, dynamic>{
+          'phaseKey': 'checkpoint',
+          'phaseLabel': 'Checkpoint',
+          'guidance': 'Ask the learner to point to the exact artifact that proves current understanding.',
+        },
+        <String, dynamic>{
+          'phaseKey': 'reflection',
+          'phaseLabel': 'Reflection',
+          'guidance': 'Capture what they would improve before portfolio curation.',
+        },
+      ]);
 
       final QuerySnapshot<Map<String, dynamic>> missions =
           await firestore.collection('missions').get();
       expect(missions.docs.length, 1);
       expect(missions.docs.first.data()['rubricId'], rubrics.docs.first.id);
+      expect(missions.docs.first.data()['progressionDescriptors'], <String>[
+        'Emerging: needs prompting to connect evidence to the claim.',
+        'Secure: explains how the artifact proves the capability.',
+        'Advanced: transfers the capability to a new build challenge.',
+      ]);
+      expect(missions.docs.first.data()['checkpointMappings'], <Map<String, dynamic>>[
+        <String, dynamic>{
+          'phaseKey': 'checkpoint',
+          'phaseLabel': 'Checkpoint',
+          'guidance': 'Ask the learner to point to the exact artifact that proves current understanding.',
+        },
+        <String, dynamic>{
+          'phaseKey': 'reflection',
+          'phaseLabel': 'Reflection',
+          'guidance': 'Capture what they would improve before portfolio curation.',
+        },
+      ]);
       expect(missions.docs.first.data()['status'], 'review');
       expect(missions.docs.first.data()['rubricApplied'], true);
     });
