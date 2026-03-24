@@ -654,6 +654,48 @@ void main() {
     expect(find.text('Future Skills'), findsWidgets);
     expect(find.text('Evidence linked • Reviewed'), findsOneWidget);
     expect(find.text('Prototype evidence'), findsOneWidget);
+    expect(find.text('Proof of learning: Verified'), findsOneWidget);
+    expect(
+      find.text(
+        'Proof checks: Explain-it-back, Oral check, Mini-rebuild, 1 checkpoint',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Explain-it-back note: I explained how the control loop reacts to sensor input.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Oral check note: I described the trade-off between speed and stability.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Mini-rebuild note: I would rebuild the sensor branch first and retest the response.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Checkpoint summary: Completed the working prototype before review.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Reflection: Great iteration. Tighten the evidence trail and explain the tradeoffs in your next revision.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Artifacts linked: 1 artifact'), findsOneWidget);
+    expect(
+      find.text('AI disclosure: Learner said no AI support was used'),
+      findsOneWidget,
+    );
     expect(find.text('No projects added yet'), findsNothing);
   });
 

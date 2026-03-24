@@ -382,9 +382,8 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
 
     return items.map((PortfolioItemModel item) {
       final String proofBundleId = (item.proofBundleId ?? '').trim();
-      final Map<String, dynamic>? proofBundle = proofBundleId.isEmpty
-          ? null
-          : proofBundles[proofBundleId];
+      final Map<String, dynamic>? proofBundle =
+          proofBundleId.isEmpty ? null : proofBundles[proofBundleId];
       if (proofBundle == null) {
         return item;
       }
@@ -398,12 +397,12 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
         proofCheckpointCount: item.proofCheckpointCount > 0
             ? item.proofCheckpointCount
             : checkpoints.length,
-        proofHasExplainItBack:
-            item.proofHasExplainItBack || _nonEmpty(proofBundle['explainItBack']),
-        proofHasOralCheck:
-            item.proofHasOralCheck || _nonEmpty(proofBundle['oralCheckResponse']),
-        proofHasMiniRebuild:
-            item.proofHasMiniRebuild || _nonEmpty(proofBundle['miniRebuildPlan']),
+        proofHasExplainItBack: item.proofHasExplainItBack ||
+            _nonEmpty(proofBundle['explainItBack']),
+        proofHasOralCheck: item.proofHasOralCheck ||
+            _nonEmpty(proofBundle['oralCheckResponse']),
+        proofHasMiniRebuild: item.proofHasMiniRebuild ||
+            _nonEmpty(proofBundle['miniRebuildPlan']),
         proofExplainItBackExcerpt: item.proofExplainItBackExcerpt ??
             _trimmedString(proofBundle['explainItBack']),
         proofOralCheckExcerpt: item.proofOralCheckExcerpt ??
@@ -426,8 +425,7 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
         proofBundle['versionHistory'] as List<dynamic>? ?? <dynamic>[];
     return rawHistory
         .whereType<Map<dynamic, dynamic>>()
-        .map((Map<dynamic, dynamic> entry) =>
-            Map<String, dynamic>.from(entry))
+        .map((Map<dynamic, dynamic> entry) => Map<String, dynamic>.from(entry))
         .toList(growable: false);
   }
 
@@ -1503,7 +1501,8 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
 
   List<String> _proofDetailLines(PortfolioItemModel item) {
     final List<String> lines = <String>[];
-    final String? proofStatus = _proofOfLearningLabel(item.proofOfLearningStatus);
+    final String? proofStatus =
+        _proofOfLearningLabel(item.proofOfLearningStatus);
     if (proofStatus != null) {
       lines.add('${_t('Proof of learning')}: $proofStatus');
     }
@@ -1549,7 +1548,8 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
   List<String> _reflectionDetailLines(PortfolioItemModel item) {
     final List<String> lines = <String>[];
     if ((item.checkpointSummary?.trim().isNotEmpty ?? false)) {
-      lines.add('${_t('Checkpoint summary')}: ${item.checkpointSummary!.trim()}');
+      lines.add(
+          '${_t('Checkpoint summary')}: ${item.checkpointSummary!.trim()}');
     }
     if ((item.reflectionNote?.trim().isNotEmpty ?? false)) {
       lines.add('${_t('Reflection')}: ${item.reflectionNote!.trim()}');
@@ -2088,9 +2088,9 @@ class _ProjectCard extends StatelessWidget {
             .where((String value) => value.trim().isNotEmpty)
             .toList(growable: false);
     final List<String> detailLines =
-      ((project['detailLines'] as List?)?.cast<String>() ?? const <String>[])
-        .where((String value) => value.trim().isNotEmpty)
-        .toList(growable: false);
+        ((project['detailLines'] as List?)?.cast<String>() ?? const <String>[])
+            .where((String value) => value.trim().isNotEmpty)
+            .toList(growable: false);
     final String statusLabel = (project['statusLabel'] as String? ?? '').trim();
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -2191,22 +2191,22 @@ class _ProjectCard extends StatelessWidget {
                       ],
                     ),
                   ],
-                      if (detailLines.isNotEmpty) ...<Widget>[
-                        const SizedBox(height: 12),
-                        ...detailLines.map(
-                          (String line) => Padding(
-                            padding: const EdgeInsets.only(bottom: 6),
-                            child: Text(
-                              line,
-                              style: TextStyle(
-                                color: context.schTextSecondary,
-                                fontSize: 13,
-                                height: 1.35,
-                              ),
-                            ),
+                  if (detailLines.isNotEmpty) ...<Widget>[
+                    const SizedBox(height: 12),
+                    ...detailLines.map(
+                      (String line) => Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Text(
+                          line,
+                          style: TextStyle(
+                            color: context.schTextSecondary,
+                            fontSize: 13,
+                            height: 1.35,
                           ),
                         ),
-                      ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

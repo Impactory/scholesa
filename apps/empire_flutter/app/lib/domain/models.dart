@@ -1195,12 +1195,13 @@ class PortfolioItemModel {
       capabilityTitles: List<String>.from(
         data['capabilityTitles'] as List? ?? const <String>[],
       ),
-      growthEventIds:
-          List<String>.from(data['growthEventIds'] as List? ?? const <String>[]),
+      growthEventIds: List<String>.from(
+          data['growthEventIds'] as List? ?? const <String>[]),
       missionAttemptId: data['missionAttemptId'] as String?,
       rubricApplicationId: data['rubricApplicationId'] as String?,
       proofBundleId: data['proofBundleId'] as String?,
-      proofCheckpointCount: (data['proofCheckpointCount'] as num?)?.toInt() ?? 0,
+      proofCheckpointCount:
+          (data['proofCheckpointCount'] as num?)?.toInt() ?? 0,
       proofOfLearningStatus: data['proofOfLearningStatus'] as String?,
       checkpointSummary: data['checkpointSummary'] as String?,
       reflectionNote: data['reflectionNote'] as String?,
