@@ -221,7 +221,8 @@ Future<void> _seedParentData(FakeFirebaseFirestore firestore) async {
       'checkpointMappings': const <Map<String, dynamic>>[
         <String, dynamic>{
           'phase': 'review',
-          'guidance': 'Confirm the learner can explain the tradeoff independently.',
+          'guidance':
+              'Confirm the learner can explain the tradeoff independently.',
         },
       ],
       'createdAt':
@@ -508,7 +509,8 @@ Future<void> _seedMissionReviewData(
       'checkpointMappings': const <Map<String, dynamic>>[
         <String, dynamic>{
           'phase': 'review',
-          'guidance': 'Ask the learner to justify the prototype path without prompts.',
+          'guidance':
+              'Ask the learner to justify the prototype path without prompts.',
         },
       ],
     },
@@ -536,7 +538,8 @@ Future<void> _seedMissionReviewData(
       'checkpointMappings': const <Map<String, dynamic>>[
         <String, dynamic>{
           'phase': 'review',
-          'guidance': 'Ask the learner to justify the prototype path without prompts.',
+          'guidance':
+              'Ask the learner to justify the prototype path without prompts.',
         },
       ],
       'criteria': <Map<String, dynamic>>[
@@ -1692,7 +1695,8 @@ void main() {
       );
       expect(find.text('Verification Criteria'), findsOneWidget);
       expect(
-        find.text('Review: Ask the learner to justify the prototype path without prompts.'),
+        find.text(
+            'Review: Ask the learner to justify the prototype path without prompts.'),
         findsOneWidget,
       );
       expect(find.text('Progression Descriptors'), findsOneWidget);
@@ -2103,7 +2107,8 @@ void main() {
           'checkpointMappings': const <Map<String, dynamic>>[
             <String, dynamic>{
               'phase': 'review',
-              'guidance': 'Verify the learner can defend the choice without scaffolds.',
+              'guidance':
+                  'Verify the learner can defend the choice without scaffolds.',
             },
           ],
           'proofOfLearningStatus': 'verified',
@@ -2165,7 +2170,8 @@ void main() {
       );
       expect(find.text('Verification Criteria'), findsOneWidget);
       expect(
-        find.text('Review: Verify the learner can defend the choice without scaffolds.'),
+        find.text(
+            'Review: Verify the learner can defend the choice without scaffolds.'),
         findsOneWidget,
       );
       expect(find.text('Progression Descriptors'), findsOneWidget);
@@ -2229,7 +2235,8 @@ void main() {
           'checkpointMappings': const <Map<String, dynamic>>[
             <String, dynamic>{
               'phase': 'review',
-              'guidance': 'Verify the learner can defend the choice without scaffolds.',
+              'guidance':
+                  'Verify the learner can defend the choice without scaffolds.',
             },
           ],
           'proofOfLearningStatus': 'verified',

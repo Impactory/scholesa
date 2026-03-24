@@ -608,7 +608,8 @@ class _ParentChildPageState extends State<ParentChildPage> {
                           ),
                         ),
                       ],
-                      if (_buildVerificationCriteriaDetail(claim).isNotEmpty) ...<Widget>[
+                      if (_buildVerificationCriteriaDetail(claim)
+                          .isNotEmpty) ...<Widget>[
                         const SizedBox(height: 4),
                         Text(
                           '${_t('Verification Criteria')}: ${_buildVerificationCriteriaDetail(claim)}',
@@ -618,7 +619,8 @@ class _ParentChildPageState extends State<ParentChildPage> {
                           ),
                         ),
                       ],
-                      if (_buildProgressionDescriptorsDetail(claim).isNotEmpty) ...<Widget>[
+                      if (_buildProgressionDescriptorsDetail(claim)
+                          .isNotEmpty) ...<Widget>[
                         const SizedBox(height: 4),
                         Text(
                           '${_t('Progression Descriptors')}: ${_buildProgressionDescriptorsDetail(claim)}',

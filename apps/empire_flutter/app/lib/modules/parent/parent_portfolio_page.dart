@@ -760,7 +760,8 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
               Text(_buildVerificationCriteriaDetail(item),
                   style: const TextStyle(fontSize: 14)),
             ],
-            if (_buildProgressionDescriptorsDetail(item).isNotEmpty) ...<Widget>[
+            if (_buildProgressionDescriptorsDetail(item)
+                .isNotEmpty) ...<Widget>[
               const SizedBox(height: 16),
               Text(
                 _t('Progression Descriptors'),
