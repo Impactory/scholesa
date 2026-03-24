@@ -207,6 +207,7 @@ void main() {
       expect(find.text('家庭仪表板'), findsOneWidget);
       expect(find.text('学习支柱'), findsOneWidget);
       expect(find.text('家庭学习概览'), findsOneWidget);
+      expect(find.text('家庭证据视图'), findsOneWidget);
     });
 
     testWidgets('parent summary localizes unavailable learner labels in zh-CN',

@@ -706,7 +706,7 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
             ),
             const SizedBox(height: 6),
             Text(
-              '${openRequestCount} ${_tSiteSessions(context, 'request open')} • $pendingRequestCount ${_tSiteSessions(context, 'not yet requested')}',
+              '$openRequestCount ${_tSiteSessions(context, 'request open')} • $pendingRequestCount ${_tSiteSessions(context, 'not yet requested')}',
               style: const TextStyle(
                 color: ScholesaColors.textSecondary,
                 fontSize: 12,

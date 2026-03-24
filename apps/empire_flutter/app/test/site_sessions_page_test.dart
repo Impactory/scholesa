@@ -253,7 +253,7 @@ void main() {
         today.subtract(Duration(days: today.weekday - 1));
     final DateTime weekEnd = weekStart.add(const Duration(days: 6));
 
-    bool _isSameWeek(DateTime candidate) {
+    bool isSameWeek(DateTime candidate) {
       final DateTime normalized = DateUtils.dateOnly(candidate);
       return !normalized.isBefore(weekStart) && !normalized.isAfter(weekEnd);
     }
@@ -278,7 +278,7 @@ void main() {
               ],
             };
           }
-          if (_isSameWeek(selectedDate)) {
+          if (isSameWeek(selectedDate)) {
             return <String, List<SiteSessionData>>{
               '11:00 AM': const <SiteSessionData>[
                 SiteSessionData(

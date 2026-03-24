@@ -150,6 +150,120 @@ AppState _buildParentState() {
   return state;
 }
 
+LearnerSummary _richLearnerSummary() {
+  final DateTime now = DateTime(2026, 3, 24, 10, 30);
+  return LearnerSummary(
+    learnerId: 'learner-1',
+    learnerName: 'Avery Stone',
+    currentLevel: 3,
+    totalXp: 120,
+    missionsCompleted: 4,
+    currentStreak: 6,
+    attendanceRate: 0.92,
+    recentActivities: const <RecentActivity>[],
+    upcomingEvents: const <UpcomingEvent>[],
+    pillarProgress: const <String, double>{
+      'futureSkills': 0.70,
+      'leadership': 0.65,
+      'impact': 0.60,
+    },
+    capabilitySnapshot: const CapabilitySnapshot(
+      overall: 0.80,
+      band: 'developing',
+    ),
+    evidenceSummary: const EvidenceSummary(
+      recordCount: 5,
+      reviewedCount: 3,
+      verificationPromptCount: 1,
+    ),
+    growthSummary: GrowthSummary(
+      capabilityCount: 2,
+      updatedCapabilityCount: 2,
+      averageLevel: 3.0,
+      latestLevel: 3,
+      latestGrowthAt: now,
+    ),
+    portfolioSnapshot: PortfolioSnapshot(
+      artifactCount: 2,
+      verifiedArtifactCount: 1,
+      latestArtifactAt: now,
+    ),
+    portfolioItemsPreview: <PortfolioPreviewItem>[
+      PortfolioPreviewItem(
+        id: 'portfolio-1',
+        title: 'Prototype Evidence',
+        description: 'Reviewed prototype reflection.',
+        pillar: 'Impact',
+        type: 'project',
+        completedAt: now.subtract(const Duration(days: 1)),
+        verificationStatus: 'reviewed',
+        evidenceLinked: true,
+        verificationPrompt:
+            'Review: Ask the learner to justify the prototype path without prompts.',
+        progressionDescriptors: const <String>[
+          'Learner explains why the prototype choice fits the observed evidence.',
+          'Learner identifies a tradeoff and defends the decision with examples.',
+        ],
+        checkpointMappings: const <VerificationCheckpointMapping>[
+          VerificationCheckpointMapping(
+            phase: 'review',
+            guidance:
+                'Ask the learner to justify the prototype path without prompts.',
+          ),
+        ],
+        proofOfLearningStatus: 'verified',
+        reviewingEducatorName: 'Coach Rivera',
+        rubricLevel: 3,
+      ),
+    ],
+    ideationPassport: IdeationPassport(
+      reflectionsSubmitted: 2,
+      claims: <PassportClaim>[
+        PassportClaim(
+          capabilityId: 'cap-1',
+          title: 'Evidence-backed reasoning',
+          pillar: 'Impact',
+          latestLevel: 3,
+          evidenceCount: 3,
+          verifiedArtifactCount: 1,
+          progressionDescriptors: const <String>[
+            'Learner explains why the prototype choice fits the observed evidence.',
+          ],
+          checkpointMappings: const <VerificationCheckpointMapping>[
+            VerificationCheckpointMapping(
+              phase: 'review',
+              guidance:
+                  'Ask the learner to justify the prototype path without prompts.',
+            ),
+          ],
+          proofOfLearningStatus: 'verified',
+          latestEvidenceAt: now,
+          verificationStatus: 'reviewed',
+          reviewingEducatorName: 'Coach Rivera',
+          reviewedAt: now,
+          rubricRawScore: 3,
+          rubricMaxScore: 4,
+        ),
+      ],
+    ),
+    growthTimeline: <GrowthTimelineEntry>[
+      GrowthTimelineEntry(
+        capabilityId: 'cap-1',
+        title: 'Evidence-backed reasoning',
+        pillar: 'Impact',
+        level: 3,
+        linkedEvidenceRecordIds: const <String>['ev-1'],
+        linkedPortfolioItemIds: const <String>['portfolio-1'],
+        proofOfLearningStatus: 'verified',
+        occurredAt: now,
+        reviewingEducatorName: 'Coach Rivera',
+        rubricRawScore: 3,
+        rubricMaxScore: 4,
+      ),
+    ],
+  );
+}
+
 Future<void> _pumpPage(
   WidgetTester tester, {
   required ParentService parentService,
@@ -187,7 +301,8 @@ Future<void> _pumpPage(
 }
 
 void main() {
-  testWidgets('parent summary empty state persists linked learner review requests',
+  testWidgets(
+      'parent summary empty state persists linked learner review requests',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     final FirestoreService firestoreService = FirestoreService(
@@ -209,14 +324,18 @@ void main() {
     await tester.tap(find.text('Request Linking Review'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Linked learner review request submitted.'), findsOneWidget);
+    expect(
+        find.text('Linked learner review request submitted.'), findsOneWidget);
     final requests = await firestore.collection('supportRequests').get();
     expect(requests.docs, hasLength(1));
-    expect(requests.docs.single.data()['requestType'], 'parent_linked_learner_review');
-    expect(requests.docs.single.data()['source'], 'parent_summary_request_linked_learner_review');
+    expect(requests.docs.single.data()['requestType'],
+        'parent_linked_learner_review');
+    expect(requests.docs.single.data()['source'],
+        'parent_summary_request_linked_learner_review');
   });
 
-  testWidgets('parent summary empty state fails closed when support requests are unavailable',
+  testWidgets(
+      'parent summary empty state fails closed when support requests are unavailable',
       (WidgetTester tester) async {
     await _pumpPage(
       tester,
@@ -229,7 +348,8 @@ void main() {
     await tester.tap(find.text('Request Linking Review'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Unable to submit linked learner review right now.'), findsOneWidget);
+    expect(find.text('Unable to submit linked learner review right now.'),
+        findsOneWidget);
   });
 
   testWidgets(
@@ -306,5 +426,37 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('No learners linked'), findsNothing);
+  });
+
+  testWidgets(
+      'parent summary surfaces evidence-backed capability descriptors and verification guidance',
+      (WidgetTester tester) async {
+    await _pumpPage(
+      tester,
+      parentService: _StubParentService(
+        parentId: 'parent-1',
+        learnerSummaries: <LearnerSummary>[_richLearnerSummary()],
+      ),
+    );
+
+    expect(find.text('Capability Snapshot'), findsOneWidget);
+    expect(find.text('Evidence-backed capability focus'), findsOneWidget);
+    expect(find.textContaining('Evidence-backed reasoning'), findsWidgets);
+    expect(find.text('Progression Descriptors'), findsOneWidget);
+    expect(
+      find.textContaining(
+        'Learner explains why the prototype choice fits the observed evidence.',
+      ),
+      findsWidgets,
+    );
+    expect(find.text('Verification Criteria'), findsOneWidget);
+    expect(
+      find.textContaining(
+        'Review: Ask the learner to justify the prototype path without prompts.',
+      ),
+      findsWidgets,
+    );
+    expect(find.text('Proof of Learning'), findsOneWidget);
+    expect(find.textContaining('Coach Rivera'), findsWidgets);
   });
 }

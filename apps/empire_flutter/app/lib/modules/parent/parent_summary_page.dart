@@ -511,18 +511,26 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
   }
 
   Widget _buildFamilyEvidenceAnswers(LearnerSummary learner) {
+    final PassportClaim? featuredClaim = _selectFeaturedClaim(learner);
+    final PortfolioPreviewItem? featuredPortfolioItem =
+        _selectFeaturedPortfolioItem(learner);
+    final List<String> featuredProgressionDescriptors =
+        _featuredProgressionDescriptors(featuredClaim, featuredPortfolioItem);
+    final List<VerificationCheckpointMapping> featuredCheckpointMappings =
+        _featuredCheckpointMappings(featuredClaim, featuredPortfolioItem);
+    final String verificationCriteria =
+        _buildVerificationCriteriaDetail(featuredCheckpointMappings);
+    final String progressionDescriptors =
+        _buildProgressionDescriptorsDetail(featuredProgressionDescriptors);
+    final String proofDetail =
+        _buildProofSummary(featuredClaim, featuredPortfolioItem);
     final int capabilityPercent =
         (learner.capabilitySnapshot.overall * 100).round();
-    final String nextFocus = learner.evidenceSummary.verificationPromptCount > 0
-        ? _t(
-            'Follow up on the latest educator verification prompts during the next studio check-in.')
-        : learner.portfolioSnapshot.artifactCount == 0
-            ? _t('Capture a first portfolio artifact from current studio work.')
-            : learner.portfolioSnapshot.verifiedArtifactCount <
-                    learner.portfolioSnapshot.artifactCount
-                ? _t('Publish the strongest recent artifact with reflection.')
-                : _t(
-                    'Keep adding checkpoints, reflections, and educator evidence next week.');
+    final String nextFocus = _buildNextFocusAnswer(
+      learner,
+      featuredClaim,
+      featuredPortfolioItem,
+    );
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -557,23 +565,74 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
             _FamilyAnswerRow(
               icon: Icons.workspace_premium_rounded,
               label: _t('What can this learner do now?'),
-              value:
-                  '${learner.capabilitySnapshot.band} • ${learner.growthSummary.capabilityCount} ${_t('capabilities with current evidence')} • $capabilityPercent% ${_t('coverage confidence')}',
+              value: _buildCapabilityAnswer(
+                learner,
+                featuredClaim,
+                capabilityPercent,
+                progressionDescriptors,
+              ),
             ),
             const SizedBox(height: 12),
             _FamilyAnswerRow(
               icon: Icons.fact_check_rounded,
               label: _t('What evidence proves it?'),
-              value:
-                  '${learner.evidenceSummary.reviewedCount} ${_t('reviewed observations')}, ${learner.portfolioSnapshot.verifiedArtifactCount} ${_t('reviewed or verified artifacts')}, ${learner.ideationPassport.reflectionsSubmitted} ${_t('reflections')}${learner.evidenceSummary.verificationPromptCount > 0 ? ', ${learner.evidenceSummary.verificationPromptCount} ${_t('verification prompts pending')}' : ''}',
+              value: _buildEvidenceAnswer(
+                learner,
+                featuredClaim,
+                featuredPortfolioItem,
+                verificationCriteria,
+              ),
             ),
             const SizedBox(height: 12),
             _FamilyAnswerRow(
               icon: Icons.timeline_rounded,
               label: _t('How are they growing?'),
-              value:
-                  '${learner.growthSummary.updatedCapabilityCount} ${_t('capabilities updated')}, ${_formatAverageCapabilityLevel(learner.growthSummary.averageLevel)}, ${_formatLatestGrowthNote(learner.growthSummary.latestGrowthAt)}',
+              value: _buildGrowthAnswer(
+                learner,
+                featuredClaim,
+                proofDetail,
+              ),
             ),
+            if (featuredClaim != null ||
+                featuredPortfolioItem != null) ...<Widget>[
+              const SizedBox(height: 16),
+              Text(
+                _t('Capability Snapshot'),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 8),
+              _FamilyEvidenceDetail(
+                label: _t('Evidence-backed capability focus'),
+                value: _buildFeaturedCapabilityFocus(
+                  featuredClaim,
+                  featuredPortfolioItem,
+                ),
+              ),
+              if (progressionDescriptors.isNotEmpty) ...<Widget>[
+                const SizedBox(height: 8),
+                _FamilyEvidenceDetail(
+                  label: _t('Progression Descriptors'),
+                  value: progressionDescriptors,
+                ),
+              ],
+              if (verificationCriteria.isNotEmpty) ...<Widget>[
+                const SizedBox(height: 8),
+                _FamilyEvidenceDetail(
+                  label: _t('Verification Criteria'),
+                  value: verificationCriteria,
+                ),
+              ],
+              if (proofDetail.isNotEmpty) ...<Widget>[
+                const SizedBox(height: 8),
+                _FamilyEvidenceDetail(
+                  label: _t('Proof of Learning'),
+                  value: proofDetail,
+                ),
+              ],
+            ],
             if (learner.growthTimeline.isNotEmpty) ...<Widget>[
               const SizedBox(height: 12),
               Text(
@@ -642,6 +701,291 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
     return '${value.toStringAsFixed(1)}/4 ${_t('average capability level')}';
   }
 
+  PassportClaim? _selectFeaturedClaim(LearnerSummary learner) {
+    if (learner.ideationPassport.claims.isEmpty) {
+      return null;
+    }
+    final List<PassportClaim> claims = List<PassportClaim>.from(
+        learner.ideationPassport.claims)
+      ..sort((PassportClaim left, PassportClaim right) {
+        final int evidenceAtCompare =
+            (right.latestEvidenceAt?.millisecondsSinceEpoch ?? 0)
+                .compareTo(left.latestEvidenceAt?.millisecondsSinceEpoch ?? 0);
+        if (evidenceAtCompare != 0) {
+          return evidenceAtCompare;
+        }
+        final int reviewedAtCompare =
+            (right.reviewedAt?.millisecondsSinceEpoch ?? 0)
+                .compareTo(left.reviewedAt?.millisecondsSinceEpoch ?? 0);
+        if (reviewedAtCompare != 0) {
+          return reviewedAtCompare;
+        }
+        final int verifiedCompare =
+            right.verifiedArtifactCount.compareTo(left.verifiedArtifactCount);
+        if (verifiedCompare != 0) {
+          return verifiedCompare;
+        }
+        return right.evidenceCount.compareTo(left.evidenceCount);
+      });
+    return claims.first;
+  }
+
+  PortfolioPreviewItem? _selectFeaturedPortfolioItem(LearnerSummary learner) {
+    if (learner.portfolioItemsPreview.isEmpty) {
+      return null;
+    }
+    final List<PortfolioPreviewItem> items =
+        List<PortfolioPreviewItem>.from(learner.portfolioItemsPreview)
+          ..sort((PortfolioPreviewItem left, PortfolioPreviewItem right) {
+            final int verificationCompare = _verificationPriority(right)
+                .compareTo(_verificationPriority(left));
+            if (verificationCompare != 0) {
+              return verificationCompare;
+            }
+            final int evidenceCompare = (right.evidenceLinked ? 1 : 0)
+                .compareTo(left.evidenceLinked ? 1 : 0);
+            if (evidenceCompare != 0) {
+              return evidenceCompare;
+            }
+            return right.completedAt.compareTo(left.completedAt);
+          });
+    return items.first;
+  }
+
+  int _verificationPriority(PortfolioPreviewItem item) {
+    switch ((item.verificationStatus ?? '').trim().toLowerCase()) {
+      case 'verified':
+        return 4;
+      case 'reviewed':
+        return 3;
+      case 'pending':
+        return 2;
+      case 'draft':
+        return 1;
+      default:
+        return 0;
+    }
+  }
+
+  List<String> _featuredProgressionDescriptors(
+    PassportClaim? claim,
+    PortfolioPreviewItem? item,
+  ) {
+    if (item != null && item.progressionDescriptors.isNotEmpty) {
+      return item.progressionDescriptors;
+    }
+    if (claim != null && claim.progressionDescriptors.isNotEmpty) {
+      return claim.progressionDescriptors;
+    }
+    return const <String>[];
+  }
+
+  List<VerificationCheckpointMapping> _featuredCheckpointMappings(
+    PassportClaim? claim,
+    PortfolioPreviewItem? item,
+  ) {
+    if (item != null && item.checkpointMappings.isNotEmpty) {
+      return item.checkpointMappings;
+    }
+    if (claim != null && claim.checkpointMappings.isNotEmpty) {
+      return claim.checkpointMappings;
+    }
+    return const <VerificationCheckpointMapping>[];
+  }
+
+  String _buildCapabilityAnswer(
+    LearnerSummary learner,
+    PassportClaim? featuredClaim,
+    int capabilityPercent,
+    String progressionDescriptors,
+  ) {
+    if (featuredClaim == null) {
+      return '${learner.capabilitySnapshot.band} • ${learner.growthSummary.capabilityCount} ${_t('capabilities with current evidence')} • $capabilityPercent% ${_t('coverage confidence')}';
+    }
+    final List<String> parts = <String>[
+      '${featuredClaim.title} • ${_t('Level')} ${featuredClaim.latestLevel}/4',
+    ];
+    if (progressionDescriptors.isNotEmpty) {
+      parts.add(progressionDescriptors);
+    }
+    parts.add(
+      '${learner.growthSummary.capabilityCount} ${_t('capabilities with current evidence')} • $capabilityPercent% ${_t('coverage confidence')}',
+    );
+    return parts.join(' • ');
+  }
+
+  String _buildEvidenceAnswer(
+    LearnerSummary learner,
+    PassportClaim? featuredClaim,
+    PortfolioPreviewItem? featuredPortfolioItem,
+    String verificationCriteria,
+  ) {
+    final List<String> parts = <String>[
+      '${learner.evidenceSummary.reviewedCount} ${_t('reviewed observations')}',
+      '${learner.portfolioSnapshot.verifiedArtifactCount} ${_t('reviewed or verified artifacts')}',
+      '${learner.ideationPassport.reflectionsSubmitted} ${_t('reflections')}',
+    ];
+    if (featuredPortfolioItem != null) {
+      parts.add('${_t('Artifact')}: ${featuredPortfolioItem.title}');
+    }
+    if (featuredClaim != null) {
+      parts.add('${_t('Capability')}: ${featuredClaim.title}');
+    }
+    if (verificationCriteria.isNotEmpty) {
+      parts.add('${_t('Verification Criteria')}: $verificationCriteria');
+    }
+    if (learner.evidenceSummary.verificationPromptCount > 0) {
+      parts.add(
+        '${learner.evidenceSummary.verificationPromptCount} ${_t('verification prompts pending')}',
+      );
+    }
+    return parts.join(' • ');
+  }
+
+  String _buildGrowthAnswer(
+    LearnerSummary learner,
+    PassportClaim? featuredClaim,
+    String proofDetail,
+  ) {
+    final List<String> parts = <String>[
+      '${learner.growthSummary.updatedCapabilityCount} ${_t('capabilities updated')}',
+      _formatAverageCapabilityLevel(learner.growthSummary.averageLevel),
+      _formatLatestGrowthNote(learner.growthSummary.latestGrowthAt),
+    ];
+    if (featuredClaim != null) {
+      parts.insert(0,
+          '${featuredClaim.title} • ${_t('Level')} ${featuredClaim.latestLevel}/4');
+    }
+    if (proofDetail.isNotEmpty) {
+      parts.add(proofDetail);
+    }
+    return parts.join(' • ');
+  }
+
+  String _buildNextFocusAnswer(
+    LearnerSummary learner,
+    PassportClaim? featuredClaim,
+    PortfolioPreviewItem? featuredPortfolioItem,
+  ) {
+    if (featuredPortfolioItem?.verificationPrompt?.trim().isNotEmpty == true) {
+      return featuredPortfolioItem!.verificationPrompt!.trim();
+    }
+    final List<VerificationCheckpointMapping> checkpointMappings =
+        _featuredCheckpointMappings(featuredClaim, featuredPortfolioItem);
+    if (checkpointMappings.isNotEmpty) {
+      return _checkpointMappingToSentence(checkpointMappings.first);
+    }
+    if (learner.evidenceSummary.verificationPromptCount > 0) {
+      return _t(
+          'Follow up on the latest educator verification prompts during the next studio check-in.');
+    }
+    if (learner.portfolioSnapshot.artifactCount == 0) {
+      return _t('Capture a first portfolio artifact from current studio work.');
+    }
+    if (learner.portfolioSnapshot.verifiedArtifactCount <
+        learner.portfolioSnapshot.artifactCount) {
+      return _t('Publish the strongest recent artifact with reflection.');
+    }
+    return _t(
+        'Keep adding checkpoints, reflections, and educator evidence next week.');
+  }
+
+  String _checkpointMappingToSentence(VerificationCheckpointMapping mapping) {
+    final String phase = _titleCase(mapping.phase);
+    final String guidance = mapping.guidance.trim();
+    if (phase.isEmpty) {
+      return guidance;
+    }
+    if (guidance.isEmpty) {
+      return phase;
+    }
+    return '$phase: $guidance';
+  }
+
+  String _buildFeaturedCapabilityFocus(
+    PassportClaim? claim,
+    PortfolioPreviewItem? item,
+  ) {
+    final List<String> parts = <String>[];
+    if (claim != null) {
+      parts.add('${claim.title} • ${_t('Level')} ${claim.latestLevel}/4');
+      if ((claim.verificationStatus ?? '').trim().isNotEmpty) {
+        parts.add(
+          '${_t('Artifact Review Status')}: ${_titleCase(claim.verificationStatus!)}',
+        );
+      }
+    }
+    if (item != null) {
+      parts.add('${_t('Artifact')}: ${item.title}');
+      if (item.reviewingEducatorName?.trim().isNotEmpty == true) {
+        parts.add('${_t('Reviewed by')}: ${item.reviewingEducatorName}');
+      }
+    }
+    return parts.join(' • ');
+  }
+
+  String _buildVerificationCriteriaDetail(
+    List<VerificationCheckpointMapping> checkpointMappings,
+  ) {
+    if (checkpointMappings.isEmpty) {
+      return '';
+    }
+    return checkpointMappings
+        .map(_checkpointMappingToSentence)
+        .where((String value) => value.trim().isNotEmpty)
+        .join(' • ');
+  }
+
+  String _buildProgressionDescriptorsDetail(List<String> descriptors) {
+    if (descriptors.isEmpty) {
+      return '';
+    }
+    return descriptors.join(' • ');
+  }
+
+  String _buildProofSummary(
+    PassportClaim? claim,
+    PortfolioPreviewItem? item,
+  ) {
+    final List<String> parts = <String>[];
+    final String? proofStatus =
+        (item?.proofOfLearningStatus?.trim().isNotEmpty == true)
+            ? item!.proofOfLearningStatus
+            : claim?.proofOfLearningStatus;
+    if (proofStatus?.trim().isNotEmpty == true) {
+      parts.add(
+        '${_t('Proof of Learning')}: ${_formatTimelineProofStatus(proofStatus!)}',
+      );
+    }
+    if (claim?.reviewingEducatorName?.trim().isNotEmpty == true) {
+      parts.add('${_t('Reviewed by')}: ${claim!.reviewingEducatorName}');
+    } else if (item?.reviewingEducatorName?.trim().isNotEmpty == true) {
+      parts.add('${_t('Reviewed by')}: ${item!.reviewingEducatorName}');
+    }
+    if ((item?.rubricLevel ?? 0) > 0) {
+      parts.add('${_t('Rubric level')}: ${item!.rubricLevel}/4');
+    } else if ((claim?.rubricRawScore ?? 0) > 0 &&
+        (claim?.rubricMaxScore ?? 0) > 0) {
+      parts.add(
+        '${_t('Rubric score')}: ${claim!.rubricRawScore}/${claim.rubricMaxScore}',
+      );
+    }
+    return parts.join(' • ');
+  }
+
+  String _titleCase(String value) {
+    final String normalized = value.trim();
+    if (normalized.isEmpty) {
+      return normalized;
+    }
+    return normalized
+        .split(RegExp(r'[_\s]+'))
+        .map((String part) => part.isEmpty
+            ? part
+            : '${part[0].toUpperCase()}${part.substring(1).toLowerCase()}')
+        .join(' ');
+  }
+
   String _formatLatestGrowthNote(DateTime? value) {
     if (value == null) {
       return _t('latest growth update pending');
@@ -672,7 +1016,8 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
           '${entry.linkedPortfolioItemIds.length} ${_t('portfolio artifacts linked')}');
     }
     if (entry.proofOfLearningStatus?.trim().isNotEmpty == true) {
-      parts.add('${_t('proof')} ${_formatTimelineProofStatus(entry.proofOfLearningStatus!)}');
+      parts.add(
+          '${_t('proof')} ${_formatTimelineProofStatus(entry.proofOfLearningStatus!)}');
     }
     if (entry.occurredAt != null) {
       final DateTime value = entry.occurredAt!;
@@ -1185,6 +1530,52 @@ class _FamilyAnswerRow extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _FamilyEvidenceDetail extends StatelessWidget {
+  const _FamilyEvidenceDetail({
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: ScholesaColors.parent.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: ScholesaColors.parent.withValues(alpha: 0.14),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.grey[700],
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              height: 1.35,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

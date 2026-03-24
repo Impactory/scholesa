@@ -307,6 +307,7 @@ Interpretation rule:
 - Focused provisioning, educator sessions, educator learners, and attendance downstream workflow regressions passed after adding the cross-site learner-roster proof: 51 passed, 0 failed.
 - Focused parent fallback evidence-chain regression passed: 1 passed, 0 failed.
 - Focused parent callable current-level backend regression passed: 2 passed, 0 failed.
+- Focused parent callable provenance honesty regression passed: 2 passed, 0 failed.
 - Focused parent callable current-level Flutter parser regression passed: 1 passed, 0 failed.
 - Focused learner portfolio honesty regressions passed after separating reviewed evidence from awaiting-review submissions: 7 passed, 0 failed.
 - Focused educator learner evidence regressions passed after replacing legacy roster progress with reviewed capability mastery: 20 passed, 0 failed.
