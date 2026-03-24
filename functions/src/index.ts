@@ -2525,25 +2525,25 @@ async function buildParentLearnerSummary(params: {
     return !rowSiteId || rowSiteId === siteId;
   };
 
-  const portfolioRows = portfolioSnap.docs
+  const portfolioRows: Array<Record<string, unknown>> = portfolioSnap.docs
     .map((doc) => ({ id: doc.id, ...(doc.data() as Record<string, unknown>) }))
     .filter(includeForSite);
-  const evidenceRows = evidenceSnap.docs
+  const evidenceRows: Array<Record<string, unknown>> = evidenceSnap.docs
     .map((doc) => ({ id: doc.id, ...(doc.data() as Record<string, unknown>) }))
     .filter(includeForSite);
-  const masteryRows = masterySnap.docs
+  const masteryRows: Array<Record<string, unknown>> = masterySnap.docs
     .map((doc) => doc.data() as Record<string, unknown>)
     .filter(includeForSite);
-  const growthRows = growthSnap.docs
+  const growthRows: Array<Record<string, unknown>> = growthSnap.docs
     .map((doc) => ({ id: doc.id, ...(doc.data() as Record<string, unknown>) }))
     .filter(includeForSite);
-  const reflectionRows = reflectionsSnap.docs
+  const reflectionRows: Array<Record<string, unknown>> = reflectionsSnap.docs
     .map((doc) => doc.data() as Record<string, unknown>)
     .filter(includeForSite);
-  const missionAttemptRows = missionAttemptsSnap.docs
+  const missionAttemptRows: Array<Record<string, unknown>> = missionAttemptsSnap.docs
     .map((doc) => ({ id: doc.id, ...(doc.data() as Record<string, unknown>) }))
     .filter(includeForSite);
-  const interactionEventRows = interactionEventsSnap.docs
+  const interactionEventRows: Array<Record<string, unknown>> = interactionEventsSnap.docs
     .map((doc) => ({ id: doc.id, ...(doc.data() as Record<string, unknown>) }))
     .filter(includeForSite);
 
@@ -2942,13 +2942,13 @@ async function buildParentLearnerSummary(params: {
     .map((row) => {
       const capabilityId = typeof row.capabilityId === 'string' ? row.capabilityId.trim() : '';
       if (!capabilityId) return null;
-      const matchingEvidence = evidenceRows.filter((entry) =>
+      const matchingEvidence: Array<Record<string, unknown>> = evidenceRows.filter((entry) =>
         typeof entry.capabilityId === 'string' && entry.capabilityId.trim() === capabilityId,
       );
-      const matchingPortfolio = portfolioRows.filter((entry) =>
+      const matchingPortfolio: Array<Record<string, unknown>> = portfolioRows.filter((entry) =>
         Array.isArray(entry.capabilityIds) && entry.capabilityIds.includes(capabilityId),
       );
-      const matchingGrowth = growthRows.filter((entry) =>
+      const matchingGrowth: Array<Record<string, unknown>> = growthRows.filter((entry) =>
         typeof entry.capabilityId === 'string' && entry.capabilityId.trim() === capabilityId,
       );
       const missionAttemptIds = new Set<string>([
@@ -2958,7 +2958,7 @@ async function buildParentLearnerSummary(params: {
         ...matchingPortfolio.map((entry) => (typeof entry.missionAttemptId === 'string' ? entry.missionAttemptId.trim() : '')),
       ]);
       missionAttemptIds.delete('');
-      const matchingMissionAttempts = missionAttemptRows.filter((entry) =>
+      const matchingMissionAttempts: Array<Record<string, unknown>> = missionAttemptRows.filter((entry) =>
         typeof entry.id === 'string' && missionAttemptIds.has(entry.id),
       );
       const sessionOccurrenceIds = new Set<string>(
@@ -2966,7 +2966,7 @@ async function buildParentLearnerSummary(params: {
           .map((entry) => (typeof entry.sessionOccurrenceId === 'string' ? entry.sessionOccurrenceId.trim() : ''))
           .filter(Boolean),
       );
-      const matchingInteractionEvents = interactionEventRows.filter((entry) =>
+      const matchingInteractionEvents: Array<Record<string, unknown>> = interactionEventRows.filter((entry) =>
         typeof entry.sessionOccurrenceId === 'string' && sessionOccurrenceIds.has(entry.sessionOccurrenceId.trim()),
       );
       const capabilityTitles = matchingPortfolio.flatMap((entry) =>
@@ -3176,7 +3176,7 @@ async function buildParentLearnerSummary(params: {
         aiFeedbackAt,
       };
     })
-    .filter((value): value is Record<string, unknown> => Boolean(value))
+    .filter((value): value is NonNullable<typeof value> => value !== null)
     .sort((left, right) => {
       const levelDiff = Number(right.latestLevel ?? 0) - Number(left.latestLevel ?? 0);
       if (levelDiff !== 0) return levelDiff;
@@ -3257,7 +3257,7 @@ async function buildParentLearnerSummary(params: {
         missionAttemptId: typeof row.missionAttemptId === 'string' && row.missionAttemptId.trim() ? row.missionAttemptId.trim() : null,
       };
     })
-    .filter((value): value is Record<string, unknown> => value !== null)
+    .filter((value): value is NonNullable<typeof value> => value !== null)
     .sort((left, right) => Date.parse(String(right.occurredAt ?? now.toISOString())) - Date.parse(String(left.occurredAt ?? now.toISOString())));
 
   const currentLevel = resolveParentCurrentLevel(averageLevel);
@@ -4131,15 +4131,22 @@ export const listAnalyticsRepairRuns = onCall(async (request: CallableRequest) =
       query = query.where('siteId', '==', siteId);
     }
     const snap = await query.get();
-    logs = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    logs = snap.docs.map((doc): Record<string, unknown> => ({ id: doc.id, ...(doc.data() as Record<string, unknown>) }));
   } catch {
     const snap = await admin.firestore().collection(AUDIT_COLLECTION)
       .orderBy('createdAt', 'desc')
       .limit(Math.min(limit * 5, 500))
       .get();
     logs = snap.docs
-      .map((doc) => ({ id: doc.id, ...doc.data() }))
-      .filter((entry) => ANALYTICS_REPAIR_AUDIT_ACTIONS.includes(typeof entry.action === 'string' ? entry.action as typeof ANALYTICS_REPAIR_AUDIT_ACTIONS[number] : ''))
+      .map((doc): Record<string, unknown> => ({ id: doc.id, ...(doc.data() as Record<string, unknown>) }))
+      .filter((entry) => {
+        if (typeof entry.action !== 'string') {
+          return false;
+        }
+        return ANALYTICS_REPAIR_AUDIT_ACTIONS.includes(
+          entry.action as typeof ANALYTICS_REPAIR_AUDIT_ACTIONS[number],
+        );
+      })
       .filter((entry) => !siteId || entry.siteId === siteId)
       .slice(0, limit);
   }
