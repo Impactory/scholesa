@@ -360,11 +360,29 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
     if (_topPerformersData.isNotEmpty) {
       buffer
         ..writeln('Top Performers')
-        ..writeln('--------------');
-      for (final _TopPerformerData item in _topPerformersData) {
-        buffer.writeln(
-          '#${item.rank} ${item.name} | ${item.site} | missions=${item.missionsCompleted} | streak=${item.streak}',
+        ..writeln('--------------')
+        ..writeln(
+          'Ranked by reviewed capability growth and reviewed evidence, not assignment completion.',
         );
+      for (final _TopPerformerData item in _topPerformersData) {
+        final List<String> parts = <String>[
+          '#${item.rank} ${item.name}',
+          item.site,
+          'reviewedEvidence=${item.reviewedEvidenceCount}',
+        ];
+        if (item.capabilityUpdates > 0) {
+          parts.add('capabilityUpdates=${item.capabilityUpdates}');
+        }
+        if (item.reviewedDays > 0) {
+          parts.add('reviewedDays=${item.reviewedDays}');
+        }
+        if (item.latestCapabilityTitle?.trim().isNotEmpty == true) {
+          final String capabilityLabel = item.latestCapabilityLevel > 0
+              ? '${item.latestCapabilityTitle} | level=${item.latestCapabilityLevel}/4'
+              : item.latestCapabilityTitle!;
+          parts.add('latestCapability=$capabilityLabel');
+        }
+        buffer.writeln(parts.join(' | '));
       }
       buffer.writeln('');
     }
@@ -1593,8 +1611,11 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
               rank: performer.rank,
               name: performer.name,
               site: performer.site,
-              missionsCompleted: performer.missionsCompleted,
-              streak: performer.streak,
+              reviewedEvidenceCount: performer.reviewedEvidenceCount,
+              capabilityUpdates: performer.capabilityUpdates,
+              reviewedDays: performer.reviewedDays,
+              latestCapabilityTitle: performer.latestCapabilityTitle,
+              latestCapabilityLevel: performer.latestCapabilityLevel,
             ),
           ),
         ],
@@ -1995,8 +2016,11 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                   rank: performer.rank,
                   name: performer.name,
                   site: performer.site,
-                  missionsCompleted: performer.missionsCompleted,
-                  streak: performer.streak,
+                  reviewedEvidenceCount: performer.reviewedEvidenceCount,
+                  capabilityUpdates: performer.capabilityUpdates,
+                  reviewedDays: performer.reviewedDays,
+                  latestCapabilityTitle: performer.latestCapabilityTitle,
+                  latestCapabilityLevel: performer.latestCapabilityLevel,
                 ),
               ),
             ],
@@ -2066,9 +2090,17 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                   rank: (row['rank'] as num?)?.toInt() ?? 1,
                   name: (row['name'] as String?) ?? 'Learner',
                   site: (row['site'] as String?) ?? _t('All Sites'),
-                  missionsCompleted:
+                reviewedEvidenceCount:
+                  (row['reviewedEvidenceCount'] as num?)?.toInt() ??
                       (row['missionsCompleted'] as num?)?.toInt() ?? 0,
-                  streak: (row['streak'] as num?)?.toInt() ?? 0,
+                capabilityUpdates:
+                  (row['capabilityUpdates'] as num?)?.toInt() ?? 0,
+                reviewedDays: (row['reviewedDays'] as num?)?.toInt() ??
+                  (row['streak'] as num?)?.toInt() ?? 0,
+                latestCapabilityTitle:
+                  (row['latestCapabilityTitle'] as String?)?.trim(),
+                latestCapabilityLevel:
+                  (row['latestCapabilityLevel'] as num?)?.toInt() ?? 0,
                 ),
               )
               .toList(growable: false);
@@ -2218,9 +2250,22 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
       final QuerySnapshot<Map<String, dynamic>> attemptsSnapshot =
           await attemptsQuery.limit(500).get();
 
-      final Map<String, int> completedAttemptsByLearner = <String, int>{};
+      Query<Map<String, dynamic>> growthQuery =
+          firestoreService.firestore.collection('capabilityGrowthEvents');
+      if (_selectedSite != 'all') {
+        growthQuery = growthQuery.where('siteId', isEqualTo: _selectedSite);
+      }
+      final QuerySnapshot<Map<String, dynamic>> growthSnapshot =
+          await growthQuery.limit(500).get();
+
+      final Map<String, int> reviewedEvidenceByLearner = <String, int>{};
       final Map<String, String> learnerSite = <String, String>{};
       final Map<String, Set<String>> learnerDays = <String, Set<String>>{};
+      final Map<String, int> capabilityUpdatesByLearner = <String, int>{};
+      final Map<String, String> latestCapabilityTitleByLearner =
+          <String, String>{};
+      final Map<String, int> latestCapabilityLevelByLearner = <String, int>{};
+      final Map<String, DateTime> latestGrowthAtByLearner = <String, DateTime>{};
       final Map<String, int> attemptsByPillar = <String, int>{
         'Future Skills': 0,
         'Leadership': 0,
@@ -2263,8 +2308,8 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
             reviewStatus == 'approved' ||
             reviewStatus == 'reviewed';
         if (completed) {
-          completedAttemptsByLearner[learnerId] =
-              (completedAttemptsByLearner[learnerId] ?? 0) + 1;
+          reviewedEvidenceByLearner[learnerId] =
+            (reviewedEvidenceByLearner[learnerId] ?? 0) + 1;
           final DateTime? createdAt =
               _toDateTime(data['createdAt']) ?? _toDateTime(data['submittedAt']);
           if (createdAt != null) {
@@ -2273,6 +2318,39 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
             learnerDays.putIfAbsent(learnerId, () => <String>{}).add(dayKey);
           }
           completedByPillar[pillar] = (completedByPillar[pillar] ?? 0) + 1;
+        }
+      }
+
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+          in growthSnapshot.docs) {
+        final Map<String, dynamic> data = doc.data();
+        final String learnerId = ((data['learnerId'] as String?) ?? '').trim();
+        if (learnerId.isEmpty) continue;
+
+        final String siteId = ((data['siteId'] as String?) ?? '').trim();
+        if (siteId.isNotEmpty) {
+          learnerSite[learnerId] = siteId;
+        }
+
+        capabilityUpdatesByLearner[learnerId] =
+            (capabilityUpdatesByLearner[learnerId] ?? 0) + 1;
+
+        final DateTime? occurredAt =
+            _toDateTime(data['occurredAt']) ?? _toDateTime(data['createdAt']);
+        final DateTime latestSeen = latestGrowthAtByLearner[learnerId] ??
+            DateTime.fromMillisecondsSinceEpoch(0);
+        if (occurredAt != null && occurredAt.isAfter(latestSeen)) {
+          latestGrowthAtByLearner[learnerId] = occurredAt;
+          final String capabilityTitle =
+              ((data['capabilityTitle'] as String?) ?? '').trim();
+          if (capabilityTitle.isNotEmpty) {
+            latestCapabilityTitleByLearner[learnerId] = capabilityTitle;
+          }
+          latestCapabilityLevelByLearner[learnerId] =
+              _asInt(data['currentLevel']) ??
+                  _asInt(data['newLevel']) ??
+                  _asInt(data['level']) ??
+                  0;
         }
       }
 
@@ -2300,11 +2378,33 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
         ),
       ];
 
-        final List<MapEntry<String, int>> ranked =
-          completedAttemptsByLearner.entries
+      final Set<String> rankedLearnerIds = <String>{
+        ...reviewedEvidenceByLearner.keys,
+        ...capabilityUpdatesByLearner.keys,
+      };
+      final List<MapEntry<String, int>> ranked = rankedLearnerIds
+          .map(
+            (String learnerId) => MapEntry<String, int>(
+              learnerId,
+              reviewedEvidenceByLearner[learnerId] ?? 0,
+            ),
+          )
           .toList()
-        ..sort((MapEntry<String, int> a, MapEntry<String, int> b) =>
-            b.value.compareTo(a.value));
+        ..sort((MapEntry<String, int> a, MapEntry<String, int> b) {
+          final int growthCompare =
+              (capabilityUpdatesByLearner[b.key] ?? 0).compareTo(
+            capabilityUpdatesByLearner[a.key] ?? 0,
+          );
+          if (growthCompare != 0) {
+            return growthCompare;
+          }
+          final int evidenceCompare = b.value.compareTo(a.value);
+          if (evidenceCompare != 0) {
+            return evidenceCompare;
+          }
+          return (learnerDays[b.key]?.length ?? 0)
+              .compareTo(learnerDays[a.key]?.length ?? 0);
+        });
       final List<String> topLearnerIds = ranked
           .take(10)
           .map((MapEntry<String, int> entry) => entry.key)
@@ -2325,8 +2425,12 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
             site: siteId != null && siteNames.containsKey(siteId)
                 ? siteNames[siteId]!
                 : _t('All Sites'),
-            missionsCompleted: ranked[index].value,
-            streak: streak,
+            reviewedEvidenceCount: ranked[index].value,
+            capabilityUpdates: capabilityUpdatesByLearner[learnerId] ?? 0,
+            reviewedDays: streak,
+            latestCapabilityTitle: latestCapabilityTitleByLearner[learnerId],
+            latestCapabilityLevel: latestCapabilityLevelByLearner[learnerId] ??
+                0,
           ),
         );
       }
@@ -2765,15 +2869,21 @@ class _TopPerformerData {
     required this.rank,
     required this.name,
     required this.site,
-    required this.missionsCompleted,
-    required this.streak,
+    required this.reviewedEvidenceCount,
+    required this.capabilityUpdates,
+    required this.reviewedDays,
+    this.latestCapabilityTitle,
+    this.latestCapabilityLevel = 0,
   });
 
   final int rank;
   final String name;
   final String site;
-  final int missionsCompleted;
-  final int streak;
+  final int reviewedEvidenceCount;
+  final int capabilityUpdates;
+  final int reviewedDays;
+  final String? latestCapabilityTitle;
+  final int latestCapabilityLevel;
 }
 
 class _PillarAnalyticsData {
@@ -3314,14 +3424,20 @@ class _TopPerformerCard extends StatelessWidget {
     required this.rank,
     required this.name,
     required this.site,
-    required this.missionsCompleted,
-    required this.streak,
+    required this.reviewedEvidenceCount,
+    required this.capabilityUpdates,
+    required this.reviewedDays,
+    this.latestCapabilityTitle,
+    this.latestCapabilityLevel = 0,
   });
   final int rank;
   final String name;
   final String site;
-  final int missionsCompleted;
-  final int streak;
+  final int reviewedEvidenceCount;
+  final int capabilityUpdates;
+  final int reviewedDays;
+  final String? latestCapabilityTitle;
+  final int latestCapabilityLevel;
 
   Color get _rankColor {
     switch (rank) {
@@ -3379,6 +3495,17 @@ class _TopPerformerCard extends StatelessWidget {
                     site,
                     style: TextStyle(color: Colors.grey[600], fontSize: 12),
                   ),
+                  if (latestCapabilityTitle?.trim().isNotEmpty == true)
+                    Text(
+                      latestCapabilityLevel > 0
+                          ? '$latestCapabilityTitle • Level $latestCapabilityLevel/4'
+                          : latestCapabilityTitle!,
+                      style: TextStyle(
+                        color: Colors.grey[700],
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -3387,22 +3514,31 @@ class _TopPerformerCard extends StatelessWidget {
               children: <Widget>[
                 Row(
                   children: <Widget>[
-                    const Icon(Icons.rocket_launch,
+                    const Icon(Icons.fact_check_rounded,
                         size: 14, color: ScholesaColors.futureSkills),
                     const SizedBox(width: 4),
                     Text(
-                      '$missionsCompleted',
+                      '$reviewedEvidenceCount reviewed',
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
                 Row(
                   children: <Widget>[
-                    const Icon(Icons.local_fire_department,
-                        size: 14, color: ScholesaColors.warning),
+                    Icon(
+                      capabilityUpdates > 0
+                          ? Icons.workspace_premium_rounded
+                          : Icons.calendar_today_rounded,
+                      size: 14,
+                      color: capabilityUpdates > 0
+                          ? ScholesaColors.hq
+                          : ScholesaColors.warning,
+                    ),
                     const SizedBox(width: 4),
                     Text(
-                      '$streak days',
+                      capabilityUpdates > 0
+                          ? '$capabilityUpdates growth updates'
+                          : '$reviewedDays reviewed days',
                       style: TextStyle(color: Colors.grey[600], fontSize: 12),
                     ),
                   ],

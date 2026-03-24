@@ -605,7 +605,7 @@ void main() {
     expect(find.text('Top Performers'), findsOneWidget);
     expect(find.text('Nia Analytics'), findsOneWidget);
     expect(find.text('North Hub'), findsWidgets);
-    expect(find.text('1 days'), findsOneWidget);
+    expect(find.text('1 reviewed'), findsOneWidget);
     expect(find.text('Uma Unfinished'), findsNothing);
     expect(find.text('No top performers available'), findsNothing);
   });
@@ -712,6 +712,21 @@ void main() {
                 attendanceTrend: <AttendanceTrendPoint>[],
               );
             },
+            supplementalLoader: ({String selectedSite = 'all'}) async =>
+                const HqAnalyticsSupplementalSnapshot(
+                  topPerformers: <Map<String, dynamic>>[
+                    <String, dynamic>{
+                      'rank': 1,
+                      'name': 'Nia Analytics',
+                      'site': 'North Hub',
+                      'reviewedEvidenceCount': 2,
+                      'capabilityUpdates': 1,
+                      'reviewedDays': 1,
+                      'latestCapabilityTitle': 'Evidence-backed reasoning',
+                      'latestCapabilityLevel': 3,
+                    },
+                  ],
+                ),
             kpiPacksLoader: ({String? siteId, int limit = 24}) async =>
                 <Map<String, dynamic>>[],
             syntheticImportLoader: () async => null,
@@ -736,6 +751,13 @@ void main() {
       _savedFileContent,
       contains('Weekly accountability adherence: 91.0%'),
     );
+    expect(_savedFileContent, contains('reviewedEvidence=2'));
+    expect(_savedFileContent, contains('capabilityUpdates=1'));
+    expect(
+      _savedFileContent,
+      contains('latestCapability=Evidence-backed reasoning | level=3/4'),
+    );
+    expect(_savedFileContent, isNot(contains('missions=2')));
   });
 
   testWidgets('hq analytics export copies content when file export is unsupported',
@@ -1024,8 +1046,11 @@ void main() {
                   'rank': 1,
                   'name': 'Luna Learner',
                   'site': 'North Hub',
-                  'missionsCompleted': 12,
-                  'streak': 4,
+                  'reviewedEvidenceCount': 12,
+                  'capabilityUpdates': 5,
+                  'reviewedDays': 4,
+                  'latestCapabilityTitle': 'Evidence-backed reasoning',
+                  'latestCapabilityLevel': 4,
                 },
               ],
               bosMiaFeedback: <String, dynamic>{
