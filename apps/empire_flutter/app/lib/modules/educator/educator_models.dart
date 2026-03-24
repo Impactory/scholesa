@@ -115,6 +115,12 @@ class EducatorSession extends Equatable {
     required this.maxCapacity,
     required this.status,
     this.joinCode,
+    this.missionId,
+    this.rubricId,
+    this.rubricTitle,
+    this.capabilityTitles = const <String>[],
+    this.progressionDescriptors = const <String>[],
+    this.checkpointMappings = const <EducatorCheckpointMapping>[],
     this.teacherIds = const <String>[],
     this.coTeacherIds = const <String>[],
     this.aideIds = const <String>[],
@@ -130,9 +136,20 @@ class EducatorSession extends Equatable {
   final int maxCapacity;
   final String status;
   final String? joinCode;
+  final String? missionId;
+  final String? rubricId;
+  final String? rubricTitle;
+  final List<String> capabilityTitles;
+  final List<String> progressionDescriptors;
+  final List<EducatorCheckpointMapping> checkpointMappings;
   final List<String> teacherIds;
   final List<String> coTeacherIds;
   final List<String> aideIds;
+
+  bool get hasTeachingGuidance =>
+      (rubricTitle?.trim().isNotEmpty ?? false) ||
+      progressionDescriptors.isNotEmpty ||
+      checkpointMappings.isNotEmpty;
 
   /// Convenience getters for UI
   int get learnerCount => enrolledCount;
@@ -162,10 +179,31 @@ class EducatorSession extends Equatable {
         maxCapacity,
         status,
         joinCode,
+        missionId,
+        rubricId,
+        rubricTitle,
+        capabilityTitles,
+        progressionDescriptors,
+        checkpointMappings,
         teacherIds,
         coTeacherIds,
         aideIds,
       ];
+}
+
+class EducatorCheckpointMapping extends Equatable {
+  const EducatorCheckpointMapping({
+    required this.phaseKey,
+    required this.phaseLabel,
+    required this.guidance,
+  });
+
+  final String phaseKey;
+  final String phaseLabel;
+  final String guidance;
+
+  @override
+  List<Object?> get props => <Object?>[phaseKey, phaseLabel, guidance];
 }
 
 /// Learner model for learner roster

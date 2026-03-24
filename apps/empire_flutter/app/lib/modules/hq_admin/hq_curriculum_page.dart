@@ -3442,6 +3442,11 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     final TextEditingController criteriaController = TextEditingController(
       text: 'Clarity, Evidence, Agency',
     );
+    final TextEditingController descriptorsController = TextEditingController();
+    final TextEditingController checkpointMappingsController =
+        TextEditingController(
+      text: _defaultCheckpointMappingsDraft(),
+    );
     bool isSubmitting = false;
 
     showDialog<void>(
@@ -3508,6 +3513,62 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                     ),
                   ),
                 ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: descriptorsController,
+                  minLines: 2,
+                  maxLines: 4,
+                  style: const TextStyle(
+                    color: ScholesaColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  decoration: InputDecoration(
+                    labelText: _tHqCurriculum(
+                      context,
+                      'Progression descriptors (one per line)',
+                    ),
+                    labelStyle:
+                        const TextStyle(color: ScholesaColors.textSecondary),
+                    filled: true,
+                    fillColor: ScholesaColors.surfaceVariant,
+                    border: const OutlineInputBorder(),
+                    enabledBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(color: ScholesaColors.border),
+                    ),
+                    focusedBorder: const OutlineInputBorder(
+                      borderSide:
+                          BorderSide(color: ScholesaColors.primary, width: 1.5),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: checkpointMappingsController,
+                  minLines: 4,
+                  maxLines: 8,
+                  style: const TextStyle(
+                    color: ScholesaColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  decoration: InputDecoration(
+                    labelText: _tHqCurriculum(
+                      context,
+                      'Checkpoint mappings (phase: guidance)',
+                    ),
+                    labelStyle:
+                        const TextStyle(color: ScholesaColors.textSecondary),
+                    filled: true,
+                    fillColor: ScholesaColors.surfaceVariant,
+                    border: const OutlineInputBorder(),
+                    enabledBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(color: ScholesaColors.border),
+                    ),
+                    focusedBorder: const OutlineInputBorder(
+                      borderSide:
+                          BorderSide(color: ScholesaColors.primary, width: 1.5),
+                    ),
+                  ),
+                ),
               ],
             ),
             actions: <Widget>[
@@ -3532,6 +3593,14 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                             .map((String item) => item.trim())
                             .where((String item) => item.isNotEmpty)
                             .toList();
+                        final List<String> progressionDescriptors =
+                            _parseLineSeparatedValues(
+                          descriptorsController.text,
+                        );
+                        final List<Map<String, dynamic>> checkpointMappings =
+                            _parseCheckpointMappings(
+                          checkpointMappingsController.text,
+                        );
 
                         if (rubricTitle.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -3558,6 +3627,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                           curriculum,
                           rubricTitle: rubricTitle,
                           criteriaLabels: criteria,
+                          progressionDescriptors: progressionDescriptors,
+                          checkpointMappings: checkpointMappings,
                         );
 
                         if (!mounted || !dialogContext.mounted) return;
@@ -3586,6 +3657,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     _Curriculum curriculum, {
     required String rubricTitle,
     required List<String> criteriaLabels,
+    required List<String> progressionDescriptors,
+    required List<Map<String, dynamic>> checkpointMappings,
   }) async {
     final FirestoreService? firestoreService = _maybeFirestoreService();
     final AppState? appState = _maybeAppState();
@@ -3640,6 +3713,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
           'criteria': criteria,
           'capabilityIds': curriculum.capabilityIds,
           'capabilityTitles': curriculum.capabilityTitles,
+          'progressionDescriptors': progressionDescriptors,
+          'checkpointMappings': checkpointMappings,
           'createdBy': appState?.userId,
           'createdByRole': appState?.role?.name,
         },
@@ -3650,6 +3725,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
         'rubricApplied': true,
         'rubricId': rubricId,
         'rubricTitle': rubricTitle,
+        'progressionDescriptors': progressionDescriptors,
+        'checkpointMappings': checkpointMappings,
         'rubricAppliedBy': appState?.userId,
         'rubricAppliedAt': FieldValue.serverTimestamp(),
         'status': 'review',
@@ -3677,6 +3754,62 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
       );
       return false;
     }
+  }
+
+  List<String> _parseLineSeparatedValues(String raw) {
+    return raw
+        .split(RegExp(r'\r?\n'))
+        .map((String value) => value.trim())
+        .where((String value) => value.isNotEmpty)
+        .toList(growable: false);
+  }
+
+  List<Map<String, dynamic>> _parseCheckpointMappings(String raw) {
+    final List<String> lines = _parseLineSeparatedValues(raw);
+    return lines.map((String line) {
+      final List<String> parts = line.split(':');
+      final String phaseKey = parts.first.trim();
+      final String guidance =
+          parts.length > 1 ? parts.sublist(1).join(':').trim() : '';
+      return <String, dynamic>{
+        'phaseKey': phaseKey,
+        'phaseLabel': _phaseLabelForCheckpointKey(phaseKey),
+        'guidance': guidance,
+      };
+    }).where((Map<String, dynamic> item) {
+      final String phaseKey = (item['phaseKey'] as String?)?.trim() ?? '';
+      final String guidance = (item['guidance'] as String?)?.trim() ?? '';
+      return phaseKey.isNotEmpty && guidance.isNotEmpty;
+    }).toList(growable: false);
+  }
+
+  String _phaseLabelForCheckpointKey(String key) {
+    switch (key.trim()) {
+      case 'retrieval_warm_up':
+        return 'Retrieval Warm-up';
+      case 'mini_lesson':
+        return 'Mini-lesson / Micro-skill';
+      case 'build_sprint':
+        return 'Build Sprint';
+      case 'checkpoint':
+        return 'Checkpoint';
+      case 'share_out':
+        return 'Share-out';
+      case 'reflection':
+        return 'Reflection';
+      case 'portfolio_artifact':
+        return 'Portfolio Artifact';
+      default:
+        return key.trim();
+    }
+  }
+
+  String _defaultCheckpointMappingsDraft() {
+    return <String>[
+      'build_sprint: Note which learner action shows the capability in progress.',
+      'checkpoint: Record the explanation, artifact, or demonstration that proves current understanding.',
+      'reflection: Capture what changed, what still needs verification, and the next claim to test.',
+    ].join('\n');
   }
 
   Future<void> _createMissionSnapshot(_Curriculum curriculum) async {

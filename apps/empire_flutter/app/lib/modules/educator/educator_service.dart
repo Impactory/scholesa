@@ -714,10 +714,18 @@ class EducatorService extends ChangeNotifier {
   Future<EducatorSessionsSnapshot> _loadSessionsSnapshot() async {
     final List<QueryDocumentSnapshot<Map<String, dynamic>>> sessionDocs =
         await _loadEducatorSessionDocs();
+    final Map<String, Map<String, dynamic>> missionsById =
+        await _loadLinkedMissionsById(sessionDocs);
+    final Map<String, Map<String, dynamic>> missionsBySessionId =
+        await _loadLinkedMissionsBySessionId(sessionDocs);
 
     final List<EducatorSession> sessions =
         sessionDocs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
       final Map<String, dynamic> data = doc.data();
+      final String linkedMissionId = _linkedMissionId(data);
+      final Map<String, dynamic>? missionData = linkedMissionId.isNotEmpty
+          ? missionsById[linkedMissionId]
+          : missionsBySessionId[doc.id];
       final String pillar = _stringOrDefault(
         data['pillar'],
         (data['pillarCodes'] is List<dynamic> &&
@@ -732,6 +740,19 @@ class EducatorService extends ChangeNotifier {
       final DateTime endTime = _parseTimestamp(data['endTime']) ??
           _parseTimestamp(data['endDate']) ??
           startTime.add(const Duration(hours: 1));
+      final List<String> capabilityTitles = _stringListOrFallback(
+        data['capabilityTitles'],
+        missionData == null ? null : missionData['capabilityTitles'],
+      );
+      final List<String> progressionDescriptors = _stringListOrFallback(
+        data['progressionDescriptors'],
+        missionData == null ? null : missionData['progressionDescriptors'],
+      );
+      final List<EducatorCheckpointMapping> checkpointMappings =
+          _checkpointMappingsOrFallback(
+        data['checkpointMappings'],
+        missionData == null ? null : missionData['checkpointMappings'],
+      );
       return EducatorSession(
         id: doc.id,
         title: _stringOrDefault(data['title'], null, 'Session'),
@@ -744,6 +765,18 @@ class EducatorService extends ChangeNotifier {
         maxCapacity: (data['maxCapacity'] as num?)?.toInt() ?? 20,
         status: _stringOrDefault(data['status'], null, 'upcoming'),
         joinCode: (data['joinCode'] as String?)?.trim(),
+        missionId: linkedMissionId.isNotEmpty
+            ? linkedMissionId
+            : _stringValue(missionData == null ? null : missionData['id']),
+        rubricId: _stringValue(data['rubricId']) ??
+            _stringValue(missionData == null ? null : missionData['rubricId']),
+        rubricTitle: _stringValue(data['rubricTitle']) ??
+            _stringValue(
+              missionData == null ? null : missionData['rubricTitle'],
+            ),
+        capabilityTitles: capabilityTitles,
+        progressionDescriptors: progressionDescriptors,
+        checkpointMappings: checkpointMappings,
         teacherIds: _normalizedDistinctIds(
           <String>[
             ..._asStringIterable(data['teacherIds']),
@@ -762,6 +795,135 @@ class EducatorService extends ChangeNotifier {
           );
 
     return EducatorSessionsSnapshot(sessions: sessions);
+  }
+
+  String _linkedMissionId(Map<String, dynamic> data) {
+    return _stringValue(data['missionId']) ??
+        _stringValue(data['curriculumId']) ??
+        _stringValue(data['linkedMissionId']) ??
+        '';
+  }
+
+  Future<Map<String, Map<String, dynamic>>> _loadLinkedMissionsById(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> sessionDocs,
+  ) async {
+    final Set<String> missionIds = sessionDocs
+        .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
+            _linkedMissionId(doc.data()))
+        .where((String id) => id.isNotEmpty)
+        .toSet();
+    if (missionIds.isEmpty) {
+      return <String, Map<String, dynamic>>{};
+    }
+
+    final List<DocumentSnapshot<Map<String, dynamic>>> docs =
+        await Future.wait(
+      missionIds.map(
+        (String missionId) =>
+            _firestore.collection('missions').doc(missionId).get(),
+      ),
+    );
+
+    final Map<String, Map<String, dynamic>> missions =
+        <String, Map<String, dynamic>>{};
+    for (final DocumentSnapshot<Map<String, dynamic>> doc in docs) {
+      if (!doc.exists) {
+        continue;
+      }
+      final Map<String, dynamic> data = doc.data() ?? <String, dynamic>{};
+      missions[doc.id] = <String, dynamic>{'id': doc.id, ...data};
+    }
+    return missions;
+  }
+
+  Future<Map<String, Map<String, dynamic>>> _loadLinkedMissionsBySessionId(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> sessionDocs,
+  ) async {
+    final Set<String> sessionIds = sessionDocs
+        .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) => doc.id)
+        .where((String id) => id.trim().isNotEmpty)
+        .toSet();
+    if (sessionIds.isEmpty) {
+      return <String, Map<String, dynamic>>{};
+    }
+
+    final Map<String, Map<String, dynamic>> missionsBySessionId =
+        <String, Map<String, dynamic>>{};
+    for (final List<String> chunk in _chunked(sessionIds.toList(), 10)) {
+      final QuerySnapshot<Map<String, dynamic>> snapshot = await _firestore
+          .collection('missions')
+          .where('sessionId', whereIn: chunk)
+          .get();
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+          in snapshot.docs) {
+        final Map<String, dynamic> data = doc.data();
+        final String sessionId = _stringValue(data['sessionId']) ?? '';
+        if (sessionId.isEmpty || missionsBySessionId.containsKey(sessionId)) {
+          continue;
+        }
+        missionsBySessionId[sessionId] = <String, dynamic>{
+          'id': doc.id,
+          ...data,
+        };
+      }
+    }
+    return missionsBySessionId;
+  }
+
+  String? _stringValue(dynamic value) {
+    final String normalized = (value as String?)?.trim() ?? '';
+    return normalized.isEmpty ? null : normalized;
+  }
+
+  List<String> _stringListOrFallback(dynamic primary, dynamic fallback) {
+    final List<String> direct =
+        _asStringIterable(primary).toList(growable: false);
+    if (direct.isNotEmpty) {
+      return direct;
+    }
+    return _asStringIterable(fallback).toList(growable: false);
+  }
+
+  List<EducatorCheckpointMapping> _checkpointMappingsOrFallback(
+    dynamic primary,
+    dynamic fallback,
+  ) {
+    final List<EducatorCheckpointMapping> direct =
+        _parseCheckpointMappings(primary);
+    if (direct.isNotEmpty) {
+      return direct;
+    }
+    return _parseCheckpointMappings(fallback);
+  }
+
+  List<EducatorCheckpointMapping> _parseCheckpointMappings(dynamic raw) {
+    if (raw is! List) {
+      return const <EducatorCheckpointMapping>[];
+    }
+
+    return raw
+        .whereType<Map>()
+        .map((Map value) => Map<String, dynamic>.from(value))
+        .map((Map<String, dynamic> item) {
+          final String phaseKey = _stringValue(item['phaseKey']) ??
+              _stringValue(item['phase']) ??
+              '';
+          final String guidance = _stringValue(item['guidance']) ??
+              _stringValue(item['prompt']) ??
+              '';
+          if (phaseKey.isEmpty || guidance.isEmpty) {
+            return null;
+          }
+          return EducatorCheckpointMapping(
+            phaseKey: phaseKey,
+            phaseLabel: _stringValue(item['phaseLabel']) ??
+                _stringValue(item['label']) ??
+                phaseKey,
+            guidance: guidance,
+          );
+        })
+        .whereType<EducatorCheckpointMapping>()
+        .toList(growable: false);
   }
 
   /// Create a new session and reflect it immediately in local state

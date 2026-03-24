@@ -85,6 +85,13 @@ const List<_StudioFlowStep> _studioFlowSteps = <_StudioFlowStep>[
   ),
 ];
 
+_StudioFlowStep _stepForPhase(String phaseKey) {
+  return _studioFlowSteps.firstWhere(
+    (_StudioFlowStep step) => step.key == phaseKey,
+    orElse: () => _studioFlowSteps[2],
+  );
+}
+
 String _activeSiteIdForAppState(AppState appState) {
   if (appState.activeSiteId?.trim().isNotEmpty == true) {
     return appState.activeSiteId!.trim();
@@ -1720,6 +1727,76 @@ class _StudioLaunchCard extends StatelessWidget {
                 )
                 .toList(),
           ),
+          if (session.hasTeachingGuidance) ...<Widget>[
+            const SizedBox(height: 16),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    _tEducatorSessions(context, 'HQ teaching guidance'),
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  if ((session.rubricTitle?.trim().isNotEmpty ?? false)) ...<Widget>[
+                    const SizedBox(height: 8),
+                    Text(
+                      _tEducatorSessions(
+                        context,
+                        'Rubric: {title}',
+                        placeholders: <String, String>{
+                          'title': session.rubricTitle!.trim(),
+                        },
+                      ),
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                  if (session.progressionDescriptors.isNotEmpty) ...<Widget>[
+                    const SizedBox(height: 10),
+                    Text(
+                      _tEducatorSessions(context, 'Progression descriptors'),
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 6),
+                    ...session.progressionDescriptors.map(
+                      (String descriptor) => Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: Text(
+                          descriptor,
+                          style:
+                              TextStyle(color: Colors.grey[700], height: 1.35),
+                        ),
+                      ),
+                    ),
+                  ],
+                  if (session.checkpointMappings.isNotEmpty) ...<Widget>[
+                    const SizedBox(height: 10),
+                    Text(
+                      _tEducatorSessions(context, 'Checkpoint mappings'),
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 6),
+                    ...session.checkpointMappings.map(
+                      (EducatorCheckpointMapping mapping) => Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Text(
+                          '${mapping.phaseLabel}: ${mapping.guidance}',
+                          style:
+                              TextStyle(color: Colors.grey[700], height: 1.35),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
           Container(
             width: double.infinity,
@@ -1962,12 +2039,26 @@ class _QuickEvidenceDialogState extends State<_QuickEvidenceDialog> {
   }
 
   String _phaseLabel(String key) {
-    return _studioFlowSteps
-            .where(((_StudioFlowStep step) => step.key == key))
-            .map(((_StudioFlowStep step) => step.label))
-            .cast<String?>()
-            .firstOrNull ??
-        'Build Sprint';
+    return _stepForPhase(key).label;
+  }
+
+  EducatorCheckpointMapping? _checkpointMappingForPhase(String key) {
+    return widget.session.checkpointMappings
+        .where((EducatorCheckpointMapping mapping) => mapping.phaseKey == key)
+        .cast<EducatorCheckpointMapping?>()
+        .firstOrNull;
+  }
+
+  String _phaseTeacherPrompt(BuildContext context) {
+    final EducatorCheckpointMapping? mapping =
+        _checkpointMappingForPhase(_selectedPhaseKey);
+    if (mapping != null) {
+      return mapping.guidance;
+    }
+    return _tEducatorSessions(
+      context,
+      _stepForPhase(_selectedPhaseKey).teacherPrompt,
+    );
   }
 
   String _evidenceTypeForPhase(String key) {
@@ -2002,6 +2093,11 @@ class _QuickEvidenceDialogState extends State<_QuickEvidenceDialog> {
   }
 
   String? _phaseEvidenceHint(BuildContext context) {
+    final EducatorCheckpointMapping? mapping =
+        _checkpointMappingForPhase(_selectedPhaseKey);
+    if (mapping != null) {
+      return mapping.guidance;
+    }
     switch (_selectedPhaseKey) {
       case 'checkpoint':
         return _tEducatorSessions(
@@ -2361,6 +2457,44 @@ class _QuickEvidenceDialogState extends State<_QuickEvidenceDialog> {
                   'Capture the strongest piece of evidence from studio time in one place so rubricing, growth, and portfolio follow-up can happen later.',
                 ),
                 style: TextStyle(color: Colors.grey[700], height: 1.35),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      _tEducatorSessions(context, 'Current teaching prompt'),
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      _phaseTeacherPrompt(context),
+                      style:
+                          TextStyle(color: Colors.grey[700], height: 1.35),
+                    ),
+                    if ((widget.session.rubricTitle?.trim().isNotEmpty ?? false)) ...<Widget>[
+                      const SizedBox(height: 8),
+                      Text(
+                        _tEducatorSessions(
+                          context,
+                          'Rubric: {title}',
+                          placeholders: <String, String>{
+                            'title': widget.session.rubricTitle!.trim(),
+                          },
+                        ),
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
