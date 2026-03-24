@@ -608,6 +608,26 @@ class _ParentChildPageState extends State<ParentChildPage> {
                           ),
                         ),
                       ],
+                      if (_buildVerificationCriteriaDetail(claim).isNotEmpty) ...<Widget>[
+                        const SizedBox(height: 4),
+                        Text(
+                          '${_t('Verification Criteria')}: ${_buildVerificationCriteriaDetail(claim)}',
+                          style: const TextStyle(
+                            color: ScholesaColors.textSecondary,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                      if (_buildProgressionDescriptorsDetail(claim).isNotEmpty) ...<Widget>[
+                        const SizedBox(height: 4),
+                        Text(
+                          '${_t('Progression Descriptors')}: ${_buildProgressionDescriptorsDetail(claim)}',
+                          style: const TextStyle(
+                            color: ScholesaColors.textSecondary,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
                       if (claim.evidenceRecordIds.isNotEmpty ||
                           claim.portfolioItemIds.isNotEmpty) ...<Widget>[
                         const SizedBox(height: 8),
@@ -729,6 +749,14 @@ class _ParentChildPageState extends State<ParentChildPage> {
       }
       if (_buildReviewDetail(claim).isNotEmpty) {
         lines.add('  ${_t('Review Detail')}: ${_buildReviewDetail(claim)}');
+      }
+      if (_buildVerificationCriteriaDetail(claim).isNotEmpty) {
+        lines.add(
+            '  ${_t('Verification Criteria')}: ${_buildVerificationCriteriaDetail(claim)}');
+      }
+      if (_buildProgressionDescriptorsDetail(claim).isNotEmpty) {
+        lines.add(
+            '  ${_t('Progression Descriptors')}: ${_buildProgressionDescriptorsDetail(claim)}');
       }
       if (claim.latestEvidenceAt != null) {
         lines.add(
@@ -986,6 +1014,32 @@ class _ParentChildPageState extends State<ParentChildPage> {
       if (claim.aiAssistanceDetails?.trim().isNotEmpty == true)
         '${_t('Learner AI details')}: ${claim.aiAssistanceDetails}',
     ].join(' • ');
+  }
+
+  String _buildVerificationCriteriaDetail(PassportClaim claim) {
+    if (claim.checkpointMappings.isEmpty) {
+      return '';
+    }
+    return claim.checkpointMappings
+        .map((VerificationCheckpointMapping mapping) {
+          final String phase = _titleCase(mapping.phase);
+          if (phase.isEmpty) {
+            return mapping.guidance;
+          }
+          if (mapping.guidance.trim().isEmpty) {
+            return phase;
+          }
+          return '$phase: ${mapping.guidance}';
+        })
+        .where((String value) => value.trim().isNotEmpty)
+        .join(' • ');
+  }
+
+  String _buildProgressionDescriptorsDetail(PassportClaim claim) {
+    if (claim.progressionDescriptors.isEmpty) {
+      return '';
+    }
+    return claim.progressionDescriptors.join(' • ');
   }
 
   String _buildReviewDetail(PassportClaim claim) {

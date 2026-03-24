@@ -829,6 +829,32 @@ class ParentService extends ChangeNotifier {
         .toList(growable: false);
   }
 
+  List<String> _stringListFromDynamic(dynamic value) {
+    if (value is! List) {
+      return const <String>[];
+    }
+    return value
+        .map(_asTrimmedString)
+        .where((String item) => item.isNotEmpty)
+        .toList(growable: false);
+  }
+
+  List<VerificationCheckpointMapping> _checkpointMappingsFromDynamic(
+      dynamic value) {
+    if (value is! List) {
+      return const <VerificationCheckpointMapping>[];
+    }
+    return value
+        .whereType<Map>()
+        .map((Map item) => VerificationCheckpointMapping(
+              phase: _asTrimmedString(item['phase']),
+              guidance: _asTrimmedString(item['guidance']),
+            ))
+        .where((VerificationCheckpointMapping item) =>
+            item.phase.isNotEmpty || item.guidance.isNotEmpty)
+        .toList(growable: false);
+  }
+
   List<PortfolioPreviewItem> _parsePortfolioItemsPreview(dynamic value) {
     if (value is! List) return const <PortfolioPreviewItem>[];
     return value
@@ -864,6 +890,10 @@ class ParentService extends ChangeNotifier {
                   _asTrimmedString(item['verificationPrompt']).isEmpty
                       ? null
                       : _asTrimmedString(item['verificationPrompt']),
+                progressionDescriptors:
+                  _stringListFromDynamic(item['progressionDescriptors']),
+                checkpointMappings:
+                  _checkpointMappingsFromDynamic(item['checkpointMappings']),
               proofOfLearningStatus:
                   _asTrimmedString(item['proofOfLearningStatus']).isEmpty
                       ? null
@@ -958,6 +988,10 @@ class ParentService extends ChangeNotifier {
               missionAttemptIds: List<String>.from(
                 item['missionAttemptIds'] as List? ?? const <String>[],
               ),
+                progressionDescriptors:
+                  _stringListFromDynamic(item['progressionDescriptors']),
+                checkpointMappings:
+                  _checkpointMappingsFromDynamic(item['checkpointMappings']),
               proofOfLearningStatus:
                   _asTrimmedString(item['proofOfLearningStatus']).isEmpty
                       ? null
@@ -1465,6 +1499,20 @@ class ParentService extends ChangeNotifier {
                       : matchingMissionAttempt != null
                           ? 'no-learner-ai-signal'
                           : 'not-available';
+              final List<String> progressionDescriptors =
+                _stringListFromDynamic(row['progressionDescriptors']).isNotEmpty
+                  ? _stringListFromDynamic(row['progressionDescriptors'])
+                  : latestGrowth == null
+                    ? const <String>[]
+                    : _stringListFromDynamic(latestGrowth['progressionDescriptors']);
+              final List<VerificationCheckpointMapping> checkpointMappings =
+                _checkpointMappingsFromDynamic(row['checkpointMappings']).isNotEmpty
+                  ? _checkpointMappingsFromDynamic(row['checkpointMappings'])
+                  : latestGrowth == null
+                    ? const <VerificationCheckpointMapping>[]
+                    : _checkpointMappingsFromDynamic(
+                      latestGrowth['checkpointMappings'],
+                    );
       return PortfolioPreviewItem(
         id: _asTrimmedString(row['id']),
         title: _asTrimmedString(row['title']).isEmpty
@@ -1498,6 +1546,8 @@ class ParentService extends ChangeNotifier {
         verificationPrompt: _asTrimmedString(row['verificationPrompt']).isEmpty
             ? null
             : _asTrimmedString(row['verificationPrompt']),
+        progressionDescriptors: progressionDescriptors,
+        checkpointMappings: checkpointMappings,
         proofOfLearningStatus: proofOfLearningStatus,
         aiDisclosureStatus: aiDisclosureStatus,
         proofHasExplainItBack: hasExplainItBack,
@@ -1867,6 +1917,21 @@ class ParentService extends ChangeNotifier {
             latestMissionAttempt?['aiAssistanceDetails'] ??
             proofBundle?['aiAssistanceDetails'],
       );
+      final List<String> progressionDescriptors = _stringListFromDynamic(
+        latestPortfolio?['progressionDescriptors'],
+      ).isNotEmpty
+          ? _stringListFromDynamic(latestPortfolio?['progressionDescriptors'])
+          : _stringListFromDynamic(latestGrowth?['progressionDescriptors']);
+      final List<VerificationCheckpointMapping> checkpointMappings =
+          _checkpointMappingsFromDynamic(
+        latestPortfolio?['checkpointMappings'],
+      ).isNotEmpty
+              ? _checkpointMappingsFromDynamic(
+                  latestPortfolio?['checkpointMappings'],
+                )
+              : _checkpointMappingsFromDynamic(
+                  latestGrowth?['checkpointMappings'],
+                );
       claims.add(
         PassportClaim(
           capabilityId: capabilityId,
@@ -1886,6 +1951,8 @@ class ParentService extends ChangeNotifier {
               .where((String value) => value.isNotEmpty)
               .toList(growable: false),
           missionAttemptIds: missionAttemptIds.toList(growable: false),
+            progressionDescriptors: progressionDescriptors,
+            checkpointMappings: checkpointMappings,
           proofOfLearningStatus: proofOfLearningStatus,
           aiDisclosureStatus: aiDisclosureStatus,
           latestEvidenceAt: evidenceDates.isEmpty ? null : evidenceDates.first,

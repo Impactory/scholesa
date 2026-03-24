@@ -749,6 +749,28 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
               Text(item.verificationPrompt!,
                   style: const TextStyle(fontSize: 14)),
             ],
+            if (_buildVerificationCriteriaDetail(item).isNotEmpty) ...<Widget>[
+              const SizedBox(height: 16),
+              Text(
+                _t('Verification Criteria'),
+                style:
+                    const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 8),
+              Text(_buildVerificationCriteriaDetail(item),
+                  style: const TextStyle(fontSize: 14)),
+            ],
+            if (_buildProgressionDescriptorsDetail(item).isNotEmpty) ...<Widget>[
+              const SizedBox(height: 16),
+              Text(
+                _t('Progression Descriptors'),
+                style:
+                    const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 8),
+              Text(_buildProgressionDescriptorsDetail(item),
+                  style: const TextStyle(fontSize: 14)),
+            ],
             if (_buildProofDetail(item).isNotEmpty) ...<Widget>[
               const SizedBox(height: 16),
               Text(
@@ -1022,6 +1044,10 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
         '${_t('Capability Evidence')}: ${item.capabilityTitles.join(', ')}',
       if (item.verificationPrompt?.trim().isNotEmpty == true)
         '${_t('Verification Prompt')}: ${item.verificationPrompt}',
+      if (_buildVerificationCriteriaDetail(item).isNotEmpty)
+        '${_t('Verification Criteria')}: ${_buildVerificationCriteriaDetail(item)}',
+      if (_buildProgressionDescriptorsDetail(item).isNotEmpty)
+        '${_t('Progression Descriptors')}: ${_buildProgressionDescriptorsDetail(item)}',
       if (item.evidenceRecordIds.isNotEmpty)
         '${_t('Evidence Record IDs')}: ${item.evidenceRecordIds.join(', ')}',
       if (item.missionAttemptId?.trim().isNotEmpty == true)
@@ -1053,6 +1079,8 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
             evidenceRecordIds: item.evidenceRecordIds,
             missionAttemptId: item.missionAttemptId,
             verificationPrompt: item.verificationPrompt,
+            progressionDescriptors: item.progressionDescriptors,
+            checkpointMappings: item.checkpointMappings,
             proofOfLearningStatus: item.proofOfLearningStatus,
             aiDisclosureStatus: item.aiDisclosureStatus,
             proofHasExplainItBack: item.proofHasExplainItBack,
@@ -1169,6 +1197,32 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
         '${_t('Mini-rebuild note')}: ${item.proofMiniRebuildExcerpt}',
       ...item.proofCheckpoints.map(_formatCheckpointLine),
     ].join(' • ');
+  }
+
+  String _buildVerificationCriteriaDetail(_PortfolioItem item) {
+    if (item.checkpointMappings.isEmpty) {
+      return '';
+    }
+    return item.checkpointMappings
+        .map((VerificationCheckpointMapping mapping) {
+          final String phase = _titleCase(mapping.phase);
+          if (phase.isEmpty) {
+            return mapping.guidance;
+          }
+          if (mapping.guidance.trim().isEmpty) {
+            return phase;
+          }
+          return '$phase: ${mapping.guidance}';
+        })
+        .where((String value) => value.trim().isNotEmpty)
+        .join(' • ');
+  }
+
+  String _buildProgressionDescriptorsDetail(_PortfolioItem item) {
+    if (item.progressionDescriptors.isEmpty) {
+      return '';
+    }
+    return item.progressionDescriptors.join(' • ');
   }
 
   String _formatCheckpointLine(ProofCheckpointPreview checkpoint) {
@@ -1388,6 +1442,8 @@ class _PortfolioItem {
     this.evidenceRecordIds = const <String>[],
     this.missionAttemptId,
     this.verificationPrompt,
+    this.progressionDescriptors = const <String>[],
+    this.checkpointMappings = const <VerificationCheckpointMapping>[],
     this.proofOfLearningStatus,
     this.aiDisclosureStatus,
     this.proofHasExplainItBack = false,
@@ -1426,6 +1482,8 @@ class _PortfolioItem {
   final List<String> evidenceRecordIds;
   final String? missionAttemptId;
   final String? verificationPrompt;
+  final List<String> progressionDescriptors;
+  final List<VerificationCheckpointMapping> checkpointMappings;
   final String? proofOfLearningStatus;
   final String? aiDisclosureStatus;
   final bool proofHasExplainItBack;
