@@ -685,12 +685,6 @@ void main() {
       ),
       findsOneWidget,
     );
-    expect(
-      find.text(
-        'Reflection: Great iteration. Tighten the evidence trail and explain the tradeoffs in your next revision.',
-      ),
-      findsOneWidget,
-    );
     expect(find.text('Artifacts linked: 1 artifact'), findsOneWidget);
     expect(
       find.text('AI disclosure: Learner said no AI support was used'),
@@ -725,6 +719,9 @@ void main() {
         'pillarCodes': const <String>['future_skills'],
         'evidenceRecordIds': const <String>['evidence-1'],
         'capabilityTitles': const <String>['Prototype evidence'],
+        'checkpointSummary':
+            'Checkpoint summary carried into the reviewed portfolio item.',
+        'reflectionNote': 'Reviewed reflection captured by educator.',
         'verificationStatus': 'reviewed',
         'createdAt': Timestamp.fromDate(DateTime(2026, 3, 18, 10)),
         'updatedAt': Timestamp.fromDate(DateTime(2026, 3, 18, 11)),
@@ -762,6 +759,16 @@ void main() {
 
     expect(find.text('Reviewed robot prototype'), findsOneWidget);
     expect(find.text('Evidence linked • Reviewed'), findsOneWidget);
+    expect(
+      find.text(
+        'Checkpoint summary: Checkpoint summary carried into the reviewed portfolio item.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Reflection: Reviewed reflection captured by educator.'),
+      findsOneWidget,
+    );
     expect(find.text('Draft field notes'), findsOneWidget);
     expect(find.text('Awaiting educator review'), findsWidgets);
     expect(
