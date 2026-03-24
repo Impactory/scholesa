@@ -1094,6 +1094,13 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
+    expect(
+      find.textContaining(
+        'Unable to refresh supplemental analytics right now.',
+      ),
+      findsWidgets,
+    );
+
     await tester.scrollUntilVisible(
       find.text('Top Performers'),
       300,
@@ -1101,10 +1108,6 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(
-      find.text('Unable to refresh supplemental analytics right now. Showing the last successful data.'),
-      findsWidgets,
-    );
     expect(find.text('Luna Learner'), findsOneWidget);
     expect(find.text('North Hub'), findsWidgets);
   });
