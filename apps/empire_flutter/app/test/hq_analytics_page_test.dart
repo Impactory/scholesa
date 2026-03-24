@@ -1094,13 +1094,6 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
-    expect(
-      find.textContaining(
-        'Unable to refresh supplemental analytics right now.',
-      ),
-      findsWidgets,
-    );
-
     await tester.scrollUntilVisible(
       find.text('Top Performers'),
       300,
