@@ -1116,7 +1116,16 @@ class PortfolioItemModel {
     this.missionAttemptId,
     this.rubricApplicationId,
     this.proofBundleId,
+    this.proofCheckpointCount = 0,
     this.proofOfLearningStatus,
+    this.checkpointSummary,
+    this.reflectionNote,
+    this.proofHasExplainItBack = false,
+    this.proofHasOralCheck = false,
+    this.proofHasMiniRebuild = false,
+    this.proofExplainItBackExcerpt,
+    this.proofOralCheckExcerpt,
+    this.proofMiniRebuildExcerpt,
     this.aiAssistanceUsed,
     this.aiAssistanceDetails,
     this.aiDisclosureStatus,
@@ -1143,7 +1152,16 @@ class PortfolioItemModel {
   final String? missionAttemptId;
   final String? rubricApplicationId;
   final String? proofBundleId;
+  final int proofCheckpointCount;
   final String? proofOfLearningStatus;
+  final String? checkpointSummary;
+  final String? reflectionNote;
+  final bool proofHasExplainItBack;
+  final bool proofHasOralCheck;
+  final bool proofHasMiniRebuild;
+  final String? proofExplainItBackExcerpt;
+  final String? proofOralCheckExcerpt;
+  final String? proofMiniRebuildExcerpt;
   final bool? aiAssistanceUsed;
   final String? aiAssistanceDetails;
   final String? aiDisclosureStatus;
@@ -1182,10 +1200,19 @@ class PortfolioItemModel {
       missionAttemptId: data['missionAttemptId'] as String?,
       rubricApplicationId: data['rubricApplicationId'] as String?,
       proofBundleId: data['proofBundleId'] as String?,
-        proofOfLearningStatus: data['proofOfLearningStatus'] as String?,
-        aiAssistanceUsed: data['aiAssistanceUsed'] as bool?,
-        aiAssistanceDetails: data['aiAssistanceDetails'] as String?,
-        aiDisclosureStatus: data['aiDisclosureStatus'] as String?,
+      proofCheckpointCount: (data['proofCheckpointCount'] as num?)?.toInt() ?? 0,
+      proofOfLearningStatus: data['proofOfLearningStatus'] as String?,
+      checkpointSummary: data['checkpointSummary'] as String?,
+      reflectionNote: data['reflectionNote'] as String?,
+      proofHasExplainItBack: data['proofHasExplainItBack'] == true,
+      proofHasOralCheck: data['proofHasOralCheck'] == true,
+      proofHasMiniRebuild: data['proofHasMiniRebuild'] == true,
+      proofExplainItBackExcerpt: data['proofExplainItBackExcerpt'] as String?,
+      proofOralCheckExcerpt: data['proofOralCheckExcerpt'] as String?,
+      proofMiniRebuildExcerpt: data['proofMiniRebuildExcerpt'] as String?,
+      aiAssistanceUsed: data['aiAssistanceUsed'] as bool?,
+      aiAssistanceDetails: data['aiAssistanceDetails'] as String?,
+      aiDisclosureStatus: data['aiDisclosureStatus'] as String?,
       educatorId: data['educatorId'] as String?,
       verificationPrompt: data['verificationPrompt'] as String?,
       verificationStatus: data['verificationStatus'] as String?,
@@ -1210,7 +1237,16 @@ class PortfolioItemModel {
         'missionAttemptId': missionAttemptId,
         'rubricApplicationId': rubricApplicationId,
         'proofBundleId': proofBundleId,
+        'proofCheckpointCount': proofCheckpointCount,
         'proofOfLearningStatus': proofOfLearningStatus,
+        'checkpointSummary': checkpointSummary,
+        'reflectionNote': reflectionNote,
+        'proofHasExplainItBack': proofHasExplainItBack,
+        'proofHasOralCheck': proofHasOralCheck,
+        'proofHasMiniRebuild': proofHasMiniRebuild,
+        'proofExplainItBackExcerpt': proofExplainItBackExcerpt,
+        'proofOralCheckExcerpt': proofOralCheckExcerpt,
+        'proofMiniRebuildExcerpt': proofMiniRebuildExcerpt,
         'aiAssistanceUsed': aiAssistanceUsed,
         'aiAssistanceDetails': aiAssistanceDetails,
         'aiDisclosureStatus': aiDisclosureStatus,
@@ -1221,6 +1257,85 @@ class PortfolioItemModel {
         'createdAt': createdAt ?? Timestamp.now(),
         'updatedAt': updatedAt ?? Timestamp.now(),
       };
+
+  PortfolioItemModel copyWith({
+    String? id,
+    String? siteId,
+    String? learnerId,
+    String? title,
+    String? description,
+    List<String>? artifactUrls,
+    List<String>? pillarCodes,
+    List<String>? skillIds,
+    List<String>? evidenceRecordIds,
+    List<String>? capabilityIds,
+    List<String>? capabilityTitles,
+    List<String>? growthEventIds,
+    String? missionAttemptId,
+    String? rubricApplicationId,
+    String? proofBundleId,
+    int? proofCheckpointCount,
+    String? proofOfLearningStatus,
+    String? checkpointSummary,
+    String? reflectionNote,
+    bool? proofHasExplainItBack,
+    bool? proofHasOralCheck,
+    bool? proofHasMiniRebuild,
+    String? proofExplainItBackExcerpt,
+    String? proofOralCheckExcerpt,
+    String? proofMiniRebuildExcerpt,
+    bool? aiAssistanceUsed,
+    String? aiAssistanceDetails,
+    String? aiDisclosureStatus,
+    String? educatorId,
+    String? verificationPrompt,
+    String? verificationStatus,
+    String? source,
+    Timestamp? createdAt,
+    Timestamp? updatedAt,
+  }) {
+    return PortfolioItemModel(
+      id: id ?? this.id,
+      siteId: siteId ?? this.siteId,
+      learnerId: learnerId ?? this.learnerId,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      artifactUrls: artifactUrls ?? this.artifactUrls,
+      pillarCodes: pillarCodes ?? this.pillarCodes,
+      skillIds: skillIds ?? this.skillIds,
+      evidenceRecordIds: evidenceRecordIds ?? this.evidenceRecordIds,
+      capabilityIds: capabilityIds ?? this.capabilityIds,
+      capabilityTitles: capabilityTitles ?? this.capabilityTitles,
+      growthEventIds: growthEventIds ?? this.growthEventIds,
+      missionAttemptId: missionAttemptId ?? this.missionAttemptId,
+      rubricApplicationId: rubricApplicationId ?? this.rubricApplicationId,
+      proofBundleId: proofBundleId ?? this.proofBundleId,
+      proofCheckpointCount: proofCheckpointCount ?? this.proofCheckpointCount,
+      proofOfLearningStatus:
+          proofOfLearningStatus ?? this.proofOfLearningStatus,
+      checkpointSummary: checkpointSummary ?? this.checkpointSummary,
+      reflectionNote: reflectionNote ?? this.reflectionNote,
+      proofHasExplainItBack:
+          proofHasExplainItBack ?? this.proofHasExplainItBack,
+      proofHasOralCheck: proofHasOralCheck ?? this.proofHasOralCheck,
+      proofHasMiniRebuild: proofHasMiniRebuild ?? this.proofHasMiniRebuild,
+      proofExplainItBackExcerpt:
+          proofExplainItBackExcerpt ?? this.proofExplainItBackExcerpt,
+      proofOralCheckExcerpt:
+          proofOralCheckExcerpt ?? this.proofOralCheckExcerpt,
+      proofMiniRebuildExcerpt:
+          proofMiniRebuildExcerpt ?? this.proofMiniRebuildExcerpt,
+      aiAssistanceUsed: aiAssistanceUsed ?? this.aiAssistanceUsed,
+      aiAssistanceDetails: aiAssistanceDetails ?? this.aiAssistanceDetails,
+      aiDisclosureStatus: aiDisclosureStatus ?? this.aiDisclosureStatus,
+      educatorId: educatorId ?? this.educatorId,
+      verificationPrompt: verificationPrompt ?? this.verificationPrompt,
+      verificationStatus: verificationStatus ?? this.verificationStatus,
+      source: source ?? this.source,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
 }
 
 @immutable

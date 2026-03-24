@@ -329,12 +329,132 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
       ),
     ]);
 
+    final List<PortfolioItemModel> items =
+        (results[1] as List<PortfolioItemModel>).toList(growable: false);
+    final List<PortfolioItemModel> enrichedItems =
+        await _enrichPortfolioItemsWithProofBundles(
+      firestore: firestore,
+      siteId: siteId,
+      items: items,
+    );
+
     return LearnerPortfolioSnapshot(
       profile: results.first as LearnerProfileModel?,
-      items: (results[1] as List<PortfolioItemModel>).toList(growable: false),
+      items: enrichedItems,
       credentials:
           (results.last as List<CredentialModel>).toList(growable: false),
     );
+  }
+
+  Future<List<PortfolioItemModel>> _enrichPortfolioItemsWithProofBundles({
+    required FirebaseFirestore firestore,
+    required String siteId,
+    required List<PortfolioItemModel> items,
+  }) async {
+    final Set<String> proofBundleIds = items
+        .where((PortfolioItemModel item) => item.siteId.trim() == siteId)
+        .map((PortfolioItemModel item) => (item.proofBundleId ?? '').trim())
+        .where((String proofBundleId) => proofBundleId.isNotEmpty)
+        .toSet();
+
+    if (proofBundleIds.isEmpty) {
+      return items;
+    }
+
+    final Map<String, Map<String, dynamic>> proofBundles =
+        <String, Map<String, dynamic>>{};
+    await Future.wait<void>(
+      proofBundleIds.map((String proofBundleId) async {
+        try {
+          final DocumentSnapshot<Map<String, dynamic>> proofBundleDoc =
+              await firestore
+                  .collection('proofOfLearningBundles')
+                  .doc(proofBundleId)
+                  .get();
+          if (proofBundleDoc.exists && proofBundleDoc.data() != null) {
+            proofBundles[proofBundleId] = proofBundleDoc.data()!;
+          }
+        } catch (_) {
+          // Omit missing proof detail instead of synthesizing it.
+        }
+      }),
+    );
+
+    return items.map((PortfolioItemModel item) {
+      final String proofBundleId = (item.proofBundleId ?? '').trim();
+      final Map<String, dynamic>? proofBundle = proofBundleId.isEmpty
+          ? null
+          : proofBundles[proofBundleId];
+      if (proofBundle == null) {
+        return item;
+      }
+
+      final List<Map<String, dynamic>> checkpoints =
+          _proofBundleCheckpoints(proofBundle);
+      return item.copyWith(
+        artifactUrls: item.artifactUrls.isNotEmpty
+            ? item.artifactUrls
+            : _proofBundleArtifactUrls(proofBundle),
+        proofCheckpointCount: item.proofCheckpointCount > 0
+            ? item.proofCheckpointCount
+            : checkpoints.length,
+        proofHasExplainItBack:
+            item.proofHasExplainItBack || _nonEmpty(proofBundle['explainItBack']),
+        proofHasOralCheck:
+            item.proofHasOralCheck || _nonEmpty(proofBundle['oralCheckResponse']),
+        proofHasMiniRebuild:
+            item.proofHasMiniRebuild || _nonEmpty(proofBundle['miniRebuildPlan']),
+        proofExplainItBackExcerpt: item.proofExplainItBackExcerpt ??
+            _trimmedString(proofBundle['explainItBack']),
+        proofOralCheckExcerpt: item.proofOralCheckExcerpt ??
+            _trimmedString(proofBundle['oralCheckResponse']),
+        proofMiniRebuildExcerpt: item.proofMiniRebuildExcerpt ??
+            _trimmedString(proofBundle['miniRebuildPlan']),
+        checkpointSummary:
+            item.checkpointSummary ?? _latestCheckpointSummary(checkpoints),
+        aiAssistanceUsed:
+            item.aiAssistanceUsed ?? (proofBundle['aiAssistanceUsed'] == true),
+        aiAssistanceDetails: item.aiAssistanceDetails ??
+            _trimmedString(proofBundle['aiAssistanceDetails']),
+      );
+    }).toList(growable: false);
+  }
+
+  List<Map<String, dynamic>> _proofBundleCheckpoints(
+      Map<String, dynamic> proofBundle) {
+    final List<dynamic> rawHistory =
+        proofBundle['versionHistory'] as List<dynamic>? ?? <dynamic>[];
+    return rawHistory
+        .whereType<Map<dynamic, dynamic>>()
+        .map((Map<dynamic, dynamic> entry) =>
+            Map<String, dynamic>.from(entry))
+        .toList(growable: false);
+  }
+
+  List<String> _proofBundleArtifactUrls(Map<String, dynamic> proofBundle) {
+    return List<String>.from(
+      proofBundle['artifactUrls'] as List<dynamic>? ?? <dynamic>[],
+    );
+  }
+
+  String? _latestCheckpointSummary(List<Map<String, dynamic>> checkpoints) {
+    for (final Map<String, dynamic> checkpoint in checkpoints.reversed) {
+      final String? summary = _trimmedString(checkpoint['summary']);
+      if (summary != null) {
+        return summary;
+      }
+    }
+    return null;
+  }
+
+  bool _nonEmpty(dynamic value) => _trimmedString(value) != null;
+
+  String? _trimmedString(dynamic value) {
+    final String trimmed = (value as String? ?? '').trim();
+    if (trimmed.isEmpty) {
+      return null;
+    }
+    return trimmed;
   }
 
   bool get _hasVisiblePortfolioData =>
@@ -1359,6 +1479,12 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
     required String statusLabel,
     String? fallbackDescription,
   }) {
+    final List<String> detailLines = <String>[
+      ..._proofDetailLines(item),
+      ..._reflectionDetailLines(item),
+      ..._artifactDetailLines(item),
+      ..._aiDetailLines(item),
+    ];
     return <String, dynamic>{
       'title': item.title.trim(),
       'description': (item.description?.trim().isNotEmpty ?? false)
@@ -1369,9 +1495,130 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
       'capabilityTitles': item.capabilityTitles,
       'evidenceLinked': item.evidenceRecordIds.isNotEmpty,
       'statusLabel': statusLabel,
+      'detailLines': detailLines,
       'image': null,
       'color': _projectColor(item),
     };
+  }
+
+  List<String> _proofDetailLines(PortfolioItemModel item) {
+    final List<String> lines = <String>[];
+    final String? proofStatus = _proofOfLearningLabel(item.proofOfLearningStatus);
+    if (proofStatus != null) {
+      lines.add('${_t('Proof of learning')}: $proofStatus');
+    }
+
+    final List<String> proofChecks = <String>[];
+    if (item.proofHasExplainItBack) {
+      proofChecks.add(_t('Explain-it-back'));
+    }
+    if (item.proofHasOralCheck) {
+      proofChecks.add(_t('Oral check'));
+    }
+    if (item.proofHasMiniRebuild) {
+      proofChecks.add(_t('Mini-rebuild'));
+    }
+    if (item.proofCheckpointCount > 0) {
+      proofChecks.add(
+        item.proofCheckpointCount == 1
+            ? _t('1 checkpoint')
+            : '${item.proofCheckpointCount} ${_t('checkpoints')}',
+      );
+    }
+    if (proofChecks.isNotEmpty) {
+      lines.add('${_t('Proof checks')}: ${proofChecks.join(', ')}');
+    }
+    if ((item.proofExplainItBackExcerpt?.trim().isNotEmpty ?? false)) {
+      lines.add(
+        '${_t('Explain-it-back note')}: ${item.proofExplainItBackExcerpt!.trim()}',
+      );
+    }
+    if ((item.proofOralCheckExcerpt?.trim().isNotEmpty ?? false)) {
+      lines.add(
+        '${_t('Oral check note')}: ${item.proofOralCheckExcerpt!.trim()}',
+      );
+    }
+    if ((item.proofMiniRebuildExcerpt?.trim().isNotEmpty ?? false)) {
+      lines.add(
+        '${_t('Mini-rebuild note')}: ${item.proofMiniRebuildExcerpt!.trim()}',
+      );
+    }
+    return lines;
+  }
+
+  List<String> _reflectionDetailLines(PortfolioItemModel item) {
+    final List<String> lines = <String>[];
+    if ((item.checkpointSummary?.trim().isNotEmpty ?? false)) {
+      lines.add('${_t('Checkpoint summary')}: ${item.checkpointSummary!.trim()}');
+    }
+    if ((item.reflectionNote?.trim().isNotEmpty ?? false)) {
+      lines.add('${_t('Reflection')}: ${item.reflectionNote!.trim()}');
+    }
+    return lines;
+  }
+
+  List<String> _artifactDetailLines(PortfolioItemModel item) {
+    if (item.artifactUrls.isEmpty) {
+      return const <String>[];
+    }
+    final String countLabel = item.artifactUrls.length == 1
+        ? _t('1 artifact')
+        : '${item.artifactUrls.length} ${_t('artifacts')}';
+    return <String>['${_t('Artifacts linked')}: $countLabel'];
+  }
+
+  List<String> _aiDetailLines(PortfolioItemModel item) {
+    final List<String> lines = <String>[];
+    final String? disclosureLabel = _aiDisclosureLabel(item);
+    if (disclosureLabel != null) {
+      lines.add('${_t('AI disclosure')}: $disclosureLabel');
+    }
+    if ((item.aiAssistanceDetails?.trim().isNotEmpty ?? false)) {
+      lines.add('${_t('AI details')}: ${item.aiAssistanceDetails!.trim()}');
+    }
+    return lines;
+  }
+
+  String? _proofOfLearningLabel(String? status) {
+    switch ((status ?? '').trim()) {
+      case 'verified':
+        return _t('Verified');
+      case 'partial':
+        return _t('Partial');
+      case 'missing':
+        return _t('Missing');
+      case 'not-available':
+        return _t('Not available');
+      default:
+        return null;
+    }
+  }
+
+  String? _aiDisclosureLabel(PortfolioItemModel item) {
+    switch ((item.aiDisclosureStatus ?? '').trim()) {
+      case 'learner-ai-verified':
+        return _t('Learner disclosed AI use and explained it');
+      case 'learner-ai-verification-gap':
+        return _t('Learner disclosed AI use; proof still needs verification');
+      case 'learner-ai-not-used':
+        return _t('Learner said no AI support was used');
+      case 'educator-observed-ai-use':
+        return _t('Educator observed AI use during review');
+      case 'educator-observed-no-ai-use':
+        return _t('Educator confirmed no AI use during review');
+      case 'educator-feedback-ai':
+        return _t('AI-assisted educator feedback is attached');
+      case 'no-learner-ai-signal':
+        return _t('No learner AI disclosure was recorded');
+      default:
+        if (item.aiAssistanceUsed == true) {
+          return _t('AI support was used');
+        }
+        if ((item.aiAssistanceDetails?.trim().isNotEmpty ?? false)) {
+          return _t('AI support details recorded');
+        }
+        return null;
+    }
   }
 
   void _editProfile() {
@@ -1840,6 +2087,10 @@ class _ProjectCard extends StatelessWidget {
                 const <String>[])
             .where((String value) => value.trim().isNotEmpty)
             .toList(growable: false);
+    final List<String> detailLines =
+      ((project['detailLines'] as List?)?.cast<String>() ?? const <String>[])
+        .where((String value) => value.trim().isNotEmpty)
+        .toList(growable: false);
     final String statusLabel = (project['statusLabel'] as String? ?? '').trim();
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -1940,6 +2191,22 @@ class _ProjectCard extends StatelessWidget {
                       ],
                     ),
                   ],
+                      if (detailLines.isNotEmpty) ...<Widget>[
+                        const SizedBox(height: 12),
+                        ...detailLines.map(
+                          (String line) => Padding(
+                            padding: const EdgeInsets.only(bottom: 6),
+                            child: Text(
+                              line,
+                              style: TextStyle(
+                                color: context.schTextSecondary,
+                                fontSize: 13,
+                                height: 1.35,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                 ],
               ),
             ),
