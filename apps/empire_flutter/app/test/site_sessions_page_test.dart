@@ -643,6 +643,8 @@ void main() {
             Timestamp.fromDate(today.subtract(const Duration(days: 1))),
         'resolvedAt': Timestamp.fromDate(today),
         'updatedAt': Timestamp.fromDate(today),
+        'resolutionOperatorNote':
+            'Mapped Future Skills coverage to the studio mission and refreshed readiness.',
         'resolutionSupportingCapabilityCount': 1,
         'resolutionSupportingCapabilityTitles': <String>['Systems thinking'],
         'resolutionSupportingCurriculumTitles': <String>[
@@ -679,6 +681,12 @@ void main() {
     );
     expect(
       find.text('Mapped curriculum records: Future Skills Mission'),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'HQ resolution note: Mapped Future Skills coverage to the studio mission and refreshed readiness.',
+      ),
       findsOneWidget,
     );
     expect(find.widgetWithText(OutlinedButton, 'Request HQ mapping'),

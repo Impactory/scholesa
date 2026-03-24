@@ -21,7 +21,7 @@ class SharedRoleSurfaceI18n {
         '请稍后重试，或在网络稳定后刷新。',
     'Refresh': '刷新',
     'Unable to refresh messages right now. Showing the last successful data. ':
-      '目前无法刷新消息。正在显示最近一次成功加载的数据。',
+        '目前无法刷新消息。正在显示最近一次成功加载的数据。',
     'Unknown': '未知',
     'Conversation participant unavailable': '对话参与者信息不可用',
     'Sender unavailable': '发送者信息不可用',
@@ -76,45 +76,45 @@ class SharedRoleSurfaceI18n {
     'This Quarter': '本季度',
     'This Year': '今年',
     'Unable to load telemetry metrics:': '无法加载遥测指标：',
-      'Retry': '重试',
+    'Retry': '重试',
     'Telemetry KPIs': '遥测 KPI',
-      'Telemetry metrics are temporarily unavailable': '遥测指标暂时不可用',
-      'We could not load telemetry metrics right now. Retry to check the current state.':
+    'Telemetry metrics are temporarily unavailable': '遥测指标暂时不可用',
+    'We could not load telemetry metrics right now. Retry to check the current state.':
         '我们暂时无法加载遥测指标。请重试以检查当前状态。',
-      'Unable to refresh telemetry metrics right now. Showing the last successful data.':
+    'Unable to refresh telemetry metrics right now. Showing the last successful data.':
         '目前无法刷新遥测指标。正在显示最近一次成功加载的数据。',
     'Telemetry feed pending': '遥测流待接入',
     'Waiting for first app telemetry sync.': '正在等待应用遥测的首次数据同步。',
     '7-day': '7 天',
-      'Showing last successful attendance trend': '正在显示最近一次成功加载的出勤趋势',
+    'Showing last successful attendance trend': '正在显示最近一次成功加载的出勤趋势',
     'Weekly Accountability': '每周问责',
     'Review SLA': '审核 SLA',
-      'Supplemental analytics are temporarily unavailable': '补充分析暂时不可用',
-      'We could not load supplemental analytics right now. Retry to check the current state.':
+    'Supplemental analytics are temporarily unavailable': '补充分析暂时不可用',
+    'We could not load supplemental analytics right now. Retry to check the current state.':
         '我们暂时无法加载补充分析。请重试以检查当前状态。',
-      'Unable to refresh supplemental analytics right now. Showing the last successful data.':
+    'Unable to refresh supplemental analytics right now. Showing the last successful data.':
         '目前无法刷新补充分析。正在显示最近一次成功加载的数据。',
     'within SLA': '在 SLA 内',
-      'Site comparison is temporarily unavailable': '站点对比暂时不可用',
+    'Site comparison is temporarily unavailable': '站点对比暂时不可用',
     'Avg Review Turnaround': '平均审核时长',
-      'Top performers are temporarily unavailable': '最佳表现者暂时不可用',
+    'Top performers are temporarily unavailable': '最佳表现者暂时不可用',
     'hours': '小时',
     'Interventions Helped': '干预成效',
     'outcomes': '结果',
-      'KPI packs are temporarily unavailable': 'KPI 包暂时不可用',
-      'We could not load KPI packs right now. Retry to check the current state.':
+    'KPI packs are temporarily unavailable': 'KPI 包暂时不可用',
+    'We could not load KPI packs right now. Retry to check the current state.':
         '我们暂时无法加载 KPI 包。请重试以检查当前状态。',
-      'Unable to refresh KPI packs right now. Showing the last successful data.':
+    'Unable to refresh KPI packs right now. Showing the last successful data.':
         '目前无法刷新 KPI 包。正在显示最近一次成功加载的数据。',
     'Attendance Trend': '出勤趋势',
     'Attendance data unavailable': '出勤数据不可用',
-      'HQ AI help feedback is temporarily unavailable': 'HQ AI 帮助反馈暂时不可用',
+    'HQ AI help feedback is temporarily unavailable': 'HQ AI 帮助反馈暂时不可用',
     'Attendance rate unavailable for this period': '此期间的出勤率不可用',
     'No attendance telemetry for this period': '此期间没有出勤遥测数据',
-      'Synthetic import metadata is temporarily unavailable': '合成导入元数据暂时不可用',
-      'We could not load synthetic import metadata right now. Retry to check the current state.':
+    'Synthetic import metadata is temporarily unavailable': '合成导入元数据暂时不可用',
+    'We could not load synthetic import metadata right now. Retry to check the current state.':
         '我们暂时无法加载合成导入元数据。请重试以检查当前状态。',
-      'Unable to refresh synthetic import metadata right now. Showing the last successful data.':
+    'Unable to refresh synthetic import metadata right now. Showing the last successful data.':
         '目前无法刷新合成导入元数据。正在显示最近一次成功加载的数据。',
     'Latest attendance:': '最新出勤：',
     'Capture attendance records to render this trend.': '记录出勤后即可显示此趋势。',
@@ -130,7 +130,7 @@ class SharedRoleSurfaceI18n {
     'Generate and export the current HQ analytics summary for cross-site review.':
         '生成并导出当前 HQ 分析摘要供跨站点审核。',
     'HQ analytics exports are not available in the app yet.':
-      '当有可导出的 HQ 分析数据时，导出会直接下载到此设备。',
+        '当有可导出的 HQ 分析数据时，导出会直接下载到此设备。',
     'No HQ analytics data to export yet.': '暂时没有可导出的 HQ 分析数据。',
     'HQ analytics export copied to clipboard.': 'HQ 分析导出内容已复制到剪贴板。',
     'HQ analytics export downloaded.': 'HQ 分析导出文件已下载。',
@@ -190,9 +190,9 @@ class SharedRoleSurfaceI18n {
     'Curriculum Manager': '课程管理',
     'Curricula are temporarily unavailable': '课程暂时不可用',
     'We could not load curricula right now. Retry to check the current state.':
-      '我们暂时无法加载课程。请重试以检查当前状态。',
+        '我们暂时无法加载课程。请重试以检查当前状态。',
     'Unable to refresh curricula right now. Showing the last successful data.':
-      '目前无法刷新课程。正在显示最近一次成功加载的数据。',
+        '目前无法刷新课程。正在显示最近一次成功加载的数据。',
     'Published': '已发布',
     'In Review': '审核中',
     'Drafts': '草稿',
@@ -230,19 +230,22 @@ class SharedRoleSurfaceI18n {
     'Loading HQ mapping requests...': '正在加载 HQ 映射请求...',
     'HQ mapping request queue is temporarily unavailable': 'HQ 映射请求队列暂时不可用',
     'We could not load HQ mapping requests right now. Retry to check the current state.':
-      '我们暂时无法加载 HQ 映射请求。请重试以检查当前状态。',
+        '我们暂时无法加载 HQ 映射请求。请重试以检查当前状态。',
     'HQ mapping requests': 'HQ 映射请求',
     'open school escalations are waiting for curriculum mapping follow-through.':
-      '个学校端升级请求正在等待课程映射跟进。',
+        '个学校端升级请求正在等待课程映射跟进。',
     'Unable to refresh HQ mapping requests right now. Showing the last successful data.':
-      '当前无法刷新 HQ 映射请求。正在显示最近一次成功加载的数据。',
+        '当前无法刷新 HQ 映射请求。正在显示最近一次成功加载的数据。',
     'Needs manual review': '需要人工复核',
     'Awaiting mapping': '等待映射',
     'Ready to resolve': '可立即解决',
     'Requested by': '请求人',
     'Resolve request': '解决请求',
+    'Resolution note (optional)': '解决备注（可选）',
+    'Explain what changed so school teams can verify the unblock.':
+        '说明发生了什么变化，方便学校团队核实解除阻塞。',
     'This request cannot be resolved until mapped capability coverage is available for the session pillar.':
-      '在该课程支柱具备映射能力覆盖之前，此请求无法解决。',
+        '在该课程支柱具备映射能力覆盖之前，此请求无法解决。',
     'Mapping request resolved': '映射请求已解决',
     'Unable to resolve mapping request right now.': '目前无法解决映射请求。',
     'Snapshot created': '快照已创建',
@@ -279,9 +282,9 @@ class SharedRoleSurfaceI18n {
     'No training cycles yet': '暂无培训周期',
     'Training cycles are temporarily unavailable': '培训周期暂时不可用',
     'We could not load training cycles right now. Retry to check the current state.':
-      '我们暂时无法加载培训周期。请重试以检查当前状态。',
+        '我们暂时无法加载培训周期。请重试以检查当前状态。',
     'Unable to refresh training cycles right now. Showing the last successful data.':
-      '目前无法刷新培训周期。正在显示最近一次成功加载的数据。',
+        '目前无法刷新培训周期。正在显示最近一次成功加载的数据。',
     'Create Training Cycle': '创建培训周期',
     'Training Type': '培训类型',
     'Audience': '受众',
@@ -309,7 +312,7 @@ class SharedRoleSurfaceI18n {
         '請稍後再試，或在連線穩定後重新整理。',
     'Refresh': '重新整理',
     'Unable to refresh messages right now. Showing the last successful data. ':
-      '目前無法刷新訊息。正在顯示最近一次成功載入的資料。',
+        '目前無法刷新訊息。正在顯示最近一次成功載入的資料。',
     'Unknown': '未知',
     'Conversation participant unavailable': '對話參與者資訊不可用',
     'Sender unavailable': '發送者資訊不可用',
@@ -364,45 +367,45 @@ class SharedRoleSurfaceI18n {
     'This Quarter': '本季',
     'This Year': '今年',
     'Unable to load telemetry metrics:': '無法載入遙測指標：',
-      'Retry': '重試',
+    'Retry': '重試',
     'Telemetry KPIs': '遙測 KPI',
-      'Telemetry metrics are temporarily unavailable': '遙測指標暫時不可用',
-      'We could not load telemetry metrics right now. Retry to check the current state.':
+    'Telemetry metrics are temporarily unavailable': '遙測指標暫時不可用',
+    'We could not load telemetry metrics right now. Retry to check the current state.':
         '我們暫時無法載入遙測指標。請重試以檢查目前狀態。',
-      'Unable to refresh telemetry metrics right now. Showing the last successful data.':
+    'Unable to refresh telemetry metrics right now. Showing the last successful data.':
         '目前無法重新整理遙測指標。正在顯示最近一次成功載入的資料。',
     'Telemetry feed pending': '遙測資料流待接入',
     'Waiting for first app telemetry sync.': '正在等待應用程式遙測的首次資料同步。',
     '7-day': '7 天',
-      'Showing last successful attendance trend': '正在顯示最近一次成功載入的出勤趨勢',
+    'Showing last successful attendance trend': '正在顯示最近一次成功載入的出勤趨勢',
     'Weekly Accountability': '每週問責',
     'Review SLA': '審核 SLA',
-      'Supplemental analytics are temporarily unavailable': '補充分析暫時不可用',
-      'We could not load supplemental analytics right now. Retry to check the current state.':
+    'Supplemental analytics are temporarily unavailable': '補充分析暫時不可用',
+    'We could not load supplemental analytics right now. Retry to check the current state.':
         '我們暫時無法載入補充分析。請重試以檢查目前狀態。',
-      'Unable to refresh supplemental analytics right now. Showing the last successful data.':
+    'Unable to refresh supplemental analytics right now. Showing the last successful data.':
         '目前無法重新整理補充分析。正在顯示最近一次成功載入的資料。',
     'within SLA': '在 SLA 內',
-      'Site comparison is temporarily unavailable': '站點比較暫時不可用',
+    'Site comparison is temporarily unavailable': '站點比較暫時不可用',
     'Avg Review Turnaround': '平均審核時長',
-      'Top performers are temporarily unavailable': '最佳表現者暫時不可用',
+    'Top performers are temporarily unavailable': '最佳表現者暫時不可用',
     'hours': '小時',
     'Interventions Helped': '介入成效',
     'outcomes': '結果',
-      'KPI packs are temporarily unavailable': 'KPI 包暫時不可用',
-      'We could not load KPI packs right now. Retry to check the current state.':
+    'KPI packs are temporarily unavailable': 'KPI 包暫時不可用',
+    'We could not load KPI packs right now. Retry to check the current state.':
         '我們暫時無法載入 KPI 包。請重試以檢查目前狀態。',
-      'Unable to refresh KPI packs right now. Showing the last successful data.':
+    'Unable to refresh KPI packs right now. Showing the last successful data.':
         '目前無法重新整理 KPI 包。正在顯示最近一次成功載入的資料。',
     'Attendance Trend': '出勤趨勢',
     'Attendance data unavailable': '出勤資料不可用',
-      'HQ AI help feedback is temporarily unavailable': 'HQ AI 幫助回饋暫時不可用',
+    'HQ AI help feedback is temporarily unavailable': 'HQ AI 幫助回饋暫時不可用',
     'Attendance rate unavailable for this period': '此期間的出勤率不可用',
     'No attendance telemetry for this period': '此期間沒有出勤遙測資料',
-      'Synthetic import metadata is temporarily unavailable': '合成匯入中繼資料暫時不可用',
-      'We could not load synthetic import metadata right now. Retry to check the current state.':
+    'Synthetic import metadata is temporarily unavailable': '合成匯入中繼資料暫時不可用',
+    'We could not load synthetic import metadata right now. Retry to check the current state.':
         '我們暫時無法載入合成匯入中繼資料。請重試以檢查目前狀態。',
-      'Unable to refresh synthetic import metadata right now. Showing the last successful data.':
+    'Unable to refresh synthetic import metadata right now. Showing the last successful data.':
         '目前無法重新整理合成匯入中繼資料。正在顯示最近一次成功載入的資料。',
     'Latest attendance:': '最新出勤：',
     'Capture attendance records to render this trend.': '記錄出勤後即可顯示此趨勢。',
@@ -418,7 +421,7 @@ class SharedRoleSurfaceI18n {
     'Generate and export the current HQ analytics summary for cross-site review.':
         '產生並匯出目前 HQ 分析摘要供跨站點審查。',
     'HQ analytics exports are not available in the app yet.':
-      '當有可匯出的 HQ 分析資料時，匯出會直接下載到此裝置。',
+        '當有可匯出的 HQ 分析資料時，匯出會直接下載到此裝置。',
     'No HQ analytics data to export yet.': '目前沒有可匯出的 HQ 分析資料。',
     'HQ analytics export copied to clipboard.': 'HQ 分析匯出內容已複製到剪貼簿。',
     'HQ analytics export downloaded.': 'HQ 分析匯出檔已下載。',
@@ -478,9 +481,9 @@ class SharedRoleSurfaceI18n {
     'Curriculum Manager': '課程管理',
     'Curricula are temporarily unavailable': '課程暫時不可用',
     'We could not load curricula right now. Retry to check the current state.':
-      '我們暫時無法載入課程。請重試以檢查目前狀態。',
+        '我們暫時無法載入課程。請重試以檢查目前狀態。',
     'Unable to refresh curricula right now. Showing the last successful data.':
-      '目前無法重新整理課程。正在顯示最近一次成功載入的資料。',
+        '目前無法重新整理課程。正在顯示最近一次成功載入的資料。',
     'Published': '已發佈',
     'In Review': '審核中',
     'Drafts': '草稿',
@@ -518,19 +521,22 @@ class SharedRoleSurfaceI18n {
     'Loading HQ mapping requests...': '正在載入 HQ 映射請求...',
     'HQ mapping request queue is temporarily unavailable': 'HQ 映射請求佇列暫時不可用',
     'We could not load HQ mapping requests right now. Retry to check the current state.':
-      '我們暫時無法載入 HQ 映射請求。請重試以檢查目前狀態。',
+        '我們暫時無法載入 HQ 映射請求。請重試以檢查目前狀態。',
     'HQ mapping requests': 'HQ 映射請求',
     'open school escalations are waiting for curriculum mapping follow-through.':
-      '個學校端升級請求正在等待課程映射跟進。',
+        '個學校端升級請求正在等待課程映射跟進。',
     'Unable to refresh HQ mapping requests right now. Showing the last successful data.':
-      '目前無法重新整理 HQ 映射請求。正在顯示最近一次成功載入的資料。',
+        '目前無法重新整理 HQ 映射請求。正在顯示最近一次成功載入的資料。',
     'Needs manual review': '需要人工複核',
     'Awaiting mapping': '等待映射',
     'Ready to resolve': '可立即解決',
     'Requested by': '請求人',
     'Resolve request': '解決請求',
+    'Resolution note (optional)': '解決備註（可選）',
+    'Explain what changed so school teams can verify the unblock.':
+        '說明發生了哪些變更，方便學校團隊核實解除阻塞。',
     'This request cannot be resolved until mapped capability coverage is available for the session pillar.':
-      '在該課程支柱具備映射能力覆蓋之前，此請求無法解決。',
+        '在該課程支柱具備映射能力覆蓋之前，此請求無法解決。',
     'Mapping request resolved': '映射請求已解決',
     'Unable to resolve mapping request right now.': '目前無法解決映射請求。',
     'Snapshot created': '快照已建立',
@@ -567,9 +573,9 @@ class SharedRoleSurfaceI18n {
     'No training cycles yet': '目前沒有培訓週期',
     'Training cycles are temporarily unavailable': '培訓週期暫時不可用',
     'We could not load training cycles right now. Retry to check the current state.':
-      '我們暫時無法載入培訓週期。請重試以檢查目前狀態。',
+        '我們暫時無法載入培訓週期。請重試以檢查目前狀態。',
     'Unable to refresh training cycles right now. Showing the last successful data.':
-      '目前無法重新整理培訓週期。正在顯示最近一次成功載入的資料。',
+        '目前無法重新整理培訓週期。正在顯示最近一次成功載入的資料。',
     'Create Training Cycle': '建立培訓週期',
     'Training Type': '培訓類型',
     'Audience': '受眾',

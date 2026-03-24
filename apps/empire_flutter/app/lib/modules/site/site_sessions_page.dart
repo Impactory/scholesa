@@ -1091,6 +1091,8 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
         sortAt: sortAt,
         resolvedAt: _toDateTime(request['resolvedAt']),
         resolutionSummary: (request['resolutionSummary'] as String?)?.trim(),
+        resolutionOperatorNote:
+            (request['resolutionOperatorNote'] as String?)?.trim(),
         resolutionSupportingCapabilityCount: supportingCapabilityCount,
         resolutionSupportingCapabilityTitles: supportingCapabilityTitles,
         resolutionSupportingCurriculumTitles: supportingCurriculumTitles,
@@ -1134,6 +1136,8 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
             capabilityRequestsBySessionId[doc.id]?.status ?? '',
         capabilityRequestResolutionSummary:
             capabilityRequestsBySessionId[doc.id]?.resolutionSummary,
+        capabilityRequestResolutionOperatorNote:
+            capabilityRequestsBySessionId[doc.id]?.resolutionOperatorNote,
         capabilityRequestResolvedAt:
             capabilityRequestsBySessionId[doc.id]?.resolvedAt,
         capabilityRequestResolvedSupportingCapabilityCount:
@@ -1281,6 +1285,7 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
                     hasOpenCapabilityRequest: true,
                     capabilityRequestStatus: 'open',
                     capabilityRequestResolutionSummary: '',
+                    capabilityRequestResolutionOperatorNote: '',
                     capabilityRequestResolvedAt: null,
                     capabilityRequestResolvedSupportingCapabilityCount: null,
                     capabilityRequestResolvedSupportingCapabilityTitles: const <String>[],
@@ -1658,6 +1663,7 @@ class SiteSessionData {
     this.hasOpenCapabilityRequest = false,
     this.capabilityRequestStatus = '',
     this.capabilityRequestResolutionSummary,
+    this.capabilityRequestResolutionOperatorNote,
     this.capabilityRequestResolvedAt,
     this.capabilityRequestResolvedSupportingCapabilityCount,
     this.capabilityRequestResolvedSupportingCapabilityTitles = const <String>[],
@@ -1673,6 +1679,7 @@ class SiteSessionData {
   final bool hasOpenCapabilityRequest;
   final String capabilityRequestStatus;
   final String? capabilityRequestResolutionSummary;
+  final String? capabilityRequestResolutionOperatorNote;
   final DateTime? capabilityRequestResolvedAt;
   final int? capabilityRequestResolvedSupportingCapabilityCount;
   final List<String> capabilityRequestResolvedSupportingCapabilityTitles;
@@ -1692,6 +1699,7 @@ class SiteSessionData {
     bool? hasOpenCapabilityRequest,
     String? capabilityRequestStatus,
     String? capabilityRequestResolutionSummary,
+    String? capabilityRequestResolutionOperatorNote,
     DateTime? capabilityRequestResolvedAt,
     int? capabilityRequestResolvedSupportingCapabilityCount,
     List<String>? capabilityRequestResolvedSupportingCapabilityTitles,
@@ -1712,6 +1720,9 @@ class SiteSessionData {
           capabilityRequestStatus ?? this.capabilityRequestStatus,
       capabilityRequestResolutionSummary: capabilityRequestResolutionSummary ??
           this.capabilityRequestResolutionSummary,
+      capabilityRequestResolutionOperatorNote:
+          capabilityRequestResolutionOperatorNote ??
+              this.capabilityRequestResolutionOperatorNote,
       capabilityRequestResolvedAt:
           capabilityRequestResolvedAt ?? this.capabilityRequestResolvedAt,
       capabilityRequestResolvedSupportingCapabilityCount:
@@ -1733,6 +1744,7 @@ class _CapabilityRequestSnapshot {
     required this.sortAt,
     this.resolvedAt,
     this.resolutionSummary,
+    this.resolutionOperatorNote,
     this.resolutionSupportingCapabilityCount,
     this.resolutionSupportingCapabilityTitles = const <String>[],
     this.resolutionSupportingCurriculumTitles = const <String>[],
@@ -1742,6 +1754,7 @@ class _CapabilityRequestSnapshot {
   final DateTime sortAt;
   final DateTime? resolvedAt;
   final String? resolutionSummary;
+  final String? resolutionOperatorNote;
   final int? resolutionSupportingCapabilityCount;
   final List<String> resolutionSupportingCapabilityTitles;
   final List<String> resolutionSupportingCurriculumTitles;
@@ -1973,6 +1986,11 @@ class _SessionCard extends StatelessWidget {
         session.capabilityRequestResolvedSupportingCapabilityTitles;
     final List<String> supportingCurricula =
         session.capabilityRequestResolvedSupportingCurriculumTitles;
+    final String? operatorNote =
+        session.capabilityRequestResolutionOperatorNote?.trim().isNotEmpty ==
+                true
+            ? session.capabilityRequestResolutionOperatorNote!.trim()
+            : null;
     final String resolvedMessage = supportingCapabilities.isNotEmpty
         ? '${_tSiteSessions(context, 'HQ resolved this request. Confirmed capabilities:')} ${supportingCapabilities.join(', ')}'
         : _tSiteSessions(
@@ -2071,6 +2089,16 @@ class _SessionCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               '${_tSiteSessions(context, 'Mapped curriculum records:')} ${supportingCurricula.join(', ')}',
+              style: const TextStyle(
+                color: ScholesaColors.textSecondary,
+                fontSize: 12,
+              ),
+            ),
+          ],
+          if (!blocked && resolved && operatorNote != null) ...<Widget>[
+            const SizedBox(height: 8),
+            Text(
+              '${_tSiteSessions(context, 'HQ resolution note:')} $operatorNote',
               style: const TextStyle(
                 color: ScholesaColors.textSecondary,
                 fontSize: 12,

@@ -169,6 +169,7 @@ class _SessionCapabilityMappingRequest {
 class _MappingResolutionDetails {
   const _MappingResolutionDetails({
     required this.summary,
+    required this.operatorNote,
     required this.supportingCapabilityCount,
     required this.supportingCapabilityIds,
     required this.supportingCapabilityTitles,
@@ -178,6 +179,7 @@ class _MappingResolutionDetails {
   });
 
   final String summary;
+  final String operatorNote;
   final int supportingCapabilityCount;
   final List<String> supportingCapabilityIds;
   final List<String> supportingCapabilityTitles;
@@ -963,7 +965,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
               FilledButton.icon(
                 onPressed: isResolving || !canResolve
                     ? null
-                    : () => _resolveMappingRequest(request),
+                    : () => _showResolveMappingRequestDialog(request),
                 icon: isResolving
                     ? const SizedBox(
                         width: 16,
@@ -2230,9 +2232,56 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     _showCreateDialog(initialPillar: request.pillar);
   }
 
-  Future<void> _resolveMappingRequest(
+  Future<void> _showResolveMappingRequestDialog(
     _SessionCapabilityMappingRequest request,
   ) async {
+    final TextEditingController noteController = TextEditingController();
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: ScholesaColors.surface,
+          surfaceTintColor: ScholesaColors.surface,
+          title: Text(_tHqCurriculum(context, 'Resolve request')),
+          content: TextField(
+            controller: noteController,
+            minLines: 3,
+            maxLines: 5,
+            decoration: InputDecoration(
+              labelText: _tHqCurriculum(context, 'Resolution note (optional)'),
+              hintText: _tHqCurriculum(
+                context,
+                'Explain what changed so school teams can verify the unblock.',
+              ),
+              border: const OutlineInputBorder(),
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(_tHqCurriculum(context, 'Cancel')),
+            ),
+            FilledButton(
+              onPressed: () async {
+                Navigator.of(dialogContext).pop();
+                await _resolveMappingRequest(
+                  request,
+                  operatorNote: noteController.text.trim(),
+                );
+              },
+              child: Text(_tHqCurriculum(context, 'Resolve request')),
+            ),
+          ],
+        );
+      },
+    );
+    noteController.dispose();
+  }
+
+  Future<void> _resolveMappingRequest(
+    _SessionCapabilityMappingRequest request, {
+    required String operatorNote,
+  }) async {
     final FirestoreService? firestoreService = _maybeFirestoreService();
     final AppState? appState = _maybeAppState();
     final _SessionCapabilityReadiness? readiness =
@@ -2249,6 +2298,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
         firestoreService: firestoreService,
         request: request,
         readiness: readiness,
+        operatorNote: operatorNote,
       );
       await firestoreService.updateDocument(
         'supportRequests',
@@ -2260,6 +2310,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
           'resolvedByRole': appState?.role?.name,
           'resolutionType': 'capability_mapping_completed',
           'resolutionSummary': resolutionDetails.summary,
+          'resolutionOperatorNote': resolutionDetails.operatorNote,
           'resolutionSupportingCapabilityCount':
               resolutionDetails.supportingCapabilityCount,
           'resolutionSupportingCapabilityIds':
@@ -2320,6 +2371,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     required FirestoreService firestoreService,
     required _SessionCapabilityMappingRequest request,
     required _SessionCapabilityReadiness? readiness,
+    required String operatorNote,
   }) async {
     final String pillarCode = readiness?.pillarCode.trim().isNotEmpty == true
         ? readiness!.pillarCode.trim()
@@ -2331,6 +2383,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
       return _MappingResolutionDetails(
         summary:
             'HQ resolved this request after manual review. Refresh the session readiness surface before educator capture resumes.',
+        operatorNote: operatorNote,
         supportingCapabilityCount: 0,
         supportingCapabilityIds: const <String>[],
         supportingCapabilityTitles: const <String>[],
@@ -2377,6 +2430,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
 
     return _MappingResolutionDetails(
       summary: summary,
+      operatorNote: operatorNote,
       supportingCapabilityCount: supportingCapabilityCount,
       supportingCapabilityIds: supportingCapabilityIds,
       supportingCapabilityTitles: supportingCapabilityTitles,

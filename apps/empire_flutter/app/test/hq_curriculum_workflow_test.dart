@@ -638,6 +638,13 @@ void main() {
       await tester.ensureVisible(resolveButton);
       await tester.tap(resolveButton);
       await tester.pump();
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Resolution note (optional)'),
+        'Mapped Future Skills coverage to the studio mission and refreshed readiness.',
+      );
+      await tester
+          .tap(find.widgetWithText(FilledButton, 'Resolve request').last);
+      await tester.pump();
       await tester.pumpAndSettle();
 
       expect(find.text('Mapping request resolved'), findsOneWidget);
@@ -663,6 +670,10 @@ void main() {
       expect(
         requestDoc.data()?['resolutionSupportingCurriculumIds'],
         contains('mission-1'),
+      );
+      expect(
+        requestDoc.data()?['resolutionOperatorNote'],
+        'Mapped Future Skills coverage to the studio mission and refreshed readiness.',
       );
     });
   });
