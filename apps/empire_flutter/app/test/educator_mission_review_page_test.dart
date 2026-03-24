@@ -636,7 +636,10 @@ void main() {
     expect(masteryDoc.exists, isTrue);
     expect(masteryDoc.data()?['latestMissionAttemptId'], attemptId);
     expect(masteryDoc.data()?['latestLevel'], 4);
+    expect(masteryDoc.data()?['capabilityTitle'], 'Prototype evidence');
     expect(growthEvents.docs, hasLength(1));
+    expect(growthEvents.docs.single.data()['capabilityTitle'],
+        'Prototype evidence');
     expect(growthEvents.docs.single.data()['level'], 4);
     expect(evidenceDoc.data()?['growthStatus'], 'updated');
     expect(evidenceDoc.data()?['linkedMissionAttemptId'], attemptId);

@@ -61,6 +61,8 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
   bool _showAiCoach = false;
   LearnerProfileModel? _learnerProfile;
   List<PortfolioItemModel> _portfolioItems = const <PortfolioItemModel>[];
+  Map<String, CapabilityGrowthEventModel> _growthEventsById =
+      const <String, CapabilityGrowthEventModel>{};
   List<CredentialModel> _credentials = const <CredentialModel>[];
   bool _isPortfolioLoading = false;
   String? _portfolioLoadError;
@@ -281,10 +283,17 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
         });
       final List<CredentialModel> credentials =
           snapshot.credentials.toList(growable: false);
+      final Map<String, CapabilityGrowthEventModel> growthEventsById =
+          await _loadGrowthEventsById(
+        firestore: firestore,
+        siteId: siteId,
+        items: items,
+      );
       if (!mounted) return;
       setState(() {
         _learnerProfile = profile;
         _portfolioItems = items;
+        _growthEventsById = growthEventsById;
         _credentials = credentials;
         _portfolioLoadError = null;
         _isPortfolioLoading = false;
@@ -302,6 +311,44 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
         _isPortfolioLoading = false;
       });
     }
+  }
+
+  Future<Map<String, CapabilityGrowthEventModel>> _loadGrowthEventsById({
+    required FirebaseFirestore firestore,
+    required String siteId,
+    required List<PortfolioItemModel> items,
+  }) async {
+    final Set<String> growthEventIds = items
+        .where((PortfolioItemModel item) => item.siteId.trim() == siteId)
+        .expand((PortfolioItemModel item) => item.growthEventIds)
+        .map((String value) => value.trim())
+        .where((String value) => value.isNotEmpty)
+        .toSet();
+
+    if (growthEventIds.isEmpty) {
+      return const <String, CapabilityGrowthEventModel>{};
+    }
+
+    final Map<String, CapabilityGrowthEventModel> growthEventsById =
+        <String, CapabilityGrowthEventModel>{};
+    await Future.wait<void>(
+      growthEventIds.map((String growthEventId) async {
+        try {
+          final DocumentSnapshot<Map<String, dynamic>> growthDoc =
+              await firestore
+                  .collection('capabilityGrowthEvents')
+                  .doc(growthEventId)
+                  .get();
+          if (growthDoc.exists) {
+            growthEventsById[growthEventId] =
+                CapabilityGrowthEventModel.fromDoc(growthDoc);
+          }
+        } catch (_) {
+          // Omit missing growth detail instead of inventing it.
+        }
+      }),
+    );
+    return growthEventsById;
   }
 
   Future<LearnerPortfolioSnapshot> _loadPortfolioSnapshot({
@@ -1478,6 +1525,7 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
     String? fallbackDescription,
   }) {
     final List<String> detailLines = <String>[
+      ..._growthDetailLines(item),
       ..._proofDetailLines(item),
       ..._reflectionDetailLines(item),
       ..._artifactDetailLines(item),
@@ -1543,6 +1591,49 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
       );
     }
     return lines;
+  }
+
+  List<String> _growthDetailLines(PortfolioItemModel item) {
+    final List<CapabilityGrowthEventModel> growthEvents = item.growthEventIds
+        .map((String growthEventId) => _growthEventsById[growthEventId.trim()])
+        .whereType<CapabilityGrowthEventModel>()
+        .toList(growable: false);
+    if (growthEvents.isEmpty) {
+      return const <String>[];
+    }
+
+    return growthEvents.map((CapabilityGrowthEventModel growthEvent) {
+      final String capabilityTitle =
+          (growthEvent.capabilityTitle?.trim().isNotEmpty ?? false)
+              ? growthEvent.capabilityTitle!.trim()
+              : _fallbackGrowthCapabilityTitle(item, growthEvent.capabilityId);
+      final List<String> parts = <String>[
+        capabilityTitle,
+        '${_t('Level')} ${growthEvent.level}',
+        '${_t('Reviewed score')} ${growthEvent.rawScore}/${growthEvent.maxScore}',
+      ];
+      return '${_t('Capability update')}: ${parts.join(' • ')}';
+    }).toList(growable: false);
+  }
+
+  String _fallbackGrowthCapabilityTitle(
+    PortfolioItemModel item,
+    String capabilityId,
+  ) {
+    final int matchingIndex = item.capabilityIds.indexOf(capabilityId);
+    if (matchingIndex >= 0 && matchingIndex < item.capabilityTitles.length) {
+      final String matchedTitle = item.capabilityTitles[matchingIndex].trim();
+      if (matchedTitle.isNotEmpty) {
+        return matchedTitle;
+      }
+    }
+    if (item.capabilityTitles.isNotEmpty) {
+      final String firstTitle = item.capabilityTitles.first.trim();
+      if (firstTitle.isNotEmpty) {
+        return firstTitle;
+      }
+    }
+    return _t('Capability evidence');
   }
 
   List<String> _reflectionDetailLines(PortfolioItemModel item) {

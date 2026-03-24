@@ -762,6 +762,7 @@ class CapabilityMasteryModel {
     required this.pillarCode,
     required this.latestLevel,
     required this.highestLevel,
+    this.capabilityTitle,
     this.siteId,
     this.latestEvidenceId,
     this.latestMissionAttemptId,
@@ -776,6 +777,7 @@ class CapabilityMasteryModel {
   final String pillarCode;
   final int latestLevel;
   final int highestLevel;
+  final String? capabilityTitle;
   final String? siteId;
   final String? latestEvidenceId;
   final String? latestMissionAttemptId;
@@ -794,6 +796,7 @@ class CapabilityMasteryModel {
       pillarCode: data['pillarCode'] as String? ?? '',
       latestLevel: (data['latestLevel'] as num?)?.toInt() ?? 0,
       highestLevel: (data['highestLevel'] as num?)?.toInt() ?? 0,
+      capabilityTitle: data['capabilityTitle'] as String?,
       siteId: data['siteId'] as String?,
       latestEvidenceId: data['latestEvidenceId'] as String?,
       latestMissionAttemptId: data['latestMissionAttemptId'] as String?,
@@ -810,6 +813,7 @@ class CapabilityMasteryModel {
         'pillarCode': pillarCode,
         'latestLevel': latestLevel,
         'highestLevel': highestLevel,
+        'capabilityTitle': capabilityTitle,
         'siteId': siteId,
         'latestEvidenceId': latestEvidenceId,
         'latestMissionAttemptId': latestMissionAttemptId,
@@ -829,6 +833,7 @@ class CapabilityGrowthEventModel {
     required this.level,
     required this.rawScore,
     required this.maxScore,
+    this.capabilityTitle,
     this.siteId,
     this.evidenceId,
     this.missionAttemptId,
@@ -844,6 +849,7 @@ class CapabilityGrowthEventModel {
   final int level;
   final int rawScore;
   final int maxScore;
+  final String? capabilityTitle;
   final String? siteId;
   final String? evidenceId;
   final String? missionAttemptId;
@@ -863,6 +869,7 @@ class CapabilityGrowthEventModel {
       level: (data['level'] as num?)?.toInt() ?? 0,
       rawScore: (data['rawScore'] as num?)?.toInt() ?? 0,
       maxScore: (data['maxScore'] as num?)?.toInt() ?? 0,
+      capabilityTitle: data['capabilityTitle'] as String?,
       siteId: data['siteId'] as String?,
       evidenceId: data['evidenceId'] as String?,
       missionAttemptId: data['missionAttemptId'] as String?,
@@ -879,6 +886,7 @@ class CapabilityGrowthEventModel {
         'level': level,
         'rawScore': rawScore,
         'maxScore': maxScore,
+        'capabilityTitle': capabilityTitle,
         'siteId': siteId,
         'evidenceId': evidenceId,
         'missionAttemptId': missionAttemptId,

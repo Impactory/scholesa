@@ -2142,6 +2142,9 @@ class MissionService extends ChangeNotifier {
                     ((capabilityRawScore / capabilityMaxScore) * 4).ceil(),
                   ),
                 );
+          final String growthCapabilityTitle = rubricCapabilityTitle.isNotEmpty
+              ? rubricCapabilityTitle
+              : capabilityId;
           final String masteryId = '${reviewLearnerId}_$capabilityId';
           final DocumentReference<Map<String, dynamic>> masteryRef =
               _firestore.collection('capabilityMastery').doc(masteryId);
@@ -2169,6 +2172,8 @@ class MissionService extends ChangeNotifier {
               if (reviewSiteId != null && reviewSiteId.isNotEmpty)
                 'siteId': reviewSiteId,
               'pillarCode': pillarCode,
+              if (growthCapabilityTitle.isNotEmpty)
+                'capabilityTitle': growthCapabilityTitle,
               'latestLevel': nextLevel,
               'highestLevel': highestLevel,
               'latestEvidenceId': canonicalAttemptRef.id,
@@ -2191,6 +2196,8 @@ class MissionService extends ChangeNotifier {
               if (reviewSiteId != null && reviewSiteId.isNotEmpty)
                 'siteId': reviewSiteId,
               'pillarCode': pillarCode,
+              if (growthCapabilityTitle.isNotEmpty)
+                'capabilityTitle': growthCapabilityTitle,
               'level': nextLevel,
               'rawScore': capabilityRawScore,
               'maxScore': capabilityMaxScore,
@@ -2452,6 +2459,8 @@ class MissionService extends ChangeNotifier {
               if (reviewSiteId != null && reviewSiteId.isNotEmpty)
                 'siteId': reviewSiteId,
               'pillarCode': pillarCode,
+              if (growthCapabilityTitle.isNotEmpty)
+                'capabilityTitle': growthCapabilityTitle,
               'level': nextLevel,
               'rawScore': capabilityRawScore,
               'maxScore': capabilityMaxScore,

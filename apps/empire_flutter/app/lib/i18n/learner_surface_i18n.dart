@@ -91,6 +91,9 @@ class LearnerSurfaceI18n {
     'Saved submission awaiting educator review before it becomes portfolio evidence.':
         '这份已保存的提交内容正在等待教育者审核，审核后才会成为作品集证据。',
     'Evidence linked': '已关联证据',
+    'Capability update': '能力更新',
+    'Reviewed score': '审核分数',
+    'Capability evidence': '能力证据',
     'Proof of learning': '学习证明',
     'Proof checks': '证明检查',
     'Explain-it-back': '解释回讲',
@@ -339,6 +342,9 @@ class LearnerSurfaceI18n {
     'Saved submission awaiting educator review before it becomes portfolio evidence.':
         '這份已儲存的提交內容正在等待教育者審查，審查後才會成為作品集證據。',
     'Evidence linked': '已連結證據',
+    'Capability update': '能力更新',
+    'Reviewed score': '審查分數',
+    'Capability evidence': '能力證據',
     'Proof of learning': '學習證明',
     'Proof checks': '證明檢查',
     'Explain-it-back': '解釋回講',
