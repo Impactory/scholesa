@@ -259,90 +259,109 @@ class _BosLearnerLoopInsightsCardState
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    if (parsed.partialSignals) ...<Widget>[
+                    if (!parsed.hasAnySignal) ...<Widget>[
                       _buildInfoState(
                         context,
-                        icon: Icons.info_outline_rounded,
-                        message: BosCoachingI18n.partialSignals(context),
+                        icon: Icons.sensors_off_outlined,
+                        message: BosCoachingI18n.signalUnavailable(context),
                         accent: accent,
                       ),
-                      const SizedBox(height: 8),
-                    ],
-                    if (parsed.syntheticPreview) ...<Widget>[
-                      _buildInfoState(
-                        context,
-                        icon: Icons.science_outlined,
-                        message: BosCoachingI18n.syntheticPreview(context),
-                        accent: accent,
-                      ),
-                      const SizedBox(height: 8),
-                    ],
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: <Widget>[
-                        _metricChip(
-                          '${BosCoachingI18n.cognition(context)} ${parsed.pct(context, parsed.cognition)}',
-                          accent,
-                          context,
-                        ),
-                        _metricChip(
-                          '${BosCoachingI18n.engagement(context)} ${parsed.pct(context, parsed.engagement)}',
-                          accent,
-                          context,
-                        ),
-                        _metricChip(
-                          '${BosCoachingI18n.integrity(context)} ${parsed.pct(context, parsed.integrity)}',
-                          accent,
-                          context,
-                        ),
-                        _metricChip(
-                          '${BosCoachingI18n.improvementScore(context)} ${parsed.delta(context, parsed.improvementScore)}',
-                          accent,
-                          context,
-                        ),
-                        _metricChip(
-                          '${BosCoachingI18n.mvlStatus(context)} ${parsed.mvlSummary(context)}',
-                          accent,
-                          context,
-                        ),
+                      if (parsed.quality.hasWarnings) ...<Widget>[
+                        const SizedBox(height: 8),
+                        _buildQualityState(context, accent, parsed.quality),
                       ],
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: scheme.surfaceContainerHigh,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        '${BosCoachingI18n.latestSignal(context)}: ${BosCoachingI18n.cognition(context)} ${parsed.delta(context, parsed.cognitionDelta)} • ${BosCoachingI18n.engagement(context)} ${parsed.delta(context, parsed.engagementDelta)} • ${BosCoachingI18n.integrity(context)} ${parsed.delta(context, parsed.integrityDelta)}',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                          fontWeight: FontWeight.w600,
-                          height: 1.35,
+                    ] else ...<Widget>[
+                      if (parsed.partialSignals) ...<Widget>[
+                        _buildInfoState(
+                          context,
+                          icon: Icons.info_outline_rounded,
+                          message: BosCoachingI18n.partialSignals(context),
+                          accent: accent,
                         ),
-                      ),
-                    ),
-                    if (parsed.activeGoals.isNotEmpty) ...<Widget>[
-                      const SizedBox(height: 8),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: accent.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(12),
+                        const SizedBox(height: 8),
+                      ],
+                      if (parsed.syntheticPreview) ...<Widget>[
+                        _buildInfoState(
+                          context,
+                          icon: Icons.science_outlined,
+                          message: BosCoachingI18n.syntheticPreview(context),
+                          accent: accent,
                         ),
-                        child: Text(
-                          '${BosCoachingI18n.activeGoals(context)}: ${parsed.activeGoals.take(3).join(' • ')}',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: scheme.onSurface,
-                            fontWeight: FontWeight.w600,
-                            height: 1.35,
+                        const SizedBox(height: 8),
+                      ],
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: <Widget>[
+                          _metricChip(
+                            '${BosCoachingI18n.cognition(context)} ${parsed.pct(context, parsed.cognition)}',
+                            accent,
+                            context,
+                          ),
+                          _metricChip(
+                            '${BosCoachingI18n.engagement(context)} ${parsed.pct(context, parsed.engagement)}',
+                            accent,
+                            context,
+                          ),
+                          _metricChip(
+                            '${BosCoachingI18n.integrity(context)} ${parsed.pct(context, parsed.integrity)}',
+                            accent,
+                            context,
+                          ),
+                          _metricChip(
+                            '${BosCoachingI18n.improvementScore(context)} ${parsed.delta(context, parsed.improvementScore)}',
+                            accent,
+                            context,
+                          ),
+                          _metricChip(
+                            '${BosCoachingI18n.mvlStatus(context)} ${parsed.mvlSummary(context)}',
+                            accent,
+                            context,
+                          ),
+                        ],
+                      ),
+                      if (parsed.quality.hasWarnings) ...<Widget>[
+                        const SizedBox(height: 8),
+                        _buildQualityState(context, accent, parsed.quality),
+                      ],
+                      if (parsed.hasTrendSignals) ...<Widget>[
+                        const SizedBox(height: 8),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: scheme.surfaceContainerHigh,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '${BosCoachingI18n.latestSignal(context)}: ${BosCoachingI18n.cognition(context)} ${parsed.delta(context, parsed.cognitionDelta)} • ${BosCoachingI18n.engagement(context)} ${parsed.delta(context, parsed.engagementDelta)} • ${BosCoachingI18n.integrity(context)} ${parsed.delta(context, parsed.integrityDelta)}',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: scheme.onSurfaceVariant,
+                              fontWeight: FontWeight.w600,
+                              height: 1.35,
+                            ),
                           ),
                         ),
-                      ),
+                      ],
+                      if (parsed.activeGoals.isNotEmpty) ...<Widget>[
+                        const SizedBox(height: 8),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: accent.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '${BosCoachingI18n.activeGoals(context)}: ${parsed.activeGoals.take(3).join(' • ')}',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: scheme.onSurface,
+                              fontWeight: FontWeight.w600,
+                              height: 1.35,
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ],
                 );
@@ -401,6 +420,54 @@ class _BosLearnerLoopInsightsCardState
                     fontWeight: FontWeight.w600,
                     height: 1.35,
                   ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQualityState(
+    BuildContext context,
+    Color accent,
+    _InsightDataQuality quality,
+  ) {
+    final ThemeData theme = Theme.of(context);
+    final ColorScheme scheme = theme.colorScheme;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: accent.withValues(alpha: 0.12)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            BosCoachingI18n.dataQuality(context),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: scheme.onSurface,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            quality.summary(context),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: scheme.onSurfaceVariant,
+              fontWeight: FontWeight.w700,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            BosCoachingI18n.verifiedSignalsOnly(context),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: scheme.onSurfaceVariant,
+              fontWeight: FontWeight.w500,
+              height: 1.35,
             ),
           ),
         ],
@@ -467,6 +534,7 @@ class _LearnerLoopInsights {
     required this.activeGoals,
     required this.partialSignals,
     required this.syntheticPreview,
+    required this.quality,
   });
 
   final double? cognition;
@@ -482,6 +550,7 @@ class _LearnerLoopInsights {
   final List<String> activeGoals;
   final bool partialSignals;
   final bool syntheticPreview;
+  final _InsightDataQuality quality;
 
   static _LearnerLoopInsights? tryFromPayload(Map<String, dynamic> payload) {
     final Map<String, dynamic> state =
@@ -493,6 +562,27 @@ class _LearnerLoopInsights {
     final Map<String, dynamic> availability =
         _asStringDynamicMap(payload['stateAvailability']) ??
             <String, dynamic>{};
+    final _InsightDataQuality quality = _InsightDataQuality.fromStatuses(
+      <_FieldStatus>[
+        _doubleStatus(state, 'cognition'),
+        _doubleStatus(state, 'engagement'),
+        _doubleStatus(state, 'integrity'),
+        _doubleStatus(trend, 'improvementScore'),
+        _doubleStatus(trend, 'cognitionDelta'),
+        _doubleStatus(trend, 'engagementDelta'),
+        _doubleStatus(trend, 'integrityDelta'),
+        _intStatus(mvl, 'active'),
+        _intStatus(mvl, 'passed'),
+        _intStatus(mvl, 'failed'),
+        _stringListStatus(payload, 'activeGoals'),
+        _boolStatus(availability, 'hasCurrentState'),
+        _boolStatus(availability, 'hasTrendBaseline'),
+      ],
+      incomplete: <bool>[
+        availability['hasCurrentState'] == false,
+        availability['hasTrendBaseline'] == false,
+      ].where((bool value) => value).length,
+    );
 
     final _LearnerLoopInsights parsed = _LearnerLoopInsights(
       cognition: _readFiniteDouble(state, 'cognition'),
@@ -506,12 +596,12 @@ class _LearnerLoopInsights {
       passedMvl: _readInt(mvl, 'passed'),
       failedMvl: _readInt(mvl, 'failed'),
       activeGoals: _readTrimmedStringList(payload, 'activeGoals'),
-      partialSignals: !(_readBool(availability, 'hasCurrentState') ?? false) ||
-          !(_readBool(availability, 'hasTrendBaseline') ?? false),
+      partialSignals: quality.hasWarnings,
       syntheticPreview: _readBool(payload, 'synthetic') ?? false,
+      quality: quality,
     );
 
-    if (!parsed.hasAnySignal) {
+    if (!parsed.hasAnySignal && !parsed.quality.hasWarnings) {
       return null;
     }
     return parsed;
@@ -529,6 +619,11 @@ class _LearnerLoopInsights {
       passedMvl != null ||
       failedMvl != null ||
       activeGoals.isNotEmpty;
+
+  bool get hasTrendSignals =>
+      cognitionDelta != null ||
+      engagementDelta != null ||
+      integrityDelta != null;
 
   String pct(BuildContext context, double? value) {
     if (value == null) {
@@ -551,4 +646,91 @@ class _LearnerLoopInsights {
     }
     return '$activeMvl/$passedMvl/$failedMvl';
   }
+}
+
+enum _FieldStatus { available, missing, malformed }
+
+class _InsightDataQuality {
+  const _InsightDataQuality({
+    required this.available,
+    required this.incomplete,
+    required this.missing,
+    required this.malformed,
+  });
+
+  factory _InsightDataQuality.fromStatuses(
+    List<_FieldStatus> statuses, {
+    int incomplete = 0,
+  }) {
+    int available = 0;
+    int missing = 0;
+    int malformed = 0;
+    for (final _FieldStatus status in statuses) {
+      switch (status) {
+        case _FieldStatus.available:
+          available += 1;
+        case _FieldStatus.missing:
+          missing += 1;
+        case _FieldStatus.malformed:
+          malformed += 1;
+      }
+    }
+    return _InsightDataQuality(
+      available: available,
+      incomplete: incomplete,
+      missing: missing,
+      malformed: malformed,
+    );
+  }
+
+  final int available;
+  final int incomplete;
+  final int missing;
+  final int malformed;
+
+  bool get hasWarnings => incomplete > 0 || missing > 0 || malformed > 0;
+
+  String summary(BuildContext context) {
+    return '${BosCoachingI18n.qualityAvailable(context)} $available • ${BosCoachingI18n.qualityIncomplete(context)} $incomplete • ${BosCoachingI18n.qualityMissing(context)} $missing • ${BosCoachingI18n.qualityMalformed(context)} $malformed';
+  }
+}
+
+_FieldStatus _doubleStatus(Map<String, dynamic> source, String key) {
+  if (!source.containsKey(key) || source[key] == null) {
+    return _FieldStatus.missing;
+  }
+  final dynamic value = source[key];
+  if (value is! num || !value.toDouble().isFinite) {
+    return _FieldStatus.malformed;
+  }
+  return _FieldStatus.available;
+}
+
+_FieldStatus _intStatus(Map<String, dynamic> source, String key) {
+  if (!source.containsKey(key) || source[key] == null) {
+    return _FieldStatus.missing;
+  }
+  return source[key] is num ? _FieldStatus.available : _FieldStatus.malformed;
+}
+
+_FieldStatus _boolStatus(Map<String, dynamic> source, String key) {
+  if (!source.containsKey(key) || source[key] == null) {
+    return _FieldStatus.missing;
+  }
+  return source[key] is bool
+      ? _FieldStatus.available
+      : _FieldStatus.malformed;
+}
+
+_FieldStatus _stringListStatus(Map<String, dynamic> source, String key) {
+  if (!source.containsKey(key) || source[key] == null) {
+    return _FieldStatus.missing;
+  }
+  final dynamic value = source[key];
+  if (value is! List<dynamic>) {
+    return _FieldStatus.malformed;
+  }
+  return value.whereType<String>().any((String item) => item.trim().isNotEmpty)
+      ? _FieldStatus.available
+      : _FieldStatus.malformed;
 }

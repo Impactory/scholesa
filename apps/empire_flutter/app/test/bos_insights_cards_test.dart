@@ -76,6 +76,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('No current learning signals yet'), findsOneWidget);
+      expect(find.text('Data quality'), findsOneWidget);
+      expect(find.textContaining('Available 0'), findsOneWidget);
+      expect(find.textContaining('Missing 7'), findsOneWidget);
+      expect(find.textContaining('Malformed 6'), findsOneWidget);
       expect(find.textContaining('Mastery Validation 0/0/0'), findsNothing);
       expect(find.textContaining('Growth Trend'), findsNothing);
     });
@@ -143,6 +147,65 @@ void main() {
         find.textContaining('Engagement No current learning signals yet'),
         findsWidgets,
       );
+      expect(find.text('Data quality'), findsOneWidget);
+      expect(find.textContaining('Available 3'), findsOneWidget);
+      expect(find.textContaining('Missing 2'), findsOneWidget);
+      expect(find.textContaining('Malformed 4'), findsOneWidget);
+    });
+
+    testWidgets('learner loop hides latest update fallback when trend baseline is unavailable',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: <SingleChildWidget>[
+            ChangeNotifierProvider<AppState>.value(value: _buildLearnerState()),
+          ],
+          child: MaterialApp(
+            theme: _testTheme,
+            home: Scaffold(
+              body: BosLearnerLoopInsightsCard(
+                title: 'Learning Support Snapshot',
+                subtitle: 'Current learning signals for this learner',
+                emptyLabel: 'No learning support snapshot yet',
+                learnerId: 'learner-1',
+                learnerName: 'Avery Chen',
+                insightsLoader: ({
+                  required String siteId,
+                  required String learnerId,
+                  required int lookbackDays,
+                }) async =>
+                    <String, dynamic>{
+                  'state': <String, dynamic>{
+                    'cognition': 0.72,
+                    'engagement': 0.68,
+                    'integrity': 0.91,
+                  },
+                  'mvl': <String, dynamic>{
+                    'active': 1,
+                    'passed': 2,
+                    'failed': 0,
+                  },
+                  'activeGoals': <String>['Prototype feedback loop'],
+                  'stateAvailability': <String, dynamic>{
+                    'hasCurrentState': true,
+                    'hasTrendBaseline': false,
+                  },
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Data quality'), findsOneWidget);
+      expect(find.textContaining('Incomplete 1'), findsOneWidget);
+      expect(find.textContaining('Latest Update:'), findsNothing);
+      expect(find.textContaining('Growth Trend No current learning signals yet'),
+          findsWidgets);
     });
 
     testWidgets('learner loop discloses synthetic preview payloads',

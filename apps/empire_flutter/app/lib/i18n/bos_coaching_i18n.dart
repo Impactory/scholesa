@@ -54,6 +54,12 @@ class BosCoachingI18n {
     'signalUnavailable': '暂无当前学习信号',
     'partialSignals': '部分学习信号缺失，仅显示当前可用信息',
     'syntheticPreview': '当前为合成预览数据，请勿视为真实课堂证据或成长记录',
+        'dataQuality': '数据质量',
+        'verifiedSignalsOnly': '仅显示已验证的 BOS 信号；缺失或格式错误的字段不会被伪装成低分。',
+        'qualityAvailable': '可用',
+        'qualityIncomplete': '覆盖不足',
+        'qualityMissing': '缺失',
+        'qualityMalformed': '格式错误',
   };
 
   static const Map<String, String> _zhTwTranslations = <String, String>{
@@ -98,6 +104,12 @@ class BosCoachingI18n {
     'signalUnavailable': '目前沒有學習訊號',
     'partialSignals': '部分學習訊號缺失，僅顯示目前可用資訊',
     'syntheticPreview': '目前顯示的是合成預覽資料，請勿視為真實課堂證據或成長紀錄',
+        'dataQuality': '資料品質',
+        'verifiedSignalsOnly': '只顯示已驗證的 BOS 訊號；缺失或格式錯誤的欄位不會被偽裝成低分。',
+        'qualityAvailable': '可用',
+        'qualityIncomplete': '覆蓋不足',
+        'qualityMissing': '缺失',
+        'qualityMalformed': '格式錯誤',
   };
 
   static const Map<String, String> _enTranslations = <String, String>{
@@ -147,6 +159,13 @@ class BosCoachingI18n {
         'Some learning signals are missing; showing only currently available information',
     'syntheticPreview':
         'Synthetic preview only. Do not treat this as classroom evidence or learner growth.',
+    'dataQuality': 'Data quality',
+    'verifiedSignalsOnly':
+        'Only verified BOS signals are shown. Missing or malformed fields stay unavailable instead of reading as low performance.',
+    'qualityAvailable': 'Available',
+    'qualityIncomplete': 'Incomplete',
+    'qualityMissing': 'Missing',
+    'qualityMalformed': 'Malformed',
   };
 
   /// Get an AI help key in the user's locale
@@ -245,4 +264,15 @@ class BosCoachingI18n {
       get(context, 'partialSignals');
   static String syntheticPreview(BuildContext context) =>
       get(context, 'syntheticPreview');
+  static String dataQuality(BuildContext context) => get(context, 'dataQuality');
+  static String verifiedSignalsOnly(BuildContext context) =>
+      get(context, 'verifiedSignalsOnly');
+  static String qualityAvailable(BuildContext context) =>
+      get(context, 'qualityAvailable');
+  static String qualityIncomplete(BuildContext context) =>
+      get(context, 'qualityIncomplete');
+  static String qualityMissing(BuildContext context) =>
+      get(context, 'qualityMissing');
+  static String qualityMalformed(BuildContext context) =>
+      get(context, 'qualityMalformed');
 }

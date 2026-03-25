@@ -125,45 +125,46 @@ class _BosClassInsightsCardState extends State<BosClassInsightsCard> {
             ),
           ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Row(
-              children: <Widget>[
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: accent.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(10),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Row(
+                children: <Widget>[
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: accent.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(Icons.insights_rounded, color: accent, size: 18),
                   ),
-                  child: Icon(Icons.insights_rounded, color: accent, size: 18),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    widget.title,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: scheme.onSurface,
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      widget.title,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: scheme.onSurface,
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              widget.subtitle,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: scheme.onSurfaceVariant,
-                height: 1.35,
-                fontWeight: FontWeight.w500,
+                ],
               ),
-            ),
-            const SizedBox(height: 10),
-            FutureBuilder<Map<String, dynamic>?>(
-              future: _futureInsights,
-              builder: (BuildContext context,
-                  AsyncSnapshot<Map<String, dynamic>?> snapshot) {
+              const SizedBox(height: 4),
+              Text(
+                widget.subtitle,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                  height: 1.35,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 10),
+              FutureBuilder<Map<String, dynamic>?>(
+                future: _futureInsights,
+                builder: (BuildContext context,
+                    AsyncSnapshot<Map<String, dynamic>?> snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -217,79 +218,99 @@ class _BosClassInsightsCardState extends State<BosClassInsightsCard> {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    if (parsed.partialSignals) ...<Widget>[
+                    if (!parsed.hasAnySignal) ...<Widget>[
                       _buildInfoState(
                         context,
-                        icon: Icons.info_outline_rounded,
-                        message: BosCoachingI18n.partialSignals(context),
+                        icon: Icons.sensors_off_outlined,
+                        message: BosCoachingI18n.signalUnavailable(context),
                         accent: accent,
                       ),
-                      const SizedBox(height: 8),
-                    ],
-                    if (parsed.syntheticPreview) ...<Widget>[
-                      _buildInfoState(
-                        context,
-                        icon: Icons.science_outlined,
-                        message: BosCoachingI18n.syntheticPreview(context),
-                        accent: accent,
+                      if (parsed.quality.hasWarnings) ...<Widget>[
+                        const SizedBox(height: 8),
+                        _buildQualityState(context, accent, parsed.quality),
+                      ],
+                    ] else ...<Widget>[
+                      if (parsed.partialSignals) ...<Widget>[
+                        _buildInfoState(
+                          context,
+                          icon: Icons.info_outline_rounded,
+                          message: BosCoachingI18n.partialSignals(context),
+                          accent: accent,
+                        ),
+                        const SizedBox(height: 8),
+                      ],
+                      if (parsed.syntheticPreview) ...<Widget>[
+                        _buildInfoState(
+                          context,
+                          icon: Icons.science_outlined,
+                          message: BosCoachingI18n.syntheticPreview(context),
+                          accent: accent,
+                        ),
+                        const SizedBox(height: 8),
+                      ],
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: <Widget>[
+                          _metricChip(
+                            '${BosCoachingI18n.learnersTracked(context)} ${parsed.countLabel(context, parsed.learnerCount)}',
+                            accent,
+                            context,
+                          ),
+                          _metricChip(
+                            '${BosCoachingI18n.cognition(context)} ${parsed.pct(context, parsed.cognition)}',
+                            accent,
+                            context,
+                          ),
+                          _metricChip(
+                            '${BosCoachingI18n.engagement(context)} ${parsed.pct(context, parsed.engagement)}',
+                            accent,
+                            context,
+                          ),
+                          _metricChip(
+                            '${BosCoachingI18n.integrity(context)} ${parsed.pct(context, parsed.integrity)}',
+                            accent,
+                            context,
+                          ),
+                          _metricChip(
+                            '${BosCoachingI18n.activeMvlGates(context)} ${parsed.countLabel(context, parsed.activeMvlCount)}',
+                            accent,
+                            context,
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 8),
-                    ],
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: <Widget>[
-                        _metricChip(
-                          '${BosCoachingI18n.learnersTracked(context)} ${parsed.countLabel(context, parsed.learnerCount)}',
-                          accent,
-                          context,
-                        ),
-                        _metricChip(
-                          '${BosCoachingI18n.cognition(context)} ${parsed.pct(context, parsed.cognition)}',
-                          accent,
-                          context,
-                        ),
-                        _metricChip(
-                          '${BosCoachingI18n.engagement(context)} ${parsed.pct(context, parsed.engagement)}',
-                          accent,
-                          context,
-                        ),
-                        _metricChip(
-                          '${BosCoachingI18n.integrity(context)} ${parsed.pct(context, parsed.integrity)}',
-                          accent,
-                          context,
-                        ),
-                        _metricChip(
-                          '${BosCoachingI18n.activeMvlGates(context)} ${parsed.countLabel(context, parsed.activeMvlCount)}',
-                          accent,
-                          context,
+                      if (parsed.quality.hasWarnings) ...<Widget>[
+                        const SizedBox(height: 8),
+                        _buildQualityState(context, accent, parsed.quality),
+                      ],
+                      if (parsed.hasAverageSignals) ...<Widget>[
+                        const SizedBox(height: 8),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: scheme.surfaceContainerHigh,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '${BosCoachingI18n.fdmStateEstimate(context)}: ${BosCoachingI18n.cognition(context)} ${parsed.pct(context, parsed.cognition)} • ${BosCoachingI18n.engagement(context)} ${parsed.pct(context, parsed.engagement)} • ${BosCoachingI18n.integrity(context)} ${parsed.pct(context, parsed.integrity)}',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: scheme.onSurfaceVariant,
+                              fontWeight: FontWeight.w600,
+                              height: 1.35,
+                            ),
+                          ),
                         ),
                       ],
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: scheme.surfaceContainerHigh,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        '${BosCoachingI18n.fdmStateEstimate(context)}: ${BosCoachingI18n.cognition(context)} ${parsed.pct(context, parsed.cognition)} • ${BosCoachingI18n.engagement(context)} ${parsed.pct(context, parsed.engagement)} • ${BosCoachingI18n.integrity(context)} ${parsed.pct(context, parsed.integrity)}',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                          fontWeight: FontWeight.w600,
-                          height: 1.35,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    _buildWatchlistSection(context, accent, parsed.watchlist),
+                      const SizedBox(height: 8),
+                      _buildWatchlistSection(context, accent, parsed.watchlist),
+                    ],
                   ],
                 );
-              },
-            ),
-          ],
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -540,6 +561,54 @@ class _BosClassInsightsCardState extends State<BosClassInsightsCard> {
       ),
     );
   }
+
+  Widget _buildQualityState(
+    BuildContext context,
+    Color accent,
+    _InsightDataQuality quality,
+  ) {
+    final ThemeData theme = Theme.of(context);
+    final ColorScheme scheme = theme.colorScheme;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: accent.withValues(alpha: 0.12)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            BosCoachingI18n.dataQuality(context),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: scheme.onSurface,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            quality.summary(context),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: scheme.onSurfaceVariant,
+              fontWeight: FontWeight.w700,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            BosCoachingI18n.verifiedSignalsOnly(context),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: scheme.onSurfaceVariant,
+              fontWeight: FontWeight.w500,
+              height: 1.35,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _ClassLearnerSignal {
@@ -659,6 +728,7 @@ class _BosClassInsights {
     required this.watchlist,
     required this.partialSignals,
     required this.syntheticPreview,
+    required this.quality,
   });
 
   final int? learnerCount;
@@ -669,6 +739,7 @@ class _BosClassInsights {
   final List<_ClassLearnerSignal> watchlist;
   final bool partialSignals;
   final bool syntheticPreview;
+  final _InsightDataQuality quality;
 
   static _BosClassInsights? tryFromPayload(
     Map<String, dynamic> payload,
@@ -680,6 +751,14 @@ class _BosClassInsights {
     final int? learnerCount = _readInt(payload, 'learnerCount');
     final int? activeMvlCount = _readInt(payload, 'activeMvlCount');
     final dynamic rawWatchlist = payload['watchlist'] ?? payload['learners'];
+    final int incompleteCoverageCount = learnerCount == null
+      ? 0
+      : <String>['cognition', 'engagement', 'integrity']
+        .where((String key) {
+          final int? coverageCount = _readInt(coverage, key);
+          return coverageCount != null && coverageCount < learnerCount;
+        })
+        .length;
     final List<_ClassLearnerSignal> watchlist = rawWatchlist is List<dynamic>
         ? rawWatchlist
             .map(_asStringDynamicMap)
@@ -695,6 +774,20 @@ class _BosClassInsights {
             .where((_ClassLearnerSignal learner) => learner.needsAttention)
             .toList(growable: false)
         : const <_ClassLearnerSignal>[];
+    final _InsightDataQuality quality = _InsightDataQuality.fromStatuses(
+      <_FieldStatus>[
+        _intStatus(payload, 'learnerCount'),
+        _intStatus(payload, 'activeMvlCount'),
+        _doubleStatus(averages, 'cognition'),
+        _doubleStatus(averages, 'engagement'),
+        _doubleStatus(averages, 'integrity'),
+        _intStatus(coverage, 'cognition'),
+        _intStatus(coverage, 'engagement'),
+        _intStatus(coverage, 'integrity'),
+        _watchlistStatus(payload),
+      ],
+      incomplete: incompleteCoverageCount,
+    );
 
     watchlist.sort((a, b) => a.riskScore.compareTo(b.riskScore));
 
@@ -705,14 +798,13 @@ class _BosClassInsights {
       engagement: _readFiniteDouble(averages, 'engagement'),
       integrity: _readFiniteDouble(averages, 'integrity'),
       watchlist: watchlist,
-      partialSignals: learnerCount != null &&
-          (((_readInt(coverage, 'cognition') ?? -1) != learnerCount) ||
-              ((_readInt(coverage, 'engagement') ?? -1) != learnerCount) ||
-              ((_readInt(coverage, 'integrity') ?? -1) != learnerCount)),
-        syntheticPreview: payload['synthetic'] is bool && payload['synthetic'] as bool,
+      partialSignals: quality.hasWarnings,
+      syntheticPreview:
+          payload['synthetic'] is bool && payload['synthetic'] as bool,
+      quality: quality,
     );
 
-    if (!parsed.hasAnySignal) {
+    if (!parsed.hasAnySignal && !parsed.quality.hasWarnings) {
       return null;
     }
     return parsed;
@@ -725,6 +817,9 @@ class _BosClassInsights {
       engagement != null ||
       integrity != null ||
       watchlist.isNotEmpty;
+
+    bool get hasAverageSignals =>
+      cognition != null || engagement != null || integrity != null;
 
   String pct(BuildContext context, double? value) {
     if (value == null) {
@@ -739,4 +834,79 @@ class _BosClassInsights {
     }
     return '$value';
   }
+}
+
+enum _FieldStatus { available, missing, malformed }
+
+class _InsightDataQuality {
+  const _InsightDataQuality({
+    required this.available,
+    required this.incomplete,
+    required this.missing,
+    required this.malformed,
+  });
+
+  factory _InsightDataQuality.fromStatuses(
+    List<_FieldStatus> statuses, {
+    int incomplete = 0,
+  }) {
+    int available = 0;
+    int missing = 0;
+    int malformed = 0;
+    for (final _FieldStatus status in statuses) {
+      switch (status) {
+        case _FieldStatus.available:
+          available += 1;
+        case _FieldStatus.missing:
+          missing += 1;
+        case _FieldStatus.malformed:
+          malformed += 1;
+      }
+    }
+    return _InsightDataQuality(
+      available: available,
+      incomplete: incomplete,
+      missing: missing,
+      malformed: malformed,
+    );
+  }
+
+  final int available;
+  final int incomplete;
+  final int missing;
+  final int malformed;
+
+  bool get hasWarnings => incomplete > 0 || missing > 0 || malformed > 0;
+
+  String summary(BuildContext context) {
+    return '${BosCoachingI18n.qualityAvailable(context)} $available • ${BosCoachingI18n.qualityIncomplete(context)} $incomplete • ${BosCoachingI18n.qualityMissing(context)} $missing • ${BosCoachingI18n.qualityMalformed(context)} $malformed';
+  }
+}
+
+_FieldStatus _doubleStatus(Map<String, dynamic>? source, String key) {
+  if (source == null || !source.containsKey(key) || source[key] == null) {
+    return _FieldStatus.missing;
+  }
+  final dynamic value = source[key];
+  if (value is! num || !value.toDouble().isFinite) {
+    return _FieldStatus.malformed;
+  }
+  return _FieldStatus.available;
+}
+
+_FieldStatus _intStatus(Map<String, dynamic>? source, String key) {
+  if (source == null || !source.containsKey(key) || source[key] == null) {
+    return _FieldStatus.missing;
+  }
+  return source[key] is num ? _FieldStatus.available : _FieldStatus.malformed;
+}
+
+_FieldStatus _watchlistStatus(Map<String, dynamic> payload) {
+  if (!payload.containsKey('watchlist') && !payload.containsKey('learners')) {
+    return _FieldStatus.missing;
+  }
+  final dynamic rawWatchlist = payload['watchlist'] ?? payload['learners'];
+  return rawWatchlist is List<dynamic>
+      ? _FieldStatus.available
+      : _FieldStatus.malformed;
 }

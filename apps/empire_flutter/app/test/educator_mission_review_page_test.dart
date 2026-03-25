@@ -606,11 +606,11 @@ void main() {
           'Checkpoint: Ask the learner to identify the exact artifact that proves current understanding.'),
       findsOneWidget,
     );
-    expect(find.text('Evidence'), findsOneWidget);
-    expect(find.text('Reflection'), findsOneWidget);
+    expect(find.text('Evidence'), findsWidgets);
+    expect(find.text('Reflection'), findsWidgets);
 
     await tester.scrollUntilVisible(
-      find.text('Reflection'),
+      find.text('Reflection').last,
       200,
       scrollable: find.byType(Scrollable).last,
     );
@@ -624,11 +624,11 @@ void main() {
       'Great iteration. Tighten the evidence trail and explain the tradeoffs in your next revision.',
     );
     await tester.scrollUntilVisible(
-      find.text('Approve'),
+      find.widgetWithText(ElevatedButton, 'Approve'),
       250,
       scrollable: find.byType(Scrollable).last,
     );
-    await tester.tap(find.text('Approve'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Approve'));
     await tester.pump();
     await tester.pumpAndSettle();
 
@@ -704,6 +704,100 @@ void main() {
   });
 
   testWidgets(
+      'educator mission review requires explicit rubric scoring before review decisions unlock',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedCompletedMissionReadyForReview(firestore);
+    await _seedReviewRubricAndEvidence(firestore);
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final MissionService learnerMissionService = MissionService(
+      firestoreService: firestoreService,
+      learnerId: 'learner-1',
+    );
+
+    final String attemptId = await _submitMissionForReview(
+      tester,
+      firestoreService: firestoreService,
+      missionService: learnerMissionService,
+    );
+
+    final MissionService educatorMissionService = MissionService(
+      firestoreService: firestoreService,
+      learnerId: 'educator-1',
+    );
+
+    await _pumpPage(tester, educatorMissionService);
+
+    await tester.tap(find.text('Mission ready for review').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Evidence-backed review'), findsOneWidget);
+    expect(
+      find.text(
+          'Score every rubric criterion before approving or requesting revision.'),
+      findsOneWidget,
+    );
+
+    final OutlinedButton lockedRevisionButton = tester.widget<OutlinedButton>(
+      find.widgetWithText(OutlinedButton, 'Request Revision'),
+    );
+    final ElevatedButton lockedApproveButton = tester.widget<ElevatedButton>(
+      find.widgetWithText(ElevatedButton, 'Approve'),
+    );
+    expect(lockedRevisionButton.onPressed, isNull);
+    expect(lockedApproveButton.onPressed, isNull);
+
+    await tester.scrollUntilVisible(
+      find.text('Reflection').last,
+      200,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.text('0/4').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('3/4').at(1));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+          'Rubric scoring complete. Review decision can update capability growth.'),
+      findsOneWidget,
+    );
+
+    final OutlinedButton unlockedRevisionButton =
+        tester.widget<OutlinedButton>(
+      find.widgetWithText(OutlinedButton, 'Request Revision'),
+    );
+    final ElevatedButton unlockedApproveButton = tester.widget<ElevatedButton>(
+      find.widgetWithText(ElevatedButton, 'Approve'),
+    );
+    expect(unlockedRevisionButton.onPressed, isNotNull);
+    expect(unlockedApproveButton.onPressed, isNotNull);
+
+    await tester.enterText(
+      find.byType(TextField).last,
+      'Explicit rubric scoring is complete and ready for capability review.',
+    );
+    await tester.scrollUntilVisible(
+      find.widgetWithText(ElevatedButton, 'Approve'),
+      250,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Approve'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    final DocumentSnapshot<Map<String, dynamic>> attemptDoc =
+        await firestore.collection('missionAttempts').doc(attemptId).get();
+
+    expect(attemptDoc.data()?['reviewStatus'], 'approved');
+    expect(attemptDoc.data()?['rubricTotalScore'], 3);
+    expect(attemptDoc.data()?['rubricMaxScore'], 8);
+  });
+
+  testWidgets(
       'educator mission review falls back to HQ checkpoint guidance when live evidence prompt is absent',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
@@ -740,7 +834,7 @@ void main() {
     await tester.tap(find.text('Mission ready for review').first);
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
-      find.text('Reflection'),
+      find.text('Reflection').last,
       200,
       scrollable: find.byType(Scrollable).last,
     );
@@ -750,11 +844,11 @@ void main() {
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).last, 'Use HQ criteria.');
     await tester.scrollUntilVisible(
-      find.text('Approve'),
+      find.widgetWithText(ElevatedButton, 'Approve'),
       250,
       scrollable: find.byType(Scrollable).last,
     );
-    await tester.tap(find.text('Approve'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Approve'));
     await tester.pump();
     await tester.pumpAndSettle();
 
@@ -818,7 +912,7 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.scrollUntilVisible(
-      find.text('Reflection'),
+      find.text('Reflection').last,
       200,
       scrollable: find.byType(Scrollable).last,
     );
@@ -832,11 +926,11 @@ void main() {
       'Growth should only link the live evidence from the reviewed session.',
     );
     await tester.scrollUntilVisible(
-      find.text('Approve'),
+      find.widgetWithText(ElevatedButton, 'Approve'),
       250,
       scrollable: find.byType(Scrollable).last,
     );
-    await tester.tap(find.text('Approve'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Approve'));
     await tester.pump();
     await tester.pumpAndSettle();
 
@@ -919,7 +1013,7 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.scrollUntilVisible(
-      find.text('Reflection'),
+      find.text('Reflection').last,
       200,
       scrollable: find.byType(Scrollable).last,
     );
@@ -933,11 +1027,11 @@ void main() {
       'Reviewing educator-captured checkpoint and AI disclosure evidence.',
     );
     await tester.scrollUntilVisible(
-      find.text('Approve'),
+      find.widgetWithText(ElevatedButton, 'Approve'),
       250,
       scrollable: find.byType(Scrollable).last,
     );
-    await tester.tap(find.text('Approve'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Approve'));
     await tester.pump();
     await tester.pumpAndSettle();
 
@@ -1019,7 +1113,7 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.scrollUntilVisible(
-      find.text('Reflection'),
+      find.text('Reflection').last,
       200,
       scrollable: find.byType(Scrollable).last,
     );
@@ -1033,11 +1127,11 @@ void main() {
       'The unmapped live evidence from this occurrence should be claimed into the rubric capability.',
     );
     await tester.scrollUntilVisible(
-      find.text('Approve'),
+      find.widgetWithText(ElevatedButton, 'Approve'),
       250,
       scrollable: find.byType(Scrollable).last,
     );
-    await tester.tap(find.text('Approve'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Approve'));
     await tester.pump();
     await tester.pumpAndSettle();
 

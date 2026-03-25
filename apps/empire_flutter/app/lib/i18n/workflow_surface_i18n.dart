@@ -403,6 +403,20 @@ class WorkflowSurfaceI18n {
     'Approved': '已批准',
     'Feedback': '反馈',
     'Rubric': '评分量规',
+    'Evidence-backed review': '基于证据的审查',
+    'Use rubric evidence, progression descriptors, and verification criteria before deciding.':
+        '在做出决定前，请先查看量规证据、进阶描述和验证标准。',
+    'rubric criteria linked': '已关联量规标准',
+    'progression descriptors ready': '已准备进阶描述',
+    'verification prompts ready': '已准备验证提示',
+    'Rubric scoring complete. Review decision can update capability growth.':
+        '量规评分已完成，本次审查决定可以更新能力成长。',
+    'Score every rubric criterion before approving or requesting revision.':
+        '在批准或要求修改前，请先为每一项量规标准评分。',
+    'Stars support coaching notes, but rubric evidence drives capability updates.':
+        '星级只用于辅导记录，真正推动能力更新的是量规证据。',
+    'Complete the rubric so this review can update capability growth honestly.':
+        '请完成量规评分，让这次审查能够真实地更新能力成长。',
     'Approve': '批准',
     'Generate AI draft': '生成 AI 草稿',
     'Generate a coach draft, then edit before sending.': '先生成教练反馈草稿，再编辑后发送。',
@@ -1156,6 +1170,20 @@ class WorkflowSurfaceI18n {
     'Unable to load mission review queue right now.': '目前無法載入任務審查佇列。',
     'Unable to submit review right now.': '目前無法提交審查。',
     'Rubric': '評分量規',
+    'Evidence-backed review': '以證據為基礎的審查',
+    'Use rubric evidence, progression descriptors, and verification criteria before deciding.':
+        '在做出決定前，請先查看量規證據、進程描述與驗證標準。',
+    'rubric criteria linked': '已連結量規標準',
+    'progression descriptors ready': '已備妥進程描述',
+    'verification prompts ready': '已備妥驗證提示',
+    'Rubric scoring complete. Review decision can update capability growth.':
+        '量規評分已完成，這次審查決定可以更新能力成長。',
+    'Score every rubric criterion before approving or requesting revision.':
+        '在核准或要求修改前，請先為每一項量規標準評分。',
+    'Stars support coaching notes, but rubric evidence drives capability updates.':
+        '星等只支援教學備註，真正推動能力更新的是量規證據。',
+    'Complete the rubric so this review can update capability growth honestly.':
+        '請完成量規評分，讓這次審查能夠誠實地更新能力成長。',
     'Generate AI draft': '產生 AI 草稿',
     'Generate a coach draft, then edit before sending.': '先產生教練回饋草稿，再編輯後送出。',
     'AI draft ready to edit': 'AI 草稿已產生，可繼續編輯',

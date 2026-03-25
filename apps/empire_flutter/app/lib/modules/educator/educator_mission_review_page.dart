@@ -781,7 +781,7 @@ class _ReviewSheetState extends State<_ReviewSheet> {
   final TextEditingController _feedbackController = TextEditingController();
   String? _aiFeedbackDraft;
   int _rating = 0;
-  late final Map<String, int> _rubricScores;
+  late final Map<String, int?> _rubricScores;
 
   @override
   void initState() {
@@ -789,7 +789,7 @@ class _ReviewSheetState extends State<_ReviewSheet> {
     _rating = widget.submission.rating ?? 0;
     _feedbackController.text = widget.submission.feedback ?? '';
     _aiFeedbackDraft = widget.submission.aiFeedbackDraft;
-    _rubricScores = <String, int>{
+    _rubricScores = <String, int?>{
       for (final Map<String, dynamic> criterion
           in widget.submission.rubricCriteria)
         _criterionId(criterion): _existingScoreForCriterion(criterion),
@@ -802,14 +802,14 @@ class _ReviewSheetState extends State<_ReviewSheet> {
     super.dispose();
   }
 
-  int _existingScoreForCriterion(Map<String, dynamic> criterion) {
+  int? _existingScoreForCriterion(Map<String, dynamic> criterion) {
     final String criterionId = _criterionId(criterion);
     for (final Map<String, dynamic> score in widget.submission.rubricScores) {
       if ((score['criterionId'] as String? ?? '') == criterionId) {
         return (score['score'] as num?)?.toInt() ?? 0;
       }
     }
-    return 0;
+    return null;
   }
 
   String _criterionId(Map<String, dynamic> criterion) {
@@ -855,11 +855,224 @@ class _ReviewSheetState extends State<_ReviewSheet> {
     return '${_displayLearnerName(context, widget.submission.learnerName)} showed ${_pillarLabel(widget.submission.pillar).toLowerCase()} growth in ${_displayMissionTitle(context, widget.submission.missionTitle)}. $tone. ${_tEducatorMissionReview(context, 'Reference specific evidence from the submission and keep the next step concrete.')} $nextStep';
   }
 
+  bool get _requiresExplicitRubricScoring =>
+      widget.submission.rubricCriteria.isNotEmpty;
+
+  int get _completedRubricCriteriaCount {
+    if (!_requiresExplicitRubricScoring) {
+      return 0;
+    }
+    return widget.submission.rubricCriteria.where((Map<String, dynamic> criterion) {
+      final String criterionId = _criterionId(criterion);
+      return _rubricScores[criterionId] != null;
+    }).length;
+  }
+
+  int get _verificationCriteriaCount {
+    return widget.submission.checkpointMappings.where((Map<String, dynamic> mapping) {
+      final String guidance =
+          (mapping['guidance'] as String? ?? mapping['prompt'] as String? ?? '')
+              .trim();
+      return guidance.isNotEmpty;
+    }).length;
+  }
+
+  bool get _hasCompletedRubricScoring {
+    if (!_requiresExplicitRubricScoring) {
+      return true;
+    }
+    return _completedRubricCriteriaCount == widget.submission.rubricCriteria.length;
+  }
+
+  List<String> get _pendingRubricCriterionLabels {
+    return widget.submission.rubricCriteria
+        .where((Map<String, dynamic> criterion) {
+          final String criterionId = _criterionId(criterion);
+          return _rubricScores[criterionId] == null;
+        })
+        .map((Map<String, dynamic> criterion) =>
+            (criterion['label'] as String? ?? _criterionId(criterion)).trim())
+        .where((String value) => value.isNotEmpty)
+        .toList(growable: false);
+  }
+
+  Widget _buildEvidenceReviewCard() {
+    final bool hasEvidenceContext = widget.submission.hasRubric ||
+        widget.submission.progressionDescriptors.isNotEmpty ||
+        _verificationCriteriaCount > 0;
+    if (!hasEvidenceContext) {
+      return const SizedBox.shrink();
+    }
+
+    Widget buildMetric(String label, String value) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Text(
+              value,
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+                color: ScholesaColors.educator,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                color: Colors.grey[700],
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: ScholesaColors.educator.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: ScholesaColors.educator.withValues(alpha: 0.18),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            _tEducatorMissionReview(context, 'Evidence-backed review'),
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 16,
+              color: ScholesaColors.educator,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            _tEducatorMissionReview(
+              context,
+              'Use rubric evidence, progression descriptors, and verification criteria before deciding.',
+            ),
+            style: TextStyle(
+              color: Colors.grey[700],
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: <Widget>[
+              buildMetric(
+                _tEducatorMissionReview(context, 'rubric criteria linked'),
+                widget.submission.rubricCriteria.length.toString(),
+              ),
+              buildMetric(
+                _tEducatorMissionReview(context, 'progression descriptors ready'),
+                widget.submission.progressionDescriptors.length.toString(),
+              ),
+              buildMetric(
+                _tEducatorMissionReview(context, 'verification prompts ready'),
+                _verificationCriteriaCount.toString(),
+              ),
+            ],
+          ),
+          if (_requiresExplicitRubricScoring) ...<Widget>[
+            const SizedBox(height: 14),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: _hasCompletedRubricScoring
+                    ? ScholesaColors.success.withValues(alpha: 0.08)
+                    : ScholesaColors.warning.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: _hasCompletedRubricScoring
+                      ? ScholesaColors.success.withValues(alpha: 0.25)
+                      : ScholesaColors.warning.withValues(alpha: 0.3),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    _hasCompletedRubricScoring
+                        ? _tEducatorMissionReview(
+                            context,
+                            'Rubric scoring complete. Review decision can update capability growth.',
+                          )
+                        : _tEducatorMissionReview(
+                            context,
+                            'Score every rubric criterion before approving or requesting revision.',
+                          ),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: _hasCompletedRubricScoring
+                          ? ScholesaColors.success
+                          : ScholesaColors.warning,
+                    ),
+                  ),
+                  if (!_hasCompletedRubricScoring &&
+                      _pendingRubricCriterionLabels.isNotEmpty) ...<Widget>[
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _pendingRubricCriterionLabels
+                          .map(
+                            (String label) => Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(999),
+                                border: Border.all(
+                                  color: ScholesaColors.warning
+                                      .withValues(alpha: 0.3),
+                                ),
+                              ),
+                              child: Text(
+                                label,
+                                style: TextStyle(
+                                  color: Colors.grey[800],
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          )
+                          .toList(growable: false),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   List<Map<String, dynamic>> _selectedRubricScores() {
     return widget.submission.rubricCriteria
         .map((Map<String, dynamic> criterion) {
       final String criterionId = _criterionId(criterion);
       final int maxScore = _criterionMaxScore(criterion);
+      final int resolvedScore = (_rubricScores[criterionId] ?? 0).clamp(0, maxScore);
       return <String, dynamic>{
         'criterionId': criterionId,
         'label': criterion['label'] as String? ?? criterionId,
@@ -870,7 +1083,7 @@ class _ReviewSheetState extends State<_ReviewSheet> {
         if ((criterion['capabilityTitle'] as String?)?.trim().isNotEmpty ==
             true)
           'capabilityTitle': (criterion['capabilityTitle'] as String).trim(),
-        'score': (_rubricScores[criterionId] ?? 0).clamp(0, maxScore),
+        'score': resolvedScore,
         'maxScore': maxScore,
       };
     }).toList();
@@ -1060,6 +1273,11 @@ class _ReviewSheetState extends State<_ReviewSheet> {
                     ),
                   ),
                   const SizedBox(height: 24),
+                  _buildEvidenceReviewCard(),
+                  if (widget.submission.hasRubric ||
+                      widget.submission.progressionDescriptors.isNotEmpty ||
+                      _verificationCriteriaCount > 0)
+                    const SizedBox(height: 24),
                   Text(
                     _tEducatorMissionReview(context, 'Rating'),
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
@@ -1091,6 +1309,19 @@ class _ReviewSheetState extends State<_ReviewSheet> {
                       ),
                     ),
                   ),
+                  if (_requiresExplicitRubricScoring) ...<Widget>[
+                    const SizedBox(height: 8),
+                    Text(
+                      _tEducatorMissionReview(
+                        context,
+                        'Stars support coaching notes, but rubric evidence drives capability updates.',
+                      ),
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 24),
                   Text(
                     _tEducatorMissionReview(context, 'Feedback'),
@@ -1286,8 +1517,7 @@ class _ReviewSheetState extends State<_ReviewSheet> {
                                 maxScore + 1,
                                 (int score) => ChoiceChip(
                                   label: Text('$score/$maxScore'),
-                                  selected: (_rubricScores[criterionId] ?? 0) ==
-                                      score,
+                                  selected: _rubricScores[criterionId] == score,
                                   onSelected: (_) {
                                     setState(() =>
                                         _rubricScores[criterionId] = score);
@@ -1305,7 +1535,9 @@ class _ReviewSheetState extends State<_ReviewSheet> {
                     children: <Widget>[
                       Expanded(
                         child: OutlinedButton(
-                          onPressed: () async {
+                          onPressed: !_hasCompletedRubricScoring
+                              ? null
+                              : () async {
                             TelemetryService.instance.logEvent(
                               event: 'cta.clicked',
                               metadata: <String, dynamic>{
@@ -1339,7 +1571,9 @@ class _ReviewSheetState extends State<_ReviewSheet> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: () async {
+                          onPressed: !_hasCompletedRubricScoring
+                              ? null
+                              : () async {
                             TelemetryService.instance.logEvent(
                               event: 'cta.clicked',
                               metadata: <String, dynamic>{
@@ -1369,6 +1603,19 @@ class _ReviewSheetState extends State<_ReviewSheet> {
                       ),
                     ],
                   ),
+                  if (!_hasCompletedRubricScoring) ...<Widget>[
+                    const SizedBox(height: 12),
+                    Text(
+                      _tEducatorMissionReview(
+                        context,
+                        'Complete the rubric so this review can update capability growth honestly.',
+                      ),
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
