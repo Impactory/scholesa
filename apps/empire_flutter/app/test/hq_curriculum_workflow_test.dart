@@ -259,6 +259,71 @@ void main() {
       expect(missions.docs.first.data()['rubricApplied'], true);
     });
 
+    testWidgets(
+        'apply rubric normalizes human-readable checkpoint phase keys for live teaching handoff',
+        (WidgetTester tester) async {
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+      final AppState appState = _buildHqState();
+      await _pumpPage(tester, firestore: firestore, appState: appState);
+
+      await _createDraftCurriculum(tester, 'Normalized Handoff Curriculum');
+
+      await tester.tap(find.text('Drafts'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Normalized Handoff Curriculum').first);
+      await tester.pumpAndSettle();
+
+      await _tapVisible(
+        tester,
+        find.widgetWithText(OutlinedButton, 'Apply Rubric'),
+      );
+
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Rubric title'),
+        'HQ Normalized Rubric',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Criteria (comma-separated)'),
+        'Evidence',
+      );
+      await tester.enterText(
+        find.widgetWithText(
+          TextField,
+          'Checkpoint mappings (phase: guidance)',
+        ),
+        'Checkpoint: Ask for the exact artifact proof.\nBuild Sprint: Note the move that shows capability in progress.',
+      );
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Apply Rubric'));
+      await tester.pumpAndSettle();
+
+      final QuerySnapshot<Map<String, dynamic>> rubrics =
+          await firestore.collection('rubrics').get();
+      final List<Map<String, dynamic>> rubricMappings =
+          (rubrics.docs.first.data()['checkpointMappings'] as List)
+              .map((dynamic item) => Map<String, dynamic>.from(item as Map))
+              .toList(growable: false);
+      expect(rubricMappings, <Map<String, dynamic>>[
+        <String, dynamic>{
+          'phaseKey': 'checkpoint',
+          'phaseLabel': 'Checkpoint',
+          'guidance': 'Ask for the exact artifact proof.',
+        },
+        <String, dynamic>{
+          'phaseKey': 'build_sprint',
+          'phaseLabel': 'Build Sprint',
+          'guidance': 'Note the move that shows capability in progress.',
+        },
+      ]);
+
+      final QuerySnapshot<Map<String, dynamic>> missions =
+          await firestore.collection('missions').get();
+      final List<Map<String, dynamic>> missionMappings =
+          (missions.docs.first.data()['checkpointMappings'] as List)
+              .map((dynamic item) => Map<String, dynamic>.from(item as Map))
+              .toList(growable: false);
+      expect(missionMappings, rubricMappings);
+    });
+
     testWidgets('mark parent summary ready only records readiness metadata',
         (WidgetTester tester) async {
       final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();

@@ -920,6 +920,111 @@ void main() {
   });
 
   testWidgets(
+      'educator live studio resolves legacy human-readable checkpoint keys into current teaching prompts',
+      (WidgetTester tester) async {
+    await tester.binding.setSurfaceSize(const Size(900, 1400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+
+    await firestore.collection('sessions').doc('session-1').set(
+      <String, dynamic>{
+        'siteId': 'site-1',
+        'title': 'Robotics Warm-up',
+        'pillar': 'future_skills',
+        'educatorId': 'educator-1',
+        'teacherIds': <String>['educator-1'],
+        'startTime': Timestamp.fromDate(
+          DateTime.now().add(const Duration(days: 1)),
+        ),
+        'endTime': Timestamp.fromDate(
+          DateTime.now().add(const Duration(days: 1, hours: 1)),
+        ),
+      },
+    );
+    await firestore.collection('missions').doc('mission-1').set(
+      <String, dynamic>{
+        'siteId': 'site-1',
+        'title': 'Robotics Warm-up Mission',
+        'sessionId': 'session-1',
+        'rubricId': 'rubric-1',
+        'rubricTitle': 'HQ Live Evidence Rubric',
+        'capabilityTitles': <String>['Prototype evidence'],
+        'checkpointMappings': <Map<String, dynamic>>[
+          <String, dynamic>{
+            'phaseKey': 'Checkpoint',
+            'phaseLabel': 'Checkpoint',
+            'guidance':
+                'Ask the learner to point to the exact artifact that proves current understanding.',
+          },
+        ],
+      },
+    );
+    await firestore.collection('capabilities').doc('capability-1').set(
+      <String, dynamic>{
+        'title': 'Prototype evidence',
+        'pillarCode': 'FS',
+        'siteId': 'site-1',
+      },
+    );
+    await firestore.collection('users').doc('learner-1').set(
+      <String, dynamic>{
+        'name': 'Ava Stone',
+        'email': 'ava@scholesa.test',
+        'role': 'learner',
+        'siteId': 'site-1',
+        'educatorId': 'educator-1',
+        'enrolledSessionIds': <String>['session-1'],
+      },
+    );
+
+    final EducatorService educatorService = EducatorService(
+      firestoreService: firestoreService,
+      educatorId: 'educator-1',
+      siteId: 'site-1',
+    );
+
+    await tester.pumpWidget(
+      _buildHarness(
+        educatorService: educatorService,
+        firestoreService: firestoreService,
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Robotics Warm-up').first);
+    await tester.pumpAndSettle();
+
+    final Finder logEvidenceButton =
+        find.widgetWithText(OutlinedButton, 'Log Evidence');
+    await tester.ensureVisible(logEvidenceButton);
+    await tester.tap(logEvidenceButton);
+    await tester.pumpAndSettle();
+
+    final Finder dialogDropdowns = find.descendant(
+      of: find.byType(AlertDialog),
+      matching: find.byType(DropdownButtonFormField<String>),
+    );
+    await tester.tap(dialogDropdowns.at(1));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Checkpoint').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Current teaching prompt'), findsOneWidget);
+    expect(
+      find.text(
+        'Ask the learner to point to the exact artifact that proves current understanding.',
+      ),
+      findsWidgets,
+    );
+  });
+
+  testWidgets(
       'HQ capability mapping clears readiness and unblocks educator live evidence on reload',
       (WidgetTester tester) async {
     await tester.binding.setSurfaceSize(const Size(1200, 1600));

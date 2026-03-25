@@ -2698,13 +2698,85 @@ class MissionService extends ChangeNotifier {
     return raw
         .whereType<Map>()
         .map((Map value) => Map<String, dynamic>.from(value))
-        .where((Map<String, dynamic> value) {
+        .map((Map<String, dynamic> value) {
+          final String phaseKey = _normalizeCheckpointPhaseKey(
+            (value['phaseKey'] as String? ?? value['phase'] as String? ?? ''),
+          );
           final String guidance =
               (value['guidance'] as String? ?? value['prompt'] as String? ?? '')
                   .trim();
-          return guidance.isNotEmpty;
+          if (phaseKey.isEmpty || guidance.isEmpty) {
+            return null;
+          }
+          return <String, dynamic>{
+            ...value,
+            'phaseKey': phaseKey,
+            'phaseLabel': _checkpointPhaseLabel(phaseKey),
+            'guidance': guidance,
+          };
         })
+        .whereType<Map<String, dynamic>>()
         .toList(growable: false);
+  }
+
+  String _normalizeCheckpointPhaseKey(String raw) {
+    final String normalized = raw
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+        .replaceAll(RegExp(r'_+'), '_')
+        .replaceAll(RegExp(r'^_|_$'), '');
+    switch (normalized) {
+      case 'retrieval_warm_up':
+      case 'retrieval_warmup':
+      case 'retrieval':
+        return 'retrieval_warm_up';
+      case 'mini_lesson':
+      case 'mini_lesson_micro_skill':
+      case 'mini_lesson_micro_skills':
+      case 'micro_skill':
+      case 'micro_skills':
+      case 'mini_skill':
+        return 'mini_lesson';
+      case 'build_sprint':
+      case 'build':
+        return 'build_sprint';
+      case 'checkpoint':
+        return 'checkpoint';
+      case 'share_out':
+      case 'share':
+        return 'share_out';
+      case 'reflection':
+      case 'reflect':
+        return 'reflection';
+      case 'portfolio_artifact':
+      case 'artifact':
+      case 'portfolio':
+        return 'portfolio_artifact';
+      default:
+        return normalized;
+    }
+  }
+
+  String _checkpointPhaseLabel(String phaseKey) {
+    switch (phaseKey) {
+      case 'retrieval_warm_up':
+        return 'Retrieval Warm-up';
+      case 'mini_lesson':
+        return 'Mini-lesson / Micro-skill';
+      case 'build_sprint':
+        return 'Build Sprint';
+      case 'checkpoint':
+        return 'Checkpoint';
+      case 'share_out':
+        return 'Share-out';
+      case 'reflection':
+        return 'Reflection';
+      case 'portfolio_artifact':
+        return 'Portfolio Artifact';
+      default:
+        return phaseKey;
+    }
   }
 
   String _checkpointGuidanceLine(Map<String, dynamic> mapping) {

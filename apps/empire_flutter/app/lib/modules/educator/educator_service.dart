@@ -915,11 +915,9 @@ class EducatorService extends ChangeNotifier {
             return null;
           }
           final String canonicalLabel = _checkpointPhaseLabel(phaseKey);
-          final String storedLabel =
-              _stringValue(item['phaseLabel']) ?? _stringValue(item['label']) ?? '';
           return EducatorCheckpointMapping(
             phaseKey: phaseKey,
-            phaseLabel: storedLabel.isNotEmpty ? canonicalLabel : canonicalLabel,
+            phaseLabel: canonicalLabel,
             guidance: guidance,
           );
         })
