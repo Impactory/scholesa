@@ -905,25 +905,86 @@ class EducatorService extends ChangeNotifier {
         .whereType<Map>()
         .map((Map value) => Map<String, dynamic>.from(value))
         .map((Map<String, dynamic> item) {
-          final String phaseKey = _stringValue(item['phaseKey']) ??
-              _stringValue(item['phase']) ??
-              '';
+          final String phaseKey = _normalizeCheckpointPhaseKey(
+            _stringValue(item['phaseKey']) ?? _stringValue(item['phase']) ?? '',
+          );
           final String guidance = _stringValue(item['guidance']) ??
               _stringValue(item['prompt']) ??
               '';
           if (phaseKey.isEmpty || guidance.isEmpty) {
             return null;
           }
+          final String canonicalLabel = _checkpointPhaseLabel(phaseKey);
+          final String storedLabel =
+              _stringValue(item['phaseLabel']) ?? _stringValue(item['label']) ?? '';
           return EducatorCheckpointMapping(
             phaseKey: phaseKey,
-            phaseLabel: _stringValue(item['phaseLabel']) ??
-                _stringValue(item['label']) ??
-                phaseKey,
+            phaseLabel: storedLabel.isNotEmpty ? canonicalLabel : canonicalLabel,
             guidance: guidance,
           );
         })
         .whereType<EducatorCheckpointMapping>()
         .toList(growable: false);
+  }
+
+  String _normalizeCheckpointPhaseKey(String raw) {
+    final String normalized = raw
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+        .replaceAll(RegExp(r'_+'), '_')
+        .replaceAll(RegExp(r'^_|_$'), '');
+    switch (normalized) {
+      case 'retrieval_warm_up':
+      case 'retrieval_warmup':
+      case 'retrieval':
+        return 'retrieval_warm_up';
+      case 'mini_lesson':
+      case 'mini_lesson_micro_skill':
+      case 'mini_lesson_micro_skills':
+      case 'micro_skill':
+      case 'micro_skills':
+      case 'mini_skill':
+        return 'mini_lesson';
+      case 'build_sprint':
+      case 'build':
+        return 'build_sprint';
+      case 'checkpoint':
+        return 'checkpoint';
+      case 'share_out':
+      case 'share':
+        return 'share_out';
+      case 'reflection':
+      case 'reflect':
+        return 'reflection';
+      case 'portfolio_artifact':
+      case 'artifact':
+      case 'portfolio':
+        return 'portfolio_artifact';
+      default:
+        return normalized;
+    }
+  }
+
+  String _checkpointPhaseLabel(String phaseKey) {
+    switch (phaseKey) {
+      case 'retrieval_warm_up':
+        return 'Retrieval Warm-up';
+      case 'mini_lesson':
+        return 'Mini-lesson / Micro-skill';
+      case 'build_sprint':
+        return 'Build Sprint';
+      case 'checkpoint':
+        return 'Checkpoint';
+      case 'share_out':
+        return 'Share-out';
+      case 'reflection':
+        return 'Reflection';
+      case 'portfolio_artifact':
+        return 'Portfolio Artifact';
+      default:
+        return phaseKey;
+    }
   }
 
   /// Create a new session and reflect it immediately in local state

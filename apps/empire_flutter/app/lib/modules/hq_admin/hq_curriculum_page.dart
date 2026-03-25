@@ -3768,7 +3768,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     final List<String> lines = _parseLineSeparatedValues(raw);
     return lines.map((String line) {
       final List<String> parts = line.split(':');
-      final String phaseKey = parts.first.trim();
+      final String phaseKey = _normalizeCheckpointPhaseKey(parts.first);
       final String guidance =
           parts.length > 1 ? parts.sublist(1).join(':').trim() : '';
       return <String, dynamic>{
@@ -3783,8 +3783,47 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
     }).toList(growable: false);
   }
 
+  String _normalizeCheckpointPhaseKey(String raw) {
+    final String normalized = raw
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+        .replaceAll(RegExp(r'_+'), '_')
+        .replaceAll(RegExp(r'^_|_$'), '');
+    switch (normalized) {
+      case 'retrieval_warm_up':
+      case 'retrieval_warmup':
+      case 'retrieval':
+        return 'retrieval_warm_up';
+      case 'mini_lesson':
+      case 'mini_lesson_micro_skill':
+      case 'mini_lesson_micro_skills':
+      case 'micro_skill':
+      case 'micro_skills':
+      case 'mini_skill':
+        return 'mini_lesson';
+      case 'build_sprint':
+      case 'build':
+        return 'build_sprint';
+      case 'checkpoint':
+        return 'checkpoint';
+      case 'share_out':
+      case 'share':
+        return 'share_out';
+      case 'reflection':
+      case 'reflect':
+        return 'reflection';
+      case 'portfolio_artifact':
+      case 'artifact':
+      case 'portfolio':
+        return 'portfolio_artifact';
+      default:
+        return normalized;
+    }
+  }
+
   String _phaseLabelForCheckpointKey(String key) {
-    switch (key.trim()) {
+    switch (_normalizeCheckpointPhaseKey(key)) {
       case 'retrieval_warm_up':
         return 'Retrieval Warm-up';
       case 'mini_lesson':
