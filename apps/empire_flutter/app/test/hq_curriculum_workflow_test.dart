@@ -216,6 +216,19 @@ void main() {
           await firestore.collection('rubrics').get();
       expect(rubrics.docs.length, 1);
       expect(rubrics.docs.first.data()['title'], 'HQ Rubric A');
+      expect(
+        (rubrics.docs.first.data()['criteria'] as List)
+            .map((dynamic entry) => (entry as Map<String, dynamic>)['label'])
+            .toList(growable: false),
+        <String>['Clarity', 'Agency', 'Impact'],
+      );
+      expect(
+        (rubrics.docs.first.data()['criteria'] as List)
+            .map((dynamic entry) =>
+                (entry as Map<String, dynamic>)['capabilityTitle'])
+            .toList(growable: false),
+        <String>['Systems thinking', 'Agency', 'Impact'],
+      );
       expect(rubrics.docs.first.data()['progressionDescriptors'], <String>[
         'Emerging: needs prompting to connect evidence to the claim.',
         'Secure: explains how the artifact proves the capability.',

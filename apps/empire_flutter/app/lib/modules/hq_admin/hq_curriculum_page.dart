@@ -3690,9 +3690,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
           .entries
           .map((MapEntry<int, String> entry) => <String, dynamic>{
                 'id': 'c${entry.key + 1}',
-                'label': entry.key < curriculum.capabilityTitles.length
-                    ? curriculum.capabilityTitles[entry.key]
-                    : entry.value,
+            'label': entry.value,
                 'pillarCode': _pillarCodeFromLabel(curriculum.pillar),
                 'capabilityId': entry.key < curriculum.capabilityIds.length
                     ? curriculum.capabilityIds[entry.key]
