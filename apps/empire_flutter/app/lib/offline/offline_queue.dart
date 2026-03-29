@@ -17,6 +17,15 @@ enum OpType {
   incidentSubmit,
   messageSend,
   attemptSaveDraft,
+  // Evidence chain operations
+  checkpointSubmit,
+  reflectionSubmit,
+  aiCoachLog,
+  peerFeedbackSubmit,
+  portfolioItemCreate,
+  proofBundleCreate,
+  proofBundleUpdate,
+  rubricApply,
 }
 
 /// Single queued operation

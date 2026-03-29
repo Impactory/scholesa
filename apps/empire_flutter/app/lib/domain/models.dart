@@ -6789,3 +6789,619 @@ class MetacognitiveCalibrationRecordModel {
         'updatedAt': updatedAt ?? Timestamp.now(),
       };
 }
+
+// ==================== EVIDENCE CHAIN MODELS ====================
+
+/// Fast-feedback checkpoint with optional explain-it-back verification.
+/// Collection: checkpointHistory
+@immutable
+class CheckpointModel {
+  const CheckpointModel({
+    required this.id,
+    required this.missionId,
+    required this.learnerId,
+    required this.siteId,
+    this.sessionId,
+    this.skillId,
+    required this.question,
+    required this.learnerResponse,
+    this.isCorrect = false,
+    this.explainItBackRequired = false,
+    this.explainItBackResponse,
+    this.educatorId,
+    this.score,
+    this.createdAt,
+  });
+
+  final String id;
+  final String missionId;
+  final String learnerId;
+  final String siteId;
+  final String? sessionId;
+  final String? skillId;
+  final String question;
+  final String learnerResponse;
+  final bool isCorrect;
+  final bool explainItBackRequired;
+  final String? explainItBackResponse;
+  final String? educatorId;
+  final int? score;
+  final Timestamp? createdAt;
+
+  factory CheckpointModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? <String, dynamic>{};
+    return CheckpointModel(
+      id: doc.id,
+      missionId: data['missionId'] as String? ?? '',
+      learnerId: data['learnerId'] as String? ?? '',
+      siteId: data['siteId'] as String? ?? '',
+      sessionId: data['sessionId'] as String?,
+      skillId: data['skillId'] as String?,
+      question: data['question'] as String? ?? '',
+      learnerResponse: data['learnerResponse'] as String? ?? '',
+      isCorrect: data['isCorrect'] as bool? ?? false,
+      explainItBackRequired:
+          data['explainItBackRequired'] as bool? ?? false,
+      explainItBackResponse: data['explainItBackResponse'] as String?,
+      educatorId: data['educatorId'] as String?,
+      score: data['score'] as int?,
+      createdAt: data['createdAt'] as Timestamp?,
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'missionId': missionId,
+        'learnerId': learnerId,
+        'siteId': siteId,
+        'sessionId': sessionId,
+        'skillId': skillId,
+        'question': question,
+        'learnerResponse': learnerResponse,
+        'isCorrect': isCorrect,
+        'explainItBackRequired': explainItBackRequired,
+        'explainItBackResponse': explainItBackResponse,
+        'educatorId': educatorId,
+        'score': score,
+        'createdAt': createdAt ?? Timestamp.now(),
+      };
+}
+
+/// Learner metacognitive reflection entry.
+/// Collection: learnerReflections
+@immutable
+class ReflectionEntryModel {
+  const ReflectionEntryModel({
+    required this.id,
+    required this.learnerId,
+    required this.siteId,
+    this.sessionId,
+    this.missionId,
+    required this.prompt,
+    required this.response,
+    this.engagementRating,
+    this.confidenceRating,
+    this.educatorNotes,
+    this.createdAt,
+  });
+
+  final String id;
+  final String learnerId;
+  final String siteId;
+  final String? sessionId;
+  final String? missionId;
+  final String prompt;
+  final String response;
+  final int? engagementRating;
+  final int? confidenceRating;
+  final String? educatorNotes;
+  final Timestamp? createdAt;
+
+  factory ReflectionEntryModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? <String, dynamic>{};
+    return ReflectionEntryModel(
+      id: doc.id,
+      learnerId: data['learnerId'] as String? ?? '',
+      siteId: data['siteId'] as String? ?? '',
+      sessionId: data['sessionId'] as String?,
+      missionId: data['missionId'] as String?,
+      prompt: data['prompt'] as String? ?? '',
+      response: data['response'] as String? ?? '',
+      engagementRating: data['engagementRating'] as int?,
+      confidenceRating: data['confidenceRating'] as int?,
+      educatorNotes: data['educatorNotes'] as String?,
+      createdAt: data['createdAt'] as Timestamp?,
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'learnerId': learnerId,
+        'siteId': siteId,
+        'sessionId': sessionId,
+        'missionId': missionId,
+        'prompt': prompt,
+        'response': response,
+        'engagementRating': engagementRating,
+        'confidenceRating': confidenceRating,
+        'educatorNotes': educatorNotes,
+        'createdAt': createdAt ?? Timestamp.now(),
+      };
+}
+
+/// Evidence submission linked to a micro-skill.
+/// Collection: skillEvidence
+@immutable
+class SkillEvidenceModel {
+  const SkillEvidenceModel({
+    required this.id,
+    required this.learnerId,
+    required this.skillId,
+    required this.capabilityId,
+    required this.evidenceType,
+    required this.evidenceRefId,
+    this.educatorId,
+    required this.siteId,
+    this.notes,
+    this.createdAt,
+  });
+
+  final String id;
+  final String learnerId;
+  final String skillId;
+  final String capabilityId;
+  /// One of: artifact, observation, checkpoint, reflection
+  final String evidenceType;
+  final String evidenceRefId;
+  final String? educatorId;
+  final String siteId;
+  final String? notes;
+  final Timestamp? createdAt;
+
+  factory SkillEvidenceModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? <String, dynamic>{};
+    return SkillEvidenceModel(
+      id: doc.id,
+      learnerId: data['learnerId'] as String? ?? '',
+      skillId: data['skillId'] as String? ?? '',
+      capabilityId: data['capabilityId'] as String? ?? '',
+      evidenceType: data['evidenceType'] as String? ?? '',
+      evidenceRefId: data['evidenceRefId'] as String? ?? '',
+      educatorId: data['educatorId'] as String?,
+      siteId: data['siteId'] as String? ?? '',
+      notes: data['notes'] as String?,
+      createdAt: data['createdAt'] as Timestamp?,
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'learnerId': learnerId,
+        'skillId': skillId,
+        'capabilityId': capabilityId,
+        'evidenceType': evidenceType,
+        'evidenceRefId': evidenceRefId,
+        'educatorId': educatorId,
+        'siteId': siteId,
+        'notes': notes,
+        'createdAt': createdAt ?? Timestamp.now(),
+      };
+}
+
+/// AI coach interaction log with explain-it-back guardrails.
+/// Collection: aiCoachInteractions
+@immutable
+class AICoachInteractionModel {
+  const AICoachInteractionModel({
+    required this.id,
+    required this.learnerId,
+    this.sessionId,
+    required this.mode,
+    required this.question,
+    required this.response,
+    this.explainItBackRequired = false,
+    this.explainItBackPassed,
+    this.versionHistoryCheck,
+    this.toolsUsed = const <String>[],
+    this.durationMs,
+    this.createdAt,
+  });
+
+  final String id;
+  final String learnerId;
+  final String? sessionId;
+  /// One of: hint, verify, debug, explain
+  final String mode;
+  final String question;
+  final String response;
+  final bool explainItBackRequired;
+  final bool? explainItBackPassed;
+  final bool? versionHistoryCheck;
+  final List<String> toolsUsed;
+  final int? durationMs;
+  final Timestamp? createdAt;
+
+  factory AICoachInteractionModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? <String, dynamic>{};
+    return AICoachInteractionModel(
+      id: doc.id,
+      learnerId: data['learnerId'] as String? ?? '',
+      sessionId: data['sessionId'] as String?,
+      mode: data['mode'] as String? ?? 'hint',
+      question: data['question'] as String? ?? '',
+      response: data['response'] as String? ?? '',
+      explainItBackRequired:
+          data['explainItBackRequired'] as bool? ?? false,
+      explainItBackPassed: data['explainItBackPassed'] as bool?,
+      versionHistoryCheck: data['versionHistoryCheck'] as bool?,
+      toolsUsed: List<String>.from(
+          data['toolsUsed'] as List? ?? const <String>[]),
+      durationMs: data['durationMs'] as int?,
+      createdAt: data['createdAt'] as Timestamp?,
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'learnerId': learnerId,
+        'sessionId': sessionId,
+        'mode': mode,
+        'question': question,
+        'response': response,
+        'explainItBackRequired': explainItBackRequired,
+        'explainItBackPassed': explainItBackPassed,
+        'versionHistoryCheck': versionHistoryCheck,
+        'toolsUsed': toolsUsed,
+        'durationMs': durationMs,
+        'createdAt': createdAt ?? Timestamp.now(),
+      };
+}
+
+/// Structured peer review feedback.
+/// Collection: peerFeedback
+@immutable
+class PeerFeedbackModel {
+  const PeerFeedbackModel({
+    required this.id,
+    required this.fromLearnerId,
+    required this.toLearnerId,
+    required this.missionAttemptId,
+    this.rating,
+    this.strengths,
+    this.suggestions,
+    required this.siteId,
+    this.sessionId,
+    this.createdAt,
+  });
+
+  final String id;
+  final String fromLearnerId;
+  final String toLearnerId;
+  final String missionAttemptId;
+  final int? rating;
+  final String? strengths;
+  final String? suggestions;
+  final String siteId;
+  final String? sessionId;
+  final Timestamp? createdAt;
+
+  factory PeerFeedbackModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? <String, dynamic>{};
+    return PeerFeedbackModel(
+      id: doc.id,
+      fromLearnerId: data['fromLearnerId'] as String? ?? '',
+      toLearnerId: data['toLearnerId'] as String? ?? '',
+      missionAttemptId: data['missionAttemptId'] as String? ?? '',
+      rating: data['rating'] as int?,
+      strengths: data['strengths'] as String?,
+      suggestions: data['suggestions'] as String?,
+      siteId: data['siteId'] as String? ?? '',
+      sessionId: data['sessionId'] as String?,
+      createdAt: data['createdAt'] as Timestamp?,
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'fromLearnerId': fromLearnerId,
+        'toLearnerId': toLearnerId,
+        'missionAttemptId': missionAttemptId,
+        'rating': rating,
+        'strengths': strengths,
+        'suggestions': suggestions,
+        'siteId': siteId,
+        'sessionId': sessionId,
+        'createdAt': createdAt ?? Timestamp.now(),
+      };
+}
+
+/// Granular skill definition with rubric levels.
+/// Collection: microSkills
+@immutable
+class MicroSkillModel {
+  const MicroSkillModel({
+    required this.id,
+    required this.capabilityId,
+    required this.pillarCode,
+    required this.name,
+    required this.description,
+    this.rubricLevels = const <String, String>{},
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  final String id;
+  final String capabilityId;
+  final String pillarCode;
+  final String name;
+  final String description;
+  /// Map of level name (e.g. "emerging") to descriptor text
+  final Map<String, String> rubricLevels;
+  final Timestamp? createdAt;
+  final Timestamp? updatedAt;
+
+  factory MicroSkillModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? <String, dynamic>{};
+    return MicroSkillModel(
+      id: doc.id,
+      capabilityId: data['capabilityId'] as String? ?? '',
+      pillarCode: data['pillarCode'] as String? ?? '',
+      name: data['name'] as String? ?? '',
+      description: data['description'] as String? ?? '',
+      rubricLevels: Map<String, String>.from(
+          data['rubricLevels'] as Map? ?? const <String, String>{}),
+      createdAt: data['createdAt'] as Timestamp?,
+      updatedAt: data['updatedAt'] as Timestamp?,
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'capabilityId': capabilityId,
+        'pillarCode': pillarCode,
+        'name': name,
+        'description': description,
+        'rubricLevels': rubricLevels,
+        'createdAt': createdAt ?? Timestamp.now(),
+        'updatedAt': updatedAt ?? Timestamp.now(),
+      };
+}
+
+/// Difficulty-differentiated mission variant.
+/// Collection: missionVariants
+@immutable
+class MissionVariantModel {
+  const MissionVariantModel({
+    required this.id,
+    required this.missionId,
+    required this.difficultyLevel,
+    required this.description,
+    this.adjustedCheckpoints = const <String>[],
+    this.scaffolding,
+    this.createdAt,
+  });
+
+  final String id;
+  final String missionId;
+  /// One of: easy, standard, challenge
+  final String difficultyLevel;
+  final String description;
+  final List<String> adjustedCheckpoints;
+  final String? scaffolding;
+  final Timestamp? createdAt;
+
+  factory MissionVariantModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? <String, dynamic>{};
+    return MissionVariantModel(
+      id: doc.id,
+      missionId: data['missionId'] as String? ?? '',
+      difficultyLevel: data['difficultyLevel'] as String? ?? 'standard',
+      description: data['description'] as String? ?? '',
+      adjustedCheckpoints: List<String>.from(
+          data['adjustedCheckpoints'] as List? ?? const <String>[]),
+      scaffolding: data['scaffolding'] as String?,
+      createdAt: data['createdAt'] as Timestamp?,
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'missionId': missionId,
+        'difficultyLevel': difficultyLevel,
+        'description': description,
+        'adjustedCheckpoints': adjustedCheckpoints,
+        'scaffolding': scaffolding,
+        'createdAt': createdAt ?? Timestamp.now(),
+      };
+}
+
+/// Public showcase of learner work.
+/// Collection: showcaseSubmissions
+@immutable
+class ShowcaseSubmissionModel {
+  const ShowcaseSubmissionModel({
+    required this.id,
+    required this.learnerId,
+    required this.portfolioItemId,
+    required this.title,
+    required this.description,
+    this.visibility = 'school',
+    this.approvalStatus = 'pending',
+    this.approvedBy,
+    this.createdAt,
+  });
+
+  final String id;
+  final String learnerId;
+  final String portfolioItemId;
+  final String title;
+  final String description;
+  /// One of: public, school, class
+  final String visibility;
+  /// One of: pending, approved, rejected
+  final String approvalStatus;
+  final String? approvedBy;
+  final Timestamp? createdAt;
+
+  factory ShowcaseSubmissionModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? <String, dynamic>{};
+    return ShowcaseSubmissionModel(
+      id: doc.id,
+      learnerId: data['learnerId'] as String? ?? '',
+      portfolioItemId: data['portfolioItemId'] as String? ?? '',
+      title: data['title'] as String? ?? '',
+      description: data['description'] as String? ?? '',
+      visibility: data['visibility'] as String? ?? 'school',
+      approvalStatus: data['approvalStatus'] as String? ?? 'pending',
+      approvedBy: data['approvedBy'] as String?,
+      createdAt: data['createdAt'] as Timestamp?,
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'learnerId': learnerId,
+        'portfolioItemId': portfolioItemId,
+        'title': title,
+        'description': description,
+        'visibility': visibility,
+        'approvalStatus': approvalStatus,
+        'approvedBy': approvedBy,
+        'createdAt': createdAt ?? Timestamp.now(),
+      };
+}
+
+/// Learner weekly goal-setting.
+/// Collection: weeklyGoals
+@immutable
+class WeeklyGoalModel {
+  const WeeklyGoalModel({
+    required this.id,
+    required this.learnerId,
+    required this.siteId,
+    this.weekStartDate,
+    required this.goalText,
+    this.targetCapabilityId,
+    this.status = 'active',
+    this.reflectionOnCompletion,
+    this.createdAt,
+  });
+
+  final String id;
+  final String learnerId;
+  final String siteId;
+  final Timestamp? weekStartDate;
+  final String goalText;
+  final String? targetCapabilityId;
+  /// One of: active, completed, abandoned
+  final String status;
+  final String? reflectionOnCompletion;
+  final Timestamp? createdAt;
+
+  factory WeeklyGoalModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? <String, dynamic>{};
+    return WeeklyGoalModel(
+      id: doc.id,
+      learnerId: data['learnerId'] as String? ?? '',
+      siteId: data['siteId'] as String? ?? '',
+      weekStartDate: data['weekStartDate'] as Timestamp?,
+      goalText: data['goalText'] as String? ?? '',
+      targetCapabilityId: data['targetCapabilityId'] as String?,
+      status: data['status'] as String? ?? 'active',
+      reflectionOnCompletion: data['reflectionOnCompletion'] as String?,
+      createdAt: data['createdAt'] as Timestamp?,
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'learnerId': learnerId,
+        'siteId': siteId,
+        'weekStartDate': weekStartDate,
+        'goalText': goalText,
+        'targetCapabilityId': targetCapabilityId,
+        'status': status,
+        'reflectionOnCompletion': reflectionOnCompletion,
+        'createdAt': createdAt ?? Timestamp.now(),
+      };
+}
+
+/// Assembled proof-of-learning bundle with 3 verification methods.
+/// Collection: proofOfLearningBundles
+@immutable
+class ProofOfLearningBundleModel {
+  const ProofOfLearningBundleModel({
+    required this.id,
+    required this.learnerId,
+    required this.portfolioItemId,
+    this.capabilityId,
+    this.hasExplainItBack = false,
+    this.hasOralCheck = false,
+    this.hasMiniRebuild = false,
+    this.explainItBackExcerpt,
+    this.oralCheckExcerpt,
+    this.miniRebuildExcerpt,
+    this.verificationStatus = 'missing',
+    this.educatorVerifierId,
+    this.version = 1,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  final String id;
+  final String learnerId;
+  final String portfolioItemId;
+  final String? capabilityId;
+  final bool hasExplainItBack;
+  final bool hasOralCheck;
+  final bool hasMiniRebuild;
+  final String? explainItBackExcerpt;
+  final String? oralCheckExcerpt;
+  final String? miniRebuildExcerpt;
+  /// One of: missing, partial, verified
+  final String verificationStatus;
+  final String? educatorVerifierId;
+  final int version;
+  final Timestamp? createdAt;
+  final Timestamp? updatedAt;
+
+  factory ProofOfLearningBundleModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? <String, dynamic>{};
+    return ProofOfLearningBundleModel(
+      id: doc.id,
+      learnerId: data['learnerId'] as String? ?? '',
+      portfolioItemId: data['portfolioItemId'] as String? ?? '',
+      capabilityId: data['capabilityId'] as String?,
+      hasExplainItBack: data['hasExplainItBack'] as bool? ?? false,
+      hasOralCheck: data['hasOralCheck'] as bool? ?? false,
+      hasMiniRebuild: data['hasMiniRebuild'] as bool? ?? false,
+      explainItBackExcerpt: data['explainItBackExcerpt'] as String?,
+      oralCheckExcerpt: data['oralCheckExcerpt'] as String?,
+      miniRebuildExcerpt: data['miniRebuildExcerpt'] as String?,
+      verificationStatus:
+          data['verificationStatus'] as String? ?? 'missing',
+      educatorVerifierId: data['educatorVerifierId'] as String?,
+      version: data['version'] as int? ?? 1,
+      createdAt: data['createdAt'] as Timestamp?,
+      updatedAt: data['updatedAt'] as Timestamp?,
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'learnerId': learnerId,
+        'portfolioItemId': portfolioItemId,
+        'capabilityId': capabilityId,
+        'hasExplainItBack': hasExplainItBack,
+        'hasOralCheck': hasOralCheck,
+        'hasMiniRebuild': hasMiniRebuild,
+        'explainItBackExcerpt': explainItBackExcerpt,
+        'oralCheckExcerpt': oralCheckExcerpt,
+        'miniRebuildExcerpt': miniRebuildExcerpt,
+        'verificationStatus': verificationStatus,
+        'educatorVerifierId': educatorVerifierId,
+        'version': version,
+        'createdAt': createdAt ?? Timestamp.now(),
+        'updatedAt': updatedAt ?? Timestamp.now(),
+      };
+}
