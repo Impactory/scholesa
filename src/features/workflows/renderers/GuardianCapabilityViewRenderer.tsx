@@ -241,7 +241,7 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
         </p>
       </header>
 
-      {learners.map((learner) => {
+      {learners.map((learner: LearnerSummary) => {
         const band = LEVEL_BAND_CONFIG[learner.currentLevelBand] ?? LEVEL_BAND_CONFIG.emerging;
 
         return (
@@ -274,7 +274,7 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
                   What {learner.name} can do
                 </h3>
                 <div className="space-y-3">
-                  {learner.pillars.map((pillar) => (
+                  {learner.pillars.map((pillar: PillarProgress) => (
                     <PillarProgressBar key={pillar.pillarCode} pillar={pillar} />
                   ))}
                 </div>
@@ -291,7 +291,7 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
                   Recent growth
                 </h3>
                 <ul className="space-y-3">
-                  {learner.growthTimeline.map((event) => {
+                  {learner.growthTimeline.map((event: GrowthEvent) => {
                     const proofCfg =
                       PROOF_STATUS_CONFIG[event.proofStatus] ?? PROOF_STATUS_CONFIG.missing;
                     return (
@@ -333,7 +333,7 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
                   Proof of learning
                 </h3>
                 <ul className="space-y-3">
-                  {learner.portfolioHighlights.slice(0, 5).map((item) => {
+                  {learner.portfolioHighlights.slice(0, 5).map((item: PortfolioItem) => {
                     const verifCfg =
                       VERIFICATION_CONFIG[item.verificationStatus] ??
                       VERIFICATION_CONFIG.unverified;

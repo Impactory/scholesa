@@ -11,6 +11,8 @@ import {
   query,
   serverTimestamp,
   updateDoc,
+  type DocumentData,
+  type QueryDocumentSnapshot,
 } from 'firebase/firestore';
 import { firestore } from '@/src/firebase/client-init';
 import { Spinner } from '@/src/components/ui/Spinner';
@@ -136,7 +138,7 @@ export default function HqCapabilityFrameworkRenderer({ ctx }: CustomRouteRender
       ]);
 
       setCapabilities(
-        capSnap.docs.map((d) => {
+        capSnap.docs.map((d: QueryDocumentSnapshot<DocumentData>) => {
           const data = d.data();
           const progressionLevels = Array.isArray(data.progressionLevels)
             ? (data.progressionLevels as ProgressionLevel[])
@@ -155,7 +157,7 @@ export default function HqCapabilityFrameworkRenderer({ ctx }: CustomRouteRender
       );
 
       setRubrics(
-        rubricSnap.docs.map((d) => {
+        rubricSnap.docs.map((d: QueryDocumentSnapshot<DocumentData>) => {
           const data = d.data();
           const criteria = Array.isArray(data.criteria) ? data.criteria : [];
           return {
@@ -196,7 +198,7 @@ export default function HqCapabilityFrameworkRenderer({ ctx }: CustomRouteRender
         normalizedTitle: newCapTitle.trim().toLowerCase(),
         pillarCode: newCapPillar,
         descriptor: newCapDescriptor.trim(),
-        progressionLevels: newCapProgressionLevels.filter((l) => l.description.trim().length > 0),
+        progressionLevels: newCapProgressionLevels.filter((l: ProgressionLevel) => l.description.trim().length > 0),
         siteId: null,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -219,7 +221,7 @@ export default function HqCapabilityFrameworkRenderer({ ctx }: CustomRouteRender
     try {
       await updateDoc(doc(firestore, 'capabilities', capId), {
         descriptor: editDescriptor.trim(),
-        progressionLevels: editProgressionLevels.filter((l) => l.description.trim().length > 0),
+        progressionLevels: editProgressionLevels.filter((l: ProgressionLevel) => l.description.trim().length > 0),
         updatedAt: serverTimestamp(),
       });
       trackInteraction('feature_discovered', { cta: 'capability_updated', capId });
@@ -351,7 +353,7 @@ export default function HqCapabilityFrameworkRenderer({ ctx }: CustomRouteRender
   // ---- Group capabilities by pillar ----
   const capsByPillar = PILLAR_OPTIONS.map((pillar) => ({
     pillar,
-    items: capabilities.filter((c) => c.pillarCode === pillar.value),
+    items: capabilities.filter((c: CapabilityRecord) => c.pillarCode === pillar.value),
   }));
 
   // ---- Render ----
@@ -413,7 +415,7 @@ export default function HqCapabilityFrameworkRenderer({ ctx }: CustomRouteRender
           <div className="flex gap-3">
             <button
               type="button"
-              onClick={() => setShowCreateCapability((prev) => !prev)}
+              onClick={() => setShowCreateCapability((prev: boolean) => !prev)}
               className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
               data-testid="create-capability-toggle"
             >
@@ -442,7 +444,7 @@ export default function HqCapabilityFrameworkRenderer({ ctx }: CustomRouteRender
                   <input
                     type="text"
                     value={newCapTitle}
-                    onChange={(e) => setNewCapTitle(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewCapTitle(e.target.value)}
                     placeholder="e.g. Computational Thinking"
                     className="w-full rounded-md border border-app bg-app-canvas px-3 py-2 text-sm text-app-foreground"
                     data-testid="capability-title-input"
@@ -453,7 +455,7 @@ export default function HqCapabilityFrameworkRenderer({ ctx }: CustomRouteRender
                   <span className="text-xs font-medium text-app-muted">Pillar *</span>
                   <select
                     value={newCapPillar}
-                    onChange={(e) => setNewCapPillar(e.target.value as PillarCode)}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setNewCapPillar(e.target.value as PillarCode)}
                     className="w-full rounded-md border border-app bg-app-canvas px-3 py-2 text-sm text-app-foreground"
                   >
                     {PILLAR_OPTIONS.map((p) => (
@@ -469,7 +471,7 @@ export default function HqCapabilityFrameworkRenderer({ ctx }: CustomRouteRender
                 <span className="text-xs font-medium text-app-muted">Descriptor</span>
                 <textarea
                   value={newCapDescriptor}
-                  onChange={(e) => setNewCapDescriptor(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewCapDescriptor(e.target.value)}
                   placeholder="What this capability means and how it is demonstrated..."
                   className="w-full rounded-md border border-app bg-app-canvas px-3 py-2 text-sm text-app-foreground min-h-20"
                 />
@@ -478,7 +480,7 @@ export default function HqCapabilityFrameworkRenderer({ ctx }: CustomRouteRender
               {/* Progression levels */}
               <div className="space-y-2">
                 <span className="text-xs font-medium text-app-muted">Progression Levels</span>
-                {newCapProgressionLevels.map((level, i) => (
+                {newCapProgressionLevels.map((level: ProgressionLevel, i: number) => (
                   <div key={level.level} className="flex gap-2 items-start">
                     <span className="mt-2 w-6 text-center text-xs font-bold text-app-muted">
                       {level.level}
@@ -486,7 +488,7 @@ export default function HqCapabilityFrameworkRenderer({ ctx }: CustomRouteRender
                     <input
                       type="text"
                       value={level.label}
-                      onChange={(e) =>
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         updateProgressionLevel(
                           newCapProgressionLevels,
                           setNewCapProgressionLevels,
@@ -501,7 +503,7 @@ export default function HqCapabilityFrameworkRenderer({ ctx }: CustomRouteRender
                     <input
                       type="text"
                       value={level.description}
-                      onChange={(e) =>
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         updateProgressionLevel(
                           newCapProgressionLevels,
                           setNewCapProgressionLevels,

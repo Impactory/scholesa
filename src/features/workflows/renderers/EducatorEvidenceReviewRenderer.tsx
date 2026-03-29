@@ -13,6 +13,8 @@ import {
   setDoc,
   updateDoc,
   where,
+  type DocumentData,
+  type QueryDocumentSnapshot,
 } from 'firebase/firestore';
 import { firestore } from '@/src/firebase/client-init';
 import { Spinner } from '@/src/components/ui/Spinner';
@@ -137,7 +139,7 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
         )
       );
 
-      const loaded: MissionAttempt[] = snap.docs.map((d) => {
+      const loaded: MissionAttempt[] = snap.docs.map((d: QueryDocumentSnapshot<DocumentData>) => {
         const data = d.data();
         return {
           id: d.id,
@@ -394,7 +396,7 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
         </div>
       ) : (
         <ul className="space-y-4" data-testid="submissions-list">
-          {attempts.map((attempt) => {
+          {attempts.map((attempt: MissionAttempt) => {
             const learner = learners[attempt.learnerId];
             const mission = missions[attempt.missionId];
             const isRubricOpen = rubricOpen === attempt.id;
@@ -466,7 +468,7 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
                       Evidence Artifacts ({attempt.attachmentUrls.length})
                     </span>
                     <div className="flex flex-wrap gap-2">
-                      {attempt.attachmentUrls.map((url, i) => (
+                      {attempt.attachmentUrls.map((url: string, i: number) => (
                         <a
                           key={i}
                           href={url}
@@ -530,7 +532,7 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
                           <button
                             key={value}
                             type="button"
-                            onClick={() => setRubricForm((prev) => ({ ...prev, level: value }))}
+                            onClick={() => setRubricForm((prev: RubricFormState) => ({ ...prev, level: value }))}
                             className={`rounded-md px-3 py-1.5 text-sm font-medium ${
                               rubricForm.level === value
                                 ? 'bg-primary text-primary-foreground'
@@ -548,8 +550,8 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
                       <span className="text-xs font-medium text-app-muted">Feedback *</span>
                       <textarea
                         value={rubricForm.feedback}
-                        onChange={(e) =>
-                          setRubricForm((prev) => ({ ...prev, feedback: e.target.value }))
+                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                          setRubricForm((prev: RubricFormState) => ({ ...prev, feedback: e.target.value }))
                         }
                         placeholder="Provide specific feedback on the evidence and demonstrated capability..."
                         className="w-full rounded-md border border-app bg-app-canvas px-3 py-2 text-sm text-app-foreground min-h-24"
@@ -561,8 +563,8 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
                       <input
                         type="checkbox"
                         checked={rubricForm.proofVerified}
-                        onChange={(e) =>
-                          setRubricForm((prev) => ({
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setRubricForm((prev: RubricFormState) => ({
                             ...prev,
                             proofVerified: e.target.checked,
                           }))
@@ -609,7 +611,7 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
                       </span>
                       <textarea
                         value={revisionFeedback}
-                        onChange={(e) => setRevisionFeedback(e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setRevisionFeedback(e.target.value)}
                         placeholder="Explain what needs to be revised or improved..."
                         className="w-full rounded-md border border-app bg-app-canvas px-3 py-2 text-sm text-app-foreground min-h-24"
                         data-testid={`revision-feedback-${attempt.id}`}
