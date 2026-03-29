@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '@/src/firebase/client-init';
 import { Spinner } from '@/src/components/ui/Spinner';
@@ -111,7 +111,7 @@ function formatDate(iso: string): string {
 // Sub-components
 // ---------------------------------------------------------------------------
 
-function CheckMark({ checked, label }: { checked: boolean; label: string }) {
+function CheckMark({ checked, label }: { checked: boolean; label: string }): React.JSX.Element {
   return (
     <span className="inline-flex items-center gap-1 text-xs text-app-muted">
       {checked ? (
@@ -128,7 +128,7 @@ function CheckMark({ checked, label }: { checked: boolean; label: string }) {
   );
 }
 
-function PillarProgressBar({ pillar }: { pillar: PillarProgress }) {
+function PillarProgressBar({ pillar }: { key?: React.Key; pillar: PillarProgress }): React.JSX.Element {
   const barColor = PILLAR_BAR_COLORS[pillar.pillarCode] ?? 'bg-gray-400';
   const clampedPercent = Math.max(0, Math.min(100, pillar.percent));
 

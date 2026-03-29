@@ -3,27 +3,44 @@
 FROM ghcr.io/cirruslabs/flutter:3.38.9 AS builder
 WORKDIR /workspace
 
-# Copy only app source for deterministic web build
-COPY apps/empire_flutter/app /workspace/app
+# Copy the canonical brand SVG from the repo root (needed by sync_platform_icons.sh)
+COPY scholesa.svg /workspace/scholesa.svg
 
-WORKDIR /workspace/app
+# Copy the Flutter app source
+COPY apps/empire_flutter/app /workspace/apps/empire_flutter/app
+
+# Create the Next.js public dir stub so the icon sync script doesn't fail
+RUN mkdir -p /workspace/public/icons
+
+WORKDIR /workspace/apps/empire_flutter/app
+
+# Sync platform icons from canonical sources before build
+RUN bash scripts/sync_platform_icons.sh || echo "[icons] Sync skipped (no resize tools); using checked-in assets"
+
 RUN flutter pub get
 RUN flutter build web --release --no-tree-shake-icons --no-wasm-dry-run
 
 FROM nginx:1.25-alpine
 
 # Copy compiled Flutter web assets from build stage
-COPY --from=builder /workspace/app/build/web /usr/share/nginx/html
+COPY --from=builder /workspace/apps/empire_flutter/app/build/web /usr/share/nginx/html
 
-# Nginx config for single-page app routing, cache-safe index, and Cloud Run port 8080
+# Nginx config for single-page app routing, cache headers, gzip, and Cloud Run port 8080
 RUN printf '\
 server {\n\
     listen 8080;\n\
     server_name _;\n\
     root /usr/share/nginx/html;\n\
     include /etc/nginx/mime.types;\n\
+    gzip on;\n\
+    gzip_types text/html text/css application/javascript application/json image/svg+xml;\n\
+    gzip_min_length 256;\n\
     location = /index.html {\n\
         add_header Cache-Control "no-cache, no-store, must-revalidate";\n\
+        try_files $uri =404;\n\
+    }\n\
+    location ~* \\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {\n\
+        add_header Cache-Control "public, max-age=31536000, immutable";\n\
         try_files $uri =404;\n\
     }\n\
     location / {\n\

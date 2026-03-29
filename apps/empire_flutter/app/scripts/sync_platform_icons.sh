@@ -3,7 +3,22 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 ICONS_DIR="$ROOT_DIR/assets/icons"
-REPO_ROOT="$(cd "$ROOT_DIR/../../.." && pwd)"
+# Resolve repo root: try 3 levels up first (monorepo), then look for scholesa.svg upwards
+REPO_ROOT_CANDIDATE="$(cd "$ROOT_DIR/../../.." 2>/dev/null && pwd)"
+if [[ -f "$REPO_ROOT_CANDIDATE/scholesa.svg" ]]; then
+  REPO_ROOT="$REPO_ROOT_CANDIDATE"
+else
+  # Fallback: walk up from ROOT_DIR looking for scholesa.svg (supports Docker builds)
+  _dir="$ROOT_DIR"
+  while [[ "$_dir" != "/" ]]; do
+    if [[ -f "$_dir/scholesa.svg" ]]; then
+      REPO_ROOT="$_dir"
+      break
+    fi
+    _dir="$(dirname "$_dir")"
+  done
+fi
+REPO_ROOT="${REPO_ROOT:-$REPO_ROOT_CANDIDATE}"
 SOURCE_SVG="$REPO_ROOT/scholesa.svg"
 
 ANDROID_SRC="$ICONS_DIR/android"

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   addDoc,
   collection,
@@ -13,6 +13,8 @@ import {
   serverTimestamp,
   updateDoc,
   where,
+  type DocumentData,
+  type QueryDocumentSnapshot,
 } from 'firebase/firestore';
 import { firestore } from '@/src/firebase/client-init';
 import { Spinner } from '@/src/components/ui/Spinner';
@@ -184,7 +186,7 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
       ]);
 
       setPortfolioItems(
-        itemsSnap.docs.map((d) => {
+        itemsSnap.docs.map((d: QueryDocumentSnapshot<DocumentData>) => {
           const data = d.data();
           return {
             id: d.id,
@@ -220,7 +222,7 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
       );
 
       setMasteries(
-        masterySnap.docs.map((d) => {
+        masterySnap.docs.map((d: QueryDocumentSnapshot<DocumentData>) => {
           const data = d.data();
           return {
             id: d.id,
@@ -238,7 +240,7 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
       );
 
       setGrowthEvents(
-        growthSnap.docs.map((d) => {
+        growthSnap.docs.map((d: QueryDocumentSnapshot<DocumentData>) => {
           const data = d.data();
           return {
             id: d.id,
@@ -334,7 +336,7 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
   // ---- Group mastery by pillar ----
   const masteryByPillar = PILLAR_OPTIONS.map((pillar) => ({
     pillar,
-    items: masteries.filter((m) => m.pillarCode === pillar.value),
+    items: masteries.filter((m: CapabilityMastery) => m.pillarCode === pillar.value),
   }));
 
   // ---- Render ----
@@ -397,7 +399,7 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
                         </span>
                       </h3>
                       <ul className="space-y-2">
-                        {items.map((m) => (
+                        {items.map((m: CapabilityMastery) => (
                           <li
                             key={m.id}
                             className="flex items-center gap-3"
@@ -431,7 +433,7 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
               <div className="mt-4 space-y-2" data-testid="growth-events">
                 <h3 className="text-sm font-semibold text-app-foreground">Recent Growth</h3>
                 <ul className="space-y-1">
-                  {growthEvents.slice(0, 5).map((ev) => (
+                  {growthEvents.slice(0, 5).map((ev: GrowthEvent) => (
                     <li
                       key={ev.id}
                       className="flex items-center gap-2 text-xs text-app-muted"
@@ -462,7 +464,7 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
               <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => setShowAddForm((prev) => !prev)}
+                  onClick={() => setShowAddForm((prev: boolean) => !prev)}
                   className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
                   data-testid="add-portfolio-item-toggle"
                 >
@@ -494,7 +496,7 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
                     <input
                       type="text"
                       value={newTitle}
-                      onChange={(e) => setNewTitle(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewTitle(e.target.value)}
                       placeholder="e.g. My robotics project"
                       className="w-full rounded-md border border-app bg-app-canvas px-3 py-2 text-sm text-app-foreground"
                       data-testid="portfolio-item-title-input"
@@ -505,7 +507,7 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
                     <span className="text-xs font-medium text-app-muted">Pillar *</span>
                     <select
                       value={newPillar}
-                      onChange={(e) => setNewPillar(e.target.value as PillarCode)}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setNewPillar(e.target.value as PillarCode)}
                       className="w-full rounded-md border border-app bg-app-canvas px-3 py-2 text-sm text-app-foreground"
                       data-testid="portfolio-item-pillar-select"
                     >
@@ -522,7 +524,7 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
                   <span className="text-xs font-medium text-app-muted">Description</span>
                   <textarea
                     value={newDescription}
-                    onChange={(e) => setNewDescription(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewDescription(e.target.value)}
                     placeholder="Describe what you learned and how you demonstrated this capability..."
                     className="w-full rounded-md border border-app bg-app-canvas px-3 py-2 text-sm text-app-foreground min-h-20"
                     data-testid="portfolio-item-description-input"
@@ -534,7 +536,7 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
                   <input
                     type="url"
                     value={newArtifactUrl}
-                    onChange={(e) => setNewArtifactUrl(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewArtifactUrl(e.target.value)}
                     placeholder="https://..."
                     className="w-full rounded-md border border-app bg-app-canvas px-3 py-2 text-sm text-app-foreground"
                     data-testid="portfolio-item-artifact-url-input"
@@ -585,7 +587,7 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
               </div>
             ) : (
               <ul className="grid gap-3" data-testid="portfolio-items-list">
-                {portfolioItems.map((item) => (
+                {portfolioItems.map((item: PortfolioItem) => (
                   <li
                     key={item.id}
                     className="rounded-xl border border-app bg-app-surface-raised p-4 space-y-3"
@@ -670,7 +672,7 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
                     {item.linkedCapabilityTitles.length > 0 && (
                       <div className="flex flex-wrap gap-1.5" data-testid={`linked-capabilities-${item.id}`}>
                         <span className="text-xs text-app-muted">Capabilities:</span>
-                        {item.linkedCapabilityTitles.map((title, i) => (
+                        {item.linkedCapabilityTitles.map((title: string, i: number) => (
                           <span
                             key={i}
                             className="rounded-full bg-app-canvas px-2 py-0.5 text-xs text-app-foreground"

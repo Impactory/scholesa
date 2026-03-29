@@ -547,7 +547,7 @@ export default function HqCapabilityFrameworkRenderer({ ctx }: CustomRouteRender
                 </div>
               ) : (
                 <ul className="grid gap-3">
-                  {items.map((cap) => (
+                  {items.map((cap: CapabilityRecord) => (
                     <li
                       key={cap.id}
                       className="rounded-xl border border-app bg-app-surface-raised p-4"
@@ -563,7 +563,7 @@ export default function HqCapabilityFrameworkRenderer({ ctx }: CustomRouteRender
                             <span className="text-xs font-medium text-app-muted">Descriptor</span>
                             <textarea
                               value={editDescriptor}
-                              onChange={(e) => setEditDescriptor(e.target.value)}
+                              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setEditDescriptor(e.target.value)}
                               className="w-full rounded-md border border-app bg-app-canvas px-3 py-2 text-sm min-h-16"
                             />
                           </label>
@@ -571,7 +571,7 @@ export default function HqCapabilityFrameworkRenderer({ ctx }: CustomRouteRender
                             <span className="text-xs font-medium text-app-muted">
                               Progression Levels
                             </span>
-                            {editProgressionLevels.map((level, i) => (
+                            {editProgressionLevels.map((level: ProgressionLevel, i: number) => (
                               <div key={level.level} className="flex gap-2 items-start">
                                 <span className="mt-2 w-6 text-center text-xs font-bold text-app-muted">
                                   {level.level}
@@ -579,7 +579,7 @@ export default function HqCapabilityFrameworkRenderer({ ctx }: CustomRouteRender
                                 <input
                                   type="text"
                                   value={level.label}
-                                  onChange={(e) =>
+                                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                                     updateProgressionLevel(
                                       editProgressionLevels,
                                       setEditProgressionLevels,
@@ -593,7 +593,7 @@ export default function HqCapabilityFrameworkRenderer({ ctx }: CustomRouteRender
                                 <input
                                   type="text"
                                   value={level.description}
-                                  onChange={(e) =>
+                                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                                     updateProgressionLevel(
                                       editProgressionLevels,
                                       setEditProgressionLevels,
@@ -638,7 +638,7 @@ export default function HqCapabilityFrameworkRenderer({ ctx }: CustomRouteRender
                             )}
                             {cap.progressionLevels.length > 0 && (
                               <div className="mt-2 flex flex-wrap gap-1.5">
-                                {cap.progressionLevels.map((level) => (
+                                {cap.progressionLevels.map((level: ProgressionLevel) => (
                                   <span
                                     key={level.level}
                                     className="inline-flex items-center gap-1 rounded-full bg-app-canvas px-2 py-0.5 text-xs text-app-muted"
@@ -663,8 +663,8 @@ export default function HqCapabilityFrameworkRenderer({ ctx }: CustomRouteRender
                               setEditDescriptor(cap.descriptor);
                               setEditProgressionLevels(
                                 cap.progressionLevels.length > 0
-                                  ? cap.progressionLevels.map((l) => ({ ...l }))
-                                  : DEFAULT_PROGRESSION_LEVELS.map((l) => ({ ...l }))
+                                  ? cap.progressionLevels.map((l: ProgressionLevel) => ({ ...l }))
+                                  : DEFAULT_PROGRESSION_LEVELS.map((l: ProgressionLevel) => ({ ...l }))
                               );
                             }}
                             className="rounded-md border border-app px-3 py-1.5 text-xs font-medium text-app-foreground hover:bg-app-canvas"
@@ -688,7 +688,7 @@ export default function HqCapabilityFrameworkRenderer({ ctx }: CustomRouteRender
           <div className="flex gap-3">
             <button
               type="button"
-              onClick={() => setShowCreateRubric((prev) => !prev)}
+              onClick={() => setShowCreateRubric((prev: boolean) => !prev)}
               className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
               data-testid="create-rubric-toggle"
             >
@@ -714,7 +714,7 @@ export default function HqCapabilityFrameworkRenderer({ ctx }: CustomRouteRender
                   <input
                     type="text"
                     value={newRubricName}
-                    onChange={(e) => setNewRubricName(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewRubricName(e.target.value)}
                     placeholder="e.g. K-3 Evidence Quality Rubric"
                     className="w-full rounded-md border border-app bg-app-canvas px-3 py-2 text-sm"
                   />
@@ -724,7 +724,7 @@ export default function HqCapabilityFrameworkRenderer({ ctx }: CustomRouteRender
                   <span className="text-xs font-medium text-app-muted">Pillar</span>
                   <select
                     value={newRubricPillar}
-                    onChange={(e) => setNewRubricPillar(e.target.value as PillarCode)}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setNewRubricPillar(e.target.value as PillarCode)}
                     className="w-full rounded-md border border-app bg-app-canvas px-3 py-2 text-sm"
                   >
                     {PILLAR_OPTIONS.map((p) => (
@@ -740,7 +740,7 @@ export default function HqCapabilityFrameworkRenderer({ ctx }: CustomRouteRender
                 <span className="text-xs font-medium text-app-muted">Description</span>
                 <textarea
                   value={newRubricDescription}
-                  onChange={(e) => setNewRubricDescription(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewRubricDescription(e.target.value)}
                   placeholder="What this rubric evaluates..."
                   className="w-full rounded-md border border-app bg-app-canvas px-3 py-2 text-sm min-h-20"
                 />
@@ -771,7 +771,7 @@ export default function HqCapabilityFrameworkRenderer({ ctx }: CustomRouteRender
             </div>
           ) : (
             <ul className="grid gap-3">
-              {rubrics.map((rubric) => (
+              {rubrics.map((rubric: RubricRecord) => (
                 <li
                   key={rubric.id}
                   className="rounded-xl border border-app bg-app-surface-raised p-4"
