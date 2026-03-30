@@ -10,6 +10,7 @@ import 'package:scholesa_app/modules/hq_admin/hq_integrations_health_page.dart';
 import 'package:scholesa_app/modules/hq_admin/hq_safety_page.dart';
 import 'package:scholesa_app/services/export_service.dart';
 import 'package:scholesa_app/ui/theme/scholesa_theme.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 String? _savedFileName;
 String? _savedFileContent;
@@ -59,6 +60,7 @@ void main() {
     _savedFileContent = null;
     _clipboardText = null;
     ExportService.instance.debugSaveTextFile = null;
+    SharedPreferences.setMockInitialValues(<String, Object>{});
   });
 
   testWidgets('HQ safety detail sheets remove the fake full report CTA',
