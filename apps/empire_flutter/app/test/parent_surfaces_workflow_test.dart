@@ -666,7 +666,12 @@ Future<void> _approveSubmittedMission(
   await tester.pumpAndSettle();
 
   await tester.scrollUntilVisible(
-    find.text('Reflection'),
+    find.byWidgetPredicate(
+      (Widget widget) =>
+          widget is Text &&
+          widget.data == 'Reflection' &&
+          widget.style?.fontWeight == FontWeight.w600,
+    ),
     200,
     scrollable: find.byType(Scrollable).last,
   );
