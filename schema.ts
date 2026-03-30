@@ -140,6 +140,7 @@ export interface Mission {
   description: string;
   pillarCodes: string[];
   capabilityIds?: string[];
+  /** @deprecated Resolve titles from capabilities collection using capabilityIds */
   capabilityTitles?: string[];
   difficulty: 'beginner' | 'intermediate' | 'advanced';
   estimatedDurationMinutes?: number;
@@ -187,6 +188,7 @@ export interface PortfolioItem {
   relatedSkillIds?: string[];
   evidenceRecordIds?: string[];
   capabilityIds?: string[];
+  /** @deprecated Resolve titles from capabilities collection using capabilityIds */
   capabilityTitles?: string[];
   growthEventIds?: string[];
   missionAttemptId?: string;

@@ -52,7 +52,8 @@ export interface Mission {
   content: string;
   xp: number;
   order: number;
-  skills?: string[];
+  skills?: string[]; // Deprecated — use capabilityIds
+  capabilityIds?: string[]; // References to capabilities collection
   pillarCodes: PillarCode[];
 }
 
@@ -200,7 +201,6 @@ export interface PortfolioItem {
   artifacts: string[]; // URLs
   evidenceRecordIds?: string[];
   capabilityIds?: string[];
-  capabilityTitles?: string[];
   growthEventIds?: string[];
   missionAttemptId?: string;
   rubricApplicationId?: string;
@@ -1150,7 +1150,6 @@ export interface EvidenceRecord {
   sessionOccurrenceId?: string;
   description: string;
   capabilityId?: string;
-  capabilityLabel?: string;
   capabilityMapped: boolean;
   phaseKey?: 'retrieval_warm_up' | 'mini_lesson' | 'build_sprint' | 'checkpoint' | 'share_out' | 'reflection';
   portfolioCandidate: boolean;
@@ -1179,8 +1178,7 @@ export interface RubricApplication {
   criteria: RubricCriterionScore[];
   totalRawScore: number;
   totalMaxScore: number;
-  capabilityIds: string[];
-  capabilityTitles: string[];
+  capabilityIds: string[]; // Primary: IDs into capabilities collection
   feedback?: string;
   createdAt: Timestamp;
 }
@@ -1188,8 +1186,7 @@ export interface RubricApplication {
 export interface RubricCriterionScore {
   label: string;
   pillarCode?: PillarCode;
-  capabilityId?: string;
-  capabilityTitle?: string;
+  capabilityId: string; // Required: reference to capabilities collection
   score: number;
   maxScore: number;
   notes?: string;

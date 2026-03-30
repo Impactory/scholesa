@@ -2508,7 +2508,7 @@ async function buildParentLearnerSummary(params: {
     attendanceRate = null;
   }
 
-  const [portfolioSnap, evidenceSnap, masterySnap, growthSnap, reflectionsSnap, missionAttemptsSnap, interactionEventsSnap] =
+  const [portfolioSnap, evidenceSnap, masterySnap, growthSnap, reflectionsSnap, missionAttemptsSnap, interactionEventsSnap, capabilitiesSnap] =
     await Promise.all([
       admin.firestore().collection('portfolioItems').where('learnerId', '==', learnerId).limit(100).get().catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
       admin.firestore().collection('evidenceRecords').where('learnerId', '==', learnerId).limit(100).get().catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
@@ -2517,6 +2517,9 @@ async function buildParentLearnerSummary(params: {
       admin.firestore().collection('learnerReflections').where('learnerId', '==', learnerId).limit(100).get().catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
       admin.firestore().collection('missionAttempts').where('learnerId', '==', learnerId).limit(100).get().catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
       admin.firestore().collection('interactionEvents').where('actorId', '==', learnerId).limit(400).get().catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
+      siteId
+        ? admin.firestore().collection('capabilities').where('siteId', '==', siteId).get().catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] }))
+        : Promise.resolve({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] }),
     ]);
 
   const includeForSite = (data: Record<string, unknown>): boolean => {
@@ -2546,6 +2549,14 @@ async function buildParentLearnerSummary(params: {
   const interactionEventRows: Array<Record<string, unknown>> = interactionEventsSnap.docs
     .map((doc) => ({ id: doc.id, ...(doc.data() as Record<string, unknown>) }))
     .filter(includeForSite);
+
+  // Build authoritative capability ID → title map from the capabilities collection
+  const capabilityTitlesById = new Map<string, string>();
+  for (const doc of capabilitiesSnap.docs) {
+    const data = doc.data();
+    const title = typeof data.title === 'string' ? data.title.trim() : '';
+    if (title) capabilityTitlesById.set(doc.id, title);
+  }
 
   const reviewerIds = Array.from(
     new Set(
@@ -2892,7 +2903,9 @@ async function buildParentLearnerSummary(params: {
         completedAt: parseDateFromUnknown(row.updatedAt ?? row.createdAt)?.toISOString() ?? now.toISOString(),
         verificationStatus: typeof row.verificationStatus === 'string' ? row.verificationStatus.trim() : null,
         evidenceLinked: Array.isArray(row.evidenceRecordIds) && row.evidenceRecordIds.length > 0,
-        capabilityTitles: Array.isArray(row.capabilityTitles) ? row.capabilityTitles.filter((value) => typeof value === 'string') : [],
+        capabilityTitles: Array.isArray(row.capabilityIds)
+          ? row.capabilityIds.filter((v): v is string => typeof v === 'string').map((id) => capabilityTitlesById.get(id.trim()) ?? id.trim()).filter(Boolean)
+          : [],
         evidenceRecordIds: Array.isArray(row.evidenceRecordIds) ? row.evidenceRecordIds.filter((value) => typeof value === 'string') : [],
         missionAttemptId: missionAttemptId || null,
         verificationPrompt: typeof row.verificationPrompt === 'string' && row.verificationPrompt.trim() ? row.verificationPrompt.trim() : null,
@@ -2969,15 +2982,8 @@ async function buildParentLearnerSummary(params: {
       const matchingInteractionEvents: Array<Record<string, unknown>> = interactionEventRows.filter((entry) =>
         typeof entry.sessionOccurrenceId === 'string' && sessionOccurrenceIds.has(entry.sessionOccurrenceId.trim()),
       );
-      const capabilityTitles = matchingPortfolio.flatMap((entry) =>
-        Array.isArray(entry.capabilityTitles) ? entry.capabilityTitles : [],
-      );
-      const evidenceTitles = matchingEvidence
-        .map((entry) => (typeof entry.capabilityLabel === 'string' ? entry.capabilityLabel.trim() : ''))
-        .filter(Boolean);
-      const title = capabilityTitles.find((value) => typeof value === 'string' && value.trim())
-        ?? evidenceTitles[0]
-        ?? 'Capability title unavailable';
+      const capabilityId = typeof row.capabilityId === 'string' ? row.capabilityId.trim() : '';
+      const title = capabilityTitlesById.get(capabilityId) ?? capabilityId || 'Capability title unavailable';
       const latestLevel = typeof row.latestLevel === 'number' && Number.isFinite(row.latestLevel)
         ? Math.round(row.latestLevel)
         : null;
@@ -3205,29 +3211,6 @@ async function buildParentLearnerSummary(params: {
     claims: passportClaims,
   };
 
-  const capabilityTitlesById = new Map<string, string>();
-  evidenceRows.forEach((row) => {
-    const capabilityId = typeof row.capabilityId === 'string' ? row.capabilityId.trim() : '';
-    const capabilityLabel = typeof row.capabilityLabel === 'string' ? row.capabilityLabel.trim() : '';
-    if (capabilityId && capabilityLabel) {
-      capabilityTitlesById.set(capabilityId, capabilityLabel);
-    }
-  });
-  portfolioRows.forEach((row) => {
-    const capabilityIds = Array.isArray(row.capabilityIds)
-      ? row.capabilityIds.filter((value): value is string => typeof value === 'string')
-      : [];
-    const capabilityTitles = Array.isArray(row.capabilityTitles)
-      ? row.capabilityTitles.filter((value): value is string => typeof value === 'string')
-      : [];
-    capabilityIds.forEach((capabilityId, index) => {
-      const trimmedCapabilityId = capabilityId.trim();
-      const capabilityTitle = capabilityTitles[index]?.trim() ?? '';
-      if (trimmedCapabilityId && capabilityTitle) {
-        capabilityTitlesById.set(trimmedCapabilityId, capabilityTitle);
-      }
-    });
-  });
   const growthTimeline = growthRows
     .map((row) => {
       const capabilityId = typeof row.capabilityId === 'string' ? row.capabilityId.trim() : '';
@@ -8048,3 +8031,212 @@ async function generateNudgesForLearner(learnerId: string, siteId: string) {
     expiresAt: Timestamp.fromMillis(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
   });
 }
+
+// ─── Evidence → Rubric → Growth callable ─────────────────────────────────────
+// Replicates Flutter's submitReview() chain for the web platform:
+// 1. Creates a RubricApplication doc
+// 2. For each distinct capabilityId in the scores, creates a CapabilityGrowthEvent
+//    and upserts CapabilityMastery
+// 3. Links the matching EvidenceRecords (sets rubricStatus + growthStatus)
+// Uses a Firestore batch for all-or-nothing atomicity.
+
+interface RubricScoreInput {
+  criterionId: string;
+  capabilityId: string;
+  pillarCode: string;
+  score: number;
+  maxScore: number;
+}
+
+export const applyRubricToEvidence = onCall(async (request: CallableRequest<{
+  evidenceRecordIds: string[];
+  learnerId: string;
+  siteId: string;
+  rubricId?: string;
+  scores: RubricScoreInput[];
+}>) => {
+  const educatorId = request.auth?.uid;
+  await requireRoleAndSite(educatorId, ['educator', 'siteLead', 'site', 'hq', 'admin'], request.data?.siteId);
+
+  const { evidenceRecordIds, learnerId, siteId, rubricId, scores } = request.data ?? {};
+
+  if (!Array.isArray(evidenceRecordIds) || evidenceRecordIds.length === 0) {
+    throw new HttpsError('invalid-argument', 'evidenceRecordIds is required.');
+  }
+  if (!learnerId || typeof learnerId !== 'string') {
+    throw new HttpsError('invalid-argument', 'learnerId is required.');
+  }
+  if (!siteId || typeof siteId !== 'string') {
+    throw new HttpsError('invalid-argument', 'siteId is required.');
+  }
+  if (!Array.isArray(scores) || scores.length === 0) {
+    throw new HttpsError('invalid-argument', 'scores array is required and must be non-empty.');
+  }
+  for (const s of scores) {
+    if (!s.capabilityId || typeof s.score !== 'number' || typeof s.maxScore !== 'number') {
+      throw new HttpsError('invalid-argument', 'Each score must have capabilityId, score, and maxScore.');
+    }
+    if (s.score < 0 || s.maxScore <= 0 || s.score > s.maxScore) {
+      throw new HttpsError('invalid-argument', `Invalid score values: ${s.score}/${s.maxScore}`);
+    }
+  }
+
+  const db = admin.firestore();
+  const batch = db.batch();
+
+  // 1. Create the RubricApplication document
+  const rubricAppRef = db.collection('rubricApplications').doc();
+  batch.set(rubricAppRef, {
+    learnerId,
+    siteId,
+    educatorId,
+    rubricId: rubricId ?? null,
+    evidenceRecordIds,
+    scores: scores.map((s) => ({
+      criterionId: s.criterionId,
+      capabilityId: s.capabilityId,
+      pillarCode: s.pillarCode,
+      score: s.score,
+      maxScore: s.maxScore,
+    })),
+    createdAt: FieldValue.serverTimestamp(),
+  });
+
+  // Group scores by capabilityId
+  const scoresByCapability = new Map<string, RubricScoreInput[]>();
+  for (const s of scores) {
+    const existing = scoresByCapability.get(s.capabilityId) ?? [];
+    existing.push(s);
+    scoresByCapability.set(s.capabilityId, existing);
+  }
+
+  const growthEventIds: string[] = [];
+
+  // 2. For each capability: create growth event + upsert mastery
+  for (const [capabilityId, capabilityScores] of scoresByCapability) {
+    const rawScore = capabilityScores.reduce((sum, s) => sum + s.score, 0);
+    const maxScore = capabilityScores.reduce((sum, s) => sum + s.maxScore, 0);
+    const pillarCode = capabilityScores.find((s) => s.pillarCode)?.pillarCode ?? '';
+
+    // Level 1-4 from normalized score
+    const nextLevel = maxScore <= 0
+      ? 0
+      : Math.max(1, Math.min(4, Math.ceil((rawScore / maxScore) * 4)));
+
+    // Upsert CapabilityMastery
+    const masteryId = `${learnerId}_${capabilityId}`;
+    const masteryRef = db.collection('capabilityMastery').doc(masteryId);
+    const masterySnap = await masteryRef.get();
+    const masteryData = masterySnap.data() ?? {};
+    const highestLevel = Math.max(nextLevel, (masteryData.highestLevel as number) ?? 0);
+    const priorEvidenceIds: string[] = Array.isArray(masteryData.evidenceIds) ? masteryData.evidenceIds : [];
+    const mergedEvidenceIds = [...new Set([...evidenceRecordIds, ...priorEvidenceIds])];
+
+    batch.set(masteryRef, {
+      learnerId,
+      capabilityId,
+      siteId,
+      pillarCode,
+      latestLevel: nextLevel,
+      highestLevel,
+      latestEvidenceId: evidenceRecordIds[0],
+      evidenceIds: mergedEvidenceIds,
+      createdAt: masteryData.createdAt ?? FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+
+    // Create CapabilityGrowthEvent
+    const growthEventRef = db.collection('capabilityGrowthEvents').doc();
+    growthEventIds.push(growthEventRef.id);
+    batch.set(growthEventRef, {
+      learnerId,
+      capabilityId,
+      siteId,
+      pillarCode,
+      level: nextLevel,
+      rawScore,
+      maxScore,
+      linkedEvidenceRecordIds: evidenceRecordIds,
+      linkedPortfolioItemIds: [],
+      rubricApplicationId: rubricAppRef.id,
+      educatorId,
+      createdAt: FieldValue.serverTimestamp(),
+    });
+  }
+
+  // 3. Link evidence records
+  for (const evidenceId of evidenceRecordIds) {
+    const evidenceRef = db.collection('evidenceRecords').doc(evidenceId);
+    batch.update(evidenceRef, {
+      rubricStatus: 'applied',
+      growthStatus: 'recorded',
+      rubricApplicationId: rubricAppRef.id,
+      growthEventId: growthEventIds[0] ?? null,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+  }
+
+  await batch.commit();
+
+  // 4. Enrich portfolio — create/update a PortfolioItem linking evidence → capabilities → growth
+  const portfolioItemIds: string[] = [];
+  const portfolioBatch = db.batch();
+  const capabilityIds = Array.from(scoresByCapability.keys());
+
+  // Read evidence records to extract artifact data for portfolio
+  const evidenceDocs = await Promise.all(
+    evidenceRecordIds.map((id) => db.collection('evidenceRecords').doc(id).get())
+  );
+
+  // Group pillar codes from scored capabilities
+  const pillarCodes = [...new Set(scores.map((s) => s.pillarCode).filter(Boolean))];
+
+  for (const evidenceDoc of evidenceDocs) {
+    if (!evidenceDoc.exists) continue;
+    const evidenceData = evidenceDoc.data() ?? {};
+    const portfolioId = `rubric-${evidenceDoc.id}`;
+    const portfolioRef = db.collection('portfolioItems').doc(portfolioId);
+
+    portfolioBatch.set(portfolioRef, {
+      learnerId,
+      siteId,
+      title: typeof evidenceData.description === 'string'
+        ? evidenceData.description.slice(0, 100)
+        : 'Reviewed evidence',
+      description: typeof evidenceData.description === 'string'
+        ? evidenceData.description
+        : '',
+      pillarCodes,
+      artifacts: typeof evidenceData.artifactUrl === 'string' ? [evidenceData.artifactUrl] : [],
+      evidenceRecordIds: [evidenceDoc.id],
+      capabilityIds,
+      growthEventIds,
+      rubricApplicationId: rubricAppRef.id,
+      educatorId,
+      verificationStatus: 'reviewed',
+      proofOfLearningStatus: evidenceData.portfolioCandidate ? 'partial' : 'not-available',
+      aiDisclosureStatus: evidenceData.aiDisclosureStatus ?? 'not-available',
+      source: 'rubric_application',
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+
+    portfolioItemIds.push(portfolioId);
+  }
+
+  // Update growth events with linked portfolio item IDs
+  for (const growthEventId of growthEventIds) {
+    portfolioBatch.update(db.collection('capabilityGrowthEvents').doc(growthEventId), {
+      linkedPortfolioItemIds: portfolioItemIds,
+    });
+  }
+
+  await portfolioBatch.commit();
+
+  return {
+    rubricApplicationId: rubricAppRef.id,
+    growthEventIds,
+    portfolioItemIds,
+    capabilitiesProcessed: scoresByCapability.size,
+  };
+});

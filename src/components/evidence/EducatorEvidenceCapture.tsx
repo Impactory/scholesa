@@ -12,13 +12,14 @@ import {
 } from 'firebase/firestore';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import {
-  capabilitiesCollection,
   evidenceRecordsCollection,
   usersCollection,
 } from '@/src/firebase/firestore/collections';
+import { useCapabilities } from '@/src/lib/capabilities/useCapabilities';
 import { RoleRouteGuard } from '@/src/components/auth/RoleRouteGuard';
+import { RubricReviewPanel } from '@/src/components/evidence/RubricReviewPanel';
 import { Spinner } from '@/src/components/ui/Spinner';
-import type { Capability, EvidenceRecord } from '@/src/types/schema';
+import type { EvidenceRecord } from '@/src/types/schema';
 
 const PHASE_OPTIONS: { value: EvidenceRecord['phaseKey']; label: string }[] = [
   { value: 'retrieval_warm_up', label: 'Retrieval / Warm-up' },
@@ -37,8 +38,11 @@ interface LearnerOption {
 interface RecentEvidence {
   id: string;
   learnerName: string;
+  learnerId: string;
   description: string;
-  capabilityLabel: string | null;
+  capabilityId?: string;
+  capabilityMapped: boolean;
+  rubricStatus: string;
   phaseKey: string | null;
   portfolioCandidate: boolean;
 }
@@ -47,8 +51,8 @@ export function EducatorEvidenceCapture() {
   const { user, profile, loading: authLoading } = useAuthContext();
   const siteId = profile?.studioId ?? null;
 
+  const { capabilityList: capabilities, resolveTitle, loading: capLoading } = useCapabilities(siteId);
   const [learners, setLearners] = useState<LearnerOption[]>([]);
-  const [capabilities, setCapabilities] = useState<Capability[]>([]);
   const [recentEvidence, setRecentEvidence] = useState<RecentEvidence[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -58,9 +62,9 @@ export function EducatorEvidenceCapture() {
   const [selectedLearnerId, setSelectedLearnerId] = useState('');
   const [description, setDescription] = useState('');
   const [selectedCapabilityId, setSelectedCapabilityId] = useState('');
-  const [freeTextCapability, setFreeTextCapability] = useState('');
   const [phaseKey, setPhaseKey] = useState<EvidenceRecord['phaseKey']>(undefined);
   const [portfolioCandidate, setPortfolioCandidate] = useState(false);
+  const [reviewingEvidence, setReviewingEvidence] = useState<RecentEvidence | null>(null);
 
   const learnerNameMap = useMemo(() => {
     const map = new Map<string, string>();
@@ -77,11 +81,10 @@ export function EducatorEvidenceCapture() {
     if (!siteId) return;
     setLoading(true);
     try {
-      const [learnerSnap, capabilitySnap, evidenceSnap] = await Promise.all([
+      const [learnerSnap, evidenceSnap] = await Promise.all([
         getDocs(
           query(usersCollection, where('studioId', '==', siteId), where('role', '==', 'learner'), orderBy('displayName'))
         ),
-        getDocs(query(capabilitiesCollection, where('siteId', '==', siteId))),
         getDocs(
           query(evidenceRecordsCollection, where('siteId', '==', siteId), orderBy('createdAt', 'desc'), limit(20))
         ),
@@ -93,7 +96,6 @@ export function EducatorEvidenceCapture() {
           displayName: d.data().displayName,
         }))
       );
-      setCapabilities(capabilitySnap.docs.map((d) => ({ ...d.data(), id: d.id })));
 
       const learnerNames = new Map<string, string>();
       for (const d of learnerSnap.docs) learnerNames.set(d.data().uid, d.data().displayName);
@@ -104,8 +106,11 @@ export function EducatorEvidenceCapture() {
           return {
             id: d.id,
             learnerName: learnerNames.get(data.learnerId) ?? data.learnerId,
+            learnerId: data.learnerId ?? '',
             description: data.description,
-            capabilityLabel: data.capabilityLabel ?? null,
+            capabilityId: data.capabilityId ?? null,
+            capabilityMapped: data.capabilityMapped,
+            rubricStatus: data.rubricStatus ?? 'pending',
             phaseKey: data.phaseKey ?? null,
             portfolioCandidate: data.portfolioCandidate,
           };
@@ -125,7 +130,6 @@ export function EducatorEvidenceCapture() {
   const resetForm = () => {
     setDescription('');
     setSelectedCapabilityId('');
-    setFreeTextCapability('');
     setPhaseKey(undefined);
     setPortfolioCandidate(false);
     // Keep selectedLearnerId for quick successive logs
@@ -136,9 +140,8 @@ export function EducatorEvidenceCapture() {
     setSaving(true);
     setSuccessMessage(null);
 
-    const capabilityLabel =
-      selectedCapability?.title ?? (freeTextCapability.trim() || null);
     const capabilityId = selectedCapability?.id ?? null;
+    const mapped = !!capabilityId;
 
     try {
       await addDoc(evidenceRecordsCollection, {
@@ -147,8 +150,7 @@ export function EducatorEvidenceCapture() {
         siteId,
         description: description.trim(),
         capabilityId: capabilityId ?? undefined,
-        capabilityLabel: capabilityLabel ?? undefined,
-        capabilityMapped: !!capabilityId,
+        capabilityMapped: mapped,
         phaseKey,
         portfolioCandidate,
         rubricStatus: 'pending' as const,
@@ -162,12 +164,15 @@ export function EducatorEvidenceCapture() {
       resetForm();
 
       // Prepend to recent evidence for instant feedback
-      setRecentEvidence((prev) => [
+      setRecentEvidence((prev: RecentEvidence[]) => [
         {
           id: `temp-${Date.now()}`,
           learnerName,
+          learnerId: selectedLearnerId,
           description: description.trim(),
-          capabilityLabel,
+          capabilityId: capabilityId ?? undefined,
+          capabilityMapped: mapped,
+          rubricStatus: 'pending',
           phaseKey: phaseKey ?? null,
           portfolioCandidate,
         },
@@ -283,13 +288,10 @@ export function EducatorEvidenceCapture() {
                 <select
                   data-testid="evidence-capability"
                   value={selectedCapabilityId}
-                  onChange={(e) => {
-                    setSelectedCapabilityId(e.target.value);
-                    if (e.target.value) setFreeTextCapability('');
-                  }}
+                  onChange={(e) => setSelectedCapabilityId(e.target.value)}
                   className="w-full rounded-md border border-app bg-app-canvas px-3 py-2 text-sm text-app-foreground"
                 >
-                  <option value="">Select or type below</option>
+                  <option value="">(unmapped — select a capability)</option>
                   {capabilities.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.title} ({c.pillarCode.replace(/_/g, ' ')})
@@ -297,14 +299,10 @@ export function EducatorEvidenceCapture() {
                   ))}
                 </select>
               ) : (
-                <input
-                  data-testid="evidence-capability-text"
-                  type="text"
-                  value={freeTextCapability}
-                  onChange={(e) => setFreeTextCapability(e.target.value)}
-                  placeholder="e.g., Problem Solving"
-                  className="w-full rounded-md border border-app bg-app-canvas px-3 py-2 text-sm text-app-foreground"
-                />
+                <p className="text-xs text-amber-700 bg-amber-50 rounded-md px-3 py-2 border border-amber-200">
+                  No capabilities defined for this site. Ask HQ to create the capability framework.
+                  Evidence will be saved as unmapped.
+                </p>
               )}
             </label>
 
@@ -321,20 +319,7 @@ export function EducatorEvidenceCapture() {
             </div>
           </div>
 
-          {/* Free-text capability fallback when dropdown is present but none selected */}
-          {capabilities.length > 0 && !selectedCapabilityId && (
-            <label className="block space-y-1">
-              <span className="text-xs font-medium text-app-muted">Or type capability label</span>
-              <input
-                data-testid="evidence-capability-text"
-                type="text"
-                value={freeTextCapability}
-                onChange={(e) => setFreeTextCapability(e.target.value)}
-                placeholder="Free-text capability if not in list"
-                className="w-full rounded-md border border-app bg-app-canvas px-3 py-2 text-sm text-app-foreground"
-              />
-            </label>
-          )}
+
 
           {/* Submit */}
           <button
@@ -347,6 +332,23 @@ export function EducatorEvidenceCapture() {
             {saving ? 'Saving...' : 'Log Evidence'}
           </button>
         </div>
+
+        {/* Rubric review panel */}
+        {reviewingEvidence && siteId && (
+          <RubricReviewPanel
+            evidenceRecordIds={[reviewingEvidence.id]}
+            learnerId={reviewingEvidence.learnerId}
+            learnerName={reviewingEvidence.learnerName}
+            siteId={siteId}
+            description={reviewingEvidence.description}
+            capabilityId={reviewingEvidence.capabilityId}
+            onComplete={() => {
+              setReviewingEvidence(null);
+              void loadData();
+            }}
+            onCancel={() => setReviewingEvidence(null)}
+          />
+        )}
 
         {/* Recent evidence log */}
         <div className="rounded-xl border border-app bg-app-surface p-4" data-testid="evidence-recent">
@@ -376,10 +378,27 @@ export function EducatorEvidenceCapture() {
                         Portfolio
                       </span>
                     )}
+                    {ev.rubricStatus === 'pending' && (
+                      <button
+                        type="button"
+                        onClick={() => setReviewingEvidence(ev)}
+                        className="shrink-0 rounded bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary hover:bg-primary/20"
+                      >
+                        Review
+                      </button>
+                    )}
+                    {ev.rubricStatus === 'applied' && (
+                      <span className="shrink-0 rounded bg-green-100 px-1.5 py-0.5 text-xs font-medium text-green-800">
+                        Reviewed
+                      </span>
+                    )}
                   </div>
                   <div className="mt-1 flex flex-wrap gap-2 text-xs text-app-muted">
-                    {ev.capabilityLabel && (
-                      <span className="rounded bg-app-surface px-1.5 py-0.5">{ev.capabilityLabel}</span>
+                    {ev.capabilityId && (
+                      <span className="rounded bg-app-surface px-1.5 py-0.5">{resolveTitle(ev.capabilityId)}</span>
+                    )}
+                    {!ev.capabilityMapped && (
+                      <span className="rounded bg-amber-50 text-amber-700 px-1.5 py-0.5">unmapped</span>
                     )}
                     {ev.phaseKey && (
                       <span className="rounded bg-app-surface px-1.5 py-0.5">
