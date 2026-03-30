@@ -1080,3 +1080,117 @@ export interface MotivationAnalytics {
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
+
+// --- Capability Framework & Evidence Chain ---
+
+/**
+ * A capability defined by HQ curriculum authors.
+ * Capabilities are the top-level learning outcomes that evidence maps to.
+ */
+export interface Capability {
+  id: string;
+  title: string;
+  normalizedTitle: string;
+  pillarCode: PillarCode;
+  siteId?: string | null;
+  descriptor?: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+/**
+ * Tracks a learner's current and highest mastery level for a capability.
+ * Updated whenever a rubric is applied and a growth event is recorded.
+ */
+export interface CapabilityMastery {
+  id: string;
+  learnerId: string;
+  capabilityId: string;
+  siteId: string;
+  pillarCode: PillarCode;
+  latestLevel: number;
+  highestLevel: number;
+  latestEvidenceId?: string;
+  latestMissionAttemptId?: string;
+  evidenceIds: string[];
+  growthEventIds: string[];
+  updatedAt: Timestamp;
+  createdAt: Timestamp;
+}
+
+/**
+ * Append-only record of a capability level change.
+ * Created when a rubric is applied and links evidence to capability growth.
+ */
+export interface CapabilityGrowthEvent {
+  id: string;
+  learnerId: string;
+  capabilityId: string;
+  siteId: string;
+  pillarCode: PillarCode;
+  level: number;
+  rawScore: number;
+  maxScore: number;
+  evidenceId?: string;
+  missionAttemptId?: string;
+  rubricApplicationId?: string;
+  educatorId?: string;
+  createdAt: Timestamp;
+}
+
+/**
+ * An educator-logged observation or evidence artifact captured during a live session.
+ * This is the primary evidence creation point in the chain.
+ */
+export interface EvidenceRecord {
+  id: string;
+  learnerId: string;
+  educatorId: string;
+  siteId: string;
+  sessionOccurrenceId?: string;
+  description: string;
+  capabilityId?: string;
+  capabilityLabel?: string;
+  capabilityMapped: boolean;
+  phaseKey?: 'retrieval_warm_up' | 'mini_lesson' | 'build_sprint' | 'checkpoint' | 'share_out' | 'reflection';
+  portfolioCandidate: boolean;
+  rubricStatus: 'pending' | 'applied' | 'skipped';
+  growthStatus: 'pending' | 'recorded' | 'skipped';
+  rubricApplicationId?: string;
+  growthEventId?: string;
+  artifactUrl?: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+/**
+ * A rubric application linking an educator's scoring to capabilities.
+ * Created when an educator reviews learner work against rubric criteria.
+ */
+export interface RubricApplication {
+  id: string;
+  learnerId: string;
+  educatorId: string;
+  siteId: string;
+  missionAttemptId?: string;
+  evidenceRecordId?: string;
+  rubricId?: string;
+  rubricTitle: string;
+  criteria: RubricCriterionScore[];
+  totalRawScore: number;
+  totalMaxScore: number;
+  capabilityIds: string[];
+  capabilityTitles: string[];
+  feedback?: string;
+  createdAt: Timestamp;
+}
+
+export interface RubricCriterionScore {
+  label: string;
+  pillarCode?: PillarCode;
+  capabilityId?: string;
+  capabilityTitle?: string;
+  score: number;
+  maxScore: number;
+  notes?: string;
+}

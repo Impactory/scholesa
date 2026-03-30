@@ -37,6 +37,11 @@ import type {
   SupportIntervention,
   MotivationNudge,
   MotivationConfig,
+  Capability,
+  CapabilityMastery,
+  CapabilityGrowthEvent,
+  EvidenceRecord,
+  RubricApplication,
 } from '@/src/types/schema';
 
 // Helper to create typed collection
@@ -85,3 +90,10 @@ export const learnerInteractionsCollection = createCollection<LearnerInteraction
 export const supportInterventionsCollection = createCollection<SupportIntervention>('supportInterventions');
 export const motivationNudgesCollection = createCollection<MotivationNudge>('motivationNudges');
 export const motivationConfigCollection = createCollection<MotivationConfig>('configs/motivationConfig');
+
+// Capability Framework & Evidence Chain
+export const capabilitiesCollection = createCollection<Capability>('capabilities');
+export const capabilityMasteryCollection = createCollection<CapabilityMastery>('capabilityMastery');
+export const capabilityGrowthEventsCollection = createCollection<CapabilityGrowthEvent>('capabilityGrowthEvents');
+export const evidenceRecordsCollection = createCollection<EvidenceRecord>('evidenceRecords');
+export const rubricApplicationsCollection = createCollection<RubricApplication>('rubricApplications');
