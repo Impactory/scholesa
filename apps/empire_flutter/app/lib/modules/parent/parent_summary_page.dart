@@ -183,6 +183,9 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
                 ),
                 SliverToBoxAdapter(
                     child: _buildPillarProgress(selectedLearner)),
+                if (selectedLearner.growthTimeline.length > 1)
+                  SliverToBoxAdapter(
+                      child: _buildGrowthTrendSection(selectedLearner)),
                 SliverToBoxAdapter(
                     child: _buildRecentActivity(selectedLearner)),
                 SliverToBoxAdapter(
@@ -1079,6 +1082,185 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
         ],
       ),
     );
+  }
+
+  Widget _buildGrowthTrendSection(LearnerSummary learner) {
+    // Group timeline entries by capability to show per-capability growth
+    final Map<String, List<GrowthTimelineEntry>> byCapability =
+        <String, List<GrowthTimelineEntry>>{};
+    for (final GrowthTimelineEntry entry in learner.growthTimeline) {
+      byCapability.putIfAbsent(entry.capabilityId, () => <GrowthTimelineEntry>[]).add(entry);
+    }
+    // Sort entries within each capability by date
+    for (final List<GrowthTimelineEntry> entries in byCapability.values) {
+      entries.sort((GrowthTimelineEntry a, GrowthTimelineEntry b) {
+        final DateTime da = a.occurredAt ?? DateTime(2000);
+        final DateTime db = b.occurredAt ?? DateTime(2000);
+        return da.compareTo(db);
+      });
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            _t('Capability Growth Trend'),
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _t('How capabilities have progressed over time'),
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey[600],
+            ),
+          ),
+          const SizedBox(height: 14),
+          for (final MapEntry<String, List<GrowthTimelineEntry>> cap
+              in byCapability.entries)
+            _buildCapabilityTrendRow(cap.value),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCapabilityTrendRow(List<GrowthTimelineEntry> entries) {
+    final GrowthTimelineEntry latest = entries.last;
+    final Color pillarColor = _getPillarColor(latest.pillar);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  color: pillarColor,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  latest.title,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Text(
+                '${_t('Level')} ${latest.level}/4',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: pillarColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          // Level progression bar
+          Row(
+            children: <Widget>[
+              for (int i = 0; i < entries.length; i++) ...<Widget>[
+                if (i > 0)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                    child: Icon(
+                      Icons.arrow_forward_rounded,
+                      size: 12,
+                      color: Colors.grey[400],
+                    ),
+                  ),
+                _buildLevelBadge(entries[i].level, pillarColor),
+              ],
+            ],
+          ),
+          if (latest.reviewingEducatorName?.trim().isNotEmpty == true ||
+              latest.proofOfLearningStatus?.trim().isNotEmpty == true)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Row(
+                children: <Widget>[
+                  if (latest.reviewingEducatorName?.trim().isNotEmpty == true)
+                    Text(
+                      '${_t('Reviewed by')} ${latest.reviewingEducatorName}',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.grey[500],
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  if (latest.reviewingEducatorName?.trim().isNotEmpty == true &&
+                      latest.proofOfLearningStatus?.trim().isNotEmpty == true)
+                    Text(
+                      ' · ',
+                      style: TextStyle(fontSize: 10, color: Colors.grey[400]),
+                    ),
+                  if (latest.proofOfLearningStatus?.trim().isNotEmpty == true)
+                    Text(
+                      _formatTimelineProofStatus(
+                          latest.proofOfLearningStatus!),
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.grey[500],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLevelBadge(int level, Color baseColor) {
+    final double opacity = level / 4.0;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: baseColor.withValues(alpha: 0.1 + (opacity * 0.25)),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        '$level',
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: baseColor,
+        ),
+      ),
+    );
+  }
+
+  Color _getPillarColor(String pillar) {
+    switch (pillar) {
+      case 'Future Skills':
+        return const Color(0xFF3B82F6);
+      case 'Leadership & Agency':
+        return const Color(0xFF8B5CF6);
+      case 'Impact & Innovation':
+        return const Color(0xFF10B981);
+      default:
+        return Colors.grey;
+    }
   }
 
   Widget _buildRecentActivity(LearnerSummary learner) {

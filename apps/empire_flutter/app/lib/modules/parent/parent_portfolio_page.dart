@@ -208,6 +208,9 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
               _buildAiCoachingSection(context),
               if (service.learnerSummaries.isNotEmpty)
                 _buildLearnerSnapshotStrip(service),
+              if (service.learnerSummaries
+                  .any((LearnerSummary l) => l.ideationPassport.claims.isNotEmpty))
+                _buildPassportClaimsSection(service),
               Expanded(
                 child: TabBarView(
                   controller: _tabController,
@@ -402,6 +405,218 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
               fontWeight: FontWeight.w700,
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  String _levelLabel(int level) {
+    switch (level) {
+      case 1:
+        return _t('Beginning');
+      case 2:
+        return _t('Developing');
+      case 3:
+        return _t('Proficient');
+      case 4:
+        return _t('Advanced');
+      default:
+        return _t('Not assessed');
+    }
+  }
+
+  Color _levelColor(int level) {
+    switch (level) {
+      case 1:
+        return Colors.orange;
+      case 2:
+        return Colors.amber;
+      case 3:
+        return Colors.teal;
+      case 4:
+        return Colors.green;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  Widget _buildPassportClaimsSection(ParentService service) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            _t('Capability Claims'),
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          for (final LearnerSummary learner in service.learnerSummaries)
+            if (learner.ideationPassport.claims.isNotEmpty)
+              _buildLearnerClaimsBlock(learner),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLearnerClaimsBlock(LearnerSummary learner) {
+    final List<PassportClaim> claims = learner.ideationPassport.claims;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        if (claims.length > 1 ||
+            (claims.isNotEmpty))
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6, top: 4),
+            child: Text(
+              _displayLearnerName(learner.learnerName),
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: ScholesaColors.textSecondary,
+              ),
+            ),
+          ),
+        for (final PassportClaim claim in claims) _buildClaimCard(claim),
+        const SizedBox(height: 8),
+      ],
+    );
+  }
+
+  Widget _buildClaimCard(PassportClaim claim) {
+    final Color pillarColor = _getPillarColor(claim.pillar);
+    final Color lvlColor = _levelColor(claim.latestLevel);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: ScholesaColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border(
+          left: BorderSide(color: pillarColor, width: 4),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          // Title + level row
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  claim.title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: lvlColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  _levelLabel(claim.latestLevel),
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: lvlColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+
+          // Pillar + evidence count row
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: <Widget>[
+              _buildMetaChip(_t(claim.pillar), pillarColor),
+              _buildMetaChip(
+                '${claim.evidenceCount} ${_t('evidence')}',
+                Colors.blueGrey,
+              ),
+              if (claim.verifiedArtifactCount > 0)
+                _buildMetaChip(
+                  '${claim.verifiedArtifactCount} ${_t('verified')}',
+                  Colors.teal,
+                ),
+            ],
+          ),
+
+          // Proof-of-learning indicators
+          if (claim.proofHasExplainItBack ||
+              claim.proofHasOralCheck ||
+              claim.proofHasMiniRebuild ||
+              (claim.proofOfLearningStatus?.trim().isNotEmpty ?? false))
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: <Widget>[
+                  if (claim.proofOfLearningStatus?.trim().isNotEmpty ?? false)
+                    _buildMetaChip(
+                      _formatProofStatus(claim.proofOfLearningStatus),
+                      Colors.indigo,
+                    ),
+                  if (claim.proofHasExplainItBack)
+                    _buildMetaChip(_t('Explain-it-back'), Colors.deepPurple),
+                  if (claim.proofHasOralCheck)
+                    _buildMetaChip(_t('Oral check'), Colors.deepPurple),
+                  if (claim.proofHasMiniRebuild)
+                    _buildMetaChip(_t('Mini rebuild'), Colors.deepPurple),
+                ],
+              ),
+            ),
+
+          // AI disclosure
+          if (claim.aiDisclosureStatus?.trim().isNotEmpty ?? false)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: _buildMetaChip(
+                _formatAiDisclosure(claim.aiDisclosureStatus),
+                Colors.deepOrange,
+              ),
+            ),
+
+          // Educator review attribution
+          if (claim.reviewingEducatorName?.trim().isNotEmpty ?? false)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                '${_t('Reviewed by')} ${claim.reviewingEducatorName}'
+                '${claim.reviewedAt != null ? ' · ${_formatDate(claim.reviewedAt!)}' : ''}',
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: ScholesaColors.textSecondary,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ),
+
+          // Rubric score
+          if (claim.rubricRawScore != null && claim.rubricMaxScore != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(
+                '${_t('Rubric')}: ${claim.rubricRawScore}/${claim.rubricMaxScore}',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
         ],
       ),
     );
