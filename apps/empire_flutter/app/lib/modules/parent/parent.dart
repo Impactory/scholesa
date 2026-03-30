@@ -10,3 +10,4 @@ export 'parent_consent_service.dart';
 export 'parent_billing_page.dart';
 export 'parent_schedule_page.dart';
 export 'parent_portfolio_page.dart';
+export 'growth_timeline_page.dart';
