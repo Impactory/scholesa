@@ -13,6 +13,7 @@ import 'package:scholesa_app/modules/educator/educator_service.dart';
 import 'package:scholesa_app/services/export_service.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
 import 'package:scholesa_app/ui/theme/scholesa_theme.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
@@ -103,6 +104,10 @@ Future<void> _seedLearnerWithoutDisplayName(
 }
 
 void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+  });
+
     testWidgets(
       'educator learner detail saves lane override, printable practice export, and persisted follow-up request',
       (WidgetTester tester) async {
@@ -143,7 +148,7 @@ void main() {
     );
 
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Learner One'));
     await tester.pump(const Duration(milliseconds: 400));
 
@@ -260,7 +265,7 @@ void main() {
     );
 
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
 
     expect(find.text('Learner unavailable'), findsWidgets);
     expect(find.text('Unknown'), findsNothing);
@@ -320,7 +325,7 @@ void main() {
     );
 
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Learner One'));
     await tester.pump(const Duration(milliseconds: 400));
 

@@ -455,7 +455,7 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
     final int pendingCount =
         (delivery?['targetSiteIds'] as List?)?.length ?? 0;
     final String id = 'runtime-rollout-alert-$deliveryRecordId';
-    final Timestamp updatedAt = Timestamp.fromDate(DateTime(2026, 3, 21, 12));
+    final Timestamp updatedAt = Timestamp.fromDate(DateTime.now());
     final Map<String, dynamic> persisted = <String, dynamic>{
       'id': id,
       'deliveryRecordId': deliveryRecordId,
@@ -547,7 +547,7 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
       'mode': normalized['mode'] as String? ?? 'monitor',
       'ownerUserId': normalized['ownerUserId'] as String? ?? '',
       'reason': normalized['reason'] as String? ?? '',
-      'updatedAt': Timestamp.fromDate(DateTime(2026, 3, 21, 12)),
+      'updatedAt': Timestamp.fromDate(DateTime.now()),
     };
     final int existingIndex = _runtimeRolloutControls.indexWhere(
       (Map<String, dynamic> row) => row['deliveryRecordId'] == deliveryRecordId,
@@ -611,7 +611,7 @@ class _FakeWorkflowBridgeService extends WorkflowBridgeService {
       'pendingCount': pendingCount,
       'ownerUserId': normalized['ownerUserId'] as String? ?? '',
       'notes': normalized['notes'] as String? ?? '',
-      'updatedAt': Timestamp.fromDate(DateTime(2026, 3, 21, 12)),
+      'updatedAt': Timestamp.fromDate(DateTime.now()),
     };
     final int existingIndex = _runtimeRolloutEscalations.indexWhere(
       (Map<String, dynamic> row) => row['deliveryRecordId'] == deliveryRecordId,

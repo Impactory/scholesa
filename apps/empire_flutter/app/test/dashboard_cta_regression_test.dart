@@ -17,6 +17,7 @@ import 'package:scholesa_app/modules/site/site_dashboard_page.dart';
 import 'package:scholesa_app/services/export_service.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
 import 'package:scholesa_app/ui/theme/scholesa_theme.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 final ThemeData _testTheme = ScholesaTheme.light;
 
@@ -33,6 +34,7 @@ void main() {
       _savedFileName = null;
       _savedFileContent = null;
       ExportService.instance.debugSaveTextFile = null;
+      SharedPreferences.setMockInitialValues(<String, Object>{});
     });
 
     testWidgets('role dashboard View All opens quick actions sheet',
