@@ -316,8 +316,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.bySemanticsLabel('Sign Out'), findsOneWidget);
-      expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
+      expect(find.bySemanticsLabel('登出'), findsOneWidget);
+      expect(find.bySemanticsLabel('帳戶選單'), findsOneWidget);
       expect(find.text('Scholesa 以恢復模式啟動'), findsOneWidget);
     });
   });
