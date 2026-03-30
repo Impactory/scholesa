@@ -220,31 +220,41 @@ void main() {
         (WidgetTester tester) async {
       final AppState appState = _buildSiteState();
       final List<Map<String, String?>> resolverCalls = <Map<String, String?>>[];
+      // Loader is stateful: excludes already-resolved identities so the page
+      // correctly removes them from the queue after each action.
+      final List<Map<String, dynamic>> allIdentities = <Map<String, dynamic>>[
+        <String, dynamic>{
+          'id': 'identity-1',
+          'provider': 'clever',
+          'providerUserId': 'clever-learner-1',
+          'scholesaUserId': 'learner-1',
+          'scholesaUserName': 'Clever Learner',
+          'confidence': 0.93,
+          'status': 'unmatched',
+        },
+        <String, dynamic>{
+          'id': 'identity-2',
+          'provider': 'classlink',
+          'providerUserId': 'classlink-learner-2',
+          'scholesaUserId': 'learner-2',
+          'scholesaUserName': 'ClassLink Learner',
+          'confidence': 0.84,
+          'status': 'unmatched',
+        },
+      ];
 
       await tester.pumpWidget(
         _buildSiteHarness(
           appState: appState,
           child: SiteIdentityPage(
-            identityLoader: (_) async => <Map<String, dynamic>>[
-              <String, dynamic>{
-                'id': 'identity-1',
-                'provider': 'clever',
-                'providerUserId': 'clever-learner-1',
-                'scholesaUserId': 'learner-1',
-                'scholesaUserName': 'Clever Learner',
-                'confidence': 0.93,
-                'status': 'unmatched',
-              },
-              <String, dynamic>{
-                'id': 'identity-2',
-                'provider': 'classlink',
-                'providerUserId': 'classlink-learner-2',
-                'scholesaUserId': 'learner-2',
-                'scholesaUserName': 'ClassLink Learner',
-                'confidence': 0.84,
-                'status': 'unmatched',
-              },
-            ],
+            identityLoader: (_) async {
+              final Set<String> resolved =
+                  resolverCalls.map((Map<String, String?> c) => c['id']!).toSet();
+              return allIdentities
+                  .where((Map<String, dynamic> i) =>
+                      !resolved.contains(i['id'] as String))
+                  .toList();
+            },
             identityResolver: (
               String id,
               String rawProvider,

@@ -189,6 +189,9 @@ Future<void> _pumpPage(
 
 LearnerSummary _buildLearnerSummaryWithEvents() {
   final DateTime now = DateTime.now();
+  // Pin events to fixed days within the current calendar month so month-view
+  // filtering (entry.month == selectedDate.month) is always satisfied,
+  // regardless of what day the test runs.
   return LearnerSummary(
     learnerId: 'learner-1',
     learnerName: 'Ava Learner',
@@ -201,14 +204,14 @@ LearnerSummary _buildLearnerSummaryWithEvents() {
       UpcomingEvent(
         id: 'event-1',
         title: 'Design Studio',
-        dateTime: now.add(const Duration(days: 1, hours: 2)),
+        dateTime: DateTime(now.year, now.month, 5, 14),
         type: 'class',
         location: 'Room A',
       ),
       UpcomingEvent(
         id: 'event-2',
         title: 'Reflection Circle',
-        dateTime: now.add(const Duration(days: 10, hours: 1)),
+        dateTime: DateTime(now.year, now.month, 10, 10),
         type: 'conference',
         location: 'Room B',
       ),
