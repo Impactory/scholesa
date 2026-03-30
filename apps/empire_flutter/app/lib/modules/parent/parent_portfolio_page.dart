@@ -1495,7 +1495,7 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
           '${_t('Rubric score')}: ${item.rubricRawScore}/${item.rubricMaxScore}');
     }
     if ((item.rubricLevel ?? 0) > 0) {
-      parts.add('${_t('Rubric level')}: ${item.rubricLevel}/4');
+      parts.add('${_t('Rubric level')}: ${_levelLabel(item.rubricLevel ?? 0)}');
     }
     return parts.join(' • ');
   }

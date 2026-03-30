@@ -704,6 +704,21 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
     return '${value.toStringAsFixed(1)}/4 ${_t('average capability level')}';
   }
 
+  String _levelLabel(int level) {
+    switch (level) {
+      case 1:
+        return _t('Beginning');
+      case 2:
+        return _t('Developing');
+      case 3:
+        return _t('Proficient');
+      case 4:
+        return _t('Advanced');
+      default:
+        return _t('Not assessed');
+    }
+  }
+
   PassportClaim? _selectFeaturedClaim(LearnerSummary learner) {
     if (learner.ideationPassport.claims.isEmpty) {
       return null;
@@ -806,7 +821,7 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
       return '${learner.capabilitySnapshot.band} • ${learner.growthSummary.capabilityCount} ${_t('capabilities with current evidence')} • $capabilityPercent% ${_t('coverage confidence')}';
     }
     final List<String> parts = <String>[
-      '${featuredClaim.title} • ${_t('Level')} ${featuredClaim.latestLevel}/4',
+      '${featuredClaim.title} • ${_levelLabel(featuredClaim.latestLevel)}',
     ];
     if (progressionDescriptors.isNotEmpty) {
       parts.add(progressionDescriptors);
@@ -857,7 +872,7 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
     ];
     if (featuredClaim != null) {
       parts.insert(0,
-          '${featuredClaim.title} • ${_t('Level')} ${featuredClaim.latestLevel}/4');
+          '${featuredClaim.title} • ${_levelLabel(featuredClaim.latestLevel)}');
     }
     if (proofDetail.isNotEmpty) {
       parts.add(proofDetail);
@@ -911,7 +926,7 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
   ) {
     final List<String> parts = <String>[];
     if (claim != null) {
-      parts.add('${claim.title} • ${_t('Level')} ${claim.latestLevel}/4');
+      parts.add('${claim.title} • ${_levelLabel(claim.latestLevel)}');
       if ((claim.verificationStatus ?? '').trim().isNotEmpty) {
         parts.add(
           '${_t('Artifact Review Status')}: ${_titleCase(claim.verificationStatus!)}',
@@ -966,7 +981,7 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
       parts.add('${_t('Reviewed by')}: ${item!.reviewingEducatorName}');
     }
     if ((item?.rubricLevel ?? 0) > 0) {
-      parts.add('${_t('Rubric level')}: ${item!.rubricLevel}/4');
+      parts.add('${_t('Rubric level')}: ${_levelLabel(item!.rubricLevel ?? 0)}');
     } else if ((claim?.rubricRawScore ?? 0) > 0 &&
         (claim?.rubricMaxScore ?? 0) > 0) {
       parts.add(
@@ -1001,7 +1016,7 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
   String _formatGrowthTimelineEntry(GrowthTimelineEntry entry) {
     final List<String> parts = <String>[
       entry.title,
-      '${_t('level')} ${entry.level}/4',
+      _levelLabel(entry.level),
     ];
     if ((entry.rubricRawScore ?? 0) > 0 && (entry.rubricMaxScore ?? 0) > 0) {
       parts.add(
@@ -1166,7 +1181,7 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
                 ),
               ),
               Text(
-                '${_t('Level')} ${latest.level}/4',
+                _levelLabel(latest.level),
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,

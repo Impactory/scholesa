@@ -30,6 +30,21 @@ class _ParentChildPageState extends State<ParentChildPage> {
 
   String _t(String input) => ParentSurfaceI18n.text(context, input);
 
+  String _levelLabel(int level) {
+    switch (level) {
+      case 1:
+        return _t('Beginning');
+      case 2:
+        return _t('Developing');
+      case 3:
+        return _t('Proficient');
+      case 4:
+        return _t('Advanced');
+      default:
+        return _t('Not assessed');
+    }
+  }
+
   FirestoreService? _maybeFirestoreService() {
     try {
       return context.read<ParentService>().firestoreService;
@@ -560,7 +575,7 @@ class _ParentChildPageState extends State<ParentChildPage> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${_t(claim.pillar)} • ${_t('Level')} ${claim.latestLevel}/4',
+                        '${_t(claim.pillar)} • ${_levelLabel(claim.latestLevel)}',
                         style: const TextStyle(
                             color: ScholesaColors.textSecondary),
                       ),
@@ -729,7 +744,7 @@ class _ParentChildPageState extends State<ParentChildPage> {
     for (final PassportClaim claim in passport.claims) {
       lines.add('- ${claim.title}');
       lines.add('  ${_t('Pillar')}: ${_t(claim.pillar)}');
-      lines.add('  ${_t('Level')}: ${claim.latestLevel}/4');
+      lines.add('  ${_t('Level')}: ${_levelLabel(claim.latestLevel)}');
       lines.add('  ${_t('Evidence Count')}: ${claim.evidenceCount}');
       lines.add(
         '  ${_t('Reviewed/Verified Artifacts')}: ${claim.verifiedArtifactCount}',
