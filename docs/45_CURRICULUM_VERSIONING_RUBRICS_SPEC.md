@@ -1,3 +1,11 @@
+> **CONSTITUTIONAL TRUST: TIER 4 — UNIMPLEMENTED SPEC**
+> This specification was never implemented. The curriculum versioning and
+> rubric system described here does not exist in the codebase. The current
+> rubric system is in CapabilityGrowthEngine (Flutter) and applyRubricToEvidence
+> (Cloud Functions). Do not implement from this spec without reconciling with
+> the current evidence chain architecture.
+> Flagged: March 2026 constitutional audit.
+
 # 45_CURRICULUM_VERSIONING_RUBRICS_SPEC.md
 Curriculum versioning + rubrics (without “versioning issues”)
 

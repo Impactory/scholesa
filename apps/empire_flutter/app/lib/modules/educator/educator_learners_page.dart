@@ -861,6 +861,8 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
   bool _isSubmittingFollowUp = false;
   String? _followUpStatusMessage;
   bool _followUpStatusIsError = false;
+  List<Map<String, dynamic>> _growthEvents = <Map<String, dynamic>>[];
+  bool _isLoadingGrowth = true;
 
   EducatorLearner get learner => widget.learner;
 
@@ -872,6 +874,7 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
     _savedLane = _recommendedLane;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadSavedLaneOverride();
+      _loadGrowthEvents();
     });
   }
 
@@ -1001,6 +1004,62 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
       });
     } catch (error) {
       debugPrint('Failed to load learner differentiation override: $error');
+    }
+  }
+
+  Future<void> _loadGrowthEvents() async {
+    try {
+      final QuerySnapshot<Map<String, dynamic>> snap = await FirebaseFirestore
+          .instance
+          .collection('capabilityGrowthEvents')
+          .where('learnerId', isEqualTo: learner.id)
+          .orderBy('createdAt', descending: true)
+          .limit(20)
+          .get();
+      if (!mounted) return;
+      setState(() {
+        _growthEvents = snap.docs
+            .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
+                <String, dynamic>{'id': doc.id, ...doc.data()})
+            .toList();
+        _isLoadingGrowth = false;
+      });
+    } catch (error) {
+      debugPrint('Failed to load growth events: $error');
+      if (mounted) {
+        setState(() => _isLoadingGrowth = false);
+      }
+    }
+  }
+
+  String _levelLabel(int level) {
+    switch (level) {
+      case 1:
+        return _tEducatorLearners(context, 'Beginning');
+      case 2:
+        return _tEducatorLearners(context, 'Developing');
+      case 3:
+        return _tEducatorLearners(context, 'Proficient');
+      case 4:
+        return _tEducatorLearners(context, 'Advanced');
+      default:
+        return _tEducatorLearners(context, 'Not assessed');
+    }
+  }
+
+  Color _getPillarColorForCode(String code) {
+    switch (code.toLowerCase()) {
+      case 'future_skills':
+      case 'futureskills':
+        return ScholesaColors.futureSkills;
+      case 'leadership':
+      case 'leadership_agency':
+        return ScholesaColors.leadership;
+      case 'impact':
+      case 'impact_innovation':
+        return ScholesaColors.impact;
+      default:
+        return Colors.grey;
     }
   }
 
@@ -1415,6 +1474,153 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
                     progress: learner.impactProgress,
                     color: ScholesaColors.impact,
                   ),
+                  const SizedBox(height: 24),
+                  // Capability Growth History
+                  Text(
+                    _tEducatorLearners(context, 'Capability Growth'),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  const SizedBox(height: 8),
+                  if (_isLoadingGrowth)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      child: Center(
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: ScholesaColors.educator,
+                          ),
+                        ),
+                      ),
+                    )
+                  else if (_growthEvents.isEmpty)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[50],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        _tEducatorLearners(
+                          context,
+                          'No capability growth events recorded yet. Growth updates appear after rubric scoring.',
+                        ),
+                        style: TextStyle(color: Colors.grey[500], height: 1.4),
+                      ),
+                    )
+                  else
+                    ...(_growthEvents.take(8).map(
+                      (Map<String, dynamic> event) {
+                        final String title =
+                            (event['capabilityTitle'] as String?) ??
+                                (event['capabilityId'] as String?) ??
+                                '';
+                        final int level =
+                            (event['level'] as int?) ?? 0;
+                        final int rawScore =
+                            (event['rawScore'] as int?) ?? 0;
+                        final int maxScore =
+                            (event['maxScore'] as int?) ?? 0;
+                        final String pillar =
+                            (event['pillarCode'] as String?) ?? '';
+                        final Timestamp? createdAt =
+                            event['createdAt'] as Timestamp?;
+                        final String educatorId =
+                            (event['educatorId'] as String?) ?? '';
+                        final Color pillarColor = _getPillarColorForCode(pillar);
+
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border(
+                              left: BorderSide(color: pillarColor, width: 3),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Row(
+                                children: <Widget>[
+                                  Expanded(
+                                    child: Text(
+                                      title,
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: pillarColor.withValues(alpha: 0.12),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      _levelLabel(level),
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: pillarColor,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: <Widget>[
+                                  if (maxScore > 0)
+                                    Text(
+                                      '${_tEducatorLearners(context, 'Rubric')}: $rawScore/$maxScore',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                  if (maxScore > 0 && createdAt != null)
+                                    Text(
+                                      ' · ',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.grey[400],
+                                      ),
+                                    ),
+                                  if (createdAt != null)
+                                    Text(
+                                      '${createdAt.toDate().month}/${createdAt.toDate().day}/${createdAt.toDate().year}',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.grey[500],
+                                      ),
+                                    ),
+                                  if (educatorId.isNotEmpty) ...<Widget>[
+                                    Text(
+                                      ' · ',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.grey[400],
+                                      ),
+                                    ),
+                                    Icon(Icons.person_outline,
+                                        size: 12, color: Colors.grey[500]),
+                                  ],
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    )),
                   const SizedBox(height: 24),
                   Text(
                     _tEducatorLearners(context, 'Differentiation lane'),

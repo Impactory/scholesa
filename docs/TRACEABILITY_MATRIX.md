@@ -1,6 +1,11 @@
-# Traceability Matrix
+> **CONSTITUTIONAL TRUST: TIER 4 — MISLEADING TRACEABILITY**
+> This matrix claims implementation status and verification for workflows
+> that are partial, stubbed, or disconnected. Status columns do not reflect
+> end-to-end evidence chain verification. Use GOLD_READY_WORKFLOW_VERIFICATION
+> and FULL_HONESTY_AUDIT for actual implementation status.
+> Flagged: March 2026 constitutional audit.
 
-> Current status: Flutter and locale-first web tracks are active. Role-routing, protected-route, and tri-locale web coverage are validated through the Playwright browser harness plus the i18n key audit. That browser harness runs with `NEXT_PUBLIC_E2E_TEST_MODE=1`, so it proves route composition, locale behavior, and role gating on the generic web workflow layer rather than live Firestore or callable data backends.
+# Traceability Matrix Role-routing, protected-route, and tri-locale web coverage are validated through the Playwright browser harness plus the i18n key audit. That browser harness runs with `NEXT_PUBLIC_E2E_TEST_MODE=1`, so it proves route composition, locale behavior, and role gating on the generic web workflow layer rather than live Firestore or callable data backends.
 
 | Req ID | Requirement | Implementation Files | Verification | Status |
 | --- | --- | --- | --- | --- |

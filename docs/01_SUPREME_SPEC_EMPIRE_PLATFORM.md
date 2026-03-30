@@ -1,3 +1,10 @@
+> **CONSTITUTIONAL TRUST: TIER 4 — OUTDATED / UNRELIABLE**
+> This document predates the capability-first evidence architecture. Many claims
+> about features, completion, and architecture no longer reflect the codebase.
+> Do not treat this as a current specification. Refer to CLAUDE.md and
+> copilot-instructions.md for the authoritative architecture.
+> Flagged: March 2026 constitutional audit.
+
 # 01_SUPREME_SPEC_EMPIRE_PLATFORM.md
 
 ## What we are building
