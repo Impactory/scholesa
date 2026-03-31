@@ -491,8 +491,17 @@ class PortfolioItemRepository {
   CollectionReference<Map<String, dynamic>> get _col =>
       _firestore.collection('portfolioItems');
 
+  Future<PortfolioItemModel?> getById(String id) async {
+    final doc = await _col.doc(id).get();
+    if (!doc.exists) return null;
+    return PortfolioItemModel.fromDoc(doc);
+  }
+
   Future<void> upsert(PortfolioItemModel model) =>
       _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
+
+  Future<void> patch(String id, Map<String, dynamic> fields) =>
+      _col.doc(id).update(fields);
 
   Future<List<PortfolioItemModel>> listByLearner(String learnerId) async {
     final snap = await _col.where('learnerId', isEqualTo: learnerId).get();

@@ -246,11 +246,9 @@ class CapabilityGrowthEngine {
     List<String> progressionDescriptors = const [],
     List<Map<String, dynamic>> checkpointMappings = const [],
   }) async {
-    final col = _firestore.collection('portfolioItems');
-    final doc = await col.doc(portfolioItemId).get();
-    if (!doc.exists) return;
+    final existing = await _portfolioItemRepo.getById(portfolioItemId);
+    if (existing == null) return;
 
-    final existing = PortfolioItemModel.fromDoc(doc);
     final updatedGrowthIds = <String>[
       ...existing.growthEventIds,
       growthEventId,
@@ -264,7 +262,7 @@ class CapabilityGrowthEngine {
       if (capabilityTitle != null) capabilityTitle,
     }.toList();
 
-    await col.doc(portfolioItemId).update(<String, dynamic>{
+    await _portfolioItemRepo.patch(portfolioItemId, <String, dynamic>{
       'growthEventIds': updatedGrowthIds,
       'capabilityIds': updatedCapIds,
       'capabilityTitles': updatedCapTitles,

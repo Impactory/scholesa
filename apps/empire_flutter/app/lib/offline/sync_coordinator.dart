@@ -213,6 +213,30 @@ class SyncCoordinator extends ChangeNotifier {
           SetOptions(merge: true),
         );
         break;
+      case OpType.observationCapture:
+        await firestore
+            .collection('observationRecords')
+            .doc(op.idempotencyKey)
+            .set(payload);
+        break;
+      case OpType.rubricApplication:
+        await firestore
+            .collection('rubricApplications')
+            .doc(op.idempotencyKey)
+            .set(payload);
+        break;
+      case OpType.capabilityGrowthEvent:
+        await firestore
+            .collection('capabilityGrowthEvents')
+            .doc(op.idempotencyKey)
+            .set(payload);
+        break;
+      case OpType.checkpointVerification:
+        await firestore
+            .collection('checkpointVerifications')
+            .doc(op.idempotencyKey)
+            .set(payload);
+        break;
     }
   }
 
