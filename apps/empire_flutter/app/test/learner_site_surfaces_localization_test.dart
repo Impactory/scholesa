@@ -9,9 +9,11 @@ import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/modules/habits/habit_service.dart';
 import 'package:scholesa_app/modules/learner/learner_credentials_page.dart';
+import 'package:scholesa_app/domain/models.dart';
 import 'package:scholesa_app/modules/learner/learner_portfolio_page.dart';
 import 'package:scholesa_app/modules/learner/learner_today_page.dart';
 import 'package:scholesa_app/modules/messages/message_service.dart';
@@ -116,6 +118,7 @@ void main() {
 
   setUp(() {
     _portfolioClipboardText = null;
+    SharedPreferences.setMockInitialValues(<String, Object>{});
   });
 
   group('Learner and site tri-locale surfaces', () {
@@ -143,7 +146,8 @@ void main() {
         userId: 'test-user-1',
       );
 
-      await tester.binding.setSurfaceSize(const Size(1280, 1600));
+      await tester.binding.setSurfaceSize(const Size(1280, 4000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(
         _buildHarness(
           locale: locale,
@@ -158,8 +162,7 @@ void main() {
           ],
         ),
       );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 250));
+      await tester.pumpAndSettle();
 
       expect(find.text('今天'), findsOneWidget);
       expect(find.text('🌟 继续加油！'), findsOneWidget);
@@ -737,7 +740,8 @@ void main() {
         userId: 'test-user-1',
       );
 
-      await tester.binding.setSurfaceSize(const Size(1280, 1800));
+      await tester.binding.setSurfaceSize(const Size(1280, 4000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(
         _buildHarness(
           locale: locale,
@@ -786,7 +790,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('我的作品集'), findsOneWidget);
-      expect(find.text('展示你的成就'), findsOneWidget);
+      expect(find.text('展示你已儲存的作品與憑證'), findsOneWidget);
       expect(find.text('徽章'), findsOneWidget);
     });
 
@@ -921,10 +925,27 @@ void main() {
       );
 
       await tester.binding.setSurfaceSize(const Size(1280, 1800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(
         _buildHarness(
           locale: locale,
-          child: const LearnerPortfolioPage(),
+          child: LearnerPortfolioPage(
+            portfolioStateLoader: (String learnerId, String siteId) async =>
+                LearnerPortfolioSnapshot(
+              items: <PortfolioItemModel>[
+                PortfolioItemModel(
+                  id: 'artifact-1',
+                  learnerId: learnerId,
+                  siteId: siteId,
+                  title: 'Solar Oven Prototype',
+                  description: 'Built and tested a solar cooker.',
+                  pillarCodes: <String>['impact'],
+                  createdAt: Timestamp.fromDate(DateTime(2026, 3, 17, 9)),
+                  updatedAt: Timestamp.fromDate(DateTime(2026, 3, 17, 10)),
+                ),
+              ],
+            ),
+          ),
           providers: <SingleChildWidget>[
             ChangeNotifierProvider<AppState>.value(value: appState),
             Provider<FirestoreService>.value(value: firestoreService),

@@ -187,11 +187,11 @@ Future<void> _pumpPage(
   await tester.pumpAndSettle();
 }
 
+// Events pinned to today's date for month-view tests. Month view shows all
+// events in the current month regardless of past/future status, so using today
+// (even if already past) keeps both events in the current month.
 LearnerSummary _buildLearnerSummaryWithEvents() {
   final DateTime now = DateTime.now();
-  // Pin events to fixed days within the current calendar month so month-view
-  // filtering (entry.month == selectedDate.month) is always satisfied,
-  // regardless of what day the test runs.
   return LearnerSummary(
     learnerId: 'learner-1',
     learnerName: 'Ava Learner',
@@ -204,14 +204,45 @@ LearnerSummary _buildLearnerSummaryWithEvents() {
       UpcomingEvent(
         id: 'event-1',
         title: 'Design Studio',
-        dateTime: DateTime(now.year, now.month, 5, 14),
+        dateTime: DateTime(now.year, now.month, now.day, 14),
         type: 'class',
         location: 'Room A',
       ),
       UpcomingEvent(
         id: 'event-2',
         title: 'Reflection Circle',
-        dateTime: DateTime(now.year, now.month, 10, 10),
+        dateTime: DateTime(now.year, now.month, now.day, 10),
+        type: 'conference',
+        location: 'Room B',
+      ),
+    ],
+  );
+}
+
+// Events always in the future for tests that require the next-session banner
+// to display (which only shows events where dateTime.isAfter(now)).
+LearnerSummary _buildLearnerSummaryWithFutureEvents() {
+  final DateTime now = DateTime.now();
+  return LearnerSummary(
+    learnerId: 'learner-1',
+    learnerName: 'Ava Learner',
+    currentLevel: 4,
+    totalXp: 120,
+    missionsCompleted: 8,
+    currentStreak: 3,
+    attendanceRate: 0.94,
+    upcomingEvents: <UpcomingEvent>[
+      UpcomingEvent(
+        id: 'event-1',
+        title: 'Design Studio',
+        dateTime: now.add(const Duration(hours: 2)),
+        type: 'class',
+        location: 'Room A',
+      ),
+      UpcomingEvent(
+        id: 'event-2',
+        title: 'Reflection Circle',
+        dateTime: now.add(const Duration(hours: 3)),
         type: 'conference',
         location: 'Room B',
       ),
@@ -356,7 +387,7 @@ void main() {
       snapshots: <_ParentLoadSnapshot>[
         _ParentLoadSnapshot(
           learnerSummaries: <LearnerSummary>[
-            _buildLearnerSummaryWithEvents(),
+            _buildLearnerSummaryWithFutureEvents(),
           ],
         ),
         const _ParentLoadSnapshot(error: 'refresh failed'),

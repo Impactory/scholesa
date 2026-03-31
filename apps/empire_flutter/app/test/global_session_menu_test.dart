@@ -318,7 +318,7 @@ void main() {
 
       expect(find.bySemanticsLabel('登出'), findsOneWidget);
       expect(find.bySemanticsLabel('帳戶選單'), findsOneWidget);
-      expect(find.text('Scholesa 以恢復模式啟動'), findsOneWidget);
+      expect(find.text('Scholesa 以復原模式啟動'), findsOneWidget);
     });
   });
 }

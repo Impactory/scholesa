@@ -1976,7 +1976,7 @@ Map<String, dynamic> _runtimeDeliveryRecordRow({
     'warmStartModelVersion': warmStartModelVersion,
     'manifestDigest':
         'sha256:delivery-${candidateModelPackageId.replaceAll('fl_pkg_', '')}',
-    'expiresAt': expiresAt ?? DateTime(2026, 3, 21, 19),
+    'expiresAt': expiresAt ?? DateTime.now().add(const Duration(days: 30)),
     'supersededAt': supersededAt,
     'supersededBy': supersededBy,
     'supersededByDeliveryRecordId': supersededByDeliveryRecordId,

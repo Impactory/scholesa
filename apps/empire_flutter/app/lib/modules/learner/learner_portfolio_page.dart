@@ -64,7 +64,7 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
   Map<String, CapabilityGrowthEventModel> _growthEventsById =
       const <String, CapabilityGrowthEventModel>{};
   List<CredentialModel> _credentials = const <CredentialModel>[];
-  bool _isPortfolioLoading = false;
+  bool _isPortfolioLoading = true;
   String? _portfolioLoadError;
 
   String _t(String input) => _tLearnerPortfolio(context, input);
@@ -751,48 +751,46 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
     required String title,
     required String message,
   }) {
-    return ListView(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
-      children: <Widget>[
-        Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: context.schBorder),
-          ),
-          child: Column(
-            children: <Widget>[
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: ScholesaColors.learner.withValues(alpha: 0.08),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: ScholesaColors.learner, size: 28),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                message,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: context.schTextSecondary,
-                  height: 1.4,
-                ),
-              ),
-            ],
-          ),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: context.schBorder),
         ),
-      ],
+        child: Column(
+          children: <Widget>[
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: ScholesaColors.learner.withValues(alpha: 0.08),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: ScholesaColors.learner, size: 28),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: context.schTextSecondary,
+                height: 1.4,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
