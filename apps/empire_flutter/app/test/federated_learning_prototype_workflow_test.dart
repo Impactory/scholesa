@@ -6507,6 +6507,9 @@ void main() {
       ],
     );
 
+    await tester.binding.setSurfaceSize(const Size(1200, 1800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
     await tester.pumpWidget(
       _wrapWithMaterial(HqFeatureFlagsPage(workflowBridge: bridge)),
     );

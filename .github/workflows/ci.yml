@@ -54,10 +54,20 @@ jobs:
       - name: Functions Gen 2 verification
         run: npm --prefix functions run verify:gen2
 
-      - name: Flutter web build gate
+      - name: Flutter analyze
         run: |
           cd apps/empire_flutter/app
           flutter pub get
+          flutter analyze --no-fatal-infos
+
+      - name: Flutter test
+        run: |
+          cd apps/empire_flutter/app
+          flutter test
+
+      - name: Flutter web build gate
+        run: |
+          cd apps/empire_flutter/app
           flutter build web --release --no-wasm-dry-run
 
       - name: Workflow no-mock audit

@@ -17,6 +17,10 @@ enum OpType {
   incidentSubmit,
   messageSend,
   attemptSaveDraft,
+  observationCapture,
+  rubricApplication,
+  capabilityGrowthEvent,
+  checkpointVerification,
 }
 
 /// Single queued operation

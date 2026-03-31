@@ -309,6 +309,9 @@ void main() {
       );
     }
 
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
     await tester.pumpWidget(
       _buildHarness(
         child: buildPage(),
