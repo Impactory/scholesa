@@ -531,6 +531,28 @@ service cloud.firestore {
       allow create, update: if isEducator();
       allow delete: if false;
     }
+    // Observation records: educator-captured in-session observations linked to evidence chain.
+    match /observationRecords/{id} {
+      allow read: if isAuthenticated() && (
+        resource.data.learnerId == request.auth.uid
+        || isEducator()
+        || isParentLinkedToLearner(resource.data.learnerId)
+      );
+      allow create: if isEducator() && isSiteScopedWrite(request.resource.data);
+      allow update: if isEducator() && isSiteScopedWrite(request.resource.data);
+      allow delete: if false;
+    }
+    // Checkpoint verifications: educator-issued proof that a learner met a checkpoint.
+    match /checkpointVerifications/{id} {
+      allow read: if isAuthenticated() && (
+        resource.data.learnerId == request.auth.uid
+        || isEducator()
+        || isParentLinkedToLearner(resource.data.learnerId)
+      );
+      allow create: if isEducator() && isSiteScopedWrite(request.resource.data);
+      allow update: if false;
+      allow delete: if false;
+    }
 
     // Marketplace
     match /marketplaceListings/{id} {

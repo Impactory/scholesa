@@ -1498,4 +1498,61 @@ void main() {
     expect(find.text('Link removed'), findsOneWidget);
     expect(find.text('Parent One → Learner One'), findsNothing);
   });
+
+  // Gate H — Educational Truth
+  testWidgets(
+      'provisioning page is an administrative surface and shows no learner capability or mastery claims',
+      (WidgetTester tester) async {
+    await pumpProvisioningPage(
+      tester,
+      service: _FakeProvisioningService(
+        learners: <LearnerProfile>[
+          LearnerProfile(
+            id: 'learner-h',
+            displayName: 'Test Learner',
+            siteId: 'site-1',
+            userId: 'learner-h',
+          ),
+        ],
+      ),
+    );
+
+    // The provisioning surface manages roster membership. It must not show
+    // learner capability mastery, growth levels, Passport claims, or portfolio
+    // evidence alongside administrative learner records.
+    expect(find.textContaining('mastery'), findsNothing,
+        reason:
+            'provisioning page must not show learner mastery claims (Gate H)');
+    expect(find.textContaining('growth level'), findsNothing,
+        reason:
+            'provisioning page must not show learner growth level claims (Gate H)');
+    expect(find.textContaining('Passport'), findsNothing,
+        reason:
+            'provisioning page must not reference learner Passport claims (Gate H)');
+    expect(find.textContaining('portfolio evidence'), findsNothing,
+        reason:
+            'provisioning page must not claim portfolio evidence provenance (Gate H)');
+  });
+
+  // Gate I — AI Transparency
+  testWidgets(
+      'provisioning page does not present AI-generated output as verified learner proof',
+      (WidgetTester tester) async {
+    await pumpProvisioningPage(
+      tester,
+      service: _FakeProvisioningService(),
+    );
+
+    // Provisioning is a purely administrative roster tool. It must not present
+    // any AI-generated output as verified learner proof.
+    expect(find.textContaining('AI-generated'), findsNothing,
+        reason:
+            'provisioning page must not label output as AI-generated (Gate I)');
+    expect(find.textContaining('AI assisted'), findsNothing,
+        reason:
+            'provisioning page must not imply AI assistance (Gate I)');
+    expect(find.textContaining('verified by AI'), findsNothing,
+        reason:
+            'provisioning page must not present AI-verified claims (Gate I)');
+  });
 }

@@ -232,13 +232,123 @@ export interface Rubric extends BaseEntity {
   }>;
 }
 
+export interface RubricCriterionScore {
+  label: string;
+  pillarCode?: PillarCode;
+  capabilityId: ID; // reference to capabilities collection
+  score: number;
+  maxScore: number;
+  notes?: string;
+}
+
 export interface RubricApplication extends BaseEntity {
   siteId: ID;
-  missionAttemptId: ID;
+  learnerId: ID;
   educatorId: ID;
-  rubricId: ID;
-  scores: Array<{ criterionTitle: string; level: 0|1|2|3|4; note?: string }>;
-  overallNote?: string;
+  missionAttemptId?: ID;
+  evidenceRecordId?: ID;
+  rubricId?: ID;
+  rubricTitle: string;
+  criteria: RubricCriterionScore[];
+  totalRawScore: number;
+  totalMaxScore: number;
+  capabilityIds: ID[]; // references to capabilities collection
+  feedback?: string;
+}
+
+/* ===========================
+   EVIDENCE CHAIN
+   =========================== */
+
+export type PillarCode = string; // e.g. 'ideation' | 'craft' | 'character' | 'community' | 'enterprise'
+
+export type EvidencePhaseKey =
+  | 'retrieval_warm_up'
+  | 'mini_lesson'
+  | 'build_sprint'
+  | 'checkpoint'
+  | 'share_out'
+  | 'reflection';
+
+/** HQ-defined capability within a pillar framework. */
+export interface Capability extends BaseEntity {
+  title: string;
+  normalizedTitle: string;
+  pillarCode: PillarCode;
+  siteId?: ID | null; // null = global
+  descriptor?: string;
+}
+
+/** Educator-logged in-session observation linked to evidence chain. */
+export interface ObservationRecord extends BaseEntity {
+  siteId: ID;
+  learnerId: ID;
+  educatorId: ID;
+  sessionOccurrenceId?: ID;
+  description: string;
+  capabilityId?: ID;
+  phaseKey?: EvidencePhaseKey;
+  portfolioCandidate: boolean;
+  artifactUrl?: string;
+}
+
+/** Educator-captured evidence record (observation + artifact). */
+export interface EvidenceRecord extends BaseEntity {
+  siteId: ID;
+  learnerId: ID;
+  educatorId: ID;
+  sessionOccurrenceId?: ID;
+  description: string;
+  capabilityId?: ID;
+  capabilityMapped: boolean;
+  phaseKey?: EvidencePhaseKey;
+  portfolioCandidate: boolean;
+  rubricStatus: 'pending' | 'applied' | 'skipped';
+  growthStatus: 'pending' | 'recorded' | 'skipped';
+  rubricApplicationId?: ID;
+  growthEventId?: ID;
+  artifactUrl?: string;
+}
+
+/** Append-only provenance record for each capability-level update. */
+export interface CapabilityGrowthEvent extends BaseEntity {
+  siteId: ID;
+  learnerId: ID;
+  capabilityId: ID;
+  pillarCode: PillarCode;
+  level: number; // 1-5
+  rawScore: number;
+  maxScore: number;
+  evidenceId?: ID;
+  missionAttemptId?: ID;
+  rubricApplicationId?: ID;
+  educatorId?: ID;
+}
+
+/** Aggregated mastery state per learner per capability (upserted on each growth event). */
+export interface CapabilityMastery extends BaseEntity {
+  siteId: ID;
+  learnerId: ID;
+  capabilityId: ID;
+  pillarCode: PillarCode;
+  latestLevel: number; // 1-5
+  highestLevel: number;
+  latestEvidenceId?: ID;
+  latestMissionAttemptId?: ID;
+  evidenceIds: ID[];
+  growthEventIds: ID[];
+}
+
+/** Educator-issued proof that a learner satisfied a checkpoint requirement. */
+export interface CheckpointVerification extends BaseEntity {
+  siteId: ID;
+  learnerId: ID;
+  educatorId: ID;
+  capabilityId: ID;
+  checkpointId: ID;
+  targetLevel: number;
+  verifiedAt: EpochMs;
+  notes?: string;
 }
 
 export type IdentityLinkProvider = 'google_classroom' | 'github';

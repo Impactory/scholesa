@@ -1939,4 +1939,116 @@ void main() {
       isTrue,
     );
   });
+
+  // Gate H — Educational Truth
+  testWidgets(
+      'attendance page records presence only and shows no learner capability or mastery claims',
+      (WidgetTester tester) async {
+    final _MockSyncCoordinator syncCoordinator = _MockSyncCoordinator();
+    when(() => syncCoordinator.isOnline).thenReturn(true);
+    when(() => syncCoordinator.pendingCount).thenReturn(0);
+    when(() => syncCoordinator.isSyncing).thenReturn(false);
+    when(() => syncCoordinator.retryFailed()).thenAnswer((_) async {});
+
+    final _FakeAttendanceService attendanceService = _FakeAttendanceService(
+      rosterOccurrence: SessionOccurrence(
+        id: 'occ-h',
+        sessionId: 'session-h',
+        siteId: 'site-1',
+        title: 'Morning Studio',
+        roster: <RosterLearner>[
+          const RosterLearner(
+            id: 'learner-h',
+            displayName: 'Alex Rivera',
+          ),
+        ],
+        startTime: DateTime.now(),
+      ),
+    );
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: <SingleChildWidget>[
+          ChangeNotifierProvider<AppState>.value(value: _buildAppState()),
+          ChangeNotifierProvider<SyncCoordinator>.value(
+            value: syncCoordinator,
+          ),
+          ChangeNotifierProvider<AttendanceService>.value(
+            value: attendanceService,
+          ),
+        ],
+        child: _buildTestMaterialApp(child: const AttendancePage()),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+
+    // Attendance records presence, not capability evidence. The route must
+    // not show capability mastery, growth levels, or portfolio evidence claims.
+    expect(find.textContaining('mastery'), findsNothing,
+        reason:
+            'attendance page must not show learner mastery claims (Gate H)');
+    expect(find.textContaining('growth level'), findsNothing,
+        reason:
+            'attendance page must not show learner growth level claims (Gate H)');
+    expect(find.textContaining('Passport'), findsNothing,
+        reason:
+            'attendance page must not reference learner Passport claims (Gate H)');
+    expect(find.textContaining('portfolio evidence'), findsNothing,
+        reason:
+            'attendance page must not claim portfolio evidence provenance (Gate H)');
+  });
+
+  // Gate I — AI Transparency
+  testWidgets(
+      'attendance page does not present AI-generated output as verified learner proof',
+      (WidgetTester tester) async {
+    final _MockSyncCoordinator syncCoordinator = _MockSyncCoordinator();
+    when(() => syncCoordinator.isOnline).thenReturn(true);
+    when(() => syncCoordinator.pendingCount).thenReturn(0);
+    when(() => syncCoordinator.isSyncing).thenReturn(false);
+    when(() => syncCoordinator.retryFailed()).thenAnswer((_) async {});
+
+    final _FakeAttendanceService attendanceService = _FakeAttendanceService(
+      rosterOccurrence: SessionOccurrence(
+        id: 'occ-i',
+        sessionId: 'session-i',
+        siteId: 'site-1',
+        title: 'Afternoon Studio',
+        roster: const <RosterLearner>[],
+        startTime: DateTime.now(),
+      ),
+    );
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: <SingleChildWidget>[
+          ChangeNotifierProvider<AppState>.value(value: _buildAppState()),
+          ChangeNotifierProvider<SyncCoordinator>.value(
+            value: syncCoordinator,
+          ),
+          ChangeNotifierProvider<AttendanceService>.value(
+            value: attendanceService,
+          ),
+        ],
+        child: _buildTestMaterialApp(child: const AttendancePage()),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+
+    // Attendance is purely manual educator input. It must not present any
+    // AI-generated output as verified learner proof.
+    expect(find.textContaining('AI-generated'), findsNothing,
+        reason:
+            'attendance page must not label output as AI-generated (Gate I)');
+    expect(find.textContaining('AI assisted'), findsNothing,
+        reason:
+            'attendance page must not imply AI assistance (Gate I)');
+    expect(find.textContaining('verified by AI'), findsNothing,
+        reason:
+            'attendance page must not present AI-verified claims (Gate I)');
+  });
 }

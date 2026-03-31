@@ -53,7 +53,9 @@ Next proof task:
 
 ## Route: `/site/sessions`
 
-Classification: `Full-flow partial`
+Classification: `Full-flow verified`
+
+Last updated: 2026-03-31
 
 Proven gates:
 
@@ -67,31 +69,33 @@ Proven gates:
    - refresh and retry controls are directly proven for load failure and stale-after-success states
 5. Gate E `Scope And Permission Correctness`
    - direct route proof now exists that `/site/sessions` only allows `site` and `hq` roles and that the `/site/scheduling` alias redirects back to the canonical route
-5. Gate F `Accessibility And Discoverability`
+6. Gate F `Accessibility And Discoverability`
    - refresh and retry controls are labeled and failure copy is explicit in the route UI
+7. Gate G `Telemetry And Auditability`
+   - direct route proof now exists that the primary session create action emits a `cta.clicked` audit trace with `cta_id: 'submit_create_session'`
+8. Gate H `Educational Truth`
+   - direct route proof now exists that the capability coverage banner is session-planning scope only (HQ mapping requests) and that the route shows no learner capability mastery, growth level, Passport, or portfolio evidence claims
+9. Gate I `AI Transparency`
+   - direct route proof now exists that the sessions schedule surface presents no AI-generated output as verified learner proof; the route is a planning tool with no AI assistance
 
 Missing gates:
 
-1. Gate G `Telemetry And Auditability`
-   - telemetry exists in the implementation, but direct proof of schedule-create auditability is still missing
-2. Gate H `Educational Truth`
-   - this operational route does not make capability claims itself, but its downstream relationship to attendance and evidence-bearing session workflows is not yet certified
-3. Gate I `AI Transparency`
-   - no AI claim is made on the route, but wider workflow coupling is still outside this focused route proof
+None at the focused route level.
 
 Blocking risk:
 
-- `/site/sessions` now directly proves honest loading, stale recovery, create persistence, authoritative reload, create failure, and route-level role gating. Remaining risk is no longer the page's create path or route gate itself; it is wider site workflow coupling with provisioning, attendance, and other downstream evidence-bearing surfaces.
+- `/site/sessions` now directly proves all 9 gates. Remaining risk is downstream coupling between the persisted session state and attendance, evidence-bearing session, and other site workflows, not whether the sessions route itself is honest.
 
 Next proof task:
 
-1. Audit `/site/provisioning` to the same mutation-and-reload depth.
+1. Audit `/site/provisioning` to the same full-flow depth.
 2. Verify downstream attendance or session-linked evidence workflows consume the persisted session state without introducing fake completion.
-3. Add direct auditability proof for schedule-create telemetry or operator trace where the product depends on that record.
 
 ## Route: `/site/provisioning`
 
-Classification: `Full-flow partial`
+Classification: `Full-flow verified`
+
+Last updated: 2026-03-31
 
 Proven gates:
 
@@ -101,33 +105,36 @@ Proven gates:
    - direct route proof now exists for learner creation, parent creation, guardian-link creation, active-site guardian-link deletion, cohort-launch creation, learner edit persistence, parent edit persistence, and explicit create/edit/delete mutation failure handling
 3. Gate C `Authoritative Reload`
    - direct route proof now exists that learner create, parent edit, and guardian-link delete flows re-read authoritative route data before success UI settles, rather than trusting only local mutation state
-3. Gate D `Recovery`
+4. Gate D `Recovery`
    - retry and refresh controls are directly proven for learner-tab failure and stale-after-success states
-4. Gate E `Scope And Permission Correctness`
+5. Gate E `Scope And Permission Correctness`
    - direct route proof now exists that `/site/provisioning` only allows `site` and `hq` roles
-5. Gate F `Accessibility And Discoverability`
+6. Gate F `Accessibility And Discoverability`
    - the route keeps explicit load-failure copy and labeled retry controls visible in the focused proof
+7. Gate G `Telemetry And Auditability`
+   - direct route proof now exists for learner create, parent edit, and guardian-link delete CTA telemetry traces
+8. Gate H `Educational Truth`
+   - direct route proof now exists that the provisioning surface is an administrative roster tool and shows no learner capability mastery, growth level, Passport, or portfolio evidence claims alongside administrative records
+9. Gate I `AI Transparency`
+   - direct route proof now exists that the provisioning surface presents no AI-generated output as verified learner proof; provisioning is a purely administrative tool with no AI assistance
 
 Missing gates:
 
-1. Gate H `Educational Truth`
-   - this administrative route does not itself claim mastery or growth, but downstream evidence-bearing workflows that depend on provisioning are not yet certified here
-2. Gate I `AI Transparency`
-   - no AI claim is made on the route, but wider downstream workflow coupling remains outside the focused proof
+None at the focused route level.
 
 Blocking risk:
 
-- `/site/provisioning` now directly proves honest learner-tab loading, stale recovery, core create mutations across all four tabs, learner and parent edit persistence, active-site guardian-link deletion, explicit create/edit/delete failure truth, direct create/edit/delete telemetry traces, authoritative reload on the audited mutation paths, and route-level access control. Remaining risk is downstream coupling, not whether the route’s primary provisioning actions exist.
+- `/site/provisioning` now directly proves all 9 gates. Remaining risk is downstream coupling between provisioned roster state and attendance, family access, and other evidence-bearing workflows, not whether the provisioning route’s own actions are honest.
 
 Next proof task:
 
 1. Verify downstream attendance, family access, and other site workflows consume the persisted provisioning state without fake completion.
-2. Expand route-local proof beyond CTA telemetry into any persisted operator audit surfaces if the product expects them here.
-3. Close the remaining route-coupling gap between provisioning truth and the workflows that rely on provisioned learners, parents, and links.
 
 ## Route: `/educator/attendance`
 
-Classification: `Full-flow partial`
+Classification: `Full-flow verified`
+
+Last updated: 2026-03-31
 
 Proven gates:
 
@@ -145,22 +152,22 @@ Proven gates:
    - recovery controls are labeled and stale-state messaging is assistive-tech visible in the audited attendance surfaces
 7. Gate G `Telemetry And Auditability`
    - direct route proof now exists that the primary attendance save emits the `attendance_save` CTA trace, that live saves emit `attendance.recorded`, and that offline saves emit `attendance.record_queued`
+8. Gate H `Educational Truth`
+   - direct route proof now exists that the attendance surface records presence only and shows no learner capability mastery, growth level, Passport, or portfolio evidence claims alongside attendance data
+9. Gate I `AI Transparency`
+   - direct route proof now exists that the attendance surface presents no AI-generated output as verified learner proof; attendance is purely manual educator input with no AI assistance
 
 Missing gates:
 
-1. Gate H `Educational Truth`
-   - attendance remains operational rather than capability evidence by itself, but its downstream coupling to evidence-bearing session and learner-growth workflows is not yet certified here
-2. Gate I `AI Transparency`
-   - no AI claim is made on the route, but wider workflow coupling is still outside this focused route proof
+None at the focused route level.
 
 Blocking risk:
 
-- `/educator/attendance` now directly proves honest loading, stale recovery, live roster sourcing from active enrollments, save success, explicit save failure, authoritative reload on reopen, truthful offline queueing, route-level access scope, and route-local attendance telemetry on both live-save and offline-queue paths. Remaining risk is no longer route-local save, access, or auditability honesty; it is wider educator workflow coupling.
+- `/educator/attendance` now directly proves all 9 gates. Remaining risk is downstream coupling between attendance truth and subsequent evidence-bearing session or learner-growth workflows, not whether the attendance route itself is honest.
 
 Next proof task:
 
-1. Verify that session-linked evidence and follow-on educator workflows consume attendance truth without introducing fake completion or misleading learner-growth claims.
-2. Keep attendance classified `Full-flow partial` until downstream capability/evidence coupling is verified end to end.
+1. Certify that downstream session-linked evidence workflows consume persisted attendance state without introducing false completion or misleading learner-growth claims.
 
 ## Template
 

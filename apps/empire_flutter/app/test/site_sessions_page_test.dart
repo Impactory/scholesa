@@ -11,6 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/modules/site/site_sessions_page.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
+import 'package:scholesa_app/services/telemetry_service.dart';
 import 'package:scholesa_app/ui/theme/scholesa_theme.dart';
 
 class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
@@ -694,5 +695,149 @@ void main() {
     );
     expect(find.widgetWithText(OutlinedButton, 'Request HQ mapping'),
         findsNothing);
+  });
+
+  // Gate G — Telemetry and Auditability
+  testWidgets('site sessions create emits audit telemetry on session persist',
+      (WidgetTester tester) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 1600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedSessionCreateOptions(firestore);
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final AppState appState = _buildSiteState();
+
+    final List<Map<String, dynamic>> events = <Map<String, dynamic>>[];
+    await TelemetryService.runWithDispatcher(
+      (Map<String, dynamic> payload) async {
+        events.add(Map<String, dynamic>.from(payload));
+      },
+      () async {
+        await tester.pumpWidget(
+          _buildHarness(
+            child: MultiProvider(
+              providers: <SingleChildWidget>[
+                Provider<FirestoreService>.value(value: firestoreService),
+                ChangeNotifierProvider<AppState>.value(value: appState),
+              ],
+              child: const SiteSessionsPage(),
+            ),
+          ),
+        );
+        await tester.pump();
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('New Session'));
+        await tester.pumpAndSettle();
+        await tester.enterText(
+          find.widgetWithText(TextField, 'Session Title'),
+          'Evidence Studio',
+        );
+        final Finder createButton =
+            find.widgetWithText(ElevatedButton, 'Create Session');
+        await tester.ensureVisible(createButton);
+        await tester.tap(createButton);
+        await tester.pump();
+        await tester.pumpAndSettle();
+      },
+    );
+
+    expect(
+      events.any(
+        (Map<String, dynamic> p) =>
+            p['event'] == 'cta.clicked' &&
+            (p['metadata'] as Map<String, dynamic>)['cta_id'] ==
+                'submit_create_session',
+      ),
+      isTrue,
+      reason:
+          'session create must leave an auditable CTA trace (Gate G)',
+    );
+  });
+
+  // Gate H — Educational Truth
+  testWidgets(
+      'site sessions capability banner is session-planning scope, not learner mastery',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final AppState appState = _buildSiteState();
+    final DateTime today = DateUtils.dateOnly(DateTime.now());
+
+    await firestore.collection('sessions').doc('session-blocked').set(
+      <String, dynamic>{
+        'siteId': 'site-1',
+        'title': 'Design Lab',
+        'educatorName': 'Coach Ada',
+        'room': 'Room 1',
+        'learnerCount': 14,
+        'pillar': 'Design',
+        'hasOpenCapabilityRequest': true,
+        'startTime': Timestamp.fromDate(today.add(const Duration(hours: 10))),
+      },
+    );
+
+    await tester.pumpWidget(
+      _buildHarness(
+        child: MultiProvider(
+          providers: <SingleChildWidget>[
+            Provider<FirestoreService>.value(value: firestoreService),
+            ChangeNotifierProvider<AppState>.value(value: appState),
+          ],
+          child: const SiteSessionsPage(),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    // Capability references on this page are session-planning scope (HQ
+    // mapping requests), not learner mastery or growth level claims.
+    expect(find.textContaining('mastery'), findsNothing,
+        reason: 'sessions page must not show learner mastery claims (Gate H)');
+    expect(find.textContaining('growth level'), findsNothing,
+        reason: 'sessions page must not show learner growth level claims (Gate H)');
+    expect(find.textContaining('Passport'), findsNothing,
+        reason: 'sessions page must not reference learner Passport claims (Gate H)');
+    expect(find.textContaining('portfolio evidence'), findsNothing,
+        reason:
+            'sessions page must not claim portfolio evidence provenance (Gate H)');
+  });
+
+  // Gate I — AI Transparency
+  testWidgets(
+      'site sessions does not present AI-generated output as verified learner proof',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      _buildHarness(
+        child: MultiProvider(
+          providers: <SingleChildWidget>[
+            ChangeNotifierProvider<AppState>.value(value: _buildSiteState()),
+          ],
+          child: const SiteSessionsPage(),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    // The sessions schedule surface is a planning tool. It does not use AI
+    // assistance and must not present any output as AI-verified learner proof.
+    expect(find.textContaining('AI-generated'), findsNothing,
+        reason:
+            'sessions page must not label any output as AI-generated (Gate I)');
+    expect(find.textContaining('AI assisted'), findsNothing,
+        reason:
+            'sessions page must not imply AI assistance on session records (Gate I)');
+    expect(find.textContaining('verified by AI'), findsNothing,
+        reason:
+            'sessions page must not present AI-verified claims (Gate I)');
   });
 }
