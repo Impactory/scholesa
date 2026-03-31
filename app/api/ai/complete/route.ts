@@ -144,6 +144,7 @@ function buildEscalatedGuardResponse(input: {
   safetyReasonCode: string;
   confidence?: number;
   answer: string;
+  targetLocale: SupportedLocale;
 }): ModelResponse {
   return {
     answer: input.answer,
@@ -228,6 +229,7 @@ export async function POST(request: Request) {
         modelVersion: 'confidence-guard-v1',
         safetyReasonCode: 'child_inference_unavailable',
         answer: localizedServiceUnavailable(targetLocale),
+        targetLocale,
       }), { status: 200 });
     }
     return NextResponse.json({ error: 'inference_unavailable', code: inference.errorCode }, { status: 503 });
@@ -241,6 +243,7 @@ export async function POST(request: Request) {
         modelVersion: 'confidence-guard-v1',
         safetyReasonCode: 'child_inference_unavailable',
         answer: localizedServiceUnavailable(targetLocale),
+        targetLocale,
       }), { status: 200 });
     }
     return NextResponse.json({ error: 'inference_unavailable', code: inference.errorCode }, { status: 503 });
@@ -255,6 +258,7 @@ export async function POST(request: Request) {
         modelVersion: llmPayload?.modelVersion || 'confidence-guard-v1',
         safetyReasonCode: 'child_empty_inference_response',
         answer: localizedServiceUnavailable(targetLocale),
+        targetLocale,
       }), { status: 200 });
     }
     return NextResponse.json({ error: 'empty_inference_response' }, { status: 503 });
@@ -269,6 +273,7 @@ export async function POST(request: Request) {
       safetyReasonCode: certifiedConfidence == null ? 'child_confidence_unavailable' : 'child_low_confidence_guard',
       confidence: certifiedConfidence,
       answer: localizedLowConfidenceSupport(targetLocale),
+      targetLocale,
     }), { status: 200 });
   }
 

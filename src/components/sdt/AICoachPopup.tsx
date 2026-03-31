@@ -131,11 +131,9 @@ export function AICoachPopup({
   const [isMinimized, setIsMinimized] = useState(true);
   const [mode, setMode] = useState<CoachMode | null>(null);
   const [question, setQuestion] = useState('');
-  const [isListening, setIsListening] = useState(false);
   const [response, setResponse] = useState<AIServiceResponse | null>(null);
   const [explainBack, setExplainBack] = useState('');
   const [loading, setLoading] = useState(false);
-  const [isTranscribing, setIsTranscribing] = useState(false);
   const [voiceInputTraceId, setVoiceInputTraceId] = useState<string | null>(null);
   const [currentLogId, setCurrentLogId] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);

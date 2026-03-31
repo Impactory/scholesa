@@ -197,7 +197,7 @@ export function AnalyticsDashboard() {
     ? t('analytics.educator.period.week')
     : t('analytics.educator.period.month');
   const trendPoints = buildTrendPoints(learners, timeRange, locale);
-  const trendMax = Math.max(100, ...trendPoints.map((point) => point.value));
+  const trendMax = Math.max(100, ...trendPoints.map((point) => point.value ?? 0));
   const voiceTrendMax = Math.max(100, ...siteVoiceMetrics.trendPoints.map((point) => point.value ?? 0));
   
   const handleExportCSV = () => {
@@ -218,10 +218,10 @@ export function AnalyticsDashboard() {
     // Prepare CSV rows
     const rows = learners.map(s => [
       s.learnerName,
-      s.engagementScore.toString(),
-      s.autonomyScore.toString(),
-      s.competenceScore.toString(),
-      s.belongingScore.toString(),
+      (s.engagementScore ?? 0).toString(),
+      (s.autonomyScore ?? 0).toString(),
+      (s.competenceScore ?? 0).toString(),
+      (s.belongingScore ?? 0).toString(),
       s.eventCount.toString(),
       s.lastActive ? s.lastActive.toLocaleDateString(locale) : t('analytics.educator.never')
     ]);

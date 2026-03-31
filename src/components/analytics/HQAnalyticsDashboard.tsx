@@ -142,8 +142,9 @@ export function HQAnalyticsDashboard() {
           
           // Determine health status
           let healthStatus: 'healthy' | 'warning' | 'critical' | 'unavailable' = 'unavailable';
-          const daysSinceActivity = lastActivityDate
-            ? Math.floor((new Date().getTime() - lastActivityDate.getTime()) / 86400000)
+          const capturedLastActivityDate = lastActivityDate;
+          const daysSinceActivity = capturedLastActivityDate
+            ? Math.floor((new Date().getTime() - capturedLastActivityDate.getTime()) / 86400000)
             : null;
           const voiceCaptureCritical = avgVoiceCaptureSuccess !== null && avgVoiceCaptureSuccess < 50;
           const voiceCaptureWarning = avgVoiceCaptureSuccess !== null && avgVoiceCaptureSuccess < 80;
