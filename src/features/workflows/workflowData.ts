@@ -3528,6 +3528,61 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
         ]),
       };
     }
+    case '/hq/capabilities':
+      return {
+        records: applyRouteActionLabels(await queryCollectionRecords({
+          routePath: ctx.routePath,
+          collectionName: 'capabilities',
+          constraints: [orderBy('sortOrder', 'asc')],
+          titleKeys: ['title', 'name'],
+          subtitleKeys: ['pillarCode', 'status'],
+          statusKeys: ['status'],
+          editable: true,
+          deletable: false,
+          limitSize: 200,
+        }), ctx.routePath),
+        canCreate: true,
+        canRefresh: true,
+        createLabel: 'Create capability',
+        createConfig: null,
+      };
+    case '/educator/verification':
+      return {
+        records: applyRouteActionLabels(await queryCollectionRecords({
+          routePath: ctx.routePath,
+          collectionName: 'portfolioItems',
+          constraints: siteId
+            ? [where('siteId', '==', siteId), where('verificationStatus', '==', 'pending'), orderBy('createdAt', 'desc')]
+            : [where('verificationStatus', '==', 'pending'), orderBy('createdAt', 'desc')],
+          titleKeys: ['title'],
+          subtitleKeys: ['learnerId', 'pillarCode'],
+          statusKeys: ['verificationStatus'],
+          editable: true,
+          deletable: false,
+          limitSize: 50,
+        }), ctx.routePath),
+        canCreate: false,
+        canRefresh: true,
+        createLabel: 'Create',
+        createConfig: null,
+      };
+    case '/parent/passport':
+      return {
+        records: await loadCallableRows({
+          routePath: ctx.routePath,
+          callableName: 'getParentDashboardBundle',
+          args: {},
+          rowArrayField: 'portfolioItemsPreview',
+          collectionName: 'portfolioItems',
+          titleKeys: ['title'],
+          subtitleKeys: ['pillar', 'type'],
+          statusKeys: ['verificationStatus'],
+        }),
+        canCreate: false,
+        canRefresh: true,
+        createLabel: 'Create',
+        createConfig: null,
+      };
     default:
       return { records: [], canCreate: false, canRefresh: true, createLabel: 'Create', guidanceText: null, createConfig: null };
   }

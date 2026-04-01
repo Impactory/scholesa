@@ -28,9 +28,9 @@ export function applyKidFriendlyConversationalTone(
 
   let shaped = hasEncouragement ? normalized : `${displayName}, nice effort. ${normalized}`;
   shaped = shaped
-    .replace(/\bAI coach\b/gi, 'AI help')
-    .replace(/\bai coach\b/g, 'AI help')
-    .replace(/\bMiloOS\b/g, 'AI help');
+    .replace(/\bAI coach\b/gi, 'MiloOS')
+    .replace(/\bai coach\b/g, 'MiloOS')
+    .replace(/\bAI help\b/gi, 'MiloOS');
 
   if (!hasQuestion && !skipFollowupQuestion) {
     shaped = `${shaped} What feels like the best first move?`;

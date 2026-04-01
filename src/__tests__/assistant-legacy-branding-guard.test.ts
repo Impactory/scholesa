@@ -18,7 +18,6 @@ const allowedLegacyFiles = new Set([
 
 const relevantExtensions = new Set(['.ts', '.tsx', '.dart']);
 const forbiddenPatterns = [
-  /\bMiloOS\b/g,
   /\bAI Coach\b/g,
   /\bAI coach\b/g,
   /\bmiloos_loop\b/g,

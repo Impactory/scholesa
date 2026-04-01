@@ -50,10 +50,10 @@ const LOW_CONFIDENCE_STUDENT_SUPPORT: Record<VoiceLocale, string> = {
 };
 
 const UNAVAILABLE_STUDENT_SUPPORT: Record<VoiceLocale, string> = {
-  en: 'AI help is not ready to give a reliable answer right now. Share your work so far, or ask your educator to review the next step with you.',
-  'zh-CN': 'AI 帮助现在还不能提供足够可靠的回答。你可以先分享你目前的思路，或者请老师陪你一起看下一步。',
-  'zh-TW': 'AI 幫助現在還不能提供足夠可靠的回答。你可以先分享你目前的思路，或者請老師陪你一起看下一步。',
-  th: 'ความช่วยเหลือจาก AI ยังไม่พร้อมให้คำตอบที่เชื่อถือได้ในตอนนี้ ลองเล่าสิ่งที่ทำมาถึงตอนนี้ หรือให้ครูช่วยดูขั้นต่อไปกับคุณ',
+  en: 'MiloOS is not ready to give a reliable answer right now. Share your work so far, or ask your educator to review the next step with you.',
+  'zh-CN': 'MiloOS 现在还不能提供足够可靠的回答。你可以先分享你目前的思路，或者请老师陪你一起看下一步。',
+  'zh-TW': 'MiloOS 現在還不能提供足夠可靠的回答。你可以先分享你目前的思路，或者請老師陪你一起看下一步。',
+  th: 'MiloOS ยังไม่พร้อมให้คำตอบที่เชื่อถือได้ในตอนนี้ ลองเล่าสิ่งที่ทำมาถึงตอนนี้ หรือให้ครูช่วยดูขั้นต่อไปกับคุณ',
 };
 
 const HEURISTIC_ONLY_STUDENT_SUPPORT: Record<VoiceLocale, string> = {

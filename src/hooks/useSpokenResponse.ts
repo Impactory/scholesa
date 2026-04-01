@@ -20,9 +20,9 @@ interface UseSpokenResponseOptions {
 
 export function useSpokenResponse({
   locale,
-  audioSuccessMessage = 'AI Help answered out loud. Replay the spoken response if you need to hear it again.',
-  browserSuccessMessage = 'AI Help answered out loud using this device audio. Replay the spoken response if you need to hear it again.',
-  unavailableMessage = 'AI Help prepared a spoken response, but this device could not play it out loud. Turn on audio and try Replay.',
+  audioSuccessMessage = 'MiloOS answered out loud. Replay the spoken response if you need to hear it again.',
+  browserSuccessMessage = 'MiloOS answered out loud using this device audio. Replay the spoken response if you need to hear it again.',
+  unavailableMessage = 'MiloOS prepared a spoken response, but this device could not play it out loud. Turn on audio and try Replay.',
   onAudioPlaybackError,
 }: UseSpokenResponseOptions) {
   const [spokenResponseStatus, setSpokenResponseStatus] = useState<string | null>(null);

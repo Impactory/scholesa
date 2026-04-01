@@ -495,11 +495,11 @@
     }
   },
   "aiCoach": {
-    "title": "AI 幫助",
+    "title": "MiloOS",
     "tooltip": "取得幫助",
-    "openAria": "開啟 AI 幫助",
-    "minimizeAria": "收起 AI 幫助",
-    "teacherGuidance": "使用 AI 幫助前，請先和老師確認。",
+    "openAria": "開啟 MiloOS",
+    "minimizeAria": "收起 MiloOS",
+    "teacherGuidance": "使用 MiloOS 前，請先和老師確認。",
     "howCanIHelp": "今天我可以怎麼幫你？",
     "mode": {
       "hint": {
@@ -525,7 +525,7 @@
     "speakQuestion": "說出你的問題",
     "thinking": "正在思考...",
     "ask": "提問",
-    "responseLabel": "AI 幫助：",
+    "responseLabel": "MiloOS:",
     "poweredBy": "由 {{model}} 提供支援",
     "wasHelpful": "這有幫助嗎？",
     "helpfulYes": "有",

@@ -495,11 +495,11 @@
     }
   },
   "aiCoach": {
-    "title": "AI Help",
+    "title": "MiloOS",
     "tooltip": "Ask for help",
-    "openAria": "Open AI help",
-    "minimizeAria": "Minimize AI help",
-    "teacherGuidance": "Check with your teacher before using AI help.",
+    "openAria": "Open MiloOS",
+    "minimizeAria": "Minimize MiloOS",
+    "teacherGuidance": "Check with your teacher before using MiloOS.",
     "howCanIHelp": "How can I help you today?",
     "mode": {
       "hint": {
@@ -525,7 +525,7 @@
     "speakQuestion": "Speak Your Question",
     "thinking": "Thinking...",
     "ask": "Ask",
-    "responseLabel": "AI Help:",
+    "responseLabel": "MiloOS:",
     "poweredBy": "Powered by {{model}}",
     "wasHelpful": "Was this helpful?",
     "helpfulYes": "Yes",

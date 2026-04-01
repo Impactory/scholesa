@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * AI Help Screen
+ * MiloOS Screen
  * 
  * Level 1: Must-have for flow and retention
  * Three modes: Hint / Rubric Check / Debug-by-Questions + Explain-it-back box
@@ -88,8 +88,8 @@ export function AICoachScreen({
       setResponse(aiResponse);
       await playSpokenResponse(aiResponse.message);
     } catch (err) {
-      console.error('AI Help error:', err);
-      setError('Unable to get AI help right now. Try again or ask your teacher!');
+      console.error('MiloOS error:', err);
+      setError('Unable to get MiloOS right now. Try again or ask your teacher!');
     } finally {
       setLoading(false);
     }
@@ -112,17 +112,17 @@ export function AICoachScreen({
       await handleSubmitQuestion(transcript);
     },
     onUnavailable: () => {
-      setStatusMessage('Voice capture is unavailable. Please sign in and complete voice setup to use AI Help by voice.');
+      setStatusMessage('Voice capture is unavailable. Please sign in and complete voice setup to use MiloOS by voice.');
     },
     onCaptureError: (microphoneError) => {
-      console.error('Microphone capture unavailable for AI Help screen:', microphoneError);
+      console.error('Microphone capture unavailable for MiloOS screen:', microphoneError);
       setStatusMessage('Microphone access is required for voice questions. Please allow microphone permission and try again.');
     },
     onEmptyTranscript: () => {
-      setStatusMessage('AI Help could not clearly capture what you said. Please try again and speak a little more clearly.');
+      setStatusMessage('MiloOS could not clearly capture what you said. Please try again and speak a little more clearly.');
     },
     onTranscriptionError: (voiceError) => {
-      console.error('Voice transcription failed in AI Help screen:', voiceError);
+      console.error('Voice transcription failed in MiloOS screen:', voiceError);
       setStatusMessage(getUserFacingVoiceTranscriptionError(voiceError));
     },
     onListeningStarted: () => {
@@ -160,7 +160,7 @@ export function AICoachScreen({
       setStatusMessage(
         result.feedback?.trim() ||
           (result.approved
-            ? 'Explain-back submitted. Your reflection is now attached to this AI help session.'
+            ? 'Explain-back submitted. Your reflection is now attached to this MiloOS session.'
             : 'Explain-back submitted for review.'),
       );
       setResponse((current) =>
@@ -177,7 +177,7 @@ export function AICoachScreen({
         approved: result.approved,
       });
     } catch (err) {
-      console.error('AI Help explain-back error:', err);
+      console.error('MiloOS explain-back error:', err);
       setError('Unable to submit your explanation right now. Try again or ask your teacher to review it.');
     } finally {
       setLoading(false);
@@ -188,9 +188,9 @@ export function AICoachScreen({
     <div className="max-w-3xl mx-auto space-y-6">
       {/* Header */}
       <div className="bg-gradient-to-r from-purple-500 to-indigo-600 rounded-lg p-6 text-white">
-        <h1 className="text-2xl font-bold mb-2">AI Help</h1>
+        <h1 className="text-2xl font-bold mb-2">MiloOS</h1>
         <p className="text-purple-100">
-          Speak your question or type when needed. AI Help answers out loud, and you still need to understand and explain it.
+          Speak your question or type when needed. MiloOS answers out loud, and you still need to understand and explain it.
         </p>
       </div>
 
@@ -282,7 +282,7 @@ export function AICoachScreen({
                   <p className="text-sm text-indigo-800">
                     {isListening
                       ? 'Listening now. Finish your thought, then tap again to stop.'
-                      : 'Use the mic for a conversational turn. AI Help will transcribe it, think, and answer out loud.'}
+                      : 'Use the mic for a conversational turn. MiloOS will transcribe it, think, and answer out loud.'}
                   </p>
                 </div>
                 <button
@@ -334,7 +334,7 @@ export function AICoachScreen({
               ) : (
                 <>
                   <SendIcon className="w-5 h-5" />
-                  <span>Ask AI Help</span>
+                  <span>Ask MiloOS</span>
                 </>
               )}
             </button>
@@ -355,7 +355,7 @@ export function AICoachScreen({
               <LightbulbIcon className="w-5 h-5 text-purple-600" />
             </div>
             <div className="flex-1">
-              <p className="font-medium text-gray-900 mb-2">AI Help answered out loud.</p>
+              <p className="font-medium text-gray-900 mb-2">MiloOS answered out loud.</p>
               <p className="text-gray-700">
                 {spokenResponseStatus || 'Replay the spoken response if you need to hear it again.'}
               </p>
@@ -439,7 +439,7 @@ export function AICoachScreen({
       <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-600">
         <p className="font-medium text-gray-700 mb-1">💡 Pro tip:</p>
         <p>
-          AI Help is here to help you think, not to do the work for you. 
+          MiloOS is here to help you think, not to do the work for you. 
           The best learning happens when you struggle a bit and figure things out!
         </p>
       </div>

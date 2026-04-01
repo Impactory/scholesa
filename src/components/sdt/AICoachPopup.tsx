@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * AI Help Popup
+ * MiloOS Popup
  * 
  * Floating assistant in bottom-right corner
  * - Voice-first input and auto-submit
@@ -94,22 +94,22 @@ function buildVoiceTransparencyMessage(metadata: VoiceTransparencyMeta): string 
   const understandingConfidence = metadata.understanding?.confidence ?? null;
 
   if (responseGenerationSource === 'guardrail' && understandingSource === 'heuristic') {
-    return 'AI Help is being careful here because it could not understand the voice request clearly enough yet.';
+    return 'MiloOS is being careful here because it could not understand the voice request clearly enough yet.';
   }
   if (responseGenerationSource === 'local' && understandingSource === 'heuristic') {
-    return 'AI Help answered with a simple local hint because it could not confirm the voice request clearly. Treat this as a prompt to think, not a verified reading of what you meant.';
+    return 'MiloOS answered with a simple local hint because it could not confirm the voice request clearly. Treat this as a prompt to think, not a verified reading of what you meant.';
   }
   if (responseGenerationSource === 'model' && understandingSource === 'heuristic') {
-    return 'AI Help used the model to write the reply, but it still could not confirm the voice request clearly.';
+    return 'MiloOS used the model to write the reply, but it still could not confirm the voice request clearly.';
   }
   if (understandingSource === 'blended') {
     const confidenceText = typeof understandingConfidence === 'number'
       ? ` Confidence in that reading: ${Math.round(understandingConfidence * 100)}%.`
       : '';
-    return `AI Help used both a quick local check and model support to understand this voice turn.${confidenceText}`;
+    return `MiloOS used both a quick local check and model support to understand this voice turn.${confidenceText}`;
   }
   if (understandingSource === 'model') {
-    return 'AI Help used model support to understand this voice turn.';
+    return 'MiloOS used model support to understand this voice turn.';
   }
   return null;
 }
@@ -182,7 +182,7 @@ export function AICoachPopup({
   } = useSpokenResponse({
     locale,
     onAudioPlaybackError: (error) => {
-      console.error('Voice playback failed in AI Help popup:', error);
+      console.error('Voice playback failed in MiloOS popup:', error);
     },
   });
 
@@ -206,7 +206,7 @@ export function AICoachPopup({
       }
     },
     onUnavailable: () => {
-      setStatusMessage('Voice capture is unavailable. Please sign in and complete voice setup to use AI Help by voice.');
+      setStatusMessage('Voice capture is unavailable. Please sign in and complete voice setup to use MiloOS by voice.');
     },
     onCaptureError: (error) => {
       console.error('Microphone capture unavailable for BOS voice flow.', error);
@@ -226,10 +226,10 @@ export function AICoachPopup({
       });
     },
     onEmptyTranscript: () => {
-      setStatusMessage('AI Help could not clearly capture what you said. Please try again and speak a little more clearly.');
+      setStatusMessage('MiloOS could not clearly capture what you said. Please try again and speak a little more clearly.');
     },
     onTranscriptionError: (error) => {
-      console.error('Voice transcription failed in AI Help popup.', error);
+      console.error('Voice transcription failed in MiloOS popup.', error);
       setStatusMessage(getUserFacingVoiceTranscriptionError(error));
     },
   });
@@ -365,7 +365,7 @@ Guidance: ${
         ? `${personalizedContext}\n\nStudent Question: ${resolvedQuestion}`
         : resolvedQuestion;
       if (!user) {
-        throw new Error('Sign in to use AI Help by voice.');
+        throw new Error('Sign in to use MiloOS by voice.');
       }
       if (!voiceApiConfigured()) {
         throw new Error('Voice help is not available right now. Complete voice setup and try again.');
@@ -455,7 +455,7 @@ Guidance: ${
         voiceInputTraceId: voiceInputTraceId || undefined,
       });
     } catch (err) {
-      console.error('AI Help error:', err);
+      console.error('MiloOS error:', err);
       const traceId = `ai_popup_${Date.now()}`;
       setResponse({
         answer: localizedServiceUnavailable(locale),
@@ -472,7 +472,7 @@ Guidance: ${
         traceId,
       });
       await playSpokenResponse(localizedServiceUnavailable(locale));
-      setVoiceTransparencyMessage('AI Help could not understand this voice turn reliably, so it switched to a safer fallback reply.');
+      setVoiceTransparencyMessage('MiloOS could not understand this voice turn reliably, so it switched to a safer fallback reply.');
     } finally {
       setLoading(false);
     }
@@ -483,7 +483,7 @@ Guidance: ${
 
     const interactionId = response.traceId?.trim();
     if (actorRole !== 'learner' || !interactionId) {
-      setStatusMessage('Open AI Help from the learner workspace to record explain-back for this session.');
+      setStatusMessage('Open MiloOS from the learner workspace to record explain-back for this session.');
       return;
     }
 
@@ -518,11 +518,11 @@ Guidance: ${
       setMode(null);
       setCurrentLogId(null);
       setStatusMessage(
-        result.feedback?.trim() || 'Explain-back recorded for this AI help session.',
+        result.feedback?.trim() || 'Explain-back recorded for this MiloOS session.',
       );
     } catch (err) {
-      console.error('AI Help popup explain-back error:', err);
-      setStatusMessage('Unable to record explain-back right now. Open the learner AI Help screen or try again later.');
+      console.error('MiloOS popup explain-back error:', err);
+      setStatusMessage('Unable to record explain-back right now. Open the learner MiloOS screen or try again later.');
     } finally {
       setLoading(false);
     }
@@ -723,7 +723,7 @@ Guidance: ${
         {response && (
           <div className="space-y-3">
             <div className="bg-purple-50 rounded-lg p-3 text-sm">
-              <p className="font-medium text-purple-900 mb-2">AI Help answered out loud.</p>
+              <p className="font-medium text-purple-900 mb-2">MiloOS answered out loud.</p>
               <p className="text-app-foreground">
                 {spokenResponseStatus || 'Replay the spoken response if you need to hear it again.'}
               </p>

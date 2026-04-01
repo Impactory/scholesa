@@ -495,10 +495,10 @@
     }
   },
   "aiCoach": {
-    "title": "ความช่วยเหลือจาก AI",
+    "title": "MiloOS",
     "tooltip": "ขอความช่วยเหลือ",
-    "openAria": "เปิดความช่วยเหลือจาก AI",
-    "minimizeAria": "ย่อความช่วยเหลือจาก AI",
+    "openAria": "เปิด MiloOS",
+    "minimizeAria": "ย่อ MiloOS",
     "teacherGuidance": "ถามครูก่อนใช้ความช่วยเหลือจาก AI",
     "howCanIHelp": "วันนี้ฉันช่วยอะไรได้บ้าง?",
     "mode": {
@@ -525,7 +525,7 @@
     "speakQuestion": "พูดคำถามของคุณ",
     "thinking": "กำลังคิด...",
     "ask": "ถาม",
-    "responseLabel": "ความช่วยเหลือจาก AI:",
+    "responseLabel": "MiloOS:",
     "poweredBy": "ขับเคลื่อนโดย {{model}}",
     "wasHelpful": "สิ่งนี้ช่วยได้ไหม?",
     "helpfulYes": "ได้",

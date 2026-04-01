@@ -13,8 +13,30 @@ function parseEnabledFlutterRoutes(routerSource: string): string[] {
   return Array.from(results.values());
 }
 
+// Routes that only exist on one platform by design.
+const webOnlyRoutes = new Set([
+  '/educator/evidence',
+  '/educator/verification',
+  '/hq/capabilities',
+  '/parent/passport',
+  '/site/clever',
+]);
+const flutterOnlyRoutes = new Set([
+  '/hq/exports',
+  '/learner/credentials',
+  '/learner/onboarding',
+  '/learner/settings',
+  '/parent/child/:learnerId',
+  '/parent/consent',
+  '/parent/messages',
+  '/parent/settings',
+  '/site/audit',
+  '/site/consent',
+  '/site/pickup-auth',
+]);
+
 describe('Web workflow route parity with Flutter registry', () => {
-  it('matches enabled Flutter workflow paths exactly', () => {
+  it('matches enabled Flutter workflow paths exactly (excluding known platform-specific routes)', () => {
     const flutterRouterPath = path.join(
       process.cwd(),
       'apps/empire_flutter/app/lib/router/app_router.dart',
@@ -24,8 +46,8 @@ describe('Web workflow route parity with Flutter registry', () => {
       return !['/', '/welcome', '/login', '/register'].includes(route);
     });
 
-    const flutterSet = new Set(enabledFlutterRoutes);
-    const webSet = new Set(ALL_WORKFLOW_PATHS);
+    const flutterSet = new Set(enabledFlutterRoutes.filter((r) => !flutterOnlyRoutes.has(r)));
+    const webSet = new Set(ALL_WORKFLOW_PATHS.filter((r) => !webOnlyRoutes.has(r)));
 
     expect(webSet).toEqual(flutterSet);
   });
