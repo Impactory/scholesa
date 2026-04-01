@@ -42,6 +42,7 @@ import type {
   CapabilityGrowthEvent,
   EvidenceRecord,
   RubricApplication,
+  RubricTemplate,
 } from '@/src/types/schema';
 
 // Helper to create typed collection
@@ -97,3 +98,4 @@ export const capabilityMasteryCollection = createCollection<CapabilityMastery>('
 export const capabilityGrowthEventsCollection = createCollection<CapabilityGrowthEvent>('capabilityGrowthEvents');
 export const evidenceRecordsCollection = createCollection<EvidenceRecord>('evidenceRecords');
 export const rubricApplicationsCollection = createCollection<RubricApplication>('rubricApplications');
+export const rubricTemplatesCollection = createCollection<RubricTemplate>('rubricTemplates');

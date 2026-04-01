@@ -1,4 +1,4 @@
-import { ConnectorConfig, DataConnect, QueryRef, QueryPromise, MutationRef, MutationPromise } from 'firebase/data-connect';
+import { ConnectorConfig, DataConnect, QueryRef, QueryPromise, ExecuteQueryOptions, MutationRef, MutationPromise } from 'firebase/data-connect';
 
 export const connectorConfig: ConnectorConfig;
 
@@ -93,8 +93,8 @@ interface ListAllTeamsRef {
 }
 export const listAllTeamsRef: ListAllTeamsRef;
 
-export function listAllTeams(): QueryPromise<ListAllTeamsData, undefined>;
-export function listAllTeams(dc: DataConnect): QueryPromise<ListAllTeamsData, undefined>;
+export function listAllTeams(options?: ExecuteQueryOptions): QueryPromise<ListAllTeamsData, undefined>;
+export function listAllTeams(dc: DataConnect, options?: ExecuteQueryOptions): QueryPromise<ListAllTeamsData, undefined>;
 
 interface UpdatePlayerJerseyNumberRef {
   /* Allow users to create refs without passing in DataConnect */
@@ -117,6 +117,6 @@ interface ListMyTeamsRef {
 }
 export const listMyTeamsRef: ListMyTeamsRef;
 
-export function listMyTeams(): QueryPromise<ListMyTeamsData, undefined>;
-export function listMyTeams(dc: DataConnect): QueryPromise<ListMyTeamsData, undefined>;
+export function listMyTeams(options?: ExecuteQueryOptions): QueryPromise<ListMyTeamsData, undefined>;
+export function listMyTeams(dc: DataConnect, options?: ExecuteQueryOptions): QueryPromise<ListMyTeamsData, undefined>;
 

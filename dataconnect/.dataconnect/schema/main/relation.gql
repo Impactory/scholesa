@@ -63,7 +63,7 @@ extend type Attendance {
   """
   A generated field that is used for caching results in SDKs.
   """
-  _id: ID! @fdc_generated(from: "Attendance.playerId,eventId", purpose: GLOBAL_ID)
+  _id: ID! @fdc_generated(from: "Attendance.playerId,eventId", purpose: ENTITY_ID)
 }
 extend type Event {
   """
@@ -267,7 +267,7 @@ extend type Event {
   """
   A generated field that is used for caching results in SDKs.
   """
-  _id: ID! @fdc_generated(from: "Event.id", purpose: GLOBAL_ID)
+  _id: ID! @fdc_generated(from: "Event.id", purpose: ENTITY_ID)
 }
 extend type PerformanceStat {
   """
@@ -343,7 +343,7 @@ extend type PerformanceStat {
   """
   A generated field that is used for caching results in SDKs.
   """
-  _id: ID! @fdc_generated(from: "PerformanceStat.playerId,eventId,statType", purpose: GLOBAL_ID)
+  _id: ID! @fdc_generated(from: "PerformanceStat.playerId,eventId,statType", purpose: ENTITY_ID)
 }
 extend type Player {
   """
@@ -582,7 +582,7 @@ extend type Player {
   """
   A generated field that is used for caching results in SDKs.
   """
-  _id: ID! @fdc_generated(from: "Player.id", purpose: GLOBAL_ID)
+  _id: ID! @fdc_generated(from: "Player.id", purpose: ENTITY_ID)
 }
 extend type Team {
   """
@@ -726,7 +726,7 @@ extend type Team {
   """
   A generated field that is used for caching results in SDKs.
   """
-  _id: ID! @fdc_generated(from: "Team.id", purpose: GLOBAL_ID)
+  _id: ID! @fdc_generated(from: "Team.id", purpose: ENTITY_ID)
 }
 extend type User {
   """
@@ -836,5 +836,5 @@ extend type User {
   """
   A generated field that is used for caching results in SDKs.
   """
-  _id: ID! @fdc_generated(from: "User.id", purpose: GLOBAL_ID)
+  _id: ID! @fdc_generated(from: "User.id", purpose: ENTITY_ID)
 }

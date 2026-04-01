@@ -201,6 +201,7 @@ export interface PortfolioItem {
   artifacts: string[]; // URLs
   evidenceRecordIds?: string[];
   capabilityIds?: string[];
+  capabilityTitles?: string[]; // Denormalized for offline-first display (Flutter writes)
   growthEventIds?: string[];
   missionAttemptId?: string;
   rubricApplicationId?: string;
@@ -1094,8 +1095,48 @@ export interface Capability {
   pillarCode: PillarCode;
   siteId?: string | null;
   descriptor?: string;
+  progressionDescriptors?: ProgressionDescriptors;
+  rubricTemplateId?: string;
+  unitMappings?: string[]; // Mission/unit IDs this capability maps to
+  sortOrder?: number;
+  status?: 'active' | 'archived';
   createdAt: Timestamp;
   updatedAt: Timestamp;
+}
+
+/**
+ * Progression descriptors for a capability.
+ * Defines what Beginning, Developing, Proficient, and Advanced look like.
+ */
+export interface ProgressionDescriptors {
+  beginning: string;
+  developing: string;
+  proficient: string;
+  advanced: string;
+}
+
+/**
+ * A reusable rubric template for scoring evidence against capability criteria.
+ * Created by HQ admin and used by educators when applying rubrics.
+ */
+export interface RubricTemplate {
+  id: string;
+  title: string;
+  siteId?: string | null;
+  capabilityIds: string[];
+  criteria: RubricTemplateCriterion[];
+  status: 'draft' | 'published' | 'archived';
+  createdBy: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface RubricTemplateCriterion {
+  label: string;
+  capabilityId: string;
+  pillarCode?: PillarCode;
+  maxScore: number;
+  descriptors?: ProgressionDescriptors;
 }
 
 /**

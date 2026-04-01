@@ -1,4 +1,4 @@
-const { queryRef, executeQuery, mutationRef, executeMutation, validateArgs } = require('firebase/data-connect');
+const { queryRef, executeQuery, validateArgsWithOptions, mutationRef, executeMutation, validateArgs } = require('firebase/data-connect');
 
 const connectorConfig = {
   connector: 'example',
@@ -16,8 +16,10 @@ createDemoUserRef.operationName = 'CreateDemoUser';
 exports.createDemoUserRef = createDemoUserRef;
 
 exports.createDemoUser = function createDemoUser(dc) {
-  return executeMutation(createDemoUserRef(dc));
-};
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dc, undefined);
+  return executeMutation(createDemoUserRef(dcInstance, inputVars));
+}
+;
 
 const listAllTeamsRef = (dc) => {
   const { dc: dcInstance} = validateArgs(connectorConfig, dc, undefined);
@@ -27,9 +29,12 @@ const listAllTeamsRef = (dc) => {
 listAllTeamsRef.operationName = 'ListAllTeams';
 exports.listAllTeamsRef = listAllTeamsRef;
 
-exports.listAllTeams = function listAllTeams(dc) {
-  return executeQuery(listAllTeamsRef(dc));
-};
+exports.listAllTeams = function listAllTeams(dcOrOptions, options) {
+  
+  const { dc: dcInstance, vars: inputVars, options: inputOpts } = validateArgsWithOptions(connectorConfig, dcOrOptions, options, undefined,false, false);
+  return executeQuery(listAllTeamsRef(dcInstance, inputVars), inputOpts && inputOpts.fetchPolicy);
+}
+;
 
 const updatePlayerJerseyNumberRef = (dcOrVars, vars) => {
   const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
@@ -40,8 +45,10 @@ updatePlayerJerseyNumberRef.operationName = 'UpdatePlayerJerseyNumber';
 exports.updatePlayerJerseyNumberRef = updatePlayerJerseyNumberRef;
 
 exports.updatePlayerJerseyNumber = function updatePlayerJerseyNumber(dcOrVars, vars) {
-  return executeMutation(updatePlayerJerseyNumberRef(dcOrVars, vars));
-};
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(updatePlayerJerseyNumberRef(dcInstance, inputVars));
+}
+;
 
 const listMyTeamsRef = (dc) => {
   const { dc: dcInstance} = validateArgs(connectorConfig, dc, undefined);
@@ -51,6 +58,9 @@ const listMyTeamsRef = (dc) => {
 listMyTeamsRef.operationName = 'ListMyTeams';
 exports.listMyTeamsRef = listMyTeamsRef;
 
-exports.listMyTeams = function listMyTeams(dc) {
-  return executeQuery(listMyTeamsRef(dc));
-};
+exports.listMyTeams = function listMyTeams(dcOrOptions, options) {
+  
+  const { dc: dcInstance, vars: inputVars, options: inputOpts } = validateArgsWithOptions(connectorConfig, dcOrOptions, options, undefined,false, false);
+  return executeQuery(listMyTeamsRef(dcInstance, inputVars), inputOpts && inputOpts.fetchPolicy);
+}
+;

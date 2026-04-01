@@ -531,6 +531,12 @@ service cloud.firestore {
       allow create, update: if isEducator();
       allow delete: if false;
     }
+    // Rubric templates: reusable rubric definitions created by HQ, read by educators.
+    match /rubricTemplates/{id} {
+      allow read: if isAuthenticated();
+      allow create, update: if isHQ();
+      allow delete: if false;
+    }
     // Observation records: educator-captured in-session observations linked to evidence chain.
     match /observationRecords/{id} {
       allow read: if isAuthenticated() && (
