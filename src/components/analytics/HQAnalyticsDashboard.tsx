@@ -142,7 +142,7 @@ export function HQAnalyticsDashboard() {
           
           // Determine health status
           let healthStatus: 'healthy' | 'warning' | 'critical' | 'unavailable' = 'unavailable';
-          const capturedLastActivityDate = lastActivityDate;
+          const capturedLastActivityDate = lastActivityDate as Date | null;
           const daysSinceActivity = capturedLastActivityDate
             ? Math.floor((new Date().getTime() - capturedLastActivityDate.getTime()) / 86400000)
             : null;
