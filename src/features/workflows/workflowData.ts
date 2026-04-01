@@ -402,7 +402,7 @@ async function loadSessionOptionsForActor(ctx: WorkflowContext, siteId: string |
     const startDate = toIsoDate(data.startDate || data.createdAt);
     return {
       value: sessionDoc.id,
-      label: `${title} • ${new Date(startDate).toLocaleString()}`,
+      label: `${title} • ${startDate ? new Date(startDate).toLocaleString() : ''}`,
     };
   });
 }

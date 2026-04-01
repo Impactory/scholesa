@@ -322,7 +322,7 @@ export function AICoachScreen({
             </div>
 
             <button
-              onClick={handleSubmitQuestion}
+              onClick={() => handleSubmitQuestion()}
               disabled={!question.trim() || loading || isTranscribing}
               className="w-full bg-indigo-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >

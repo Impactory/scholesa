@@ -308,9 +308,9 @@ export class IntelligenceService {
     }
 
     if (patterns.length === 0 && hasCompleteSdt) {
-      const balanceGap = Math.abs(profile.sdtScores.autonomy - 60)
-        + Math.abs(profile.sdtScores.competence - 60)
-        + Math.abs(profile.sdtScores.belonging - 60)
+      const balanceGap = Math.abs(profile.sdtScores.autonomy! - 60)
+        + Math.abs(profile.sdtScores.competence! - 60)
+        + Math.abs(profile.sdtScores.belonging! - 60)
         + (profile.engagementScore == null ? 0 : Math.abs(profile.engagementScore - 60));
       patterns.push({
         pattern: 'Developing steady habits',

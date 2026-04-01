@@ -108,7 +108,7 @@ export function EducatorEvidenceCapture() {
             learnerName: learnerNames.get(data.learnerId) ?? data.learnerId,
             learnerId: data.learnerId ?? '',
             description: data.description,
-            capabilityId: data.capabilityId ?? null,
+            capabilityId: data.capabilityId ?? undefined,
             capabilityMapped: data.capabilityMapped,
             rubricStatus: data.rubricStatus ?? 'pending',
             phaseKey: data.phaseKey ?? null,

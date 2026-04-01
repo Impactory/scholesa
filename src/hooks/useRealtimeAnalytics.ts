@@ -386,5 +386,4 @@ function getActivityDescription(eventName: string, _metadata: Record<string, unk
 }
 
 // Re-export getDocs for backwards compatibility
-import { getDocs } from 'firebase/firestore';
-export { getDocs };
+export { getDocs } from 'firebase/firestore';

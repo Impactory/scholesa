@@ -29,7 +29,7 @@ import { sdtMotivation } from '@/src/lib/motivation/sdtMotivation';
 import { TelemetryService } from '@/src/lib/telemetry/telemetryService';
 import { useI18n } from '@/src/lib/i18n/useI18n';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
-import { sendCopilotVoiceMessage, voiceApiConfigured } from '@/src/lib/voice/voiceService';
+import { sendCopilotVoiceMessage, voiceApiConfigured, type CopilotVoiceResponse } from '@/src/lib/voice/voiceService';
 import { getUserFacingVoiceTranscriptionError } from '@/src/lib/voice/userFacingVoiceErrors';
 import { useVoiceTranscription } from '@/src/hooks/useVoiceTranscription';
 import { useSpokenResponse } from '@/src/hooks/useSpokenResponse';
