@@ -105,8 +105,8 @@ describe('AI help wording availability', () => {
 
     expect(voiceErrorSource).toContain('MiloOS could not clearly capture what you said. Please try again.');
     expect(voiceErrorSource).toContain('Sign in to use MiloOS by voice.');
-    expect(voiceErrorSource).toContain('Voice help is not available right now. Complete voice setup and try again.');
-    expect(voiceErrorSource).toContain('Voice help took too long to respond. Please try again.');
+    expect(voiceErrorSource).toContain('MiloOS voice is not available right now. Complete voice setup and try again.');
+    expect(voiceErrorSource).toContain('MiloOS voice took too long to respond. Please try again.');
 
     expect(learnerDashboardSource).toContain('MiloOS');
     expect(learnerDashboardSource).toContain('MiloOS appears here when a real support response is available.');

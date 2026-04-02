@@ -476,7 +476,7 @@ function toStringArray(value: unknown): string[] {
 }
 
 // ──────────────────────────────────────────────────────
-// AI help control surface — Helper Functions
+// MiloOS control surface — Helper Functions
 // Spec: BOS_MIA_HOW_TO_IMPLEMENT.md §5, Math Contract §6-§8
 // ──────────────────────────────────────────────────────
 
@@ -720,7 +720,7 @@ async function computeAutonomyRisk(
     return { riskType: 'autonomy', signals, riskScore: 0, threshold: 0.5 };
   }
 
-  // Signal 1: Heavy AI use — >40% of events are ai_help_*
+  // Signal 1: Heavy MiloOS use — >40% of events are ai_help_*
   const aiEvents = events.filter(e =>
     e.eventType === 'ai_help_used' || e.eventType === 'ai_help_opened'
   ).length;
@@ -729,7 +729,7 @@ async function computeAutonomyRisk(
     riskScore += 0.25;
   }
 
-  // Signal 2: Rapid submit after AI help — ai_help_used followed by checkpoint_submitted
+  // Signal 2: Rapid submit after MiloOS — ai_help_used followed by checkpoint_submitted
   // within 30 seconds (approximated by consecutive order)
   for (let i = 0; i < events.length - 1; i++) {
     if (events[i].eventType === 'checkpoint_submitted' && events[i + 1].eventType === 'ai_help_used') {
@@ -898,7 +898,7 @@ function generateMvlInterceptMessage(
 }
 
 /**
- * Generate AI help response from internal inference only.
+ * Generate MiloOS response from internal inference only.
  * Forbidden: final answers, doing the learner's work, punitive language, or low-confidence autonomous help.
  */
 

@@ -66,7 +66,7 @@ export type TelemetryEventType =
   | 'reflection_submitted'
   | 'effort_rated'
   | 'enjoyment_rated'
-  // AI help signals
+  // MiloOS signals
   | 'ai_coach_used'
   | 'explain_back_submitted'
   // Time signals
@@ -496,7 +496,7 @@ class SDTTelemetry {
         type: 'opportunity',
         category: 'competence',
         message: 'Struggles with checkpoints, but persists',
-        suggestedAction: 'Offer scaffolding or AI help nudge',
+        suggestedAction: 'Offer scaffolding or MiloOS nudge',
         confidence: confidenceAboveThreshold(metrics.revisionPersistence, 5, 5, 0.58)
       });
     }
