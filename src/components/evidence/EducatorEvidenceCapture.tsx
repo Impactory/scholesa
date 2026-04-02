@@ -13,8 +13,11 @@ import {
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import {
   evidenceRecordsCollection,
+  sessionOccurrencesCollection,
+  sessionsCollection,
   usersCollection,
 } from '@/src/firebase/firestore/collections';
+import { Timestamp } from 'firebase/firestore';
 import { useCapabilities } from '@/src/lib/capabilities/useCapabilities';
 import { RoleRouteGuard } from '@/src/components/auth/RoleRouteGuard';
 import { RubricReviewPanel } from '@/src/components/evidence/RubricReviewPanel';
@@ -29,6 +32,11 @@ const PHASE_OPTIONS: { value: EvidenceRecord['phaseKey']; label: string }[] = [
   { value: 'share_out', label: 'Share Out' },
   { value: 'reflection', label: 'Reflection' },
 ];
+
+interface SessionOption {
+  occurrenceId: string;
+  label: string;
+}
 
 interface LearnerOption {
   uid: string;
@@ -53,6 +61,7 @@ export function EducatorEvidenceCapture() {
 
   const { capabilityList: capabilities, resolveTitle, loading: capLoading } = useCapabilities(siteId);
   const [learners, setLearners] = useState<LearnerOption[]>([]);
+  const [todaySessions, setTodaySessions] = useState<SessionOption[]>([]);
   const [recentEvidence, setRecentEvidence] = useState<RecentEvidence[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -64,6 +73,7 @@ export function EducatorEvidenceCapture() {
   const [selectedCapabilityId, setSelectedCapabilityId] = useState('');
   const [phaseKey, setPhaseKey] = useState<EvidenceRecord['phaseKey']>(undefined);
   const [portfolioCandidate, setPortfolioCandidate] = useState(false);
+  const [selectedSessionOccurrenceId, setSelectedSessionOccurrenceId] = useState('');
   const [reviewingEvidence, setReviewingEvidence] = useState<RecentEvidence | null>(null);
 
   const learnerNameMap = useMemo(() => {
@@ -81,14 +91,57 @@ export function EducatorEvidenceCapture() {
     if (!siteId) return;
     setLoading(true);
     try {
-      const [learnerSnap, evidenceSnap] = await Promise.all([
+      // Build today's date range for session occurrence query
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999);
+
+      const [learnerSnap, evidenceSnap, occurrenceSnap] = await Promise.all([
         getDocs(
           query(usersCollection, where('studioId', '==', siteId), where('role', '==', 'learner'), orderBy('displayName'))
         ),
         getDocs(
           query(evidenceRecordsCollection, where('siteId', '==', siteId), orderBy('createdAt', 'desc'), limit(20))
         ),
+        getDocs(
+          query(
+            sessionOccurrencesCollection,
+            where('siteId', '==', siteId),
+            where('date', '>=', Timestamp.fromDate(todayStart)),
+            where('date', '<=', Timestamp.fromDate(todayEnd))
+          )
+        ),
       ]);
+
+      // Resolve parent session docs for time labels
+      const sessionIds = Array.from(new Set(occurrenceSnap.docs.map((d) => d.data().sessionId)));
+      const sessionTimeMap = new Map<string, { start: Date; end: Date }>();
+      if (sessionIds.length > 0) {
+        // Firestore 'in' supports up to 30 values, should be fine for daily sessions
+        const sessionSnap = await getDocs(
+          query(sessionsCollection, where('__name__', 'in', sessionIds.slice(0, 30)))
+        );
+        for (const sd of sessionSnap.docs) {
+          const s = sd.data();
+          sessionTimeMap.set(sd.id, {
+            start: s.startTime?.toDate?.() ?? new Date(),
+            end: s.endTime?.toDate?.() ?? new Date(),
+          });
+        }
+      }
+
+      const fmt = (d: Date) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      setTodaySessions(
+        occurrenceSnap.docs.map((d) => {
+          const occ = d.data();
+          const times = sessionTimeMap.get(occ.sessionId);
+          const label = times
+            ? `${fmt(times.start)} – ${fmt(times.end)}`
+            : `Session ${occ.sessionId.slice(0, 6)}`;
+          return { occurrenceId: d.id, label };
+        })
+      );
 
       setLearners(
         learnerSnap.docs.map((d) => ({
@@ -132,7 +185,7 @@ export function EducatorEvidenceCapture() {
     setSelectedCapabilityId('');
     setPhaseKey(undefined);
     setPortfolioCandidate(false);
-    // Keep selectedLearnerId for quick successive logs
+    // Keep selectedLearnerId and selectedSessionOccurrenceId for quick successive logs
   };
 
   const handleSubmit = async () => {
@@ -148,6 +201,7 @@ export function EducatorEvidenceCapture() {
         learnerId: selectedLearnerId,
         educatorId: user.uid,
         siteId,
+        sessionOccurrenceId: selectedSessionOccurrenceId || undefined,
         description: description.trim(),
         capabilityId: capabilityId ?? undefined,
         capabilityMapped: mapped,
@@ -229,6 +283,30 @@ export function EducatorEvidenceCapture() {
 
         {/* Quick capture form */}
         <div className="rounded-xl border border-app bg-app-surface-raised p-4 space-y-3" data-testid="evidence-form">
+          {/* Row 0: Session context */}
+          <label className="block space-y-1">
+            <span className="text-xs font-medium text-app-muted">Session</span>
+            {todaySessions.length > 0 ? (
+              <select
+                data-testid="evidence-session"
+                value={selectedSessionOccurrenceId}
+                onChange={(e) => setSelectedSessionOccurrenceId(e.target.value)}
+                className="w-full rounded-md border border-app bg-app-canvas px-3 py-2 text-sm text-app-foreground"
+              >
+                <option value="">(not linked to a session)</option>
+                {todaySessions.map((s) => (
+                  <option key={s.occurrenceId} value={s.occurrenceId}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <p className="text-xs text-app-muted bg-app-surface rounded-md px-3 py-2 border border-app">
+                No sessions scheduled today. Evidence will be saved without a session link.
+              </p>
+            )}
+          </label>
+
           {/* Row 1: Learner + Phase */}
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="space-y-1">

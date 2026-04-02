@@ -41,6 +41,7 @@ export const ALL_WORKFLOW_PATHS = [
   '/site/clever',
   '/site/integrations-health',
   '/site/billing',
+  '/site/evidence-health',
   '/partner/listings',
   '/partner/contracts',
   '/partner/deliverables',
@@ -309,6 +310,14 @@ export const WORKFLOW_ROUTE_DEFINITIONS: WorkflowRouteDefinition[] = [
     allowedRoles: ['site', 'hq'],
     navGroup: 'site',
     dataMode: 'callable',
+  },
+  {
+    path: '/site/evidence-health',
+    title: 'Evidence Health',
+    description: 'School-level evidence coverage and educator capture rates.',
+    allowedRoles: ['site', 'hq'],
+    navGroup: 'site',
+    dataMode: 'firestore',
   },
   {
     path: '/partner/listings',

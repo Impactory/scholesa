@@ -25,6 +25,7 @@ import {
   BellIcon
 } from 'lucide-react';
 import { usePageViewTracking } from '@/src/hooks/useTelemetry';
+import { CapabilityGuidancePanel } from '@/src/components/analytics/CapabilityGuidancePanel';
 
 interface ChildData {
   childId: string;
@@ -437,6 +438,13 @@ export function ParentAnalyticsDashboard() {
           </div>
         </div>
       </div>
+      
+      {/* Capability Growth Guidance */}
+      <CapabilityGuidancePanel
+        learnerId={currentChild.childId}
+        siteId={siteId}
+        learnerName={currentChild.childName}
+      />
     </div>
   );
 }

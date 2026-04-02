@@ -20,6 +20,7 @@ const webOnlyRoutes = new Set([
   '/hq/capabilities',
   '/parent/passport',
   '/site/clever',
+  '/site/evidence-health',
 ]);
 const flutterOnlyRoutes = new Set([
   '/hq/exports',

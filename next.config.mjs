@@ -18,6 +18,7 @@ const nextConfig = withPWA({
   reactStrictMode: true,
   outputFileTracingRoot: rootDir,
   pwa: pwaConfig,
+  turbopack: {},
 });
 
 const pwaWebpack = nextConfig.webpack;
