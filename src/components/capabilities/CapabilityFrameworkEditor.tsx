@@ -192,7 +192,7 @@ export function CapabilityFrameworkEditor() {
           title,
           normalizedTitle,
           pillarCode: capabilityForm.pillarCode,
-          descriptor: capabilityForm.descriptor.trim() || null,
+          descriptor: capabilityForm.descriptor.trim() || undefined,
           sortOrder: capabilityForm.sortOrder,
           ...(hasProgression
             ? { progressionDescriptors: capabilityForm.progressionDescriptors }
@@ -206,13 +206,13 @@ export function CapabilityFrameworkEditor() {
           normalizedTitle,
           pillarCode: capabilityForm.pillarCode,
           siteId,
-          descriptor: capabilityForm.descriptor.trim() || null,
+          descriptor: capabilityForm.descriptor.trim() || undefined,
           sortOrder: capabilityForm.sortOrder,
           ...(hasProgression ? { progressionDescriptors: capabilityForm.progressionDescriptors } : {}),
-          status: 'active',
+          status: 'active' as const,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
-        });
+        } as Omit<Capability, 'id'>);
         flash('Capability created.');
       }
       if (siteId) invalidateCapabilityCache(siteId);
@@ -296,7 +296,7 @@ export function CapabilityFrameworkEditor() {
 
     setSaving(true);
     try {
-      const capabilityIds = [...new Set(rubricForm.criteria.map((c) => c.capabilityId))];
+      const capabilityIds = Array.from(new Set(rubricForm.criteria.map((c) => c.capabilityId)));
       const criteria = rubricForm.criteria.map((c) => ({
         label: c.label.trim(),
         capabilityId: c.capabilityId,
@@ -319,11 +319,11 @@ export function CapabilityFrameworkEditor() {
           siteId,
           capabilityIds,
           criteria,
-          status: 'published',
+          status: 'published' as const,
           createdBy: user.uid,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
-        });
+        } as Omit<RubricTemplate, 'id'>);
         flash('Rubric template created.');
       }
       setShowRubricForm(false);
