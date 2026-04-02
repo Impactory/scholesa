@@ -116,7 +116,7 @@ export function SiteEvidenceHealthDashboard() {
       let totalRubric = 0;
       const educatorMetrics: EducatorMetric[] = [];
 
-      for (const [educatorId, agg] of educatorMap) {
+      for (const [educatorId, agg] of Array.from(educatorMap)) {
         totalMapped += agg.mapped;
         totalRubric += agg.rubric;
         educatorMetrics.push({
