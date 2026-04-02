@@ -1223,7 +1223,7 @@ export const genAiCoach = onCall(async (request) => {
   const userId = request.auth.uid;
   const profile = await getUserProfile(userId);
   if (!profile || normalizeRoleValue(profile.role) !== 'learner') {
-    throw new HttpsError('permission-denied', 'Learner role required for AI help.');
+    throw new HttpsError('permission-denied', 'Learner role required for MiloOS.');
   }
 
   // ── A2) Hard schema validation ──────────────────
@@ -1547,18 +1547,18 @@ export const submitExplainBack = onCall(async (request) => {
     }
   }
   if (!openedSnap.exists) {
-    throw new HttpsError('not-found', 'AI help session not found.');
+    throw new HttpsError('not-found', 'MiloOS session not found.');
   }
 
   const openedData = openedSnap.data() as Record<string, unknown>;
   if (openedData.eventType !== 'ai_help_opened') {
     throw new HttpsError(
       'failed-precondition',
-      'interactionId must reference an AI help session.',
+      'interactionId must reference a MiloOS session.',
     );
   }
   if (openedData.actorId !== userId) {
-    throw new HttpsError('permission-denied', 'AI help session ownership mismatch.');
+    throw new HttpsError('permission-denied', 'MiloOS session ownership mismatch.');
   }
   if (openedData.siteId !== siteId) {
     throw new HttpsError('permission-denied', 'Site access denied.');

@@ -9,9 +9,14 @@ function getCaseBody(source: string, routePath: string): string {
   const escapedPath = routePath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const matcher = new RegExp(
     `case\\s+'${escapedPath}'\\s*:\\s*([\\s\\S]*?)(?=\\n\\s*case\\s+'|\\n\\s*default:)`,
+    'g',
   );
-  const match = source.match(matcher);
-  return match ? match[1] : '';
+  const bodies: string[] = [];
+  let match: RegExpExecArray | null;
+  while ((match = matcher.exec(source)) !== null) {
+    bodies.push(match[1]);
+  }
+  return bodies.join('\n');
 }
 
 function routeRequiresCallableBoundary(route: WorkflowRouteDefinition): boolean {

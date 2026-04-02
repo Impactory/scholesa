@@ -1083,7 +1083,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         : safeGoals.map((g) => '- $g').join('\n');
 
     return '''
-You are Scholesa AI Help in a live spoken conversation.
+You are MiloOS in a live spoken conversation.
 ${_roleInstruction(widget.actorRole)}
 Mode: ${_selectedMode.name}. ${_coachDirectiveForMode(_selectedMode)}
 Safety: Do not provide final graded answers; scaffold thinking.
@@ -1381,7 +1381,7 @@ Response style:
       );
 
       if (kDebugMode) {
-        debugPrint('AI Help request failed, returning safe escalation: $e');
+        debugPrint('MiloOS request failed, returning safe escalation: $e');
       }
 
       setState(() {

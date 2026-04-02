@@ -1470,7 +1470,7 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
       '${_t('Learner disclosure')}: ${item.aiHasLearnerDisclosure ? _t('Present') : _t('Not recorded')}',
       '${_t('Learner said AI used')}: ${item.aiLearnerDeclaredUsed ? _t('Yes') : _t('No')}',
       '${_t('Explain-it-back evidence')}: ${item.aiHasExplainItBackEvidence ? _t('Yes') : _t('No')}',
-      '${_t('AI help events')}: ${item.aiHelpEventCount}',
+      '${_t('MiloOS events')}: ${item.aiHelpEventCount}',
       if (item.aiHasEducatorAiFeedback)
         '${_t('Educator AI feedback')}: ${_t('Present')}',
       if (item.aiFeedbackEducatorName?.trim().isNotEmpty == true)

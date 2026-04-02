@@ -241,7 +241,7 @@ class _ParentBillingPageState extends State<ParentBillingPage>
                   SliverToBoxAdapter(child: _buildBalanceSummary(service)),
                   SliverToBoxAdapter(
                     child: AiContextCoachSection(
-                      title: _tParentBilling(context, 'Billing AI Help'),
+                      title: _tParentBilling(context, 'Billing MiloOS'),
                       subtitle: _tParentBilling(
                         context,
                         'See support ideas for family billing and learner continuity',

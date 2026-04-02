@@ -1021,7 +1021,7 @@ class _ParentChildPageState extends State<ParentChildPage> {
       '${_t('Learner disclosure')}: ${claim.aiHasLearnerDisclosure ? _t('Present') : _t('Not recorded')}',
       '${_t('Learner said AI used')}: ${claim.aiLearnerDeclaredUsed ? _t('Yes') : _t('No')}',
       '${_t('Explain-it-back evidence')}: ${claim.aiHasExplainItBackEvidence ? _t('Yes') : _t('No')}',
-      '${_t('AI help events')}: ${claim.aiHelpEventCount}',
+      '${_t('MiloOS events')}: ${claim.aiHelpEventCount}',
       if (claim.aiHasEducatorAiFeedback)
         '${_t('Educator AI feedback')}: ${_t('Present')}',
       if (claim.aiFeedbackEducatorName?.trim().isNotEmpty == true)

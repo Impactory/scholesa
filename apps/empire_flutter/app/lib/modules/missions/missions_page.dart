@@ -2307,7 +2307,7 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
                           color: pillarColor, size: 20),
                       const SizedBox(width: 8),
                       Text(
-                        _tMissions(context, 'Get AI Help'),
+                        _tMissions(context, 'Get MiloOS Help'),
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
                           color: pillarColor,
@@ -2386,7 +2386,7 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    _tMissions(context, 'AI help is temporarily unavailable'),
+                    _tMissions(context, 'MiloOS is temporarily unavailable'),
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
                       color: context.schTextPrimary,
@@ -2407,7 +2407,7 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
             Text(
               _tMissions(
                 context,
-                'Try the next step below or reopen AI help in a moment.',
+                'Try the next step below or reopen MiloOS in a moment.',
               ),
               style: TextStyle(color: context.schTextSecondary),
             ),

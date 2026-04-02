@@ -157,7 +157,7 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
                 SliverToBoxAdapter(
                   child: AiContextCoachSection(
                     title: _tEducatorLearnersPageSpecific(
-                        context, 'Learner AI Help'),
+                        context, 'Learner MiloOS'),
                     subtitle: _tEducatorLearnersPageSpecific(
                         context, 'See support ideas for each learner'),
                     module: 'educator_learners',

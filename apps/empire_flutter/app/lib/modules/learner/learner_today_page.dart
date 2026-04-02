@@ -1924,7 +1924,7 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
       return Container(
         margin: const EdgeInsets.only(top: 12),
         child: _DashboardInfoCard(
-          title: _t('AI help is loading'),
+          title: _t('MiloOS is loading'),
           compactTitle: true,
           body: <Widget>[
             Text(

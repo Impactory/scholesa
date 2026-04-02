@@ -47,7 +47,7 @@ class ParentSurfaceI18n {
         '我们暂时无法加载你已关联的学习者。请重试以检查当前状态。',
     'Unable to refresh family dashboard right now. Showing the last successful data.':
         '目前无法刷新家庭仪表板。正在显示最近一次成功加载的数据。',
-    'Family AI Help': '家庭 AI 帮助',
+    'Family MiloOS': '家庭 MiloOS',
     'See support ideas for each child’s progress': '查看每个孩子进展的支持建议',
     'No recent activity yet': '暂无最近活动',
     'Recent learner updates will appear here once missions or habits are completed.':
@@ -102,7 +102,7 @@ class ParentSurfaceI18n {
     'min': '分钟',
     'hr': '小时',
     'on': '于',
-    'Schedule AI Help': '日程 AI 帮助',
+    'Schedule MiloOS': '日程 MiloOS',
     'See support ideas for each learner schedule': '查看每位学习者日程的支持建议',
     'Unable to load schedule right now': '目前无法加载日程',
     'No learner links found yet. Request a linking review and we will check your family account.':
@@ -314,7 +314,7 @@ class ParentSurfaceI18n {
         '我們暫時無法載入你已關聯的學習者。請重試以檢查目前狀態。',
     'Unable to refresh family dashboard right now. Showing the last successful data.':
         '目前無法重新整理家庭儀表板。正在顯示最近一次成功載入的資料。',
-    'Family AI Help': '家庭 AI 幫助',
+    'Family MiloOS': '家庭 MiloOS',
     'See support ideas for each child’s progress': '查看每個孩子進展的支持建議',
     'No recent activity yet': '目前沒有最近活動',
     'Recent learner updates will appear here once missions or habits are completed.':
@@ -369,7 +369,7 @@ class ParentSurfaceI18n {
     'min': '分鐘',
     'hr': '小時',
     'on': '於',
-    'Schedule AI Help': '日程 AI 幫助',
+    'Schedule MiloOS': '日程 MiloOS',
     'See support ideas for each learner schedule': '查看每位學習者日程的支持建議',
     'Unable to load schedule right now': '目前無法載入日程',
     'No learner links found yet. Request a linking review and we will check your family account.':

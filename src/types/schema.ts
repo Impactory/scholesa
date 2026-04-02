@@ -931,7 +931,7 @@ export interface ReflectionEntry {
 }
 
 /**
- * AI help interaction log
+ * MiloOS interaction log
  */
 export interface AICoachInteraction {
   id: string;

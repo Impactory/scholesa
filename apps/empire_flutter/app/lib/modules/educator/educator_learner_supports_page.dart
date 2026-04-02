@@ -235,7 +235,7 @@ class _EducatorLearnerSupportsPageState
                   child: _buildStaleDataBanner(effectiveError),
                 ),
               AiContextCoachSection(
-                title: _tEducatorLearnerSupports(context, 'Support AI Help'),
+                title: _tEducatorLearnerSupports(context, 'Support MiloOS'),
                 subtitle: _tEducatorLearnerSupports(
                   context,
                   'See support ideas for each learner support plan',

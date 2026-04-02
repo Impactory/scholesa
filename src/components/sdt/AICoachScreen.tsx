@@ -89,7 +89,7 @@ export function AICoachScreen({
       await playSpokenResponse(aiResponse.message);
     } catch (err) {
       console.error('MiloOS error:', err);
-      setError('Unable to get MiloOS right now. Try again or ask your teacher!');
+      setError('Unable to get MiloOS help right now. Try again or ask your teacher!');
     } finally {
       setLoading(false);
     }

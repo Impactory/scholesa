@@ -30,7 +30,7 @@ const plans: PricingPlan[] = [
     features: [
       'Access to all learning missions',
       'Personal progress dashboard',
-      'MiloOS and guidance',
+      'MiloOS help and guidance',
       'Portfolio builder',
       'Certificate generation',
     ],

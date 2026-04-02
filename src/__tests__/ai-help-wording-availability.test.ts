@@ -26,30 +26,30 @@ describe('AI help wording availability', () => {
     expect(popupSource).toContain("{t('aiCoach.voiceRequirements')}");
     expect(popupSource).toContain("{t('aiCoach.footerTip')}");
     expect(popupSource).toContain('useSpokenResponse');
-    expect(popupSource).toContain('AI Help answered out loud.');
+    expect(popupSource).toContain('MiloOS answered out loud.');
     expect(popupSource).toContain('Replay spoken response');
-    expect(popupSource).toContain('Open AI Help from the learner workspace to record explain-back for this session.');
-    expect(popupSource).toContain('Explain-back recorded for this AI help session.');
-    expect(popupSource).toContain('Unable to record explain-back right now. Open the learner AI Help screen or try again later.');
-    expect(popupSource).toContain('AI Help is being careful here because it could not understand the voice request clearly enough yet.');
-    expect(popupSource).toContain('AI Help answered with a simple local hint because it could not confirm the voice request clearly. Treat this as a prompt to think, not a verified reading of what you meant.');
-    expect(popupSource).toContain('AI Help used the model to write the reply, but it still could not confirm the voice request clearly.');
+    expect(popupSource).toContain('Open MiloOS from the learner workspace to record explain-back for this session.');
+    expect(popupSource).toContain('Explain-back recorded for this MiloOS session.');
+    expect(popupSource).toContain('Unable to record explain-back right now. Open the learner MiloOS screen or try again later.');
+    expect(popupSource).toContain('MiloOS is being careful here because it could not understand the voice request clearly enough yet.');
+    expect(popupSource).toContain('MiloOS answered with a simple local hint because it could not confirm the voice request clearly. Treat this as a prompt to think, not a verified reading of what you meant.');
+    expect(popupSource).toContain('MiloOS used the model to write the reply, but it still could not confirm the voice request clearly.');
     expect(popupSource).toContain('Confidence in that reading:');
-    expect(popupSource).toContain('AI Help used both a quick local check and model support to understand this voice turn.');
-    expect(popupSource).toContain('AI Help used model support to understand this voice turn.');
-    expect(popupSource).toContain('AI Help could not understand this voice turn reliably, so it switched to a safer fallback reply.');
-    expect(popupSource).toContain('AI Help could not clearly capture what you said. Please try again and speak a little more clearly.');
+    expect(popupSource).toContain('MiloOS used both a quick local check and model support to understand this voice turn.');
+    expect(popupSource).toContain('MiloOS used model support to understand this voice turn.');
+    expect(popupSource).toContain('MiloOS could not understand this voice turn reliably, so it switched to a safer fallback reply.');
+    expect(popupSource).toContain('MiloOS could not clearly capture what you said. Please try again and speak a little more clearly.');
     expect(popupSource).toContain('getUserFacingVoiceTranscriptionError');
-    expect(popupSource).toContain('Voice capture is unavailable. Please sign in and complete voice setup to use AI Help by voice.');
-    expect(popupSource).toContain('Sign in to use AI Help by voice.');
+    expect(popupSource).toContain('Voice capture is unavailable. Please sign in and complete voice setup to use MiloOS by voice.');
+    expect(popupSource).toContain('Sign in to use MiloOS by voice.');
     expect(popupSource).toContain('Voice help is not available right now. Complete voice setup and try again.');
     expect(popupSource).toContain('ai_help_voice_model');
     expect(popupSource).toContain('ai_help_voice_guardrail');
     expect(popupSource).toContain('ai_help_voice_local_support');
-    expect(popupSource).toContain("console.error('Voice playback failed in AI Help popup:'");
-    expect(popupSource).toContain("console.error('Voice transcription failed in AI Help popup.'");
-    expect(popupSource).toContain("console.error('AI Help error:'");
-    expect(popupSource).toContain("console.error('AI Help popup explain-back error:'");
+    expect(popupSource).toContain("console.error('Voice playback failed in MiloOS popup:'");
+    expect(popupSource).toContain("console.error('Voice transcription failed in MiloOS popup.'");
+    expect(popupSource).toContain("console.error('MiloOS error:'");
+    expect(popupSource).toContain("console.error('MiloOS popup explain-back error:'");
     expect(popupSource).not.toContain('{response.answer}');
     expect(popupSource).not.toContain("t('aiCoach.poweredBy'");
     expect(popupSource).not.toContain('Voice playback failed in AI coach popup:');
@@ -70,21 +70,21 @@ describe('AI help wording availability', () => {
     expect(popupSource).not.toContain('reliable voice inference turn');
     expect(popupSource).not.toContain('reliable voice transcript');
 
-    expect(screenSource).toContain('AI Help');
-    expect(screenSource).toContain('Ask AI Help');
-    expect(screenSource).toContain('AI Help answered out loud.');
+    expect(screenSource).toContain('MiloOS');
+    expect(screenSource).toContain('Ask MiloOS');
+    expect(screenSource).toContain('MiloOS answered out loud.');
     expect(screenSource).toContain('Replay spoken response');
     expect(screenSource).toContain('useVoiceTranscription');
     expect(screenSource).toContain('useSpokenResponse');
     expect(screenSource).toContain('Speak your question');
     expect(screenSource).toContain('Speak now');
-    expect(screenSource).toContain('AI Help is here to help you think, not to do the work for you.');
-    expect(screenSource).toContain('Voice capture is unavailable. Please sign in and complete voice setup to use AI Help by voice.');
+    expect(screenSource).toContain('MiloOS is here to help you think, not to do the work for you.');
+    expect(screenSource).toContain('Voice capture is unavailable. Please sign in and complete voice setup to use MiloOS by voice.');
     expect(screenSource).toContain('getUserFacingVoiceTranscriptionError');
-    expect(screenSource).toContain("console.error('AI Help error:'");
-    expect(screenSource).toContain("console.error('Microphone capture unavailable for AI Help screen:'");
-    expect(screenSource).toContain("console.error('Voice transcription failed in AI Help screen:'");
-    expect(screenSource).toContain("console.error('AI Help explain-back error:'");
+    expect(screenSource).toContain("console.error('MiloOS error:'");
+    expect(screenSource).toContain("console.error('Microphone capture unavailable for MiloOS screen:'");
+    expect(screenSource).toContain("console.error('Voice transcription failed in MiloOS screen:'");
+    expect(screenSource).toContain("console.error('MiloOS explain-back error:'");
     expect(screenSource).not.toContain('{response.message}');
     expect(screenSource).not.toContain('Ask AI Coach');
     expect(screenSource).not.toContain('AI Coach says:');
@@ -103,23 +103,23 @@ describe('AI help wording availability', () => {
     expect(dockSource).not.toContain('MiloOS');
     expect(dockSource).not.toContain('Voice API');
 
-    expect(voiceErrorSource).toContain('AI Help could not clearly capture what you said. Please try again.');
-    expect(voiceErrorSource).toContain('Sign in to use AI Help by voice.');
+    expect(voiceErrorSource).toContain('MiloOS could not clearly capture what you said. Please try again.');
+    expect(voiceErrorSource).toContain('Sign in to use MiloOS by voice.');
     expect(voiceErrorSource).toContain('Voice help is not available right now. Complete voice setup and try again.');
     expect(voiceErrorSource).toContain('Voice help took too long to respond. Please try again.');
 
-    expect(learnerDashboardSource).toContain('AI Help');
-    expect(learnerDashboardSource).toContain('AI help appears here when a real support response is available.');
+    expect(learnerDashboardSource).toContain('MiloOS');
+    expect(learnerDashboardSource).toContain('MiloOS appears here when a real support response is available.');
     expect(learnerDashboardSource).toContain('No live help response is attached to this dashboard card yet.');
     expect(learnerDashboardSource).not.toContain('AI Coach');
     expect(learnerDashboardSource).not.toContain('AI coach guidance appears here');
 
-    expect(pricingPlansSource).toContain('AI help and guidance');
+    expect(pricingPlansSource).toContain('MiloOS help and guidance');
     expect(pricingPlansSource).not.toContain('AI coaching support');
 
-    expect(spokenResponseHookSource).toContain('AI Help answered out loud. Replay the spoken response if you need to hear it again.');
-    expect(spokenResponseHookSource).toContain('AI Help answered out loud using this device audio. Replay the spoken response if you need to hear it again.');
-    expect(spokenResponseHookSource).toContain('AI Help prepared a spoken response, but this device could not play it out loud. Turn on audio and try Replay.');
+    expect(spokenResponseHookSource).toContain('MiloOS answered out loud. Replay the spoken response if you need to hear it again.');
+    expect(spokenResponseHookSource).toContain('MiloOS answered out loud using this device audio. Replay the spoken response if you need to hear it again.');
+    expect(spokenResponseHookSource).toContain('MiloOS prepared a spoken response, but this device could not play it out loud. Turn on audio and try Replay.');
 
     expect(voiceServiceSource).toContain('Voice help took too long to respond. Please try again.');
     expect(voiceServiceSource).toContain('Voice help is unavailable right now. Complete voice setup and try again.');
@@ -133,10 +133,10 @@ describe('AI help wording availability', () => {
     const functionIndexSource = readRepoFile('functions', 'src', 'index.ts');
 
     const requiredSnippets = [
-      'AI help is not ready to give a reliable answer right now. Share your work so far, or ask your educator to review the next step with you.',
-      'AI 帮助现在还不能提供足够可靠的回答。你可以先分享你目前的思路，或者请老师陪你一起看下一步。',
-      'AI 幫助現在還不能提供足夠可靠的回答。你可以先分享你目前的思路，或者請老師陪你一起看下一步。',
-      'ความช่วยเหลือจาก AI ยังไม่พร้อมให้คำตอบที่เชื่อถือได้ในตอนนี้ ลองเล่าสิ่งที่ทำมาถึงตอนนี้ หรือให้ครูช่วยดูขั้นต่อไปกับคุณ',
+      'MiloOS is not ready to give a reliable answer right now. Share your work so far, or ask your educator to review the next step with you.',
+      'MiloOS 现在还不能提供足够可靠的回答。你可以先分享你目前的思路，或者请老师陪你一起看下一步。',
+      'MiloOS 現在還不能提供足夠可靠的回答。你可以先分享你目前的思路，或者請老師陪你一起看下一步。',
+      'MiloOS ยังไม่พร้อมให้คำตอบที่เชื่อถือได้ในตอนนี้ ลองเล่าสิ่งที่ทำมาถึงตอนนี้ หรือให้ครูช่วยดูขั้นต่อไปกับคุณ',
     ];
 
     for (const source of [guardrailSource, voiceSystemSource, functionIndexSource]) {
@@ -156,9 +156,9 @@ describe('AI help wording availability', () => {
       {
         relativePath: ['packages', 'i18n', 'locales', 'en.json'],
         required: [
-          '"title": "AI Help"',
+          '"title": "MiloOS"',
           '"tooltip": "Ask for help"',
-          '"responseLabel": "AI Help:"',
+          '"responseLabel": "MiloOS:"',
           '"voiceRequirements": "Sign in, enable microphone access, and finish voice setup before using voice help."',
           '"sessionLoopTitle": "Session Learning Signals"',
           '"improvementScore": "Growth Trend"',
@@ -170,8 +170,8 @@ describe('AI help wording availability', () => {
       {
         relativePath: ['packages', 'i18n', 'locales', 'zh-CN.json'],
         required: [
-          '"title": "AI 帮助"',
-          '"responseLabel": "AI 帮助："',
+          '"title": "MiloOS"',
+          '"responseLabel": "MiloOS:"',
           '"voiceRequirements": "请先登录、启用麦克风权限，并完成语音设置后再使用语音帮助。"',
           '"sessionLoopTitle": "课堂学习信号"',
           '"improvementScore": "成长趋势"',
@@ -183,8 +183,8 @@ describe('AI help wording availability', () => {
       {
         relativePath: ['packages', 'i18n', 'locales', 'zh-TW.json'],
         required: [
-          '"title": "AI 幫助"',
-          '"responseLabel": "AI 幫助："',
+          '"title": "MiloOS"',
+          '"responseLabel": "MiloOS:"',
           '"voiceRequirements": "請先登入、啟用麥克風權限，並完成語音設定後再使用語音幫助。"',
           '"sessionLoopTitle": "課堂學習訊號"',
           '"improvementScore": "成長趨勢"',
@@ -196,8 +196,8 @@ describe('AI help wording availability', () => {
       {
         relativePath: ['packages', 'i18n', 'locales', 'es.json'],
         required: [
-          '"openAria": "Abrir ayuda de IA"',
-          '"responseLabel": "Ayuda de IA:"',
+          '"openAria": "Abrir MiloOS"',
+          '"responseLabel": "MiloOS:"',
           '"voiceRequirements": "Inicia sesión, habilita el micrófono y termina la configuración de voz antes de usar la ayuda por voz."',
           '"sessionLoopTitle": "Señales de aprendizaje de la sesión"',
           '"improvementScore": "Tendencia de crecimiento"',
@@ -209,9 +209,9 @@ describe('AI help wording availability', () => {
       {
         relativePath: ['packages', 'i18n', 'locales', 'th.json'],
         required: [
-          '"title": "ความช่วยเหลือจาก AI"',
+          '"title": "MiloOS"',
           '"tooltip": "ขอความช่วยเหลือ"',
-          '"responseLabel": "ความช่วยเหลือจาก AI:"',
+          '"responseLabel": "MiloOS:"',
           '"voiceRequirements": "ลงชื่อเข้าใช้ เปิดสิทธิ์ไมโครโฟน และตั้งค่าเสียงให้เสร็จก่อนใช้ความช่วยเหลือด้วยเสียง"',
           '"sessionLoopTitle": "สัญญาณการเรียนรู้ของคาบนี้"',
           '"improvementScore": "แนวโน้มการเติบโต"',

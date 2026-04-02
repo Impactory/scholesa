@@ -154,18 +154,18 @@ class WorkflowSurfaceI18n {
     'No misconception alerts yet for this session.': '本节课暂时没有误区提醒。',
     'Cold-call queued': '点名提问已加入队列',
     'Quick poll saved to live mode': '快速投票题目已保存到课堂模式',
-    'AI help is temporarily unavailable': 'AI 帮助暂时不可用',
+    'MiloOS is temporarily unavailable': 'MiloOS 暂时不可用',
     'Keep working on this mission while AI reconnects.':
         '在 AI 重新连接期间，请继续完成这个任务。',
-    'Try the next step below or reopen AI help in a moment.':
-        '请先继续下面的下一步，或稍后重新打开 AI 帮助。',
-    'Billing AI Help': '账单 AI 帮助',
+    'Try the next step below or reopen MiloOS in a moment.':
+        '请先继续下面的下一步，或稍后重新打开 MiloOS。',
+    'Billing MiloOS': '账单 MiloOS',
     'See support ideas for family billing and learner continuity':
         '查看有关家庭账单和学习连续性的支持建议',
-    'Review AI Help': '审查 AI 帮助',
+    'Review MiloOS': '审查 MiloOS',
     'See support ideas while reviewing learner submissions':
         '在审查学习者提交内容时查看支持建议',
-    'Session AI Help': '课堂 AI 帮助',
+    'Session MiloOS': '课堂 MiloOS',
     'See support ideas for each session and learner': '查看每节课和每位学习者的支持建议',
     'Edit Support Plan': '编辑支持方案',
     'Support Type': '支持类型',
@@ -176,9 +176,9 @@ class WorkflowSurfaceI18n {
     'Showing results for': '正在显示搜索结果',
     'Clear Search': '清除搜索',
     'No matching support plans': '未找到匹配的支持方案',
-    'Learner AI Help': '学习者 AI 帮助',
+    'Learner MiloOS': '学习者 MiloOS',
     'See support ideas for each learner': '查看每位学习者的支持建议',
-    'Integrations AI Help': '集成 AI 帮助',
+    'Integrations MiloOS': '集成 MiloOS',
     'See support ideas while syncing learner systems': '在同步学习者系统时查看支持建议',
     'Integrations health is temporarily unavailable': '集成健康状态暂时不可用',
     'Unable to refresh integrations health right now. Showing the last successful data.':
@@ -215,14 +215,14 @@ class WorkflowSurfaceI18n {
         '我们暂时无法加载联邦学习实验。请重试以检查当前状态。',
     'Unable to refresh federated-learning experiments right now. Showing the last successful data.':
         '目前无法刷新联邦学习实验。正在显示最近一次成功加载的数据。',
-    'Mission Planning AI Help': '任务规划 AI 帮助',
+    'Mission Planning MiloOS': '任务规划 MiloOS',
     'See support ideas while designing missions for each learner':
         '在为每位学习者设计任务时查看支持建议',
     'Filter Missions': '筛选任务',
     'All Pillars': '所有支柱',
     'Leadership & Agency': '领导力与自主性',
     'Impact & Innovation': '影响力与创新',
-    'Support AI Help': '支持 AI 帮助',
+    'Support MiloOS': '支持 MiloOS',
     'See support ideas for each learner support plan': '查看每个学习者支持计划的支持建议',
     'Continue this mission': '继续这个任务',
     'Keep your streak moving while AI reconnects.': '在 AI 重新连接期间，继续保持你的习惯连胜。',
@@ -1027,18 +1027,18 @@ class WorkflowSurfaceI18n {
     'No misconception alerts yet for this session.': '本節課暫時沒有迷思提醒。',
     'Cold-call queued': '點名提問已加入隊列',
     'Quick poll saved to live mode': '快速投票題目已儲存到課堂模式',
-    'AI help is temporarily unavailable': 'AI 幫助暫時不可用',
+    'MiloOS is temporarily unavailable': 'MiloOS 暫時不可用',
     'Keep working on this mission while AI reconnects.':
         '在 AI 重新連線期間，請繼續完成這個任務。',
-    'Try the next step below or reopen AI help in a moment.':
-        '請先繼續下面的下一步，或稍後重新開啟 AI 幫助。',
-    'Billing AI Help': '帳單 AI 幫助',
+    'Try the next step below or reopen MiloOS in a moment.':
+        '請先繼續下面的下一步，或稍後重新開啟 MiloOS。',
+    'Billing MiloOS': '帳單 MiloOS',
     'See support ideas for family billing and learner continuity':
         '查看有關家庭帳單和學習連續性的支持建議',
-    'Review AI Help': '審查 AI 幫助',
+    'Review MiloOS': '審查 MiloOS',
     'See support ideas while reviewing learner submissions':
         '在審查學習者提交內容時查看支持建議',
-    'Session AI Help': '課堂 AI 幫助',
+    'Session MiloOS': '課堂 MiloOS',
     'See support ideas for each session and learner': '查看每堂課和每位學習者的支持建議',
     'Edit Support Plan': '編輯支持方案',
     'Support Type': '支持類型',
@@ -1049,9 +1049,9 @@ class WorkflowSurfaceI18n {
     'Showing results for': '正在顯示搜尋結果',
     'Clear Search': '清除搜尋',
     'No matching support plans': '找不到匹配的支持方案',
-    'Learner AI Help': '學習者 AI 幫助',
+    'Learner MiloOS': '學習者 MiloOS',
     'See support ideas for each learner': '查看每位學習者的支持建議',
-    'Integrations AI Help': '整合 AI 幫助',
+    'Integrations MiloOS': '整合 MiloOS',
     'See support ideas while syncing learner systems': '在同步學習者系統時查看支持建議',
     'Integrations health is temporarily unavailable': '整合健康狀態暫時不可用',
     'Unable to refresh integrations health right now. Showing the last successful data.':
@@ -1088,14 +1088,14 @@ class WorkflowSurfaceI18n {
         '我們暫時無法載入聯邦學習實驗。請重試以檢查目前狀態。',
     'Unable to refresh federated-learning experiments right now. Showing the last successful data.':
         '目前無法重新整理聯邦學習實驗。正在顯示最近一次成功載入的資料。',
-    'Mission Planning AI Help': '任務規劃 AI 幫助',
+    'Mission Planning MiloOS': '任務規劃 MiloOS',
     'See support ideas while designing missions for each learner':
         '在為每位學習者設計任務時查看支持建議',
     'Filter Missions': '篩選任務',
     'All Pillars': '所有支柱',
     'Leadership & Agency': '領導力與自主性',
     'Impact & Innovation': '影響力與創新',
-    'Support AI Help': '支持 AI 幫助',
+    'Support MiloOS': '支持 MiloOS',
     'See support ideas for each learner support plan': '查看每個學習者支持計畫的支持建議',
     'Continue this mission': '繼續這個任務',
     'Keep your streak moving while AI reconnects.': '在 AI 重新連線期間，繼續維持你的習慣連勝。',

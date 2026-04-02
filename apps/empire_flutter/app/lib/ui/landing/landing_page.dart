@@ -9,8 +9,8 @@ const Map<String, String> _landingZhCn = <String, String>{
   'Features': '功能',
   'Pillars': '支柱',
   'For Schools': '面向学校',
-    'Mission-based learning, AI help, portfolios, analytics, and offline support.':
-      '任务式学习、AI 帮助、作品集、分析与离线支持。',
+    'Mission-based learning, MiloOS, portfolios, analytics, and offline support.':
+      '任务式学习、MiloOS、作品集、分析与离线支持。',
   'Future Skills, Leadership & Agency, and Impact & Innovation.':
       '未来技能、领导力与自主性，以及影响力与创新。',
   'Role-based dashboards for learners, educators, parents, site teams, and HQ.':
@@ -26,7 +26,7 @@ const Map<String, String> _landingZhCn = <String, String>{
       '演示包含：\n• 角色仪表板\n• CTA 操作流程\n• 任务与出勤生命周期',
   'Close': '关闭',
   'Try Live': '立即体验',
-  'AI Help': 'AI 帮助',
+  'MiloOS': 'MiloOS',
   'Achievements': '成就',
   'Missions': '任务',
   'Community': '社区',
@@ -67,8 +67,8 @@ const Map<String, String> _landingZhTw = <String, String>{
   'Features': '功能',
   'Pillars': '支柱',
   'For Schools': '面向學校',
-    'Mission-based learning, AI help, portfolios, analytics, and offline support.':
-      '任務式學習、AI 幫助、作品集、分析與離線支援。',
+    'Mission-based learning, MiloOS, portfolios, analytics, and offline support.':
+      '任務式學習、MiloOS、作品集、分析與離線支援。',
   'Future Skills, Leadership & Agency, and Impact & Innovation.':
       '未來技能、領導力與自主性，以及影響力與創新。',
   'Role-based dashboards for learners, educators, parents, site teams, and HQ.':
@@ -84,7 +84,7 @@ const Map<String, String> _landingZhTw = <String, String>{
       '示範包含：\n• 角色儀表板\n• CTA 操作流程\n• 任務與出勤生命週期',
   'Close': '關閉',
   'Try Live': '立即體驗',
-  'AI Help': 'AI 幫助',
+  'MiloOS': 'MiloOS',
   'Achievements': '成就',
   'Missions': '任務',
   'Community': '社群',
@@ -313,7 +313,7 @@ class _LandingPageState extends State<LandingPage>
               onTap: () => _showSectionPreview(
                 title: _tLanding(context, 'Features'),
                 detail: _tLanding(context,
-                    'Mission-based learning, AI help, portfolios, analytics, and offline support.'),
+                    'Mission-based learning, MiloOS, portfolios, analytics, and offline support.'),
               ),
             ),
             const SizedBox(width: 32),
@@ -586,7 +586,7 @@ class _LandingPageState extends State<LandingPage>
             left: 40,
             child: _buildFloatingCard(
               icon: Icons.psychology_rounded,
-              label: _tLanding(context, 'AI Help'),
+              label: _tLanding(context, 'MiloOS'),
               color: ScholesaColors.futureSkills,
             ),
           ),

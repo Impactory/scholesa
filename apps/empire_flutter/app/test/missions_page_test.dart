@@ -341,7 +341,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Mission with AI fallback').first);
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Get AI Help'));
+    await tester.ensureVisible(find.text('Get MiloOS Help'));
     await tester.tap(find.byKey(const Key('mission-ai-toggle')));
     await tester.pumpAndSettle();
 

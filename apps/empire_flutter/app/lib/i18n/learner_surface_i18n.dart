@@ -30,7 +30,7 @@ class LearnerSurfaceI18n {
     'No active missions yet': '还没有进行中的任务',
     'Start a mission to build real learning evidence today.':
         '开始一个任务，建立今天真实的学习证据。',
-    'AI help is loading': 'AI 帮助正在加载',
+    'MiloOS is loading': 'MiloOS 正在加载',
     'Runtime context is syncing. Try again in a moment.': '运行时上下文正在同步。请稍后再试。',
     'My Portfolio': '我的作品集',
     'Showcase your saved work and credentials': '展示你已保存的作品与凭证',
@@ -281,7 +281,7 @@ class LearnerSurfaceI18n {
     'No active missions yet': '尚未有進行中的任務',
     'Start a mission to build real learning evidence today.':
         '開始一個任務，建立今天真實的學習證據。',
-    'AI help is loading': 'AI 幫助正在載入',
+    'MiloOS is loading': 'MiloOS 正在載入',
     'Runtime context is syncing. Try again in a moment.': '執行階段內容正在同步。請稍後再試。',
     'My Portfolio': '我的作品集',
     'Showcase your saved work and credentials': '展示你已儲存的作品與憑證',

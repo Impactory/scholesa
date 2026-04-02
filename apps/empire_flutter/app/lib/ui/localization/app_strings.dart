@@ -119,7 +119,7 @@ class AppStrings {
       'ai.clear': 'Clear',
       'ai.currentGoals': 'Current goals',
       'ai.clearGoals.cta': 'Clear goals',
-    'ai.empty.title': 'AI Help',
+    'ai.empty.title': 'MiloOS',
       'ai.empty.subtitle':
           'Choose a help mode and ask a question. I\'ll guide your thinking, not hand over the answer.',
       'ai.banner.verification':

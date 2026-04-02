@@ -61,12 +61,12 @@ class VoiceRuntimeService {
   Future<String> _requiredIdToken() async {
     final User? user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      throw Exception('Sign in to use AI Help by voice.');
+      throw Exception('Sign in to use MiloOS by voice.');
     }
     final String? idToken = await user.getIdToken();
     if (idToken == null || idToken.isEmpty) {
       throw Exception(
-          'Sign-in could not be confirmed for AI Help voice support.');
+          'Sign-in could not be confirmed for MiloOS voice support.');
     }
     return idToken;
   }

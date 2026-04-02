@@ -11,16 +11,16 @@ describe('aiCoachTone honesty shaping', () => {
     ).toBe('Start with one clue.');
   });
 
-  it('rewrites legacy assistant labels to AI help and keeps a natural follow-up question', () => {
+  it('rewrites legacy assistant labels to MiloOS and keeps a natural follow-up question', () => {
     const shaped = applyKidFriendlyConversationalTone(
-      'Hello Sam, this is your AI coach. MiloOS can help you test one example.',
+      'Hello Sam, this is your AI coach. AI help can help you test one example.',
       'Sam',
     );
 
-    expect(shaped).toContain('AI help can help you test one example.');
+    expect(shaped).toContain('MiloOS can help you test one example.');
     expect(shaped).toContain('What feels like the best first move?');
     expect(shaped).not.toContain('AI coach');
-    expect(shaped).not.toContain('MiloOS');
+    expect(shaped).not.toContain('AI help');
   });
 
   it('keeps strong encouraging replies concise when no extra question is requested', () => {
