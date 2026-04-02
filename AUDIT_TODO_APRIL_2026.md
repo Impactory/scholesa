@@ -186,8 +186,11 @@
 
 ## ACTIVE GOLD BLOCKERS
 
-### G9. No checkpoint mapping admin UI in CapabilityFrameworkEditor
-- **Status**: 🔴 OPEN
+**None** — All gold blockers G1–G12 are closed.
+
+---
+
+## CLOSED GOLD BLOCKERS (Previously Fixed)
 - **Severity**: GOLD BLOCKER (WF1)
 - **Location**: `src/components/capabilities/CapabilityFrameworkEditor.tsx`
 - **Problem**: `unitMappings` maps capabilities to missions (units), but there is no UI to map capabilities to checkpoints. The gold spec says "map capabilities to units/checkpoints." The `checkpointMappings` concept exists in the backend (`functions/src/index.ts: checkpointMappingsFromUnknown()`) but only as data that flows FROM evidence, not FROM admin authoring.
