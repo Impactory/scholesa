@@ -4,10 +4,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { httpsCallable } from 'firebase/functions';
 import { getDocs, query, where } from 'firebase/firestore';
 import { functions } from '@/src/firebase/client-init';
-import { rubricTemplatesCollection } from '@/src/firebase/firestore/collections';
+import { rubricTemplatesCollection, processDomainsCollection } from '@/src/firebase/firestore/collections';
 import { useCapabilities } from '@/src/lib/capabilities/useCapabilities';
 import { Spinner } from '@/src/components/ui/Spinner';
-import type { RubricTemplate } from '@/src/types/schema';
+import type { RubricTemplate, ProcessDomain } from '@/src/types/schema';
 
 interface RubricReviewPanelProps {
   evidenceRecordIds: string[];
@@ -22,6 +22,7 @@ interface RubricReviewPanelProps {
 
 interface ScoreEntry {
   capabilityId: string;
+  processDomainId?: string;
   pillarCode: string;
   criterionId: string;
   score: number;
@@ -47,6 +48,7 @@ export function RubricReviewPanel({
 }: RubricReviewPanelProps) {
   const { capabilityList, resolveTitle } = useCapabilities(siteId);
   const [templates, setTemplates] = useState<RubricTemplate[]>([]);
+  const [processDomains, setProcessDomains] = useState<ProcessDomain[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [scores, setScores] = useState<ScoreEntry[]>(() =>
     preselectedCapabilityId
@@ -59,6 +61,7 @@ export function RubricReviewPanel({
         }]
       : []
   );
+  const [domainScores, setDomainScores] = useState<ScoreEntry[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -77,20 +80,45 @@ export function RubricReviewPanel({
     })();
   }, [siteId]);
 
+  // Load active process domains for the site
+  useEffect(() => {
+    if (!siteId) return;
+    void (async () => {
+      try {
+        const snap = await getDocs(
+          query(processDomainsCollection, where('status', '==', 'active'))
+        );
+        setProcessDomains(snap.docs.map((d) => ({ ...d.data(), id: d.id }) as ProcessDomain));
+      } catch {
+        // Process domains are optional
+      }
+    })();
+  }, [siteId]);
+
   // When a template is selected, populate scores from its criteria
   const applyTemplate = useCallback((templateId: string) => {
     const tpl = templates.find((t) => t.id === templateId);
     if (!tpl) return;
     setSelectedTemplateId(templateId);
-    setScores(
-      tpl.criteria.map((c) => ({
+    const capScores: ScoreEntry[] = [];
+    const domScores: ScoreEntry[] = [];
+    for (const c of tpl.criteria) {
+      const entry: ScoreEntry = {
         capabilityId: c.capabilityId,
+        processDomainId: c.processDomainId,
         pillarCode: c.pillarCode ?? capabilityList.find((cap) => cap.id === c.capabilityId)?.pillarCode ?? '',
         criterionId: c.label,
         score: 0,
         maxScore: c.maxScore || 4,
-      }))
-    );
+      };
+      if (c.processDomainId) {
+        domScores.push(entry);
+      } else {
+        capScores.push(entry);
+      }
+    }
+    setScores(capScores);
+    setDomainScores(domScores);
   }, [templates, capabilityList]);
 
   // Find templates that match the current capability selection
@@ -142,9 +170,54 @@ export function RubricReviewPanel({
     setScores((prev) => prev.filter((s) => s.capabilityId !== capabilityId));
   }, []);
 
+  const addProcessDomainScore = useCallback((domainId: string) => {
+    if (domainScores.some((s) => s.processDomainId === domainId)) return;
+    const domain = processDomains.find((d) => d.id === domainId);
+    if (!domain) return;
+    setDomainScores((prev) => [
+      ...prev,
+      {
+        capabilityId: '',
+        processDomainId: domainId,
+        pillarCode: '',
+        criterionId: `process-domain-${domainId}`,
+        score: 0,
+        maxScore: 4,
+      },
+    ]);
+  }, [processDomains, domainScores]);
+
+  const updateDomainScore = useCallback((domainId: string, level: number) => {
+    setDomainScores((prev) =>
+      prev.map((s) =>
+        s.processDomainId === domainId ? { ...s, score: level } : s
+      )
+    );
+  }, []);
+
+  const removeDomainScore = useCallback((domainId: string) => {
+    setDomainScores((prev) => prev.filter((s) => s.processDomainId !== domainId));
+  }, []);
+
+  const getProcessDomainDescriptor = useCallback((domainId: string, level: number): string | undefined => {
+    const domain = processDomains.find((d) => d.id === domainId);
+    if (!domain?.progressionDescriptors) return undefined;
+    const levelMap: Record<number, keyof NonNullable<typeof domain.progressionDescriptors>> = {
+      1: 'beginning', 2: 'developing', 3: 'proficient', 4: 'advanced',
+    };
+    return domain.progressionDescriptors[levelMap[level]];
+  }, [processDomains]);
+
+  const resolveDomainTitle = useCallback((domainId: string): string => {
+    return processDomains.find((d) => d.id === domainId)?.title ?? domainId;
+  }, [processDomains]);
+
   const canSubmit = useMemo(
-    () => scores.length > 0 && scores.every((s) => s.score > 0),
-    [scores]
+    () => {
+      const allScores = [...scores, ...domainScores];
+      return allScores.length > 0 && allScores.every((s) => s.score > 0);
+    },
+    [scores, domainScores]
   );
 
   const handleSubmit = useCallback(async () => {
@@ -154,15 +227,17 @@ export function RubricReviewPanel({
 
     try {
       const applyRubric = httpsCallable(functions, 'applyRubricToEvidence');
+      const allScores = [...scores, ...domainScores];
       await applyRubric({
         evidenceRecordIds,
         learnerId,
         siteId,
         rubricId: selectedTemplateId ?? undefined,
-        scores: scores.map((s) => ({
+        scores: allScores.map((s) => ({
           criterionId: s.criterionId,
-          capabilityId: s.capabilityId,
-          pillarCode: s.pillarCode,
+          capabilityId: s.capabilityId || undefined,
+          processDomainId: s.processDomainId || undefined,
+          pillarCode: s.pillarCode || undefined,
           score: s.score,
           maxScore: s.maxScore,
         })),
@@ -174,7 +249,7 @@ export function RubricReviewPanel({
     } finally {
       setSaving(false);
     }
-  }, [canSubmit, evidenceRecordIds, learnerId, siteId, scores, onComplete]);
+  }, [canSubmit, evidenceRecordIds, learnerId, siteId, scores, domainScores, selectedTemplateId, onComplete]);
 
   const unusedCapabilities = useMemo(
     () => capabilityList.filter((c) => !scores.some((s) => s.capabilityId === c.id)),
@@ -288,6 +363,76 @@ export function RubricReviewPanel({
         </div>
       )}
 
+      {/* Process domain score cards */}
+      {domainScores.length > 0 && (
+        <div className="space-y-2">
+          <h4 className="text-xs font-semibold text-app-muted uppercase tracking-wide">Process Domains</h4>
+          {domainScores.map((s) => (
+            <div key={s.processDomainId} className="rounded-lg border border-purple-200 bg-purple-50/50 p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-purple-900">
+                  {resolveDomainTitle(s.processDomainId!)}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => removeDomainScore(s.processDomainId!)}
+                  className="text-xs text-red-500 hover:text-red-700"
+                >
+                  Remove
+                </button>
+              </div>
+              <div className="flex gap-2">
+                {SCORE_LEVELS.map((level) => (
+                  <button
+                    key={level.value}
+                    type="button"
+                    onClick={() => updateDomainScore(s.processDomainId!, level.value)}
+                    className={`flex-1 rounded-md border px-2 py-1.5 text-xs font-medium transition-all ${
+                      s.score === level.value
+                        ? level.color + ' ring-2 ring-offset-1 ring-purple-400/40'
+                        : 'border-app bg-app-surface text-app-muted hover:bg-app-canvas'
+                    }`}
+                  >
+                    {level.label}
+                  </button>
+                ))}
+              </div>
+              {s.score > 0 && getProcessDomainDescriptor(s.processDomainId!, s.score) && (
+                <p className="text-xs text-purple-700 italic pl-1">
+                  {getProcessDomainDescriptor(s.processDomainId!, s.score)}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Add process domain */}
+      {processDomains.length > 0 && (
+        <div className="flex items-center gap-2">
+          <select
+            aria-label="Add process domain to assess"
+            onChange={(e) => {
+              if (e.target.value) {
+                addProcessDomainScore(e.target.value);
+                e.target.value = '';
+              }
+            }}
+            className="flex-1 rounded-md border border-purple-200 bg-purple-50/30 px-3 py-2 text-sm text-app-foreground"
+            defaultValue=""
+          >
+            <option value="">+ Add process domain to assess</option>
+            {processDomains
+              .filter((d) => !domainScores.some((s) => s.processDomainId === d.id))
+              .map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.title}
+                </option>
+              ))}
+          </select>
+        </div>
+      )}
+
       {capabilityList.length === 0 && (
         <p className="text-xs text-amber-700 bg-amber-50 rounded-md px-3 py-2 border border-amber-200">
           No capabilities defined for this site. Define capabilities in HQ before reviewing evidence.
@@ -308,7 +453,7 @@ export function RubricReviewPanel({
           disabled={!canSubmit || saving}
           className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
         >
-          {saving ? 'Applying...' : `Apply Rubric (${scores.length} capabilities)`}
+          {saving ? 'Applying...' : `Apply Rubric (${scores.length + domainScores.length} scores)`}
         </button>
         <button
           type="button"

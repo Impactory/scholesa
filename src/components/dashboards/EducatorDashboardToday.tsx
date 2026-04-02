@@ -72,12 +72,12 @@ export function EducatorDashboardToday() {
           ),
         );
         const sessionList: SessionInfo[] = sessionsSnap.docs.map((d) => {
-          const data = d.data() as Record<string, unknown>;
+          const raw = d.data() as unknown as Record<string, unknown>;
           return {
             id: d.id,
-            title: (data.title ?? data.name ?? 'Untitled Session') as string,
-            description: (data.description ?? '') as string,
-            status: (data.status ?? '') as string,
+            title: (raw.title ?? raw.name ?? 'Untitled Session') as string,
+            description: (raw.description ?? '') as string,
+            status: (raw.status ?? '') as string,
           };
         });
 
