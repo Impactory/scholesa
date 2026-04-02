@@ -8240,3 +8240,143 @@ export const applyRubricToEvidence = onCall(async (request: CallableRequest<{
     capabilitiesProcessed: scoresByCapability.size,
   };
 });
+
+/**
+ * Verify Proof-of-Learning for a portfolio item.
+ * When verified, creates CapabilityGrowthEvents and updates CapabilityMastery
+ * for each linked capability, completing the evidence chain.
+ */
+export const verifyProofOfLearning = onCall(async (request: CallableRequest<{
+  portfolioItemId: string;
+  verificationStatus: 'verified' | 'reviewed' | 'pending';
+  proofOfLearningStatus: 'verified' | 'partial' | 'missing' | 'not-available';
+  proofChecks: { explainItBack: boolean; oralCheck: boolean; miniRebuild: boolean };
+  excerpts?: { explainItBack?: string; oralCheck?: string; miniRebuild?: string };
+  educatorNotes?: string;
+  resubmissionReason?: string;
+}>) => {
+  const educatorId = request.auth?.uid;
+  if (!educatorId) {
+    throw new HttpsError('unauthenticated', 'Must be authenticated.');
+  }
+
+  const {
+    portfolioItemId,
+    verificationStatus,
+    proofOfLearningStatus,
+    proofChecks,
+    excerpts,
+    educatorNotes,
+    resubmissionReason,
+  } = request.data ?? {};
+
+  if (!portfolioItemId || typeof portfolioItemId !== 'string') {
+    throw new HttpsError('invalid-argument', 'portfolioItemId is required.');
+  }
+  if (!verificationStatus) {
+    throw new HttpsError('invalid-argument', 'verificationStatus is required.');
+  }
+
+  const db = admin.firestore();
+
+  // Read the portfolio item
+  const portfolioRef = db.collection('portfolioItems').doc(portfolioItemId);
+  const portfolioSnap = await portfolioRef.get();
+  if (!portfolioSnap.exists) {
+    throw new HttpsError('not-found', 'Portfolio item not found.');
+  }
+  const portfolioData = portfolioSnap.data() ?? {};
+  const learnerId = portfolioData.learnerId as string;
+  const siteId = portfolioData.siteId as string;
+
+  // Verify educator has access to this site
+  await requireRoleAndSite(educatorId, ['educator', 'siteLead', 'site', 'hq', 'admin'], siteId);
+
+  const checkpointCount = [proofChecks?.explainItBack, proofChecks?.oralCheck, proofChecks?.miniRebuild]
+    .filter(Boolean).length;
+
+  const batch = db.batch();
+
+  // 1. Update the portfolio item
+  const portfolioUpdate: Record<string, unknown> = {
+    verificationStatus,
+    proofOfLearningStatus,
+    proofHasExplainItBack: proofChecks?.explainItBack ?? false,
+    proofHasOralCheck: proofChecks?.oralCheck ?? false,
+    proofHasMiniRebuild: proofChecks?.miniRebuild ?? false,
+    proofCheckpointCount: checkpointCount,
+    updatedAt: FieldValue.serverTimestamp(),
+  };
+  if (excerpts?.explainItBack) portfolioUpdate.proofExplainItBackExcerpt = excerpts.explainItBack;
+  if (excerpts?.oralCheck) portfolioUpdate.proofOralCheckExcerpt = excerpts.oralCheck;
+  if (excerpts?.miniRebuild) portfolioUpdate.proofMiniRebuildExcerpt = excerpts.miniRebuild;
+  if (educatorNotes) portfolioUpdate.verificationNotes = educatorNotes;
+  if (resubmissionReason) {
+    portfolioUpdate.verificationPrompt = resubmissionReason;
+    portfolioUpdate.verificationPromptSource = 'educator_review';
+  }
+  batch.update(portfolioRef, portfolioUpdate);
+
+  const growthEventIds: string[] = [];
+  const capabilityIds: string[] = Array.isArray(portfolioData.capabilityIds) ? portfolioData.capabilityIds : [];
+
+  // 2. If verified and capabilities are linked, create growth events + update mastery
+  if (verificationStatus === 'verified' && capabilityIds.length > 0) {
+    for (const capabilityId of capabilityIds) {
+      // Read capability to get pillarCode
+      const capSnap = await db.collection('capabilities').doc(capabilityId).get();
+      const pillarCode = capSnap.exists ? (capSnap.data()?.pillarCode ?? '') : '';
+
+      // Create growth event recording PoL verification
+      const growthRef = db.collection('capabilityGrowthEvents').doc();
+      growthEventIds.push(growthRef.id);
+      batch.set(growthRef, {
+        learnerId,
+        capabilityId,
+        siteId,
+        pillarCode,
+        level: checkpointCount, // 1-3 based on proof checks passed
+        rawScore: checkpointCount,
+        maxScore: 3,
+        evidenceId: portfolioItemId,
+        linkedPortfolioItemIds: [portfolioItemId],
+        rubricApplicationId: null,
+        educatorId,
+        source: 'proof_of_learning',
+        createdAt: FieldValue.serverTimestamp(),
+      });
+
+      // Upsert CapabilityMastery
+      const masteryId = `${learnerId}_${capabilityId}`;
+      const masteryRef = db.collection('capabilityMastery').doc(masteryId);
+      const masterySnap = await masteryRef.get();
+      const masteryData = masterySnap.data() ?? {};
+      const priorGrowthEventIds: string[] = Array.isArray(masteryData.growthEventIds) ? masteryData.growthEventIds : [];
+      const priorEvidenceIds: string[] = Array.isArray(masteryData.evidenceIds) ? masteryData.evidenceIds : [];
+
+      batch.set(masteryRef, {
+        learnerId,
+        capabilityId,
+        siteId,
+        pillarCode,
+        latestLevel: Math.max(checkpointCount, (masteryData.latestLevel as number) ?? 0),
+        highestLevel: Math.max(checkpointCount, (masteryData.highestLevel as number) ?? 0),
+        latestEvidenceId: portfolioItemId,
+        evidenceIds: [...new Set([portfolioItemId, ...priorEvidenceIds])],
+        growthEventIds: [...new Set([growthRef.id, ...priorGrowthEventIds])],
+        proofOfLearningVerified: true,
+        createdAt: masteryData.createdAt ?? FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      }, { merge: true });
+    }
+  }
+
+  await batch.commit();
+
+  return {
+    portfolioItemId,
+    verificationStatus,
+    growthEventIds,
+    capabilitiesProcessed: capabilityIds.length,
+  };
+});

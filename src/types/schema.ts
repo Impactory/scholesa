@@ -1204,6 +1204,24 @@ export interface EvidenceRecord {
 }
 
 /**
+ * A learner-authored reflection tied to an artifact, mission, or capability.
+ * Used for portfolio evidence and proof-of-learning verification.
+ */
+export interface LearnerReflection {
+  id: string;
+  learnerId: string;
+  siteId: string;
+  content: string;
+  missionId?: string;
+  portfolioItemId?: string;
+  capabilityIds?: string[];
+  aiAssistanceUsed: boolean;
+  aiAssistanceDetails?: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+/**
  * A rubric application linking an educator's scoring to capabilities.
  * Created when an educator reviews learner work against rubric criteria.
  */

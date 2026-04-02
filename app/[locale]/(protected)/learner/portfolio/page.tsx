@@ -1,5 +1,5 @@
-import { WorkflowRoutePage } from '@/src/features/workflows/WorkflowRoutePage';
+import { LearnerEvidenceSubmission } from '@/src/components/evidence/LearnerEvidenceSubmission';
 
-export default function WorkflowPage() {
-  return <WorkflowRoutePage routePath='/learner/portfolio' />;
+export default function LearnerPortfolioPage() {
+  return <LearnerEvidenceSubmission />;
 }

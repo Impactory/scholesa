@@ -2,19 +2,18 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import {
-  doc,
   getDocs,
   limit,
   orderBy,
   query,
-  serverTimestamp,
-  updateDoc,
   where,
 } from 'firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import {
   portfolioItemsCollection,
 } from '@/src/firebase/firestore/collections';
+import { functions } from '@/src/firebase/client-init';
 import { useCapabilities } from '@/src/lib/capabilities/useCapabilities';
 import { RoleRouteGuard } from '@/src/components/auth/RoleRouteGuard';
 import { Spinner } from '@/src/components/ui/Spinner';
@@ -112,6 +111,7 @@ export function ProofOfLearningVerification() {
         {/* Filter toolbar */}
         <div className="mb-4 flex items-center gap-3">
           <select
+            aria-label="Filter verification status"
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value as 'all' | 'pending' | 'reviewed')}
             className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
@@ -175,12 +175,29 @@ export function ProofOfLearningVerification() {
                   onVerify={async (verdictData) => {
                     setSaving(true);
                     try {
-                      const ref = doc(portfolioItemsCollection, selectedItem.id);
-                      await updateDoc(ref, {
-                        ...verdictData,
-                        updatedAt: serverTimestamp(),
+                      const verifyPoL = httpsCallable(functions, 'verifyProofOfLearning');
+                      await verifyPoL({
+                        portfolioItemId: selectedItem.id,
+                        verificationStatus: verdictData.verificationStatus,
+                        proofOfLearningStatus: verdictData.proofOfLearningStatus,
+                        proofChecks: {
+                          explainItBack: verdictData.proofHasExplainItBack ?? false,
+                          oralCheck: verdictData.proofHasOralCheck ?? false,
+                          miniRebuild: verdictData.proofHasMiniRebuild ?? false,
+                        },
+                        excerpts: {
+                          explainItBack: verdictData.proofExplainItBackExcerpt,
+                          oralCheck: verdictData.proofOralCheckExcerpt,
+                          miniRebuild: verdictData.proofMiniRebuildExcerpt,
+                        },
+                        educatorNotes: verdictData.verificationNotes,
+                        resubmissionReason: verdictData.verificationPrompt,
                       });
-                      setSuccessMessage(`Verification ${verdictData.verificationStatus === 'verified' ? 'confirmed' : 'updated'}.`);
+                      setSuccessMessage(
+                        verdictData.verificationStatus === 'verified'
+                          ? 'Verified — capability growth updated.'
+                          : 'Verification updated.'
+                      );
                       setTimeout(() => setSuccessMessage(null), 3000);
                       await loadItems();
                       setSelectedItem(null);
