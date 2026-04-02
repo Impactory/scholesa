@@ -20,10 +20,10 @@ void main() {
         () {
       expect(bosServiceSource, contains('Malformed AI Help payload.'));
       expect(bosModelsSource, contains('Malformed AI Help response payload.'));
-      expect(voiceRuntimeSource, contains('Sign in to use AI Help by voice.'));
+      expect(voiceRuntimeSource, contains('Sign in to use MiloOS by voice.'));
       expect(
         voiceRuntimeSource,
-        contains('Sign-in could not be confirmed for AI Help voice support.'),
+        contains('Sign-in could not be confirmed for MiloOS voice support.'),
       );
       expect(
         voiceRuntimeSource,
@@ -43,7 +43,7 @@ void main() {
       'removes legacy assistant identity wording from runtime prompt and errors',
         () {
       expect(coachWidgetSource,
-          contains('You are Scholesa AI Help in a live spoken conversation.'));
+          contains('You are MiloOS in a live spoken conversation.'));
       expect(
           coachWidgetSource,
           contains(
@@ -52,7 +52,7 @@ void main() {
       expect(coachWidgetSource, contains("'ai_help_loop'"));
       expect(
         coachWidgetSource,
-        contains('AI Help request failed, returning safe escalation: \$e'),
+        contains('MiloOS request failed, returning safe escalation: \$e'),
       );
 
       expect(bosServiceSource, isNot(contains('Malformed AI coach payload.')));

@@ -164,7 +164,7 @@ void main() {
     await tester.tap(find.byKey(const Key('habit-ai-toggle')));
     await tester.pumpAndSettle();
 
-    expect(find.text('AI help is temporarily unavailable'), findsOneWidget);
+    expect(find.text('MiloOS is temporarily unavailable'), findsOneWidget);
     expect(
       find.text('Keep your streak moving while AI reconnects.'),
       findsOneWidget,
@@ -174,7 +174,7 @@ void main() {
     await tester.tap(find.text('Continue this habit'));
     await tester.pumpAndSettle();
 
-    expect(find.text('AI help is temporarily unavailable'), findsNothing);
+    expect(find.text('MiloOS is temporarily unavailable'), findsNothing);
     expect(find.text('Get coaching on your progress'), findsOneWidget);
   });
 }
