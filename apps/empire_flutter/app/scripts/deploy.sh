@@ -15,9 +15,9 @@ fi
 # Sync icons before build
 bash "$APP_ROOT/scripts/sync_platform_icons.sh"
 
-# Build the production web bundle on the stable non-WASM path until
-# flutter_tts and the rest of the voice stack are WebAssembly-clean.
-"$FLUTTER_BIN" build web --release --no-tree-shake-icons --no-wasm-dry-run
+# Build the production web bundle with WebAssembly (WASM) compilation.
+# Flutter 3.41+ stable supports WASM-GC; voice packages have JS fallback.
+"$FLUTTER_BIN" build web --wasm --release --no-tree-shake-icons
 
 # Docker + Cloud Run deploy (requires GCP_PROJECT_ID, GCP_REGION, CLOUD_RUN_FLUTTER_SERVICE)
 if [[ -n "${GCP_PROJECT_ID:-}" && -n "${GCP_REGION:-}" && -n "${CLOUD_RUN_FLUTTER_SERVICE:-}" ]]; then

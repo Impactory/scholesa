@@ -57,6 +57,13 @@ const LEVEL_DESCRIPTIONS: Record<number, string> = {
   4: 'Advanced — can teach and extend',
 };
 
+const LEVEL_KEYS: Record<number, 'beginning' | 'developing' | 'proficient' | 'advanced'> = {
+  1: 'beginning',
+  2: 'developing',
+  3: 'proficient',
+  4: 'advanced',
+};
+
 /* ───── Component ───── */
 
 interface CapabilityGuidancePanelProps {
@@ -219,6 +226,28 @@ export function CapabilityGuidancePanel({ learnerId, siteId, learnerName }: Capa
               </div>
 
               <p className="mt-2 text-xs text-gray-600">{pg.nextSteps}</p>
+
+              {/* Per-capability progression descriptors */}
+              {mastery
+                .filter((m) => (m.pillarCode || 'unknown') === pillar.pillarCode)
+                .map((m) => {
+                  const cap = capabilities.find((c) => c.id === m.capabilityId);
+                  if (!cap) return null;
+                  const level = m.latestLevel ?? 0;
+                  const levelKey = LEVEL_KEYS[Math.min(4, Math.max(1, Math.round(level))) as 1 | 2 | 3 | 4];
+                  const descriptor = cap.progressionDescriptors?.[levelKey];
+                  return (
+                    <div key={m.id ?? m.capabilityId} className="mt-2 rounded border border-gray-50 bg-gray-50 px-3 py-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-gray-800">{cap.title}</span>
+                        <span className="text-xs text-gray-500">Level {level}/4</span>
+                      </div>
+                      {descriptor ? (
+                        <p className="mt-0.5 text-xs text-gray-600 italic">&ldquo;{descriptor}&rdquo;</p>
+                      ) : null}
+                    </div>
+                  );
+                })}
             </div>
           );
         })}

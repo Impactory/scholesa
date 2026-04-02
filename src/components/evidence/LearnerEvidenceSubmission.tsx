@@ -14,13 +14,15 @@ import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import {
   portfolioItemsCollection,
   learnerReflectionsCollection,
+  missionsCollection,
+  missionAttemptsCollection,
 } from '@/src/firebase/firestore/collections';
 import { useCapabilities } from '@/src/lib/capabilities/useCapabilities';
 import { RoleRouteGuard } from '@/src/components/auth/RoleRouteGuard';
 import { Spinner } from '@/src/components/ui/Spinner';
-import type { PortfolioItem, LearnerReflection, PillarCode } from '@/src/types/schema';
+import type { PortfolioItem, LearnerReflection, Mission, PillarCode } from '@/src/types/schema';
 
-type SubmitTab = 'artifact' | 'reflection';
+type SubmitTab = 'artifact' | 'reflection' | 'checkpoint';
 
 interface PortfolioEntry {
   id: string;
@@ -59,6 +61,14 @@ export function LearnerEvidenceSubmission() {
   const [reflectionCapabilityIds, setReflectionCapabilityIds] = useState<string[]>([]);
   const [reflectionAiUsed, setReflectionAiUsed] = useState(false);
   const [reflectionAiDetails, setReflectionAiDetails] = useState('');
+
+  // Checkpoint form state
+  const [missions, setMissions] = useState<Mission[]>([]);
+  const [checkpointMissionId, setCheckpointMissionId] = useState('');
+  const [checkpointContent, setCheckpointContent] = useState('');
+  const [checkpointAttachmentUrl, setCheckpointAttachmentUrl] = useState('');
+  const [checkpointAiUsed, setCheckpointAiUsed] = useState(false);
+  const [checkpointAiDetails, setCheckpointAiDetails] = useState('');
 
   // Derive pillar codes from selected capabilities
   const derivedPillarCodes = useMemo(() => {
@@ -111,6 +121,19 @@ export function LearnerEvidenceSubmission() {
     if (!authLoading && learnerId && siteId) void loadPortfolio();
   }, [authLoading, learnerId, siteId, loadPortfolio]);
 
+  // Load missions for checkpoint selector
+  useEffect(() => {
+    if (!siteId) return;
+    void (async () => {
+      try {
+        const snap = await getDocs(query(missionsCollection, limit(100)));
+        setMissions(snap.docs.map((d) => ({ ...d.data(), id: d.id } as Mission)));
+      } catch (err) {
+        console.error('Failed to load missions', err);
+      }
+    })();
+  }, [siteId]);
+
   // Artifact submission
   const handleSubmitArtifact = async () => {
     if (!learnerId || !siteId || !artifactTitle.trim()) return;
@@ -122,6 +145,7 @@ export function LearnerEvidenceSubmission() {
 
       await addDoc(portfolioItemsCollection, {
         learnerId,
+        siteId,
         title: artifactTitle.trim(),
         description: artifactDescription.trim(),
         pillarCodes,
@@ -160,10 +184,33 @@ export function LearnerEvidenceSubmission() {
     setSaving(true);
     setSuccessMessage(null);
     try {
+      // Create portfolio item first so reflection can reference it
+      const reflectionPillarCodes: PillarCode[] = [];
+      const reflectionArtifacts: string[] = [];
+      const portfolioRef = await addDoc(portfolioItemsCollection, {
+        learnerId,
+        siteId,
+        title: `Reflection: ${reflectionContent.trim().slice(0, 60)}${reflectionContent.trim().length > 60 ? '…' : ''}`,
+        description: reflectionContent.trim(),
+        pillarCodes: reflectionPillarCodes,
+        artifacts: reflectionArtifacts,
+        capabilityIds: reflectionCapabilityIds,
+        capabilityTitles: reflectionCapabilityIds.map((cid) => resolveTitle(cid)),
+        aiAssistanceUsed: reflectionAiUsed,
+        aiAssistanceDetails: reflectionAiUsed ? reflectionAiDetails.trim() : undefined,
+        aiDisclosureStatus: reflectionAiUsed ? 'learner-ai-verified' : 'learner-ai-not-used',
+        verificationStatus: 'pending' as const,
+        proofOfLearningStatus: 'not-available' as const,
+        source: 'reflection',
+        createdAt: serverTimestamp(),
+      } as Omit<PortfolioItem, 'id'>);
+
+      // Create reflection linked to the portfolio item
       await addDoc(learnerReflectionsCollection, {
         learnerId,
         siteId,
         content: reflectionContent.trim(),
+        portfolioItemId: portfolioRef.id,
         capabilityIds: reflectionCapabilityIds,
         aiAssistanceUsed: reflectionAiUsed,
         aiAssistanceDetails: reflectionAiUsed ? reflectionAiDetails.trim() : undefined,
@@ -176,8 +223,71 @@ export function LearnerEvidenceSubmission() {
       setReflectionCapabilityIds([]);
       setReflectionAiUsed(false);
       setReflectionAiDetails('');
+
+      void loadPortfolio();
     } catch (err) {
       console.error('Failed to save reflection', err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Checkpoint evidence submission
+  const handleSubmitCheckpoint = async () => {
+    if (!learnerId || !siteId || !checkpointMissionId || !checkpointContent.trim()) return;
+    setSaving(true);
+    setSuccessMessage(null);
+    try {
+      const mission = missions.find((m) => m.id === checkpointMissionId);
+      const capIds = mission?.capabilityIds ?? [];
+      const pillarCodes = mission?.pillarCodes ?? [];
+      const attachmentUrls = checkpointAttachmentUrl.trim()
+        ? [checkpointAttachmentUrl.trim()]
+        : [];
+
+      // Create mission attempt
+      const attemptRef = await addDoc(missionAttemptsCollection, {
+        learnerId,
+        missionId: checkpointMissionId,
+        missionTitle: mission?.title ?? '',
+        siteId,
+        status: 'submitted' as const,
+        content: checkpointContent.trim(),
+        attachmentUrls,
+        submittedAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+
+      // Also add to portfolio for visibility — linked to the mission attempt
+      await addDoc(portfolioItemsCollection, {
+        learnerId,
+        siteId,
+        title: `Checkpoint: ${mission?.title ?? 'Unknown'}`,
+        description: checkpointContent.trim(),
+        pillarCodes,
+        artifacts: attachmentUrls,
+        capabilityIds: capIds,
+        capabilityTitles: capIds.map((cid: string) => resolveTitle(cid)),
+        missionAttemptId: attemptRef.id,
+        aiAssistanceUsed: checkpointAiUsed,
+        aiAssistanceDetails: checkpointAiUsed ? checkpointAiDetails.trim() : undefined,
+        aiDisclosureStatus: checkpointAiUsed ? 'learner-ai-verified' : 'learner-ai-not-used',
+        verificationStatus: 'pending' as const,
+        proofOfLearningStatus: 'not-available' as const,
+        source: 'checkpoint_submission',
+        createdAt: serverTimestamp(),
+      } as Omit<PortfolioItem, 'id'>);
+
+      setSuccessMessage('Checkpoint evidence submitted!');
+      setCheckpointMissionId('');
+      setCheckpointContent('');
+      setCheckpointAttachmentUrl('');
+      setCheckpointAiUsed(false);
+      setCheckpointAiDetails('');
+
+      void loadPortfolio();
+    } catch (err) {
+      console.error('Failed to submit checkpoint evidence', err);
     } finally {
       setSaving(false);
     }
@@ -208,6 +318,7 @@ export function LearnerEvidenceSubmission() {
 
   const canSubmitArtifact = artifactTitle.trim().length > 0 && !saving;
   const canSubmitReflection = reflectionContent.trim().length > 0 && !saving;
+  const canSubmitCheckpoint = checkpointMissionId.length > 0 && checkpointContent.trim().length > 0 && !saving;
 
   const statusBadge = (status?: string) => {
     if (!status || status === 'pending') return <span className="rounded bg-yellow-100 px-1.5 py-0.5 text-xs font-medium text-yellow-800">Pending review</span>;
@@ -263,6 +374,17 @@ export function LearnerEvidenceSubmission() {
             }`}
           >
             Write Reflection
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('checkpoint')}
+            className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+              activeTab === 'checkpoint'
+                ? 'bg-primary text-primary-foreground'
+                : 'text-app-muted hover:text-app-foreground'
+            }`}
+          >
+            Checkpoint Evidence
           </button>
         </div>
 
@@ -450,6 +572,102 @@ export function LearnerEvidenceSubmission() {
               className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-50 sm:w-auto"
             >
               {saving ? 'Saving...' : 'Save Reflection'}
+            </button>
+          </div>
+        )}
+
+        {/* Checkpoint evidence form */}
+        {activeTab === 'checkpoint' && (
+          <div className="rounded-xl border border-app bg-app-surface-raised p-4 space-y-3" data-testid="checkpoint-form">
+            <h2 className="text-sm font-semibold text-app-foreground">Checkpoint Evidence</h2>
+            <p className="text-xs text-app-muted">
+              Submit evidence for a specific mission or checkpoint. Show what you built, learned, or can explain.
+            </p>
+
+            <label className="block space-y-1">
+              <span className="text-xs font-medium text-app-muted">Mission / Checkpoint *</span>
+              <select
+                data-testid="checkpoint-mission-select"
+                value={checkpointMissionId}
+                onChange={(e) => setCheckpointMissionId(e.target.value)}
+                className="w-full rounded-md border border-app bg-app-canvas px-3 py-2 text-sm text-app-foreground"
+              >
+                <option value="">Select a mission…</option>
+                {missions.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            {checkpointMissionId && (() => {
+              const mission = missions.find((m) => m.id === checkpointMissionId);
+              const capIds = mission?.capabilityIds ?? [];
+              if (capIds.length === 0) return null;
+              return (
+                <div className="text-xs text-app-muted rounded-md border border-app bg-app-canvas px-3 py-2">
+                  <span className="font-medium">Linked capabilities: </span>
+                  {capIds.map((cid) => resolveTitle(cid)).join(', ')}
+                </div>
+              );
+            })()}
+
+            <label className="block space-y-1">
+              <span className="text-xs font-medium text-app-muted">What did you do / build / demonstrate? *</span>
+              <textarea
+                data-testid="checkpoint-content"
+                value={checkpointContent}
+                onChange={(e) => setCheckpointContent(e.target.value)}
+                placeholder="Describe what you created, what you can explain, and what you learned…"
+                className="w-full rounded-md border border-app bg-app-canvas px-3 py-2 text-sm text-app-foreground min-h-28"
+              />
+            </label>
+
+            <label className="block space-y-1">
+              <span className="text-xs font-medium text-app-muted">Attachment URL (optional)</span>
+              <input
+                data-testid="checkpoint-attachment"
+                type="url"
+                value={checkpointAttachmentUrl}
+                onChange={(e) => setCheckpointAttachmentUrl(e.target.value)}
+                placeholder="https://drive.google.com/... or link to your work"
+                className="w-full rounded-md border border-app bg-app-canvas px-3 py-2 text-sm text-app-foreground"
+              />
+            </label>
+
+            {/* AI disclosure for checkpoint */}
+            <div className="rounded-md border border-app bg-app-canvas p-3 space-y-2">
+              <label className="flex items-center gap-2 text-sm text-app-foreground">
+                <input
+                  type="checkbox"
+                  checked={checkpointAiUsed}
+                  onChange={(e) => setCheckpointAiUsed(e.target.checked)}
+                />
+                I used AI tools for part of this checkpoint work
+              </label>
+              {checkpointAiUsed && (
+                <label className="block space-y-1">
+                  <span className="text-xs font-medium text-app-muted">How did AI help? What did you change?</span>
+                  <textarea
+                    data-testid="checkpoint-ai-details"
+                    value={checkpointAiDetails}
+                    onChange={(e) => setCheckpointAiDetails(e.target.value)}
+                    placeholder="Describe how you used AI and what parts are your own work…"
+                    className="w-full rounded-md border border-app bg-app-canvas px-3 py-2 text-sm text-app-foreground min-h-16"
+                  />
+                </label>
+              )}
+            </div>
+
+            <button
+              type="button"
+              data-testid="checkpoint-submit"
+              disabled={!canSubmitCheckpoint}
+              onClick={() => void handleSubmitCheckpoint()}
+              className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-50 sm:w-auto"
+            >
+              {saving ? 'Submitting...' : 'Submit Checkpoint Evidence'}
             </button>
           </div>
         )}

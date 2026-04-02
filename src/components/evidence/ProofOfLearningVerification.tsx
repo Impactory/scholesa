@@ -55,8 +55,9 @@ export function ProofOfLearningVerification() {
     setLoading(true);
     try {
       // Load items that are pending or reviewed (not yet verified)
+      // Site-scoped to prevent cross-site data access
       const constraints = [
-        where('educatorId', '!=', null),
+        where('siteId', '==', siteId),
         orderBy('createdAt', 'desc'),
         limit(100),
       ];

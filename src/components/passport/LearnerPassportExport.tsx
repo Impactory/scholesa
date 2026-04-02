@@ -26,6 +26,7 @@ interface PassportClaim {
   reviewedAt: string | null;
   rubricRawScore: number | null;
   rubricMaxScore: number | null;
+  progressionDescriptors: string[];
 }
 
 interface GrowthTimelineEntry {
@@ -204,6 +205,9 @@ function normalizeLearner(raw: Record<string, unknown>): LearnerPassportData | n
         reviewedAt: str(r.reviewedAt) || null,
         rubricRawScore: fin(r.rubricRawScore),
         rubricMaxScore: fin(r.rubricMaxScore),
+        progressionDescriptors: Array.isArray(r.progressionDescriptors)
+          ? r.progressionDescriptors.filter((v): v is string => typeof v === 'string')
+          : [],
       });
     }
   }
@@ -731,6 +735,11 @@ function ClaimRow({ claim }: { claim: PassportClaim }) {
           <span>{claim.verifiedArtifactCount} verified</span>
           {claim.reviewingEducatorName && <span>by {claim.reviewingEducatorName}</span>}
         </div>
+        {claim.progressionDescriptors.length > 0 && (
+          <p className="mt-1 text-xs text-gray-500 italic">
+            &ldquo;{claim.progressionDescriptors[0]}&rdquo;
+          </p>
+        )}
       </div>
       <div className="text-right shrink-0 space-y-0.5">
         <div className="text-xs font-medium">

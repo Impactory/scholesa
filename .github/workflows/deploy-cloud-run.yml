@@ -124,7 +124,7 @@ jobs:
         run: |
           cd apps/empire_flutter/app
           flutter pub get
-          flutter build web --release --no-wasm-dry-run
+          flutter build web --wasm --release --no-tree-shake-icons
 
       - name: Full RC2 regression chain
         env:

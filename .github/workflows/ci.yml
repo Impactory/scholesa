@@ -68,7 +68,7 @@ jobs:
       - name: Flutter web build gate
         run: |
           cd apps/empire_flutter/app
-          flutter build web --release --no-wasm-dry-run
+          flutter build web --wasm --release --no-tree-shake-icons
 
       - name: Workflow no-mock audit
         run: npm run qa:workflow:no-mock

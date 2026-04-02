@@ -195,6 +195,7 @@ export interface Announcement {
 export interface PortfolioItem {
   id: string;
   learnerId: string;
+  siteId?: string;
   title: string;
   description: string;
   pillarCodes: PillarCode[];

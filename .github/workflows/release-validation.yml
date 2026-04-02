@@ -56,7 +56,7 @@ jobs:
         run: |
           cd apps/empire_flutter/app
           flutter pub get
-          flutter build web --release --no-wasm-dry-run
+          flutter build web --wasm --release --no-tree-shake-icons
 
       - name: Workflow no-mock audit
         run: npm run qa:workflow:no-mock

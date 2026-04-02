@@ -1,6 +1,6 @@
-# Flutter web static container for Cloud Run (empire-web)
+# Flutter web WASM container for Cloud Run (empire-web)
 
-FROM ghcr.io/cirruslabs/flutter:3.38.9 AS builder
+FROM ghcr.io/cirruslabs/flutter:3.41.6 AS builder
 WORKDIR /workspace
 
 # Copy only app source for deterministic web build
@@ -8,20 +8,26 @@ COPY apps/empire_flutter/app /workspace/app
 
 WORKDIR /workspace/app
 RUN flutter pub get
-RUN flutter build web --release --no-tree-shake-icons --no-wasm-dry-run
+RUN flutter build web --wasm --release --no-tree-shake-icons
 
 FROM nginx:1.25-alpine
 
 # Copy compiled Flutter web assets from build stage
 COPY --from=builder /workspace/app/build/web /usr/share/nginx/html
 
-# Nginx config for single-page app routing, cache-safe index, and Cloud Run port 8080
+# Nginx config for SPA routing, WASM content types, and Cloud Run port 8080
 RUN printf '\
 server {\n\
     listen 8080;\n\
     server_name _;\n\
     root /usr/share/nginx/html;\n\
     include /etc/nginx/mime.types;\n\
+    types {\n\
+        application/wasm wasm;\n\
+        text/javascript mjs;\n\
+    }\n\
+    add_header Cross-Origin-Opener-Policy "same-origin";\n\
+    add_header Cross-Origin-Embedder-Policy "credentialless";\n\
     location = /index.html {\n\
         add_header Cache-Control "no-cache, no-store, must-revalidate";\n\
         try_files $uri =404;\n\

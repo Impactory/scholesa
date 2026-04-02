@@ -15,8 +15,10 @@ import {
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import {
   capabilitiesCollection,
+  missionsCollection,
   rubricTemplatesCollection,
 } from '@/src/firebase/firestore/collections';
+import type { Mission } from '@/src/types/schema';
 import { invalidateCapabilityCache } from '@/src/lib/capabilities/useCapabilities';
 import { RoleRouteGuard } from '@/src/components/auth/RoleRouteGuard';
 import { Spinner } from '@/src/components/ui/Spinner';
@@ -50,6 +52,7 @@ interface CapabilityFormData {
   descriptor: string;
   sortOrder: number;
   progressionDescriptors: ProgressionDescriptors;
+  unitMappings: string[];
 }
 
 interface RubricTemplateFormData {
@@ -64,6 +67,7 @@ const EMPTY_CAPABILITY_FORM: CapabilityFormData = {
   descriptor: '',
   sortOrder: 0,
   progressionDescriptors: { beginning: '', developing: '', proficient: '', advanced: '' },
+  unitMappings: [],
 };
 
 const EMPTY_RUBRIC_FORM: RubricTemplateFormData = {
@@ -79,6 +83,7 @@ export function CapabilityFrameworkEditor() {
   const siteId = profile?.studioId ?? null;
 
   const [capabilities, setCapabilities] = useState<Capability[]>([]);
+  const [missions, setMissions] = useState<Mission[]>([]);
   const [rubricTemplates, setRubricTemplates] = useState<RubricTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -101,12 +106,14 @@ export function CapabilityFrameworkEditor() {
     setLoading(true);
     setErrorMessage(null);
     try {
-      const [capSnap, rubSnap] = await Promise.all([
+      const [capSnap, rubSnap, missionSnap] = await Promise.all([
         getDocs(query(capabilitiesCollection, where('siteId', '==', siteId), orderBy('pillarCode'), orderBy('sortOrder'))),
         getDocs(query(rubricTemplatesCollection, where('siteId', '==', siteId), orderBy('updatedAt', 'desc'))),
+        getDocs(query(missionsCollection, orderBy('order'))),
       ]);
       setCapabilities(capSnap.docs.map((d) => ({ ...d.data(), id: d.id }) as Capability));
       setRubricTemplates(rubSnap.docs.map((d) => ({ ...d.data(), id: d.id }) as RubricTemplate));
+      setMissions(missionSnap.docs.map((d) => ({ ...d.data(), id: d.id }) as Mission));
     } catch (err) {
       console.error('Failed to load capability framework data', err);
       setErrorMessage('Failed to load data. Please try again.');
@@ -172,6 +179,7 @@ export function CapabilityFrameworkEditor() {
       progressionDescriptors: cap.progressionDescriptors ?? {
         beginning: '', developing: '', proficient: '', advanced: '',
       },
+      unitMappings: cap.unitMappings ?? [],
     });
     setShowCapabilityForm(true);
   }, []);
@@ -194,6 +202,7 @@ export function CapabilityFrameworkEditor() {
           pillarCode: capabilityForm.pillarCode,
           descriptor: capabilityForm.descriptor.trim() || undefined,
           sortOrder: capabilityForm.sortOrder,
+          unitMappings: capabilityForm.unitMappings.length > 0 ? capabilityForm.unitMappings : deleteField(),
           ...(hasProgression
             ? { progressionDescriptors: capabilityForm.progressionDescriptors }
             : { progressionDescriptors: deleteField() }),
@@ -208,6 +217,7 @@ export function CapabilityFrameworkEditor() {
           siteId,
           descriptor: capabilityForm.descriptor.trim() || undefined,
           sortOrder: capabilityForm.sortOrder,
+          ...(capabilityForm.unitMappings.length > 0 ? { unitMappings: capabilityForm.unitMappings } : {}),
           ...(hasProgression ? { progressionDescriptors: capabilityForm.progressionDescriptors } : {}),
           status: 'active' as const,
           createdAt: serverTimestamp(),
@@ -418,6 +428,7 @@ export function CapabilityFrameworkEditor() {
           <CapabilityFormModal
             form={capabilityForm}
             setForm={setCapabilityForm}
+            missions={missions}
             isEditing={!!editingCapabilityId}
             saving={saving}
             onSave={saveCapability}
@@ -472,6 +483,7 @@ function CapabilitiesTab({
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <select
+            aria-label="Filter by pillar"
             value={filterPillar}
             onChange={(e) => setFilterPillar(e.target.value as PillarCode | 'all')}
             className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
@@ -686,6 +698,7 @@ function RubricTemplatesTab({
 function CapabilityFormModal({
   form,
   setForm,
+  missions,
   isEditing,
   saving,
   onSave,
@@ -693,6 +706,7 @@ function CapabilityFormModal({
 }: {
   form: CapabilityFormData;
   setForm: (fn: (prev: CapabilityFormData) => CapabilityFormData) => void;
+  missions: Mission[];
   isEditing: boolean;
   saving: boolean;
   onSave: () => void;
@@ -722,6 +736,7 @@ function CapabilityFormModal({
           <div>
             <label className="block text-sm font-medium text-gray-700">Pillar *</label>
             <select
+              aria-label="Select pillar"
               value={form.pillarCode}
               onChange={(e) => setForm((prev) => ({ ...prev, pillarCode: e.target.value as PillarCode }))}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm"
@@ -748,11 +763,50 @@ function CapabilityFormModal({
           <div>
             <label className="block text-sm font-medium text-gray-700">Sort Order</label>
             <input
+              aria-label="Sort order"
               type="number"
               value={form.sortOrder}
               onChange={(e) => setForm((prev) => ({ ...prev, sortOrder: parseInt(e.target.value) || 0 }))}
               className="mt-1 block w-24 rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm"
             />
+          </div>
+
+          {/* Unit / Mission Mappings */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Mapped Units / Missions
+            </label>
+            <p className="text-xs text-gray-400 mb-2">
+              Select which missions or checkpoints this capability is assessed in.
+            </p>
+            {missions.length > 0 ? (
+              <div className="max-h-40 overflow-y-auto rounded-md border border-gray-300 p-2 space-y-1">
+                {missions.map((m) => (
+                  <label key={m.id} className="flex items-center gap-2 text-sm text-gray-700 py-0.5">
+                    <input
+                      type="checkbox"
+                      checked={form.unitMappings.includes(m.id)}
+                      onChange={(e) => {
+                        setForm((prev) => ({
+                          ...prev,
+                          unitMappings: e.target.checked
+                            ? [...prev.unitMappings, m.id]
+                            : prev.unitMappings.filter((id) => id !== m.id),
+                        }));
+                      }}
+                    />
+                    <span>{m.title}</span>
+                  </label>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-gray-400 italic">No missions defined yet.</p>
+            )}
+            {form.unitMappings.length > 0 && (
+              <p className="mt-1 text-xs text-gray-500">
+                {form.unitMappings.length} mission{form.unitMappings.length !== 1 ? 's' : ''} mapped
+              </p>
+            )}
           </div>
 
           {/* Progression Descriptors */}
@@ -893,6 +947,7 @@ function RubricTemplateFormModal({
                         />
                         <div className="flex gap-2">
                           <select
+                            aria-label="Map to capability"
                             value={criterion.capabilityId}
                             onChange={(e) => updateCriterion(i, 'capabilityId', e.target.value)}
                             className="block flex-1 rounded-md border border-gray-300 px-2 py-1 text-xs shadow-sm"
@@ -907,6 +962,7 @@ function RubricTemplateFormModal({
                           <div className="flex items-center gap-1">
                             <label className="text-xs text-gray-500">Max:</label>
                             <input
+                              aria-label="Max score"
                               type="number"
                               min={1}
                               max={10}

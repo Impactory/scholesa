@@ -1956,6 +1956,26 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
         ]),
       };
     }
+    case '/educator/evidence':
+      return {
+        records: applyRouteActionLabels(await queryCollectionRecords({
+          routePath: ctx.routePath,
+          collectionName: 'evidenceRecords',
+          constraints: siteId
+            ? [where('siteId', '==', siteId), orderBy('createdAt', 'desc')]
+            : [orderBy('createdAt', 'desc')],
+          titleKeys: ['capabilityId', 'learnerId'],
+          subtitleKeys: ['phaseKey', 'notes'],
+          statusKeys: ['status'],
+          editable: false,
+          deletable: false,
+          limitSize: 50,
+        }), ctx.routePath),
+        canCreate: false,
+        canRefresh: true,
+        createLabel: 'Create',
+        createConfig: null,
+      };
     case '/educator/integrations':
       return {
         records: await loadCallableRows({

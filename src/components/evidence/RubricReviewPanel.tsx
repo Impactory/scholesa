@@ -1,10 +1,13 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { httpsCallable } from 'firebase/functions';
+import { getDocs, query, where } from 'firebase/firestore';
 import { functions } from '@/src/firebase/client-init';
+import { rubricTemplatesCollection } from '@/src/firebase/firestore/collections';
 import { useCapabilities } from '@/src/lib/capabilities/useCapabilities';
 import { Spinner } from '@/src/components/ui/Spinner';
+import type { RubricTemplate } from '@/src/types/schema';
 
 interface RubricReviewPanelProps {
   evidenceRecordIds: string[];
@@ -43,6 +46,8 @@ export function RubricReviewPanel({
   onCancel,
 }: RubricReviewPanelProps) {
   const { capabilityList, resolveTitle } = useCapabilities(siteId);
+  const [templates, setTemplates] = useState<RubricTemplate[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [scores, setScores] = useState<ScoreEntry[]>(() =>
     preselectedCapabilityId
       ? [{
@@ -56,6 +61,58 @@ export function RubricReviewPanel({
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Load published rubric templates for the site
+  useEffect(() => {
+    if (!siteId) return;
+    void (async () => {
+      try {
+        const snap = await getDocs(
+          query(rubricTemplatesCollection, where('status', '==', 'published'))
+        );
+        setTemplates(snap.docs.map((d) => ({ ...d.data(), id: d.id })));
+      } catch {
+        // Templates are optional — fall back to ad-hoc scoring
+      }
+    })();
+  }, [siteId]);
+
+  // When a template is selected, populate scores from its criteria
+  const applyTemplate = useCallback((templateId: string) => {
+    const tpl = templates.find((t) => t.id === templateId);
+    if (!tpl) return;
+    setSelectedTemplateId(templateId);
+    setScores(
+      tpl.criteria.map((c) => ({
+        capabilityId: c.capabilityId,
+        pillarCode: c.pillarCode ?? capabilityList.find((cap) => cap.id === c.capabilityId)?.pillarCode ?? '',
+        criterionId: c.label,
+        score: 0,
+        maxScore: c.maxScore || 4,
+      }))
+    );
+  }, [templates, capabilityList]);
+
+  // Find templates that match the current capability selection
+  const matchingTemplates = useMemo(() => {
+    const capIds = new Set(scores.map((s) => s.capabilityId));
+    return templates.filter((t) =>
+      t.capabilityIds.some((cid) => capIds.has(cid)) || t.capabilityIds.length === 0
+    );
+  }, [templates, scores]);
+
+  // Get descriptors for a score entry from the selected template
+  const getDescriptor = useCallback((capabilityId: string, level: number): string | undefined => {
+    if (!selectedTemplateId) return undefined;
+    const tpl = templates.find((t) => t.id === selectedTemplateId);
+    if (!tpl) return undefined;
+    const criterion = tpl.criteria.find((c) => c.capabilityId === capabilityId);
+    if (!criterion?.descriptors) return undefined;
+    const levelMap: Record<number, keyof NonNullable<typeof criterion.descriptors>> = {
+      1: 'beginning', 2: 'developing', 3: 'proficient', 4: 'advanced',
+    };
+    return criterion.descriptors[levelMap[level]];
+  }, [selectedTemplateId, templates]);
 
   const addCapabilityScore = useCallback((capId: string) => {
     const cap = capabilityList.find((c) => c.id === capId);
@@ -101,6 +158,7 @@ export function RubricReviewPanel({
         evidenceRecordIds,
         learnerId,
         siteId,
+        rubricId: selectedTemplateId ?? undefined,
         scores: scores.map((s) => ({
           criterionId: s.criterionId,
           capabilityId: s.capabilityId,
@@ -141,6 +199,32 @@ export function RubricReviewPanel({
         </button>
       </div>
 
+      {/* Rubric template selector */}
+      {templates.length > 0 && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 space-y-2">
+          <label className="text-xs font-semibold text-blue-800">Use rubric template</label>
+          <select
+            aria-label="Select rubric template"
+            value={selectedTemplateId ?? ''}
+            onChange={(e) => {
+              if (e.target.value) {
+                applyTemplate(e.target.value);
+              } else {
+                setSelectedTemplateId(null);
+              }
+            }}
+            className="w-full rounded-md border border-blue-200 bg-white px-3 py-2 text-sm text-app-foreground"
+          >
+            <option value="">Ad-hoc scoring (no template)</option>
+            {templates.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.title} ({t.criteria.length} criteria)
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       {/* Capability score cards */}
       {scores.map((s) => (
         <div key={s.capabilityId} className="rounded-lg border border-app bg-app-canvas p-3 space-y-2">
@@ -172,6 +256,11 @@ export function RubricReviewPanel({
               </button>
             ))}
           </div>
+          {s.score > 0 && getDescriptor(s.capabilityId, s.score) && (
+            <p className="text-xs text-app-muted italic pl-1">
+              {getDescriptor(s.capabilityId, s.score)}
+            </p>
+          )}
         </div>
       ))}
 

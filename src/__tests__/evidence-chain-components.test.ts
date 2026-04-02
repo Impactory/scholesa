@@ -83,6 +83,49 @@ describe('LearnerEvidenceSubmission component', () => {
     expect(source).toContain('reflection');
   });
 
+  it('supports checkpoint evidence submission', () => {
+    expect(source).toContain("'checkpoint'");
+    expect(source).toContain('handleSubmitCheckpoint');
+    expect(source).toContain('data-testid="checkpoint-form"');
+  });
+
+  it('imports missionAttemptsCollection for checkpoint writes', () => {
+    expect(source).toContain('missionAttemptsCollection');
+  });
+
+  it('loads missions for checkpoint selector', () => {
+    expect(source).toContain('missionsCollection');
+    expect(source).toContain('setMissions');
+  });
+
+  it('has mission selector in checkpoint form', () => {
+    expect(source).toContain('data-testid="checkpoint-mission-select"');
+    expect(source).toContain('checkpointMissionId');
+  });
+
+  it('writes checkpoint to missionAttempts with submitted status', () => {
+    const handler = source.slice(
+      source.indexOf('const handleSubmitCheckpoint'),
+      source.indexOf('};', source.indexOf("setSuccessMessage('Checkpoint evidence submitted!')")) + 2
+    );
+    expect(handler).toContain('missionAttemptsCollection');
+    expect(handler).toContain("status: 'submitted'");
+  });
+
+  it('also writes checkpoint to portfolio for visibility', () => {
+    const handler = source.slice(
+      source.indexOf('const handleSubmitCheckpoint'),
+      source.indexOf('};', source.indexOf("setSuccessMessage('Checkpoint evidence submitted!')")) + 2
+    );
+    expect(handler).toContain('portfolioItemsCollection');
+    expect(handler).toContain("source: 'checkpoint_submission'");
+  });
+
+  it('includes AI disclosure on checkpoint form', () => {
+    expect(source).toContain('data-testid="checkpoint-ai-details"');
+    expect(source).toContain('checkpointAiUsed');
+  });
+
   it('captures AI disclosure', () => {
     expect(source).toContain('aiAssistanceUsed');
   });
@@ -101,6 +144,12 @@ describe('LearnerEvidenceSubmission component', () => {
 
   it('uses RoleRouteGuard for access control', () => {
     expect(source).toContain('RoleRouteGuard');
+  });
+
+  it('has three tab buttons (artifact, reflection, checkpoint)', () => {
+    expect(source).toContain('Submit Artifact');
+    expect(source).toContain('Write Reflection');
+    expect(source).toContain('Checkpoint Evidence');
   });
 });
 
@@ -266,4 +315,47 @@ describe('Evidence chain collection exports completeness', () => {
       expect(collectionsSource).toContain(`export const ${name}`);
     });
   }
+});
+
+/* ───── CapabilityFrameworkEditor unit/checkpoint mapping ───── */
+
+describe('CapabilityFrameworkEditor unit mapping', () => {
+  const source = readSrcFile('components', 'capabilities', 'CapabilityFrameworkEditor.tsx');
+
+  it('includes unitMappings in capability form data', () => {
+    expect(source).toContain('unitMappings');
+  });
+
+  it('imports missionsCollection for unit selector', () => {
+    expect(source).toContain('missionsCollection');
+  });
+
+  it('loads missions data', () => {
+    expect(source).toContain('setMissions');
+    expect(source).toMatch(/useState<Mission\[\]>/);
+  });
+
+  it('renders mission checkboxes for mapping', () => {
+    expect(source).toContain('missions.map');
+  });
+
+  it('saves unitMappings on create', () => {
+    const createBlock = source.slice(
+      source.indexOf('await addDoc(capabilitiesCollection'),
+      source.indexOf(');', source.indexOf('await addDoc(capabilitiesCollection')) + 1
+    );
+    expect(createBlock).toContain('unitMappings');
+  });
+
+  it('saves unitMappings on update', () => {
+    const updateBlock = source.slice(
+      source.indexOf('await updateDoc('),
+      source.indexOf(');', source.indexOf('await updateDoc(')) + 1
+    );
+    expect(updateBlock).toContain('unitMappings');
+  });
+
+  it('populates unitMappings when editing existing capability', () => {
+    expect(source).toContain('unitMappings: cap.unitMappings');
+  });
 });

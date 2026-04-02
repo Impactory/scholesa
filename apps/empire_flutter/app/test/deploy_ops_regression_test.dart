@@ -436,9 +436,9 @@ void main() {
         reason: 'Deploy workflow must explicitly verify the Functions Gen 2 baseline',
       );
       expect(
-        content.contains('flutter build web --release --no-wasm-dry-run'),
+        content.contains('flutter build web --wasm --release'),
         isTrue,
-        reason: 'Deploy workflow must explicitly build the Flutter web target before deploy',
+        reason: 'Deploy workflow must explicitly build the Flutter web WASM target before deploy',
       );
       expect(
         content.contains('docker build -f Dockerfile.flutter'),
@@ -622,15 +622,15 @@ void main() {
       expect(content.contains('8080'), isTrue,
           reason: 'Cloud Run expects port 8080');
       expect(
-        content.contains('flutter build web --release'),
+        content.contains('flutter build web --wasm --release'),
         isTrue,
-        reason: 'Flutter web Dockerfile must produce a release web build',
+        reason: 'Flutter web Dockerfile must produce a release WASM web build',
       );
       expect(
-        content.contains('--no-wasm-dry-run'),
+        content.contains('--wasm'),
         isTrue,
         reason:
-            'Flutter web Dockerfile must disable wasm dry-run until the current dependency set is compatible',
+            'Flutter web Dockerfile must use WASM compilation for production builds',
       );
     });
 
