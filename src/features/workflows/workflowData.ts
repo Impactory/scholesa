@@ -24,6 +24,7 @@ import {
 import { firestore, functions } from '@/src/firebase/client-init';
 import type { UserProfile, UserRole } from '@/src/types/user';
 import type { WorkflowPath } from '@/src/lib/routing/workflowRoutes';
+import { loadCapabilitiesForSite, resolveCapabilityTitles } from '@/src/lib/capabilities/useCapabilities';
 
 async function loadE2EWorkflowBackend() {
   return import('@/src/testing/e2e/fakeWebBackend');
@@ -221,6 +222,36 @@ function optionLabelFromRecord(data: Record<string, unknown>, fallbackId: string
   const email = asString(data.email, '');
   if (email) return email;
   return fallbackId;
+}
+
+/**
+ * Enriches workflow records that have capabilityIds metadata with resolved capability titles.
+ * Adds a `capabilities` metadata field with comma-separated capability titles.
+ */
+async function enrichRecordsWithCapabilityTitles(
+  records: WorkflowRecord[],
+  siteId: string | null
+): Promise<void> {
+  if (!siteId || records.length === 0) return;
+  const hasCapabilities = records.some(
+    (r) => r.metadata.capabilityIds && r.metadata.capabilityIds.length > 0
+  );
+  if (!hasCapabilities) return;
+
+  try {
+    const capMap = await loadCapabilitiesForSite(siteId);
+    for (const record of records) {
+      const raw = record.metadata.capabilityIds;
+      if (!raw) continue;
+      // capabilityIds is stored as comma-separated string in metadata (Firestore array → string coercion)
+      const ids = raw.split(',').map((s) => s.trim()).filter(Boolean);
+      if (ids.length === 0) continue;
+      const titles = resolveCapabilityTitles(ids, capMap);
+      record.metadata.capabilities = titles.join(', ');
+    }
+  } catch {
+    // Capability resolution is best-effort; don't break the mission list
+  }
 }
 
 function userLabelFromRecord(data: Record<string, unknown>, fallbackLabel = 'User name unavailable'): string {
@@ -682,6 +713,8 @@ async function loadParentPortfolioWorkflowRecords(ctx: WorkflowContext): Promise
     routePath: ctx.routePath,
     learnerIds,
   });
+  const parentSiteId = activeSiteId(ctx.profile);
+  await enrichRecordsWithCapabilityTitles(portfolioRecords, parentSiteId);
   return sortWorkflowRecords([...summaryRecords, ...portfolioRecords]);
 }
 
@@ -728,9 +761,6 @@ function applyRouteActionLabels(records: WorkflowRecord[], routePath: WorkflowPa
       switch (routePath) {
       case '/learner/missions':
         primaryActionLabel = record.status === 'submitted' ? 'Reopen attempt' : 'Submit attempt';
-        break;
-      case '/learner/habits':
-        primaryActionLabel = 'Log completion';
         break;
       case '/learner/portfolio':
         primaryActionLabel = record.status === 'published' ? 'Refresh item' : 'Publish item';
@@ -1574,21 +1604,24 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
     }
     case '/learner/missions': {
       const missionOptions = await loadMissionOptions();
+      const siteId2 = activeSiteId(ctx.profile);
+      const records = applyRouteActionLabels(await queryCollectionRecords({
+        routePath: ctx.routePath,
+        collectionName: 'missionAttempts',
+        constraints: [
+          where('learnerId', '==', ctx.uid),
+          orderBy('startedAt', 'desc'),
+        ],
+        titleKeys: ['missionTitle', 'missionId'],
+        subtitleKeys: ['feedback', 'submissionUrl'],
+        statusKeys: ['status'],
+        editable: true,
+        deletable: false,
+        limitSize: 40,
+      }), ctx.routePath);
+      await enrichRecordsWithCapabilityTitles(records, siteId2);
       return {
-        records: applyRouteActionLabels(await queryCollectionRecords({
-          routePath: ctx.routePath,
-          collectionName: 'missionAttempts',
-          constraints: [
-            where('learnerId', '==', ctx.uid),
-            orderBy('startedAt', 'desc'),
-          ],
-          titleKeys: ['missionTitle', 'missionId'],
-          subtitleKeys: ['feedback', 'submissionUrl'],
-          statusKeys: ['status'],
-          editable: true,
-          deletable: false,
-          limitSize: 40,
-        }), ctx.routePath),
+        records,
         canCreate: true,
         canRefresh: true,
         createLabel: 'Start mission attempt',
@@ -1609,52 +1642,6 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
         ]),
       };
     }
-    case '/learner/habits':
-      return {
-        records: applyRouteActionLabels(await queryCollectionRecords({
-          routePath: ctx.routePath,
-          collectionName: 'habits',
-          constraints: [
-            where('learnerId', '==', ctx.uid),
-            orderBy('updatedAt', 'desc'),
-          ],
-          titleKeys: ['name', 'title'],
-          subtitleKeys: ['description', 'cadence'],
-          statusKeys: ['status'],
-          editable: true,
-          deletable: false,
-          limitSize: 40,
-        }), ctx.routePath),
-        canCreate: true,
-        canRefresh: true,
-        createLabel: 'Create habit',
-        createConfig: buildCreateConfig('Create habit', 'Create habit', [
-          {
-            name: 'name',
-            label: 'Habit name',
-            type: 'text',
-            required: true,
-            placeholder: 'Morning reflection',
-          },
-          {
-            name: 'description',
-            label: 'Description',
-            type: 'textarea',
-            placeholder: 'What should happen every day?',
-          },
-          {
-            name: 'cadence',
-            label: 'Cadence',
-            type: 'select',
-            required: true,
-            defaultValue: 'daily',
-            options: [
-              { value: 'daily', label: 'Daily' },
-              { value: 'weekly', label: 'Weekly' },
-            ],
-          },
-        ]),
-      };
     case '/learner/portfolio':
       return {
         records: applyRouteActionLabels(await queryCollectionRecords({
@@ -1842,26 +1829,29 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
         canRefresh: true,
         createLabel: 'Create',
       };
-    case '/educator/missions/review':
+    case '/educator/missions/review': {
+      const reviewRecords = applyRouteActionLabels(await queryCollectionRecords({
+        routePath: ctx.routePath,
+        collectionName: 'missionAttempts',
+        constraints: siteId
+          ? [where('siteId', '==', siteId), where('status', 'in', ['submitted', 'pending_review']), orderBy('submittedAt', 'desc')]
+          : [where('status', 'in', ['submitted', 'pending_review']), orderBy('submittedAt', 'desc')],
+        titleKeys: ['missionTitle', 'missionId'],
+        subtitleKeys: ['learnerId', 'feedback'],
+        statusKeys: ['status'],
+        editable: true,
+        deletable: false,
+        limitSize: 100,
+      }), ctx.routePath);
+      await enrichRecordsWithCapabilityTitles(reviewRecords, siteId);
       return {
-        records: applyRouteActionLabels(await queryCollectionRecords({
-          routePath: ctx.routePath,
-          collectionName: 'missionAttempts',
-          constraints: siteId
-            ? [where('siteId', '==', siteId), where('status', 'in', ['submitted', 'pending_review']), orderBy('submittedAt', 'desc')]
-            : [where('status', 'in', ['submitted', 'pending_review']), orderBy('submittedAt', 'desc')],
-          titleKeys: ['missionTitle', 'missionId'],
-          subtitleKeys: ['learnerId', 'feedback'],
-          statusKeys: ['status'],
-          editable: true,
-          deletable: false,
-          limitSize: 100,
-        }), ctx.routePath),
+        records: reviewRecords,
         canCreate: false,
         canRefresh: true,
         createLabel: 'Create',
         createConfig: null,
       };
+    }
     case '/educator/mission-plans':
       return {
         records: applyRouteActionLabels(await queryCollectionRecords({
@@ -3802,6 +3792,8 @@ export async function createWorkflowRecord(
       const missionId = requireStringValue(input, 'missionId', 'Mission');
       const missionSnap = await getDoc(doc(collection(firestore, 'missions'), missionId));
       const missionData = (missionSnap.data() || {}) as Record<string, unknown>;
+      const capabilityIds = Array.isArray(missionData.capabilityIds) ? missionData.capabilityIds.filter((v: unknown): v is string => typeof v === 'string') : [];
+      const pillarCodes = Array.isArray(missionData.pillarCodes) ? missionData.pillarCodes.filter((v: unknown): v is string => typeof v === 'string') : [];
       await addDoc(collection(firestore, 'missionAttempts'), {
         ...payloadBase,
         missionId,
@@ -3810,19 +3802,11 @@ export async function createWorkflowRecord(
         status: 'started',
         startedAt: serverTimestamp(),
         notes: optionalStringValue(input, 'notes') || null,
+        ...(capabilityIds.length > 0 ? { capabilityIds } : {}),
+        ...(pillarCodes.length > 0 ? { pillarCodes } : {}),
       });
       return;
     }
-    case '/learner/habits':
-      await addDoc(collection(firestore, 'habits'), {
-        ...payloadBase,
-        name: requireStringValue(input, 'name', 'Habit name'),
-        description: optionalStringValue(input, 'description') || null,
-        cadence: requireStringValue(input, 'cadence', 'Cadence'),
-        learnerId: ctx.uid,
-        status: 'active',
-      });
-      return;
     case '/learner/portfolio':
       await addDoc(collection(firestore, 'portfolioItems'), {
         ...payloadBase,
@@ -4421,14 +4405,6 @@ export async function updateWorkflowRecord(
         updatedAt: serverTimestamp(),
         status: asString(data.status, '') === 'submitted' ? 'started' : 'submitted',
         submittedAt: serverTimestamp(),
-      });
-      return;
-    case '/learner/habits':
-      await updateDoc(ref, {
-        updatedAt: serverTimestamp(),
-        lastCompletedAt: serverTimestamp(),
-        completionCount: increment(1),
-        status: 'active',
       });
       return;
     case '/learner/portfolio':

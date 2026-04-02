@@ -25,6 +25,7 @@ const webOnlyRoutes = new Set([
 const flutterOnlyRoutes = new Set([
   '/hq/exports',
   '/learner/credentials',
+  '/learner/habits',
   '/learner/onboarding',
   '/learner/settings',
   '/parent/child/:learnerId',

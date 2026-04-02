@@ -14,7 +14,6 @@ export const LEGACY_ROLE_ROOT_SEGMENTS = new Set(['learner', 'educator', 'parent
 export const ALL_WORKFLOW_PATHS = [
   '/learner/today',
   '/learner/missions',
-  '/learner/habits',
   '/learner/portfolio',
   '/educator/today',
   '/educator/attendance',
@@ -91,14 +90,6 @@ export const WORKFLOW_ROUTE_DEFINITIONS: WorkflowRouteDefinition[] = [
     path: '/learner/missions',
     title: 'Learner Missions',
     description: 'Mission assignment and completion workflow.',
-    allowedRoles: ['learner', 'educator', 'hq'],
-    navGroup: 'learner',
-    dataMode: 'firestore',
-  },
-  {
-    path: '/learner/habits',
-    title: 'Learner Habits',
-    description: 'Daily habit tracking and consistency history.',
     allowedRoles: ['learner', 'educator', 'hq'],
     navGroup: 'learner',
     dataMode: 'firestore',

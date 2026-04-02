@@ -117,6 +117,8 @@ export interface MissionAttempt {
   content?: string; // Artifacts or submission text
   notes?: string;
   attachmentUrls?: string[];
+  capabilityIds?: string[]; // Copied from Mission.capabilityIds at creation time
+  pillarCodes?: PillarCode[]; // Copied from Mission.pillarCodes at creation time
   startedAt?: Timestamp;
   submittedAt?: Timestamp;
   reviewedAt?: Timestamp;
@@ -147,6 +149,10 @@ export interface AccountabilityCycle {
   name: string; // e.g., "Week 1 - Term 2"
 }
 
+/**
+ * @deprecated Legacy type — conflates attendance/completion metrics with capability mastery.
+ * Do not use for capability-first workflows. See CapabilityMastery for evidence-backed growth.
+ */
 export interface AccountabilityKPI {
   id: string;
   cycleId: string;
@@ -1000,7 +1006,9 @@ export interface LearnerInterestProfile {
 }
 
 /**
- * Parent weekly snapshot
+ * @deprecated Legacy type — makes skill claims without evidence links.
+ * Superseded by getParentDashboardBundle callable which returns evidence-backed data.
+ * Do not use for capability-first workflows.
  */
 export interface ParentSnapshot {
   id: string;
@@ -1309,4 +1317,45 @@ export interface RubricCriterionScore {
   score: number;
   maxScore: number;
   notes?: string;
+}
+
+/**
+ * Composite read-only view of a learner's full capability profile, synthesized from
+ * CapabilityMastery, ProcessDomainMastery, PortfolioItem, and CapabilityGrowthEvent.
+ * Not stored in Firestore — assembled at query time for dashboards and reports.
+ */
+export interface LearnerCapabilityProfile {
+  learnerId: string;
+  siteId: string;
+  generatedAt: Date;
+
+  /** Per-capability mastery state */
+  capabilityMasteries: CapabilityMastery[];
+
+  /** Per-process-domain mastery state */
+  processDomainMasteries: ProcessDomainMastery[];
+
+  /** Per-pillar summary: average level across capabilities in pillar */
+  pillarSummaries: {
+    pillarCode: PillarCode;
+    averageLevel: number;
+    capabilityCount: number;
+    evidenceCount: number;
+    band: 'emerging' | 'developing' | 'strong';
+  }[];
+
+  /** Recent growth events (most recent first) */
+  recentGrowthEvents: CapabilityGrowthEvent[];
+
+  /** Portfolio highlights: verified items with highest capability coverage */
+  portfolioHighlights: {
+    portfolioItemId: string;
+    title: string;
+    source: string;
+    verificationStatus: string;
+    capabilityIds: string[];
+  }[];
+
+  /** Overall profile band */
+  overallBand: 'emerging' | 'developing' | 'strong';
 }
