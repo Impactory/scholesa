@@ -8043,6 +8043,7 @@ async function generateNudgesForLearner(learnerId: string, siteId: string) {
 interface RubricScoreInput {
   criterionId: string;
   capabilityId: string;
+  processDomainId?: string;
   pillarCode: string;
   score: number;
   maxScore: number;
@@ -8095,6 +8096,7 @@ export const applyRubricToEvidence = onCall(async (request: CallableRequest<{
     scores: scores.map((s) => ({
       criterionId: s.criterionId,
       capabilityId: s.capabilityId,
+      processDomainId: s.processDomainId ?? null,
       pillarCode: s.pillarCode,
       score: s.score,
       maxScore: s.maxScore,
@@ -8158,6 +8160,59 @@ export const applyRubricToEvidence = onCall(async (request: CallableRequest<{
       maxScore,
       linkedEvidenceRecordIds: evidenceRecordIds,
       linkedPortfolioItemIds: [],
+      rubricApplicationId: rubricAppRef.id,
+      educatorId,
+      createdAt: FieldValue.serverTimestamp(),
+    });
+  }
+
+  // 2b. For each process domain: create growth event + upsert mastery
+  const scoresByProcessDomain = new Map<string, RubricScoreInput[]>();
+  for (const s of scores) {
+    if (s.processDomainId && typeof s.processDomainId === 'string' && s.processDomainId.trim().length > 0) {
+      const existing = scoresByProcessDomain.get(s.processDomainId) ?? [];
+      existing.push(s);
+      scoresByProcessDomain.set(s.processDomainId, existing);
+    }
+  }
+
+  for (const [processDomainId, domainScores] of scoresByProcessDomain) {
+    const rawScore = domainScores.reduce((sum, s) => sum + s.score, 0);
+    const maxScore = domainScores.reduce((sum, s) => sum + s.maxScore, 0);
+    const nextLevel = maxScore <= 0
+      ? 0
+      : Math.max(1, Math.min(4, Math.ceil((rawScore / maxScore) * 4)));
+
+    // Upsert ProcessDomainMastery
+    const pdMasteryId = `${learnerId}_${processDomainId}`;
+    const pdMasteryRef = db.collection('processDomainMastery').doc(pdMasteryId);
+    const pdMasterySnap = await pdMasteryRef.get();
+    const pdMasteryData = pdMasterySnap.data() ?? {};
+    const pdHighestLevel = Math.max(nextLevel, (pdMasteryData.highestLevel as number) ?? 0);
+    const pdPriorEvidenceIds: string[] = Array.isArray(pdMasteryData.evidenceIds) ? pdMasteryData.evidenceIds : [];
+    const pdMergedEvidenceIds = [...new Set([...evidenceRecordIds, ...pdPriorEvidenceIds])];
+
+    batch.set(pdMasteryRef, {
+      learnerId,
+      processDomainId,
+      siteId,
+      latestLevel: nextLevel,
+      highestLevel: pdHighestLevel,
+      evidenceIds: pdMergedEvidenceIds,
+      createdAt: pdMasteryData.createdAt ?? FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+
+    // Create ProcessDomainGrowthEvent
+    const pdGrowthRef = db.collection('processDomainGrowthEvents').doc();
+    batch.set(pdGrowthRef, {
+      learnerId,
+      processDomainId,
+      siteId,
+      level: nextLevel,
+      rawScore,
+      maxScore,
+      linkedEvidenceRecordIds: evidenceRecordIds,
       rubricApplicationId: rubricAppRef.id,
       educatorId,
       createdAt: FieldValue.serverTimestamp(),

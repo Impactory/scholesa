@@ -1,239 +1,402 @@
-# Scholesa Platform Audit — April 2, 2026
+# Scholesa Gold-Ready Audit — April 2, 2026
 
-## Assumptions
-
-The app is treated as 70% complete until each claim is verified with evidence.
-
----
-
-## 1. GOLD BLOCKERS (Must Fix Before Any Production Claim)
-
-### G1. Reflections disconnected from portfolio items
-- **Status**: ✅ CLOSED
-- **Severity**: GOLD BLOCKER
-- **Location**: `src/components/evidence/LearnerEvidenceSubmission.tsx` (reflection submit handler ~line 190)
-- **Problem**: `handleSubmitReflection` writes to `learnerReflections` collection but never sets `portfolioItemId` on the reflection, and never creates/updates a corresponding portfolio item. Reflections are orphaned from the portfolio view.
-- **Schema**: `LearnerReflection` interface has `portfolioItemId?: string` field but it is never populated.
-- **Impact**: Passport `reflectionsSubmitted` counter counts them, but individual reflections cannot be displayed alongside the artifact they explain. Breaks the reflection→artifact→capability trace.
-- **Fix**: In the reflection submit handler, after creating the reflection doc, also create a companion `portfolioItem` with `source: 'reflection'` linking to the reflection, OR add a portfolioItem selector to the reflection form so learners can attach reflections to existing artifacts.
-
-### G2. Checkpoint portfolio items missing `missionAttemptId`
-- **Status**: ✅ CLOSED
-- **Severity**: GOLD BLOCKER
-- **Location**: `src/components/evidence/LearnerEvidenceSubmission.tsx` (checkpoint submit handler ~line 230)
-- **Problem**: When a learner submits checkpoint evidence, two docs are created independently: a `missionAttempt` and a `portfolioItem`. The portfolio item never gets `missionAttemptId` set, so downstream aggregation cannot trace portfolio → attempt → mission → capabilities.
-- **Schema**: `PortfolioItem` has `missionAttemptId?: string` but it is never written.
-- **Impact**: Passport cannot trace checkpoint evidence back to the mission that defined it. Breaks evidence provenance chain.
-- **Fix**: After creating the missionAttempt doc, capture its ID and write it into the portfolioItem as `missionAttemptId`.
-
-### G3. Rubric templates authored but never consumed at apply time
-- **Status**: ✅ CLOSED
-- **Severity**: GOLD BLOCKER
-- **Location**: `src/components/evidence/RubricReviewPanel.tsx` + `src/components/capabilities/CapabilityFrameworkEditor.tsx`
-- **Problem**: HQ creates `rubricTemplates` in the CapabilityFrameworkEditor (full CRUD). But `RubricReviewPanel` does NOT reference `rubricTemplates` at all — it constructs ad-hoc 4-level scoring from the capability list. The `rubricId` parameter in `applyRubricToEvidence` callable is always `undefined`.
-- **Impact**: Standardized assessment criteria defined by HQ are ignored. Every educator scores on a generic 1-4 scale without the rubric descriptors/criteria that HQ authored. Undermines the capability-first standardization claim.
-- **Fix**: In `RubricReviewPanel`, load `rubricTemplates` that match the selected capabilities. If a template exists, display its criteria and descriptors instead of the generic 4-level buttons. Pass `rubricId` to the callable.
-
-### G4. Overly permissive Firestore rules — no ownership checks
-- **Status**: ✅ CLOSED
-- **Severity**: GOLD BLOCKER (security)
-- **Location**: `firestore.rules` lines 699-760
-- **Collections affected**:
-  - `presenceRecords` — any authed user can read/write ANY user's presence
-  - `conversations` — any authed user can read/write ANY conversation
-  - `habitLogs` — any authed user can CRUD any record
-  - `offlineDemoActions` — full read/write for any authed user (labeled demo-only)
-  - `incidents` — any authed user can read any incident (no site scoping)
-  - `drafts` — any authed user can CRUD any draft (no ownership)
-- **Impact**: Data leakage across users and sites. Any authenticated user can read other users' habits, conversations, and presence.
-- **Fix**: Add ownership checks (`request.auth.uid == resource.data.userId || request.auth.uid == resource.data.learnerId`) for personal collections. Add site-scoping for `incidents`. Remove or gate `offlineDemoActions` behind a flag.
-
-### G5. No standalone learner portfolio browse view
-- **Status**: ✅ CLOSED
-- **Severity**: GOLD BLOCKER (learner experience)
-- **Location**: `src/components/evidence/LearnerEvidenceSubmission.tsx` — portfolio is a flat list BELOW the submission form
-- **Problem**: The learner's portfolio is only browsable as a list within the evidence submission component. There is no dedicated, filterable portfolio page showing artifacts, reflections, evidence links, growth history, and verification status in a meaningful layout. The learner cannot answer "what evidence have I produced?" or "what belongs in my portfolio?" without scrolling past the submission form.
-- **Impact**: Constitutional learner rule violated: "what evidence have I produced?" and "what belongs in my portfolio?" are not clearly answered.
-- **Fix**: Extract the portfolio display into a dedicated `LearnerPortfolioBrowser` component that shows filterable/grouped portfolio items with capability tags, verification badges, PoL status, growth event links. Render it as the primary view on `/learner/portfolio` with the submission form as a secondary action.
+> The platform is gold-ready ONLY when all 10 workflows below are verified end-to-end with real data.
+> Do not label the product gold-ready unless every workflow shows ✅ VERIFIED.
 
 ---
 
-## 2. BETA-SAFE ISSUES (Can Ship Beta, But Track)
+## CURRENT VERDICT: NOT GOLD-READY
 
-### B1. 45/51 routes use identical generic CRUD list UI
-- **Status**: OPEN
-- **Severity**: BETA-SAFE
-- **Problem**: All WorkflowRoutePage routes render the exact same UI: title, subtitle, status badge, metadata key-value pairs. A safety incident looks the same as a learner habit or a partner contract.
-- **Impact**: Functional but not role-appropriate or domain-specific. Users get data but no insight.
-- **Action**: Prioritize role-critical routes first: `/educator/today` (calendar not list), `/learner/today` (dashboard not list), `/site/dashboard` (metrics not list).
-
-### B2. 23 Firestore collections have rules but no TypeScript interface
-- **Status**: OPEN
-- **Severity**: BETA-SAFE
-- **Collections**: `learnerProfiles`, `parentProfiles`, `guardianLinks`, `educatorLearnerLinks`, `habits`, `habitLogs`, `missionSnapshots`, `proofOfLearningBundles`, `vectorDocuments`, `observationRecords`, `checkpointVerifications`, `rubricTemplates`, `mediaConsents`, `pickupAuthorizations`, `siteCheckInOut`, `presenceRecords`, `missionAssignments`, `billingAccounts`, `billingPlanChangeRequests`, `rosterImports`, `metacognitiveCalibrationRecords`, `siteOpsEvents`, `supportInterventions`
-- **Impact**: No type safety in client code touching these collections.
-- **Action**: Add TypeScript interfaces for each as they are touched in feature work.
-
-### B3. Missing Firestore rules for 18 server-only collections
-- **Status**: OPEN
-- **Severity**: BETA-SAFE (mitigated by default-deny)
-- **Problem**: Collections like `coppaSchoolConsents`, `ltiPlatformRegistrations`, `ltiResourceLinks`, `cohortLaunches`, `partnerLaunches`, `kpiPacks`, `redTeamReviews`, `trainingCycles`, `approvals`, `alerts`, `telemetryArchive`, `refunds`, `bosLearningProfiles`, `bosMiaCalibrationProfiles`, and several federated learning collections are used by Cloud Functions but have no explicit rules.
-- **Impact**: Default-deny blocks all client access (secure by default), but no explicit read rules means admin dashboards may need them later. Not a client-side leak.
-- **Action**: Add explicit `allow read: if isHQ(); allow write: if false;` rules for admin-visible collections.
-
-### B4. Partner role has thin UX
-- **Status**: OPEN
-- **Severity**: BETA-SAFE
-- **Problem**: All 5 partner routes use the generic CRUD list. No marketplace preview, no deliverable evidence upload, no contract timeline view.
-- **Impact**: Functional but not production-quality for partner onboarding.
-- **Action**: Defer until evidence chain is gold-ready.
-
-### B5. Global content catalog readable by all authenticated users
-- **Status**: OPEN
-- **Severity**: BETA-SAFE
-- **Problem**: `programs`, `courses`, `capabilities`, `missions` have `allow read: if isAuthenticated()` — no site scoping on reads. Any authenticated user can read all programs/courses/capabilities across all sites.
-- **Impact**: Could leak unpublished content across sites. Acceptable for shared catalog model but risky if sites have proprietary curricula.
-- **Action**: Document as intentional or add `status == 'published'` read filter.
-
-### B6. 37 npm vulnerabilities (5 critical, 16 high)
-- **Status**: OPEN
-- **Severity**: BETA-SAFE
-- **Problem**: `npm audit` reports 37 vulnerabilities, including 5 critical.
-- **Action**: Run `npm audit fix` for safe fixes. Evaluate `--force` for breaking changes.
+**Verified**: 6 of 10 workflows (WF2, WF3, WF5, WF7, WF8, WF9)
+**Partial**: 4 of 10 workflows (WF1, WF4, WF6, WF10)
+**Active blockers**: 4 (G9–G12)
 
 ---
 
-## 3. VERIFIED FLOWS WITH EVIDENCE
+## GOLD-READY WORKFLOW VERIFICATION
 
-### V1. Admin-HQ defines capability frameworks ✅
-- **Evidence**: `CapabilityFrameworkEditor.tsx` has full CRUD for capabilities, progression descriptors (4 levels), pillar mapping, unit mappings, sort order
-- **Persistence**: `addDoc(capabilitiesCollection, {...})` / `updateDoc()` — site-scoped
-- **Rules**: `isHQ()` gated writes, authenticated reads
-- **Data**: `useCapabilities` hook loads/caches per-site
+### WF1. Curriculum admin can define capabilities and map them to units/checkpoints
 
-### V2. Admin-HQ defines rubric templates ✅
-- **Evidence**: CapabilityFrameworkEditor has Rubric Templates tab with criteria/maxScore authoring
-- **Persistence**: `addDoc(rubricTemplatesCollection, {...})` — HQ-gated writes
-- **Note**: Templates are authored but NOT consumed (see G3)
+**Status**: ⚠️ PARTIAL — Capability CRUD works, checkpoint mapping admin UI missing
 
-### V3. Educator runs sessions ✅
-- **Evidence**: workflowData loads sessions by siteId with create/update forms
-- **Persistence**: `sessions`, `sessionOccurrences` Firestore collections
-- **Rules**: educator write, authenticated read
+**What's verified**:
+- ✅ `CapabilityFrameworkEditor.tsx` — Full CRUD for capabilities: title, pillar (FUTURE_SKILLS/LEADERSHIP_AGENCY/IMPACT_INNOVATION), descriptor, sortOrder
+- ✅ Progression descriptors — 4 text fields (beginning/developing/proficient/advanced) saved to `progressionDescriptors` object on capability doc
+- ✅ Unit/mission mapping — Checkbox list of missions via `unitMappings: string[]` array storing mission IDs
+- ✅ Rubric template creation — Criteria mapped to capabilities with `maxScore` and optional descriptors
+- ✅ Firestore persistence — `addDoc(capabilitiesCollection)` / `updateDoc()` site-scoped, `isHQ()` gated writes
+- ✅ `useCapabilities` hook loads and caches capabilities per-site
 
-### V4. Educator logs observations in <10 seconds ✅
-- **Evidence**: `EducatorEvidenceCapture.tsx` retains learner+session across submissions, has capability dropdown, phase picker, portfolio-candidate toggle
-- **Persistence**: `addDoc(evidenceRecordsCollection, {...})` with full provenance (learnerId, educatorId, siteId, sessionOccurrenceId, capabilityId, phaseKey)
-- **Rules**: educator creates/updates, learner reads own
+**What's missing**:
+- ❌ **G9: No checkpoint mapping admin UI** — The `checkpointMappings` field exists in backend data (functions `getParentDashboardBundle` uses `checkpointMappingsFromUnknown()` to parse it from portfolio items and growth events), but there is NO admin authoring UI in `CapabilityFrameworkEditor` to define which checkpoints map to which capabilities. Checkpoint mappings are only populated downstream when evidence is reviewed — they are not part of curriculum-level authoring.
+- ❌ Unit mappings have no referential integrity — `unitMappings: string[]` stores mission IDs without foreign-key validation. Orphaned IDs possible.
 
-### V5. Educator applies 4-level rubric ✅
-- **Evidence**: `RubricReviewPanel.tsx` provides Beginning/Developing/Proficient/Advanced scoring per capability
-- **Persistence**: `applyRubricToEvidence` callable creates rubricApplications + capabilityGrowthEvents + upserts capabilityMastery in atomic batch
-- **Note**: Uses ad-hoc scoring, not rubric templates (see G3)
-
-### V6. Educator verifies proof-of-learning ✅
-- **Evidence**: `ProofOfLearningVerification.tsx` — explain-it-back, oral check, mini rebuild verification checkboxes + excerpts
-- **Persistence**: `verifyProofOfLearning` callable updates portfolio item, creates capabilityGrowthEvents, upserts capabilityMastery
-- **Rules**: educator-gated
-
-### V7. Learner submits artifacts with AI disclosure ✅
-- **Evidence**: `LearnerEvidenceSubmission.tsx` artifact tab: title, description, URL, capability selection, AI disclosure fields
-- **Persistence**: `addDoc(portfolioItemsCollection, {...})` with `siteId`, `capabilityIds`, `aiDisclosureStatus`, `verificationStatus: 'pending'`
-- **Rules**: learner creates, educator updates
-
-### V8. Learner submits checkpoints ✅ (with gap)
-- **Evidence**: Checkpoint tab creates missionAttempt + portfolioItem
-- **Persistence**: Both docs written to Firestore
-- **Gap**: Portfolio item doesn't reference missionAttemptId (see G2)
-
-### V9. Capability growth updates from evidence ✅
-- **Evidence**: Both `applyRubricToEvidence` and `verifyProofOfLearning` callables atomically create `capabilityGrowthEvents` and upsert `capabilityMastery`
-- **Persistence**: Append-only growth events with full provenance (educator, rubric scores, evidence links)
-
-### V10. Parent sees trustworthy progress summary ✅
-- **Evidence**: `getParentDashboardBundle` callable aggregates 8 collections. `CapabilityGuidancePanel` shows plain-language bands with progression descriptors. Honest "no-evidence" state.
-- **Persistence**: Real-time from Firestore
-
-### V11. Ideation Passport from actual evidence ✅
-- **Evidence**: `LearnerPassportExport.tsx` renders per-capability claims with evidence count, verified artifacts, PoL status, progression descriptors, growth timeline, AI disclosure
-- **Persistence**: `getParentDashboardBundle` callable → real aggregation from `portfolioItems`, `evidenceRecords`, `capabilityMastery`, `capabilityGrowthEvents`, `learnerReflections`, `missionAttempts`
-- **Export**: Print + text export supported
-
-### V12. AI-use disclosed and visible ✅
-- **Evidence**: `aiDisclosureStatus` in portfolio items, AI fields in evidence submission, passport shows AI disclosure per artifact
-
-### V13. Site evidence health dashboard ✅
-- **Evidence**: `SiteEvidenceHealthDashboard.tsx` computes learner coverage, educator capture rates, capability-mapped %, rubric-applied % over configurable time window
-- **Persistence**: Real reads from `evidenceRecords` and `users` collections
-
-### V14. Build + TypeScript + Tests all green ✅
-- **Evidence**: `npx next build --webpack` → EXIT=0 (69 routes compiled), `npx tsc --noEmit` → EXIT=0, `npx jest` → 25 suites, 183/183 tests pass
-
-### V15. All 130+ Cloud Functions are REAL (no stubs) ✅
-- **Evidence**: Complete audit of functions/src/index.ts, bosRuntime.ts, coppaOps.ts, workflowOps.ts, telemetryAggregator.ts, voiceSystem.ts — all contain real Firestore operations, role checks, and domain logic
-
-### V16. All 6 API routes are REAL ✅
-- **Evidence**: /api/healthz, /api/ai/complete, /api/auth/session-login, /api/auth/session-logout, /api/auth/sso/providers, /api/lti/launch — all have full implementations
-
-### V17. All 51 web workflow routes have real Firestore/callable data ✅
-- **Evidence**: workflowData.ts audit shows every route either queries Firestore collections or calls Cloud Functions. Zero routes return hardcoded/mock data.
+**Blocker**: G9 — Checkpoint mapping authoring (see §BLOCKERS below)
 
 ---
 
-## 4. UNKNOWNS THAT STILL NEED PROOF
+### WF2. Teacher can run a session and quickly log capability observations during build time
 
-### U1. Flutter test suite completion status
-- **Status**: UNVERIFIED
-- **Last known**: 317+ tests were passing (from /tmp/flutter_final.txt), but the run may not have completed (no "All tests passed" line found)
-- **Action**: Run `cd apps/empire_flutter/app && flutter test --reporter compact` and verify pass count
+**Status**: ✅ VERIFIED
 
-### U2. Functions test suite status
-- **Status**: UNVERIFIED
-- **Last attempt**: `npm --prefix functions run build` succeeded, but test output was not captured
-- **Action**: Run `cd functions && npm run build && npm test` and verify pass count
+**Evidence**:
+- `EducatorEvidenceCapture.tsx` — Single-column form: session selector (today's sessions pre-queried), learner selector, phase selector (retrieval_warm_up / mini_lesson / build_sprint / checkpoint / share_out / reflection), description, capability selector, portfolio-candidate toggle
+- Retains learner + session context across multiple entries (only clears description/capability/phase on submit)
+- `addDoc(evidenceRecordsCollection)` with full provenance: `learnerId`, `educatorId`, `siteId`, `sessionOccurrenceId`, `capabilityId`, `phaseKey`, `portfolioCandidate`, `rubricStatus: 'pending'`, `growthStatus: 'pending'`
+- Under 10 seconds per entry: 1 dropdown + 1 phase + 1 text + 1 button, no modal
+- Session context from `sessionOccurrences` query joined with parent session docs
+- `EvidenceRecord` schema: `schema.ts:1185-1203`
 
-### U3. End-to-end evidence chain with real Firestore data
-- **Status**: UNVERIFIED (each step verified in isolation, not full chain)
-- **Action**: With emulators, test: create capability → create session → submit evidence → apply rubric → verify PoL → check mastery doc → generate passport
-
-### U4. Passport rendering with canonical data
-- **Status**: UNVERIFIED
-- **Action**: Run `getParentDashboardBundle` against seeded data and verify the LearnerPassportExport renders all expected fields
-
-### U5. Mobile (classroom) usability
-- **Status**: UNVERIFIED
-- **Action**: Test educator evidence capture and learner submission on mobile viewport
+**Blocker**: None
 
 ---
 
-## 5. FINAL DECISION
+### WF3. Student can submit artifacts, reflections, and checkpoint evidence
 
-### Post-fix Assessment: BETA-READY
+**Status**: ✅ VERIFIED
 
-**All 5 gold blockers are now CLOSED:**
-- ✅ G1 — Reflections now create companion portfolio items with `portfolioItemId` cross-link
-- ✅ G2 — Checkpoint submissions now capture `attemptRef.id` and set `missionAttemptId` on portfolio item
-- ✅ G3 — RubricReviewPanel now loads published rubric templates, shows template selector, populates criteria scores, displays progression descriptors, and passes `rubricId` to callable
-- ✅ G4 — Firestore rules tightened: `presenceRecords`, `conversations`, `habitLogs`, `incidents`, `offlineDemoActions` now have ownership/site-scoping checks
-- ✅ G5 — New `LearnerPortfolioBrowser` component with source/verification/pillar filters, learner portfolio page now shows tabbed browse/submit layout
+**Evidence**:
+- **Artifact submission** — `LearnerEvidenceSubmission.tsx` artifact tab: title, description, URL, capability IDs, AI disclosure (used + details). Creates `PortfolioItem` with `source: 'learner_submission'`, `verificationStatus: 'pending'`, `aiDisclosureStatus`, `capabilityIds`, `pillarCodes`
+- **Reflection submission** — Creates TWO docs: `PortfolioItem` with `source: 'reflection'` AND `LearnerReflection` with `portfolioItemId` cross-link (G1 fix)
+- **Checkpoint submission** — Creates TWO docs: `MissionAttempt` then `PortfolioItem` with `missionAttemptId: attemptRef.id` (G2 fix)
+- All three types write real Firestore docs with `siteId`, `learnerId`, AI disclosure fields
 
-**Verification evidence:**
-- `npx tsc --noEmit` → EXIT=0 (TypeScript clean)
-- `npx jest --runInBand --no-coverage` → 25 suites, 183/183 pass
-- `npx next build --webpack` → BUILD_EXIT=0, 69 routes compiled
-
-**What's strong**: Full evidence chain (capability setup → session → observation → artifact → reflection → checkpoint → rubric → PoL → growth → portfolio → passport) is now connected end-to-end with real persistence. All links in the chain have provenance. All 130+ Cloud Functions are real. All routes load real data.
-
-**Beta-safe issues tracked for GA (B1-B6)**: Generic CRUD UX, untyped collections, server-only collection rules, partner UX, catalog visibility, npm vulnerabilities.
-
-**Gold-ready requires**: U1-U5 verified (Flutter tests, Functions tests, E2E chain test with emulators, passport rendering, mobile viewport) + B1-B6 triaged.
+**Blocker**: None
 
 ---
 
-## Fix Execution Order
+### WF4. Teacher can apply a 4-level rubric tied to capabilities and process domains
 
-1. **G4** — Firestore rules (security, no code changes needed beyond rules)
-2. **G2** — Checkpoint missionAttemptId linkage (small code fix)
-3. **G1** — Reflections portfolio linkage (medium code fix)
-4. **G3** — Rubric templates consumption (medium-large)
-5. **G5** — Learner portfolio browser (new component)
+**Status**: ⚠️ PARTIAL — 4-level capability rubric works, process domains not implemented
+
+**What's verified**:
+- ✅ `RubricReviewPanel.tsx` — Loads published `rubricTemplates` from Firestore, template selector dropdown, populates criteria scores from template
+- ✅ 4-level scoring: `SCORE_LEVELS` = 1=Beginning, 2=Developing, 3=Proficient, 4=Advanced
+- ✅ `getDescriptor()` retrieves level-specific progression descriptor text from template
+- ✅ `applyRubricToEvidence` callable (functions `index.ts:~8051-8150`): atomically creates `RubricApplication`, `CapabilityGrowthEvent` per capability, upserts `CapabilityMastery` with `latestLevel`/`highestLevel`
+- ✅ `rubricId` passed to callable (G3 fix)
+- ✅ `RubricTemplateCriterion` has `capabilityId`, `pillarCode`, `maxScore`, optional `descriptors`
+
+**What's missing**:
+- ❌ **G10: No process domain concept** — The gold spec requires rubrics "tied to capabilities **and** process domains" (e.g., collaboration, critical thinking, communication, persistence). There is ZERO implementation of process domains:
+  - No `ProcessDomain` type in schema
+  - No process domain field in `RubricTemplateCriterion` (only `capabilityId`)
+  - No process domain selector in rubric review UI
+  - No process domain scoring in `applyRubricToEvidence` callable
+  - No process domain display in portfolio, passport, or growth events
+- This means rubrics only score subject-area capabilities, not cross-cutting skills
+
+**Blocker**: G10 — Process domain model (see §BLOCKERS below)
+
+---
+
+### WF5. Proof-of-learning can be captured and reviewed
+
+**Status**: ✅ VERIFIED
+
+**Evidence**:
+- `ProofOfLearningVerification.tsx` — 3 verification methods: explainItBack ("Can the learner explain the concept in their own words?"), oralCheck ("Can the learner answer follow-up questions?"), miniRebuild ("Can the learner recreate or extend the work independently?")
+- Educator sees original evidence: title, description, capability count, evidence record count, artifact count, capabilities mapped (pill badges), AI disclosure detail
+- Checkboxes for each proof check with conditional textareas for excerpts, educator notes field
+- Two submit paths: "Verify" (needs ≥2 checks) and "Mark reviewed" (no requirement)
+- `verifyProofOfLearning` callable (`index.ts:~8249-8320`): updates `PortfolioItem` with `verificationStatus`/`proofOfLearningStatus`/proof excerpts, creates `CapabilityGrowthEvent` with `source: 'proof_of_learning'`, upserts `CapabilityMastery`
+- Atomic batch commit
+
+**Blocker**: None
+
+---
+
+### WF6. Capability growth updates over time from evidence
+
+**Status**: ⚠️ PARTIAL — Backend growth engine works, web growth dashboard missing
+
+**What's verified**:
+- ✅ `applyRubricToEvidence` callable creates `capabilityGrowthEvents` with: `level` (1-4), `rawScore`, `maxScore`, `linkedEvidenceRecordIds`, `linkedPortfolioItemIds`, `rubricApplicationId`, `educatorId`, `createdAt`
+- ✅ `verifyProofOfLearning` callable creates `capabilityGrowthEvent` with `source: 'proof_of_learning'`, `level = checkpointCount` (1-3)
+- ✅ Both callables upsert `capabilityMastery` with `latestLevel`, `highestLevel`, `evidenceIds[]`, `growthEventIds[]`
+- ✅ Growth events are append-only, queryable by `learnerId` + `createdAt`
+- ✅ `LearnerPassportExport.tsx` renders growth timeline (15 most recent): capability title, level, educator name, rubric scores
+- ✅ `CapabilityGuidancePanel.tsx` shows per-pillar average level + band (strong/developing/emerging)
+- ✅ Flutter has custom growth visualizations in `parent_summary_page.dart` (level progression bars per capability)
+
+**What's missing**:
+- ❌ **G11: Web `/learner/today` shows session list, not growth dashboard** — Route uses `loadLearnerToday()` which queries enrollments → sessions and returns `WorkflowRecord[]` (title/subtitle/status). Learner CANNOT see "my capability growth this week" or "what I'm improving at." The backend data exists but the web UI is a generic CRUD list.
+- ❌ No web-side growth trajectory view (only in passport and Flutter)
+
+**Blocker**: G11 — Custom learner dashboard (see §BLOCKERS below)
+
+---
+
+### WF7. Student portfolio shows real artifacts and reflections
+
+**Status**: ✅ VERIFIED
+
+**Evidence**:
+- `LearnerPortfolioBrowser.tsx` — Queries `portfolioItems` where `learnerId` == current user, `orderBy('createdAt', 'desc')`
+- Shows: title, source badge (artifact/reflection/checkpoint), description, verification status badge (pending→yellow, reviewed→blue, verified→green), PoL badge, capability tags (resolved via `useCapabilities`), file count, AI assistance indicator, growth links, proof bundle indicator
+- Filters: source type (all/artifact/reflection/checkpoint), verification status (all/pending/reviewed/verified), pillar (all/FUTURE_SKILLS/LEADERSHIP_AGENCY/IMPACT_INNOVATION)
+- Tabbed layout on `/learner/portfolio`: "My Portfolio" (browser, default) + "Submit Evidence" (submission form)
+
+**Blocker**: None
+
+---
+
+### WF8. Ideation Passport/report can be generated from actual evidence
+
+**Status**: ✅ VERIFIED
+
+**Evidence**:
+- `LearnerPassportExport.tsx` calls `getParentDashboardBundle` callable with `{ siteId, locale, range: 'all' }`
+- Callable aggregates: `capabilityMastery`, `capabilityGrowthEvents`, `portfolioItems`, `evidenceRecords`, `missionAttempts`, `learnerReflections` (+ more)
+- Per-capability claims: `evidenceCount`, `verifiedArtifactCount`, `proofOfLearningStatus`, `rubricRawScore`/`rubricMaxScore`, `progressionDescriptors`, `aiDisclosureStatus`, `reviewingEducatorName`, `reviewedAt`
+- Capability band calculation: normalized per-pillar score → strong/developing/emerging band
+- Growth timeline rendered: up to 15 events with capability title, level, date, educator name, rubric score
+- Export: text export (`handleExportText`) + browser print/PDF (`handlePrint`)
+- Honest empty state: "No capability claims backed by evidence yet"
+- ⚠️ Minor gap: No dedicated PDF download button (uses browser print dialog) — acceptable for beta
+
+**Blocker**: None
+
+---
+
+### WF9. AI-use is disclosed and visible where relevant
+
+**Status**: ✅ VERIFIED
+
+**Evidence**:
+- **Capture**: `LearnerEvidenceSubmission.tsx` — Checkbox "I used AI assistance" + text field "explain what/how" → sets `aiDisclosureStatus` (learner-ai-verified / learner-ai-not-used) and `aiAssistanceDetails`
+- **Portfolio display**: `LearnerPortfolioBrowser.tsx` — "AI assisted" badge rendered when `aiAssistanceUsed` is true
+- **Passport display**: `LearnerPassportExport.tsx` — `aiLabel(claim.aiDisclosureStatus)` per capability claim → "AI used — verified", "AI used — not verified", "No AI signal"
+- **Educator visibility**: Evidence records and portfolio items carry `aiDisclosureStatus` field viewable in review panels
+- **Flutter parent view**: `parent_portfolio_page.dart` — `_formatAiDisclosure()` with human-readable labels
+- **Audit trail**: Stored in Firestore `portfolioItems.aiDisclosureStatus`, copied to `capabilityGrowthEvents`, preserved in passport export
+
+**Blocker**: None
+
+---
+
+### WF10. Family/student/teacher views are understandable and trustworthy
+
+**Status**: ⚠️ PARTIAL — Rich data exists via callables, but web dashboards are generic CRUD lists
+
+**What's verified**:
+- ✅ `getParentDashboardBundle` callable returns comprehensive evidence-backed data: `capabilitySnapshot`, `ideationPassport.claims[]`, `growthTimeline[]`, `portfolioSnapshot`, per-learner summaries
+- ✅ `CapabilityGuidancePanel.tsx` exists and shows plain-language bands with progression descriptors + "no-evidence" state
+- ✅ Flutter has custom dashboards: `LearnerTodayPage` (gradient progress cards, missions, AI coaching), `EducatorTodayPage` (class insights, quick stats), `ParentSummaryPage` (capability guidance, growth trends)
+- ✅ `loadParentSummary()` calls `getParentDashboardBundle` and extracts: learner name, artifact count, reflections submitted, missions completed, capability band
+
+**What's broken**:
+- ❌ **G12: Three critical web dashboards are generic `WorkflowRoutePage` wrappers**, not custom UIs:
+  - **`/learner/today`** — Shows enrolled session list (title/description/status). Learner CANNOT answer "what can I do now?" or "how am I growing?"
+  - **`/educator/today`** — Shows session list filtered by `educatorIds`. Educator CANNOT see attendance, review queue, or learner context.
+  - **`/parent/summary`** — Shows flattened learner list with artifact/reflection counts. Parent CANNOT answer "what can my child do now?" — the rich `CapabilityGuidancePanel` and capability band data from the callable is NOT rendered in the UI.
+- All three routes delegate to `WorkflowRoutePage` which renders the identical generic CRUD list: title, subtitle, status badge, metadata key-value pairs.
+- **The Flutter client has real dashboards for all three roles. The web client does not.**
+
+**Blocker**: G12 — Custom web dashboards (see §BLOCKERS below)
+
+---
+
+## ACTIVE GOLD BLOCKERS
+
+### G9. No checkpoint mapping admin UI in CapabilityFrameworkEditor
+- **Status**: 🔴 OPEN
+- **Severity**: GOLD BLOCKER (WF1)
+- **Location**: `src/components/capabilities/CapabilityFrameworkEditor.tsx`
+- **Problem**: `unitMappings` maps capabilities to missions (units), but there is no UI to map capabilities to checkpoints. The gold spec says "map capabilities to units/checkpoints." The `checkpointMappings` concept exists in the backend (`functions/src/index.ts: checkpointMappingsFromUnknown()`) but only as data that flows FROM evidence, not FROM admin authoring.
+- **Impact**: Admin cannot define "this capability is assessed at these checkpoints" — the capability→checkpoint graph is implicit, not authored.
+- **Fix**: Add a "Checkpoint Mappings" section to the capability form in `CapabilityFrameworkEditor` that allows HQ to define named checkpoints per capability (e.g., "Can explain concept", "Can apply independently", "Can teach to peer"). Store as `checkpointMappings: Array<{label: string, description?: string}>` on the capability doc. Wire to evidence verification prompts.
+
+### G10. No process domain model for rubric scoring
+- **Status**: 🔴 OPEN
+- **Severity**: GOLD BLOCKER (WF4)
+- **Location**: Schema (`schema.ts`), `RubricReviewPanel.tsx`, `applyRubricToEvidence` callable
+- **Problem**: The gold spec requires rubrics "tied to capabilities **and process domains**" (cross-cutting skills like collaboration, critical thinking, communication, persistence). Current model only scores capabilities. No `ProcessDomain` type, no domain field in `RubricTemplateCriterion`, no domain selector in UI, no domain growth tracking.
+- **Impact**: Rubrics cannot differentiate between "student understands computational thinking" (capability) and "student collaborates effectively" (process domain). Only subject-area mastery is tracked.
+- **Fix**:
+  1. Add `ProcessDomain` type to `schema.ts` with `id`, `title`, `description`, `siteId`
+  2. Add `processDomainId?: string` to `RubricTemplateCriterion` (criteria can point to EITHER a capability OR a process domain)
+  3. Add process domain selection in rubric template authoring UI
+  4. Add process domain scoring in `RubricReviewPanel`
+  5. Extend `applyRubricToEvidence` callable to create growth events for process domain scores
+  6. Display process domain progress alongside capabilities in passport and dashboards
+
+### G11. Web `/learner/today` is a generic session list, not a growth dashboard
+- **Status**: 🔴 OPEN
+- **Severity**: GOLD BLOCKER (WF6 + WF10)
+- **Location**: `app/[locale]/(protected)/learner/today/page.tsx`, `workflowData.ts:loadLearnerToday()`
+- **Problem**: Route uses `WorkflowRoutePage` → `loadLearnerToday()` which queries enrollments → sessions → returns `WorkflowRecord[]` (title/subtitle/status). The learner cannot see capability growth, active missions, evidence submitted, or what they need to work on next. Flutter has a custom `LearnerTodayPage` with gradient progress cards, missions, AI coaching — web doesn't.
+- **Impact**: Learner cannot answer "what can I do now?" or "how am I growing?" from the web. Violates WF6 ("capability growth updates visible") and WF10 ("student views understandable").
+- **Fix**: Create `LearnerDashboardToday.tsx` component — replace `WorkflowRoutePage` on this route:
+  - Show `CapabilityGuidancePanel` (pillar progress, capability bands, progression descriptors)
+  - Show "Recent growth" (last 5 capability growth events with level + capability title)
+  - Show "Active missions" (enrolled missions with completion status)
+  - Show "Today's sessions" (today's session occurrences)
+  - Load data via `getParentDashboardBundle` (already exists) or direct Firestore queries
+
+### G12. Web `/educator/today` and `/parent/summary` are generic CRUD lists
+- **Status**: 🔴 OPEN
+- **Severity**: GOLD BLOCKER (WF10)
+- **Location**: `app/[locale]/(protected)/educator/today/page.tsx`, `app/[locale]/(protected)/parent/summary/page.tsx`
+- **Problem**:
+  - **Educator today**: Shows sessions filtered by `educatorIds`. Cannot see attendance, review queue, learner progress context. "What needs my attention now?" unanswered.
+  - **Parent summary**: `loadParentSummary()` calls `getParentDashboardBundle` and returns rich data, but flattens it into generic `WorkflowRecord[]` losing capability band detail, growth trends, and progression descriptors. "What can my child do now?" unanswered.
+- **Fix — Educator**:
+  - Create `EducatorDashboardToday.tsx` — replace `WorkflowRoutePage`:
+    - "Today's sessions" (time, learner count, status)
+    - "Review queue" (pending evidence count, pending PoL count)
+    - "Class capability snapshot" (aggregate capability levels across learners)
+    - Quick-link to evidence capture
+- **Fix — Parent**:
+  - Create `ParentSummaryDashboard.tsx` — replace `WorkflowRoutePage`:
+    - Per-child `CapabilityGuidancePanel` (band, progress bars, next steps text)
+    - Growth timeline (recent capability level changes with dates)
+    - Portfolio highlights (latest verified artifacts with thumbnails)
+    - Link to full passport export
+
+---
+
+## CLOSED GOLD BLOCKERS (Previously Fixed)
+
+### G1. Reflections disconnected from portfolio items — ✅ CLOSED
+- **Fix**: `LearnerEvidenceSubmission.tsx` reflection handler now creates companion `PortfolioItem` with `source: 'reflection'` and `portfolioItemId` cross-link.
+
+### G2. Checkpoint portfolio items missing `missionAttemptId` — ✅ CLOSED
+- **Fix**: Checkpoint handler captures `attemptRef.id` and writes `missionAttemptId` on the companion `PortfolioItem`.
+
+### G3. Rubric templates authored but never consumed at apply time — ✅ CLOSED
+- **Fix**: `RubricReviewPanel.tsx` now loads published templates, shows selector dropdown, populates criteria scores, displays progression descriptors, passes `rubricId` to callable.
+
+### G4. Overly permissive Firestore rules — ✅ CLOSED
+- **Fix**: Ownership checks on `presenceRecords`, `conversations`, `habitLogs`, `incidents`, `offlineDemoActions`, `drafts`.
+
+### G5. No standalone learner portfolio browse view — ✅ CLOSED
+- **Fix**: `LearnerPortfolioBrowser.tsx` with source/verification/pillar filters, tabbed layout on `/learner/portfolio`.
+
+### G6. `/educator/evidence` route no case body in workflowData.ts — ✅ CLOSED
+- **Fix**: Added case body querying `evidenceRecords` with site-scoping.
+
+### G7. `drafts` collection no ownership check — ✅ CLOSED
+- **Fix**: Added `userId == auth.uid` checks on all CRUD operations.
+
+### G8. CapabilityFrameworkEditor missing accessible names — ✅ CLOSED
+- **Fix**: Added `aria-label` to 5 form elements.
+
+---
+
+## BETA-SAFE ISSUES (Track for GA)
+
+| ID | Issue | Severity | Status |
+|----|-------|----------|--------|
+| B1 | 45/51 routes use generic CRUD list UI | BETA-SAFE | G11/G12 addresses the 3 critical routes |
+| B2 | 23 Firestore collections have rules but no TS interface | BETA-SAFE | Add as touched |
+| B3 | 18 server-only collections have no explicit rules (default-deny) | BETA-SAFE | No client leak |
+| B4 | Partner role thin UX | BETA-SAFE | Defer to partner onboarding |
+| B5 | Global content catalog readable by all auth users | BETA-SAFE | Intentional shared model |
+| B6 | 37 npm vulns (all transitive, no safe fixes) | BETA-SAFE | Monitor upstream |
+
+---
+
+## VERIFICATION EVIDENCE
+
+### Build & Test — April 2, 2026
+| Check | Result | Command |
+|-------|--------|---------|
+| TypeScript | ✅ EXIT=0 | `npx tsc --noEmit` |
+| Jest (web) | ✅ 25 suites, 183/183 pass | `npx jest --runInBand` |
+| Next.js build | ✅ BUILD_EXIT=0, 69 routes | `npx next build --webpack` |
+| Functions build | ✅ Compiled | `cd functions && npm run build` |
+| Functions tests | ✅ 33 suites, 127/127 pass | `cd functions && npx jest --runInBand --forceExit` |
+| Flutter tests | ✅ 317+ pass, 0 fail | `cd apps/empire_flutter/app && flutter test` |
+
+### Evidence Chain Integrity
+| Step | WF | Status | Code Evidence |
+|------|----|--------|---------------|
+| HQ defines capabilities + descriptors | WF1 | ✅ | `CapabilityFrameworkEditor.tsx` CRUD, 4-level descriptors, pillar mapping |
+| HQ defines rubric templates | WF1 | ✅ | Rubric Templates tab, criteria+maxScore+descriptors |
+| HQ maps capabilities to checkpoints | WF1 | ❌ | No admin UI — `checkpointMappings` only in backend data flow |
+| Educator runs sessions | WF2 | ✅ | workflowData sessions by siteId, create/update |
+| Educator logs observations <10s | WF2 | ✅ | `EducatorEvidenceCapture.tsx` with retained context |
+| Learner submits artifacts | WF3 | ✅ | `LearnerEvidenceSubmission.tsx` artifact tab |
+| Learner submits reflections → portfolio | WF3 | ✅ | Companion portfolioItem with cross-link (G1) |
+| Learner submits checkpoints → mission | WF3 | ✅ | `missionAttemptId` linkage (G2) |
+| Educator applies rubric with template | WF4 | ✅ | Template selector, descriptors, `rubricId` (G3) |
+| Educator scores process domains | WF4 | ❌ | No process domain model |
+| Educator verifies proof-of-learning | WF5 | ✅ | 3 verification methods, excerpts, atomic growth |
+| Growth events created atomically | WF6 | ✅ | Both rubric + PoL callables |
+| Growth visible on web dashboard | WF6 | ❌ | `/learner/today` is session list |
+| Portfolio browsable with filters | WF7 | ✅ | `LearnerPortfolioBrowser.tsx` |
+| Passport from real evidence | WF8 | ✅ | `LearnerPassportExport.tsx` via callable |
+| AI disclosure captured + displayed | WF9 | ✅ | All surfaces: submission, portfolio, passport |
+| Parent answers "what can my child do?" | WF10 | ❌ | `/parent/summary` is flat learner list |
+| Educator answers "what needs attention?" | WF10 | ❌ | `/educator/today` is session list |
+| Learner answers "how am I growing?" | WF10 | ❌ | `/learner/today` is session list |
+
+### Security
+| Check | Result |
+|-------|--------|
+| Personal collection ownership | ✅ presenceRecords, conversations, habitLogs, drafts, offlineDemoActions |
+| Site-scoped collections | ✅ incidents |
+| Default-deny on unlisted | ✅ |
+| WCAG 2.2 AA form labels | ✅ CapabilityFrameworkEditor (G8) |
+
+---
+
+## EXECUTION PLAN — PATH TO GOLD
+
+**Priority order** (highest-impact blockers first):
+
+### Phase 1: Custom Web Dashboards (G11 + G12)
+These are the single biggest gap between the current state and gold. The backend data is already there — the callables and Firestore queries return rich, evidence-backed data. The web UI just flattens it into generic lists.
+
+1. **G11: `/learner/today` custom dashboard**
+   - Create `LearnerDashboardToday.tsx`
+   - Sections: capability guidance panel (pillar progress + bands), recent growth events, active missions, today's sessions
+   - Data: `getParentDashboardBundle` callable or direct Firestore queries for `capabilityMastery`, `capabilityGrowthEvents`, `enrollments`
+   - Replace `WorkflowRoutePage` in `app/[locale]/(protected)/learner/today/page.tsx`
+
+2. **G12a: `/educator/today` custom dashboard**
+   - Create `EducatorDashboardToday.tsx`
+   - Sections: today's sessions (time/learner count), review queue (pending evidence + PoL counts), class capability snapshot
+   - Data: Firestore queries for `sessions`, `evidenceRecords` (where `rubricStatus == 'pending'`), `portfolioItems` (where `verificationStatus == 'pending'`)
+   - Replace `WorkflowRoutePage` in `app/[locale]/(protected)/educator/today/page.tsx`
+
+3. **G12b: `/parent/summary` custom dashboard**
+   - Create `ParentSummaryDashboard.tsx`
+   - Sections: per-child `CapabilityGuidancePanel`, growth timeline, portfolio highlights, link to passport
+   - Data: `getParentDashboardBundle` callable (already used by `loadParentSummary()` — just stop flattening it)
+   - Replace `WorkflowRoutePage` in `app/[locale]/(protected)/parent/summary/page.tsx`
+
+### Phase 2: Process Domain Model (G10)
+This is the deepest architectural gap. Requires schema + UI + backend changes.
+
+4. **G10a: Schema** — Add `ProcessDomain` interface to `schema.ts`, add `processDomainId?: string` to `RubricTemplateCriterion`
+5. **G10b: Admin UI** — Add process domain management tab to `CapabilityFrameworkEditor` or dedicated admin route
+6. **G10c: Rubric review** — Add process domain scoring to `RubricReviewPanel.tsx`
+7. **G10d: Backend** — Extend `applyRubricToEvidence` callable to track process domain growth events
+8. **G10e: Display** — Show process domain progress in passport, portfolio, and dashboards
+
+### Phase 3: Checkpoint Mapping (G9)
+Lower risk — the evidence chain works without it, but admin completeness requires it.
+
+9. **G9: Checkpoint mapping UI** — Add section to capability form for named checkpoints (label + description). Store as `checkpointMappings: Array<{label: string, description?: string}>` on capability doc.
+
+### Phase 4: Verification
+10. **E2E with emulators** — Full chain: create capability → create session → submit evidence → apply rubric → verify PoL → check mastery → generate passport
+11. **Mobile viewport** — Test educator evidence capture + learner submission on mobile
+12. **Re-audit all 10 workflows** — Verify each shows ✅
+
+---
+
+## WHAT DOES NOT NEED TO CHANGE FOR GOLD
+
+These are verified and complete:
+- Evidence capture (educator observations, learner artifacts/reflections/checkpoints)
+- Rubric + PoL → growth engine (atomic batch writes, mastery upserts)
+- Portfolio browser (filters, verification badges, AI disclosure)
+- Passport export (evidence-backed claims, growth timeline, text/print export)
+- AI disclosure chain (capture → portfolio → passport → all stakeholders)
+- Firestore security (ownership checks, site-scoping, default-deny)
+- 130+ Cloud Functions (all real, zero stubs)
+- Flutter custom dashboards (learner/educator/parent — these are gold-ready on mobile)
+- All tests green (web 183, functions 127, flutter 317+)

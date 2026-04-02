@@ -17,12 +17,13 @@ import {
   capabilitiesCollection,
   missionsCollection,
   rubricTemplatesCollection,
+  processDomainsCollection,
 } from '@/src/firebase/firestore/collections';
 import type { Mission } from '@/src/types/schema';
 import { invalidateCapabilityCache } from '@/src/lib/capabilities/useCapabilities';
 import { RoleRouteGuard } from '@/src/components/auth/RoleRouteGuard';
 import { Spinner } from '@/src/components/ui/Spinner';
-import type { Capability, PillarCode, RubricTemplate, ProgressionDescriptors } from '@/src/types/schema';
+import type { Capability, PillarCode, RubricTemplate, ProgressionDescriptors, ProcessDomain, CheckpointMapping } from '@/src/types/schema';
 
 /* ───── Constants ───── */
 
@@ -44,7 +45,7 @@ function pillarLabel(pillarCode: PillarCode): string {
 
 /* ───── Types ───── */
 
-type TabKey = 'capabilities' | 'rubricTemplates';
+type TabKey = 'capabilities' | 'rubricTemplates' | 'processDomains';
 
 interface CapabilityFormData {
   title: string;
@@ -53,6 +54,14 @@ interface CapabilityFormData {
   sortOrder: number;
   progressionDescriptors: ProgressionDescriptors;
   unitMappings: string[];
+  checkpointMappings: CheckpointMapping[];
+}
+
+interface ProcessDomainFormData {
+  title: string;
+  descriptor: string;
+  sortOrder: number;
+  progressionDescriptors: ProgressionDescriptors;
 }
 
 interface RubricTemplateFormData {
@@ -68,6 +77,14 @@ const EMPTY_CAPABILITY_FORM: CapabilityFormData = {
   sortOrder: 0,
   progressionDescriptors: { beginning: '', developing: '', proficient: '', advanced: '' },
   unitMappings: [],
+  checkpointMappings: [],
+};
+
+const EMPTY_PROCESS_DOMAIN_FORM: ProcessDomainFormData = {
+  title: '',
+  descriptor: '',
+  sortOrder: 0,
+  progressionDescriptors: { beginning: '', developing: '', proficient: '', advanced: '' },
 };
 
 const EMPTY_RUBRIC_FORM: RubricTemplateFormData = {
@@ -180,6 +197,7 @@ export function CapabilityFrameworkEditor() {
         beginning: '', developing: '', proficient: '', advanced: '',
       },
       unitMappings: cap.unitMappings ?? [],
+      checkpointMappings: cap.checkpointMappings ?? [],
     });
     setShowCapabilityForm(true);
   }, []);
@@ -203,6 +221,9 @@ export function CapabilityFrameworkEditor() {
           descriptor: capabilityForm.descriptor.trim() || undefined,
           sortOrder: capabilityForm.sortOrder,
           unitMappings: capabilityForm.unitMappings.length > 0 ? capabilityForm.unitMappings : deleteField(),
+          checkpointMappings: capabilityForm.checkpointMappings.length > 0
+            ? capabilityForm.checkpointMappings.filter((cm) => cm.label.trim())
+            : deleteField(),
           ...(hasProgression
             ? { progressionDescriptors: capabilityForm.progressionDescriptors }
             : { progressionDescriptors: deleteField() }),
@@ -218,6 +239,9 @@ export function CapabilityFrameworkEditor() {
           descriptor: capabilityForm.descriptor.trim() || undefined,
           sortOrder: capabilityForm.sortOrder,
           ...(capabilityForm.unitMappings.length > 0 ? { unitMappings: capabilityForm.unitMappings } : {}),
+          ...(capabilityForm.checkpointMappings.filter((cm) => cm.label.trim()).length > 0
+            ? { checkpointMappings: capabilityForm.checkpointMappings.filter((cm) => cm.label.trim()) }
+            : {}),
           ...(hasProgression ? { progressionDescriptors: capabilityForm.progressionDescriptors } : {}),
           status: 'active' as const,
           createdAt: serverTimestamp(),
@@ -346,6 +370,108 @@ export function CapabilityFrameworkEditor() {
     }
   }, [siteId, user, rubricForm, editingRubricId, capabilityMap, flash, flashError, loadData]);
 
+  /* ───── Process Domain State & CRUD ───── */
+
+  const [processDomains, setProcessDomains] = useState<ProcessDomain[]>([]);
+  const [showProcessDomainForm, setShowProcessDomainForm] = useState(false);
+  const [editingProcessDomainId, setEditingProcessDomainId] = useState<string | null>(null);
+  const [processDomainForm, setProcessDomainForm] = useState<ProcessDomainFormData>(EMPTY_PROCESS_DOMAIN_FORM);
+
+  const loadProcessDomains = useCallback(async () => {
+    if (!siteId) return;
+    try {
+      const snap = await getDocs(
+        query(processDomainsCollection, where('siteId', '==', siteId), orderBy('sortOrder')),
+      );
+      setProcessDomains(snap.docs.map((d) => ({ ...d.data(), id: d.id }) as ProcessDomain));
+    } catch (err) {
+      console.error('Failed to load process domains', err);
+    }
+  }, [siteId]);
+
+  useEffect(() => {
+    if (siteId) loadProcessDomains();
+  }, [siteId, loadProcessDomains]);
+
+  const openCreateProcessDomain = useCallback(() => {
+    setEditingProcessDomainId(null);
+    setProcessDomainForm(EMPTY_PROCESS_DOMAIN_FORM);
+    setShowProcessDomainForm(true);
+  }, []);
+
+  const openEditProcessDomain = useCallback((pd: ProcessDomain) => {
+    setEditingProcessDomainId(pd.id);
+    setProcessDomainForm({
+      title: pd.title,
+      descriptor: pd.descriptor ?? '',
+      sortOrder: pd.sortOrder ?? 0,
+      progressionDescriptors: pd.progressionDescriptors ?? {
+        beginning: '', developing: '', proficient: '', advanced: '',
+      },
+    });
+    setShowProcessDomainForm(true);
+  }, []);
+
+  const saveProcessDomain = useCallback(async () => {
+    if (!siteId || !user) return;
+    const title = processDomainForm.title.trim();
+    if (!title) { flashError('Title is required.'); return; }
+
+    setSaving(true);
+    try {
+      const hasProgression = Object.values(processDomainForm.progressionDescriptors).some((v) => v.trim());
+
+      if (editingProcessDomainId) {
+        const ref = doc(processDomainsCollection, editingProcessDomainId);
+        await updateDoc(ref, {
+          title,
+          descriptor: processDomainForm.descriptor.trim() || undefined,
+          sortOrder: processDomainForm.sortOrder,
+          ...(hasProgression
+            ? { progressionDescriptors: processDomainForm.progressionDescriptors }
+            : { progressionDescriptors: deleteField() }),
+          updatedAt: serverTimestamp(),
+        });
+        flash('Process domain updated.');
+      } else {
+        await addDoc(processDomainsCollection, {
+          title,
+          siteId,
+          descriptor: processDomainForm.descriptor.trim() || undefined,
+          sortOrder: processDomainForm.sortOrder,
+          ...(hasProgression ? { progressionDescriptors: processDomainForm.progressionDescriptors } : {}),
+          status: 'active' as const,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        } as Omit<ProcessDomain, 'id'>);
+        flash('Process domain created.');
+      }
+      setShowProcessDomainForm(false);
+      await loadProcessDomains();
+    } catch (err) {
+      console.error('Failed to save process domain', err);
+      flashError('Failed to save. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  }, [siteId, user, processDomainForm, editingProcessDomainId, flash, flashError, loadProcessDomains]);
+
+  const archiveProcessDomain = useCallback(async (pd: ProcessDomain) => {
+    if (!confirm(`Archive "${pd.title}"?`)) return;
+    setSaving(true);
+    try {
+      const ref = doc(processDomainsCollection, pd.id);
+      await updateDoc(ref, { status: 'archived', updatedAt: serverTimestamp() });
+      flash('Process domain archived.');
+      await loadProcessDomains();
+    } catch (err) {
+      console.error('Failed to archive process domain', err);
+      flashError('Failed to archive.');
+    } finally {
+      setSaving(false);
+    }
+  }, [flash, flashError, loadProcessDomains]);
+
   /* ───── Auth Guard ───── */
 
   if (authLoading) return <div className="flex justify-center py-12"><Spinner /></div>;
@@ -398,6 +524,16 @@ export function CapabilityFrameworkEditor() {
             >
               Rubric Templates ({rubricTemplates.length})
             </button>
+            <button
+              onClick={() => setActiveTab('processDomains')}
+              className={`pb-3 text-sm font-medium border-b-2 ${
+                activeTab === 'processDomains'
+                  ? 'border-indigo-600 text-indigo-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Process Domains ({processDomains.length})
+            </button>
           </nav>
         </div>
 
@@ -414,12 +550,20 @@ export function CapabilityFrameworkEditor() {
             saving={saving}
             totalCount={capabilities.length}
           />
-        ) : (
+        ) : activeTab === 'rubricTemplates' ? (
           <RubricTemplatesTab
             rubricTemplates={rubricTemplates}
             capabilityMap={capabilityMap}
             onCreateRubric={openCreateRubric}
             onEditRubric={openEditRubric}
+          />
+        ) : (
+          <ProcessDomainsTab
+            processDomains={processDomains}
+            onCreateProcessDomain={openCreateProcessDomain}
+            onEditProcessDomain={openEditProcessDomain}
+            onArchiveProcessDomain={archiveProcessDomain}
+            saving={saving}
           />
         )}
 
@@ -449,6 +593,18 @@ export function CapabilityFrameworkEditor() {
             addCriterion={addCriterion}
             removeCriterion={removeCriterion}
             updateCriterion={updateCriterion}
+          />
+        )}
+
+        {/* ───── Process Domain Form Modal ───── */}
+        {showProcessDomainForm && (
+          <ProcessDomainFormModal
+            form={processDomainForm}
+            setForm={setProcessDomainForm}
+            isEditing={!!editingProcessDomainId}
+            saving={saving}
+            onSave={saveProcessDomain}
+            onCancel={() => setShowProcessDomainForm(false)}
           />
         )}
       </div>
@@ -809,6 +965,83 @@ function CapabilityFormModal({
             )}
           </div>
 
+          {/* Checkpoint Mappings */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-sm font-medium text-gray-700">
+                Checkpoint Mappings
+              </label>
+              <button
+                type="button"
+                onClick={() =>
+                  setForm((prev) => ({
+                    ...prev,
+                    checkpointMappings: [...prev.checkpointMappings, { label: '', description: '' }],
+                  }))
+                }
+                className="rounded bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-200"
+              >
+                + Add Checkpoint
+              </button>
+            </div>
+            <p className="text-xs text-gray-400 mb-2">
+              Define named checkpoints (assessment points) for this capability.
+            </p>
+            {form.checkpointMappings.length === 0 ? (
+              <p className="text-xs text-gray-400 italic">No checkpoints defined.</p>
+            ) : (
+              <div className="space-y-2">
+                {form.checkpointMappings.map((cm, i) => (
+                  <div key={i} className="flex items-start gap-2 rounded border border-gray-200 bg-gray-50 p-2">
+                    <div className="flex-1 space-y-1">
+                      <input
+                        type="text"
+                        value={cm.label}
+                        onChange={(e) =>
+                          setForm((prev) => ({
+                            ...prev,
+                            checkpointMappings: prev.checkpointMappings.map((c, j) =>
+                              j === i ? { ...c, label: e.target.value } : c
+                            ),
+                          }))
+                        }
+                        className="block w-full rounded-md border border-gray-300 px-2 py-1 text-xs shadow-sm"
+                        placeholder="Checkpoint label (e.g., Mid-sprint check)"
+                      />
+                      <input
+                        type="text"
+                        value={cm.description ?? ''}
+                        onChange={(e) =>
+                          setForm((prev) => ({
+                            ...prev,
+                            checkpointMappings: prev.checkpointMappings.map((c, j) =>
+                              j === i ? { ...c, description: e.target.value } : c
+                            ),
+                          }))
+                        }
+                        className="block w-full rounded-md border border-gray-300 px-2 py-1 text-xs shadow-sm"
+                        placeholder="Description (optional)"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setForm((prev) => ({
+                          ...prev,
+                          checkpointMappings: prev.checkpointMappings.filter((_, j) => j !== i),
+                        }))
+                      }
+                      className="mt-1 rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-500"
+                      title="Remove checkpoint"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* Progression Descriptors */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -985,6 +1218,204 @@ function RubricTemplateFormModal({
                 ))}
               </div>
             )}
+          </div>
+        </div>
+
+        <div className="mt-6 flex justify-end gap-3">
+          <button
+            onClick={onCancel}
+            className="rounded-md border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onSave}
+            disabled={saving}
+            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+          >
+            {saving ? 'Saving...' : isEditing ? 'Update' : 'Create'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ───── Process Domains Tab ───── */
+
+function ProcessDomainsTab({
+  processDomains,
+  onCreateProcessDomain,
+  onEditProcessDomain,
+  onArchiveProcessDomain,
+  saving,
+}: {
+  processDomains: ProcessDomain[];
+  onCreateProcessDomain: () => void;
+  onEditProcessDomain: (pd: ProcessDomain) => void;
+  onArchiveProcessDomain: (pd: ProcessDomain) => void;
+  saving: boolean;
+}) {
+  return (
+    <div>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-xs text-gray-400">{processDomains.length} process domains</p>
+          <p className="text-xs text-gray-500 mt-0.5">
+            Cross-cutting skills (e.g., collaboration, critical thinking) assessed alongside capabilities in rubrics.
+          </p>
+        </div>
+        <button
+          onClick={onCreateProcessDomain}
+          disabled={saving}
+          className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+        >
+          + Add Process Domain
+        </button>
+      </div>
+
+      {processDomains.length === 0 ? (
+        <div className="rounded-lg border-2 border-dashed border-gray-200 py-12 text-center">
+          <p className="text-sm text-gray-500">No process domains defined yet.</p>
+          <p className="mt-1 text-xs text-gray-400">
+            Process domains capture cross-cutting skills assessed alongside capabilities.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {processDomains.map((pd) => {
+            const hasProgression = pd.progressionDescriptors &&
+              Object.values(pd.progressionDescriptors).some((v) => v?.trim());
+            return (
+              <div key={pd.id} className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <h4 className="text-sm font-medium text-gray-900">{pd.title}</h4>
+                    {pd.descriptor && (
+                      <p className="mt-1 text-xs text-gray-500">{pd.descriptor}</p>
+                    )}
+                    {hasProgression && (
+                      <p className="mt-1 text-xs text-gray-400">Has progression descriptors</p>
+                    )}
+                    {pd.status === 'archived' && (
+                      <span className="mt-1 inline-block rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500">Archived</span>
+                    )}
+                  </div>
+                  <div className="flex shrink-0 gap-1">
+                    <button
+                      onClick={() => onEditProcessDomain(pd)}
+                      disabled={saving}
+                      className="rounded px-2 py-1 text-xs text-indigo-600 hover:bg-indigo-50 disabled:opacity-50"
+                    >
+                      Edit
+                    </button>
+                    {pd.status !== 'archived' && (
+                      <button
+                        onClick={() => onArchiveProcessDomain(pd)}
+                        disabled={saving}
+                        className="rounded px-2 py-1 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50"
+                      >
+                        Archive
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ───── Process Domain Form Modal ───── */
+
+function ProcessDomainFormModal({
+  form,
+  setForm,
+  isEditing,
+  saving,
+  onSave,
+  onCancel,
+}: {
+  form: ProcessDomainFormData;
+  setForm: (fn: (prev: ProcessDomainFormData) => ProcessDomainFormData) => void;
+  isEditing: boolean;
+  saving: boolean;
+  onSave: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="w-full max-w-xl rounded-lg bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+        <h2 className="text-lg font-semibold text-gray-900">
+          {isEditing ? 'Edit Process Domain' : 'Create Process Domain'}
+        </h2>
+
+        <div className="mt-4 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Title *</label>
+            <input
+              type="text"
+              value={form.title}
+              onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              placeholder="e.g., Collaboration, Critical Thinking"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Descriptor</label>
+            <textarea
+              value={form.descriptor}
+              onChange={(e) => setForm((prev) => ({ ...prev, descriptor: e.target.value }))}
+              rows={2}
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm"
+              placeholder="Brief description of this process domain"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Sort Order</label>
+            <input
+              aria-label="Sort order"
+              type="number"
+              value={form.sortOrder}
+              onChange={(e) => setForm((prev) => ({ ...prev, sortOrder: parseInt(e.target.value) || 0 }))}
+              className="mt-1 block w-24 rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Progression Descriptors
+            </label>
+            <div className="space-y-2">
+              {LEVEL_LABELS.map((label) => {
+                const key = label.toLowerCase() as keyof ProgressionDescriptors;
+                return (
+                  <div key={label} className="flex items-start gap-2">
+                    <span className="mt-2 w-24 shrink-0 text-xs font-medium text-gray-600">{label}</span>
+                    <textarea
+                      value={form.progressionDescriptors[key]}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          progressionDescriptors: {
+                            ...prev.progressionDescriptors,
+                            [key]: e.target.value,
+                          },
+                        }))
+                      }
+                      rows={1}
+                      className="block w-full rounded-md border border-gray-300 px-3 py-1.5 text-xs shadow-sm"
+                      placeholder={`What does "${label}" look like for this domain?`}
+                    />
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
 

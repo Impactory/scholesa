@@ -289,6 +289,35 @@ service cloud.firestore {
       allow create: if isEducator();
       allow update, delete: if false;
     }
+
+    // Process Domains: HQ/admin defines, educators can read.
+    match /processDomains/{id} {
+      allow read: if isAuthenticated();
+      allow create, update: if isHQ();
+      allow delete: if false;
+    }
+
+    // Process Domain Mastery: Educators can write via backend, learners and parents can read.
+    match /processDomainMastery/{id} {
+      allow read: if isAuthenticated() && (
+        resource.data.learnerId == request.auth.uid
+        || isEducator()
+        || isParentLinkedToLearner(resource.data.learnerId)
+      );
+      allow create, update: if isEducator();
+      allow delete: if false;
+    }
+
+    // Process Domain Growth Events: append-only provenance.
+    match /processDomainGrowthEvents/{id} {
+      allow read: if isAuthenticated() && (
+        resource.data.learnerId == request.auth.uid
+        || isEducator()
+        || isParentLinkedToLearner(resource.data.learnerId)
+      );
+      allow create: if isEducator();
+      allow update, delete: if false;
+    }
     
     // Recognition Badges: Educators can award, learners can read their own
     match /recognitionBadges/{id} {

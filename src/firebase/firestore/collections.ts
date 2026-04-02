@@ -44,6 +44,9 @@ import type {
   RubricApplication,
   RubricTemplate,
   LearnerReflection,
+  ProcessDomain,
+  ProcessDomainMastery,
+  ProcessDomainGrowthEvent,
 } from '@/src/types/schema';
 
 // Helper to create typed collection
@@ -101,3 +104,8 @@ export const evidenceRecordsCollection = createCollection<EvidenceRecord>('evide
 export const rubricApplicationsCollection = createCollection<RubricApplication>('rubricApplications');
 export const rubricTemplatesCollection = createCollection<RubricTemplate>('rubricTemplates');
 export const learnerReflectionsCollection = createCollection<LearnerReflection>('learnerReflections');
+
+// Process Domains
+export const processDomainsCollection = createCollection<ProcessDomain>('processDomains');
+export const processDomainMasteryCollection = createCollection<ProcessDomainMastery>('processDomainMastery');
+export const processDomainGrowthEventsCollection = createCollection<ProcessDomainGrowthEvent>('processDomainGrowthEvents');

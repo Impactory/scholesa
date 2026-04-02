@@ -1099,10 +1099,19 @@ export interface Capability {
   progressionDescriptors?: ProgressionDescriptors;
   rubricTemplateId?: string;
   unitMappings?: string[]; // Mission/unit IDs this capability maps to
+  checkpointMappings?: CheckpointMapping[]; // Named checkpoints for this capability
   sortOrder?: number;
   status?: 'active' | 'archived';
   createdAt: Timestamp;
   updatedAt: Timestamp;
+}
+
+/**
+ * A named checkpoint that defines a specific assessment point for a capability.
+ */
+export interface CheckpointMapping {
+  label: string;
+  description?: string;
 }
 
 /**
@@ -1135,9 +1144,59 @@ export interface RubricTemplate {
 export interface RubricTemplateCriterion {
   label: string;
   capabilityId: string;
+  processDomainId?: string;
   pillarCode?: PillarCode;
   maxScore: number;
   descriptors?: ProgressionDescriptors;
+}
+
+/**
+ * A process domain captures cross-cutting skills (e.g., collaboration,
+ * critical thinking) that are assessed alongside capabilities in rubrics.
+ */
+export interface ProcessDomain {
+  id: string;
+  title: string;
+  siteId?: string | null;
+  descriptor?: string;
+  progressionDescriptors?: ProgressionDescriptors;
+  sortOrder?: number;
+  status?: 'active' | 'archived';
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+/**
+ * Tracks a learner's mastery level for a process domain.
+ */
+export interface ProcessDomainMastery {
+  id: string;
+  learnerId: string;
+  processDomainId: string;
+  siteId: string;
+  latestLevel: number;
+  highestLevel: number;
+  evidenceIds: string[];
+  growthEventIds: string[];
+  updatedAt: Timestamp;
+  createdAt: Timestamp;
+}
+
+/**
+ * Append-only growth event for a process domain level change.
+ */
+export interface ProcessDomainGrowthEvent {
+  id: string;
+  learnerId: string;
+  processDomainId: string;
+  siteId: string;
+  level: number;
+  rawScore: number;
+  maxScore: number;
+  evidenceId?: string;
+  rubricApplicationId?: string;
+  educatorId?: string;
+  createdAt: Timestamp;
 }
 
 /**
