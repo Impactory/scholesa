@@ -286,10 +286,9 @@ G1–G12 all closed. No broken links in the chain.
 - **Gap**: Missions CRUD showed no capability context.
 - **Fix**: `MissionAttempt` schema now has `capabilityIds` and `pillarCodes` fields. Creation copies from `Mission`. CRUD views resolve and display capability titles via `enrichRecordsWithCapabilityTitles()`.
 
-### P1-C. Educator Mission Review → Rubric Integration
-- **Gap**: `/educator/missions/review` shows mission submissions as a CRUD list but cannot apply rubrics.
-- **Fix**: Embed `RubricReviewPanel` in mission review flow so educators can assess capability levels from mission submissions.
-- **Risk**: Medium — requires workflow change (CRUD → assessment).
+### P1-C. Educator Mission Review → Rubric Integration — ✅ DONE
+- **Gap**: `/educator/missions/review` showed mission submissions as a CRUD list but could not apply rubrics.
+- **Fix**: Extended `WorkflowRoutePage` with `renderRecordDetail` prop for inline assessment panels. Mission review page now renders `RubricReviewPanel` inline per record. Cloud Function `applyRubricToEvidence` extended with `missionAttemptId` support — creates `RubricApplication`, `CapabilityGrowthEvent`, `CapabilityMastery` upserts, mission attempt status update, and portfolio creation from mission data, all in atomic batch. Learner names resolved at query time via `enrichRecordsWithLearnerNames`.
 
 ### P1-D. Parent Portfolio Capability Mapping — ✅ DONE
 - **Gap**: Parent portfolio items showed no capability tags.
@@ -339,7 +338,7 @@ G1–G12 all closed. No broken links in the chain.
 4. ~~Remove `/learner/habits` route (no schema backing)~~ ✅
 
 ### Phase 2: Assessment Depth (Medium Effort)
-5. **P1-C**: Embed `RubricReviewPanel` in `/educator/missions/review`
+5. ~~**P1-C**: Embed `RubricReviewPanel` in `/educator/missions/review`~~ ✅
 6. **P1-A**: Create learner capability profile synthesis view
 7. Process domain progress display in passport + portfolio views
 

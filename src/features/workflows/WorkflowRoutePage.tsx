@@ -21,11 +21,23 @@ import {
   type WorkflowCreateInput,
   type WorkflowFieldDefinition,
   type WorkflowLoadResult,
+  type WorkflowRecord,
 } from './workflowData';
 import { formatWorkflowRecordUpdatedAt } from './workflowRecordTimestamps';
 
 interface WorkflowRoutePageProps {
   routePath: WorkflowPath;
+  /**
+   * Optional detail renderer for inline assessment/review panels.
+   * When provided, records get an additional action button that opens
+   * the detail panel inline below the record card.
+   */
+  renderRecordDetail?: (
+    record: WorkflowRecord,
+    onClose: () => void,
+  ) => React.ReactNode;
+  /** Label for the button that opens the detail panel (default: "Apply Rubric") */
+  detailActionLabel?: string;
 }
 
 function buildInitialFormValues(fields: WorkflowFieldDefinition[] = []): Record<string, string | boolean> {
@@ -39,7 +51,7 @@ function buildInitialFormValues(fields: WorkflowFieldDefinition[] = []): Record<
   }, {});
 }
 
-export function WorkflowRoutePage({ routePath }: WorkflowRoutePageProps) {
+export function WorkflowRoutePage({ routePath, renderRecordDetail, detailActionLabel }: WorkflowRoutePageProps) {
   const route = getWorkflowRoute(routePath);
   const { user, profile, loading: authLoading } = useAuthContext();
   const { locale } = useI18n();
@@ -66,6 +78,7 @@ export function WorkflowRoutePage({ routePath }: WorkflowRoutePageProps) {
     values: {},
   });
   const [mutatingId, setMutatingId] = useState<string | null>(null);
+  const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
 
   const formatMetadataLabel = (key: string) =>
     key
@@ -437,6 +450,28 @@ export function WorkflowRoutePage({ routePath }: WorkflowRoutePageProps) {
                     ) : null}
                   </div>
                   <div className="flex flex-wrap gap-2">
+                    {renderRecordDetail && (
+                      <button
+                        type="button"
+                        data-testid={`workflow-record-${record.id}-detail`}
+                        disabled={mutatingId === record.id}
+                        onClick={() => {
+                          setSelectedRecordId(
+                            selectedRecordId === record.id ? null : record.id
+                          );
+                          trackInteraction('feature_discovered', {
+                            cta: 'workflow_detail_open',
+                            routePath,
+                            recordId: record.id,
+                          });
+                        }}
+                        className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground disabled:opacity-50"
+                      >
+                        {selectedRecordId === record.id
+                          ? 'Close'
+                          : detailActionLabel || 'Apply Rubric'}
+                      </button>
+                    )}
                     {record.canEdit && (
                       <button
                         type="button"
@@ -465,6 +500,14 @@ export function WorkflowRoutePage({ routePath }: WorkflowRoutePageProps) {
                     )}
                   </div>
                 </div>
+                {renderRecordDetail && selectedRecordId === record.id && (
+                  <div className="mt-4 border-t border-app pt-4">
+                    {renderRecordDetail(record, () => {
+                      setSelectedRecordId(null);
+                      void refresh();
+                    })}
+                  </div>
+                )}
               </li>
             ))}
           </ul>

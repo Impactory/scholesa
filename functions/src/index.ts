@@ -8051,6 +8051,7 @@ interface RubricScoreInput {
 
 export const applyRubricToEvidence = onCall(async (request: CallableRequest<{
   evidenceRecordIds: string[];
+  missionAttemptId?: string;
   learnerId: string;
   siteId: string;
   rubricId?: string;
@@ -8059,11 +8060,14 @@ export const applyRubricToEvidence = onCall(async (request: CallableRequest<{
   const educatorId = request.auth?.uid;
   await requireRoleAndSite(educatorId, ['educator', 'siteLead', 'site', 'hq', 'admin'], request.data?.siteId);
 
-  const { evidenceRecordIds, learnerId, siteId, rubricId, scores } = request.data ?? {};
+  const { evidenceRecordIds, missionAttemptId, learnerId, siteId, rubricId, scores } = request.data ?? {};
 
-  if (!Array.isArray(evidenceRecordIds) || evidenceRecordIds.length === 0) {
-    throw new HttpsError('invalid-argument', 'evidenceRecordIds is required.');
+  const hasEvidence = Array.isArray(evidenceRecordIds) && evidenceRecordIds.length > 0;
+  const hasMission = typeof missionAttemptId === 'string' && missionAttemptId.length > 0;
+  if (!hasEvidence && !hasMission) {
+    throw new HttpsError('invalid-argument', 'Either evidenceRecordIds or missionAttemptId is required.');
   }
+  const safeEvidenceRecordIds = hasEvidence ? evidenceRecordIds : [];
   if (!learnerId || typeof learnerId !== 'string') {
     throw new HttpsError('invalid-argument', 'learnerId is required.');
   }
@@ -8092,7 +8096,8 @@ export const applyRubricToEvidence = onCall(async (request: CallableRequest<{
     siteId,
     educatorId,
     rubricId: rubricId ?? null,
-    evidenceRecordIds,
+    missionAttemptId: missionAttemptId ?? null,
+    evidenceRecordIds: safeEvidenceRecordIds,
     scores: scores.map((s) => ({
       criterionId: s.criterionId,
       capabilityId: s.capabilityId,
@@ -8132,7 +8137,7 @@ export const applyRubricToEvidence = onCall(async (request: CallableRequest<{
     const masteryData = masterySnap.data() ?? {};
     const highestLevel = Math.max(nextLevel, (masteryData.highestLevel as number) ?? 0);
     const priorEvidenceIds: string[] = Array.isArray(masteryData.evidenceIds) ? masteryData.evidenceIds : [];
-    const mergedEvidenceIds = [...new Set([...evidenceRecordIds, ...priorEvidenceIds])];
+    const mergedEvidenceIds = [...new Set([...safeEvidenceRecordIds, ...priorEvidenceIds])];
 
     batch.set(masteryRef, {
       learnerId,
@@ -8141,7 +8146,8 @@ export const applyRubricToEvidence = onCall(async (request: CallableRequest<{
       pillarCode,
       latestLevel: nextLevel,
       highestLevel,
-      latestEvidenceId: evidenceRecordIds[0],
+      latestEvidenceId: safeEvidenceRecordIds[0] ?? null,
+      latestMissionAttemptId: missionAttemptId ?? null,
       evidenceIds: mergedEvidenceIds,
       createdAt: masteryData.createdAt ?? FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
@@ -8158,7 +8164,8 @@ export const applyRubricToEvidence = onCall(async (request: CallableRequest<{
       level: nextLevel,
       rawScore,
       maxScore,
-      linkedEvidenceRecordIds: evidenceRecordIds,
+      missionAttemptId: missionAttemptId ?? null,
+      linkedEvidenceRecordIds: safeEvidenceRecordIds,
       linkedPortfolioItemIds: [],
       rubricApplicationId: rubricAppRef.id,
       educatorId,
@@ -8190,7 +8197,7 @@ export const applyRubricToEvidence = onCall(async (request: CallableRequest<{
     const pdMasteryData = pdMasterySnap.data() ?? {};
     const pdHighestLevel = Math.max(nextLevel, (pdMasteryData.highestLevel as number) ?? 0);
     const pdPriorEvidenceIds: string[] = Array.isArray(pdMasteryData.evidenceIds) ? pdMasteryData.evidenceIds : [];
-    const pdMergedEvidenceIds = [...new Set([...evidenceRecordIds, ...pdPriorEvidenceIds])];
+    const pdMergedEvidenceIds = [...new Set([...safeEvidenceRecordIds, ...pdPriorEvidenceIds])];
 
     batch.set(pdMasteryRef, {
       learnerId,
@@ -8212,7 +8219,8 @@ export const applyRubricToEvidence = onCall(async (request: CallableRequest<{
       level: nextLevel,
       rawScore,
       maxScore,
-      linkedEvidenceRecordIds: evidenceRecordIds,
+      missionAttemptId: missionAttemptId ?? null,
+      linkedEvidenceRecordIds: safeEvidenceRecordIds,
       rubricApplicationId: rubricAppRef.id,
       educatorId,
       createdAt: FieldValue.serverTimestamp(),
@@ -8220,13 +8228,26 @@ export const applyRubricToEvidence = onCall(async (request: CallableRequest<{
   }
 
   // 3. Link evidence records
-  for (const evidenceId of evidenceRecordIds) {
+  for (const evidenceId of safeEvidenceRecordIds) {
     const evidenceRef = db.collection('evidenceRecords').doc(evidenceId);
     batch.update(evidenceRef, {
       rubricStatus: 'applied',
       growthStatus: 'recorded',
       rubricApplicationId: rubricAppRef.id,
       growthEventId: growthEventIds[0] ?? null,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+  }
+
+  // 3b. Update mission attempt if provided
+  if (hasMission) {
+    const missionRef = db.collection('missionAttempts').doc(missionAttemptId!);
+    batch.update(missionRef, {
+      status: 'reviewed',
+      reviewStatus: 'reviewed',
+      reviewedBy: educatorId,
+      reviewedAt: FieldValue.serverTimestamp(),
+      rubricApplicationId: rubricAppRef.id,
       updatedAt: FieldValue.serverTimestamp(),
     });
   }
@@ -8238,40 +8259,77 @@ export const applyRubricToEvidence = onCall(async (request: CallableRequest<{
   const portfolioBatch = db.batch();
   const capabilityIds = Array.from(scoresByCapability.keys());
 
-  // Read evidence records to extract artifact data for portfolio
-  const evidenceDocs = await Promise.all(
-    evidenceRecordIds.map((id) => db.collection('evidenceRecords').doc(id).get())
-  );
-
   // Group pillar codes from scored capabilities
   const pillarCodes = [...new Set(scores.map((s) => s.pillarCode).filter(Boolean))];
 
-  for (const evidenceDoc of evidenceDocs) {
-    if (!evidenceDoc.exists) continue;
-    const evidenceData = evidenceDoc.data() ?? {};
-    const portfolioId = `rubric-${evidenceDoc.id}`;
+  // Read evidence records to extract artifact data for portfolio
+  if (safeEvidenceRecordIds.length > 0) {
+    const evidenceDocs = await Promise.all(
+      safeEvidenceRecordIds.map((id) => db.collection('evidenceRecords').doc(id).get())
+    );
+
+    for (const evidenceDoc of evidenceDocs) {
+      if (!evidenceDoc.exists) continue;
+      const evidenceData = evidenceDoc.data() ?? {};
+      const portfolioId = `rubric-${evidenceDoc.id}`;
+      const portfolioRef = db.collection('portfolioItems').doc(portfolioId);
+
+      portfolioBatch.set(portfolioRef, {
+        learnerId,
+        siteId,
+        title: typeof evidenceData.description === 'string'
+          ? evidenceData.description.slice(0, 100)
+          : 'Reviewed evidence',
+        description: typeof evidenceData.description === 'string'
+          ? evidenceData.description
+          : '',
+        pillarCodes,
+        artifacts: typeof evidenceData.artifactUrl === 'string' ? [evidenceData.artifactUrl] : [],
+        evidenceRecordIds: [evidenceDoc.id],
+        capabilityIds,
+        growthEventIds,
+        rubricApplicationId: rubricAppRef.id,
+        educatorId,
+        verificationStatus: 'reviewed',
+        proofOfLearningStatus: evidenceData.portfolioCandidate ? 'partial' : 'not-available',
+        aiDisclosureStatus: evidenceData.aiDisclosureStatus ?? 'not-available',
+        source: 'rubric_application',
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      }, { merge: true });
+
+      portfolioItemIds.push(portfolioId);
+    }
+  }
+
+  // 4b. Create portfolio item from mission attempt if no evidence records
+  if (hasMission && safeEvidenceRecordIds.length === 0) {
+    const missionDoc = await db.collection('missionAttempts').doc(missionAttemptId!).get();
+    const missionData = missionDoc.exists ? (missionDoc.data() ?? {}) : {};
+    const missionTitle = typeof missionData.missionTitle === 'string'
+      ? missionData.missionTitle
+      : 'Mission submission';
+    const portfolioId = `rubric-mission-${missionAttemptId}`;
     const portfolioRef = db.collection('portfolioItems').doc(portfolioId);
+    const artifacts: string[] = Array.isArray(missionData.attachmentUrls) ? missionData.attachmentUrls : [];
 
     portfolioBatch.set(portfolioRef, {
       learnerId,
       siteId,
-      title: typeof evidenceData.description === 'string'
-        ? evidenceData.description.slice(0, 100)
-        : 'Reviewed evidence',
-      description: typeof evidenceData.description === 'string'
-        ? evidenceData.description
-        : '',
+      title: missionTitle.slice(0, 100),
+      description: typeof missionData.content === 'string' ? missionData.content : missionTitle,
       pillarCodes,
-      artifacts: typeof evidenceData.artifactUrl === 'string' ? [evidenceData.artifactUrl] : [],
-      evidenceRecordIds: [evidenceDoc.id],
+      artifacts,
+      evidenceRecordIds: [],
+      missionAttemptId,
       capabilityIds,
       growthEventIds,
       rubricApplicationId: rubricAppRef.id,
       educatorId,
       verificationStatus: 'reviewed',
-      proofOfLearningStatus: evidenceData.portfolioCandidate ? 'partial' : 'not-available',
-      aiDisclosureStatus: evidenceData.aiDisclosureStatus ?? 'not-available',
-      source: 'rubric_application',
+      proofOfLearningStatus: 'not-available',
+      aiDisclosureStatus: 'not-available',
+      source: 'mission_rubric_application',
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
     }, { merge: true });

@@ -11,6 +11,7 @@ import type { RubricTemplate, ProcessDomain } from '@/src/types/schema';
 
 interface RubricReviewPanelProps {
   evidenceRecordIds: string[];
+  missionAttemptId?: string;
   learnerId: string;
   learnerName: string;
   siteId: string;
@@ -38,6 +39,7 @@ const SCORE_LEVELS = [
 
 export function RubricReviewPanel({
   evidenceRecordIds,
+  missionAttemptId,
   learnerId,
   learnerName,
   siteId,
@@ -230,6 +232,7 @@ export function RubricReviewPanel({
       const allScores = [...scores, ...domainScores];
       await applyRubric({
         evidenceRecordIds,
+        missionAttemptId: missionAttemptId ?? undefined,
         learnerId,
         siteId,
         rubricId: selectedTemplateId ?? undefined,
@@ -249,7 +252,7 @@ export function RubricReviewPanel({
     } finally {
       setSaving(false);
     }
-  }, [canSubmit, evidenceRecordIds, learnerId, siteId, scores, domainScores, selectedTemplateId, onComplete]);
+  }, [canSubmit, evidenceRecordIds, missionAttemptId, learnerId, siteId, scores, domainScores, selectedTemplateId, onComplete]);
 
   const unusedCapabilities = useMemo(
     () => capabilityList.filter((c) => !scores.some((s) => s.capabilityId === c.id)),

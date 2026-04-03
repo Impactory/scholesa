@@ -254,6 +254,49 @@ async function enrichRecordsWithCapabilityTitles(
   }
 }
 
+/**
+ * Batch-resolve learner UIDs to display names and inject as metadata.
+ * Best-effort: falls back to UID if lookup fails.
+ */
+async function enrichRecordsWithLearnerNames(records: WorkflowRecord[]): Promise<void> {
+  if (records.length === 0) return;
+  const learnerIds = Array.from(new Set(
+    records.map((r) => r.metadata.learnerId).filter((id): id is string => Boolean(id))
+  ));
+  if (learnerIds.length === 0) return;
+
+  try {
+    // Batch fetch user docs (Firestore 'in' supports up to 30 at a time)
+    const nameMap = new Map<string, string>();
+    for (let i = 0; i < learnerIds.length; i += 30) {
+      const batch = learnerIds.slice(i, i + 30);
+      const snap = await getDocs(
+        query(collection(firestore, 'users'), where(documentId(), 'in', batch))
+      );
+      for (const d of snap.docs) {
+        const data = d.data() as Record<string, unknown>;
+        const displayName =
+          (typeof data.displayName === 'string' && data.displayName) ||
+          (typeof data.name === 'string' && data.name) ||
+          d.id;
+        nameMap.set(d.id, displayName);
+      }
+    }
+    for (const record of records) {
+      const uid = record.metadata.learnerId;
+      if (uid && nameMap.has(uid)) {
+        record.metadata.learnerName = nameMap.get(uid)!;
+        // Also update subtitle to show name instead of UID
+        if (record.subtitle === uid) {
+          record.subtitle = nameMap.get(uid)!;
+        }
+      }
+    }
+  } catch {
+    // Name resolution is best-effort
+  }
+}
+
 function userLabelFromRecord(data: Record<string, unknown>, fallbackLabel = 'User name unavailable'): string {
   const displayName = asString(data.displayName, '');
   if (displayName) return displayName;
@@ -1844,6 +1887,7 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
         limitSize: 100,
       }), ctx.routePath);
       await enrichRecordsWithCapabilityTitles(reviewRecords, siteId);
+      await enrichRecordsWithLearnerNames(reviewRecords);
       return {
         records: reviewRecords,
         canCreate: false,
