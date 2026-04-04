@@ -146,11 +146,18 @@ export interface AccountabilityCycle {
   name: string; // e.g., "Week 1 - Term 2"
 }
 
+/**
+ * @deprecated LMS-shaped type — conflates attendance with mastery.
+ * Migrate to CapabilityMastery + CapabilityGrowthEvent for evidence-based tracking.
+ * Scheduled for removal in Sprint 2. See docs/ALIGNMENT_PLAN.md S0-2.
+ */
 export interface AccountabilityKPI {
   id: string;
   cycleId: string;
   learnerId: string;
+  /** @deprecated Use CapabilityMastery instead of attendance metrics */
   attendancePct: number;
+  /** @deprecated Use CapabilityMastery.currentLevel instead */
   missionsCompleted: number;
   pillarScores: Record<PillarCode, number>;
 }
@@ -998,7 +1005,10 @@ export interface LearnerInterestProfile {
 }
 
 /**
- * Parent weekly snapshot
+ * @deprecated LMS-shaped type — skillsImproved has no evidence provenance.
+ * Migrate to buildParentLearnerSummary() which reads from CapabilityMastery,
+ * CapabilityGrowthEvent, and PortfolioItem with proof-of-learning linkage.
+ * Scheduled for removal in Sprint 2. See docs/ALIGNMENT_PLAN.md S0-2.
  */
 export interface ParentSnapshot {
   id: string;
@@ -1006,24 +1016,27 @@ export interface ParentSnapshot {
   parentId: string;
   siteId: string;
   cycleId: string;
-  
+
   // Summary
   whatTheyBuilt: string[];
+  /** @deprecated No evidence provenance — use CapabilityGrowthEvent instead */
   skillsImproved: string[];
   howToSupportAtHome: string[];
-  
+
   // Stats
+  /** @deprecated Use CapabilityMastery for evidence-backed metrics */
   attendanceThisWeek: number;
+  /** @deprecated Use CapabilityMastery for evidence-backed metrics */
   missionsCompleted: number;
   badgesEarned: number;
-  
+
   // Highlights
   showcaseHighlight?: {
     title: string;
     artifactUrl: string;
     description: string;
   };
-  
+
   createdAt: Timestamp;
 }
 

@@ -1488,6 +1488,9 @@ class AccountabilityCycleModel {
       };
 }
 
+/// @deprecated LMS-shaped type — conflates attendance with mastery.
+/// Migrate to CapabilityMastery + CapabilityGrowthEvent.
+/// Scheduled for removal in Sprint 2.
 @immutable
 class AccountabilityKPIModel {
   const AccountabilityKPIModel({

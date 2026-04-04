@@ -522,6 +522,8 @@ class AccountabilityCycleRepository {
       _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
 }
 
+/// @deprecated LMS-shaped type — use CapabilityMastery + GrowthEngineService.
+/// Scheduled for removal in Sprint 2.
 class AccountabilityKPIRepository {
   CollectionReference<Map<String, dynamic>> get _col =>
       FirebaseFirestore.instance.collection('accountabilityKPIs');
