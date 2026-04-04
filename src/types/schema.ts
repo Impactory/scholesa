@@ -832,7 +832,11 @@ export interface SkillEvidence {
   
   // Status
   status: 'submitted' | 'approved' | 'needs_revision';
-  
+
+  // AI disclosure (S1-7)
+  aiAssistanceUsed?: boolean;
+  aiAssistanceDetails?: string;
+
   submittedAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -891,7 +895,11 @@ export interface Checkpoint {
   // Pass/needs revision
   status: 'passed' | 'needs_revision';
   attemptNumber: number;
-  
+
+  // AI disclosure (S1-7)
+  aiAssistanceUsed?: boolean;
+  aiAssistanceDetails?: string;
+
   createdAt: Timestamp;
 }
 
@@ -925,7 +933,11 @@ export interface ShowcaseSubmission {
   // Visibility
   visibleToCrew: boolean;
   visibleToSite: boolean;
-  
+
+  // AI disclosure (S1-7)
+  aiAssistanceUsed?: boolean;
+  aiAssistanceDetails?: string;
+
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -953,7 +965,11 @@ export interface ReflectionEntry {
   
   // What strategy worked
   effectiveStrategy?: string;
-  
+
+  // AI disclosure (S1-7)
+  aiAssistanceUsed?: boolean;
+  aiAssistanceDetails?: string;
+
   createdAt: Timestamp;
 }
 
@@ -1083,7 +1099,11 @@ export interface PeerFeedback {
   flagReason?: string;
   moderatedBy?: string;
   moderatedAt?: Timestamp;
-  
+
+  // AI disclosure (S1-7)
+  aiAssistanceUsed?: boolean;
+  aiAssistanceDetails?: string;
+
   createdAt: Timestamp;
 }
 

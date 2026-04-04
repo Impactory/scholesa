@@ -6764,6 +6764,8 @@ class CheckpointModel {
     this.explainItBackResponse,
     this.educatorId,
     this.score,
+    this.aiAssistanceUsed,
+    this.aiAssistanceDetails,
     this.createdAt,
   });
 
@@ -6780,6 +6782,8 @@ class CheckpointModel {
   final String? explainItBackResponse;
   final String? educatorId;
   final int? score;
+  final bool? aiAssistanceUsed;
+  final String? aiAssistanceDetails;
   final Timestamp? createdAt;
 
   factory CheckpointModel.fromDoc(
@@ -6800,6 +6804,8 @@ class CheckpointModel {
       explainItBackResponse: data['explainItBackResponse'] as String?,
       educatorId: data['educatorId'] as String?,
       score: data['score'] as int?,
+      aiAssistanceUsed: data['aiAssistanceUsed'] as bool?,
+      aiAssistanceDetails: data['aiAssistanceDetails'] as String?,
       createdAt: data['createdAt'] as Timestamp?,
     );
   }
@@ -6817,6 +6823,8 @@ class CheckpointModel {
         'explainItBackResponse': explainItBackResponse,
         'educatorId': educatorId,
         'score': score,
+        'aiAssistanceUsed': aiAssistanceUsed,
+        'aiAssistanceDetails': aiAssistanceDetails,
         'createdAt': createdAt ?? Timestamp.now(),
       };
 }
@@ -6836,6 +6844,8 @@ class ReflectionEntryModel {
     this.engagementRating,
     this.confidenceRating,
     this.educatorNotes,
+    this.aiAssistanceUsed,
+    this.aiAssistanceDetails,
     this.createdAt,
   });
 
@@ -6849,6 +6859,8 @@ class ReflectionEntryModel {
   final int? engagementRating;
   final int? confidenceRating;
   final String? educatorNotes;
+  final bool? aiAssistanceUsed;
+  final String? aiAssistanceDetails;
   final Timestamp? createdAt;
 
   factory ReflectionEntryModel.fromDoc(
@@ -6865,6 +6877,8 @@ class ReflectionEntryModel {
       engagementRating: data['engagementRating'] as int?,
       confidenceRating: data['confidenceRating'] as int?,
       educatorNotes: data['educatorNotes'] as String?,
+      aiAssistanceUsed: data['aiAssistanceUsed'] as bool?,
+      aiAssistanceDetails: data['aiAssistanceDetails'] as String?,
       createdAt: data['createdAt'] as Timestamp?,
     );
   }
@@ -6879,6 +6893,8 @@ class ReflectionEntryModel {
         'engagementRating': engagementRating,
         'confidenceRating': confidenceRating,
         'educatorNotes': educatorNotes,
+        'aiAssistanceUsed': aiAssistanceUsed,
+        'aiAssistanceDetails': aiAssistanceDetails,
         'createdAt': createdAt ?? Timestamp.now(),
       };
 }
@@ -6897,6 +6913,8 @@ class SkillEvidenceModel {
     this.educatorId,
     required this.siteId,
     this.notes,
+    this.aiAssistanceUsed,
+    this.aiAssistanceDetails,
     this.createdAt,
   });
 
@@ -6910,6 +6928,8 @@ class SkillEvidenceModel {
   final String? educatorId;
   final String siteId;
   final String? notes;
+  final bool? aiAssistanceUsed;
+  final String? aiAssistanceDetails;
   final Timestamp? createdAt;
 
   factory SkillEvidenceModel.fromDoc(
@@ -6925,6 +6945,8 @@ class SkillEvidenceModel {
       educatorId: data['educatorId'] as String?,
       siteId: data['siteId'] as String? ?? '',
       notes: data['notes'] as String?,
+      aiAssistanceUsed: data['aiAssistanceUsed'] as bool?,
+      aiAssistanceDetails: data['aiAssistanceDetails'] as String?,
       createdAt: data['createdAt'] as Timestamp?,
     );
   }
@@ -6938,6 +6960,8 @@ class SkillEvidenceModel {
         'educatorId': educatorId,
         'siteId': siteId,
         'notes': notes,
+        'aiAssistanceUsed': aiAssistanceUsed,
+        'aiAssistanceDetails': aiAssistanceDetails,
         'createdAt': createdAt ?? Timestamp.now(),
       };
 }
@@ -7025,6 +7049,8 @@ class PeerFeedbackModel {
     this.suggestions,
     required this.siteId,
     this.sessionId,
+    this.aiAssistanceUsed,
+    this.aiAssistanceDetails,
     this.createdAt,
   });
 
@@ -7037,6 +7063,8 @@ class PeerFeedbackModel {
   final String? suggestions;
   final String siteId;
   final String? sessionId;
+  final bool? aiAssistanceUsed;
+  final String? aiAssistanceDetails;
   final Timestamp? createdAt;
 
   factory PeerFeedbackModel.fromDoc(
@@ -7052,6 +7080,8 @@ class PeerFeedbackModel {
       suggestions: data['suggestions'] as String?,
       siteId: data['siteId'] as String? ?? '',
       sessionId: data['sessionId'] as String?,
+      aiAssistanceUsed: data['aiAssistanceUsed'] as bool?,
+      aiAssistanceDetails: data['aiAssistanceDetails'] as String?,
       createdAt: data['createdAt'] as Timestamp?,
     );
   }
@@ -7065,6 +7095,8 @@ class PeerFeedbackModel {
         'suggestions': suggestions,
         'siteId': siteId,
         'sessionId': sessionId,
+        'aiAssistanceUsed': aiAssistanceUsed,
+        'aiAssistanceDetails': aiAssistanceDetails,
         'createdAt': createdAt ?? Timestamp.now(),
       };
 }
@@ -7182,6 +7214,8 @@ class ShowcaseSubmissionModel {
     this.visibility = 'school',
     this.approvalStatus = 'pending',
     this.approvedBy,
+    this.aiAssistanceUsed,
+    this.aiAssistanceDetails,
     this.createdAt,
   });
 
@@ -7195,6 +7229,8 @@ class ShowcaseSubmissionModel {
   /// One of: pending, approved, rejected
   final String approvalStatus;
   final String? approvedBy;
+  final bool? aiAssistanceUsed;
+  final String? aiAssistanceDetails;
   final Timestamp? createdAt;
 
   factory ShowcaseSubmissionModel.fromDoc(
@@ -7209,6 +7245,8 @@ class ShowcaseSubmissionModel {
       visibility: data['visibility'] as String? ?? 'school',
       approvalStatus: data['approvalStatus'] as String? ?? 'pending',
       approvedBy: data['approvedBy'] as String?,
+      aiAssistanceUsed: data['aiAssistanceUsed'] as bool?,
+      aiAssistanceDetails: data['aiAssistanceDetails'] as String?,
       createdAt: data['createdAt'] as Timestamp?,
     );
   }
@@ -7221,6 +7259,8 @@ class ShowcaseSubmissionModel {
         'visibility': visibility,
         'approvalStatus': approvalStatus,
         'approvedBy': approvedBy,
+        'aiAssistanceUsed': aiAssistanceUsed,
+        'aiAssistanceDetails': aiAssistanceDetails,
         'createdAt': createdAt ?? Timestamp.now(),
       };
 }
