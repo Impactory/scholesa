@@ -1135,6 +1135,7 @@ class PortfolioItemModel {
     this.capabilityIds = const <String>[],
     this.capabilityTitles = const <String>[],
     this.growthEventIds = const <String>[],
+    this.reflectionIds = const <String>[],
     this.missionAttemptId,
     this.rubricApplicationId,
     this.proofBundleId,
@@ -1174,6 +1175,7 @@ class PortfolioItemModel {
   final List<String> capabilityIds;
   final List<String> capabilityTitles;
   final List<String> growthEventIds;
+  final List<String> reflectionIds;
   final String? missionAttemptId;
   final String? rubricApplicationId;
   final String? proofBundleId;
@@ -1225,6 +1227,8 @@ class PortfolioItemModel {
       ),
       growthEventIds: List<String>.from(
           data['growthEventIds'] as List? ?? const <String>[]),
+      reflectionIds: List<String>.from(
+          data['reflectionIds'] as List? ?? const <String>[]),
       missionAttemptId: data['missionAttemptId'] as String?,
       rubricApplicationId: data['rubricApplicationId'] as String?,
       proofBundleId: data['proofBundleId'] as String?,
@@ -1272,6 +1276,7 @@ class PortfolioItemModel {
         'capabilityIds': capabilityIds,
         'capabilityTitles': capabilityTitles,
         'growthEventIds': growthEventIds,
+        'reflectionIds': reflectionIds,
         'missionAttemptId': missionAttemptId,
         'rubricApplicationId': rubricApplicationId,
         'proofBundleId': proofBundleId,
@@ -6839,6 +6844,7 @@ class ReflectionEntryModel {
     required this.siteId,
     this.sessionId,
     this.missionId,
+    this.portfolioItemId,
     required this.prompt,
     required this.response,
     this.engagementRating,
@@ -6854,6 +6860,7 @@ class ReflectionEntryModel {
   final String siteId;
   final String? sessionId;
   final String? missionId;
+  final String? portfolioItemId;
   final String prompt;
   final String response;
   final int? engagementRating;
@@ -6872,6 +6879,7 @@ class ReflectionEntryModel {
       siteId: data['siteId'] as String? ?? '',
       sessionId: data['sessionId'] as String?,
       missionId: data['missionId'] as String?,
+      portfolioItemId: data['portfolioItemId'] as String?,
       prompt: data['prompt'] as String? ?? '',
       response: data['response'] as String? ?? '',
       engagementRating: data['engagementRating'] as int?,
@@ -6888,6 +6896,7 @@ class ReflectionEntryModel {
         'siteId': siteId,
         'sessionId': sessionId,
         'missionId': missionId,
+        'portfolioItemId': portfolioItemId,
         'prompt': prompt,
         'response': response,
         'engagementRating': engagementRating,

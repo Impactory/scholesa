@@ -229,6 +229,7 @@ export interface PortfolioItem {
   evidenceRecordIds?: string[];
   capabilityIds?: string[];
   capabilityTitles?: string[];
+  reflectionIds?: string[]; // S1-6: linked ReflectionEntry documents
   growthEventIds?: string[];
   missionAttemptId?: string;
   rubricApplicationId?: string;
@@ -954,6 +955,7 @@ export interface ReflectionEntry {
   sprintSessionId?: string;
   missionId?: string;
   cycleId?: string; // Weekly cycle
+  portfolioItemId?: string; // S1-6: back-link to the portfolio item this reflects on
   
   // Core prompts
   proudOf: string; // "I'm proud of..."

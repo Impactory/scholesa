@@ -155,6 +155,7 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
   const [newPillar, setNewPillar] = useState<PillarCode>('FUTURE_SKILLS');
   const [newArtifactUrl, setNewArtifactUrl] = useState('');
   const [newAiDisclosure, setNewAiDisclosure] = useState<AiDisclosure>('none');
+  const [newReflection, setNewReflection] = useState('');
   const [saving, setSaving] = useState(false);
 
   // ---- Data loading ----
@@ -273,7 +274,7 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
     if (!newTitle.trim()) return;
     setSaving(true);
     try {
-      await addDoc(collection(firestore, 'portfolioItems'), {
+      const portfolioDoc = await addDoc(collection(firestore, 'portfolioItems'), {
         title: newTitle.trim(),
         description: newDescription.trim(),
         pillarCode: newPillar,
@@ -283,18 +284,38 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
         proofOfLearning: false,
         linkedCapabilityIds: [],
         linkedCapabilityTitles: [],
+        reflectionIds: [] as string[],
         learnerId: ctx.uid,
         createdAt: serverTimestamp(),
       });
+
+      // S1-6: Create linked reflection if provided
+      if (newReflection.trim()) {
+        const reflectionDoc = await addDoc(collection(firestore, 'learnerReflections'), {
+          learnerId: ctx.uid,
+          siteId: ctx.profile?.siteIds?.[0] ?? '',
+          portfolioItemId: portfolioDoc.id,
+          proudOf: newReflection.trim(),
+          nextIWill: '',
+          createdAt: serverTimestamp(),
+        });
+        // Back-link the reflection to the portfolio item
+        await updateDoc(portfolioDoc, {
+          reflectionIds: [reflectionDoc.id],
+        });
+      }
+
       trackInteraction('feature_discovered', {
         cta: 'portfolio_item_added',
         pillar: newPillar,
         aiDisclosure: newAiDisclosure,
+        hasReflection: newReflection.trim().length > 0,
       });
       setNewTitle('');
       setNewDescription('');
       setNewArtifactUrl('');
       setNewAiDisclosure('none');
+      setNewReflection('');
       setShowAddForm(false);
       await loadData();
     } catch (err) {
@@ -564,6 +585,22 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
                     </label>
                   ))}
                 </fieldset>
+
+                {/* Reflection linkage (S1-6) */}
+                <label className="block space-y-1">
+                  <span className="text-xs font-medium text-app-muted">
+                    Reflection (optional)
+                  </span>
+                  <textarea
+                    value={newReflection}
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                      setNewReflection(e.target.value)
+                    }
+                    placeholder="What are you proud of? What did you learn from this work?"
+                    className="w-full rounded-md border border-app bg-app-canvas px-3 py-2 text-sm text-app-foreground min-h-16"
+                    data-testid="add-portfolio-reflection"
+                  />
+                </label>
 
                 <button
                   type="button"
