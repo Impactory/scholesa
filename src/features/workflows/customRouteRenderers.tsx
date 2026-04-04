@@ -42,11 +42,15 @@ const LearnerPortfolioCurationRenderer = lazy(
 const GuardianCapabilityViewRenderer = lazy(
   () => import('./renderers/GuardianCapabilityViewRenderer')
 );
+const HqCapabilityAnalyticsRenderer = lazy(
+  () => import('./renderers/HqCapabilityAnalyticsRenderer')
+);
 
 const CUSTOM_ROUTE_RENDERERS: Partial<
   Record<WorkflowPath, ComponentType<CustomRouteRendererProps>>
 > = {
   '/hq/curriculum': HqCapabilityFrameworkRenderer,
+  '/hq/analytics': HqCapabilityAnalyticsRenderer,
   '/educator/missions/review': EducatorEvidenceReviewRenderer,
   '/learner/portfolio': LearnerPortfolioCurationRenderer,
   '/parent/summary': GuardianCapabilityViewRenderer,
