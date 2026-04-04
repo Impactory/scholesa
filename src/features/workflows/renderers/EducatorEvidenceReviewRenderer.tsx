@@ -19,15 +19,21 @@ import {
 import { firestore } from '@/src/firebase/client-init';
 import { Spinner } from '@/src/components/ui/Spinner';
 import { useInteractionTracking } from '@/src/hooks/useTelemetry';
+import {
+  RubricManager,
+  type AssessmentRubric,
+  type RubricCriterion,
+  type RubricLevel as RubricLevelType,
+} from '@/src/lib/ai/rubricManager';
 import type { CustomRouteRendererProps } from '../customRouteRenderers';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-type RubricLevel = 'Emerging' | 'Developing' | 'Proficient' | 'Advanced';
+type SimpleLevelName = 'Emerging' | 'Developing' | 'Proficient' | 'Advanced';
 
-const RUBRIC_LEVELS: { value: RubricLevel; score: number }[] = [
+const FALLBACK_LEVELS: { value: SimpleLevelName; score: number }[] = [
   { value: 'Emerging', score: 1 },
   { value: 'Developing', score: 2 },
   { value: 'Proficient', score: 3 },
@@ -55,12 +61,25 @@ interface LearnerInfo {
 interface MissionInfo {
   title: string;
   capabilityId: string | null;
+  siteId: string | null;
+  grade: number | null;
+}
+
+/** Per-criterion score entry */
+interface CriterionScore {
+  criterionName: string;
+  levelName: string;
+  score: number;
+  weight: number;
 }
 
 interface RubricFormState {
-  level: RubricLevel;
+  /** Used when no structured rubric is available (fallback mode) */
+  level: SimpleLevelName;
   feedback: string;
   proofVerified: boolean;
+  /** Per-criterion scores when a structured rubric is loaded */
+  criterionScores: Record<string, CriterionScore>;
 }
 
 // ---------------------------------------------------------------------------
@@ -120,7 +139,12 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
     level: 'Proficient',
     feedback: '',
     proofVerified: false,
+    criterionScores: {},
   });
+
+  // Loaded structured rubric for the currently open attempt
+  const [activeRubric, setActiveRubric] = useState<AssessmentRubric | null>(null);
+  const [rubricLoading, setRubricLoading] = useState(false);
 
   // Revision form: keyed by attempt id
   const [revisionOpen, setRevisionOpen] = useState<string | null>(null);
@@ -194,13 +218,15 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
                     title: asString(data.title, mid),
                     capabilityId:
                       typeof data.capabilityId === 'string' ? data.capabilityId : null,
+                    siteId: typeof data.siteId === 'string' ? data.siteId : null,
+                    grade: typeof data.grade === 'number' ? data.grade : null,
                   },
                 ] as const;
               }
             } catch {
               // Ignore individual fetch failures
             }
-            return [mid, { title: mid, capabilityId: null }] as const;
+            return [mid, { title: mid, capabilityId: null, siteId: null, grade: null }] as const;
           })
         ),
       ]);
@@ -218,14 +244,74 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
     void loadAttempts();
   }, [loadAttempts]);
 
+  // ---- Load structured rubric for an attempt ----
+  const loadRubricForAttempt = useCallback(
+    async (attempt: MissionAttempt) => {
+      setRubricLoading(true);
+      setActiveRubric(null);
+      try {
+        const mission = missions[attempt.missionId];
+        const rubric = await RubricManager.getActiveRubric({
+          siteId: mission?.siteId || ctx.profile?.siteIds?.[0] || '*',
+          missionId: attempt.missionId,
+          grade: mission?.grade ?? undefined,
+        });
+        setActiveRubric(rubric);
+        if (rubric) {
+          // Pre-populate criterion scores with empty selections
+          const initial: Record<string, CriterionScore> = {};
+          for (const criterion of rubric.criteria) {
+            initial[criterion.name] = {
+              criterionName: criterion.name,
+              levelName: '',
+              score: 0,
+              weight: criterion.weight,
+            };
+          }
+          setRubricForm((prev: RubricFormState) => ({ ...prev, criterionScores: initial }));
+        }
+      } catch {
+        // If rubric loading fails, fall back to simple mode (activeRubric stays null)
+      } finally {
+        setRubricLoading(false);
+      }
+    },
+    [missions, ctx.profile?.siteIds]
+  );
+
   // ---- Apply rubric ----
   const handleApplyRubric = async (attempt: MissionAttempt) => {
     if (!rubricForm.feedback.trim()) return;
     setSaving(attempt.id);
     try {
-      const score = RUBRIC_LEVELS.find((l) => l.value === rubricForm.level)?.score ?? 3;
       const capabilityId =
         attempt.capabilityId || missions[attempt.missionId]?.capabilityId || null;
+
+      // Compute overall score: weighted average of criterion scores, or fallback simple level
+      let overallScore: number;
+      let overallLevel: string;
+      let criterionScoresArray: CriterionScore[] = [];
+
+      if (activeRubric && Object.keys(rubricForm.criterionScores).length > 0) {
+        criterionScoresArray = (
+          Object.values(rubricForm.criterionScores) as CriterionScore[]
+        ).filter((cs) => cs.score > 0);
+        if (criterionScoresArray.length === 0) return; // No scores selected
+
+        const totalWeight = criterionScoresArray.reduce((sum, cs) => sum + cs.weight, 0);
+        overallScore =
+          totalWeight > 0
+            ? criterionScoresArray.reduce((sum, cs) => sum + cs.score * cs.weight, 0) / totalWeight
+            : 0;
+        // Map weighted score to mastery level
+        if (overallScore >= 3.5) overallLevel = 'Advanced';
+        else if (overallScore >= 2.5) overallLevel = 'Proficient';
+        else if (overallScore >= 1.5) overallLevel = 'Developing';
+        else overallLevel = 'Emerging';
+      } else {
+        overallScore = FALLBACK_LEVELS.find((l) => l.value === rubricForm.level)?.score ?? 3;
+        overallLevel = rubricForm.level;
+      }
 
       // 1. Update missionAttempt status to 'reviewed'
       await updateDoc(doc(firestore, 'missionAttempts', attempt.id), {
@@ -234,17 +320,21 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
         reviewedAt: serverTimestamp(),
       });
 
-      // 2. Create rubricApplications document
+      // 2. Create rubricApplications document with per-criterion scores
       await addDoc(collection(firestore, 'rubricApplications'), {
         missionAttemptId: attempt.id,
         missionId: attempt.missionId,
         learnerId: attempt.learnerId,
         educatorId: ctx.uid,
-        level: rubricForm.level,
-        score,
+        level: overallLevel,
+        score: Math.round(overallScore * 100) / 100,
         feedback: rubricForm.feedback.trim(),
         proofVerified: rubricForm.proofVerified,
         capabilityId,
+        // Structured rubric data (null when using fallback mode)
+        rubricId: activeRubric?.id ?? null,
+        rubricVersion: activeRubric?.version ?? null,
+        criterionScores: criterionScoresArray.length > 0 ? criterionScoresArray : null,
         createdAt: serverTimestamp(),
       });
 
@@ -257,9 +347,11 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
           missionAttemptId: attempt.id,
           educatorId: ctx.uid,
           eventType: 'rubric_applied',
-          level: rubricForm.level,
-          score,
+          level: overallLevel,
+          score: Math.round(overallScore * 100) / 100,
           proofVerified: rubricForm.proofVerified,
+          rubricId: activeRubric?.id ?? null,
+          criterionScores: criterionScoresArray.length > 0 ? criterionScoresArray : null,
           createdAt: serverTimestamp(),
         });
 
@@ -267,15 +359,17 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
         const masteryDocId = `${attempt.learnerId}_${capabilityId}`;
         const masteryRef = doc(firestore, 'capabilityMastery', masteryDocId);
         const masterySnap = await getDoc(masteryRef);
+        const roundedScore = Math.round(overallScore * 100) / 100;
 
         if (masterySnap.exists()) {
           const existing = masterySnap.data();
-          const existingScore = typeof existing.currentScore === 'number' ? existing.currentScore : 0;
+          const existingScore =
+            typeof existing.currentScore === 'number' ? existing.currentScore : 0;
           const existingCount =
             typeof existing.evidenceCount === 'number' ? existing.evidenceCount : 0;
           await updateDoc(masteryRef, {
-            currentLevel: rubricForm.level,
-            currentScore: Math.max(existingScore, score),
+            currentLevel: overallLevel,
+            currentScore: Math.max(existingScore, roundedScore),
             evidenceCount: existingCount + 1,
             lastMissionAttemptId: attempt.id,
             updatedAt: serverTimestamp(),
@@ -284,8 +378,8 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
           await setDoc(masteryRef, {
             learnerId: attempt.learnerId,
             capabilityId,
-            currentLevel: rubricForm.level,
-            currentScore: score,
+            currentLevel: overallLevel,
+            currentScore: roundedScore,
             evidenceCount: 1,
             lastMissionAttemptId: attempt.id,
             createdAt: serverTimestamp(),
@@ -296,12 +390,20 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
 
       trackInteraction('feature_discovered', {
         cta: 'rubric_applied',
-        level: rubricForm.level,
+        level: overallLevel,
         missionId: attempt.missionId,
+        rubricId: activeRubric?.id,
+        criteriaCount: criterionScoresArray.length || undefined,
       });
 
       setRubricOpen(null);
-      setRubricForm({ level: 'Proficient', feedback: '', proofVerified: false });
+      setActiveRubric(null);
+      setRubricForm({
+        level: 'Proficient',
+        feedback: '',
+        proofVerified: false,
+        criterionScores: {},
+      });
       await loadAttempts();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to apply rubric.');
@@ -492,7 +594,13 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
                       onClick={() => {
                         setRubricOpen(attempt.id);
                         setRevisionOpen(null);
-                        setRubricForm({ level: 'Proficient', feedback: '', proofVerified: false });
+                        setRubricForm({
+                          level: 'Proficient',
+                          feedback: '',
+                          proofVerified: false,
+                          criterionScores: {},
+                        });
+                        void loadRubricForAttempt(attempt);
                       }}
                       className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                       data-testid={`apply-rubric-btn-${attempt.id}`}
@@ -523,35 +631,156 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
                   >
                     <h4 className="text-sm font-semibold text-app-foreground">Apply Rubric</h4>
 
-                    <div className="space-y-1">
-                      <span className="text-xs font-medium text-app-muted">
-                        Proficiency Level *
-                      </span>
-                      <div className="flex flex-wrap gap-2">
-                        {RUBRIC_LEVELS.map(({ value }) => (
-                          <button
-                            key={value}
-                            type="button"
-                            onClick={() => setRubricForm((prev: RubricFormState) => ({ ...prev, level: value }))}
-                            className={`rounded-md px-3 py-1.5 text-sm font-medium ${
-                              rubricForm.level === value
-                                ? 'bg-primary text-primary-foreground'
-                                : 'bg-app-canvas text-app-muted hover:text-app-foreground'
-                            }`}
-                            data-testid={`rubric-level-${value.toLowerCase()}-${attempt.id}`}
-                          >
-                            {value}
-                          </button>
-                        ))}
+                    {rubricLoading ? (
+                      <div className="flex items-center gap-2 text-app-muted text-sm py-2">
+                        <Spinner /> Loading rubric...
                       </div>
-                    </div>
+                    ) : activeRubric ? (
+                      /* ---- Per-criterion scoring (structured rubric) ---- */
+                      <div className="space-y-4" data-testid={`rubric-criteria-${attempt.id}`}>
+                        <div className="rounded-md bg-app-canvas px-3 py-2 text-xs text-app-muted">
+                          Rubric: <span className="font-medium text-app-foreground">{activeRubric.name}</span>
+                          <span className="ml-2">v{activeRubric.version}</span>
+                          {activeRubric.criteria.length > 0 && (
+                            <span className="ml-2">
+                              ({activeRubric.criteria.length} criteria)
+                            </span>
+                          )}
+                        </div>
+
+                        {activeRubric.criteria.map((criterion: RubricCriterion) => {
+                          const currentScore = rubricForm.criterionScores[criterion.name];
+                          return (
+                            <div
+                              key={criterion.name}
+                              className="rounded-lg border border-app p-3 space-y-2"
+                              data-testid={`criterion-${criterion.name}-${attempt.id}`}
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <div>
+                                  <h5 className="text-sm font-semibold text-app-foreground">
+                                    {criterion.name}
+                                  </h5>
+                                  <p className="text-xs text-app-muted">{criterion.description}</p>
+                                </div>
+                                <span className="shrink-0 rounded-full bg-app-canvas px-2 py-0.5 text-xs text-app-muted">
+                                  {Math.round(criterion.weight * 100)}%
+                                </span>
+                              </div>
+                              <div className="flex flex-wrap gap-1.5">
+                                {criterion.levels.map((level: RubricLevelType) => {
+                                  const isSelected = currentScore?.levelName === level.name;
+                                  return (
+                                    <button
+                                      key={level.name}
+                                      type="button"
+                                      onClick={() =>
+                                        setRubricForm((prev: RubricFormState) => ({
+                                          ...prev,
+                                          criterionScores: {
+                                            ...prev.criterionScores,
+                                            [criterion.name]: {
+                                              criterionName: criterion.name,
+                                              levelName: level.name,
+                                              score: level.score,
+                                              weight: criterion.weight,
+                                            },
+                                          },
+                                        }))
+                                      }
+                                      title={level.description}
+                                      className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                                        isSelected
+                                          ? 'bg-primary text-primary-foreground ring-2 ring-primary/30'
+                                          : 'bg-app-canvas text-app-muted hover:text-app-foreground hover:bg-app-surface-raised'
+                                      }`}
+                                      data-testid={`criterion-level-${criterion.name}-${level.score}-${attempt.id}`}
+                                    >
+                                      {level.name}
+                                      <span className="ml-1 opacity-60">({level.score})</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                              {/* Show selected level description */}
+                              {currentScore?.levelName && (() => {
+                                const selectedLevel = criterion.levels.find(
+                                  (l: RubricLevelType) => l.name === currentScore.levelName
+                                );
+                                return selectedLevel ? (
+                                  <p className="text-xs text-app-muted italic pl-1">
+                                    {selectedLevel.description}
+                                  </p>
+                                ) : null;
+                              })()}
+                            </div>
+                          );
+                        })}
+
+                        {/* Weighted score preview */}
+                        {(() => {
+                          const scored = (
+                            Object.values(rubricForm.criterionScores) as CriterionScore[]
+                          ).filter((cs) => cs.score > 0);
+                          if (scored.length === 0) return null;
+                          const totalWeight = scored.reduce((s, cs) => s + cs.weight, 0);
+                          const weighted =
+                            totalWeight > 0
+                              ? scored.reduce((s, cs) => s + cs.score * cs.weight, 0) / totalWeight
+                              : 0;
+                          return (
+                            <div className="rounded-md bg-app-canvas px-3 py-2 text-xs text-app-muted">
+                              Weighted score:{' '}
+                              <span className="font-semibold text-app-foreground">
+                                {weighted.toFixed(2)}
+                              </span>
+                              <span className="ml-2">
+                                ({scored.length}/{activeRubric.criteria.length} criteria scored)
+                              </span>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    ) : (
+                      /* ---- Fallback: simple 4-level scoring ---- */
+                      <div className="space-y-1">
+                        <span className="text-xs font-medium text-app-muted">
+                          Proficiency Level *
+                        </span>
+                        <div className="flex flex-wrap gap-2">
+                          {FALLBACK_LEVELS.map(({ value }) => (
+                            <button
+                              key={value}
+                              type="button"
+                              onClick={() =>
+                                setRubricForm((prev: RubricFormState) => ({ ...prev, level: value }))
+                              }
+                              className={`rounded-md px-3 py-1.5 text-sm font-medium ${
+                                rubricForm.level === value
+                                  ? 'bg-primary text-primary-foreground'
+                                  : 'bg-app-canvas text-app-muted hover:text-app-foreground'
+                              }`}
+                              data-testid={`rubric-level-${value.toLowerCase()}-${attempt.id}`}
+                            >
+                              {value}
+                            </button>
+                          ))}
+                        </div>
+                        <p className="text-xs text-app-muted mt-1">
+                          No structured rubric found for this mission. Using default levels.
+                        </p>
+                      </div>
+                    )}
 
                     <label className="block space-y-1">
                       <span className="text-xs font-medium text-app-muted">Feedback *</span>
                       <textarea
                         value={rubricForm.feedback}
                         onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                          setRubricForm((prev: RubricFormState) => ({ ...prev, feedback: e.target.value }))
+                          setRubricForm((prev: RubricFormState) => ({
+                            ...prev,
+                            feedback: e.target.value,
+                          }))
                         }
                         placeholder="Provide specific feedback on the evidence and demonstrated capability..."
                         className="w-full rounded-md border border-app bg-app-canvas px-3 py-2 text-sm text-app-foreground min-h-24"
@@ -588,7 +817,10 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
                       <button
                         type="button"
                         disabled={isSaving}
-                        onClick={() => setRubricOpen(null)}
+                        onClick={() => {
+                          setRubricOpen(null);
+                          setActiveRubric(null);
+                        }}
                         className="rounded-md border border-app px-3 py-2 text-sm text-app-foreground"
                       >
                         Cancel
