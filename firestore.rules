@@ -106,6 +106,7 @@ service cloud.firestore {
     match /programs/{id} { allow read: if isAuthenticated(); allow write: if isHQ(); }
     match /courses/{id} { allow read: if isAuthenticated(); allow write: if isHQ(); }
     match /capabilities/{id} { allow read: if isAuthenticated(); allow create, update: if isHQ(); allow delete: if false; }
+    match /stages/{id} { allow read: if isAuthenticated(); allow create, update: if isHQ(); allow delete: if false; }
     match /missions/{id} { allow read: if isAuthenticated(); allow write: if isHQ(); }
 
     // Operational (Sessions, Occurrences):

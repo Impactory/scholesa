@@ -2,6 +2,24 @@ import { Timestamp } from 'firebase/firestore';
 
 export type UserRole = 'learner' | 'parent' | 'educator' | 'hq' | 'siteLead' | 'partner';
 export type PillarCode = 'FUTURE_SKILLS' | 'LEADERSHIP_AGENCY' | 'IMPACT_INNOVATION';
+export type StageId = 'discoverers' | 'builders' | 'explorers' | 'innovators';
+export type AiPolicyTier = 'A' | 'B' | 'C' | 'D';
+export type UxComplexity = 'simple' | 'guided' | 'autonomous' | 'professional';
+
+/**
+ * Learning stage (grade band) — defines age-appropriate delivery, AI policy,
+ * and UX complexity for a cohort of learners. Spec §7.
+ */
+export interface Stage {
+  id: StageId;
+  name: string;
+  gradeRange: [number, number];
+  description: string;
+  focusAreas: string[];
+  aiPolicyTier: AiPolicyTier;
+  uxComplexity: UxComplexity;
+  defaultSessionDuration: number; // minutes
+}
 
 export interface UserProfile {
   uid: string;
@@ -9,6 +27,7 @@ export interface UserProfile {
   displayName: string;
   role: UserRole;
   studioId?: string;
+  stageId?: StageId; // Learner stage (grade band)
   linkedLearnerIds?: string[]; // For parents
   createdAt: Timestamp;
   updatedAt: Timestamp;
@@ -54,6 +73,7 @@ export interface Mission {
   order: number;
   skills?: string[];
   pillarCodes: PillarCode[];
+  stageId?: StageId; // Target stage for this mission
 }
 
 export interface Enrolment {
@@ -74,6 +94,7 @@ export interface Session {
   startTime: Timestamp;
   endTime: Timestamp;
   dayOfWeek?: number; // 0-6
+  stageId?: StageId; // Stage this session targets
 }
 
 export interface SessionOccurrence {
@@ -1089,7 +1110,63 @@ export interface MotivationAnalytics {
   // Autonomy signals
   choiceDistribution: Record<DifficultyLevel, number>;
   selfSelectedChallengeChanges: number;
-  
+
   createdAt: Timestamp;
   updatedAt: Timestamp;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Capability Graph — core types for the capability-first evidence chain
+// ═══════════════════════════════════════════════════════════════════════════
+
+export type MasteryLevel = 'emerging' | 'developing' | 'proficient' | 'advanced';
+
+/**
+ * A capability definition within the Scholesa framework.
+ * Collection: capabilities (HQ-only write, all read)
+ */
+export interface Capability {
+  id: string;
+  name: string;
+  domain: 'technical' | 'human';
+  pillarCode: PillarCode;
+  description: string;
+  stageId?: StageId;
+  prerequisites?: string[];
+  iCanStatements?: Record<MasteryLevel, string>;
+  teacherLookFors?: string[];
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+/**
+ * Current mastery level of a learner for a specific capability.
+ * Collection: capabilityMastery (doc ID: learnerId_capabilityId)
+ */
+export interface CapabilityMastery {
+  learnerId: string;
+  capabilityId: string;
+  currentLevel: MasteryLevel;
+  previousLevel?: MasteryLevel;
+  evidenceCount: number;
+  lastAssessedBy: string;
+  lastAssessedAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+/**
+ * Immutable growth event recording a mastery level change.
+ * Collection: capabilityGrowthEvents (educator create-only, append-only)
+ */
+export interface CapabilityGrowthEvent {
+  id: string;
+  learnerId: string;
+  capabilityId: string;
+  fromLevel: MasteryLevel | null;
+  toLevel: MasteryLevel;
+  educatorId: string;
+  siteId: string;
+  rubricApplicationId?: string;
+  evidenceIds: string[];
+  createdAt: Timestamp;
 }

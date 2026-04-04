@@ -16,7 +16,11 @@ import type {
   AccountabilityKPI,
   AccountabilityCommitment,
   AccountabilityReview,
-  AuditLog
+  AuditLog,
+  Stage,
+  Capability,
+  CapabilityMastery,
+  CapabilityGrowthEvent,
 } from '@/schema';
 
 import type {
@@ -104,6 +108,12 @@ export const learnerInterestProfilesCollection = createCollection<LearnerInteres
 export const parentSnapshotsCollection = createCollection<ParentSnapshot>('parentSnapshots');
 export const peerFeedbackCollection = createCollection<PeerFeedback>('peerFeedback');
 export const motivationAnalyticsCollection = createCollection<MotivationAnalytics>('motivationAnalytics');
+
+// Capability Graph
+export const stagesCollection = createCollection<Stage>('stages');
+export const capabilitiesCollection = createCollection<Capability>('capabilities');
+export const capabilityMasteryCollection = createCollection<CapabilityMastery>('capabilityMastery');
+export const capabilityGrowthEventsCollection = createCollection<CapabilityGrowthEvent>('capabilityGrowthEvents');
 
 // Telemetry
 export const telemetryEventsCollection = createCollection<TelemetryEvent>('telemetryEvents');

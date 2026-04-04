@@ -7408,3 +7408,62 @@ class ProofOfLearningBundleModel {
         'updatedAt': updatedAt ?? Timestamp.now(),
       };
 }
+
+/// Learning stage (grade band) configuration.
+/// Collection: stages
+@immutable
+class StageModel {
+  const StageModel({
+    required this.id,
+    required this.name,
+    required this.gradeRange,
+    required this.description,
+    this.focusAreas = const <String>[],
+    required this.aiPolicyTier,
+    required this.uxComplexity,
+    this.defaultSessionDuration = 60,
+    this.createdAt,
+  });
+
+  final String id;
+  final String name;
+  final List<int> gradeRange;
+  final String description;
+  final List<String> focusAreas;
+  /// One of: A, B, C, D
+  final String aiPolicyTier;
+  /// One of: simple, guided, autonomous, professional
+  final String uxComplexity;
+  final int defaultSessionDuration;
+  final Timestamp? createdAt;
+
+  factory StageModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? <String, dynamic>{};
+    return StageModel(
+      id: doc.id,
+      name: data['name'] as String? ?? '',
+      gradeRange:
+          List<int>.from(data['gradeRange'] as List? ?? const <int>[]),
+      description: data['description'] as String? ?? '',
+      focusAreas:
+          List<String>.from(data['focusAreas'] as List? ?? const <String>[]),
+      aiPolicyTier: data['aiPolicyTier'] as String? ?? 'A',
+      uxComplexity: data['uxComplexity'] as String? ?? 'simple',
+      defaultSessionDuration:
+          data['defaultSessionDuration'] as int? ?? 60,
+      createdAt: data['createdAt'] as Timestamp?,
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'name': name,
+        'gradeRange': gradeRange,
+        'description': description,
+        'focusAreas': focusAreas,
+        'aiPolicyTier': aiPolicyTier,
+        'uxComplexity': uxComplexity,
+        'defaultSessionDuration': defaultSessionDuration,
+        'createdAt': createdAt ?? Timestamp.now(),
+      };
+}

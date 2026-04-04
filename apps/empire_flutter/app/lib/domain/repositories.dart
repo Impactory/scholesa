@@ -2986,3 +2986,19 @@ class ShowcaseSubmissionRepository {
     return snap.docs.map(ShowcaseSubmissionModel.fromDoc).toList();
   }
 }
+
+/// Repository for learning stages (grade bands).
+class StageRepository {
+  CollectionReference<Map<String, dynamic>> get _col =>
+      FirebaseFirestore.instance.collection('stages');
+
+  Future<List<StageModel>> listAll() async {
+    final snap = await _col.orderBy('gradeRange').get();
+    return snap.docs.map(StageModel.fromDoc).toList();
+  }
+
+  Future<StageModel?> getById(String stageId) async {
+    final doc = await _col.doc(stageId).get();
+    return doc.exists ? StageModel.fromDoc(doc) : null;
+  }
+}
