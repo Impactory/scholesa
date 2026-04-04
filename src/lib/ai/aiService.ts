@@ -18,7 +18,8 @@ import { RedactionService, redactStudentQuestion } from './redactionService';
 import { RetrievalService, getHintContext, getRubricCheckContext } from './retrievalService';
 import { AIInteractionLogger, logAICoachInteraction } from './interactionLogger';
 import { getPolicyForGrade } from '@/src/lib/policies/gradeBandPolicy';
-import type { AgeBand } from '@/src/types/schema';
+import { enforceAiPolicyTier } from '@/src/lib/policies/aiPolicyTierGate';
+import type { AgeBand, StageId } from '@/src/types/schema';
 import type { Role } from '@/schema';
 import { normalizeLocale, type SupportedLocale } from '@/src/lib/i18n/config';
 import {
@@ -40,6 +41,7 @@ export interface AIServiceRequest {
   studentName: string;
   siteId: string;
   grade: number;
+  stageId?: StageId;
   studentLevel: 'emerging' | 'proficient' | 'advanced';
   
   // Mission context
@@ -97,6 +99,28 @@ export class AIService {
     const missionAttemptId = req.missionAttemptId || req.missionId;
 
     try {
+      // 0. S1-3: Enforce AI policy tier based on learner's stage
+      if (role === 'learner') {
+        const gate = enforceAiPolicyTier(req.stageId, req.taskType);
+        if (!gate.allowed) {
+          return {
+            answer: gate.reason,
+            modelUsed: 'policy_gate',
+            modelVersion: null,
+            logId: traceId,
+            promptTemplateId: 'blocked_by_policy',
+            policyVersion: policyVersion(),
+            safetyOutcome: 'safe' as SafetyOutcome,
+            safetyReasonCode: `tier_${gate.tier}_blocked`,
+            toolCallIds: [],
+            targetLocale,
+            gradeBand: this.getAgeBand(req.grade),
+            traceId,
+            missionAttemptId,
+          };
+        }
+      }
+
       // 1. Get policy for age band
       const policy = getPolicyForGrade(req.grade);
       const policyMode: PolicyMode = this.getPolicyMode(req.grade);
