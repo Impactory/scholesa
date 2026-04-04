@@ -24,7 +24,6 @@ export type {
   MissionAttempt,
   PortfolioItem,
   AccountabilityCycle,
-  AccountabilityKPI,
   AccountabilityCommitment,
   AccountabilityReview,
   Stage,

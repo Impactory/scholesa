@@ -13,7 +13,6 @@ import type {
   Portfolio,
   PortfolioItem,
   AccountabilityCycle,
-  AccountabilityKPI,
   AccountabilityCommitment,
   AccountabilityReview,
   AuditLog,
@@ -43,7 +42,6 @@ import type {
   AICoachInteraction,
   WeeklyGoal,
   LearnerInterestProfile,
-  ParentSnapshot,
   PeerFeedback,
   MotivationAnalytics
 } from '@/src/types/schema';
@@ -76,7 +74,7 @@ export const portfolioItemsCollection = createCollection<PortfolioItem>('portfol
 
 // Accountability
 export const accountabilityCyclesCollection = createCollection<AccountabilityCycle>('accountabilityCycles');
-export const accountabilityKPIsCollection = createCollection<AccountabilityKPI>('accountabilityKPIs');
+// accountabilityKPIsCollection removed — S1-8: legacy LMS metric, replaced by capabilityMastery
 export const accountabilityCommitmentsCollection = createCollection<AccountabilityCommitment>('accountabilityCommitments');
 export const accountabilityReviewsCollection = createCollection<AccountabilityReview>('accountabilityReviews');
 
@@ -105,7 +103,7 @@ export const reflectionEntriesCollection = createCollection<ReflectionEntry>('re
 export const aiCoachInteractionsCollection = createCollection<AICoachInteraction>('aiCoachInteractions');
 export const weeklyGoalsCollection = createCollection<WeeklyGoal>('weeklyGoals');
 export const learnerInterestProfilesCollection = createCollection<LearnerInterestProfile>('learnerInterestProfiles');
-export const parentSnapshotsCollection = createCollection<ParentSnapshot>('parentSnapshots');
+// parentSnapshotsCollection removed — S1-8: replaced by buildParentLearnerSummary capability-based output
 export const peerFeedbackCollection = createCollection<PeerFeedback>('peerFeedback');
 export const motivationAnalyticsCollection = createCollection<MotivationAnalytics>('motivationAnalytics');
 

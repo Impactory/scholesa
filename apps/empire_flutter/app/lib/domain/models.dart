@@ -1488,56 +1488,7 @@ class AccountabilityCycleModel {
       };
 }
 
-/// @deprecated LMS-shaped type — conflates attendance with mastery.
-/// Migrate to CapabilityMastery + CapabilityGrowthEvent.
-/// Scheduled for removal in Sprint 2.
-@immutable
-class AccountabilityKPIModel {
-  const AccountabilityKPIModel({
-    required this.id,
-    required this.cycleId,
-    required this.name,
-    required this.target,
-    required this.currentValue,
-    this.unit,
-    this.createdAt,
-    this.updatedAt,
-  });
-
-  final String id;
-  final String cycleId;
-  final String name;
-  final num target;
-  final num currentValue;
-  final String? unit;
-  final Timestamp? createdAt;
-  final Timestamp? updatedAt;
-
-  factory AccountabilityKPIModel.fromDoc(
-      DocumentSnapshot<Map<String, dynamic>> doc) {
-    final data = doc.data() ?? <String, dynamic>{};
-    return AccountabilityKPIModel(
-      id: doc.id,
-      cycleId: data['cycleId'] as String? ?? '',
-      name: data['name'] as String? ?? '',
-      target: data['target'] as num? ?? 0,
-      currentValue: data['currentValue'] as num? ?? 0,
-      unit: data['unit'] as String?,
-      createdAt: data['createdAt'] as Timestamp?,
-      updatedAt: data['updatedAt'] as Timestamp?,
-    );
-  }
-
-  Map<String, dynamic> toMap() => <String, dynamic>{
-        'cycleId': cycleId,
-        'name': name,
-        'target': target,
-        'currentValue': currentValue,
-        'unit': unit,
-        'createdAt': createdAt ?? Timestamp.now(),
-        'updatedAt': updatedAt ?? Timestamp.now(),
-      };
-}
+// AccountabilityKPIModel removed — S1-8: legacy LMS metric replaced by CapabilityMastery
 
 @immutable
 class AccountabilityCommitmentModel {

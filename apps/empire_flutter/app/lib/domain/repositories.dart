@@ -522,21 +522,7 @@ class AccountabilityCycleRepository {
       _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
 }
 
-/// @deprecated LMS-shaped type — use CapabilityMastery + GrowthEngineService.
-/// Scheduled for removal in Sprint 2.
-class AccountabilityKPIRepository {
-  CollectionReference<Map<String, dynamic>> get _col =>
-      FirebaseFirestore.instance.collection('accountabilityKPIs');
-
-  Future<void> upsert(AccountabilityKPIModel model) =>
-      _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
-
-  Future<List<AccountabilityKPIModel>> listRecent({int limit = 6}) async {
-    final snap =
-        await _col.orderBy('updatedAt', descending: true).limit(limit).get();
-    return snap.docs.map(AccountabilityKPIModel.fromDoc).toList();
-  }
-}
+// AccountabilityKPIRepository removed — S1-8: legacy LMS metric replaced by CapabilityMastery
 
 class AccountabilityCommitmentRepository {
   CollectionReference<Map<String, dynamic>> get _col =>

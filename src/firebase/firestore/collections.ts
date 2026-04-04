@@ -15,7 +15,6 @@ import type {
   MissionAttempt,
   Reflection,
   AccountabilityCycle,
-  AccountabilityKPI,
   AccountabilityCommitment,
   AccountabilityReview,
   Alert,
@@ -61,7 +60,7 @@ export const missionPlansCollection = createCollection<MissionPlan>('missionPlan
 export const missionAttemptsCollection = createCollection<MissionAttemptWrite>('missionAttempts');
 export const reflectionsCollection = createCollection<Reflection>('reflections');
 export const accountabilityCyclesCollection = createCollection<AccountabilityCycle>('accountabilityCycles');
-export const accountabilityKPIsCollection = createCollection<AccountabilityKPI>('accountabilityKPIs');
+// accountabilityKPIsCollection removed �� S1-8: legacy LMS metric
 export const accountabilityCommitmentsCollection = createCollection<AccountabilityCommitment>('accountabilityCommitments');
 export const accountabilityReviewsCollection = createCollection<AccountabilityReview>('accountabilityReviews');
 export const alertsCollection = createCollection<Alert>('alerts');
