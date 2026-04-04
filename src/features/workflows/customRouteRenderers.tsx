@@ -45,6 +45,9 @@ const GuardianCapabilityViewRenderer = lazy(
 const HqCapabilityAnalyticsRenderer = lazy(
   () => import('./renderers/HqCapabilityAnalyticsRenderer')
 );
+const EducatorAiAuditRenderer = lazy(
+  () => import('./renderers/EducatorAiAuditRenderer')
+);
 
 const CUSTOM_ROUTE_RENDERERS: Partial<
   Record<WorkflowPath, ComponentType<CustomRouteRendererProps>>
@@ -52,6 +55,7 @@ const CUSTOM_ROUTE_RENDERERS: Partial<
   '/hq/curriculum': HqCapabilityFrameworkRenderer,
   '/hq/analytics': HqCapabilityAnalyticsRenderer,
   '/educator/missions/review': EducatorEvidenceReviewRenderer,
+  '/educator/learners': EducatorAiAuditRenderer,
   '/learner/portfolio': LearnerPortfolioCurationRenderer,
   '/parent/summary': GuardianCapabilityViewRenderer,
   '/parent/portfolio': GuardianCapabilityViewRenderer,
