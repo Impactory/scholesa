@@ -73,6 +73,7 @@ export interface Mission {
   order: number;
   skills?: string[];
   pillarCodes: PillarCode[];
+  capabilityIds?: string[]; // S2-1: linked capabilities from the graph
   stageId?: StageId; // Target stage for this mission
 }
 

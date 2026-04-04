@@ -919,6 +919,7 @@ class MissionModel {
     required this.pillarCodes,
     this.siteId,
     this.skillIds = const <String>[],
+    this.capabilityIds = const <String>[],
     this.difficulty,
     this.createdAt,
     this.updatedAt,
@@ -930,6 +931,7 @@ class MissionModel {
   final List<String> pillarCodes;
   final String? siteId;
   final List<String> skillIds;
+  final List<String> capabilityIds;
   final String? difficulty;
   final Timestamp? createdAt;
   final Timestamp? updatedAt;
@@ -945,6 +947,8 @@ class MissionModel {
       siteId: data['siteId'] as String?,
       skillIds:
           List<String>.from(data['skillIds'] as List? ?? const <String>[]),
+      capabilityIds:
+          List<String>.from(data['capabilityIds'] as List? ?? const <String>[]),
       difficulty: data['difficulty'] as String?,
       createdAt: data['createdAt'] as Timestamp?,
       updatedAt: data['updatedAt'] as Timestamp?,
@@ -957,6 +961,7 @@ class MissionModel {
         'pillarCodes': pillarCodes,
         'siteId': siteId,
         'skillIds': skillIds,
+        'capabilityIds': capabilityIds,
         'difficulty': difficulty,
         'createdAt': createdAt ?? Timestamp.now(),
         'updatedAt': updatedAt ?? Timestamp.now(),
