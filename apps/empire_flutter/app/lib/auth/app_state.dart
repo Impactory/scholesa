@@ -90,6 +90,7 @@ class AppState extends ChangeNotifier {
   String? _displayName;
   UserRole? _role;
   String? _activeSiteId;
+  String? _stageId;
   List<String> _siteIds = <String>[];
   List<Entitlement> _entitlements = <Entitlement>[];
   String _preferredLocaleCode = 'en';
@@ -122,6 +123,8 @@ class AppState extends ChangeNotifier {
   bool get isImpersonating => _impersonatingRole != null;
 
   String? get activeSiteId => _activeSiteId;
+  /// Learner's learning stage (discoverers/builders/explorers/innovators)
+  String? get stageId => _stageId;
   List<String> get siteIds => List<String>.unmodifiable(_siteIds);
   List<Entitlement> get entitlements =>
       List<Entitlement>.unmodifiable(_entitlements);
@@ -163,6 +166,7 @@ class AppState extends ChangeNotifier {
         ? UserRoleExtension.fromString(data['role'] as String)
         : null;
     _activeSiteId = data['activeSiteId'] as String?;
+    _stageId = data['stageId'] as String?;
     _siteIds =
         List<String>.from(data['siteIds'] as List<dynamic>? ?? <dynamic>[]);
     _preferredLocaleCode = _canonicalLocaleCode(data['localeCode'] as String?);
@@ -235,6 +239,7 @@ class AppState extends ChangeNotifier {
     _displayName = null;
     _role = null;
     _activeSiteId = null;
+    _stageId = null;
     _siteIds = <String>[];
     _entitlements = <Entitlement>[];
     _preferredLocaleCode = 'en';

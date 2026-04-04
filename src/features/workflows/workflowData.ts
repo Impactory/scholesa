@@ -233,7 +233,7 @@ function userLabelFromRecord(data: Record<string, unknown>, fallbackLabel = 'Use
   return fallbackLabel;
 }
 
-async function loadMissionOptions(): Promise<WorkflowFieldOption[]> {
+async function loadMissionOptions(stageId?: string): Promise<WorkflowFieldOption[]> {
   const snap = await getDocs(
     query(
       collection(firestore, 'missions'),
@@ -242,7 +242,15 @@ async function loadMissionOptions(): Promise<WorkflowFieldOption[]> {
     ),
   );
 
-  return snap.docs.map((missionDoc) => {
+  // S1-2: Filter missions by learner's stage (show stage-matching + universal missions)
+  const docs = stageId
+    ? snap.docs.filter((missionDoc) => {
+        const missionStage = (missionDoc.data() as Record<string, unknown>).stageId;
+        return !missionStage || missionStage === stageId;
+      })
+    : snap.docs;
+
+  return docs.map((missionDoc) => {
     const data = (missionDoc.data() || {}) as Record<string, unknown>;
     return {
       value: missionDoc.id,
@@ -943,7 +951,17 @@ async function loadLearnerToday(ctx: WorkflowContext): Promise<WorkflowRecord[]>
     query(collection(firestore, 'sessions'), where(documentId(), 'in', sessionIds)),
   );
 
-  return sessionsSnap.docs.map((snapDoc) =>
+  // S1-2: Filter sessions by learner's stage (if stage is set on profile)
+  const learnerStage = ctx.profile?.stageId;
+  const filteredDocs = learnerStage
+    ? sessionsSnap.docs.filter((snapDoc) => {
+        const sessionStage = snapDoc.data().stageId;
+        // Show sessions that match the learner's stage or have no stage set (universal)
+        return !sessionStage || sessionStage === learnerStage;
+      })
+    : sessionsSnap.docs;
+
+  return filteredDocs.map((snapDoc) =>
     buildRecord({
       routePath: '/learner/today',
       collectionName: 'sessions',
@@ -1573,7 +1591,7 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
       return { records, canCreate: false, canRefresh: true, createLabel: 'Create', createConfig: null };
     }
     case '/learner/missions': {
-      const missionOptions = await loadMissionOptions();
+      const missionOptions = await loadMissionOptions(ctx.profile?.stageId);
       return {
         records: applyRouteActionLabels(await queryCollectionRecords({
           routePath: ctx.routePath,
