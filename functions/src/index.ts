@@ -8493,3 +8493,145 @@ export const verifyProofOfLearning = onCall(async (request: CallableRequest<{
     capabilitiesProcessed: capabilityIds.length,
   };
 });
+
+// ---------------------------------------------------------------------------
+// S3-2: Badge auto-issuance based on capability mastery
+// ---------------------------------------------------------------------------
+
+/**
+ * Evaluates badge eligibility for a learner when their mastery changes.
+ * Checks all site badges against the learner's current mastery levels
+ * and auto-awards any badges whose criteria are met.
+ */
+export const evaluateBadgeEligibility = onCall(async (request: CallableRequest<{
+  learnerId: string;
+  siteId: string;
+  capabilityId?: string;
+}>) => {
+  const auth = request.auth;
+  if (!auth) throw new HttpsError('unauthenticated', 'Must be authenticated');
+
+  const { learnerId, siteId, capabilityId } = request.data;
+  if (!learnerId || !siteId) {
+    throw new HttpsError('invalid-argument', 'learnerId and siteId required');
+  }
+
+  const db = admin.firestore();
+  const MASTERY_RANK: Record<string, number> = {
+    emerging: 1,
+    developing: 2,
+    proficient: 3,
+    advanced: 4,
+  };
+
+  // Load badges for this site
+  let badgeQuery = db.collection('recognitionBadges').where('siteId', '==', siteId);
+  if (capabilityId) {
+    // Optimization: only check badges requiring this specific capability
+    badgeQuery = badgeQuery.where('requiredCapabilityId', '==', capabilityId);
+  }
+  const badgesSnap = await badgeQuery.get();
+  if (badgesSnap.empty) return { awarded: [] };
+
+  // Load learner's current mastery levels
+  const masterySnap = await db
+    .collection('capabilityMastery')
+    .where('learnerId', '==', learnerId)
+    .get();
+
+  const masteryByCapability = new Map<string, string>();
+  masterySnap.docs.forEach((d) => {
+    const data = d.data();
+    if (data.capabilityId && data.currentLevel) {
+      masteryByCapability.set(data.capabilityId, data.currentLevel);
+    }
+  });
+
+  // Load existing badge awards to avoid duplicates
+  const existingAwardsSnap = await db
+    .collection('badgeAwards')
+    .where('learnerId', '==', learnerId)
+    .where('siteId', '==', siteId)
+    .get();
+
+  const existingBadgeIds = new Set(existingAwardsSnap.docs.map((d) => d.data().badgeId));
+
+  // Load evidence count for microSkill-based badges
+  const evidenceSnap = await db
+    .collection('skillEvidence')
+    .where('learnerId', '==', learnerId)
+    .where('siteId', '==', siteId)
+    .get();
+
+  const evidenceBySkill = new Map<string, string[]>();
+  evidenceSnap.docs.forEach((d) => {
+    const data = d.data();
+    const skillId = data.microSkillId as string;
+    if (skillId) {
+      const ids = evidenceBySkill.get(skillId) || [];
+      ids.push(d.id);
+      evidenceBySkill.set(skillId, ids);
+    }
+  });
+
+  const awarded: Array<{ badgeId: string; badgeName: string; awardId: string }> = [];
+  const batch = db.batch();
+
+  for (const badgeDoc of badgesSnap.docs) {
+    const badge = badgeDoc.data();
+    if (existingBadgeIds.has(badgeDoc.id)) continue; // Already awarded
+
+    let eligible = true;
+    const linkedEvidenceIds: string[] = [];
+
+    // Check capability mastery requirement
+    if (badge.requiredCapabilityId && badge.requiredMasteryLevel) {
+      const learnerLevel = masteryByCapability.get(badge.requiredCapabilityId);
+      if (!learnerLevel || MASTERY_RANK[learnerLevel] < MASTERY_RANK[badge.requiredMasteryLevel]) {
+        eligible = false;
+      }
+    }
+
+    // Check microSkill evidence requirements
+    if (eligible && Array.isArray(badge.requiredMicroSkillIds) && badge.requiredMicroSkillIds.length > 0) {
+      for (const skillId of badge.requiredMicroSkillIds) {
+        const evidence = evidenceBySkill.get(skillId);
+        if (!evidence || evidence.length === 0) {
+          eligible = false;
+          break;
+        }
+        linkedEvidenceIds.push(...evidence);
+      }
+    }
+
+    // Check required evidence count
+    if (eligible && typeof badge.requiredEvidenceCount === 'number' && badge.requiredEvidenceCount > 0) {
+      if (linkedEvidenceIds.length < badge.requiredEvidenceCount) {
+        eligible = false;
+      }
+    }
+
+    if (eligible) {
+      const awardRef = db.collection('badgeAwards').doc();
+      batch.set(awardRef, {
+        badgeId: badgeDoc.id,
+        learnerId,
+        siteId,
+        evidenceIds: linkedEvidenceIds.slice(0, 50), // Cap at 50 references
+        awardedAt: FieldValue.serverTimestamp(),
+        awardedBy: 'system',
+      });
+      awarded.push({
+        badgeId: badgeDoc.id,
+        badgeName: badge.name || 'Badge',
+        awardId: awardRef.id,
+      });
+    }
+  }
+
+  if (awarded.length > 0) {
+    await batch.commit();
+  }
+
+  return { awarded };
+});

@@ -36,7 +36,12 @@ interface PortfolioItem {
     explainItBack: boolean;
     oralCheck: boolean;
     miniRebuild: boolean;
+    explainItBackExcerpt?: string;
+    oralCheckExcerpt?: string;
+    miniRebuildExcerpt?: string;
+    educatorVerifierName?: string;
   };
+  evidenceCount?: number;
 }
 
 interface IdeationPassportSummary {
@@ -371,6 +376,45 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
                             checked={item.proofDetails.miniRebuild}
                             label="MiniRebuild"
                           />
+                        </div>
+
+                        {/* S3-4: Proof excerpts for parent transparency */}
+                        {(item.proofDetails.explainItBackExcerpt ||
+                          item.proofDetails.oralCheckExcerpt ||
+                          item.proofDetails.miniRebuildExcerpt) && (
+                          <div className="mt-2 space-y-1 rounded-md bg-blue-50 p-2 text-xs text-blue-900">
+                            {item.proofDetails.explainItBackExcerpt && (
+                              <p>
+                                <span className="font-medium">Explained:</span>{' '}
+                                &ldquo;{item.proofDetails.explainItBackExcerpt.slice(0, 120)}
+                                {item.proofDetails.explainItBackExcerpt.length > 120 ? '…' : ''}&rdquo;
+                              </p>
+                            )}
+                            {item.proofDetails.oralCheckExcerpt && (
+                              <p>
+                                <span className="font-medium">Oral check:</span>{' '}
+                                &ldquo;{item.proofDetails.oralCheckExcerpt.slice(0, 120)}
+                                {item.proofDetails.oralCheckExcerpt.length > 120 ? '…' : ''}&rdquo;
+                              </p>
+                            )}
+                            {item.proofDetails.miniRebuildExcerpt && (
+                              <p>
+                                <span className="font-medium">Mini rebuild:</span>{' '}
+                                &ldquo;{item.proofDetails.miniRebuildExcerpt.slice(0, 120)}
+                                {item.proofDetails.miniRebuildExcerpt.length > 120 ? '…' : ''}&rdquo;
+                              </p>
+                            )}
+                          </div>
+                        )}
+
+                        {/* S3-4: Educator verification and evidence count */}
+                        <div className="mt-2 flex flex-wrap gap-3 text-xs text-app-muted">
+                          {item.proofDetails.educatorVerifierName && (
+                            <span>Verified by: {item.proofDetails.educatorVerifierName}</span>
+                          )}
+                          {typeof item.evidenceCount === 'number' && item.evidenceCount > 0 && (
+                            <span>{item.evidenceCount} evidence record{item.evidenceCount !== 1 ? 's' : ''}</span>
+                          )}
                         </div>
                       </li>
                     );

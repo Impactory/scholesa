@@ -782,13 +782,17 @@ export interface Badge {
   name: string;
   description: string;
   iconUrl?: string;
-  
+
   // What proves this badge
   requiredMicroSkillIds: string[];
   requiredEvidenceCount: number; // How many pieces of evidence needed
-  
+
+  // S3-2: Capability mastery threshold for auto-issuance
+  requiredCapabilityId?: string;
+  requiredMasteryLevel?: MasteryLevel;
+
   pillarCode?: PillarCode;
-  
+
   createdAt: Timestamp;
 }
 

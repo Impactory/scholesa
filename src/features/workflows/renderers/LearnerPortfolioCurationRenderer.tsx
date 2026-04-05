@@ -31,6 +31,14 @@ type VerificationStatus = 'pending' | 'reviewed' | 'verified';
 
 type AiDisclosure = 'none' | 'assisted_can_explain' | 'assisted_needs_verification';
 
+interface ProofBundleSummary {
+  id: string;
+  hasExplainItBack: boolean;
+  hasOralCheck: boolean;
+  hasMiniRebuild: boolean;
+  verificationStatus: 'missing' | 'partial' | 'verified';
+}
+
 interface PortfolioItem {
   id: string;
   title: string;
@@ -40,6 +48,7 @@ interface PortfolioItem {
   aiDisclosure: AiDisclosure;
   verificationStatus: VerificationStatus;
   proofOfLearning: boolean;
+  proofBundle: ProofBundleSummary | null;
   linkedCapabilityIds: string[];
   linkedCapabilityTitles: string[];
   learnerId: string;
@@ -163,7 +172,7 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
     setLoading(true);
     setError(null);
     try {
-      const [itemsSnap, masterySnap, growthSnap] = await Promise.all([
+      const [itemsSnap, masterySnap, growthSnap, proofSnap] = await Promise.all([
         getDocs(
           query(
             collection(firestore, 'portfolioItems'),
@@ -184,7 +193,31 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
             limit(20)
           )
         ),
+        getDocs(
+          query(
+            collection(firestore, 'proofOfLearningBundles'),
+            where('learnerId', '==', ctx.uid)
+          )
+        ),
       ]);
+
+      // Build proof bundle lookup by portfolioItemId
+      const proofByItem = new Map<string, ProofBundleSummary>();
+      proofSnap.docs.forEach((d: QueryDocumentSnapshot<DocumentData>) => {
+        const data = d.data();
+        const piId = data.portfolioItemId as string;
+        if (piId) {
+          proofByItem.set(piId, {
+            id: d.id,
+            hasExplainItBack: data.hasExplainItBack === true,
+            hasOralCheck: data.hasOralCheck === true,
+            hasMiniRebuild: data.hasMiniRebuild === true,
+            verificationStatus: (['missing', 'partial', 'verified'].includes(data.verificationStatus)
+              ? data.verificationStatus
+              : 'missing') as 'missing' | 'partial' | 'verified',
+          });
+        }
+      });
 
       setPortfolioItems(
         itemsSnap.docs.map((d: QueryDocumentSnapshot<DocumentData>) => {
@@ -210,6 +243,7 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
               ? data.verificationStatus
               : 'pending') as VerificationStatus,
             proofOfLearning: data.proofOfLearning === true,
+            proofBundle: proofByItem.get(d.id) || null,
             linkedCapabilityIds: Array.isArray(data.linkedCapabilityIds)
               ? data.linkedCapabilityIds
               : [],
@@ -692,17 +726,44 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
                         {aiDisclosureLabel(item.aiDisclosure)}
                       </span>
 
-                      {item.proofOfLearning && (
+                      {/* S3-1: Proof bundle detail indicators */}
+                      {item.proofBundle ? (
+                        <span
+                          className={`rounded-full px-2 py-0.5 font-medium ${
+                            item.proofBundle.verificationStatus === 'verified'
+                              ? 'bg-green-100 text-green-800'
+                              : item.proofBundle.verificationStatus === 'partial'
+                                ? 'bg-amber-100 text-amber-800'
+                                : 'bg-gray-100 text-gray-500'
+                          }`}
+                        >
+                          Proof: {item.proofBundle.verificationStatus}
+                        </span>
+                      ) : item.proofOfLearning ? (
                         <span className="rounded-full bg-green-100 px-2 py-0.5 font-medium text-green-800">
                           Proof of Learning
                         </span>
-                      )}
-
-                      {!item.proofOfLearning && (
+                      ) : (
                         <span className="rounded-full bg-gray-100 px-2 py-0.5 font-medium text-gray-500">
-                          No proof of learning
+                          No proof
                         </span>
                       )}
+                    </div>
+
+                    {/* S3-1: Proof method checklist */}
+                    {item.proofBundle && (
+                      <div className="flex gap-3 text-xs">
+                        <span className={item.proofBundle.hasExplainItBack ? 'text-green-700' : 'text-gray-400'}>
+                          {item.proofBundle.hasExplainItBack ? '✓' : '○'} Explain It Back
+                        </span>
+                        <span className={item.proofBundle.hasOralCheck ? 'text-green-700' : 'text-gray-400'}>
+                          {item.proofBundle.hasOralCheck ? '✓' : '○'} Oral Check
+                        </span>
+                        <span className={item.proofBundle.hasMiniRebuild ? 'text-green-700' : 'text-gray-400'}>
+                          {item.proofBundle.hasMiniRebuild ? '✓' : '○'} Mini Rebuild
+                        </span>
+                      </div>
+                    )
                     </div>
 
                     {/* Linked capabilities */}

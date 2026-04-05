@@ -7472,3 +7472,108 @@ class StageModel {
         'createdAt': createdAt ?? Timestamp.now(),
       };
 }
+
+/// S3-2: Badge definition — Collection: recognitionBadges
+@immutable
+class BadgeModel {
+  const BadgeModel({
+    required this.id,
+    required this.siteId,
+    required this.name,
+    this.description = '',
+    this.iconUrl,
+    this.requiredMicroSkillIds = const [],
+    this.requiredEvidenceCount = 0,
+    this.requiredCapabilityId,
+    this.requiredMasteryLevel,
+    this.pillarCode,
+    this.createdAt,
+  });
+
+  final String id;
+  final String siteId;
+  final String name;
+  final String description;
+  final String? iconUrl;
+  final List<String> requiredMicroSkillIds;
+  final int requiredEvidenceCount;
+  final String? requiredCapabilityId;
+  final String? requiredMasteryLevel;
+  final String? pillarCode;
+  final Timestamp? createdAt;
+
+  factory BadgeModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? <String, dynamic>{};
+    return BadgeModel(
+      id: doc.id,
+      siteId: data['siteId'] as String? ?? '',
+      name: data['name'] as String? ?? '',
+      description: data['description'] as String? ?? '',
+      iconUrl: data['iconUrl'] as String?,
+      requiredMicroSkillIds:
+          (data['requiredMicroSkillIds'] as List<dynamic>?)?.cast<String>() ?? [],
+      requiredEvidenceCount: data['requiredEvidenceCount'] as int? ?? 0,
+      requiredCapabilityId: data['requiredCapabilityId'] as String?,
+      requiredMasteryLevel: data['requiredMasteryLevel'] as String?,
+      pillarCode: data['pillarCode'] as String?,
+      createdAt: data['createdAt'] as Timestamp?,
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'siteId': siteId,
+        'name': name,
+        'description': description,
+        'iconUrl': iconUrl,
+        'requiredMicroSkillIds': requiredMicroSkillIds,
+        'requiredEvidenceCount': requiredEvidenceCount,
+        'requiredCapabilityId': requiredCapabilityId,
+        'requiredMasteryLevel': requiredMasteryLevel,
+        'pillarCode': pillarCode,
+        'createdAt': createdAt ?? Timestamp.now(),
+      };
+}
+
+/// S3-2: Badge award to a learner — Collection: badgeAwards
+@immutable
+class BadgeAwardModel {
+  const BadgeAwardModel({
+    required this.id,
+    required this.badgeId,
+    required this.learnerId,
+    required this.siteId,
+    this.evidenceIds = const [],
+    this.awardedAt,
+    this.awardedBy,
+  });
+
+  final String id;
+  final String badgeId;
+  final String learnerId;
+  final String siteId;
+  final List<String> evidenceIds;
+  final Timestamp? awardedAt;
+  final String? awardedBy;
+
+  factory BadgeAwardModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? <String, dynamic>{};
+    return BadgeAwardModel(
+      id: doc.id,
+      badgeId: data['badgeId'] as String? ?? '',
+      learnerId: data['learnerId'] as String? ?? '',
+      siteId: data['siteId'] as String? ?? '',
+      evidenceIds: (data['evidenceIds'] as List<dynamic>?)?.cast<String>() ?? [],
+      awardedAt: data['awardedAt'] as Timestamp?,
+      awardedBy: data['awardedBy'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'badgeId': badgeId,
+        'learnerId': learnerId,
+        'siteId': siteId,
+        'evidenceIds': evidenceIds,
+        'awardedAt': awardedAt ?? Timestamp.now(),
+        'awardedBy': awardedBy,
+      };
+}
