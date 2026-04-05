@@ -51,6 +51,9 @@ const EducatorAiAuditRenderer = lazy(
 const EducatorTodayRenderer = lazy(
   () => import('./renderers/EducatorTodayRenderer')
 );
+const LearnerProofAssemblyRenderer = lazy(
+  () => import('./renderers/LearnerProofAssemblyRenderer')
+);
 
 const CUSTOM_ROUTE_RENDERERS: Partial<
   Record<WorkflowPath, ComponentType<CustomRouteRendererProps>>
@@ -61,6 +64,7 @@ const CUSTOM_ROUTE_RENDERERS: Partial<
   '/educator/today': EducatorTodayRenderer,
   '/educator/learners': EducatorAiAuditRenderer,
   '/learner/portfolio': LearnerPortfolioCurationRenderer,
+  '/learner/missions': LearnerProofAssemblyRenderer,
   '/parent/summary': GuardianCapabilityViewRenderer,
   '/parent/portfolio': GuardianCapabilityViewRenderer,
 };

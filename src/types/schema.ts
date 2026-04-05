@@ -844,6 +844,36 @@ export interface SkillEvidence {
 }
 
 /**
+ * Proof-of-learning bundle — learner-assembled proof linking
+ * portfolio items to verification methods (ExplainItBack, OralCheck, MiniRebuild).
+ * Collection: proofOfLearningBundles
+ */
+export interface ProofOfLearningBundle {
+  id: string;
+  learnerId: string;
+  portfolioItemId: string;
+  capabilityId?: string;
+
+  // Three verification methods
+  hasExplainItBack: boolean;
+  hasOralCheck: boolean;
+  hasMiniRebuild: boolean;
+
+  // Excerpts / evidence from each method
+  explainItBackExcerpt?: string;
+  oralCheckExcerpt?: string;
+  miniRebuildExcerpt?: string;
+
+  // Verification status (derived from methods present)
+  verificationStatus: 'missing' | 'partial' | 'verified';
+  educatorVerifierId?: string;
+
+  version: number;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+/**
  * Sprint session (15-30 min focused work)
  */
 export interface SprintSession {

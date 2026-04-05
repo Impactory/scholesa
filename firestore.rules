@@ -159,6 +159,20 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    match /skillEvidence/{id} {
+      allow read: if isAuthenticated() && (
+        resource.data.learnerId == request.auth.uid
+        || isEducator()
+        || (
+          resource.data.keys().hasAny(['learnerId'])
+          && isParentLinkedToLearner(resource.data.learnerId)
+        )
+      );
+      allow create: if isAuthenticated() && request.resource.data.learnerId == request.auth.uid;
+      allow update: if isEducator();
+      allow delete: if false;
+    }
+
     // Learning Artifacts (MissionAttempts, Reflections):
     // - Read: Owner or Educator.
     // - Create: Owner (Learner).

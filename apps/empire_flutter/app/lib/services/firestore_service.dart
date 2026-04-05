@@ -538,6 +538,22 @@ class FirestoreService {
       'recordedBy': _auth.currentUser?.uid,
       'createdAt': FieldValue.serverTimestamp(),
     });
+
+    // S2-2: Auto-create SkillEvidence record when checkpoint is submitted
+    if (skillId != null && skillId.isNotEmpty) {
+      await _firestore.collection('skillEvidence').add(<String, dynamic>{
+        'learnerId': learnerId,
+        'siteId': siteId,
+        'microSkillId': skillId,
+        'evidenceType': 'quiz',
+        'description': 'Checkpoint response for mission $missionId',
+        'selfScore': isCorrect ? 'proficient' : 'developing',
+        'status': 'submitted',
+        'submittedAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    }
+
     return docRef.id;
   }
 

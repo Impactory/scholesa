@@ -36,6 +36,8 @@ import type {
   SupportIntervention,
   MotivationNudge,
   MotivationConfig,
+  SkillEvidence,
+  ProofOfLearningBundle,
 } from '@/src/types/schema';
 
 // Helper to create typed collection
@@ -84,3 +86,7 @@ export const learnerInteractionsCollection = createCollection<LearnerInteraction
 export const supportInterventionsCollection = createCollection<SupportIntervention>('supportInterventions');
 export const motivationNudgesCollection = createCollection<MotivationNudge>('motivationNudges');
 export const motivationConfigCollection = createCollection<MotivationConfig>('configs/motivationConfig');
+
+// Evidence Engine
+export const skillEvidenceCollection = createCollection<SkillEvidence>('skillEvidence');
+export const proofOfLearningBundlesCollection = createCollection<ProofOfLearningBundle>('proofOfLearningBundles');
