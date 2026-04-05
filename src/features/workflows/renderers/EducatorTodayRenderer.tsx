@@ -1,0 +1,300 @@
+'use client';
+
+import { useCallback, useEffect, useState } from 'react';
+import {
+  collection,
+  getDocs,
+  orderBy,
+  query,
+  where,
+  limit,
+  type DocumentData,
+  type QueryDocumentSnapshot,
+} from 'firebase/firestore';
+import { firestore } from '@/src/firebase/client-init';
+import { Spinner } from '@/src/components/ui/Spinner';
+import { useInteractionTracking } from '@/src/hooks/useTelemetry';
+import type { CustomRouteRendererProps } from '../customRouteRenderers';
+
+// Lazy-import the feedback form to avoid bundle bloat
+import dynamic from 'next/dynamic';
+const EducatorFeedbackForm = dynamic(
+  () => import('@/src/components/motivation/EducatorFeedbackForm'),
+  { ssr: false }
+);
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+interface SessionRow {
+  id: string;
+  title: string;
+  description: string;
+  status: string;
+  startDate: string | null;
+  siteId: string;
+}
+
+interface LearnerOption {
+  id: string;
+  displayName: string;
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function toIso(value: unknown): string | null {
+  if (
+    value &&
+    typeof value === 'object' &&
+    'toDate' in value &&
+    typeof (value as { toDate: () => Date }).toDate === 'function'
+  ) {
+    return (value as { toDate: () => Date }).toDate().toISOString();
+  }
+  if (typeof value === 'string') return value;
+  return null;
+}
+
+function asString(value: unknown, fallback: string): string {
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : fallback;
+}
+
+function formatDate(iso: string | null): string {
+  if (!iso) return '';
+  try {
+    return new Date(iso).toLocaleDateString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch {
+    return iso;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+
+export default function EducatorTodayRenderer({ ctx }: CustomRouteRendererProps) {
+  const trackInteraction = useInteractionTracking();
+
+  const [sessions, setSessions] = useState<SessionRow[]>([]);
+  const [learners, setLearners] = useState<LearnerOption[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Quick observation state
+  const [observationOpen, setObservationOpen] = useState(false);
+  const [selectedLearnerId, setSelectedLearnerId] = useState<string | null>(null);
+  const [selectedLearnerName, setSelectedLearnerName] = useState('');
+
+  const siteId = ctx.profile?.siteIds?.[0] ?? null;
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      // Load sessions and learners in parallel
+      const sessionsQuery = query(
+        collection(firestore, 'sessions'),
+        where('educatorIds', 'array-contains', ctx.uid),
+        orderBy('startDate', 'asc'),
+        limit(20)
+      );
+
+      const learnersQuery = siteId
+        ? query(
+            collection(firestore, 'users'),
+            where('role', '==', 'learner'),
+            where('siteIds', 'array-contains', siteId),
+            limit(50)
+          )
+        : null;
+
+      const promises: Promise<unknown>[] = [getDocs(sessionsQuery)];
+      if (learnersQuery) promises.push(getDocs(learnersQuery));
+
+      const results = await Promise.all(promises);
+      const sessionsSnap = results[0] as Awaited<ReturnType<typeof getDocs>>;
+
+      setSessions(
+        sessionsSnap.docs.map((d: QueryDocumentSnapshot<DocumentData>) => {
+          const data = d.data();
+          return {
+            id: d.id,
+            title: asString(data.title || data.name, d.id),
+            description: asString(data.description, ''),
+            status: asString(data.status, 'scheduled'),
+            startDate: toIso(data.startDate),
+            siteId: asString(data.siteId, ''),
+          };
+        })
+      );
+
+      if (results[1]) {
+        const learnersSnap = results[1] as Awaited<ReturnType<typeof getDocs>>;
+        setLearners(
+          learnersSnap.docs.map((d: QueryDocumentSnapshot<DocumentData>) => ({
+            id: d.id,
+            displayName: asString(d.data().displayName, d.id),
+          }))
+        );
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load today view.');
+    } finally {
+      setLoading(false);
+    }
+  }, [ctx.uid, siteId]);
+
+  useEffect(() => {
+    void loadData();
+  }, [loadData]);
+
+  const handleOpenObservation = (learner: LearnerOption) => {
+    setSelectedLearnerId(learner.id);
+    setSelectedLearnerName(learner.displayName);
+    setObservationOpen(true);
+    trackInteraction('feature_discovered', { cta: 'quick_observation_opened' });
+  };
+
+  return (
+    <section className="space-y-6" data-testid="educator-today">
+      <header className="rounded-xl border border-app bg-app-surface-raised p-6">
+        <h1 className="text-2xl font-bold text-app-foreground">Today</h1>
+        <p className="mt-2 text-sm text-app-muted">
+          Your sessions for today and quick observation capture.
+        </p>
+        <div className="mt-3 flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => void loadData()}
+            className="rounded-md border border-app px-3 py-1.5 text-xs font-medium text-app-foreground hover:bg-app-canvas"
+          >
+            Refresh
+          </button>
+        </div>
+      </header>
+
+      {error && (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      {loading ? (
+        <div className="flex min-h-[240px] items-center justify-center rounded-xl border border-app bg-app-surface">
+          <div className="flex items-center gap-2 text-app-muted">
+            <Spinner />
+            <span>Loading...</span>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Quick Observation Section (S2-4) */}
+          <div
+            className="rounded-xl border border-app bg-app-surface-raised p-5 space-y-3"
+            data-testid="quick-observation"
+          >
+            <h2 className="text-base font-semibold text-app-foreground">
+              Quick Observation
+            </h2>
+            <p className="text-xs text-app-muted">
+              Capture a learner observation in under 10 seconds. Select a learner to begin.
+            </p>
+
+            {observationOpen && selectedLearnerId ? (
+              <div data-testid="observation-form">
+                <EducatorFeedbackForm
+                  learnerId={selectedLearnerId}
+                  learnerName={selectedLearnerName}
+                  siteId={siteId ?? ''}
+                  onSuccess={() => {
+                    setObservationOpen(false);
+                    setSelectedLearnerId(null);
+                    trackInteraction('feature_discovered', {
+                      cta: 'observation_submitted',
+                    });
+                  }}
+                  onCancel={() => {
+                    setObservationOpen(false);
+                    setSelectedLearnerId(null);
+                  }}
+                />
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {learners.length === 0 ? (
+                  <span className="text-xs text-app-muted">
+                    No learners found for this site.
+                  </span>
+                ) : (
+                  learners.map((l) => (
+                    <button
+                      key={l.id}
+                      type="button"
+                      onClick={() => handleOpenObservation(l)}
+                      className="rounded-md border border-app bg-app-canvas px-3 py-1.5 text-xs font-medium text-app-foreground hover:bg-app-surface-raised"
+                      data-testid={`observe-${l.id}`}
+                    >
+                      {l.displayName}
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Sessions List */}
+          <div className="space-y-3">
+            <h2 className="text-base font-semibold text-app-foreground">
+              Sessions ({sessions.length})
+            </h2>
+            {sessions.length === 0 ? (
+              <div className="rounded-xl border border-app bg-app-surface p-8 text-center text-sm text-app-muted">
+                No sessions scheduled. Check back later.
+              </div>
+            ) : (
+              <ul className="space-y-2" data-testid="sessions-list">
+                {sessions.map((s) => (
+                  <li
+                    key={s.id}
+                    className="flex items-center justify-between rounded-lg border border-app bg-app-surface p-3"
+                  >
+                    <div>
+                      <span className="text-sm font-medium text-app-foreground">
+                        {s.title}
+                      </span>
+                      {s.description && (
+                        <p className="text-xs text-app-muted mt-0.5">{s.description}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                          s.status === 'active'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-gray-100 text-gray-600'
+                        }`}
+                      >
+                        {s.status}
+                      </span>
+                      <span className="text-xs text-app-muted">
+                        {formatDate(s.startDate)}
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </>
+      )}
+    </section>
+  );
+}

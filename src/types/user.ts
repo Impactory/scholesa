@@ -1,4 +1,5 @@
 import { Timestamp } from 'firebase/firestore';
+import type { StageId } from './schema';
 
 export type UserRole = 'learner' | 'parent' | 'educator' | 'site' | 'partner' | 'hq';
 
@@ -8,6 +9,7 @@ export interface UserProfile {
   displayName: string;
   role: UserRole;
   studioId?: string;
+  stageId?: StageId;
   siteIds?: string[];
   activeSiteId?: string;
   organizationId?: string;

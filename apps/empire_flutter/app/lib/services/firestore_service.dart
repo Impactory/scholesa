@@ -510,6 +510,364 @@ class FirestoreService {
         .toList();
   }
 
+  // ==================== EVIDENCE CHAIN OPERATIONS ====================
+
+  /// Submit a checkpoint result
+  Future<String> submitCheckpointResult({
+    required String learnerId,
+    required String missionId,
+    required String siteId,
+    String? sessionId,
+    String? skillId,
+    required String question,
+    required String learnerResponse,
+    required bool isCorrect,
+    bool explainItBackRequired = false,
+  }) async {
+    final DocumentReference<Map<String, dynamic>> docRef =
+        await _firestore.collection('checkpointHistory').add(<String, dynamic>{
+      'learnerId': learnerId,
+      'missionId': missionId,
+      'siteId': siteId,
+      'sessionId': sessionId,
+      'skillId': skillId,
+      'question': question,
+      'learnerResponse': learnerResponse,
+      'isCorrect': isCorrect,
+      'explainItBackRequired': explainItBackRequired,
+      'recordedBy': _auth.currentUser?.uid,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+
+    // S2-2: Auto-create SkillEvidence record when checkpoint is submitted
+    if (skillId != null && skillId.isNotEmpty) {
+      await _firestore.collection('skillEvidence').add(<String, dynamic>{
+        'learnerId': learnerId,
+        'siteId': siteId,
+        'microSkillId': skillId,
+        'evidenceType': 'quiz',
+        'description': 'Checkpoint response for mission $missionId',
+        'selfScore': isCorrect ? 'proficient' : 'developing',
+        'status': 'submitted',
+        'submittedAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    }
+
+    return docRef.id;
+  }
+
+  /// Submit a learner reflection
+  Future<String> submitReflection({
+    required String learnerId,
+    required String siteId,
+    String? sessionId,
+    String? missionId,
+    required String prompt,
+    required String response,
+    int? engagementRating,
+    int? confidenceRating,
+  }) async {
+    final DocumentReference<Map<String, dynamic>> docRef =
+        await _firestore.collection('learnerReflections').add(<String, dynamic>{
+      'learnerId': learnerId,
+      'siteId': siteId,
+      'sessionId': sessionId,
+      'missionId': missionId,
+      'prompt': prompt,
+      'response': response,
+      'engagementRating': engagementRating,
+      'confidenceRating': confidenceRating,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+    return docRef.id;
+  }
+
+  /// Log an AI coach interaction
+  Future<String> logAICoachInteraction({
+    required String learnerId,
+    String? sessionId,
+    required String mode,
+    required String question,
+    required String response,
+    bool explainItBackRequired = false,
+    List<String> toolsUsed = const <String>[],
+    int? durationMs,
+  }) async {
+    final DocumentReference<Map<String, dynamic>> docRef = await _firestore
+        .collection('aiCoachInteractions')
+        .add(<String, dynamic>{
+      'learnerId': learnerId,
+      'sessionId': sessionId,
+      'mode': mode,
+      'question': question,
+      'response': response,
+      'explainItBackRequired': explainItBackRequired,
+      'toolsUsed': toolsUsed,
+      'durationMs': durationMs,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+    return docRef.id;
+  }
+
+  /// Submit peer feedback
+  Future<String> submitPeerFeedback({
+    required String fromLearnerId,
+    required String toLearnerId,
+    required String missionAttemptId,
+    required String siteId,
+    String? sessionId,
+    int? rating,
+    String? strengths,
+    String? suggestions,
+  }) async {
+    final DocumentReference<Map<String, dynamic>> docRef =
+        await _firestore.collection('peerFeedback').add(<String, dynamic>{
+      'fromLearnerId': fromLearnerId,
+      'toLearnerId': toLearnerId,
+      'missionAttemptId': missionAttemptId,
+      'siteId': siteId,
+      'sessionId': sessionId,
+      'rating': rating,
+      'strengths': strengths,
+      'suggestions': suggestions,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+    return docRef.id;
+  }
+
+  /// Create a proof-of-learning bundle
+  Future<String> createProofOfLearningBundle({
+    required String learnerId,
+    required String portfolioItemId,
+    String? capabilityId,
+  }) async {
+    final DocumentReference<Map<String, dynamic>> docRef = await _firestore
+        .collection('proofOfLearningBundles')
+        .add(<String, dynamic>{
+      'learnerId': learnerId,
+      'portfolioItemId': portfolioItemId,
+      'capabilityId': capabilityId,
+      'hasExplainItBack': false,
+      'hasOralCheck': false,
+      'hasMiniRebuild': false,
+      'verificationStatus': 'missing',
+      'version': 1,
+      'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+    return docRef.id;
+  }
+
+  /// Update proof-of-learning bundle with verification methods
+  Future<void> updateProofOfLearningBundle({
+    required String bundleId,
+    bool? hasExplainItBack,
+    bool? hasOralCheck,
+    bool? hasMiniRebuild,
+    String? explainItBackExcerpt,
+    String? oralCheckExcerpt,
+    String? miniRebuildExcerpt,
+  }) async {
+    final Map<String, dynamic> updates = <String, dynamic>{
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+    if (hasExplainItBack != null) updates['hasExplainItBack'] = hasExplainItBack;
+    if (hasOralCheck != null) updates['hasOralCheck'] = hasOralCheck;
+    if (hasMiniRebuild != null) updates['hasMiniRebuild'] = hasMiniRebuild;
+    if (explainItBackExcerpt != null) {
+      updates['explainItBackExcerpt'] = explainItBackExcerpt;
+    }
+    if (oralCheckExcerpt != null) updates['oralCheckExcerpt'] = oralCheckExcerpt;
+    if (miniRebuildExcerpt != null) {
+      updates['miniRebuildExcerpt'] = miniRebuildExcerpt;
+    }
+
+    final bool eib = hasExplainItBack ?? false;
+    final bool oc = hasOralCheck ?? false;
+    final bool mr = hasMiniRebuild ?? false;
+    if (eib && oc && mr) {
+      updates['verificationStatus'] = 'verified';
+    } else if (eib || oc || mr) {
+      updates['verificationStatus'] = 'partial';
+    }
+
+    await _firestore
+        .collection('proofOfLearningBundles')
+        .doc(bundleId)
+        .update(updates);
+  }
+
+  /// Educator verifies a proof-of-learning bundle
+  Future<void> verifyProofOfLearning({
+    required String bundleId,
+    required String educatorId,
+    required String verificationStatus,
+  }) async {
+    await _firestore
+        .collection('proofOfLearningBundles')
+        .doc(bundleId)
+        .update(<String, dynamic>{
+      'educatorVerifierId': educatorId,
+      'verificationStatus': verificationStatus,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Educator applies a rubric judgment
+  Future<String> applyRubric({
+    required String learnerId,
+    required String capabilityId,
+    required String educatorId,
+    required String level,
+    String? feedback,
+    List<String> evidenceRefIds = const <String>[],
+    required String siteId,
+  }) async {
+    final DocumentReference<Map<String, dynamic>> docRef =
+        await _firestore.collection('rubricApplications').add(<String, dynamic>{
+      'learnerId': learnerId,
+      'capabilityId': capabilityId,
+      'educatorId': educatorId,
+      'level': level,
+      'feedback': feedback,
+      'evidenceRefIds': evidenceRefIds,
+      'siteId': siteId,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+    return docRef.id;
+  }
+
+  /// Update capability mastery level
+  Future<void> updateCapabilityMastery({
+    required String learnerId,
+    required String capabilityId,
+    required String newLevel,
+    required String educatorId,
+  }) async {
+    final String docId = '${learnerId}_$capabilityId';
+    await _firestore
+        .collection('capabilityMastery')
+        .doc(docId)
+        .set(<String, dynamic>{
+      'learnerId': learnerId,
+      'capabilityId': capabilityId,
+      'currentLevel': newLevel,
+      'lastAssessedBy': educatorId,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  /// Create an append-only capability growth event (immutable provenance)
+  Future<String> createCapabilityGrowthEvent({
+    required String learnerId,
+    required String capabilityId,
+    String? fromLevel,
+    required String toLevel,
+    required String educatorId,
+    String? rubricApplicationId,
+    List<String> evidenceIds = const <String>[],
+    required String siteId,
+  }) async {
+    final DocumentReference<Map<String, dynamic>> docRef = await _firestore
+        .collection('capabilityGrowthEvents')
+        .add(<String, dynamic>{
+      'learnerId': learnerId,
+      'capabilityId': capabilityId,
+      'fromLevel': fromLevel,
+      'toLevel': toLevel,
+      'educatorId': educatorId,
+      'rubricApplicationId': rubricApplicationId,
+      'evidenceIds': evidenceIds,
+      'siteId': siteId,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+    return docRef.id;
+  }
+
+  /// Get checkpoints by learner
+  Future<List<Map<String, dynamic>>> getCheckpointsByLearner(
+      String learnerId) async {
+    final QuerySnapshot<Map<String, dynamic>> snapshot = await _firestore
+        .collection('checkpointHistory')
+        .where('learnerId', isEqualTo: learnerId)
+        .orderBy('createdAt', descending: true)
+        .get();
+    return snapshot.docs
+        .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
+            <String, dynamic>{'id': doc.id, ...doc.data()})
+        .toList();
+  }
+
+  /// Get portfolio items by learner
+  Future<List<Map<String, dynamic>>> getPortfolioItemsByLearner(
+      String learnerId) async {
+    final QuerySnapshot<Map<String, dynamic>> snapshot = await _firestore
+        .collection('portfolioItems')
+        .where('learnerId', isEqualTo: learnerId)
+        .orderBy('createdAt', descending: true)
+        .get();
+    return snapshot.docs
+        .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
+            <String, dynamic>{'id': doc.id, ...doc.data()})
+        .toList();
+  }
+
+  /// Get proof bundles by learner
+  Future<List<Map<String, dynamic>>> getProofBundlesByLearner(
+      String learnerId) async {
+    final QuerySnapshot<Map<String, dynamic>> snapshot = await _firestore
+        .collection('proofOfLearningBundles')
+        .where('learnerId', isEqualTo: learnerId)
+        .orderBy('createdAt', descending: true)
+        .get();
+    return snapshot.docs
+        .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
+            <String, dynamic>{'id': doc.id, ...doc.data()})
+        .toList();
+  }
+
+  /// Get evidence records by site
+  Future<List<Map<String, dynamic>>> getEvidenceRecordsBySite(
+      String siteId) async {
+    final QuerySnapshot<Map<String, dynamic>> snapshot = await _firestore
+        .collection('evidenceRecords')
+        .where('siteId', isEqualTo: siteId)
+        .orderBy('createdAt', descending: true)
+        .get();
+    return snapshot.docs
+        .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
+            <String, dynamic>{'id': doc.id, ...doc.data()})
+        .toList();
+  }
+
+  /// Get capability mastery by learner
+  Future<List<Map<String, dynamic>>> getCapabilityMasteryByLearner(
+      String learnerId) async {
+    final QuerySnapshot<Map<String, dynamic>> snapshot = await _firestore
+        .collection('capabilityMastery')
+        .where('learnerId', isEqualTo: learnerId)
+        .get();
+    return snapshot.docs
+        .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
+            <String, dynamic>{'id': doc.id, ...doc.data()})
+        .toList();
+  }
+
+  /// Get growth events by learner
+  Future<List<Map<String, dynamic>>> getGrowthEventsByLearner(
+      String learnerId) async {
+    final QuerySnapshot<Map<String, dynamic>> snapshot = await _firestore
+        .collection('capabilityGrowthEvents')
+        .where('learnerId', isEqualTo: learnerId)
+        .orderBy('createdAt', descending: true)
+        .get();
+    return snapshot.docs
+        .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
+            <String, dynamic>{'id': doc.id, ...doc.data()})
+        .toList();
+  }
+
   // ==================== GENERIC OPERATIONS ====================
 
   /// Generic document get

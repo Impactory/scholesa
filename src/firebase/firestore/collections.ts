@@ -15,7 +15,6 @@ import type {
   MissionAttempt,
   Reflection,
   AccountabilityCycle,
-  AccountabilityKPI,
   AccountabilityCommitment,
   AccountabilityReview,
   Alert,
@@ -47,6 +46,8 @@ import type {
   ProcessDomain,
   ProcessDomainMastery,
   ProcessDomainGrowthEvent,
+  SkillEvidence,
+  ProofOfLearningBundle,
 } from '@/src/types/schema';
 
 // Helper to create typed collection
@@ -71,7 +72,7 @@ export const missionPlansCollection = createCollection<MissionPlan>('missionPlan
 export const missionAttemptsCollection = createCollection<MissionAttemptWrite>('missionAttempts');
 export const reflectionsCollection = createCollection<Reflection>('reflections');
 export const accountabilityCyclesCollection = createCollection<AccountabilityCycle>('accountabilityCycles');
-export const accountabilityKPIsCollection = createCollection<AccountabilityKPI>('accountabilityKPIs');
+// accountabilityKPIsCollection removed �� S1-8: legacy LMS metric
 export const accountabilityCommitmentsCollection = createCollection<AccountabilityCommitment>('accountabilityCommitments');
 export const accountabilityReviewsCollection = createCollection<AccountabilityReview>('accountabilityReviews');
 export const alertsCollection = createCollection<Alert>('alerts');
@@ -109,3 +110,7 @@ export const learnerReflectionsCollection = createCollection<LearnerReflection>(
 export const processDomainsCollection = createCollection<ProcessDomain>('processDomains');
 export const processDomainMasteryCollection = createCollection<ProcessDomainMastery>('processDomainMastery');
 export const processDomainGrowthEventsCollection = createCollection<ProcessDomainGrowthEvent>('processDomainGrowthEvents');
+
+// Evidence Engine
+export const skillEvidenceCollection = createCollection<SkillEvidence>('skillEvidence');
+export const proofOfLearningBundlesCollection = createCollection<ProofOfLearningBundle>('proofOfLearningBundles');

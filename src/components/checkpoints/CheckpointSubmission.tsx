@@ -12,7 +12,7 @@ import { Timestamp, addDoc, getDocs, query, serverTimestamp, where } from 'fireb
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { trackUnifiedEvent } from '@/src/lib/analytics';
 import { CheckCircleIcon, XIcon, AlertCircleIcon } from 'lucide-react';
-import { missionAttemptsCollection } from '@/src/firebase/firestore/collections';
+import { missionAttemptsCollection, skillEvidenceCollection } from '@/src/firebase/firestore/collections';
 
 interface CheckpointSubmissionProps {
   missionId: string;
@@ -88,6 +88,23 @@ export function CheckpointSubmission({
         content,
         submittedAt: serverTimestamp(),
       });
+
+      // S2-2: Auto-create SkillEvidence records for each assessed skill
+      await Promise.all(
+        requiredSkills.map((skill) =>
+          addDoc(skillEvidenceCollection, {
+            learnerId,
+            siteId,
+            microSkillId: skill,
+            evidenceType: 'quiz',
+            description: `Checkpoint ${checkpointNumber} response for "${skill}" on mission ${missionId}`,
+            selfScore: 'developing',
+            status: 'submitted',
+            submittedAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          })
+        )
+      );
 
       await trackUnifiedEvent({
         userId: learnerId,

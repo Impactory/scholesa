@@ -447,6 +447,446 @@ async function main() {
     .set(missionAssignment);
   await db.collection('guardianLinks').doc(guardianLink.id).set(guardianLink);
 
+  // =========================================================================
+  // EVIDENCE CHAIN SEED DATA
+  // =========================================================================
+  console.log('Seeding evidence chain data...');
+
+  // --- Capabilities ---
+  const capabilities = [
+    {
+      id: 'cap-computational-thinking',
+      title: 'Computational Thinking',
+      normalizedTitle: 'computational thinking',
+      pillarCode: 'FUTURE_SKILLS',
+      descriptor: 'Ability to decompose problems, identify patterns, and design algorithmic solutions.',
+      progressionLevels: [
+        { level: 1, label: 'Emerging', description: 'Can follow step-by-step instructions to solve a structured problem.' },
+        { level: 2, label: 'Developing', description: 'Can decompose a problem into smaller parts with guidance.' },
+        { level: 3, label: 'Proficient', description: 'Independently decomposes problems, identifies patterns, and designs solutions.' },
+        { level: 4, label: 'Advanced', description: 'Creates elegant abstractions and evaluates algorithmic trade-offs.' },
+      ],
+      siteId: null,
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: 'cap-creative-problem-solving',
+      title: 'Creative Problem Solving',
+      normalizedTitle: 'creative problem solving',
+      pillarCode: 'FUTURE_SKILLS',
+      descriptor: 'Generating novel approaches to open-ended challenges.',
+      progressionLevels: [
+        { level: 1, label: 'Emerging', description: 'Tries one approach when stuck.' },
+        { level: 2, label: 'Developing', description: 'Generates multiple approaches with prompting.' },
+        { level: 3, label: 'Proficient', description: 'Independently generates and evaluates multiple approaches.' },
+        { level: 4, label: 'Advanced', description: 'Combines ideas from different domains to create original solutions.' },
+      ],
+      siteId: null,
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: 'cap-team-leadership',
+      title: 'Team Leadership',
+      normalizedTitle: 'team leadership',
+      pillarCode: 'LEADERSHIP_AGENCY',
+      descriptor: 'Guiding a team toward shared goals while supporting individual growth.',
+      progressionLevels: [
+        { level: 1, label: 'Emerging', description: 'Participates in team tasks when directed.' },
+        { level: 2, label: 'Developing', description: 'Takes initiative on specific tasks within a team.' },
+        { level: 3, label: 'Proficient', description: 'Coordinates team efforts and supports peers effectively.' },
+        { level: 4, label: 'Advanced', description: 'Inspires and empowers team members while managing conflict constructively.' },
+      ],
+      siteId: null,
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: 'cap-community-impact',
+      title: 'Community Impact',
+      normalizedTitle: 'community impact',
+      pillarCode: 'IMPACT_INNOVATION',
+      descriptor: 'Creating projects that address real needs in the community.',
+      progressionLevels: [
+        { level: 1, label: 'Emerging', description: 'Identifies a community need with guidance.' },
+        { level: 2, label: 'Developing', description: 'Proposes a solution to a community need.' },
+        { level: 3, label: 'Proficient', description: 'Designs and implements a project addressing a real community need.' },
+        { level: 4, label: 'Advanced', description: 'Leads a sustained initiative with measurable community outcomes.' },
+      ],
+      siteId: null,
+      createdAt: now,
+      updatedAt: now,
+    },
+  ];
+
+  await Promise.all(
+    capabilities.map((cap) => db.collection('capabilities').doc(cap.id).set(cap)),
+  );
+  console.log(`  Seeded ${capabilities.length} capabilities`);
+
+  // --- Assessment Rubrics ---
+  const rubrics = [
+    {
+      id: 'rubric-evidence-quality-k3',
+      name: 'K-3 Evidence Quality Rubric',
+      description: 'Evaluates evidence quality for K-3 learners across all pillars.',
+      version: 1,
+      status: 'active',
+      siteId: '*',
+      pillarId: 'FUTURE_SKILLS',
+      criteria: [
+        {
+          name: 'Evidence Quality',
+          description: 'Depth and authenticity of evidence provided.',
+          weight: 0.5,
+          levels: [
+            { name: 'Emerging', description: 'Minimal evidence, mostly prompted responses.', score: 1 },
+            { name: 'Developing', description: 'Some original work with guided evidence.', score: 2 },
+            { name: 'Proficient', description: 'Clear, authentic evidence of independent work.', score: 3 },
+            { name: 'Advanced', description: 'Rich, multi-source evidence showing deep engagement.', score: 4 },
+          ],
+        },
+        {
+          name: 'Capability Demonstration',
+          description: 'How well the work demonstrates the target capability.',
+          weight: 0.5,
+          levels: [
+            { name: 'Emerging', description: 'Capability not clearly demonstrated.', score: 1 },
+            { name: 'Developing', description: 'Capability partially demonstrated with support.', score: 2 },
+            { name: 'Proficient', description: 'Capability clearly demonstrated independently.', score: 3 },
+            { name: 'Advanced', description: 'Capability demonstrated at an exceptional level with transfer to new contexts.', score: 4 },
+          ],
+        },
+      ],
+      tags: ['k3', 'evidence', 'future_skills'],
+      createdBy: hqUid,
+      createdAt: now,
+    },
+  ];
+
+  await Promise.all(
+    rubrics.map((r) => db.collection('assessmentRubrics').doc(r.id).set(r)),
+  );
+  console.log(`  Seeded ${rubrics.length} rubrics`);
+
+  // --- Mission Attempt (submitted, with evidence) ---
+  const missionAttemptId = 'attempt-1';
+  const missionAttempt = {
+    id: missionAttemptId,
+    learnerId: learnerUid,
+    missionId: mission.id,
+    sessionOccurrenceId: occurrence.id,
+    siteId,
+    status: 'reviewed',
+    reviewStatus: 'approved',
+    reviewedBy: educatorUid,
+    reviewedAt: now,
+    content: 'I built a number guessing game using loops and conditionals. The program generates a random number and gives hints.',
+    attachmentUrls: [],
+    aiAssistanceUsed: true,
+    aiAssistanceDetails: 'Used AI coach for debugging a loop issue. I changed the approach after understanding the hint.',
+    proofBundleId: 'proof-bundle-1',
+    proofBundleSummary: {
+      hasExplainItBack: true,
+      hasOralCheck: true,
+      hasMiniRebuild: false,
+      checkpointCount: 2,
+      hasLearnerAiDisclosure: true,
+      aiAssistanceUsed: true,
+    },
+    rubricTotalScore: 3,
+    rubricMaxScore: 4,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  await db.collection('missionAttempts').doc(missionAttemptId).set(missionAttempt);
+  console.log('  Seeded mission attempt');
+
+  // --- Proof of Learning Bundle ---
+  const proofBundle = {
+    id: 'proof-bundle-1',
+    learnerId: learnerUid,
+    siteId,
+    missionAttemptId,
+    explainItBack: 'I used a while loop to keep asking for guesses. The condition checks if the guess matches the random number. I added a counter to track attempts.',
+    oralCheckResponse: 'Student explained the difference between while and for loops and why while was better here.',
+    miniRebuildPlan: null,
+    versionHistory: [
+      { id: 'v1', summary: 'Initial submission with basic loop', createdAt: now - 3600000 },
+      { id: 'v2', summary: 'Added hint system after checkpoint feedback', createdAt: now - 1800000 },
+    ],
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  await db.collection('proofOfLearningBundles').doc(proofBundle.id).set(proofBundle);
+  console.log('  Seeded proof-of-learning bundle');
+
+  // --- Evidence Records ---
+  const evidenceRecords = [
+    {
+      id: 'evidence-1',
+      learnerId: learnerUid,
+      siteId,
+      capabilityId: 'cap-computational-thinking',
+      capabilityLabel: 'Computational Thinking',
+      pillarCode: 'FUTURE_SKILLS',
+      observedAt: now,
+      observedBy: educatorUid,
+      rubricStatus: 'linked',
+      growthStatus: 'updated',
+      linkedPortfolioItemId: 'portfolio-1',
+      portfolioStatus: 'linked',
+      nextVerificationPrompt: 'Can you explain why you chose a while loop instead of a for loop?',
+      createdAt: now,
+    },
+    {
+      id: 'evidence-2',
+      learnerId: learnerUid,
+      siteId,
+      capabilityId: 'cap-creative-problem-solving',
+      capabilityLabel: 'Creative Problem Solving',
+      pillarCode: 'FUTURE_SKILLS',
+      observedAt: now,
+      observedBy: educatorUid,
+      rubricStatus: 'linked',
+      growthStatus: 'updated',
+      linkedPortfolioItemId: 'portfolio-1',
+      portfolioStatus: 'linked',
+      createdAt: now,
+    },
+  ];
+
+  await Promise.all(
+    evidenceRecords.map((r) => db.collection('evidenceRecords').doc(r.id).set(r)),
+  );
+  console.log(`  Seeded ${evidenceRecords.length} evidence records`);
+
+  // --- Capability Mastery ---
+  const masteryRecords = [
+    {
+      id: `mastery-${learnerUid}-cap-computational-thinking`,
+      learnerId: learnerUid,
+      capabilityId: 'cap-computational-thinking',
+      siteId,
+      pillarCode: 'FUTURE_SKILLS',
+      latestLevel: 3,
+      highestLevel: 3,
+      latestEvidenceId: 'evidence-1',
+      latestMissionAttemptId: missionAttemptId,
+      evidenceIds: ['evidence-1'],
+      updatedAt: now,
+      createdAt: now,
+    },
+    {
+      id: `mastery-${learnerUid}-cap-creative-problem-solving`,
+      learnerId: learnerUid,
+      capabilityId: 'cap-creative-problem-solving',
+      siteId,
+      pillarCode: 'FUTURE_SKILLS',
+      latestLevel: 2,
+      highestLevel: 2,
+      latestEvidenceId: 'evidence-2',
+      latestMissionAttemptId: missionAttemptId,
+      evidenceIds: ['evidence-2'],
+      updatedAt: now,
+      createdAt: now,
+    },
+    {
+      id: `mastery-${learnerUid}-cap-team-leadership`,
+      learnerId: learnerUid,
+      capabilityId: 'cap-team-leadership',
+      siteId,
+      pillarCode: 'LEADERSHIP_AGENCY',
+      latestLevel: 2,
+      highestLevel: 2,
+      latestEvidenceId: null,
+      evidenceIds: [],
+      updatedAt: now,
+      createdAt: now,
+    },
+  ];
+
+  await Promise.all(
+    masteryRecords.map((r) => db.collection('capabilityMastery').doc(r.id).set(r)),
+  );
+  console.log(`  Seeded ${masteryRecords.length} capability mastery records`);
+
+  // --- Capability Growth Events ---
+  const growthEvents = [
+    {
+      id: 'growth-1',
+      learnerId: learnerUid,
+      capabilityId: 'cap-computational-thinking',
+      siteId,
+      pillarCode: 'FUTURE_SKILLS',
+      level: 2,
+      rawScore: 2,
+      maxScore: 4,
+      evidenceId: 'evidence-1',
+      missionAttemptId,
+      educatorId: educatorUid,
+      linkedEvidenceRecordIds: ['evidence-1'],
+      linkedPortfolioItemIds: ['portfolio-1'],
+      proofOfLearningStatus: 'partial',
+      createdAt: now - 604800000, // 1 week ago
+    },
+    {
+      id: 'growth-2',
+      learnerId: learnerUid,
+      capabilityId: 'cap-computational-thinking',
+      siteId,
+      pillarCode: 'FUTURE_SKILLS',
+      level: 3,
+      rawScore: 3,
+      maxScore: 4,
+      evidenceId: 'evidence-1',
+      missionAttemptId,
+      rubricApplicationId: 'rubric-app-1',
+      educatorId: educatorUid,
+      linkedEvidenceRecordIds: ['evidence-1'],
+      linkedPortfolioItemIds: ['portfolio-1'],
+      proofOfLearningStatus: 'verified',
+      createdAt: now,
+    },
+    {
+      id: 'growth-3',
+      learnerId: learnerUid,
+      capabilityId: 'cap-creative-problem-solving',
+      siteId,
+      pillarCode: 'FUTURE_SKILLS',
+      level: 2,
+      rawScore: 2,
+      maxScore: 4,
+      evidenceId: 'evidence-2',
+      missionAttemptId,
+      educatorId: educatorUid,
+      linkedEvidenceRecordIds: ['evidence-2'],
+      proofOfLearningStatus: 'partial',
+      createdAt: now,
+    },
+  ];
+
+  await Promise.all(
+    growthEvents.map((e) => db.collection('capabilityGrowthEvents').doc(e.id).set(e)),
+  );
+  console.log(`  Seeded ${growthEvents.length} growth events`);
+
+  // --- Rubric Application ---
+  const rubricApplication = {
+    id: 'rubric-app-1',
+    rubricId: 'rubric-evidence-quality-k3',
+    learnerId: learnerUid,
+    siteId,
+    missionAttemptId,
+    capabilityId: 'cap-computational-thinking',
+    educatorId: educatorUid,
+    criterionScores: [
+      { criterionName: 'Evidence Quality', score: 3, maxScore: 4 },
+      { criterionName: 'Capability Demonstration', score: 3, maxScore: 4 },
+    ],
+    totalScore: 3,
+    maxScore: 4,
+    level: 3,
+    feedback: 'Strong demonstration of computational thinking. The loop logic is correct and the hint system shows creative problem decomposition.',
+    createdAt: now,
+  };
+
+  await db.collection('rubricApplications').doc(rubricApplication.id).set(rubricApplication);
+  console.log('  Seeded rubric application');
+
+  // --- Portfolio Items ---
+  const portfolioItems = [
+    {
+      id: 'portfolio-1',
+      learnerId: learnerUid,
+      title: 'Number Guessing Game',
+      description: 'A Python program that generates a random number and gives progressive hints to the player.',
+      pillarCodes: ['FUTURE_SKILLS'],
+      artifacts: [],
+      evidenceRecordIds: ['evidence-1', 'evidence-2'],
+      capabilityIds: ['cap-computational-thinking', 'cap-creative-problem-solving'],
+      capabilityTitles: ['Computational Thinking', 'Creative Problem Solving'],
+      growthEventIds: ['growth-2', 'growth-3'],
+      missionAttemptId,
+      rubricApplicationId: 'rubric-app-1',
+      proofBundleId: 'proof-bundle-1',
+      proofOfLearningStatus: 'verified',
+      aiAssistanceUsed: true,
+      aiAssistanceDetails: 'Used AI coach for debugging. Changed approach after understanding hint.',
+      aiDisclosureStatus: 'learner-ai-verified',
+      educatorId: educatorUid,
+      verificationStatus: 'verified',
+      source: 'mission',
+      createdAt: now,
+    },
+    {
+      id: 'portfolio-2',
+      learnerId: learnerUid,
+      title: 'Team Presentation on Climate Data',
+      description: 'Led a group presentation analyzing local temperature trends using spreadsheet data.',
+      pillarCodes: ['LEADERSHIP_AGENCY', 'IMPACT_INNOVATION'],
+      artifacts: [],
+      evidenceRecordIds: [],
+      capabilityIds: ['cap-team-leadership', 'cap-community-impact'],
+      capabilityTitles: ['Team Leadership', 'Community Impact'],
+      growthEventIds: [],
+      proofOfLearningStatus: 'partial',
+      aiAssistanceUsed: false,
+      aiDisclosureStatus: 'learner-ai-not-used',
+      verificationStatus: 'pending',
+      source: 'session',
+      createdAt: now - 86400000, // 1 day ago
+    },
+  ];
+
+  await Promise.all(
+    portfolioItems.map((item) => db.collection('portfolioItems').doc(item.id).set(item)),
+  );
+  console.log(`  Seeded ${portfolioItems.length} portfolio items`);
+
+  // --- Learner Reflections ---
+  const reflections = [
+    {
+      id: 'reflection-1',
+      learnerId: learnerUid,
+      siteId,
+      sprintSessionId: null,
+      missionId: mission.id,
+      proudOf: 'I figured out the loop logic by myself after the AI gave me a hint about while vs for.',
+      nextIWill: 'Try to add difficulty levels to the game.',
+      effortLevel: 4,
+      enjoymentLevel: 5,
+      effectiveStrategy: 'Breaking the problem into smaller steps',
+      reflectionType: 'mission_reflection',
+      createdAt: now,
+    },
+  ];
+
+  await Promise.all(
+    reflections.map((r) => db.collection('learnerReflections').doc(r.id).set(r)),
+  );
+  console.log(`  Seeded ${reflections.length} reflections`);
+
+  // --- Learner Progress ---
+  const learnerProgress = {
+    totalXp: 150,
+    missionsCompleted: 3,
+    currentStreak: 5,
+    pillarProgress: {
+      futureSkills: 0.625,
+      leadership: 0.5,
+      impact: 0,
+    },
+    updatedAt: now,
+  };
+
+  await db.collection('learnerProgress').doc(learnerUid).set(learnerProgress);
+  console.log('  Seeded learner progress');
+
+  console.log('Evidence chain seed complete.');
   console.log('Test login password:', standardTestPassword);
   console.log(
     'Primary testing accounts: learner@scholesa.dev, educator@scholesa.dev, parent@scholesa.dev, site@scholesa.dev, hq@scholesa.dev, partner@scholesa.dev',

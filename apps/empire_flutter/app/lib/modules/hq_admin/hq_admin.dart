@@ -16,3 +16,5 @@ export 'hq_exports_page.dart';
 export 'hq_integrations_health_page.dart';
 export 'hq_curriculum_page.dart';
 export 'hq_feature_flags_page.dart';
+export 'capability_framework_page.dart';
+export 'rubric_builder_page.dart';

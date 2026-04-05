@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { Spinner } from '@/src/components/ui/Spinner';
 import { RoleRouteGuard } from '@/src/components/auth/RoleRouteGuard';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
@@ -24,6 +24,7 @@ import {
   type WorkflowRecord,
 } from './workflowData';
 import { formatWorkflowRecordUpdatedAt } from './workflowRecordTimestamps';
+import { getCustomRouteRenderer } from './customRouteRenderers';
 
 interface WorkflowRoutePageProps {
   routePath: WorkflowPath;
@@ -62,6 +63,9 @@ export function WorkflowRoutePage({ routePath, renderRecordDetail, detailActionL
     routePath,
     ...(normalizedRole ? { role: normalizedRole } : {}),
   });
+
+  // Check for a domain-specific custom renderer for this route.
+  const CustomRenderer = route ? getCustomRouteRenderer(routePath) : null;
 
   const [data, setData] = useState<WorkflowLoadResult>({
     records: [],
@@ -132,6 +136,35 @@ export function WorkflowRoutePage({ routePath, renderRecordDetail, detailActionL
       <div className="rounded-lg border border-app bg-app-surface p-6 text-app-muted">
         Workflow route is not configured.
       </div>
+    );
+  }
+
+  // If a custom renderer is registered for this route and auth is ready, use it
+  // instead of the generic card-list UI.
+  if (CustomRenderer && user && normalizedRole && !authLoading) {
+    return (
+      <RoleRouteGuard allowedRoles={route.allowedRoles}>
+        <Suspense
+          fallback={
+            <div className="flex min-h-[240px] items-center justify-center rounded-xl border border-app bg-app-surface">
+              <div className="flex items-center gap-2 text-app-muted">
+                <Spinner />
+                <span>Loading...</span>
+              </div>
+            </div>
+          }
+        >
+          <CustomRenderer
+            ctx={{
+              routePath,
+              locale,
+              uid: user.uid,
+              role: normalizedRole,
+              profile: profile || null,
+            }}
+          />
+        </Suspense>
+      </RoleRouteGuard>
     );
   }
 

@@ -21,6 +21,15 @@ enum OpType {
   rubricApplication,
   capabilityGrowthEvent,
   checkpointVerification,
+  // Evidence chain operations
+  checkpointSubmit,
+  reflectionSubmit,
+  aiCoachLog,
+  peerFeedbackSubmit,
+  portfolioItemCreate,
+  proofBundleCreate,
+  proofBundleUpdate,
+  rubricApply,
 }
 
 /// Single queued operation

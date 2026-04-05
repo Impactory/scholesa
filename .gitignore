@@ -100,3 +100,10 @@ Archive.zip
 
 !packages/safety/fixtures/guardrails.i18n.json
 .firebase/logs/vsce-debug.log
+
+# Compiled artifacts
+*.class
+build.log
+
+# -impactory merge duplicates (should never be committed)
+*-impactory.*

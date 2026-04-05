@@ -2,6 +2,24 @@ import { Timestamp } from 'firebase/firestore';
 
 export type UserRole = 'learner' | 'parent' | 'educator' | 'hq' | 'siteLead' | 'partner';
 export type PillarCode = 'FUTURE_SKILLS' | 'LEADERSHIP_AGENCY' | 'IMPACT_INNOVATION';
+export type StageId = 'discoverers' | 'builders' | 'explorers' | 'innovators';
+export type AiPolicyTier = 'A' | 'B' | 'C' | 'D';
+export type UxComplexity = 'simple' | 'guided' | 'autonomous' | 'professional';
+
+/**
+ * Learning stage (grade band) — defines age-appropriate delivery, AI policy,
+ * and UX complexity for a cohort of learners. Spec §7.
+ */
+export interface Stage {
+  id: StageId;
+  name: string;
+  gradeRange: [number, number];
+  description: string;
+  focusAreas: string[];
+  aiPolicyTier: AiPolicyTier;
+  uxComplexity: UxComplexity;
+  defaultSessionDuration: number; // minutes
+}
 
 export interface UserProfile {
   uid: string;
@@ -9,6 +27,7 @@ export interface UserProfile {
   displayName: string;
   role: UserRole;
   studioId?: string;
+  stageId?: StageId; // Learner stage (grade band)
   linkedLearnerIds?: string[]; // For parents
   createdAt: Timestamp;
   updatedAt: Timestamp;
@@ -52,9 +71,10 @@ export interface Mission {
   content: string;
   xp: number;
   order: number;
-  skills?: string[]; // Deprecated — use capabilityIds
-  capabilityIds?: string[]; // References to capabilities collection
+  skills?: string[];
   pillarCodes: PillarCode[];
+  capabilityIds?: string[]; // S2-1: linked capabilities from the graph
+  stageId?: StageId; // Target stage for this mission
 }
 
 export interface Enrolment {
@@ -75,6 +95,7 @@ export interface Session {
   startTime: Timestamp;
   endTime: Timestamp;
   dayOfWeek?: number; // 0-6
+  stageId?: StageId; // Stage this session targets
 }
 
 export interface SessionOccurrence {
@@ -117,8 +138,6 @@ export interface MissionAttempt {
   content?: string; // Artifacts or submission text
   notes?: string;
   attachmentUrls?: string[];
-  capabilityIds?: string[]; // Copied from Mission.capabilityIds at creation time
-  pillarCodes?: PillarCode[]; // Copied from Mission.pillarCodes at creation time
   startedAt?: Timestamp;
   submittedAt?: Timestamp;
   reviewedAt?: Timestamp;
@@ -150,14 +169,17 @@ export interface AccountabilityCycle {
 }
 
 /**
- * @deprecated Legacy type — conflates attendance/completion metrics with capability mastery.
- * Do not use for capability-first workflows. See CapabilityMastery for evidence-backed growth.
+ * @deprecated LMS-shaped type — conflates attendance with mastery.
+ * Migrate to CapabilityMastery + CapabilityGrowthEvent for evidence-based tracking.
+ * Scheduled for removal in Sprint 2. See docs/ALIGNMENT_PLAN.md S0-2.
  */
 export interface AccountabilityKPI {
   id: string;
   cycleId: string;
   learnerId: string;
+  /** @deprecated Use CapabilityMastery instead of attendance metrics */
   attendancePct: number;
+  /** @deprecated Use CapabilityMastery.currentLevel instead */
   missionsCompleted: number;
   pillarScores: Record<PillarCode, number>;
 }
@@ -201,14 +223,14 @@ export interface Announcement {
 export interface PortfolioItem {
   id: string;
   learnerId: string;
-  siteId?: string;
   title: string;
   description: string;
   pillarCodes: PillarCode[];
   artifacts: string[]; // URLs
   evidenceRecordIds?: string[];
   capabilityIds?: string[];
-  capabilityTitles?: string[]; // Denormalized for offline-first display (Flutter writes)
+  capabilityTitles?: string[];
+  reflectionIds?: string[]; // S1-6: linked ReflectionEntry documents
   growthEventIds?: string[];
   missionAttemptId?: string;
   rubricApplicationId?: string;
@@ -812,8 +834,42 @@ export interface SkillEvidence {
   
   // Status
   status: 'submitted' | 'approved' | 'needs_revision';
-  
+
+  // AI disclosure (S1-7)
+  aiAssistanceUsed?: boolean;
+  aiAssistanceDetails?: string;
+
   submittedAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+/**
+ * Proof-of-learning bundle — learner-assembled proof linking
+ * portfolio items to verification methods (ExplainItBack, OralCheck, MiniRebuild).
+ * Collection: proofOfLearningBundles
+ */
+export interface ProofOfLearningBundle {
+  id: string;
+  learnerId: string;
+  portfolioItemId: string;
+  capabilityId?: string;
+
+  // Three verification methods
+  hasExplainItBack: boolean;
+  hasOralCheck: boolean;
+  hasMiniRebuild: boolean;
+
+  // Excerpts / evidence from each method
+  explainItBackExcerpt?: string;
+  oralCheckExcerpt?: string;
+  miniRebuildExcerpt?: string;
+
+  // Verification status (derived from methods present)
+  verificationStatus: 'missing' | 'partial' | 'verified';
+  educatorVerifierId?: string;
+
+  version: number;
+  createdAt: Timestamp;
   updatedAt: Timestamp;
 }
 
@@ -871,7 +927,11 @@ export interface Checkpoint {
   // Pass/needs revision
   status: 'passed' | 'needs_revision';
   attemptNumber: number;
-  
+
+  // AI disclosure (S1-7)
+  aiAssistanceUsed?: boolean;
+  aiAssistanceDetails?: string;
+
   createdAt: Timestamp;
 }
 
@@ -905,7 +965,11 @@ export interface ShowcaseSubmission {
   // Visibility
   visibleToCrew: boolean;
   visibleToSite: boolean;
-  
+
+  // AI disclosure (S1-7)
+  aiAssistanceUsed?: boolean;
+  aiAssistanceDetails?: string;
+
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -922,6 +986,7 @@ export interface ReflectionEntry {
   sprintSessionId?: string;
   missionId?: string;
   cycleId?: string; // Weekly cycle
+  portfolioItemId?: string; // S1-6: back-link to the portfolio item this reflects on
   
   // Core prompts
   proudOf: string; // "I'm proud of..."
@@ -933,12 +998,16 @@ export interface ReflectionEntry {
   
   // What strategy worked
   effectiveStrategy?: string;
-  
+
+  // AI disclosure (S1-7)
+  aiAssistanceUsed?: boolean;
+  aiAssistanceDetails?: string;
+
   createdAt: Timestamp;
 }
 
 /**
- * MiloOS interaction log
+ * AI help interaction log
  */
 export interface AICoachInteraction {
   id: string;
@@ -1006,9 +1075,10 @@ export interface LearnerInterestProfile {
 }
 
 /**
- * @deprecated Legacy type — makes skill claims without evidence links.
- * Superseded by getParentDashboardBundle callable which returns evidence-backed data.
- * Do not use for capability-first workflows.
+ * @deprecated LMS-shaped type — skillsImproved has no evidence provenance.
+ * Migrate to buildParentLearnerSummary() which reads from CapabilityMastery,
+ * CapabilityGrowthEvent, and PortfolioItem with proof-of-learning linkage.
+ * Scheduled for removal in Sprint 2. See docs/ALIGNMENT_PLAN.md S0-2.
  */
 export interface ParentSnapshot {
   id: string;
@@ -1016,24 +1086,27 @@ export interface ParentSnapshot {
   parentId: string;
   siteId: string;
   cycleId: string;
-  
+
   // Summary
   whatTheyBuilt: string[];
+  /** @deprecated No evidence provenance — use CapabilityGrowthEvent instead */
   skillsImproved: string[];
   howToSupportAtHome: string[];
-  
+
   // Stats
+  /** @deprecated Use CapabilityMastery for evidence-backed metrics */
   attendanceThisWeek: number;
+  /** @deprecated Use CapabilityMastery for evidence-backed metrics */
   missionsCompleted: number;
   badgesEarned: number;
-  
+
   // Highlights
   showcaseHighlight?: {
     title: string;
     artifactUrl: string;
     description: string;
   };
-  
+
   createdAt: Timestamp;
 }
 
@@ -1059,7 +1132,11 @@ export interface PeerFeedback {
   flagReason?: string;
   moderatedBy?: string;
   moderatedAt?: Timestamp;
-  
+
+  // AI disclosure (S1-7)
+  aiAssistanceUsed?: boolean;
+  aiAssistanceDetails?: string;
+
   createdAt: Timestamp;
 }
 
@@ -1086,276 +1163,63 @@ export interface MotivationAnalytics {
   // Autonomy signals
   choiceDistribution: Record<DifficultyLevel, number>;
   selfSelectedChallengeChanges: number;
-  
+
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
 
-// --- Capability Framework & Evidence Chain ---
+// ═══════════════════════════════════════════════════════════════════════════
+// Capability Graph — core types for the capability-first evidence chain
+// ═══════════════════════════════════════════════════════════════════════════
+
+export type MasteryLevel = 'emerging' | 'developing' | 'proficient' | 'advanced';
 
 /**
- * A capability defined by HQ curriculum authors.
- * Capabilities are the top-level learning outcomes that evidence maps to.
+ * A capability definition within the Scholesa framework.
+ * Collection: capabilities (HQ-only write, all read)
  */
 export interface Capability {
   id: string;
-  title: string;
-  normalizedTitle: string;
+  name: string;
+  domain: 'technical' | 'human';
   pillarCode: PillarCode;
-  siteId?: string | null;
-  descriptor?: string;
-  progressionDescriptors?: ProgressionDescriptors;
-  rubricTemplateId?: string;
-  unitMappings?: string[]; // Mission/unit IDs this capability maps to
-  checkpointMappings?: CheckpointMapping[]; // Named checkpoints for this capability
-  sortOrder?: number;
-  status?: 'active' | 'archived';
+  description: string;
+  stageId?: StageId;
+  prerequisites?: string[];
+  iCanStatements?: Record<MasteryLevel, string>;
+  teacherLookFors?: string[];
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
 
 /**
- * A named checkpoint that defines a specific assessment point for a capability.
- */
-export interface CheckpointMapping {
-  label: string;
-  description?: string;
-}
-
-/**
- * Progression descriptors for a capability.
- * Defines what Beginning, Developing, Proficient, and Advanced look like.
- */
-export interface ProgressionDescriptors {
-  beginning: string;
-  developing: string;
-  proficient: string;
-  advanced: string;
-}
-
-/**
- * A reusable rubric template for scoring evidence against capability criteria.
- * Created by HQ admin and used by educators when applying rubrics.
- */
-export interface RubricTemplate {
-  id: string;
-  title: string;
-  siteId?: string | null;
-  capabilityIds: string[];
-  criteria: RubricTemplateCriterion[];
-  status: 'draft' | 'published' | 'archived';
-  createdBy: string;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-}
-
-export interface RubricTemplateCriterion {
-  label: string;
-  capabilityId: string;
-  processDomainId?: string;
-  pillarCode?: PillarCode;
-  maxScore: number;
-  descriptors?: ProgressionDescriptors;
-}
-
-/**
- * A process domain captures cross-cutting skills (e.g., collaboration,
- * critical thinking) that are assessed alongside capabilities in rubrics.
- */
-export interface ProcessDomain {
-  id: string;
-  title: string;
-  siteId?: string | null;
-  descriptor?: string;
-  progressionDescriptors?: ProgressionDescriptors;
-  sortOrder?: number;
-  status?: 'active' | 'archived';
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-}
-
-/**
- * Tracks a learner's mastery level for a process domain.
- */
-export interface ProcessDomainMastery {
-  id: string;
-  learnerId: string;
-  processDomainId: string;
-  siteId: string;
-  latestLevel: number;
-  highestLevel: number;
-  evidenceIds: string[];
-  growthEventIds: string[];
-  updatedAt: Timestamp;
-  createdAt: Timestamp;
-}
-
-/**
- * Append-only growth event for a process domain level change.
- */
-export interface ProcessDomainGrowthEvent {
-  id: string;
-  learnerId: string;
-  processDomainId: string;
-  siteId: string;
-  level: number;
-  rawScore: number;
-  maxScore: number;
-  evidenceId?: string;
-  rubricApplicationId?: string;
-  educatorId?: string;
-  createdAt: Timestamp;
-}
-
-/**
- * Tracks a learner's current and highest mastery level for a capability.
- * Updated whenever a rubric is applied and a growth event is recorded.
+ * Current mastery level of a learner for a specific capability.
+ * Collection: capabilityMastery (doc ID: learnerId_capabilityId)
  */
 export interface CapabilityMastery {
-  id: string;
   learnerId: string;
   capabilityId: string;
-  siteId: string;
-  pillarCode: PillarCode;
-  latestLevel: number;
-  highestLevel: number;
-  latestEvidenceId?: string;
-  latestMissionAttemptId?: string;
-  evidenceIds: string[];
-  growthEventIds: string[];
+  currentLevel: MasteryLevel;
+  previousLevel?: MasteryLevel;
+  evidenceCount: number;
+  lastAssessedBy: string;
+  lastAssessedAt: Timestamp;
   updatedAt: Timestamp;
-  createdAt: Timestamp;
 }
 
 /**
- * Append-only record of a capability level change.
- * Created when a rubric is applied and links evidence to capability growth.
+ * Immutable growth event recording a mastery level change.
+ * Collection: capabilityGrowthEvents (educator create-only, append-only)
  */
 export interface CapabilityGrowthEvent {
   id: string;
   learnerId: string;
   capabilityId: string;
-  siteId: string;
-  pillarCode: PillarCode;
-  level: number;
-  rawScore: number;
-  maxScore: number;
-  evidenceId?: string;
-  missionAttemptId?: string;
-  rubricApplicationId?: string;
-  educatorId?: string;
-  createdAt: Timestamp;
-}
-
-/**
- * An educator-logged observation or evidence artifact captured during a live session.
- * This is the primary evidence creation point in the chain.
- */
-export interface EvidenceRecord {
-  id: string;
-  learnerId: string;
+  fromLevel: MasteryLevel | null;
+  toLevel: MasteryLevel;
   educatorId: string;
   siteId: string;
-  sessionOccurrenceId?: string;
-  description: string;
-  capabilityId?: string;
-  capabilityMapped: boolean;
-  phaseKey?: 'retrieval_warm_up' | 'mini_lesson' | 'build_sprint' | 'checkpoint' | 'share_out' | 'reflection';
-  portfolioCandidate: boolean;
-  rubricStatus: 'pending' | 'applied' | 'skipped';
-  growthStatus: 'pending' | 'recorded' | 'skipped';
   rubricApplicationId?: string;
-  growthEventId?: string;
-  artifactUrl?: string;
+  evidenceIds: string[];
   createdAt: Timestamp;
-  updatedAt: Timestamp;
-}
-
-/**
- * A learner-authored reflection tied to an artifact, mission, or capability.
- * Used for portfolio evidence and proof-of-learning verification.
- */
-export interface LearnerReflection {
-  id: string;
-  learnerId: string;
-  siteId: string;
-  content: string;
-  missionId?: string;
-  portfolioItemId?: string;
-  capabilityIds?: string[];
-  aiAssistanceUsed: boolean;
-  aiAssistanceDetails?: string;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-}
-
-/**
- * A rubric application linking an educator's scoring to capabilities.
- * Created when an educator reviews learner work against rubric criteria.
- */
-export interface RubricApplication {
-  id: string;
-  learnerId: string;
-  educatorId: string;
-  siteId: string;
-  missionAttemptId?: string;
-  evidenceRecordId?: string;
-  rubricId?: string;
-  rubricTitle: string;
-  criteria: RubricCriterionScore[];
-  totalRawScore: number;
-  totalMaxScore: number;
-  capabilityIds: string[]; // Primary: IDs into capabilities collection
-  feedback?: string;
-  createdAt: Timestamp;
-}
-
-export interface RubricCriterionScore {
-  label: string;
-  pillarCode?: PillarCode;
-  capabilityId: string; // Required: reference to capabilities collection
-  score: number;
-  maxScore: number;
-  notes?: string;
-}
-
-/**
- * Composite read-only view of a learner's full capability profile, synthesized from
- * CapabilityMastery, ProcessDomainMastery, PortfolioItem, and CapabilityGrowthEvent.
- * Not stored in Firestore — assembled at query time for dashboards and reports.
- */
-export interface LearnerCapabilityProfile {
-  learnerId: string;
-  siteId: string;
-  generatedAt: Date;
-
-  /** Per-capability mastery state */
-  capabilityMasteries: CapabilityMastery[];
-
-  /** Per-process-domain mastery state */
-  processDomainMasteries: ProcessDomainMastery[];
-
-  /** Per-pillar summary: average level across capabilities in pillar */
-  pillarSummaries: {
-    pillarCode: PillarCode;
-    averageLevel: number;
-    capabilityCount: number;
-    evidenceCount: number;
-    band: 'emerging' | 'developing' | 'strong';
-  }[];
-
-  /** Recent growth events (most recent first) */
-  recentGrowthEvents: CapabilityGrowthEvent[];
-
-  /** Portfolio highlights: verified items with highest capability coverage */
-  portfolioHighlights: {
-    portfolioItemId: string;
-    title: string;
-    source: string;
-    verificationStatus: string;
-    capabilityIds: string[];
-  }[];
-
-  /** Overall profile band */
-  overallBand: 'emerging' | 'developing' | 'strong';
 }

@@ -10,12 +10,18 @@ class InlineLocaleText {
     String input, {
     required InlineTranslations zhCn,
     required InlineTranslations zhTw,
+    InlineTranslations es = const <String, String>{},
+    InlineTranslations th = const <String, String>{},
   }) {
     switch (_canonicalLocale(Localizations.localeOf(context))) {
       case 'zh-CN':
         return zhCn[input] ?? zhTw[input] ?? input;
       case 'zh-TW':
         return zhTw[input] ?? zhCn[input] ?? input;
+      case 'es':
+        return es[input] ?? input;
+      case 'th':
+        return th[input] ?? input;
       default:
         return input;
     }
@@ -32,6 +38,8 @@ class InlineLocaleText {
       }
       return 'zh-CN';
     }
+    if (languageCode == 'es') return 'es';
+    if (languageCode == 'th') return 'th';
     return 'en';
   }
 }

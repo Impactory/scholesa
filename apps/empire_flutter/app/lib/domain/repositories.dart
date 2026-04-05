@@ -88,30 +88,6 @@ class LearnerReflectionRepository {
     } catch (_) {}
     return doc.id;
   }
-
-  Future<void> upsert(LearnerReflectionModel model) =>
-      _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
-
-  Future<LearnerReflectionModel?> getById(String id) async {
-    final doc = await _col.doc(id).get();
-    if (!doc.exists) return null;
-    return LearnerReflectionModel.fromDoc(doc);
-  }
-
-  Future<List<LearnerReflectionModel>> listByLearner(
-    String learnerId, {
-    String? siteId,
-    int limit = 50,
-  }) async {
-    Query<Map<String, dynamic>> q =
-        _col.where('learnerId', isEqualTo: learnerId);
-    if (siteId != null && siteId.isNotEmpty) {
-      q = q.where('siteId', isEqualTo: siteId);
-    }
-    final snap =
-        await q.orderBy('createdAt', descending: true).limit(limit).get();
-    return snap.docs.map(LearnerReflectionModel.fromDoc).toList();
-  }
 }
 
 class MetacognitiveCalibrationRepository {
@@ -491,17 +467,8 @@ class PortfolioItemRepository {
   CollectionReference<Map<String, dynamic>> get _col =>
       _firestore.collection('portfolioItems');
 
-  Future<PortfolioItemModel?> getById(String id) async {
-    final doc = await _col.doc(id).get();
-    if (!doc.exists) return null;
-    return PortfolioItemModel.fromDoc(doc);
-  }
-
   Future<void> upsert(PortfolioItemModel model) =>
       _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
-
-  Future<void> patch(String id, Map<String, dynamic> fields) =>
-      _col.doc(id).update(fields);
 
   Future<List<PortfolioItemModel>> listByLearner(String learnerId) async {
     final snap = await _col.where('learnerId', isEqualTo: learnerId).get();
@@ -555,19 +522,7 @@ class AccountabilityCycleRepository {
       _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
 }
 
-class AccountabilityKPIRepository {
-  CollectionReference<Map<String, dynamic>> get _col =>
-      FirebaseFirestore.instance.collection('accountabilityKPIs');
-
-  Future<void> upsert(AccountabilityKPIModel model) =>
-      _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
-
-  Future<List<AccountabilityKPIModel>> listRecent({int limit = 6}) async {
-    final snap =
-        await _col.orderBy('updatedAt', descending: true).limit(limit).get();
-    return snap.docs.map(AccountabilityKPIModel.fromDoc).toList();
-  }
-}
+// AccountabilityKPIRepository removed — S1-8: legacy LMS metric replaced by CapabilityMastery
 
 class AccountabilityCommitmentRepository {
   CollectionReference<Map<String, dynamic>> get _col =>
@@ -1004,12 +959,6 @@ class RubricRepository {
 }
 
 class RubricApplicationRepository {
-  RubricApplicationRepository({this.growthEngine});
-
-  /// Optional growth engine. When provided, rubric applications automatically
-  /// trigger capability growth processing through the evidence chain.
-  final dynamic growthEngine;
-
   CollectionReference<Map<String, dynamic>> get _col =>
       FirebaseFirestore.instance.collection('rubricApplications');
 
@@ -1026,43 +975,6 @@ class RubricApplicationRepository {
         },
       );
     } catch (_) {}
-  }
-
-  /// Apply a rubric and trigger capability growth processing.
-  /// This is the primary method educators should use — it connects
-  /// the rubric application to the full evidence chain.
-  Future<void> applyAndProcessGrowth({
-    required RubricApplicationModel application,
-    required String learnerId,
-    required String siteId,
-    required String capabilityId,
-    required String pillarCode,
-    String? capabilityTitle,
-    List<String> progressionDescriptors = const [],
-    List<Map<String, dynamic>> checkpointMappings = const [],
-    String? educatorId,
-    String? missionAttemptId,
-    String? evidenceRecordId,
-    String? portfolioItemId,
-  }) async {
-    await upsert(application);
-
-    if (growthEngine != null) {
-      await growthEngine.processRubricApplication(
-        rubricApplication: application,
-        learnerId: learnerId,
-        siteId: siteId,
-        capabilityId: capabilityId,
-        pillarCode: pillarCode,
-        capabilityTitle: capabilityTitle,
-        progressionDescriptors: progressionDescriptors,
-        checkpointMappings: checkpointMappings,
-        educatorId: educatorId,
-        missionAttemptId: missionAttemptId,
-        evidenceRecordId: evidenceRecordId,
-        portfolioItemId: portfolioItemId,
-      );
-    }
   }
 
   Future<List<RubricApplicationModel>> listByAttempt(String missionAttemptId,
@@ -2792,298 +2704,287 @@ class ItemResponseRepository {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Evidence chain repositories
-// ---------------------------------------------------------------------------
+// ==================== EVIDENCE CHAIN REPOSITORIES ====================
 
-class EvidenceRecordRepository {
-  EvidenceRecordRepository({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
-
-  final FirebaseFirestore _firestore;
-
+class CheckpointRepository {
   CollectionReference<Map<String, dynamic>> get _col =>
-      _firestore.collection('evidenceRecords');
+      FirebaseFirestore.instance.collection('checkpointHistory');
 
-  Future<void> upsert(EvidenceRecordModel model) =>
-      _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
-
-  Future<EvidenceRecordModel?> getById(String id) async {
-    final doc = await _col.doc(id).get();
-    if (!doc.exists) return null;
-    return EvidenceRecordModel.fromDoc(doc);
-  }
-
-  Future<List<EvidenceRecordModel>> listByLearner(
-    String learnerId, {
-    String? siteId,
-    int limit = 100,
-  }) async {
-    Query<Map<String, dynamic>> q =
-        _col.where('learnerId', isEqualTo: learnerId);
-    if (siteId != null && siteId.isNotEmpty) {
-      q = q.where('siteId', isEqualTo: siteId);
-    }
-    final snap =
-        await q.orderBy('createdAt', descending: true).limit(limit).get();
-    return snap.docs.map(EvidenceRecordModel.fromDoc).toList();
-  }
-
-  Future<List<EvidenceRecordModel>> listBySite(
-    String siteId, {
-    int limit = 200,
-  }) async {
-    final snap = await _col
-        .where('siteId', isEqualTo: siteId)
-        .orderBy('createdAt', descending: true)
-        .limit(limit)
-        .get();
-    return snap.docs.map(EvidenceRecordModel.fromDoc).toList();
-  }
-
-  Future<List<EvidenceRecordModel>> listByCapability(
-    String capabilityId, {
-    required String learnerId,
-    int limit = 50,
-  }) async {
-    final snap = await _col
-        .where('capabilityId', isEqualTo: capabilityId)
-        .where('learnerId', isEqualTo: learnerId)
-        .orderBy('createdAt', descending: true)
-        .limit(limit)
-        .get();
-    return snap.docs.map(EvidenceRecordModel.fromDoc).toList();
-  }
-}
-
-class ObservationRepository {
-  ObservationRepository({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
-
-  final FirebaseFirestore _firestore;
-
-  CollectionReference<Map<String, dynamic>> get _col =>
-      _firestore.collection('observations');
-
-  Future<String> create(ObservationModel model) async {
-    final doc = model.id.isNotEmpty ? _col.doc(model.id) : _col.doc();
-    await doc.set(model.toMap(), SetOptions(merge: true));
-    try {
-      await TelemetryService.instance.logEvent(
-        event: 'observation.created',
-        role: 'educator',
-        siteId: model.siteId,
-        metadata: <String, dynamic>{
-          'observationType': model.observationType,
-          'hasNote': model.note != null && model.note!.trim().isNotEmpty,
-          'tagCount': model.tags.length,
-          'hasCapability': model.capabilityId != null,
-        },
-      );
-    } catch (_) {}
+  Future<String> create(CheckpointModel model) async {
+    final doc = await _col.add(model.toMap());
     return doc.id;
   }
 
-  Future<void> upsert(ObservationModel model) =>
-      _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
-
-  Future<List<ObservationModel>> listBySession(
-    String sessionOccurrenceId, {
-    int limit = 100,
-  }) async {
-    final snap = await _col
-        .where('sessionOccurrenceId', isEqualTo: sessionOccurrenceId)
-        .orderBy('createdAt', descending: true)
-        .limit(limit)
-        .get();
-    return snap.docs.map(ObservationModel.fromDoc).toList();
-  }
-
-  Future<List<ObservationModel>> listByEducator(
-    String educatorId, {
-    required String siteId,
-    int limit = 100,
-  }) async {
-    final snap = await _col
-        .where('educatorId', isEqualTo: educatorId)
-        .where('siteId', isEqualTo: siteId)
-        .orderBy('createdAt', descending: true)
-        .limit(limit)
-        .get();
-    return snap.docs.map(ObservationModel.fromDoc).toList();
-  }
-}
-
-class ProofBundleRepository {
-  ProofBundleRepository({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
-
-  final FirebaseFirestore _firestore;
-
-  CollectionReference<Map<String, dynamic>> get _col =>
-      _firestore.collection('proofOfLearningBundles');
-
-  Future<void> upsert(ProofBundleModel model) =>
-      _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
-
-  Future<ProofBundleModel?> getById(String id) async {
+  Future<CheckpointModel?> getById(String id) async {
     final doc = await _col.doc(id).get();
     if (!doc.exists) return null;
-    return ProofBundleModel.fromDoc(doc);
+    return CheckpointModel.fromDoc(doc);
   }
 
-  Future<List<ProofBundleModel>> listByLearner(
-    String learnerId, {
-    String? siteId,
-    int limit = 50,
-  }) async {
-    Query<Map<String, dynamic>> q =
-        _col.where('learnerId', isEqualTo: learnerId);
-    if (siteId != null && siteId.isNotEmpty) {
-      q = q.where('siteId', isEqualTo: siteId);
-    }
-    final snap =
-        await q.orderBy('createdAt', descending: true).limit(limit).get();
-    return snap.docs.map(ProofBundleModel.fromDoc).toList();
+  Future<List<CheckpointModel>> listByLearnerAndMission(
+      String learnerId, String missionId) async {
+    final snap = await _col
+        .where('learnerId', isEqualTo: learnerId)
+        .where('missionId', isEqualTo: missionId)
+        .orderBy('createdAt', descending: true)
+        .get();
+    return snap.docs.map(CheckpointModel.fromDoc).toList();
+  }
+
+  Future<List<CheckpointModel>> listBySession(String sessionId) async {
+    final snap = await _col
+        .where('sessionId', isEqualTo: sessionId)
+        .orderBy('createdAt', descending: true)
+        .get();
+    return snap.docs.map(CheckpointModel.fromDoc).toList();
   }
 }
 
-class CheckpointRepository {
-  CheckpointRepository({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
-
-  final FirebaseFirestore _firestore;
-
+class SkillEvidenceRepository {
   CollectionReference<Map<String, dynamic>> get _col =>
-      _firestore.collection('checkpoints');
+      FirebaseFirestore.instance.collection('skillEvidence');
 
-  Future<void> upsert(CheckpointModel model) =>
+  Future<String> create(SkillEvidenceModel model) async {
+    final doc = await _col.add(model.toMap());
+    return doc.id;
+  }
+
+  Future<SkillEvidenceModel?> getById(String id) async {
+    final doc = await _col.doc(id).get();
+    if (!doc.exists) return null;
+    return SkillEvidenceModel.fromDoc(doc);
+  }
+
+  Future<List<SkillEvidenceModel>> listByLearner(String learnerId) async {
+    final snap = await _col.where('learnerId', isEqualTo: learnerId).get();
+    return snap.docs.map(SkillEvidenceModel.fromDoc).toList();
+  }
+
+  Future<List<SkillEvidenceModel>> listBySkill(String skillId) async {
+    final snap = await _col.where('skillId', isEqualTo: skillId).get();
+    return snap.docs.map(SkillEvidenceModel.fromDoc).toList();
+  }
+}
+
+class AICoachInteractionRepository {
+  CollectionReference<Map<String, dynamic>> get _col =>
+      FirebaseFirestore.instance.collection('aiCoachInteractions');
+
+  Future<String> create(AICoachInteractionModel model) async {
+    final doc = await _col.add(model.toMap());
+    return doc.id;
+  }
+
+  Future<List<AICoachInteractionModel>> listByLearner(
+      String learnerId) async {
+    final snap = await _col
+        .where('learnerId', isEqualTo: learnerId)
+        .orderBy('createdAt', descending: true)
+        .get();
+    return snap.docs.map(AICoachInteractionModel.fromDoc).toList();
+  }
+
+  Future<List<AICoachInteractionModel>> listBySession(
+      String sessionId) async {
+    final snap = await _col
+        .where('sessionId', isEqualTo: sessionId)
+        .orderBy('createdAt', descending: true)
+        .get();
+    return snap.docs.map(AICoachInteractionModel.fromDoc).toList();
+  }
+}
+
+class PeerFeedbackRepository {
+  CollectionReference<Map<String, dynamic>> get _col =>
+      FirebaseFirestore.instance.collection('peerFeedback');
+
+  Future<String> create(PeerFeedbackModel model) async {
+    final doc = await _col.add(model.toMap());
+    return doc.id;
+  }
+
+  Future<List<PeerFeedbackModel>> listForLearner(
+      String toLearnerId) async {
+    final snap = await _col
+        .where('toLearnerId', isEqualTo: toLearnerId)
+        .orderBy('createdAt', descending: true)
+        .get();
+    return snap.docs.map(PeerFeedbackModel.fromDoc).toList();
+  }
+
+  Future<List<PeerFeedbackModel>> listByAuthor(
+      String fromLearnerId) async {
+    final snap = await _col
+        .where('fromLearnerId', isEqualTo: fromLearnerId)
+        .orderBy('createdAt', descending: true)
+        .get();
+    return snap.docs.map(PeerFeedbackModel.fromDoc).toList();
+  }
+}
+
+class ProofOfLearningBundleRepository {
+  CollectionReference<Map<String, dynamic>> get _col =>
+      FirebaseFirestore.instance.collection('proofOfLearningBundles');
+
+  Future<String> create(ProofOfLearningBundleModel model) async {
+    final doc = await _col.add(model.toMap());
+    return doc.id;
+  }
+
+  Future<void> update(ProofOfLearningBundleModel model) =>
       _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
 
-  Future<List<CheckpointModel>> listByCapability(
-    String capabilityId, {
-    int limit = 50,
-  }) async {
+  Future<ProofOfLearningBundleModel?> getById(String id) async {
+    final doc = await _col.doc(id).get();
+    if (!doc.exists) return null;
+    return ProofOfLearningBundleModel.fromDoc(doc);
+  }
+
+  Future<ProofOfLearningBundleModel?> getByPortfolioItem(
+      String portfolioItemId) async {
+    final snap = await _col
+        .where('portfolioItemId', isEqualTo: portfolioItemId)
+        .limit(1)
+        .get();
+    if (snap.docs.isEmpty) return null;
+    return ProofOfLearningBundleModel.fromDoc(snap.docs.first);
+  }
+
+  Future<List<ProofOfLearningBundleModel>> listByLearner(
+      String learnerId) async {
+    final snap = await _col
+        .where('learnerId', isEqualTo: learnerId)
+        .orderBy('createdAt', descending: true)
+        .get();
+    return snap.docs.map(ProofOfLearningBundleModel.fromDoc).toList();
+  }
+}
+
+class RubricApplicationRepository {
+  CollectionReference<Map<String, dynamic>> get _col =>
+      FirebaseFirestore.instance.collection('rubricApplications');
+
+  Future<String> create(Map<String, dynamic> data) async {
+    final doc = await _col.add(<String, dynamic>{
+      ...data,
+      'createdAt': Timestamp.now(),
+    });
+    return doc.id;
+  }
+
+  Future<List<Map<String, dynamic>>> listByLearner(
+      String learnerId) async {
+    final snap = await _col
+        .where('learnerId', isEqualTo: learnerId)
+        .orderBy('createdAt', descending: true)
+        .get();
+    return snap.docs
+        .map((d) => <String, dynamic>{'id': d.id, ...d.data()})
+        .toList();
+  }
+
+  Future<List<Map<String, dynamic>>> listByEducator(
+      String educatorId) async {
+    final snap = await _col
+        .where('educatorId', isEqualTo: educatorId)
+        .orderBy('createdAt', descending: true)
+        .get();
+    return snap.docs
+        .map((d) => <String, dynamic>{'id': d.id, ...d.data()})
+        .toList();
+  }
+
+  Future<List<Map<String, dynamic>>> listByCapability(
+      String capabilityId) async {
     final snap = await _col
         .where('capabilityId', isEqualTo: capabilityId)
-        .where('isActive', isEqualTo: true)
-        .orderBy('order')
-        .limit(limit)
+        .orderBy('createdAt', descending: true)
         .get();
-    return snap.docs.map(CheckpointModel.fromDoc).toList();
-  }
-
-  Future<List<CheckpointModel>> listBySite(
-    String siteId, {
-    int limit = 200,
-  }) async {
-    final snap = await _col
-        .where('siteId', isEqualTo: siteId)
-        .where('isActive', isEqualTo: true)
-        .orderBy('order')
-        .limit(limit)
-        .get();
-    return snap.docs.map(CheckpointModel.fromDoc).toList();
+    return snap.docs
+        .map((d) => <String, dynamic>{'id': d.id, ...d.data()})
+        .toList();
   }
 }
 
-class AiDisclosureRepository {
-  AiDisclosureRepository({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
-
-  final FirebaseFirestore _firestore;
-
+class EvidenceRecordRepository {
   CollectionReference<Map<String, dynamic>> get _col =>
-      _firestore.collection('aiDisclosures');
+      FirebaseFirestore.instance.collection('evidenceRecords');
 
-  Future<void> upsert(AiDisclosureModel model) =>
-      _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
-
-  Future<List<AiDisclosureModel>> listByLearner(
-    String learnerId, {
-    String? siteId,
-    int limit = 50,
-  }) async {
-    Query<Map<String, dynamic>> q =
-        _col.where('learnerId', isEqualTo: learnerId);
-    if (siteId != null && siteId.isNotEmpty) {
-      q = q.where('siteId', isEqualTo: siteId);
-    }
-    final snap =
-        await q.orderBy('createdAt', descending: true).limit(limit).get();
-    return snap.docs.map(AiDisclosureModel.fromDoc).toList();
-  }
-
-  Future<AiDisclosureModel?> getByEvidenceRecord(
-      String evidenceRecordId) async {
-    final snap = await _col
-        .where('evidenceRecordId', isEqualTo: evidenceRecordId)
-        .limit(1)
-        .get();
-    if (snap.docs.isEmpty) return null;
-    return AiDisclosureModel.fromDoc(snap.docs.first);
-  }
-}
-
-class EvidenceHealthSnapshotRepository {
-  EvidenceHealthSnapshotRepository({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
-
-  final FirebaseFirestore _firestore;
-
-  CollectionReference<Map<String, dynamic>> get _col =>
-      _firestore.collection('evidenceHealthSnapshots');
-
-  Future<void> upsert(EvidenceHealthSnapshotModel model) =>
-      _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
-
-  Future<EvidenceHealthSnapshotModel?> getLatestBySite(String siteId) async {
-    final snap = await _col
-        .where('siteId', isEqualTo: siteId)
-        .orderBy('snapshotAt', descending: true)
-        .limit(1)
-        .get();
-    if (snap.docs.isEmpty) return null;
-    return EvidenceHealthSnapshotModel.fromDoc(snap.docs.first);
-  }
-}
-
-class LearnerNextStepRepository {
-  LearnerNextStepRepository({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
-
-  final FirebaseFirestore _firestore;
-
-  CollectionReference<Map<String, dynamic>> get _col =>
-      _firestore.collection('learnerNextSteps');
-
-  Future<void> upsert(LearnerNextStepModel model) =>
-      _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
-
-  Future<List<LearnerNextStepModel>> listByLearner(
-    String learnerId, {
-    String? siteId,
-    bool activeOnly = true,
-    int limit = 20,
-  }) async {
-    Query<Map<String, dynamic>> q =
-        _col.where('learnerId', isEqualTo: learnerId);
-    if (siteId != null && siteId.isNotEmpty) {
-      q = q.where('siteId', isEqualTo: siteId);
-    }
-    if (activeOnly) {
-      q = q.where('isComplete', isEqualTo: false);
-    }
-    final snap =
-        await q.orderBy('createdAt', descending: true).limit(limit).get();
-    return snap.docs.map(LearnerNextStepModel.fromDoc).toList();
-  }
-
-  Future<void> markComplete(String id) async {
-    await _col.doc(id).update(<String, dynamic>{
-      'isComplete': true,
-      'completedAt': Timestamp.now(),
-      'updatedAt': Timestamp.now(),
+  Future<String> create(Map<String, dynamic> data) async {
+    final doc = await _col.add(<String, dynamic>{
+      ...data,
+      'createdAt': Timestamp.now(),
     });
+    return doc.id;
+  }
+
+  Future<Map<String, dynamic>?> getById(String id) async {
+    final doc = await _col.doc(id).get();
+    if (!doc.exists) return null;
+    return <String, dynamic>{'id': doc.id, ...doc.data()!};
+  }
+
+  Future<List<Map<String, dynamic>>> listBySite(String siteId) async {
+    final snap = await _col
+        .where('siteId', isEqualTo: siteId)
+        .orderBy('createdAt', descending: true)
+        .get();
+    return snap.docs
+        .map((d) => <String, dynamic>{'id': d.id, ...d.data()})
+        .toList();
+  }
+
+  Future<List<Map<String, dynamic>>> listByLearner(
+      String learnerId) async {
+    final snap = await _col
+        .where('learnerId', isEqualTo: learnerId)
+        .orderBy('createdAt', descending: true)
+        .get();
+    return snap.docs
+        .map((d) => <String, dynamic>{'id': d.id, ...d.data()})
+        .toList();
+  }
+}
+
+class ShowcaseSubmissionRepository {
+  CollectionReference<Map<String, dynamic>> get _col =>
+      FirebaseFirestore.instance.collection('showcaseSubmissions');
+
+  Future<String> create(ShowcaseSubmissionModel model) async {
+    final doc = await _col.add(model.toMap());
+    return doc.id;
+  }
+
+  Future<List<ShowcaseSubmissionModel>> listByLearner(
+      String learnerId) async {
+    final snap = await _col
+        .where('learnerId', isEqualTo: learnerId)
+        .orderBy('createdAt', descending: true)
+        .get();
+    return snap.docs.map(ShowcaseSubmissionModel.fromDoc).toList();
+  }
+
+  Future<List<ShowcaseSubmissionModel>> listApproved(String siteId) async {
+    final snap = await _col
+        .where('approvalStatus', isEqualTo: 'approved')
+        .orderBy('createdAt', descending: true)
+        .get();
+    return snap.docs.map(ShowcaseSubmissionModel.fromDoc).toList();
+  }
+}
+
+/// Repository for learning stages (grade bands).
+class StageRepository {
+  CollectionReference<Map<String, dynamic>> get _col =>
+      FirebaseFirestore.instance.collection('stages');
+
+  Future<List<StageModel>> listAll() async {
+    final snap = await _col.orderBy('gradeRange').get();
+    return snap.docs.map(StageModel.fromDoc).toList();
+  }
+
+  Future<StageModel?> getById(String stageId) async {
+    final doc = await _col.doc(stageId).get();
+    return doc.exists ? StageModel.fromDoc(doc) : null;
   }
 }

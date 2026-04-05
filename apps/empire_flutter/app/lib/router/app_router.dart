@@ -42,6 +42,10 @@ final Map<String, bool> kKnownRoutes = <String, bool>{
   '/learner/portfolio': true,
   '/learner/credentials': true,
   '/learner/settings': true,
+  '/learner/checkpoints': true,
+  '/learner/reflections': true,
+  '/learner/proof-assembly': true,
+  '/learner/peer-feedback': true,
 
   // Educator
   '/educator/today': true,
@@ -52,6 +56,9 @@ final Map<String, bool> kKnownRoutes = <String, bool>{
   '/educator/mission-plans': true,
   '/educator/learner-supports': true,
   '/educator/integrations': true,
+  '/educator/observations': true,
+  '/educator/rubrics/apply': true,
+  '/educator/proof-review': true,
 
   // Parent
   '/parent/summary': true,
@@ -62,6 +69,7 @@ final Map<String, bool> kKnownRoutes = <String, bool>{
   '/parent/portfolio': true,
   '/parent/messages': true,
   '/parent/settings': true,
+  '/parent/growth-timeline': true,
 
   // Site
   '/site/checkin': true,
@@ -97,6 +105,8 @@ final Map<String, bool> kKnownRoutes = <String, bool>{
   '/hq/integrations-health': true,
   '/hq/curriculum': true,
   '/hq/feature-flags': true,
+  '/hq/capability-frameworks': true,
+  '/hq/rubric-builder': true,
 
   // Cross-role
   '/messages': true,
@@ -507,6 +517,36 @@ GoRouter createAppRouter(
         ),
       ),
 
+      // Learner evidence chain routes
+      GoRoute(
+        path: '/learner/checkpoints',
+        builder: (BuildContext context, GoRouterState state) => const RoleGate(
+          allowedRoles: <UserRole>[UserRole.learner],
+          child: LearnerOnboardingGate(child: CheckpointSubmissionPage()),
+        ),
+      ),
+      GoRoute(
+        path: '/learner/reflections',
+        builder: (BuildContext context, GoRouterState state) => const RoleGate(
+          allowedRoles: <UserRole>[UserRole.learner],
+          child: LearnerOnboardingGate(child: ReflectionJournalPage()),
+        ),
+      ),
+      GoRoute(
+        path: '/learner/proof-assembly',
+        builder: (BuildContext context, GoRouterState state) => const RoleGate(
+          allowedRoles: <UserRole>[UserRole.learner],
+          child: LearnerOnboardingGate(child: ProofAssemblyPage()),
+        ),
+      ),
+      GoRoute(
+        path: '/learner/peer-feedback',
+        builder: (BuildContext context, GoRouterState state) => const RoleGate(
+          allowedRoles: <UserRole>[UserRole.learner],
+          child: LearnerOnboardingGate(child: PeerFeedbackPage()),
+        ),
+      ),
+
       // Settings route (all authenticated users)
       GoRoute(
         path: '/settings',
@@ -657,6 +697,29 @@ GoRouter createAppRouter(
         ),
       ),
 
+      // Educator evidence chain routes
+      GoRoute(
+        path: '/educator/observations',
+        builder: (BuildContext context, GoRouterState state) => const RoleGate(
+          allowedRoles: <UserRole>[UserRole.educator, UserRole.hq],
+          child: ObservationCapturePage(),
+        ),
+      ),
+      GoRoute(
+        path: '/educator/rubrics/apply',
+        builder: (BuildContext context, GoRouterState state) => const RoleGate(
+          allowedRoles: <UserRole>[UserRole.educator, UserRole.hq],
+          child: RubricApplicationPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/educator/proof-review',
+        builder: (BuildContext context, GoRouterState state) => const RoleGate(
+          allowedRoles: <UserRole>[UserRole.educator, UserRole.hq],
+          child: ProofVerificationPage(),
+        ),
+      ),
+
       // ─────────────────────────────────────────────────────────────
       // NEW ROUTES - Parent Module (Extended)
       // ─────────────────────────────────────────────────────────────
@@ -665,6 +728,15 @@ GoRouter createAppRouter(
         builder: (BuildContext context, GoRouterState state) => const RoleGate(
           allowedRoles: <UserRole>[UserRole.parent, UserRole.hq],
           child: ParentPortfolioPage(),
+        ),
+      ),
+
+      // Parent evidence chain routes
+      GoRoute(
+        path: '/parent/growth-timeline',
+        builder: (BuildContext context, GoRouterState state) => const RoleGate(
+          allowedRoles: <UserRole>[UserRole.parent, UserRole.hq],
+          child: GrowthTimelinePage(),
         ),
       ),
 
@@ -717,6 +789,23 @@ GoRouter createAppRouter(
           child: HqCurriculumPage(),
         ),
       ),
+
+      // HQ evidence chain routes
+      GoRoute(
+        path: '/hq/capability-frameworks',
+        builder: (BuildContext context, GoRouterState state) => const RoleGate(
+          allowedRoles: <UserRole>[UserRole.hq],
+          child: CapabilityFrameworkPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/hq/rubric-builder',
+        builder: (BuildContext context, GoRouterState state) => const RoleGate(
+          allowedRoles: <UserRole>[UserRole.hq],
+          child: RubricBuilderPage(),
+        ),
+      ),
+
       GoRoute(
         path: '/hq/feature-flags',
         builder: (BuildContext context, GoRouterState state) => const RoleGate(

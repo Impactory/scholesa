@@ -237,6 +237,85 @@ class SyncCoordinator extends ChangeNotifier {
             .doc(op.idempotencyKey)
             .set(payload);
         break;
+
+      // Evidence chain operations
+      case OpType.checkpointSubmit:
+        await firestore
+            .collection('checkpointHistory')
+            .doc(op.idempotencyKey)
+            .set(<String, dynamic>{
+          ...payload,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+        break;
+      case OpType.reflectionSubmit:
+        await firestore
+            .collection('learnerReflections')
+            .doc(op.idempotencyKey)
+            .set(<String, dynamic>{
+          ...payload,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+        break;
+      case OpType.aiCoachLog:
+        await firestore
+            .collection('aiCoachInteractions')
+            .doc(op.idempotencyKey)
+            .set(<String, dynamic>{
+          ...payload,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+        break;
+      case OpType.peerFeedbackSubmit:
+        await firestore
+            .collection('peerFeedback')
+            .doc(op.idempotencyKey)
+            .set(<String, dynamic>{
+          ...payload,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+        break;
+      case OpType.portfolioItemCreate:
+        await firestore
+            .collection('portfolioItems')
+            .doc(op.idempotencyKey)
+            .set(<String, dynamic>{
+          ...payload,
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+        break;
+      case OpType.proofBundleCreate:
+        await firestore
+            .collection('proofOfLearningBundles')
+            .doc(op.idempotencyKey)
+            .set(<String, dynamic>{
+          ...payload,
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+        break;
+      case OpType.proofBundleUpdate:
+        final String bundleId = payload.remove('bundleId') as String? ?? '';
+        if (bundleId.isNotEmpty) {
+          await firestore
+              .collection('proofOfLearningBundles')
+              .doc(bundleId)
+              .update(<String, dynamic>{
+            ...payload,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+        }
+        break;
+      case OpType.rubricApply:
+        await firestore
+            .collection('rubricApplications')
+            .doc(op.idempotencyKey)
+            .set(<String, dynamic>{
+          ...payload,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+        break;
     }
   }
 
