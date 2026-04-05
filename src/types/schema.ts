@@ -607,6 +607,40 @@ export interface SupportIntervention {
 }
 
 /**
+ * S5-1: MiloOS autonomy intervention trigger.
+ * Records when the BOS runtime detects autonomy risk and triggers
+ * an intervention for a learner. Append-only for audit trail.
+ * Collection: autonomyInterventions
+ */
+export interface AutonomyIntervention {
+  id: string;
+  learnerId: string;
+  siteId: string;
+  sessionId?: string;
+
+  // Risk signals that triggered this intervention
+  riskSignals: Array<{
+    signal: 'heavy_ai_use' | 'rapid_submit' | 'verification_gap' | 'repeated_hints_no_attempt' | 'low_integrity_state';
+    score: number;
+  }>;
+  totalRiskScore: number;
+
+  // Intervention decision (from BOS runtime)
+  interventionType: 'nudge' | 'scaffold' | 'handoff' | 'revisit' | 'pace';
+  salience: 'low' | 'medium' | 'high';
+  reasonCodes: string[];
+
+  // Whether MVL (minimum viable learning) gate was activated
+  mvlGateTriggered: boolean;
+
+  // Outcome (filled in later)
+  outcome?: 'resolved' | 'escalated' | 'dismissed';
+  resolvedAt?: Timestamp;
+
+  createdAt: Timestamp;
+}
+
+/**
  * Personalized nudge for a learner
  */
 export interface MotivationNudge {

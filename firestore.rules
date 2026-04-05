@@ -481,6 +481,13 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // S5-1: Autonomy interventions (append-only, educator/HQ read)
+    match /autonomyInterventions/{id} {
+      allow read: if isAuthenticated() && (isEducator() || isHQ());
+      allow create: if isAuthenticated(); // System or educator creates
+      allow update, delete: if false; // Immutable audit trail
+    }
+
     // Credentials
     match /credentials/{id} {
       allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());

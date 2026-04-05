@@ -7577,3 +7577,79 @@ class BadgeAwardModel {
         'awardedBy': awardedBy,
       };
 }
+
+/// S5-1: MiloOS autonomy intervention trigger — Collection: autonomyInterventions
+@immutable
+class AutonomyInterventionModel {
+  const AutonomyInterventionModel({
+    required this.id,
+    required this.learnerId,
+    required this.siteId,
+    this.sessionId,
+    this.riskSignals = const [],
+    this.totalRiskScore = 0.0,
+    required this.interventionType,
+    required this.salience,
+    this.reasonCodes = const [],
+    this.mvlGateTriggered = false,
+    this.outcome,
+    this.resolvedAt,
+    this.createdAt,
+  });
+
+  final String id;
+  final String learnerId;
+  final String siteId;
+  final String? sessionId;
+  final List<Map<String, dynamic>> riskSignals;
+  final double totalRiskScore;
+  /// One of: nudge, scaffold, handoff, revisit, pace
+  final String interventionType;
+  /// One of: low, medium, high
+  final String salience;
+  final List<String> reasonCodes;
+  final bool mvlGateTriggered;
+  /// One of: resolved, escalated, dismissed
+  final String? outcome;
+  final Timestamp? resolvedAt;
+  final Timestamp? createdAt;
+
+  factory AutonomyInterventionModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? <String, dynamic>{};
+    return AutonomyInterventionModel(
+      id: doc.id,
+      learnerId: data['learnerId'] as String? ?? '',
+      siteId: data['siteId'] as String? ?? '',
+      sessionId: data['sessionId'] as String?,
+      riskSignals: (data['riskSignals'] as List<dynamic>?)
+              ?.map((e) => Map<String, dynamic>.from(e as Map))
+              .toList() ??
+          [],
+      totalRiskScore: (data['totalRiskScore'] as num?)?.toDouble() ?? 0.0,
+      interventionType: data['interventionType'] as String? ?? 'nudge',
+      salience: data['salience'] as String? ?? 'low',
+      reasonCodes:
+          (data['reasonCodes'] as List<dynamic>?)?.cast<String>() ?? [],
+      mvlGateTriggered: data['mvlGateTriggered'] as bool? ?? false,
+      outcome: data['outcome'] as String?,
+      resolvedAt: data['resolvedAt'] as Timestamp?,
+      createdAt: data['createdAt'] as Timestamp?,
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'learnerId': learnerId,
+        'siteId': siteId,
+        'sessionId': sessionId,
+        'riskSignals': riskSignals,
+        'totalRiskScore': totalRiskScore,
+        'interventionType': interventionType,
+        'salience': salience,
+        'reasonCodes': reasonCodes,
+        'mvlGateTriggered': mvlGateTriggered,
+        'outcome': outcome,
+        'resolvedAt': resolvedAt,
+        'createdAt': createdAt ?? Timestamp.now(),
+      };
+}
