@@ -886,6 +886,166 @@ async function main() {
   await db.collection('learnerProgress').doc(learnerUid).set(learnerProgress);
   console.log('  Seeded learner progress');
 
+  // --- Checkpoints (S4-4) ---
+  const checkpoints = [
+    {
+      id: 'checkpoint-1',
+      sprintSessionId: 'sprint-session-1',
+      learnerId: learnerUid,
+      siteId,
+      checkpointNumber: 1,
+      explainItBack: 'I used a while loop because I did not know how many guesses the player would need.',
+      feedbackGivenBy: 'ai',
+      feedback: 'Good explanation of why while is appropriate here.',
+      status: 'passed',
+      attemptNumber: 1,
+      createdAt: now - 7200000,
+    },
+    {
+      id: 'checkpoint-2',
+      sprintSessionId: 'sprint-session-1',
+      learnerId: learnerUid,
+      siteId,
+      checkpointNumber: 2,
+      explainItBack: 'I added a counter variable that increments each time through the loop to track attempts.',
+      feedbackGivenBy: 'teacher',
+      feedbackGivenByUserId: educatorUid,
+      feedback: 'Excellent understanding of counter pattern.',
+      status: 'passed',
+      attemptNumber: 1,
+      createdAt: now - 3600000,
+    },
+  ];
+
+  await Promise.all(
+    checkpoints.map((c) => db.collection('checkpointHistory').doc(c.id).set(c)),
+  );
+  console.log(`  Seeded ${checkpoints.length} checkpoints`);
+
+  // --- Skill Evidence (S4-4) ---
+  const skillEvidenceItems = [
+    {
+      id: 'skill-evidence-1',
+      learnerId: learnerUid,
+      siteId,
+      microSkillId: 'loops-while',
+      evidenceType: 'quiz',
+      description: 'Checkpoint 1: Demonstrated while loop understanding',
+      selfScore: 'proficient',
+      teacherScore: 'proficient',
+      teacherFeedback: 'Strong understanding of loop control flow.',
+      teacherFeedbackBy: educatorUid,
+      teacherFeedbackAt: now,
+      status: 'approved',
+      submittedAt: now - 7200000,
+      updatedAt: now,
+    },
+    {
+      id: 'skill-evidence-2',
+      learnerId: learnerUid,
+      siteId,
+      microSkillId: 'variables-counter',
+      evidenceType: 'quiz',
+      description: 'Checkpoint 2: Counter variable pattern',
+      selfScore: 'developing',
+      status: 'submitted',
+      submittedAt: now - 3600000,
+      updatedAt: now - 3600000,
+    },
+  ];
+
+  await Promise.all(
+    skillEvidenceItems.map((s) => db.collection('skillEvidence').doc(s.id).set(s)),
+  );
+  console.log(`  Seeded ${skillEvidenceItems.length} skill evidence records`);
+
+  // --- AI Coach Interactions (S4-4) ---
+  const aiInteractions = [
+    {
+      id: 'ai-interaction-1',
+      learnerId: learnerUid,
+      siteId,
+      sessionId: 'sprint-session-1',
+      mode: 'hint',
+      question: 'How do I make the game keep going until they guess right?',
+      response: 'Think about which loop type continues until a condition is true. What condition would stop the game?',
+      explainItBackRequired: true,
+      modelUsed: 'internal',
+      createdAt: now - 7200000,
+    },
+    {
+      id: 'ai-interaction-2',
+      learnerId: learnerUid,
+      siteId,
+      sessionId: 'sprint-session-1',
+      mode: 'debug',
+      question: 'My counter is not going up',
+      response: 'Check where your counter increment is placed. Is it inside the loop body?',
+      explainItBackRequired: false,
+      modelUsed: 'internal',
+      createdAt: now - 5400000,
+    },
+  ];
+
+  await Promise.all(
+    aiInteractions.map((a) => db.collection('aiInteractionLogs').doc(a.id).set(a)),
+  );
+  console.log(`  Seeded ${aiInteractions.length} AI coach interactions`);
+
+  // --- Peer Feedback (S4-4) ---
+  const peerFeedback = [
+    {
+      id: 'peer-feedback-1',
+      targetId: 'portfolio-1',
+      targetType: 'portfolio',
+      fromLearnerId: 'peer-learner-1',
+      fromLearnerName: 'Alex',
+      siteId,
+      iLike: 'The hint system is really creative and makes the game more fun.',
+      iWonder: 'Could you add difficulty levels?',
+      nextStep: 'Maybe add a timer to make it more challenging.',
+      flagged: false,
+      createdAt: now - 1800000,
+    },
+  ];
+
+  await Promise.all(
+    peerFeedback.map((p) => db.collection('peerFeedback').doc(p.id).set(p)),
+  );
+  console.log(`  Seeded ${peerFeedback.length} peer feedback entries`);
+
+  // --- Badges & Awards (S4-4) ---
+  const badges = [
+    {
+      id: 'badge-loop-master',
+      siteId,
+      name: 'Loop Master',
+      description: 'Demonstrated proficiency in loop constructs',
+      requiredMicroSkillIds: ['loops-while'],
+      requiredEvidenceCount: 1,
+      requiredCapabilityId: 'cap-computational-thinking',
+      requiredMasteryLevel: 'proficient',
+      pillarCode: 'FUTURE_SKILLS',
+      createdAt: now,
+    },
+  ];
+
+  const badgeAwards = [
+    {
+      id: 'badge-award-1',
+      badgeId: 'badge-loop-master',
+      learnerId: learnerUid,
+      siteId,
+      evidenceIds: ['skill-evidence-1'],
+      awardedAt: now,
+      awardedBy: 'system',
+    },
+  ];
+
+  await Promise.all(badges.map((b) => db.collection('recognitionBadges').doc(b.id).set(b)));
+  await Promise.all(badgeAwards.map((a) => db.collection('badgeAwards').doc(a.id).set(a)));
+  console.log(`  Seeded ${badges.length} badges and ${badgeAwards.length} badge awards`);
+
   console.log('Evidence chain seed complete.');
   console.log('Test login password:', standardTestPassword);
   console.log(

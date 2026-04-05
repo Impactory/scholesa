@@ -8635,3 +8635,125 @@ export const evaluateBadgeEligibility = onCall(async (request: CallableRequest<{
 
   return { awarded };
 });
+
+// ---------------------------------------------------------------------------
+// S4-1: Checkpoint completion → capability mastery update
+// ---------------------------------------------------------------------------
+
+/**
+ * When a checkpoint is marked as passed, update the learner's capability
+ * mastery for linked skills and emit a growth event if the level changes.
+ */
+export const processCheckpointMasteryUpdate = onCall(async (request: CallableRequest<{
+  learnerId: string;
+  siteId: string;
+  checkpointId: string;
+  skillIds: string[];
+  passed: boolean;
+  educatorId?: string;
+}>) => {
+  const auth = request.auth;
+  if (!auth) throw new HttpsError('unauthenticated', 'Must be authenticated');
+
+  const { learnerId, siteId, skillIds, passed, educatorId } = request.data;
+  if (!learnerId || !siteId || !skillIds?.length) {
+    throw new HttpsError('invalid-argument', 'learnerId, siteId, and skillIds required');
+  }
+
+  if (!passed) return { updated: false, reason: 'Checkpoint not passed' };
+
+  const db = admin.firestore();
+  const LEVEL_ORDER = ['emerging', 'developing', 'proficient', 'advanced'];
+  const batch = db.batch();
+  const growthEvents: Array<{ capabilityId: string; from: string | null; to: string }> = [];
+
+  for (const skillId of skillIds) {
+    // Look up which capability this skill belongs to
+    const capSnap = await db
+      .collection('capabilities')
+      .where('microSkillIds', 'array-contains', skillId)
+      .limit(1)
+      .get();
+
+    if (capSnap.empty) continue;
+
+    const capDoc = capSnap.docs[0];
+    const capabilityId = capDoc.id;
+
+    // Get current mastery
+    const masteryQuery = await db
+      .collection('capabilityMastery')
+      .where('learnerId', '==', learnerId)
+      .where('capabilityId', '==', capabilityId)
+      .limit(1)
+      .get();
+
+    const currentLevel = masteryQuery.empty
+      ? null
+      : (masteryQuery.docs[0].data().currentLevel as string) || 'emerging';
+
+    const currentIdx = currentLevel ? LEVEL_ORDER.indexOf(currentLevel) : -1;
+
+    // Count evidence to determine new level
+    const evidenceSnap = await db
+      .collection('skillEvidence')
+      .where('learnerId', '==', learnerId)
+      .where('microSkillId', '==', skillId)
+      .get();
+
+    const evidenceCount = evidenceSnap.size;
+    // Simple progression: 1-2 evidence = developing, 3-4 = proficient, 5+ = advanced
+    let newLevel = 'emerging';
+    if (evidenceCount >= 5) newLevel = 'advanced';
+    else if (evidenceCount >= 3) newLevel = 'proficient';
+    else if (evidenceCount >= 1) newLevel = 'developing';
+
+    const newIdx = LEVEL_ORDER.indexOf(newLevel);
+    if (newIdx <= currentIdx) continue; // No progression
+
+    // Update or create mastery record
+    if (masteryQuery.empty) {
+      const masteryRef = db.collection('capabilityMastery').doc();
+      batch.set(masteryRef, {
+        learnerId,
+        capabilityId,
+        currentLevel: newLevel,
+        previousLevel: null,
+        evidenceCount,
+        lastAssessedBy: educatorId || 'system',
+        lastAssessedAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+    } else {
+      batch.update(masteryQuery.docs[0].ref, {
+        currentLevel: newLevel,
+        previousLevel: currentLevel,
+        evidenceCount,
+        lastAssessedBy: educatorId || 'system',
+        lastAssessedAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+    }
+
+    // Append growth event (immutable)
+    const growthRef = db.collection('capabilityGrowthEvents').doc();
+    batch.set(growthRef, {
+      learnerId,
+      capabilityId,
+      fromLevel: currentLevel,
+      toLevel: newLevel,
+      educatorId: educatorId || 'system',
+      siteId,
+      evidenceIds: evidenceSnap.docs.map((d) => d.id).slice(0, 20),
+      createdAt: FieldValue.serverTimestamp(),
+    });
+
+    growthEvents.push({ capabilityId, from: currentLevel, to: newLevel });
+  }
+
+  if (growthEvents.length > 0) {
+    await batch.commit();
+  }
+
+  return { updated: growthEvents.length > 0, growthEvents };
+});
