@@ -109,10 +109,11 @@ describe('AI help wording availability', () => {
     expect(voiceErrorSource).toContain('MiloOS voice took too long to respond. Please try again.');
 
     expect(learnerDashboardSource).toContain('MiloOS');
-    expect(learnerDashboardSource).toContain('MiloOS appears here when a real support response is available.');
-    expect(learnerDashboardSource).toContain('No live help response is attached to this dashboard card yet.');
+    expect(learnerDashboardSource).toContain('No learning signals yet. Start a session to see your MiloOS support snapshot.');
+    expect(learnerDashboardSource).toContain('Learning signals from your latest session');
     expect(learnerDashboardSource).not.toContain('AI Coach');
     expect(learnerDashboardSource).not.toContain('AI coach guidance appears here');
+    expect(learnerDashboardSource).not.toContain('MiloOS appears here when a real support response is available.');
 
     expect(pricingPlansSource).toContain('MiloOS help and guidance');
     expect(pricingPlansSource).not.toContain('AI coaching support');

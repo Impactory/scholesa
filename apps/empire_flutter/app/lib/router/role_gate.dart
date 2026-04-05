@@ -180,6 +180,10 @@ class _LockedFeatureCard extends StatelessWidget {
 
     final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
     final FirestoreService? firestoreService = _maybeFirestoreService(context);
+    final String successMsg =
+        _tRoleGate(context, 'Access review request submitted.');
+    final String failMsg =
+        _tRoleGate(context, 'Unable to submit support request right now.');
     if (firestoreService == null) {
       messenger.showSnackBar(
         SnackBar(
@@ -235,9 +239,7 @@ class _LockedFeatureCard extends StatelessWidget {
       );
       messenger.showSnackBar(
         SnackBar(
-          content: Text(
-            _tRoleGate(context, 'Access review request submitted.'),
-          ),
+          content: Text(successMsg),
         ),
       );
     } catch (error) {
@@ -250,9 +252,7 @@ class _LockedFeatureCard extends StatelessWidget {
       );
       messenger.showSnackBar(
         SnackBar(
-          content: Text(
-            _tRoleGate(context, 'Unable to submit support request right now.'),
-          ),
+          content: Text(failMsg),
         ),
       );
     }

@@ -209,7 +209,7 @@ export function AICoachPopup({
       setStatusMessage('Voice capture is unavailable. Please sign in and complete voice setup to use MiloOS by voice.');
     },
     onCaptureError: (error) => {
-      console.error('Microphone capture unavailable for BOS voice flow.', error);
+      console.error('Microphone capture unavailable for MiloOS voice flow.', error);
       setResponse({
         answer: 'Microphone access is required for voice mode. Please allow microphone permission and try again.',
         modelUsed: 'error',

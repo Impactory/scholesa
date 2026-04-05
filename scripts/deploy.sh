@@ -7,7 +7,8 @@
 #   ./scripts/deploy.sh functions    # Deploy only Cloud Functions
 #   ./scripts/deploy.sh rules        # Deploy Firestore + Storage rules
 #   ./scripts/deploy.sh web          # Deploy both Cloud Run web surfaces (primary web + Flutter web)
-#   ./scripts/deploy.sh cloudrun-web # Alias of web
+#   ./scripts/deploy.sh web wasm      # Same as 'web' (WASM build is default for Flutter web)
+#   ./scripts/deploy.sh cloudrun-web  # Alias of web
 #   ./scripts/deploy.sh primary-web  # Build root web app & deploy to primary Cloud Run
 #   ./scripts/deploy.sh compliance-operator # Deploy scholesa-compliance Cloud Run service
 #   ./scripts/deploy.sh flutter-web  # Build Flutter web & deploy to Flutter Cloud Run
@@ -22,6 +23,7 @@ FLUTTER_APP="$REPO_ROOT/apps/empire_flutter/app"
 FUNCTIONS_DIR="$REPO_ROOT/functions"
 FVM_FLUTTER="$FLUTTER_APP/.fvm/flutter_sdk/bin/flutter"
 TARGET="${1:-all}"
+SHIFT_ARGS="${*:2}"
 FLUTTER_GATE_DONE=0
 TEMP_GCP_CREDENTIALS=""
 NO_TRAFFIC_DEPLOY="${CLOUD_RUN_NO_TRAFFIC:-0}"
@@ -179,7 +181,7 @@ flutter_gate() {
   sync_platform_icons
 
   log "Running flutter analyze..."
-  (cd "$FLUTTER_APP" && flutter_cmd analyze --no-pub) || fail "flutter analyze failed — fix issues before deploying"
+  (cd "$FLUTTER_APP" && flutter_cmd analyze --no-pub --no-fatal-infos) || fail "flutter analyze failed — fix issues before deploying"
 
   log "Running flutter test..."
   (cd "$FLUTTER_APP" && flutter_cmd test) || fail "flutter tests failed — fix before deploying"

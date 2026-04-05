@@ -710,6 +710,7 @@ class _HqBillingPageState extends State<HqBillingPage>
         return;
       }
       await Clipboard.setData(ClipboardData(text: exportContent));
+      if (!mounted) return;
       TelemetryService.instance.logEvent(
         event: 'export.copied',
         metadata: <String, dynamic>{
@@ -1164,6 +1165,7 @@ class _InvoiceCard extends StatelessWidget {
         return;
       }
       await Clipboard.setData(ClipboardData(text: reminder));
+      if (!context.mounted) return;
       TelemetryService.instance.logEvent(
         event: 'export.copied',
         metadata: <String, dynamic>{

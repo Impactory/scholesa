@@ -29,11 +29,11 @@ If this chain is broken, the platform is not ready.
 
 ## Monorepo Structure
 
-- **Next.js web app** (App Router, locale-first) — `app/`, `src/`
-- **Flutter mobile/desktop client** — `apps/empire_flutter/app/`
+- **Next.js web app** (App Router, locale-first, 69 routes) — `app/`, `src/`
+- **Flutter mobile/desktop client** (WASM web, iOS, Android, macOS) — `apps/empire_flutter/app/`
 - **Firebase Functions v2 backend** — `functions/`
 - **Compliance operator service** — `services/scholesa-compliance/`
-- **Shared packages** — `packages/i18n/`, `packages/safety/`
+- **Shared packages** — `packages/i18n/` (5 locales), `packages/safety/`
 
 ## Quick Reference
 
@@ -136,7 +136,8 @@ apps/empire_flutter/app/   # Flutter client
   lib/dashboards/          # Role-based dashboards
   lib/modules/             # Feature pages by domain
   lib/offline/             # Offline queue & sync
-  lib/runtime/             # BOS, MIA, AI surfaces
+  lib/runtime/             # MiloOS orchestration, MIA, AI surfaces
+  lib/i18n/                # Learning signal i18n (EN, zh-CN, zh-TW)
 services/scholesa-compliance/  # Compliance operator service
 packages/                  # Shared packages (i18n, safety)
 scripts/                   # QA, release, and audit tooling
@@ -267,11 +268,15 @@ npm run dev                 # Web dev server
 
 ## Deployment
 
-- **Web**: Google Cloud Run (Docker, multi-stage build)
+- **Web**: Google Cloud Run (Docker, multi-stage build) — `./scripts/deploy.sh primary-web`
 - **Functions**: `firebase deploy --only functions` (auto-runs build + gen2 verify)
-- **Flutter**: Google Cloud Run (separate service)
+- **Flutter WASM web**: Google Cloud Run — `./scripts/deploy.sh flutter-web`
+- **Flutter native**: `./scripts/deploy.sh flutter-ios` / `flutter-macos` / `flutter-android`
+- **Both web surfaces**: `./scripts/deploy.sh web` (deploys Next.js + Flutter WASM)
 - **Full platform**: `./scripts/deploy.sh all`
+- **Compliance operator**: `./scripts/deploy.sh compliance-operator`
 - **Release policy**: Big-bang only (no canary/progressive rollouts)
+- **Traffic rehearsal**: `CLOUD_RUN_NO_TRAFFIC=1 ./scripts/deploy.sh web`
 
 ## CI/CD
 

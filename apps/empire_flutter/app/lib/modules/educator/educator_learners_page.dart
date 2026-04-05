@@ -65,8 +65,9 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await _restoreFilters();
       await _refreshLearners();
+      if (!mounted) return;
       final EducatorService service = context.read<EducatorService>();
-      if (!mounted || service.learners.isEmpty) {
+      if (service.learners.isEmpty) {
         return;
       }
       _selectLoopLearner(service.learners.first);

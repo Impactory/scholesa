@@ -447,6 +447,8 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
         _tHqSafety(context, 'Incident summary downloaded.');
     final String failureMessage =
         _tHqSafety(context, 'Unable to download incident summary right now.');
+    final String copiedMsg =
+        _tHqSafety(context, 'Incident summary copied to clipboard.');
     try {
       final String? savedLocation = await ExportService.instance.saveTextFile(
         fileName: fileName,
@@ -474,6 +476,7 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
       if (!mounted) return;
 
       await Clipboard.setData(ClipboardData(text: summary));
+      if (!mounted) return;
       TelemetryService.instance.logEvent(
         event: 'export.copied',
         metadata: <String, dynamic>{
@@ -487,9 +490,7 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
 
       messenger.showSnackBar(
         SnackBar(
-          content: Text(
-            _tHqSafety(context, 'Incident summary copied to clipboard.'),
-          ),
+          content: Text(copiedMsg),
         ),
       );
     } catch (_) {

@@ -33,7 +33,7 @@ typedef EducatorMissionPlanCreator = Future<bool> Function(
 typedef EducatorMissionPlanUpdater = Future<bool> Function(
   BuildContext context, {
   required String missionId,
-  required _PlanStatus currentStatus,
+  required PlanStatus currentStatus,
   required String title,
   required String description,
   required String pillar,
@@ -50,7 +50,7 @@ typedef EducatorMissionPlanArchiver = Future<bool> Function(
 /// Educator mission plans page for planning and managing missions
 /// Based on docs/11_MISSIONS_CHALLENGES_SPEC.md
 
-enum _PlanStatus { draft, active, archived }
+enum PlanStatus { draft, active, archived }
 
 class _MissionPlan {
   const _MissionPlan({
@@ -75,7 +75,7 @@ class _MissionPlan {
   final String duration;
   final String targetGrade;
   final String difficulty;
-  final _PlanStatus status;
+  final PlanStatus status;
   final int assignedSessions;
   final int completedBy;
   final List<String> evidenceDefaults;
@@ -441,17 +441,17 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
     }
   }
 
-  Widget _buildStatusChip(_PlanStatus status) {
+  Widget _buildStatusChip(PlanStatus status) {
     Color color;
     String label;
     switch (status) {
-      case _PlanStatus.draft:
+      case PlanStatus.draft:
         color = Colors.grey;
         label = _tEducatorMissionPlans(context, 'Draft');
-      case _PlanStatus.active:
+      case PlanStatus.active:
         color = Colors.green;
         label = _tEducatorMissionPlans(context, 'Active');
-      case _PlanStatus.archived:
+      case PlanStatus.archived:
         color = Colors.orange;
         label = _tEducatorMissionPlans(context, 'Archived');
     }
@@ -777,16 +777,16 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                     label: Text(
                       _tEducatorMissionPlans(
                         context,
-                        plan.status == _PlanStatus.archived
+                        plan.status == PlanStatus.archived
                             ? 'Archived'
                             : 'Archive',
                       ),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: plan.status == _PlanStatus.archived
+                      backgroundColor: plan.status == PlanStatus.archived
                           ? Colors.grey.shade300
                           : Colors.orange,
-                      foregroundColor: plan.status == _PlanStatus.archived
+                      foregroundColor: plan.status == PlanStatus.archived
                           ? Colors.black54
                           : Colors.white,
                     ),
@@ -794,7 +794,7 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                 ),
               ],
             ),
-            if (plan.status == _PlanStatus.archived) ...<Widget>[
+            if (plan.status == PlanStatus.archived) ...<Widget>[
               const SizedBox(height: 12),
               Text(
                 _tEducatorMissionPlans(
@@ -807,7 +807,7 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                 ),
               ),
             ],
-            if (plan.status != _PlanStatus.archived) ...<Widget>[
+            if (plan.status != PlanStatus.archived) ...<Widget>[
               const SizedBox(height: 12),
               Text(
                 _tEducatorMissionPlans(
@@ -1427,7 +1427,7 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
         duration: '4 weeks',
         targetGrade: '6-8',
         difficulty: difficulty,
-        status: _PlanStatus.draft,
+        status: PlanStatus.draft,
         assignedSessions: 0,
         completedBy: 0,
         evidenceDefaults: evidenceDefaults,
@@ -1452,7 +1452,7 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
 
   Future<bool> _updateMission({
     required String missionId,
-    required _PlanStatus currentStatus,
+    required PlanStatus currentStatus,
     required String title,
     required String description,
     required String pillar,
@@ -1754,16 +1754,16 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
     );
   }
 
-  _PlanStatus _parsePlanStatus(String? status) {
+  PlanStatus _parsePlanStatus(String? status) {
     switch ((status ?? '').trim().toLowerCase()) {
       case 'active':
       case 'in_progress':
-        return _PlanStatus.active;
+        return PlanStatus.active;
       case 'archived':
       case 'completed':
-        return _PlanStatus.archived;
+        return PlanStatus.archived;
       default:
-        return _PlanStatus.draft;
+        return PlanStatus.draft;
     }
   }
 
@@ -1794,13 +1794,13 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
     }
   }
 
-  String _statusKey(_PlanStatus status) {
+  String _statusKey(PlanStatus status) {
     switch (status) {
-      case _PlanStatus.active:
+      case PlanStatus.active:
         return 'active';
-      case _PlanStatus.archived:
+      case PlanStatus.archived:
         return 'archived';
-      case _PlanStatus.draft:
+      case PlanStatus.draft:
         return 'draft';
     }
   }

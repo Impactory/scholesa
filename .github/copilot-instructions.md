@@ -1,13 +1,13 @@
 # Scholesa Platform – AI Coding Agent Instructions
 
-**Scholesa** is an Education 2.0 OS for K-9 learning studios and schools, built on Next.js + Firebase with role-based features around three pillars: Future Skills, Leadership & Agency, and Impact & Innovation.
+**Scholesa** is a capability-first evidence platform for K-9 learning studios and schools, built on Next.js + Firebase with role-based features. Students are evaluated by what they can do, explain, improve, and demonstrate over time.
 
 ## Stack & Architecture
 
-- **Frontend**: Next.js 14 (App Router) + React 18 + TypeScript
-- **Backend**: Firebase (Firestore, Auth, Storage, Cloud Functions)
+- **Frontend**: Next.js 16 (App Router) + React 18 + TypeScript
+- **Backend**: Firebase (Firestore, Auth, Storage, Cloud Functions v2)
 - **Styling**: TailwindCSS + Lucide icons + Headless UI
-- **Deployment**: Vercel (web), Cloud Run (optional), Firebase Hosting + Functions
+- **Deployment**: Google Cloud Run (web + Flutter WASM), Firebase Functions
 - **PWA**: Service worker in `public/sw.js`, configured via `next-pwa`
 - **i18n**: JSON translation files in `locales/`, server-side caching in `lib/i18n.ts`
 

@@ -841,23 +841,26 @@ class _LinksTab extends StatelessWidget {
                 },
               );
               Navigator.pop(context);
+              final String? siteId = context.read<AppState>().activeSiteId;
+              final ScaffoldMessengerState messenger =
+                  ScaffoldMessenger.of(context);
+              final String removedMsg =
+                  _tProvisioning(context, 'Link removed');
+              final String failedMsg =
+                  _tProvisioning(context, 'Failed to remove link');
               final bool success = await service.deleteGuardianLink(link.id);
-              if (context.mounted) {
-                if (success) {
-                  final String? siteId = context.read<AppState>().activeSiteId;
-                  if (siteId != null) {
-                    await service.loadGuardianLinks(siteId);
-                  }
-                }
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(success
-                        ? _tProvisioning(context, 'Link removed')
-                          : service.error ??
-                              _tProvisioning(context, 'Failed to remove link')),
-                  ),
-                );
+              if (!context.mounted) return;
+              if (success && siteId != null) {
+                await service.loadGuardianLinks(siteId);
               }
+              if (!context.mounted) return;
+              messenger.showSnackBar(
+                SnackBar(
+                  content: Text(success
+                      ? removedMsg
+                        : service.error ?? failedMsg),
+                ),
+              );
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: Text(_tProvisioning(context, 'Delete')),

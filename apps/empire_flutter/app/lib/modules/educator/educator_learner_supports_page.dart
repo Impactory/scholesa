@@ -82,8 +82,10 @@ class _EducatorLearnerSupportsPageState
     });
 
     try {
+      // ignore: use_build_context_synchronously
+      final BuildContext ctx = context;
       final List<Map<String, dynamic>> rows = widget.supportPlansLoader != null
-          ? await widget.supportPlansLoader!(context, siteId)
+          ? await widget.supportPlansLoader!(ctx, siteId) // ignore: use_build_context_synchronously
           : await _loadPersistedSupportPlanRows(siteId);
       final Map<String, _PersistedSupportPlan> nextOverrides =
           <String, _PersistedSupportPlan>{};

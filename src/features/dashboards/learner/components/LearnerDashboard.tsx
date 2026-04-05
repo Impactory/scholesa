@@ -32,6 +32,11 @@ export function LearnerDashboard() {
   const [currentMission, setCurrentMission] = useState('—');
   const [overallProgress, setOverallProgress] = useState(0);
   const [pillarScores, setPillarScores] = useState<PillarScores>(EMPTY_PILLAR_SCORES);
+  const [learningSignals, setLearningSignals] = useState<{
+    cognition: number | null;
+    engagement: number | null;
+    integrity: number | null;
+  } | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -83,6 +88,29 @@ export function LearnerDashboard() {
             }
           }
         }
+
+        // Fetch latest MiloOS learning signals
+        const orchQuery = query(
+          collection(firestore, 'orchestrationStates'),
+          where('learnerId', '==', user.uid),
+          ...(siteId ? [where('siteId', '==', siteId)] : []),
+          orderBy('lastUpdatedAt', 'desc'),
+          limit(1),
+        );
+        const orchSnap = await getDocs(orchQuery);
+        if (!orchSnap.empty && isMounted) {
+          const orchData = orchSnap.docs[0].data() as Record<string, unknown>;
+          const xHat = orchData.x_hat && typeof orchData.x_hat === 'object'
+            ? orchData.x_hat as Record<string, unknown>
+            : null;
+          if (xHat) {
+            setLearningSignals({
+              cognition: typeof xHat.cognition === 'number' ? Math.round(xHat.cognition * 100) : null,
+              engagement: typeof xHat.engagement === 'number' ? Math.round(xHat.engagement * 100) : null,
+              integrity: typeof xHat.integrity === 'number' ? Math.round(xHat.integrity * 100) : null,
+            });
+          }
+        }
       } catch (error) {
         console.error('Failed to load learner dashboard data', error);
       } finally {
@@ -127,8 +155,25 @@ export function LearnerDashboard() {
         </Card>
         <Card className="p-6">
           <h2 className="text-xl font-semibold mb-2">MiloOS</h2>
-          <p className="text-gray-600">MiloOS appears here when a real support response is available.</p>
-          <p className="mt-2 text-sm text-amber-700">No live help response is attached to this dashboard card yet.</p>
+          {learningSignals ? (
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Cognition</span>
+                <span className="font-medium">{learningSignals.cognition != null ? `${learningSignals.cognition}%` : '—'}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Engagement</span>
+                <span className="font-medium">{learningSignals.engagement != null ? `${learningSignals.engagement}%` : '—'}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Integrity</span>
+                <span className="font-medium">{learningSignals.integrity != null ? `${learningSignals.integrity}%` : '—'}</span>
+              </div>
+              <p className="text-xs text-gray-400 mt-2">Learning signals from your latest session</p>
+            </div>
+          ) : (
+            <p className="text-gray-500 text-sm">No learning signals yet. Start a session to see your MiloOS support snapshot.</p>
+          )}
         </Card>
       </div>
 

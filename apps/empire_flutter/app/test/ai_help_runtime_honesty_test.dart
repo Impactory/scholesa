@@ -18,8 +18,8 @@ void main() {
     test(
         'keeps runtime exception text aligned to AI Help and voice help wording',
         () {
-      expect(bosServiceSource, contains('Malformed AI Help payload.'));
-      expect(bosModelsSource, contains('Malformed AI Help response payload.'));
+      expect(bosServiceSource, contains('Malformed MiloOS payload.'));
+      expect(bosModelsSource, contains('Malformed MiloOS response payload.'));
       expect(voiceRuntimeSource, contains('Sign in to use MiloOS by voice.'));
       expect(
         voiceRuntimeSource,
@@ -56,8 +56,11 @@ void main() {
       );
 
       expect(bosServiceSource, isNot(contains('Malformed AI coach payload.')));
+      expect(bosServiceSource, isNot(contains('Malformed AI Help payload.')));
       expect(bosModelsSource,
           isNot(contains('Malformed AI coach response payload.')));
+      expect(bosModelsSource,
+          isNot(contains('Malformed AI Help response payload.')));
       expect(
           voiceRuntimeSource,
           isNot(

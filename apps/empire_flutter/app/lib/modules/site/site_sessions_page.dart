@@ -745,6 +745,10 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
                         label: Text(mode.toUpperCase()),
                         selected: _viewMode == mode,
                         onSelected: (_) async {
+                          final messenger =
+                              ScaffoldMessenger.of(context);
+                          final snackText =
+                              '${_tSiteSessions(context, 'Showing')} ${_modeLabel(context, mode)} ${_tSiteSessions(context, 'view')}';
                           TelemetryService.instance.logEvent(
                             event: 'cta.clicked',
                             metadata: <String, dynamic>{
@@ -758,11 +762,11 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
                             mode,
                             trigger: 'filter_view_mode',
                           );
-                          Navigator.pop(sheetContext);
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          if (!mounted) return;
+                          Navigator.pop(sheetContext); // ignore: use_build_context_synchronously
+                          messenger.showSnackBar(
                             SnackBar(
-                              content: Text(
-                                  '${_tSiteSessions(context, 'Showing')} ${_modeLabel(context, mode)} ${_tSiteSessions(context, 'view')}'),
+                              content: Text(snackText),
                               backgroundColor: ScholesaColors.site,
                             ),
                           );

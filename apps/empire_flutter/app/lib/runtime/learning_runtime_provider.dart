@@ -91,7 +91,7 @@ class LearningRuntimeProvider extends ChangeNotifier {
           _stateStatus = LearningRuntimeStateStatus.malformed;
           _stateLoadIssue = 'malformed_orchestration_state';
           debugPrint(
-            '[BOS] Ignoring malformed orchestration state for $docId.',
+            '[MiloOS] Ignoring malformed orchestration state for $docId.',
           );
         }
       } else {

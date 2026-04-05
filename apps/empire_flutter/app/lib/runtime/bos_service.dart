@@ -197,7 +197,7 @@ class BosService {
         await _fn.httpsCallable('genAiCoach').call(request.toMap());
     final Map<String, dynamic>? response = _asStringDynamicMap(result.data);
     if (response == null) {
-      throw const FormatException('Malformed AI Help payload.');
+      throw const FormatException('Malformed MiloOS payload.');
     }
     return AiCoachResponse.fromMap(response);
   }

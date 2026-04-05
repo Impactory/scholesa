@@ -1260,7 +1260,7 @@ class AiCoachResponse {
         requiresExplainBack == null ||
         mvlGateActive == null ||
         voiceAvailable == null) {
-      throw const FormatException('Malformed AI Help response payload.');
+      throw const FormatException('Malformed MiloOS response payload.');
     }
 
     return AiCoachResponse(

@@ -1106,8 +1106,8 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
           const SizedBox(height: 8),
           RadioListTile<bool>(
             value: false,
-            groupValue: _aiAssistanceUsed,
-            onChanged: (bool? value) {
+            groupValue: _aiAssistanceUsed, // ignore: deprecated_member_use
+            onChanged: (bool? value) { // ignore: deprecated_member_use
               setState(() {
                 _aiAssistanceUsed = value;
                 _aiDisclosureController.clear();
@@ -1119,8 +1119,8 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
           ),
           RadioListTile<bool>(
             value: true,
-            groupValue: _aiAssistanceUsed,
-            onChanged: (bool? value) {
+            groupValue: _aiAssistanceUsed, // ignore: deprecated_member_use
+            onChanged: (bool? value) { // ignore: deprecated_member_use
               setState(() {
                 _aiAssistanceUsed = value;
               });

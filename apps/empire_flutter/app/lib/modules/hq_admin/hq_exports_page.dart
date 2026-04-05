@@ -710,6 +710,7 @@ class _HqExportsPageState extends State<HqExportsPage> {
         return;
       }
       await Clipboard.setData(ClipboardData(text: content));
+      if (!mounted) return;
       TelemetryService.instance.logEvent(
         event: 'export.copied',
         metadata: <String, dynamic>{
