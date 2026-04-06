@@ -7196,6 +7196,264 @@ export const giveRecognition = onCall(async (request: CallableRequest<{
 });
 
 /**
+ * Get learner dashboard data for today.
+ *
+ * Aggregates from missions, missionAttempts, checkpointHistory, learnerReflections,
+ * and interactionEvents to build the SDT-driven daily view.
+ */
+export const getLearnerDashboard = onCall(async (request: CallableRequest<{
+  learnerId: string;
+  siteId: string;
+}>) => {
+  const { uid } = await requireRoleAndSite(request.auth?.uid, ['learner'], request.data.siteId);
+  const { learnerId, siteId } = request.data;
+
+  if (!learnerId || !siteId) {
+    throw new HttpsError('invalid-argument', 'learnerId and siteId required');
+  }
+  if (uid !== learnerId) {
+    throw new HttpsError('permission-denied', 'Learners can only view their own dashboard');
+  }
+
+  const db = admin.firestore();
+
+  // Parallel queries
+  const [
+    attemptsSnap,
+    checkpointsSnap,
+    reflectionsSnap,
+    eventsSnap,
+    missionsSnap,
+  ] = await Promise.all([
+    db.collection('missionAttempts')
+      .where('learnerId', '==', learnerId)
+      .orderBy('createdAt', 'desc')
+      .limit(50)
+      .get(),
+    db.collection('checkpointHistory')
+      .where('learnerId', '==', learnerId)
+      .orderBy('createdAt', 'desc')
+      .limit(20)
+      .get(),
+    db.collection('learnerReflections')
+      .where('learnerId', '==', learnerId)
+      .orderBy('createdAt', 'desc')
+      .limit(30)
+      .get(),
+    db.collection('interactionEvents')
+      .where('actorId', '==', learnerId)
+      .where('siteId', '==', siteId)
+      .orderBy('createdAt', 'desc')
+      .limit(100)
+      .get(),
+    db.collection('missions')
+      .where('siteId', '==', siteId)
+      .where('status', '==', 'active')
+      .limit(50)
+      .get(),
+  ]);
+
+  // Find today's active mission (most recent in-progress attempt)
+  const inProgressAttempt = attemptsSnap.docs.find(d => d.data().status === 'in_progress');
+  let todaysMission = undefined;
+  if (inProgressAttempt) {
+    const attemptData = inProgressAttempt.data();
+    const missionDoc = missionsSnap.docs.find(m => m.id === attemptData.missionId);
+    if (missionDoc) {
+      todaysMission = {
+        id: missionDoc.id,
+        title: missionDoc.data().title ?? 'Mission',
+        difficultyLevel: missionDoc.data().difficultyLevel ?? 'developing',
+        progress: typeof attemptData.progress === 'number' ? attemptData.progress : 0,
+      };
+    }
+  }
+
+  // Compute streaks from interaction events
+  const eventDates = new Set<string>();
+  eventsSnap.docs.forEach(d => {
+    const ts = d.data().createdAt;
+    if (ts?.toDate) eventDates.add(ts.toDate().toISOString().slice(0, 10));
+  });
+  const sortedDates = [...eventDates].sort().reverse();
+  let currentStreak = 0;
+  const today = new Date().toISOString().slice(0, 10);
+  for (let i = 0; i < sortedDates.length; i++) {
+    const expected = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10);
+    if (sortedDates[i] === expected || (i === 0 && sortedDates[i] === today)) {
+      currentStreak++;
+    } else break;
+  }
+
+  // Effort streak: consecutive days with reflection that includes effortLevel
+  const effortDates = new Set<string>();
+  reflectionsSnap.docs.forEach(d => {
+    const data = d.data();
+    if (data.effortLevel && data.createdAt?.toDate) {
+      effortDates.add(data.createdAt.toDate().toISOString().slice(0, 10));
+    }
+  });
+  let effortStreak = 0;
+  for (let i = 0; i < 30; i++) {
+    const date = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10);
+    if (effortDates.has(date)) effortStreak++;
+    else if (i > 0) break;
+  }
+
+  // Next checkpoint
+  const completedCheckpoints = checkpointsSnap.docs.filter(d => d.data().passed === true);
+  const nextCheckpointNumber = completedCheckpoints.length + 1;
+  const nextCheckpoint = inProgressAttempt ? {
+    sprintId: inProgressAttempt.data().sessionOccurrenceId ?? inProgressAttempt.id,
+    checkpointNumber: nextCheckpointNumber,
+    dueAt: null, // No fixed due date in the current schema
+  } : undefined;
+
+  // Unread feedback: mission attempts with feedback that hasn't been acknowledged
+  const unreadFeedback = attemptsSnap.docs.filter(d => {
+    const data = d.data();
+    return data.feedback && !data.feedbackAcknowledged;
+  }).length;
+
+  // Pending reflections: attempts completed but no linked reflection
+  const reflectionLinkedAttemptIds = new Set(
+    reflectionsSnap.docs.map(d => d.data().missionId).filter(Boolean)
+  );
+  const completedAttempts = attemptsSnap.docs.filter(d => d.data().status === 'completed');
+  const pendingReflections = completedAttempts.filter(d =>
+    !reflectionLinkedAttemptIds.has(d.data().missionId)
+  ).length;
+
+  return {
+    todaysMission,
+    streak: {
+      current: currentStreak,
+      best: Math.max(currentStreak, sortedDates.length), // Approximate best
+      attendanceStreak: currentStreak,
+      effortStreak,
+    },
+    nextCheckpoint,
+    quickResumeAvailable: !!inProgressAttempt,
+    unreadFeedback,
+    pendingReflections,
+  };
+});
+
+/**
+ * Get learning path progress for a learner.
+ *
+ * Builds a unit-by-unit progress map from missions, mission attempts,
+ * and skill mastery data.
+ */
+export const getLearningPath = onCall(async (request: CallableRequest<{
+  learnerId: string;
+  siteId: string;
+  courseId?: string;
+}>) => {
+  const { uid } = await requireRoleAndSite(request.auth?.uid, ['learner', 'educator', 'hq'], request.data.siteId);
+  const { learnerId, siteId, courseId } = request.data;
+
+  if (!learnerId || !siteId) {
+    throw new HttpsError('invalid-argument', 'learnerId and siteId required');
+  }
+
+  const db = admin.firestore();
+
+  // Load missions for this site, optionally filtered by course
+  let missionsQuery = db.collection('missions').where('siteId', '==', siteId);
+  if (courseId) {
+    missionsQuery = missionsQuery.where('courseId', '==', courseId);
+  }
+
+  const [missionsSnap, attemptsSnap, skillMasterySnap] = await Promise.all([
+    missionsQuery.get(),
+    db.collection('missionAttempts')
+      .where('learnerId', '==', learnerId)
+      .get(),
+    db.collection('skillMastery')
+      .where('learnerId', '==', learnerId)
+      .get(),
+  ]);
+
+  // Group missions by unitId
+  const unitMissions = new Map<string, Array<{ id: string; title: string; difficultyLevel: string; order: number; microSkillIds: string[] }>>();
+  const unitNames = new Map<string, string>();
+
+  missionsSnap.docs.forEach(d => {
+    const data = d.data();
+    const unitId = data.unitId ?? 'default';
+    const unitName = data.unitName ?? 'Learning Path';
+    unitNames.set(unitId, unitName);
+    if (!unitMissions.has(unitId)) unitMissions.set(unitId, []);
+    unitMissions.get(unitId)!.push({
+      id: d.id,
+      title: data.title ?? 'Mission',
+      difficultyLevel: data.difficultyLevel ?? 'developing',
+      order: typeof data.order === 'number' ? data.order : 0,
+      microSkillIds: Array.isArray(data.microSkillIds) ? data.microSkillIds : [],
+    });
+  });
+
+  // Index attempts by missionId
+  const completedMissionIds = new Set<string>();
+  attemptsSnap.docs.forEach(d => {
+    const data = d.data();
+    if (data.status === 'completed') completedMissionIds.add(data.missionId);
+  });
+
+  // Index skill mastery
+  const masteredSkillIds = new Set<string>();
+  const inProgressSkillIds = new Set<string>();
+  skillMasterySnap.docs.forEach(d => {
+    const data = d.data();
+    const skillId = data.microSkillId ?? d.id;
+    const level = typeof data.level === 'number' ? data.level : 0;
+    if (level >= 3) masteredSkillIds.add(skillId);
+    else if (level >= 1) inProgressSkillIds.add(skillId);
+  });
+
+  // Build path progress sorted by unit order
+  const unitEntries = [...unitMissions.entries()].sort((a, b) => {
+    const aMin = Math.min(...a[1].map(m => m.order));
+    const bMin = Math.min(...b[1].map(m => m.order));
+    return aMin - bMin;
+  });
+
+  let previousUnitComplete = true;
+  const path = unitEntries.map(([unitId, missions]) => {
+    const missionsCompleted = missions.filter(m => completedMissionIds.has(m.id)).length;
+    const allMicroSkills = new Set(missions.flatMap(m => m.microSkillIds));
+    const proven = [...allMicroSkills].filter(id => masteredSkillIds.has(id));
+    const inProg = [...allMicroSkills].filter(id => inProgressSkillIds.has(id) && !masteredSkillIds.has(id));
+
+    const isLocked = !previousUnitComplete;
+    previousUnitComplete = missionsCompleted >= missions.length;
+
+    // Find next uncompleted mission
+    const nextMission = missions
+      .sort((a, b) => a.order - b.order)
+      .find(m => !completedMissionIds.has(m.id));
+
+    return {
+      unitId,
+      unitName: unitNames.get(unitId) ?? 'Unit',
+      missionsTotal: missions.length,
+      missionsCompleted,
+      microSkillsProven: proven,
+      microSkillsInProgress: inProg,
+      isLocked,
+      nextMission: nextMission ? {
+        id: nextMission.id,
+        title: nextMission.title,
+        difficultyLevel: nextMission.difficultyLevel,
+      } : undefined,
+    };
+  });
+
+  return { path };
+});
+
+/**
  * Log a support intervention and its outcome
  */
 export const logSupportIntervention = onCall(async (request: CallableRequest<{

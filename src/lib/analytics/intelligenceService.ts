@@ -96,13 +96,72 @@ export class IntelligenceService {
       TelemetryService.getSDTProfile(userId, siteId, 30),
       TelemetryService.getUserEngagementScore(userId, siteId, 7)
     ]);
-    
+
+    // Generate insights from SDT scores and engagement data
+    const insights: InsightRule[] = [];
+
+    if (sdtScores.autonomy !== null && sdtScores.autonomy < 0.3) {
+      insights.push({
+        id: `${userId}-low-autonomy`,
+        triggered: true,
+        recommendation: 'Autonomy score is low — offer more learner choice in missions and difficulty levels.',
+        actions: ['Provide mission options', 'Allow self-pacing', 'Introduce choice boards'],
+        priority: 'high',
+        category: 'learning',
+      });
+    }
+
+    if (sdtScores.competence !== null && sdtScores.competence < 0.3) {
+      insights.push({
+        id: `${userId}-low-competence`,
+        triggered: true,
+        recommendation: 'Competence perception is low — scaffold with more checkpoints and celebrate small wins.',
+        actions: ['Add micro-checkpoints', 'Use rubric feedback', 'Highlight growth evidence'],
+        priority: 'high',
+        category: 'learning',
+      });
+    }
+
+    if (sdtScores.belonging !== null && sdtScores.belonging < 0.3) {
+      insights.push({
+        id: `${userId}-low-belonging`,
+        triggered: true,
+        recommendation: 'Belonging score is low — promote peer collaboration and showcase participation.',
+        actions: ['Pair with peer buddy', 'Enable showcase sharing', 'Encourage peer feedback'],
+        priority: 'medium',
+        category: 'collaboration',
+      });
+    }
+
+    if (engagementScore !== null && engagementScore < 0.3) {
+      insights.push({
+        id: `${userId}-low-engagement`,
+        triggered: true,
+        recommendation: 'Engagement is declining — check in with the learner and adjust difficulty or topic.',
+        actions: ['Schedule 1:1 check-in', 'Review mission difficulty', 'Explore interest alignment'],
+        priority: 'high',
+        category: 'engagement',
+      });
+    }
+
+    if (sdtScores.autonomy !== null && sdtScores.competence !== null
+        && sdtScores.autonomy >= 0.7 && sdtScores.competence >= 0.7) {
+      insights.push({
+        id: `${userId}-high-autonomy-competence`,
+        triggered: true,
+        recommendation: 'High autonomy and competence — this learner may be ready for advanced challenges or peer mentoring.',
+        actions: ['Offer stretch missions', 'Invite as peer mentor', 'Suggest portfolio showcase'],
+        priority: 'low',
+        category: 'learning',
+      });
+    }
+
     return {
       userId,
       siteId,
       sdtScores,
       engagementScore,
-      insights: [], // Individual insights not yet implemented
+      insights,
       lastUpdated: new Date()
     };
   }
