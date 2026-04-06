@@ -18,8 +18,17 @@ import type { CustomRouteRendererProps } from '../customRouteRenderers';
 
 // Lazy-import the feedback form to avoid bundle bloat
 import dynamic from 'next/dynamic';
-const EducatorFeedbackForm = dynamic(
-  () => import('@/src/components/motivation/EducatorFeedbackForm'),
+
+interface EducatorFeedbackFormProps {
+  learnerId: string;
+  learnerName: string;
+  siteId: string;
+  onSuccess: () => void;
+  onCancel: () => void;
+}
+
+const EducatorFeedbackForm = dynamic<EducatorFeedbackFormProps>(
+  () => import('@/src/components/motivation/EducatorFeedbackForm').then((m) => ({ default: m.EducatorFeedbackForm })),
   { ssr: false }
 );
 
@@ -123,15 +132,15 @@ export default function EducatorTodayRenderer({ ctx }: CustomRouteRendererProps)
       const sessionsSnap = results[0] as Awaited<ReturnType<typeof getDocs>>;
 
       setSessions(
-        sessionsSnap.docs.map((d: QueryDocumentSnapshot<DocumentData>) => {
-          const data = d.data();
+        sessionsSnap.docs.map((d) => {
+          const data = d.data() as Record<string, unknown>;
           return {
             id: d.id,
-            title: asString(data.title || data.name, d.id),
-            description: asString(data.description, ''),
-            status: asString(data.status, 'scheduled'),
-            startDate: toIso(data.startDate),
-            siteId: asString(data.siteId, ''),
+            title: asString(data['title'] || data['name'], d.id),
+            description: asString(data['description'], ''),
+            status: asString(data['status'], 'scheduled'),
+            startDate: toIso(data['startDate']),
+            siteId: asString(data['siteId'], ''),
           };
         })
       );
@@ -139,9 +148,9 @@ export default function EducatorTodayRenderer({ ctx }: CustomRouteRendererProps)
       if (results[1]) {
         const learnersSnap = results[1] as Awaited<ReturnType<typeof getDocs>>;
         setLearners(
-          learnersSnap.docs.map((d: QueryDocumentSnapshot<DocumentData>) => ({
+          learnersSnap.docs.map((d) => ({
             id: d.id,
-            displayName: asString(d.data().displayName, d.id),
+            displayName: asString((d.data() as Record<string, unknown>)['displayName'], d.id),
           }))
         );
       }

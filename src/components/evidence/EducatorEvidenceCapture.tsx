@@ -162,10 +162,10 @@ export function EducatorEvidenceCapture() {
             learnerId: data.learnerId ?? '',
             description: data.description,
             capabilityId: data.capabilityId ?? undefined,
-            capabilityMapped: data.capabilityMapped,
+            capabilityMapped: data.capabilityMapped ?? false,
             rubricStatus: data.rubricStatus ?? 'pending',
             phaseKey: data.phaseKey ?? null,
-            portfolioCandidate: data.portfolioCandidate,
+            portfolioCandidate: data.portfolioCandidate ?? false,
           };
         })
       );
@@ -211,7 +211,7 @@ export function EducatorEvidenceCapture() {
         growthStatus: 'pending' as const,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
-      } as Omit<EvidenceRecord, 'id'>);
+      } as unknown as Omit<EvidenceRecord, 'id'>);
 
       const learnerName = learnerNameMap.get(selectedLearnerId) ?? selectedLearnerId;
       setSuccessMessage(`Logged for ${learnerName}`);

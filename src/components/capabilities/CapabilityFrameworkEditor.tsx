@@ -189,7 +189,7 @@ export function CapabilityFrameworkEditor() {
   const openEditCapability = useCallback((cap: Capability) => {
     setEditingCapabilityId(cap.id);
     setCapabilityForm({
-      title: cap.title,
+      title: cap.title ?? cap.name,
       pillarCode: cap.pillarCode,
       descriptor: cap.descriptor ?? '',
       sortOrder: cap.sortOrder ?? 0,
@@ -246,7 +246,7 @@ export function CapabilityFrameworkEditor() {
           status: 'active' as const,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
-        } as Omit<Capability, 'id'>);
+        } as unknown as Omit<Capability, 'id'>);
         flash('Capability created.');
       }
       if (siteId) invalidateCapabilityCache(siteId);
@@ -357,7 +357,7 @@ export function CapabilityFrameworkEditor() {
           createdBy: user.uid,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
-        } as Omit<RubricTemplate, 'id'>);
+        } as unknown as Omit<RubricTemplate, 'id'>);
         flash('Rubric template created.');
       }
       setShowRubricForm(false);
@@ -1285,7 +1285,7 @@ function ProcessDomainsTab({
         <div className="space-y-2">
           {processDomains.map((pd) => {
             const hasProgression = pd.progressionDescriptors &&
-              Object.values(pd.progressionDescriptors).some((v) => v?.trim());
+              Object.values(pd.progressionDescriptors as unknown as Record<string, string>).some((v) => v.trim());
             return (
               <div key={pd.id} className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
                 <div className="flex items-start justify-between gap-3">

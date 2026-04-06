@@ -159,7 +159,7 @@ export function LearnerEvidenceSubmission() {
         proofOfLearningStatus: 'not-available' as const,
         source: 'learner_submission',
         createdAt: serverTimestamp(),
-      } as Omit<PortfolioItem, 'id'>);
+      } as unknown as Omit<PortfolioItem, 'id'>);
 
       setSuccessMessage('Artifact submitted to your portfolio!');
       setArtifactTitle('');
@@ -203,7 +203,7 @@ export function LearnerEvidenceSubmission() {
         proofOfLearningStatus: 'not-available' as const,
         source: 'reflection',
         createdAt: serverTimestamp(),
-      } as Omit<PortfolioItem, 'id'>);
+      } as unknown as Omit<PortfolioItem, 'id'>);
 
       // Create reflection linked to the portfolio item
       await addDoc(learnerReflectionsCollection, {
@@ -216,7 +216,7 @@ export function LearnerEvidenceSubmission() {
         aiAssistanceDetails: reflectionAiUsed ? reflectionAiDetails.trim() : undefined,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
-      } as Omit<LearnerReflection, 'id'>);
+      } as unknown as Omit<LearnerReflection, 'id'>);
 
       setSuccessMessage('Reflection saved!');
       setReflectionContent('');
@@ -276,7 +276,7 @@ export function LearnerEvidenceSubmission() {
         proofOfLearningStatus: 'not-available' as const,
         source: 'checkpoint_submission',
         createdAt: serverTimestamp(),
-      } as Omit<PortfolioItem, 'id'>);
+      } as unknown as Omit<PortfolioItem, 'id'>);
 
       setSuccessMessage('Checkpoint evidence submitted!');
       setCheckpointMissionId('');

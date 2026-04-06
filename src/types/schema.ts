@@ -225,6 +225,7 @@ export interface Announcement {
 export interface PortfolioItem {
   id: string;
   learnerId: string;
+  siteId?: string;
   title: string;
   description: string;
   pillarCodes: PillarCode[];
@@ -1228,6 +1229,7 @@ export interface ProgressionDescriptors {
 export interface CheckpointMapping {
   label: string;
   checkpointId?: string;
+  description?: string;
 }
 
 export interface RubricTemplateCriterion {

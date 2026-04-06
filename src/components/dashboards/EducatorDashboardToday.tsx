@@ -116,11 +116,12 @@ export function EducatorDashboardToday() {
         const masteryList = masterySnap.docs.map((d) => d.data() as CapabilityMastery);
 
         const pillarMap = new Map<PillarCode, { levels: number[]; learnerIds: Set<string> }>();
+        const MASTERY_SCORE: Record<string, number> = { emerging: 1, developing: 2, proficient: 3, advanced: 4 };
         for (const m of masteryList) {
-          const pc = m.pillarCode;
+          const pc = m.pillarCode as PillarCode | undefined;
           if (!pc) continue;
           const entry = pillarMap.get(pc) ?? { levels: [], learnerIds: new Set() };
-          entry.levels.push(m.latestLevel ?? 0);
+          entry.levels.push(MASTERY_SCORE[m.latestLevel] ?? 0);
           entry.learnerIds.add(m.learnerId);
           pillarMap.set(pc, entry);
         }

@@ -3650,7 +3650,6 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
           statusKeys: ['status'],
           editable: false,
           deletable: false,
-          limitSize: 20,
         }),
         canCreate: false,
         canRefresh: true,

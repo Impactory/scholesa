@@ -13,6 +13,7 @@ import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { trackUnifiedEvent } from '@/src/lib/analytics';
 import { CheckCircleIcon, XIcon, AlertCircleIcon } from 'lucide-react';
 import { missionAttemptsCollection, skillEvidenceCollection } from '@/src/firebase/firestore/collections';
+import type { SkillEvidence } from '@/src/types/schema';
 
 interface CheckpointSubmissionProps {
   missionId: string;
@@ -102,7 +103,7 @@ export function CheckpointSubmission({
             status: 'submitted',
             submittedAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
-          })
+          } as unknown as Omit<SkillEvidence, 'id'>)
         )
       );
 

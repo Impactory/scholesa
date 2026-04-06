@@ -75,7 +75,6 @@ const CUSTOM_ROUTE_RENDERERS: Partial<
   '/learner/today': LearnerProgressReportRenderer,
   '/learner/portfolio': LearnerPortfolioCurationRenderer,
   '/learner/missions': LearnerProofAssemblyRenderer,
-  '/learner/habits': LearnerShowcasePeerReviewRenderer,
   '/site/dashboard': SiteImplementationHealthRenderer,
   '/parent/summary': GuardianCapabilityViewRenderer,
   '/parent/portfolio': GuardianCapabilityViewRenderer,

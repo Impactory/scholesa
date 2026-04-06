@@ -145,11 +145,9 @@ export function LearnerDashboardToday() {
     );
   }
 
-  const LEVEL_LABELS: Record<number, string> = {
-    1: 'Beginning',
-    2: 'Developing',
-    3: 'Proficient',
-    4: 'Advanced',
+  const LEVEL_LABELS: Record<string, string> = {
+    '1': 'Beginning', '2': 'Developing', '3': 'Proficient', '4': 'Advanced',
+    emerging: 'Beginning', developing: 'Developing', proficient: 'Proficient', advanced: 'Advanced',
   };
 
   return (
@@ -207,7 +205,7 @@ export function LearnerDashboardToday() {
                   <div>
                     <span className="text-sm font-medium text-gray-900">{capTitle}</span>
                     <span className="ml-2 text-xs text-gray-500">
-                      Level {g.level}/4 — {LEVEL_LABELS[g.level] ?? `Level ${g.level}`}
+                      {g.level} — {LEVEL_LABELS[g.level] ?? g.level}
                     </span>
                   </div>
                   <div className="text-right">

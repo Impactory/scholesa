@@ -40,20 +40,20 @@ export async function createUserDocument({
       return;
     }
 
-    const newUser: User = {
+    const newUser = {
       uid,
       email,
       role,
       displayName: displayName || '',
       photoURL: photoURL || '',
       siteIds,
-      createdAt: serverTimestamp() as unknown as FieldValue,
-      updatedAt: serverTimestamp() as unknown as FieldValue,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
       // Only include organizationId if defined to avoid Firestore "undefined" errors
       ...(organizationId ? { organizationId } : {}),
     };
 
-    await setDoc(userRef, newUser);
+    await setDoc(userRef, newUser as unknown as User);
   } catch (error) {
     console.error('Error creating user document:', error);
     throw error;

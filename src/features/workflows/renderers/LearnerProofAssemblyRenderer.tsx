@@ -24,7 +24,7 @@ import {
   portfolioItemsCollection,
   proofOfLearningBundlesCollection,
 } from '@/src/firebase/firestore/collections';
-import type { WorkflowContext } from '@/src/features/workflows/WorkflowRoutePage';
+import type { WorkflowContext } from '@/src/features/workflows/workflowData';
 import type { ProofOfLearningBundle } from '@/src/types/schema';
 import {
   ShieldCheckIcon,
@@ -118,9 +118,9 @@ export default function LearnerProofAssemblyRenderer({ ctx }: { ctx: WorkflowCon
         const data = d.data();
         return {
           id: d.id,
-          title: (data as Record<string, unknown>).title as string || 'Untitled',
-          type: (data as Record<string, unknown>).type as string || 'artifact',
-          createdAt: (data as Record<string, unknown>).createdAt as Timestamp | null,
+          title: (data as unknown as Record<string, unknown>).title as string || 'Untitled',
+          type: (data as unknown as Record<string, unknown>).type as string || 'artifact',
+          createdAt: (data as unknown as Record<string, unknown>).createdAt as Timestamp | null,
         };
       });
       setPortfolioItems(items);
