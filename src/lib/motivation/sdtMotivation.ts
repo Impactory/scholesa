@@ -1,6 +1,6 @@
 /**
  * SDT Motivation Service
- * 
+ *
  * Self-Determination Theory framework for the Scholesa Motivation Engine
  * Autonomy + Competence + Belonging = Intrinsic Motivation
  */
@@ -8,16 +8,8 @@
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import type {
   DifficultyLevel,
-  AgeBand,
   CrewRole,
   RecognitionType,
-  SprintSession,
-  ReflectionEntry,
-  WeeklyGoal,
-  ShowcaseSubmission,
-  SkillEvidence,
-  AICoachInteraction,
-  MotivationAnalytics
 } from '@/src/types/schema';
 
 const functions = getFunctions();
@@ -167,226 +159,8 @@ export const RECOGNITION_EMOJI: Record<RecognitionType, string> = {
 // ===== SDT MOTIVATION SERVICE =====
 
 class SDTMotivationService {
-  // === AUTONOMY MODULE ===
-  
-  /**
-   * Get mission options for learner to choose from (autonomy)
-   */
-  async getMissionOptions(
-    learnerId: string,
-    siteId: string,
-    sessionOccurrenceId?: string
-  ): Promise<MissionOption[]> {
-    const callable = httpsCallable<
-      { learnerId: string; siteId: string; sessionOccurrenceId?: string },
-      { options: MissionOption[] }
-    >(functions, 'getMissionOptions');
-    
-    const result = await callable({ learnerId, siteId, sessionOccurrenceId });
-    return result.data.options;
-  }
-  
-  /**
-   * Learner selects a mission variant
-   */
-  async selectMission(
-    learnerId: string,
-    siteId: string,
-    missionVariantId: string,
-    reason?: string
-  ): Promise<{ sprintSessionId: string }> {
-    const callable = httpsCallable<
-      { learnerId: string; siteId: string; missionVariantId: string; reason?: string },
-      { sprintSessionId: string }
-    >(functions, 'selectMission');
-    
-    const result = await callable({ learnerId, siteId, missionVariantId, reason });
-    return result.data;
-  }
-  
-  /**
-   * Update learner interest profile
-   */
-  async updateInterests(
-    learnerId: string,
-    siteId: string,
-    interests: string[]
-  ): Promise<void> {
-    const callable = httpsCallable(functions, 'updateLearnerInterests');
-    await callable({ learnerId, siteId, interests });
-  }
-  
-  /**
-   * Set a weekly goal (autonomy)
-   */
-  async setWeeklyGoal(
-    learnerId: string,
-    siteId: string,
-    cycleId: string,
-    goalType: WeeklyGoal['goalType'],
-    goalText: string,
-    targetCount?: number
-  ): Promise<{ goalId: string }> {
-    const callable = httpsCallable<any, { goalId: string }>(functions, 'setWeeklyGoal');
-    const result = await callable({ learnerId, siteId, cycleId, goalType, goalText, targetCount });
-    return result.data;
-  }
-  
-  // === COMPETENCE MODULE ===
-  
-  /**
-   * Submit skill evidence (micro-skill mastery)
-   */
-  async submitSkillEvidence(
-    learnerId: string,
-    siteId: string,
-    microSkillId: string,
-    evidenceType: SkillEvidence['evidenceType'],
-    artifactUrl: string,
-    description: string,
-    locationInWork: string,
-    selfScore: SkillEvidence['selfScore']
-  ): Promise<{ evidenceId: string }> {
-    const callable = httpsCallable<any, { evidenceId: string }>(functions, 'submitSkillEvidence');
-    const result = await callable({
-      learnerId,
-      siteId,
-      microSkillId,
-      evidenceType,
-      artifactUrl,
-      description,
-      locationInWork,
-      selfScore
-    });
-    return result.data;
-  }
-  
-  /**
-   * Get progress insights (visible mastery)
-   */
-  async getProgressInsights(
-    learnerId: string,
-    siteId: string
-  ): Promise<ProgressInsights> {
-    const callable = httpsCallable<
-      { learnerId: string; siteId: string },
-      ProgressInsights
-    >(functions, 'getProgressInsights');
-    
-    const result = await callable({ learnerId, siteId });
-    return result.data;
-  }
-  
-  /**
-   * Submit checkpoint (fast feedback)
-   */
-  async submitCheckpoint(
-    sprintSessionId: string,
-    learnerId: string,
-    siteId: string,
-    checkpointNumber: number,
-    uploadUrl: string,
-    explainItBack: string
-  ): Promise<{
-    checkpointId: string;
-    feedback: string;
-    nextStep?: string;
-    passed: boolean;
-  }> {
-    const callable = httpsCallable<any, any>(functions, 'submitCheckpoint');
-    const result = await callable({
-      sprintSessionId,
-      learnerId,
-      siteId,
-      checkpointNumber,
-      uploadUrl,
-      explainItBack
-    });
-    return result.data;
-  }
-  
-  // === BELONGING MODULE ===
-  
-  /**
-   * Submit showcase (team visibility + recognition)
-   */
-  async submitShowcase(
-    learnerId: string,
-    siteId: string,
-    sprintSessionId: string,
-    title: string,
-    artifactType: ShowcaseSubmission['artifactType'],
-    artifactUrl: string,
-    description: string,
-    microSkillIds: string[],
-    visibleToCrew: boolean,
-    visibleToSite: boolean
-  ): Promise<{ showcaseId: string }> {
-    const callable = httpsCallable<any, { showcaseId: string }>(functions, 'submitShowcase');
-    const result = await callable({
-      learnerId,
-      siteId,
-      sprintSessionId,
-      title,
-      artifactType,
-      artifactUrl,
-      description,
-      microSkillIds,
-      visibleToCrew,
-      visibleToSite
-    });
-    return result.data;
-  }
-  
-  /**
-   * Give recognition to peer
-   */
-  async giveRecognition(
-    fromLearnerId: string,
-    toLearnerId: string,
-    siteId: string,
-    showcaseId: string,
-    recognitionType: RecognitionType,
-    comment?: string
-  ): Promise<void> {
-    const callable = httpsCallable(functions, 'giveRecognition');
-    await callable({
-      fromLearnerId,
-      toLearnerId,
-      siteId,
-      showcaseId,
-      recognitionType,
-      comment
-    });
-  }
-  
-  /**
-   * Submit peer feedback (I like, I wonder, Next step)
-   */
-  async submitPeerFeedback(
-    fromLearnerId: string,
-    toLearnerId: string,
-    siteId: string,
-    showcaseId: string,
-    iLike: string,
-    iWonder: string,
-    nextStep: string
-  ): Promise<{ feedbackId: string }> {
-    const callable = httpsCallable<any, { feedbackId: string }>(functions, 'submitPeerFeedback');
-    const result = await callable({
-      fromLearnerId,
-      toLearnerId,
-      siteId,
-      showcaseId,
-      iLike,
-      iWonder,
-      nextStep
-    });
-    return result.data;
-  }
-  
   // === REFLECTION (IDENTITY) ===
-  
+
   /**
    * Submit reflection ("I'm proud of... Next I will...")
    */
@@ -415,9 +189,9 @@ class SDTMotivationService {
     });
     return result.data;
   }
-  
+
   // === AI HELP ===
-  
+
   /**
   * Request AI help (with guardrails)
    */
@@ -431,11 +205,11 @@ class SDTMotivationService {
       AICoachRequest & { learnerId: string; siteId: string },
       AICoachResponse
     >(functions, 'genAiCoach');
-    
+
     const result = await callable({ ...request, learnerId, siteId });
     return result.data;
   }
-  
+
   /**
    * Submit explain-it-back response
    */
@@ -449,9 +223,9 @@ class SDTMotivationService {
     const result = await callable({ learnerId, siteId, interactionId, explainBack });
     return result.data;
   }
-  
+
   // === DASHBOARD DATA ===
-  
+
   /**
    * Get learner dashboard data
    */
@@ -463,11 +237,11 @@ class SDTMotivationService {
       { learnerId: string; siteId: string },
       DashboardData
     >(functions, 'getLearnerDashboard');
-    
+
     const result = await callable({ learnerId, siteId });
     return result.data;
   }
-  
+
   /**
    * Get learning path progress
    */

@@ -46,7 +46,7 @@ export default tseslint.config(
       ...nextPlugin.configs["core-web-vitals"].rules,
       quotes: ["error", "single", { avoidEscape: true }],
       "@typescript-eslint/no-explicit-any": "off",
-      "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
+      "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
       "@typescript-eslint/no-empty-object-type": "off",
       "no-trailing-spaces": "off",
       "comma-dangle": "off",

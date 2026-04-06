@@ -5003,9 +5003,8 @@ export const stripeWebhook = onRequest({
     res.status(200).json({ received: true, type: event.type });
   } catch (err: any) {
     console.error('Error processing webhook:', err);
-    // Return 200 to prevent Stripe retries for non-retryable errors
-    // But log for investigation
-    res.status(200).json({ received: true, error: err.message });
+    // Return 500 for transient errors so Stripe retries
+    res.status(500).json({ received: false, error: err.message });
   }
 });
 
@@ -7350,7 +7349,7 @@ export const getLearningPath = onCall(async (request: CallableRequest<{
   siteId: string;
   courseId?: string;
 }>) => {
-  const { uid } = await requireRoleAndSite(request.auth?.uid, ['learner', 'educator', 'hq'], request.data.siteId);
+  const { uid: _uid } = await requireRoleAndSite(request.auth?.uid, ['learner', 'educator', 'hq'], request.data.siteId);
   const { learnerId, siteId, courseId } = request.data;
 
   if (!learnerId || !siteId) {
