@@ -4,7 +4,7 @@
  * Implements the complete analytics.json specification:
  * - Event tracking (mission selection, checkpoints, AI usage, etc.)
  * - Computed metrics (pass rates, attempts to mastery, hint dependency)
- * - Insight rules (threshold-based + internal AI-powered inference)
+ * - Insight rules (threshold-based internal inference)
  * - Grade band policy integration
  * - SDT motivation profiling
  * - Personalized recommendations
@@ -20,7 +20,7 @@ export {
   computeHintDependencyIndex,
   computeExplainItBackCompliance,
   getInsights,
-  generateAIInsights,
+  generateThresholdInsights,
   type AnalyticsEventType,
   type MissionSelectedEvent,
   type SprintStartedEvent,

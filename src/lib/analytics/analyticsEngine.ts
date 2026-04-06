@@ -438,7 +438,7 @@ export class AnalyticsEngine {
    * PRIVACY: Uses only in-process aggregated class-level metrics.
    * NO student names, IDs, individual records, or third-party AI APIs.
    */
-  static async generateAIInsights(
+  static async generateThresholdInsights(
     classId: string,
     sessionId?: string
   ): Promise<InsightRule[]> {
@@ -610,7 +610,7 @@ export class AnalyticsEngine {
   static async getInsights(classId: string, sessionId?: string): Promise<InsightRule[]> {
     const [thresholdInsights, aiInsights] = await Promise.all([
       this.evaluateInsightRules(classId, sessionId),
-      this.generateAIInsights(classId, sessionId)
+      this.generateThresholdInsights(classId, sessionId)
     ]);
     
     return [...thresholdInsights, ...aiInsights];
@@ -647,4 +647,4 @@ export const computeChoiceDistribution = AnalyticsEngine.computeChoiceDistributi
 export const computeHintDependencyIndex = AnalyticsEngine.computeHintDependencyIndex.bind(AnalyticsEngine);
 export const computeExplainItBackCompliance = AnalyticsEngine.computeExplainItBackCompliance.bind(AnalyticsEngine);
 export const getInsights = AnalyticsEngine.getInsights.bind(AnalyticsEngine);
-export const generateAIInsights = AnalyticsEngine.generateAIInsights.bind(AnalyticsEngine);
+export const generateThresholdInsights = AnalyticsEngine.generateThresholdInsights.bind(AnalyticsEngine);

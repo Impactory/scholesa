@@ -134,9 +134,9 @@ describe('Analytics Implementation', () => {
       expect(provider).toBe('INTERNAL_AI');
     });
     
-    it('should generate AI insights with proper structure', async () => {
-      // This uses internal deterministic AI inference logic
-      const insights = await AnalyticsEngine.generateAIInsights('class_123');
+    it('should generate threshold-based insights with proper structure', async () => {
+      // This uses internal deterministic threshold logic
+      const insights = await AnalyticsEngine.generateThresholdInsights('class_123');
       
       expect(Array.isArray(insights)).toBe(true);
       
