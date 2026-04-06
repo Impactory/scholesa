@@ -273,7 +273,7 @@ class OrchestrationState {
 @immutable
 class EstimatorModel {
   const EstimatorModel({
-    this.estimator = 'ekf-lite',
+    this.estimator = 'ema-state-estimator',
     this.version = '0.1.0',
     this.qVersion = 'v1',
     this.rVersion = 'v1',
@@ -682,7 +682,7 @@ class FeatureQuality {
 @immutable
 class ReliabilityRisk {
   const ReliabilityRisk({
-    this.method = 'sep',
+    this.method = 'distributional_entropy_v1',
     this.k = 0,
     this.m = 0,
     this.hSem = 0.0,
@@ -690,7 +690,7 @@ class ReliabilityRisk {
     this.threshold = 0.5,
   });
 
-  final String method; // 'semantic-entropy' | 'sep'
+  final String method; // 'distributional_entropy_v1'
   final int k;
   final int m;
   final double hSem;

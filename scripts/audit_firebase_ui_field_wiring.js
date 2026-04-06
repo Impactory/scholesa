@@ -568,7 +568,7 @@ function checkVoiceBosStaticSupport() {
       id: 'bos_self_learning_pipeline_declared',
       pass:
         bosSource.includes('extractFeatures(') &&
-        bosSource.includes('ekfLiteUpdate(') &&
+        bosSource.includes('emaStateEstimatorUpdate(') &&
         bosSource.includes('computeIntervention(') &&
         bosSource.includes('scoreMvlEpisode('),
     },

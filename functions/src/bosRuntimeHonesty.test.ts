@@ -28,7 +28,7 @@ jest.mock('./internalInferenceGateway', () => ({
 }));
 
 jest.mock('./bosRuntimeCore', () => ({
-  ekfLiteUpdate: jest.fn(),
+  emaStateEstimatorUpdate: jest.fn(),
   summarizeClassInsights: jest.fn(),
 }));
 
@@ -56,7 +56,7 @@ describe('bosRuntime honesty guards', () => {
       x_hat: { cognition: 0.7, engagement: 0.5, integrity: 0.8 },
       P: { trace: 0.4, confidence: 0.9 },
       model: {
-        estimator: 'ekf-lite',
+        estimator: 'ema-state-estimator',
         version: '0.1.0',
         Q_version: 'v1',
       },
@@ -85,7 +85,7 @@ describe('bosRuntime honesty guards', () => {
       x_hat: { cognition: 0.7, engagement: 0.5, integrity: 0.8 },
       P: { trace: 0.4, confidence: 0.9 },
       model: {
-        estimator: 'ekf-lite',
+        estimator: 'ema-state-estimator',
         version: '0.1.0',
         Q_version: 'v1',
         R_version: 'v1',
@@ -104,7 +104,7 @@ describe('bosRuntime honesty guards', () => {
     });
 
     expect(sanitized.model).toEqual({
-      estimator: 'ekf-lite',
+      estimator: 'ema-state-estimator',
       version: '0.1.0',
       Q_version: 'v1',
       R_version: 'v1',

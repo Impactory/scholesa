@@ -1,8 +1,8 @@
-import { ekfLiteUpdate, summarizeClassInsights } from './bosRuntimeCore';
+import { emaStateEstimatorUpdate, summarizeClassInsights } from './bosRuntimeCore';
 
 describe('bosRuntimeCore', () => {
-  it('initializes an EKF-lite state from the first observation', () => {
-    const state = ekfLiteUpdate(null, {
+  it('initializes an EMA state estimate from the first observation', () => {
+    const state = emaStateEstimatorUpdate(null, {
       cognition: 0.72,
       engagement: 0.61,
       integrity: 0.83,
@@ -19,7 +19,7 @@ describe('bosRuntimeCore', () => {
   });
 
   it('shrinks uncertainty and blends the next observation', () => {
-    const state = ekfLiteUpdate(
+    const state = emaStateEstimatorUpdate(
       {
         x_hat: { cognition: 0.4, engagement: 0.5, integrity: 0.6 },
         P: { diag: [0.25, 0.25, 0.25], trace: 0.75, confidence: 0.25 },

@@ -247,14 +247,14 @@ void main() {
   group('ReliabilityRisk', () {
     test('default values', () {
       const ReliabilityRisk risk = ReliabilityRisk();
-      expect(risk.method, 'sep');
+      expect(risk.method, 'distributional_entropy_v1');
       expect(risk.riskScore, 0.0);
       expect(risk.threshold, 0.5);
     });
 
     test('fromMap throws on malformed inferential payloads', () {
       expect(
-        () => ReliabilityRisk.fromMap(<String, dynamic>{'method': 'sep'}),
+        () => ReliabilityRisk.fromMap(<String, dynamic>{'method': 'distributional_entropy_v1'}),
         throwsFormatException,
       );
       expect(
@@ -267,7 +267,7 @@ void main() {
 
     test('tryFromMap rejects missing inferential fields', () {
       expect(
-        ReliabilityRisk.tryFromMap(<String, dynamic>{'method': 'sep'}),
+        ReliabilityRisk.tryFromMap(<String, dynamic>{'method': 'distributional_entropy_v1'}),
         isNull,
       );
       expect(
@@ -318,7 +318,7 @@ void main() {
     test('tryFromMap rejects incomplete provenance payloads', () {
       expect(
         EstimatorModel.tryFromMap(<String, dynamic>{
-          'estimator': 'ekf-lite',
+          'estimator': 'ema-state-estimator',
           'version': '0.1.0',
         }),
         isNull,
@@ -328,7 +328,7 @@ void main() {
     test('fromMap throws on incomplete provenance payloads', () {
       expect(
         () => EstimatorModel.fromMap(<String, dynamic>{
-          'estimator': 'ekf-lite',
+          'estimator': 'ema-state-estimator',
           'version': '0.1.0',
         }),
         throwsFormatException,

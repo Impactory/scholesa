@@ -86,7 +86,7 @@ void main() {
         'risk': <String, dynamic>{
           'reliability': <String, dynamic>{
             'riskType': 'reliability',
-            'method': 'sep',
+            'method': 'distributional_entropy_v1',
             'K': 1,
             'M': 1,
             'H_sem': 0.0,
@@ -120,7 +120,7 @@ void main() {
       expect(response.requiresExplainBack, isFalse);
       expect(response.suggestedNextSteps, hasLength(1));
       expect(response.learnerState?.cognition, equals(0.6));
-      expect(response.reliabilityRisk?.method, equals('sep'));
+      expect(response.reliabilityRisk?.method, equals('distributional_entropy_v1'));
       expect(response.reliabilityRisk?.riskScore, equals(0.15));
       expect(response.autonomyRisk?.signals, contains('verification_gap'));
       expect(response.mvlGateActive, isFalse);
@@ -355,7 +355,7 @@ void main() {
       expect(defaultRisk.riskScore, equals(0.0));
       expect(defaultRisk.threshold, equals(0.5));
       expect(defaultRisk.riskScore < defaultRisk.threshold, isTrue);
-      expect(defaultRisk.method, equals('sep'));
+      expect(defaultRisk.method, equals('distributional_entropy_v1'));
     });
 
     test('AutonomyRisk defaults are safe (below threshold)', () {
@@ -391,7 +391,7 @@ void main() {
 
     test('ReliabilityRisk round-trips through fromMap/toMap', () {
       const ReliabilityRisk original = ReliabilityRisk(
-        method: 'sep',
+        method: 'distributional_entropy_v1',
         k: 5,
         m: 3,
         hSem: 0.42,
@@ -428,7 +428,7 @@ void main() {
         'message': 'Try one next step.',
         'mode': 'hint',
         'risk': <String, dynamic>{
-          'reliability': <String, dynamic>{'method': 'sep'},
+          'reliability': <String, dynamic>{'method': 'distributional_entropy_v1'},
           'autonomy': <String, dynamic>{
             'signals': <String>['rapid_submit']
           },
@@ -454,7 +454,7 @@ void main() {
         sessionOccurrenceId: 'so1',
         triggerReason: 'integrity_below_threshold + high_autonomy_risk',
         reliabilityRisk: ReliabilityRisk(
-          method: 'sep',
+          method: 'distributional_entropy_v1',
           k: 1,
           m: 1,
           hSem: 0.0,
@@ -575,14 +575,14 @@ void main() {
 
     test('EstimatorModel tracks version + Q/R versions', () {
       const EstimatorModel model = EstimatorModel(
-        estimator: 'ekf-lite',
+        estimator: 'ema-state-estimator',
         version: '0.1.0',
         qVersion: 'v1',
         rVersion: 'v1',
       );
 
       final EstimatorModel restored = EstimatorModel.fromMap(model.toMap());
-      expect(restored.estimator, equals('ekf-lite'));
+      expect(restored.estimator, equals('ema-state-estimator'));
       expect(restored.version, equals('0.1.0'));
       expect(restored.qVersion, equals('v1'));
       expect(restored.rVersion, equals('v1'));

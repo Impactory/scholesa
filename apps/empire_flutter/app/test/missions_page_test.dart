@@ -93,7 +93,7 @@ Future<void> _seedMissionAndGate(FakeFirebaseFirestore firestore) async {
       'sessionOccurrenceId': null,
       'triggerReason': 'high_reliability_risk + high_autonomy_risk',
       'reliability': <String, dynamic>{
-        'method': 'sep',
+        'method': 'distributional_entropy_v1',
         'K': 1,
         'M': 1,
         'H_sem': 0.72,

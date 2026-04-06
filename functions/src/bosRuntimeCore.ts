@@ -49,7 +49,7 @@ function averageDefined(values: Array<number | undefined>): number | null {
   return definedValues.reduce((sum, value) => sum + value, 0) / definedValues.length;
 }
 
-export function ekfLiteUpdate(
+export function emaStateEstimatorUpdate(
   prior: StateEstimate | null,
   observation: FeatureVector,
   alpha: number = 0.7,

@@ -641,7 +641,7 @@ async function assertActiveSchoolConsent(siteId: string) {
 
 interface ReliabilityRiskResult {
   riskType: 'reliability';
-  method: 'sep';
+  method: 'distributional_entropy_v1';
   K: number;
   M: number;
   H_sem: number;
@@ -650,16 +650,15 @@ interface ReliabilityRiskResult {
 }
 
 /**
- * Compute reliability risk via SEP v1 heuristic (Math Contract §6).
+ * Compute reliability risk via distributional entropy v1 heuristic (Math Contract §6).
  * V1: Heuristic proxy — high uncertainty + low cognition = high reliability risk.
- * V2+: True semantic entropy with sampling + clustering.
  */
 function computeReliabilityRisk(
   mode: string,
   xHat: { cognition: number; engagement: number; integrity: number } | null,
   pSummary: { trace: number; confidence: number } | null,
 ): ReliabilityRiskResult {
-  // SEP v1: Proxy risk from state uncertainty + mode
+  // Distributional entropy v1: Proxy risk from state uncertainty + mode
   const baseRisk = pSummary ? (1 - pSummary.confidence) * 0.5 : 0.25;
 
   // Higher risk for explain/debug modes (more complex output)
@@ -672,7 +671,7 @@ function computeReliabilityRisk(
 
   return {
     riskType: 'reliability',
-    method: 'sep',
+    method: 'distributional_entropy_v1',
     K: 1,   // V1: single response (no sampling)
     M: 1,   // V1: single cluster
     H_sem: 0,

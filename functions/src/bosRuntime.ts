@@ -13,7 +13,7 @@
  *
  * Plus:
  *  - FDM (Feature Detection Module) — §2 sense pipeline
- *  - EKF-lite estimator            — §3 state estimator
+ *  - EMA state estimator            — §3 state estimator
  *  - Policy engine                 — §4 autonomy-regularized control
  *
  * All write to Firestore collections:
@@ -26,7 +26,7 @@ import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { SCHOLESA_GEN2_REGION } from './gen2Runtime';
 import { callInternalInferenceJson, isInternalInferenceRequired } from './internalInferenceGateway';
-import { ekfLiteUpdate, summarizeClassInsights, StateEstimate } from './bosRuntimeCore';
+import { emaStateEstimatorUpdate, summarizeClassInsights, StateEstimate } from './bosRuntimeCore';
 import { BosRuntimeCalibration, resolveBosRuntimeCalibration } from './bosRuntimeCalibration';
 import { readInteractionSignalObservation } from './fdmInteractionSignals';
 import { hasSiteAccess, isCoppaConsentActive } from './coppaGuards';
@@ -449,7 +449,7 @@ interface FeatureVector {
 
 interface ReliabilityRiskFromEvents {
   riskType: 'reliability';
-  method: 'sep';
+  method: 'distributional_entropy_v1';
   K: number;
   M: number;
   H_sem: number;
@@ -789,7 +789,7 @@ async function extractFeatures(
 }
 
 // ──────────────────────────────────────────────────────
-// §3  EKF-lite State Estimator
+// §3  EMA State Estimator
 // ──────────────────────────────────────────────────────
 
 // ──────────────────────────────────────────────────────
@@ -1044,7 +1044,7 @@ function applyRoleIntelligenceToIntervention(
   return next;
 }
 
-function computeSemanticEntropyRiskFromEvents(
+function computeDistributionalEntropyRiskFromEvents(
   state: StateEstimate,
   events: FirebaseFirestore.DocumentData[],
   calibration: BosRuntimeCalibration | null = null,
@@ -1056,7 +1056,7 @@ function computeSemanticEntropyRiskFromEvents(
   if (voiceEvents.length === 0) {
     return {
       riskType: 'reliability',
-      method: 'sep',
+      method: 'distributional_entropy_v1',
       K: 0,
       M: 0,
       H_sem: 0,
@@ -1111,7 +1111,7 @@ function computeSemanticEntropyRiskFromEvents(
 
   return {
     riskType: 'reliability',
-    method: 'sep',
+    method: 'distributional_entropy_v1',
     K: new Set(intents).size,
     M: new Set(responseModes).size,
     H_sem: round3(H_sem),
@@ -1501,7 +1501,7 @@ export const bosGetIntervention = onCall(
       : null;
     const gBand = gradeBand || 'G4_6';
     const runtimeCalibration = await loadBosCalibrationProfile(siteId, gBand);
-    const newState = ekfLiteUpdate(priorState, features, runtimeCalibration?.ekfAlpha ?? 0.7);
+    const newState = emaStateEstimatorUpdate(priorState, features, runtimeCalibration?.ekfAlpha ?? 0.7);
 
     // Save updated state
     await db.collection('orchestrationStates').doc(stateDocId).set({
@@ -1510,7 +1510,7 @@ export const bosGetIntervention = onCall(
       sessionOccurrenceId,
       x_hat: newState.x_hat,
       P: newState.P,
-      model: { estimator: 'ekf-lite', version: '0.1.0', Q_version: 'v1', R_version: 'v1' },
+      model: { estimator: 'ema-state-estimator', version: '0.1.0', Q_version: 'v1', R_version: 'v1' },
       calibration: runtimeCalibration ? {
         scope: 'synthetic',
         gradeBand: runtimeCalibration.gradeBand,
@@ -1720,7 +1720,7 @@ export const bosGetIntervention = onCall(
       recentEvents,
       runtimeCalibration,
     );
-    const reliabilityRiskResult = computeSemanticEntropyRiskFromEvents(
+    const reliabilityRiskResult = computeDistributionalEntropyRiskFromEvents(
       newState,
       recentEvents,
       runtimeCalibration,

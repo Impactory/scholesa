@@ -29,7 +29,7 @@ void main() {
           'confidence': 0.81,
         },
         'model': <String, dynamic>{
-          'estimator': 'ekf-lite',
+          'estimator': 'ema-state-estimator',
           'version': '0.1.0',
           'Q_version': 'v1',
           'R_version': 'v1',
