@@ -1046,6 +1046,148 @@ async function main() {
   await Promise.all(badgeAwards.map((a) => db.collection('badgeAwards').doc(a.id).set(a)));
   console.log(`  Seeded ${badges.length} badges and ${badgeAwards.length} badge awards`);
 
+  // --- Process Domains (HQ-managed) ---
+  const processDomains = [
+    {
+      id: 'pd-design-thinking',
+      title: 'Design Thinking',
+      descriptor: 'Iterative problem-solving through empathy, ideation, prototyping, and testing.',
+      siteId: '*',
+      pillarCode: 'FUTURE_SKILLS',
+      progressionDescriptors: {
+        beginning: 'Follows a design process with heavy guidance.',
+        developing: 'Applies design steps independently but may skip iteration.',
+        proficient: 'Uses full design cycle with genuine user empathy and iteration.',
+        advanced: 'Leads design sprints, mentors peers, and adapts process to context.',
+      },
+      sortOrder: 1,
+      status: 'active',
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: 'pd-scientific-inquiry',
+      title: 'Scientific Inquiry',
+      descriptor: 'Forming hypotheses, designing experiments, and drawing evidence-based conclusions.',
+      siteId: '*',
+      pillarCode: 'FUTURE_SKILLS',
+      progressionDescriptors: {
+        beginning: 'Asks questions about observations with prompting.',
+        developing: 'Forms simple hypotheses and follows guided experiments.',
+        proficient: 'Designs fair experiments, collects data, and draws supported conclusions.',
+        advanced: 'Critiques experimental design, identifies confounds, and connects findings to broader theory.',
+      },
+      sortOrder: 2,
+      status: 'active',
+      createdAt: now,
+      updatedAt: now,
+    },
+  ];
+
+  await Promise.all(
+    processDomains.map((pd) => db.collection('processDomains').doc(pd.id).set(pd)),
+  );
+  console.log(`  Seeded ${processDomains.length} process domains`);
+
+  // --- Rubric Templates (HQ-managed) ---
+  const rubricTemplates = [
+    {
+      id: 'rt-computational-thinking-k3',
+      title: 'Computational Thinking Assessment (K-3)',
+      siteId: '*',
+      capabilityIds: ['cap-computational-thinking'],
+      criteria: [
+        {
+          id: 'rtc-decomposition',
+          label: 'Problem Decomposition',
+          capabilityId: 'cap-computational-thinking',
+          pillarCode: 'FUTURE_SKILLS',
+          maxScore: 4,
+          descriptors: {
+            beginning: 'Cannot break a problem into parts without direct instruction.',
+            developing: 'Breaks a problem into 2-3 parts with guidance.',
+            proficient: 'Independently decomposes problems into logical sub-tasks.',
+            advanced: 'Decomposes complex problems and identifies reusable patterns across tasks.',
+          },
+          processDomainId: 'pd-design-thinking',
+        },
+        {
+          id: 'rtc-algorithmic',
+          label: 'Algorithmic Thinking',
+          capabilityId: 'cap-computational-thinking',
+          pillarCode: 'FUTURE_SKILLS',
+          maxScore: 4,
+          descriptors: {
+            beginning: 'Follows step-by-step instructions but cannot create them.',
+            developing: 'Creates simple step-by-step procedures for familiar problems.',
+            proficient: 'Designs efficient algorithms with conditionals and loops.',
+            advanced: 'Evaluates algorithm efficiency and selects optimal approaches.',
+          },
+        },
+      ],
+      status: 'published',
+      createdBy: hqUid,
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: 'rt-leadership-k6',
+      title: 'Team Leadership Assessment (K-6)',
+      siteId: '*',
+      capabilityIds: ['cap-team-leadership'],
+      criteria: [
+        {
+          id: 'rtc-collaboration',
+          label: 'Collaborative Facilitation',
+          capabilityId: 'cap-team-leadership',
+          pillarCode: 'LEADERSHIP_AGENCY',
+          maxScore: 4,
+          descriptors: {
+            beginning: 'Participates when asked but does not initiate collaboration.',
+            developing: 'Takes turns leading and following in group work.',
+            proficient: 'Actively facilitates group discussions and ensures all voices are heard.',
+            advanced: 'Adapts leadership style to team needs and resolves conflicts constructively.',
+          },
+        },
+      ],
+      status: 'published',
+      createdBy: hqUid,
+      createdAt: now,
+      updatedAt: now,
+    },
+  ];
+
+  await Promise.all(
+    rubricTemplates.map((rt) => db.collection('rubricTemplates').doc(rt.id).set(rt)),
+  );
+  console.log(`  Seeded ${rubricTemplates.length} rubric templates`);
+
+  // --- Showcase Submissions ---
+  const showcaseSubmissions = [
+    {
+      id: 'showcase-1',
+      learnerId: learnerUid,
+      siteId,
+      title: 'Number Guessing Game - Final Version',
+      artifactType: 'code',
+      artifactUrl: '',
+      description: 'My Python number guessing game with difficulty levels and a hint system. I used loops and conditionals to make it interactive.',
+      microSkillIds: ['loops-while', 'variables-counter'],
+      recognitions: [],
+      visibleToCrew: true,
+      visibleToSite: true,
+      aiAssistanceUsed: true,
+      aiAssistanceDetails: 'Used AI coach for debugging a loop issue. Changed approach after understanding the hint.',
+      createdAt: now - 86400000,
+      updatedAt: now - 86400000,
+    },
+  ];
+
+  await Promise.all(
+    showcaseSubmissions.map((s) => db.collection('showcaseSubmissions').doc(s.id).set(s)),
+  );
+  console.log(`  Seeded ${showcaseSubmissions.length} showcase submissions`);
+
   console.log('Evidence chain seed complete.');
   console.log('Test login password:', standardTestPassword);
   console.log(
