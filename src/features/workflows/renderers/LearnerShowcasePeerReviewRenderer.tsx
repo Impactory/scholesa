@@ -180,6 +180,7 @@ export default function LearnerShowcasePeerReviewRenderer({ ctx }: CustomRouteRe
       await loadData();
     } catch (err) {
       console.error('Failed to submit showcase:', err);
+      alert('Failed to submit showcase. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -208,6 +209,7 @@ export default function LearnerShowcasePeerReviewRenderer({ ctx }: CustomRouteRe
       await loadData();
     } catch (err) {
       console.error('Failed to send feedback:', err);
+      alert('Failed to send feedback. Please try again.');
     } finally {
       setSendingFeedback(false);
     }

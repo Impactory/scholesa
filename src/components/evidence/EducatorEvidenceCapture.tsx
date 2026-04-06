@@ -234,6 +234,8 @@ export function EducatorEvidenceCapture() {
       ]);
     } catch (err) {
       console.error('Failed to save evidence record', err);
+      setSuccessMessage(null);
+      alert('Failed to save evidence record. Please try again.');
     } finally {
       setSaving(false);
     }

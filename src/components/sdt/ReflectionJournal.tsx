@@ -330,6 +330,7 @@ export function QuickReflection({
       onComplete?.();
     } catch (err) {
       console.error('Quick reflection error:', err);
+      alert('Failed to save reflection. Please try again.');
     } finally {
       setLoading(false);
     }

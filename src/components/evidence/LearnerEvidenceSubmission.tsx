@@ -173,6 +173,7 @@ export function LearnerEvidenceSubmission() {
       void loadPortfolio();
     } catch (err) {
       console.error('Failed to submit artifact', err);
+      setSuccessMessage('Failed to submit artifact. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -227,6 +228,7 @@ export function LearnerEvidenceSubmission() {
       void loadPortfolio();
     } catch (err) {
       console.error('Failed to save reflection', err);
+      setSuccessMessage('Failed to save reflection. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -288,6 +290,7 @@ export function LearnerEvidenceSubmission() {
       void loadPortfolio();
     } catch (err) {
       console.error('Failed to submit checkpoint evidence', err);
+      setSuccessMessage('Failed to submit checkpoint evidence. Please try again.');
     } finally {
       setSaving(false);
     }

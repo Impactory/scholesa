@@ -107,8 +107,8 @@ service cloud.firestore {
     match /courses/{id} { allow read: if isAuthenticated(); allow write: if isHQ(); }
     match /capabilities/{id} { allow read: if isAuthenticated(); allow create, update: if isHQ(); allow delete: if false; }
     match /stages/{id} { allow read: if isAuthenticated(); allow create, update: if isHQ(); allow delete: if false; }
-    match /aiInteractionLogs/{id} { allow read: if isEducator() || isHQ(); allow create: if isAuthenticated(); allow update: if isEducator(); allow delete: if false; }
-    match /aiCoachInteractions/{id} { allow read: if isEducator() || isHQ(); allow create: if isAuthenticated(); allow update: if false; allow delete: if false; }
+    match /aiInteractionLogs/{id} { allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator() || isHQ()); allow create: if isAuthenticated(); allow update: if isEducator(); allow delete: if false; }
+    match /aiCoachInteractions/{id} { allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator() || isHQ()); allow create: if isAuthenticated(); allow update: if false; allow delete: if false; }
     match /missions/{id} { allow read: if isAuthenticated(); allow write: if isHQ(); }
 
     // Operational (Sessions, Occurrences):

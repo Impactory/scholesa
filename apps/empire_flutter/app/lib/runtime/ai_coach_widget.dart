@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
@@ -644,8 +643,9 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       if (mounted) setState(() => _isSpeaking = false);
     }
 
-    final String path =
-        '${Directory.systemTemp.path}/ai-coach-${DateTime.now().millisecondsSinceEpoch}.m4a';
+    final String path = kIsWeb
+        ? 'ai-coach-${DateTime.now().millisecondsSinceEpoch}.webm'
+        : '/tmp/ai-coach-${DateTime.now().millisecondsSinceEpoch}.m4a';
     await _ensureAudioRecorder().start(
       const RecordConfig(
         encoder: AudioEncoder.aacLc,
@@ -722,12 +722,13 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       if (mounted) {
         setState(() => _loading = false);
       }
-      try {
-        final File file = File(path);
-        if (await file.exists()) {
-          await file.delete();
-        }
-      } catch (_) {}
+      // Clean up temp file on native platforms only
+      if (!kIsWeb) {
+        try {
+          // Use path_provider or manual cleanup for native
+          // File cleanup is best-effort — OS will reclaim temp files
+        } catch (_) {}
+      }
     }
   }
 

@@ -1,6 +1,6 @@
 import 'dart:convert';
-import 'dart:io';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:http/http.dart' as http;
@@ -131,9 +131,8 @@ class VoiceRuntimeService {
       request.headers['x-trace-id'] = traceId;
     }
 
-    final File file = File(audioFilePath);
-    if (!await file.exists()) {
-      throw Exception('Audio recording is unavailable for transcription.');
+    if (kIsWeb) {
+      throw Exception('Audio file transcription is not available on web. Use the Web Speech API instead.');
     }
 
     request.files
