@@ -1,5 +1,22 @@
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:scholesa_app/services/firestore_service.dart';
 import 'package:scholesa_app/services/growth_engine_service.dart';
+
+class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
+
+GrowthEngineService _makeEngine() {
+  final FakeFirebaseFirestore fakeFirestore = FakeFirebaseFirestore();
+  return GrowthEngineService(
+    firestoreService: FirestoreService(
+      firestore: fakeFirestore,
+      auth: _MockFirebaseAuth(),
+    ),
+    firestore: fakeFirestore,
+  );
+}
 
 /// Unit tests for GrowthEngineService.
 ///
@@ -18,10 +35,7 @@ void main() {
     });
 
     test('accepts optional parameters', () {
-      // Verifying the constructor accepts named params without error
-      // We cannot actually call Firestore in unit tests, but we can
-      // verify the type signature
-      final GrowthEngineService engine = GrowthEngineService();
+      final GrowthEngineService engine = _makeEngine();
       expect(engine, isA<GrowthEngineService>());
     });
   });
@@ -30,7 +44,7 @@ void main() {
     late GrowthEngineService engine;
 
     setUp(() {
-      engine = GrowthEngineService();
+      engine = _makeEngine();
     });
 
     test('onCheckpointCompleted skips when skillId is null', () async {

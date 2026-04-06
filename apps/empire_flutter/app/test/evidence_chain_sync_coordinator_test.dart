@@ -82,7 +82,7 @@ void main() {
           type: type,
           payload: <String, dynamic>{'test': true},
         );
-        keys.add(op.idempotencyKey);
+        keys.add(op.idempotencyKey!);
       }
       // All 8 should have unique idempotency keys
       expect(keys.length, 8);

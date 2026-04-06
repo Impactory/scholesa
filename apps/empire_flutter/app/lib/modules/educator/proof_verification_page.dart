@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -21,17 +20,6 @@ class _ProofVerificationPageState extends State<ProofVerificationPage> {
   String? _error;
 
   FirestoreService get _firestoreService => context.read<FirestoreService>();
-
-  String? _activeSiteId() {
-    final AppState appState = context.read<AppState>();
-    final String activeSiteId = (appState.activeSiteId ?? '').trim();
-    if (activeSiteId.isNotEmpty) return activeSiteId;
-    if (appState.siteIds.isNotEmpty) {
-      final String first = appState.siteIds.first.trim();
-      if (first.isNotEmpty) return first;
-    }
-    return null;
-  }
 
   @override
   void initState() {

@@ -1,3 +1,4 @@
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
 import 'package:scholesa_app/i18n/evidence_chain_i18n.dart';
@@ -25,6 +26,11 @@ void main() {
           supportedLocales: const <Locale>[
             Locale('en'),
             Locale('zh', 'CN'),
+          ],
+          localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
           ],
           home: const _TestWidgetZh(),
         ),

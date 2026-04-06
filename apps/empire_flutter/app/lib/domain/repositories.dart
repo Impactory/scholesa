@@ -470,6 +470,15 @@ class PortfolioItemRepository {
   Future<void> upsert(PortfolioItemModel model) =>
       _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
 
+  Future<PortfolioItemModel?> getById(String id) async {
+    final doc = await _col.doc(id).get();
+    if (!doc.exists) return null;
+    return PortfolioItemModel.fromDoc(doc);
+  }
+
+  Future<void> patch(String id, Map<String, dynamic> updates) =>
+      _col.doc(id).set(updates, SetOptions(merge: true));
+
   Future<List<PortfolioItemModel>> listByLearner(String learnerId) async {
     final snap = await _col.where('learnerId', isEqualTo: learnerId).get();
     return snap.docs.map(PortfolioItemModel.fromDoc).toList();
@@ -2738,6 +2747,14 @@ class CheckpointRepository {
         .get();
     return snap.docs.map(CheckpointModel.fromDoc).toList();
   }
+
+  Future<List<CheckpointModel>> listByCapability(String capabilityId) async {
+    final snap = await _col
+        .where('capabilityId', isEqualTo: capabilityId)
+        .orderBy('order')
+        .get();
+    return snap.docs.map(CheckpointModel.fromDoc).toList();
+  }
 }
 
 class SkillEvidenceRepository {
@@ -2860,55 +2877,12 @@ class ProofOfLearningBundleRepository {
   }
 }
 
-class RubricApplicationRepository {
-  CollectionReference<Map<String, dynamic>> get _col =>
-      FirebaseFirestore.instance.collection('rubricApplications');
-
-  Future<String> create(Map<String, dynamic> data) async {
-    final doc = await _col.add(<String, dynamic>{
-      ...data,
-      'createdAt': Timestamp.now(),
-    });
-    return doc.id;
-  }
-
-  Future<List<Map<String, dynamic>>> listByLearner(
-      String learnerId) async {
-    final snap = await _col
-        .where('learnerId', isEqualTo: learnerId)
-        .orderBy('createdAt', descending: true)
-        .get();
-    return snap.docs
-        .map((d) => <String, dynamic>{'id': d.id, ...d.data()})
-        .toList();
-  }
-
-  Future<List<Map<String, dynamic>>> listByEducator(
-      String educatorId) async {
-    final snap = await _col
-        .where('educatorId', isEqualTo: educatorId)
-        .orderBy('createdAt', descending: true)
-        .get();
-    return snap.docs
-        .map((d) => <String, dynamic>{'id': d.id, ...d.data()})
-        .toList();
-  }
-
-  Future<List<Map<String, dynamic>>> listByCapability(
-      String capabilityId) async {
-    final snap = await _col
-        .where('capabilityId', isEqualTo: capabilityId)
-        .orderBy('createdAt', descending: true)
-        .get();
-    return snap.docs
-        .map((d) => <String, dynamic>{'id': d.id, ...d.data()})
-        .toList();
-  }
-}
-
 class EvidenceRecordRepository {
   CollectionReference<Map<String, dynamic>> get _col =>
       FirebaseFirestore.instance.collection('evidenceRecords');
+
+  Future<void> upsert(EvidenceRecordModel model) =>
+      _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
 
   Future<String> create(Map<String, dynamic> data) async {
     final doc = await _col.add(<String, dynamic>{
@@ -2986,5 +2960,50 @@ class StageRepository {
   Future<StageModel?> getById(String stageId) async {
     final doc = await _col.doc(stageId).get();
     return doc.exists ? StageModel.fromDoc(doc) : null;
+  }
+}
+
+class LearnerNextStepRepository {
+  CollectionReference<Map<String, dynamic>> get _col =>
+      FirebaseFirestore.instance.collection('learnerNextSteps');
+
+  Future<void> upsert(LearnerNextStepModel model) =>
+      _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
+
+  Future<List<LearnerNextStepModel>> listByLearner(String learnerId,
+      {String? capabilityId, int limit = 20}) async {
+    Query<Map<String, dynamic>> query =
+        _col.where('learnerId', isEqualTo: learnerId);
+    if (capabilityId != null) {
+      query = query.where('capabilityId', isEqualTo: capabilityId);
+    }
+    final snap =
+        await query.orderBy('createdAt', descending: true).limit(limit).get();
+    return snap.docs.map(_fromDoc).toList();
+  }
+
+  LearnerNextStepModel _fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
+    final d = doc.data() ?? <String, dynamic>{};
+    return LearnerNextStepModel(
+      id: doc.id,
+      siteId: d['siteId'] as String? ?? '',
+      learnerId: d['learnerId'] as String? ?? '',
+      capabilityId: d['capabilityId'] as String? ?? '',
+      pillarCode: d['pillarCode'] as String? ?? '',
+      stepType: d['stepType'] as String? ?? '',
+      title: d['title'] as String? ?? '',
+      description: d['description'] as String?,
+      currentLevel: d['currentLevel'] as int? ?? 0,
+      targetLevel: d['targetLevel'] as int? ?? 1,
+      requiredEvidenceTypes:
+          (d['requiredEvidenceTypes'] as List<dynamic>?)?.cast<String>() ??
+              const <String>[],
+      status: d['status'] as String? ?? 'active',
+      checkpointId: d['checkpointId'] as String?,
+      generatedBy: d['generatedBy'] as String?,
+      createdAt: d['createdAt'] as Timestamp?,
+      updatedAt: d['updatedAt'] as Timestamp?,
+    );
   }
 }

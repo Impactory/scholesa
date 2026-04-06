@@ -43,7 +43,7 @@ class GrowthEngineService {
               .get();
 
       final String? previousLevel = masteryDoc.exists
-          ? masteryDoc.data()?['currentLevel'] as String?
+          ? (masteryDoc.data()?['currentLevel']) as String?
           : null;
 
       // 2. Compute new mastery level from rubric level

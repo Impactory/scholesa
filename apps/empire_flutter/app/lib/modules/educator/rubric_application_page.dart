@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../auth/app_state.dart';
-import '../../domain/models.dart';
 import '../../services/firestore_service.dart';
 
 /// Educator applies rubric judgments to learner evidence.

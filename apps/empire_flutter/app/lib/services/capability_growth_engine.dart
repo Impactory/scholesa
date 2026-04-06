@@ -287,9 +287,9 @@ class CapabilityGrowthEngine {
     final checkpoints =
         await _checkpointRepo.listByCapability(capabilityId);
     final nextCheckpoint = checkpoints
-        .where((c) => c.order >= targetLevel)
+        .where((c) => (c.order ?? 0) >= targetLevel)
         .toList()
-      ..sort((a, b) => a.order.compareTo(b.order));
+      ..sort((a, b) => (a.order ?? 0).compareTo(b.order ?? 0));
 
     final stepId = '${capabilityId}_${learnerId}_next_$targetLevel';
     final step = LearnerNextStepModel(

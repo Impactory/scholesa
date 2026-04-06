@@ -227,8 +227,6 @@ class _CheckpointSubmissionPageState extends State<CheckpointSubmissionPage> {
     final bool isCompleted = checkpoint.learnerResponse.trim().isNotEmpty;
     final bool needsExplain = checkpoint.explainItBackRequired &&
         (checkpoint.explainItBackResponse?.trim().isEmpty ?? true);
-    final bool awaitingExplain =
-        _awaitingExplainItBack.contains(checkpoint.id);
 
     return Card(
       elevation: 1,

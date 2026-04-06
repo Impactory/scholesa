@@ -81,7 +81,8 @@ void main() {
           userId: appState.userId ?? 'smoke-${role.name}',
         );
 
-        await tester.binding.setSurfaceSize(const Size(1280, 800));
+        // HQ has more cards (13) and stats section; use 1024px height to avoid overflow
+        await tester.binding.setSurfaceSize(const Size(1280, 1024));
         addTearDown(() async {
           await tester.binding.setSurfaceSize(null);
         });

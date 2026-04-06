@@ -1,5 +1,10 @@
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
+
+class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
 /// Tests that evidence chain Firestore service methods exist.
 /// These are structural tests; actual Firestore calls require the emulator.
@@ -8,7 +13,10 @@ void main() {
     late FirestoreService service;
 
     setUp(() {
-      service = FirestoreService();
+      service = FirestoreService(
+        firestore: FakeFirebaseFirestore(),
+        auth: _MockFirebaseAuth(),
+      );
     });
 
     test('service has evidence capture methods', () {

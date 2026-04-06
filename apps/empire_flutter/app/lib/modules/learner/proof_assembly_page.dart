@@ -55,13 +55,6 @@ class _ProofAssemblyPageState extends State<ProofAssemblyPage> {
   String _learnerId(AppState appState) =>
       appState.userId?.trim() ?? '';
 
-  String _siteId(AppState appState) {
-    final String active = appState.activeSiteId?.trim() ?? '';
-    if (active.isNotEmpty) return active;
-    if (appState.siteIds.isNotEmpty) return appState.siteIds.first.trim();
-    return '';
-  }
-
   FirestoreService? _maybeFirestoreService() {
     try {
       return context.read<FirestoreService>();

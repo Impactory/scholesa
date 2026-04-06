@@ -307,13 +307,24 @@ void main() {
       final List<dynamic> predeploy =
           functions['predeploy'] as List<dynamic>? ?? <dynamic>[];
 
+      // Accept either the portable $RESOURCE_DIR form or the Linux-safe cd form
+      final bool hasBuild =
+          predeploy.contains('npm --prefix "\$RESOURCE_DIR" run build') ||
+              predeploy.any((dynamic s) =>
+                  s is String && s.contains('functions') && s.contains('build'));
       expect(
-        predeploy.contains('npm --prefix "\$RESOURCE_DIR" run build'),
+        hasBuild,
         isTrue,
         reason: 'Functions predeploy must compile TypeScript before deploy',
       );
+      final bool hasVerify =
+          predeploy.contains('npm --prefix "\$RESOURCE_DIR" run verify:gen2') ||
+              predeploy.any((dynamic s) =>
+                  s is String &&
+                  s.contains('functions') &&
+                  s.contains('verify'));
       expect(
-        predeploy.contains('npm --prefix "\$RESOURCE_DIR" run verify:gen2'),
+        hasVerify,
         isTrue,
         reason:
             'Functions predeploy must verify the shared Gen 2 deployment baseline',

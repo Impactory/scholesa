@@ -6767,6 +6767,7 @@ class CheckpointModel {
     required this.siteId,
     this.sessionId,
     this.skillId,
+    this.capabilityId,
     required this.question,
     required this.learnerResponse,
     this.isCorrect = false,
@@ -6774,6 +6775,9 @@ class CheckpointModel {
     this.explainItBackResponse,
     this.educatorId,
     this.score,
+    this.order,
+    this.guidance,
+    this.requiredEvidenceTypes = const <String>[],
     this.aiAssistanceUsed,
     this.aiAssistanceDetails,
     this.createdAt,
@@ -6787,11 +6791,15 @@ class CheckpointModel {
   final String? skillId;
   final String question;
   final String learnerResponse;
+  final String? capabilityId;
   final bool isCorrect;
   final bool explainItBackRequired;
   final String? explainItBackResponse;
   final String? educatorId;
   final int? score;
+  final int? order;
+  final String? guidance;
+  final List<String> requiredEvidenceTypes;
   final bool? aiAssistanceUsed;
   final String? aiAssistanceDetails;
   final Timestamp? createdAt;
@@ -6806,6 +6814,7 @@ class CheckpointModel {
       siteId: data['siteId'] as String? ?? '',
       sessionId: data['sessionId'] as String?,
       skillId: data['skillId'] as String?,
+      capabilityId: data['capabilityId'] as String?,
       question: data['question'] as String? ?? '',
       learnerResponse: data['learnerResponse'] as String? ?? '',
       isCorrect: data['isCorrect'] as bool? ?? false,
@@ -6814,6 +6823,11 @@ class CheckpointModel {
       explainItBackResponse: data['explainItBackResponse'] as String?,
       educatorId: data['educatorId'] as String?,
       score: data['score'] as int?,
+      order: data['order'] as int?,
+      guidance: data['guidance'] as String?,
+      requiredEvidenceTypes: (data['requiredEvidenceTypes'] as List<dynamic>?)
+              ?.cast<String>() ??
+          const <String>[],
       aiAssistanceUsed: data['aiAssistanceUsed'] as bool?,
       aiAssistanceDetails: data['aiAssistanceDetails'] as String?,
       createdAt: data['createdAt'] as Timestamp?,
@@ -6826,6 +6840,7 @@ class CheckpointModel {
         'siteId': siteId,
         'sessionId': sessionId,
         'skillId': skillId,
+        'capabilityId': capabilityId,
         'question': question,
         'learnerResponse': learnerResponse,
         'isCorrect': isCorrect,
@@ -6833,6 +6848,9 @@ class CheckpointModel {
         'explainItBackResponse': explainItBackResponse,
         'educatorId': educatorId,
         'score': score,
+        'order': order,
+        'guidance': guidance,
+        'requiredEvidenceTypes': requiredEvidenceTypes,
         'aiAssistanceUsed': aiAssistanceUsed,
         'aiAssistanceDetails': aiAssistanceDetails,
         'createdAt': createdAt ?? Timestamp.now(),
@@ -7651,5 +7669,164 @@ class AutonomyInterventionModel {
         'outcome': outcome,
         'resolvedAt': resolvedAt,
         'createdAt': createdAt ?? Timestamp.now(),
+      };
+}
+
+/// Evidence record created during learner/educator evidence capture.
+/// Collection: evidenceRecords
+@immutable
+class EvidenceRecordModel {
+  const EvidenceRecordModel({
+    required this.id,
+    required this.siteId,
+    required this.learnerId,
+    required this.evidenceType,
+    this.title,
+    this.description,
+    this.artifactUrls = const <String>[],
+    this.sessionOccurrenceId,
+    this.missionAttemptId,
+    this.capabilityId,
+    this.pillarCode,
+    this.observationId,
+    this.reflectionId,
+    this.proofBundleId,
+    this.educatorId,
+    this.status = 'submitted',
+    this.aiAssistanceUsed = false,
+    this.aiDisclosureNote,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  final String id;
+  final String siteId;
+  final String learnerId;
+  final String evidenceType;
+  final String? title;
+  final String? description;
+  final List<String> artifactUrls;
+  final String? sessionOccurrenceId;
+  final String? missionAttemptId;
+  final String? capabilityId;
+  final String? pillarCode;
+  final String? observationId;
+  final String? reflectionId;
+  final String? proofBundleId;
+  final String? educatorId;
+  final String status;
+  final bool aiAssistanceUsed;
+  final String? aiDisclosureNote;
+  final Timestamp? createdAt;
+  final Timestamp? updatedAt;
+
+  factory EvidenceRecordModel.fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? <String, dynamic>{};
+    return EvidenceRecordModel(
+      id: doc.id,
+      siteId: data['siteId'] as String? ?? '',
+      learnerId: data['learnerId'] as String? ?? '',
+      evidenceType: data['evidenceType'] as String? ?? 'observation',
+      title: data['title'] as String?,
+      description: data['description'] as String?,
+      artifactUrls: (data['artifactUrls'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const <String>[],
+      sessionOccurrenceId: data['sessionOccurrenceId'] as String?,
+      missionAttemptId: data['missionAttemptId'] as String?,
+      capabilityId: data['capabilityId'] as String?,
+      pillarCode: data['pillarCode'] as String?,
+      observationId: data['observationId'] as String?,
+      reflectionId: data['reflectionId'] as String?,
+      proofBundleId: data['proofBundleId'] as String?,
+      educatorId: data['educatorId'] as String?,
+      status: data['status'] as String? ?? 'submitted',
+      aiAssistanceUsed: data['aiAssistanceUsed'] as bool? ?? false,
+      aiDisclosureNote: data['aiDisclosureNote'] as String?,
+      createdAt: data['createdAt'] as Timestamp?,
+      updatedAt: data['updatedAt'] as Timestamp?,
+    );
+  }
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'siteId': siteId,
+        'learnerId': learnerId,
+        'evidenceType': evidenceType,
+        'title': title,
+        'description': description,
+        'artifactUrls': artifactUrls,
+        'sessionOccurrenceId': sessionOccurrenceId,
+        'missionAttemptId': missionAttemptId,
+        'capabilityId': capabilityId,
+        'pillarCode': pillarCode,
+        'observationId': observationId,
+        'reflectionId': reflectionId,
+        'proofBundleId': proofBundleId,
+        'educatorId': educatorId,
+        'status': status,
+        'aiAssistanceUsed': aiAssistanceUsed,
+        'aiDisclosureNote': aiDisclosureNote,
+        'createdAt': createdAt ?? Timestamp.now(),
+        'updatedAt': updatedAt ?? Timestamp.now(),
+      };
+}
+
+/// Learner next-step generated after a growth event.
+@immutable
+class LearnerNextStepModel {
+  const LearnerNextStepModel({
+    required this.id,
+    required this.siteId,
+    required this.learnerId,
+    required this.capabilityId,
+    required this.pillarCode,
+    required this.stepType,
+    required this.title,
+    this.description,
+    required this.currentLevel,
+    required this.targetLevel,
+    this.requiredEvidenceTypes = const <String>[],
+    this.status = 'active',
+    this.checkpointId,
+    this.generatedBy,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  final String id;
+  final String siteId;
+  final String learnerId;
+  final String capabilityId;
+  final String pillarCode;
+  final String stepType;
+  final String title;
+  final String? description;
+  final int currentLevel;
+  final int targetLevel;
+  final List<String> requiredEvidenceTypes;
+  final String status;
+  final String? checkpointId;
+  final String? generatedBy;
+  final Timestamp? createdAt;
+  final Timestamp? updatedAt;
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'siteId': siteId,
+        'learnerId': learnerId,
+        'capabilityId': capabilityId,
+        'pillarCode': pillarCode,
+        'stepType': stepType,
+        'title': title,
+        'description': description,
+        'currentLevel': currentLevel,
+        'targetLevel': targetLevel,
+        'requiredEvidenceTypes': requiredEvidenceTypes,
+        'status': status,
+        'checkpointId': checkpointId,
+        'generatedBy': generatedBy,
+        'createdAt': createdAt ?? Timestamp.now(),
+        'updatedAt': updatedAt ?? Timestamp.now(),
       };
 }

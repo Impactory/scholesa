@@ -14,8 +14,8 @@ void main() {
       expect(OpType.values, contains(OpType.rubricApply));
     });
 
-    test('total OpType count is 14 (6 original + 8 evidence chain)', () {
-      expect(OpType.values.length, 14);
+    test('total OpType count is 18 (6 original + 4 ops + 8 evidence chain)', () {
+      expect(OpType.values.length, 18);
     });
   });
 

@@ -183,6 +183,8 @@ class GradientCard extends StatelessWidget {
                         color:
                             isEnabled ? foregroundColor : scheme.onSurface,
                       ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     if (subtitle != null) ...<Widget>[
                       const SizedBox(height: 4),
@@ -192,7 +194,7 @@ class GradientCard extends StatelessWidget {
                           fontSize: 13,
                           color: isEnabled ? subtitleColor : disabledText,
                         ),
-                        maxLines: 2,
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],
