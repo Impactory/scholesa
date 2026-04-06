@@ -84,6 +84,9 @@ const HqRubricBuilderRenderer = lazy(
 const GuardianPassportRenderer = lazy(
   () => import('./renderers/GuardianPassportRenderer')
 );
+const LearnerMiloOSRenderer = lazy(
+  () => import('./renderers/LearnerMiloOSRenderer')
+);
 
 const CUSTOM_ROUTE_RENDERERS: Partial<
   Record<WorkflowPath, ComponentType<CustomRouteRendererProps>>
@@ -111,6 +114,7 @@ const CUSTOM_ROUTE_RENDERERS: Partial<
   '/learner/checkpoints': LearnerCheckpointRenderer,
   '/learner/reflections': LearnerReflectionsRenderer,
   '/learner/peer-feedback': LearnerShowcasePeerReviewRenderer,
+  '/learner/habits': LearnerMiloOSRenderer,
   // Parent / Guardian
   '/parent/summary': GuardianCapabilityViewRenderer,
   '/parent/portfolio': GuardianCapabilityViewRenderer,

@@ -48,6 +48,7 @@ describe('Custom renderer registry covers all evidence chain routes', () => {
     '/learner/checkpoints',
     '/learner/reflections',
     '/learner/peer-feedback',
+    '/learner/habits',
     // Parent / Guardian
     '/parent/summary',
     '/parent/portfolio',
@@ -175,6 +176,15 @@ describe('Renderers delegate to real evidence components', () => {
       'features', 'workflows', 'renderers', 'GuardianPassportRenderer.tsx'
     );
     expect(source).toContain('GuardianCapabilityViewRenderer');
+  });
+
+  it('LearnerMiloOSRenderer → AICoachScreen with autonomy risk awareness', () => {
+    const source = readSrcFile(
+      'features', 'workflows', 'renderers', 'LearnerMiloOSRenderer.tsx'
+    );
+    expect(source).toContain('AICoachScreen');
+    expect(source).toContain('aiInteractionLogs');
+    expect(source).toContain('autonomyRiskLevel');
   });
 
   it('SiteImplementationHealthRenderer queries evidence chain collections', () => {
