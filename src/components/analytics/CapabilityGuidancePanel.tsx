@@ -12,7 +12,7 @@ import {
 } from '@/src/firebase/firestore/collections';
 import { Spinner } from '@/src/components/ui/Spinner';
 import { useCapabilities } from '@/src/lib/capabilities/useCapabilities';
-import type { CapabilityMastery, PillarCode } from '@/src/types/schema';
+import type { CapabilityMastery } from '@/src/types/schema';
 
 /* ───── Interpretation Maps ───── */
 
@@ -62,6 +62,13 @@ const LEVEL_KEYS: Record<number, 'beginning' | 'developing' | 'proficient' | 'ad
   2: 'developing',
   3: 'proficient',
   4: 'advanced',
+};
+
+const MASTERY_LEVEL_SCORE: Record<string, number> = {
+  emerging: 1,
+  developing: 2,
+  proficient: 3,
+  advanced: 4,
 };
 
 /* ───── Component ───── */
@@ -129,7 +136,7 @@ export function CapabilityGuidancePanel({ learnerId, siteId, learnerName }: Capa
   for (const m of mastery) {
     const pillar = m.pillarCode || 'unknown';
     const entry = pillarMap.get(pillar) ?? { levels: [], evidenceCounts: [], latestDates: [] };
-    entry.levels.push(m.latestLevel ?? 0);
+    entry.levels.push(MASTERY_LEVEL_SCORE[m.latestLevel] ?? 0);
     entry.evidenceCounts.push(m.evidenceIds?.length ?? 0);
     if (m.updatedAt && typeof m.updatedAt.toDate === 'function') {
       entry.latestDates.push(m.updatedAt.toDate());
@@ -233,7 +240,7 @@ export function CapabilityGuidancePanel({ learnerId, siteId, learnerName }: Capa
                 .map((m) => {
                   const cap = capabilities.find((c) => c.id === m.capabilityId);
                   if (!cap) return null;
-                  const level = m.latestLevel ?? 0;
+                  const level = MASTERY_LEVEL_SCORE[m.latestLevel] ?? 0;
                   const levelKey = LEVEL_KEYS[Math.min(4, Math.max(1, Math.round(level))) as 1 | 2 | 3 | 4];
                   const descriptor = cap.progressionDescriptors?.[levelKey];
                   return (

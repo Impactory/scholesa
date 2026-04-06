@@ -12,7 +12,7 @@ jest.mock('@/src/firebase/client-init', () => ({
 }));
 
 jest.mock('firebase/functions', () => ({
-  httpsCallable: (...args: unknown[]) => httpsCallableMock.apply(undefined, args),
+  httpsCallable: (...args: unknown[]) => httpsCallableMock(...args),
 }));
 
 jest.mock('firebase/firestore', () => ({

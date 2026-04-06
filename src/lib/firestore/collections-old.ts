@@ -13,7 +13,6 @@ import type {
   Portfolio,
   PortfolioItem,
   AccountabilityCycle,
-  AccountabilityKPI,
   AccountabilityCommitment,
   AccountabilityReview,
   AuditLog
@@ -70,7 +69,6 @@ export const portfolioItemsCollection = createCollection<PortfolioItem>('portfol
 
 // Accountability
 export const accountabilityCyclesCollection = createCollection<AccountabilityCycle>('accountabilityCycles');
-export const accountabilityKPIsCollection = createCollection<AccountabilityKPI>('accountabilityKPIs');
 export const accountabilityCommitmentsCollection = createCollection<AccountabilityCommitment>('accountabilityCommitments');
 export const accountabilityReviewsCollection = createCollection<AccountabilityReview>('accountabilityReviews');
 

@@ -192,7 +192,7 @@ function getStripe(): Stripe | null {
   return stripeClient;
 }
 
-type Role = 'learner' | 'educator' | 'parent' | 'site' | 'partner' | 'hq';
+type Role = 'learner' | 'educator' | 'parent' | 'site' | 'siteLead' | 'partner' | 'hq' | 'admin';
 type TelemetryRole = Role | 'system';
 type CanonicalTelemetryRole = 'student' | 'teacher' | 'admin' | 'system';
 
@@ -2982,8 +2982,7 @@ async function buildParentLearnerSummary(params: {
       const matchingInteractionEvents: Array<Record<string, unknown>> = interactionEventRows.filter((entry) =>
         typeof entry.sessionOccurrenceId === 'string' && sessionOccurrenceIds.has(entry.sessionOccurrenceId.trim()),
       );
-      const capabilityId = typeof row.capabilityId === 'string' ? row.capabilityId.trim() : '';
-      const title = capabilityTitlesById.get(capabilityId) ?? capabilityId || 'Capability title unavailable';
+      const title = (capabilityTitlesById.get(capabilityId) ?? capabilityId) || 'Capability title unavailable';
       const latestLevel = typeof row.latestLevel === 'number' && Number.isFinite(row.latestLevel)
         ? Math.round(row.latestLevel)
         : null;
@@ -3358,7 +3357,7 @@ async function loadParentUpcomingEvents(params: {
       return occurrenceEvents
         .sort((left, right) => left.timestamp - right.timestamp)
         .slice(0, 5)
-        .map(({ timestamp, ...event }) => event);
+        .map(({ timestamp: _timestamp, ...event }) => event);
     }
   } catch {
     // Fall through to legacy events lookup.

@@ -59,7 +59,7 @@ export function EducatorEvidenceCapture() {
   const { user, profile, loading: authLoading } = useAuthContext();
   const siteId = profile?.studioId ?? null;
 
-  const { capabilityList: capabilities, resolveTitle, loading: capLoading } = useCapabilities(siteId);
+  const { capabilityList: capabilities, resolveTitle } = useCapabilities(siteId);
   const [learners, setLearners] = useState<LearnerOption[]>([]);
   const [todaySessions, setTodaySessions] = useState<SessionOption[]>([]);
   const [recentEvidence, setRecentEvidence] = useState<RecentEvidence[]>([]);

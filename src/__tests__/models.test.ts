@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 
 describe('Schema model contracts', () => {
-  const schemaPath = path.join(process.cwd(), 'schema.ts');
+  const schemaPath = path.join(process.cwd(), 'src', 'types', 'schema.ts');
   const schemaSource = fs.readFileSync(schemaPath, 'utf8');
 
   it('keeps site scoping on core operational records', () => {

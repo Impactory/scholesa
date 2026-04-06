@@ -105,6 +105,7 @@ function toDate(value) {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function gradeBandCode(raw) {
   switch (String(raw || '').trim()) {
     case '1-3':
@@ -305,7 +306,7 @@ function mvlTriggerReason(row) {
 
 function parseRawEvent(event, cohortById, sessionById, rowByRecordId) {
   const cohort = cohortById.get(event.cohort_id) || null;
-  const session = sessionById.get(event.session_id) || null;
+  sessionById.get(event.session_id);
   const record = rowByRecordId.get(event.record_id) || null;
   const siteId = cohort ? cohort._siteId : (record ? record._siteId : 'synthetic-site-starter');
   return {

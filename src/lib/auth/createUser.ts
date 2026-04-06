@@ -1,4 +1,4 @@
-import { deleteDoc, doc, getDoc, setDoc } from 'firebase/firestore';
+import { deleteDoc, doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { firestore } from '@/src/firebase/client-init';
 import type { User, Role } from '@/schema';
 
@@ -47,8 +47,8 @@ export async function createUserDocument({
       displayName: displayName || '',
       photoURL: photoURL || '',
       siteIds,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
+      createdAt: serverTimestamp() as unknown as FieldValue,
+      updatedAt: serverTimestamp() as unknown as FieldValue,
       // Only include organizationId if defined to avoid Firestore "undefined" errors
       ...(organizationId ? { organizationId } : {}),
     };

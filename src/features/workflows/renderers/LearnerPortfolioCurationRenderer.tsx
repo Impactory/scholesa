@@ -763,8 +763,7 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
                           {item.proofBundle.hasMiniRebuild ? '✓' : '○'} Mini Rebuild
                         </span>
                       </div>
-                    )
-                    </div>
+                    )}
 
                     {/* Linked capabilities */}
                     {item.linkedCapabilityTitles.length > 0 && (

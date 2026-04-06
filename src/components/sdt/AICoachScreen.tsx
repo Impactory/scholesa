@@ -8,7 +8,7 @@
  * Guardrails: Student must explain back and show proof of work
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   LightbulbIcon,
   ClipboardCheckIcon,

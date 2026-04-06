@@ -3,7 +3,7 @@
 /**
  * Learner Progress Report / Passport + MiloOS Coach Renderer (S4-2, S5-2)
  *
- * Combines the existing LearnerPassportExport with the MiloOS AI coach
+ * Combines the existing LearnerPassportExport with MiloOS
  * on /learner/today — giving learners their progress + intelligence surface.
  */
 

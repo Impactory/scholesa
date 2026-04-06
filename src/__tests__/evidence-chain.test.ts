@@ -247,7 +247,7 @@ describe('Functions backend evidence chain callables', () => {
   for (const name of requiredCallables) {
     it(`exports ${name} as onCall`, () => {
       expect(functionsSource).toContain(`export const ${name}`);
-      expect(functionsSource).toContain(`onCall(`);
+      expect(functionsSource).toContain('onCall(');
     });
   }
 
@@ -268,7 +268,7 @@ describe('Functions backend evidence chain callables', () => {
         functionsSource.indexOf('export const applyRubricToEvidence') + 10
       )
     );
-    expect(applyRubricSection).toContain("verificationStatus");
+    expect(applyRubricSection).toContain('verificationStatus');
   });
 });
 

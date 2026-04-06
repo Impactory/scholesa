@@ -59,7 +59,7 @@ interface PillarSummary {
 // Helpers
 // ---------------------------------------------------------------------------
 
-const LEVEL_SCORES: Record<MasteryLevel, number> = {
+const _LEVEL_SCORES: Record<MasteryLevel, number> = {
   emerging: 1,
   developing: 2,
   proficient: 3,
@@ -93,7 +93,7 @@ function asString(value: unknown, fallback: string): string {
 // Component
 // ---------------------------------------------------------------------------
 
-export default function HqCapabilityAnalyticsRenderer({ ctx }: CustomRouteRendererProps) {
+export default function HqCapabilityAnalyticsRenderer({ ctx: _ctx }: CustomRouteRendererProps) {
   const trackInteraction = useInteractionTracking();
 
   const [loading, setLoading] = useState(true);

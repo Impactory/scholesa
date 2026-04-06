@@ -6,7 +6,6 @@ import { getDocs, query, where } from 'firebase/firestore';
 import { functions } from '@/src/firebase/client-init';
 import { rubricTemplatesCollection, processDomainsCollection } from '@/src/firebase/firestore/collections';
 import { useCapabilities } from '@/src/lib/capabilities/useCapabilities';
-import { Spinner } from '@/src/components/ui/Spinner';
 import type { RubricTemplate, ProcessDomain } from '@/src/types/schema';
 
 interface RubricReviewPanelProps {
@@ -124,7 +123,7 @@ export function RubricReviewPanel({
   }, [templates, capabilityList]);
 
   // Find templates that match the current capability selection
-  const matchingTemplates = useMemo(() => {
+  const _matchingTemplates = useMemo(() => {
     const capIds = new Set(scores.map((s) => s.capabilityId));
     return templates.filter((t) =>
       t.capabilityIds.some((cid) => capIds.has(cid)) || t.capabilityIds.length === 0

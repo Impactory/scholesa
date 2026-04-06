@@ -25,9 +25,9 @@ describe('protected web logout availability', () => {
     );
 
     expect(navigationSource).toContain(
-      "const { user, profile, signOut } = useAuthContext();",
+      'const { user, profile, signOut } = useAuthContext();',
     );
-    expect(navigationSource).toContain("await signOut();");
+    expect(navigationSource).toContain('await signOut();');
     expect(navigationSource).toContain("t('navigation.signOut')");
     expect(navigationSource).toContain('<Button');
   });

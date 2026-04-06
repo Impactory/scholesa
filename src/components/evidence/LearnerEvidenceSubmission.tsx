@@ -40,7 +40,7 @@ export function LearnerEvidenceSubmission() {
   const siteId = profile?.studioId ?? null;
   const learnerId = user?.uid ?? null;
 
-  const { capabilityList: capabilities, resolveTitle, loading: capLoading } = useCapabilities(siteId);
+  const { capabilityList: capabilities, resolveTitle } = useCapabilities(siteId);
   const [activeTab, setActiveTab] = useState<SubmitTab>('artifact');
   const [portfolio, setPortfolio] = useState<PortfolioEntry[]>([]);
   const [loading, setLoading] = useState(true);

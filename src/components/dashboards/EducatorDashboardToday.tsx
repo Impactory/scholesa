@@ -16,7 +16,7 @@ import {
   capabilityMasteryCollection,
 } from '@/src/firebase/firestore/collections';
 import { Spinner } from '@/src/components/ui/Spinner';
-import type { EvidenceRecord, PortfolioItem, CapabilityMastery, PillarCode } from '@/src/types/schema';
+import type { EvidenceRecord, CapabilityMastery, PillarCode } from '@/src/types/schema';
 
 interface SessionInfo {
   id: string;

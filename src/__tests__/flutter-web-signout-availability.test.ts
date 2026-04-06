@@ -25,7 +25,7 @@ describe('flutter web logout availability', () => {
     expect(sessionMenuSource).toContain('await _confirmGlobalSessionSignOut(effectiveContext);');
     expect(sessionMenuSource).toContain('this.includeSafeArea = true');
     expect(sessionMenuSource).toContain('this.padding = const EdgeInsets.only(top: 16, right: 12)');
-    expect(sessionMenuSource).toContain("message: _tGlobalSessionMenu(");
+    expect(sessionMenuSource).toContain('message: _tGlobalSessionMenu(');
     expect(sessionMenuSource).toContain("label: _tGlobalSessionMenu(context, 'Account menu')");
   });
 

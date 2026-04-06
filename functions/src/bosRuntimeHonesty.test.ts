@@ -45,7 +45,7 @@ jest.mock('./coppaGuards', () => ({
   isCoppaConsentActive: jest.fn(),
 }));
 
-const { __bosRuntimeInternals } = require('./bosRuntime');
+import { __bosRuntimeInternals } from './bosRuntime';
 
 describe('bosRuntime honesty guards', () => {
   it('drops malformed orchestration provenance blocks from callable state payloads', () => {

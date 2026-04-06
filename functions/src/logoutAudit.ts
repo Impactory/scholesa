@@ -6,8 +6,10 @@ export type LogoutAuditRole =
   | 'educator'
   | 'parent'
   | 'site'
+  | 'siteLead'
   | 'partner'
-  | 'hq';
+  | 'hq'
+  | 'admin';
 
 export interface LogoutAuditWriteParams {
   actorId: string;

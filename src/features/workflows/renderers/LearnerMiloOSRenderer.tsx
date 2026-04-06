@@ -22,9 +22,7 @@ import { firestore } from '@/src/firebase/client-init';
 import type { CustomRouteRendererProps } from '../customRouteRenderers';
 import {
   BrainIcon,
-  ShieldAlertIcon,
   ActivityIcon,
-  ZapIcon,
   CheckCircleIcon,
   AlertTriangleIcon,
 } from 'lucide-react';
@@ -193,7 +191,7 @@ export default function LearnerMiloOSRenderer({ ctx }: CustomRouteRendererProps)
         </div>
       )}
 
-      {/* AI Coach Screen */}
+      {/* MiloOS Screen */}
       <div className="bg-white border border-gray-200 rounded-lg p-4">
         <AICoachScreen learnerId={learnerId} siteId={siteId} />
       </div>

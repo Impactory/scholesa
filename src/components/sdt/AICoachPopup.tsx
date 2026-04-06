@@ -9,7 +9,7 @@
  * - Age-appropriate modes based on GradeBandPolicy
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   MessageCircleIcon,
   MicIcon,

@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   addDoc,
   collection,
-  deleteDoc,
   doc,
   getDocs,
   orderBy,

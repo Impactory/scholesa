@@ -31,9 +31,9 @@ type UnderstandingSource = 'heuristic' | 'model' | 'blended';
 type ResponseGenerationSource = 'local' | 'model' | 'guardrail';
 
 const VOICE_POLICY_VERSION = 'voice-policy-2026-02-23';
-const VOICE_MODEL_VERSION = 'voice-orchestrator-v1';
-const STT_MODEL_VERSION = 'scholesa-stt-internal-v1';
-const TTS_MODEL_VERSION = 'scholesa-tts-internal-v1';
+const _VOICE_MODEL_VERSION = 'voice-orchestrator-v1';
+const _STT_MODEL_VERSION = 'scholesa-stt-internal-v1';
+const _TTS_MODEL_VERSION = 'scholesa-tts-internal-v1';
 const MIN_AUTONOMOUS_STUDENT_CONFIDENCE = 0.97;
 const MIN_AUTONOMOUS_POLICY_CONFIDENCE = 0.97;
 const AUDIO_TOKEN_TTL_MS = 5 * 60 * 1000;
@@ -2679,11 +2679,11 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
       'llm',
       safety.safetyOutcome === 'allowed' ? 'not_attempted' : 'safety_blocked',
     );
-    let bosInferenceMeta: VoiceInferenceMeta = buildLocalInferenceMeta(
+    let _bosInferenceMeta: VoiceInferenceMeta = buildLocalInferenceMeta(
       'bos',
       safety.safetyOutcome === 'allowed' ? 'not_attempted' : 'safety_blocked',
     );
-    let bosPolicyHint: BosPolicyHint | null = null;
+    let _bosPolicyHint: BosPolicyHint | null = null;
     if (safety.safetyOutcome === 'allowed') {
       const llmResult = await callInternalInferenceJson<Record<string, unknown>, Record<string, unknown>>({
         service: 'llm',
@@ -2829,7 +2829,7 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
       if (bosResult.ok) {
         const policyHint = extractInternalBosPayload(bosResult.data);
         if (policyHint) {
-          bosPolicyHint = policyHint;
+          _bosPolicyHint = policyHint;
           const applyPolicyHint =
             policyHint.confidence !== undefined &&
             policyHint.confidence >= MIN_AUTONOMOUS_POLICY_CONFIDENCE;
@@ -2837,16 +2837,16 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
             const bosModeToolHints = deriveBosModeToolHints(authContext.requesterRole, policyHint);
             modelToolHints = dedupeStrings([...modelToolHints, ...bosModeToolHints]).slice(0, 6);
           }
-          bosInferenceMeta = buildInferenceMeta(
+          _bosInferenceMeta = buildInferenceMeta(
             'bos',
             bosResult,
             applyPolicyHint ? 'policy_hint_applied' : 'policy_hint_low_confidence',
           );
         } else {
-          bosInferenceMeta = buildInferenceMeta('bos', bosResult, 'no_policy_payload');
+          _bosInferenceMeta = buildInferenceMeta('bos', bosResult, 'no_policy_payload');
         }
       } else {
-        bosInferenceMeta = buildInferenceMeta('bos', bosResult, 'internal_call_failed');
+        _bosInferenceMeta = buildInferenceMeta('bos', bosResult, 'internal_call_failed');
       }
     }
 

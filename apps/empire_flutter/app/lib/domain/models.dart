@@ -6980,7 +6980,7 @@ class SkillEvidenceModel {
       };
 }
 
-/// AI coach interaction log with explain-it-back guardrails.
+/// MiloOS interaction log with explain-it-back guardrails.
 /// Collection: aiCoachInteractions
 @immutable
 class AICoachInteractionModel {

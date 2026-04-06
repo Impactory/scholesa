@@ -3225,8 +3225,8 @@ export const upsertFederatedLearningPilotEvidenceRecord = onCall(async (request:
   const experimentId = asTrimmedString(packageData.experimentId);
   const aggregationRunId = asTrimmedString(packageData.aggregationRunId);
   const mergeArtifactId = asTrimmedString(packageData.mergeArtifactId);
-  const packageDigest = asTrimmedString(packageData.packageDigest);
-  const boundedDigest = asTrimmedString(packageData.boundedDigest);
+  const _packageDigest = asTrimmedString(packageData.packageDigest);
+  const _boundedDigest = asTrimmedString(packageData.boundedDigest);
   const evidenceId = buildFederatedLearningPilotEvidenceRecordDocId(candidateModelPackageId);
   const evidenceRef = admin.firestore().collection('federatedLearningPilotEvidenceRecords').doc(evidenceId);
 

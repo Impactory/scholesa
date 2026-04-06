@@ -33,7 +33,7 @@ export default function RootLayout({
           id="theme-preload"
           strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var key='scholesa.theme.preference';var stored=localStorage.getItem(key);var prefersDark=window.matchMedia('(prefers-color-scheme: dark)').matches;var theme=(stored==='light'||stored==='dark')?stored:(prefersDark?'dark':'light');document.documentElement.dataset.theme=theme;document.documentElement.style.colorScheme=theme;}catch(e){document.documentElement.dataset.theme='light';document.documentElement.style.colorScheme='light';}})();`,
+            __html: '(function(){try{var key=\'scholesa.theme.preference\';var stored=localStorage.getItem(key);var prefersDark=window.matchMedia(\'(prefers-color-scheme: dark)\').matches;var theme=(stored===\'light\'||stored===\'dark\')?stored:(prefersDark?\'dark\':\'light\');document.documentElement.dataset.theme=theme;document.documentElement.style.colorScheme=theme;}catch(e){document.documentElement.dataset.theme=\'light\';document.documentElement.style.colorScheme=\'light\';}})();',
           }}
         />
         <ServiceWorkerRegister />

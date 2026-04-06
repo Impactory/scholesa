@@ -89,7 +89,7 @@ export default function EducatorAiAuditRenderer({ ctx }: CustomRouteRendererProp
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [learners, setLearners] = useState<LearnerRow[]>([]);
-  const [interactions, setInteractions] = useState<AiInteractionRow[]>([]);
+  const [_interactions, setInteractions] = useState<AiInteractionRow[]>([]);
   const [summaries, setSummaries] = useState<LearnerAiSummary[]>([]);
 
   const siteId = ctx.profile?.siteIds?.[0] ?? null;

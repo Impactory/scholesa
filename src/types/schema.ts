@@ -72,7 +72,7 @@ export interface Mission {
   xp: number;
   order: number;
   skills?: string[];
-  pillarCodes: PillarCode[];
+  pillarCodes: string[];
   capabilityIds?: string[]; // S2-1: linked capabilities from the graph
   stageId?: StageId; // Target stage for this mission
 }
@@ -96,6 +96,7 @@ export interface Session {
   endTime: Timestamp;
   dayOfWeek?: number; // 0-6
   stageId?: StageId; // Stage this session targets
+  pillarCodes: string[]; // Pillar focus for session planning
 }
 
 export interface SessionOccurrence {
@@ -162,10 +163,11 @@ export interface Reflection {
 
 export interface AccountabilityCycle {
   id: string;
-  startDate: Timestamp;
-  endDate: Timestamp;
+  startDate: number;
+  endDate: number;
   siteId: string;
   name: string; // e.g., "Week 1 - Term 2"
+  status: 'active' | 'closed';
 }
 
 /**
@@ -1216,16 +1218,148 @@ export type MasteryLevel = 'emerging' | 'developing' | 'proficient' | 'advanced'
  * A capability definition within the Scholesa framework.
  * Collection: capabilities (HQ-only write, all read)
  */
+export interface ProgressionDescriptors {
+  beginning: string;
+  developing: string;
+  proficient: string;
+  advanced: string;
+}
+
+export interface CheckpointMapping {
+  label: string;
+  checkpointId?: string;
+}
+
+export interface RubricTemplateCriterion {
+  id: string;
+  label: string;
+  capabilityId: string;
+  pillarCode: PillarCode;
+  maxScore: number;
+  descriptors?: ProgressionDescriptors;
+  processDomainId?: string;
+}
+
+export interface RubricTemplate {
+  id: string;
+  /** Display title of the rubric template */
+  title: string;
+  /** @deprecated Use title instead */
+  name?: string;
+  siteId: string;
+  capabilityIds: string[];
+  criteria: RubricTemplateCriterion[];
+  status?: 'draft' | 'published' | 'archived';
+  createdBy?: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface EvidenceRecord {
+  id: string;
+  learnerId: string;
+  educatorId: string;
+  siteId: string;
+  sessionOccurrenceId?: string;
+  capabilityId?: string;
+  capabilityMapped?: boolean;
+  phaseKey?: string;
+  description: string;
+  rubricStatus?: 'pending' | 'applied';
+  growthStatus?: 'pending' | 'processed';
+  portfolioCandidate?: boolean;
+  createdAt: Timestamp;
+  updatedAt?: Timestamp;
+}
+
+export interface RubricApplication {
+  id: string;
+  learnerId: string;
+  educatorId: string;
+  siteId: string;
+  rubricTemplateId: string;
+  evidenceRecordIds: string[];
+  scores: Array<{ criterionId: string; score: number; capabilityId: string }>;
+  status: 'pending' | 'applied' | 'growth-recorded';
+  capabilityId?: string;
+  missionAttemptId?: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface LearnerReflection {
+  id: string;
+  learnerId: string;
+  siteId: string;
+  content: string;
+  capabilityIds?: string[];
+  pillarCodes?: string[];
+  missionAttemptId?: string;
+  portfolioItemId?: string;
+  aiAssistanceUsed?: boolean;
+  createdAt: Timestamp;
+}
+
+export interface ProcessDomain {
+  id: string;
+  title: string;
+  descriptor?: string;
+  siteId: string;
+  pillarCode?: string;
+  progressionDescriptors?: ProgressionDescriptors;
+  sortOrder?: number;
+  status?: 'active' | 'archived';
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface ProcessDomainMastery {
+  id?: string;
+  learnerId: string;
+  processDomainId: string;
+  siteId: string;
+  currentLevel: MasteryLevel;
+  latestLevel: MasteryLevel;
+  previousLevel?: MasteryLevel;
+  evidenceCount: number;
+  lastAssessedBy: string;
+  lastAssessedAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface ProcessDomainGrowthEvent {
+  id: string;
+  learnerId: string;
+  processDomainId: string;
+  level: MasteryLevel;
+  fromLevel: MasteryLevel | null;
+  toLevel: MasteryLevel;
+  educatorId: string;
+  siteId: string;
+  evidenceIds: string[];
+  createdAt: Timestamp;
+}
+
 export interface Capability {
   id: string;
   name: string;
+  title?: string; // Alias for name — used by some surfaces
+  normalizedTitle?: string;
   domain: 'technical' | 'human';
   pillarCode: PillarCode;
   description: string;
+  descriptor?: string; // Short one-line description for UI display
+  siteId?: string;
+  progressionDescriptors?: ProgressionDescriptors;
+  rubricTemplateId?: string;
+  sortOrder?: number;
+  status?: 'active' | 'archived';
   stageId?: StageId;
   prerequisites?: string[];
   iCanStatements?: Record<MasteryLevel, string>;
   teacherLookFors?: string[];
+  unitMappings?: string[];
+  checkpointMappings?: CheckpointMapping[];
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -1235,11 +1369,15 @@ export interface Capability {
  * Collection: capabilityMastery (doc ID: learnerId_capabilityId)
  */
 export interface CapabilityMastery {
+  id?: string;
   learnerId: string;
   capabilityId: string;
+  pillarCode?: string;
   currentLevel: MasteryLevel;
+  latestLevel: MasteryLevel;
   previousLevel?: MasteryLevel;
   evidenceCount: number;
+  evidenceIds?: string[];
   lastAssessedBy: string;
   lastAssessedAt: Timestamp;
   updatedAt: Timestamp;
@@ -1253,11 +1391,14 @@ export interface CapabilityGrowthEvent {
   id: string;
   learnerId: string;
   capabilityId: string;
+  level: MasteryLevel;
   fromLevel: MasteryLevel | null;
   toLevel: MasteryLevel;
   educatorId: string;
   siteId: string;
   rubricApplicationId?: string;
   evidenceIds: string[];
+  rawScore?: number;
+  maxScore?: number;
   createdAt: Timestamp;
 }

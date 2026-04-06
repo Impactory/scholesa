@@ -22,7 +22,7 @@ describe('learner profile wording availability', () => {
     expect(profileSource).toContain("title={t('motivation.sdt.competence.title')}");
     expect(profileSource).toContain("subtitle={t('motivation.sdt.competence.subtitle')}");
     expect(profileSource).toContain("{t('motivation.skills.title')}");
-    expect(profileSource).toContain("{t(`motivation.skillLevel.${skill.level}`)}");
+    expect(profileSource).toContain('{t(`motivation.skillLevel.${skill.level}`)}');
     expect(profileSource).toContain("t('motivation.evidenceCollected', { count: skill.evidenceCount })");
 
     expect(englishLocale.motivation.headerSubtitle).toBe('Track your growth, skill building, and achievements');

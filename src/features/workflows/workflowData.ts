@@ -11,7 +11,6 @@ import {
   documentId,
   getDoc,
   getDocs,
-  increment,
   limit,
   orderBy,
   query,
@@ -3638,6 +3637,26 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
         createLabel: 'Create',
         createConfig: null,
       };
+    case '/educator/rubrics/apply':
+      return {
+        records: await loadCallableRows({
+          routePath: ctx.routePath,
+          callableName: 'applyRubricToEvidence',
+          args: {},
+          rowArrayField: 'applications',
+          collectionName: 'rubricApplications',
+          titleKeys: ['capabilityId'],
+          subtitleKeys: ['learnerId', 'educatorId'],
+          statusKeys: ['status'],
+          editable: false,
+          deletable: false,
+          limitSize: 20,
+        }),
+        canCreate: false,
+        canRefresh: true,
+        createLabel: 'Apply',
+        createConfig: null,
+      };
     case '/parent/passport':
       return {
         records: await loadCallableRows({
@@ -4130,6 +4149,7 @@ export async function createWorkflowRecord(
         });
         return;
       }
+      {
       const partnerId = ctx.role === 'partner'
         ? ctx.uid
         : requireStringValue(input, 'partnerId', 'Partner');
@@ -4142,6 +4162,7 @@ export async function createWorkflowRecord(
         status: 'draft',
       });
       return;
+      }
     case '/partner/deliverables': {
       const evidenceUrl = optionalStringValue(input, 'evidenceUrl');
       if (evidenceUrl) {

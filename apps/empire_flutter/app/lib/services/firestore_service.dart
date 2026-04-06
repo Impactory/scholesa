@@ -583,7 +583,7 @@ class FirestoreService {
     return docRef.id;
   }
 
-  /// Log an AI coach interaction
+  /// Log a MiloOS interaction
   Future<String> logAICoachInteraction({
     required String learnerId,
     String? sessionId,

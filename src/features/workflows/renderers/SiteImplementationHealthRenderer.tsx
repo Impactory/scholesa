@@ -16,8 +16,6 @@ import {
   getDocs,
   query,
   where,
-  orderBy,
-  limit,
 } from 'firebase/firestore';
 import { firestore } from '@/src/firebase/client-init';
 import type { CustomRouteRendererProps } from '../customRouteRenderers';

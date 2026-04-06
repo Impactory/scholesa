@@ -30,9 +30,9 @@ const STAGE_TO_TIER: Record<StageId, AiPolicyTier> = {
 /** Allowed AI task types per tier */
 const TIER_ALLOWED_MODES: Record<AiPolicyTier, TaskType[]> = {
   A: [],
-  B: ['hint'],
-  C: ['hint', 'rubric_check', 'debug'],
-  D: ['hint', 'rubric_check', 'debug', 'critique'],
+  B: ['hint_generation'],
+  C: ['hint_generation', 'rubric_check', 'debug_assistance'],
+  D: ['hint_generation', 'rubric_check', 'debug_assistance', 'critique_feedback'],
 };
 
 /** Human-readable tier descriptions */

@@ -21,27 +21,27 @@ jest.mock('@/src/firebase/client-init', () => ({
 }));
 
 jest.mock('firebase/functions', () => ({
-  httpsCallable: (...args: unknown[]) => httpsCallableMock.apply(undefined, args),
+  httpsCallable: (...args: unknown[]) => httpsCallableMock(...args),
 }));
 
 jest.mock('firebase/firestore', () => ({
-  addDoc: (...args: unknown[]) => addDocMock.apply(undefined, args),
+  addDoc: (...args: unknown[]) => addDocMock(...args),
   arrayRemove: jest.fn(),
   arrayUnion: jest.fn(),
-  collection: (...args: unknown[]) => collectionMock.apply(undefined, args),
-  deleteDoc: (...args: unknown[]) => deleteDocMock.apply(undefined, args),
-  doc: (...args: unknown[]) => docMock.apply(undefined, args),
+  collection: (...args: any[]) => (collectionMock as (...a: any[]) => any)(...args),
+  deleteDoc: (...args: any[]) => deleteDocMock(...args),
+  doc: (...args: any[]) => (docMock as (...a: any[]) => any)(...args),
   documentId: () => documentIdMock(),
-  getDoc: (...args: unknown[]) => getDocMock.apply(undefined, args),
-  getDocs: (...args: unknown[]) => getDocsMock.apply(undefined, args),
-  increment: (...args: unknown[]) => incrementMock.apply(undefined, args),
-  limit: (...args: unknown[]) => limitMock.apply(undefined, args),
-  orderBy: (...args: unknown[]) => orderByMock.apply(undefined, args),
-  query: (...args: unknown[]) => queryMock.apply(undefined, args),
+  getDoc: (...args: any[]) => getDocMock(...args),
+  getDocs: (...args: any[]) => getDocsMock(...args),
+  increment: (...args: any[]) => (incrementMock as (...a: any[]) => any)(...args),
+  limit: (...args: any[]) => (limitMock as (...a: any[]) => any)(...args),
+  orderBy: (...args: any[]) => (orderByMock as (...a: any[]) => any)(...args),
+  query: (...args: any[]) => queryMock(...args),
   serverTimestamp: () => serverTimestampMock(),
-  setDoc: (...args: unknown[]) => setDocMock.apply(undefined, args),
-  updateDoc: (...args: unknown[]) => updateDocMock.apply(undefined, args),
-  where: (...args: unknown[]) => whereMock.apply(undefined, args),
+  setDoc: (...args: any[]) => setDocMock(...args),
+  updateDoc: (...args: any[]) => updateDocMock(...args),
+  where: (...args: any[]) => (whereMock as (...a: any[]) => any)(...args),
 }));
 
 import {

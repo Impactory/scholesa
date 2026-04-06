@@ -41,9 +41,6 @@ interface GrowthTimelineEntry {
   occurredAt: string | null;
 }
 
-interface BundleResponse {
-  learners: LearnerSummary[];
-}
 
 const BAND_COLORS: Record<string, string> = {
   strong: 'bg-green-100 text-green-800 border-green-200',

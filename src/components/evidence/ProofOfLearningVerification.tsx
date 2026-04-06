@@ -340,7 +340,7 @@ function VerificationPanel({
                   <textarea
                     value={excerpts[check.key] ?? ''}
                     onChange={(e) => setExcerpts((prev) => ({ ...prev, [check.key]: e.target.value }))}
-                    placeholder={`What did the learner say/do? (optional brief excerpt)`}
+                    placeholder={'What did the learner say/do? (optional brief excerpt)'}
                     rows={2}
                     className="mt-2 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-xs shadow-sm"
                   />
