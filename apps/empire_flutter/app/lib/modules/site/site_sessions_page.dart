@@ -283,24 +283,20 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
               ),
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (BuildContext context, int index) {
-                    if (index >= timeSlots.length) {
-                      return null;
-                    }
-
-                    final MapEntry<String, List<SiteSessionData>> slot =
-                        timeSlots[index];
-                    return _SessionTimeSlot(
-                      time: slot.key,
-                      sessions: slot.value,
-                      onRequestCapabilityMapping: _requestCapabilityMapping,
-                      submittingCapabilityRequestIds:
-                          _submittingCapabilityRequestIds,
-                    );
-                  },
-                  childCount: timeSlots.length,
+              sliver: SliverToBoxAdapter(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    for (final MapEntry<String, List<SiteSessionData>> slot
+                        in timeSlots)
+                      _SessionTimeSlot(
+                        time: slot.key,
+                        sessions: slot.value,
+                        onRequestCapabilityMapping: _requestCapabilityMapping,
+                        submittingCapabilityRequestIds:
+                            _submittingCapabilityRequestIds,
+                      ),
+                  ],
                 ),
               ),
             ),

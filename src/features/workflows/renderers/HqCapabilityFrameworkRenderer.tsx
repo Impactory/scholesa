@@ -17,3 +17,5 @@ import type { CustomRouteRendererProps } from '../customRouteRenderers';
 export function HqCapabilityFrameworkRenderer(_props: CustomRouteRendererProps) {
   return <CapabilityFrameworkEditor initialTab="capabilities" />;
 }
+
+export default HqCapabilityFrameworkRenderer;

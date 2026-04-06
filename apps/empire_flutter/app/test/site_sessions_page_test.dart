@@ -318,7 +318,12 @@ void main() {
         child: buildPage(),
       ),
     );
-    await tester.pump();
+    // The post-frame callback restores prefs then fires _loadSessions which
+    // awaits the loader once per date in the active range (7 for week view).
+    // Each await yields to the event loop, so multiple pump rounds are needed.
+    for (int i = 0; i < 10; i++) {
+      await tester.pump();
+    }
     await tester.pumpAndSettle();
 
     expect(find.text('Today Advisory'), findsOneWidget);
