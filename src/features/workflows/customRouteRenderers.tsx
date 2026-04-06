@@ -60,21 +60,64 @@ const LearnerProgressReportRenderer = lazy(
 const SiteImplementationHealthRenderer = lazy(
   () => import('./renderers/SiteImplementationHealthRenderer')
 );
+const EducatorEvidenceCaptureRenderer = lazy(
+  () => import('./renderers/EducatorEvidenceCaptureRenderer')
+);
+const EducatorProofReviewRenderer = lazy(
+  () => import('./renderers/EducatorProofReviewRenderer')
+);
+const EducatorRubricApplyRenderer = lazy(
+  () => import('./renderers/EducatorRubricApplyRenderer')
+);
+const LearnerCheckpointRenderer = lazy(
+  () => import('./renderers/LearnerCheckpointRenderer')
+);
+const LearnerReflectionsRenderer = lazy(
+  () => import('./renderers/LearnerReflectionsRenderer')
+);
+const LearnerShowcasePeerReviewRenderer = lazy(
+  () => import('./renderers/LearnerShowcasePeerReviewRenderer')
+);
+const HqRubricBuilderRenderer = lazy(
+  () => import('./renderers/HqRubricBuilderRenderer')
+);
+const GuardianPassportRenderer = lazy(
+  () => import('./renderers/GuardianPassportRenderer')
+);
 
 const CUSTOM_ROUTE_RENDERERS: Partial<
   Record<WorkflowPath, ComponentType<CustomRouteRendererProps>>
 > = {
+  // HQ
   '/hq/curriculum': HqCapabilityFrameworkRenderer,
+  '/hq/capabilities': HqCapabilityFrameworkRenderer,
+  '/hq/capability-frameworks': HqCapabilityFrameworkRenderer,
+  '/hq/rubric-builder': HqRubricBuilderRenderer,
   '/hq/analytics': HqCapabilityAnalyticsRenderer,
-  '/educator/missions/review': EducatorEvidenceReviewRenderer,
+  // Educator
   '/educator/today': EducatorTodayRenderer,
+  '/educator/missions/review': EducatorEvidenceReviewRenderer,
   '/educator/learners': EducatorAiAuditRenderer,
+  '/educator/evidence': EducatorEvidenceCaptureRenderer,
+  '/educator/observations': EducatorEvidenceCaptureRenderer,
+  '/educator/proof-review': EducatorProofReviewRenderer,
+  '/educator/verification': EducatorProofReviewRenderer,
+  '/educator/rubrics/apply': EducatorRubricApplyRenderer,
+  // Learner
   '/learner/today': LearnerProgressReportRenderer,
   '/learner/portfolio': LearnerPortfolioCurationRenderer,
   '/learner/missions': LearnerProofAssemblyRenderer,
-  '/site/dashboard': SiteImplementationHealthRenderer,
+  '/learner/proof-assembly': LearnerProofAssemblyRenderer,
+  '/learner/checkpoints': LearnerCheckpointRenderer,
+  '/learner/reflections': LearnerReflectionsRenderer,
+  '/learner/peer-feedback': LearnerShowcasePeerReviewRenderer,
+  // Parent / Guardian
   '/parent/summary': GuardianCapabilityViewRenderer,
   '/parent/portfolio': GuardianCapabilityViewRenderer,
+  '/parent/growth-timeline': GuardianCapabilityViewRenderer,
+  '/parent/passport': GuardianPassportRenderer,
+  // Site
+  '/site/dashboard': SiteImplementationHealthRenderer,
 };
 
 /**
