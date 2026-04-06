@@ -101,6 +101,7 @@ export default function LearnerProofAssemblyRenderer({ ctx }: { ctx: WorkflowCon
   const [loading, setLoading] = useState(true);
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Draft state for the currently expanded proof form
   const [draftExplainItBack, setDraftExplainItBack] = useState('');
@@ -152,6 +153,7 @@ export default function LearnerProofAssemblyRenderer({ ctx }: { ctx: WorkflowCon
       setBundles(bundleMap);
     } catch (err) {
       console.error('Failed to load proof assembly data:', err);
+      setError('Failed to load data. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -279,6 +281,7 @@ export default function LearnerProofAssemblyRenderer({ ctx }: { ctx: WorkflowCon
 
   return (
     <div className="space-y-6">
+      {error && <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</div>}
       {/* Header */}
       <div className="flex items-center gap-3">
         <ShieldCheckIcon className="h-7 w-7 text-indigo-600" />

@@ -112,6 +112,7 @@ export function LearnerEvidenceSubmission() {
       );
     } catch (err) {
       console.error('Failed to load portfolio', err);
+      alert('Failed to load data. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -130,6 +131,7 @@ export function LearnerEvidenceSubmission() {
         setMissions(snap.docs.map((d) => ({ ...d.data(), id: d.id } as Mission)));
       } catch (err) {
         console.error('Failed to load missions', err);
+        alert('Failed to load missions. Please try again.');
       }
     })();
   }, [siteId]);

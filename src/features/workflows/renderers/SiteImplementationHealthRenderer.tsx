@@ -73,6 +73,7 @@ export default function SiteImplementationHealthRenderer({ ctx }: CustomRouteRen
   const siteId = ctx.profile?.siteIds?.[0] || '';
   const [metrics, setMetrics] = useState<HealthMetrics | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const loadMetrics = useCallback(async () => {
     if (!siteId) return;
@@ -140,6 +141,7 @@ export default function SiteImplementationHealthRenderer({ ctx }: CustomRouteRen
       });
     } catch (err) {
       console.error('Failed to load health metrics:', err);
+      setError('Failed to load data. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -170,6 +172,7 @@ export default function SiteImplementationHealthRenderer({ ctx }: CustomRouteRen
 
   return (
     <div className="space-y-6">
+      {error && <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</div>}
       {/* Header with overall health score */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">

@@ -150,6 +150,7 @@ export function EducatorDashboardToday() {
         setPillarSnapshots(snapshots);
       } catch (err) {
         console.error('Failed to load educator dashboard', err);
+        alert('Failed to load data. Please try again.');
       } finally {
         if (!cancelled) setLoading(false);
       }

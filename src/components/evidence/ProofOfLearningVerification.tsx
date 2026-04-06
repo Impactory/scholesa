@@ -46,6 +46,7 @@ export function ProofOfLearningVerification() {
   const [selectedItem, setSelectedItem] = useState<PortfolioItem | null>(null);
   const [saving, setSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'reviewed'>('pending');
 
   /* ───── Load portfolio items needing verification ───── */
@@ -71,6 +72,7 @@ export function ProofOfLearningVerification() {
       setItems(allItems);
     } catch (err) {
       console.error('Failed to load verification queue', err);
+      setLoadError('Failed to load verification queue. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -106,6 +108,12 @@ export function ProofOfLearningVerification() {
         {successMessage && (
           <div className="mb-4 rounded-md bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-800">
             {successMessage}
+          </div>
+        )}
+
+        {loadError && (
+          <div className="mb-4 rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-800">
+            {loadError}
           </div>
         )}
 
@@ -204,6 +212,7 @@ export function ProofOfLearningVerification() {
                       setSelectedItem(null);
                     } catch (err) {
                       console.error('Failed to update verification', err);
+                      alert('Failed to save verification. Please try again.');
                     } finally {
                       setSaving(false);
                     }

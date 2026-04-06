@@ -119,6 +119,7 @@ export function LearnerDashboardToday() {
         setActiveMissions(missionList);
       } catch (err) {
         console.error('Failed to load learner dashboard', err);
+        alert('Failed to load data. Please try again.');
       } finally {
         if (!cancelled) setLoading(false);
       }

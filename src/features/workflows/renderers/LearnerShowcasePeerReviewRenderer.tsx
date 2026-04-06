@@ -68,6 +68,7 @@ export default function LearnerShowcasePeerReviewRenderer({ ctx }: CustomRouteRe
   const [items, setItems] = useState<ShowcaseItem[]>([]);
   const [feedbacks, setFeedbacks] = useState<Map<string, PeerFeedbackEntry[]>>(new Map());
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showSubmitForm, setShowSubmitForm] = useState(false);
   const [feedbackTarget, setFeedbackTarget] = useState<string | null>(null);
 
@@ -146,6 +147,7 @@ export default function LearnerShowcasePeerReviewRenderer({ ctx }: CustomRouteRe
       }
     } catch (err) {
       console.error('Failed to load showcase data:', err);
+      setError('Failed to load data. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -221,6 +223,7 @@ export default function LearnerShowcasePeerReviewRenderer({ ctx }: CustomRouteRe
 
   return (
     <div className="space-y-6">
+      {error && <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</div>}
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">

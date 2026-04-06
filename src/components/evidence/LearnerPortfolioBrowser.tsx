@@ -43,6 +43,7 @@ export function LearnerPortfolioBrowser() {
       setItems(snap.docs.map((d) => ({ ...d.data(), id: d.id })));
     } catch (err) {
       console.error('Failed to load portfolio', err);
+      alert('Failed to load data. Please try again.');
     } finally {
       setLoading(false);
     }

@@ -171,6 +171,7 @@ export function EducatorEvidenceCapture() {
       );
     } catch (err) {
       console.error('Failed to load evidence capture data', err);
+      alert('Failed to load data. Please try again.');
     } finally {
       setLoading(false);
     }

@@ -141,6 +141,7 @@ export function SiteEvidenceHealthDashboard() {
       });
     } catch (err) {
       console.error('Failed to load evidence health metrics', err);
+      alert('Failed to load data. Please try again.');
     } finally {
       setLoading(false);
     }

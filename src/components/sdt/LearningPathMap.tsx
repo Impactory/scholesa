@@ -57,6 +57,7 @@ export function LearningPathMap({
         }
       } catch (err) {
         console.error('Error fetching learning path:', err);
+        alert('Failed to load data. Please try again.');
       } finally {
         setLoading(false);
       }

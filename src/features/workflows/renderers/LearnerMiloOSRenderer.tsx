@@ -57,6 +57,7 @@ export default function LearnerMiloOSRenderer({ ctx }: CustomRouteRendererProps)
   const siteId = ctx.profile?.siteIds?.[0] || '';
   const [learnerState, setLearnerState] = useState<LearnerState | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const loadState = useCallback(async () => {
     if (!learnerId) return;
@@ -109,6 +110,7 @@ export default function LearnerMiloOSRenderer({ ctx }: CustomRouteRendererProps)
       setLearnerState(state);
     } catch (err) {
       console.error('Failed to load learner state:', err);
+      setError('Failed to load data. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -143,6 +145,7 @@ export default function LearnerMiloOSRenderer({ ctx }: CustomRouteRendererProps)
 
   return (
     <div className="space-y-4">
+      {error && <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</div>}
       {/* Header */}
       <div className="flex items-center gap-3">
         <BrainIcon className="h-7 w-7 text-indigo-600" />

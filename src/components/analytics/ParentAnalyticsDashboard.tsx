@@ -218,6 +218,7 @@ export function ParentAnalyticsDashboard() {
         
       } catch (err) {
         console.error('Failed to load children data:', err);
+        alert('Failed to load data. Please try again.');
       } finally {
         setLoading(false);
       }

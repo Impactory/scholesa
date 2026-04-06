@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:speech_to_text/speech_to_text.dart';
@@ -643,9 +644,13 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       if (mounted) setState(() => _isSpeaking = false);
     }
 
-    final String path = kIsWeb
-        ? 'ai-coach-${DateTime.now().millisecondsSinceEpoch}.webm'
-        : '/tmp/ai-coach-${DateTime.now().millisecondsSinceEpoch}.m4a';
+    final String path;
+    if (kIsWeb) {
+      path = 'ai-coach-${DateTime.now().millisecondsSinceEpoch}.webm';
+    } else {
+      final dir = await getTemporaryDirectory();
+      path = '${dir.path}/ai-coach-${DateTime.now().millisecondsSinceEpoch}.m4a';
+    }
     await _ensureAudioRecorder().start(
       const RecordConfig(
         encoder: AudioEncoder.aacLc,
@@ -721,13 +726,6 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     } finally {
       if (mounted) {
         setState(() => _loading = false);
-      }
-      // Clean up temp file on native platforms only
-      if (!kIsWeb) {
-        try {
-          // Use path_provider or manual cleanup for native
-          // File cleanup is best-effort — OS will reclaim temp files
-        } catch (_) {}
       }
     }
   }
