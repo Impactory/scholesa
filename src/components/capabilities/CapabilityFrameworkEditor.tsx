@@ -95,7 +95,11 @@ const EMPTY_RUBRIC_FORM: RubricTemplateFormData = {
 
 /* ───── Main Component ───── */
 
-export function CapabilityFrameworkEditor() {
+interface CapabilityFrameworkEditorProps {
+  initialTab?: TabKey;
+}
+
+export function CapabilityFrameworkEditor({ initialTab }: CapabilityFrameworkEditorProps = {}) {
   const { user, profile, loading: authLoading } = useAuthContext();
   const siteId = profile?.studioId ?? null;
 
@@ -107,7 +111,7 @@ export function CapabilityFrameworkEditor() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const [activeTab, setActiveTab] = useState<TabKey>('capabilities');
+  const [activeTab, setActiveTab] = useState<TabKey>(initialTab ?? 'capabilities');
   const [editingCapabilityId, setEditingCapabilityId] = useState<string | null>(null);
   const [editingRubricId, setEditingRubricId] = useState<string | null>(null);
   const [showCapabilityForm, setShowCapabilityForm] = useState(false);
