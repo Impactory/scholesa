@@ -31,7 +31,7 @@ void main() {
       );
       expect(
         voiceRuntimeSource,
-        contains('Audio recording is unavailable for transcription.'),
+        contains('Audio file transcription is not available on web.'),
       );
       expect(
         voiceRuntimeSource,
