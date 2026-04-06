@@ -54,9 +54,6 @@ const EducatorTodayRenderer = lazy(
 const LearnerProofAssemblyRenderer = lazy(
   () => import('./renderers/LearnerProofAssemblyRenderer')
 );
-const LearnerShowcasePeerReviewRenderer = lazy(
-  () => import('./renderers/LearnerShowcasePeerReviewRenderer')
-);
 const LearnerProgressReportRenderer = lazy(
   () => import('./renderers/LearnerProgressReportRenderer')
 );

@@ -8,8 +8,6 @@ import {
   query,
   where,
   limit,
-  type DocumentData,
-  type QueryDocumentSnapshot,
 } from 'firebase/firestore';
 import { firestore } from '@/src/firebase/client-init';
 import { Spinner } from '@/src/components/ui/Spinner';
