@@ -310,7 +310,7 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: _selectedPillar,
+              initialValue: _selectedPillar,
               decoration: const InputDecoration(
                 labelText: 'Pillar',
                 border: OutlineInputBorder(),

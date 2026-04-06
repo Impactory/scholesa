@@ -6996,6 +6996,92 @@ export const submitEducatorFeedback = onCall(async (request: CallableRequest<{
 });
 
 /**
+ * Submit a learner reflection (metacognitive growth capture)
+ *
+ * Creates a document in `learnerReflections` and logs a `reflection.submitted`
+ * interaction event for BOS scoring.  Firestore rules enforce learner-only
+ * create, so the callable validates `uid === data.learnerId`.
+ */
+export const submitReflection = onCall(async (request: CallableRequest<{
+  learnerId: string;
+  siteId: string;
+  proudOf: string;
+  nextIWill: string;
+  sprintSessionId?: string;
+  missionId?: string;
+  effortLevel?: 1 | 2 | 3 | 4 | 5;
+  enjoymentLevel?: 1 | 2 | 3 | 4 | 5;
+  effectiveStrategy?: string;
+}>) => {
+  const { uid } = await requireRoleAndSite(request.auth?.uid, ['learner'], request.data.siteId);
+
+  const {
+    learnerId,
+    siteId,
+    proudOf,
+    nextIWill,
+    sprintSessionId,
+    missionId,
+    effortLevel,
+    enjoymentLevel,
+    effectiveStrategy,
+  } = request.data;
+
+  if (!learnerId || !siteId || !proudOf || !nextIWill) {
+    throw new HttpsError('invalid-argument', 'Missing required fields: learnerId, siteId, proudOf, nextIWill');
+  }
+
+  if (uid !== learnerId) {
+    throw new HttpsError('permission-denied', 'Learners can only submit their own reflections');
+  }
+
+  const reflectionDoc: Record<string, unknown> = {
+    learnerId,
+    siteId,
+    proudOf,
+    nextIWill,
+    sprintSessionId: sprintSessionId || null,
+    missionId: missionId || null,
+    reflectionType: sprintSessionId ? 'session_reflection' : missionId ? 'mission_reflection' : 'free_reflection',
+    createdAt: FieldValue.serverTimestamp(),
+  };
+
+  if (effortLevel) reflectionDoc.effortLevel = effortLevel;
+  if (enjoymentLevel) reflectionDoc.enjoymentLevel = enjoymentLevel;
+  if (effectiveStrategy) reflectionDoc.effectiveStrategy = effectiveStrategy;
+
+  const reflectionRef = await admin.firestore().collection('learnerReflections').add(reflectionDoc);
+
+  // Log interaction event for BOS scoring
+  await admin.firestore().collection('interactionEvents').add({
+    eventType: 'reflection.submitted',
+    siteId,
+    actorId: learnerId,
+    actorRole: 'learner',
+    sessionOccurrenceId: sprintSessionId || null,
+    payload: {
+      reflectionId: reflectionRef.id,
+      missionId: missionId || null,
+      hasEffort: !!effortLevel,
+      hasEnjoyment: !!enjoymentLevel,
+      hasStrategy: !!effectiveStrategy,
+    },
+    createdAt: FieldValue.serverTimestamp(),
+  });
+
+  // Log telemetry
+  await persistTelemetryEvent({
+    event: 'learner.reflection.submitted',
+    userId: uid,
+    role: 'learner',
+    siteId,
+    metadata: { reflectionId: reflectionRef.id, missionId: missionId || null },
+  });
+
+  return { reflectionId: reflectionRef.id };
+});
+
+/**
  * Log a support intervention and its outcome
  */
 export const logSupportIntervention = onCall(async (request: CallableRequest<{

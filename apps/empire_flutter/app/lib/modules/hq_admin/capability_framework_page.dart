@@ -304,7 +304,7 @@ class _CapabilityFrameworkPageState extends State<CapabilityFrameworkPage> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: _selectedPillar,
+              initialValue: _selectedPillar,
               decoration: const InputDecoration(
                 labelText: 'Pillar',
                 border: OutlineInputBorder(),
