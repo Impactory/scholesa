@@ -197,6 +197,11 @@ export default function LearnerProofAssemblyRenderer({ ctx }: { ctx: WorkflowCon
           version: existing.version + 1,
           updatedAt: serverTimestamp(),
         });
+        // Back-link: update portfolio item with proof bundle ID and status
+        await updateDoc(doc(db, 'portfolioItems', portfolioItemId), {
+          proofBundleId: existing.id,
+          proofOfLearningStatus: verificationStatus,
+        });
         setBundles((prev) => {
           const next = new Map(prev);
           next.set(portfolioItemId, {
@@ -228,6 +233,11 @@ export default function LearnerProofAssemblyRenderer({ ctx }: { ctx: WorkflowCon
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
         } as unknown as ProofOfLearningBundle);
+        // Back-link: update portfolio item with proof bundle ID and status
+        await updateDoc(doc(db, 'portfolioItems', portfolioItemId), {
+          proofBundleId: docRef.id,
+          proofOfLearningStatus: verificationStatus,
+        });
         setBundles((prev) => {
           const next = new Map(prev);
           next.set(portfolioItemId, {

@@ -49,7 +49,7 @@ interface PortfolioItem {
   verificationStatus: VerificationStatus;
   proofOfLearning: boolean;
   proofBundle: ProofBundleSummary | null;
-  linkedCapabilityIds: string[];
+  capabilityIds: string[];
   linkedCapabilityTitles: string[];
   learnerId: string;
   createdAt: string | null;
@@ -244,12 +244,16 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
               : 'pending') as VerificationStatus,
             proofOfLearning: data.proofOfLearning === true,
             proofBundle: proofByItem.get(d.id) || null,
-            linkedCapabilityIds: Array.isArray(data.linkedCapabilityIds)
-              ? data.linkedCapabilityIds
-              : [],
+            capabilityIds: Array.isArray(data.capabilityIds)
+              ? data.capabilityIds
+              : Array.isArray(data.linkedCapabilityIds)
+                ? data.linkedCapabilityIds
+                : [],
             linkedCapabilityTitles: Array.isArray(data.linkedCapabilityTitles)
               ? data.linkedCapabilityTitles
-              : [],
+              : Array.isArray(data.capabilityTitles)
+                ? data.capabilityTitles
+                : [],
             learnerId: asString(data.learnerId, ctx.uid),
             createdAt: toIso(data.createdAt),
           };
@@ -316,8 +320,8 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
         aiDisclosure: newAiDisclosure,
         verificationStatus: 'pending',
         proofOfLearning: false,
-        linkedCapabilityIds: [],
-        linkedCapabilityTitles: [],
+        capabilityIds: [],
+        capabilityTitles: [],
         reflectionIds: [] as string[],
         learnerId: ctx.uid,
         createdAt: serverTimestamp(),

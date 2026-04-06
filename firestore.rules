@@ -986,6 +986,87 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // --- Collections referenced by frontend but previously missing rules ---
+
+    // Analytics events — learners write their own events, educators/HQ read
+    match /analyticsEvents/{id} {
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow read: if isEducator() || isHQ();
+      allow update, delete: if false; // Immutable event log
+    }
+
+    // Learner badges — system/educator awards, learner reads own
+    match /learnerBadges/{id} {
+      allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
+      allow create: if isAuthenticated();
+      allow update, delete: if false; // Immutable once awarded
+    }
+
+    // Motivation analytics — aggregates per learner, written by learner, read by educator/parent
+    match /motivationAnalytics/{id} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated();
+      allow delete: if false;
+    }
+
+    // Learner choice history — learner writes own, educator reads
+    match /learnerChoiceHistory/{id} {
+      allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
+      allow create, update: if isAuthenticated() && request.resource.data.learnerId == request.auth.uid;
+      allow delete: if false;
+    }
+
+    // Session reflections — motivation engine aggregates per session
+    match /sessionReflections/{id} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated();
+      allow delete: if false;
+    }
+
+    // KPI packs — HQ-managed, read by educator/HQ
+    match /kpiPacks/{id} {
+      allow read: if isAuthenticated() && (isEducator() || isHQ());
+      allow create, update: if isHQ();
+      allow delete: if false;
+    }
+
+    // Badge achievements — read by learner/parent/educator
+    match /badgeAchievements/{id} {
+      allow read: if isAuthenticated();
+      allow create: if isEducator() || isHQ();
+      allow update, delete: if false; // Immutable
+    }
+
+    // Mission enrollments — learner reads own, educator reads all
+    match /missionEnrollments/{id} {
+      allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
+      allow create, update: if isEducator();
+      allow delete: if false;
+    }
+
+    // HQ alerts
+    match /alerts/{id} {
+      allow read: if isAuthenticated() && isHQ();
+      allow create, update: if isHQ();
+      allow delete: if isHQ();
+    }
+
+    // AI vector store collections — read-only for AI coaching
+    match /assessmentRubrics/{id} {
+      allow read: if isAuthenticated();
+      allow write: if isHQ();
+    }
+
+    match /artifacts/{id} {
+      allow read: if isAuthenticated();
+      allow write: if false; // System-managed
+    }
+
+    match /commonMisconceptions/{id} {
+      allow read: if isAuthenticated();
+      allow write: if isHQ();
+    }
+
     // Default Deny
     match /{document=**} {
       allow read, write: if false;

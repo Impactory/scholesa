@@ -7082,6 +7082,120 @@ export const submitReflection = onCall(async (request: CallableRequest<{
 });
 
 /**
+ * Update a learner's interest profile for autonomy-driven mission selection
+ */
+export const updateLearnerInterests = onCall(async (request: CallableRequest<{
+  learnerId: string;
+  siteId: string;
+  interests: string[];
+}>) => {
+  const { uid } = await requireRoleAndSite(request.auth?.uid, ['learner'], request.data.siteId);
+
+  const { learnerId, siteId, interests } = request.data;
+
+  if (!learnerId || !siteId || !Array.isArray(interests)) {
+    throw new HttpsError('invalid-argument', 'Missing required fields: learnerId, siteId, interests');
+  }
+
+  if (uid !== learnerId) {
+    throw new HttpsError('permission-denied', 'Learners can only update their own interests');
+  }
+
+  const profileRef = admin.firestore().collection('learnerInterestProfiles').doc(learnerId);
+  await profileRef.set({
+    learnerId,
+    siteId,
+    interests,
+    updatedAt: FieldValue.serverTimestamp(),
+  }, { merge: true });
+
+  await persistTelemetryEvent({
+    event: 'learner.interests.updated',
+    userId: uid,
+    role: 'learner',
+    siteId,
+    metadata: { interestCount: interests.length },
+  });
+
+  return { success: true };
+});
+
+/**
+ * Give recognition to a peer's showcase submission
+ */
+export const giveRecognition = onCall(async (request: CallableRequest<{
+  fromLearnerId: string;
+  toLearnerId: string;
+  siteId: string;
+  showcaseId: string;
+  recognitionType: string;
+  comment?: string;
+}>) => {
+  const { uid } = await requireRoleAndSite(request.auth?.uid, ['learner'], request.data.siteId);
+
+  const { fromLearnerId, toLearnerId, siteId, showcaseId, recognitionType, comment } = request.data;
+
+  if (!fromLearnerId || !toLearnerId || !siteId || !showcaseId || !recognitionType) {
+    throw new HttpsError('invalid-argument', 'Missing required fields');
+  }
+
+  if (uid !== fromLearnerId) {
+    throw new HttpsError('permission-denied', 'Learners can only give recognition from their own account');
+  }
+
+  if (fromLearnerId === toLearnerId) {
+    throw new HttpsError('invalid-argument', 'Cannot give recognition to yourself');
+  }
+
+  // Verify showcase exists
+  const showcaseSnap = await admin.firestore().collection('showcaseSubmissions').doc(showcaseId).get();
+  if (!showcaseSnap.exists) {
+    throw new HttpsError('not-found', 'Showcase submission not found');
+  }
+
+  // Add recognition to showcase
+  const recognitionRef = await admin.firestore().collection('showcaseSubmissions')
+    .doc(showcaseId).collection('recognitions').add({
+      fromLearnerId,
+      toLearnerId,
+      siteId,
+      recognitionType,
+      comment: comment || null,
+      createdAt: FieldValue.serverTimestamp(),
+    });
+
+  // Update recognition count on showcase
+  await admin.firestore().collection('showcaseSubmissions').doc(showcaseId).update({
+    [`recognitionCounts.${recognitionType}`]: FieldValue.increment(1),
+  });
+
+  // Log interaction event for BOS scoring
+  await admin.firestore().collection('interactionEvents').add({
+    eventType: 'recognition.given',
+    siteId,
+    actorId: fromLearnerId,
+    actorRole: 'learner',
+    payload: {
+      recognitionId: recognitionRef.id,
+      toLearnerId,
+      showcaseId,
+      recognitionType,
+    },
+    createdAt: FieldValue.serverTimestamp(),
+  });
+
+  await persistTelemetryEvent({
+    event: 'learner.recognition.given',
+    userId: uid,
+    role: 'learner',
+    siteId,
+    metadata: { toLearnerId, showcaseId, recognitionType },
+  });
+
+  return { success: true, recognitionId: recognitionRef.id };
+});
+
+/**
  * Log a support intervention and its outcome
  */
 export const logSupportIntervention = onCall(async (request: CallableRequest<{
@@ -8570,6 +8684,40 @@ export const verifyProofOfLearning = onCall(async (request: CallableRequest<{
   }
 
   await batch.commit();
+
+  // 3. Back-link: update associated mission attempt with proof bundle summary
+  const missionAttemptId = portfolioData.missionAttemptId as string | undefined;
+  if (missionAttemptId) {
+    const proofBundleSummary = {
+      hasExplainItBack: proofChecks?.explainItBack ?? false,
+      hasOralCheck: proofChecks?.oralCheck ?? false,
+      hasMiniRebuild: proofChecks?.miniRebuild ?? false,
+      checkpointCount,
+      hasLearnerAiDisclosure: portfolioData.aiAssistanceUsed === true,
+      aiAssistanceUsed: portfolioData.aiAssistanceUsed ?? false,
+      verificationStatus,
+    };
+    await db.collection('missionAttempts').doc(missionAttemptId).update({
+      proofBundleId: portfolioData.proofBundleId || null,
+      proofBundleSummary,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+  }
+
+  // 4. Back-link: update evidence records with linked portfolio item ID
+  const evidenceRecordIds: string[] = Array.isArray(portfolioData.evidenceRecordIds)
+    ? portfolioData.evidenceRecordIds
+    : [];
+  if (evidenceRecordIds.length > 0) {
+    const evidenceBatch = db.batch();
+    for (const evidenceId of evidenceRecordIds) {
+      evidenceBatch.update(db.collection('evidenceRecords').doc(evidenceId), {
+        linkedPortfolioItemId: portfolioItemId,
+        linkedMissionAttemptId: missionAttemptId || null,
+      });
+    }
+    await evidenceBatch.commit();
+  }
 
   return {
     portfolioItemId,

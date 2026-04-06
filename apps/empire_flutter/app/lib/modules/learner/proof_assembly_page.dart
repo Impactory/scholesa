@@ -32,6 +32,10 @@ class _ProofAssemblyPageState extends State<ProofAssemblyPage> {
   final Map<String, TextEditingController> _rebuildControllers =
       <String, TextEditingController>{};
 
+  /// Controllers for oral check notes, keyed by portfolio item id.
+  final Map<String, TextEditingController> _oralControllers =
+      <String, TextEditingController>{};
+
   /// Tracks which items are currently being submitted.
   final Set<String> _submitting = <String>{};
 
@@ -47,6 +51,9 @@ class _ProofAssemblyPageState extends State<ProofAssemblyPage> {
       c.dispose();
     }
     for (final TextEditingController c in _rebuildControllers.values) {
+      c.dispose();
+    }
+    for (final TextEditingController c in _oralControllers.values) {
       c.dispose();
     }
     super.dispose();
@@ -70,6 +77,11 @@ class _ProofAssemblyPageState extends State<ProofAssemblyPage> {
 
   TextEditingController _rebuildController(String id) {
     return _rebuildControllers.putIfAbsent(
+        id, () => TextEditingController());
+  }
+
+  TextEditingController _oralController(String id) {
+    return _oralControllers.putIfAbsent(
         id, () => TextEditingController());
   }
 
@@ -137,6 +149,10 @@ class _ProofAssemblyPageState extends State<ProofAssemblyPage> {
               bundle.miniRebuildExcerpt!.isNotEmpty) {
             _rebuildController(item.id).text = bundle.miniRebuildExcerpt!;
           }
+          if (bundle.oralCheckExcerpt != null &&
+              bundle.oralCheckExcerpt!.isNotEmpty) {
+            _oralController(item.id).text = bundle.oralCheckExcerpt!;
+          }
         }
       }
 
@@ -167,6 +183,7 @@ class _ProofAssemblyPageState extends State<ProofAssemblyPage> {
 
     final String explainText = _explainController(item.id).text.trim();
     final String rebuildText = _rebuildController(item.id).text.trim();
+    final String oralText = _oralController(item.id).text.trim();
 
     setState(() => _submitting.add(item.id));
 
@@ -179,9 +196,11 @@ class _ProofAssemblyPageState extends State<ProofAssemblyPage> {
           bundleId: existing.id,
           hasExplainItBack: explainText.isNotEmpty,
           hasMiniRebuild: rebuildText.isNotEmpty,
-          hasOralCheck: existing.hasOralCheck,
+          hasOralCheck: oralText.isNotEmpty,
           explainItBackExcerpt:
               explainText.isNotEmpty ? explainText : null,
+          oralCheckExcerpt:
+              oralText.isNotEmpty ? oralText : null,
           miniRebuildExcerpt:
               rebuildText.isNotEmpty ? rebuildText : null,
         );
@@ -191,13 +210,16 @@ class _ProofAssemblyPageState extends State<ProofAssemblyPage> {
           learnerId: learnerId,
           portfolioItemId: item.id,
         );
-        if (explainText.isNotEmpty || rebuildText.isNotEmpty) {
+        if (explainText.isNotEmpty || rebuildText.isNotEmpty || oralText.isNotEmpty) {
           await service.updateProofOfLearningBundle(
             bundleId: bundleId,
             hasExplainItBack: explainText.isNotEmpty,
             hasMiniRebuild: rebuildText.isNotEmpty,
+            hasOralCheck: oralText.isNotEmpty,
             explainItBackExcerpt:
                 explainText.isNotEmpty ? explainText : null,
+            oralCheckExcerpt:
+                oralText.isNotEmpty ? oralText : null,
             miniRebuildExcerpt:
                 rebuildText.isNotEmpty ? rebuildText : null,
           );
@@ -432,7 +454,7 @@ class _ProofAssemblyPageState extends State<ProofAssemblyPage> {
                   ),
                   const SizedBox(height: 16.0),
 
-                  // Oral Check section (placeholder)
+                  // Oral Check section
                   Text(
                     'Oral Check',
                     style: theme.textTheme.labelLarge
@@ -440,17 +462,18 @@ class _ProofAssemblyPageState extends State<ProofAssemblyPage> {
                   ),
                   const SizedBox(height: 4.0),
                   Text(
-                    'Record yourself explaining this work out loud.',
+                    'Say it out loud, then write what you said — explain this work as if talking to a friend.',
                     style: theme.textTheme.bodySmall
                         ?.copyWith(color: colors.onSurfaceVariant),
                   ),
                   const SizedBox(height: 8.0),
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      _showSnackBar('Voice recording coming soon.');
-                    },
-                    icon: const Icon(Icons.mic),
-                    label: const Text('Record'),
+                  TextField(
+                    controller: _oralController(item.id),
+                    maxLines: 4,
+                    decoration: const InputDecoration(
+                      hintText: 'When I explain this out loud, I say...',
+                      border: OutlineInputBorder(),
+                    ),
                   ),
                   const SizedBox(height: 16.0),
 

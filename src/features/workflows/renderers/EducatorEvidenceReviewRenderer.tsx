@@ -371,7 +371,7 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
             currentLevel: overallLevel,
             currentScore: Math.max(existingScore, roundedScore),
             evidenceCount: existingCount + 1,
-            lastMissionAttemptId: attempt.id,
+            latestMissionAttemptId: attempt.id,
             updatedAt: serverTimestamp(),
           });
         } else {
@@ -381,7 +381,7 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
             currentLevel: overallLevel,
             currentScore: roundedScore,
             evidenceCount: 1,
-            lastMissionAttemptId: attempt.id,
+            latestMissionAttemptId: attempt.id,
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
           });
