@@ -371,7 +371,7 @@ class _ProofAssemblyPageState extends State<ProofAssemblyPage> {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 10.0, vertical: 4.0),
                     decoration: BoxDecoration(
-                      color: statusColor.withOpacity(0.15),
+                      color: statusColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(12.0),
                     ),
                     child: Row(

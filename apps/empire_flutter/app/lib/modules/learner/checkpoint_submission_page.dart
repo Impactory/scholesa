@@ -307,7 +307,7 @@ class _CheckpointSubmissionPageState extends State<CheckpointSubmissionPage> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(12.0),
                   decoration: BoxDecoration(
-                    color: colors.primaryContainer.withOpacity(0.3),
+                    color: colors.primaryContainer.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(8.0),
                   ),
                   child: Text(

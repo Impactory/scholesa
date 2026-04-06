@@ -93,6 +93,9 @@ class _ObservationCapturePageState extends State<ObservationCapturePage> {
         return;
       }
 
+      // Capture context-dependent state before any awaits
+      final AppState appState = context.read<AppState>();
+
       // Load learners enrolled at this site
       final List<Map<String, dynamic>> learners =
           await _firestoreService.queryCollection(
@@ -113,7 +116,6 @@ class _ObservationCapturePageState extends State<ObservationCapturePage> {
           .toList();
 
       // Load recent observations by this educator
-      final AppState appState = context.read<AppState>();
       final List<Map<String, dynamic>> recent =
           await _firestoreService.queryCollection(
         'evidenceRecords',
