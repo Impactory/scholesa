@@ -1,6 +1,15 @@
 import { deleteDoc, doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { firestore } from '@/src/firebase/client-init';
 import type { User, Role } from '@/schema';
+import type { AgeBand } from '@/src/types/user';
+
+export interface RegistrationConsentParams {
+  consentAccepted: boolean;
+  tosAccepted: boolean;
+  ageBand: AgeBand;
+  parentConsentConfirmed: boolean;
+  pipedaCrossBorderAcknowledged: boolean;
+}
 
 export interface CreateUserParams {
   uid: string;
@@ -10,6 +19,7 @@ export interface CreateUserParams {
   photoURL?: string;
   siteIds?: string[];
   organizationId?: string;
+  registrationConsent?: RegistrationConsentParams;
 }
 
 /**
@@ -25,13 +35,14 @@ export async function createUserDocument({
   photoURL,
   siteIds = [],
   organizationId,
+  registrationConsent,
 }: CreateUserParams): Promise<void> {
   if (!uid) throw new Error('User UID is required');
   if (!email) throw new Error('User email is required');
   if (!role) throw new Error('User role is required');
 
   const userRef = doc(firestore, 'users', uid);
-  
+
   try {
     const userSnap = await getDoc(userRef);
 
@@ -51,6 +62,15 @@ export async function createUserDocument({
       updatedAt: serverTimestamp(),
       // Only include organizationId if defined to avoid Firestore "undefined" errors
       ...(organizationId ? { organizationId } : {}),
+      // Include registration consent metadata if provided
+      ...(registrationConsent
+        ? {
+            registrationConsent: {
+              ...registrationConsent,
+              consentTimestamp: serverTimestamp(),
+            },
+          }
+        : {}),
     };
 
     await setDoc(userRef, newUser as unknown as User);

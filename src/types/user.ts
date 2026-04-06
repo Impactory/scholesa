@@ -3,6 +3,17 @@ import type { StageId } from './schema';
 
 export type UserRole = 'learner' | 'parent' | 'educator' | 'site' | 'partner' | 'hq';
 
+export type AgeBand = 'under13' | '13-17' | '18+';
+
+export interface RegistrationConsent {
+  consentAccepted: boolean;
+  tosAccepted: boolean;
+  ageBand: AgeBand;
+  parentConsentConfirmed: boolean;
+  consentTimestamp: Timestamp;
+  pipedaCrossBorderAcknowledged: boolean;
+}
+
 export interface UserProfile {
   uid: string;
   email: string;
@@ -18,6 +29,7 @@ export interface UserProfile {
   authMethods?: string[];
   jitProvisioned?: boolean;
   isActive?: boolean;
+  registrationConsent?: RegistrationConsent;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }

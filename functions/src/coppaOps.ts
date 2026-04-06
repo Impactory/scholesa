@@ -50,6 +50,8 @@ interface ProcessParentRequestPayload {
   requestId: string;
   dryRun?: boolean;
   storagePrefixes?: string[];
+  field?: string;
+  newValue?: string;
 }
 
 interface RetentionRunPayload {
@@ -499,6 +501,78 @@ function buildCollectionSummaries(matches: ScopedDoc[]) {
   }));
 }
 
+const CORRECTION_ALLOWED_FIELDS = new Set([
+  'displayName',
+  'email',
+  'guardianEmail',
+  'guardianPhone',
+]);
+
+async function executeDataExport(siteId: string, learnerId: string): Promise<{
+  profile: FirebaseFirestore.DocumentData | null;
+  portfolioItems: FirebaseFirestore.DocumentData[];
+  reflections: FirebaseFirestore.DocumentData[];
+  missionAttempts: FirebaseFirestore.DocumentData[];
+  interactions: FirebaseFirestore.DocumentData[];
+  checkpoints: FirebaseFirestore.DocumentData[];
+}> {
+  const db = admin.firestore();
+
+  const userSnap = await db.collection(USERS_COLLECTION).doc(learnerId).get();
+  const profile = userSnap.exists ? userSnap.data()! : null;
+
+  const [
+    portfolioSnap,
+    reflectionsSnap,
+    missionAttemptsSnap,
+    interactionsSnap,
+    checkpointsSnap,
+  ] = await Promise.all([
+    db.collection('portfolioItems').where('learnerId', '==', learnerId).limit(MAX_DOCS_PER_QUERY).get(),
+    db.collection('learnerReflections').where('learnerId', '==', learnerId).limit(MAX_DOCS_PER_QUERY).get(),
+    db.collection('missionAttempts').where('learnerId', '==', learnerId).limit(MAX_DOCS_PER_QUERY).get(),
+    db.collection('interactionEvents').where('actorId', '==', learnerId).limit(MAX_DOCS_PER_QUERY).get(),
+    db.collection('checkpointHistory').where('learnerId', '==', learnerId).limit(MAX_DOCS_PER_QUERY).get(),
+  ]);
+
+  return {
+    profile,
+    portfolioItems: portfolioSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
+    reflections: reflectionsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
+    missionAttempts: missionAttemptsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
+    interactions: interactionsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
+    checkpoints: checkpointsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
+  };
+}
+
+async function executeCorrectionRequest(
+  learnerId: string,
+  field: string,
+  newValue: string,
+): Promise<{ corrected: true; field: string; updatedAt: string }> {
+  if (!CORRECTION_ALLOWED_FIELDS.has(field)) {
+    throw new HttpsError(
+      'invalid-argument',
+      `Correction not allowed for field "${field}". Allowed fields: ${[...CORRECTION_ALLOWED_FIELDS].join(', ')}`,
+    );
+  }
+
+  const db = admin.firestore();
+  const userRef = db.collection(USERS_COLLECTION).doc(learnerId);
+  const userSnap = await userRef.get();
+  if (!userSnap.exists) {
+    throw new HttpsError('not-found', 'Learner user record not found');
+  }
+
+  const now = new Date().toISOString();
+  await userRef.update({
+    [field]: newValue,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  return { corrected: true, field, updatedAt: now };
+}
+
 async function executeParentRequest(params: {
   requestId: string;
   siteId: string;
@@ -923,6 +997,80 @@ export const processParentDataRequest = onCall(async (request: CallableRequest<P
   });
 
   try {
+    // Handle export requests: collect and return learner data
+    if (requestData.requestType === 'export') {
+      const exportData = await executeDataExport(requestData.siteId, requestData.learnerId);
+
+      await requestRef.set({
+        status: 'completed' as ParentRequestStatus,
+        completedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true });
+
+      await appendTraceLog({
+        traceId: requestData.traceId,
+        siteId: requestData.siteId,
+        learnerId: requestData.learnerId,
+        action: 'parent_request_completed',
+        actorId: actor.uid,
+        actorRole: actor.role,
+        details: {
+          requestId,
+          requestType: requestData.requestType,
+          exportedCollections: [
+            'users',
+            'portfolioItems',
+            'learnerReflections',
+            'missionAttempts',
+            'interactionEvents',
+            'checkpointHistory',
+          ],
+        },
+      });
+
+      return {
+        status: 'completed',
+        requestId,
+        traceId: requestData.traceId,
+        exportData,
+      };
+    }
+
+    // Handle correction requests: update allowed user profile fields
+    if (requestData.requestType === 'correction') {
+      const field = mustString(request.data?.field, 'field');
+      const newValue = mustString(request.data?.newValue, 'newValue');
+      const correctionResult = await executeCorrectionRequest(requestData.learnerId, field, newValue);
+
+      await requestRef.set({
+        status: 'completed' as ParentRequestStatus,
+        completedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true });
+
+      await appendTraceLog({
+        traceId: requestData.traceId,
+        siteId: requestData.siteId,
+        learnerId: requestData.learnerId,
+        action: 'parent_request_completed',
+        actorId: actor.uid,
+        actorRole: actor.role,
+        details: {
+          requestId,
+          requestType: requestData.requestType,
+          correctedField: field,
+        },
+      });
+
+      return {
+        status: 'completed',
+        requestId,
+        traceId: requestData.traceId,
+        correction: correctionResult,
+      };
+    }
+
+    // Handle delete requests (existing logic)
     const report = await executeParentRequest({
       requestId,
       siteId: requestData.siteId,

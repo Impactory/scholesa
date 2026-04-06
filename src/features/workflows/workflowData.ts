@@ -4402,8 +4402,14 @@ export async function updateWorkflowRecord(
   }
 
   const ref = doc(collection(firestore, target.collectionName), target.id);
-  const existing = await getDoc(ref).catch(() => null);
-  const data = (existing?.data() || {}) as Record<string, unknown>;
+  const existing = await getDoc(ref).catch((err) => {
+    console.error('Failed to read existing document before update:', err);
+    return null;
+  });
+  if (!existing || !existing.exists()) {
+    throw new Error('Could not verify existing document. Please try again.');
+  }
+  const data = (existing.data() || {}) as Record<string, unknown>;
   const siteId = ctx.routePath.startsWith('/site/')
     ? requireActiveSiteWorkflowContext(ctx)
     : activeSiteId(ctx.profile);

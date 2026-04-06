@@ -3728,10 +3728,15 @@ export async function handleVoiceAudio(req: Request, res: Response): Promise<voi
       throw new VoiceHttpError(400, 'invalid_argument', 'token is required.');
     }
     const payload = verifyAudioToken(token);
-    const wav = synthesizeAudioWave(payload.text, payload.locale);
-    res.setHeader('Content-Type', 'audio/wav');
-    res.setHeader('Cache-Control', 'private, max-age=60');
-    res.status(200).send(wav);
+    // TTS inference service is not configured — do not return fake sine-wave audio.
+    // The Flutter client uses FlutterTts as primary; this endpoint honestly signals unavailability.
+    res.setHeader('Cache-Control', 'no-store');
+    res.status(200).json({
+      ttsAvailable: false,
+      reason: 'TTS inference service not configured',
+      text: payload.text,
+      locale: payload.locale,
+    });
   } catch (error) {
     responseError(res, error);
   }

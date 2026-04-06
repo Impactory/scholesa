@@ -10,6 +10,7 @@ import { guardedFetch } from './security/egressGuard';
 import {
   buildExplainBackSubmittedEvent,
   explainBackRecordedFeedback,
+  verifyExplainBack,
 } from './aiCoachExplainBack';
 import {
   enqueueLearnerGoalReminders,
@@ -1564,6 +1565,14 @@ export const submitExplainBack = onCall(async (request) => {
     throw new HttpsError('permission-denied', 'Site access denied.');
   }
 
+  // Extract the AI response text from the opened event for copy-detection
+  const aiResponseText = typeof (openedData.payload as Record<string, unknown> | undefined)?.aiResponseText === 'string'
+    ? ((openedData.payload as Record<string, unknown>).aiResponseText as string)
+    : undefined;
+
+  // Verify the explain-back with heuristic checks
+  const verification = verifyExplainBack(explainBack, aiResponseText);
+
   const explainBackEvent = buildExplainBackSubmittedEvent({
     actorId: userId,
     aiHelpOpenedEventId: openedEventId,
@@ -1576,6 +1585,7 @@ export const submitExplainBack = onCall(async (request) => {
       checkpointId: openedData.checkpointId,
       payload: (openedData.payload as Record<string, unknown> | undefined) ?? {},
     },
+    verification,
   });
 
   await admin.firestore().collection('interactionEvents').add({
@@ -1584,8 +1594,8 @@ export const submitExplainBack = onCall(async (request) => {
   });
 
   return {
-    approved: true,
-    feedback: explainBackRecordedFeedback,
+    approved: verification.approved,
+    feedback: verification.feedback,
   };
 });
 
@@ -3567,10 +3577,23 @@ async function computeRoleDashboardStats(params: {
       upcomingSessions = 0;
     }
 
+    let pendingVerifications = 0;
+    try {
+      if (learnerIds.length > 0) {
+        const proofSnap = await db.collection('portfolioItems')
+          .where('learnerId', 'in', learnerIds.slice(0, 10))
+          .where('verificationStatus', '==', 'pending')
+          .get();
+        pendingVerifications = proofSnap.size;
+      }
+    } catch {
+      pendingVerifications = 0;
+    }
+
     return [
       { label: 'Linked Learners', value: String(learnerIds.length), icon: 'people', color: 'primary' },
       { label: 'Upcoming Sessions', value: String(upcomingSessions), icon: 'event', color: 'info' },
-      { label: 'Alerts', value: 'Evidence unavailable', icon: 'warning', color: 'warning' },
+      { label: 'Pending Verifications', value: String(pendingVerifications), icon: 'assignment', color: pendingVerifications > 0 ? 'warning' : 'success' },
     ];
   }
 
@@ -3589,7 +3612,8 @@ async function computeRoleDashboardStats(params: {
         .where('siteIds', 'array-contains', siteId)
         .get();
       onSite = users.docs.filter((doc) => normalizeRoleValue(doc.data().role) === 'learner').length;
-    } catch {
+    } catch (err) {
+      console.error('[dashboardStats:site] Failed to load onSite count:', err);
       onSite = 0;
     }
 
@@ -3602,7 +3626,8 @@ async function computeRoleDashboardStats(params: {
         .where('timestamp', '<', Timestamp.fromDate(endOfDay))
         .get();
       checkedIn = records.size;
-    } catch {
+    } catch (err) {
+      console.error('[dashboardStats:site] Failed to load checkedIn count:', err);
       checkedIn = 0;
     }
 
@@ -3613,7 +3638,8 @@ async function computeRoleDashboardStats(params: {
         .where('status', '==', 'open')
         .get();
       openIncidents = incidents.size;
-    } catch {
+    } catch (err) {
+      console.error('[dashboardStats:site] Failed to load openIncidents count:', err);
       openIncidents = 0;
     }
 
@@ -5893,12 +5919,18 @@ export const healthCheck = onRequest({
       firestoreStatus = 'limited';
     }
     
-    // Verify Auth connectivity (don't fail if user doesn't exist)
-    const authStatus = 'ok';
+    // Verify Auth connectivity
+    let authStatus = 'unknown';
     try {
       await admin.auth().getUser('health-check-dummy');
-    } catch {
-      // Expected - user doesn't exist, but auth service is working
+      authStatus = 'ok';
+    } catch (authErr: any) {
+      // auth/user-not-found means Auth service is working (expected for dummy user)
+      if (authErr?.code === 'auth/user-not-found') {
+        authStatus = 'ok';
+      } else {
+        authStatus = `error: ${authErr?.message ?? 'auth unavailable'}`;
+      }
     }
 
     res.status(200).json({

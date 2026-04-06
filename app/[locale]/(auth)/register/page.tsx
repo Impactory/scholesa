@@ -13,6 +13,7 @@ import { auth } from '@/src/firebase/client-init';
 import { createUserDocument, deleteUserDocument } from '@/src/lib/auth/createUser';
 import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import type { Role } from '@/schema';
+import type { AgeBand } from '@/src/types/user';
 import { useI18n } from '@/src/lib/i18n/useI18n';
 import { syncSessionCookie } from '@/src/firebase/auth/sessionClient';
 import { ThemeModeToggle } from '@/src/lib/theme/ThemeModeToggle';
@@ -28,6 +29,16 @@ export default function RegisterPage() {
   const [role, setRole] = useState<Role>('learner');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Privacy consent & age verification state
+  const [consentAccepted, setConsentAccepted] = useState(false);
+  const [tosAccepted, setTosAccepted] = useState(false);
+  const [ageBand, setAgeBand] = useState<AgeBand | ''>('');
+  const [parentConsentConfirmed, setParentConsentConfirmed] = useState(false);
+
+  const isUnder13 = ageBand === 'under13';
+  const consentValid =
+    consentAccepted && tosAccepted && ageBand !== '' && (!isUnder13 || parentConsentConfirmed);
 
   const resolveRegisterError = (err: unknown): string => {
     if (typeof err === 'object' && err !== null && 'code' in err) {
@@ -69,6 +80,7 @@ export default function RegisterPage() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!consentValid) return;
     setLoading(true);
     setError('');
 
@@ -86,13 +98,20 @@ export default function RegisterPage() {
         await updateProfile(user, { displayName });
       }
 
-      // 3. Create Firestore Document
+      // 3. Create Firestore Document with consent metadata
       await createUserDocument({
         uid: user.uid,
         email: user.email!,
         role,
         displayName,
         photoURL: user.photoURL || undefined,
+        registrationConsent: {
+          consentAccepted: true,
+          tosAccepted: true,
+          ageBand: ageBand as AgeBand,
+          parentConsentConfirmed: isUnder13 ? parentConsentConfirmed : false,
+          pipedaCrossBorderAcknowledged: true,
+        },
       });
       createdUserDocument = true;
 
@@ -193,17 +212,114 @@ export default function RegisterPage() {
             </div>
           </div>
 
+          {/* --- Privacy Consent & Age Verification --- */}
+          <div className="space-y-4 rounded-md border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/50">
+            {/* Age band selection */}
+            <div>
+              <label htmlFor="age-band" className="block text-sm font-medium leading-6 text-app-foreground">
+                Age of the primary user of this account
+              </label>
+              <select
+                id="age-band"
+                name="age-band"
+                required
+                className="mt-2 block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-app-foreground ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6 bg-app-surface"
+                value={ageBand}
+                onChange={(e) => {
+                  setAgeBand(e.target.value as AgeBand | '');
+                  if (e.target.value !== 'under13') {
+                    setParentConsentConfirmed(false);
+                  }
+                }}
+              >
+                <option value="" disabled>
+                  Select age range
+                </option>
+                <option value="under13">Under 13</option>
+                <option value="13-17">13-17</option>
+                <option value="18+">18+</option>
+              </select>
+            </div>
+
+            {/* Under-13 COPPA banner */}
+            {isUnder13 && (
+              <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-600 dark:bg-amber-900/30 dark:text-amber-200">
+                Accounts for children under 13 require parental/guardian consent. A parent or guardian must complete this registration.
+              </div>
+            )}
+
+            {/* Parent/guardian consent for under-13 */}
+            {isUnder13 && (
+              <div className="flex items-start gap-3">
+                <input
+                  id="parent-consent"
+                  name="parent-consent"
+                  type="checkbox"
+                  checked={parentConsentConfirmed}
+                  onChange={(e) => setParentConsentConfirmed(e.target.checked)}
+                  className="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+                />
+                <label htmlFor="parent-consent" className="text-sm text-app-foreground">
+                  I confirm I am the parent/guardian of this child and consent to their use of this platform.
+                </label>
+              </div>
+            )}
+
+            {/* Privacy policy consent */}
+            <div className="flex items-start gap-3">
+              <input
+                id="privacy-consent"
+                name="privacy-consent"
+                type="checkbox"
+                checked={consentAccepted}
+                onChange={(e) => setConsentAccepted(e.target.checked)}
+                className="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+              />
+              <label htmlFor="privacy-consent" className="text-sm text-app-foreground">
+                I agree to the{' '}
+                <a href={`/${locale}/privacy`} target="_blank" rel="noopener noreferrer" className="font-medium text-app-primary hover:text-app-primary-emphasis underline">
+                  Privacy Policy
+                </a>{' '}
+                and consent to the processing of personal information as described.
+              </label>
+            </div>
+
+            {/* Terms of Service consent */}
+            <div className="flex items-start gap-3">
+              <input
+                id="tos-consent"
+                name="tos-consent"
+                type="checkbox"
+                checked={tosAccepted}
+                onChange={(e) => setTosAccepted(e.target.checked)}
+                className="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+              />
+              <label htmlFor="tos-consent" className="text-sm text-app-foreground">
+                I agree to the{' '}
+                <a href={`/${locale}/terms`} target="_blank" rel="noopener noreferrer" className="font-medium text-app-primary hover:text-app-primary-emphasis underline">
+                  Terms of Service
+                </a>
+                .
+              </label>
+            </div>
+
+            {/* PIPEDA cross-border disclosure */}
+            <p className="text-xs text-app-muted">
+              Your data may be processed in Canada and the United States. By creating an account, you acknowledge this cross-border data transfer.
+            </p>
+          </div>
+
           <div>
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !consentValid}
               onClick={() => trackInteraction('help_accessed', { cta: 'auth_register_submit', role })}
               className="min-touch-target relative flex w-full justify-center rounded-md bg-app-primary px-4 py-3 text-sm font-semibold text-app-primary-foreground hover:bg-app-primary-emphasis focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-ring disabled:opacity-50"
             >
               {loading ? t('auth.register.submitting') : t('auth.register.submit')}
             </button>
           </div>
-          
+
           <div className="text-center text-sm">
             <a
               href={`/${locale}/login`}
