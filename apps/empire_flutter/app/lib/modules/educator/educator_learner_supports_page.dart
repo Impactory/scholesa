@@ -1069,7 +1069,7 @@ class _EducatorLearnerSupportsPageState
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   DropdownButtonFormField<String>(
-                    initialValue: selectedSupportType,
+                    value: selectedSupportType,
                     decoration: InputDecoration(
                       labelText:
                           _tEducatorLearnerSupports(context, 'Support Type'),
@@ -1095,7 +1095,7 @@ class _EducatorLearnerSupportsPageState
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<_Priority>(
-                    initialValue: selectedPriority,
+                    value: selectedPriority,
                     decoration: InputDecoration(
                       labelText: _tEducatorLearnerSupports(context, 'Priority'),
                     ),

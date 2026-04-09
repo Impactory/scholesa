@@ -2303,7 +2303,7 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
-                    initialValue: _selectedTime,
+                    value: _selectedTime,
                     decoration: InputDecoration(
                       labelText: _tSiteSessions(context, 'Time Slot'),
                       filled: true,
@@ -2340,7 +2340,7 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
-                    initialValue: _selectedEducatorId,
+                    value: _selectedEducatorId,
                     decoration: InputDecoration(
                       labelText: _tSiteSessions(context, 'Educator'),
                       filled: true,
@@ -2378,7 +2378,7 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
-                    initialValue: _selectedRoom,
+                    value: _selectedRoom,
                     decoration: InputDecoration(
                       labelText: _tSiteSessions(context, 'Room'),
                       filled: true,

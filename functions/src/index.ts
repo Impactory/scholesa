@@ -8632,12 +8632,15 @@ export const applyRubricToEvidence = onCall(async (request: CallableRequest<{
     const priorEvidenceIds: string[] = Array.isArray(masteryData.evidenceIds) ? masteryData.evidenceIds : [];
     const mergedEvidenceIds = [...new Set([...safeEvidenceRecordIds, ...priorEvidenceIds])];
 
+    const NUMBER_TO_LEVEL: Record<number, string> = { 1: 'emerging', 2: 'developing', 3: 'proficient', 4: 'advanced' };
+
     batch.set(masteryRef, {
       learnerId,
       capabilityId,
       siteId,
       pillarCode,
       latestLevel: nextLevel,
+      currentLevel: NUMBER_TO_LEVEL[nextLevel] ?? 'emerging',
       highestLevel,
       latestEvidenceId: safeEvidenceRecordIds[0] ?? null,
       latestMissionAttemptId: missionAttemptId ?? null,
@@ -9069,14 +9072,23 @@ export const evaluateBadgeEligibility = onCall(async (request: CallableRequest<{
   const masteryByCapability = new Map<string, string>();
   masterySnap.docs.forEach((d) => {
     const data = d.data();
-    if (data.capabilityId && data.currentLevel) {
-      masteryByCapability.set(data.capabilityId, data.currentLevel);
+    if (data.capabilityId) {
+      // Support both field conventions: currentLevel (string) from
+      // processCheckpointMasteryUpdate and latestLevel (number 1-4) from
+      // applyRubricToEvidence. Normalize to string for comparison.
+      const LEVEL_FROM_NUMBER: Record<number, string> = { 1: 'emerging', 2: 'developing', 3: 'proficient', 4: 'advanced' };
+      const level = data.currentLevel
+        || LEVEL_FROM_NUMBER[data.latestLevel as number]
+        || null;
+      if (level) {
+        masteryByCapability.set(data.capabilityId, level);
+      }
     }
   });
 
   // Load existing badge awards to avoid duplicates
   const existingAwardsSnap = await db
-    .collection('badgeAwards')
+    .collection('badgeAchievements')
     .where('learnerId', '==', learnerId)
     .where('siteId', '==', siteId)
     .get();
@@ -9139,7 +9151,7 @@ export const evaluateBadgeEligibility = onCall(async (request: CallableRequest<{
     }
 
     if (eligible) {
-      const awardRef = db.collection('badgeAwards').doc();
+      const awardRef = db.collection('badgeAchievements').doc();
       batch.set(awardRef, {
         badgeId: badgeDoc.id,
         learnerId,
@@ -9238,6 +9250,8 @@ export const processCheckpointMasteryUpdate = onCall(async (request: CallableReq
     const newIdx = LEVEL_ORDER.indexOf(newLevel);
     if (newIdx <= currentIdx) continue; // No progression
 
+    const LEVEL_TO_NUMBER: Record<string, number> = { emerging: 1, developing: 2, proficient: 3, advanced: 4 };
+
     // Update or create mastery record
     if (masteryQuery.empty) {
       const masteryRef = db.collection('capabilityMastery').doc();
@@ -9245,6 +9259,7 @@ export const processCheckpointMasteryUpdate = onCall(async (request: CallableReq
         learnerId,
         capabilityId,
         currentLevel: newLevel,
+        latestLevel: LEVEL_TO_NUMBER[newLevel] ?? 1,
         previousLevel: null,
         evidenceCount,
         lastAssessedBy: educatorId || 'system',
@@ -9254,6 +9269,7 @@ export const processCheckpointMasteryUpdate = onCall(async (request: CallableReq
     } else {
       batch.update(masteryQuery.docs[0].ref, {
         currentLevel: newLevel,
+        latestLevel: LEVEL_TO_NUMBER[newLevel] ?? 1,
         previousLevel: currentLevel,
         evidenceCount,
         lastAssessedBy: educatorId || 'system',

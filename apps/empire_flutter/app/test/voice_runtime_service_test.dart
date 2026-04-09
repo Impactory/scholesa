@@ -95,6 +95,30 @@ void main() {
     });
   });
 
+  group('VoiceRuntimeService configuration', () {
+    test('region default is us-central1', () {
+      expect(VoiceRuntimeService.region, 'us-central1');
+    });
+
+    test('region is mutable for non-default deployments', () {
+      final String original = VoiceRuntimeService.region;
+      VoiceRuntimeService.region = 'europe-west1';
+      expect(VoiceRuntimeService.region, 'europe-west1');
+      VoiceRuntimeService.region = original;
+    });
+
+    test('timeout default is 25 seconds', () {
+      expect(VoiceRuntimeService.timeout, const Duration(seconds: 25));
+    });
+
+    test('timeout is mutable for custom configurations', () {
+      final Duration original = VoiceRuntimeService.timeout;
+      VoiceRuntimeService.timeout = const Duration(seconds: 60);
+      expect(VoiceRuntimeService.timeout, const Duration(seconds: 60));
+      VoiceRuntimeService.timeout = original;
+    });
+  });
+
   group('ExplainBackResult', () {
     test('constructs with approved = true', () {
       const result = ExplainBackResult(

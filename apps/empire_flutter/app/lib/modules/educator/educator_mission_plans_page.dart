@@ -956,7 +956,7 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  initialValue: selectedPillar,
+                  value: selectedPillar,
                   decoration: InputDecoration(
                     labelText: _tEducatorMissionPlans(context, 'Pillar'),
                     border: const OutlineInputBorder(),

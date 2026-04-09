@@ -1735,6 +1735,7 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
                                           final ScaffoldMessengerState
                                               messenger =
                                               ScaffoldMessenger.of(context);
+                                          final AppState? appState = context.read<AppState?>();
                                           await _saveProofBundle();
                                           TelemetryService.instance.logEvent(
                                             event: 'cta.clicked',
@@ -1772,7 +1773,6 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
                                               'progress': mission.progress,
                                             },
                                           );
-                                          final AppState? appState = context.read<AppState?>();
                                           BosEventBus.instance.track(
                                             eventType: 'mission_completed',
                                             siteId: appState?.activeSiteId ?? '',

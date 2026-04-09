@@ -57,7 +57,11 @@ class VoiceRuntimeService {
   VoiceRuntimeService._();
   static final VoiceRuntimeService instance = VoiceRuntimeService._();
 
-  static const Duration _timeout = Duration(seconds: 25);
+  /// Cloud Function region. Override for non-default deployments.
+  static String region = 'us-central1';
+
+  /// HTTP timeout for all voice API calls.
+  static Duration timeout = const Duration(seconds: 25);
 
   Future<String> _requiredIdToken() async {
     final User? user = FirebaseAuth.instance.currentUser;
@@ -86,7 +90,7 @@ class VoiceRuntimeService {
           },
           body: jsonEncode(request.toMap()),
         )
-        .timeout(_timeout);
+        .timeout(timeout);
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw Exception(
@@ -166,7 +170,7 @@ class VoiceRuntimeService {
         .add(await http.MultipartFile.fromPath('audio', audioFilePath));
 
     final http.StreamedResponse streamed =
-        await request.send().timeout(_timeout);
+        await request.send().timeout(timeout);
     final http.Response response = await http.Response.fromStream(streamed);
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw Exception(
@@ -210,7 +214,7 @@ class VoiceRuntimeService {
           },
           body: jsonEncode(body),
         )
-        .timeout(_timeout);
+        .timeout(timeout);
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw Exception(
@@ -248,13 +252,11 @@ class VoiceRuntimeService {
     return (confidence.clamp(0.0, 1.0) as num).toDouble();
   }
 
-  static const String _defaultRegion = 'us-central1';
-
   Uri _voiceApiUri(String path) {
     final String projectId = Firebase.app().options.projectId;
     final String cleanedPath = path.startsWith('/') ? path : '/$path';
     return Uri.parse(
-      'https://$_defaultRegion-$projectId.cloudfunctions.net/voiceApi$cleanedPath',
+      'https://$region-$projectId.cloudfunctions.net/voiceApi$cleanedPath',
     );
   }
 }

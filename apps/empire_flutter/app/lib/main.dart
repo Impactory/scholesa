@@ -28,7 +28,7 @@ import 'services/theme_service.dart';
 import 'services/app_resilience.dart';
 import 'offline/offline_queue.dart';
 import 'offline/sync_coordinator.dart';
-import 'runtime/global_ai_assistant_overlay.dart';
+import 'runtime/runtime.dart';
 import 'router/app_router.dart';
 import 'ui/localization/app_strings.dart';
 import 'modules/hq_admin/hq_admin.dart';

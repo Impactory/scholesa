@@ -1245,7 +1245,7 @@ class _CreateLearnerDialogState extends State<_CreateLearnerDialog> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<int>(
-              initialValue: _selectedGrade,
+              value: _selectedGrade,
               decoration: InputDecoration(
                 labelText: _tProvisioning(context, 'Grade Level'),
                 prefixIcon: Icon(Icons.school),
@@ -1525,7 +1525,7 @@ class _CreateLinkDialogState extends State<_CreateLinkDialog> {
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               DropdownButtonFormField<String>(
-                initialValue: _selectedParentId,
+                value: _selectedParentId,
                 decoration: InputDecoration(
                   labelText: _tProvisioning(context, 'Parent'),
                   prefixIcon: Icon(Icons.family_restroom),
@@ -1548,7 +1548,7 @@ class _CreateLinkDialogState extends State<_CreateLinkDialog> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                initialValue: _selectedLearnerId,
+                value: _selectedLearnerId,
                 decoration: InputDecoration(
                   labelText: _tProvisioning(context, 'Learner'),
                   prefixIcon: Icon(Icons.child_care),
@@ -1572,7 +1572,7 @@ class _CreateLinkDialogState extends State<_CreateLinkDialog> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                initialValue: _relationship,
+                value: _relationship,
                 decoration: InputDecoration(
                   labelText: _tProvisioning(context, 'Relationship'),
                   prefixIcon: Icon(Icons.people),
@@ -1747,7 +1747,7 @@ class _CreateCohortDialogState extends State<_CreateCohortDialog> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  initialValue: _ageBand,
+                  value: _ageBand,
                   decoration: InputDecoration(
                     labelText: _tProvisioning(context, 'Age Band'),
                     prefixIcon: const Icon(Icons.groups_rounded),
@@ -1779,7 +1779,7 @@ class _CreateCohortDialogState extends State<_CreateCohortDialog> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  initialValue: _programFormat,
+                  value: _programFormat,
                   decoration: InputDecoration(
                     labelText: _tProvisioning(context, 'Program Format'),
                     prefixIcon: const Icon(Icons.rocket_rounded),
@@ -1817,7 +1817,7 @@ class _CreateCohortDialogState extends State<_CreateCohortDialog> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  initialValue: _rosterStatus,
+                  value: _rosterStatus,
                   decoration: InputDecoration(
                     labelText: _tProvisioning(context, 'Roster Status'),
                     prefixIcon: const Icon(Icons.fact_check_rounded),
@@ -1838,7 +1838,7 @@ class _CreateCohortDialogState extends State<_CreateCohortDialog> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  initialValue: _parentCommunicationStatus,
+                  value: _parentCommunicationStatus,
                   decoration: InputDecoration(
                     labelText: _tProvisioning(context, 'Parent Comms'),
                     prefixIcon: const Icon(Icons.mark_email_read_rounded),
@@ -1860,7 +1860,7 @@ class _CreateCohortDialogState extends State<_CreateCohortDialog> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  initialValue: _baselineSurveyStatus,
+                  value: _baselineSurveyStatus,
                   decoration: InputDecoration(
                     labelText: _tProvisioning(context, 'Baseline Survey'),
                     prefixIcon: const Icon(Icons.assignment_rounded),
@@ -1882,7 +1882,7 @@ class _CreateCohortDialogState extends State<_CreateCohortDialog> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  initialValue: _kickoffStatus,
+                  value: _kickoffStatus,
                   decoration: InputDecoration(
                     labelText: _tProvisioning(context, 'Kickoff'),
                     prefixIcon: const Icon(Icons.celebration_rounded),
@@ -2034,7 +2034,7 @@ class _EditLearnerDialogState extends State<_EditLearnerDialog> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<int>(
-              initialValue: _selectedGrade,
+              value: _selectedGrade,
               decoration: InputDecoration(
                 labelText: _tProvisioning(context, 'Grade Level'),
                 prefixIcon: Icon(Icons.school),

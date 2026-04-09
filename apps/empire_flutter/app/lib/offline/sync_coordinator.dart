@@ -216,7 +216,7 @@ class SyncCoordinator extends ChangeNotifier {
         break;
       case OpType.observationCapture:
         await firestore
-            .collection('observationRecords')
+            .collection('evidenceRecords')
             .doc(op.idempotencyKey)
             .set(payload);
         break;

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -337,6 +338,90 @@ void main() {
       expect(r.synced, 5);
       expect(r.failed, 2);
       expect(r.pending, 3);
+    });
+  });
+
+  // ── Evidence chain collection targeting ─────────────────────
+  group('Evidence chain collection targeting', () {
+    test('observationCapture OpType targets evidenceRecords (not observationRecords)', () {
+      // Read the source file to verify the correct collection name.
+      // This test guards against regression of the offline/online
+      // collection mismatch bug where observations synced from offline
+      // went to the wrong collection.
+      final String source = File(
+        'lib/offline/sync_coordinator.dart',
+      ).readAsStringSync();
+
+      final int obsCaseIdx = source.indexOf('OpType.observationCapture');
+      expect(obsCaseIdx, isNot(-1), reason: 'observationCapture case must exist');
+
+      final String obsSection = source.substring(obsCaseIdx, obsCaseIdx + 250);
+      expect(
+        obsSection,
+        contains("'evidenceRecords'"),
+        reason: 'offline observation sync must target evidenceRecords collection',
+      );
+      expect(
+        obsSection,
+        isNot(contains("'observationRecords'")),
+        reason: 'must NOT target observationRecords (legacy mismatch)',
+      );
+    });
+
+    test('bosEventIngest routes through Cloud Function (not direct Firestore)', () {
+      final String source = File(
+        'lib/offline/sync_coordinator.dart',
+      ).readAsStringSync();
+
+      final int bosCaseIdx = source.indexOf('OpType.bosEventIngest');
+      expect(bosCaseIdx, isNot(-1), reason: 'bosEventIngest case must exist');
+
+      final String bosSection = source.substring(bosCaseIdx, bosCaseIdx + 400);
+      expect(
+        bosSection,
+        contains('bosIngestEvent'),
+        reason: 'Must route through bosIngestEvent Cloud Function for FDM, sanitization, COPPA',
+      );
+    });
+
+    test('proofBundleUpdate requires non-empty bundleId', () {
+      final String source = File(
+        'lib/offline/sync_coordinator.dart',
+      ).readAsStringSync();
+
+      final int proofIdx = source.indexOf('OpType.proofBundleUpdate');
+      expect(proofIdx, isNot(-1));
+
+      final String proofSection = source.substring(proofIdx, proofIdx + 400);
+      expect(
+        proofSection,
+        contains('StateError'),
+        reason: 'proofBundleUpdate must throw on empty bundleId',
+      );
+    });
+
+    test('all evidence chain OpTypes exist in enum', () {
+      // Guard against accidental removal of evidence chain op types
+      final List<String> requiredOps = <String>[
+        'checkpointSubmit',
+        'reflectionSubmit',
+        'peerFeedbackSubmit',
+        'proofBundleCreate',
+        'proofBundleUpdate',
+        'rubricApplication',
+        'rubricApply',
+        'capabilityGrowthEvent',
+        'portfolioItemCreate',
+        'observationCapture',
+        'aiCoachLog',
+        'bosEventIngest',
+      ];
+
+      for (final String opName in requiredOps) {
+        final bool exists =
+            OpType.values.any((OpType op) => op.name == opName);
+        expect(exists, isTrue, reason: 'OpType.$opName must exist');
+      }
     });
   });
 }

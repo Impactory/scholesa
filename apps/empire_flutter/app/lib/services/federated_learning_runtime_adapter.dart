@@ -4,7 +4,7 @@ import 'dart:math' as math;
 
 import '../auth/app_state.dart';
 import '../domain/models.dart';
-import '../runtime/bos_models.dart';
+import '../runtime/runtime.dart';
 import 'federated_learning_runtime_activation_reporter.dart';
 import 'federated_learning_runtime_package_resolver.dart';
 import 'federated_learning_prototype_uploader.dart';

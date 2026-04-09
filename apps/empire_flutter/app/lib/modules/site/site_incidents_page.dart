@@ -656,7 +656,7 @@ class _SiteIncidentsPageState extends State<SiteIncidentsPage>
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<_Severity>(
-                  initialValue: selectedSeverity,
+                  value: selectedSeverity,
                   decoration: InputDecoration(
                     labelText: _tSiteIncidents(context, 'Severity'),
                     border: const OutlineInputBorder(),

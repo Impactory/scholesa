@@ -909,10 +909,10 @@ service cloud.firestore {
 
     // ── BOS+MIA Runtime Collections ──────────────────
 
-    // interactionEvents: client writes, server reads for FDM pipeline
+    // interactionEvents: client writes own events, server reads for FDM pipeline
     match /interactionEvents/{id} {
       allow read: if isHQ() || isAdminOrHQ();
-      allow create: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
       allow update: if false;
       allow delete: if false;
     }
@@ -1002,10 +1002,10 @@ service cloud.firestore {
       allow update, delete: if false; // Immutable once awarded
     }
 
-    // Motivation analytics — aggregates per learner, written by learner, read by educator/parent
+    // Motivation analytics — server-managed, read by educator/owner/parent
     match /motivationAnalytics/{id} {
-      allow read: if isAuthenticated();
-      allow create, update: if isAuthenticated();
+      allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator() || isParentLinkedToLearner(resource.data.learnerId));
+      allow create, update: if false; // Server-only via Cloud Functions
       allow delete: if false;
     }
 
@@ -1017,9 +1017,11 @@ service cloud.firestore {
     }
 
     // Session reflections — motivation engine aggregates per session
+    // Session reflections — owner write, educator/owner read
     match /sessionReflections/{id} {
-      allow read: if isAuthenticated();
-      allow create, update: if isAuthenticated();
+      allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
+      allow create: if isAuthenticated() && request.resource.data.learnerId == request.auth.uid;
+      allow update: if isAuthenticated() && resource.data.learnerId == request.auth.uid;
       allow delete: if false;
     }
 
@@ -1065,6 +1067,127 @@ service cloud.firestore {
     match /commonMisconceptions/{id} {
       allow read: if isAuthenticated();
       allow write: if isHQ();
+    }
+
+    // ── Missing rules for Flutter collections ──────────────────
+
+    // MicroSkills — HQ admin defines, read by all (used by growth engine)
+    match /microSkills/{id} {
+      allow read: if isAuthenticated();
+      allow create, update: if isHQ();
+      allow delete: if false;
+    }
+
+    // Live session modes — educator writes, site-scoped read
+    match /liveSessionModes/{id} {
+      allow read: if isAuthenticated() && userHasSite(resource.data.siteId);
+      allow create, update: if isEducator() && userHasSite(request.resource.data.siteId);
+      allow delete: if false;
+    }
+
+    // Live session events — educator writes, site-scoped read
+    match /liveSessionEvents/{id} {
+      allow read: if isAuthenticated() && userHasSite(resource.data.siteId);
+      allow create: if isEducator() && userHasSite(request.resource.data.siteId);
+      allow update: if false; // Immutable event log
+      allow delete: if false;
+    }
+
+    // Mission submissions — learner creates own, educator reads/updates
+    match /missionSubmissions/{id} {
+      allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
+      allow create: if isAuthenticated() && request.resource.data.learnerId == request.auth.uid;
+      allow update: if isEducator();
+      allow delete: if false;
+    }
+
+    // Site ops daily status — educator/site writes, site-scoped read
+    match /siteOpsDailyStatus/{id} {
+      allow read: if isAuthenticated() && userHasSite(resource.data.siteId);
+      allow create, update: if isEducator() && userHasSite(request.resource.data.siteId);
+      allow delete: if false;
+    }
+
+    // Site ops kit checklist — educator/site writes, site-scoped read
+    match /siteOpsKitChecklist/{id} {
+      allow read: if isAuthenticated() && userHasSite(resource.data.siteId);
+      allow create, update: if isEducator() && userHasSite(request.resource.data.siteId);
+      allow delete: if false;
+    }
+
+    // Site safety notes — educator writes, site-scoped read
+    match /siteSafetyNotes/{id} {
+      allow read: if isAuthenticated() && userHasSite(resource.data.siteId);
+      allow create, update: if isEducator() && userHasSite(request.resource.data.siteId);
+      allow delete: if false;
+    }
+
+    // Support requests — learner/parent creates own, educator reads
+    match /supportRequests/{id} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isEducator() || isHQ());
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isEducator() || isHQ();
+      allow delete: if false;
+    }
+
+    // Research consents — educator/site manages, site-scoped
+    match /researchConsents/{id} {
+      allow read: if isAuthenticated() && userHasSite(resource.data.siteId);
+      allow create, update: if isEducator() && userHasSite(request.resource.data.siteId);
+      allow delete: if false;
+    }
+
+    // Student assents — learner reads own, educator reads
+    match /studentAssents/{id} {
+      allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
+      allow create: if isAuthenticated() && request.resource.data.learnerId == request.auth.uid;
+      allow update: if false; // Immutable
+      allow delete: if false;
+    }
+
+    // Assessment instruments — HQ defines, authenticated reads
+    match /assessmentInstruments/{id} {
+      allow read: if isAuthenticated();
+      allow create, update: if isHQ();
+      allow delete: if false;
+    }
+
+    // Item responses — learner creates own, educator reads
+    match /itemResponses/{id} {
+      allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
+      allow create: if isAuthenticated() && request.resource.data.learnerId == request.auth.uid;
+      allow update: if false; // Immutable
+      allow delete: if false;
+    }
+
+    // Learner next steps — educator creates, learner reads own
+    match /learnerNextSteps/{id} {
+      allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
+      allow create, update: if isEducator();
+      allow delete: if false;
+    }
+
+    // Practice exports — educator creates, site-scoped read
+    match /practiceExports/{id} {
+      allow read: if isAuthenticated() && userHasSite(resource.data.siteId);
+      allow create: if isEducator() && userHasSite(request.resource.data.siteId);
+      allow update, delete: if false;
+    }
+
+    // LTI collections — server-managed, educator/HQ read
+    match /ltiPlatformRegistrations/{id} {
+      allow read: if isAuthenticated() && (isEducator() || isHQ());
+      allow write: if false; // Server-only
+    }
+
+    match /ltiResourceLinks/{id} {
+      allow read: if isAuthenticated() && (isEducator() || isHQ());
+      allow write: if false; // Server-only
+    }
+
+    match /ltiGradePassbackJobs/{id} {
+      allow read: if isAuthenticated() && (isEducator() || isHQ());
+      allow write: if false; // Server-only
     }
 
     // Default Deny

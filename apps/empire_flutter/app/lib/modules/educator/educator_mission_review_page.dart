@@ -1113,6 +1113,7 @@ class _ReviewSheetState extends State<_ReviewSheet> {
     }
     final int effectiveRating = _rating == 0 ? fallbackRating : _rating;
     final List<Map<String, dynamic>> rubricScores = _selectedRubricScores();
+    final AppState? reviewAppState = context.read<AppState?>();
     final bool success = await missionService.submitReview(
       submissionId: widget.submission.id,
       rating: effectiveRating,
@@ -1140,7 +1141,6 @@ class _ReviewSheetState extends State<_ReviewSheet> {
       }
       return;
     }
-    final AppState? reviewAppState = context.read<AppState?>();
     BosEventBus.instance.track(
       eventType: 'artifact_reviewed',
       siteId: reviewAppState?.activeSiteId ?? '',

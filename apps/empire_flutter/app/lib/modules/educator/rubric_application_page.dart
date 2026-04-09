@@ -123,6 +123,9 @@ class _RubricApplicationPageState extends State<RubricApplicationPage> {
     final String learnerId = attempt['learnerId'] as String? ?? '';
     final String attemptId = attempt['id'] as String? ?? '';
     final String? siteId = _activeSiteId();
+    final GradeBand resolvedGradeBand = gradeBandForRole(
+      appState.role ?? UserRole.educator,
+    );
 
     if (educatorId.isEmpty || learnerId.isEmpty || siteId == null) return;
 
@@ -172,7 +175,7 @@ class _RubricApplicationPageState extends State<RubricApplicationPage> {
       BosEventBus.instance.track(
         eventType: 'checkpoint_graded',
         siteId: siteId,
-        gradeBand: GradeBand.g7_9,
+        gradeBand: resolvedGradeBand,
         actorRole: 'educator',
         payload: <String, dynamic>{
           'learnerId': learnerId,

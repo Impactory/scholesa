@@ -695,7 +695,7 @@ class _PickupAuthorizationEditorDialogState
                 _buildLockedLearnerField()
               else
                 DropdownButtonFormField<String>(
-                  initialValue: _selectedLearnerId,
+                  value: _selectedLearnerId,
                   decoration: InputDecoration(
                     labelText: _tSitePickupAuth(context, 'Learner'),
                     border: const OutlineInputBorder(),

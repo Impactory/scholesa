@@ -1011,6 +1011,10 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
   }) async {
     if (!_voiceOutputEnabled) return;
 
+    // Capture locale before any async gap to avoid use_build_context_synchronously.
+    final String capturedLocale =
+        Localizations.localeOf(context).toLanguageTag();
+
     if (widget.onSpeakOverride != null) {
       await widget.onSpeakOverride!(text);
       await TelemetryService.instance.logEvent(
@@ -1101,11 +1105,9 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
 
     // Fallback: direct browser speechSynthesis via Web Speech API.
     if (!played && kIsWeb && WebSpeechSynthesis.isSupported) {
-      final String synthesisLocale =
-          Localizations.localeOf(context).toLanguageTag();
       try {
         if (mounted) setState(() => _isSpeaking = true);
-        await WebSpeechSynthesis.speak(text, locale: synthesisLocale);
+        await WebSpeechSynthesis.speak(text, locale: capturedLocale);
         played = true;
         if (mounted) setState(() => _isSpeaking = false);
         await TelemetryService.instance.logEvent(

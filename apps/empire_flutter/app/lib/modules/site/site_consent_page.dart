@@ -749,7 +749,7 @@ class _MediaConsentDialogState extends State<_MediaConsentDialog> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  initialValue: _consentStatus,
+                  value: _consentStatus,
                   decoration: InputDecoration(
                     labelText: _tSiteConsent(context, 'Consent status'),
                     border: const OutlineInputBorder(),
@@ -932,7 +932,7 @@ class _ResearchConsentDialogState extends State<_ResearchConsentDialog> {
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
                 DropdownButtonFormField<String>(
-                  initialValue: _selectedParentId.isEmpty ? null : _selectedParentId,
+                  value: _selectedParentId.isEmpty ? null : _selectedParentId,
                   decoration: InputDecoration(
                     labelText: _tSiteConsent(context, 'Parent'),
                     border: const OutlineInputBorder(),
@@ -974,7 +974,7 @@ class _ResearchConsentDialogState extends State<_ResearchConsentDialog> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  initialValue: _dataShareScope,
+                  value: _dataShareScope,
                   decoration: InputDecoration(
                     labelText: _tSiteConsent(context, 'Data share scope'),
                     border: const OutlineInputBorder(),
