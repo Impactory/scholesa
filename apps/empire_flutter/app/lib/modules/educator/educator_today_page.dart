@@ -40,13 +40,20 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final AppState? appState = context.read<AppState?>();
+      BosEventBus.instance.track(
+        eventType: 'educator_class_view',
+        siteId: appState?.activeSiteId ?? '',
+        gradeBand: GradeBand.g7_9,
+        actorRole: 'educator',
+      );
       await _refreshEducatorData();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return MiloRuntimeScope(child: Scaffold(
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -160,7 +167,7 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
           },
         ),
       ),
-    );
+    ));
   }
 
   String? _sessionOccurrenceIdForInsights(EducatorService service) {
@@ -1716,6 +1723,7 @@ class _LiveSessionModeSheetState extends State<_LiveSessionModeSheet> {
         'learner_id': learnerId,
       },
     );
+    final AppState? csAppState = context.read<AppState?>();
     await _persistLiveSessionState(
       eventType: 'cold_call',
       eventData: <String, dynamic>{
@@ -1723,6 +1731,16 @@ class _LiveSessionModeSheetState extends State<_LiveSessionModeSheet> {
         'learnerName': widget.learnerNamesById[learnerId],
       },
       successMessage: 'Cold-call queued',
+    );
+    BosEventBus.instance.track(
+      eventType: 'cold_call',
+      siteId: csAppState?.activeSiteId ?? '',
+      gradeBand: GradeBand.g7_9,
+      actorRole: 'educator',
+      payload: <String, dynamic>{
+        'learnerId': learnerId,
+        'classId': widget.todayClass.id,
+      },
     );
   }
 
@@ -1734,6 +1752,7 @@ class _LiveSessionModeSheetState extends State<_LiveSessionModeSheet> {
         'class_id': widget.todayClass.id,
       },
     );
+    final AppState? pollAppState = context.read<AppState?>();
     await _persistLiveSessionState(
       eventType: 'poll',
       eventData: <String, dynamic>{
@@ -1741,6 +1760,15 @@ class _LiveSessionModeSheetState extends State<_LiveSessionModeSheet> {
         'options': const <String>['Need help', 'Ready', 'Can teach it'],
       },
       successMessage: 'Quick poll saved to live mode',
+    );
+    BosEventBus.instance.track(
+      eventType: 'poll',
+      siteId: pollAppState?.activeSiteId ?? '',
+      gradeBand: GradeBand.g7_9,
+      actorRole: 'educator',
+      payload: <String, dynamic>{
+        'classId': widget.todayClass.id,
+      },
     );
   }
 
@@ -1752,12 +1780,22 @@ class _LiveSessionModeSheetState extends State<_LiveSessionModeSheet> {
         'class_id': widget.todayClass.id,
       },
     );
+    final AppState? etAppState = context.read<AppState?>();
     await _persistLiveSessionState(
       eventType: 'exit_ticket',
       eventData: <String, dynamic>{
         'prompt': _exitTicketController.text.trim(),
       },
       successMessage: 'Exit ticket saved to live mode',
+    );
+    BosEventBus.instance.track(
+      eventType: 'exit_ticket',
+      siteId: etAppState?.activeSiteId ?? '',
+      gradeBand: GradeBand.g7_9,
+      actorRole: 'educator',
+      payload: <String, dynamic>{
+        'classId': widget.todayClass.id,
+      },
     );
   }
 

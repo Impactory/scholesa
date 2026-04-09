@@ -234,7 +234,7 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                 },
               );
 
-    return Scaffold(
+    return MiloRuntimeScope(child: Scaffold(
       backgroundColor: ScholesaColors.background,
       appBar: AppBar(
         title: Text(_tEducatorMissionPlans(context, 'Mission Plans')),
@@ -305,7 +305,7 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
           );
         },
       ),
-    );
+    ));
   }
 
   Widget _buildMissionPlanCard(_MissionPlan plan) {

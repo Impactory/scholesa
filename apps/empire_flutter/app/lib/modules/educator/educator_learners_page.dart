@@ -120,7 +120,7 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return MiloRuntimeScope(child: Scaffold(
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -219,7 +219,7 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
           },
         ),
       ),
-    );
+    ));
   }
 
   void _selectLoopLearner(EducatorLearner learner) {
@@ -547,6 +547,14 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
         'learner_id': learner.id,
       },
     );
+    final AppState? appState = context.read<AppState?>();
+    BosEventBus.instance.track(
+      eventType: 'educator_learner_drilldown',
+      siteId: appState?.activeSiteId ?? '',
+      gradeBand: GradeBand.g7_9,
+      actorRole: 'educator',
+      payload: <String, dynamic>{'learnerId': learner.id},
+    );
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -864,6 +872,15 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
   bool _followUpStatusIsError = false;
   List<Map<String, dynamic>> _growthEvents = <Map<String, dynamic>>[];
   bool _isLoadingGrowth = true;
+  // MVL override state
+  Map<String, dynamic>? _activeMvlEpisode;
+  bool _isLoadingMvl = true;
+  bool _isMvlOverriding = false;
+  final TextEditingController _mvlReasonController = TextEditingController();
+  // Contestability state
+  bool _hasContestabilityRequest = false;
+  String? _contestabilityReason;
+  bool _isResolvingContestability = false;
 
   EducatorLearner get learner => widget.learner;
 
@@ -876,6 +893,7 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadSavedLaneOverride();
       _loadGrowthEvents();
+      _loadActiveMvlEpisode();
     });
   }
 
@@ -883,6 +901,7 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
   void dispose() {
     _overrideReasonController.dispose();
     _followUpRequestController.dispose();
+    _mvlReasonController.dispose();
     super.dispose();
   }
 
@@ -1030,6 +1049,141 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
       if (mounted) {
         setState(() => _isLoadingGrowth = false);
       }
+    }
+  }
+
+  Future<void> _loadActiveMvlEpisode() async {
+    try {
+      final AppState? appState = context.read<AppState?>();
+      final String siteId = appState?.activeSiteId ?? '';
+      if (siteId.isEmpty) {
+        if (mounted) setState(() => _isLoadingMvl = false);
+        return;
+      }
+      final QuerySnapshot<Map<String, dynamic>> snap = await FirebaseFirestore
+          .instance
+          .collection('mvlEpisodes')
+          .where('learnerId', isEqualTo: learner.id)
+          .where('siteId', isEqualTo: siteId)
+          .where('resolution', isNull: true)
+          .orderBy('createdAt', descending: true)
+          .limit(1)
+          .get();
+      if (!mounted) return;
+      final Map<String, dynamic>? episodeData = snap.docs.isNotEmpty
+          ? <String, dynamic>{'id': snap.docs.first.id, ...snap.docs.first.data()}
+          : null;
+      setState(() {
+        _activeMvlEpisode = episodeData;
+        _isLoadingMvl = false;
+        _hasContestabilityRequest =
+            episodeData?['contestabilityStatus'] == 'pending';
+        _contestabilityReason =
+            episodeData?['contestabilityReason'] as String?;
+      });
+    } catch (error) {
+      debugPrint('Failed to load MVL episode: $error');
+      if (mounted) setState(() => _isLoadingMvl = false);
+    }
+  }
+
+  Future<void> _overrideMvl(String resolution) async {
+    final String? episodeId = _activeMvlEpisode?['id'] as String?;
+    if (episodeId == null || episodeId.isEmpty) return;
+
+    setState(() => _isMvlOverriding = true);
+    try {
+      await BosService.instance.teacherOverrideMvl(
+        episodeId: episodeId,
+        resolution: resolution,
+        reason: _mvlReasonController.text.trim().isNotEmpty
+            ? _mvlReasonController.text.trim()
+            : null,
+      );
+
+      final AppState? appState = mounted ? context.read<AppState?>() : null;
+      BosEventBus.instance.track(
+        eventType: 'teacher_override_mvl',
+        siteId: appState?.activeSiteId ?? '',
+        gradeBand: GradeBand.g7_9,
+        actorRole: 'educator',
+        payload: <String, dynamic>{
+          'episodeId': episodeId,
+          'resolution': resolution,
+          'learnerId': learner.id,
+        },
+      );
+
+      if (!mounted) return;
+      _mvlReasonController.clear();
+      setState(() {
+        _activeMvlEpisode = null;
+        _isMvlOverriding = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_tEducatorLearners(context, 'MVL override applied')),
+          backgroundColor: ScholesaColors.success,
+        ),
+      );
+    } catch (error) {
+      debugPrint('MVL override failed: $error');
+      if (!mounted) return;
+      setState(() => _isMvlOverriding = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_tEducatorLearners(context, 'MVL override failed')),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _resolveContestability(String resolution) async {
+    final String? episodeId = _activeMvlEpisode?['id'] as String?;
+    if (episodeId == null || episodeId.isEmpty) return;
+
+    setState(() => _isResolvingContestability = true);
+    try {
+      await BosService.instance.resolveContestability(
+        episodeId: episodeId,
+        resolution: resolution,
+      );
+
+      final AppState? appState = mounted ? context.read<AppState?>() : null;
+      BosEventBus.instance.track(
+        eventType: 'contestability_resolved',
+        siteId: appState?.activeSiteId ?? '',
+        gradeBand: GradeBand.g7_9,
+        actorRole: 'educator',
+        payload: <String, dynamic>{
+          'episodeId': episodeId,
+          'resolution': resolution,
+          'learnerId': learner.id,
+        },
+      );
+
+      if (!mounted) return;
+      setState(() => _isResolvingContestability = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_tEducatorLearners(
+              context, 'Contestability request resolved')),
+          backgroundColor: ScholesaColors.success,
+        ),
+      );
+      await _loadActiveMvlEpisode();
+    } catch (error) {
+      debugPrint('Contestability resolution failed: $error');
+      if (!mounted) return;
+      setState(() => _isResolvingContestability = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_tEducatorLearners(
+              context, 'Contestability resolution failed')),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -1717,6 +1871,207 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
                       ],
                     ),
                   ),
+                  // ── MVL Override Section ──
+                  if (!_isLoadingMvl && _activeMvlEpisode != null) ...<Widget>[
+                    const SizedBox(height: 24),
+                    Text(
+                      _tEducatorLearners(context, 'Active MVL gate'),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.orange.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            _tEducatorLearners(
+                              context,
+                              'This learner has an active Metacognitive Verification Loop. You can override it if appropriate.',
+                            ),
+                            style: TextStyle(color: Colors.grey[700]),
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: _mvlReasonController,
+                            maxLines: 2,
+                            decoration: InputDecoration(
+                              hintText: _tEducatorLearners(
+                                  context, 'Override reason (optional)'),
+                              border: const OutlineInputBorder(),
+                              isDense: true,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: <Widget>[
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: _isMvlOverriding
+                                      ? null
+                                      : () => _overrideMvl('passed'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: ScholesaColors.success,
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 12),
+                                  ),
+                                  child: Text(_tEducatorLearners(
+                                      context, 'Override: Pass')),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: OutlinedButton(
+                                  onPressed: _isMvlOverriding
+                                      ? null
+                                      : () => _overrideMvl('failed'),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: Colors.red,
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 12),
+                                    side: const BorderSide(color: Colors.red),
+                                  ),
+                                  child: Text(_tEducatorLearners(
+                                      context, 'Override: Fail')),
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (_isMvlOverriding)
+                            const Padding(
+                              padding: EdgeInsets.only(top: 8),
+                              child: Center(
+                                child: SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  if (_hasContestabilityRequest && _activeMvlEpisode != null) ...<Widget>[
+                    const SizedBox(height: 24),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.orange.shade300),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Row(
+                            children: <Widget>[
+                              Icon(Icons.gavel_rounded,
+                                  color: Colors.orange.shade700, size: 20),
+                              const SizedBox(width: 8),
+                              Text(
+                                _tEducatorLearners(
+                                    context, 'Contestability Request'),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                  color: Colors.orange.shade800,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          if (_contestabilityReason != null &&
+                              _contestabilityReason!.isNotEmpty)
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  Text(
+                                    _tEducatorLearners(
+                                        context, 'Learner\'s reason:'),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[600],
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    _contestabilityReason!,
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: <Widget>[
+                              Expanded(
+                                child: OutlinedButton(
+                                  onPressed: _isResolvingContestability
+                                      ? null
+                                      : () =>
+                                          _resolveContestability('upheld'),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: Colors.orange.shade700,
+                                    side: BorderSide(
+                                        color: Colors.orange.shade300),
+                                  ),
+                                  child: Text(_tEducatorLearners(
+                                      context, 'Uphold gate')),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: _isResolvingContestability
+                                      ? null
+                                      : () =>
+                                          _resolveContestability('dismissed'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.green,
+                                    foregroundColor: Colors.white,
+                                  ),
+                                  child: Text(_tEducatorLearners(
+                                      context, 'Dismiss gate')),
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (_isResolvingContestability)
+                            const Padding(
+                              padding: EdgeInsets.only(top: 8),
+                              child: Center(
+                                child: SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 24),
                   Text(
                     _tEducatorLearners(context, 'Printable practice export'),

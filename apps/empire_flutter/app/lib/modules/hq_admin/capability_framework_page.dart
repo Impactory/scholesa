@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../auth/app_state.dart';
+import '../../i18n/evidence_chain_i18n.dart';
 import '../../services/firestore_service.dart';
 
 /// HQ admin defines and manages capability frameworks.
@@ -40,6 +41,8 @@ class _CapabilityFrameworkPageState extends State<CapabilityFrameworkPage> {
   ];
 
   FirestoreService get _firestoreService => context.read<FirestoreService>();
+
+  String _t(String input) => EvidenceChainI18n.text(context, input);
 
   @override
   void initState() {
@@ -119,7 +122,7 @@ class _CapabilityFrameworkPageState extends State<CapabilityFrameworkPage> {
   Future<void> _saveCapability() async {
     if (_nameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Capability name is required.')),
+        SnackBar(content: Text(_t('Capability name is required.'))),
       );
       return;
     }
@@ -153,7 +156,7 @@ class _CapabilityFrameworkPageState extends State<CapabilityFrameworkPage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_editingId != null ? 'Capability updated.' : 'Capability created.'),
+          content: Text(_editingId != null ? _t('Capability updated.') : _t('Capability created.')),
         ),
       );
 
@@ -165,7 +168,7 @@ class _CapabilityFrameworkPageState extends State<CapabilityFrameworkPage> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error saving capability: $e')),
+        SnackBar(content: Text('${_t('Error saving capability:')} $e')),
       );
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -176,11 +179,11 @@ class _CapabilityFrameworkPageState extends State<CapabilityFrameworkPage> {
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext ctx) => AlertDialog(
-        title: const Text('Delete Capability'),
-        content: const Text('Are you sure you want to delete this capability?'),
+        title: Text(_t('Delete Capability')),
+        content: Text(_t('Are you sure you want to delete this capability?')),
         actions: <Widget>[
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(_t('Cancel'))),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(_t('Delete'))),
         ],
       ),
     );
@@ -191,13 +194,13 @@ class _CapabilityFrameworkPageState extends State<CapabilityFrameworkPage> {
       await _firestoreService.deleteDocument('capabilities', id);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Capability deleted.')),
+        SnackBar(content: Text(_t('Capability deleted.'))),
       );
       await _loadCapabilities();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error deleting capability: $e')),
+        SnackBar(content: Text('${_t('Error deleting capability:')} $e')),
       );
     }
   }
@@ -207,7 +210,7 @@ class _CapabilityFrameworkPageState extends State<CapabilityFrameworkPage> {
     final ThemeData theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Capability Frameworks'),
+        title: Text(_t('Capability Frameworks')),
         actions: <Widget>[
           if (!_showForm)
             IconButton(
@@ -231,7 +234,7 @@ class _CapabilityFrameworkPageState extends State<CapabilityFrameworkPage> {
                       FilledButton.icon(
                         onPressed: _loadCapabilities,
                         icon: const Icon(Icons.refresh),
-                        label: const Text('Retry'),
+                        label: Text(_t('Retry')),
                       ),
                     ],
                   ),
@@ -251,13 +254,13 @@ class _CapabilityFrameworkPageState extends State<CapabilityFrameworkPage> {
                                 Icon(Icons.category_outlined,
                                     size: 48, color: theme.colorScheme.primary),
                                 const SizedBox(height: 12),
-                                Text('No capabilities defined yet.',
+                                Text(_t('No capabilities defined yet.'),
                                     style: theme.textTheme.bodyLarge),
                                 const SizedBox(height: 12),
                                 FilledButton.icon(
                                   onPressed: _openCreateForm,
                                   icon: const Icon(Icons.add),
-                                  label: const Text('Add First Capability'),
+                                  label: Text(_t('Add First Capability')),
                                 ),
                               ],
                             ),
@@ -280,14 +283,14 @@ class _CapabilityFrameworkPageState extends State<CapabilityFrameworkPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              _editingId != null ? 'Edit Capability' : 'Add Capability',
+              _editingId != null ? _t('Edit Capability') : _t('Add Capability'),
               style: theme.textTheme.titleMedium,
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Name',
+              decoration: InputDecoration(
+                labelText: _t('Name'),
                 hintText: 'e.g. Critical Thinking',
                 border: OutlineInputBorder(),
               ),
@@ -295,8 +298,8 @@ class _CapabilityFrameworkPageState extends State<CapabilityFrameworkPage> {
             const SizedBox(height: 12),
             TextField(
               controller: _descriptionController,
-              decoration: const InputDecoration(
-                labelText: 'Description',
+              decoration: InputDecoration(
+                labelText: _t('Description'),
                 hintText: 'Describe what this capability represents...',
                 border: OutlineInputBorder(),
               ),
@@ -305,8 +308,8 @@ class _CapabilityFrameworkPageState extends State<CapabilityFrameworkPage> {
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               initialValue: _selectedPillar,
-              decoration: const InputDecoration(
-                labelText: 'Pillar',
+              decoration: InputDecoration(
+                labelText: _t('Pillar'),
                 border: OutlineInputBorder(),
               ),
               items: _pillars
@@ -320,7 +323,7 @@ class _CapabilityFrameworkPageState extends State<CapabilityFrameworkPage> {
               },
             ),
             const SizedBox(height: 16),
-            Text('Progression Levels', style: theme.textTheme.titleSmall),
+            Text(_t('Progression Levels'), style: theme.textTheme.titleSmall),
             const SizedBox(height: 8),
             ..._progressionLevels.asMap().entries.map(
                   (MapEntry<int, _ProgressionLevel> entry) =>
@@ -330,7 +333,7 @@ class _CapabilityFrameworkPageState extends State<CapabilityFrameworkPage> {
               onPressed: () => setState(() =>
                   _progressionLevels.add(_ProgressionLevel(name: '', descriptor: ''))),
               icon: const Icon(Icons.add, size: 18),
-              label: const Text('Add Level'),
+              label: Text(_t('Add Level')),
             ),
             const SizedBox(height: 16),
             Row(
@@ -343,7 +346,7 @@ class _CapabilityFrameworkPageState extends State<CapabilityFrameworkPage> {
                           height: 16,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : Text(_editingId != null ? 'Update' : 'Create'),
+                      : Text(_editingId != null ? _t('Update') : _t('Create')),
                 ),
                 const SizedBox(width: 8),
                 TextButton(
@@ -351,7 +354,7 @@ class _CapabilityFrameworkPageState extends State<CapabilityFrameworkPage> {
                     _showForm = false;
                     _editingId = null;
                   }),
-                  child: const Text('Cancel'),
+                  child: Text(_t('Cancel')),
                 ),
               ],
             ),
@@ -369,8 +372,8 @@ class _CapabilityFrameworkPageState extends State<CapabilityFrameworkPage> {
           SizedBox(
             width: 120,
             child: TextField(
-              decoration: const InputDecoration(
-                labelText: 'Level',
+              decoration: InputDecoration(
+                labelText: _t('Level'),
                 isDense: true,
                 border: OutlineInputBorder(),
               ),
@@ -381,8 +384,8 @@ class _CapabilityFrameworkPageState extends State<CapabilityFrameworkPage> {
           const SizedBox(width: 8),
           Expanded(
             child: TextField(
-              decoration: const InputDecoration(
-                labelText: 'Descriptor',
+              decoration: InputDecoration(
+                labelText: _t('Descriptor'),
                 isDense: true,
                 border: OutlineInputBorder(),
               ),

@@ -51,26 +51,6 @@ class BosService {
     });
   }
 
-  // ── Endpoint 2: Get orchestration state ────────────
-
-  Future<OrchestrationState?> getOrchestrationState({
-    required String learnerId,
-    required String sessionOccurrenceId,
-  }) async {
-    final HttpsCallableResult<dynamic> result = await _fn
-        .httpsCallable('bosGetOrchestrationState')
-        .call(<String, dynamic>{
-      'learnerId': learnerId,
-      'sessionOccurrenceId': sessionOccurrenceId,
-    });
-
-    final Map<String, dynamic>? response = _asStringDynamicMap(result.data);
-    final Map<String, dynamic>? stateData =
-        _asStringDynamicMap(response?['state']);
-    if (stateData == null) return null;
-    return OrchestrationState.tryFromMap(stateData);
-  }
-
   // ── Endpoint 3: Get intervention (runs FDM + Estimator + Policy) ──
 
   Future<BosIntervention?> getIntervention({
@@ -190,15 +170,29 @@ class BosService {
     });
   }
 
-  // ── AI help (genAiCoach with BOS context) ────────
+  // ── Explain-it-back submission ──────────────────
 
-  Future<AiCoachResponse> callAiCoach(AiCoachRequest request) async {
+  /// Submits a learner's explain-it-back response for verification.
+  /// Returns `{approved: bool, feedback: String}`.
+  Future<ExplainBackResult> submitExplainBack({
+    required String siteId,
+    required String interactionId,
+    required String explainBack,
+  }) async {
     final HttpsCallableResult<dynamic> result =
-        await _fn.httpsCallable('genAiCoach').call(request.toMap());
+        await _fn.httpsCallable('submitExplainBack').call(<String, dynamic>{
+      'siteId': siteId,
+      'interactionId': interactionId,
+      'explainBack': explainBack,
+    });
     final Map<String, dynamic>? response = _asStringDynamicMap(result.data);
     if (response == null) {
-      throw const FormatException('Malformed MiloOS payload.');
+      throw const FormatException('Malformed explain-back result.');
     }
-    return AiCoachResponse.fromMap(response);
+    return ExplainBackResult(
+      approved: response['approved'] == true,
+      feedback: response['feedback'] as String? ??
+          'Explain-back recorded for review.',
+    );
   }
 }

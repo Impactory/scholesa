@@ -673,6 +673,24 @@ void main() {
         );
       }
     });
+
+    test('Voice and MVL events are in event bus allowlist', () {
+      const List<String> requiredVoiceEvents = <String>[
+        'voice_stt_completed',
+        'voice_tts_played',
+        'mvl_evidence_submitted',
+        'ai_learning_goal_updated',
+      ];
+
+      for (final String eventType in requiredVoiceEvents) {
+        expect(
+          _knownAllowedEvents.contains(eventType),
+          isTrue,
+          reason:
+              'Voice/MVL event "$eventType" should be in the BOS event bus allowlist',
+        );
+      }
+    });
   });
 
   // ════════════════════════════════════════════════════
@@ -790,6 +808,7 @@ const Set<String> _knownAllowedEvents = <String>{
   'ai_help_used',
   'ai_coach_response',
   'ai_coach_feedback',
+  'ai_learning_goal_updated',
   'explain_it_back_submitted',
   'source_check_performed',
   'retrieval_attempted',
@@ -799,6 +818,7 @@ const Set<String> _knownAllowedEvents = <String>{
   'mvl_passed',
   'mvl_failed',
   'mvl_needs_more_evidence',
+  'mvl_evidence_submitted',
   'teacher_override_mvl',
   'teacher_override_intervention',
   'teacher_override_applied',
@@ -809,6 +829,8 @@ const Set<String> _knownAllowedEvents = <String>{
   'idle_detected',
   'focus_restored',
   'interaction_signal_observed',
+  'voice_stt_completed',
+  'voice_tts_played',
   'educator_class_view',
   'educator_learner_drilldown',
 };

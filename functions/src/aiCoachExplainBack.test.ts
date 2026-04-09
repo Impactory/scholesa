@@ -1,6 +1,7 @@
 import {
   buildExplainBackSubmittedEvent,
   explainBackRecordedFeedback,
+  verifyExplainBack,
 } from './aiCoachExplainBack';
 
 describe('aiCoachExplainBack', () => {
@@ -57,5 +58,50 @@ describe('aiCoachExplainBack', () => {
     expect(payload.missionId).toBeNull();
     expect(payload.checkpointId).toBeNull();
     expect(payload.payload.mode).toBeNull();
+  });
+});
+
+describe('verifyExplainBack', () => {
+  const aiResponse = 'The function transforms input data by applying a normalization step followed by a calibration pass to produce the final output values';
+
+  it('rejects explanations that are too short', () => {
+    const result = verifyExplainBack('yes I got it', aiResponse);
+    expect(result.approved).toBe(false);
+    expect(result.rejectionReason).toBe('too_short');
+  });
+
+  it('rejects copied AI response (high word overlap)', () => {
+    // Nearly identical to AI response
+    const copy = 'The function transforms input data by applying a normalization step followed by a calibration pass to produce the final output values';
+    const result = verifyExplainBack(copy, aiResponse);
+    expect(result.approved).toBe(false);
+    expect(result.rejectionReason).toBe('copied_ai_response');
+    expect(result.wordOverlapWithAiResponse).toBeGreaterThanOrEqual(0.75);
+  });
+
+  it('approves genuine explanation with enough detail', () => {
+    const genuine = 'I learned that the handler first normalizes the raw measurements, then runs a calibration algorithm to adjust for sensor drift, and finally returns corrected readings for downstream use';
+    const result = verifyExplainBack(genuine, aiResponse);
+    expect(result.approved).toBe(true);
+    expect(result.feedback).toContain('Great');
+  });
+
+  it('handles undefined aiResponseText gracefully', () => {
+    const explanation = 'I learned that the function processes data through multiple transformation stages before returning the results to the caller for rendering in the dashboard view';
+    const result = verifyExplainBack(explanation, undefined);
+    expect(result.approved).toBe(true);
+  });
+
+  it('handles empty aiResponseText gracefully', () => {
+    const explanation = 'I learned that the function processes data through multiple transformation stages before returning the results to the caller for rendering in the dashboard view';
+    const result = verifyExplainBack(explanation, '  ');
+    expect(result.approved).toBe(true);
+  });
+
+  it('rejects insufficient detail when AI response is available', () => {
+    const tooShort = 'It does something with data and stuff';
+    const result = verifyExplainBack(tooShort, aiResponse);
+    expect(result.approved).toBe(false);
+    expect(result.rejectionReason).toBe('insufficient_detail');
   });
 });

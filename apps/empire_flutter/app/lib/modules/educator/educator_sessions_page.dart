@@ -339,7 +339,7 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return MiloRuntimeScope(child: Scaffold(
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -463,7 +463,7 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
         icon: const Icon(Icons.add),
         label: Text(_tEducatorSessions(context, 'New Session')),
       ),
-    );
+    ));
   }
 
   Widget _buildHeader() {

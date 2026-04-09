@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -13,6 +14,7 @@ import 'bos_models.dart';
 import 'bos_service.dart';
 import 'learning_runtime_provider.dart';
 import 'voice_runtime_service.dart';
+import 'web_speech.dart';
 import '../services/telemetry_service.dart';
 import '../auth/app_state.dart';
 import '../ui/localization/app_strings.dart';
@@ -80,6 +82,7 @@ class AiCoachWidget extends StatefulWidget {
 class _AiCoachWidgetState extends State<AiCoachWidget> {
   final TextEditingController _inputController = TextEditingController();
   final List<_ChatMessage> _messages = <_ChatMessage>[];
+  final ScrollController _scrollController = ScrollController();
   final SpeechToText _speechToText = SpeechToText();
   final FlutterTts _flutterTts = FlutterTts();
   AudioPlayer? _audioPlayer;
@@ -92,6 +95,9 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
   bool _isListening = false;
   bool _speechAvailable = false;
   bool _uploadSttAvailable = false;
+  bool _webSpeechAvailable = false;
+  WebSpeechRecognition? _webSpeechRecognition;
+  bool _webAudioContextUnlocked = false;
   bool _usingUploadStt = false;
   bool _voiceOutputEnabled = true;
   bool _isSpeaking = false;
@@ -100,6 +106,8 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
   bool _hasSpokenGreeting = false;
   bool _autoAssistInFlight = false;
   bool _listenAfterSpeech = false;
+  bool _awaitingExplainBack = false;
+  String? _explainBackInteractionId;
   DateTime _lastLearnerActivityAt = DateTime.now();
   DateTime? _lastAutoAssistAt;
   Timer? _interactionSignalTimer;
@@ -205,10 +213,16 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         setState(() {
           _speechAvailable = false;
           _uploadSttAvailable = false;
+          _webSpeechAvailable = false;
         });
       }
       unawaited(_maybeSpeakInitialGreeting());
       return;
+    }
+
+    // On web/WASM: prefer the native Web Speech API over Flutter plugins.
+    if (kIsWeb) {
+      _webSpeechAvailable = WebSpeechRecognition.isSupported;
     }
 
     try {
@@ -302,7 +316,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       });
 
       final bool uploadReady =
-          kIsWeb ? false : await audioRecorder.hasPermission();
+          await audioRecorder.hasPermission();
       if (!mounted) return;
       setState(() {
         _speechAvailable = speechReady;
@@ -482,6 +496,10 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     if (!mounted) return;
 
     final String greeting = _t('ai.greeting.initial');
+    setState(() {
+      _messages.add(_ChatMessage(text: greeting, isUser: false));
+    });
+    _scrollToBottom();
     await _speakText(greeting);
 
     await TelemetryService.instance.logEvent(
@@ -493,6 +511,18 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         'role': widget.actorRole.name,
       },
     );
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+        );
+      }
+    });
   }
 
   Future<void> _evaluateBosAutoAssist({required String trigger}) async {
@@ -590,6 +620,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       );
 
       setState(() => _messages.add(aiMessage));
+      _scrollToBottom();
       await _speakText(
         aiMessage.text,
         traceId: response.traceId,
@@ -622,8 +653,13 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     _proactiveAssistTimer?.cancel();
     _flushInteractionSignal(reason: 'dispose');
     _interactionSignalTimer?.cancel();
+    _webSpeechRecognition?.abort();
+    _webSpeechRecognition = null;
     unawaited(_speechToText.stop());
     unawaited(_flutterTts.stop());
+    if (kIsWeb) {
+      WebSpeechSynthesis.cancel();
+    }
     if (_audioPlayer != null) {
       unawaited(_audioPlayer!.stop());
       unawaited(_audioPlayer!.dispose());
@@ -634,6 +670,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     _playerCompleteSub?.cancel();
     _playerStateSub?.cancel();
     _inputController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -652,8 +689,8 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       path = '${dir.path}/ai-coach-${DateTime.now().millisecondsSinceEpoch}.m4a';
     }
     await _ensureAudioRecorder().start(
-      const RecordConfig(
-        encoder: AudioEncoder.aacLc,
+      RecordConfig(
+        encoder: kIsWeb ? AudioEncoder.opus : AudioEncoder.aacLc,
         bitRate: 64000,
         sampleRate: 16000,
       ),
@@ -680,11 +717,26 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     }
 
     try {
-      final TranscribeVoiceResponse transcribed =
-          await VoiceRuntimeService.instance.transcribeAudioFile(
-        audioFilePath: path,
-        locale: Localizations.localeOf(context).toLanguageTag(),
-      );
+      final String locale = Localizations.localeOf(context).toLanguageTag();
+      final TranscribeVoiceResponse transcribed;
+
+      if (kIsWeb) {
+        // On web, stop() returns a blob URL. Fetch it to get raw bytes.
+        final http.Response blobResponse = await http.get(Uri.parse(path));
+        final Uint8List audioBytes = blobResponse.bodyBytes;
+        transcribed =
+            await VoiceRuntimeService.instance.transcribeAudioBase64(
+          audioBytes: audioBytes,
+          mimeType: 'audio/webm;codecs=opus',
+          locale: locale,
+        );
+      } else {
+        transcribed =
+            await VoiceRuntimeService.instance.transcribeAudioFile(
+          audioFilePath: path,
+          locale: locale,
+        );
+      }
 
       if (!mounted) return;
       setState(() {
@@ -703,6 +755,19 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
           'latencyMs': transcribed.latencyMs,
           'modelVersion': transcribed.modelVersion,
           'mode': _selectedMode.name,
+        },
+      );
+      widget.runtime.trackEvent(
+        'voice_stt_completed',
+        missionId: widget.missionId,
+        checkpointId: widget.checkpointId,
+        payload: <String, dynamic>{
+          'source': kIsWeb ? 'voice_api_upload_web' : 'voice_api_upload',
+          'chars': transcribed.transcript.length,
+          if (transcribed.confidence != null)
+            'confidence': transcribed.confidence,
+          if (transcribed.latencyMs != null)
+            'latencyMs': transcribed.latencyMs,
         },
       );
 
@@ -730,11 +795,87 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     }
   }
 
+  void _startWebSpeechListening() {
+    final WebSpeechRecognition recognition = WebSpeechRecognition();
+    _webSpeechRecognition = recognition;
+
+    recognition.onResult = (String transcript, bool isFinal) {
+      if (!mounted) return;
+      setState(() {
+        _replaceInputText(transcript);
+      });
+
+      if (isFinal) {
+        TelemetryService.instance.logEvent(
+          event: 'voice.transcribe',
+          metadata: <String, dynamic>{
+            'source': 'web_speech_api',
+            'surface': 'ai_coach_widget',
+            'chars': transcript.length,
+            'mode': _selectedMode.name,
+          },
+        );
+        widget.runtime.trackEvent(
+          'voice_stt_completed',
+          missionId: widget.missionId,
+          checkpointId: widget.checkpointId,
+          payload: <String, dynamic>{
+            'source': 'web_speech_api',
+            'chars': transcript.length,
+          },
+        );
+        if (widget.voiceOnlyConversation) {
+          recognition.stop();
+          if (mounted) setState(() => _isListening = false);
+          unawaited(_sendMessageWithInput(
+            transcript,
+            source: 'web_speech_api_auto',
+          ));
+        }
+      }
+    };
+
+    recognition.onError = (String error) {
+      if (!mounted) return;
+      setState(() => _isListening = false);
+      _webSpeechRecognition = null;
+      if (error != 'aborted' && error != 'no-speech') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_t('ai.voice.transcriptionUnavailable')),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    };
+
+    recognition.onEnd = () {
+      if (!mounted) return;
+      setState(() => _isListening = false);
+      _webSpeechRecognition = null;
+    };
+
+    final String locale = Localizations.localeOf(context).toLanguageTag();
+    recognition.start(locale: locale);
+    if (mounted) setState(() => _isListening = true);
+  }
+
   Future<void> _toggleListening() async {
     _markLearnerActivity();
     if (_loading) return;
 
-    if (!_speechAvailable && !_uploadSttAvailable) {
+    // Unlock Web Audio context on first user gesture (required by browsers).
+    if (kIsWeb && !_webAudioContextUnlocked) {
+      _webAudioContextUnlocked = true;
+      unawaited(unlockWebAudioContext());
+    }
+
+    if (!_speechAvailable && !_uploadSttAvailable && !_webSpeechAvailable) {
+      // Re-check Web Speech API support on web.
+      if (kIsWeb) {
+        _webSpeechAvailable = WebSpeechRecognition.isSupported;
+      }
+
       bool speechReady = false;
       try {
         speechReady = await _speechToText.initialize(
@@ -754,14 +895,14 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       }
 
       final bool uploadReady =
-          kIsWeb ? false : await _ensureAudioRecorder().hasPermission();
+          await _ensureAudioRecorder().hasPermission();
       if (!mounted) return;
       setState(() {
         _speechAvailable = speechReady;
         _uploadSttAvailable = uploadReady;
       });
 
-      if (!speechReady && !uploadReady) {
+      if (!speechReady && !uploadReady && !_webSpeechAvailable) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(_t('ai.voice.microphonePermissionRequired')),
@@ -777,12 +918,24 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         await _stopUploadRecordingAndTranscribe();
         return;
       }
+      if (_webSpeechRecognition != null && _webSpeechRecognition!.isActive) {
+        _webSpeechRecognition!.stop();
+        if (mounted) setState(() => _isListening = false);
+        return;
+      }
       await _speechToText.stop();
       if (!mounted) return;
       setState(() => _isListening = false);
       return;
     }
 
+    // Priority 1: Web Speech API on web (most reliable for WASM).
+    if (kIsWeb && _webSpeechAvailable) {
+      _startWebSpeechListening();
+      return;
+    }
+
+    // Priority 2: speech_to_text plugin (native, may work on some web browsers).
     if (_speechAvailable) {
       final bool started = await _speechToText.listen(
         onResult: (result) {
@@ -799,6 +952,17 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
                 'surface': 'ai_coach_widget',
                 'chars': result.recognizedWords.length,
                 'mode': _selectedMode.name,
+              },
+            );
+            widget.runtime.trackEvent(
+              'voice_stt_completed',
+              missionId: widget.missionId,
+              checkpointId: widget.checkpointId,
+              payload: <String, dynamic>{
+                'source': 'speech_to_text',
+                'chars': result.recognizedWords.length,
+                if (result.confidence > 0)
+                  'confidence': result.confidence,
               },
             );
             if (widget.voiceOnlyConversation) {
@@ -825,7 +989,8 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       return;
     }
 
-    if (_uploadSttAvailable && !kIsWeb) {
+    // Priority 3: Upload-based STT (native + web via base64).
+    if (_uploadSttAvailable) {
       await _startUploadRecording();
       return;
     }
@@ -890,9 +1055,17 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
             'audioUrlAvailable': true,
           },
         );
+        widget.runtime.trackEvent(
+          'voice_tts_played',
+          missionId: widget.missionId,
+          checkpointId: widget.checkpointId,
+          payload: <String, dynamic>{
+            'source': 'voice_api_audio',
+            'chars': text.length,
+          },
+        );
       } catch (_) {
         if (mounted) setState(() => _isSpeaking = false);
-        _listenAfterSpeech = false;
       }
     }
 
@@ -912,9 +1085,53 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
             'traceId': traceId,
           },
         );
+        widget.runtime.trackEvent(
+          'voice_tts_played',
+          missionId: widget.missionId,
+          checkpointId: widget.checkpointId,
+          payload: <String, dynamic>{
+            'source': kIsWeb ? 'flutter_tts_web' : 'flutter_tts',
+            'chars': text.length,
+          },
+        );
       } catch (_) {
         if (mounted) setState(() => _isSpeaking = false);
-        _listenAfterSpeech = false;
+      }
+    }
+
+    // Fallback: direct browser speechSynthesis via Web Speech API.
+    if (!played && kIsWeb && WebSpeechSynthesis.isSupported) {
+      final String synthesisLocale =
+          Localizations.localeOf(context).toLanguageTag();
+      try {
+        if (mounted) setState(() => _isSpeaking = true);
+        await WebSpeechSynthesis.speak(text, locale: synthesisLocale);
+        played = true;
+        if (mounted) setState(() => _isSpeaking = false);
+        await TelemetryService.instance.logEvent(
+          event: 'voice.tts',
+          metadata: <String, dynamic>{
+            'source': 'web_speech_synthesis',
+            'surface': 'ai_coach_widget',
+            'chars': text.length,
+            'traceId': traceId,
+          },
+        );
+        widget.runtime.trackEvent(
+          'voice_tts_played',
+          missionId: widget.missionId,
+          checkpointId: widget.checkpointId,
+          payload: <String, dynamic>{
+            'source': 'web_speech_synthesis',
+            'chars': text.length,
+          },
+        );
+        if (_listenAfterSpeech) {
+          _listenAfterSpeech = false;
+          unawaited(_toggleListening());
+        }
+      } catch (_) {
+        if (mounted) setState(() => _isSpeaking = false);
       }
     }
 
@@ -1019,6 +1236,25 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
           'mathematical_learner_state_model + synthetic_training_baseline_not_learner_evidence + live_session_updates',
       'personaInstructions':
           'Kid-friendly, conversational coaching voice. Keep it warm, simple, and spoken. Never give final answers; guide step-by-step.',
+      // BOS orchestration state from live Firestore listener.
+      if (widget.runtime.state != null) 'orchestrationState': <String, dynamic>{
+        'xHat': <String, double>{
+          'cognition': widget.runtime.state!.xHat.cognition,
+          'engagement': widget.runtime.state!.xHat.engagement,
+          'integrity': widget.runtime.state!.xHat.integrity,
+        },
+        if (widget.runtime.confidence != null)
+          'confidence': widget.runtime.confidence,
+        'stateStatus': widget.runtime.stateStatus.name,
+      },
+      // Active MVL episode context.
+      if (widget.runtime.hasMvlGate) 'activeMvl': <String, dynamic>{
+        'active': true,
+        if (widget.runtime.activeMvl?.triggerReason != null)
+          'triggerReason': widget.runtime.activeMvl!.triggerReason,
+        if (widget.runtime.activeMvl?.evidenceEventIds != null)
+          'evidenceCount': widget.runtime.activeMvl!.evidenceEventIds.length,
+      },
     };
   }
 
@@ -1278,6 +1514,9 @@ Response style:
     if (_isListening) {
       if (_usingUploadStt) {
         await _stopUploadRecordingAndTranscribe();
+      } else if (_webSpeechRecognition != null &&
+          _webSpeechRecognition!.isActive) {
+        _webSpeechRecognition!.stop();
       } else {
         await _speechToText.stop();
       }
@@ -1293,12 +1532,100 @@ Response style:
     );
   }
 
+  Future<void> _submitExplainBack(String explanation) async {
+    _awaitingExplainBack = false;
+    final String interactionId = _explainBackInteractionId ?? '';
+    _explainBackInteractionId = null;
+
+    setState(() {
+      _messages.add(_ChatMessage(text: explanation, isUser: true));
+      _loading = true;
+      _clearInputText();
+    });
+    _scrollToBottom();
+
+    try {
+      final String siteId = widget.runtime.siteId;
+      final ExplainBackResult result =
+          await BosService.instance.submitExplainBack(
+        siteId: siteId,
+        interactionId: interactionId,
+        explainBack: explanation,
+      );
+
+      if (!mounted) return;
+
+      widget.runtime.trackEvent(
+        'explain_it_back_submitted',
+        missionId: widget.missionId,
+        checkpointId: widget.checkpointId,
+        payload: <String, dynamic>{
+          'approved': result.approved,
+          'interactionId': interactionId,
+          'explainBackLength': explanation.length,
+        },
+      );
+
+      setState(() {
+        _messages.add(_ChatMessage(
+          text: result.feedback,
+          isUser: false,
+          isSystemPrompt: true,
+        ));
+        _loading = false;
+      });
+      _scrollToBottom();
+      if (widget.voiceOnlyConversation) {
+        await _speakText(result.feedback);
+      }
+
+      if (!result.approved) {
+        // Prompt learner to try again.
+        _awaitingExplainBack = true;
+        _explainBackInteractionId = interactionId;
+      } else if (widget.runtime.hasMvlGate) {
+        // Approved explain-back is strong evidence for lifting MVL gate.
+        final MvlEpisode? episode = widget.runtime.activeMvl;
+        if (episode != null && interactionId.isNotEmpty) {
+          try {
+            await BosService.instance.submitMvlEvidence(
+              episodeId: episode.id,
+              eventIds: <String>[interactionId],
+            );
+          } catch (_) {
+            // Non-critical.
+          }
+        }
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _messages.add(_ChatMessage(
+          text: _t('ai.explainBack.error'),
+          isUser: false,
+          isSystemPrompt: true,
+          isError: true,
+        ));
+        _loading = false;
+      });
+      _scrollToBottom();
+    }
+  }
+
   Future<void> _sendMessageWithInput(
     String rawInput, {
     required String source,
   }) async {
     final String input = rawInput.trim();
     if (_loading || input.isEmpty) return;
+
+    // Intercept: if we're awaiting an explain-it-back, submit it
+    // instead of sending a normal copilot request.
+    if (_awaitingExplainBack) {
+      await _submitExplainBack(input);
+      return;
+    }
+
     if (source == 'manual') {
       _flushInteractionSignal(reason: 'submitted');
     }
@@ -1321,6 +1648,7 @@ Response style:
       _loading = true;
       _clearInputText();
     });
+    _scrollToBottom();
 
     // Emit ai_help_opened (client-side tracking)
     widget.runtime.trackEvent(
@@ -1346,6 +1674,7 @@ Response style:
         _messages.add(aiMessage);
         _loading = false;
       });
+      _scrollToBottom();
 
       await _speakText(
         aiMessage.text,
@@ -1367,6 +1696,55 @@ Response style:
               response.policyVersion == null ? 'bos_callable' : 'voice_api',
         },
       );
+
+      // Trigger explain-it-back prompt when BOS requires it.
+      if (response.requiresExplainBack &&
+          widget.actorRole == UserRole.learner &&
+          mounted) {
+        _awaitingExplainBack = true;
+        _explainBackInteractionId =
+            response.traceId ?? response.aiHelpOpenedEventId;
+        setState(() {
+          _messages.add(_ChatMessage(
+            text: _t('ai.explainBack.prompt'),
+            isUser: false,
+            isSystemPrompt: true,
+          ));
+        });
+        _scrollToBottom();
+        if (widget.voiceOnlyConversation) {
+          await _speakText(_t('ai.explainBack.prompt'));
+        }
+      }
+
+      // Submit chat interaction as MVL evidence when gate is active.
+      if (widget.runtime.hasMvlGate &&
+          widget.actorRole == UserRole.learner) {
+        final MvlEpisode? episode = widget.runtime.activeMvl;
+        final String? eventId =
+            response.aiHelpOpenedEventId ?? response.traceId;
+        if (episode != null && eventId != null && eventId.isNotEmpty) {
+          try {
+            await BosService.instance.submitMvlEvidence(
+              episodeId: episode.id,
+              eventIds: <String>[eventId],
+            );
+            widget.runtime.trackEvent(
+              'mvl_evidence_submitted',
+              missionId: widget.missionId,
+              checkpointId: widget.checkpointId,
+              payload: <String, dynamic>{
+                'episodeId': episode.id,
+                'source': 'ai_coach_chat',
+                'mode': _selectedMode.name,
+              },
+            );
+          } catch (_) {
+            // Non-critical — evidence submission failure should not
+            // disrupt the chat flow.
+          }
+        }
+      }
     } catch (e) {
       await TelemetryService.instance.logEvent(
         event: 'voice.message',
@@ -1391,6 +1769,7 @@ Response style:
         ));
         _loading = false;
       });
+      _scrollToBottom();
     }
   }
 
@@ -1508,6 +1887,11 @@ Response style:
                 'mode': mode.name,
               },
             );
+            if (mode == AiCoachMode.debug) {
+              widget.runtime.trackEvent('debug_attempted', payload: <String, dynamic>{
+                'missionId': widget.missionId ?? '',
+              });
+            }
             setState(() => _selectedMode = mode);
           },
         ),
@@ -1645,6 +2029,7 @@ Response style:
                   ),
                 )
               : ListView.builder(
+                  controller: _scrollController,
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   itemCount: _messages.length,
@@ -1683,7 +2068,8 @@ Response style:
               children: <Widget>[
                 if (widget.voiceOnlyConversation ||
                     _speechAvailable ||
-                    _uploadSttAvailable)
+                    _uploadSttAvailable ||
+                    _webSpeechAvailable)
                   IconButton(
                     onPressed:
                         (_loading || _isSpeaking) ? null : _toggleListening,
@@ -2015,12 +2401,14 @@ class _ChatMessage {
     required this.isUser,
     this.response,
     this.isError = false,
+    this.isSystemPrompt = false,
   });
 
   final String text;
   final bool isUser;
   final AiCoachResponse? response;
   final bool isError;
+  final bool isSystemPrompt;
 }
 
 // ──── Chat bubble ────
@@ -2054,9 +2442,11 @@ class _ChatBubble extends StatelessWidget {
         decoration: BoxDecoration(
           color: isUser
               ? theme.colorScheme.primary
-              : message.isError
-                  ? theme.colorScheme.errorContainer
-                  : theme.colorScheme.surfaceContainerHighest,
+              : message.isSystemPrompt
+                  ? theme.colorScheme.tertiaryContainer
+                  : message.isError
+                      ? theme.colorScheme.errorContainer
+                      : theme.colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(

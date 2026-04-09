@@ -135,6 +135,12 @@ class AppStrings {
       'ai.chat.verificationRequired': 'Verification required',
       'ai.chat.helpful': 'Helpful?',
       'ai.feedback.thanks': 'Thanks for the feedback!',
+      'ai.explainBack.prompt':
+          'Before we move on, can you explain what you just learned in your own words? This helps verify your understanding.',
+      'ai.explainBack.error':
+          'Could not submit your explanation right now. Try again shortly.',
+      'ai.mvl.gatedResponse':
+          'This conversation is paused while we verify your understanding. Please complete the explain-it-back check first.',
       'ai.feedback.noted': 'Noted — we\'ll improve.',
       'ai.enrich.retryPrompt':
           'Let\'s try that again. What part feels most confusing right now?',
@@ -275,6 +281,9 @@ class AppStrings {
       'ai.chat.verificationRequired': '需要验证',
       'ai.chat.helpful': '有帮助吗？',
       'ai.feedback.thanks': '感谢你的反馈！',
+      'ai.explainBack.prompt': '在继续之前，你能用自己的话解释一下你刚刚学到了什么吗？这有助于验证你的理解。',
+      'ai.explainBack.error': '现在无法提交你的解释，请稍后再试。',
+      'ai.mvl.gatedResponse': '此对话已暂停，我们正在验证你的理解。请先完成"用自己的话解释"检查。',
       'ai.feedback.noted': '已记录，我们会继续改进。',
       'ai.enrich.retryPrompt': '我们再试一次。现在最让你困惑的部分是什么？',
       'ai.enrich.hintFollowup': '到目前为止你尝试了什么？',
@@ -406,6 +415,9 @@ class AppStrings {
       'ai.chat.verificationRequired': '需要驗證',
       'ai.chat.helpful': '有幫助嗎？',
       'ai.feedback.thanks': '感謝你的回饋！',
+      'ai.explainBack.prompt': '在繼續之前，你能用自己的話解釋一下你剛剛學到了什麼嗎？這有助於驗證你的理解。',
+      'ai.explainBack.error': '現在無法提交你的解釋，請稍後再試。',
+      'ai.mvl.gatedResponse': '此對話已暫停，我們正在驗證你的理解。請先完成「用自己的話解釋」檢查。',
       'ai.feedback.noted': '已記錄，我們會持續改進。',
       'ai.enrich.retryPrompt': '我們再試一次。現在最讓你困惑的部分是什麼？',
       'ai.enrich.hintFollowup': '到目前為止你嘗試了什麼？',

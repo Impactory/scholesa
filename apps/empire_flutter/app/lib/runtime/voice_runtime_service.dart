@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_auth/firebase_auth.dart';
@@ -89,21 +90,44 @@ class VoiceRuntimeService {
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw Exception(
-          'Voice help is unavailable right now (${response.statusCode}).');
+          'Voice help is unavailable right now (${response.statusCode}): '
+          '${response.body}');
     }
 
     final Map<String, dynamic> json =
         jsonDecode(response.body) as Map<String, dynamic>;
 
+    final Map<String, dynamic> metadata =
+        json['metadata'] as Map<String, dynamic>? ?? const <String, dynamic>{};
+    final Map<String, dynamic> bos =
+        json['bos'] as Map<String, dynamic>? ?? const <String, dynamic>{};
+    final Map<String, dynamic> tts =
+        json['tts'] as Map<String, dynamic>? ?? const <String, dynamic>{};
+
+    // Derive mode from BOS policy hint if available, else from metadata.
+    final String effectiveMode = (bos['mode'] as String?) ??
+        (metadata['understanding'] is Map
+            ? ((metadata['understanding'] as Map)['responseMode'] as String? ?? 'hint')
+            : 'hint');
+
     return AiCoachResponse.fromMap(<String, dynamic>{
       'message': (json['text'] as String?)?.trim() ?? '',
-      'mode': 'hint',
+      'mode': effectiveMode,
       'suggestedNextSteps': const <String>[],
-      'metadata': json['metadata'] as Map<String, dynamic>? ??
-          const <String, dynamic>{},
-      'tts': json['tts'] as Map<String, dynamic>? ?? const <String, dynamic>{},
+      'metadata': metadata,
+      'tts': tts,
+      // Forward BOS policy data for MVL gating and risk assessment.
+      if (bos.isNotEmpty) 'mvl': <String, dynamic>{
+        'gateActive': bos['triggerMvl'] == true,
+        'reason': (bos['reasonCodes'] as List<dynamic>?)?.isNotEmpty == true
+            ? (bos['reasonCodes'] as List<dynamic>).first.toString()
+            : null,
+      },
+      'requiresExplainBack': bos['requiresExplainBack'] == true,
       'meta': <String, dynamic>{
         'version': 'voice-api-v1',
+        'traceId': metadata['traceId'],
+        'policyVersion': metadata['policyVersion'],
       },
     });
   }
@@ -132,7 +156,10 @@ class VoiceRuntimeService {
     }
 
     if (kIsWeb) {
-      throw Exception('Audio file transcription is not available on web. Use the Web Speech API instead.');
+      throw Exception(
+        'Audio file transcription is not available on web. '
+        'Use transcribeAudioBase64 or the Web Speech API instead.',
+      );
     }
 
     request.files
@@ -143,11 +170,60 @@ class VoiceRuntimeService {
     final http.Response response = await http.Response.fromStream(streamed);
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw Exception(
-          'Voice transcription is unavailable right now (${response.statusCode}).');
+          'Voice transcription is unavailable right now (${response.statusCode}): '
+          '${response.body}');
     }
 
+    return _parseTranscribeResponse(response.body);
+  }
+
+  /// Transcribe audio on the server using a base64-encoded audio payload.
+  ///
+  /// This is the web-compatible alternative to [transcribeAudioFile] — the
+  /// backend already accepts `audioBase64` in a JSON body.
+  Future<TranscribeVoiceResponse> transcribeAudioBase64({
+    required Uint8List audioBytes,
+    required String mimeType,
+    required String locale,
+    String? traceId,
+  }) async {
+    final String idToken = await _requiredIdToken();
+    final Uri endpoint = _voiceApiUri('/voice/transcribe');
+
+    final Map<String, dynamic> body = <String, dynamic>{
+      'audioBase64': base64Encode(audioBytes),
+      'mimeType': mimeType,
+      'locale': locale,
+    };
+    if (traceId != null && traceId.isNotEmpty) {
+      body['traceId'] = traceId;
+    }
+
+    final http.Response response = await http
+        .post(
+          endpoint,
+          headers: <String, String>{
+            'Authorization': 'Bearer $idToken',
+            'Content-Type': 'application/json',
+            'x-scholesa-locale': locale,
+            if (traceId != null && traceId.isNotEmpty) 'x-trace-id': traceId,
+          },
+          body: jsonEncode(body),
+        )
+        .timeout(_timeout);
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception(
+          'Voice transcription is unavailable right now (${response.statusCode}): '
+          '${response.body}');
+    }
+
+    return _parseTranscribeResponse(response.body);
+  }
+
+  TranscribeVoiceResponse _parseTranscribeResponse(String responseBody) {
     final Map<String, dynamic> json =
-        jsonDecode(response.body) as Map<String, dynamic>;
+        jsonDecode(responseBody) as Map<String, dynamic>;
     final Map<String, dynamic> metadata =
         json['metadata'] as Map<String, dynamic>? ?? const <String, dynamic>{};
 
@@ -172,11 +248,13 @@ class VoiceRuntimeService {
     return (confidence.clamp(0.0, 1.0) as num).toDouble();
   }
 
+  static const String _defaultRegion = 'us-central1';
+
   Uri _voiceApiUri(String path) {
     final String projectId = Firebase.app().options.projectId;
     final String cleanedPath = path.startsWith('/') ? path : '/$path';
     return Uri.parse(
-      'https://us-central1-$projectId.cloudfunctions.net/voiceApi$cleanedPath',
+      'https://$_defaultRegion-$projectId.cloudfunctions.net/voiceApi$cleanedPath',
     );
   }
 }

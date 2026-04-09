@@ -796,7 +796,7 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return MiloRuntimeScope(child: Scaffold(
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -850,7 +850,7 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
         icon: const Icon(Icons.share),
         label: Text(_t('Share')),
       ),
-    );
+    ));
   }
 
   Widget _buildHeader() {

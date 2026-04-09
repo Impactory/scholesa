@@ -30,6 +30,7 @@ enum OpType {
   proofBundleCreate,
   proofBundleUpdate,
   rubricApply,
+  bosEventIngest,
 }
 
 /// Single queued operation

@@ -1307,3 +1307,13 @@ class AiCoachResponse {
     );
   }
 }
+
+class ExplainBackResult {
+  const ExplainBackResult({
+    required this.approved,
+    required this.feedback,
+  });
+
+  final bool approved;
+  final String feedback;
+}

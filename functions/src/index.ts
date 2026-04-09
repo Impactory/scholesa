@@ -1386,6 +1386,11 @@ export const genAiCoach = onCall(async (request) => {
   const personaHint = typeof personaInstructions === 'string' ? personaInstructions.trim() : '';
   message = applyKidFriendlyConversationalTone(message, displayName, personaHint);
 
+  // Back-fill aiResponseText on the ai_help_opened event for explain-back copy detection.
+  await aiHelpOpenedRef.update({
+    'payload.aiResponseText': message.substring(0, 500),
+  });
+
   if (coppaBand === 'G6_8') {
     suggestedNextSteps = [...new Set([...suggestedNextSteps, 'Connect this response to your checkpoint submission.'])];
   }
@@ -1452,6 +1457,7 @@ export const genAiCoach = onCall(async (request) => {
       ...(responseConfidence != null
         ? {responseConfidence}
         : {}),
+      aiResponseText: message.substring(0, 500),
     },
     timestamp: FieldValue.serverTimestamp(),
   });

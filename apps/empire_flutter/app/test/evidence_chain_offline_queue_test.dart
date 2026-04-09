@@ -14,8 +14,55 @@ void main() {
       expect(OpType.values, contains(OpType.rubricApply));
     });
 
-    test('total OpType count is 18 (6 original + 4 ops + 8 evidence chain)', () {
-      expect(OpType.values.length, 18);
+    test('total OpType count is 19 (6 original + 4 ops + 8 evidence chain + 1 BOS)', () {
+      expect(OpType.values.length, 19);
+    });
+
+    test('bosEventIngest exists in OpType enum', () {
+      expect(OpType.values, contains(OpType.bosEventIngest));
+    });
+  });
+
+  group('bosEventIngest QueuedOp', () {
+    test('bosEventIngest serializes correctly', () {
+      final QueuedOp op = QueuedOp(
+        type: OpType.bosEventIngest,
+        payload: <String, dynamic>{
+          'eventType': 'checkpoint_submitted',
+          'siteId': 'site1',
+          'actorRole': 'learner',
+          'gradeBand': 'G4_6',
+          'payload': <String, dynamic>{
+            'missionId': 'mission1',
+            'schemaVersion': '2.0.0',
+          },
+        },
+      );
+
+      expect(op.type, OpType.bosEventIngest);
+      final Map<String, dynamic> json = op.toJson();
+      expect(json['type'], 'bosEventIngest');
+      expect(json['payload']['eventType'], 'checkpoint_submitted');
+      expect(json['payload']['siteId'], 'site1');
+    });
+
+    test('bosEventIngest round-trips through JSON', () {
+      final QueuedOp original = QueuedOp(
+        type: OpType.bosEventIngest,
+        payload: <String, dynamic>{
+          'eventType': 'ai_help_used',
+          'siteId': 'site2',
+          'actorRole': 'learner',
+          'gradeBand': 'G7_9',
+          'payload': <String, dynamic>{
+            'mode': 'hint',
+          },
+        },
+      );
+      final Map<String, dynamic> json = original.toJson();
+      final QueuedOp restored = QueuedOp.fromJson(json);
+      expect(restored.type, OpType.bosEventIngest);
+      expect(restored.payload['eventType'], 'ai_help_used');
     });
   });
 

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import '../services/firestore_service.dart';
@@ -297,15 +298,18 @@ class SyncCoordinator extends ChangeNotifier {
         break;
       case OpType.proofBundleUpdate:
         final String bundleId = payload.remove('bundleId') as String? ?? '';
-        if (bundleId.isNotEmpty) {
-          await firestore
-              .collection('proofOfLearningBundles')
-              .doc(bundleId)
-              .update(<String, dynamic>{
-            ...payload,
-            'updatedAt': FieldValue.serverTimestamp(),
-          });
+        if (bundleId.isEmpty) {
+          throw StateError(
+            'proofBundleUpdate requires a non-empty bundleId in payload',
+          );
         }
+        await firestore
+            .collection('proofOfLearningBundles')
+            .doc(bundleId)
+            .update(<String, dynamic>{
+          ...payload,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
         break;
       case OpType.rubricApply:
         await firestore
@@ -314,6 +318,39 @@ class SyncCoordinator extends ChangeNotifier {
             .set(<String, dynamic>{
           ...payload,
           'createdAt': FieldValue.serverTimestamp(),
+        });
+        break;
+      case OpType.bosEventIngest:
+        // Route through Cloud Function to ensure FDM extraction, rate
+        // limiting, payload sanitization, and COPPA consent checks.
+        await FirebaseFunctions.instance
+            .httpsCallable('bosIngestEvent')
+            .call(<String, dynamic>{
+          'eventType': payload['eventType'] as String? ?? '',
+          'siteId': payload['siteId'] as String? ?? '',
+          'actorRole': payload['actorRole'] as String? ?? '',
+          'gradeBand': payload['gradeBand'] as String? ?? '',
+          if (payload['sessionOccurrenceId'] != null)
+            'sessionOccurrenceId': payload['sessionOccurrenceId'],
+          if (payload['missionId'] != null)
+            'missionId': payload['missionId'],
+          if (payload['checkpointId'] != null)
+            'checkpointId': payload['checkpointId'],
+          'payload': <String, dynamic>{
+            ...payload['payload'] as Map<String, dynamic>? ??
+                const <String, dynamic>{},
+            'eventId': payload['eventId'] as String? ?? op.idempotencyKey,
+            if (payload['schemaVersion'] != null)
+              'schemaVersion': payload['schemaVersion'],
+            if (payload['contextMode'] != null)
+              'contextMode': payload['contextMode'],
+            if (payload['actorIdPseudo'] != null)
+              'actorIdPseudo': payload['actorIdPseudo'],
+            if (payload['assignmentId'] != null)
+              'assignmentId': payload['assignmentId'],
+            if (payload['lessonId'] != null)
+              'lessonId': payload['lessonId'],
+          },
         });
         break;
     }

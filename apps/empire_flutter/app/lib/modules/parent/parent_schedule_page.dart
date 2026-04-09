@@ -229,7 +229,7 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
   @override
   Widget build(BuildContext context) {
     final ColorScheme scheme = Theme.of(context).colorScheme;
-    return Scaffold(
+    return MiloRuntimeScope(child: Scaffold(
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -329,7 +329,7 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
           },
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildLoadErrorState({

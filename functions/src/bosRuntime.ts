@@ -63,6 +63,23 @@ const BOS_LOGIC_SPEC = Object.freeze({
 
 const FAIRNESS_COLLECTION = 'fairnessAudits';
 
+// ── Per-user rate limiter for bosIngestEvent (H5) ──
+const EVENT_RATE_LIMIT_PER_MINUTE = 60;
+const eventRateMap = new Map<string, { count: number; resetAt: number }>();
+
+function checkEventRateLimit(uid: string): void {
+  const now = Date.now();
+  const entry = eventRateMap.get(uid);
+  if (!entry || now >= entry.resetAt) {
+    eventRateMap.set(uid, { count: 1, resetAt: now + 60_000 });
+    return;
+  }
+  entry.count++;
+  if (entry.count > EVENT_RATE_LIMIT_PER_MINUTE) {
+    throw new HttpsError('resource-exhausted', 'Too many events — max 60 per minute');
+  }
+}
+
 type FairnessAuditBucket = {
   siteId: string | null;
   interventions: number;
@@ -1297,6 +1314,7 @@ export const bosIngestEvent = onCall(
   async (request: CallableRequest) => {
     const uid = request.auth?.uid;
     if (!uid) throw new HttpsError('unauthenticated', 'Auth required');
+    checkEventRateLimit(uid);
 
     const data = request.data && typeof request.data === 'object'
       ? request.data as Record<string, unknown>

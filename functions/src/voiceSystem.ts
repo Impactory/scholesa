@@ -691,6 +691,58 @@ function resolveBosInteractionContext(
   };
 }
 
+/**
+ * Extract client-sent orchestration state (EMA xHat estimates) from the
+ * request context. Returns null if the context doesn't include valid data.
+ */
+function resolveClientOrchestrationState(
+  context: Record<string, unknown> | undefined,
+): { xHat: { cognition: number; engagement: number; integrity: number }; confidence?: number; stateStatus?: string } | null {
+  if (!context) return null;
+  const orch = context.orchestrationState;
+  if (!orch || typeof orch !== 'object') return null;
+  const orchObj = orch as Record<string, unknown>;
+  const xHat = orchObj.xHat;
+  if (!xHat || typeof xHat !== 'object') return null;
+  const xHatObj = xHat as Record<string, unknown>;
+  const cognition = typeof xHatObj.cognition === 'number' ? xHatObj.cognition : undefined;
+  const engagement = typeof xHatObj.engagement === 'number' ? xHatObj.engagement : undefined;
+  const integrity = typeof xHatObj.integrity === 'number' ? xHatObj.integrity : undefined;
+  if (cognition === undefined || engagement === undefined || integrity === undefined) return null;
+  const result: { xHat: { cognition: number; engagement: number; integrity: number }; confidence?: number; stateStatus?: string } = {
+    xHat: { cognition, engagement, integrity },
+  };
+  if (typeof orchObj.confidence === 'number' && isFinite(orchObj.confidence)) {
+    result.confidence = orchObj.confidence;
+  }
+  if (typeof orchObj.stateStatus === 'string') {
+    result.stateStatus = orchObj.stateStatus;
+  }
+  return result;
+}
+
+/**
+ * Extract client-sent active MVL context from the request context.
+ * Returns null if no active MVL gate is reported.
+ */
+function resolveClientMvlContext(
+  context: Record<string, unknown> | undefined,
+): { active: boolean; triggerReason?: string; evidenceCount?: number } | null {
+  if (!context) return null;
+  const mvl = context.activeMvl;
+  if (!mvl || typeof mvl !== 'object') return null;
+  const mvlObj = mvl as Record<string, unknown>;
+  if (mvlObj.active !== true) return null;
+  const result: { active: boolean; triggerReason?: string; evidenceCount?: number } = { active: true };
+  if (typeof mvlObj.triggerReason === 'string') {
+    result.triggerReason = mvlObj.triggerReason;
+  }
+  if (typeof mvlObj.evidenceCount === 'number') {
+    result.evidenceCount = mvlObj.evidenceCount;
+  }
+  return result;
+}
+
 function resolveRequestId(req: Request): string {
   const headerRequestId = toHeaderString(req.header('x-request-id'));
   return headerRequestId ?? `voice-${randomUUID()}`;
@@ -1241,6 +1293,52 @@ function applyStudentConversationalTone(
     out = `${out} What should we try first?`;
   }
   return out;
+}
+
+/** Adapt response text based on BOS policy type/salience recommendation. */
+function applyBosPolicyModeStyle(
+  text: string,
+  policyHint: BosPolicyHint,
+  locale: VoiceLocale,
+  role: VoiceRequesterRole,
+): string {
+  if (!text || role !== 'student') return text;
+  const interventionType = policyHint.type;
+  if (!interventionType) return text;
+
+  // Adapt the response phrasing to match the BOS-recommended intervention type.
+  // Only applies to English for now — other locales pass through unchanged.
+  if (locale !== 'en') return text;
+
+  const hasQuestion = /\?/.test(text);
+  switch (interventionType) {
+    case 'scaffold': {
+      // Structured scaffolding: break down into steps.
+      const prefix = policyHint.salience === 'high'
+        ? 'Let me break this down for you.'
+        : 'Let us work through this together.';
+      return hasQuestion ? `${prefix} ${text}` : `${prefix} ${text} What part would you like to explore first?`;
+    }
+    case 'nudge': {
+      // Minimal support: gentle encouragement only.
+      const hasEncouragement = /\b(great|good|nice|keep going|awesome)\b/i.test(text);
+      return hasEncouragement ? text : `You are on the right track. ${text}`;
+    }
+    case 'revisit': {
+      // Suggest going back to review a concept.
+      return `It might help to revisit what we covered earlier. ${text}`;
+    }
+    case 'pace': {
+      // Slow down pacing signal.
+      return hasQuestion ? text : `Take your time with this one. ${text}`;
+    }
+    case 'handoff': {
+      // Escalate to educator.
+      return `This is a great question for your educator. ${text}`;
+    }
+    default:
+      return text;
+  }
 }
 
 function selectToolCalls(
@@ -2667,6 +2765,10 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
     const requestContext = asRecord(body.context);
     const bosContext = resolveBosInteractionContext(body, authContext);
     const personaInstructions = normalizeString(requestContext?.personaInstructions);
+
+    // Extract client-side orchestration state (live Firestore EMA estimates).
+    const clientOrchState = resolveClientOrchestrationState(requestContext);
+    const clientMvlContext = resolveClientMvlContext(requestContext);
     const personalizationContextUsed = Boolean(learningSnapshot) || roleIntelligence.signalCount > 0;
     const roleIntelligenceSignals = roleIntelligence.signalCount;
     const baselineCandidateText = safety.safetyOutcome === 'allowed'
@@ -2709,6 +2811,8 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
           },
           learningSnapshot: toInferenceLearningSnapshot(learningSnapshot),
           roleIntelligenceContext: roleIntelligence,
+          ...(clientOrchState ? { orchestrationState: clientOrchState } : {}),
+          ...(clientMvlContext ? { activeMvl: clientMvlContext } : {}),
           maxTokens: 220,
         },
         context: buildInferenceContextHeaders({
@@ -2812,6 +2916,8 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
           understanding,
           learningSnapshot: toInferenceLearningSnapshot(learningSnapshot),
           roleIntelligenceContext: roleIntelligence,
+          ...(clientOrchState ? { orchestrationState: clientOrchState } : {}),
+          ...(clientMvlContext ? { activeMvl: clientMvlContext } : {}),
         },
         context: buildInferenceContextHeaders({
           traceId,
@@ -2855,6 +2961,12 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
     }
     if (personaInstructions && /kid|child|friendly|conversational|spoken/i.test(personaInstructions)) {
       candidateText = applyStudentConversationalTone(candidateText, locale);
+    }
+
+    // BOS policy mode shapes the response style when confidence is high enough.
+    if (_bosPolicyHint && _bosPolicyHint.confidence !== undefined &&
+        _bosPolicyHint.confidence >= MIN_AUTONOMOUS_POLICY_CONFIDENCE) {
+      candidateText = applyBosPolicyModeStyle(candidateText, _bosPolicyHint, locale, authContext.requesterRole);
     }
 
     const toolsInvoked = selectToolCalls(
@@ -3163,6 +3275,16 @@ export async function handleCopilotMessage(req: Request, res: Response): Promise
           topicTags: understanding.topicTags,
         },
       },
+      bos: _bosPolicyHint ? {
+        mode: _bosPolicyHint.mode ?? null,
+        type: _bosPolicyHint.type ?? null,
+        salience: _bosPolicyHint.salience ?? null,
+        triggerMvl: _bosPolicyHint.triggerMvl === true,
+        confidence: _bosPolicyHint.confidence ?? null,
+        reasonCodes: _bosPolicyHint.reasonCodes ?? [],
+        requiresExplainBack: _bosPolicyHint.triggerMvl === true ||
+          (understanding.needsScaffold && authContext.requesterRole === 'student'),
+      } : null,
       tts: {
         available: Boolean(audioUrl),
         audioUrl,
@@ -3786,6 +3908,8 @@ export const __voiceSystemInternals = {
   normalizeVoiceLocale,
   redactTextForSpeech,
   resolveBosInteractionContext,
+  resolveClientMvlContext,
+  resolveClientOrchestrationState,
   resolveLocale,
   resolveTraceId,
   selectToolCalls,

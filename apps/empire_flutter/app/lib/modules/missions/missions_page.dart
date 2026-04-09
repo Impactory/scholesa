@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../domain/models.dart' show LearnerProfileModel;
@@ -535,6 +537,14 @@ class _MissionsPageState extends State<MissionsPage>
         'status': mission.status.name,
       },
     );
+    final AppState? appState = context.read<AppState?>();
+    BosEventBus.instance.track(
+      eventType: 'mission_viewed',
+      siteId: appState?.activeSiteId ?? '',
+      gradeBand: GradeBand.g4_6,
+      actorRole: 'learner',
+      missionId: mission.id,
+    );
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -997,6 +1007,16 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
     if (!mounted) {
       return;
     }
+    if (bundle != null) {
+      final AppState? appState = context.read<AppState?>();
+      BosEventBus.instance.track(
+        eventType: 'artifact_created',
+        siteId: appState?.activeSiteId ?? '',
+        gradeBand: GradeBand.g4_6,
+        actorRole: 'learner',
+        missionId: widget.mission.id,
+      );
+    }
     setState(() {
       _isSavingProofBundle = false;
       _versionHistory = bundle?.versionHistory ?? _versionHistory;
@@ -1029,6 +1049,14 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
       );
       return;
     }
+    final AppState? ckAppState = context.read<AppState?>();
+    BosEventBus.instance.track(
+      eventType: 'checkpoint_started',
+      siteId: ckAppState?.activeSiteId ?? '',
+      gradeBand: GradeBand.g4_6,
+      actorRole: 'learner',
+      missionId: widget.mission.id,
+    );
     setState(() => _isSavingCheckpoint = true);
     final MissionService missionService = context.read<MissionService>();
     final MissionProofBundle? bundle =
@@ -1039,6 +1067,24 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
     );
     if (!mounted) {
       return;
+    }
+    if (bundle != null) {
+      final AppState? appState = context.read<AppState?>();
+      BosEventBus.instance.track(
+        eventType: 'checkpoint_submitted',
+        siteId: appState?.activeSiteId ?? '',
+        gradeBand: GradeBand.g4_6,
+        actorRole: 'learner',
+        missionId: widget.mission.id,
+        payload: <String, dynamic>{'summary': summary},
+      );
+      BosEventBus.instance.track(
+        eventType: 'artifact_version_saved',
+        siteId: appState?.activeSiteId ?? '',
+        gradeBand: GradeBand.g4_6,
+        actorRole: 'learner',
+        missionId: widget.mission.id,
+      );
     }
     setState(() {
       _isSavingCheckpoint = false;
@@ -1596,6 +1642,14 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
                                         'mission_id': mission.id,
                                       },
                                     );
+                                    final AppState? appState = context.read<AppState?>();
+                                    BosEventBus.instance.track(
+                                      eventType: 'mission_selected',
+                                      siteId: appState?.activeSiteId ?? '',
+                                      gradeBand: GradeBand.g4_6,
+                                      actorRole: 'learner',
+                                      missionId: mission.id,
+                                    );
                                     final bool started = await context
                                         .read<MissionService>()
                                         .startMission(mission.id);
@@ -1603,6 +1657,13 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
                                     if (!context.mounted) return;
 
                                     if (started) {
+                                      BosEventBus.instance.track(
+                                        eventType: 'mission_started',
+                                        siteId: appState?.activeSiteId ?? '',
+                                        gradeBand: GradeBand.g4_6,
+                                        actorRole: 'learner',
+                                        missionId: mission.id,
+                                      );
                                       Navigator.pop(context);
                                       ScaffoldMessenger.of(context)
                                           .showSnackBar(
@@ -1709,6 +1770,27 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
                                               'mission_status':
                                                   mission.status.name,
                                               'progress': mission.progress,
+                                            },
+                                          );
+                                          final AppState? appState = context.read<AppState?>();
+                                          BosEventBus.instance.track(
+                                            eventType: 'mission_completed',
+                                            siteId: appState?.activeSiteId ?? '',
+                                            gradeBand: GradeBand.g4_6,
+                                            actorRole: 'learner',
+                                            missionId: mission.id,
+                                            payload: <String, dynamic>{
+                                              'submissionId': submissionId,
+                                            },
+                                          );
+                                          BosEventBus.instance.track(
+                                            eventType: 'artifact_submitted',
+                                            siteId: appState?.activeSiteId ?? '',
+                                            gradeBand: GradeBand.g4_6,
+                                            actorRole: 'learner',
+                                            missionId: mission.id,
+                                            payload: <String, dynamic>{
+                                              'submissionId': submissionId,
                                             },
                                           );
                                           if (!context.mounted) return;
@@ -2463,35 +2545,71 @@ class _MissionRuntimeScope extends StatefulWidget {
 }
 
 class _MissionRuntimeScopeState extends State<_MissionRuntimeScope> {
-  late final LearningRuntimeProvider _runtime;
+  LearningRuntimeProvider? _runtime;
 
   @override
   void initState() {
     super.initState();
-    _runtime = LearningRuntimeProvider(
-      siteId: widget.siteId,
-      learnerId: widget.learnerId,
-      gradeBand: GradeBand.g4_6,
-      firestore: widget.firestoreService.firestore,
-    );
-    _runtime.startListening();
+    unawaited(_initializeRuntime());
+  }
+
+  Future<void> _initializeRuntime() async {
+    try {
+      final AppState? appState = context.read<AppState?>();
+      final UserRole role = appState?.role ?? UserRole.learner;
+      final GradeBand gradeBand = gradeBandForRole(role);
+
+      final String? sessionOccurrenceId = await resolveSessionOccurrenceId(
+        context,
+        siteId: widget.siteId,
+        learnerId: widget.learnerId,
+        role: role,
+        firestore: widget.firestoreService.firestore,
+      );
+
+      if (!mounted) return;
+
+      final LearningRuntimeProvider runtime = LearningRuntimeProvider(
+        siteId: widget.siteId,
+        learnerId: widget.learnerId,
+        gradeBand: gradeBand,
+        sessionOccurrenceId: sessionOccurrenceId,
+        firestore: widget.firestoreService.firestore,
+      );
+      runtime.startListening();
+
+      if (!mounted) {
+        runtime.dispose();
+        return;
+      }
+
+      setState(() {
+        _runtime = runtime;
+      });
+    } catch (_) {
+      // Gracefully degrade — runtime stays null and child renders without it.
+    }
   }
 
   @override
   void dispose() {
-    _runtime.dispose();
+    _runtime?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final LearningRuntimeProvider? runtime = _runtime;
+    if (runtime == null) {
+      return widget.child;
+    }
     return ChangeNotifierProvider<LearningRuntimeProvider>.value(
-      value: _runtime,
+      value: runtime,
       child: AnimatedBuilder(
-        animation: _runtime,
+        animation: runtime,
         builder: (BuildContext context, Widget? child) {
           return MvlGateWidget(
-            runtime: _runtime,
+            runtime: runtime,
             child: child ?? const SizedBox.shrink(),
           );
         },

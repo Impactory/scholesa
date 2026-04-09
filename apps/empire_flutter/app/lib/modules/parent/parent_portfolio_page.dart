@@ -164,7 +164,7 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return MiloRuntimeScope(child: Scaffold(
       backgroundColor: ScholesaColors.background,
       appBar: AppBar(
         title: Text(_t('Portfolio')),
@@ -225,7 +225,7 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
           );
         },
       ),
-    );
+    ));
   }
 
   Widget _buildLoadErrorState({

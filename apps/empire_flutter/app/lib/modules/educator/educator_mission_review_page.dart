@@ -80,7 +80,7 @@ class _EducatorMissionReviewPageState extends State<EducatorMissionReviewPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return MiloRuntimeScope(child: Scaffold(
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -177,7 +177,7 @@ class _EducatorMissionReviewPageState extends State<EducatorMissionReviewPage> {
           },
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildHeader(MissionService service) {
@@ -1140,6 +1140,18 @@ class _ReviewSheetState extends State<_ReviewSheet> {
       }
       return;
     }
+    final AppState? reviewAppState = context.read<AppState?>();
+    BosEventBus.instance.track(
+      eventType: 'artifact_reviewed',
+      siteId: reviewAppState?.activeSiteId ?? '',
+      gradeBand: GradeBand.g7_9,
+      actorRole: 'educator',
+      payload: <String, dynamic>{
+        'submissionId': widget.submission.id,
+        'outcome': outcome,
+        'rating': effectiveRating,
+      },
+    );
     if (!context.mounted) {
       return;
     }

@@ -51,7 +51,7 @@ class _EducatorIntegrationsPageState extends State<EducatorIntegrationsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return MiloRuntimeScope(child: Scaffold(
       backgroundColor: ScholesaColors.background,
       appBar: AppBar(
         title: Text(_tEducatorIntegrations(context, 'My Integrations')),
@@ -158,7 +158,7 @@ class _EducatorIntegrationsPageState extends State<EducatorIntegrationsPage> {
           );
         },
       ),
-    );
+    ));
   }
 
   Widget _buildLoadErrorState(String message) {

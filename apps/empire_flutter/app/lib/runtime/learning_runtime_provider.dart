@@ -100,6 +100,12 @@ class LearningRuntimeProvider extends ChangeNotifier {
         _stateLoadIssue = null;
       }
       notifyListeners();
+    }, onError: (Object error) {
+      _state = null;
+      _stateStatus = LearningRuntimeStateStatus.unavailable;
+      _stateLoadIssue = 'listener_error';
+      debugPrint('[MiloOS] Orchestration listener error: $error');
+      notifyListeners();
     });
   }
 
@@ -118,6 +124,10 @@ class LearningRuntimeProvider extends ChangeNotifier {
       } else {
         _activeMvl = null;
       }
+      notifyListeners();
+    }, onError: (Object error) {
+      _activeMvl = null;
+      debugPrint('[MiloOS] MVL listener error: $error');
       notifyListeners();
     });
   }

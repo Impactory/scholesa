@@ -104,7 +104,7 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return MiloRuntimeScope(child: Scaffold(
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -196,7 +196,7 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
           },
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildHeader(ParentService service) {

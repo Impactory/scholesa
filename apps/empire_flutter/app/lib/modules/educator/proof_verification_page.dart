@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../auth/app_state.dart';
+import '../../i18n/evidence_chain_i18n.dart';
 import '../../services/firestore_service.dart';
 
 /// Educator reviews and verifies learner proof-of-learning bundles.
@@ -20,6 +21,8 @@ class _ProofVerificationPageState extends State<ProofVerificationPage> {
   String? _error;
 
   FirestoreService get _firestoreService => context.read<FirestoreService>();
+
+  String _t(String input) => EvidenceChainI18n.text(context, input);
 
   @override
   void initState() {
@@ -83,13 +86,13 @@ class _ProofVerificationPageState extends State<ProofVerificationPage> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Proof of learning verified.')),
+        SnackBar(content: Text(_t('Proof of learning verified.'))),
       );
       await _loadPendingBundles();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error verifying proof: $e')),
+        SnackBar(content: Text('${_t('Error verifying proof:')} $e')),
       );
     }
   }
@@ -107,13 +110,13 @@ class _ProofVerificationPageState extends State<ProofVerificationPage> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Revision requested.')),
+        SnackBar(content: Text(_t('Revision requested.'))),
       );
       await _loadPendingBundles();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error requesting revision: $e')),
+        SnackBar(content: Text('${_t('Error requesting revision:')} $e')),
       );
     }
   }
@@ -123,7 +126,7 @@ class _ProofVerificationPageState extends State<ProofVerificationPage> {
     final ThemeData theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Verify Proof of Learning'),
+        title: Text(_t('Verify Proof of Learning')),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -139,7 +142,7 @@ class _ProofVerificationPageState extends State<ProofVerificationPage> {
                       FilledButton.icon(
                         onPressed: _loadPendingBundles,
                         icon: const Icon(Icons.refresh),
-                        label: const Text('Retry'),
+                        label: Text(_t('Retry')),
                       ),
                     ],
                   ),
@@ -152,7 +155,7 @@ class _ProofVerificationPageState extends State<ProofVerificationPage> {
                           Icon(Icons.verified_outlined,
                               size: 48, color: theme.colorScheme.primary),
                           const SizedBox(height: 12),
-                          Text('All proof bundles have been verified.',
+                          Text(_t('All proof bundles have been verified.'),
                               style: theme.textTheme.bodyLarge),
                         ],
                       ),
@@ -211,17 +214,17 @@ class _ProofVerificationPageState extends State<ProofVerificationPage> {
             const SizedBox(height: 12),
             // Proof method checklist
             _ProofMethodRow(
-              label: 'Explain-It-Back',
+              label: _t('Explain-It-Back'),
               completed: hasEIB,
               excerpt: eibExcerpt,
             ),
             _ProofMethodRow(
-              label: 'Oral Check',
+              label: _t('Oral Check'),
               completed: hasOC,
               excerpt: ocExcerpt,
             ),
             _ProofMethodRow(
-              label: 'Mini Rebuild',
+              label: _t('Mini Rebuild'),
               completed: hasMR,
               excerpt: mrExcerpt,
             ),
@@ -231,13 +234,13 @@ class _ProofVerificationPageState extends State<ProofVerificationPage> {
                 FilledButton.icon(
                   onPressed: () => _verifyBundle(bundle),
                   icon: const Icon(Icons.verified, size: 18),
-                  label: const Text('Verify'),
+                  label: Text(_t('Verify')),
                 ),
                 const SizedBox(width: 8),
                 OutlinedButton.icon(
                   onPressed: () => _requestRevision(bundle),
                   icon: const Icon(Icons.edit_note, size: 18),
-                  label: const Text('Request Revision'),
+                  label: Text(_t('Request Revision')),
                 ),
               ],
             ),

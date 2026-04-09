@@ -18,7 +18,7 @@ void main() {
     test(
         'keeps runtime exception text aligned to AI Help and voice help wording',
         () {
-      expect(bosServiceSource, contains('Malformed MiloOS payload.'));
+      expect(bosServiceSource, contains('Malformed MVL resolution payload.'));
       expect(bosModelsSource, contains('Malformed MiloOS response payload.'));
       expect(voiceRuntimeSource, contains('Sign in to use MiloOS by voice.'));
       expect(

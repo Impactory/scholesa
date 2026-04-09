@@ -45,7 +45,7 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return MiloRuntimeScope(child: Scaffold(
       backgroundColor: context.schSurfaceMuted,
       body: Consumer<HabitService>(
         builder: (BuildContext context, HabitService service, _) {
@@ -67,7 +67,7 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
         },
       ),
       floatingActionButton: _buildAddHabitFab(),
-    );
+    ));
   }
 
   Widget _buildHeader(HabitService service) {
@@ -687,6 +687,14 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
               // Use Firebase method to persist completion
               final bool success = await service.completeHabitInFirestore(habit.id);
               if (success && mounted) {
+                final AppState? appState = context.read<AppState?>();
+                BosEventBus.instance.track(
+                  eventType: 'reflection_submitted',
+                  siteId: appState?.activeSiteId ?? '',
+                  gradeBand: GradeBand.g4_6,
+                  actorRole: 'learner',
+                  payload: <String, dynamic>{'habitId': habit.id},
+                );
                 _celebrationController.forward(from: 0);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(

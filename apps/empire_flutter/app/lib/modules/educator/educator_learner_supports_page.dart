@@ -138,7 +138,7 @@ class _EducatorLearnerSupportsPageState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return MiloRuntimeScope(child: Scaffold(
       backgroundColor: ScholesaColors.background,
       appBar: AppBar(
         title: Text(_tEducatorLearnerSupports(context, 'Learner Supports')),
@@ -281,7 +281,7 @@ class _EducatorLearnerSupportsPageState
           );
         },
       ),
-    );
+    ));
   }
 
   Widget _buildSearchBanner() {

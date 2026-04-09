@@ -59,10 +59,10 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
     final ColorScheme scheme = Theme.of(context).colorScheme;
     final bool isDark = scheme.brightness == Brightness.dark;
     if (widget.forceSetupMode) {
-      return _buildOnboardingScaffold(scheme, isDark);
+      return MiloRuntimeScope(child: _buildOnboardingScaffold(scheme, isDark));
     }
 
-    return Scaffold(
+    return MiloRuntimeScope(child: Scaffold(
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -93,7 +93,7 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
           ],
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildOnboardingScaffold(ColorScheme scheme, bool isDark) {

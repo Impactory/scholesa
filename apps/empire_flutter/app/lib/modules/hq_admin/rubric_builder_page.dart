@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../auth/app_state.dart';
+import '../../i18n/evidence_chain_i18n.dart';
 import '../../services/firestore_service.dart';
 
 /// HQ admin creates and manages rubric templates.
@@ -35,6 +36,8 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
   ];
 
   FirestoreService get _firestoreService => context.read<FirestoreService>();
+
+  String _t(String input) => EvidenceChainI18n.text(context, input);
 
   @override
   void initState() {
@@ -122,7 +125,7 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
   Future<void> _saveRubric() async {
     if (_nameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Rubric name is required.')),
+        SnackBar(content: Text(_t('Rubric name is required.'))),
       );
       return;
     }
@@ -160,7 +163,7 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_editingId != null ? 'Rubric updated.' : 'Rubric created.'),
+          content: Text(_editingId != null ? _t('Rubric updated.') : _t('Rubric created.')),
         ),
       );
 
@@ -172,7 +175,7 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error saving rubric: $e')),
+        SnackBar(content: Text('${_t('Error saving rubric:')} $e')),
       );
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -183,11 +186,11 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext ctx) => AlertDialog(
-        title: const Text('Delete Rubric'),
-        content: const Text('Are you sure you want to delete this rubric template?'),
+        title: Text(_t('Delete Rubric')),
+        content: Text(_t('Are you sure you want to delete this rubric template?')),
         actions: <Widget>[
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(_t('Cancel'))),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(_t('Delete'))),
         ],
       ),
     );
@@ -198,13 +201,13 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
       await _firestoreService.deleteDocument('rubrics', id);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Rubric deleted.')),
+        SnackBar(content: Text(_t('Rubric deleted.'))),
       );
       await _loadRubrics();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error deleting rubric: $e')),
+        SnackBar(content: Text('${_t('Error deleting rubric:')} $e')),
       );
     }
   }
@@ -214,7 +217,7 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
     final ThemeData theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Rubric Builder'),
+        title: Text(_t('Rubric Builder')),
         actions: <Widget>[
           if (!_showForm)
             IconButton(
@@ -238,7 +241,7 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
                       FilledButton.icon(
                         onPressed: _loadRubrics,
                         icon: const Icon(Icons.refresh),
-                        label: const Text('Retry'),
+                        label: Text(_t('Retry')),
                       ),
                     ],
                   ),
@@ -258,13 +261,13 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
                                 Icon(Icons.grading_outlined,
                                     size: 48, color: theme.colorScheme.primary),
                                 const SizedBox(height: 12),
-                                Text('No rubric templates yet.',
+                                Text(_t('No rubric templates yet.'),
                                     style: theme.textTheme.bodyLarge),
                                 const SizedBox(height: 12),
                                 FilledButton.icon(
                                   onPressed: _openCreateForm,
                                   icon: const Icon(Icons.add),
-                                  label: const Text('Create First Rubric'),
+                                  label: Text(_t('Create First Rubric')),
                                 ),
                               ],
                             ),
@@ -286,14 +289,14 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              _editingId != null ? 'Edit Rubric' : 'Create Rubric',
+              _editingId != null ? _t('Edit Rubric') : _t('Create Rubric'),
               style: theme.textTheme.titleMedium,
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Rubric Name',
+              decoration: InputDecoration(
+                labelText: _t('Rubric Name'),
                 hintText: 'e.g. Problem Solving Rubric',
                 border: OutlineInputBorder(),
               ),
@@ -301,8 +304,8 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
             const SizedBox(height: 12),
             TextField(
               controller: _descriptionController,
-              decoration: const InputDecoration(
-                labelText: 'Description',
+              decoration: InputDecoration(
+                labelText: _t('Description'),
                 hintText: 'What does this rubric assess?',
                 border: OutlineInputBorder(),
               ),
@@ -311,8 +314,8 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               initialValue: _selectedPillar,
-              decoration: const InputDecoration(
-                labelText: 'Pillar',
+              decoration: InputDecoration(
+                labelText: _t('Pillar'),
                 border: OutlineInputBorder(),
               ),
               items: _pillars
@@ -326,7 +329,7 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
               },
             ),
             const SizedBox(height: 16),
-            Text('Levels', style: theme.textTheme.titleSmall),
+            Text(_t('Levels'), style: theme.textTheme.titleSmall),
             const SizedBox(height: 8),
             ..._levels.asMap().entries.map(
                   (MapEntry<int, _RubricLevel> entry) =>
@@ -336,7 +339,7 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
               onPressed: () => setState(
                   () => _levels.add(_RubricLevel(name: '', criteria: '', score: _levels.length + 1))),
               icon: const Icon(Icons.add, size: 18),
-              label: const Text('Add Level'),
+              label: Text(_t('Add Level')),
             ),
             const SizedBox(height: 16),
             Row(
@@ -349,7 +352,7 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
                           height: 16,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : Text(_editingId != null ? 'Update' : 'Create'),
+                      : Text(_editingId != null ? _t('Update') : _t('Create')),
                 ),
                 const SizedBox(width: 8),
                 TextButton(
@@ -357,7 +360,7 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
                     _showForm = false;
                     _editingId = null;
                   }),
-                  child: const Text('Cancel'),
+                  child: Text(_t('Cancel')),
                 ),
               ],
             ),
@@ -376,8 +379,8 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
           SizedBox(
             width: 100,
             child: TextField(
-              decoration: const InputDecoration(
-                labelText: 'Name',
+              decoration: InputDecoration(
+                labelText: _t('Name'),
                 isDense: true,
                 border: OutlineInputBorder(),
               ),
@@ -388,8 +391,8 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
           const SizedBox(width: 8),
           Expanded(
             child: TextField(
-              decoration: const InputDecoration(
-                labelText: 'Criteria',
+              decoration: InputDecoration(
+                labelText: _t('Criteria'),
                 isDense: true,
                 border: OutlineInputBorder(),
               ),
@@ -401,8 +404,8 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
           SizedBox(
             width: 60,
             child: TextField(
-              decoration: const InputDecoration(
-                labelText: 'Score',
+              decoration: InputDecoration(
+                labelText: _t('Score'),
                 isDense: true,
                 border: OutlineInputBorder(),
               ),
@@ -458,7 +461,7 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
                 ),
                 const SizedBox(width: 8),
                 Chip(
-                  label: Text('$levelCount levels', style: const TextStyle(fontSize: 12)),
+                  label: Text('$levelCount ${_t('levels')}', style: const TextStyle(fontSize: 12)),
                   visualDensity: VisualDensity.compact,
                 ),
                 const Spacer(),

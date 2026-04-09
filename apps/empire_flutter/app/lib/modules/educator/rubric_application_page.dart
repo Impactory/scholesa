@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../auth/app_state.dart';
+import '../../i18n/evidence_chain_i18n.dart';
+import '../../runtime/runtime.dart';
 import '../../services/firestore_service.dart';
 
 /// Educator applies rubric judgments to learner evidence.
@@ -42,6 +44,8 @@ class _RubricApplicationPageState extends State<RubricApplicationPage> {
 
   FirestoreService get _firestoreService => context.read<FirestoreService>();
 
+  String _t(String input) => EvidenceChainI18n.text(context, input);
+
   String? _activeSiteId() {
     final AppState appState = context.read<AppState>();
     final String activeSiteId = (appState.activeSiteId ?? '').trim();
@@ -76,7 +80,7 @@ class _RubricApplicationPageState extends State<RubricApplicationPage> {
       final String? siteId = _activeSiteId();
       if (siteId == null) {
         setState(() {
-          _error = 'No active site selected.';
+          _error = _t('No active site selected.');
           _isLoading = false;
         });
         return;
@@ -164,10 +168,24 @@ class _RubricApplicationPageState extends State<RubricApplicationPage> {
         <String, dynamic>{'status': 'reviewed'},
       );
 
+      // 5. Emit checkpoint_graded BOS event
+      BosEventBus.instance.track(
+        eventType: 'checkpoint_graded',
+        siteId: siteId,
+        gradeBand: GradeBand.g7_9,
+        actorRole: 'educator',
+        payload: <String, dynamic>{
+          'learnerId': learnerId,
+          'attemptId': attemptId,
+          'level': _selectedLevel,
+          'rubricApplicationId': rubricAppId,
+        },
+      );
+
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Rubric applied and growth event recorded.')),
+        SnackBar(content: Text(_t('Rubric applied and growth event recorded.'))),
       );
 
       _feedbackController.clear();
@@ -177,7 +195,7 @@ class _RubricApplicationPageState extends State<RubricApplicationPage> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error applying rubric: $e')),
+        SnackBar(content: Text('${_t('Error applying rubric:')} $e')),
       );
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -189,7 +207,7 @@ class _RubricApplicationPageState extends State<RubricApplicationPage> {
     final ThemeData theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Apply Rubric Judgments'),
+        title: Text(_t('Apply Rubric Judgments')),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -205,7 +223,7 @@ class _RubricApplicationPageState extends State<RubricApplicationPage> {
                       FilledButton.icon(
                         onPressed: _loadPendingAttempts,
                         icon: const Icon(Icons.refresh),
-                        label: const Text('Retry'),
+                        label: Text(_t('Retry')),
                       ),
                     ],
                   ),
@@ -218,7 +236,7 @@ class _RubricApplicationPageState extends State<RubricApplicationPage> {
                           Icon(Icons.check_circle_outline,
                               size: 48, color: theme.colorScheme.primary),
                           const SizedBox(height: 12),
-                          Text('No pending submissions to review.',
+                          Text(_t('No pending submissions to review.'),
                               style: theme.textTheme.bodyLarge),
                         ],
                       ),
@@ -288,7 +306,7 @@ class _RubricApplicationPageState extends State<RubricApplicationPage> {
             if (!isExpanded)
               FilledButton.tonal(
                 onPressed: () => setState(() => _expandedAttemptId = attemptId),
-                child: const Text('Apply Rubric'),
+                child: Text(_t('Apply Rubric')),
               )
             else
               _buildRubricForm(attempt),
@@ -303,7 +321,7 @@ class _RubricApplicationPageState extends State<RubricApplicationPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         const Divider(),
-        Text('Select Level', style: Theme.of(context).textTheme.titleSmall),
+        Text(_t('Select Level'), style: Theme.of(context).textTheme.titleSmall),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
@@ -320,9 +338,9 @@ class _RubricApplicationPageState extends State<RubricApplicationPage> {
         const SizedBox(height: 12),
         TextField(
           controller: _feedbackController,
-          decoration: const InputDecoration(
-            labelText: 'Feedback (optional)',
-            hintText: 'Provide feedback on this submission...',
+          decoration: InputDecoration(
+            labelText: _t('Feedback (optional)'),
+            hintText: _t('Provide feedback on this submission...'),
             border: OutlineInputBorder(),
           ),
           maxLines: 3,
@@ -343,12 +361,12 @@ class _RubricApplicationPageState extends State<RubricApplicationPage> {
                       height: 16,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('Submit Rubric'),
+                  : Text(_t('Submit Rubric')),
             ),
             const SizedBox(width: 8),
             TextButton(
               onPressed: () => setState(() => _expandedAttemptId = null),
-              child: const Text('Cancel'),
+              child: Text(_t('Cancel')),
             ),
           ],
         ),

@@ -217,7 +217,7 @@ class _ParentBillingPageState extends State<ParentBillingPage>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return MiloRuntimeScope(child: Scaffold(
       body: Consumer<ParentService>(
         builder: (BuildContext context, ParentService service, _) {
           return Container(
@@ -280,7 +280,7 @@ class _ParentBillingPageState extends State<ParentBillingPage>
           );
         },
       ),
-    );
+    ));
   }
 
   Widget _buildHeader(ParentService service) {

@@ -1,11 +1,12 @@
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import '../offline/offline_queue.dart';
 import 'bos_models.dart';
 import 'bos_service.dart';
 
 // ──────────────────────────────────────────────────────
-// BOS Event Bus  (36 allowed event types)
+// BOS Event Bus  (44 allowed event types)
 // Spec: BOS_MIA_EVENT_SCHEMA.md / HOW_TO §1 (endpoint 1)
 // ──────────────────────────────────────────────────────
 
@@ -19,6 +20,21 @@ class BosEventBus {
 
   final List<BosEvent> _buffer = <BosEvent>[];
   Timer? _flushTimer;
+  static const int _maxBufferSize = 500;
+  static OfflineQueue? _offlineQueue;
+
+  // Client-side rate limit mirroring backend's 60 events/minute.
+  static const int _rateLimitPerMinute = 60;
+  final List<DateTime> _emitTimestamps = <DateTime>[];
+  int _droppedByRateLimit = 0;
+
+  /// Number of events dropped by client-side rate limiting since last reset.
+  int get droppedByRateLimit => _droppedByRateLimit;
+
+  /// Set the offline queue for persisting unflushed events on app suspend.
+  static void setOfflineQueue(OfflineQueue queue) {
+    _offlineQueue = queue;
+  }
 
   /// All BOS event types that the client is allowed to emit.
   static const Set<String> allowedBosEvents = <String>{
@@ -53,6 +69,7 @@ class BosEventBus {
     'mvl_passed',
     'mvl_failed',
     'mvl_needs_more_evidence',
+    'mvl_evidence_submitted',
     // ── Teacher override (supervisory control g_t)
     'teacher_override_mvl',
     'teacher_override_intervention',
@@ -66,15 +83,37 @@ class BosEventBus {
     'idle_detected',
     'focus_restored',
     'interaction_signal_observed',
+    // ── Voice I/O signals (feeds FDM)
+    'voice_stt_completed',
+    'voice_tts_played',
     // ── Educator insights
     'educator_class_view',
     'educator_learner_drilldown',
+    // ── Educator engagement tools (live session)
+    'cold_call',
+    'poll',
+    'exit_ticket',
   };
 
   /// Enqueue a [BosEvent] for asynchronous flush.
   void emit(BosEvent event) {
     if (!allowedBosEvents.contains(event.eventType)) return;
+
+    // Client-side rate limiting: drop events that would exceed the backend's
+    // 60 events/minute limit to avoid silent server-side drops.
+    final DateTime now = DateTime.now();
+    final DateTime windowStart = now.subtract(const Duration(minutes: 1));
+    _emitTimestamps.removeWhere((DateTime t) => t.isBefore(windowStart));
+    if (_emitTimestamps.length >= _rateLimitPerMinute) {
+      _droppedByRateLimit++;
+      return;
+    }
+    _emitTimestamps.add(now);
+
     _buffer.add(event);
+    if (_buffer.length > _maxBufferSize) {
+      _buffer.removeRange(0, _buffer.length - _maxBufferSize);
+    }
     _scheduleFlush();
   }
 
@@ -144,8 +183,16 @@ class BosEventBus {
   }
 
   /// Force immediate flush (e.g. on app suspend).
+  /// If flush fails and offline queue is available, persists remaining events.
   Future<void> flushNow() async {
     _flushTimer?.cancel();
     await _flush();
+    // Persist any remaining unflushed events to offline queue.
+    if (_buffer.isNotEmpty && _offlineQueue != null) {
+      for (final BosEvent event in _buffer) {
+        await _offlineQueue!.enqueue(OpType.bosEventIngest, event.toMap());
+      }
+      _buffer.clear();
+    }
   }
 }
