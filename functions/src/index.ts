@@ -9,7 +9,6 @@ import { SCHOLESA_GEN2_REGION } from './gen2Runtime';
 import { guardedFetch } from './security/egressGuard';
 import {
   buildExplainBackSubmittedEvent,
-  explainBackRecordedFeedback,
   verifyExplainBack,
 } from './aiCoachExplainBack';
 import {

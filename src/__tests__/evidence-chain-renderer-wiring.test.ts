@@ -129,12 +129,15 @@ describe('Renderers delegate to real evidence components', () => {
     expect(source).toContain('EducatorEvidenceCapture');
   });
 
-  it('LearnerCheckpointRenderer → LearnerEvidenceSubmission', () => {
+  it('LearnerCheckpointRenderer reads/writes checkpointHistory collection', () => {
     const source = readSrcFile(
       'features', 'workflows', 'renderers', 'LearnerCheckpointRenderer.tsx'
     );
-    expect(source).toContain('LearnerEvidenceSubmission');
-    expect(source).toContain('@/src/components/evidence/LearnerEvidenceSubmission');
+    // Purpose-built checkpoint UI — reads from and writes to checkpointHistory
+    expect(source).toContain('checkpointHistory');
+    expect(source).toContain('explainItBack');
+    expect(source).toContain('learnerId');
+    expect(source).toContain('addDoc');
   });
 
   it('LearnerReflectionsRenderer → ReflectionJournal with auth context', () => {

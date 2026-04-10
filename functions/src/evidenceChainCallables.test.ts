@@ -6,10 +6,6 @@
  * field naming consistency, and collection targeting.
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
-import { HttpsError } from 'firebase-functions/v1/https';
-
 // ── Firestore mock ──────────────────────────────────────────────
 
 const batchOps: Array<{ op: string; path: string; data: any }> = [];
@@ -81,7 +77,7 @@ function resetMocks() {
   jest.clearAllMocks();
 }
 
-function batchOpsForCollection(collection: string) {
+function _batchOpsForCollection(collection: string) {
   return batchOps.filter((op) => op.path.startsWith(`${collection}/`));
 }
 
@@ -90,37 +86,37 @@ function batchOpsForCollection(collection: string) {
 describe('Evidence chain callable exports', () => {
   beforeEach(resetMocks);
 
-  it('applyRubricToEvidence is exported in index.ts', () => {
-    const fs = require('fs');
-    const path = require('path');
+  it('applyRubricToEvidence is exported in index.ts', async () => {
+    const fs = await import('fs');
+    const path = await import('path');
     const source = fs.readFileSync(path.join(__dirname, 'index.ts'), 'utf-8');
     expect(source).toContain('export const applyRubricToEvidence');
   });
 
-  it('processCheckpointMasteryUpdate is exported in index.ts', () => {
-    const fs = require('fs');
-    const path = require('path');
+  it('processCheckpointMasteryUpdate is exported in index.ts', async () => {
+    const fs = await import('fs');
+    const path = await import('path');
     const source = fs.readFileSync(path.join(__dirname, 'index.ts'), 'utf-8');
     expect(source).toContain('export const processCheckpointMasteryUpdate');
   });
 
-  it('evaluateBadgeEligibility is exported in index.ts', () => {
-    const fs = require('fs');
-    const path = require('path');
+  it('evaluateBadgeEligibility is exported in index.ts', async () => {
+    const fs = await import('fs');
+    const path = await import('path');
     const source = fs.readFileSync(path.join(__dirname, 'index.ts'), 'utf-8');
     expect(source).toContain('export const evaluateBadgeEligibility');
   });
 
-  it('verifyProofOfLearning is exported in index.ts', () => {
-    const fs = require('fs');
-    const path = require('path');
+  it('verifyProofOfLearning is exported in index.ts', async () => {
+    const fs = await import('fs');
+    const path = await import('path');
     const source = fs.readFileSync(path.join(__dirname, 'index.ts'), 'utf-8');
     expect(source).toContain('export const verifyProofOfLearning');
   });
 
-  it('getParentDashboardBundle is exported in index.ts', () => {
-    const fs = require('fs');
-    const path = require('path');
+  it('getParentDashboardBundle is exported in index.ts', async () => {
+    const fs = await import('fs');
+    const path = await import('path');
     const source = fs.readFileSync(path.join(__dirname, 'index.ts'), 'utf-8');
     expect(source).toContain('export const getParentDashboardBundle');
   });

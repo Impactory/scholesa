@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 
 import '../../auth/app_state.dart';
 import '../../i18n/evidence_chain_i18n.dart';
+import '../../offline/offline_queue.dart';
+import '../../offline/sync_coordinator.dart';
 import '../../services/firestore_service.dart';
 
 /// Quick evidence capture for educators (10-second rule).
@@ -172,7 +174,7 @@ class _ObservationCapturePageState extends State<ObservationCapturePage> {
           ? DateTime.now().difference(_captureStartTime!).inMilliseconds
           : 0;
 
-      await _firestoreService.createDocument('evidenceRecords', <String, dynamic>{
+      final Map<String, dynamic> payload = <String, dynamic>{
         'learnerId': _selectedLearnerId,
         'learnerName': _selectedLearnerName,
         'educatorId': educatorId,
@@ -183,7 +185,18 @@ class _ObservationCapturePageState extends State<ObservationCapturePage> {
         'note': _noteController.text.trim(),
         'captureTimeMs': captureMs,
         'status': 'recorded',
-      });
+        'queuedAtClient': DateTime.now().millisecondsSinceEpoch,
+      };
+
+      // Route through offline queue so observations survive connectivity loss.
+      final SyncCoordinator? syncCoordinator =
+          context.read<SyncCoordinator?>();
+      if (syncCoordinator != null) {
+        await syncCoordinator.queueOperation(OpType.observationCapture, payload);
+      } else {
+        // Fallback: direct write when sync coordinator is not provided (tests).
+        await _firestoreService.createDocument('evidenceRecords', payload);
+      }
 
       if (!mounted) return;
 
