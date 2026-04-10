@@ -1594,7 +1594,7 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
                   ),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
-                    value: _selectedParent,
+                    initialValue: _selectedParent,
                     decoration: InputDecoration(
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -1620,7 +1620,7 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
                   ),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
-                    value: _selectedLearner,
+                    initialValue: _selectedLearner,
                     decoration: InputDecoration(
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),

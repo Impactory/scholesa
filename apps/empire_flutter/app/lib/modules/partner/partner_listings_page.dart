@@ -454,7 +454,7 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: selectedProductId,
+                  initialValue: selectedProductId,
                   decoration: InputDecoration(
                     labelText: _tPartnerListings(context, 'Product'),
                     border: OutlineInputBorder(),
@@ -476,7 +476,7 @@ class _PartnerListingsPageState extends State<PartnerListingsPage> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: selectedCategory,
+                  initialValue: selectedCategory,
                   decoration: InputDecoration(
                     labelText: _tPartnerListings(context, 'Category'),
                     border: OutlineInputBorder(),

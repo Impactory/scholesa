@@ -880,7 +880,7 @@ class _HqAuditPageState extends State<HqAuditPage> {
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    value: decision,
+                    initialValue: decision,
                     decoration: InputDecoration(
                       labelText: _tHqAudit(context, 'Decision'),
                     ),
@@ -895,7 +895,7 @@ class _HqAuditPageState extends State<HqAuditPage> {
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    value: partnerStatus,
+                    initialValue: partnerStatus,
                     decoration: InputDecoration(
                       labelText: _tHqAudit(context, 'Partner Status'),
                     ),

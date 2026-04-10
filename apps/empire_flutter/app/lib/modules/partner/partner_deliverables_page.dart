@@ -166,7 +166,7 @@ class _PartnerDeliverablesPageState extends State<PartnerDeliverablesPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   DropdownButtonFormField<String>(
-                    value: selectedContractId,
+                    initialValue: selectedContractId,
                     decoration: InputDecoration(labelText: _t('Contract')),
                     items: _contractDeliverables
                         .map(

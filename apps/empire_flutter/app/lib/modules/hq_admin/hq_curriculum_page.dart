@@ -1656,7 +1656,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: selectedPillar,
+                  initialValue: selectedPillar,
                   style: const TextStyle(
                     color: ScholesaColors.textPrimary,
                     fontWeight: FontWeight.w600,
@@ -1702,7 +1702,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: selectedTemplate,
+                  initialValue: selectedTemplate,
                   decoration: _dialogDecoration(context, 'Template'),
                   items: _templateOptions
                       .map((String option) => DropdownMenuItem<String>(
@@ -1718,7 +1718,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: selectedDifficulty,
+                  initialValue: selectedDifficulty,
                   decoration: _dialogDecoration(context, 'Difficulty'),
                   items: _difficultyOptions
                       .map((String option) => DropdownMenuItem<String>(
@@ -1734,7 +1734,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: selectedMediaFormat,
+                  initialValue: selectedMediaFormat,
                   decoration: _dialogDecoration(context, 'Media format'),
                   items: _mediaFormatOptions
                       .map((String option) => DropdownMenuItem<String>(
@@ -1962,7 +1962,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: selectedPillar,
+                  initialValue: selectedPillar,
                   style: const TextStyle(
                     color: ScholesaColors.textPrimary,
                     fontWeight: FontWeight.w600,
@@ -2008,7 +2008,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: selectedTemplate,
+                  initialValue: selectedTemplate,
                   decoration: _dialogDecoration(context, 'Template'),
                   items: _templateOptions
                       .map((String option) => DropdownMenuItem<String>(
@@ -2024,7 +2024,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: selectedDifficulty,
+                  initialValue: selectedDifficulty,
                   decoration: _dialogDecoration(context, 'Difficulty'),
                   items: _difficultyOptions
                       .map((String option) => DropdownMenuItem<String>(
@@ -2040,7 +2040,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: selectedMediaFormat,
+                  initialValue: selectedMediaFormat,
                   decoration: _dialogDecoration(context, 'Media format'),
                   items: _mediaFormatOptions
                       .map((String option) => DropdownMenuItem<String>(
@@ -2623,7 +2623,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    value: trainingType,
+                    initialValue: trainingType,
                     decoration: InputDecoration(
                       labelText: _tHqCurriculum(context, 'Training Type'),
                     ),
@@ -2643,7 +2643,7 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    value: audience,
+                    initialValue: audience,
                     decoration: InputDecoration(
                       labelText: _tHqCurriculum(context, 'Audience'),
                     ),
