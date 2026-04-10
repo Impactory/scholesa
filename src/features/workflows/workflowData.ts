@@ -3673,6 +3673,255 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
         createLabel: 'Create',
         createConfig: null,
       };
+    case '/learner/checkpoints':
+      return {
+        records: applyRouteActionLabels(await queryCollectionRecords({
+          routePath: ctx.routePath,
+          collectionName: 'checkpointHistory',
+          constraints: [where('learnerId', '==', ctx.uid), orderBy('createdAt', 'desc')],
+          titleKeys: ['explainItBack'],
+          subtitleKeys: ['feedback', 'checkpointNumber'],
+          statusKeys: ['status'],
+          editable: false,
+          deletable: false,
+          limitSize: 50,
+        }), ctx.routePath),
+        canCreate: true,
+        canRefresh: true,
+        createLabel: 'Submit checkpoint',
+        createConfig: buildCreateConfig('Submit Checkpoint', 'Submit', [
+          { name: 'explainItBack', label: 'Explain your work', type: 'textarea', required: true, placeholder: 'Explain what you learned and how you approached this...' },
+          { name: 'checkpointNumber', label: 'Checkpoint #', type: 'number', required: true },
+          { name: 'aiAssistanceUsed', label: 'AI assistance used?', type: 'checkbox' },
+          { name: 'aiAssistanceDetails', label: 'AI assistance details', type: 'textarea', placeholder: 'Describe how AI helped you.' },
+        ]),
+      };
+    case '/learner/peer-feedback':
+      return {
+        records: applyRouteActionLabels(await queryCollectionRecords({
+          routePath: ctx.routePath,
+          collectionName: 'peerFeedback',
+          constraints: [where('authorId', '==', ctx.uid), orderBy('createdAt', 'desc')],
+          titleKeys: ['iLike'],
+          subtitleKeys: ['iWonder', 'nextStep'],
+          statusKeys: ['flagged'],
+          editable: false,
+          deletable: false,
+          limitSize: 40,
+        }), ctx.routePath),
+        canCreate: true,
+        canRefresh: true,
+        createLabel: 'Give peer feedback',
+        createConfig: buildCreateConfig('Give Peer Feedback', 'Submit feedback', [
+          { name: 'toLearnerId', label: 'Peer (learner ID)', type: 'text', required: true, placeholder: 'Learner to give feedback to' },
+          { name: 'iLike', label: 'I like...', type: 'textarea', required: true, placeholder: 'Something specific you appreciated.' },
+          { name: 'iWonder', label: 'I wonder...', type: 'textarea', required: true, placeholder: 'A question or curiosity about their work.' },
+          { name: 'nextStep', label: 'Next step suggestion', type: 'textarea', required: true, placeholder: 'A constructive suggestion for improvement.' },
+        ]),
+      };
+    case '/learner/proof-assembly':
+      return {
+        records: applyRouteActionLabels(await queryCollectionRecords({
+          routePath: ctx.routePath,
+          collectionName: 'proofOfLearningBundles',
+          constraints: [where('learnerId', '==', ctx.uid), orderBy('createdAt', 'desc')],
+          titleKeys: ['title', 'portfolioItemId'],
+          subtitleKeys: ['verificationStatus', 'proofMethods'],
+          statusKeys: ['verificationStatus'],
+          editable: true,
+          deletable: false,
+          limitSize: 40,
+        }), ctx.routePath),
+        canCreate: true,
+        canRefresh: true,
+        createLabel: 'Assemble proof bundle',
+        createConfig: buildCreateConfig('Assemble Proof Bundle', 'Create bundle', [
+          { name: 'title', label: 'Title', type: 'text', required: true, placeholder: 'Name this proof bundle' },
+          { name: 'portfolioItemId', label: 'Portfolio Item ID', type: 'text', required: true, placeholder: 'Link to portfolio artifact' },
+          { name: 'capabilityId', label: 'Capability ID', type: 'text', placeholder: 'Capability being demonstrated' },
+        ]),
+      };
+    case '/learner/reflections':
+      return {
+        records: applyRouteActionLabels(await queryCollectionRecords({
+          routePath: ctx.routePath,
+          collectionName: 'learnerReflections',
+          constraints: [where('learnerId', '==', ctx.uid), orderBy('createdAt', 'desc')],
+          titleKeys: ['proudOf'],
+          subtitleKeys: ['nextIWill', 'effectiveStrategy'],
+          statusKeys: [],
+          editable: true,
+          deletable: false,
+          limitSize: 40,
+        }), ctx.routePath),
+        canCreate: true,
+        canRefresh: true,
+        createLabel: 'Add reflection',
+        createConfig: buildCreateConfig('Add Reflection', 'Save reflection', [
+          { name: 'proudOf', label: "I'm proud of...", type: 'textarea', required: true, placeholder: 'What went well and why.' },
+          { name: 'nextIWill', label: 'Next I will...', type: 'textarea', required: true, placeholder: 'What you plan to do differently.' },
+          { name: 'effectiveStrategy', label: 'Strategy that worked', type: 'textarea', placeholder: 'A specific technique or approach that helped.' },
+          { name: 'aiAssistanceUsed', label: 'AI assistance used?', type: 'checkbox' },
+        ]),
+      };
+    case '/learner/habits':
+      return {
+        records: applyRouteActionLabels(await queryCollectionRecords({
+          routePath: ctx.routePath,
+          collectionName: 'learnerReflections',
+          constraints: [where('learnerId', '==', ctx.uid), orderBy('createdAt', 'desc')],
+          titleKeys: ['proudOf', 'effectiveStrategy'],
+          subtitleKeys: ['nextIWill'],
+          statusKeys: [],
+          editable: false,
+          deletable: false,
+          limitSize: 30,
+        }), ctx.routePath),
+        canCreate: false,
+        canRefresh: true,
+        createLabel: 'Create',
+        createConfig: null,
+        guidanceText: 'Learning habits are tracked through reflections, checkpoint patterns, and MiloOS learning support signals.',
+      };
+    case '/educator/observations':
+      return {
+        records: applyRouteActionLabels(await queryCollectionRecords({
+          routePath: ctx.routePath,
+          collectionName: 'evidenceRecords',
+          constraints: siteId
+            ? [where('siteId', '==', siteId), where('educatorId', '==', ctx.uid), orderBy('createdAt', 'desc')]
+            : [where('educatorId', '==', ctx.uid), orderBy('createdAt', 'desc')],
+          titleKeys: ['learnerId', 'capabilityId'],
+          subtitleKeys: ['notes', 'phaseKey'],
+          statusKeys: ['status'],
+          editable: true,
+          deletable: false,
+          limitSize: 50,
+        }), ctx.routePath),
+        canCreate: true,
+        canRefresh: true,
+        createLabel: 'Log observation',
+        createConfig: buildCreateConfig('Log Observation', 'Save observation', [
+          { name: 'learnerId', label: 'Learner ID', type: 'text', required: true, placeholder: 'Learner being observed' },
+          { name: 'notes', label: 'Observation', type: 'textarea', required: true, placeholder: 'What did you observe?' },
+          { name: 'capabilityId', label: 'Capability ID', type: 'text', placeholder: 'Linked capability' },
+          { name: 'phaseKey', label: 'Phase', type: 'select', options: [
+            { value: 'observation', label: 'Observation' },
+            { value: 'checkpoint', label: 'Checkpoint' },
+            { value: 'artifact_review', label: 'Artifact review' },
+          ]},
+        ]),
+      };
+    case '/educator/proof-review':
+      return {
+        records: applyRouteActionLabels(await queryCollectionRecords({
+          routePath: ctx.routePath,
+          collectionName: 'proofOfLearningBundles',
+          constraints: siteId
+            ? [where('siteId', '==', siteId), where('verificationStatus', '==', 'pending'), orderBy('createdAt', 'desc')]
+            : [where('verificationStatus', '==', 'pending'), orderBy('createdAt', 'desc')],
+          titleKeys: ['title', 'learnerId'],
+          subtitleKeys: ['proofMethods', 'capabilityId'],
+          statusKeys: ['verificationStatus'],
+          editable: true,
+          deletable: false,
+          limitSize: 50,
+        }), ctx.routePath),
+        canCreate: false,
+        canRefresh: true,
+        createLabel: 'Create',
+        createConfig: null,
+      };
+    case '/parent/growth-timeline':
+      return {
+        records: await loadCallableRows({
+          routePath: ctx.routePath,
+          callableName: 'getParentDashboardBundle',
+          args: {},
+          rowArrayField: 'growthTimeline',
+          collectionName: 'capabilityGrowthEvents',
+          titleKeys: ['capabilityTitle', 'capabilityId'],
+          subtitleKeys: ['educatorName', 'rubricScore', 'progressionDescriptor'],
+          statusKeys: ['toLevel'],
+        }),
+        canCreate: false,
+        canRefresh: true,
+        createLabel: 'Create',
+        createConfig: null,
+      };
+    case '/site/evidence-health':
+      return {
+        records: applyRouteActionLabels(await queryCollectionRecords({
+          routePath: ctx.routePath,
+          collectionName: 'evidenceRecords',
+          constraints: siteId
+            ? [where('siteId', '==', siteId), orderBy('createdAt', 'desc')]
+            : [orderBy('createdAt', 'desc')],
+          titleKeys: ['learnerId', 'educatorId'],
+          subtitleKeys: ['notes', 'capabilityId', 'phaseKey'],
+          statusKeys: ['status'],
+          editable: false,
+          deletable: false,
+          limitSize: 100,
+        }), ctx.routePath),
+        canCreate: false,
+        canRefresh: true,
+        createLabel: 'Create',
+        createConfig: null,
+        guidanceText: 'Evidence health overview: review capture rates and coverage gaps across educators.',
+      };
+    case '/hq/capability-frameworks':
+      return {
+        records: applyRouteActionLabels(await queryCollectionRecords({
+          routePath: ctx.routePath,
+          collectionName: 'capabilities',
+          constraints: [orderBy('pillarCode', 'asc'), orderBy('sortOrder', 'asc')],
+          titleKeys: ['title', 'name'],
+          subtitleKeys: ['pillarCode', 'progressionDescriptor', 'status'],
+          statusKeys: ['status'],
+          editable: true,
+          deletable: false,
+          limitSize: 200,
+        }), ctx.routePath),
+        canCreate: true,
+        canRefresh: true,
+        createLabel: 'Add capability',
+        createConfig: buildCreateConfig('Add Capability', 'Create capability', [
+          { name: 'title', label: 'Capability title', type: 'text', required: true, placeholder: 'e.g., Systems Thinking' },
+          { name: 'pillarCode', label: 'Pillar code', type: 'select', required: true, options: [
+            { value: 'futureSkills', label: 'Future Skills' },
+            { value: 'leadership', label: 'Leadership' },
+            { value: 'impact', label: 'Impact' },
+          ]},
+          { name: 'progressionDescriptor', label: 'Progression descriptor', type: 'textarea', placeholder: 'Describe learning progression from emerging to advanced.' },
+        ]),
+      };
+    case '/hq/rubric-builder':
+      return {
+        records: applyRouteActionLabels(await queryCollectionRecords({
+          routePath: ctx.routePath,
+          collectionName: 'rubrics',
+          constraints: [orderBy('createdAt', 'desc')],
+          titleKeys: ['title', 'name'],
+          subtitleKeys: ['capabilityId', 'levelCount'],
+          statusKeys: ['status'],
+          editable: true,
+          deletable: true,
+          limitSize: 100,
+        }), ctx.routePath),
+        canCreate: true,
+        canRefresh: true,
+        createLabel: 'Create rubric',
+        createConfig: buildCreateConfig('Create Rubric', 'Create rubric', [
+          { name: 'title', label: 'Rubric title', type: 'text', required: true, placeholder: 'e.g., Systems Thinking L1-L4' },
+          { name: 'capabilityId', label: 'Capability ID', type: 'text', required: true, placeholder: 'Capability this rubric assesses' },
+          { name: 'levelCount', label: 'Levels', type: 'select', required: true, defaultValue: '4', options: [
+            { value: '3', label: '3 levels' },
+            { value: '4', label: '4 levels' },
+            { value: '5', label: '5 levels' },
+          ]},
+        ]),
+      };
     default:
       return { records: [], canCreate: false, canRefresh: true, createLabel: 'Create', guidanceText: null, createConfig: null };
   }
@@ -4176,6 +4425,7 @@ export async function createWorkflowRecord(
       }
       await addDoc(collection(firestore, 'partnerDeliverables'), {
         ...payloadBase,
+        partnerId: ctx.uid,
         contractId: requireStringValue(input, 'contractId', 'Contract'),
         title: requireStringValue(input, 'title', 'Deliverable title'),
         description: optionalStringValue(input, 'description') || null,
@@ -4386,8 +4636,101 @@ export async function createWorkflowRecord(
         updatedAt: serverTimestamp(),
       }, { merge: true });
       return;
-    default:
+    case '/learner/peer-feedback': {
+      await addDoc(collection(firestore, 'peerFeedback'), {
+        siteId: activeSiteId(ctx.profile),
+        authorId: ctx.uid,
+        targetLearnerId: requireStringValue(input, 'targetLearnerId', 'Learner'),
+        feedbackText: requireStringValue(input, 'feedbackText', 'Feedback'),
+        missionId: optionalStringValue(input, 'missionId') || null,
+        status: 'submitted',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
       return;
+    }
+    case '/learner/proof-assembly': {
+      await addDoc(collection(firestore, 'proofOfLearningBundles'), {
+        siteId: activeSiteId(ctx.profile),
+        learnerId: ctx.uid,
+        title: requireStringValue(input, 'title', 'Title'),
+        portfolioItemId: requireStringValue(input, 'portfolioItemId', 'Portfolio item'),
+        capabilityId: optionalStringValue(input, 'capabilityId') || null,
+        verificationStatus: 'pending',
+        proofMethods: [],
+        versionHistory: [],
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+      return;
+    }
+    case '/learner/reflections': {
+      await addDoc(collection(firestore, 'learnerReflections'), {
+        siteId: activeSiteId(ctx.profile),
+        learnerId: ctx.uid,
+        prompt: requireStringValue(input, 'prompt', 'Reflection prompt'),
+        responseText: requireStringValue(input, 'responseText', 'Reflection'),
+        missionId: optionalStringValue(input, 'missionId') || null,
+        status: 'submitted',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+      return;
+    }
+    case '/learner/habits': {
+      await addDoc(collection(firestore, 'habits'), {
+        siteId: activeSiteId(ctx.profile),
+        learnerId: ctx.uid,
+        title: requireStringValue(input, 'title', 'Habit name'),
+        description: optionalStringValue(input, 'description') || '',
+        status: 'active',
+        streak: 0,
+        updatedAt: serverTimestamp(),
+        createdAt: serverTimestamp(),
+      });
+      return;
+    }
+    case '/educator/observations': {
+      await addDoc(collection(firestore, 'evidenceRecords'), {
+        siteId: activeSiteId(ctx.profile),
+        educatorId: ctx.uid,
+        learnerId: requireStringValue(input, 'learnerId', 'Learner'),
+        observationText: requireStringValue(input, 'observationText', 'Observation'),
+        capabilityCode: optionalStringValue(input, 'capabilityCode') || null,
+        status: 'draft',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+      return;
+    }
+    case '/hq/capability-frameworks': {
+      await addDoc(collection(firestore, 'capabilities'), {
+        title: requireStringValue(input, 'title', 'Capability title'),
+        pillarCode: requireStringValue(input, 'pillarCode', 'Pillar code'),
+        progressionDescriptor: optionalStringValue(input, 'progressionDescriptor') || '',
+        status: 'draft',
+        sortOrder: 0,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        createdBy: ctx.uid,
+      });
+      return;
+    }
+    case '/hq/rubric-builder': {
+      await addDoc(collection(firestore, 'rubrics'), {
+        title: requireStringValue(input, 'title', 'Rubric title'),
+        capabilityId: requireStringValue(input, 'capabilityId', 'Capability'),
+        levelCount: parseInt(requireStringValue(input, 'levelCount', 'Level count'), 10) || 4,
+        levels: [],
+        status: 'draft',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        createdBy: ctx.uid,
+      });
+      return;
+    }
+    default:
+      throw new Error(`No create handler for route: ${ctx.routePath}`);
   }
 }
 
@@ -4498,8 +4841,8 @@ export async function updateWorkflowRecord(
     case '/learner/portfolio':
       await updateDoc(ref, {
         updatedAt: serverTimestamp(),
-        status: asString(data.status, '') === 'published' ? 'published' : 'published',
-        publishedAt: serverTimestamp(),
+        status: asString(data.status, '') === 'published' ? 'draft' : 'published',
+        publishedAt: asString(data.status, '') === 'published' ? null : serverTimestamp(),
       });
       return;
     case '/educator/attendance':
@@ -4699,7 +5042,7 @@ export async function updateWorkflowRecord(
       return;
       }
     default:
-      return;
+      throw new Error(`No update handler for route: ${ctx.routePath}`);
   }
 }
 
@@ -4710,7 +5053,7 @@ export async function deleteWorkflowRecord(target: WorkflowMutationTarget): Prom
     return;
   }
 
-  const deletableCollections = new Set(['portfolioItems', 'guardianLinks']);
+  const deletableCollections = new Set(['portfolioItems', 'guardianLinks', 'rubrics']);
   if (!deletableCollections.has(target.collectionName)) {
     return;
   }

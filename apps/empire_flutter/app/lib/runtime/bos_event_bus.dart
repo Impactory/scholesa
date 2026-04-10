@@ -176,9 +176,10 @@ class BosEventBus {
         await BosService.instance.ingestEvent(event);
       }
     } catch (_) {
-      // Re-buffer on failure (offline resilience).
+      // Re-buffer on failure (offline resilience) with backoff.
       _buffer.insertAll(0, batch);
-      _scheduleFlush();
+      _flushTimer?.cancel();
+      _flushTimer = Timer(const Duration(seconds: 10), _flush);
     }
   }
 

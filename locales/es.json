@@ -28,5 +28,32 @@
     "themeLight": "Claro",
     "themeDark": "Oscuro",
     "themeLabel": "Tema"
+  },
+  "auth": {
+    "login": {
+      "title": "Bienvenido de nuevo",
+      "subtitle": "Inicia sesión para continuar en tu flujo de trabajo de Scholesa.",
+      "enterpriseHeading": "SSO empresarial",
+      "loadingEnterprise": "Cargando opciones de inicio de sesión de la organización...",
+      "ssoUnavailable": "No se han configurado opciones de inicio de sesión empresarial para este espacio de trabajo.",
+      "ssoFailed": "El inicio de sesión empresarial falló. Contacta a tu administrador de sitio o HQ si el problema persiste.",
+      "emailLabel": "Correo electrónico",
+      "emailPlaceholder": "Correo electrónico",
+      "passwordLabel": "Contraseña",
+      "passwordPlaceholder": "Contraseña",
+      "submit": "Iniciar sesión",
+      "submitting": "Iniciando sesión...",
+      "switchToRegister": "Crear una cuenta",
+      "invalidCredentials": "Correo electrónico o contraseña inválidos."
+    }
+  },
+  "common": {
+    "loading": "Cargando..."
+  },
+  "aiCoach": {
+    "voiceRequirements": "Inicia sesión, habilita el acceso al micrófono y completa la configuración de voz antes de usar la ayuda por voz."
+  },
+  "dashboard": {
+    "redirecting": "Redirigiendo a tu espacio de trabajo..."
   }
 }

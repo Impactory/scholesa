@@ -1761,7 +1761,11 @@ function normalizeSpeechText(text: string): string {
 }
 
 function tokenSecret(): string {
-  return process.env.VOICE_SIGNING_SECRET || process.env.GOOGLE_CLOUD_PROJECT || 'scholesa-voice-secret';
+  const secret = process.env.VOICE_SIGNING_SECRET || process.env.GOOGLE_CLOUD_PROJECT;
+  if (!secret) {
+    throw new Error('VOICE_SIGNING_SECRET or GOOGLE_CLOUD_PROJECT must be set for token signing');
+  }
+  return secret;
 }
 
 function encodeBase64Url(input: string): string {

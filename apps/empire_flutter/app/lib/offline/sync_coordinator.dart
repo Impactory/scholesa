@@ -361,6 +361,7 @@ class SyncCoordinator extends ChangeNotifier {
     final Iterable<QueuedOp> failed =
         _queue.getAll().where((QueuedOp op) => op.status == OpStatus.failed);
     for (final QueuedOp op in failed) {
+      op.retryCount = 0; // Reset retry count so ops can be re-processed
       await _queue.updateStatus(op.id, OpStatus.pending);
     }
     notifyListeners();

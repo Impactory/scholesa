@@ -127,6 +127,9 @@ class OfflineQueue {
 
     final QueuedOp op = QueuedOp.fromJson(Map<String, dynamic>.from(data));
     op.status = status;
+    if (status == OpStatus.pending) {
+      op.retryCount = 0; // Reset retry count when re-queuing
+    }
     if (error != null) {
       op.lastError = error;
       op.retryCount++;

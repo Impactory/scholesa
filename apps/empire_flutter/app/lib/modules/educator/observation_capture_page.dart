@@ -4,6 +4,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 
 import '../../auth/app_state.dart';
+import '../../i18n/evidence_chain_i18n.dart';
 import '../../services/firestore_service.dart';
 
 /// Quick evidence capture for educators (10-second rule).
@@ -52,6 +53,8 @@ class _ObservationCapturePageState extends State<ObservationCapturePage> {
   ];
 
   FirestoreService get _firestoreService => context.read<FirestoreService>();
+
+  String _t(String input) => EvidenceChainI18n.text(context, input);
 
   String? _activeSiteId() {
     final AppState appState = context.read<AppState>();
@@ -157,7 +160,7 @@ class _ObservationCapturePageState extends State<ObservationCapturePage> {
     if (_selectedLearnerId == null || educatorId.isEmpty || siteId == null) return;
     if (_noteController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter an observation note.')),
+        SnackBar(content: Text(_t('Please enter an observation note.'))),
       );
       return;
     }
@@ -189,8 +192,8 @@ class _ObservationCapturePageState extends State<ObservationCapturePage> {
         SnackBar(
           content: Text(
             captureSeconds <= 10
-                ? 'Observation captured in ${captureSeconds}s — under 10s goal!'
-                : 'Observation captured in ${captureSeconds}s.',
+                ? '${_t('Observation captured!')} ${captureSeconds}s'
+                : '${_t('Observation captured!')} ${captureSeconds}s',
           ),
         ),
       );
@@ -203,7 +206,7 @@ class _ObservationCapturePageState extends State<ObservationCapturePage> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error recording observation: $e')),
+        SnackBar(content: Text('${_t('Error recording observation:')} $e')),
       );
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -215,7 +218,7 @@ class _ObservationCapturePageState extends State<ObservationCapturePage> {
     final ThemeData theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Quick Observation Capture'),
+        title: Text(_t('Quick Observation Capture')),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -226,12 +229,12 @@ class _ObservationCapturePageState extends State<ObservationCapturePage> {
                     children: <Widget>[
                       Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
                       const SizedBox(height: 12),
-                      Text(_error!, style: theme.textTheme.bodyLarge),
+                      Text(_t(_error!), style: theme.textTheme.bodyLarge),
                       const SizedBox(height: 12),
                       FilledButton.icon(
                         onPressed: _loadData,
                         icon: const Icon(Icons.refresh),
-                        label: const Text('Retry'),
+                        label: Text(_t('Retry')),
                       ),
                     ],
                   ),
@@ -243,23 +246,23 @@ class _ObservationCapturePageState extends State<ObservationCapturePage> {
                     children: <Widget>[
                       if (_selectedLearnerId != null) _buildCaptureForm(),
                       if (_selectedLearnerId == null) ...<Widget>[
-                        Text('Select a Learner', style: theme.textTheme.titleMedium),
+                        Text(_t('Select a Learner'), style: theme.textTheme.titleMedium),
                         const SizedBox(height: 8),
                         if (_learners.isEmpty)
-                          const Padding(
-                            padding: EdgeInsets.all(16),
-                            child: Text('No learners found for this site.'),
+                          Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Text(_t('No learners found for this site.')),
                           )
                         else
                           ..._learners.map(_buildLearnerCard),
                       ],
                       const SizedBox(height: 24),
-                      Text('Recent Observations', style: theme.textTheme.titleMedium),
+                      Text(_t('Recent Observations'), style: theme.textTheme.titleMedium),
                       const SizedBox(height: 8),
                       if (_recentObservations.isEmpty)
-                        const Padding(
-                          padding: EdgeInsets.all(16),
-                          child: Text('No recent observations.'),
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Text(_t('No recent observations.')),
                         )
                       else
                         ..._recentObservations.map(_buildRecentCard),
@@ -296,7 +299,7 @@ class _ObservationCapturePageState extends State<ObservationCapturePage> {
               children: <Widget>[
                 Expanded(
                   child: Text(
-                    'Observing: $_selectedLearnerName',
+                    '${_t('Observing:')} $_selectedLearnerName',
                     style: theme.textTheme.titleMedium,
                   ),
                 ),
@@ -305,7 +308,7 @@ class _ObservationCapturePageState extends State<ObservationCapturePage> {
               ],
             ),
             const SizedBox(height: 12),
-            Text('Observation Type', style: theme.textTheme.titleSmall),
+            Text(_t('Observation Type'), style: theme.textTheme.titleSmall),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -313,7 +316,7 @@ class _ObservationCapturePageState extends State<ObservationCapturePage> {
                 final bool selected = _selectedType == type['value'];
                 return ChoiceChip(
                   avatar: Icon(type['icon'] as IconData, size: 18),
-                  label: Text(type['label'] as String),
+                  label: Text(_t(type['label'] as String)),
                   selected: selected,
                   onSelected: (_) =>
                       setState(() => _selectedType = type['value'] as String),
@@ -324,10 +327,10 @@ class _ObservationCapturePageState extends State<ObservationCapturePage> {
             TextField(
               controller: _noteController,
               autofocus: true,
-              decoration: const InputDecoration(
-                labelText: 'Observation note',
-                hintText: 'What did you observe?',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: _t('Observation note'),
+                hintText: _t('What did you observe?'),
+                border: const OutlineInputBorder(),
               ),
               maxLines: 2,
               textInputAction: TextInputAction.done,
@@ -345,7 +348,7 @@ class _ObservationCapturePageState extends State<ObservationCapturePage> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.check),
-                  label: const Text('Record'),
+                  label: Text(_t('Record')),
                 ),
                 const SizedBox(width: 8),
                 TextButton(
@@ -354,7 +357,7 @@ class _ObservationCapturePageState extends State<ObservationCapturePage> {
                     _selectedLearnerName = null;
                     _captureStartTime = null;
                   }),
-                  child: const Text('Cancel'),
+                  child: Text(_t('Cancel')),
                 ),
               ],
             ),

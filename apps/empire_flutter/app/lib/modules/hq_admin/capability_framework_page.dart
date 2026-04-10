@@ -216,7 +216,7 @@ class _CapabilityFrameworkPageState extends State<CapabilityFrameworkPage> {
             IconButton(
               onPressed: _openCreateForm,
               icon: const Icon(Icons.add),
-              tooltip: 'Add Capability',
+              tooltip: _t('Add Capability'),
             ),
         ],
       ),
@@ -291,7 +291,7 @@ class _CapabilityFrameworkPageState extends State<CapabilityFrameworkPage> {
               controller: _nameController,
               decoration: InputDecoration(
                 labelText: _t('Name'),
-                hintText: 'e.g. Critical Thinking',
+                hintText: _t('e.g. Critical Thinking'),
                 border: OutlineInputBorder(),
               ),
             ),
@@ -300,7 +300,7 @@ class _CapabilityFrameworkPageState extends State<CapabilityFrameworkPage> {
               controller: _descriptionController,
               decoration: InputDecoration(
                 labelText: _t('Description'),
-                hintText: 'Describe what this capability represents...',
+                hintText: _t('Describe what this capability represents...'),
                 border: OutlineInputBorder(),
               ),
               maxLines: 3,
@@ -315,7 +315,7 @@ class _CapabilityFrameworkPageState extends State<CapabilityFrameworkPage> {
               items: _pillars
                   .map((Map<String, String> p) => DropdownMenuItem<String>(
                         value: p['value'],
-                        child: Text(p['label']!),
+                        child: Text(_t(p['label']!)),
                       ))
                   .toList(),
               onChanged: (String? val) {
@@ -440,12 +440,12 @@ class _CapabilityFrameworkPageState extends State<CapabilityFrameworkPage> {
                 IconButton(
                   icon: const Icon(Icons.edit_outlined, size: 20),
                   onPressed: () => _openEditForm(cap),
-                  tooltip: 'Edit',
+                  tooltip: _t('Edit'),
                 ),
                 IconButton(
                   icon: const Icon(Icons.delete_outline, size: 20),
                   onPressed: () => _deleteCapability(id),
-                  tooltip: 'Delete',
+                  tooltip: _t('Delete'),
                 ),
               ],
             ),

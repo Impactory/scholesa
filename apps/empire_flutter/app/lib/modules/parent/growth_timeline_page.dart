@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../auth/app_state.dart';
+import '../../i18n/evidence_chain_i18n.dart';
 import '../../services/firestore_service.dart';
 
 /// Rich growth timeline for parents showing capability progression over time.
@@ -22,6 +23,8 @@ class _GrowthTimelinePageState extends State<GrowthTimelinePage> {
   String? _error;
 
   FirestoreService get _firestoreService => context.read<FirestoreService>();
+
+  String _t(String input) => EvidenceChainI18n.text(context, input);
 
   @override
   void initState() {
@@ -126,7 +129,7 @@ class _GrowthTimelinePageState extends State<GrowthTimelinePage> {
     final ThemeData theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Growth Timeline'),
+        title: Text(_t('Growth Timeline')),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -137,12 +140,12 @@ class _GrowthTimelinePageState extends State<GrowthTimelinePage> {
                     children: <Widget>[
                       Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
                       const SizedBox(height: 12),
-                      Text(_error!, style: theme.textTheme.bodyLarge),
+                      Text(_t(_error!), style: theme.textTheme.bodyLarge),
                       const SizedBox(height: 12),
                       FilledButton.icon(
                         onPressed: _loadGrowthTimeline,
                         icon: const Icon(Icons.refresh),
-                        label: const Text('Retry'),
+                        label: Text(_t('Retry')),
                       ),
                     ],
                   ),
@@ -155,11 +158,11 @@ class _GrowthTimelinePageState extends State<GrowthTimelinePage> {
                           Icon(Icons.timeline_outlined,
                               size: 48, color: theme.colorScheme.primary),
                           const SizedBox(height: 12),
-                          Text('No growth events recorded yet.',
+                          Text(_t('No growth events recorded yet.'),
                               style: theme.textTheme.bodyLarge),
                           const SizedBox(height: 4),
                           Text(
-                            'Growth events appear as educators assess capabilities.',
+                            _t('Growth events appear as educators assess capabilities.'),
                             style: theme.textTheme.bodySmall,
                           ),
                         ],
@@ -172,7 +175,7 @@ class _GrowthTimelinePageState extends State<GrowthTimelinePage> {
                         children: <Widget>[
                           _buildSummaryCard(),
                           const SizedBox(height: 16),
-                          Text('Timeline', style: theme.textTheme.titleMedium),
+                          Text(_t('Timeline'), style: theme.textTheme.titleMedium),
                           const SizedBox(height: 8),
                           ..._growthEvents
                               .asMap()
@@ -211,20 +214,20 @@ class _GrowthTimelinePageState extends State<GrowthTimelinePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text('Growth Summary', style: theme.textTheme.titleMedium),
+            Text(_t('Growth Summary'), style: theme.textTheme.titleMedium),
             const SizedBox(height: 12),
             Row(
               children: <Widget>[
                 _SummaryItem(
                   icon: Icons.trending_up,
                   value: totalEvents.toString(),
-                  label: 'Growth Events',
+                  label: _t('Growth Events'),
                 ),
                 const SizedBox(width: 24),
                 _SummaryItem(
                   icon: Icons.category_outlined,
                   value: advancingCaps.length.toString(),
-                  label: 'Capabilities',
+                  label: _t('Capabilities'),
                 ),
               ],
             ),
@@ -236,7 +239,7 @@ class _GrowthTimelinePageState extends State<GrowthTimelinePage> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Latest: $latestMilestone',
+                      '${_t('Latest:')} $latestMilestone',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onPrimaryContainer,
                       ),
@@ -331,12 +334,12 @@ class _GrowthTimelinePageState extends State<GrowthTimelinePage> {
                     ),
                     const SizedBox(height: 4),
                     if (learnerName.isNotEmpty)
-                      Text('Learner: $learnerName', style: theme.textTheme.bodySmall),
+                      Text('${_t('Learner:')} $learnerName', style: theme.textTheme.bodySmall),
                     if (educatorId.isNotEmpty)
-                      Text('Assessed by: $educatorId', style: theme.textTheme.bodySmall),
+                      Text('${_t('Assessed by:')} $educatorId', style: theme.textTheme.bodySmall),
                     if (evidenceIds.isNotEmpty)
                       Text(
-                        '${evidenceIds.length} evidence item${evidenceIds.length == 1 ? '' : 's'} linked',
+                        '${evidenceIds.length} ${evidenceIds.length == 1 ? _t('evidence item linked') : _t('evidence items linked')}',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.primary,
                         ),

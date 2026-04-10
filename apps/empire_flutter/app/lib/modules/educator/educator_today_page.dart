@@ -44,7 +44,7 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
       BosEventBus.instance.track(
         eventType: 'educator_class_view',
         siteId: appState?.activeSiteId ?? '',
-        gradeBand: GradeBand.g7_9,
+        gradeBand: gradeBandForRole(appState?.role ?? UserRole.educator),
         actorRole: 'educator',
       );
       await _refreshEducatorData();
@@ -1735,7 +1735,7 @@ class _LiveSessionModeSheetState extends State<_LiveSessionModeSheet> {
     BosEventBus.instance.track(
       eventType: 'cold_call',
       siteId: csAppState?.activeSiteId ?? '',
-      gradeBand: GradeBand.g7_9,
+      gradeBand: gradeBandForRole(csAppState?.role ?? UserRole.educator),
       actorRole: 'educator',
       payload: <String, dynamic>{
         'learnerId': learnerId,
@@ -1764,7 +1764,7 @@ class _LiveSessionModeSheetState extends State<_LiveSessionModeSheet> {
     BosEventBus.instance.track(
       eventType: 'poll',
       siteId: pollAppState?.activeSiteId ?? '',
-      gradeBand: GradeBand.g7_9,
+      gradeBand: gradeBandForRole(pollAppState?.role ?? UserRole.educator),
       actorRole: 'educator',
       payload: <String, dynamic>{
         'classId': widget.todayClass.id,
@@ -1791,7 +1791,7 @@ class _LiveSessionModeSheetState extends State<_LiveSessionModeSheet> {
     BosEventBus.instance.track(
       eventType: 'exit_ticket',
       siteId: etAppState?.activeSiteId ?? '',
-      gradeBand: GradeBand.g7_9,
+      gradeBand: gradeBandForRole(etAppState?.role ?? UserRole.educator),
       actorRole: 'educator',
       payload: <String, dynamic>{
         'classId': widget.todayClass.id,

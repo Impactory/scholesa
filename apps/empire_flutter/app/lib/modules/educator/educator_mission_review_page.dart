@@ -1144,7 +1144,7 @@ class _ReviewSheetState extends State<_ReviewSheet> {
     BosEventBus.instance.track(
       eventType: 'artifact_reviewed',
       siteId: reviewAppState?.activeSiteId ?? '',
-      gradeBand: GradeBand.g7_9,
+      gradeBand: gradeBandForRole(reviewAppState?.role ?? UserRole.educator),
       actorRole: 'educator',
       payload: <String, dynamic>{
         'submissionId': widget.submission.id,

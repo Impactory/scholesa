@@ -551,7 +551,7 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
     BosEventBus.instance.track(
       eventType: 'educator_learner_drilldown',
       siteId: appState?.activeSiteId ?? '',
-      gradeBand: GradeBand.g7_9,
+      gradeBand: gradeBandForRole(appState?.role ?? UserRole.educator),
       actorRole: 'educator',
       payload: <String, dynamic>{'learnerId': learner.id},
     );
@@ -1105,7 +1105,7 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
       BosEventBus.instance.track(
         eventType: 'teacher_override_mvl',
         siteId: appState?.activeSiteId ?? '',
-        gradeBand: GradeBand.g7_9,
+        gradeBand: gradeBandForRole(appState?.role ?? UserRole.educator),
         actorRole: 'educator',
         payload: <String, dynamic>{
           'episodeId': episodeId,
@@ -1154,7 +1154,7 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
       BosEventBus.instance.track(
         eventType: 'contestability_resolved',
         siteId: appState?.activeSiteId ?? '',
-        gradeBand: GradeBand.g7_9,
+        gradeBand: gradeBandForRole(appState?.role ?? UserRole.educator),
         actorRole: 'educator',
         payload: <String, dynamic>{
           'episodeId': episodeId,

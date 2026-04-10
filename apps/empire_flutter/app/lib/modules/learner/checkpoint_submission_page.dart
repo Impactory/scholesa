@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../auth/app_state.dart';
 import '../../domain/models.dart';
+import '../../i18n/evidence_chain_i18n.dart';
 import '../../services/firestore_service.dart';
 
 /// Learner Checkpoint Submission Page - Answer checkpoint questions during missions.
@@ -33,6 +34,8 @@ class _CheckpointSubmissionPageState extends State<CheckpointSubmissionPage> {
 
   /// Tracks which checkpoints are currently being submitted.
   final Set<String> _submitting = <String>{};
+
+  String _t(String input) => EvidenceChainI18n.text(context, input);
 
   @override
   void initState() {
@@ -128,7 +131,7 @@ class _CheckpointSubmissionPageState extends State<CheckpointSubmissionPage> {
     final String siteId = _siteId(appState);
 
     if (service == null || learnerId.isEmpty || siteId.isEmpty) {
-      _showSnackBar('Unable to submit checkpoint.', isError: true);
+      _showSnackBar(_t('Unable to submit checkpoint.'), isError: true);
       return;
     }
 
@@ -142,10 +145,10 @@ class _CheckpointSubmissionPageState extends State<CheckpointSubmissionPage> {
         isCorrect: false, // Correctness determined server-side or by educator
         explainItBackRequired: explainItBackRequired,
       );
-      _showSnackBar('Checkpoint submitted!');
+      _showSnackBar(_t('Checkpoint submitted!'));
       await _loadCheckpoints();
     } catch (e) {
-      _showSnackBar('Failed to submit checkpoint.', isError: true);
+      _showSnackBar(_t('Failed to submit checkpoint.'), isError: true);
     }
   }
 
@@ -177,7 +180,7 @@ class _CheckpointSubmissionPageState extends State<CheckpointSubmissionPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Checkpoints'),
+        title: Text(_t('Checkpoints')),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -188,7 +191,7 @@ class _CheckpointSubmissionPageState extends State<CheckpointSubmissionPage> {
                     child: Padding(
                       padding: const EdgeInsets.all(24.0),
                       child: Text(
-                        _loadError!,
+                        _t(_loadError!),
                         style: theme.textTheme.bodyLarge,
                         textAlign: TextAlign.center,
                       ),
@@ -198,7 +201,7 @@ class _CheckpointSubmissionPageState extends State<CheckpointSubmissionPage> {
               : _checkpoints.isEmpty
                   ? Center(
                       child: Text(
-                        'No checkpoints yet. They will appear when you start a mission.',
+                        _t('No checkpoints yet. They will appear when you start a mission.'),
                         style: theme.textTheme.bodyLarge,
                         textAlign: TextAlign.center,
                       ),
@@ -250,8 +253,8 @@ class _CheckpointSubmissionPageState extends State<CheckpointSubmissionPage> {
                 const SizedBox(width: 8.0),
                 Text(
                   isCompleted
-                      ? (checkpoint.isCorrect ? 'Correct' : 'Submitted')
-                      : 'Pending',
+                      ? (checkpoint.isCorrect ? _t('Correct') : _t('Submitted'))
+                      : _t('Pending'),
                   style: theme.textTheme.labelMedium?.copyWith(
                     color: isCompleted
                         ? (checkpoint.isCorrect
@@ -298,7 +301,7 @@ class _CheckpointSubmissionPageState extends State<CheckpointSubmissionPage> {
                   checkpoint.explainItBackResponse!.trim().isNotEmpty) ...<Widget>[
                 const SizedBox(height: 8.0),
                 Text(
-                  'Explain-it-back:',
+                  _t('Explain-it-back:'),
                   style: theme.textTheme.labelMedium
                       ?.copyWith(fontWeight: FontWeight.w600),
                 ),
@@ -320,7 +323,7 @@ class _CheckpointSubmissionPageState extends State<CheckpointSubmissionPage> {
               if (needsExplain) ...<Widget>[
                 const SizedBox(height: 12.0),
                 Text(
-                  'Explain what you learned in your own words:',
+                  _t('Explain what you learned in your own words:'),
                   style: theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                     color: colors.primary,
@@ -330,9 +333,9 @@ class _CheckpointSubmissionPageState extends State<CheckpointSubmissionPage> {
                 TextField(
                   controller: _explainController(checkpoint.id),
                   maxLines: 3,
-                  decoration: const InputDecoration(
-                    hintText: 'Explain what you learned...',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    hintText: _t('Explain what you learned...'),
+                    border: const OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 8.0),
@@ -343,7 +346,7 @@ class _CheckpointSubmissionPageState extends State<CheckpointSubmissionPage> {
                         ? null
                         : () => _submitExplainItBack(checkpoint),
                     icon: const Icon(Icons.send, size: 18),
-                    label: const Text('Submit Explanation'),
+                    label: Text(_t('Submit Explanation')),
                   ),
                 ),
               ],
@@ -354,9 +357,9 @@ class _CheckpointSubmissionPageState extends State<CheckpointSubmissionPage> {
               TextField(
                 controller: _responseController(checkpoint.id),
                 maxLines: 3,
-                decoration: const InputDecoration(
-                  hintText: 'Type your answer...',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  hintText: _t('Type your answer...'),
+                  border: const OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 8.0),
@@ -370,7 +373,7 @@ class _CheckpointSubmissionPageState extends State<CheckpointSubmissionPage> {
                       const SizedBox(width: 4.0),
                       Expanded(
                         child: Text(
-                          'You will need to explain what you learned after submitting.',
+                          _t('You will need to explain what you learned after submitting.'),
                           style: theme.textTheme.labelSmall
                               ?.copyWith(color: colors.primary),
                         ),
@@ -387,7 +390,7 @@ class _CheckpointSubmissionPageState extends State<CheckpointSubmissionPage> {
                           final String response =
                               _responseController(checkpoint.id).text.trim();
                           if (response.isEmpty) {
-                            _showSnackBar('Please enter a response.',
+                            _showSnackBar(_t('Please enter a response.'),
                                 isError: true);
                             return;
                           }
@@ -415,7 +418,7 @@ class _CheckpointSubmissionPageState extends State<CheckpointSubmissionPage> {
                           child:
                               CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Submit'),
+                      : Text(_t('Submit')),
                 ),
               ),
             ],
@@ -429,13 +432,13 @@ class _CheckpointSubmissionPageState extends State<CheckpointSubmissionPage> {
     final String explanation =
         _explainController(checkpoint.id).text.trim();
     if (explanation.isEmpty) {
-      _showSnackBar('Please write your explanation.', isError: true);
+      _showSnackBar(_t('Please write your explanation.'), isError: true);
       return;
     }
 
     final FirestoreService? service = _maybeFirestoreService();
     if (service == null) {
-      _showSnackBar('Unable to submit explanation.', isError: true);
+      _showSnackBar(_t('Unable to submit explanation.'), isError: true);
       return;
     }
 
@@ -451,10 +454,10 @@ class _CheckpointSubmissionPageState extends State<CheckpointSubmissionPage> {
         'updatedAt': FieldValue.serverTimestamp(),
       });
       _explainController(checkpoint.id).clear();
-      _showSnackBar('Explanation submitted!');
+      _showSnackBar(_t('Explanation submitted!'));
       await _loadCheckpoints();
     } catch (e) {
-      _showSnackBar('Failed to submit explanation.', isError: true);
+      _showSnackBar(_t('Failed to submit explanation.'), isError: true);
     } finally {
       if (mounted) setState(() => _submitting.remove(key));
     }

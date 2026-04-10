@@ -223,7 +223,7 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
             IconButton(
               onPressed: _openCreateForm,
               icon: const Icon(Icons.add),
-              tooltip: 'Create Rubric',
+              tooltip: _t('Create Rubric'),
             ),
         ],
       ),
@@ -297,7 +297,7 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
               controller: _nameController,
               decoration: InputDecoration(
                 labelText: _t('Rubric Name'),
-                hintText: 'e.g. Problem Solving Rubric',
+                hintText: _t('e.g. Problem Solving Rubric'),
                 border: OutlineInputBorder(),
               ),
             ),
@@ -306,7 +306,7 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
               controller: _descriptionController,
               decoration: InputDecoration(
                 labelText: _t('Description'),
-                hintText: 'What does this rubric assess?',
+                hintText: _t('What does this rubric assess?'),
                 border: OutlineInputBorder(),
               ),
               maxLines: 2,
@@ -321,7 +321,7 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
               items: _pillars
                   .map((Map<String, String> p) => DropdownMenuItem<String>(
                         value: p['value'],
-                        child: Text(p['label']!),
+                        child: Text(_t(p['label']!)),
                       ))
                   .toList(),
               onChanged: (String? val) {
@@ -468,12 +468,12 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
                 IconButton(
                   icon: const Icon(Icons.edit_outlined, size: 20),
                   onPressed: () => _openEditForm(rubric),
-                  tooltip: 'Edit',
+                  tooltip: _t('Edit'),
                 ),
                 IconButton(
                   icon: const Icon(Icons.delete_outline, size: 20),
                   onPressed: () => _deleteRubric(id),
-                  tooltip: 'Delete',
+                  tooltip: _t('Delete'),
                 ),
               ],
             ),

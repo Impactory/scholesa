@@ -5301,22 +5301,51 @@ async function handlePaymentMethodAttached(paymentMethod: Stripe.PaymentMethod) 
  * Handle payment method detached from customer
  */
 async function handlePaymentMethodDetached(paymentMethod: Stripe.PaymentMethod) {
-  // Find customer record with this payment method
-  const customerSnap = await admin.firestore()
+  // Use Stripe customer ID to find the right customer doc directly (avoid full collection scan)
+  const stripeCustomerId = typeof paymentMethod.customer === 'string'
+    ? paymentMethod.customer
+    : paymentMethod.customer?.id;
+
+  if (stripeCustomerId) {
+    const customerSnap = await admin.firestore()
+      .collection(STRIPE_CUSTOMERS_COLLECTION)
+      .where('stripeCustomerId', '==', stripeCustomerId)
+      .limit(1)
+      .get();
+
+    if (!customerSnap.empty) {
+      const doc = customerSnap.docs[0];
+      const data = doc.data();
+      const paymentMethods = data.paymentMethods || [];
+      const filtered = paymentMethods.filter((pm: any) => pm.id !== paymentMethod.id);
+      if (filtered.length !== paymentMethods.length) {
+        await doc.ref.update({
+          paymentMethods: filtered,
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+        console.log('Payment method detached:', paymentMethod.id);
+      }
+      return;
+    }
+  }
+
+  // Fallback: scan with limit if no customer ID (should be rare)
+  console.warn('handlePaymentMethodDetached: no stripeCustomerId, scanning with limit');
+  const fallbackSnap = await admin.firestore()
     .collection(STRIPE_CUSTOMERS_COLLECTION)
+    .limit(200)
     .get();
 
-  for (const doc of customerSnap.docs) {
+  for (const doc of fallbackSnap.docs) {
     const data = doc.data();
     const paymentMethods = data.paymentMethods || [];
     const filtered = paymentMethods.filter((pm: any) => pm.id !== paymentMethod.id);
-    
     if (filtered.length !== paymentMethods.length) {
       await doc.ref.update({
         paymentMethods: filtered,
         updatedAt: FieldValue.serverTimestamp(),
       });
-      console.log('Payment method detached:', paymentMethod.id);
+      console.log('Payment method detached (fallback scan):', paymentMethod.id);
       break;
     }
   }
@@ -5800,12 +5829,30 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     updatedAt: FieldValue.serverTimestamp(),
   });
 
-  // Optionally revoke entitlements
+  // Revoke entitlements on subscription cancellation
   if (subData.productId) {
     const product = PRODUCT_CATALOG[subData.productId as ProductId];
     if (product && subData.userId) {
-      // Note: In production, you might want to keep entitlements until period end
-      console.log('Subscription cancelled for user:', subData.userId);
+      const entitlementSnap = await admin.firestore()
+        .collection(ENTITLEMENTS_COLLECTION)
+        .where('userId', '==', subData.userId)
+        .where('productId', '==', subData.productId)
+        .where('status', '==', 'active')
+        .get();
+
+      const revokeBatch = admin.firestore().batch();
+      for (const doc of entitlementSnap.docs) {
+        revokeBatch.update(doc.ref, {
+          status: 'revoked',
+          revokedAt: FieldValue.serverTimestamp(),
+          revokedReason: 'subscription_cancelled',
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+      }
+      if (!entitlementSnap.empty) {
+        await revokeBatch.commit();
+        console.log(`Revoked ${entitlementSnap.size} entitlement(s) for user: ${subData.userId}`);
+      }
     }
   }
 }
@@ -5945,7 +5992,7 @@ export const healthCheck = onRequest({
       services: {
         firestore: firestoreStatus,
         auth: authStatus,
-        stripe: stripeStatus,
+        stripe: stripeStatus === 'connected' ? 'connected' : 'unavailable',
       },
     });
   } catch (err: any) {
@@ -6022,11 +6069,11 @@ export const archiveOldTelemetry = onSchedule('0 3 * * 0', async () => {
   const db = admin.firestore();
   const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
 
-  // Get old telemetry events
+  // Get old telemetry events (limit 250 since each needs 2 batch ops: archive + delete)
   const oldEventsSnap = await db
     .collection(TELEMETRY_COLLECTION)
     .where('timestamp', '<', ninetyDaysAgo)
-    .limit(500)
+    .limit(250)
     .get();
 
   if (oldEventsSnap.empty) {
@@ -6350,10 +6397,10 @@ export const monitorWebhookHealth = onSchedule('0 9 * * *', async () => {
   const oneDayAgo = new Date();
   oneDayAgo.setDate(oneDayAgo.getDate() - 1);
 
-  // Get recent webhook logs
+  // Get recent webhook logs (field name matches logWebhookEvent which writes 'receivedAt')
   const logsSnap = await admin.firestore()
     .collection('stripeWebhookLogs')
-    .where('timestamp', '>=', Timestamp.fromDate(oneDayAgo))
+    .where('receivedAt', '>=', Timestamp.fromDate(oneDayAgo))
     .get();
 
   const logs = logsSnap.docs.map(doc => doc.data());
@@ -8939,15 +8986,19 @@ export const verifyProofOfLearning = onCall(async (request: CallableRequest<{
       // Create growth event recording PoL verification
       const growthRef = db.collection('capabilityGrowthEvents').doc();
       growthEventIds.push(growthRef.id);
+      const POL_LEVEL_MAP: Record<number, string> = { 1: 'emerging', 2: 'developing', 3: 'proficient', 4: 'advanced' };
       batch.set(growthRef, {
         learnerId,
         capabilityId,
         siteId,
         pillarCode,
         level: checkpointCount, // 1-3 based on proof checks passed
+        fromLevel: null,
+        toLevel: POL_LEVEL_MAP[checkpointCount] ?? 'emerging',
         rawScore: checkpointCount,
         maxScore: 3,
         evidenceId: portfolioItemId,
+        linkedEvidenceRecordIds: [portfolioItemId],
         linkedPortfolioItemIds: [portfolioItemId],
         rubricApplicationId: null,
         educatorId,
@@ -8963,12 +9014,16 @@ export const verifyProofOfLearning = onCall(async (request: CallableRequest<{
       const priorGrowthEventIds: string[] = Array.isArray(masteryData.growthEventIds) ? masteryData.growthEventIds : [];
       const priorEvidenceIds: string[] = Array.isArray(masteryData.evidenceIds) ? masteryData.evidenceIds : [];
 
+      const NUMBER_TO_LEVEL_POL: Record<number, string> = { 1: 'emerging', 2: 'developing', 3: 'proficient', 4: 'advanced' };
+      const resolvedLevel = Math.max(checkpointCount, (masteryData.latestLevel as number) ?? 0);
+
       batch.set(masteryRef, {
         learnerId,
         capabilityId,
         siteId,
         pillarCode,
-        latestLevel: Math.max(checkpointCount, (masteryData.latestLevel as number) ?? 0),
+        latestLevel: resolvedLevel,
+        currentLevel: NUMBER_TO_LEVEL_POL[resolvedLevel] ?? 'emerging',
         highestLevel: Math.max(checkpointCount, (masteryData.highestLevel as number) ?? 0),
         latestEvidenceId: portfolioItemId,
         evidenceIds: [...new Set([portfolioItemId, ...priorEvidenceIds])],
@@ -9193,6 +9248,7 @@ export const processCheckpointMasteryUpdate = onCall(async (request: CallableReq
 }>) => {
   const auth = request.auth;
   if (!auth) throw new HttpsError('unauthenticated', 'Must be authenticated');
+  await requireRoleAndSite(auth.uid, ['educator', 'siteLead', 'hq'] as Role[], request.data.siteId);
 
   const { learnerId, siteId, skillIds, passed, educatorId } = request.data;
   if (!learnerId || !siteId || !skillIds?.length) {
@@ -9252,9 +9308,10 @@ export const processCheckpointMasteryUpdate = onCall(async (request: CallableReq
 
     const LEVEL_TO_NUMBER: Record<string, number> = { emerging: 1, developing: 2, proficient: 3, advanced: 4 };
 
-    // Update or create mastery record
+    // Update or create mastery record (deterministic ID to match applyRubricToEvidence)
+    const masteryId = `${learnerId}_${capabilityId}`;
     if (masteryQuery.empty) {
-      const masteryRef = db.collection('capabilityMastery').doc();
+      const masteryRef = db.collection('capabilityMastery').doc(masteryId);
       batch.set(masteryRef, {
         learnerId,
         capabilityId,

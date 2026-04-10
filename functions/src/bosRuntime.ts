@@ -353,6 +353,15 @@ async function assertUserSiteAccess(uid: string, siteId: string): Promise<void> 
   }
 }
 
+async function assertEducatorRole(uid: string): Promise<void> {
+  const profileSnap = await db.collection(USERS_COLLECTION).doc(uid).get();
+  const role = profileSnap.exists ? (profileSnap.data() as Record<string, unknown>)?.role : null;
+  const EDUCATOR_ROLES = ['educator', 'siteLead', 'site', 'hq'];
+  if (!role || !EDUCATOR_ROLES.includes(role as string)) {
+    throw new HttpsError('permission-denied', 'Educator role required.');
+  }
+}
+
 async function assertCoppaSiteAccess(uid: string, siteId: string): Promise<void> {
   await assertUserSiteAccess(uid, siteId);
   await assertActiveSchoolConsent(siteId);
@@ -2136,6 +2145,7 @@ export const bosTeacherOverrideMvl = onCall(
   async (request: CallableRequest) => {
     const uid = request.auth?.uid;
     if (!uid) throw new HttpsError('unauthenticated', 'Auth required');
+    await assertEducatorRole(uid);
 
     const { episodeId, resolution, reason } = request.data;
     if (!episodeId || !resolution) {
@@ -2476,6 +2486,7 @@ export const bosContestability = onCall(
       return { ok: true, status: 'pending' };
 
     } else if (action === 'resolve') {
+      await assertEducatorRole(uid); // Only educators can resolve disputes
       if (!episodeId || !resolution) {
         throw new HttpsError('invalid-argument', 'episodeId and resolution required');
       }

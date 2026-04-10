@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import '../../auth/app_state.dart' show UserRole;
 import '../../services/firestore_service.dart';
@@ -554,14 +555,16 @@ class UserAdminService extends ChangeNotifier {
     Map<String, dynamic>? details,
   }) async {
     try {
+      final User? currentUser = FirebaseAuth.instance.currentUser;
       await _firestore.collection('auditLogs').add(<String, dynamic>{
         'action': action,
         'entityType': entityType,
         'entityId': entityId,
         'siteId': siteId,
         'details': details,
+        'actorId': currentUser?.uid,
+        'actorRole': 'hq',
         'timestamp': FieldValue.serverTimestamp(),
-        // Actor info will be filled by security rules or cloud function
       });
     } catch (e) {
       debugPrint('Failed to log audit action: $e');

@@ -508,9 +508,15 @@ export const listWorkflowApprovals = onCall(async (request: CallableRequest) => 
 
   const [contractsSnap, payoutsSnap] = await Promise.all([
     admin.firestore().collection('partnerContracts').where('status', 'in', ['pending', 'submitted']).limit(limitValue).get()
-      .catch(() => admin.firestore().collection('partnerContracts').limit(limitValue).get()),
+      .catch(() => {
+        console.warn('Partner contracts query failed');
+        return { docs: [] } as unknown as FirebaseFirestore.QuerySnapshot;
+      }),
     admin.firestore().collection('payouts').where('status', 'in', ['pending', 'submitted']).limit(limitValue).get()
-      .catch(() => admin.firestore().collection('payouts').limit(limitValue).get()),
+      .catch(() => {
+        console.warn('Partner payouts query failed');
+        return { docs: [] } as unknown as FirebaseFirestore.QuerySnapshot;
+      }),
   ]);
 
   const approvals = [
@@ -4758,7 +4764,10 @@ export const listWorkflowContacts = onCall(async (request: CallableRequest) => {
       .where('role', 'in', ['hq', 'admin'])
       .limit(limitValue)
       .get()
-      .catch(() => admin.firestore().collection('users').limit(limitValue).get());
+      .catch(() => {
+        console.warn('listWorkflowContacts: partner HQ query failed, returning empty set');
+        return { docs: [] } as unknown as FirebaseFirestore.QuerySnapshot;
+      });
     addCandidates(usersSnap.docs
       .map((docSnap) => ({
         id: docSnap.id,
@@ -4800,7 +4809,10 @@ export const getParentBillingSummary = onCall(async (request: CallableRequest) =
       .where('parentId', '==', targetParentId)
       .limit(20)
       .get()
-      .catch(() => admin.firestore().collection('payments').limit(20).get()),
+      .catch(() => {
+        console.warn('getParentBillingSummary: payments query failed');
+        return { docs: [] } as unknown as FirebaseFirestore.QuerySnapshot;
+      }),
   ]);
 
   const accountData = accountSnap.data() as Record<string, unknown> | undefined;
@@ -4865,7 +4877,10 @@ export const getSiteBillingSnapshot = onCall(async (request: CallableRequest) =>
       .where('siteId', '==', targetSiteId)
       .limit(80)
       .get()
-      .catch(() => admin.firestore().collection('payouts').limit(80).get()),
+      .catch(() => {
+        console.warn('getSiteBillingSnapshot: payouts query failed');
+        return { docs: [] } as unknown as FirebaseFirestore.QuerySnapshot;
+      }),
   ]);
 
   const siteData = siteSnap.data() as Record<string, unknown> | undefined;

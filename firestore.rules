@@ -110,6 +110,12 @@ service cloud.firestore {
     match /aiInteractionLogs/{id} { allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator() || isHQ()); allow create: if isAuthenticated(); allow update: if isEducator(); allow delete: if false; }
     match /aiCoachInteractions/{id} { allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator() || isHQ()); allow create: if isAuthenticated(); allow update: if false; allow delete: if false; }
     match /missions/{id} { allow read: if isAuthenticated(); allow write: if isHQ(); }
+    // Mission steps subcollection: HQ/educator writes, authenticated reads
+    match /missions/{missionId}/steps/{stepId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isEducator() || isHQ();
+      allow delete: if isEducator() || isHQ(); // Educators need delete for step edit (delete+recreate pattern)
+    }
 
     // Operational (Sessions, Occurrences):
     // - Read: All authenticated users (could be scoped to site).
@@ -238,10 +244,11 @@ service cloud.firestore {
       allow write: if false; // Server-only via Cloud Functions
     }
 
-    // Audit Logs: HQ read only, no client writes
+    // Audit Logs: HQ read, site admin/HQ can create for compliance trail
     match /auditLogs/{id} {
       allow read: if isHQ();
-      allow write: if false; // Server-only
+      allow create: if isAuthenticated() && (isHQ() || hasRoleSafe('siteLead') || hasRoleSafe('site'));
+      allow update, delete: if false; // Immutable — append-only
     }
 
     // Enterprise SSO provider catalog: readable for site/HQ operations, server-only writes.
@@ -359,10 +366,14 @@ service cloud.firestore {
       allow delete: if false; // Keep longitudinal calibration history
     }
     
-    // Checkpoint History: Educators can write, learners can read their own
+    // Checkpoint History: Educators and learners (own) can create, educators can update
     match /checkpointHistory/{id} {
       allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
-      allow create, update: if isEducator();
+      allow create: if isAuthenticated() && (
+        isEducator() ||
+        request.resource.data.learnerId == request.auth.uid  // Learner submits own checkpoint
+      );
+      allow update: if isEducator();
       allow delete: if false; // Keep historical data
     }
     
@@ -423,7 +434,7 @@ service cloud.firestore {
     match /guardianLinks/{id} {
       allow read: if isAuthenticated() && (resource.data.parentId == request.auth.uid || resource.data.learnerId == request.auth.uid || isEducator());
       allow create, update: if (isEducator() || isHQ()) && isSiteScopedWrite(request.resource.data);
-      allow delete: if false;
+      allow delete: if isHQ(); // HQ can remove guardian links (e.g., custody changes)
     }
     match /educatorLearnerLinks/{id} {
       allow read: if isAuthenticated() && (
@@ -912,7 +923,10 @@ service cloud.firestore {
     // interactionEvents: client writes own events, server reads for FDM pipeline
     match /interactionEvents/{id} {
       allow read: if isHQ() || isAdminOrHQ();
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && (
+        request.resource.data.userId == request.auth.uid ||
+        request.resource.data.actorId == request.auth.uid  // Backend uses actorId field
+      );
       allow update: if false;
       allow delete: if false;
     }
@@ -1188,6 +1202,20 @@ service cloud.firestore {
     match /ltiGradePassbackJobs/{id} {
       allow read: if isAuthenticated() && (isEducator() || isHQ());
       allow write: if false; // Server-only
+    }
+
+    // Learner support plans — educator creates/updates, site-scoped
+    match /learnerSupportPlans/{id} {
+      allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
+      allow create, update: if isEducator();
+      allow delete: if false;
+    }
+
+    // Learner differentiation plans — educator creates/updates, site-scoped
+    match /learnerDifferentiationPlans/{id} {
+      allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
+      allow create, update: if isEducator();
+      allow delete: if false;
     }
 
     // Default Deny

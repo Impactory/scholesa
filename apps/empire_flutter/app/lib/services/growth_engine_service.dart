@@ -126,6 +126,7 @@ class GrowthEngineService {
       await _checkCapabilityThreshold(learnerId: learnerId, skillId: skillId, siteId: siteId);
     } catch (e) {
       debugPrint('GrowthEngine.onCheckpointCompleted error: $e');
+      rethrow; // Caller must know growth update failed
     }
   }
 
@@ -151,6 +152,7 @@ class GrowthEngineService {
       }
     } catch (e) {
       debugPrint('GrowthEngine.onProofVerified error: $e');
+      rethrow; // Caller must know proof status update failed
     }
   }
 

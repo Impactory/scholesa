@@ -691,7 +691,7 @@ class _HabitsPageState extends State<HabitsPage> with TickerProviderStateMixin {
                 BosEventBus.instance.track(
                   eventType: 'reflection_submitted',
                   siteId: appState?.activeSiteId ?? '',
-                  gradeBand: GradeBand.g4_6,
+                  gradeBand: gradeBandForRole(appState?.role ?? UserRole.learner),
                   actorRole: 'learner',
                   payload: <String, dynamic>{'habitId': habit.id},
                 );

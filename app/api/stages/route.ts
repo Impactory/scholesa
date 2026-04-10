@@ -1,12 +1,18 @@
 import { NextResponse } from 'next/server';
 import { getAdminDb } from '@/src/firebase/admin-init';
+import { getCurrentUserServer } from '@/src/firebase/auth/getCurrentUserServer';
 
 /**
  * GET /api/stages — returns the 4 seeded learning stages.
- * Public read (all authenticated users).
+ * Requires authentication (all authenticated users).
  */
 export async function GET() {
   try {
+    const user = await getCurrentUserServer();
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+
     const db = getAdminDb();
     const snapshot = await db.collection('stages').orderBy('gradeRange').get();
 

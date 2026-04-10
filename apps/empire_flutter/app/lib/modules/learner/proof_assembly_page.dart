@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../auth/app_state.dart';
 import '../../domain/models.dart';
+import '../../i18n/evidence_chain_i18n.dart';
 import '../../services/firestore_service.dart';
 
 /// Learner Proof Assembly Page - Assemble proof-of-learning bundles for portfolio items.
@@ -38,6 +39,8 @@ class _ProofAssemblyPageState extends State<ProofAssemblyPage> {
 
   /// Tracks which items are currently being submitted.
   final Set<String> _submitting = <String>{};
+
+  String _t(String input) => EvidenceChainI18n.text(context, input);
 
   @override
   void initState() {
@@ -177,7 +180,7 @@ class _ProofAssemblyPageState extends State<ProofAssemblyPage> {
     final String learnerId = _learnerId(appState);
 
     if (service == null || learnerId.isEmpty) {
-      _showSnackBar('Unable to save proof bundle.', isError: true);
+      _showSnackBar(_t('Unable to save proof bundle.'), isError: true);
       return;
     }
 
@@ -226,10 +229,10 @@ class _ProofAssemblyPageState extends State<ProofAssemblyPage> {
         }
       }
 
-      _showSnackBar('Proof bundle saved!');
+      _showSnackBar(_t('Proof bundle saved!'));
       await _loadData();
     } catch (e) {
-      _showSnackBar('Failed to save proof bundle.', isError: true);
+      _showSnackBar(_t('Failed to save proof bundle.'), isError: true);
     } finally {
       if (mounted) setState(() => _submitting.remove(item.id));
     }
@@ -253,7 +256,7 @@ class _ProofAssemblyPageState extends State<ProofAssemblyPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Proof of Learning'),
+        title: Text(_t('Proof of Learning')),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -264,7 +267,7 @@ class _ProofAssemblyPageState extends State<ProofAssemblyPage> {
                     child: Padding(
                       padding: const EdgeInsets.all(24.0),
                       child: Text(
-                        _loadError!,
+                        _t(_loadError!),
                         style: theme.textTheme.bodyLarge,
                         textAlign: TextAlign.center,
                       ),
@@ -276,7 +279,7 @@ class _ProofAssemblyPageState extends State<ProofAssemblyPage> {
                       child: Padding(
                         padding: const EdgeInsets.all(24.0),
                         child: Text(
-                          'No portfolio items yet. Add items to your portfolio to assemble proof.',
+                          _t('No portfolio items yet. Add items to your portfolio to assemble proof.'),
                           style: theme.textTheme.bodyLarge,
                           textAlign: TextAlign.center,
                         ),
@@ -409,21 +412,21 @@ class _ProofAssemblyPageState extends State<ProofAssemblyPage> {
 
                   // Verification method indicators
                   _buildMethodIndicator(
-                    'Explain-it-Back',
+                    _t('Explain-It-Back'),
                     bundle?.hasExplainItBack ?? false,
                     Icons.lightbulb_outline,
                     theme,
                     colors,
                   ),
                   _buildMethodIndicator(
-                    'Oral Check',
+                    _t('Oral Check'),
                     bundle?.hasOralCheck ?? false,
                     Icons.mic,
                     theme,
                     colors,
                   ),
                   _buildMethodIndicator(
-                    'Mini Rebuild',
+                    _t('Mini Rebuild'),
                     bundle?.hasMiniRebuild ?? false,
                     Icons.build_outlined,
                     theme,
@@ -433,13 +436,13 @@ class _ProofAssemblyPageState extends State<ProofAssemblyPage> {
 
                   // Explain-it-Back section
                   Text(
-                    'Explain-it-Back',
+                    _t('Explain-It-Back'),
                     style: theme.textTheme.labelLarge
                         ?.copyWith(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 4.0),
                   Text(
-                    'Explain what you learned and how you did this work in your own words.',
+                    _t('Explain what you learned and how you did this work in your own words.'),
                     style: theme.textTheme.bodySmall
                         ?.copyWith(color: colors.onSurfaceVariant),
                   ),
@@ -447,22 +450,22 @@ class _ProofAssemblyPageState extends State<ProofAssemblyPage> {
                   TextField(
                     controller: _explainController(item.id),
                     maxLines: 4,
-                    decoration: const InputDecoration(
-                      hintText: 'I learned that...',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      hintText: _t('I learned that...'),
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 16.0),
 
                   // Oral Check section
                   Text(
-                    'Oral Check',
+                    _t('Oral Check'),
                     style: theme.textTheme.labelLarge
                         ?.copyWith(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 4.0),
                   Text(
-                    'Say it out loud, then write what you said — explain this work as if talking to a friend.',
+                    _t('Say it out loud, then write what you said.'),
                     style: theme.textTheme.bodySmall
                         ?.copyWith(color: colors.onSurfaceVariant),
                   ),
@@ -470,22 +473,22 @@ class _ProofAssemblyPageState extends State<ProofAssemblyPage> {
                   TextField(
                     controller: _oralController(item.id),
                     maxLines: 4,
-                    decoration: const InputDecoration(
-                      hintText: 'When I explain this out loud, I say...',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      hintText: _t('When I explain this out loud, I say...'),
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 16.0),
 
                   // Mini Rebuild section
                   Text(
-                    'Mini Rebuild',
+                    _t('Mini Rebuild'),
                     style: theme.textTheme.labelLarge
                         ?.copyWith(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 4.0),
                   Text(
-                    'Describe how you would rebuild or remix this work from scratch.',
+                    _t('Describe how you would rebuild or remix this work from scratch.'),
                     style: theme.textTheme.bodySmall
                         ?.copyWith(color: colors.onSurfaceVariant),
                   ),
@@ -493,9 +496,9 @@ class _ProofAssemblyPageState extends State<ProofAssemblyPage> {
                   TextField(
                     controller: _rebuildController(item.id),
                     maxLines: 4,
-                    decoration: const InputDecoration(
-                      hintText: 'If I were to rebuild this, I would...',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      hintText: _t('If I were to rebuild this, I would...'),
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 16.0),
@@ -516,7 +519,7 @@ class _ProofAssemblyPageState extends State<ProofAssemblyPage> {
                             )
                           : const Icon(Icons.save, size: 18),
                       label: Text(
-                        bundle != null ? 'Update Proof' : 'Save Proof',
+                        bundle != null ? _t('Update Proof') : _t('Save Proof'),
                       ),
                     ),
                   ),

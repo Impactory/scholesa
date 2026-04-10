@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../auth/app_state.dart';
 import '../../domain/models.dart';
+import '../../i18n/evidence_chain_i18n.dart';
 import '../../services/firestore_service.dart';
 
 /// Learner Peer Feedback Page - Give and receive structured feedback from peers.
@@ -40,6 +41,8 @@ class _PeerFeedbackPageState extends State<PeerFeedbackPage>
 
   /// Tracks which attempts are currently being submitted.
   final Set<String> _submitting = <String>{};
+
+  String _t(String input) => EvidenceChainI18n.text(context, input);
 
   @override
   void initState() {
@@ -180,7 +183,7 @@ class _PeerFeedbackPageState extends State<PeerFeedbackPage>
     final String siteId = _siteId(appState);
 
     if (service == null || learnerId.isEmpty || siteId.isEmpty) {
-      _showSnackBar('Unable to submit feedback.', isError: true);
+      _showSnackBar(_t('Unable to submit feedback.'), isError: true);
       return;
     }
 
@@ -189,7 +192,7 @@ class _PeerFeedbackPageState extends State<PeerFeedbackPage>
     final String suggestions = _suggestionsController(attempt.id).text.trim();
 
     if (rating == null) {
-      _showSnackBar('Please select a rating.', isError: true);
+      _showSnackBar(_t('Please select a rating.'), isError: true);
       return;
     }
 
@@ -211,10 +214,10 @@ class _PeerFeedbackPageState extends State<PeerFeedbackPage>
       _ratings.remove(attempt.id);
       _expandedAttempts.remove(attempt.id);
 
-      _showSnackBar('Feedback submitted!');
+      _showSnackBar(_t('Feedback submitted!'));
       await _loadData();
     } catch (e) {
-      _showSnackBar('Failed to submit feedback.', isError: true);
+      _showSnackBar(_t('Failed to submit feedback.'), isError: true);
     } finally {
       if (mounted) setState(() => _submitting.remove(attempt.id));
     }
@@ -238,12 +241,12 @@ class _PeerFeedbackPageState extends State<PeerFeedbackPage>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Peer Feedback'),
+        title: Text(_t('Peer Feedback')),
         bottom: TabBar(
           controller: _tabController,
           tabs: <Widget>[
             Tab(
-              text: 'Review Peers',
+              text: _t('Review Peers'),
               icon: Badge(
                 isLabelVisible: _peerAttempts.isNotEmpty,
                 label: Text('${_peerAttempts.length}'),
@@ -251,7 +254,7 @@ class _PeerFeedbackPageState extends State<PeerFeedbackPage>
               ),
             ),
             Tab(
-              text: 'Given',
+              text: _t('Given'),
               icon: Badge(
                 isLabelVisible: _feedbackGiven.isNotEmpty,
                 label: Text('${_feedbackGiven.length}'),
@@ -259,7 +262,7 @@ class _PeerFeedbackPageState extends State<PeerFeedbackPage>
               ),
             ),
             Tab(
-              text: 'Received',
+              text: _t('Received'),
               icon: Badge(
                 isLabelVisible: _feedbackReceived.isNotEmpty,
                 label: Text('${_feedbackReceived.length}'),
@@ -278,7 +281,7 @@ class _PeerFeedbackPageState extends State<PeerFeedbackPage>
                     child: Padding(
                       padding: const EdgeInsets.all(24.0),
                       child: Text(
-                        _loadError!,
+                        _t(_loadError!),
                         style: theme.textTheme.bodyLarge,
                         textAlign: TextAlign.center,
                       ),
@@ -304,7 +307,7 @@ class _PeerFeedbackPageState extends State<PeerFeedbackPage>
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Text(
-            'No peer submissions available for review right now.',
+            _t('No peer submissions available for review right now.'),
             style: theme.textTheme.bodyLarge,
             textAlign: TextAlign.center,
           ),
@@ -364,12 +367,12 @@ class _PeerFeedbackPageState extends State<PeerFeedbackPage>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                          'Mission: ${attempt.missionId}',
+                          '${_t('Mission:')} ${attempt.missionId}',
                           style: theme.textTheme.titleSmall
                               ?.copyWith(fontWeight: FontWeight.w600),
                         ),
                         Text(
-                          'By: ${attempt.learnerId}',
+                          '${_t('By:')} ${attempt.learnerId}',
                           style: theme.textTheme.bodySmall
                               ?.copyWith(color: colors.onSurfaceVariant),
                         ),
@@ -405,7 +408,7 @@ class _PeerFeedbackPageState extends State<PeerFeedbackPage>
                   if (attempt.reflection != null &&
                       attempt.reflection!.isNotEmpty) ...<Widget>[
                     const SizedBox(height: 8.0),
-                    Text('Submission notes:',
+                    Text(_t('Submission notes:'),
                         style: theme.textTheme.labelMedium),
                     const SizedBox(height: 4.0),
                     Container(
@@ -424,7 +427,7 @@ class _PeerFeedbackPageState extends State<PeerFeedbackPage>
                   const SizedBox(height: 16.0),
 
                   // Star rating
-                  Text('Rating', style: theme.textTheme.labelLarge),
+                  Text(_t('Rating'), style: theme.textTheme.labelLarge),
                   const SizedBox(height: 4.0),
                   Row(
                     children: List<Widget>.generate(5, (int index) {
@@ -449,27 +452,27 @@ class _PeerFeedbackPageState extends State<PeerFeedbackPage>
                   const SizedBox(height: 12.0),
 
                   // Strengths
-                  Text('Strengths', style: theme.textTheme.labelLarge),
+                  Text(_t('Strengths'), style: theme.textTheme.labelLarge),
                   const SizedBox(height: 4.0),
                   TextField(
                     controller: _strengthsController(attempt.id),
                     maxLines: 3,
-                    decoration: const InputDecoration(
-                      hintText: 'What did they do well?',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      hintText: _t('What did they do well?'),
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 12.0),
 
                   // Suggestions
-                  Text('Suggestions', style: theme.textTheme.labelLarge),
+                  Text(_t('Suggestions'), style: theme.textTheme.labelLarge),
                   const SizedBox(height: 4.0),
                   TextField(
                     controller: _suggestionsController(attempt.id),
                     maxLines: 3,
-                    decoration: const InputDecoration(
-                      hintText: 'What could be improved?',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      hintText: _t('What could be improved?'),
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 12.0),
@@ -489,7 +492,7 @@ class _PeerFeedbackPageState extends State<PeerFeedbackPage>
                                   strokeWidth: 2),
                             )
                           : const Icon(Icons.send, size: 18),
-                      label: const Text('Submit Feedback'),
+                      label: Text(_t('Submit Feedback')),
                     ),
                   ),
                 ],
@@ -508,7 +511,7 @@ class _PeerFeedbackPageState extends State<PeerFeedbackPage>
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Text(
-            'You have not given any peer feedback yet.',
+            _t('You have not given any peer feedback yet.'),
             style: theme.textTheme.bodyLarge,
             textAlign: TextAlign.center,
           ),
@@ -536,7 +539,7 @@ class _PeerFeedbackPageState extends State<PeerFeedbackPage>
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Text(
-            'You have not received any peer feedback yet.',
+            _t('You have not received any peer feedback yet.'),
             style: theme.textTheme.bodyLarge,
             textAlign: TextAlign.center,
           ),
@@ -581,8 +584,8 @@ class _PeerFeedbackPageState extends State<PeerFeedbackPage>
                 Expanded(
                   child: Text(
                     showRecipient
-                        ? 'To: ${feedback.toLearnerId}'
-                        : 'From: ${feedback.fromLearnerId}',
+                        ? '${_t('To:')} ${feedback.toLearnerId}'
+                        : '${_t('From:')} ${feedback.fromLearnerId}',
                     style: theme.textTheme.labelMedium,
                   ),
                 ),
@@ -616,7 +619,7 @@ class _PeerFeedbackPageState extends State<PeerFeedbackPage>
             // Strengths
             if (feedback.strengths != null &&
                 feedback.strengths!.isNotEmpty) ...<Widget>[
-              Text('Strengths:',
+              Text('${_t('Strengths')}:',
                   style: theme.textTheme.labelMedium
                       ?.copyWith(fontWeight: FontWeight.w600)),
               const SizedBox(height: 4.0),
@@ -627,7 +630,7 @@ class _PeerFeedbackPageState extends State<PeerFeedbackPage>
             // Suggestions
             if (feedback.suggestions != null &&
                 feedback.suggestions!.isNotEmpty) ...<Widget>[
-              Text('Suggestions:',
+              Text('${_t('Suggestions')}:',
                   style: theme.textTheme.labelMedium
                       ?.copyWith(fontWeight: FontWeight.w600)),
               const SizedBox(height: 4.0),

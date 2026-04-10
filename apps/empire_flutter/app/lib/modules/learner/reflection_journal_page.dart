@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../auth/app_state.dart';
 import '../../domain/models.dart';
+import '../../i18n/evidence_chain_i18n.dart';
 import '../../services/firestore_service.dart';
 
 /// Learner Reflection Journal Page - Metacognitive reflections on learning.
@@ -33,6 +34,8 @@ class _ReflectionJournalPageState extends State<ReflectionJournalPage> {
     'How did I help someone else learn today?',
     'What am I most proud of from this session?',
   ];
+
+  String _t(String input) => EvidenceChainI18n.text(context, input);
 
   @override
   void initState() {
@@ -116,7 +119,7 @@ class _ReflectionJournalPageState extends State<ReflectionJournalPage> {
     final String response = _responseController.text.trim();
 
     if (prompt.isEmpty || response.isEmpty) {
-      _showSnackBar('Please fill in both the prompt and your reflection.',
+      _showSnackBar(_t('Please fill in both the prompt and your reflection.'),
           isError: true);
       return;
     }
@@ -127,7 +130,7 @@ class _ReflectionJournalPageState extends State<ReflectionJournalPage> {
     final String siteId = _siteId(appState);
 
     if (service == null || learnerId.isEmpty || siteId.isEmpty) {
-      _showSnackBar('Unable to submit reflection.', isError: true);
+      _showSnackBar(_t('Unable to submit reflection.'), isError: true);
       return;
     }
 
@@ -149,10 +152,10 @@ class _ReflectionJournalPageState extends State<ReflectionJournalPage> {
         _confidenceRating = 3.0;
         _showNewForm = false;
       });
-      _showSnackBar('Reflection saved!');
+      _showSnackBar(_t('Reflection saved!'));
       await _loadReflections();
     } catch (e) {
-      _showSnackBar('Failed to save reflection.', isError: true);
+      _showSnackBar(_t('Failed to save reflection.'), isError: true);
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -176,14 +179,14 @@ class _ReflectionJournalPageState extends State<ReflectionJournalPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Reflection Journal'),
+        title: Text(_t('Reflection Journal')),
       ),
       floatingActionButton: _showNewForm
           ? null
           : FloatingActionButton.extended(
               onPressed: () => setState(() => _showNewForm = true),
               icon: const Icon(Icons.add),
-              label: const Text('New Reflection'),
+              label: Text(_t('New Reflection')),
             ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -194,7 +197,7 @@ class _ReflectionJournalPageState extends State<ReflectionJournalPage> {
                     child: Padding(
                       padding: const EdgeInsets.all(24.0),
                       child: Text(
-                        _loadError!,
+                        _t(_loadError!),
                         style: theme.textTheme.bodyLarge,
                         textAlign: TextAlign.center,
                       ),
@@ -215,7 +218,7 @@ class _ReflectionJournalPageState extends State<ReflectionJournalPage> {
                           padding: const EdgeInsets.only(top: 48.0),
                           child: Center(
                             child: Text(
-                              'No reflections yet. Tap + to write your first one.',
+                              _t('No reflections yet. Tap + to write your first one.'),
                               style: theme.textTheme.bodyLarge,
                               textAlign: TextAlign.center,
                             ),
@@ -244,7 +247,7 @@ class _ReflectionJournalPageState extends State<ReflectionJournalPage> {
             Row(
               children: <Widget>[
                 Text(
-                  'New Reflection',
+                  _t('New Reflection'),
                   style: theme.textTheme.titleMedium
                       ?.copyWith(fontWeight: FontWeight.w600),
                 ),
@@ -252,21 +255,21 @@ class _ReflectionJournalPageState extends State<ReflectionJournalPage> {
                 IconButton(
                   onPressed: () => setState(() => _showNewForm = false),
                   icon: const Icon(Icons.close),
-                  tooltip: 'Cancel',
+                  tooltip: _t('Cancel'),
                 ),
               ],
             ),
             const SizedBox(height: 12.0),
 
             // Prompt selection
-            Text('Prompt', style: theme.textTheme.labelLarge),
+            Text(_t('Prompt'), style: theme.textTheme.labelLarge),
             const SizedBox(height: 4.0),
             TextField(
               controller: _promptController,
               maxLines: 2,
-              decoration: const InputDecoration(
-                hintText: 'What are you reflecting on?',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                hintText: _t('What are you reflecting on?'),
+                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 8.0),
@@ -276,32 +279,35 @@ class _ReflectionJournalPageState extends State<ReflectionJournalPage> {
               children: _reflectionPrompts
                   .map((String prompt) => ActionChip(
                         label: Text(
-                          prompt.length > 35
-                              ? '${prompt.substring(0, 35)}...'
-                              : prompt,
+                          () {
+                            final String translated = _t(prompt);
+                            return translated.length > 35
+                                ? '${translated.substring(0, 35)}...'
+                                : translated;
+                          }(),
                           style: theme.textTheme.labelSmall,
                         ),
-                        onPressed: () => _promptController.text = prompt,
+                        onPressed: () => _promptController.text = _t(prompt),
                       ))
                   .toList(),
             ),
             const SizedBox(height: 16.0),
 
             // Response
-            Text('Your Reflection', style: theme.textTheme.labelLarge),
+            Text(_t('Your Reflection'), style: theme.textTheme.labelLarge),
             const SizedBox(height: 4.0),
             TextField(
               controller: _responseController,
               maxLines: 5,
-              decoration: const InputDecoration(
-                hintText: 'Write your thoughts...',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                hintText: _t('Write your thoughts...'),
+                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 16.0),
 
             // Engagement rating
-            Text('Engagement: ${_engagementRating.round()}/5',
+            Text('${_t('Engagement')}: ${_engagementRating.round()}/5',
                 style: theme.textTheme.labelLarge),
             Slider(
               value: _engagementRating,
@@ -314,7 +320,7 @@ class _ReflectionJournalPageState extends State<ReflectionJournalPage> {
             ),
 
             // Confidence rating
-            Text('Confidence: ${_confidenceRating.round()}/5',
+            Text('${_t('Confidence')}: ${_confidenceRating.round()}/5',
                 style: theme.textTheme.labelLarge),
             Slider(
               value: _confidenceRating,
@@ -339,7 +345,7 @@ class _ReflectionJournalPageState extends State<ReflectionJournalPage> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.save, size: 18),
-                label: const Text('Save Reflection'),
+                label: Text(_t('Save Reflection')),
               ),
             ),
           ],
@@ -372,7 +378,7 @@ class _ReflectionJournalPageState extends State<ReflectionJournalPage> {
                 const Spacer(),
                 if (reflection.engagementRating != null)
                   _buildRatingChip(
-                    'Engagement',
+                    _t('Engagement'),
                     reflection.engagementRating!,
                     colors,
                     theme,
@@ -380,7 +386,7 @@ class _ReflectionJournalPageState extends State<ReflectionJournalPage> {
                 const SizedBox(width: 8.0),
                 if (reflection.confidenceRating != null)
                   _buildRatingChip(
-                    'Confidence',
+                    _t('Confidence'),
                     reflection.confidenceRating!,
                     colors,
                     theme,

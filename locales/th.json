@@ -1,33 +1,33 @@
 {
   "landing": {
-    "title": "Scholesa – Future Skills Academy",
-    "subtitle": "The operating system for K–9 learning studios and schools.",
-    "tagline": "Learn with purpose. Build future-ready skills every day.",
-    "login": "Login",
-    "loginCta": "Login",
-    "register": "Register",
-    "registerArrow": "Register →",
+    "title": "Scholesa – สถาบันทักษะแห่งอนาคต",
+    "subtitle": "ระบบปฏิบัติการสำหรับสตูดิโอการเรียนรู้และโรงเรียน K–9",
+    "tagline": "เรียนรู้อย่างมีจุดหมาย สร้างทักษะพร้อมสำหรับอนาคตทุกวัน",
+    "login": "เข้าสู่ระบบ",
+    "loginCta": "เข้าสู่ระบบ",
+    "register": "ลงทะเบียน",
+    "registerArrow": "ลงทะเบียน →",
     "pillars": {
-      "title": "The 3 Pillars of Scholesa",
-      "future_skills": "Future Skills",
-      "leadership_agency": "Leadership & Agency",
-      "impact_innovation": "Impact & Innovation"
+      "title": "3 เสาหลักของ Scholesa",
+      "future_skills": "ทักษะแห่งอนาคต",
+      "leadership_agency": "ภาวะผู้นำและความสามารถ",
+      "impact_innovation": "ผลกระทบและนวัตกรรม"
     },
     "stakeholders": {
-      "title": "One Platform for Every Stakeholder",
-      "learners": "Learners",
-      "educators": "Educators",
-      "parents": "Parents & Guardians",
-      "site_leads": "Site Leads & Principals",
-      "partners": "Partners",
-      "hq": "HQ & Network"
+      "title": "แพลตฟอร์มเดียวสำหรับทุกผู้มีส่วนได้ส่วนเสีย",
+      "learners": "ผู้เรียน",
+      "educators": "นักการศึกษา",
+      "parents": "ผู้ปกครอง",
+      "site_leads": "หัวหน้าไซต์และผู้อำนวยการ",
+      "partners": "พันธมิตร",
+      "hq": "สำนักงานใหญ่และเครือข่าย"
     }
   },
   "navigation": {
-    "themeSystem": "System",
-    "themeLight": "Light",
-    "themeDark": "Dark",
-    "themeLabel": "Theme"
+    "themeSystem": "ระบบ",
+    "themeLight": "สว่าง",
+    "themeDark": "มืด",
+    "themeLabel": "ธีม"
   },
   "auth": {
     "login": {

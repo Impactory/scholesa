@@ -541,7 +541,7 @@ class _MissionsPageState extends State<MissionsPage>
     BosEventBus.instance.track(
       eventType: 'mission_viewed',
       siteId: appState?.activeSiteId ?? '',
-      gradeBand: GradeBand.g4_6,
+      gradeBand: gradeBandForRole(appState?.role ?? UserRole.learner),
       actorRole: 'learner',
       missionId: mission.id,
     );
@@ -1012,7 +1012,7 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
       BosEventBus.instance.track(
         eventType: 'artifact_created',
         siteId: appState?.activeSiteId ?? '',
-        gradeBand: GradeBand.g4_6,
+        gradeBand: gradeBandForRole(appState?.role ?? UserRole.learner),
         actorRole: 'learner',
         missionId: widget.mission.id,
       );
@@ -1053,7 +1053,7 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
     BosEventBus.instance.track(
       eventType: 'checkpoint_started',
       siteId: ckAppState?.activeSiteId ?? '',
-      gradeBand: GradeBand.g4_6,
+      gradeBand: gradeBandForRole(ckAppState?.role ?? UserRole.learner),
       actorRole: 'learner',
       missionId: widget.mission.id,
     );
@@ -1073,7 +1073,7 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
       BosEventBus.instance.track(
         eventType: 'checkpoint_submitted',
         siteId: appState?.activeSiteId ?? '',
-        gradeBand: GradeBand.g4_6,
+        gradeBand: gradeBandForRole(appState?.role ?? UserRole.learner),
         actorRole: 'learner',
         missionId: widget.mission.id,
         payload: <String, dynamic>{'summary': summary},
@@ -1081,7 +1081,7 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
       BosEventBus.instance.track(
         eventType: 'artifact_version_saved',
         siteId: appState?.activeSiteId ?? '',
-        gradeBand: GradeBand.g4_6,
+        gradeBand: gradeBandForRole(appState?.role ?? UserRole.learner),
         actorRole: 'learner',
         missionId: widget.mission.id,
       );
@@ -1646,7 +1646,7 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
                                     BosEventBus.instance.track(
                                       eventType: 'mission_selected',
                                       siteId: appState?.activeSiteId ?? '',
-                                      gradeBand: GradeBand.g4_6,
+                                      gradeBand: gradeBandForRole(appState?.role ?? UserRole.learner),
                                       actorRole: 'learner',
                                       missionId: mission.id,
                                     );
@@ -1660,7 +1660,7 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
                                       BosEventBus.instance.track(
                                         eventType: 'mission_started',
                                         siteId: appState?.activeSiteId ?? '',
-                                        gradeBand: GradeBand.g4_6,
+                                        gradeBand: gradeBandForRole(appState?.role ?? UserRole.learner),
                                         actorRole: 'learner',
                                         missionId: mission.id,
                                       );
@@ -1776,7 +1776,7 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
                                           BosEventBus.instance.track(
                                             eventType: 'mission_completed',
                                             siteId: appState?.activeSiteId ?? '',
-                                            gradeBand: GradeBand.g4_6,
+                                            gradeBand: gradeBandForRole(appState?.role ?? UserRole.learner),
                                             actorRole: 'learner',
                                             missionId: mission.id,
                                             payload: <String, dynamic>{
@@ -1786,7 +1786,7 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
                                           BosEventBus.instance.track(
                                             eventType: 'artifact_submitted',
                                             siteId: appState?.activeSiteId ?? '',
-                                            gradeBand: GradeBand.g4_6,
+                                            gradeBand: gradeBandForRole(appState?.role ?? UserRole.learner),
                                             actorRole: 'learner',
                                             missionId: mission.id,
                                             payload: <String, dynamic>{
