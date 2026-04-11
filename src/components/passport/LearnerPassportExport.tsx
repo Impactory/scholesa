@@ -366,6 +366,114 @@ export function LearnerPassportExport() {
 
   const handlePrint = useCallback(() => { window.print(); }, []);
 
+  const handleExportHtml = useCallback(() => {
+    if (!learner) return;
+    const claimsHtml = learner.ideationPassport.claims.length === 0
+      ? '<p style="color:#6b7280;font-size:14px">No capability claims backed by evidence yet.</p>'
+      : learner.ideationPassport.claims.map((c) => `
+        <div style="border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin-bottom:12px;background:#fafafa">
+          <h3 style="margin:0 0 8px;font-size:16px;color:#111827">${c.title}</h3>
+          <table style="border-collapse:collapse;font-size:13px;width:100%">
+            <tr><td style="color:#6b7280;padding:2px 12px 2px 0;width:160px">Pillar</td><td>${c.pillar ?? '—'}</td></tr>
+            <tr><td style="color:#6b7280;padding:2px 12px 2px 0">Level</td><td><strong>${levelLabel(c.latestLevel)}</strong></td></tr>
+            <tr><td style="color:#6b7280;padding:2px 12px 2px 0">Evidence</td><td>${c.evidenceCount} records · ${c.verifiedArtifactCount} verified artifacts</td></tr>
+            <tr><td style="color:#6b7280;padding:2px 12px 2px 0">Proof-of-Learning</td><td>${proofLabel(c.proofOfLearningStatus)}</td></tr>
+            <tr><td style="color:#6b7280;padding:2px 12px 2px 0">AI Disclosure</td><td>${aiLabel(c.aiDisclosureStatus)}</td></tr>
+            ${c.reviewingEducatorName ? `<tr><td style="color:#6b7280;padding:2px 12px 2px 0">Reviewed by</td><td>${c.reviewingEducatorName} (${formatDate(c.reviewedAt)})</td></tr>` : ''}
+            ${c.rubricRawScore != null && c.rubricMaxScore != null ? `<tr><td style="color:#6b7280;padding:2px 12px 2px 0">Rubric Score</td><td>${c.rubricRawScore}/${c.rubricMaxScore}</td></tr>` : ''}
+            <tr><td style="color:#6b7280;padding:2px 12px 2px 0">Proof methods</td><td>${[
+              c.proofHasExplainItBack ? 'Explain-it-back' : null,
+              c.proofHasOralCheck ? 'Oral check' : null,
+              c.proofHasMiniRebuild ? 'Mini-rebuild' : null,
+              c.proofCheckpointCount > 0 ? `${c.proofCheckpointCount} checkpoint(s)` : null,
+            ].filter(Boolean).join(' · ') || '—'}</td></tr>
+          </table>
+        </div>`).join('');
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Ideation Passport — ${learner.learnerName ?? learner.learnerId}</title>
+<style>
+  body{font-family:system-ui,-apple-system,sans-serif;max-width:800px;margin:0 auto;padding:32px;color:#111827}
+  @media print{body{padding:0}}
+  h1{font-size:24px;margin:0 0 4px}
+  h2{font-size:17px;margin:24px 0 10px;color:#4f46e5;border-bottom:1px solid #e5e7eb;padding-bottom:4px}
+  .meta{color:#6b7280;font-size:13px;margin-bottom:24px}
+  .pill{display:inline-block;padding:3px 10px;border-radius:9999px;font-size:12px;font-weight:600}
+  .strong{background:#d1fae5;color:#065f46}.developing{background:#fef3c7;color:#92400e}.emerging{background:#fee2e2;color:#991b1b}
+  .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:8px}
+  .stat{border:1px solid #e5e7eb;border-radius:8px;padding:12px;text-align:center}
+  .stat-val{font-size:22px;font-weight:700;color:#4f46e5}
+  .stat-label{font-size:12px;color:#6b7280;margin-top:2px}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  td{padding:4px 0}
+  footer{margin-top:32px;font-size:11px;color:#9ca3af;border-top:1px solid #e5e7eb;padding-top:12px}
+</style>
+</head>
+<body>
+<h1>Ideation Passport</h1>
+<p class="meta">
+  <strong>${learner.learnerName ?? learner.learnerId}</strong> &middot;
+  Generated ${formatDate(learner.ideationPassport.generatedAt)} &middot;
+  <span class="pill ${learner.capabilitySnapshot.band === 'strong' ? 'strong' : learner.capabilitySnapshot.band === 'developing' ? 'developing' : 'emerging'}">
+    ${bandLabel(learner.capabilitySnapshot.band)}
+  </span>
+</p>
+
+<h2>Pillar Progress</h2>
+<div class="stat-grid">
+  <div class="stat"><div class="stat-val">${pct(learner.capabilitySnapshot.futureSkills)}</div><div class="stat-label">Future Skills</div></div>
+  <div class="stat"><div class="stat-val">${pct(learner.capabilitySnapshot.leadership)}</div><div class="stat-label">Leadership &amp; Agency</div></div>
+  <div class="stat"><div class="stat-val">${pct(learner.capabilitySnapshot.impact)}</div><div class="stat-label">Impact &amp; Innovation</div></div>
+</div>
+
+<h2>Evidence Summary</h2>
+<table>
+  <tr><td style="color:#6b7280;width:200px">Evidence Records</td><td>${learner.evidenceSummary.recordCount}</td></tr>
+  <tr><td style="color:#6b7280">Reviewed</td><td>${learner.evidenceSummary.reviewedCount}</td></tr>
+  <tr><td style="color:#6b7280">Portfolio-Linked</td><td>${learner.evidenceSummary.portfolioLinkedCount}</td></tr>
+  <tr><td style="color:#6b7280">Latest Evidence</td><td>${formatDate(learner.evidenceSummary.latestEvidenceAt)}</td></tr>
+</table>
+
+<h2>Portfolio Snapshot</h2>
+<table>
+  <tr><td style="color:#6b7280;width:200px">Total Artifacts</td><td>${learner.portfolioSnapshot.artifactCount}</td></tr>
+  <tr><td style="color:#6b7280">Verified Artifacts</td><td>${learner.portfolioSnapshot.verifiedArtifactCount}</td></tr>
+  <tr><td style="color:#6b7280">Badges</td><td>${learner.portfolioSnapshot.badgeCount}</td></tr>
+  <tr><td style="color:#6b7280">Projects</td><td>${learner.portfolioSnapshot.projectCount}</td></tr>
+</table>
+
+<h2>Ideation Activity</h2>
+<table>
+  <tr><td style="color:#6b7280;width:200px">Missions Attempted</td><td>${learner.ideationPassport.missionAttempts}</td></tr>
+  <tr><td style="color:#6b7280">Missions Completed</td><td>${learner.ideationPassport.completedMissions}</td></tr>
+  <tr><td style="color:#6b7280">Reflections</td><td>${learner.ideationPassport.reflectionsSubmitted}</td></tr>
+  <tr><td style="color:#6b7280">Voice Interactions</td><td>${learner.ideationPassport.voiceInteractions}</td></tr>
+  <tr><td style="color:#6b7280">Collaboration Signals</td><td>${learner.ideationPassport.collaborationSignals}</td></tr>
+</table>
+
+<h2>Capability Claims</h2>
+${claimsHtml}
+
+<h2>Summary</h2>
+<p style="font-size:14px;color:#374151">${learner.ideationPassport.summary}</p>
+
+<footer>Scholesa Ideation Passport · Evidence-backed learner capability record · ${formatDate(learner.ideationPassport.generatedAt)}</footer>
+</body>
+</html>`;
+
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ideation-passport-${learner.learnerId}.html`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [learner]);
+
   const handleExportText = useCallback(() => {
     if (!learner) return;
     const lines: string[] = [];
@@ -492,16 +600,26 @@ export function LearnerPassportExport() {
               </select>
             )}
             <button
+              type="button"
               onClick={handleExportText}
               className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
             >
               Export Text
             </button>
             <button
+              type="button"
+              onClick={handleExportHtml}
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              title="Download a portable HTML file — open in any browser and use File › Print to save as PDF"
+            >
+              Export HTML / PDF
+            </button>
+            <button
+              type="button"
               onClick={handlePrint}
               className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
             >
-              Print / PDF
+              Print
             </button>
           </div>
         </div>
