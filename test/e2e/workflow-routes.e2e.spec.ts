@@ -152,7 +152,8 @@ test('learner workflow redirects to learner default and supports mission submit 
 
   await page.goto('/en/dashboard');
   await expect(page).toHaveURL(/\/en\/learner\/today$/);
-  await expect(page.getByText('Future Skills Studio')).toBeVisible();
+  // /learner/today uses LearnerProgressReportRenderer (custom renderer, not generic card list)
+  await expect(page.getByText('My Progress')).toBeVisible();
 
   await page.goto('/en/learner/missions');
   await expect(page).toHaveURL(/\/en\/learner\/missions$/);

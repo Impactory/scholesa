@@ -545,7 +545,7 @@ ${claimsHtml}
 
   if (authLoading || loading) {
     return (
-      <RoleRouteGuard allowedRoles={['parent', 'site', 'hq']}>
+      <RoleRouteGuard allowedRoles={['learner', 'parent', 'site', 'hq']}>
         <div className="flex items-center justify-center min-h-[400px]">
           <Spinner />
         </div>
@@ -555,7 +555,7 @@ ${claimsHtml}
 
   if (error) {
     return (
-      <RoleRouteGuard allowedRoles={['parent', 'site', 'hq']}>
+      <RoleRouteGuard allowedRoles={['learner', 'parent', 'site', 'hq']}>
         <div className="p-6">
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <p className="text-red-800 text-sm">{error}</p>
@@ -568,7 +568,7 @@ ${claimsHtml}
 
   if (learners.length === 0) {
     return (
-      <RoleRouteGuard allowedRoles={['parent', 'site', 'hq']}>
+      <RoleRouteGuard allowedRoles={['learner', 'parent', 'site', 'hq']}>
         <div className="p-6">
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
             <p className="text-gray-600">No linked learners found. Passport data will appear once learners have evidence.</p>
@@ -579,7 +579,7 @@ ${claimsHtml}
   }
 
   return (
-    <RoleRouteGuard allowedRoles={['parent', 'site', 'hq']}>
+    <RoleRouteGuard allowedRoles={['learner', 'parent', 'site', 'hq']}>
       <div className="max-w-4xl mx-auto p-6 print:p-0 print:max-w-none">
         {/* ── Header (screen only) ── */}
         <div className="flex items-center justify-between mb-6 print:hidden">
