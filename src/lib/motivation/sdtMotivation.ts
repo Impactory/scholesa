@@ -173,7 +173,9 @@ class SDTMotivationService {
     missionId?: string,
     effortLevel?: 1 | 2 | 3 | 4 | 5,
     enjoymentLevel?: 1 | 2 | 3 | 4 | 5,
-    effectiveStrategy?: string
+    effectiveStrategy?: string,
+    aiAssistanceUsed?: boolean,
+    aiAssistanceDetails?: string
   ): Promise<{ reflectionId: string }> {
     const callable = httpsCallable<any, { reflectionId: string }>(functions, 'submitReflection');
     const result = await callable({
@@ -185,7 +187,9 @@ class SDTMotivationService {
       missionId,
       effortLevel,
       enjoymentLevel,
-      effectiveStrategy
+      effectiveStrategy,
+      aiAssistanceUsed: aiAssistanceUsed ?? false,
+      aiAssistanceDetails: aiAssistanceDetails || undefined,
     });
     return result.data;
   }

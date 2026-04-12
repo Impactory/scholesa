@@ -7094,6 +7094,8 @@ export const submitReflection = onCall(async (request: CallableRequest<{
   effortLevel?: 1 | 2 | 3 | 4 | 5;
   enjoymentLevel?: 1 | 2 | 3 | 4 | 5;
   effectiveStrategy?: string;
+  aiAssistanceUsed?: boolean;
+  aiAssistanceDetails?: string;
 }>) => {
   const { uid } = await requireRoleAndSite(request.auth?.uid, ['learner'], request.data.siteId);
 
@@ -7107,6 +7109,8 @@ export const submitReflection = onCall(async (request: CallableRequest<{
     effortLevel,
     enjoymentLevel,
     effectiveStrategy,
+    aiAssistanceUsed,
+    aiAssistanceDetails,
   } = request.data;
 
   if (!learnerId || !siteId || !proudOf || !nextIWill) {
@@ -7131,6 +7135,8 @@ export const submitReflection = onCall(async (request: CallableRequest<{
   if (effortLevel) reflectionDoc.effortLevel = effortLevel;
   if (enjoymentLevel) reflectionDoc.enjoymentLevel = enjoymentLevel;
   if (effectiveStrategy) reflectionDoc.effectiveStrategy = effectiveStrategy;
+  reflectionDoc.aiAssistanceUsed = aiAssistanceUsed ?? false;
+  if (aiAssistanceDetails) reflectionDoc.aiAssistanceDetails = aiAssistanceDetails;
 
   const reflectionRef = await admin.firestore().collection('learnerReflections').add(reflectionDoc);
 

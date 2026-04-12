@@ -149,6 +149,22 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
   const [revisionOpen, setRevisionOpen] = useState<string | null>(null);
   const [revisionFeedback, setRevisionFeedback] = useState('');
 
+  // ---- Checkpoint review state ----
+  interface CheckpointItem {
+    id: string;
+    learnerId: string;
+    siteId: string;
+    answer: string;
+    explainItBack: string | null;
+    aiAssistanceUsed: boolean;
+    aiAssistanceDetails: string | null;
+    status: string;
+    createdAt: string | null;
+  }
+  const [checkpoints, setCheckpoints] = useState<CheckpointItem[]>([]);
+  const [checkpointLoading, setCheckpointLoading] = useState(false);
+  const [checkpointSaving, setCheckpointSaving] = useState<string | null>(null);
+
   // ---- Data loading ----
   const loadAttempts = useCallback(async () => {
     setLoading(true);
@@ -242,6 +258,84 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
   useEffect(() => {
     void loadAttempts();
   }, [loadAttempts]);
+
+  // ---- Checkpoint loading ----
+  const loadCheckpoints = useCallback(async () => {
+    setCheckpointLoading(true);
+    try {
+      const snap = await getDocs(
+        query(
+          collection(firestore, 'checkpointHistory'),
+          where('status', '==', 'submitted'),
+          orderBy('createdAt', 'desc')
+        )
+      );
+      setCheckpoints(
+        snap.docs.map((d) => {
+          const data = d.data();
+          return {
+            id: d.id,
+            learnerId: asString(data.learnerId, ''),
+            siteId: asString(data.siteId, ''),
+            answer: asString(data.answer, ''),
+            explainItBack: typeof data.explainItBack === 'string' ? data.explainItBack : null,
+            aiAssistanceUsed: Boolean(data.aiAssistanceUsed),
+            aiAssistanceDetails: typeof data.aiAssistanceDetails === 'string' ? data.aiAssistanceDetails : null,
+            status: asString(data.status, 'submitted'),
+            createdAt: toIso(data.createdAt),
+          };
+        })
+      );
+    } catch (err) {
+      console.warn('Failed to load checkpoints:', err);
+    } finally {
+      setCheckpointLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadCheckpoints();
+  }, [loadCheckpoints]);
+
+  // ---- Mark checkpoint correct/incorrect ----
+  const handleCheckpointReview = useCallback(
+    async (cp: CheckpointItem, isCorrect: boolean) => {
+      setCheckpointSaving(cp.id);
+      try {
+        // 1. Update checkpoint status
+        await updateDoc(doc(firestore, 'checkpointHistory', cp.id), {
+          isCorrect,
+          status: 'reviewed',
+          reviewedBy: ctx.uid,
+          reviewedAt: serverTimestamp(),
+        });
+
+        // 2. If correct, call processCheckpointMasteryUpdate to trigger growth
+        if (isCorrect) {
+          const processCheckpoint = httpsCallable(functions, 'processCheckpointMasteryUpdate');
+          await processCheckpoint({
+            learnerId: cp.learnerId,
+            siteId: cp.siteId,
+            checkpointId: cp.id,
+            skillIds: [], // checkpoint doesn't carry skill mapping yet
+            passed: true,
+            educatorId: ctx.uid,
+          });
+        }
+
+        trackInteraction('feature_discovered', { feature: 'checkpoint_reviewed', checkpointId: cp.id, isCorrect });
+
+        // Remove from list
+        setCheckpoints((prev) => prev.filter((c) => c.id !== cp.id));
+      } catch (err) {
+        console.error('Failed to review checkpoint:', err);
+        setError('Failed to review checkpoint. Please try again.');
+      } finally {
+        setCheckpointSaving(null);
+      }
+    },
+    [ctx.uid, trackInteraction]
+  );
 
   // ---- Load structured rubric for an attempt ----
   const loadRubricForAttempt = useCallback(
@@ -823,6 +917,89 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
             );
           })}
         </ul>
+      )}
+
+      {/* ---- Checkpoint Review Section ---- */}
+      {(checkpoints.length > 0 || checkpointLoading) && (
+        <div className="mt-8 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-app-foreground">
+              Pending Checkpoints
+            </h2>
+            <span className="rounded-full bg-app-canvas px-3 py-1 text-xs font-medium text-app-muted">
+              {checkpoints.length} pending
+            </span>
+          </div>
+          {checkpointLoading ? (
+            <div className="flex items-center gap-2 text-app-muted text-sm">
+              <Spinner /> Loading checkpoints...
+            </div>
+          ) : (
+            <ul className="space-y-3">
+              {checkpoints.map((cp) => {
+                const cpSaving = checkpointSaving === cp.id;
+                const learner = learners[cp.learnerId];
+                return (
+                  <li
+                    key={cp.id}
+                    className="rounded-xl border border-app bg-app-surface-raised p-4 space-y-3"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium text-app-foreground">
+                          {learner?.displayName ?? cp.learnerId}
+                        </p>
+                        <p className="text-xs text-app-muted">{formatDate(cp.createdAt)}</p>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        {cp.aiAssistanceUsed && (
+                          <span
+                            className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-800"
+                            title={cp.aiAssistanceDetails ?? 'AI tools were used'}
+                          >
+                            AI Assisted
+                          </span>
+                        )}
+                        <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">
+                          Checkpoint
+                        </span>
+                      </div>
+                    </div>
+                    <div className="rounded-lg bg-app-canvas p-3 text-sm text-app-foreground">
+                      {cp.answer}
+                    </div>
+                    {cp.explainItBack && (
+                      <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
+                        <span className="text-xs font-semibold uppercase tracking-wide text-emerald-600">
+                          Explain-it-back
+                        </span>
+                        <p className="mt-1">{cp.explainItBack}</p>
+                      </div>
+                    )}
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        disabled={cpSaving}
+                        onClick={() => void handleCheckpointReview(cp, true)}
+                        className="rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50"
+                      >
+                        {cpSaving ? 'Saving...' : 'Correct'}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={cpSaving}
+                        onClick={() => void handleCheckpointReview(cp, false)}
+                        className="rounded-md border border-red-300 bg-red-50 px-4 py-2 text-sm font-semibold text-red-800 hover:bg-red-100 disabled:opacity-50"
+                      >
+                        {cpSaving ? 'Saving...' : 'Incorrect'}
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
       )}
     </section>
   );

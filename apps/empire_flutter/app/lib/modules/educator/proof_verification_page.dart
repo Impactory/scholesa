@@ -134,8 +134,6 @@ class _ProofVerificationPageState extends State<ProofVerificationPage> {
         final String learnerId = bundle['learnerId'] as String? ?? '';
         final String? capabilityId = bundle['capabilityId'] as String?;
         if (learnerId.isNotEmpty) {
-          final GrowthEngineService growthEngine =
-              context.read<GrowthEngineService>();
           await growthEngine.onProofVerified(
             bundleId: bundleId,
             learnerId: learnerId,

@@ -43,6 +43,8 @@ export function ReflectionJournal({
   const [effortLevel, setEffortLevel] = useState<EmojiLevel | null>(null);
   const [enjoymentLevel, setEnjoymentLevel] = useState<EmojiLevel | null>(null);
   const [effectiveStrategy, setEffectiveStrategy] = useState('');
+  const [aiUsed, setAiUsed] = useState(false);
+  const [aiDetails, setAiDetails] = useState('');
   
   // UI state
   const [loading, setLoading] = useState(false);
@@ -77,7 +79,9 @@ export function ReflectionJournal({
         missionId,
         effortLevel || undefined,
         enjoymentLevel || undefined,
-        effectiveStrategy || undefined
+        effectiveStrategy || undefined,
+        aiUsed,
+        aiUsed ? aiDetails.trim() || undefined : undefined
       );
 
       setSuccess(true);
@@ -231,6 +235,31 @@ export function ReflectionJournal({
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             />
             <p className="text-xs text-gray-500 mt-1">This helps us understand what works for you!</p>
+          </div>
+
+          {/* AI Disclosure */}
+          <div className="pt-4 border-t">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="ai-used-reflection"
+                checked={aiUsed}
+                onChange={(e) => setAiUsed(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-purple-600"
+              />
+              <label htmlFor="ai-used-reflection" className="text-sm font-medium text-gray-700">
+                I used AI tools to help with this reflection
+              </label>
+            </div>
+            {aiUsed && (
+              <input
+                type="text"
+                value={aiDetails}
+                onChange={(e) => setAiDetails(e.target.value)}
+                placeholder="Which AI tools did you use? (optional)"
+                className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+            )}
           </div>
 
           {/* Error */}
