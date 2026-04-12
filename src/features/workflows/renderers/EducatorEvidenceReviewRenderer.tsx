@@ -166,6 +166,7 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
   const [checkpoints, setCheckpoints] = useState<CheckpointItem[]>([]);
   const [checkpointLoading, setCheckpointLoading] = useState(false);
   const [checkpointSaving, setCheckpointSaving] = useState<string | null>(null);
+  const [checkpointGrowthWarning, setCheckpointGrowthWarning] = useState<string | null>(null);
 
   // ---- Data loading ----
   const loadAttempts = useCallback(async () => {
@@ -314,15 +315,24 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
 
         // 2. If correct, call processCheckpointMasteryUpdate to trigger growth
         if (isCorrect) {
-          const processCheckpoint = httpsCallable(functions, 'processCheckpointMasteryUpdate');
-          await processCheckpoint({
+          const processCheckpoint = httpsCallable<unknown, { updated: boolean; reason?: string }>(
+            functions,
+            'processCheckpointMasteryUpdate'
+          );
+          const growthResult = await processCheckpoint({
             learnerId: cp.learnerId,
             siteId: cp.siteId,
             checkpointId: cp.id,
-            skillIds: [], // checkpoint doesn't carry skill mapping yet
+            skillIds: [], // capability resolved from checkpoint.capabilityId or checkpointMappings
             passed: true,
             educatorId: ctx.uid,
           });
+          if (!growthResult.data.updated) {
+            setCheckpointGrowthWarning(
+              `Checkpoint marked correct, but capability growth was not triggered — no capability is mapped to this checkpoint. ` +
+              `Ask Admin-HQ to link a capability, or apply a rubric below to update growth manually.`
+            );
+          }
         }
 
         trackInteraction('feature_discovered', { feature: 'checkpoint_reviewed', checkpointId: cp.id, isCorrect });
@@ -589,6 +599,22 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
           <button
             type="button"
             onClick={() => setError(null)}
+            className="ml-3 text-xs font-medium underline"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {checkpointGrowthWarning && (
+        <div
+          className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800"
+          data-testid="checkpoint-growth-warning"
+        >
+          {checkpointGrowthWarning}
+          <button
+            type="button"
+            onClick={() => setCheckpointGrowthWarning(null)}
             className="ml-3 text-xs font-medium underline"
           >
             Dismiss

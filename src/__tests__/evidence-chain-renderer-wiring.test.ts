@@ -233,6 +233,15 @@ describe('EducatorEvidenceReviewRenderer capability growth write path', () => {
   it('uses Firestore batch for atomicity', () => {
     expect(source).toMatch(/batch|writeBatch|setDoc|addDoc/);
   });
+
+  it('captures processCheckpointMasteryUpdate result and warns when growth not triggered', () => {
+    // The callable result must be captured (not fire-and-forget) so the renderer
+    // can detect updated: false and show the amber warning banner.
+    expect(source).toContain('growthResult');
+    expect(source).toContain('growthResult.data.updated');
+    expect(source).toContain('checkpointGrowthWarning');
+    expect(source).toContain('checkpoint-growth-warning');
+  });
 });
 
 /* ───── LearnerProofAssemblyRenderer proof bundle writes ───── */
