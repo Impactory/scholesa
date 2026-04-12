@@ -50,6 +50,8 @@ interface MissionAttempt {
   attachmentUrls: string[];
   aiDisclosure: boolean;
   aiToolsUsed: string | null;
+  aiAssistanceDetails: string | null;
+  aiDisclosureStatus: string | null;
   submittedAt: string | null;
   capabilityId: string | null;
 }
@@ -329,8 +331,8 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
           });
           if (!growthResult.data.updated) {
             setCheckpointGrowthWarning(
-              `Checkpoint marked correct, but capability growth was not triggered — no capability is mapped to this checkpoint. ` +
-              `Ask Admin-HQ to link a capability, or apply a rubric below to update growth manually.`
+              'Checkpoint marked correct, but capability growth was not triggered — no capability is mapped to this checkpoint. ' +
+              'Ask Admin-HQ to link a capability, or apply a rubric below to update growth manually.'
             );
           }
         }

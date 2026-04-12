@@ -258,6 +258,9 @@ export function LearnerEvidenceSubmission() {
         status: 'submitted' as const,
         content: checkpointContent.trim(),
         attachmentUrls,
+        aiAssistanceUsed: checkpointAiUsed,
+        aiAssistanceDetails: checkpointAiUsed ? checkpointAiDetails.trim() : undefined,
+        aiDisclosureStatus: checkpointAiUsed ? 'learner-ai-verified' : 'learner-ai-not-used',
         submittedAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
