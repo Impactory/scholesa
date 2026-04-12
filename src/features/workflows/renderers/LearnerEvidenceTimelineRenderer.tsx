@@ -13,7 +13,7 @@
  * All rendered in reverse chronological order with linking and status indicators.
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   collection,
   getDocs,
@@ -31,8 +31,6 @@ import type { CustomRouteRendererProps } from '../customRouteRenderers';
 import {
   FileTextIcon,
   CheckCircleIcon,
-  ClockIcon,
-  AlertCircleIcon,
   BookOpenIcon,
   CheckSquareIcon,
   ShieldCheckIcon,
@@ -197,7 +195,7 @@ export default function LearnerEvidenceTimelineRenderer({ ctx }: CustomRouteRend
           title: data.title || 'Untitled artifact',
           description: data.description,
           createdAt: toIso(data.createdAt),
-          status: (data.verificationStatus as string) || 'pending',
+          status: ((data.verificationStatus as string) || 'pending') as 'pending' | 'submitted' | 'reviewing' | 'verified',
           pillarCodes: data.pillarCodes || [],
           capabilityIds: data.capabilityIds || [],
           aiDisclosureStatus: data.aiDisclosureStatus,
@@ -213,13 +211,14 @@ export default function LearnerEvidenceTimelineRenderer({ ctx }: CustomRouteRend
       // Reflections
       reflectionsSnap.docs.forEach((d) => {
         const data = d.data();
+        const proudOfText = data.proudOf || 'Reflection';
         timelineItems.push({
           id: d.id,
           type: 'reflection',
-          title: `Reflection: ${data.proudOf?.slice(0, 50)}${(data.proudOf?.length ?? 0) > 50 ? '…' : ''}` || 'Reflection',
+          title: `Reflection: ${proudOfText.slice(0, 50)}${proudOfText.length > 50 ? '…' : ''}`,
           description: `Proud of: ${data.proudOf}\nNext: ${data.nextIWill}`,
           createdAt: toIso(data.createdAt),
-          status: 'submitted',
+          status: 'submitted' as const,
           pillarCodes: [],
           capabilityIds: data.capabilityIds || [],
           aiDisclosureStatus: data.aiAssistanceUsed ? 'learner-ai-verified' : 'learner-ai-not-used',
@@ -240,7 +239,7 @@ export default function LearnerEvidenceTimelineRenderer({ ctx }: CustomRouteRend
           title: data.missionTitle ? `Checkpoint: ${data.missionTitle}` : 'Checkpoint',
           description: data.answer,
           createdAt: toIso(data.createdAt),
-          status: data.isCorrect ? 'verified' : (data.status as string) || 'submitted',
+          status: (data.isCorrect ? 'verified' : (data.status as string) || 'submitted') as 'pending' | 'submitted' | 'reviewing' | 'verified',
           pillarCodes: [],
           capabilityIds: data.capabilityId ? [data.capabilityId] : [],
           aiDisclosureStatus: data.aiAssistanceUsed ? 'learner-ai-verified' : 'learner-ai-not-used',
@@ -262,7 +261,7 @@ export default function LearnerEvidenceTimelineRenderer({ ctx }: CustomRouteRend
           title: data.missionTitle || 'Mission attempt',
           description: data.content,
           createdAt: toIso(data.submittedAt || data.startedAt || data.createdAt),
-          status: (data.reviewStatus as string) || (data.status as string) || 'submitted',
+          status: ((data.reviewStatus as string) || (data.status as string) || 'submitted') as 'pending' | 'submitted' | 'reviewing' | 'verified',
           pillarCodes: [],
           capabilityIds: data.capabilityIds || [],
           metadata: {
@@ -332,7 +331,7 @@ export default function LearnerEvidenceTimelineRenderer({ ctx }: CustomRouteRend
             {/* Vertical line */}
             <div className="absolute left-3 top-2 bottom-0 w-0.5 bg-app-surface" />
 
-            {items.map((item, idx) => (
+            {items.map((item) => (
               <div key={item.id} className="relative">
                 {/* Timeline dot */}
                 <div className="absolute -left-6 top-2 h-6 w-6 rounded-full border-2 border-app bg-white flex items-center justify-center text-app-foreground">
