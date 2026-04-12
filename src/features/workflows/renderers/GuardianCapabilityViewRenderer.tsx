@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '@/src/firebase/client-init';
 import { Spinner } from '@/src/components/ui/Spinner';
@@ -210,6 +210,20 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Route-specific focus: scroll to the section that matches the current URL
+  const ROUTE_FOCUS: Record<string, { sectionId: string; subtitle: string }> = {
+    '/parent/growth-timeline': {
+      sectionId: 'guardian-growth-timeline',
+      subtitle: "Track your child's capability growth over time — each step verified by their educator.",
+    },
+    '/parent/portfolio': {
+      sectionId: 'guardian-portfolio-highlights',
+      subtitle: "Review your child's portfolio work and proof of learning.",
+    },
+  };
+  const focus = ROUTE_FOCUS[ctx.routePath ?? ''] ?? null;
+  const focusRef = useRef<HTMLDivElement | null>(null);
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -233,6 +247,13 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
   useEffect(() => {
     void fetchData();
   }, [fetchData]);
+
+  // Scroll to the focused section once data loads and the ref is attached
+  useEffect(() => {
+    if (!loading && focus && focusRef.current) {
+      focusRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [loading, focus]);
 
   // -- Loading state --
   if (loading) {
@@ -288,12 +309,12 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
       <header className="rounded-xl border border-app bg-app-surface-raised p-6">
         <h1 className="text-2xl font-bold text-app-foreground">Family Learning Dashboard</h1>
         <p className="mt-2 text-sm text-app-muted">
-          See what your children are learning, how they are growing, and the proof behind their
-          achievements.
+          {focus?.subtitle ??
+            'See what your children are learning, how they are growing, and the proof behind their achievements.'}
         </p>
       </header>
 
-      {learners.map((learner: LearnerSummary) => {
+      {learners.map((learner: LearnerSummary, learnerIdx: number) => {
         const band = LEVEL_BAND_CONFIG[learner.currentLevelBand] ?? LEVEL_BAND_CONFIG.emerging;
 
         return (
@@ -380,6 +401,8 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
             {/* ---- Growth Timeline ---- */}
             {learner.growthTimeline.length > 0 && (
               <div
+                id="guardian-growth-timeline"
+                ref={focus?.sectionId === 'guardian-growth-timeline' && learnerIdx === 0 ? focusRef : undefined}
                 className="rounded-lg border border-app bg-app-surface-raised p-4"
                 data-testid={`growth-timeline-${learner.learnerId}`}
               >
@@ -422,6 +445,8 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
             {/* ---- Portfolio Highlights ---- */}
             {learner.portfolioHighlights.length > 0 && (
               <div
+                id="guardian-portfolio-highlights"
+                ref={focus?.sectionId === 'guardian-portfolio-highlights' && learnerIdx === 0 ? focusRef : undefined}
                 className="rounded-lg border border-app bg-app-surface-raised p-4"
                 data-testid={`portfolio-highlights-${learner.learnerId}`}
               >
