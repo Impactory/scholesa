@@ -9467,13 +9467,12 @@ export const processCheckpointMasteryUpdate = onCall(async (request: CallableReq
       .where('status', '==', 'active')
       .get();
 
-    // Precision routing: check 3 sources for capability targeting:
-    // 1. The checkpoint document itself may carry a capabilityId (learner-selected)
-    // 2. Capabilities may have checkpointMappings containing this checkpoint's ID (HQ-configured)
-    // 3. Fall back to all site capabilities if no specific mapping found
-    let targetCapDocs = siteCapabilities.docs;
+    // Precision routing: require an explicit capability target — either from the checkpoint
+    // itself or from HQ-configured checkpointMappings. Never scatter growth events across
+    // all site capabilities; that would create phantom mastery without real evidence provenance.
+    let targetCapDocs: FirebaseFirestore.QueryDocumentSnapshot[] = [];
 
-    // Source 1: checkpoint doc has an explicit capabilityId
+    // Source 1: checkpoint doc has an explicit capabilityId (learner-selected at submission)
     let checkpointCapabilityId: string | null = null;
     if (checkpointId) {
       const cpDoc = await db.collection('checkpointHistory').doc(checkpointId).get();
@@ -9489,7 +9488,7 @@ export const processCheckpointMasteryUpdate = onCall(async (request: CallableReq
       const directMatch = siteCapabilities.docs.filter((d) => d.id === checkpointCapabilityId);
       if (directMatch.length > 0) targetCapDocs = directMatch;
     } else if (checkpointId) {
-      // Source 2: capability checkpointMappings
+      // Source 2: capability checkpointMappings (HQ-configured label or ID match)
       const mapped = siteCapabilities.docs.filter((capDoc) => {
         const mappings = capDoc.data().checkpointMappings;
         if (!Array.isArray(mappings)) return false;
@@ -9498,6 +9497,13 @@ export const processCheckpointMasteryUpdate = onCall(async (request: CallableReq
         );
       });
       if (mapped.length > 0) targetCapDocs = mapped;
+    }
+
+    // If no capability can be identified, refuse to write phantom growth events.
+    // The checkpoint must be mapped by the learner (capabilityId on submission) or
+    // by HQ (checkpointMappings on capability doc) before it can drive growth.
+    if (targetCapDocs.length === 0) {
+      return { updated: false, reason: 'No capability mapping found for this checkpoint. Map the checkpoint to a capability via checkpointMappings or have the learner select a capability at submission.' };
     }
 
     for (const capDoc of targetCapDocs) {

@@ -195,6 +195,25 @@ describe('Collection naming consistency', () => {
     expect(checkpointFn).toContain('latestLevel:');
   });
 
+  it('processCheckpointMasteryUpdate refuses to update ALL capabilities when no mapping exists', async () => {
+    const fs = await import('fs');
+    const path = await import('path');
+    const source = fs.readFileSync(
+      path.join(__dirname, 'index.ts'),
+      'utf-8'
+    );
+
+    const checkpointStart = source.indexOf('export const processCheckpointMasteryUpdate');
+    const checkpointEnd = source.indexOf('export const', checkpointStart + 1);
+    const checkpointFn = source.slice(checkpointStart, checkpointEnd);
+
+    // Must guard against phantom growth by requiring a capability target.
+    // The fallback to siteCapabilities.docs (all caps) has been removed.
+    expect(checkpointFn).not.toContain('siteCapabilities.docs;');
+    expect(checkpointFn).toContain('targetCapDocs.length === 0');
+    expect(checkpointFn).toContain('No capability mapping found');
+  });
+
   it('evaluateBadgeEligibility reads both currentLevel and latestLevel', async () => {
     const fs = await import('fs');
     const path = await import('path');
