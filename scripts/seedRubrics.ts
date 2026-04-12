@@ -1,6 +1,11 @@
 /**
  * Seed Default Rubrics
- * 
+ *
+ * @deprecated Seeds legacy `assessmentRubrics` collection via RubricManager.
+ * New rubrics should be created by Admin-HQ via the CapabilityFrameworkEditor
+ * and stored in `rubricTemplates`. The main seed script (seedFirestore.js)
+ * now seeds both collections. This script is kept for backwards compatibility.
+ *
  * Bootstrap your rubric library with age-appropriate defaults.
  * These are YOUR starting intelligence - iterate on them without retraining.
  */

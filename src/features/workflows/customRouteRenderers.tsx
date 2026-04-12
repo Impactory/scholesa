@@ -87,6 +87,9 @@ const GuardianPassportRenderer = lazy(
 const LearnerMiloOSRenderer = lazy(
   () => import('./renderers/LearnerMiloOSRenderer')
 );
+const EducatorSessionsRenderer = lazy(
+  () => import('./renderers/EducatorSessionsRenderer')
+);
 
 const CUSTOM_ROUTE_RENDERERS: Partial<
   Record<WorkflowPath, ComponentType<CustomRouteRendererProps>>
@@ -106,6 +109,7 @@ const CUSTOM_ROUTE_RENDERERS: Partial<
   '/educator/proof-review': EducatorProofReviewRenderer,
   '/educator/verification': EducatorProofReviewRenderer,
   '/educator/rubrics/apply': EducatorRubricApplyRenderer,
+  '/educator/sessions': EducatorSessionsRenderer,
   // Learner
   '/learner/today': LearnerProgressReportRenderer,
   '/learner/portfolio': LearnerPortfolioCurationRenderer,

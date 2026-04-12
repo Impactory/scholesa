@@ -1929,6 +1929,32 @@ void main() {
       expect(portfolioItems.docs, hasLength(1));
       final String portfolioItemId = portfolioItems.docs.single.id;
 
+      // Seed mastery + growth event data that the applyRubricToEvidence Cloud
+      // Function would write in production (CF can't run in unit tests).
+      await firestore
+          .collection('capabilityMastery')
+          .doc('${learnerId}_cap-prototype-evidence')
+          .set(<String, dynamic>{
+        'learnerId': learnerId,
+        'capabilityId': 'cap-prototype-evidence',
+        'capabilityTitle': 'Prototype evidence',
+        'latestLevel': 4,
+        'latestMissionAttemptId': missionAttemptId,
+        'siteId': 'site-1',
+      });
+      await firestore
+          .collection('capabilityGrowthEvents')
+          .doc('seed-growth-passport')
+          .set(<String, dynamic>{
+        'learnerId': learnerId,
+        'capabilityId': 'cap-prototype-evidence',
+        'capabilityTitle': 'Prototype evidence',
+        'level': 4,
+        'missionAttemptId': missionAttemptId,
+        'siteId': 'site-1',
+        'createdAt': Timestamp.fromDate(DateTime(2026, 3, 18, 10, 20)),
+      });
+
       final ParentService parentService = ParentService(
         firestoreService: firestoreService,
         parentId: parentId,

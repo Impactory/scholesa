@@ -250,6 +250,7 @@ const AUDIT_COLLECTION = 'auditLogs';
 const TELEMETRY_COLLECTION = 'telemetryEvents';
 const ORDERS_COLLECTION = 'orders';
 const ENTITLEMENTS_COLLECTION = 'entitlements';
+const LEVEL_FROM_NUMBER: Record<number, string> = { 1: 'emerging', 2: 'developing', 3: 'proficient', 4: 'advanced' };
 const FULFILLMENTS_COLLECTION = 'fulfillments';
 const NOTIFICATION_REQUESTS_COLLECTION = 'notificationRequests';
 const LEARNER_REMINDER_PREFERENCES_COLLECTION = 'learnerReminderPreferences';
@@ -2297,10 +2298,12 @@ function checkpointMappingsFromUnknown(value: unknown): Array<Record<string, str
   return value
     .filter((entry): entry is Record<string, unknown> => !!entry && typeof entry === 'object' && !Array.isArray(entry))
     .map((entry) => ({
-      phase: typeof entry.phase === 'string' ? entry.phase.trim() : '',
-      guidance: typeof entry.guidance === 'string' ? entry.guidance.trim() : '',
+      // Support both field conventions: label/description (CapabilityFrameworkEditor) and phase/guidance (legacy)
+      label: typeof entry.label === 'string' ? entry.label.trim() : (typeof entry.phase === 'string' ? entry.phase.trim() : ''),
+      description: typeof entry.description === 'string' ? entry.description.trim() : (typeof entry.guidance === 'string' ? entry.guidance.trim() : ''),
+      checkpointId: typeof entry.checkpointId === 'string' ? entry.checkpointId.trim() : '',
     }))
-    .filter((entry) => entry.phase.length > 0 || entry.guidance.length > 0);
+    .filter((entry) => entry.label.length > 0 || entry.description.length > 0);
 }
 
 function normalizeParentPillarKey(value: unknown): 'futureSkills' | 'leadership' | 'impact' | null {
@@ -2522,7 +2525,7 @@ async function buildParentLearnerSummary(params: {
     attendanceRate = null;
   }
 
-  const [portfolioSnap, evidenceSnap, masterySnap, growthSnap, reflectionsSnap, missionAttemptsSnap, interactionEventsSnap, capabilitiesSnap] =
+  const [portfolioSnap, evidenceSnap, masterySnap, growthSnap, reflectionsSnap, missionAttemptsSnap, interactionEventsSnap, capabilitiesSnap, pdMasterySnap, pdGrowthSnap] =
     await Promise.all([
       admin.firestore().collection('portfolioItems').where('learnerId', '==', learnerId).limit(100).get().catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
       admin.firestore().collection('evidenceRecords').where('learnerId', '==', learnerId).limit(100).get().catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
@@ -2534,6 +2537,8 @@ async function buildParentLearnerSummary(params: {
       siteId
         ? admin.firestore().collection('capabilities').where('siteId', '==', siteId).get().catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] }))
         : Promise.resolve({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] }),
+      admin.firestore().collection('processDomainMastery').where('learnerId', '==', learnerId).limit(100).get().catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
+      admin.firestore().collection('processDomainGrowthEvents').where('learnerId', '==', learnerId).limit(100).get().catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
     ]);
 
   const includeForSite = (data: Record<string, unknown>): boolean => {
@@ -3306,6 +3311,36 @@ async function buildParentLearnerSummary(params: {
     ideationPassport,
     recentActivities,
     upcomingEvents,
+    processDomainSnapshot: pdMasterySnap.docs
+      .map((d) => {
+        const data = d.data() as Record<string, unknown>;
+        return {
+          processDomainId: typeof data.processDomainId === 'string' ? data.processDomainId : d.id,
+          currentLevel: data.currentLevel ?? data.latestLevel ?? null,
+          highestLevel: data.highestLevel ?? data.latestLevel ?? null,
+          evidenceCount: typeof data.evidenceCount === 'number' ? data.evidenceCount : 0,
+          updatedAt: parseDateFromUnknown(data.updatedAt)?.toISOString() ?? null,
+        };
+      })
+      .filter((row) => row.currentLevel != null),
+    processDomainGrowthTimeline: pdGrowthSnap.docs
+      .map((d) => {
+        const data = d.data() as Record<string, unknown>;
+        return {
+          processDomainId: typeof data.processDomainId === 'string' ? data.processDomainId : '',
+          fromLevel: data.fromLevel ?? null,
+          toLevel: data.toLevel ?? data.level ?? null,
+          educatorId: typeof data.educatorId === 'string' ? data.educatorId : '',
+          createdAt: parseDateFromUnknown(data.createdAt)?.toISOString() ?? null,
+        };
+      })
+      .filter((row) => row.processDomainId)
+      .sort((a, b) => {
+        const da = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const db = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return db - da;
+      })
+      .slice(0, 50),
   };
 }
 
@@ -8734,6 +8769,24 @@ export const applyRubricToEvidence = onCall(async (request: CallableRequest<{
       educatorId,
       createdAt: FieldValue.serverTimestamp(),
     });
+
+    // 2a-ii. Write skillMastery for microSkillIds linked to this capability
+    const capDocForSkills = await db.collection('capabilities').doc(capabilityId).get();
+    const capMicroSkills = capDocForSkills.exists ? capDocForSkills.data()?.microSkillIds : null;
+    if (Array.isArray(capMicroSkills)) {
+      for (const msId of capMicroSkills) {
+        if (typeof msId !== 'string' || !msId.trim()) continue;
+        const skillMasteryRef = db.collection('skillMastery').doc(`${learnerId}_${msId}`);
+        batch.set(skillMasteryRef, {
+          learnerId,
+          microSkillId: msId,
+          capabilityId,
+          level: nextLevel,
+          siteId,
+          updatedAt: FieldValue.serverTimestamp(),
+        }, { merge: true });
+      }
+    }
   }
 
   // 2b. For each process domain: create growth event + upsert mastery
@@ -8762,13 +8815,20 @@ export const applyRubricToEvidence = onCall(async (request: CallableRequest<{
     const pdPriorEvidenceIds: string[] = Array.isArray(pdMasteryData.evidenceIds) ? pdMasteryData.evidenceIds : [];
     const pdMergedEvidenceIds = [...new Set([...safeEvidenceRecordIds, ...pdPriorEvidenceIds])];
 
+    const pdPreviousLevel = (pdMasteryData.latestLevel as number) ?? (pdMasteryData.currentLevel as number) ?? 0;
+
     batch.set(pdMasteryRef, {
       learnerId,
       processDomainId,
       siteId,
+      currentLevel: LEVEL_FROM_NUMBER[nextLevel] || 'emerging',
       latestLevel: nextLevel,
+      previousLevel: pdPreviousLevel,
       highestLevel: pdHighestLevel,
+      evidenceCount: pdMergedEvidenceIds.length,
       evidenceIds: pdMergedEvidenceIds,
+      lastAssessedBy: educatorId,
+      lastAssessedAt: FieldValue.serverTimestamp(),
       createdAt: pdMasteryData.createdAt ?? FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
     }, { merge: true });
@@ -8780,6 +8840,8 @@ export const applyRubricToEvidence = onCall(async (request: CallableRequest<{
       processDomainId,
       siteId,
       level: nextLevel,
+      fromLevel: pdPreviousLevel,
+      toLevel: nextLevel,
       rawScore,
       maxScore,
       missionAttemptId: missionAttemptId ?? null,
@@ -8908,6 +8970,11 @@ export const applyRubricToEvidence = onCall(async (request: CallableRequest<{
   }
 
   await portfolioBatch.commit();
+
+  // Auto-evaluate badge eligibility after mastery updates (fire-and-forget)
+  evaluateBadgeEligibilityInternal(learnerId, siteId).catch((err) =>
+    console.warn('Badge evaluation after rubric apply failed (non-blocking):', err)
+  );
 
   return {
     rubricApplicationId: rubricAppRef.id,
@@ -9108,19 +9175,13 @@ export const verifyProofOfLearning = onCall(async (request: CallableRequest<{
  * Checks all site badges against the learner's current mastery levels
  * and auto-awards any badges whose criteria are met.
  */
-export const evaluateBadgeEligibility = onCall(async (request: CallableRequest<{
-  learnerId: string;
-  siteId: string;
-  capabilityId?: string;
-}>) => {
-  const auth = request.auth;
-  if (!auth) throw new HttpsError('unauthenticated', 'Must be authenticated');
 
-  const { learnerId, siteId, capabilityId } = request.data;
-  if (!learnerId || !siteId) {
-    throw new HttpsError('invalid-argument', 'learnerId and siteId required');
-  }
-
+// Internal helper — used by both the callable and post-mastery-update hooks
+async function evaluateBadgeEligibilityInternal(
+  learnerId: string,
+  siteId: string,
+  capabilityId?: string,
+): Promise<{ awarded: Array<{ badgeId: string; badgeName: string; awardId: string }> }> {
   const db = admin.firestore();
   const MASTERY_RANK: Record<string, number> = {
     emerging: 1,
@@ -9129,16 +9190,13 @@ export const evaluateBadgeEligibility = onCall(async (request: CallableRequest<{
     advanced: 4,
   };
 
-  // Load badges for this site
-  let badgeQuery = db.collection('recognitionBadges').where('siteId', '==', siteId);
+  let badgeQuery: admin.firestore.Query = db.collection('recognitionBadges').where('siteId', '==', siteId);
   if (capabilityId) {
-    // Optimization: only check badges requiring this specific capability
     badgeQuery = badgeQuery.where('requiredCapabilityId', '==', capabilityId);
   }
   const badgesSnap = await badgeQuery.get();
   if (badgesSnap.empty) return { awarded: [] };
 
-  // Load learner's current mastery levels
   const masterySnap = await db
     .collection('capabilityMastery')
     .where('learnerId', '==', learnerId)
@@ -9148,10 +9206,6 @@ export const evaluateBadgeEligibility = onCall(async (request: CallableRequest<{
   masterySnap.docs.forEach((d) => {
     const data = d.data();
     if (data.capabilityId) {
-      // Support both field conventions: currentLevel (string) from
-      // processCheckpointMasteryUpdate and latestLevel (number 1-4) from
-      // applyRubricToEvidence. Normalize to string for comparison.
-      const LEVEL_FROM_NUMBER: Record<number, string> = { 1: 'emerging', 2: 'developing', 3: 'proficient', 4: 'advanced' };
       const level = data.currentLevel
         || LEVEL_FROM_NUMBER[data.latestLevel as number]
         || null;
@@ -9161,7 +9215,6 @@ export const evaluateBadgeEligibility = onCall(async (request: CallableRequest<{
     }
   });
 
-  // Load existing badge awards to avoid duplicates
   const existingAwardsSnap = await db
     .collection('badgeAchievements')
     .where('learnerId', '==', learnerId)
@@ -9170,7 +9223,6 @@ export const evaluateBadgeEligibility = onCall(async (request: CallableRequest<{
 
   const existingBadgeIds = new Set(existingAwardsSnap.docs.map((d) => d.data().badgeId));
 
-  // Load evidence count for microSkill-based badges
   const evidenceSnap = await db
     .collection('skillEvidence')
     .where('learnerId', '==', learnerId)
@@ -9193,12 +9245,11 @@ export const evaluateBadgeEligibility = onCall(async (request: CallableRequest<{
 
   for (const badgeDoc of badgesSnap.docs) {
     const badge = badgeDoc.data();
-    if (existingBadgeIds.has(badgeDoc.id)) continue; // Already awarded
+    if (existingBadgeIds.has(badgeDoc.id)) continue;
 
     let eligible = true;
     const linkedEvidenceIds: string[] = [];
 
-    // Check capability mastery requirement
     if (badge.requiredCapabilityId && badge.requiredMasteryLevel) {
       const learnerLevel = masteryByCapability.get(badge.requiredCapabilityId);
       if (!learnerLevel || MASTERY_RANK[learnerLevel] < MASTERY_RANK[badge.requiredMasteryLevel]) {
@@ -9206,7 +9257,6 @@ export const evaluateBadgeEligibility = onCall(async (request: CallableRequest<{
       }
     }
 
-    // Check microSkill evidence requirements
     if (eligible && Array.isArray(badge.requiredMicroSkillIds) && badge.requiredMicroSkillIds.length > 0) {
       for (const skillId of badge.requiredMicroSkillIds) {
         const evidence = evidenceBySkill.get(skillId);
@@ -9218,7 +9268,6 @@ export const evaluateBadgeEligibility = onCall(async (request: CallableRequest<{
       }
     }
 
-    // Check required evidence count
     if (eligible && typeof badge.requiredEvidenceCount === 'number' && badge.requiredEvidenceCount > 0) {
       if (linkedEvidenceIds.length < badge.requiredEvidenceCount) {
         eligible = false;
@@ -9231,7 +9280,7 @@ export const evaluateBadgeEligibility = onCall(async (request: CallableRequest<{
         badgeId: badgeDoc.id,
         learnerId,
         siteId,
-        evidenceIds: linkedEvidenceIds.slice(0, 50), // Cap at 50 references
+        evidenceIds: linkedEvidenceIds.slice(0, 50),
         awardedAt: FieldValue.serverTimestamp(),
         awardedBy: 'system',
       });
@@ -9248,6 +9297,22 @@ export const evaluateBadgeEligibility = onCall(async (request: CallableRequest<{
   }
 
   return { awarded };
+}
+
+export const evaluateBadgeEligibility = onCall(async (request: CallableRequest<{
+  learnerId: string;
+  siteId: string;
+  capabilityId?: string;
+}>) => {
+  const auth = request.auth;
+  if (!auth) throw new HttpsError('unauthenticated', 'Must be authenticated');
+
+  const { learnerId, siteId, capabilityId } = request.data;
+  if (!learnerId || !siteId) {
+    throw new HttpsError('invalid-argument', 'learnerId and siteId required');
+  }
+
+  return evaluateBadgeEligibilityInternal(learnerId, siteId, capabilityId);
 });
 
 // ---------------------------------------------------------------------------
@@ -9369,6 +9434,18 @@ export const processCheckpointMasteryUpdate = onCall(async (request: CallableReq
         createdAt: FieldValue.serverTimestamp(),
       });
 
+      // Write skillMastery for the skill that triggered this growth
+      const LEVEL_TO_NUMBER_SK: Record<string, number> = { emerging: 1, developing: 2, proficient: 3, advanced: 4 };
+      const skillMasteryRef = db.collection('skillMastery').doc(`${learnerId}_${skillId}`);
+      batch.set(skillMasteryRef, {
+        learnerId,
+        microSkillId: skillId,
+        capabilityId,
+        level: LEVEL_TO_NUMBER_SK[newLevel] ?? 1,
+        siteId,
+        updatedAt: FieldValue.serverTimestamp(),
+      }, { merge: true });
+
       growthEvents.push({ capabilityId, from: currentLevel, to: newLevel });
     }
   } else {
@@ -9383,14 +9460,47 @@ export const processCheckpointMasteryUpdate = onCall(async (request: CallableReq
     const evidenceCount = passedCheckpoints.size;
     if (evidenceCount === 0) return { updated: false, reason: 'No passed checkpoints' };
 
-    // Find all capabilities for this site and update mastery for each
+    // Find all capabilities for this site
     const siteCapabilities = await db
       .collection('capabilities')
       .where('siteId', '==', siteId)
       .where('status', '==', 'active')
       .get();
 
-    for (const capDoc of siteCapabilities.docs) {
+    // Precision routing: check 3 sources for capability targeting:
+    // 1. The checkpoint document itself may carry a capabilityId (learner-selected)
+    // 2. Capabilities may have checkpointMappings containing this checkpoint's ID (HQ-configured)
+    // 3. Fall back to all site capabilities if no specific mapping found
+    let targetCapDocs = siteCapabilities.docs;
+
+    // Source 1: checkpoint doc has an explicit capabilityId
+    let checkpointCapabilityId: string | null = null;
+    if (checkpointId) {
+      const cpDoc = await db.collection('checkpointHistory').doc(checkpointId).get();
+      if (cpDoc.exists) {
+        const cpData = cpDoc.data();
+        if (cpData && typeof cpData.capabilityId === 'string' && cpData.capabilityId) {
+          checkpointCapabilityId = cpData.capabilityId;
+        }
+      }
+    }
+
+    if (checkpointCapabilityId) {
+      const directMatch = siteCapabilities.docs.filter((d) => d.id === checkpointCapabilityId);
+      if (directMatch.length > 0) targetCapDocs = directMatch;
+    } else if (checkpointId) {
+      // Source 2: capability checkpointMappings
+      const mapped = siteCapabilities.docs.filter((capDoc) => {
+        const mappings = capDoc.data().checkpointMappings;
+        if (!Array.isArray(mappings)) return false;
+        return mappings.some((m: Record<string, unknown>) =>
+          m.checkpointId === checkpointId || m.label === checkpointId
+        );
+      });
+      if (mapped.length > 0) targetCapDocs = mapped;
+    }
+
+    for (const capDoc of targetCapDocs) {
       const capabilityId = capDoc.id;
       const pillarCode = (capDoc.data().pillarCode as string) ?? '';
 
@@ -9463,11 +9573,33 @@ export const processCheckpointMasteryUpdate = onCall(async (request: CallableReq
       });
 
       growthEvents.push({ capabilityId, from: currentLevel, to: newLevel });
+
+      // Write skillMastery for any microSkillIds linked to this capability
+      const capMicroSkillIds = capDoc.data().microSkillIds;
+      if (Array.isArray(capMicroSkillIds)) {
+        for (const msId of capMicroSkillIds) {
+          if (typeof msId !== 'string' || !msId.trim()) continue;
+          const skillMasteryRef = db.collection('skillMastery').doc(`${learnerId}_${msId}`);
+          batch.set(skillMasteryRef, {
+            learnerId,
+            microSkillId: msId,
+            capabilityId,
+            level: LEVEL_TO_NUMBER[newLevel] ?? 1,
+            siteId,
+            updatedAt: FieldValue.serverTimestamp(),
+          }, { merge: true });
+        }
+      }
     }
   }
 
   if (growthEvents.length > 0) {
     await batch.commit();
+
+    // Auto-evaluate badge eligibility after mastery updates (fire-and-forget)
+    evaluateBadgeEligibilityInternal(learnerId, siteId).catch((err) =>
+      console.warn('Badge evaluation after checkpoint mastery failed (non-blocking):', err)
+    );
   }
 
   return { updated: growthEvents.length > 0, growthEvents };

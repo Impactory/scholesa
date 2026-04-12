@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:math' as math;
 import '../../offline/offline_queue.dart';
@@ -2216,76 +2217,10 @@ class MissionService extends ChangeNotifier {
                     ((capabilityRawScore / capabilityMaxScore) * 4).ceil(),
                   ),
                 );
-          final String growthCapabilityTitle = rubricCapabilityTitle.isNotEmpty
-              ? rubricCapabilityTitle
-              : capabilityId;
-          final String masteryId = '${reviewLearnerId}_$capabilityId';
-          final DocumentReference<Map<String, dynamic>> masteryRef =
-              _firestore.collection('capabilityMastery').doc(masteryId);
-          final DocumentSnapshot<Map<String, dynamic>> masterySnapshot =
-              await masteryRef.get();
-          final Map<String, dynamic> masteryData =
-              masterySnapshot.data() ?? <String, dynamic>{};
-          final int highestLevel = math.max(
-            nextLevel,
-            (masteryData['highestLevel'] as num?)?.toInt() ?? 0,
-          );
-          final List<String> priorEvidenceIds = List<String>.from(
-            masteryData['evidenceIds'] as List? ?? const <String>[],
-          );
-          final List<String> mergedEvidenceIds = <String>{
-            canonicalAttemptRef.id,
-            ...priorEvidenceIds,
-          }.toList(growable: false);
 
-          batch.set(
-            masteryRef,
-            <String, dynamic>{
-              'learnerId': reviewLearnerId,
-              'capabilityId': capabilityId,
-              if (reviewSiteId != null && reviewSiteId.isNotEmpty)
-                'siteId': reviewSiteId,
-              'pillarCode': pillarCode,
-              if (growthCapabilityTitle.isNotEmpty)
-                'capabilityTitle': growthCapabilityTitle,
-              'latestLevel': nextLevel,
-              'highestLevel': highestLevel,
-              'latestEvidenceId': canonicalAttemptRef.id,
-              'latestMissionAttemptId': canonicalAttemptRef.id,
-              'evidenceIds': mergedEvidenceIds,
-              'createdAt':
-                  masteryData['createdAt'] ?? FieldValue.serverTimestamp(),
-              'updatedAt': FieldValue.serverTimestamp(),
-            },
-            SetOptions(merge: true),
-          );
-
-          final DocumentReference<Map<String, dynamic>> growthEventRef =
-              _firestore.collection('capabilityGrowthEvents').doc();
-          batch.set(
-            growthEventRef,
-            <String, dynamic>{
-              'learnerId': reviewLearnerId,
-              'capabilityId': capabilityId,
-              if (reviewSiteId != null && reviewSiteId.isNotEmpty)
-                'siteId': reviewSiteId,
-              'pillarCode': pillarCode,
-              if (growthCapabilityTitle.isNotEmpty)
-                'capabilityTitle': growthCapabilityTitle,
-              'level': nextLevel,
-              'rawScore': capabilityRawScore,
-              'maxScore': capabilityMaxScore,
-              'evidenceId': canonicalAttemptRef.id,
-              'missionAttemptId': canonicalAttemptRef.id,
-              'rubricApplicationId': canonicalAttemptRef.id,
-              'educatorId': reviewerId,
-              if (progressionDescriptors.isNotEmpty)
-                'progressionDescriptors': progressionDescriptors,
-              if (checkpointMappings.isNotEmpty)
-                'checkpointMappings': checkpointMappings,
-              'createdAt': FieldValue.serverTimestamp(),
-            },
-          );
+          // NOTE: capabilityMastery + capabilityGrowthEvents writes are
+          // delegated to the applyRubricToEvidence Cloud Function after
+          // batch.commit() for server-side validation and atomicity.
 
           final Iterable<QueryDocumentSnapshot<Map<String, dynamic>>>
               matchingEvidenceDocs = (learnerEvidenceSnapshot?.docs ??
@@ -2319,11 +2254,6 @@ class MissionService extends ChangeNotifier {
                     (growthStatus == 'updated' &&
                         linkedMissionAttemptId == canonicalAttemptRef.id));
           });
-          final List<String> linkedEvidenceRecordIds = matchingEvidenceDocs
-              .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) => doc.id)
-              .where((String value) => value.isNotEmpty)
-              .toList(growable: false);
-          final List<String> linkedPortfolioItemIds = <String>[];
           final Set<String> verificationPrompts = <String>{
             ...hqVerificationCriteria,
           };
@@ -2342,7 +2272,6 @@ class MissionService extends ChangeNotifier {
                 'growthStatus': 'updated',
                 'linkedMissionAttemptId': canonicalAttemptRef.id,
                 'linkedRubricApplicationId': rubricApplicationRef.id,
-                'latestGrowthEventId': growthEventRef.id,
                 'latestCapabilityLevel': nextLevel,
                 'growthUpdatedBy': reviewerId,
                 'growthUpdatedAt': FieldValue.serverTimestamp(),
@@ -2457,7 +2386,6 @@ class MissionService extends ChangeNotifier {
                 _firestore.collection('portfolioItems').doc(evidenceDoc.id);
             final DocumentSnapshot<Map<String, dynamic>>
                 existingPortfolioItemSnapshot = await portfolioItemRef.get();
-            linkedPortfolioItemIds.add(portfolioItemRef.id);
             final Map<String, dynamic> portfolioItemWrite = <String, dynamic>{
               if (reviewSiteId != null && reviewSiteId.isNotEmpty)
                 'siteId': reviewSiteId,
@@ -2475,9 +2403,6 @@ class MissionService extends ChangeNotifier {
               'capabilityIds': FieldValue.arrayUnion(<String>[capabilityId]),
               'capabilityTitles': FieldValue.arrayUnion(<String>[
                 capabilityTitle,
-              ]),
-              'growthEventIds': FieldValue.arrayUnion(<String>[
-                growthEventRef.id,
               ]),
               'missionAttemptId': canonicalAttemptRef.id,
               'rubricApplicationId': rubricApplicationRef.id,
@@ -2541,53 +2466,46 @@ class MissionService extends ChangeNotifier {
               SetOptions(merge: true),
             );
           }
-
-          batch.set(
-            growthEventRef,
-            <String, dynamic>{
-              'learnerId': reviewLearnerId,
-              'capabilityId': capabilityId,
-              if (reviewSiteId != null && reviewSiteId.isNotEmpty)
-                'siteId': reviewSiteId,
-              'pillarCode': pillarCode,
-              if (growthCapabilityTitle.isNotEmpty)
-                'capabilityTitle': growthCapabilityTitle,
-              'level': nextLevel,
-              'rawScore': capabilityRawScore,
-              'maxScore': capabilityMaxScore,
-              'evidenceId': canonicalAttemptRef.id,
-              'missionAttemptId': canonicalAttemptRef.id,
-              'rubricApplicationId': canonicalAttemptRef.id,
-              'educatorId': reviewerId,
-              'linkedEvidenceRecordIds': linkedEvidenceRecordIds,
-              'linkedPortfolioItemIds': linkedPortfolioItemIds,
-              if (proofBundleId != null) 'proofBundleId': proofBundleId,
-              if (progressionDescriptors.isNotEmpty)
-                'progressionDescriptors': progressionDescriptors,
-              if (checkpointMappings.isNotEmpty)
-                'checkpointMappings': checkpointMappings,
-              'proofOfLearningStatus': proofBundleSummary == null
-                  ? 'not-available'
-                  : (proofBundleSummary['hasExplainItBack'] == true &&
-                          proofBundleSummary['hasOralCheck'] == true &&
-                          proofBundleSummary['hasMiniRebuild'] == true)
-                      ? 'verified'
-                      : (proofBundleSummary['hasExplainItBack'] == true ||
-                              proofBundleSummary['hasOralCheck'] == true ||
-                              proofBundleSummary['hasMiniRebuild'] == true)
-                          ? 'partial'
-                          : 'missing',
-              if (verificationPrompts.isNotEmpty)
-                'verificationPrompts':
-                    verificationPrompts.toList(growable: false),
-              'createdAt': FieldValue.serverTimestamp(),
-            },
-            SetOptions(merge: true),
-          );
         }
       }
 
       await batch.commit();
+
+      // Route mastery/growth writes through Cloud Function for server-side
+      // validation, atomicity, and badge auto-evaluation.
+      if (normalizedRubricScores.isNotEmpty &&
+          reviewLearnerId.isNotEmpty &&
+          reviewSiteId != null &&
+          reviewSiteId.isNotEmpty) {
+        try {
+          await FirebaseFunctions.instance
+              .httpsCallable('applyRubricToEvidence')
+              .call(<String, dynamic>{
+            'learnerId': reviewLearnerId,
+            'siteId': reviewSiteId,
+            'missionAttemptId': canonicalAttemptRef.id,
+            'evidenceRecordIds': <String>[],
+            'scores': normalizedRubricScores
+                .where((Map<String, dynamic> s) =>
+                    ((s['capabilityId'] as String?) ?? '').trim().isNotEmpty)
+                .map((Map<String, dynamic> s) => <String, dynamic>{
+                      'criterionId':
+                          s['criterionId'] as String? ?? 'review-inline',
+                      'capabilityId': s['capabilityId'] as String? ?? '',
+                      'pillarCode': s['pillarCode'] as String? ?? '',
+                      'score': (s['score'] as num?)?.toInt() ?? 0,
+                      'maxScore': (s['maxScore'] as num?)?.toInt() ?? 4,
+                      if (s['processDomainId'] != null)
+                        'processDomainId': s['processDomainId'],
+                    })
+                .toList(growable: false),
+          });
+        } catch (e) {
+          // Non-blocking: batch already committed evidence/portfolio linkage.
+          // Mastery will be updated on next rubric apply or manual sync.
+          debugPrint('Cloud Function applyRubricToEvidence failed: $e');
+        }
+      }
 
       // Update local state
       _pendingReviews = _pendingReviews

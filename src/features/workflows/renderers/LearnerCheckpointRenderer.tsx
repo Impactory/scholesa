@@ -21,6 +21,7 @@ import {
   where,
 } from 'firebase/firestore';
 import { firestore } from '@/src/firebase/client-init';
+import { useCapabilities } from '@/src/lib/capabilities/useCapabilities';
 import type { CustomRouteRendererProps } from '../customRouteRenderers';
 import {
   CheckCircleIcon,
@@ -66,6 +67,7 @@ function statusBadge(status: CheckpointRecord['status'], isCorrect: boolean) {
 export default function LearnerCheckpointRenderer({ ctx }: CustomRouteRendererProps) {
   const learnerId = ctx.uid;
   const siteId = ctx.profile?.siteIds?.[0] || ctx.profile?.activeSiteId || '';
+  const { capabilityList } = useCapabilities(siteId || null);
 
   const [records, setRecords] = useState<CheckpointRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,6 +80,7 @@ export default function LearnerCheckpointRenderer({ ctx }: CustomRouteRendererPr
   const [explainItBack, setExplainItBack] = useState('');
   const [aiUsed, setAiUsed] = useState(false);
   const [aiDetails, setAiDetails] = useState('');
+  const [selectedCapabilityId, setSelectedCapabilityId] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -141,6 +144,7 @@ export default function LearnerCheckpointRenderer({ ctx }: CustomRouteRendererPr
         learnerId,
         siteId,
         missionId: null,
+        capabilityId: selectedCapabilityId || null,
         checkpointNumber: null,
         answer: answer.trim(),
         explainItBack: explainItBack.trim() || null,
@@ -160,6 +164,7 @@ export default function LearnerCheckpointRenderer({ ctx }: CustomRouteRendererPr
       setExplainItBack('');
       setAiUsed(false);
       setAiDetails('');
+      setSelectedCapabilityId('');
       setShowForm(false);
       await loadCheckpoints();
     } catch (err) {
@@ -205,6 +210,26 @@ export default function LearnerCheckpointRenderer({ ctx }: CustomRouteRendererPr
       {showForm && (
         <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-4 space-y-3">
           <h3 className="font-medium text-gray-900">Submit a Checkpoint</h3>
+
+          {capabilityList.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Capability <span className="text-xs text-gray-400">(what skill is this checkpoint for?)</span>
+              </label>
+              <select
+                value={selectedCapabilityId}
+                onChange={(e) => setSelectedCapabilityId(e.target.value)}
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+              >
+                <option value="">General checkpoint (no specific capability)</option>
+                {capabilityList.map((cap) => (
+                  <option key={cap.id} value={cap.id}>
+                    {cap.title ?? cap.name} ({cap.pillarCode.replace(/_/g, ' ')})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">

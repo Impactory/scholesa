@@ -219,68 +219,97 @@ export class VectorIndexer {
    */
   static async indexAllRubrics(): Promise<number> {
     console.log('Starting rubric indexing...');
-    
+
     try {
-      // 1. Fetch all active rubrics from Firestore
-      const rubricQuery = query(
+      let indexedCount = 0;
+
+      // 1a. Index HQ rubricTemplates (primary — created by Admin-HQ)
+      const hqQuery = query(
+        collection(db, 'rubricTemplates'),
+        where('status', '==', 'published')
+      );
+      const hqSnap = await getDocs(hqQuery);
+
+      if (!hqSnap.empty) {
+        const hqDocs = hqSnap.docs;
+        const batchSize = 10;
+        for (let i = 0; i < hqDocs.length; i += batchSize) {
+          const batch = hqDocs.slice(i, i + batchSize);
+          const contents = batch.map(doc => {
+            const data = doc.data();
+            const criteriaText = (data.criteria || []).map((criterion: any) =>
+              `${criterion.label}: ${criterion.capabilityId || ''} (pillar: ${criterion.pillarCode || ''})`
+            ).join('\n');
+            return `Rubric Template: ${data.title}\n\nCriteria:\n${criteriaText}`;
+          });
+          const embeddings = await EmbeddingService.generateEmbeddingsBatch(contents);
+          for (let j = 0; j < batch.length; j++) {
+            const data = batch[j].data();
+            await VectorStore.store({
+              content: contents[j],
+              embedding: embeddings[j],
+              metadata: {
+                type: 'rubric',
+                missionId: undefined,
+                skillIds: data.capabilityIds || [],
+                createdAt: data.createdAt || Timestamp.now(),
+                updatedAt: data.updatedAt || Timestamp.now()
+              }
+            });
+            indexedCount++;
+          }
+          console.log(`Indexed HQ rubric templates ${i + 1}-${Math.min(i + batchSize, hqDocs.length)} of ${hqDocs.length}`);
+        }
+      }
+
+      // 1b. Index legacy assessmentRubrics (fallback for sites not yet migrated)
+      const legacyQuery = query(
         collection(db, 'assessmentRubrics'),
         where('status', '==', 'active')
       );
-      const rubricSnap = await getDocs(rubricQuery);
-      
-      if (rubricSnap.empty) {
-        console.log('No rubrics found to index.');
-        return 0;
-      }
-      
-      let indexedCount = 0;
-      const rubrics = rubricSnap.docs;
-      
-      // 2. Process rubrics in batches for efficient embedding generation
-      const batchSize = 10;
-      for (let i = 0; i < rubrics.length; i += batchSize) {
-        const batch = rubrics.slice(i, i + batchSize);
-        
-        // Prepare content for embedding (combine rubric details)
-        const contents = batch.map(doc => {
-          const data = doc.data();
-          const criteriaText = (data.criteria || []).map((criterion: any) => 
-            `${criterion.name}: ${criterion.description}`
-          ).join('\n');
-          
-          return `Rubric: ${data.name}\n${data.description}\n\nCriteria:\n${criteriaText}`;
-        });
-        
-        // 3. Generate embeddings for batch
-        const embeddings = await EmbeddingService.generateEmbeddingsBatch(contents);
-        
-        // 4. Store in vector DB
-        for (let j = 0; j < batch.length; j++) {
-          const doc = batch[j];
-          const data = doc.data();
-          
-          await VectorStore.store({
-            content: contents[j],
-            embedding: embeddings[j],
-            metadata: {
-              type: 'rubric',
-              gradeBand: data.grade ? (data.grade <= 3 ? 'grades_1_3' : data.grade <= 6 ? 'grades_4_6' : 'grades_7_9') : undefined,
-              missionId: data.missionId,
-              skillIds: data.skillId ? [data.skillId] : [],
-              createdAt: data.createdAt || Timestamp.now(),
-              updatedAt: data.updatedAt || Timestamp.now()
-            }
+      const rubricSnap = await getDocs(legacyQuery);
+
+      if (!rubricSnap.empty) {
+        const rubrics = rubricSnap.docs;
+        const batchSize = 10;
+        for (let i = 0; i < rubrics.length; i += batchSize) {
+          const batch = rubrics.slice(i, i + batchSize);
+          const contents = batch.map(doc => {
+            const data = doc.data();
+            const criteriaText = (data.criteria || []).map((criterion: any) =>
+              `${criterion.name}: ${criterion.description}`
+            ).join('\n');
+            return `Rubric: ${data.name}\n${data.description}\n\nCriteria:\n${criteriaText}`;
           });
-          
-          indexedCount++;
+          const embeddings = await EmbeddingService.generateEmbeddingsBatch(contents);
+          for (let j = 0; j < batch.length; j++) {
+            const doc = batch[j];
+            const data = doc.data();
+            await VectorStore.store({
+              content: contents[j],
+              embedding: embeddings[j],
+              metadata: {
+                type: 'rubric',
+                gradeBand: data.grade ? (data.grade <= 3 ? 'grades_1_3' : data.grade <= 6 ? 'grades_4_6' : 'grades_7_9') : undefined,
+                missionId: data.missionId,
+                skillIds: data.skillId ? [data.skillId] : [],
+                createdAt: data.createdAt || Timestamp.now(),
+                updatedAt: data.updatedAt || Timestamp.now()
+              }
+            });
+            indexedCount++;
+          }
+          console.log(`Indexed legacy rubrics ${i + 1}-${Math.min(i + batchSize, rubrics.length)} of ${rubrics.length}`);
         }
-        
-        console.log(`Indexed rubrics ${i + 1}-${Math.min(i + batchSize, rubrics.length)} of ${rubrics.length}`);
       }
-      
-      console.log(`✓ Indexed ${indexedCount} rubrics`);
+
+      if (indexedCount === 0) {
+        console.log('No rubrics found to index.');
+      } else {
+        console.log(`✓ Indexed ${indexedCount} rubrics total (HQ templates + legacy)`);
+      }
       return indexedCount;
-      
+
     } catch (err) {
       console.error('Failed to index rubrics:', err);
       return 0;

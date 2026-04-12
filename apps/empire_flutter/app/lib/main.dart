@@ -357,7 +357,7 @@ class _ScholesaAppState extends State<ScholesaApp> {
         ChangeNotifierProvider.value(value: _themeService),
         // Growth engine — connects evidence to capability mastery
         Provider(
-          create: (_) => GrowthEngineService(firestoreService: _firestoreService),
+          create: (_) => GrowthEngineService(),
         ),
         // HQ Admin services
         ChangeNotifierProvider(

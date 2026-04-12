@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -40,6 +41,13 @@ class _RubricApplicationPageState extends State<RubricApplicationPage> {
     'developing': Colors.blue,
     'proficient': Colors.teal,
     'advanced': Colors.green,
+  };
+
+  static const Map<String, int> _levelToScore = <String, int>{
+    'emerging': 1,
+    'developing': 2,
+    'proficient': 3,
+    'advanced': 4,
   };
 
   FirestoreService get _firestoreService => context.read<FirestoreService>();
@@ -122,6 +130,8 @@ class _RubricApplicationPageState extends State<RubricApplicationPage> {
     final String educatorId = appState.userId ?? '';
     final String learnerId = attempt['learnerId'] as String? ?? '';
     final String attemptId = attempt['id'] as String? ?? '';
+    final String capabilityId =
+        attempt['capabilityId'] as String? ?? attemptId;
     final String? siteId = _activeSiteId();
     final GradeBand resolvedGradeBand = gradeBandForRole(
       appState.role ?? UserRole.educator,
@@ -132,46 +142,27 @@ class _RubricApplicationPageState extends State<RubricApplicationPage> {
     setState(() => _isSubmitting = true);
 
     try {
-      // 1. Apply rubric judgment
-      final String rubricAppId = await _firestoreService.applyRubric(
-        learnerId: learnerId,
-        capabilityId: attempt['capabilityId'] as String? ?? attemptId,
-        educatorId: educatorId,
-        level: _selectedLevel,
-        feedback: _feedbackController.text.trim().isNotEmpty
-            ? _feedbackController.text.trim()
-            : null,
-        evidenceRefIds: <String>[attemptId],
-        siteId: siteId,
-      );
+      // Route through Cloud Function for atomic, server-validated writes
+      final int score = _levelToScore[_selectedLevel] ?? 1;
+      await FirebaseFunctions.instance
+          .httpsCallable('applyRubricToEvidence')
+          .call(<String, dynamic>{
+        'learnerId': learnerId,
+        'siteId': siteId,
+        'missionAttemptId': attemptId,
+        'evidenceRecordIds': <String>[],
+        'scores': <Map<String, dynamic>>[
+          <String, dynamic>{
+            'criterionId': 'inline-rubric',
+            'capabilityId': capabilityId,
+            'pillarCode': attempt['pillarCode'] as String? ?? 'FUTURE_SKILLS',
+            'score': score,
+            'maxScore': 4,
+          },
+        ],
+      });
 
-      // 2. Update capability mastery
-      await _firestoreService.updateCapabilityMastery(
-        learnerId: learnerId,
-        capabilityId: attempt['capabilityId'] as String? ?? attemptId,
-        newLevel: _selectedLevel,
-        educatorId: educatorId,
-      );
-
-      // 3. Create immutable growth event
-      await _firestoreService.createCapabilityGrowthEvent(
-        learnerId: learnerId,
-        capabilityId: attempt['capabilityId'] as String? ?? attemptId,
-        toLevel: _selectedLevel,
-        educatorId: educatorId,
-        rubricApplicationId: rubricAppId,
-        evidenceIds: <String>[attemptId],
-        siteId: siteId,
-      );
-
-      // 4. Update attempt status
-      await _firestoreService.updateDocument(
-        'missionAttempts',
-        attemptId,
-        <String, dynamic>{'status': 'reviewed'},
-      );
-
-      // 5. Emit checkpoint_graded BOS event
+      // Emit checkpoint_graded BOS event
       BosEventBus.instance.track(
         eventType: 'checkpoint_graded',
         siteId: siteId,
@@ -181,7 +172,6 @@ class _RubricApplicationPageState extends State<RubricApplicationPage> {
           'learnerId': learnerId,
           'attemptId': attemptId,
           'level': _selectedLevel,
-          'rubricApplicationId': rubricAppId,
         },
       );
 

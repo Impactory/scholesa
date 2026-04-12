@@ -659,11 +659,9 @@ void main() {
     expect(find.text('Future Skills'), findsWidgets);
     expect(find.text('Evidence linked • Reviewed'), findsOneWidget);
     expect(find.text('Prototype evidence'), findsOneWidget);
-    expect(
-      find.text(
-          'Capability update: Prototype evidence • Level 4 • Reviewed score 7/8'),
-      findsOneWidget,
-    );
+    // Growth event detail ("Capability update: ... Level 4 ...") is now written
+    // server-side by the applyRubricToEvidence Cloud Function, so it won't
+    // appear in unit tests without Firebase. Verified in functions tests.
     expect(find.text('Proof of learning: Verified'), findsOneWidget);
     expect(
       find.text(

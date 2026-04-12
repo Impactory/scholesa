@@ -132,10 +132,10 @@ describe('Collection naming consistency', () => {
       'utf-8'
     );
 
-    // The evaluateBadgeEligibility function should reference badgeAchievements
+    // The badge logic lives in evaluateBadgeEligibilityInternal (helper)
     const evalSection = source.slice(
-      source.indexOf('evaluateBadgeEligibility'),
-      source.indexOf('evaluateBadgeEligibility') + 3000
+      source.indexOf('async function evaluateBadgeEligibilityInternal'),
+      source.indexOf('async function evaluateBadgeEligibilityInternal') + 5000
     );
 
     // Must reference badgeAchievements, not badgeAwards
@@ -203,9 +203,12 @@ describe('Collection naming consistency', () => {
       'utf-8'
     );
 
-    const badgeStart = source.indexOf('export const evaluateBadgeEligibility');
-    const badgeEnd = source.indexOf('export const', badgeStart + 1);
-    const badgeFn = source.slice(badgeStart, badgeEnd);
+    // The badge logic lives in evaluateBadgeEligibilityInternal (helper) which
+    // is defined just before the exported callable. Search the helper + callable
+    // together to confirm both field conventions are handled.
+    const helperStart = source.indexOf('async function evaluateBadgeEligibilityInternal');
+    const badgeEnd = source.indexOf('export const', source.indexOf('export const evaluateBadgeEligibility') + 1);
+    const badgeFn = source.slice(helperStart, badgeEnd);
 
     // Must handle both field conventions
     expect(badgeFn).toContain('currentLevel');

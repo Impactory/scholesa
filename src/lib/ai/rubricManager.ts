@@ -1,13 +1,21 @@
 /**
  * Rubric Manager - Store Assessment Rubrics as Versioned Configs
- * 
+ *
+ * @deprecated Legacy rubric system reading from `assessmentRubrics` collection.
+ * New rubrics are created by Admin-HQ via CapabilityFrameworkEditor and stored
+ * in the `rubricTemplates` collection. The EducatorEvidenceReviewRenderer reads
+ * HQ rubricTemplates first and falls back to this system for unmigrated sites.
+ *
+ * Migration path: once all sites have HQ rubric templates, remove this file,
+ * the `assessmentRubrics` Firestore rules, and the seedFirestore.js seeding.
+ *
  * CRITICAL: Rubrics are YOUR intelligence, not the model's.
  * Store them in your DB so you can:
  * - Iterate on quality without retraining
  * - Version track for experiments
  * - Audit which rubric version was used for each assessment
  * - Compare student performance across rubric versions
- * 
+ *
  * Pattern: Store rich rubric in DB → Fetch in retrieval → Pass to model as context
  */
 

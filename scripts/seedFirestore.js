@@ -568,7 +568,54 @@ async function main() {
   await Promise.all(
     rubrics.map((r) => db.collection('assessmentRubrics').doc(r.id).set(r)),
   );
-  console.log(`  Seeded ${rubrics.length} rubrics`);
+  console.log(`  Seeded ${rubrics.length} legacy rubrics (assessmentRubrics)`);
+
+  // --- HQ Rubric Templates (new primary system) ---
+  const rubricTemplates = [
+    {
+      id: 'tpl-evidence-quality-k3',
+      title: 'K-3 Evidence Quality Template',
+      siteId: '*',
+      status: 'published',
+      capabilityIds: capabilities.map((c) => c.id),
+      criteria: [
+        {
+          id: 'criterion-0-evidence',
+          label: 'Evidence Quality',
+          capabilityId: 'cap-critical-thinking',
+          pillarCode: 'FUTURE_SKILLS',
+          maxScore: 4,
+          descriptors: {
+            beginning: 'Minimal evidence, mostly prompted responses.',
+            developing: 'Some original work with guided evidence.',
+            proficient: 'Clear, authentic evidence of independent work.',
+            advanced: 'Rich, multi-source evidence showing deep engagement.',
+          },
+        },
+        {
+          id: 'criterion-1-capability',
+          label: 'Capability Demonstration',
+          capabilityId: 'cap-community-impact',
+          pillarCode: 'IMPACT_INNOVATION',
+          maxScore: 4,
+          descriptors: {
+            beginning: 'Capability not clearly demonstrated.',
+            developing: 'Capability partially demonstrated with support.',
+            proficient: 'Capability clearly demonstrated independently.',
+            advanced: 'Capability demonstrated at an exceptional level with transfer to new contexts.',
+          },
+        },
+      ],
+      createdBy: hqUid,
+      createdAt: now,
+      updatedAt: now,
+    },
+  ];
+
+  await Promise.all(
+    rubricTemplates.map((t) => db.collection('rubricTemplates').doc(t.id).set(t)),
+  );
+  console.log(`  Seeded ${rubricTemplates.length} HQ rubric templates (rubricTemplates)`);
 
   // --- Mission Attempt (submitted, with evidence) ---
   const missionAttemptId = 'attempt-1';
@@ -672,7 +719,9 @@ async function main() {
       capabilityId: 'cap-computational-thinking',
       siteId,
       pillarCode: 'FUTURE_SKILLS',
+      currentLevel: 'proficient',
       latestLevel: 3,
+      previousLevel: 2,
       highestLevel: 3,
       latestEvidenceId: 'evidence-1',
       latestMissionAttemptId: missionAttemptId,
@@ -686,7 +735,9 @@ async function main() {
       capabilityId: 'cap-creative-problem-solving',
       siteId,
       pillarCode: 'FUTURE_SKILLS',
+      currentLevel: 'developing',
       latestLevel: 2,
+      previousLevel: 1,
       highestLevel: 2,
       latestEvidenceId: 'evidence-2',
       latestMissionAttemptId: missionAttemptId,
@@ -700,7 +751,9 @@ async function main() {
       capabilityId: 'cap-team-leadership',
       siteId,
       pillarCode: 'LEADERSHIP_AGENCY',
+      currentLevel: 'developing',
       latestLevel: 2,
+      previousLevel: 1,
       highestLevel: 2,
       latestEvidenceId: null,
       evidenceIds: [],
@@ -1043,8 +1096,8 @@ async function main() {
   ];
 
   await Promise.all(badges.map((b) => db.collection('recognitionBadges').doc(b.id).set(b)));
-  await Promise.all(badgeAwards.map((a) => db.collection('badgeAwards').doc(a.id).set(a)));
-  console.log(`  Seeded ${badges.length} badges and ${badgeAwards.length} badge awards`);
+  await Promise.all(badgeAwards.map((a) => db.collection('badgeAchievements').doc(a.id).set(a)));
+  console.log(`  Seeded ${badges.length} badges and ${badgeAwards.length} badge achievements`);
 
   // --- Process Domains (HQ-managed) ---
   const processDomains = [
@@ -1089,8 +1142,8 @@ async function main() {
   );
   console.log(`  Seeded ${processDomains.length} process domains`);
 
-  // --- Rubric Templates (HQ-managed) ---
-  const rubricTemplates = [
+  // --- Additional Rubric Templates (HQ-managed, with process domain links) ---
+  const additionalRubricTemplates = [
     {
       id: 'rt-computational-thinking-k3',
       title: 'Computational Thinking Assessment (K-3)',
@@ -1158,9 +1211,9 @@ async function main() {
   ];
 
   await Promise.all(
-    rubricTemplates.map((rt) => db.collection('rubricTemplates').doc(rt.id).set(rt)),
+    additionalRubricTemplates.map((rt) => db.collection('rubricTemplates').doc(rt.id).set(rt)),
   );
-  console.log(`  Seeded ${rubricTemplates.length} rubric templates`);
+  console.log(`  Seeded ${additionalRubricTemplates.length} additional rubric templates`);
 
   // --- Showcase Submissions ---
   const showcaseSubmissions = [
@@ -1187,6 +1240,80 @@ async function main() {
     showcaseSubmissions.map((s) => db.collection('showcaseSubmissions').doc(s.id).set(s)),
   );
   console.log(`  Seeded ${showcaseSubmissions.length} showcase submissions`);
+
+  // --- Skill Mastery (feeds getLearnerMissionPath for mission progression) ---
+  const skillMasteryRecords = [
+    {
+      id: `${learnerUid}_loops-while`,
+      learnerId: learnerUid,
+      microSkillId: 'loops-while',
+      capabilityId: 'cap-computational-thinking',
+      level: 3,
+      siteId,
+      updatedAt: now,
+    },
+    {
+      id: `${learnerUid}_variables-counter`,
+      learnerId: learnerUid,
+      microSkillId: 'variables-counter',
+      capabilityId: 'cap-computational-thinking',
+      level: 2,
+      siteId,
+      updatedAt: now,
+    },
+  ];
+
+  await Promise.all(
+    skillMasteryRecords.map((sm) => db.collection('skillMastery').doc(sm.id).set(sm)),
+  );
+  console.log(`  Seeded ${skillMasteryRecords.length} skill mastery records`);
+
+  // --- Process Domain Mastery ---
+  const pdMasteryRecords = [
+    {
+      id: `${learnerUid}_pd-design-thinking`,
+      learnerId: learnerUid,
+      processDomainId: 'pd-design-thinking',
+      siteId,
+      currentLevel: 'developing',
+      latestLevel: 2,
+      previousLevel: 1,
+      highestLevel: 2,
+      evidenceCount: 1,
+      evidenceIds: ['evidence-1'],
+      lastAssessedBy: educatorUid,
+      lastAssessedAt: now,
+      createdAt: now,
+      updatedAt: now,
+    },
+  ];
+
+  await Promise.all(
+    pdMasteryRecords.map((pd) => db.collection('processDomainMastery').doc(pd.id).set(pd)),
+  );
+  console.log(`  Seeded ${pdMasteryRecords.length} process domain mastery records`);
+
+  // --- Process Domain Growth Events ---
+  const pdGrowthEvents = [
+    {
+      id: 'pd-growth-1',
+      learnerId: learnerUid,
+      processDomainId: 'pd-design-thinking',
+      siteId,
+      fromLevel: 1,
+      toLevel: 2,
+      rawScore: 2,
+      maxScore: 4,
+      evidenceId: 'evidence-1',
+      educatorId: educatorUid,
+      createdAt: now,
+    },
+  ];
+
+  await Promise.all(
+    pdGrowthEvents.map((e) => db.collection('processDomainGrowthEvents').doc(e.id).set(e)),
+  );
+  console.log(`  Seeded ${pdGrowthEvents.length} process domain growth events`);
 
   console.log('Evidence chain seed complete.');
   console.log('Test login password:', standardTestPassword);

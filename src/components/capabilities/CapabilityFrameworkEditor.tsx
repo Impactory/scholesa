@@ -66,8 +66,9 @@ interface ProcessDomainFormData {
 
 interface RubricTemplateFormData {
   title: string;
+  status: 'draft' | 'published';
   capabilityIds: string[];
-  criteria: { label: string; capabilityId: string; maxScore: number }[];
+  criteria: { label: string; capabilityId: string; processDomainId: string; maxScore: number }[];
 }
 
 const EMPTY_CAPABILITY_FORM: CapabilityFormData = {
@@ -89,6 +90,7 @@ const EMPTY_PROCESS_DOMAIN_FORM: ProcessDomainFormData = {
 
 const EMPTY_RUBRIC_FORM: RubricTemplateFormData = {
   title: '',
+  status: 'draft',
   capabilityIds: [],
   criteria: [],
 };
@@ -297,8 +299,9 @@ export function CapabilityFrameworkEditor({ initialTab }: CapabilityFrameworkEdi
     setEditingRubricId(tmpl.id);
     setRubricForm({
       title: tmpl.title,
+      status: tmpl.status === 'published' ? 'published' : 'draft',
       capabilityIds: [...tmpl.capabilityIds],
-      criteria: tmpl.criteria.map((c) => ({ label: c.label, capabilityId: c.capabilityId, maxScore: c.maxScore })),
+      criteria: tmpl.criteria.map((c) => ({ label: c.label, capabilityId: c.capabilityId, processDomainId: c.processDomainId || '', maxScore: c.maxScore })),
     });
     setShowRubricForm(true);
   }, []);
@@ -306,7 +309,7 @@ export function CapabilityFrameworkEditor({ initialTab }: CapabilityFrameworkEdi
   const addCriterion = useCallback(() => {
     setRubricForm((prev) => ({
       ...prev,
-      criteria: [...prev.criteria, { label: '', capabilityId: '', maxScore: 4 }],
+      criteria: [...prev.criteria, { label: '', capabilityId: '', processDomainId: '', maxScore: 4 }],
     }));
   }, []);
 
@@ -339,13 +342,16 @@ export function CapabilityFrameworkEditor({ initialTab }: CapabilityFrameworkEdi
     setSaving(true);
     try {
       const capabilityIds = Array.from(new Set(rubricForm.criteria.map((c) => c.capabilityId)));
-      const criteria = rubricForm.criteria.map((c) => {
+      const criteria = rubricForm.criteria.map((c, idx) => {
         const cap = capabilityMap.get(c.capabilityId);
         return {
+          id: `criterion-${idx}-${Date.now()}`,
           label: c.label.trim(),
           capabilityId: c.capabilityId,
           pillarCode: cap?.pillarCode,
           maxScore: c.maxScore,
+          // Link to process domain if specified
+          ...(c.processDomainId ? { processDomainId: c.processDomainId } : {}),
           // Propagate progression descriptors from the linked capability
           ...(cap?.progressionDescriptors &&
             Object.values(cap.progressionDescriptors).some((v) => v.trim())
@@ -358,18 +364,19 @@ export function CapabilityFrameworkEditor({ initialTab }: CapabilityFrameworkEdi
         const ref = doc(rubricTemplatesCollection, editingRubricId);
         await updateDoc(ref, {
           title,
+          status: rubricForm.status,
           capabilityIds,
           criteria,
           updatedAt: serverTimestamp(),
         });
-        flash('Rubric template updated.');
+        flash(`Rubric template ${rubricForm.status === 'published' ? 'published' : 'saved as draft'}.`);
       } else {
         await addDoc(rubricTemplatesCollection, {
           title,
           siteId,
           capabilityIds,
           criteria,
-          status: 'published' as const,
+          status: rubricForm.status,
           createdBy: user.uid,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
@@ -602,6 +609,7 @@ export function CapabilityFrameworkEditor({ initialTab }: CapabilityFrameworkEdi
             form={rubricForm}
             setForm={setRubricForm}
             capabilities={capabilities}
+            processDomains={processDomains}
             isEditing={!!editingRubricId}
             saving={saving}
             onSave={saveRubricTemplate}
@@ -1026,6 +1034,20 @@ function CapabilityFormModal({
                       />
                       <input
                         type="text"
+                        value={cm.checkpointId ?? ''}
+                        onChange={(e) =>
+                          setForm((prev) => ({
+                            ...prev,
+                            checkpointMappings: prev.checkpointMappings.map((c, j) =>
+                              j === i ? { ...c, checkpointId: e.target.value } : c
+                            ),
+                          }))
+                        }
+                        className="block w-full rounded-md border border-gray-300 px-2 py-1 text-xs shadow-sm font-mono"
+                        placeholder="Checkpoint ID (paste from checkpoint doc, optional)"
+                      />
+                      <input
+                        type="text"
                         value={cm.description ?? ''}
                         onChange={(e) =>
                           setForm((prev) => ({
@@ -1122,6 +1144,7 @@ function RubricTemplateFormModal({
   form,
   setForm,
   capabilities,
+  processDomains,
   isEditing,
   saving,
   onSave,
@@ -1133,6 +1156,7 @@ function RubricTemplateFormModal({
   form: RubricTemplateFormData;
   setForm: (fn: (prev: RubricTemplateFormData) => RubricTemplateFormData) => void;
   capabilities: Capability[];
+  processDomains: ProcessDomain[];
   isEditing: boolean;
   saving: boolean;
   onSave: () => void;
@@ -1142,6 +1166,7 @@ function RubricTemplateFormModal({
   updateCriterion: (index: number, field: string, value: string | number) => void;
 }) {
   const activeCapabilities = capabilities.filter((c) => c.status !== 'archived');
+  const activeProcessDomains = processDomains.filter((pd) => pd.status !== 'archived');
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
@@ -1161,6 +1186,25 @@ function RubricTemplateFormModal({
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
               placeholder="e.g., Design Thinking Project Rubric"
             />
+          </div>
+
+          {/* Status toggle */}
+          <div className="flex items-center gap-3">
+            <label className="text-sm font-medium text-gray-700">Status:</label>
+            <button
+              type="button"
+              onClick={() => setForm((prev) => ({ ...prev, status: prev.status === 'draft' ? 'published' : 'draft' }))}
+              className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                form.status === 'published'
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-yellow-100 text-yellow-800'
+              }`}
+            >
+              {form.status === 'published' ? 'Published' : 'Draft'}
+            </button>
+            <span className="text-xs text-gray-400">
+              {form.status === 'draft' ? 'Not visible to educators yet' : 'Visible to educators for scoring'}
+            </span>
           </div>
 
           {/* Criteria */}
@@ -1221,6 +1265,21 @@ function RubricTemplateFormModal({
                             />
                           </div>
                         </div>
+                        {activeProcessDomains.length > 0 && (
+                          <select
+                            aria-label="Process domain (optional)"
+                            value={criterion.processDomainId}
+                            onChange={(e) => updateCriterion(i, 'processDomainId', e.target.value)}
+                            className="block w-full rounded-md border border-gray-300 px-2 py-1 text-xs shadow-sm"
+                          >
+                            <option value="">Process domain (optional)...</option>
+                            {activeProcessDomains.map((pd) => (
+                              <option key={pd.id} value={pd.id}>
+                                {pd.title}
+                              </option>
+                            ))}
+                          </select>
+                        )}
                       </div>
                       <button
                         onClick={() => removeCriterion(i)}

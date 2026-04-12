@@ -730,6 +730,8 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
                       onClick={() => {
                         setRevisionOpen(attempt.id);
                         setRubricOpen(null);
+                        setActiveRubric(null);
+                        setActiveHqTemplate(null);
                         setRevisionFeedback('');
                       }}
                       className="rounded-md border border-app px-4 py-2 text-sm font-medium text-app-foreground hover:bg-app-canvas disabled:opacity-50"
@@ -1041,6 +1043,7 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
                         onClick={() => {
                           setRubricOpen(null);
                           setActiveRubric(null);
+                          setActiveHqTemplate(null);
                         }}
                         className="rounded-md border border-app px-3 py-2 text-sm text-app-foreground"
                       >

@@ -642,14 +642,8 @@ void main() {
         .get();
     final DocumentSnapshot<Map<String, dynamic>> rubricApplicationDoc =
         await firestore.collection('rubricApplications').doc(attemptId).get();
-    final DocumentSnapshot<Map<String, dynamic>> masteryDoc = await firestore
-        .collection('capabilityMastery')
-        .doc('learner-1_cap-prototype-evidence')
-        .get();
-    final QuerySnapshot<Map<String, dynamic>> growthEvents = await firestore
-        .collection('capabilityGrowthEvents')
-        .where('missionAttemptId', isEqualTo: attemptId)
-        .get();
+    // capabilityMastery + capabilityGrowthEvents are now written server-side
+    // by the applyRubricToEvidence Cloud Function, not the client batch.
     final DocumentSnapshot<Map<String, dynamic>> evidenceDoc =
         await firestore.collection('evidenceRecords').doc('evidence-1').get();
     final DocumentSnapshot<Map<String, dynamic>> portfolioDoc =
@@ -672,24 +666,6 @@ void main() {
     ]);
     expect((rubricApplicationDoc.data()?['checkpointMappings'] as List?)?.length,
         1);
-    expect(masteryDoc.exists, isTrue);
-    expect(masteryDoc.data()?['latestMissionAttemptId'], attemptId);
-    expect(masteryDoc.data()?['latestLevel'], 4);
-    expect(masteryDoc.data()?['capabilityTitle'], 'Prototype evidence');
-    expect(growthEvents.docs, hasLength(1));
-    expect(growthEvents.docs.single.data()['capabilityTitle'],
-        'Prototype evidence');
-    expect(growthEvents.docs.single.data()['level'], 4);
-    expect(growthEvents.docs.single.data()['progressionDescriptors'], <String>[
-      'Secure: explain how the prototype evidence supports the claim.',
-    ]);
-    expect((growthEvents.docs.single.data()['checkpointMappings'] as List?)?.length,
-        1);
-    expect(
-      growthEvents.docs.single.data()['verificationPrompts'],
-      contains(
-          'Checkpoint: Ask the learner to identify the exact artifact that proves current understanding.'),
-    );
     expect(evidenceDoc.data()?['growthStatus'], 'updated');
     expect(evidenceDoc.data()?['linkedMissionAttemptId'], attemptId);
     expect(portfolioDoc.exists, isTrue);
@@ -818,7 +794,7 @@ void main() {
       learnerId: 'learner-1',
     );
 
-    final String attemptId = await _submitMissionForReview(
+    await _submitMissionForReview(
       tester,
       firestoreService: firestoreService,
       missionService: learnerMissionService,
@@ -854,10 +830,6 @@ void main() {
 
     final DocumentSnapshot<Map<String, dynamic>> portfolioDoc =
         await firestore.collection('portfolioItems').doc('evidence-1').get();
-    final QuerySnapshot<Map<String, dynamic>> growthEvents = await firestore
-        .collection('capabilityGrowthEvents')
-        .where('missionAttemptId', isEqualTo: attemptId)
-        .get();
 
     expect(
       portfolioDoc.data()?['verificationPrompt'],
@@ -866,11 +838,6 @@ void main() {
     expect(
       portfolioDoc.data()?['verificationPromptSource'],
       'hq_checkpoint_mapping',
-    );
-    expect(
-      growthEvents.docs.single.data()['verificationPrompts'],
-      contains(
-          'Checkpoint: Ask the learner to identify the exact artifact that proves current understanding.'),
     );
   });
 
@@ -945,23 +912,11 @@ void main() {
             .collection('portfolioItems')
             .doc('evidence-stale')
             .get();
-    final QuerySnapshot<Map<String, dynamic>> growthEvents = await firestore
-        .collection('capabilityGrowthEvents')
-        .where('missionAttemptId', isEqualTo: attemptId)
-        .get();
 
     expect(currentEvidence.data()?['linkedMissionAttemptId'], attemptId);
     expect(staleEvidence.data()?['growthStatus'], 'captured');
     expect(staleEvidence.data()?['linkedMissionAttemptId'], isNull);
     expect(stalePortfolio.exists, isFalse);
-    expect(
-      growthEvents.docs.single.data()['linkedEvidenceRecordIds'],
-      contains('evidence-1'),
-    );
-    expect(
-      growthEvents.docs.single.data()['linkedEvidenceRecordIds'],
-      isNot(contains('evidence-stale')),
-    );
   });
 
   testWidgets(
@@ -1145,10 +1100,6 @@ void main() {
             .collection('portfolioItems')
             .doc('evidence-unmapped')
             .get();
-    final QuerySnapshot<Map<String, dynamic>> growthEvents = await firestore
-        .collection('capabilityGrowthEvents')
-        .where('missionAttemptId', isEqualTo: attemptId)
-        .get();
 
     expect(unmappedEvidence.data()?['capabilityId'], 'cap-prototype-evidence');
     expect(unmappedEvidence.data()?['capabilityMapped'], isTrue);
@@ -1156,9 +1107,5 @@ void main() {
     expect(unmappedEvidence.data()?['growthStatus'], 'updated');
     expect(unmappedPortfolio.exists, isTrue);
     expect(unmappedPortfolio.data()?['missionAttemptId'], attemptId);
-    expect(
-      growthEvents.docs.single.data()['linkedEvidenceRecordIds'],
-      contains('evidence-unmapped'),
-    );
   });
 }
