@@ -90,6 +90,9 @@ const LearnerMiloOSRenderer = lazy(
 const EducatorSessionsRenderer = lazy(
   () => import('./renderers/EducatorSessionsRenderer')
 );
+const LearnerEvidenceTimelineRenderer = lazy(
+  () => import('./renderers/LearnerEvidenceTimelineRenderer')
+);
 
 const CUSTOM_ROUTE_RENDERERS: Partial<
   Record<WorkflowPath, ComponentType<CustomRouteRendererProps>>
