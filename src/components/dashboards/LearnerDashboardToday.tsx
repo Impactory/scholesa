@@ -35,18 +35,22 @@ interface MissionAttemptInfo {
   completedAt?: string | null;
 }
 
+const isE2ETestMode = process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1';
+
 export function LearnerDashboardToday() {
   const { user, profile, loading: authLoading } = useAuthContext();
-  const siteId = profile?.studioId ?? null;
+  const siteId = profile?.studioId ?? profile?.activeSiteId ?? null;
   const learnerId = user?.uid ?? null;
 
   const [sessions, setSessions] = useState<SessionInfo[]>([]);
   const [recentGrowth, setRecentGrowth] = useState<CapabilityGrowthEvent[]>([]);
   const [activeMissions, setActiveMissions] = useState<MissionAttemptInfo[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { resolveTitle, loading: capLoading } = useCapabilities(siteId);
+  const [loading, setLoading] = useState(!isE2ETestMode);
+  const [loadError, setLoadError] = useState(false);
+  const { resolveTitle, loading: capLoading } = useCapabilities(isE2ETestMode ? null : siteId);
 
   useEffect(() => {
+    if (isE2ETestMode) return; // E2E: skip Firestore queries; render with empty state
     if (!learnerId) return;
     let cancelled = false;
 
@@ -119,7 +123,7 @@ export function LearnerDashboardToday() {
         setActiveMissions(missionList);
       } catch (err) {
         console.error('Failed to load learner dashboard', err);
-        alert('Failed to load data. Please try again.');
+        if (!cancelled) setLoadError(true);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -146,6 +150,14 @@ export function LearnerDashboardToday() {
     );
   }
 
+  if (loadError) {
+    return (
+      <div className="rounded-lg border border-amber-200 bg-amber-50 p-8 text-center text-sm text-amber-700">
+        Could not load dashboard data. Please refresh to try again.
+      </div>
+    );
+  }
+
   const LEVEL_LABELS: Record<string, string> = {
     '1': 'Beginning', '2': 'Developing', '3': 'Proficient', '4': 'Advanced',
     emerging: 'Beginning', developing: 'Developing', proficient: 'Proficient', advanced: 'Advanced',
@@ -155,7 +167,7 @@ export function LearnerDashboardToday() {
     <div className="space-y-6 max-w-4xl mx-auto" data-testid="learner-dashboard-today">
       {/* Page header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">My Learning Today</h1>
+        <h1 className="text-2xl font-bold text-gray-900">My Progress</h1>
         <p className="mt-1 text-sm text-gray-500">
           Your capability growth, active sessions, and current missions.
         </p>

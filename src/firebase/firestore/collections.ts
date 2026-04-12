@@ -95,7 +95,7 @@ export const learnerMotivationProfilesCollection = createCollection<LearnerMotiv
 export const learnerInteractionsCollection = createCollection<LearnerInteraction>('learnerInteractions');
 export const supportInterventionsCollection = createCollection<SupportIntervention>('supportInterventions');
 export const motivationNudgesCollection = createCollection<MotivationNudge>('motivationNudges');
-export const motivationConfigCollection = createCollection<MotivationConfig>('configs/motivationConfig');
+export const motivationConfigCollection = createCollection<MotivationConfig>('motivationConfigs');
 
 // Capability Framework & Evidence Chain
 export const capabilitiesCollection = createCollection<Capability>('capabilities');
