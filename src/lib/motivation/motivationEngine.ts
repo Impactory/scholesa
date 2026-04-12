@@ -691,23 +691,33 @@ export class ReflectionEngine {
   
   /**
    * Submit reflection (metacognition event)
+   * Uses the submitReflection callable so BOS interaction events and evidence records are created.
    */
   static async submitReflection(
     reflection: Omit<LearnerReflection, 'id' | 'createdAt'>,
     grade: number
   ): Promise<string> {
-    const docRef = await addDoc(collection(db, 'learnerReflections'), {
-      ...reflection,
-      createdAt: Timestamp.now()
+    const { httpsCallable } = await import('firebase/functions');
+    const { functions } = await import('@/src/firebase/client-init');
+    const callable = httpsCallable<unknown, { reflectionId: string }>(functions, 'submitReflection');
+    const result = await callable({
+      learnerId: reflection.learnerId,
+      siteId: reflection.siteId,
+      proudOf: typeof reflection.response === 'string' ? reflection.response : String(reflection.response),
+      nextIWill: '',
+      sprintSessionId: reflection.sessionId || undefined,
+      missionId: reflection.missionId || undefined,
+      effortLevel: reflection.effortRating as 1 | 2 | 3 | 4 | 5 | undefined,
+      enjoymentLevel: reflection.enjoymentRating as 1 | 2 | 3 | 4 | 5 | undefined,
     });
-    
-    // Track reflection
+
+    // Track telemetry (callable also logs, but keep for local analytics)
     await trackReflection('reflection_submitted', reflection.learnerId, reflection.siteId, grade, {
       promptId: reflection.promptId,
       responseLength: typeof reflection.response === 'string' ? reflection.response.length : 0
     });
-    
-    return docRef.id;
+
+    return result.data.reflectionId;
   }
   
   /**

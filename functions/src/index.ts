@@ -7140,6 +7140,21 @@ export const submitReflection = onCall(async (request: CallableRequest<{
 
   const reflectionRef = await admin.firestore().collection('learnerReflections').add(reflectionDoc);
 
+  // Create evidence record so reflections appear in educator review queue
+  await admin.firestore().collection('evidenceRecords').add({
+    learnerId,
+    siteId,
+    educatorId: null,
+    description: `Reflection: ${proudOf.slice(0, 200)}`,
+    sourceType: 'reflection',
+    sourceId: reflectionRef.id,
+    aiAssistanceNoted: aiAssistanceUsed ?? false,
+    rubricStatus: 'pending',
+    growthStatus: 'pending',
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
   // Log interaction event for BOS scoring
   await admin.firestore().collection('interactionEvents').add({
     eventType: 'reflection.submitted',
@@ -9255,9 +9270,9 @@ export const processCheckpointMasteryUpdate = onCall(async (request: CallableReq
   if (!auth) throw new HttpsError('unauthenticated', 'Must be authenticated');
   await requireRoleAndSite(auth.uid, ['educator', 'siteLead', 'hq'] as Role[], request.data.siteId);
 
-  const { learnerId, siteId, skillIds, passed, educatorId } = request.data;
-  if (!learnerId || !siteId || !skillIds?.length) {
-    throw new HttpsError('invalid-argument', 'learnerId, siteId, and skillIds required');
+  const { learnerId, siteId, checkpointId, skillIds, passed, educatorId } = request.data;
+  if (!learnerId || !siteId) {
+    throw new HttpsError('invalid-argument', 'learnerId and siteId required');
   }
 
   if (!passed) return { updated: false, reason: 'Checkpoint not passed' };
@@ -9267,93 +9282,187 @@ export const processCheckpointMasteryUpdate = onCall(async (request: CallableReq
   const batch = db.batch();
   const growthEvents: Array<{ capabilityId: string; from: string | null; to: string }> = [];
 
-  for (const skillId of skillIds) {
-    // Look up which capability this skill belongs to
-    const capSnap = await db
-      .collection('capabilities')
-      .where('microSkillIds', 'array-contains', skillId)
-      .limit(1)
-      .get();
+  // Strategy: if skillIds are provided, use skill→capability lookup.
+  // Otherwise, count all passed checkpoints + evidence records for the learner
+  // to determine growth progression.
 
-    if (capSnap.empty) continue;
+  if (skillIds && skillIds.length > 0) {
+    // Skill-based path: look up capability from microSkillIds
+    for (const skillId of skillIds) {
+      const capSnap = await db
+        .collection('capabilities')
+        .where('microSkillIds', 'array-contains', skillId)
+        .limit(1)
+        .get();
 
-    const capDoc = capSnap.docs[0];
-    const capabilityId = capDoc.id;
+      if (capSnap.empty) continue;
 
-    // Get current mastery
-    const masteryQuery = await db
-      .collection('capabilityMastery')
-      .where('learnerId', '==', learnerId)
-      .where('capabilityId', '==', capabilityId)
-      .limit(1)
-      .get();
+      const capDoc = capSnap.docs[0];
+      const capabilityId = capDoc.id;
 
-    const currentLevel = masteryQuery.empty
-      ? null
-      : (masteryQuery.docs[0].data().currentLevel as string) || 'emerging';
+      const masteryQuery = await db
+        .collection('capabilityMastery')
+        .where('learnerId', '==', learnerId)
+        .where('capabilityId', '==', capabilityId)
+        .limit(1)
+        .get();
 
-    const currentIdx = currentLevel ? LEVEL_ORDER.indexOf(currentLevel) : -1;
+      const currentLevel = masteryQuery.empty
+        ? null
+        : (masteryQuery.docs[0].data().currentLevel as string) || 'emerging';
 
-    // Count evidence to determine new level
-    const evidenceSnap = await db
-      .collection('skillEvidence')
-      .where('learnerId', '==', learnerId)
-      .where('microSkillId', '==', skillId)
-      .get();
+      const currentIdx = currentLevel ? LEVEL_ORDER.indexOf(currentLevel) : -1;
 
-    const evidenceCount = evidenceSnap.size;
-    // Simple progression: 1-2 evidence = developing, 3-4 = proficient, 5+ = advanced
-    let newLevel = 'emerging';
-    if (evidenceCount >= 5) newLevel = 'advanced';
-    else if (evidenceCount >= 3) newLevel = 'proficient';
-    else if (evidenceCount >= 1) newLevel = 'developing';
+      // Count both skillEvidence and passed checkpoints as evidence
+      const [skillSnap, checkSnap] = await Promise.all([
+        db.collection('skillEvidence').where('learnerId', '==', learnerId).where('microSkillId', '==', skillId).get(),
+        db.collection('checkpointHistory').where('learnerId', '==', learnerId).where('isCorrect', '==', true).get(),
+      ]);
 
-    const newIdx = LEVEL_ORDER.indexOf(newLevel);
-    if (newIdx <= currentIdx) continue; // No progression
+      const evidenceCount = skillSnap.size + checkSnap.size;
+      let newLevel = 'emerging';
+      if (evidenceCount >= 5) newLevel = 'advanced';
+      else if (evidenceCount >= 3) newLevel = 'proficient';
+      else if (evidenceCount >= 1) newLevel = 'developing';
 
-    const LEVEL_TO_NUMBER: Record<string, number> = { emerging: 1, developing: 2, proficient: 3, advanced: 4 };
+      const newIdx = LEVEL_ORDER.indexOf(newLevel);
+      if (newIdx <= currentIdx) continue;
 
-    // Update or create mastery record (deterministic ID to match applyRubricToEvidence)
-    const masteryId = `${learnerId}_${capabilityId}`;
-    if (masteryQuery.empty) {
-      const masteryRef = db.collection('capabilityMastery').doc(masteryId);
-      batch.set(masteryRef, {
+      const LEVEL_TO_NUMBER: Record<string, number> = { emerging: 1, developing: 2, proficient: 3, advanced: 4 };
+
+      const masteryId = `${learnerId}_${capabilityId}`;
+      if (masteryQuery.empty) {
+        const masteryRef = db.collection('capabilityMastery').doc(masteryId);
+        batch.set(masteryRef, {
+          learnerId,
+          capabilityId,
+          currentLevel: newLevel,
+          latestLevel: LEVEL_TO_NUMBER[newLevel] ?? 1,
+          previousLevel: null,
+          evidenceCount,
+          lastAssessedBy: educatorId || 'system',
+          lastAssessedAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+      } else {
+        batch.update(masteryQuery.docs[0].ref, {
+          currentLevel: newLevel,
+          latestLevel: LEVEL_TO_NUMBER[newLevel] ?? 1,
+          previousLevel: currentLevel,
+          evidenceCount,
+          lastAssessedBy: educatorId || 'system',
+          lastAssessedAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+      }
+
+      const growthRef = db.collection('capabilityGrowthEvents').doc();
+      batch.set(growthRef, {
         learnerId,
         capabilityId,
-        currentLevel: newLevel,
-        latestLevel: LEVEL_TO_NUMBER[newLevel] ?? 1,
-        previousLevel: null,
-        evidenceCount,
-        lastAssessedBy: educatorId || 'system',
-        lastAssessedAt: FieldValue.serverTimestamp(),
-        updatedAt: FieldValue.serverTimestamp(),
+        fromLevel: currentLevel,
+        toLevel: newLevel,
+        educatorId: educatorId || 'system',
+        siteId,
+        source: 'checkpoint',
+        checkpointId: checkpointId || null,
+        createdAt: FieldValue.serverTimestamp(),
       });
-    } else {
-      batch.update(masteryQuery.docs[0].ref, {
-        currentLevel: newLevel,
-        latestLevel: LEVEL_TO_NUMBER[newLevel] ?? 1,
-        previousLevel: currentLevel,
-        evidenceCount,
-        lastAssessedBy: educatorId || 'system',
-        lastAssessedAt: FieldValue.serverTimestamp(),
-        updatedAt: FieldValue.serverTimestamp(),
-      });
+
+      growthEvents.push({ capabilityId, from: currentLevel, to: newLevel });
     }
+  } else {
+    // No skillIds — checkpoint-only path.
+    // Count all passed checkpoints for this learner as evidence of overall growth.
+    const passedCheckpoints = await db
+      .collection('checkpointHistory')
+      .where('learnerId', '==', learnerId)
+      .where('isCorrect', '==', true)
+      .get();
 
-    // Append growth event (immutable)
-    const growthRef = db.collection('capabilityGrowthEvents').doc();
-    batch.set(growthRef, {
-      learnerId,
-      capabilityId,
-      fromLevel: currentLevel,
-      toLevel: newLevel,
-      educatorId: educatorId || 'system',
-      siteId,
-      evidenceIds: evidenceSnap.docs.map((d) => d.id).slice(0, 20),
-      createdAt: FieldValue.serverTimestamp(),
-    });
+    const evidenceCount = passedCheckpoints.size;
+    if (evidenceCount === 0) return { updated: false, reason: 'No passed checkpoints' };
 
-    growthEvents.push({ capabilityId, from: currentLevel, to: newLevel });
+    // Find all capabilities for this site and update mastery for each
+    const siteCapabilities = await db
+      .collection('capabilities')
+      .where('status', '==', 'active')
+      .get();
+
+    for (const capDoc of siteCapabilities.docs) {
+      const capabilityId = capDoc.id;
+      const pillarCode = (capDoc.data().pillarCode as string) ?? '';
+
+      const masteryId = `${learnerId}_${capabilityId}`;
+      const masteryRef = db.collection('capabilityMastery').doc(masteryId);
+      const masterySnap = await masteryRef.get();
+      const masteryData = masterySnap.data() ?? {};
+
+      const currentLevel = masterySnap.exists
+        ? (masteryData.currentLevel as string) || 'emerging'
+        : null;
+      const currentIdx = currentLevel ? LEVEL_ORDER.indexOf(currentLevel) : -1;
+
+      // Per-capability evidence: count evidence records mapped to this capability
+      const capEvidenceSnap = await db
+        .collection('evidenceRecords')
+        .where('learnerId', '==', learnerId)
+        .where('capabilityId', '==', capabilityId)
+        .get();
+
+      const totalEvidence = capEvidenceSnap.size + (evidenceCount > 0 ? 1 : 0);
+      let newLevel = 'emerging';
+      if (totalEvidence >= 5) newLevel = 'advanced';
+      else if (totalEvidence >= 3) newLevel = 'proficient';
+      else if (totalEvidence >= 1) newLevel = 'developing';
+
+      const newIdx = LEVEL_ORDER.indexOf(newLevel);
+      if (newIdx <= currentIdx) continue;
+
+      const LEVEL_TO_NUMBER: Record<string, number> = { emerging: 1, developing: 2, proficient: 3, advanced: 4 };
+
+      if (masterySnap.exists) {
+        batch.update(masteryRef, {
+          currentLevel: newLevel,
+          latestLevel: LEVEL_TO_NUMBER[newLevel] ?? 1,
+          previousLevel: currentLevel,
+          evidenceCount: totalEvidence,
+          lastAssessedBy: educatorId || 'system',
+          lastAssessedAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+      } else {
+        batch.set(masteryRef, {
+          learnerId,
+          capabilityId,
+          siteId,
+          pillarCode,
+          currentLevel: newLevel,
+          latestLevel: LEVEL_TO_NUMBER[newLevel] ?? 1,
+          previousLevel: null,
+          evidenceCount: totalEvidence,
+          lastAssessedBy: educatorId || 'system',
+          lastAssessedAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+      }
+
+      const growthRef = db.collection('capabilityGrowthEvents').doc();
+      batch.set(growthRef, {
+        learnerId,
+        capabilityId,
+        siteId,
+        pillarCode,
+        fromLevel: currentLevel,
+        toLevel: newLevel,
+        educatorId: educatorId || 'system',
+        source: 'checkpoint',
+        checkpointId: checkpointId || null,
+        createdAt: FieldValue.serverTimestamp(),
+      });
+
+      growthEvents.push({ capabilityId, from: currentLevel, to: newLevel });
+    }
   }
 
   if (growthEvents.length > 0) {

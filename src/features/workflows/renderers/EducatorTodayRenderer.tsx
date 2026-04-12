@@ -78,6 +78,7 @@ function QuickEvidenceCapture({
   learnerName,
   educatorId,
   siteId,
+  sessionId,
   onSuccess,
   onCancel,
 }: {
@@ -85,6 +86,7 @@ function QuickEvidenceCapture({
   learnerName: string;
   educatorId: string;
   siteId: string;
+  sessionId?: string;
   onSuccess: () => void;
   onCancel: () => void;
 }) {
@@ -106,6 +108,7 @@ function QuickEvidenceCapture({
         learnerId,
         educatorId,
         siteId,
+        sessionId: sessionId || null,
         description: trimmed,
         portfolioCandidate,
         rubricStatus: 'pending',
@@ -337,6 +340,7 @@ export default function EducatorTodayRenderer({ ctx }: CustomRouteRendererProps)
                 learnerName={selectedLearnerName}
                 educatorId={ctx.uid}
                 siteId={siteId ?? ''}
+                sessionId={sessions.find((s) => s.status === 'active')?.id ?? sessions[0]?.id}
                 onSuccess={() => {
                   setObservationOpen(false);
                   setSelectedLearnerId(null);

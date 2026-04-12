@@ -73,6 +73,7 @@ export function EducatorEvidenceCapture() {
   const [selectedCapabilityId, setSelectedCapabilityId] = useState('');
   const [phaseKey, setPhaseKey] = useState<EvidenceRecord['phaseKey']>(undefined);
   const [portfolioCandidate, setPortfolioCandidate] = useState(false);
+  const [aiAssistanceNoted, setAiAssistanceNoted] = useState(false);
   const [selectedSessionOccurrenceId, setSelectedSessionOccurrenceId] = useState('');
   const [reviewingEvidence, setReviewingEvidence] = useState<RecentEvidence | null>(null);
 
@@ -186,6 +187,7 @@ export function EducatorEvidenceCapture() {
     setSelectedCapabilityId('');
     setPhaseKey(undefined);
     setPortfolioCandidate(false);
+    setAiAssistanceNoted(false);
     // Keep selectedLearnerId and selectedSessionOccurrenceId for quick successive logs
   };
 
@@ -208,6 +210,7 @@ export function EducatorEvidenceCapture() {
         capabilityMapped: mapped,
         phaseKey,
         portfolioCandidate,
+        aiAssistanceNoted,
         rubricStatus: 'pending' as const,
         growthStatus: 'pending' as const,
         createdAt: serverTimestamp(),
@@ -387,7 +390,7 @@ export function EducatorEvidenceCapture() {
               )}
             </label>
 
-            <div className="flex items-end pb-1">
+            <div className="flex flex-col gap-2 justify-end pb-1">
               <label className="flex items-center gap-2 rounded-md border border-app bg-app-canvas px-3 py-2">
                 <input
                   data-testid="evidence-portfolio"
@@ -396,6 +399,15 @@ export function EducatorEvidenceCapture() {
                   onChange={(e) => setPortfolioCandidate(e.target.checked)}
                 />
                 <span className="text-sm text-app-foreground">Portfolio candidate</span>
+              </label>
+              <label className="flex items-center gap-2 rounded-md border border-app bg-app-canvas px-3 py-2">
+                <input
+                  data-testid="evidence-ai-noted"
+                  type="checkbox"
+                  checked={aiAssistanceNoted}
+                  onChange={(e) => setAiAssistanceNoted(e.target.checked)}
+                />
+                <span className="text-sm text-app-foreground">AI assistance noted</span>
               </label>
             </div>
           </div>

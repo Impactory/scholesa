@@ -4665,15 +4665,15 @@ export async function createWorkflowRecord(
       return;
     }
     case '/learner/reflections': {
-      await addDoc(collection(firestore, 'learnerReflections'), {
-        siteId: activeSiteId(ctx.profile),
+      // Use callable so BOS interaction event + evidence record are created
+      const submitReflection = httpsCallable<unknown, { reflectionId: string }>(functions, 'submitReflection');
+      await submitReflection({
         learnerId: ctx.uid,
+        siteId: activeSiteId(ctx.profile),
         proudOf: requireStringValue(input, 'prompt', 'Reflection prompt'),
         nextIWill: requireStringValue(input, 'responseText', 'Reflection'),
-        reflectionType: 'free_reflection',
-        missionId: optionalStringValue(input, 'missionId') || null,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        missionId: optionalStringValue(input, 'missionId') || undefined,
+        aiAssistanceUsed: booleanValue(input, 'aiAssistanceUsed'),
       });
       return;
     }
@@ -4697,6 +4697,7 @@ export async function createWorkflowRecord(
         learnerId: requireStringValue(input, 'learnerId', 'Learner'),
         observationText: requireStringValue(input, 'observationText', 'Observation'),
         capabilityCode: optionalStringValue(input, 'capabilityCode') || null,
+        aiAssistanceNoted: booleanValue(input, 'aiAssistanceNoted'),
         rubricStatus: 'pending',
         growthStatus: 'pending',
         status: 'draft',
