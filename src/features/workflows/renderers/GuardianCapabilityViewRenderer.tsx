@@ -31,7 +31,16 @@ interface PortfolioItem {
   id: string;
   title: string;
   verificationStatus: 'verified' | 'unverified' | 'pending';
-  aiDisclosure: 'none' | 'assisted' | 'generated';
+  aiDisclosure:
+    | 'none'
+    | 'assisted'
+    | 'generated'
+    | 'learner-ai-not-used'
+    | 'learner-ai-verified'
+    | 'learner-ai-verification-gap'
+    | 'educator-feedback-ai'
+    | 'no-learner-ai-signal'
+    | 'not-available';
   proofDetails: {
     explainItBack: boolean;
     oralCheck: boolean;
@@ -42,6 +51,7 @@ interface PortfolioItem {
     educatorVerifierName?: string;
   };
   evidenceCount?: number;
+  rubricScore?: { raw: number; max: number; level: string } | null;
 }
 
 interface IdeationPassportSummary {
@@ -49,6 +59,18 @@ interface IdeationPassportSummary {
   reflectionsCount: number;
   capabilityClaimsCount: number;
   summaryText: string;
+  claims?: PassportClaim[];
+}
+
+interface PassportClaim {
+  capabilityId: string;
+  capabilityTitle: string;
+  pillarCode: string;
+  level: string;
+  evidenceCount: number;
+  proofStatus: 'verified' | 'partial' | 'missing';
+  aiDisclosureStatus: string;
+  reviewerName?: string;
 }
 
 interface LearnerSummary {
@@ -89,9 +111,17 @@ const VERIFICATION_CONFIG: Record<string, { label: string; className: string }> 
 };
 
 const AI_DISCLOSURE_CONFIG: Record<string, { label: string; className: string }> = {
+  // Legacy 3-value
   none: { label: 'No AI used', className: 'bg-gray-100 text-gray-600' },
   assisted: { label: 'AI-assisted', className: 'bg-blue-100 text-blue-700' },
   generated: { label: 'AI-generated', className: 'bg-purple-100 text-purple-700' },
+  // Full 6-value from buildParentLearnerSummary
+  'learner-ai-not-used': { label: 'No AI used', className: 'bg-gray-100 text-gray-600' },
+  'learner-ai-verified': { label: 'AI used, verified', className: 'bg-green-100 text-green-700' },
+  'learner-ai-verification-gap': { label: 'AI used, unverified', className: 'bg-orange-100 text-orange-700' },
+  'educator-feedback-ai': { label: 'AI noted by educator', className: 'bg-blue-100 text-blue-700' },
+  'no-learner-ai-signal': { label: 'AI status unknown', className: 'bg-yellow-100 text-yellow-700' },
+  'not-available': { label: 'Not assessed', className: 'bg-gray-100 text-gray-500' },
 };
 
 const PILLAR_BAR_COLORS: Record<string, string> = {
@@ -446,6 +476,11 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
                           {typeof item.evidenceCount === 'number' && item.evidenceCount > 0 && (
                             <span>{item.evidenceCount} evidence record{item.evidenceCount !== 1 ? 's' : ''}</span>
                           )}
+                          {item.rubricScore && (
+                            <span>
+                              Rubric: {item.rubricScore.raw}/{item.rubricScore.max} ({item.rubricScore.level})
+                            </span>
+                          )}
                         </div>
                       </li>
                     );
@@ -487,6 +522,37 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
                   <p className="text-sm text-app-muted">
                     {learner.ideationPassport.summaryText}
                   </p>
+                )}
+                {/* Passport Claims Detail */}
+                {learner.ideationPassport.claims && learner.ideationPassport.claims.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    <h4 className="text-xs font-semibold text-app-foreground">Capability claims</h4>
+                    <ul className="space-y-1.5">
+                      {learner.ideationPassport.claims.map((claim: PassportClaim) => {
+                        const claimProofCfg = PROOF_STATUS_CONFIG[claim.proofStatus] ?? PROOF_STATUS_CONFIG.missing;
+                        const claimAiCfg = AI_DISCLOSURE_CONFIG[claim.aiDisclosureStatus] ?? AI_DISCLOSURE_CONFIG['not-available'];
+                        return (
+                          <li
+                            key={claim.capabilityId}
+                            className="flex flex-wrap items-center gap-2 rounded-md border border-app bg-app-canvas px-2.5 py-1.5 text-xs"
+                          >
+                            <span className="font-medium text-app-foreground">{claim.capabilityTitle}</span>
+                            <span className="text-app-muted">{claim.level}</span>
+                            <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${claimProofCfg.className}`}>
+                              {claimProofCfg.label}
+                            </span>
+                            <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${claimAiCfg.className}`}>
+                              {claimAiCfg.label}
+                            </span>
+                            <span className="text-app-muted">{claim.evidenceCount} evidence</span>
+                            {claim.reviewerName && (
+                              <span className="text-app-muted">by {claim.reviewerName}</span>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
                 )}
               </div>
             )}

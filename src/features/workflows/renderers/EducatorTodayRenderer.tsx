@@ -137,7 +137,7 @@ export default function EducatorTodayRenderer({ ctx }: CustomRouteRendererProps)
             title: asString(data['title'] || data['name'], d.id),
             description: asString(data['description'], ''),
             status: asString(data['status'], 'scheduled'),
-            startDate: toIso(data['startDate']),
+            startDate: toIso(data['startTime'] || data['startDate']),
             siteId: asString(data['siteId'], ''),
           };
         })
@@ -187,6 +187,38 @@ export default function EducatorTodayRenderer({ ctx }: CustomRouteRendererProps)
           </button>
         </div>
       </header>
+
+      {/* Evidence Chain quick actions */}
+      <div className="flex flex-wrap gap-2">
+        <a
+          href={`/${ctx.locale}/educator/evidence`}
+          className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
+          data-testid="nav-evidence-capture"
+        >
+          Capture Evidence
+        </a>
+        <a
+          href={`/${ctx.locale}/educator/observations`}
+          className="rounded-md border border-app bg-app-surface-raised px-4 py-2 text-sm font-medium text-app-foreground hover:bg-app-canvas"
+          data-testid="nav-observations"
+        >
+          Observations
+        </a>
+        <a
+          href={`/${ctx.locale}/educator/rubrics/apply`}
+          className="rounded-md border border-app bg-app-surface-raised px-4 py-2 text-sm font-medium text-app-foreground hover:bg-app-canvas"
+          data-testid="nav-rubric-apply"
+        >
+          Apply Rubric
+        </a>
+        <a
+          href={`/${ctx.locale}/educator/verification`}
+          className="rounded-md border border-app bg-app-surface-raised px-4 py-2 text-sm font-medium text-app-foreground hover:bg-app-canvas"
+          data-testid="nav-verification"
+        >
+          Verify Portfolios
+        </a>
+      </div>
 
       {error && (
         <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">

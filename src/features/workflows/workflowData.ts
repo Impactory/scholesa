@@ -4182,8 +4182,8 @@ export async function createWorkflowRecord(
         description: optionalStringValue(input, 'description') || null,
         educatorIds: [ctx.uid],
         pillarCodes: ['FUTURE_SKILLS'],
-        startDate,
-        endDate,
+        startTime: startDate,
+        endTime: endDate,
         status: 'scheduled',
       });
       }
