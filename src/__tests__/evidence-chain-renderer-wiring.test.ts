@@ -48,6 +48,9 @@ describe('Custom renderer registry covers all evidence chain routes', () => {
     '/learner/reflections',
     '/learner/peer-feedback',
     '/learner/habits',
+    '/learner/timeline',
+    // Educator (evidence-enriched)
+    '/educator/sessions',
     // Parent / Guardian
     '/parent/summary',
     '/parent/portfolio',
@@ -296,5 +299,82 @@ describe('LearnerPortfolioCurationRenderer evidence-linked portfolio', () => {
 
   it('supports AI disclosure tracking', () => {
     expect(source).toMatch(/aiDisclosure|aiAssistance/i);
+  });
+});
+
+/* ───── LearnerEvidenceTimelineRenderer all-evidence synthesis ───── */
+
+describe('LearnerEvidenceTimelineRenderer all-evidence synthesis', () => {
+  const source = readSrcFile(
+    'features', 'workflows', 'renderers', 'LearnerEvidenceTimelineRenderer.tsx'
+  );
+
+  it('reads portfolioItems for artifacts', () => {
+    expect(source).toContain('portfolioItems');
+  });
+
+  it('reads learnerReflections', () => {
+    expect(source).toContain('learnerReflections');
+  });
+
+  it('reads checkpointHistory for checkpoint submissions', () => {
+    expect(source).toContain('checkpointHistory');
+  });
+
+  it('reads proofOfLearningBundles', () => {
+    expect(source).toContain('proofOfLearningBundles');
+  });
+
+  it('reads missionAttempts', () => {
+    expect(source).toContain('missionAttempts');
+  });
+
+  it('scopes all queries by learnerId', () => {
+    const matchCount = (source.match(/learnerId/g) || []).length;
+    expect(matchCount).toBeGreaterThanOrEqual(5);
+  });
+
+  it('shows AI disclosure status on evidence items', () => {
+    expect(source).toMatch(/aiDisclosure|aiAssistance/i);
+  });
+
+  it('shows proof status on evidence items', () => {
+    expect(source).toMatch(/proofStatus|proof_bundle/i);
+  });
+
+  it('orders items chronologically', () => {
+    expect(source).toMatch(/createdAt|orderBy/i);
+  });
+});
+
+/* ───── EducatorSessionsRenderer evidence-enriched session view ───── */
+
+describe('EducatorSessionsRenderer evidence-enriched session view', () => {
+  const source = readSrcFile(
+    'features', 'workflows', 'renderers', 'EducatorSessionsRenderer.tsx'
+  );
+
+  it('reads sessions collection', () => {
+    expect(source).toContain("'sessions'");
+  });
+
+  it('reads evidenceRecords to show per-session counts', () => {
+    expect(source).toContain('evidenceRecords');
+  });
+
+  it('reads checkpointHistory for checkpoint counts', () => {
+    expect(source).toContain('checkpointHistory');
+  });
+
+  it('scopes session queries by siteId', () => {
+    expect(source).toContain('siteId');
+  });
+
+  it('shows evidence count per session', () => {
+    expect(source).toMatch(/evidenceCount|evidenceCounts/);
+  });
+
+  it('shows checkpoint count per session', () => {
+    expect(source).toMatch(/checkpointCount|checkpointCounts/);
   });
 });
