@@ -184,6 +184,8 @@ class _ObservationCapturePageState extends State<ObservationCapturePage> {
         'observationType': _selectedType,
         'note': _noteController.text.trim(),
         'captureTimeMs': captureMs,
+        'rubricStatus': 'pending',
+        'growthStatus': 'pending',
         'status': 'recorded',
         'queuedAtClient': DateTime.now().millisecondsSinceEpoch,
       };

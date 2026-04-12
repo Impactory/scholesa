@@ -19,6 +19,7 @@ import {
 import { firestore } from '@/src/firebase/client-init';
 import { Spinner } from '@/src/components/ui/Spinner';
 import { useInteractionTracking } from '@/src/hooks/useTelemetry';
+import { useCapabilities } from '@/src/lib/capabilities/useCapabilities';
 import type { CustomRouteRendererProps } from '../customRouteRenderers';
 
 // ---------------------------------------------------------------------------
@@ -73,7 +74,7 @@ interface GrowthEvent {
   createdAt: string | null;
 }
 
-const PILLAR_OPTIONS: { value: PillarCode; label: string }[] = [
+const DEFAULT_PILLAR_OPTIONS: { value: PillarCode; label: string }[] = [
   { value: 'FUTURE_SKILLS', label: 'Future Skills' },
   { value: 'LEADERSHIP_AGENCY', label: 'Leadership & Agency' },
   { value: 'IMPACT_INNOVATION', label: 'Impact & Innovation' },
@@ -122,7 +123,10 @@ function pillarBadgeClass(code: string): string {
 }
 
 function pillarLabel(code: string): string {
-  return PILLAR_OPTIONS.find((p) => p.value === code)?.label ?? code;
+  const found = DEFAULT_PILLAR_OPTIONS.find((p) => p.value === code);
+  if (found) return found.label;
+  // Format unknown pillar codes as readable labels
+  return code.split('_').map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
 }
 
 function verificationBadgeClass(status: VerificationStatus): string {
@@ -151,6 +155,26 @@ function levelBarWidth(level: number): string {
 
 export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRendererProps) {
   const trackInteraction = useInteractionTracking();
+  const siteId = ctx.profile?.siteIds?.[0] ?? null;
+  const { capabilityList } = useCapabilities(siteId);
+
+  // Derive pillar options from live capabilities, falling back to defaults
+  const pillarOptions = React.useMemo(() => {
+    if (capabilityList.length === 0) return DEFAULT_PILLAR_OPTIONS;
+    const seen = new Set<string>();
+    const dynamic: { value: PillarCode; label: string }[] = [];
+    for (const c of capabilityList) {
+      if (c.pillarCode && !seen.has(c.pillarCode)) {
+        seen.add(c.pillarCode);
+        const label = c.pillarCode
+          .split('_')
+          .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+          .join(' ');
+        dynamic.push({ value: c.pillarCode as PillarCode, label });
+      }
+    }
+    return dynamic.length > 0 ? dynamic : DEFAULT_PILLAR_OPTIONS;
+  }, [capabilityList]);
 
   const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([]);
   const [masteries, setMasteries] = useState<CapabilityMastery[]>([]);
@@ -382,7 +406,7 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
   };
 
   // ---- Group mastery by pillar ----
-  const masteryByPillar = PILLAR_OPTIONS.map((pillar) => ({
+  const masteryByPillar = pillarOptions.map((pillar) => ({
     pillar,
     items: masteries.filter((m: CapabilityMastery) => m.pillarCode === pillar.value),
   }));
@@ -559,7 +583,7 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
                       className="w-full rounded-md border border-app bg-app-canvas px-3 py-2 text-sm text-app-foreground"
                       data-testid="portfolio-item-pillar-select"
                     >
-                      {PILLAR_OPTIONS.map((p) => (
+                      {pillarOptions.map((p) => (
                         <option key={p.value} value={p.value}>
                           {p.label}
                         </option>

@@ -26,6 +26,7 @@ import 'services/federated_learning_runtime_adapter.dart';
 import 'services/telemetry_service.dart';
 import 'services/theme_service.dart';
 import 'services/app_resilience.dart';
+import 'services/growth_engine_service.dart';
 import 'offline/offline_queue.dart';
 import 'offline/sync_coordinator.dart';
 import 'runtime/runtime.dart';
@@ -354,6 +355,10 @@ class _ScholesaAppState extends State<ScholesaApp> {
         Provider.value(value: _authService),
         ChangeNotifierProvider.value(value: _recentLoginStore),
         ChangeNotifierProvider.value(value: _themeService),
+        // Growth engine — connects evidence to capability mastery
+        Provider(
+          create: (_) => GrowthEngineService(firestoreService: _firestoreService),
+        ),
         // HQ Admin services
         ChangeNotifierProvider(
           create: (_) => UserAdminService(firestoreService: _firestoreService),

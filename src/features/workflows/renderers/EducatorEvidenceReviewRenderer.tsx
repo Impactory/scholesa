@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import {
-  addDoc,
   collection,
   doc,
   getDoc,
@@ -10,13 +9,13 @@ import {
   orderBy,
   query,
   serverTimestamp,
-  setDoc,
   updateDoc,
   where,
   type DocumentData,
   type QueryDocumentSnapshot,
 } from 'firebase/firestore';
-import { firestore } from '@/src/firebase/client-init';
+import { httpsCallable } from 'firebase/functions';
+import { firestore, functions } from '@/src/firebase/client-init';
 import { Spinner } from '@/src/components/ui/Spinner';
 import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import {
@@ -286,114 +285,63 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
     try {
       const capabilityId =
         attempt.capabilityId || missions[attempt.missionId]?.capabilityId || null;
+      const siteId = missions[attempt.missionId]?.siteId || ctx.profile?.siteIds?.[0] || '';
 
-      // Compute overall score: weighted average of criterion scores, or fallback simple level
-      let overallScore: number;
-      let overallLevel: string;
-      let criterionScoresArray: CriterionScore[] = [];
+      // Build scores array for the callable
+      let callableScores: { criterionId: string; capabilityId: string; pillarCode: string; score: number; maxScore: number }[];
 
       if (activeRubric && Object.keys(rubricForm.criterionScores).length > 0) {
-        criterionScoresArray = (
+        const criterionScoresArray = (
           Object.values(rubricForm.criterionScores) as CriterionScore[]
         ).filter((cs) => cs.score > 0);
-        if (criterionScoresArray.length === 0) return; // No scores selected
+        if (criterionScoresArray.length === 0) return;
 
-        const totalWeight = criterionScoresArray.reduce((sum, cs) => sum + cs.weight, 0);
-        overallScore =
-          totalWeight > 0
-            ? criterionScoresArray.reduce((sum, cs) => sum + cs.score * cs.weight, 0) / totalWeight
-            : 0;
-        // Map weighted score to mastery level
-        if (overallScore >= 3.5) overallLevel = 'Advanced';
-        else if (overallScore >= 2.5) overallLevel = 'Proficient';
-        else if (overallScore >= 1.5) overallLevel = 'Developing';
-        else overallLevel = 'Emerging';
+        callableScores = criterionScoresArray.map((cs) => ({
+          criterionId: cs.criterionName,
+          capabilityId: capabilityId || '',
+          pillarCode: '',
+          score: cs.score,
+          maxScore: 4,
+        }));
       } else {
-        overallScore = FALLBACK_LEVELS.find((l) => l.value === rubricForm.level)?.score ?? 3;
-        overallLevel = rubricForm.level;
+        const fallbackScore = FALLBACK_LEVELS.find((l) => l.value === rubricForm.level)?.score ?? 3;
+        callableScores = capabilityId
+          ? [{
+              criterionId: 'overall',
+              capabilityId,
+              pillarCode: '',
+              score: fallbackScore,
+              maxScore: 4,
+            }]
+          : [];
       }
 
-      // 1. Update missionAttempt status to 'reviewed'
-      await updateDoc(doc(firestore, 'missionAttempts', attempt.id), {
-        status: 'reviewed',
-        reviewedBy: ctx.uid,
-        reviewedAt: serverTimestamp(),
-      });
+      if (callableScores.length === 0) {
+        setError('No capability linked to this mission. Cannot apply rubric without a capability.');
+        setSaving(null);
+        return;
+      }
 
-      // 2. Create rubricApplications document with per-criterion scores
-      await addDoc(collection(firestore, 'rubricApplications'), {
+      // Call the server-side callable for atomic batch write:
+      // rubricApplications + capabilityMastery + capabilityGrowthEvents + missionAttempt status
+      const applyRubric = httpsCallable(functions, 'applyRubricToEvidence');
+      await applyRubric({
+        evidenceRecordIds: [],
         missionAttemptId: attempt.id,
-        missionId: attempt.missionId,
         learnerId: attempt.learnerId,
-        educatorId: ctx.uid,
-        level: overallLevel,
-        score: Math.round(overallScore * 100) / 100,
-        feedback: rubricForm.feedback.trim(),
-        proofVerified: rubricForm.proofVerified,
-        capabilityId,
-        // Structured rubric data (null when using fallback mode)
-        rubricId: activeRubric?.id ?? null,
-        rubricVersion: activeRubric?.version ?? null,
-        criterionScores: criterionScoresArray.length > 0 ? criterionScoresArray : null,
-        createdAt: serverTimestamp(),
+        siteId,
+        rubricId: activeRubric?.id ?? undefined,
+        scores: callableScores,
       });
-
-      // 3. Create capabilityGrowthEvent (WRITE PATH for the growth engine)
-      if (capabilityId) {
-        await addDoc(collection(firestore, 'capabilityGrowthEvents'), {
-          learnerId: attempt.learnerId,
-          capabilityId,
-          missionId: attempt.missionId,
-          missionAttemptId: attempt.id,
-          educatorId: ctx.uid,
-          eventType: 'rubric_applied',
-          level: overallLevel,
-          score: Math.round(overallScore * 100) / 100,
-          proofVerified: rubricForm.proofVerified,
-          rubricId: activeRubric?.id ?? null,
-          criterionScores: criterionScoresArray.length > 0 ? criterionScoresArray : null,
-          createdAt: serverTimestamp(),
-        });
-
-        // 4. Update or create capabilityMastery document
-        const masteryDocId = `${attempt.learnerId}_${capabilityId}`;
-        const masteryRef = doc(firestore, 'capabilityMastery', masteryDocId);
-        const masterySnap = await getDoc(masteryRef);
-        const roundedScore = Math.round(overallScore * 100) / 100;
-
-        if (masterySnap.exists()) {
-          const existing = masterySnap.data();
-          const existingScore =
-            typeof existing.currentScore === 'number' ? existing.currentScore : 0;
-          const existingCount =
-            typeof existing.evidenceCount === 'number' ? existing.evidenceCount : 0;
-          await updateDoc(masteryRef, {
-            currentLevel: overallLevel,
-            currentScore: Math.max(existingScore, roundedScore),
-            evidenceCount: existingCount + 1,
-            latestMissionAttemptId: attempt.id,
-            updatedAt: serverTimestamp(),
-          });
-        } else {
-          await setDoc(masteryRef, {
-            learnerId: attempt.learnerId,
-            capabilityId,
-            currentLevel: overallLevel,
-            currentScore: roundedScore,
-            evidenceCount: 1,
-            latestMissionAttemptId: attempt.id,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-          });
-        }
-      }
 
       trackInteraction('feature_discovered', {
         cta: 'rubric_applied',
-        level: overallLevel,
+        level: callableScores.length > 0
+          ? (callableScores.reduce((s, c) => s + c.score, 0) / callableScores.length).toFixed(1)
+          : undefined,
         missionId: attempt.missionId,
         rubricId: activeRubric?.id,
-        criteriaCount: criterionScoresArray.length || undefined,
+        criteriaCount: callableScores.length || undefined,
       });
 
       setRubricOpen(null);

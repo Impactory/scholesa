@@ -687,7 +687,9 @@ class FirestoreService {
     final bool oc = hasOralCheck ?? false;
     final bool mr = hasMiniRebuild ?? false;
     if (eib && oc && mr) {
-      updates['verificationStatus'] = 'verified';
+      // Learner can only reach pending_review; educator must verify via
+      // verifyProofOfLearning() to set 'verified'.
+      updates['verificationStatus'] = 'pending_review';
     } else if (eib || oc || mr) {
       updates['verificationStatus'] = 'partial';
     }

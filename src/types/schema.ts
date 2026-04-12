@@ -1267,8 +1267,8 @@ export interface EvidenceRecord {
   capabilityMapped?: boolean;
   phaseKey?: string;
   description: string;
-  rubricStatus?: 'pending' | 'applied';
-  growthStatus?: 'pending' | 'processed';
+  rubricStatus?: 'pending' | 'applied' | 'linked';
+  growthStatus?: 'pending' | 'recorded' | 'updated';
   portfolioCandidate?: boolean;
   createdAt: Timestamp;
   updatedAt?: Timestamp;

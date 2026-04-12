@@ -137,7 +137,7 @@ export default function LearnerCheckpointRenderer({ ctx }: CustomRouteRendererPr
     setSubmitting(true);
     setSubmitError(null);
     try {
-      await addDoc(collection(firestore, 'checkpointHistory'), {
+      const checkpointRef = await addDoc(collection(firestore, 'checkpointHistory'), {
         learnerId,
         siteId,
         missionId: null,
@@ -152,6 +152,10 @@ export default function LearnerCheckpointRenderer({ ctx }: CustomRouteRendererPr
         aiAssistanceDetails: aiUsed ? aiDetails.trim() : null,
         createdAt: serverTimestamp(),
       });
+      // checkpointRef.id is available for downstream linkage; the educator
+      // reviews checkpointHistory directly and can trigger
+      // processCheckpointMasteryUpdate after marking isCorrect.
+      void checkpointRef;
       setAnswer('');
       setExplainItBack('');
       setAiUsed(false);

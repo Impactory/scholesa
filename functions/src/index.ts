@@ -2652,7 +2652,7 @@ async function buildParentLearnerSummary(params: {
   const reviewedEvidenceCount = evidenceRows.filter((row) => {
     const rubricStatus = typeof row.rubricStatus === 'string' ? row.rubricStatus.trim().toLowerCase() : '';
     const growthStatus = typeof row.growthStatus === 'string' ? row.growthStatus.trim().toLowerCase() : '';
-    return rubricStatus === 'linked' || growthStatus === 'updated';
+    return rubricStatus === 'linked' || rubricStatus === 'applied' || growthStatus === 'updated' || growthStatus === 'recorded';
   }).length;
   const portfolioLinkedEvidenceCount = evidenceRows.filter((row) => {
     const linkedPortfolioItemId = typeof row.linkedPortfolioItemId === 'string' ? row.linkedPortfolioItemId.trim() : '';

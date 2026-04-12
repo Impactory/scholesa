@@ -1061,7 +1061,7 @@ class ParentService extends ChangeNotifier {
     final int reviewedCount = rows.where((Map<String, dynamic> row) {
       final String rubricStatus = _asTrimmedString(row['rubricStatus']);
       final String growthStatus = _asTrimmedString(row['growthStatus']);
-      return rubricStatus == 'linked' || growthStatus == 'updated';
+      return rubricStatus == 'linked' || rubricStatus == 'applied' || growthStatus == 'updated' || growthStatus == 'recorded';
     }).length;
     final int portfolioLinkedCount = rows.where((Map<String, dynamic> row) {
       return _asTrimmedString(row['linkedPortfolioItemId']).isNotEmpty ||

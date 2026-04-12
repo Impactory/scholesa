@@ -29,12 +29,30 @@ interface ScoreEntry {
   maxScore: number;
 }
 
-const SCORE_LEVELS = [
+const DEFAULT_SCORE_LEVELS = [
   { value: 1, label: 'Beginning', color: 'bg-red-100 text-red-800 border-red-300' },
   { value: 2, label: 'Developing', color: 'bg-amber-100 text-amber-800 border-amber-300' },
   { value: 3, label: 'Proficient', color: 'bg-blue-100 text-blue-800 border-blue-300' },
   { value: 4, label: 'Advanced', color: 'bg-green-100 text-green-800 border-green-300' },
 ];
+
+const LEVEL_COLORS = [
+  'bg-red-100 text-red-800 border-red-300',
+  'bg-amber-100 text-amber-800 border-amber-300',
+  'bg-blue-100 text-blue-800 border-blue-300',
+  'bg-green-100 text-green-800 border-green-300',
+  'bg-emerald-100 text-emerald-800 border-emerald-300',
+  'bg-teal-100 text-teal-800 border-teal-300',
+];
+
+function scoreLevelsForMax(maxScore: number): { value: number; label: string; color: string }[] {
+  if (maxScore === 4) return DEFAULT_SCORE_LEVELS;
+  return Array.from({ length: maxScore }, (_, i) => ({
+    value: i + 1,
+    label: `Level ${i + 1}`,
+    color: LEVEL_COLORS[Math.min(i, LEVEL_COLORS.length - 1)],
+  }));
+}
 
 export function RubricReviewPanel({
   evidenceRecordIds,
@@ -318,7 +336,7 @@ export function RubricReviewPanel({
             </button>
           </div>
           <div className="flex gap-2">
-            {SCORE_LEVELS.map((level) => (
+            {scoreLevelsForMax(s.maxScore).map((level) => (
               <button
                 key={level.value}
                 type="button"
@@ -384,7 +402,7 @@ export function RubricReviewPanel({
                 </button>
               </div>
               <div className="flex gap-2">
-                {SCORE_LEVELS.map((level) => (
+                {scoreLevelsForMax(s.maxScore).map((level) => (
                   <button
                     key={level.value}
                     type="button"

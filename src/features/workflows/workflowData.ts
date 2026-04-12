@@ -4697,6 +4697,8 @@ export async function createWorkflowRecord(
         learnerId: requireStringValue(input, 'learnerId', 'Learner'),
         observationText: requireStringValue(input, 'observationText', 'Observation'),
         capabilityCode: optionalStringValue(input, 'capabilityCode') || null,
+        rubricStatus: 'pending',
+        growthStatus: 'pending',
         status: 'draft',
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
