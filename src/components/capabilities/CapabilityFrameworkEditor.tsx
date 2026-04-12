@@ -220,6 +220,7 @@ export function CapabilityFrameworkEditor({ initialTab }: CapabilityFrameworkEdi
         const ref = doc(capabilitiesCollection, editingCapabilityId);
         await updateDoc(ref, {
           title,
+          name: title,
           normalizedTitle,
           pillarCode: capabilityForm.pillarCode,
           descriptor: capabilityForm.descriptor.trim() || undefined,
@@ -237,8 +238,11 @@ export function CapabilityFrameworkEditor({ initialTab }: CapabilityFrameworkEdi
       } else {
         await addDoc(capabilitiesCollection, {
           title,
+          name: title,
           normalizedTitle,
           pillarCode: capabilityForm.pillarCode,
+          domain: 'human' as const,
+          description: capabilityForm.descriptor.trim() || title,
           siteId,
           descriptor: capabilityForm.descriptor.trim() || undefined,
           sortOrder: capabilityForm.sortOrder,
