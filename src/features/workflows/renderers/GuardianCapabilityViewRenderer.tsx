@@ -1,11 +1,20 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '@/src/firebase/client-init';
 import { Spinner } from '@/src/components/ui/Spinner';
 import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import type { CustomRouteRendererProps } from '../customRouteRenderers';
+
+const ParentAnalyticsDashboard = dynamic(
+  () =>
+    import('@/src/components/analytics/ParentAnalyticsDashboard').then(
+      (m) => m.ParentAnalyticsDashboard
+    ),
+  { loading: () => <div className="p-4 text-xs text-app-muted">Loading engagement data…</div> }
+);
 
 // ---------------------------------------------------------------------------
 // Types
@@ -614,6 +623,19 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
           </article>
         );
       })}
+
+      {/* ---- Engagement & SDT analytics (summary route only) ---- */}
+      {ctx.routePath === '/parent/summary' && (
+        <div
+          className="rounded-xl border border-app bg-app-surface-raised p-4"
+          data-testid="parent-analytics-section"
+        >
+          <h2 className="mb-3 text-sm font-semibold text-app-foreground">
+            Engagement &amp; motivation insights
+          </h2>
+          <ParentAnalyticsDashboard />
+        </div>
+      )}
     </section>
   );
 }
