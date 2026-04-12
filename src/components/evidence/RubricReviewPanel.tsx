@@ -75,8 +75,8 @@ export function RubricReviewPanel({
           query(rubricTemplatesCollection, where('status', '==', 'published'))
         );
         setTemplates(snap.docs.map((d) => ({ ...d.data(), id: d.id })));
-      } catch {
-        // Templates are optional — fall back to ad-hoc scoring
+      } catch (err) {
+        console.warn('RubricReviewPanel: failed to load rubric templates:', err);
       }
     })();
   }, [siteId]);
@@ -90,8 +90,8 @@ export function RubricReviewPanel({
           query(processDomainsCollection, where('status', '==', 'active'))
         );
         setProcessDomains(snap.docs.map((d) => ({ ...d.data(), id: d.id }) as ProcessDomain));
-      } catch {
-        // Process domains are optional
+      } catch (err) {
+        console.warn('RubricReviewPanel: failed to load process domains:', err);
       }
     })();
   }, [siteId]);

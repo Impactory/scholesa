@@ -82,6 +82,21 @@ interface LearnerSummary {
   growthTimeline: GrowthEvent[];
   portfolioHighlights: PortfolioItem[];
   ideationPassport: IdeationPassportSummary | null;
+  evidenceSummary?: {
+    recordCount: number;
+    reviewedCount: number;
+    portfolioLinkedCount: number;
+  };
+  growthSummary?: {
+    capabilityCount: number;
+    updatedCount: number;
+    averageLevel: number;
+  };
+  portfolioSnapshot?: {
+    artifactCount: number;
+    verifiedCount: number;
+    badgeCount: number;
+  };
 }
 
 interface ParentDashboardBundle {
@@ -199,41 +214,12 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
     setLoading(true);
     setError(null);
     try {
-      let bundle: ParentDashboardBundle;
-
-      if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
-        // E2E: build bundle from fakeWebBackend data (same interception pattern as workflowData.ts)
-        const { loadE2EWorkflowRecords } = await import('@/src/testing/e2e/fakeWebBackend');
-        const summaryResult = await loadE2EWorkflowRecords({ ...ctx, routePath: '/parent/summary' });
-        const portfolioResult = await loadE2EWorkflowRecords({ ...ctx, routePath: '/parent/portfolio' });
-        // portfolioResult.records is already filtered for this parent's linked learners
-        const portfolioHighlights = portfolioResult.records.map((p) => ({
-          id: p.id,
-          title: p.title,
-          verificationStatus: 'unverified' as const,
-          aiDisclosure: 'none' as const,
-          proofDetails: { explainItBack: false, oralCheck: false, miniRebuild: false },
-        }));
-        bundle = {
-          learners: summaryResult.records.map((rec) => ({
-            learnerId: rec.id,
-            name: rec.title,
-            currentLevelBand: 'developing' as const,
-            attendanceRate: 0,
-            pillars: [],
-            growthTimeline: [],
-            portfolioHighlights,
-            ideationPassport: null,
-          } as LearnerSummary)),
-        };
-      } else {
-        const callable = httpsCallable<{ parentId: string }, ParentDashboardBundle>(
-          functions,
-          'getParentDashboardBundle'
-        );
-        const result = await callable({ parentId: ctx.uid });
-        bundle = result.data;
-      }
+      const callable = httpsCallable<{ parentId: string }, ParentDashboardBundle>(
+        functions,
+        'getParentDashboardBundle'
+      );
+      const result = await callable({ parentId: ctx.uid });
+      const bundle = result.data;
 
       setLearners(bundle.learners ?? []);
       trackInteraction('feature_discovered', { cta: 'guardian_capability_view_loaded' });
@@ -344,6 +330,50 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
                     <PillarProgressBar key={pillar.pillarCode} pillar={pillar} />
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* ---- Evidence & Growth Summary ---- */}
+            {(learner.evidenceSummary || learner.growthSummary || learner.portfolioSnapshot) && (
+              <div
+                className="grid grid-cols-2 gap-3 sm:grid-cols-3"
+                data-testid={`summary-stats-${learner.learnerId}`}
+              >
+                {learner.evidenceSummary && (
+                  <div className="rounded-lg border border-app bg-app-surface-raised p-3 text-center">
+                    <p className="text-2xl font-bold text-app-foreground">
+                      {learner.evidenceSummary.recordCount}
+                    </p>
+                    <p className="text-xs text-app-muted">Evidence records</p>
+                    <p className="text-xs text-app-muted">
+                      {learner.evidenceSummary.reviewedCount} reviewed &middot;{' '}
+                      {learner.evidenceSummary.portfolioLinkedCount} in portfolio
+                    </p>
+                  </div>
+                )}
+                {learner.growthSummary && (
+                  <div className="rounded-lg border border-app bg-app-surface-raised p-3 text-center">
+                    <p className="text-2xl font-bold text-app-foreground">
+                      {learner.growthSummary.updatedCount}/{learner.growthSummary.capabilityCount}
+                    </p>
+                    <p className="text-xs text-app-muted">Capabilities assessed</p>
+                    <p className="text-xs text-app-muted">
+                      Avg level: {learner.growthSummary.averageLevel.toFixed(1)}
+                    </p>
+                  </div>
+                )}
+                {learner.portfolioSnapshot && (
+                  <div className="rounded-lg border border-app bg-app-surface-raised p-3 text-center">
+                    <p className="text-2xl font-bold text-app-foreground">
+                      {learner.portfolioSnapshot.artifactCount}
+                    </p>
+                    <p className="text-xs text-app-muted">Portfolio items</p>
+                    <p className="text-xs text-app-muted">
+                      {learner.portfolioSnapshot.verifiedCount} verified &middot;{' '}
+                      {learner.portfolioSnapshot.badgeCount} badges
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 

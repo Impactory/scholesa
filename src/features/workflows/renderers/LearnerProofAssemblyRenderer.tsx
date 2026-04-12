@@ -55,7 +55,7 @@ interface ProofBundle {
   explainItBackExcerpt?: string;
   oralCheckExcerpt?: string;
   miniRebuildExcerpt?: string;
-  verificationStatus: 'missing' | 'partial' | 'verified';
+  verificationStatus: 'missing' | 'partial' | 'pending_review' | 'verified';
   educatorVerifierId?: string;
   version: number;
 }
@@ -65,7 +65,13 @@ function statusBadge(status: string) {
     case 'verified':
       return (
         <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-800">
-          <CheckCircleIcon className="h-3 w-3" /> Verified
+          <CheckCircleIcon className="h-3 w-3" /> Verified by educator
+        </span>
+      );
+    case 'pending_review':
+      return (
+        <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">
+          <ClockIcon className="h-3 w-3" /> Ready for review
         </span>
       );
     case 'partial':
@@ -87,9 +93,11 @@ function computeVerificationStatus(
   hasExplainItBack: boolean,
   hasOralCheck: boolean,
   hasMiniRebuild: boolean
-): 'missing' | 'partial' | 'verified' {
+): 'missing' | 'partial' | 'pending_review' {
   const count = [hasExplainItBack, hasOralCheck, hasMiniRebuild].filter(Boolean).length;
-  if (count === 3) return 'verified';
+  // Learner assembly can reach 'pending_review' when all 3 methods are present.
+  // Only an educator (via verifyProofOfLearning callable) can set 'verified'.
+  if (count === 3) return 'pending_review';
   if (count > 0) return 'partial';
   return 'missing';
 }

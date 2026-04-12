@@ -4668,10 +4668,10 @@ export async function createWorkflowRecord(
       await addDoc(collection(firestore, 'learnerReflections'), {
         siteId: activeSiteId(ctx.profile),
         learnerId: ctx.uid,
-        prompt: requireStringValue(input, 'prompt', 'Reflection prompt'),
-        responseText: requireStringValue(input, 'responseText', 'Reflection'),
+        proudOf: requireStringValue(input, 'prompt', 'Reflection prompt'),
+        nextIWill: requireStringValue(input, 'responseText', 'Reflection'),
+        reflectionType: 'free_reflection',
         missionId: optionalStringValue(input, 'missionId') || null,
-        status: 'submitted',
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });

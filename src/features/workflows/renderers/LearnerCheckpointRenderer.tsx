@@ -146,7 +146,7 @@ export default function LearnerCheckpointRenderer({ ctx }: CustomRouteRendererPr
         explainItBack: explainItBack.trim() || null,
         explainItBackRequired: explainItBack.trim().length > 0,
         status: 'submitted',
-        isCorrect: false,
+        isCorrect: null,
         feedback: null,
         aiAssistanceUsed: aiUsed,
         aiAssistanceDetails: aiUsed ? aiDetails.trim() : null,

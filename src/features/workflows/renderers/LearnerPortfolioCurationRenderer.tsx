@@ -25,11 +25,11 @@ import type { CustomRouteRendererProps } from '../customRouteRenderers';
 // Types
 // ---------------------------------------------------------------------------
 
-type PillarCode = 'FUTURE_SKILLS' | 'LEADERSHIP_AGENCY' | 'IMPACT_INNOVATION';
+type PillarCode = 'FUTURE_SKILLS' | 'LEADERSHIP_AGENCY' | 'IMPACT_INNOVATION' | string;
 
 type VerificationStatus = 'pending' | 'reviewed' | 'verified';
 
-type AiDisclosure = 'none' | 'assisted_can_explain' | 'assisted_needs_verification';
+type AiDisclosure = 'none' | 'assisted_can_explain' | 'assisted_needs_verification' | 'unknown';
 
 interface ProofBundleSummary {
   id: string;
@@ -83,6 +83,7 @@ const AI_DISCLOSURE_OPTIONS: { value: AiDisclosure; label: string }[] = [
   { value: 'none', label: 'No AI assistance used' },
   { value: 'assisted_can_explain', label: 'AI assisted, I can explain my work' },
   { value: 'assisted_needs_verification', label: 'AI assisted, verification needed' },
+  { value: 'unknown', label: 'AI status not assessed' },
 ];
 
 // ---------------------------------------------------------------------------
@@ -226,17 +227,13 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
             id: d.id,
             title: asString(data.title, 'Untitled'),
             description: asString(data.description, ''),
-            pillarCode: (['FUTURE_SKILLS', 'LEADERSHIP_AGENCY', 'IMPACT_INNOVATION'].includes(
-              data.pillarCode
-            )
-              ? data.pillarCode
-              : 'FUTURE_SKILLS') as PillarCode,
+            pillarCode: (asString(data.pillarCode, '') || 'FUTURE_SKILLS') as PillarCode,
             artifactUrl: asString(data.artifactUrl, ''),
             aiDisclosure: (['none', 'assisted_can_explain', 'assisted_needs_verification'].includes(
               data.aiDisclosure
             )
               ? data.aiDisclosure
-              : 'none') as AiDisclosure,
+              : 'unknown') as AiDisclosure,
             verificationStatus: (['pending', 'reviewed', 'verified'].includes(
               data.verificationStatus
             )
@@ -267,11 +264,7 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
             id: d.id,
             capabilityId: asString(data.capabilityId, ''),
             capabilityTitle: asString(data.capabilityTitle, 'Unknown'),
-            pillarCode: (['FUTURE_SKILLS', 'LEADERSHIP_AGENCY', 'IMPACT_INNOVATION'].includes(
-              data.pillarCode
-            )
-              ? data.pillarCode
-              : 'FUTURE_SKILLS') as PillarCode,
+            pillarCode: (asString(data.pillarCode, '') || 'FUTURE_SKILLS') as PillarCode,
             level: typeof data.level === 'number' ? data.level : 0,
             learnerId: asString(data.learnerId, ctx.uid),
           };
@@ -284,11 +277,7 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
           return {
             id: d.id,
             capabilityTitle: asString(data.capabilityTitle, 'Unknown'),
-            pillarCode: (['FUTURE_SKILLS', 'LEADERSHIP_AGENCY', 'IMPACT_INNOVATION'].includes(
-              data.pillarCode
-            )
-              ? data.pillarCode
-              : 'FUTURE_SKILLS') as PillarCode,
+            pillarCode: (asString(data.pillarCode, '') || 'FUTURE_SKILLS') as PillarCode,
             fromLevel: typeof data.fromLevel === 'number' ? data.fromLevel : 0,
             toLevel: typeof data.toLevel === 'number' ? data.toLevel : 0,
             createdAt: toIso(data.createdAt),
@@ -367,7 +356,7 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
     setSaving(true);
     try {
       await updateDoc(doc(firestore, 'portfolioItems', itemId), {
-        verificationStatus: 'verified',
+        showcase: true,
         updatedAt: serverTimestamp(),
       });
       trackInteraction('feature_discovered', { cta: 'portfolio_item_showcased', itemId });
@@ -723,7 +712,9 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
                             ? 'bg-gray-100 text-gray-700'
                             : item.aiDisclosure === 'assisted_can_explain'
                               ? 'bg-indigo-100 text-indigo-800'
-                              : 'bg-amber-100 text-amber-800'
+                              : item.aiDisclosure === 'unknown'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-amber-100 text-amber-800'
                         }`}
                         data-testid={`ai-disclosure-status-${item.id}`}
                       >

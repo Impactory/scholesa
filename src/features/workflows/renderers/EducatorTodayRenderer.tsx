@@ -1,11 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
+  addDoc,
   collection,
   getDocs,
   orderBy,
   query,
+  serverTimestamp,
   where,
   limit,
 } from 'firebase/firestore';
@@ -13,22 +15,6 @@ import { firestore } from '@/src/firebase/client-init';
 import { Spinner } from '@/src/components/ui/Spinner';
 import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import type { CustomRouteRendererProps } from '../customRouteRenderers';
-
-// Lazy-import the feedback form to avoid bundle bloat
-import dynamic from 'next/dynamic';
-
-interface EducatorFeedbackFormProps {
-  learnerId: string;
-  learnerName: string;
-  siteId: string;
-  onSuccess: () => void;
-  onCancel: () => void;
-}
-
-const EducatorFeedbackForm = dynamic<EducatorFeedbackFormProps>(
-  () => import('@/src/components/motivation/EducatorFeedbackForm').then((m) => ({ default: m.EducatorFeedbackForm })),
-  { ssr: false }
-);
 
 // ---------------------------------------------------------------------------
 // Types
@@ -81,6 +67,104 @@ function formatDate(iso: string | null): string {
   } catch {
     return iso;
   }
+}
+
+// ---------------------------------------------------------------------------
+// Quick Evidence Capture — writes to evidenceRecords (evidence chain)
+// ---------------------------------------------------------------------------
+
+function QuickEvidenceCapture({
+  learnerId,
+  learnerName,
+  educatorId,
+  siteId,
+  onSuccess,
+  onCancel,
+}: {
+  learnerId: string;
+  learnerName: string;
+  educatorId: string;
+  siteId: string;
+  onSuccess: () => void;
+  onCancel: () => void;
+}) {
+  const [description, setDescription] = useState('');
+  const [portfolioCandidate, setPortfolioCandidate] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const handleSubmit = async () => {
+    const trimmed = description.trim();
+    if (!trimmed) {
+      setSubmitError('Please describe what you observed.');
+      return;
+    }
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      await addDoc(collection(firestore, 'evidenceRecords'), {
+        learnerId,
+        educatorId,
+        siteId,
+        description: trimmed,
+        portfolioCandidate,
+        rubricStatus: 'pending',
+        growthStatus: 'pending',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+      onSuccess();
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : 'Failed to save evidence.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="space-y-3" data-testid="quick-evidence-form">
+      <p className="text-xs font-medium text-app-foreground">
+        Observing: {learnerName}
+      </p>
+      <textarea
+        className="w-full rounded-md border border-app bg-app-canvas p-2 text-sm text-app-foreground placeholder:text-app-muted"
+        placeholder="What did you observe? (e.g., explained their approach clearly, collaborated well...)"
+        rows={3}
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+        data-testid="evidence-description"
+      />
+      <label className="flex items-center gap-2 text-xs text-app-muted">
+        <input
+          type="checkbox"
+          checked={portfolioCandidate}
+          onChange={(e) => setPortfolioCandidate(e.target.checked)}
+        />
+        Flag as portfolio candidate
+      </label>
+      {submitError && (
+        <p className="text-xs text-red-600">{submitError}</p>
+      )}
+      <div className="flex gap-2">
+        <button
+          type="button"
+          disabled={submitting}
+          onClick={() => void handleSubmit()}
+          className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground disabled:opacity-50"
+          data-testid="submit-evidence"
+        >
+          {submitting ? 'Saving...' : 'Save Evidence'}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="rounded-md border border-app px-3 py-1.5 text-xs font-medium text-app-foreground"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -248,24 +332,23 @@ export default function EducatorTodayRenderer({ ctx }: CustomRouteRendererProps)
             </p>
 
             {observationOpen && selectedLearnerId ? (
-              <div data-testid="observation-form">
-                <EducatorFeedbackForm
-                  learnerId={selectedLearnerId}
-                  learnerName={selectedLearnerName}
-                  siteId={siteId ?? ''}
-                  onSuccess={() => {
-                    setObservationOpen(false);
-                    setSelectedLearnerId(null);
-                    trackInteraction('feature_discovered', {
-                      cta: 'observation_submitted',
-                    });
-                  }}
-                  onCancel={() => {
-                    setObservationOpen(false);
-                    setSelectedLearnerId(null);
-                  }}
-                />
-              </div>
+              <QuickEvidenceCapture
+                learnerId={selectedLearnerId}
+                learnerName={selectedLearnerName}
+                educatorId={ctx.uid}
+                siteId={siteId ?? ''}
+                onSuccess={() => {
+                  setObservationOpen(false);
+                  setSelectedLearnerId(null);
+                  trackInteraction('feature_discovered', {
+                    cta: 'evidence_captured',
+                  });
+                }}
+                onCancel={() => {
+                  setObservationOpen(false);
+                  setSelectedLearnerId(null);
+                }}
+              />
             ) : (
               <div className="flex flex-wrap gap-2">
                 {learners.length === 0 ? (
