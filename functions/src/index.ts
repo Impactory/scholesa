@@ -8962,6 +8962,26 @@ export const applyRubricToEvidence = onCall(async (request: CallableRequest<{
     portfolioItemIds.push(portfolioId);
   }
 
+  // 4c. Update any existing learner-created portfolioItems linked to this missionAttempt
+  if (hasMission) {
+    const existingPiSnap = await db.collection('portfolioItems')
+      .where('missionAttemptId', '==', missionAttemptId)
+      .limit(10)
+      .get();
+    for (const piDoc of existingPiSnap.docs) {
+      // Skip the rubric-created portfolio item (already set to 'reviewed' above)
+      if (piDoc.id.startsWith('rubric-')) continue;
+      portfolioBatch.update(piDoc.ref, {
+        verificationStatus: 'reviewed',
+        rubricApplicationId: rubricAppRef.id,
+        growthEventIds,
+        educatorReviewedBy: educatorId,
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+      portfolioItemIds.push(piDoc.id);
+    }
+  }
+
   // Update growth events with linked portfolio item IDs
   for (const growthEventId of growthEventIds) {
     portfolioBatch.update(db.collection('capabilityGrowthEvents').doc(growthEventId), {

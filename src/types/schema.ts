@@ -134,7 +134,7 @@ export interface MissionAttempt {
   missionTitle?: string;
   sessionOccurrenceId?: string;
   siteId: string;
-  status: 'started' | 'submitted' | 'pending_review' | 'reviewed' | 'completed';
+  status: 'started' | 'submitted' | 'pending_review' | 'reviewed' | 'completed' | 'revision';
   reviewStatus?: 'reviewed' | 'approved' | 'revision';
   content?: string; // Artifacts or submission text
   notes?: string;
@@ -149,6 +149,12 @@ export interface MissionAttempt {
   reviewedBy?: string;
   reviewNotes?: string;
   proofBundleId?: string;
+  aiAssistanceUsed?: boolean;
+  aiAssistanceDetails?: string;
+  aiDisclosureStatus?: string;
+  revisionFeedback?: string;
+  revisionRequestedBy?: string;
+  revisionRequestedAt?: Timestamp;
 }
 
 export interface Reflection {

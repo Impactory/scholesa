@@ -16,7 +16,7 @@ import {
 } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { firestore, functions } from '@/src/firebase/client-init';
-import { rubricTemplatesCollection } from '@/src/firebase/firestore/collections';
+import { rubricTemplatesCollection, portfolioItemsCollection } from '@/src/firebase/firestore/collections';
 import { Spinner } from '@/src/components/ui/Spinner';
 import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import {
@@ -54,6 +54,7 @@ interface MissionAttempt {
   aiDisclosureStatus: string | null;
   submittedAt: string | null;
   capabilityId: string | null;
+  proofOfLearningStatus: string | null;
 }
 
 interface LearnerInfo {
@@ -170,6 +171,27 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
   const [checkpointSaving, setCheckpointSaving] = useState<string | null>(null);
   const [checkpointGrowthWarning, setCheckpointGrowthWarning] = useState<string | null>(null);
 
+  // ---- Portfolio items pending review (artifacts & reflections not linked to missionAttempts) ----
+  interface PortfolioReviewItem {
+    id: string;
+    learnerId: string;
+    siteId: string;
+    title: string;
+    description: string;
+    source: string;
+    capabilityIds: string[];
+    artifacts: string[];
+    aiAssistanceUsed: boolean;
+    aiAssistanceDetails: string | null;
+    aiDisclosureStatus: string | null;
+    verificationStatus: string;
+    proofOfLearningStatus: string | null;
+    createdAt: string | null;
+  }
+  const [portfolioQueue, setPortfolioQueue] = useState<PortfolioReviewItem[]>([]);
+  const [portfolioLoading, setPortfolioLoading] = useState(false);
+  const [portfolioSaving, setPortfolioSaving] = useState<string | null>(null);
+
   // ---- Data loading ----
   const loadAttempts = useCallback(async () => {
     setLoading(true);
@@ -192,12 +214,46 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
           status: asString(data.status, 'submitted'),
           content: asString(data.content, ''),
           attachmentUrls: Array.isArray(data.attachmentUrls) ? data.attachmentUrls : [],
-          aiDisclosure: Boolean(data.aiDisclosure),
+          aiDisclosure: Boolean(data.aiDisclosure || data.aiAssistanceUsed),
           aiToolsUsed: typeof data.aiToolsUsed === 'string' ? data.aiToolsUsed : null,
+          aiAssistanceDetails: typeof data.aiAssistanceDetails === 'string' ? data.aiAssistanceDetails : null,
+          aiDisclosureStatus: typeof data.aiDisclosureStatus === 'string' ? data.aiDisclosureStatus : null,
           submittedAt: toIso(data.submittedAt),
           capabilityId: typeof data.capabilityId === 'string' ? data.capabilityId : null,
+          proofOfLearningStatus: null, // populated below from linked portfolioItems
         };
       });
+
+      // Enrich attempts with proof-of-learning status from linked portfolioItems
+      const attemptIds = loaded.map((a) => a.id).filter(Boolean);
+      if (attemptIds.length > 0) {
+        // Firestore 'in' queries support max 30 values
+        const chunks = [];
+        for (let i = 0; i < attemptIds.length; i += 30) {
+          chunks.push(attemptIds.slice(i, i + 30));
+        }
+        for (const chunk of chunks) {
+          try {
+            const piSnap = await getDocs(
+              query(
+                portfolioItemsCollection,
+                where('missionAttemptId', 'in', chunk)
+              )
+            );
+            for (const piDoc of piSnap.docs) {
+              const piRaw = piDoc.data() as unknown as Record<string, unknown>;
+              const mAttemptId = piRaw.missionAttemptId as string;
+              const polStatus = typeof piRaw.proofOfLearningStatus === 'string' ? piRaw.proofOfLearningStatus : null;
+              const match = loaded.find((a) => a.id === mAttemptId);
+              if (match && polStatus) {
+                match.proofOfLearningStatus = polStatus;
+              }
+            }
+          } catch (err) {
+            console.warn('Failed to enrich PoL status:', err);
+          }
+        }
+      }
 
       setAttempts(loaded);
 
@@ -301,6 +357,79 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
   useEffect(() => {
     void loadCheckpoints();
   }, [loadCheckpoints]);
+
+  // ---- Portfolio items loading (artifacts & reflections not linked to missionAttempts) ----
+  const loadPortfolioQueue = useCallback(async () => {
+    const siteId = ctx.profile?.siteIds?.[0] || '';
+    if (!siteId) return;
+    setPortfolioLoading(true);
+    try {
+      const snap = await getDocs(
+        query(
+          portfolioItemsCollection,
+          where('siteId', '==', siteId),
+          where('verificationStatus', '==', 'pending'),
+          orderBy('createdAt', 'desc')
+        )
+      );
+      setPortfolioQueue(
+        snap.docs
+          .map((d) => {
+            const raw = d.data() as unknown as Record<string, unknown>;
+            return {
+              id: d.id,
+              learnerId: asString(raw.learnerId as string, ''),
+              siteId: asString(raw.siteId as string, ''),
+              title: asString(raw.title as string, 'Untitled'),
+              description: asString(raw.description as string, ''),
+              source: asString(raw.source as string, ''),
+              capabilityIds: Array.isArray(raw.capabilityIds) ? raw.capabilityIds as string[] : [],
+              artifacts: Array.isArray(raw.artifacts) ? raw.artifacts as string[] : [],
+              aiAssistanceUsed: Boolean(raw.aiAssistanceUsed),
+              aiAssistanceDetails: typeof raw.aiAssistanceDetails === 'string' ? raw.aiAssistanceDetails : null,
+              aiDisclosureStatus: typeof raw.aiDisclosureStatus === 'string' ? raw.aiDisclosureStatus : null,
+              verificationStatus: asString(raw.verificationStatus as string, 'pending'),
+              proofOfLearningStatus: typeof raw.proofOfLearningStatus === 'string' ? raw.proofOfLearningStatus : null,
+              createdAt: toIso(raw.createdAt),
+            };
+          })
+          // Exclude items already linked to a missionAttempt (those show in the attempts section)
+          .filter((item) => item.source !== 'checkpoint_submission')
+      );
+    } catch (err) {
+      console.warn('Failed to load portfolio queue:', err);
+    } finally {
+      setPortfolioLoading(false);
+    }
+  }, [ctx.profile?.siteIds]);
+
+  useEffect(() => {
+    void loadPortfolioQueue();
+  }, [loadPortfolioQueue]);
+
+  // ---- Verify / mark reviewed a portfolio item ----
+  const handlePortfolioVerdict = useCallback(
+    async (item: PortfolioReviewItem, verdict: 'reviewed' | 'verified') => {
+      setPortfolioSaving(item.id);
+      try {
+        const verifyPoL = httpsCallable(functions, 'verifyProofOfLearning');
+        await verifyPoL({
+          portfolioItemId: item.id,
+          verificationStatus: verdict,
+          proofOfLearningStatus: verdict === 'verified' ? 'partial' : 'not-available',
+          proofChecks: { explainItBack: false, oralCheck: false, miniRebuild: false },
+        });
+        trackInteraction('feature_discovered', { cta: 'portfolio_item_reviewed', verdict });
+        setPortfolioQueue((prev) => prev.filter((p) => p.id !== item.id));
+      } catch (err) {
+        console.error('Failed to update portfolio item:', err);
+        setError('Failed to update portfolio item. Please try again.');
+      } finally {
+        setPortfolioSaving(null);
+      }
+    },
+    [trackInteraction]
+  );
 
   // ---- Mark checkpoint correct/incorrect ----
   const handleCheckpointReview = useCallback(
@@ -694,9 +823,36 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
                           )}
                         </span>
                       )}
+                      {attempt.proofOfLearningStatus && attempt.proofOfLearningStatus !== 'not-available' && (
+                        <span
+                          className={`rounded-full px-2 py-0.5 font-medium ${
+                            attempt.proofOfLearningStatus === 'verified'
+                              ? 'bg-green-100 text-green-800'
+                              : attempt.proofOfLearningStatus === 'partial' || attempt.proofOfLearningStatus === 'pending_review'
+                                ? 'bg-amber-100 text-amber-800'
+                                : 'bg-gray-100 text-gray-600'
+                          }`}
+                          data-testid={`pol-status-${attempt.id}`}
+                        >
+                          PoL: {attempt.proofOfLearningStatus === 'pending_review' ? 'ready for review' : attempt.proofOfLearningStatus}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
+
+                {/* AI disclosure details */}
+                {attempt.aiDisclosure && attempt.aiAssistanceDetails && (
+                  <div
+                    className="rounded-lg border border-purple-200 bg-purple-50 p-3"
+                    data-testid={`ai-details-${attempt.id}`}
+                  >
+                    <span className="text-xs font-semibold uppercase tracking-wide text-purple-600">
+                      How AI was used
+                    </span>
+                    <p className="mt-1 text-sm text-purple-800">{attempt.aiAssistanceDetails}</p>
+                  </div>
+                )}
 
                 {/* Submission content */}
                 {attempt.content && (
@@ -1127,6 +1283,139 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
             );
           })}
         </ul>
+      )}
+
+      {/* ---- Portfolio Submissions Section (artifacts & reflections) ---- */}
+      {(portfolioQueue.length > 0 || portfolioLoading) && (
+        <div className="mt-8 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-app-foreground">
+              Portfolio Submissions
+            </h2>
+            <span className="rounded-full bg-app-canvas px-3 py-1 text-xs font-medium text-app-muted">
+              {portfolioQueue.length} pending
+            </span>
+          </div>
+          {portfolioLoading ? (
+            <div className="flex items-center gap-2 text-app-muted text-sm">
+              <Spinner /> Loading portfolio items...
+            </div>
+          ) : (
+            <ul className="space-y-3">
+              {portfolioQueue.map((item) => {
+                const pSaving = portfolioSaving === item.id;
+                const learner = learners[item.learnerId];
+                return (
+                  <li
+                    key={item.id}
+                    className="rounded-xl border border-app bg-app-surface-raised p-4 space-y-3"
+                    data-testid={`portfolio-review-${item.id}`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="space-y-1">
+                        <h3 className="text-base font-semibold text-app-foreground">
+                          {item.title}
+                        </h3>
+                        <p className="text-sm text-app-muted">
+                          {learner?.displayName ?? item.learnerId}
+                        </p>
+                        <div className="flex flex-wrap items-center gap-2 text-xs">
+                          <span className="rounded-full bg-indigo-100 px-2 py-0.5 font-medium text-indigo-800">
+                            {item.source === 'reflection' ? 'Reflection' : 'Artifact'}
+                          </span>
+                          <span className="text-app-muted">{formatDate(item.createdAt)}</span>
+                          {item.aiAssistanceUsed && (
+                            <span className="rounded-full bg-purple-100 px-2 py-0.5 font-medium text-purple-800">
+                              {item.aiDisclosureStatus === 'learner-ai-verified'
+                                ? 'AI used (disclosed)'
+                                : 'AI Assisted'}
+                            </span>
+                          )}
+                          {item.proofOfLearningStatus && item.proofOfLearningStatus !== 'not-available' && (
+                            <span
+                              className={`rounded-full px-2 py-0.5 font-medium ${
+                                item.proofOfLearningStatus === 'verified'
+                                  ? 'bg-green-100 text-green-800'
+                                  : item.proofOfLearningStatus === 'partial'
+                                    ? 'bg-amber-100 text-amber-800'
+                                    : 'bg-gray-100 text-gray-600'
+                              }`}
+                            >
+                              PoL: {item.proofOfLearningStatus}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Description */}
+                    {item.description && (
+                      <div className="rounded-lg border border-app bg-app-canvas p-4 text-sm text-app-foreground whitespace-pre-wrap">
+                        {item.description}
+                      </div>
+                    )}
+
+                    {/* AI disclosure details */}
+                    {item.aiAssistanceUsed && item.aiAssistanceDetails && (
+                      <div className="rounded-lg border border-purple-200 bg-purple-50 p-3">
+                        <span className="text-xs font-semibold uppercase tracking-wide text-purple-600">
+                          How AI was used
+                        </span>
+                        <p className="mt-1 text-sm text-purple-800">{item.aiAssistanceDetails}</p>
+                      </div>
+                    )}
+
+                    {/* Capability tags */}
+                    {item.capabilityIds.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {item.capabilityIds.map((capId) => (
+                          <span key={capId} className="rounded-full bg-app-canvas px-2 py-0.5 text-xs text-app-muted">
+                            {capId}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Artifacts */}
+                    {item.artifacts.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {item.artifacts.map((url, i) => (
+                          <a
+                            key={i}
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 rounded-md border border-app bg-app-canvas px-3 py-1.5 text-xs font-medium text-app-foreground hover:bg-app-surface"
+                          >
+                            Attachment {i + 1}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Actions */}
+                    <div className="flex gap-2 pt-1">
+                      <button
+                        type="button"
+                        disabled={pSaving}
+                        onClick={() => void handlePortfolioVerdict(item, 'reviewed')}
+                        className="rounded-md border border-app px-4 py-2 text-sm font-medium text-app-foreground hover:bg-app-canvas disabled:opacity-50"
+                      >
+                        {pSaving ? 'Saving...' : 'Mark Reviewed'}
+                      </button>
+                      <a
+                        href={`/${ctx.locale}/educator/proof-review`}
+                        className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+                      >
+                        Full PoL Review
+                      </a>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
       )}
 
       {/* ---- Checkpoint Review Section ---- */}

@@ -3,10 +3,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   addDoc,
+  doc,
   getDocs,
   orderBy,
   query,
   serverTimestamp,
+  updateDoc,
   where,
   limit,
 } from 'firebase/firestore';
@@ -20,7 +22,7 @@ import {
 import { useCapabilities } from '@/src/lib/capabilities/useCapabilities';
 import { RoleRouteGuard } from '@/src/components/auth/RoleRouteGuard';
 import { Spinner } from '@/src/components/ui/Spinner';
-import type { PortfolioItem, LearnerReflection, Mission, PillarCode } from '@/src/types/schema';
+import type { PortfolioItem, LearnerReflection, Mission, MissionAttempt, PillarCode } from '@/src/types/schema';
 
 type SubmitTab = 'artifact' | 'reflection' | 'checkpoint';
 
@@ -33,6 +35,18 @@ interface PortfolioEntry {
   aiAssistanceUsed: boolean;
   verificationStatus?: string;
   proofOfLearningStatus?: string;
+}
+
+interface RevisionItem {
+  id: string;
+  missionId: string;
+  missionTitle: string;
+  content: string;
+  revisionFeedback: string;
+  revisionRequestedAt: Date | null;
+  attachmentUrls: string[];
+  aiAssistanceUsed: boolean;
+  aiAssistanceDetails?: string;
 }
 
 export function LearnerEvidenceSubmission() {
@@ -69,6 +83,11 @@ export function LearnerEvidenceSubmission() {
   const [checkpointAttachmentUrl, setCheckpointAttachmentUrl] = useState('');
   const [checkpointAiUsed, setCheckpointAiUsed] = useState(false);
   const [checkpointAiDetails, setCheckpointAiDetails] = useState('');
+
+  // Revision resubmission state
+  const [revisions, setRevisions] = useState<RevisionItem[]>([]);
+  const [revisionEdits, setRevisionEdits] = useState<Record<string, string>>({});
+  const [resubmitting, setResubmitting] = useState<string | null>(null);
 
   // Derive pillar codes from selected capabilities
   const derivedPillarCodes = useMemo(() => {
@@ -118,9 +137,87 @@ export function LearnerEvidenceSubmission() {
     }
   }, [learnerId, siteId, resolveTitle]);
 
+  // Load missionAttempts with status 'revision' for the current learner
+  const loadRevisions = useCallback(async () => {
+    if (!learnerId) return;
+    try {
+      const snap = await getDocs(
+        query(
+          missionAttemptsCollection,
+          where('learnerId', '==', learnerId),
+          where('status', '==', 'revision'),
+          orderBy('updatedAt', 'desc'),
+          limit(20)
+        )
+      );
+      const items: RevisionItem[] = snap.docs.map((d) => {
+        const data = d.data() as unknown as Record<string, unknown>;
+        const reqAt = data.revisionRequestedAt as { toDate?: () => Date } | undefined;
+        return {
+          id: d.id,
+          missionId: (data.missionId as string) ?? '',
+          missionTitle: (data.missionTitle as string) ?? 'Untitled',
+          content: (data.content as string) ?? '',
+          revisionFeedback: (data.revisionFeedback as string) ?? '',
+          revisionRequestedAt: reqAt?.toDate?.() ?? null,
+          attachmentUrls: (data.attachmentUrls as string[]) ?? [],
+          aiAssistanceUsed: Boolean(data.aiAssistanceUsed),
+          aiAssistanceDetails: (data.aiAssistanceDetails as string) ?? undefined,
+        };
+      });
+      setRevisions(items);
+      // Pre-fill edit buffers with existing content
+      const edits: Record<string, string> = {};
+      for (const item of items) {
+        if (!revisionEdits[item.id]) {
+          edits[item.id] = item.content;
+        }
+      }
+      if (Object.keys(edits).length > 0) {
+        setRevisionEdits((prev) => ({ ...edits, ...prev }));
+      }
+    } catch (err) {
+      console.error('Failed to load revisions', err);
+    }
+  }, [learnerId, revisionEdits]);
+
+  // Resubmit a revised missionAttempt
+  const handleResubmit = async (revisionId: string) => {
+    const newContent = revisionEdits[revisionId]?.trim();
+    if (!newContent || !learnerId) return;
+    setResubmitting(revisionId);
+    setSuccessMessage(null);
+    try {
+      await updateDoc(doc(missionAttemptsCollection, revisionId), {
+        status: 'submitted',
+        content: newContent,
+        revisionFeedback: '',
+        updatedAt: serverTimestamp(),
+        submittedAt: serverTimestamp(),
+      } as Partial<MissionAttempt>);
+
+      setSuccessMessage('Revision resubmitted for review!');
+      setRevisionEdits((prev) => {
+        const next = { ...prev };
+        delete next[revisionId];
+        return next;
+      });
+      await loadRevisions();
+      void loadPortfolio();
+    } catch (err) {
+      console.error('Failed to resubmit revision', err);
+      setSuccessMessage('Failed to resubmit. Please try again.');
+    } finally {
+      setResubmitting(null);
+    }
+  };
+
   useEffect(() => {
-    if (!authLoading && learnerId && siteId) void loadPortfolio();
-  }, [authLoading, learnerId, siteId, loadPortfolio]);
+    if (!authLoading && learnerId && siteId) {
+      void loadPortfolio();
+      void loadRevisions();
+    }
+  }, [authLoading, learnerId, siteId, loadPortfolio, loadRevisions]);
 
   // Load missions for checkpoint selector
   useEffect(() => {
