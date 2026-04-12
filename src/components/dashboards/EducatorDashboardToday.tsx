@@ -46,14 +46,15 @@ const PILLAR_LABELS: Record<PillarCode, string> = {
 
 export function EducatorDashboardToday() {
   const { user, profile, loading: authLoading } = useAuthContext();
-  const siteId = profile?.studioId ?? null;
+  const siteId = profile?.studioId ?? profile?.activeSiteId ?? null;
   const educatorId = user?.uid ?? null;
 
   const [sessions, setSessions] = useState<SessionInfo[]>([]);
   const [reviewQueue, setReviewQueue] = useState<ReviewQueueStats>({ pendingEvidence: 0, pendingVerification: 0 });
   const [pillarSnapshots, setPillarSnapshots] = useState<PillarSnapshot[]>([]);
   const [recentEvidence, setRecentEvidence] = useState<EvidenceRecord[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     if (!educatorId) return;
@@ -150,7 +151,7 @@ export function EducatorDashboardToday() {
         setPillarSnapshots(snapshots);
       } catch (err) {
         console.error('Failed to load educator dashboard', err);
-        alert('Failed to load data. Please try again.');
+        if (!cancelled) setLoadError(true);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -160,7 +161,7 @@ export function EducatorDashboardToday() {
     return () => { cancelled = true; };
   }, [educatorId, siteId]);
 
-  if (authLoading || loading) {
+  if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-[300px]">
         <Spinner />
@@ -173,6 +174,14 @@ export function EducatorDashboardToday() {
     return (
       <div className="rounded-lg border border-gray-200 bg-white p-8 text-center text-sm text-gray-500">
         Please sign in to view your dashboard.
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="rounded-lg border border-amber-200 bg-amber-50 p-8 text-center text-sm text-amber-700">
+        Could not load dashboard data. Please refresh to try again.
       </div>
     );
   }

@@ -1,5 +1,5 @@
-import { ParentSummaryDashboard } from '@/src/components/dashboards/ParentSummaryDashboard';
+import { WorkflowRoutePage } from '@/src/features/workflows/WorkflowRoutePage';
 
-export default function ParentSummaryPage() {
-  return <ParentSummaryDashboard />;
+export default function WorkflowPage() {
+  return <WorkflowRoutePage routePath='/parent/summary' />;
 }

@@ -1,0 +1,65 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - navigation [ref=e4]:
+      - generic [ref=e5]:
+        - generic [ref=e6]:
+          - generic [ref=e7]:
+            - generic [ref=e8]: Scholesa
+            - generic [ref=e9]:
+              - link "summary" [ref=e10] [cursor=pointer]:
+                - /url: /en/parent/summary
+              - link "billing" [ref=e11] [cursor=pointer]:
+                - /url: /en/parent/billing
+              - link "schedule" [ref=e12] [cursor=pointer]:
+                - /url: /en/parent/schedule
+              - link "portfolio" [ref=e13] [cursor=pointer]:
+                - /url: /en/parent/portfolio
+              - link "growth-timeline" [ref=e14] [cursor=pointer]:
+                - /url: /en/parent/growth-timeline
+              - link "passport" [ref=e15] [cursor=pointer]:
+                - /url: /en/parent/passport
+              - link "messages" [ref=e16] [cursor=pointer]:
+                - /url: /en/messages
+              - link "notifications" [ref=e17] [cursor=pointer]:
+                - /url: /en/notifications
+              - link "profile" [ref=e18] [cursor=pointer]:
+                - /url: /en/profile
+              - link "settings" [ref=e19] [cursor=pointer]:
+                - /url: /en/settings
+          - generic [ref=e20]:
+            - group "Theme" [ref=e21]:
+              - 'button "Theme: System" [pressed] [ref=e22]': System
+              - 'button "Theme: Light" [ref=e23]': Light
+              - 'button "Theme: Dark" [ref=e24]': Dark
+            - text: navigation.signedInAs
+            - button "navigation.signOut" [ref=e25]
+        - generic [ref=e26]:
+          - link "summary" [ref=e27] [cursor=pointer]:
+            - /url: /en/parent/summary
+          - link "billing" [ref=e28] [cursor=pointer]:
+            - /url: /en/parent/billing
+          - link "schedule" [ref=e29] [cursor=pointer]:
+            - /url: /en/parent/schedule
+          - link "portfolio" [ref=e30] [cursor=pointer]:
+            - /url: /en/parent/portfolio
+          - link "growth-timeline" [ref=e31] [cursor=pointer]:
+            - /url: /en/parent/growth-timeline
+          - link "passport" [ref=e32] [cursor=pointer]:
+            - /url: /en/parent/passport
+          - link "messages" [ref=e33] [cursor=pointer]:
+            - /url: /en/messages
+          - link "notifications" [ref=e34] [cursor=pointer]:
+            - /url: /en/notifications
+          - link "profile" [ref=e35] [cursor=pointer]:
+            - /url: /en/profile
+          - link "settings" [ref=e36] [cursor=pointer]:
+            - /url: /en/settings
+    - main [ref=e37]:
+      - generic [ref=e40]:
+        - img [ref=e41]
+        - text: Loading your family dashboard...
+  - alert [ref=e43]
+```

@@ -35,8 +35,6 @@ interface MissionAttemptInfo {
   completedAt?: string | null;
 }
 
-const isE2ETestMode = process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1';
-
 export function LearnerDashboardToday() {
   const { user, profile, loading: authLoading } = useAuthContext();
   const siteId = profile?.studioId ?? profile?.activeSiteId ?? null;
@@ -45,12 +43,11 @@ export function LearnerDashboardToday() {
   const [sessions, setSessions] = useState<SessionInfo[]>([]);
   const [recentGrowth, setRecentGrowth] = useState<CapabilityGrowthEvent[]>([]);
   const [activeMissions, setActiveMissions] = useState<MissionAttemptInfo[]>([]);
-  const [loading, setLoading] = useState(!isE2ETestMode);
+  const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState(false);
-  const { resolveTitle, loading: capLoading } = useCapabilities(isE2ETestMode ? null : siteId);
+  const { resolveTitle } = useCapabilities(siteId);
 
   useEffect(() => {
-    if (isE2ETestMode) return; // E2E: skip Firestore queries; render with empty state
     if (!learnerId) return;
     let cancelled = false;
 
@@ -133,7 +130,7 @@ export function LearnerDashboardToday() {
     return () => { cancelled = true; };
   }, [learnerId]);
 
-  if (authLoading || loading || capLoading) {
+  if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-[300px]">
         <Spinner />

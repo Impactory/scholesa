@@ -59,12 +59,6 @@ interface PillarSummary {
 // Helpers
 // ---------------------------------------------------------------------------
 
-const _LEVEL_SCORES: Record<MasteryLevel, number> = {
-  emerging: 1,
-  developing: 2,
-  proficient: 3,
-  advanced: 4,
-};
 
 const PILLAR_LABELS: Record<string, string> = {
   FUTURE_SKILLS: 'Future Skills',

@@ -43,7 +43,6 @@ describe('Custom renderer registry covers all evidence chain routes', () => {
     // Learner
     '/learner/today',
     '/learner/portfolio',
-    '/learner/missions',
     '/learner/proof-assembly',
     '/learner/checkpoints',
     '/learner/reflections',
@@ -98,6 +97,10 @@ describe('All renderer files exist and are real components', () => {
         expect(source).not.toMatch(/\bfakeData\b/);
         expect(source).not.toMatch(/\bmockData\b/);
         expect(source).not.toMatch(/\bTODO\b/i);
+        // fakeWebBackend imports must be guarded by NEXT_PUBLIC_E2E_TEST_MODE
+        if (source.includes('fakeWebBackend')) {
+          expect(source).toContain('NEXT_PUBLIC_E2E_TEST_MODE');
+        }
       });
     });
   }

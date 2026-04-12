@@ -259,7 +259,7 @@ export default function LearnerProofAssemblyRenderer({ ctx }: { ctx: WorkflowCon
       }
     } catch (err) {
       console.error('Failed to save proof bundle:', err);
-      alert('Failed to save proof bundle. Please try again.');
+      setError('Failed to save proof bundle. Please try again.');
     } finally {
       setSaving(false);
     }

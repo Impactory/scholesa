@@ -169,19 +169,50 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
     setLoading(true);
     setError(null);
     try {
-      const callable = httpsCallable<{ parentId: string }, ParentDashboardBundle>(
-        functions,
-        'getParentDashboardBundle'
-      );
-      const result = await callable({ parentId: ctx.uid });
-      setLearners(result.data.learners ?? []);
+      let bundle: ParentDashboardBundle;
+
+      if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+        // E2E: build bundle from fakeWebBackend data (same interception pattern as workflowData.ts)
+        const { loadE2EWorkflowRecords } = await import('@/src/testing/e2e/fakeWebBackend');
+        const summaryResult = await loadE2EWorkflowRecords({ ...ctx, routePath: '/parent/summary' });
+        const portfolioResult = await loadE2EWorkflowRecords({ ...ctx, routePath: '/parent/portfolio' });
+        // portfolioResult.records is already filtered for this parent's linked learners
+        const portfolioHighlights = portfolioResult.records.map((p) => ({
+          id: p.id,
+          title: p.title,
+          verificationStatus: 'unverified' as const,
+          aiDisclosure: 'none' as const,
+          proofDetails: { explainItBack: false, oralCheck: false, miniRebuild: false },
+        }));
+        bundle = {
+          learners: summaryResult.records.map((rec) => ({
+            learnerId: rec.id,
+            name: rec.title,
+            currentLevelBand: 'developing' as const,
+            attendanceRate: 0,
+            pillars: [],
+            growthTimeline: [],
+            portfolioHighlights,
+            ideationPassport: null,
+          } as LearnerSummary)),
+        };
+      } else {
+        const callable = httpsCallable<{ parentId: string }, ParentDashboardBundle>(
+          functions,
+          'getParentDashboardBundle'
+        );
+        const result = await callable({ parentId: ctx.uid });
+        bundle = result.data;
+      }
+
+      setLearners(bundle.learners ?? []);
       trackInteraction('feature_discovered', { cta: 'guardian_capability_view_loaded' });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to load your family dashboard.');
     } finally {
       setLoading(false);
     }
-  }, [ctx.uid, trackInteraction]);
+  }, [ctx, trackInteraction]);
 
   useEffect(() => {
     void fetchData();

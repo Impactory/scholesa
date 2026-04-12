@@ -109,7 +109,6 @@ const CUSTOM_ROUTE_RENDERERS: Partial<
   // Learner
   '/learner/today': LearnerProgressReportRenderer,
   '/learner/portfolio': LearnerPortfolioCurationRenderer,
-  '/learner/missions': LearnerProofAssemblyRenderer,
   '/learner/proof-assembly': LearnerProofAssemblyRenderer,
   '/learner/checkpoints': LearnerCheckpointRenderer,
   '/learner/reflections': LearnerReflectionsRenderer,

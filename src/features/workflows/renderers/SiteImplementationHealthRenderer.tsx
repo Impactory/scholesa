@@ -70,8 +70,9 @@ function healthScore(metrics: HealthMetrics): { score: number; label: string; co
 }
 
 export default function SiteImplementationHealthRenderer({ ctx }: CustomRouteRendererProps) {
-  const siteId = ctx.profile?.siteIds?.[0] || '';
+  const siteId = ctx.profile?.siteIds?.[0] || ctx.profile?.activeSiteId || '';
   const [metrics, setMetrics] = useState<HealthMetrics | null>(null);
+  const [siteName, setSiteName] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -79,24 +80,53 @@ export default function SiteImplementationHealthRenderer({ ctx }: CustomRouteRen
     if (!siteId) return;
     setLoading(true);
     try {
+      if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+        const { loadE2EWorkflowRecords } = await import('@/src/testing/e2e/fakeWebBackend');
+        const result = await loadE2EWorkflowRecords({ ...ctx, routePath: '/site/dashboard' });
+        const siteRecord = result.records[0];
+        setSiteName(siteRecord?.title ?? '');
+        setMetrics({
+          totalEducators: 0,
+          educatorsWithRubricApplications: 0,
+          totalLearners: 0,
+          learnersWithEvidence: 0,
+          learnersWithProofBundles: 0,
+          totalEvidenceRecords: 0,
+          totalGrowthEvents: 0,
+          totalRubricApplications: 0,
+          averageEvidencePerLearner: 0,
+          proofVerificationRate: 0,
+        });
+        return;
+      }
+
       const [
         educatorsSnap,
         learnersSnap,
         rubricAppsSnap,
         evidenceSnap,
         growthSnap,
-        proofSnap,
       ] = await Promise.all([
         getDocs(query(collection(firestore, 'users'), where('siteIds', 'array-contains', siteId), where('role', '==', 'educator'))),
         getDocs(query(collection(firestore, 'users'), where('siteIds', 'array-contains', siteId), where('role', '==', 'learner'))),
         getDocs(query(collection(firestore, 'rubricApplications'), where('siteId', '==', siteId))),
         getDocs(query(collection(firestore, 'evidenceRecords'), where('siteId', '==', siteId))),
         getDocs(query(collection(firestore, 'capabilityGrowthEvents'), where('siteId', '==', siteId))),
-        getDocs(query(collection(firestore, 'proofOfLearningBundles'), where('learnerId', '!=', ''))),
       ]);
 
       const educatorIds = new Set(educatorsSnap.docs.map((d) => d.id));
       const learnerIds = new Set(learnersSnap.docs.map((d) => d.id));
+
+      // Proof bundles don't have siteId — batch-query by site learner IDs (max 30 per 'in' query)
+      const learnerIdArr = Array.from(learnerIds);
+      const proofDocs: FirebaseFirestore.DocumentData[] = [];
+      for (let i = 0; i < learnerIdArr.length; i += 30) {
+        const batch = learnerIdArr.slice(i, i + 30);
+        const snap = await getDocs(
+          query(collection(firestore, 'proofOfLearningBundles'), where('learnerId', 'in', batch)),
+        );
+        snap.docs.forEach((d) => proofDocs.push(d.data()));
+      }
 
       // Educators who've applied rubrics
       const educatorsWithRubrics = new Set<string>();
@@ -117,8 +147,7 @@ export default function SiteImplementationHealthRenderer({ ctx }: CustomRouteRen
       // Learners with proof bundles
       const learnersWithProof = new Set<string>();
       let verifiedProofs = 0;
-      proofSnap.docs.forEach((d) => {
-        const data = d.data();
+      proofDocs.forEach((data) => {
         const lid = data.learnerId as string;
         if (lid) learnersWithProof.add(lid);
         if (data.verificationStatus === 'verified') verifiedProofs++;
@@ -126,6 +155,7 @@ export default function SiteImplementationHealthRenderer({ ctx }: CustomRouteRen
 
       const totalLearners = learnerIds.size;
       const totalEvidence = evidenceSnap.size;
+      const totalProof = proofDocs.length;
 
       setMetrics({
         totalEducators: educatorIds.size,
@@ -137,7 +167,7 @@ export default function SiteImplementationHealthRenderer({ ctx }: CustomRouteRen
         totalGrowthEvents: growthSnap.size,
         totalRubricApplications: rubricAppsSnap.size,
         averageEvidencePerLearner: totalLearners > 0 ? totalEvidence / totalLearners : 0,
-        proofVerificationRate: proofSnap.size > 0 ? verifiedProofs / proofSnap.size : 0,
+        proofVerificationRate: totalProof > 0 ? verifiedProofs / totalProof : 0,
       });
     } catch (err) {
       console.error('Failed to load health metrics:', err);
@@ -145,18 +175,29 @@ export default function SiteImplementationHealthRenderer({ ctx }: CustomRouteRen
     } finally {
       setLoading(false);
     }
-  }, [siteId]);
+  }, [siteId, ctx]);
 
   useEffect(() => {
     loadMetrics();
   }, [loadMetrics]);
 
-  if (loading) {
-    return <div className="p-6 text-center text-gray-500">Loading implementation health...</div>;
-  }
-
   if (!metrics) {
-    return <div className="p-6 text-center text-red-500">Failed to load metrics.</div>;
+    return (
+      <div className="space-y-6">
+        {error && <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</div>}
+        <div className="flex items-center gap-3">
+          <ActivityIcon className="h-7 w-7 text-indigo-600" />
+          <div>
+            {siteName && <p className="text-sm font-semibold text-indigo-700">{siteName}</p>}
+            <h2 className="text-xl font-bold text-gray-900">Implementation Health</h2>
+            <p className="text-sm text-gray-500">Evidence chain adoption and quality metrics.</p>
+          </div>
+        </div>
+        {loading
+          ? <div className="p-6 text-center text-gray-500">Loading implementation health...</div>
+          : !error && <div className="p-6 text-center text-gray-400">No data available for this site.</div>}
+      </div>
+    );
   }
 
   const health = healthScore(metrics);
@@ -178,6 +219,7 @@ export default function SiteImplementationHealthRenderer({ ctx }: CustomRouteRen
         <div className="flex items-center gap-3">
           <ActivityIcon className="h-7 w-7 text-indigo-600" />
           <div>
+            {siteName && <p className="text-sm font-semibold text-indigo-700">{siteName}</p>}
             <h2 className="text-xl font-bold text-gray-900">Implementation Health</h2>
             <p className="text-sm text-gray-500">Evidence chain adoption and quality metrics.</p>
           </div>

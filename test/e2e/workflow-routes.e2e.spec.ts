@@ -183,7 +183,7 @@ test('learner is denied HQ routes and returns to learner default', async ({ page
 
   await page.goto('/en/hq/sites');
   await expect(page).toHaveURL(/\/en\/learner\/today$/);
-  await expect(page.getByText('Future Skills Studio')).toBeVisible();
+  await expect(page.getByText('My Progress')).toBeVisible();
 });
 
 test('educator workflow redirects to educator default and records attendance', async ({ page }) => {
@@ -191,7 +191,7 @@ test('educator workflow redirects to educator default and records attendance', a
 
   await page.goto('/en/dashboard');
   await expect(page).toHaveURL(/\/en\/educator\/today$/);
-  await expect(page.getByText('Future Skills Studio')).toBeVisible();
+  await expect(page.getByText('Educator Dashboard')).toBeVisible();
 
   await page.goto('/en/educator/attendance');
   await openWorkflowCreateForm(page);
@@ -222,7 +222,7 @@ test('educator is denied partner routes and returns to educator default', async 
 
   await page.goto('/en/partner/listings');
   await expect(page).toHaveURL(/\/en\/educator\/today$/);
-  await expect(page.getByText('Future Skills Studio')).toBeVisible();
+  await expect(page.getByText('Educator Dashboard')).toBeVisible();
 });
 
 test('parent workflow redirects to parent default and only shows linked portfolio artifacts', async ({ page }) => {
@@ -231,7 +231,8 @@ test('parent workflow redirects to parent default and only shows linked portfoli
   await page.goto('/en/dashboard');
   await expect(page).toHaveURL(/\/en\/parent\/summary$/);
   await expect(page.getByText('Learner Alpha')).toBeVisible();
-  await expect(page.getByText(/Level 7/)).toBeVisible();
+  // Custom renderer shows band label (Developing/Strong/Emerging), not raw numeric level
+  await expect(page.getByText(/Developing|Strong|Emerging/)).toBeVisible();
 
   await page.goto('/en/parent/portfolio');
   await expect(page.getByText('Learner Build Log')).toBeVisible();

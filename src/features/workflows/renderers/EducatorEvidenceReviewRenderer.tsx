@@ -200,8 +200,8 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
                   },
                 ] as const;
               }
-            } catch {
-              // Ignore individual fetch failures
+            } catch (err) {
+              console.warn('Failed to fetch learner profile:', uid, err);
             }
             return [uid, { displayName: 'Unknown Learner', email: '' }] as const;
           })
@@ -223,8 +223,8 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
                   },
                 ] as const;
               }
-            } catch {
-              // Ignore individual fetch failures
+            } catch (err) {
+              console.warn('Failed to fetch mission:', mid, err);
             }
             return [mid, { title: mid, capabilityId: null, siteId: null, grade: null }] as const;
           })
@@ -270,8 +270,8 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
           }
           setRubricForm((prev: RubricFormState) => ({ ...prev, criterionScores: initial }));
         }
-      } catch {
-        // If rubric loading fails, fall back to simple mode (activeRubric stays null)
+      } catch (err) {
+        console.warn('Rubric loading failed, falling back to simple mode:', err);
       } finally {
         setRubricLoading(false);
       }
