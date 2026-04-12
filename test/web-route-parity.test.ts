@@ -18,6 +18,7 @@ const webOnlyRoutes = new Set([
   '/educator/evidence',
   '/educator/verification',
   '/hq/capabilities',
+  '/learner/timeline',
   '/parent/passport',
   '/site/clever',
   '/site/evidence-health',
