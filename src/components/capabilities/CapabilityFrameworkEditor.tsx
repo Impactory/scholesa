@@ -335,12 +335,20 @@ export function CapabilityFrameworkEditor({ initialTab }: CapabilityFrameworkEdi
     setSaving(true);
     try {
       const capabilityIds = Array.from(new Set(rubricForm.criteria.map((c) => c.capabilityId)));
-      const criteria = rubricForm.criteria.map((c) => ({
-        label: c.label.trim(),
-        capabilityId: c.capabilityId,
-        pillarCode: capabilityMap.get(c.capabilityId)?.pillarCode,
-        maxScore: c.maxScore,
-      }));
+      const criteria = rubricForm.criteria.map((c) => {
+        const cap = capabilityMap.get(c.capabilityId);
+        return {
+          label: c.label.trim(),
+          capabilityId: c.capabilityId,
+          pillarCode: cap?.pillarCode,
+          maxScore: c.maxScore,
+          // Propagate progression descriptors from the linked capability
+          ...(cap?.progressionDescriptors &&
+            Object.values(cap.progressionDescriptors).some((v) => v.trim())
+            ? { descriptors: cap.progressionDescriptors }
+            : {}),
+        };
+      });
 
       if (editingRubricId) {
         const ref = doc(rubricTemplatesCollection, editingRubricId);

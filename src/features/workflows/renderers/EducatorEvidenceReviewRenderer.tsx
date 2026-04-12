@@ -339,21 +339,73 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
     [ctx.uid, trackInteraction]
   );
 
+  // ---- Loaded HQ rubric template for current attempt ----
+  const [activeHqTemplate, setActiveHqTemplate] = useState<RubricTemplate | null>(null);
+
   // ---- Load structured rubric for an attempt ----
+  // Priority: HQ rubricTemplates (what Admin-HQ creates) → legacy assessmentRubrics fallback
   const loadRubricForAttempt = useCallback(
     async (attempt: MissionAttempt) => {
       setRubricLoading(true);
       setActiveRubric(null);
+      setActiveHqTemplate(null);
       try {
         const mission = missions[attempt.missionId];
+        const siteId = mission?.siteId || ctx.profile?.siteIds?.[0] || '';
+        const capabilityId = attempt.capabilityId || mission?.capabilityId || null;
+
+        // 1. Try HQ rubricTemplates (the real source created by Admin-HQ)
+        if (siteId) {
+          let hqTemplateSnap;
+          if (capabilityId) {
+            // Best match: template whose capabilityIds includes this mission's capability
+            hqTemplateSnap = await getDocs(
+              query(
+                rubricTemplatesCollection,
+                where('siteId', '==', siteId),
+                where('status', '==', 'published'),
+                where('capabilityIds', 'array-contains', capabilityId),
+              )
+            );
+          }
+          // Fallback: any published template for this site
+          if (!hqTemplateSnap || hqTemplateSnap.empty) {
+            hqTemplateSnap = await getDocs(
+              query(
+                rubricTemplatesCollection,
+                where('siteId', '==', siteId),
+                where('status', '==', 'published'),
+              )
+            );
+          }
+          if (!hqTemplateSnap.empty) {
+            const tplDoc = hqTemplateSnap.docs[0];
+            const hqTemplate = { ...tplDoc.data(), id: tplDoc.id } as RubricTemplate;
+            setActiveHqTemplate(hqTemplate);
+
+            // Convert HQ template criteria to the criterion scores format
+            const initial: Record<string, CriterionScore> = {};
+            for (const c of hqTemplate.criteria) {
+              initial[c.label] = {
+                criterionName: c.label,
+                levelName: '',
+                score: 0,
+                weight: 1 / hqTemplate.criteria.length,
+              };
+            }
+            setRubricForm((prev: RubricFormState) => ({ ...prev, criterionScores: initial }));
+            return; // HQ template found — don't fall through
+          }
+        }
+
+        // 2. Fallback: legacy assessmentRubrics (RubricManager)
         const rubric = await RubricManager.getActiveRubric({
-          siteId: mission?.siteId || ctx.profile?.siteIds?.[0] || '*',
+          siteId: siteId || '*',
           missionId: attempt.missionId,
           grade: mission?.grade ?? undefined,
         });
         setActiveRubric(rubric);
         if (rubric) {
-          // Pre-populate criterion scores with empty selections
           const initial: Record<string, CriterionScore> = {};
           for (const criterion of rubric.criteria) {
             initial[criterion.name] = {
@@ -384,9 +436,28 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
       const siteId = missions[attempt.missionId]?.siteId || ctx.profile?.siteIds?.[0] || '';
 
       // Build scores array for the callable
-      let callableScores: { criterionId: string; capabilityId: string; pillarCode: string; score: number; maxScore: number }[];
+      let callableScores: { criterionId: string; capabilityId: string; processDomainId?: string; pillarCode: string; score: number; maxScore: number }[];
 
-      if (activeRubric && Object.keys(rubricForm.criterionScores).length > 0) {
+      if (activeHqTemplate && Object.keys(rubricForm.criterionScores).length > 0) {
+        // HQ rubric template path — each criterion carries its own capabilityId and pillarCode
+        const criterionScoresArray = (
+          Object.values(rubricForm.criterionScores) as CriterionScore[]
+        ).filter((cs) => cs.score > 0);
+        if (criterionScoresArray.length === 0) return;
+
+        callableScores = criterionScoresArray.map((cs) => {
+          const criterion = activeHqTemplate.criteria.find((c) => c.label === cs.criterionName);
+          return {
+            criterionId: cs.criterionName,
+            capabilityId: criterion?.capabilityId || capabilityId || '',
+            processDomainId: criterion?.processDomainId || undefined,
+            pillarCode: criterion?.pillarCode || '',
+            score: cs.score,
+            maxScore: criterion?.maxScore || 4,
+          };
+        });
+      } else if (activeRubric && Object.keys(rubricForm.criterionScores).length > 0) {
+        // Legacy assessmentRubrics path
         const criterionScoresArray = (
           Object.values(rubricForm.criterionScores) as CriterionScore[]
         ).filter((cs) => cs.score > 0);
@@ -426,7 +497,7 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
         missionAttemptId: attempt.id,
         learnerId: attempt.learnerId,
         siteId,
-        rubricId: activeRubric?.id ?? undefined,
+        rubricId: activeHqTemplate?.id ?? activeRubric?.id ?? undefined,
         scores: callableScores,
       });
 
@@ -436,12 +507,14 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
           ? (callableScores.reduce((s, c) => s + c.score, 0) / callableScores.length).toFixed(1)
           : undefined,
         missionId: attempt.missionId,
-        rubricId: activeRubric?.id,
+        rubricId: activeHqTemplate?.id ?? activeRubric?.id,
+        rubricSource: activeHqTemplate ? 'hq_template' : activeRubric ? 'legacy' : 'fallback',
         criteriaCount: callableScores.length || undefined,
       });
 
       setRubricOpen(null);
       setActiveRubric(null);
+      setActiveHqTemplate(null);
       setRubricForm({
         level: 'Proficient',
         feedback: '',
@@ -678,6 +751,110 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
                     {rubricLoading ? (
                       <div className="flex items-center gap-2 text-app-muted text-sm py-2">
                         <Spinner /> Loading rubric...
+                      </div>
+                    ) : activeHqTemplate ? (
+                      /* ---- HQ rubric template (Admin-HQ created, with progression descriptors) ---- */
+                      <div className="space-y-4" data-testid={`rubric-criteria-${attempt.id}`}>
+                        <div className="rounded-md bg-indigo-50 border border-indigo-200 px-3 py-2 text-xs text-indigo-800">
+                          Rubric Template: <span className="font-medium">{activeHqTemplate.title}</span>
+                          <span className="ml-2">({activeHqTemplate.criteria.length} criteria)</span>
+                        </div>
+
+                        {activeHqTemplate.criteria.map((criterion) => {
+                          const currentScore = rubricForm.criterionScores[criterion.label];
+                          const LEVEL_NAMES = ['Beginning', 'Developing', 'Proficient', 'Advanced'] as const;
+                          const LEVEL_COLORS = [
+                            'bg-red-100 text-red-800 border-red-300',
+                            'bg-amber-100 text-amber-800 border-amber-300',
+                            'bg-blue-100 text-blue-800 border-blue-300',
+                            'bg-green-100 text-green-800 border-green-300',
+                          ];
+                          const DESCRIPTOR_KEYS = ['beginning', 'developing', 'proficient', 'advanced'] as const;
+                          const maxScore = criterion.maxScore || 4;
+                          return (
+                            <div
+                              key={criterion.label}
+                              className="rounded-lg border border-app p-3 space-y-2"
+                              data-testid={`criterion-${criterion.label}-${attempt.id}`}
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <h5 className="text-sm font-semibold text-app-foreground">
+                                  {criterion.label}
+                                </h5>
+                                {criterion.pillarCode && (
+                                  <span className="shrink-0 rounded-full bg-app-canvas px-2 py-0.5 text-xs text-app-muted">
+                                    {criterion.pillarCode.replace(/_/g, ' ')}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex flex-wrap gap-1.5">
+                                {Array.from({ length: maxScore }, (_, i) => i + 1).map((level) => {
+                                  const isSelected = currentScore?.score === level;
+                                  const levelName = LEVEL_NAMES[level - 1] ?? `Level ${level}`;
+                                  const levelColor = LEVEL_COLORS[Math.min(level - 1, LEVEL_COLORS.length - 1)];
+                                  return (
+                                    <button
+                                      key={level}
+                                      type="button"
+                                      onClick={() =>
+                                        setRubricForm((prev: RubricFormState) => ({
+                                          ...prev,
+                                          criterionScores: {
+                                            ...prev.criterionScores,
+                                            [criterion.label]: {
+                                              criterionName: criterion.label,
+                                              levelName,
+                                              score: level,
+                                              weight: 1 / activeHqTemplate.criteria.length,
+                                            },
+                                          },
+                                        }))
+                                      }
+                                      className={`rounded-md border px-3 py-1.5 text-xs font-medium transition-all ${
+                                        isSelected
+                                          ? levelColor + ' ring-2 ring-offset-1 ring-primary/40'
+                                          : 'border-app bg-app-canvas text-app-muted hover:bg-app-surface-raised'
+                                      }`}
+                                      data-testid={`criterion-level-${criterion.label}-${level}-${attempt.id}`}
+                                    >
+                                      {levelName}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                              {/* Show progression descriptor for selected level */}
+                              {currentScore?.score > 0 && criterion.descriptors && (() => {
+                                const key = DESCRIPTOR_KEYS[currentScore.score - 1];
+                                const desc = key ? criterion.descriptors?.[key] : undefined;
+                                return desc ? (
+                                  <p className="text-xs text-app-muted italic pl-1 border-l-2 border-indigo-200 ml-1">
+                                    {desc}
+                                  </p>
+                                ) : null;
+                              })()}
+                            </div>
+                          );
+                        })}
+
+                        {/* Score summary */}
+                        {(() => {
+                          const scored = (
+                            Object.values(rubricForm.criterionScores) as CriterionScore[]
+                          ).filter((cs) => cs.score > 0);
+                          if (scored.length === 0) return null;
+                          const avg = scored.reduce((s, cs) => s + cs.score, 0) / scored.length;
+                          return (
+                            <div className="rounded-md bg-app-canvas px-3 py-2 text-xs text-app-muted">
+                              Average score:{' '}
+                              <span className="font-semibold text-app-foreground">
+                                {avg.toFixed(1)}
+                              </span>
+                              <span className="ml-2">
+                                ({scored.length}/{activeHqTemplate.criteria.length} criteria scored)
+                              </span>
+                            </div>
+                          );
+                        })()}
                       </div>
                     ) : activeRubric ? (
                       /* ---- Per-criterion scoring (structured rubric) ---- */

@@ -9386,6 +9386,7 @@ export const processCheckpointMasteryUpdate = onCall(async (request: CallableReq
     // Find all capabilities for this site and update mastery for each
     const siteCapabilities = await db
       .collection('capabilities')
+      .where('siteId', '==', siteId)
       .where('status', '==', 'active')
       .get();
 
