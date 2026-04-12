@@ -387,3 +387,29 @@ describe('EducatorSessionsRenderer evidence-enriched session view', () => {
     expect(source).toMatch(/checkpointCount|checkpointCounts/);
   });
 });
+
+/* ───── EducatorAiAuditRenderer motivation feedback wiring ───── */
+
+describe('EducatorAiAuditRenderer motivation feedback wiring', () => {
+  const source = readSrcFile(
+    'features', 'workflows', 'renderers', 'EducatorAiAuditRenderer.tsx'
+  );
+
+  it('imports EducatorFeedbackForm', () => {
+    expect(source).toContain('EducatorFeedbackForm');
+  });
+
+  it('renders log-motivation button per learner', () => {
+    expect(source).toContain('log-motivation-');
+  });
+
+  it('renders EducatorFeedbackForm inline when open', () => {
+    expect(source).toContain('motivation-form-');
+    expect(source).toContain('openMotivationId');
+  });
+
+  it('shows saved confirmation after successful submission', () => {
+    expect(source).toContain('motivationSavedIds');
+    expect(source).toMatch(/Saved|saved/);
+  });
+});

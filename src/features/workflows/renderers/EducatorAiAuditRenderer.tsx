@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import {
   collection,
   getDocs,
@@ -17,6 +18,11 @@ import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import { getTierForStage, getTierDescription } from '@/src/lib/policies/aiPolicyTierGate';
 import type { StageId } from '@/src/types/schema';
 import type { CustomRouteRendererProps } from '../customRouteRenderers';
+
+const EducatorFeedbackForm = dynamic(
+  () => import('@/src/components/motivation/EducatorFeedbackForm').then((m) => m.EducatorFeedbackForm),
+  { loading: () => <div className="p-4 text-xs text-app-muted">Loading form…</div> }
+);
 
 // ---------------------------------------------------------------------------
 // Types
@@ -91,6 +97,8 @@ export default function EducatorAiAuditRenderer({ ctx }: CustomRouteRendererProp
   const [learners, setLearners] = useState<LearnerRow[]>([]);
   const [_interactions, setInteractions] = useState<AiInteractionRow[]>([]);
   const [summaries, setSummaries] = useState<LearnerAiSummary[]>([]);
+  const [openMotivationId, setOpenMotivationId] = useState<string | null>(null);
+  const [motivationSavedIds, setMotivationSavedIds] = useState<Set<string>>(new Set());
 
   const siteId = ctx.profile?.siteIds?.[0] ?? null;
 
@@ -334,26 +342,65 @@ export default function EducatorAiAuditRenderer({ ctx }: CustomRouteRendererProp
               {learners.map((l) => (
                 <li
                   key={l.id}
-                  className="flex items-center justify-between rounded-lg border border-app bg-app-surface p-3"
+                  className="rounded-lg border border-app bg-app-surface"
                 >
-                  <div>
-                    <span className="text-sm font-medium text-app-foreground">
-                      {l.displayName}
-                    </span>
-                    {l.email && (
-                      <span className="ml-2 text-xs text-app-muted">({l.email})</span>
-                    )}
-                  </div>
-                  <div className="flex gap-2 text-xs text-app-muted">
-                    {l.stageId && (
-                      <span className="rounded-full bg-app-canvas px-2 py-0.5">
-                        {l.stageId}
+                  <div className="flex items-center justify-between p-3">
+                    <div>
+                      <span className="text-sm font-medium text-app-foreground">
+                        {l.displayName}
                       </span>
-                    )}
-                    <span className="rounded-full bg-app-canvas px-2 py-0.5">
-                      Tier {getTierForStage(l.stageId ?? undefined)}
-                    </span>
+                      {l.email && (
+                        <span className="ml-2 text-xs text-app-muted">({l.email})</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-app-muted">
+                      {l.stageId && (
+                        <span className="rounded-full bg-app-canvas px-2 py-0.5">
+                          {l.stageId}
+                        </span>
+                      )}
+                      <span className="rounded-full bg-app-canvas px-2 py-0.5">
+                        Tier {getTierForStage(l.stageId ?? undefined)}
+                      </span>
+                      {motivationSavedIds.has(l.id) ? (
+                        <span className="rounded-full bg-green-100 px-2 py-0.5 text-green-700">
+                          ✓ Saved
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setOpenMotivationId((prev) => (prev === l.id ? null : l.id))
+                          }
+                          className="rounded-full bg-indigo-50 px-2 py-0.5 text-indigo-700 hover:bg-indigo-100"
+                          data-testid={`log-motivation-${l.id}`}
+                        >
+                          {openMotivationId === l.id ? 'Cancel' : 'Log motivation'}
+                        </button>
+                      )}
+                    </div>
                   </div>
+                  {openMotivationId === l.id && siteId && (
+                    <div
+                      className="border-t border-app p-4"
+                      data-testid={`motivation-form-${l.id}`}
+                    >
+                      <EducatorFeedbackForm
+                        learnerId={l.id}
+                        learnerName={l.displayName}
+                        siteId={siteId}
+                        onSuccess={() => {
+                          setMotivationSavedIds((prev) => {
+                          const next = new Set(prev);
+                          next.add(l.id);
+                          return next;
+                        });
+                          setOpenMotivationId(null);
+                        }}
+                        onCancel={() => setOpenMotivationId(null)}
+                      />
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>
