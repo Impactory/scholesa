@@ -16,6 +16,7 @@ import {
 } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { firestore, functions } from '@/src/firebase/client-init';
+import { rubricTemplatesCollection } from '@/src/firebase/firestore/collections';
 import { Spinner } from '@/src/components/ui/Spinner';
 import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import {
@@ -24,6 +25,7 @@ import {
   type RubricCriterion,
   type RubricLevel as RubricLevelType,
 } from '@/src/lib/ai/rubricManager';
+import type { RubricTemplate } from '@/src/types/schema';
 import type { CustomRouteRendererProps } from '../customRouteRenderers';
 
 // ---------------------------------------------------------------------------

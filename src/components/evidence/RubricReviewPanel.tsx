@@ -90,7 +90,7 @@ export function RubricReviewPanel({
     void (async () => {
       try {
         const snap = await getDocs(
-          query(rubricTemplatesCollection, where('status', '==', 'published'))
+          query(rubricTemplatesCollection, where('siteId', '==', siteId), where('status', '==', 'published'))
         );
         setTemplates(snap.docs.map((d) => ({ ...d.data(), id: d.id })));
       } catch (err) {
@@ -105,7 +105,7 @@ export function RubricReviewPanel({
     void (async () => {
       try {
         const snap = await getDocs(
-          query(processDomainsCollection, where('status', '==', 'active'))
+          query(processDomainsCollection, where('siteId', '==', siteId), where('status', '==', 'active'))
         );
         setProcessDomains(snap.docs.map((d) => ({ ...d.data(), id: d.id }) as ProcessDomain));
       } catch (err) {
