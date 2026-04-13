@@ -456,6 +456,86 @@ export function LearnerEvidenceSubmission() {
           </div>
         )}
 
+        {/* Revisions needing attention */}
+        {revisions.length > 0 && (
+          <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 space-y-3" data-testid="revision-queue">
+            <div className="flex items-center gap-2">
+              <span className="rounded bg-amber-200 px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-amber-900">
+                {revisions.length} revision{revisions.length !== 1 ? 's' : ''} needed
+              </span>
+              <span className="text-sm text-amber-800">
+                Your educator has asked you to revise and resubmit
+              </span>
+            </div>
+
+            {revisions.map((rev) => (
+              <div
+                key={rev.id}
+                className="rounded-lg border border-amber-200 bg-white p-4 space-y-3"
+                data-testid={`revision-item-${rev.id}`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <h3 className="text-sm font-semibold text-app-foreground">{rev.missionTitle}</h3>
+                    {rev.revisionRequestedAt && (
+                      <span className="text-xs text-app-muted">
+                        Requested {rev.revisionRequestedAt.toLocaleDateString()}
+                      </span>
+                    )}
+                  </div>
+                  <span className="shrink-0 rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800">
+                    Needs revision
+                  </span>
+                </div>
+
+                {/* Educator feedback */}
+                <div className="rounded-md border border-blue-200 bg-blue-50 p-3">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-blue-600">
+                    Educator feedback
+                  </span>
+                  <p className="mt-1 text-sm text-blue-900">{rev.revisionFeedback}</p>
+                </div>
+
+                {/* Original submission preview */}
+                {rev.content && (
+                  <div className="rounded-md border border-gray-200 bg-gray-50 p-3">
+                    <span className="text-xs font-medium text-app-muted">Your original submission</span>
+                    <p className="mt-1 text-sm text-app-foreground line-clamp-3">{rev.content}</p>
+                  </div>
+                )}
+
+                {/* Revision editor */}
+                <label className="block space-y-1">
+                  <span className="text-xs font-medium text-app-muted">Your revised response *</span>
+                  <textarea
+                    data-testid={`revision-editor-${rev.id}`}
+                    value={revisionEdits[rev.id] ?? rev.content}
+                    onChange={(e) =>
+                      setRevisionEdits((prev) => ({ ...prev, [rev.id]: e.target.value }))
+                    }
+                    className="w-full rounded-md border border-app bg-app-canvas px-3 py-2 text-sm text-app-foreground min-h-28"
+                    placeholder="Revise your work based on the feedback above..."
+                  />
+                </label>
+
+                <button
+                  type="button"
+                  data-testid={`revision-submit-${rev.id}`}
+                  disabled={
+                    resubmitting === rev.id ||
+                    !(revisionEdits[rev.id]?.trim()) ||
+                    revisionEdits[rev.id]?.trim() === rev.content.trim()
+                  }
+                  onClick={() => void handleResubmit(rev.id)}
+                  className="rounded-md bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 disabled:opacity-50"
+                >
+                  {resubmitting === rev.id ? 'Resubmitting...' : 'Resubmit for Review'}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Tab selector */}
         <div className="flex gap-1 rounded-lg bg-app-surface p-1" data-testid="submission-tabs">
           <button
