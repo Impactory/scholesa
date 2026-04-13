@@ -127,6 +127,16 @@ export interface MissionPlan {
   pillarEmphasis: PillarCode[];
 }
 
+export interface RevisionHistoryEntry {
+  round: number;
+  educatorFeedback: string;
+  educatorId: string;
+  requestedAt: Timestamp;
+  previousContent: string;
+  resubmittedContent?: string;
+  resubmittedAt?: Timestamp;
+}
+
 export interface MissionAttempt {
   id: string;
   learnerId: string;
@@ -155,6 +165,8 @@ export interface MissionAttempt {
   revisionFeedback?: string;
   revisionRequestedBy?: string;
   revisionRequestedAt?: Timestamp;
+  revisionHistory?: RevisionHistoryEntry[];
+  revisionRound?: number;
 }
 
 export interface Reflection {

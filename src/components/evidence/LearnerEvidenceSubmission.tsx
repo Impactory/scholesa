@@ -22,7 +22,7 @@ import {
 import { useCapabilities } from '@/src/lib/capabilities/useCapabilities';
 import { RoleRouteGuard } from '@/src/components/auth/RoleRouteGuard';
 import { Spinner } from '@/src/components/ui/Spinner';
-import type { PortfolioItem, LearnerReflection, Mission, MissionAttempt, PillarCode } from '@/src/types/schema';
+import type { PortfolioItem, LearnerReflection, Mission, PillarCode } from '@/src/types/schema';
 
 type SubmitTab = 'artifact' | 'reflection' | 'checkpoint';
 
@@ -37,6 +37,15 @@ interface PortfolioEntry {
   proofOfLearningStatus?: string;
 }
 
+interface RevisionHistoryDisplay {
+  round: number;
+  educatorFeedback: string;
+  previousContent: string;
+  requestedAt: Date | null;
+  resubmittedContent?: string;
+  resubmittedAt?: Date | null;
+}
+
 interface RevisionItem {
   id: string;
   missionId: string;
@@ -44,6 +53,8 @@ interface RevisionItem {
   content: string;
   revisionFeedback: string;
   revisionRequestedAt: Date | null;
+  revisionRound: number;
+  revisionHistory: RevisionHistoryDisplay[];
   attachmentUrls: string[];
   aiAssistanceUsed: boolean;
   aiAssistanceDetails?: string;
@@ -153,6 +164,20 @@ export function LearnerEvidenceSubmission() {
       const items: RevisionItem[] = snap.docs.map((d) => {
         const data = d.data() as unknown as Record<string, unknown>;
         const reqAt = data.revisionRequestedAt as { toDate?: () => Date } | undefined;
+        const toDate = (v: unknown): Date | null => {
+          if (!v) return null;
+          const ts = v as { toDate?: () => Date };
+          return ts.toDate?.() ?? null;
+        };
+        const rawHistory = Array.isArray(data.revisionHistory) ? data.revisionHistory : [];
+        const history: RevisionHistoryDisplay[] = (rawHistory as Record<string, unknown>[]).map((entry) => ({
+          round: typeof entry.round === 'number' ? entry.round : 0,
+          educatorFeedback: typeof entry.educatorFeedback === 'string' ? entry.educatorFeedback : '',
+          previousContent: typeof entry.previousContent === 'string' ? entry.previousContent : '',
+          requestedAt: toDate(entry.requestedAt),
+          resubmittedContent: typeof entry.resubmittedContent === 'string' ? entry.resubmittedContent : undefined,
+          resubmittedAt: entry.resubmittedAt ? toDate(entry.resubmittedAt) : undefined,
+        }));
         return {
           id: d.id,
           missionId: (data.missionId as string) ?? '',
@@ -160,6 +185,8 @@ export function LearnerEvidenceSubmission() {
           content: (data.content as string) ?? '',
           revisionFeedback: (data.revisionFeedback as string) ?? '',
           revisionRequestedAt: reqAt?.toDate?.() ?? null,
+          revisionRound: typeof data.revisionRound === 'number' ? data.revisionRound : 0,
+          revisionHistory: history,
           attachmentUrls: (data.attachmentUrls as string[]) ?? [],
           aiAssistanceUsed: Boolean(data.aiAssistanceUsed),
           aiAssistanceDetails: (data.aiAssistanceDetails as string) ?? undefined,
@@ -188,13 +215,34 @@ export function LearnerEvidenceSubmission() {
     setResubmitting(revisionId);
     setSuccessMessage(null);
     try {
-      await updateDoc(doc(missionAttemptsCollection, revisionId), {
+      // Read current doc to get the history array so we can stamp the resubmission
+      const revItem = revisions.find((r) => r.id === revisionId);
+      const updatedHistory = revItem?.revisionHistory
+        ? revItem.revisionHistory.map((entry, i, arr) => {
+            if (i === arr.length - 1) {
+              // Stamp the most recent entry with the resubmission
+              return {
+                ...entry,
+                resubmittedContent: newContent,
+                resubmittedAt: serverTimestamp(),
+              };
+            }
+            return entry;
+          })
+        : [];
+
+      const updatePayload: Record<string, unknown> = {
         status: 'submitted',
         content: newContent,
         revisionFeedback: '',
         updatedAt: serverTimestamp(),
         submittedAt: serverTimestamp(),
-      } as Partial<MissionAttempt>);
+      };
+      if (updatedHistory.length > 0) {
+        updatePayload.revisionHistory = updatedHistory;
+      }
+
+      await updateDoc(doc(missionAttemptsCollection, revisionId), updatePayload);
 
       setSuccessMessage('Revision resubmitted for review!');
       setRevisionEdits((prev) => {
@@ -484,7 +532,7 @@ export function LearnerEvidenceSubmission() {
                     )}
                   </div>
                   <span className="shrink-0 rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800">
-                    Needs revision
+                    {rev.revisionRound > 1 ? `Round ${rev.revisionRound}` : 'Needs revision'}
                   </span>
                 </div>
 
@@ -496,10 +544,30 @@ export function LearnerEvidenceSubmission() {
                   <p className="mt-1 text-sm text-blue-900">{rev.revisionFeedback}</p>
                 </div>
 
+                {/* Prior revision rounds */}
+                {rev.revisionHistory.length > 1 && (
+                  <details className="rounded-md border border-gray-200 bg-gray-50">
+                    <summary className="cursor-pointer px-3 py-2 text-xs font-medium text-app-muted">
+                      Previous rounds ({rev.revisionHistory.length - 1})
+                    </summary>
+                    <div className="space-y-2 px-3 pb-3">
+                      {rev.revisionHistory.slice(0, -1).map((entry) => (
+                        <div key={entry.round} className="rounded border border-gray-100 bg-white p-2 space-y-1">
+                          <span className="text-xs font-medium text-app-muted">Round {entry.round}</span>
+                          <p className="text-xs text-blue-700">Feedback: {entry.educatorFeedback}</p>
+                          {entry.resubmittedContent && (
+                            <p className="text-xs text-green-700">Your revision: {entry.resubmittedContent}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                )}
+
                 {/* Original submission preview */}
                 {rev.content && (
                   <div className="rounded-md border border-gray-200 bg-gray-50 p-3">
-                    <span className="text-xs font-medium text-app-muted">Your original submission</span>
+                    <span className="text-xs font-medium text-app-muted">Your current submission</span>
                     <p className="mt-1 text-sm text-app-foreground line-clamp-3">{rev.content}</p>
                   </div>
                 )}

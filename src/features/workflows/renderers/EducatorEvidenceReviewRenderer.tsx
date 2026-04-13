@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import {
+  arrayUnion,
   collection,
   doc,
   getDoc,
@@ -41,6 +42,16 @@ const FALLBACK_LEVELS: { value: SimpleLevelName; score: number }[] = [
   { value: 'Advanced', score: 4 },
 ];
 
+interface RevisionHistoryItem {
+  round: number;
+  educatorFeedback: string;
+  educatorId: string;
+  requestedAt: string | null;
+  previousContent: string;
+  resubmittedContent?: string;
+  resubmittedAt?: string | null;
+}
+
 interface MissionAttempt {
   id: string;
   learnerId: string;
@@ -55,6 +66,8 @@ interface MissionAttempt {
   submittedAt: string | null;
   capabilityId: string | null;
   proofOfLearningStatus: string | null;
+  revisionRound: number;
+  revisionHistory: RevisionHistoryItem[];
 }
 
 interface LearnerInfo {
@@ -221,6 +234,18 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
           submittedAt: toIso(data.submittedAt),
           capabilityId: typeof data.capabilityId === 'string' ? data.capabilityId : null,
           proofOfLearningStatus: null, // populated below from linked portfolioItems
+          revisionRound: typeof data.revisionRound === 'number' ? data.revisionRound : 0,
+          revisionHistory: Array.isArray(data.revisionHistory)
+            ? (data.revisionHistory as Record<string, unknown>[]).map((entry) => ({
+                round: typeof entry.round === 'number' ? entry.round : 0,
+                educatorFeedback: typeof entry.educatorFeedback === 'string' ? entry.educatorFeedback : '',
+                educatorId: typeof entry.educatorId === 'string' ? entry.educatorId : '',
+                requestedAt: toIso(entry.requestedAt),
+                previousContent: typeof entry.previousContent === 'string' ? entry.previousContent : '',
+                resubmittedContent: typeof entry.resubmittedContent === 'string' ? entry.resubmittedContent : undefined,
+                resubmittedAt: entry.resubmittedAt ? toIso(entry.resubmittedAt) : undefined,
+              }))
+            : [],
         };
       });
 
@@ -675,16 +700,28 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
     if (!revisionFeedback.trim()) return;
     setSaving(attempt.id);
     try {
+      const nextRound = (attempt.revisionRound ?? 0) + 1;
+      const historyEntry = {
+        round: nextRound,
+        educatorFeedback: revisionFeedback.trim(),
+        educatorId: ctx.uid,
+        requestedAt: serverTimestamp(),
+        previousContent: attempt.content,
+      };
+
       await updateDoc(doc(firestore, 'missionAttempts', attempt.id), {
         status: 'revision',
         revisionFeedback: revisionFeedback.trim(),
         revisionRequestedBy: ctx.uid,
         revisionRequestedAt: serverTimestamp(),
+        revisionRound: nextRound,
+        revisionHistory: arrayUnion(historyEntry),
       });
 
       trackInteraction('feature_discovered', {
         cta: 'revision_requested',
         missionId: attempt.missionId,
+        revisionRound: nextRound,
       });
 
       setRevisionOpen(null);
@@ -837,6 +874,14 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
                           PoL: {attempt.proofOfLearningStatus === 'pending_review' ? 'ready for review' : attempt.proofOfLearningStatus}
                         </span>
                       )}
+                      {attempt.revisionRound > 0 && (
+                        <span
+                          className="rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-800"
+                          data-testid={`revision-badge-${attempt.id}`}
+                        >
+                          Resubmitted (round {attempt.revisionRound})
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -852,6 +897,44 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
                     </span>
                     <p className="mt-1 text-sm text-purple-800">{attempt.aiAssistanceDetails}</p>
                   </div>
+                )}
+
+                {/* Revision history */}
+                {attempt.revisionHistory.length > 0 && (
+                  <details
+                    className="rounded-lg border border-amber-200 bg-amber-50"
+                    data-testid={`revision-history-${attempt.id}`}
+                  >
+                    <summary className="cursor-pointer px-3 py-2 text-xs font-semibold uppercase tracking-wide text-amber-700">
+                      Revision history ({attempt.revisionHistory.length} round{attempt.revisionHistory.length !== 1 ? 's' : ''})
+                    </summary>
+                    <div className="space-y-3 px-3 pb-3">
+                      {attempt.revisionHistory.map((entry) => (
+                        <div key={entry.round} className="rounded-md border border-amber-100 bg-white p-3 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-medium text-amber-800">Round {entry.round}</span>
+                            {entry.requestedAt && (
+                              <span className="text-xs text-app-muted">{formatDate(entry.requestedAt)}</span>
+                            )}
+                          </div>
+                          <div className="rounded bg-blue-50 p-2">
+                            <span className="text-xs font-medium text-blue-600">Your feedback</span>
+                            <p className="mt-0.5 text-sm text-blue-900">{entry.educatorFeedback}</p>
+                          </div>
+                          <div className="rounded bg-gray-50 p-2">
+                            <span className="text-xs font-medium text-app-muted">Previous submission</span>
+                            <p className="mt-0.5 text-sm text-app-foreground line-clamp-3">{entry.previousContent}</p>
+                          </div>
+                          {entry.resubmittedContent && (
+                            <div className="rounded bg-green-50 p-2">
+                              <span className="text-xs font-medium text-green-600">Learner revision</span>
+                              <p className="mt-0.5 text-sm text-green-900 line-clamp-3">{entry.resubmittedContent}</p>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </details>
                 )}
 
                 {/* Submission content */}
