@@ -167,6 +167,10 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
   const [revisionOpen, setRevisionOpen] = useState<string | null>(null);
   const [revisionFeedback, setRevisionFeedback] = useState('');
 
+  // Review queue filter
+  type ReviewFilter = 'all' | 'resubmissions' | 'new';
+  const [reviewFilter, setReviewFilter] = useState<ReviewFilter>('all');
+
   // ---- Checkpoint review state ----
   interface CheckpointItem {
     id: string;
@@ -205,14 +209,18 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
   const [portfolioLoading, setPortfolioLoading] = useState(false);
   const [portfolioSaving, setPortfolioSaving] = useState<string | null>(null);
 
+  const educatorSiteId = ctx.profile?.studioId || ctx.profile?.siteIds?.[0] || '';
+
   // ---- Data loading ----
   const loadAttempts = useCallback(async () => {
+    if (!educatorSiteId) return;
     setLoading(true);
     setError(null);
     try {
       const snap = await getDocs(
         query(
           collection(firestore, 'missionAttempts'),
+          where('siteId', '==', educatorSiteId),
           where('status', 'in', ['submitted', 'pending_review']),
           orderBy('submittedAt', 'desc')
         )
@@ -339,7 +347,7 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [educatorSiteId]);
 
   useEffect(() => {
     void loadAttempts();
@@ -347,11 +355,13 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
 
   // ---- Checkpoint loading ----
   const loadCheckpoints = useCallback(async () => {
+    if (!educatorSiteId) return;
     setCheckpointLoading(true);
     try {
       const snap = await getDocs(
         query(
           collection(firestore, 'checkpointHistory'),
+          where('siteId', '==', educatorSiteId),
           where('status', '==', 'submitted'),
           orderBy('createdAt', 'desc')
         )
@@ -377,7 +387,7 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
     } finally {
       setCheckpointLoading(false);
     }
-  }, []);
+  }, [educatorSiteId]);
 
   useEffect(() => {
     void loadCheckpoints();
@@ -385,14 +395,13 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
 
   // ---- Portfolio items loading (artifacts & reflections not linked to missionAttempts) ----
   const loadPortfolioQueue = useCallback(async () => {
-    const siteId = ctx.profile?.siteIds?.[0] || '';
-    if (!siteId) return;
+    if (!educatorSiteId) return;
     setPortfolioLoading(true);
     try {
       const snap = await getDocs(
         query(
           portfolioItemsCollection,
-          where('siteId', '==', siteId),
+          where('siteId', '==', educatorSiteId),
           where('verificationStatus', '==', 'pending'),
           orderBy('createdAt', 'desc')
         )
@@ -426,7 +435,7 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
     } finally {
       setPortfolioLoading(false);
     }
-  }, [ctx.profile?.siteIds]);
+  }, [educatorSiteId]);
 
   useEffect(() => {
     void loadPortfolioQueue();
@@ -743,10 +752,31 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
           Review learner mission submissions, apply rubrics, and record capability growth. Submissions
           awaiting your review appear below.
         </p>
-        <div className="mt-3 flex items-center gap-3">
+        <div className="mt-3 flex flex-wrap items-center gap-3">
           <span className="rounded-full bg-app-canvas px-3 py-1 text-xs font-medium text-app-muted">
             {attempts.length} pending
           </span>
+          {attempts.filter((a) => a.revisionRound > 0).length > 0 && (
+            <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800">
+              {attempts.filter((a) => a.revisionRound > 0).length} resubmission{attempts.filter((a) => a.revisionRound > 0).length !== 1 ? 's' : ''}
+            </span>
+          )}
+          <div className="flex gap-1 rounded-lg bg-app-canvas p-0.5" data-testid="review-filter">
+            {(['all', 'resubmissions', 'new'] as const).map((f) => (
+              <button
+                key={f}
+                type="button"
+                onClick={() => setReviewFilter(f)}
+                className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                  reviewFilter === f
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-app-muted hover:text-app-foreground'
+                }`}
+              >
+                {f === 'all' ? 'All' : f === 'resubmissions' ? 'Resubmissions' : 'New'}
+              </button>
+            ))}
+          </div>
           <button
             type="button"
             onClick={() => void loadAttempts()}
@@ -790,7 +820,18 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
         </div>
       )}
 
-      {loading ? (
+      {!educatorSiteId ? (
+        <div
+          className="rounded-xl border border-amber-200 bg-amber-50 p-8 text-center text-sm text-amber-900"
+          data-testid="no-site-state"
+        >
+          <p className="font-semibold">No site assigned</p>
+          <p className="mt-1 text-amber-700">
+            Your account is not linked to a site yet. Ask your Admin-School to assign you so you can
+            review learner evidence.
+          </p>
+        </div>
+      ) : loading ? (
         <div
           className="flex min-h-[240px] items-center justify-center rounded-xl border border-app bg-app-surface"
           data-testid="loading-state"
@@ -809,7 +850,19 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
         </div>
       ) : (
         <ul className="space-y-4" data-testid="submissions-list">
-          {attempts.map((attempt: MissionAttempt) => {
+          {attempts
+            .filter((a) => {
+              if (reviewFilter === 'resubmissions') return a.revisionRound > 0;
+              if (reviewFilter === 'new') return a.revisionRound === 0;
+              return true;
+            })
+            .sort((a, b) => {
+              // Resubmissions float to top
+              if (a.revisionRound > 0 && b.revisionRound === 0) return -1;
+              if (a.revisionRound === 0 && b.revisionRound > 0) return 1;
+              return 0; // preserve Firestore order within each group
+            })
+            .map((attempt: MissionAttempt) => {
             const learner = learners[attempt.learnerId];
             const mission = missions[attempt.missionId];
             const isRubricOpen = rubricOpen === attempt.id;

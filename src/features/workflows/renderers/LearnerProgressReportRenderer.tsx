@@ -7,8 +7,11 @@
  * on /learner/today — giving learners their progress + intelligence surface.
  */
 
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
+import { getDocs, query, where, limit } from 'firebase/firestore';
+import { missionAttemptsCollection } from '@/src/firebase/firestore/collections';
 import type { CustomRouteRendererProps } from '../customRouteRenderers';
 import { BrainIcon, ChevronDownIcon, ChevronUpIcon, BarChart3Icon } from 'lucide-react';
 
@@ -28,10 +31,56 @@ const AICoachScreen = dynamic(
 
 export default function LearnerProgressReportRenderer({ ctx }: CustomRouteRendererProps) {
   const [showCoach, setShowCoach] = useState(false);
+  const [revisionCount, setRevisionCount] = useState(0);
   const siteId = ctx.profile?.siteIds?.[0] || '';
+
+  const checkRevisions = useCallback(async () => {
+    if (!ctx.uid) return;
+    try {
+      const snap = await getDocs(
+        query(
+          missionAttemptsCollection,
+          where('learnerId', '==', ctx.uid),
+          where('status', '==', 'revision'),
+          limit(20)
+        )
+      );
+      setRevisionCount(snap.size);
+    } catch {
+      // non-critical — don't block the page
+    }
+  }, [ctx.uid]);
+
+  useEffect(() => {
+    void checkRevisions();
+  }, [checkRevisions]);
 
   return (
     <div className="space-y-6">
+      {/* Revision alert */}
+      {revisionCount > 0 && (
+        <Link
+          href={`/${ctx.locale}/learner/portfolio`}
+          className="flex items-center justify-between rounded-xl border border-amber-300 bg-amber-50 p-4 hover:bg-amber-100 transition-colors"
+          data-testid="revision-alert"
+        >
+          <div className="flex items-center gap-3">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-200 text-sm font-bold text-amber-900">
+              {revisionCount}
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-amber-900">
+                {revisionCount === 1 ? 'Revision needed' : 'Revisions needed'}
+              </p>
+              <p className="text-xs text-amber-700">
+                Your educator has asked you to revise and resubmit
+              </p>
+            </div>
+          </div>
+          <span className="text-sm font-medium text-amber-800">View &rarr;</span>
+        </Link>
+      )}
+
       {/* Progress section */}
       <div>
         <div className="flex items-center gap-2 mb-2">

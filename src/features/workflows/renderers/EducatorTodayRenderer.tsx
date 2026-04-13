@@ -12,6 +12,10 @@ import {
   limit,
 } from 'firebase/firestore';
 import { firestore } from '@/src/firebase/client-init';
+import {
+  missionAttemptsCollection,
+  portfolioItemsCollection,
+} from '@/src/firebase/firestore/collections';
 import { Spinner } from '@/src/components/ui/Spinner';
 import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import type { CustomRouteRendererProps } from '../customRouteRenderers';
@@ -104,7 +108,7 @@ function QuickEvidenceCapture({
     setSubmitting(true);
     setSubmitError(null);
     try {
-      await addDoc(collection(firestore, 'evidenceRecords'), {
+      const evidenceRef = await addDoc(collection(firestore, 'evidenceRecords'), {
         learnerId,
         educatorId,
         siteId,
@@ -116,6 +120,33 @@ function QuickEvidenceCapture({
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
+
+      // When flagged as portfolio candidate, also create a linked portfolioItem
+      if (portfolioCandidate) {
+        try {
+          await addDoc(portfolioItemsCollection, {
+            learnerId,
+            siteId,
+            title: `Observation: ${trimmed.slice(0, 60)}${trimmed.length > 60 ? '...' : ''}`,
+            description: trimmed,
+            pillarCodes: [],
+            artifacts: [],
+            capabilityIds: [],
+            capabilityTitles: [],
+            evidenceRecordId: evidenceRef.id,
+            aiAssistanceUsed: false,
+            aiDisclosureStatus: 'not-available',
+            verificationStatus: 'pending',
+            proofOfLearningStatus: 'not-available',
+            source: 'educator_observation',
+            educatorId,
+            createdAt: serverTimestamp(),
+          } as Record<string, unknown>);
+        } catch (err) {
+          console.warn('Failed to create linked portfolio item:', err);
+        }
+      }
+
       onSuccess();
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Failed to save evidence.');
@@ -187,7 +218,12 @@ export default function EducatorTodayRenderer({ ctx }: CustomRouteRendererProps)
   const [selectedLearnerId, setSelectedLearnerId] = useState<string | null>(null);
   const [selectedLearnerName, setSelectedLearnerName] = useState('');
 
+  // Review queue counts
+  const [pendingReviewCount, setPendingReviewCount] = useState(0);
+  const [awaitingRevisionCount, setAwaitingRevisionCount] = useState(0);
+
   const siteId = ctx.profile?.siteIds?.[0] ?? null;
+  const educatorSiteId = ctx.profile?.studioId || siteId || '';
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -250,6 +286,40 @@ export default function EducatorTodayRenderer({ ctx }: CustomRouteRendererProps)
     void loadData();
   }, [loadData]);
 
+  // Load review queue counts
+  const loadQueueCounts = useCallback(async () => {
+    if (!educatorSiteId) return;
+    try {
+      const [pendingSnap, revisionSnap] = await Promise.all([
+        getDocs(
+          query(
+            missionAttemptsCollection,
+            where('siteId', '==', educatorSiteId),
+            where('status', 'in', ['submitted', 'pending_review']),
+            limit(50)
+          )
+        ),
+        getDocs(
+          query(
+            missionAttemptsCollection,
+            where('siteId', '==', educatorSiteId),
+            where('status', '==', 'revision'),
+            where('revisionRequestedBy', '==', ctx.uid),
+            limit(50)
+          )
+        ),
+      ]);
+      setPendingReviewCount(pendingSnap.size);
+      setAwaitingRevisionCount(revisionSnap.size);
+    } catch {
+      // non-critical
+    }
+  }, [educatorSiteId, ctx.uid]);
+
+  useEffect(() => {
+    void loadQueueCounts();
+  }, [loadQueueCounts]);
+
   const handleOpenObservation = (learner: LearnerOption) => {
     setSelectedLearnerId(learner.id);
     setSelectedLearnerName(learner.displayName);
@@ -306,6 +376,50 @@ export default function EducatorTodayRenderer({ ctx }: CustomRouteRendererProps)
           Verify Portfolios
         </a>
       </div>
+
+      {/* Review queue status */}
+      {(pendingReviewCount > 0 || awaitingRevisionCount > 0) && (
+        <div className="flex flex-wrap gap-3" data-testid="queue-status">
+          {pendingReviewCount > 0 && (
+            <a
+              href={`/${ctx.locale}/educator/missions/review`}
+              className="flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 p-4 hover:bg-blue-100 transition-colors flex-1 min-w-[200px]"
+              data-testid="pending-review-link"
+            >
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-200 text-sm font-bold text-blue-900">
+                {pendingReviewCount}
+              </span>
+              <div>
+                <p className="text-sm font-semibold text-blue-900">
+                  {pendingReviewCount === 1 ? 'Submission' : 'Submissions'} awaiting review
+                </p>
+                <p className="text-xs text-blue-700">Tap to open evidence review</p>
+              </div>
+            </a>
+          )}
+          {awaitingRevisionCount > 0 && (
+            <a
+              href={`/${ctx.locale}/educator/missions/review`}
+              className="flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 hover:bg-amber-100 transition-colors flex-1 min-w-[200px]"
+              data-testid="awaiting-revision-link"
+            >
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-200 text-sm font-bold text-amber-900">
+                {awaitingRevisionCount}
+              </span>
+              <div>
+                <p className="text-sm font-semibold text-amber-900">
+                  Awaiting learner revision
+                </p>
+                <p className="text-xs text-amber-700">
+                  {awaitingRevisionCount === 1
+                    ? 'You requested a revision — waiting for the learner'
+                    : `You requested ${awaitingRevisionCount} revisions — waiting for learners`}
+                </p>
+              </div>
+            </a>
+          )}
+        </div>
+      )}
 
       {error && (
         <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">

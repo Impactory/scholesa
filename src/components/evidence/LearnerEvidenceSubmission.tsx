@@ -244,6 +244,28 @@ export function LearnerEvidenceSubmission() {
 
       await updateDoc(doc(missionAttemptsCollection, revisionId), updatePayload);
 
+      // Sync linked portfolioItem so portfolio reflects the revised content
+      try {
+        const linkedSnap = await getDocs(
+          query(
+            portfolioItemsCollection,
+            where('missionAttemptId', '==', revisionId),
+            limit(1)
+          )
+        );
+        if (!linkedSnap.empty) {
+          const piDoc = linkedSnap.docs[0];
+          await updateDoc(doc(portfolioItemsCollection, piDoc.id), {
+            description: newContent,
+            verificationStatus: 'pending',
+            updatedAt: serverTimestamp(),
+          } as Partial<PortfolioItem>);
+        }
+      } catch (err) {
+        // Non-critical — portfolio sync failure shouldn't block the resubmission
+        console.warn('Failed to sync linked portfolio item:', err);
+      }
+
       setSuccessMessage('Revision resubmitted for review!');
       setRevisionEdits((prev) => {
         const next = { ...prev };
