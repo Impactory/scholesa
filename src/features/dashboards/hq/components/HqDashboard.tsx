@@ -95,7 +95,7 @@ export function HqDashboard() {
         </Card>
       </div>
 
-      <h2 className="text-2xl font-bold mb-4">The 3 Pillars</h2>
+      <h2 className="text-2xl font-bold mb-4">Legacy Curriculum Families</h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {pillars.map((pillar) => (
           <Card key={pillar.id} className="p-6">

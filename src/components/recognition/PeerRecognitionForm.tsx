@@ -72,7 +72,7 @@ export function PeerRecognitionForm({
           message: message.trim(),
           isPublic: true
         },
-        5 // giverGrade - K-9, using 5 as default
+        5 // Default to the Builders band when no grade context is available
       );
       
       // Track recognition event

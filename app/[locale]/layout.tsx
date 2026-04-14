@@ -3,7 +3,7 @@ import { LocaleDocumentSync } from '@/src/lib/i18n/LocaleDocumentSync';
 
 export const metadata: Metadata = {
   title: 'Scholesa',
-  description: 'Future Skills Academy',
+  description: 'K-12 skills-first learning OS',
 };
 
 export default async function LocaleLayout({

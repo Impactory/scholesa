@@ -13,6 +13,11 @@ import {
 import { firestore } from '@/src/firebase/client-init';
 import { Spinner } from '@/src/components/ui/Spinner';
 import { useInteractionTracking } from '@/src/hooks/useTelemetry';
+import {
+  getLegacyPillarCompatibilityNote,
+  getLegacyPillarFamilyLabel,
+  normalizeLegacyPillarCode,
+} from '@/src/lib/curriculum/architecture';
 import type { CustomRouteRendererProps } from '../customRouteRenderers';
 
 // ---------------------------------------------------------------------------
@@ -58,14 +63,6 @@ interface PillarSummary {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-
-const PILLAR_LABELS: Record<string, string> = {
-  FUTURE_SKILLS: 'Future Skills',
-  LEADERSHIP_AGENCY: 'Leadership & Agency',
-  IMPACT_INNOVATION: 'Impact & Innovation',
-};
-
 function toIso(value: unknown): string | null {
   if (
     value &&
@@ -167,9 +164,10 @@ export default function HqCapabilityAnalyticsRenderer({ ctx: _ctx }: CustomRoute
         const pillar = cap?.pillarCode ?? 'FUTURE_SKILLS';
 
         if (!pillarMap[pillar]) {
+          const normalizedPillar = normalizeLegacyPillarCode(pillar);
           pillarMap[pillar] = {
             pillarCode: pillar,
-            label: PILLAR_LABELS[pillar] || pillar,
+            label: normalizedPillar ? getLegacyPillarFamilyLabel(normalizedPillar) : pillar,
             capabilityCount: 0,
             learnerCount: 0,
             distribution: { emerging: 0, developing: 0, proficient: 0, advanced: 0 },
@@ -245,7 +243,8 @@ export default function HqCapabilityAnalyticsRenderer({ ctx: _ctx }: CustomRoute
       <header className="rounded-xl border border-app bg-app-surface-raised p-6">
         <h1 className="text-2xl font-bold text-app-foreground">Capability Analytics</h1>
         <p className="mt-2 text-sm text-app-muted">
-          Platform-wide capability mastery distribution, growth trends, and evidence coverage.
+          Platform-wide capability mastery distribution, growth trends, and evidence coverage across
+          legacy curriculum families.
         </p>
         <div className="mt-3 flex items-center gap-3">
           <button
@@ -292,21 +291,25 @@ export default function HqCapabilityAnalyticsRenderer({ ctx: _ctx }: CustomRoute
               <p className="text-2xl font-bold text-app-foreground">
                 {pillarSummaries.length}
               </p>
-              <p className="text-xs text-app-muted">Pillars Active</p>
+              <p className="text-xs text-app-muted">Legacy Families Active</p>
             </div>
           </div>
 
-          {/* Pillar Breakdown */}
+          {/* Legacy Family Breakdown */}
           <div className="space-y-4" data-testid="pillar-breakdown">
             <h2 className="text-lg font-semibold text-app-foreground">
-              Mastery by Pillar
+              Mastery by Legacy Family
             </h2>
+            <p className="text-sm text-app-muted">
+              These compatibility buckets roll up the live six-strand curriculum.
+            </p>
             {pillarSummaries.length === 0 ? (
               <p className="text-sm text-app-muted">
                 No capability mastery data recorded yet.
               </p>
             ) : (
               pillarSummaries.map((pillar) => {
+                const compatibilityNote = getLegacyPillarCompatibilityNote(pillar.pillarCode);
                 const total =
                   pillar.distribution.emerging +
                   pillar.distribution.developing +
@@ -328,6 +331,9 @@ export default function HqCapabilityAnalyticsRenderer({ ctx: _ctx }: CustomRoute
                           {pillar.learnerCount} learners &middot;{' '}
                           {pillar.recentGrowthCount} recent growth events
                         </p>
+                        {compatibilityNote && (
+                          <p className="mt-1 text-xs text-app-muted">{compatibilityNote}</p>
+                        )}
                       </div>
                       <span className="rounded-full bg-app-canvas px-3 py-1 text-sm font-semibold text-app-foreground">
                         {pillar.avgScore.toFixed(1)} avg

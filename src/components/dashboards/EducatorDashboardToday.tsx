@@ -16,6 +16,7 @@ import {
   capabilityMasteryCollection,
 } from '@/src/firebase/firestore/collections';
 import { Spinner } from '@/src/components/ui/Spinner';
+import { LEGACY_PILLAR_ORDER, getLegacyPillarFamilyLabel } from '@/src/lib/curriculum/architecture';
 import type { EvidenceRecord, CapabilityMastery, PillarCode } from '@/src/types/schema';
 
 interface SessionInfo {
@@ -38,10 +39,10 @@ interface PillarSnapshot {
   learnerCount: number;
 }
 
-const PILLAR_LABELS: Record<PillarCode, string> = {
-  FUTURE_SKILLS: 'Future Skills',
-  LEADERSHIP_AGENCY: 'Leadership & Agency',
-  IMPACT_INNOVATION: 'Impact & Innovation',
+const LEGACY_FAMILY_LABELS: Record<PillarCode, string> = {
+  FUTURE_SKILLS: getLegacyPillarFamilyLabel('FUTURE_SKILLS'),
+  LEADERSHIP_AGENCY: getLegacyPillarFamilyLabel('LEADERSHIP_AGENCY'),
+  IMPACT_INNOVATION: getLegacyPillarFamilyLabel('IMPACT_INNOVATION'),
 };
 
 export function EducatorDashboardToday() {
@@ -127,15 +128,15 @@ export function EducatorDashboardToday() {
           pillarMap.set(pc, entry);
         }
 
-        const snapshots: PillarSnapshot[] = (['FUTURE_SKILLS', 'LEADERSHIP_AGENCY', 'IMPACT_INNOVATION'] as PillarCode[]).map((pc) => {
+        const snapshots: PillarSnapshot[] = LEGACY_PILLAR_ORDER.map((pc) => {
           const data = pillarMap.get(pc);
           if (!data || data.levels.length === 0) {
-            return { pillarCode: pc, label: PILLAR_LABELS[pc], averageLevel: 0, learnerCount: 0 };
+            return { pillarCode: pc, label: LEGACY_FAMILY_LABELS[pc], averageLevel: 0, learnerCount: 0 };
           }
           const avg = data.levels.reduce((a, b) => a + b, 0) / data.levels.length;
           return {
             pillarCode: pc,
-            label: PILLAR_LABELS[pc],
+            label: LEGACY_FAMILY_LABELS[pc],
             averageLevel: Math.round(avg * 10) / 10,
             learnerCount: data.learnerIds.size,
           };
@@ -194,7 +195,7 @@ export function EducatorDashboardToday() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Educator Dashboard</h1>
         <p className="mt-1 text-sm text-gray-500">
-          Your sessions, review queue, and class capability snapshot.
+          Your sessions, review queue, and class legacy family snapshot.
         </p>
       </div>
 
@@ -252,7 +253,10 @@ export function EducatorDashboardToday() {
 
       {/* Class Capability Snapshot */}
       <section>
-        <h2 className="text-lg font-semibold text-gray-900 mb-3">Class Capability Snapshot</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-1">Class Legacy Family Snapshot</h2>
+        <p className="mb-3 text-sm text-gray-500">
+          Compatibility roll-up of the live six-strand curriculum.
+        </p>
         <div className="grid gap-3 sm:grid-cols-3">
           {pillarSnapshots.map((ps) => {
             const pct = Math.round((ps.averageLevel / 4) * 100);

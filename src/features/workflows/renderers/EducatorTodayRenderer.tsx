@@ -141,7 +141,7 @@ function QuickEvidenceCapture({
             source: 'educator_observation',
             educatorId,
             createdAt: serverTimestamp(),
-          } as Record<string, unknown>);
+          } as unknown as Omit<import('@/src/types/schema').PortfolioItem, 'id'>);
         } catch (err) {
           console.warn('Failed to create linked portfolio item:', err);
         }

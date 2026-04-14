@@ -1,17 +1,17 @@
 {
   "landing": {
-    "title": "Scholesa – 未来技能学院",
-    "subtitle": "面向 K–9 学习工作室和学校的操作系统。",
+    "title": "Scholesa – 技能優先學習作業系統",
+    "subtitle": "面向 K–12 學校和學習工作室的作業系統。",
     "tagline": "帶著目標學習。每天建立面向未來的能力。",
     "login": "登录",
     "loginCta": "登入",
     "register": "注册",
     "registerArrow": "註冊 →",
     "pillars": {
-      "title": "Scholesa 的三大支柱",
-      "future_skills": "未来技能",
-      "leadership_agency": "领导力与自主",
-      "impact_innovation": "影响力与创新"
+      "title": "Scholesa 課程架構",
+      "future_skills": "思考、創造與駕馭 AI",
+      "leadership_agency": "溝通與領導",
+      "impact_innovation": "為世界而建構"
     },
     "stakeholders": {
       "title": "一站式平台服务所有角色",

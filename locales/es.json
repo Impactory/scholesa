@@ -1,17 +1,17 @@
 {
   "landing": {
-    "title": "Scholesa – Academia de Habilidades Futuras",
-    "subtitle": "El sistema operativo para estudios y escuelas de aprendizaje K–9.",
+    "title": "Scholesa – Sistema de Aprendizaje Centrado en Habilidades",
+    "subtitle": "El sistema operativo para escuelas y estudios de aprendizaje K–12.",
     "tagline": "Aprende con propósito. Desarrolla habilidades para el futuro cada día.",
     "login": "Iniciar Sesión",
     "loginCta": "Iniciar sesión",
     "register": "Registrarse",
     "registerArrow": "Registrarse →",
     "pillars": {
-      "title": "Los 3 Pilares de Scholesa",
-      "future_skills": "Habilidades Futuras",
-      "leadership_agency": "Liderazgo y Agencia",
-      "impact_innovation": "Impacto e Innovación"
+      "title": "Arquitectura Curricular de Scholesa",
+      "future_skills": "Pensar, Crear y Navegar la IA",
+      "leadership_agency": "Comunicar y Liderar",
+      "impact_innovation": "Construir para el Mundo"
     },
     "stakeholders": {
       "title": "Una Plataforma para Cada Interesado",

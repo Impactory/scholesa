@@ -1,6 +1,6 @@
 # Scholesa Platform
 
-Scholesa is a capability-first evidence platform for K-9 learning studios and schools. Students are evaluated by what they can do, explain, improve, and demonstrate over time — not by marks or completion percentages. This repository contains the locale-first web app, the Flutter client, Firebase Gen 2 backend functions, a separate compliance operator, shared/generated packages, and the release and audit tooling that governs them.
+Scholesa is a capability-first evidence platform for K-12 schools and learning studios. Students are evaluated by what they can do, explain, improve, and demonstrate over time — not by marks or completion percentages. The canonical curriculum model is a four-stage journey from Discoverers to Innovators across six durable strands: Think, Make, Communicate, Lead, Navigate AI, and Build for the World. This repository contains the locale-first web app, the Flutter client, Firebase Gen 2 backend functions, a separate compliance operator, shared/generated packages, and the release and audit tooling that governs them.
 
 ## Current Platform Shape
 
@@ -18,6 +18,7 @@ Scholesa is a capability-first evidence platform for K-9 learning studios and sc
 - [docs/REPO_MAP.md](docs/REPO_MAP.md): current source-of-truth repo map
 - [docs/ROUTE_MODULE_MATRIX.md](docs/ROUTE_MODULE_MATRIX.md): web and Flutter route-to-module matrix
 - [docs/TRACEABILITY_MATRIX.md](docs/TRACEABILITY_MATRIX.md): requirement and verification coverage
+- [docs/76_CURRICULUM_ARCHITECTURE_ALIGNMENT.md](docs/76_CURRICULUM_ARCHITECTURE_ALIGNMENT.md): canonical repo alignment for the K-12 curriculum architecture
 - [docs/FEATURE_SET_E2E_EXECUTION_PLAN_2026-03-12.md](docs/FEATURE_SET_E2E_EXECUTION_PLAN_2026-03-12.md): execution plan used for current release evidence
 - [RC3_RELEASE_GATE_STANDARD_MARCH_8_2026.md](RC3_RELEASE_GATE_STANDARD_MARCH_8_2026.md): production release control policy
 - [tree.md](tree.md): pointer file to the current repo map docs

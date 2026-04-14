@@ -7,19 +7,19 @@ import '../widgets/scholesa_logo.dart';
 
 const Map<String, String> _landingZhCn = <String, String>{
   'Features': '功能',
-  'Pillars': '支柱',
+  'Curriculum': '课程体系',
   'For Schools': '面向学校',
     'Mission-based learning, MiloOS, portfolios, analytics, and offline support.':
       '任务式学习、MiloOS、作品集、分析与离线支持。',
-  'Future Skills, Leadership & Agency, and Impact & Innovation.':
-      '未来技能、领导力与自主性，以及影响力与创新。',
+  'Discoverers, Builders, Explorers, Innovators, and six capability strands.':
+      '发现者、建构者、探索者、创新者，以及六大能力主线。',
   'Role-based dashboards for learners, educators, parents, site teams, and HQ.':
       '为学习者、教育者、家长、站点团队和 HQ 提供按角色划分的仪表板。',
   'Sign In': '登录',
   'Education 2.0 Platform': '教育 2.0 平台',
   "Unlock Every\nLearner's Potential": '释放每位\n学习者的潜能',
-  'Scholesa empowers K-9 learning studios with mission-based education, habit coaching, and portfolio showcases—built on three pillars that prepare students for the future.':
-      'Scholesa 通过任务式教育、习惯教练和作品集展示赋能 K-9 学习工作室，并以三大支柱帮助学生面向未来。',
+  'Scholesa empowers K-12 schools with mission-based learning, evidence-rich portfolios, and stage-based AI governance.':
+      'Scholesa 通过任务式学习、证据型作品集和分阶段 AI 治理赋能 K-12 学校。',
   'Watch Demo': '观看演示',
   'Scholesa Demo': 'Scholesa 演示',
   'Demo walkthrough includes:\n• Role dashboards\n• CTA action flows\n• Mission and attendance lifecycle':
@@ -30,19 +30,22 @@ const Map<String, String> _landingZhCn = <String, String>{
   'Achievements': '成就',
   'Missions': '任务',
   'Community': '社区',
-  'The Three Pillars': '三大支柱',
+  'Four Stages, Six Strands': '四个阶段，六大能力主线',
   'Building Future-Ready Learners': '培养面向未来的学习者',
-  'Our curriculum is built on three foundational pillars that prepare students for success.':
-      '我们的课程建立在三大基础支柱之上，帮助学生迈向成功。',
-  'Future Skills': '未来技能',
-  "AI, coding, robotics, research, and digital literacy for tomorrow's world.":
-      '为未来世界准备的 AI、编程、机器人、研究与数字素养。',
-  'Leadership & Agency': '领导力与自主性',
-  'Self-direction, communication, collaboration, and decision-making skills.':
-      '培养自我驱动、沟通、协作与决策能力。',
-  'Impact & Innovation': '影响力与创新',
-  'Social responsibility, creative problem-solving, and community contribution.':
-      '社会责任、创造性解决问题与社区贡献。',
+  'A K-12 curriculum architecture that grows from discovery to innovation.':
+      '一个从发现到创新递进发展的 K-12 课程架构。',
+  'Discoverers': '发现者',
+  'Grades 1-3 • Story-rich invention studio with teacher-led AI demonstrations.':
+      '1-3 年级 • 以故事驱动的发明工作室，由教师主导 AI 示范。',
+  'Builders': '建构者',
+  'Grades 4-6 • Design-and-build labs with guided assistive AI use.':
+      '4-6 年级 • 以设计与建造实验室为核心，配合引导式 AI 辅助。',
+  'Explorers': '探索者',
+  'Grades 7-9 • Investigation labs focused on critique, bias checks, and verification.':
+      '7-9 年级 • 聚焦批判、偏差检查与验证的探究实验室。',
+  'Innovators': '创新者',
+  'Grades 10-12 • Pathway-based capstone studios with full audit trails.':
+      '10-12 年级 • 以方向路径驱动的毕业项目工作室，具备完整审计轨迹。',
   'PLATFORM FEATURES': '平台功能',
   'Everything You Need': '所需尽在其中',
   'Mission-Based Learning': '任务式学习',
@@ -65,19 +68,19 @@ const Map<String, String> _landingZhCn = <String, String>{
 
 const Map<String, String> _landingZhTw = <String, String>{
   'Features': '功能',
-  'Pillars': '支柱',
+  'Curriculum': '課程體系',
   'For Schools': '面向學校',
     'Mission-based learning, MiloOS, portfolios, analytics, and offline support.':
       '任務式學習、MiloOS、作品集、分析與離線支援。',
-  'Future Skills, Leadership & Agency, and Impact & Innovation.':
-      '未來技能、領導力與自主性，以及影響力與創新。',
+  'Discoverers, Builders, Explorers, Innovators, and six capability strands.':
+      '發現者、建構者、探索者、創新者，以及六大能力主線。',
   'Role-based dashboards for learners, educators, parents, site teams, and HQ.':
       '為學習者、教育者、家長、站點團隊和 HQ 提供按角色劃分的儀表板。',
   'Sign In': '登入',
   'Education 2.0 Platform': '教育 2.0 平台',
   "Unlock Every\nLearner's Potential": '釋放每位\n學習者的潛能',
-  'Scholesa empowers K-9 learning studios with mission-based education, habit coaching, and portfolio showcases—built on three pillars that prepare students for the future.':
-      'Scholesa 透過任務式教育、習慣教練和作品集展示賦能 K-9 學習工作室，並以三大支柱幫助學生面向未來。',
+  'Scholesa empowers K-12 schools with mission-based learning, evidence-rich portfolios, and stage-based AI governance.':
+      'Scholesa 透過任務式學習、證據型作品集和分階段 AI 治理賦能 K-12 學校。',
   'Watch Demo': '觀看示範',
   'Scholesa Demo': 'Scholesa 示範',
   'Demo walkthrough includes:\n• Role dashboards\n• CTA action flows\n• Mission and attendance lifecycle':
@@ -88,19 +91,22 @@ const Map<String, String> _landingZhTw = <String, String>{
   'Achievements': '成就',
   'Missions': '任務',
   'Community': '社群',
-  'The Three Pillars': '三大支柱',
+  'Four Stages, Six Strands': '四個階段，六大能力主線',
   'Building Future-Ready Learners': '培養面向未來的學習者',
-  'Our curriculum is built on three foundational pillars that prepare students for success.':
-      '我們的課程建立在三大基礎支柱之上，幫助學生邁向成功。',
-  'Future Skills': '未來技能',
-  "AI, coding, robotics, research, and digital literacy for tomorrow's world.":
-      '為未來世界準備的 AI、程式設計、機器人、研究與數位素養。',
-  'Leadership & Agency': '領導力與自主性',
-  'Self-direction, communication, collaboration, and decision-making skills.':
-      '培養自我驅動、溝通、協作與決策能力。',
-  'Impact & Innovation': '影響力與創新',
-  'Social responsibility, creative problem-solving, and community contribution.':
-      '社會責任、創造性解決問題與社群貢獻。',
+  'A K-12 curriculum architecture that grows from discovery to innovation.':
+      '一個從發現到創新遞進發展的 K-12 課程架構。',
+  'Discoverers': '發現者',
+  'Grades 1-3 • Story-rich invention studio with teacher-led AI demonstrations.':
+      '1-3 年級 • 以故事驅動的發明工作室，由教師主導 AI 示範。',
+  'Builders': '建構者',
+  'Grades 4-6 • Design-and-build labs with guided assistive AI use.':
+      '4-6 年級 • 以設計與建造實驗室為核心，搭配引導式 AI 輔助。',
+  'Explorers': '探索者',
+  'Grades 7-9 • Investigation labs focused on critique, bias checks, and verification.':
+      '7-9 年級 • 聚焦批判、偏差檢查與驗證的探究實驗室。',
+  'Innovators': '創新者',
+  'Grades 10-12 • Pathway-based capstone studios with full audit trails.':
+      '10-12 年級 • 以方向路徑驅動的畢業專題工作室，具備完整審計軌跡。',
   'PLATFORM FEATURES': '平台功能',
   'Everything You Need': '所需盡在其中',
   'Mission-Based Learning': '任務式學習',
@@ -131,7 +137,7 @@ String _tLanding(BuildContext context, String input) {
 }
 
 /// Landing Page - Public welcome page before login
-/// Showcases Scholesa's Education 2.0 platform with the 3 pillars
+/// Showcases Scholesa's K-12 curriculum architecture and platform model
 class LandingPage extends StatefulWidget {
   const LandingPage({super.key});
 
@@ -237,7 +243,7 @@ class _LandingPageState extends State<LandingPage>
                 ),
               ),
 
-              // Pillars Section
+              // Curriculum Section
               SliverToBoxAdapter(
                 child: FadeTransition(
                   opacity: _featuresFade,
@@ -318,11 +324,11 @@ class _LandingPageState extends State<LandingPage>
             ),
             const SizedBox(width: 32),
             _NavLink(
-              label: _tLanding(context, 'Pillars'),
+              label: _tLanding(context, 'Curriculum'),
               onTap: () => _showSectionPreview(
-                title: _tLanding(context, 'Pillars'),
+                title: _tLanding(context, 'Curriculum'),
                 detail: _tLanding(context,
-                    'Future Skills, Leadership & Agency, and Impact & Innovation.'),
+                    'Discoverers, Builders, Explorers, Innovators, and six capability strands.'),
               ),
             ),
             const SizedBox(width: 32),
@@ -437,7 +443,7 @@ class _LandingPageState extends State<LandingPage>
         const SizedBox(height: 24),
         Text(
           _tLanding(context,
-              'Scholesa empowers K-9 learning studios with mission-based education, habit coaching, and portfolio showcases—built on three pillars that prepare students for the future.'),
+              'Scholesa empowers K-12 schools with mission-based learning, evidence-rich portfolios, and stage-based AI governance.'),
           style: TextStyle(
             fontSize: 18,
             color: Colors.white.withValues(alpha: 0.7),
@@ -672,7 +678,7 @@ class _LandingPageState extends State<LandingPage>
         children: <Widget>[
           // Section header
           Text(
-            _tLanding(context, 'The Three Pillars'),
+            _tLanding(context, 'Four Stages, Six Strands'),
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -693,7 +699,7 @@ class _LandingPageState extends State<LandingPage>
           const SizedBox(height: 16),
           Text(
             _tLanding(context,
-                'Our curriculum is built on three foundational pillars that prepare students for success.'),
+                'A K-12 curriculum architecture that grows from discovery to innovation.'),
             style: TextStyle(
               fontSize: 16,
               color: Colors.white.withValues(alpha: 0.6),
@@ -701,71 +707,56 @@ class _LandingPageState extends State<LandingPage>
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 48),
-          // Pillar cards
-          isWide
-              ? Row(
-                  children: <Widget>[
-                    Expanded(
-                        child: _buildPillarCard(
-                      icon: Icons.computer_rounded,
-                        title: _tLanding(context, 'Future Skills'),
-                        description: _tLanding(context,
-                          'AI, coding, robotics, research, and digital literacy for tomorrow\'s world.'),
-                      color: ScholesaColors.futureSkills,
-                      emoji: '🚀',
-                    )),
-                    const SizedBox(width: 24),
-                    Expanded(
-                        child: _buildPillarCard(
-                      icon: Icons.psychology_rounded,
-                        title: _tLanding(context, 'Leadership & Agency'),
-                        description: _tLanding(context,
-                          'Self-direction, communication, collaboration, and decision-making skills.'),
-                      color: ScholesaColors.leadership,
-                      emoji: '👑',
-                    )),
-                    const SizedBox(width: 24),
-                    Expanded(
-                        child: _buildPillarCard(
-                      icon: Icons.public_rounded,
-                        title: _tLanding(context, 'Impact & Innovation'),
-                        description: _tLanding(context,
-                          'Social responsibility, creative problem-solving, and community contribution.'),
-                      color: ScholesaColors.impact,
-                      emoji: '🌍',
-                    )),
-                  ],
-                )
-              : Column(
-                  children: <Widget>[
-                    _buildPillarCard(
-                      icon: Icons.computer_rounded,
-                        title: _tLanding(context, 'Future Skills'),
-                        description: _tLanding(context,
-                          'AI, coding, robotics, research, and digital literacy for tomorrow\'s world.'),
-                      color: ScholesaColors.futureSkills,
-                      emoji: '🚀',
-                    ),
-                    const SizedBox(height: 24),
-                    _buildPillarCard(
-                      icon: Icons.psychology_rounded,
-                        title: _tLanding(context, 'Leadership & Agency'),
-                        description: _tLanding(context,
-                          'Self-direction, communication, collaboration, and decision-making skills.'),
-                      color: ScholesaColors.leadership,
-                      emoji: '👑',
-                    ),
-                    const SizedBox(height: 24),
-                    _buildPillarCard(
-                      icon: Icons.public_rounded,
-                        title: _tLanding(context, 'Impact & Innovation'),
-                        description: _tLanding(context,
-                          'Social responsibility, creative problem-solving, and community contribution.'),
-                      color: ScholesaColors.impact,
-                      emoji: '🌍',
-                    ),
-                  ],
+          Wrap(
+            spacing: 24,
+            runSpacing: 24,
+            children: <Widget>[
+              SizedBox(
+                width: isWide ? 320 : double.infinity,
+                child: _buildPillarCard(
+                  icon: Icons.auto_awesome_rounded,
+                  title: _tLanding(context, 'Discoverers'),
+                  description: _tLanding(context,
+                    'Grades 1-3 • Story-rich invention studio with teacher-led AI demonstrations.'),
+                  color: ScholesaColors.futureSkills,
+                  emoji: '✨',
                 ),
+              ),
+              SizedBox(
+                width: isWide ? 320 : double.infinity,
+                child: _buildPillarCard(
+                  icon: Icons.handyman_rounded,
+                  title: _tLanding(context, 'Builders'),
+                  description: _tLanding(context,
+                    'Grades 4-6 • Design-and-build labs with guided assistive AI use.'),
+                  color: ScholesaColors.leadership,
+                  emoji: '🛠️',
+                ),
+              ),
+              SizedBox(
+                width: isWide ? 320 : double.infinity,
+                child: _buildPillarCard(
+                  icon: Icons.travel_explore_rounded,
+                  title: _tLanding(context, 'Explorers'),
+                  description: _tLanding(context,
+                    'Grades 7-9 • Investigation labs focused on critique, bias checks, and verification.'),
+                  color: ScholesaColors.impact,
+                  emoji: '🧭',
+                ),
+              ),
+              SizedBox(
+                width: isWide ? 320 : double.infinity,
+                child: _buildPillarCard(
+                  icon: Icons.rocket_launch_rounded,
+                  title: _tLanding(context, 'Innovators'),
+                  description: _tLanding(context,
+                    'Grades 10-12 • Pathway-based capstone studios with full audit trails.'),
+                  color: ScholesaColors.primary,
+                  emoji: '🚀',
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );

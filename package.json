@@ -6,6 +6,7 @@
     "node": "24.x"
   },
   "scripts": {
+    "generate:curriculum-display": "node scripts/generate_curriculum_display.mjs",
     "icons:sync": "bash ./apps/empire_flutter/app/scripts/sync_platform_icons.sh",
     "predev": "npm run icons:sync",
     "prebuild": "npm run icons:sync",

@@ -16,8 +16,8 @@ describe('parent workflow wording availability', () => {
     const thaiLocale = JSON.parse(readRepoFile('packages', 'i18n', 'locales', 'th.json'));
 
     expect(workflowDataSource).toContain('title: `${learnerName} growth snapshot`');
-    expect(workflowDataSource).toContain('Future Skills ${futureSkills}');
-    expect(workflowDataSource).toContain('Impact & Innovation ${impact}');
+    expect(workflowDataSource).toContain('Think, Make & Navigate AI ${futureSkills}');
+    expect(workflowDataSource).toContain('Build for the World ${impact}');
     expect(workflowDataSource).toContain("'No verified growth evidence yet'");
     expect(workflowDataSource).toContain("status: capabilityBand || 'Evidence building'");
 

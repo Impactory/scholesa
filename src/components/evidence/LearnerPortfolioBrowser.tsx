@@ -5,13 +5,14 @@ import { getDocs, orderBy, query, where } from 'firebase/firestore';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { portfolioItemsCollection } from '@/src/firebase/firestore/collections';
 import { useCapabilities } from '@/src/lib/capabilities/useCapabilities';
+import { getLegacyPillarFamilyLabel } from '@/src/lib/curriculum/architecture';
 import { Spinner } from '@/src/components/ui/Spinner';
 import type { PortfolioItem, PillarCode } from '@/src/types/schema';
 
-const PILLAR_LABELS: Record<PillarCode, string> = {
-  FUTURE_SKILLS: 'Future Skills',
-  LEADERSHIP_AGENCY: 'Leadership & Agency',
-  IMPACT_INNOVATION: 'Impact & Innovation',
+const LEGACY_FAMILY_LABELS: Record<PillarCode, string> = {
+  FUTURE_SKILLS: getLegacyPillarFamilyLabel('FUTURE_SKILLS'),
+  LEADERSHIP_AGENCY: getLegacyPillarFamilyLabel('LEADERSHIP_AGENCY'),
+  IMPACT_INNOVATION: getLegacyPillarFamilyLabel('IMPACT_INNOVATION'),
 };
 
 type FilterVerification = 'all' | 'pending' | 'reviewed' | 'verified';
@@ -110,13 +111,13 @@ export function LearnerPortfolioBrowser() {
           <option value="verified">Verified</option>
         </select>
         <select
-          aria-label="Filter by pillar"
+          aria-label="Filter by legacy family"
           value={filterPillar}
           onChange={(e) => setFilterPillar(e.target.value as typeof filterPillar)}
           className="rounded-md border border-app bg-app-surface px-2 py-1 text-xs"
         >
-          <option value="all">All pillars</option>
-          {(Object.entries(PILLAR_LABELS) as [PillarCode, string][]).map(([code, label]) => (
+          <option value="all">All legacy families</option>
+          {(Object.entries(LEGACY_FAMILY_LABELS) as [PillarCode, string][]).map(([code, label]) => (
             <option key={code} value={code}>{label}</option>
           ))}
         </select>

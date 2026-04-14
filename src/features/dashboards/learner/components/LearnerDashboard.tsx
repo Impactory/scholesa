@@ -3,6 +3,7 @@ import { Card } from '@/src/components/ui/Card';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { doc, getDoc, collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
 import { firestore } from '@/src/firebase/client-init';
+import { LEGACY_PILLAR_ORDER, getLegacyPillarFamilyLabel } from '@/src/lib/curriculum/architecture';
 
 type PillarScores = {
   FUTURE_SKILLS: number | null;
@@ -14,6 +15,12 @@ const EMPTY_PILLAR_SCORES: PillarScores = {
   FUTURE_SKILLS: null,
   LEADERSHIP_AGENCY: null,
   IMPACT_INNOVATION: null,
+};
+
+const LEGACY_FAMILY_BAR_COLORS: Record<keyof PillarScores, string> = {
+  FUTURE_SKILLS: 'bg-green-500',
+  LEADERSHIP_AGENCY: 'bg-indigo-500',
+  IMPACT_INNOVATION: 'bg-purple-500',
 };
 
 function normalizeProgressMetric(value: unknown): number | null {
@@ -177,29 +184,25 @@ export function LearnerDashboard() {
         </Card>
       </div>
 
-      <h2 className="text-2xl font-bold mb-4">My Pillars</h2>
+      <h2 className="text-2xl font-bold mb-2">Legacy Curriculum Families</h2>
+      <p className="mb-4 text-sm text-gray-500">
+        These compatibility roll-ups group evidence from the live six-strand curriculum.
+      </p>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="p-6">
-          <h3 className="font-semibold mb-2">Future Skills</h3>
-          <div className="w-full bg-gray-200 rounded-full h-2.5">
-            <div className="bg-green-500 h-2.5 rounded-full" style={{ width: `${pillarScores.FUTURE_SKILLS ?? 0}%` }}></div>
-          </div>
-          <p className="text-right text-sm mt-1">{pillarScores.FUTURE_SKILLS != null ? `${pillarScores.FUTURE_SKILLS}%` : 'No evidence yet'}</p>
-        </Card>
-        <Card className="p-6">
-          <h3 className="font-semibold mb-2">Leadership & Agency</h3>
-          <div className="w-full bg-gray-200 rounded-full h-2.5">
-            <div className="bg-indigo-500 h-2.5 rounded-full" style={{ width: `${pillarScores.LEADERSHIP_AGENCY ?? 0}%` }}></div>
-          </div>
-          <p className="text-right text-sm mt-1">{pillarScores.LEADERSHIP_AGENCY != null ? `${pillarScores.LEADERSHIP_AGENCY}%` : 'No evidence yet'}</p>
-        </Card>
-        <Card className="p-6">
-          <h3 className="font-semibold mb-2">Impact & Innovation</h3>
-          <div className="w-full bg-gray-200 rounded-full h-2.5">
-            <div className="bg-purple-500 h-2.5 rounded-full" style={{ width: `${pillarScores.IMPACT_INNOVATION ?? 0}%` }}></div>
-          </div>
-          <p className="text-right text-sm mt-1">{pillarScores.IMPACT_INNOVATION != null ? `${pillarScores.IMPACT_INNOVATION}%` : 'No evidence yet'}</p>
-        </Card>
+        {LEGACY_PILLAR_ORDER.map((familyCode) => (
+          <Card key={familyCode} className="p-6">
+            <h3 className="font-semibold mb-2">{getLegacyPillarFamilyLabel(familyCode)}</h3>
+            <div className="w-full bg-gray-200 rounded-full h-2.5">
+              <div
+                className={`${LEGACY_FAMILY_BAR_COLORS[familyCode]} h-2.5 rounded-full`}
+                style={{ width: `${pillarScores[familyCode] ?? 0}%` }}
+              ></div>
+            </div>
+            <p className="text-right text-sm mt-1">
+              {pillarScores[familyCode] != null ? `${pillarScores[familyCode]}%` : 'No evidence yet'}
+            </p>
+          </Card>
+        ))}
       </div>
     </div>
   );

@@ -20,6 +20,10 @@ import { firestore } from '@/src/firebase/client-init';
 import { Spinner } from '@/src/components/ui/Spinner';
 import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import { useCapabilities } from '@/src/lib/capabilities/useCapabilities';
+import {
+  getLegacyPillarFamilyDisplayLabel,
+  normalizeLegacyPillarCode,
+} from '@/src/lib/curriculum/architecture';
 import type { CustomRouteRendererProps } from '../customRouteRenderers';
 
 // ---------------------------------------------------------------------------
@@ -75,9 +79,9 @@ interface GrowthEvent {
 }
 
 const DEFAULT_PILLAR_OPTIONS: { value: PillarCode; label: string }[] = [
-  { value: 'FUTURE_SKILLS', label: 'Future Skills' },
-  { value: 'LEADERSHIP_AGENCY', label: 'Leadership & Agency' },
-  { value: 'IMPACT_INNOVATION', label: 'Impact & Innovation' },
+  { value: 'FUTURE_SKILLS', label: getLegacyPillarFamilyDisplayLabel('FUTURE_SKILLS') },
+  { value: 'LEADERSHIP_AGENCY', label: getLegacyPillarFamilyDisplayLabel('LEADERSHIP_AGENCY') },
+  { value: 'IMPACT_INNOVATION', label: getLegacyPillarFamilyDisplayLabel('IMPACT_INNOVATION') },
 ];
 
 const AI_DISCLOSURE_OPTIONS: { value: AiDisclosure; label: string }[] = [
@@ -123,10 +127,7 @@ function pillarBadgeClass(code: string): string {
 }
 
 function pillarLabel(code: string): string {
-  const found = DEFAULT_PILLAR_OPTIONS.find((p) => p.value === code);
-  if (found) return found.label;
-  // Format unknown pillar codes as readable labels
-  return code.split('_').map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+  return getLegacyPillarFamilyDisplayLabel(code);
 }
 
 function verificationBadgeClass(status: VerificationStatus): string {
@@ -166,10 +167,7 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
     for (const c of capabilityList) {
       if (c.pillarCode && !seen.has(c.pillarCode)) {
         seen.add(c.pillarCode);
-        const label = c.pillarCode
-          .split('_')
-          .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-          .join(' ');
+        const label = getLegacyPillarFamilyDisplayLabel(c.pillarCode);
         dynamic.push({ value: c.pillarCode as PillarCode, label });
       }
     }
@@ -408,7 +406,10 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
   // ---- Group mastery by pillar ----
   const masteryByPillar = pillarOptions.map((pillar) => ({
     pillar,
-    items: masteries.filter((m: CapabilityMastery) => m.pillarCode === pillar.value),
+    items: masteries.filter(
+      (m: CapabilityMastery) =>
+        normalizeLegacyPillarCode(m.pillarCode) === normalizeLegacyPillarCode(pillar.value),
+    ),
   }));
 
   // ---- Render ----
@@ -452,6 +453,9 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
             data-testid="growth-summary"
           >
             <h2 className="text-lg font-semibold text-app-foreground">Growth Summary</h2>
+            <p className="text-sm text-app-muted">
+              Legacy family roll-up of the live six-strand curriculum.
+            </p>
 
             {masteries.length === 0 ? (
               <p className="text-sm text-app-muted" data-testid="growth-summary-empty">
@@ -576,7 +580,7 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
                   </label>
 
                   <label className="space-y-1">
-                    <span className="text-xs font-medium text-app-muted">Pillar *</span>
+                    <span className="text-xs font-medium text-app-muted">Legacy family *</span>
                     <select
                       value={newPillar}
                       onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setNewPillar(e.target.value as PillarCode)}

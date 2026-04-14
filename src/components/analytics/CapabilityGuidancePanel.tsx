@@ -12,15 +12,14 @@ import {
 } from '@/src/firebase/firestore/collections';
 import { Spinner } from '@/src/components/ui/Spinner';
 import { useCapabilities } from '@/src/lib/capabilities/useCapabilities';
+import {
+  LEGACY_PILLAR_ORDER,
+  getLegacyPillarFamilyLabel,
+  normalizeLegacyPillarCode,
+} from '@/src/lib/curriculum/architecture';
 import type { CapabilityMastery } from '@/src/types/schema';
 
 /* ───── Interpretation Maps ───── */
-
-const PILLAR_LABELS: Record<string, string> = {
-  future_skills: 'Future Skills',
-  leadership_agency: 'Leadership & Agency',
-  impact_innovation: 'Impact & Innovation',
-};
 
 const BAND_GUIDANCE: Record<string, { label: string; color: string; parentMessage: string; nextSteps: string }> = {
   strong: {
@@ -134,7 +133,8 @@ export function CapabilityGuidancePanel({ learnerId, siteId, learnerName }: Capa
   // Group mastery by pillar
   const pillarMap = new Map<string, { levels: number[]; evidenceCounts: number[]; latestDates: Date[] }>();
   for (const m of mastery) {
-    const pillar = m.pillarCode || 'unknown';
+    const pillar = normalizeLegacyPillarCode(m.pillarCode);
+    if (!pillar) continue;
     const entry = pillarMap.get(pillar) ?? { levels: [], evidenceCounts: [], latestDates: [] };
     entry.levels.push(MASTERY_LEVEL_SCORE[m.latestLevel] ?? 0);
     entry.evidenceCounts.push(m.evidenceIds?.length ?? 0);
@@ -145,12 +145,12 @@ export function CapabilityGuidancePanel({ learnerId, siteId, learnerName }: Capa
   }
 
   // Build pillar summaries
-  const pillars: PillarSummary[] = ['future_skills', 'leadership_agency', 'impact_innovation'].map((code) => {
+  const pillars: PillarSummary[] = LEGACY_PILLAR_ORDER.map((code) => {
     const data = pillarMap.get(code);
     if (!data || data.levels.length === 0) {
       return {
         pillarCode: code,
-        pillarLabel: PILLAR_LABELS[code] ?? code,
+        pillarLabel: getLegacyPillarFamilyLabel(code),
         averageLevel: 0,
         band: 'no-evidence',
         capabilityCount: 0,
@@ -169,7 +169,7 @@ export function CapabilityGuidancePanel({ learnerId, siteId, learnerName }: Capa
 
     return {
       pillarCode: code,
-      pillarLabel: PILLAR_LABELS[code] ?? code,
+      pillarLabel: getLegacyPillarFamilyLabel(code),
       averageLevel: Math.round(avg * 10) / 10,
       band,
       capabilityCount: data.levels.length,
@@ -201,8 +201,11 @@ export function CapabilityGuidancePanel({ learnerId, siteId, learnerName }: Capa
         </p>
       </div>
 
-      {/* Pillar breakdown */}
+      {/* Legacy family breakdown */}
       <div className="p-6 space-y-4">
+        <p className="text-xs text-gray-500">
+          Legacy family breakdown for the live six-strand curriculum.
+        </p>
         {pillars.map((pillar) => {
           const pg = BAND_GUIDANCE[pillar.band] ?? BAND_GUIDANCE['no-evidence'];
           return (
@@ -236,7 +239,7 @@ export function CapabilityGuidancePanel({ learnerId, siteId, learnerName }: Capa
 
               {/* Per-capability progression descriptors */}
               {mastery
-                .filter((m) => (m.pillarCode || 'unknown') === pillar.pillarCode)
+                .filter((m) => normalizeLegacyPillarCode(m.pillarCode) === pillar.pillarCode)
                 .map((m) => {
                   const cap = capabilities.find((c) => c.id === m.capabilityId);
                   if (!cap) return null;

@@ -821,7 +821,7 @@ class _ParentBillingPageState extends State<ParentBillingPage>
                 ),
                 _PlanFeature(
                   icon: Icons.rocket_launch,
-                  text: _tParentBilling(context, 'All 3 pillars curriculum'),
+                  text: _tParentBilling(context, 'Full four-stage curriculum'),
                 ),
                 _PlanFeature(
                   icon: Icons.person,

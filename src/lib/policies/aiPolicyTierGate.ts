@@ -2,14 +2,18 @@
  * AI Policy Tier Gate (S1-3)
  *
  * Enforces stage-based AI usage policies:
- *   Tier A (Discoverers, grades 1-3): AI blocked for students
- *   Tier B (Builders, grades 4-6):    Brainstorming with justification (hint only)
- *   Tier C (Explorers, grades 7-9):   Analysis with citation (hint + rubric_check + debug)
- *   Tier D (Innovators, grades 10-12): Full access with audit trail (all modes)
+ *   Tier A (Discoverers, grades 1-3): Whole-class demonstration only
+ *   Tier B (Builders, grades 4-6):    Guided assistive use with no-copy guardrails
+ *   Tier C (Explorers, grades 7-9):   Logged analytical and critique use
+ *   Tier D (Innovators, grades 10-12): Advanced assistive use with full audit trail
  */
 
 import type { AiPolicyTier, StageId } from '@/src/types/schema';
 import type { TaskType } from '@/src/lib/ai/modelAdapter';
+import {
+  getAiAllowedTaskTypesForStage,
+  getAiPolicyTierForStage,
+} from '@/src/lib/curriculum/architecture';
 
 /** Result of a policy tier enforcement check */
 export interface AiPolicyGateResult {
@@ -19,28 +23,20 @@ export interface AiPolicyGateResult {
   allowedModes: TaskType[];
 }
 
-/** Map stage IDs to their AI policy tier */
-const STAGE_TO_TIER: Record<StageId, AiPolicyTier> = {
-  discoverers: 'A',
-  builders: 'B',
-  explorers: 'C',
-  innovators: 'D',
-};
-
 /** Allowed AI task types per tier */
 const TIER_ALLOWED_MODES: Record<AiPolicyTier, TaskType[]> = {
-  A: [],
-  B: ['hint_generation'],
-  C: ['hint_generation', 'rubric_check', 'debug_assistance'],
-  D: ['hint_generation', 'rubric_check', 'debug_assistance', 'critique_feedback'],
+  A: [...getAiAllowedTaskTypesForStage('discoverers')],
+  B: [...getAiAllowedTaskTypesForStage('builders')],
+  C: [...getAiAllowedTaskTypesForStage('explorers')],
+  D: [...getAiAllowedTaskTypesForStage('innovators')],
 };
 
 /** Human-readable tier descriptions */
 const TIER_DESCRIPTIONS: Record<AiPolicyTier, string> = {
-  A: 'AI help is not available at the Discoverers stage.',
-  B: 'At the Builders stage, AI can provide hints. You must justify how the hint helped.',
-  C: 'At the Explorers stage, AI can provide hints, rubric checks, and debugging help. Citation required.',
-  D: 'At the Innovators stage, all AI modes are available. All interactions are audited.',
+  A: 'At the Discoverers stage, AI is teacher-led only and does not run as an independent learner tool.',
+  B: 'At the Builders stage, AI is guided assistive support with narrow prompts and no-copy guardrails.',
+  C: 'At the Explorers stage, AI use must stay logged, analytical, and critique-ready with verification routines.',
+  D: 'At the Innovators stage, advanced assistive use is allowed with a full audit trail and integrity defense.',
 };
 
 /**
@@ -64,7 +60,7 @@ export function enforceAiPolicyTier(
     };
   }
 
-  const tier = STAGE_TO_TIER[stageId];
+  const tier = getAiPolicyTierForStage(stageId);
   const allowedModes = TIER_ALLOWED_MODES[tier];
   const allowed = allowedModes.includes(taskType);
 
@@ -83,7 +79,7 @@ export function enforceAiPolicyTier(
  */
 export function getTierForStage(stageId: StageId | undefined): AiPolicyTier {
   if (!stageId) return 'D';
-  return STAGE_TO_TIER[stageId];
+  return getAiPolicyTierForStage(stageId);
 }
 
 /**

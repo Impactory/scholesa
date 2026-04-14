@@ -3,6 +3,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:math' as math;
 import '../../services/firestore_service.dart';
+import '../../domain/curriculum/curriculum_display.g.dart';
 import 'parent_models.dart';
 
 const String _fallbackLearnerName = 'Learner unavailable';
@@ -2030,16 +2031,15 @@ class ParentService extends ChangeNotifier {
 
   String _pillarLabelFromCodes(List<String> codes) {
     for (final String code in codes) {
-      switch (_normalizePillarCode(code)) {
-        case 'futureSkills':
-          return 'Future Skills';
-        case 'leadership':
-          return 'Leadership & Agency';
-        case 'impact':
-          return 'Impact & Innovation';
+      final CurriculumLegacyFamilyCode? familyCode =
+          CurriculumDisplay.legacyFamilyCodeFromAny(code);
+      if (familyCode != null) {
+        return CurriculumDisplay.legacyFamilyLabel(familyCode);
       }
     }
-    return 'Future Skills';
+    return CurriculumDisplay.legacyFamilyLabel(
+      CurriculumLegacyFamilyCode.future_skills,
+    );
   }
 
   String _asTrimmedString(dynamic value) {

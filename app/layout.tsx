@@ -9,8 +9,8 @@ import { ServiceWorkerRegister } from '@/src/components/pwa/ServiceWorkerRegiste
 import { ThemeProvider } from '@/src/lib/theme/ThemeProvider';
 
 export const metadata: Metadata = {
-  title: 'Scholesa – Future Skills Academy',
-  description: 'An Education 2.0 operating system for K–9 learning studios and schools.',
+  title: 'Scholesa – Skills-First Learning OS',
+  description: 'A K–12 skills-first operating system for schools and learning studios.',
   manifest: '/manifest.webmanifest',
   icons: {
     icon: [

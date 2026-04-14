@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../../domain/curriculum/curriculum_display.g.dart';
 
 /// Mission status
 enum MissionStatus {
@@ -33,11 +34,17 @@ enum Pillar {
   String get label {
     switch (this) {
       case Pillar.futureSkills:
-        return 'Future Skills';
+        return CurriculumDisplay.legacyFamilyLabel(
+          CurriculumLegacyFamilyCode.future_skills,
+        );
       case Pillar.leadership:
-        return 'Leadership & Agency';
+        return CurriculumDisplay.legacyFamilyLabel(
+          CurriculumLegacyFamilyCode.leadership_agency,
+        );
       case Pillar.impact:
-        return 'Impact & Innovation';
+        return CurriculumDisplay.legacyFamilyLabel(
+          CurriculumLegacyFamilyCode.impact_innovation,
+        );
     }
   }
 

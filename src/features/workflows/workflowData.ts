@@ -675,9 +675,9 @@ async function loadParentPortfolioWorkflowRecords(ctx: WorkflowContext): Promise
         raw: {
           title: `${learnerName} growth snapshot`,
           summary: joinAvailableParts([
-            futureSkills ? `Future Skills ${futureSkills}` : null,
-            leadership ? `Leadership ${leadership}` : null,
-            impact ? `Impact & Innovation ${impact}` : null,
+            futureSkills ? `Think, Make & Navigate AI ${futureSkills}` : null,
+            leadership ? `Communicate & Lead ${leadership}` : null,
+            impact ? `Build for the World ${impact}` : null,
           ]) || 'No verified growth evidence yet',
           status: capabilityBand || 'Evidence building',
           updatedAt: portfolio?.latestArtifactAt || learner.updatedAt || new Date().toISOString(),
@@ -3888,10 +3888,10 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
         createLabel: 'Add capability',
         createConfig: buildCreateConfig('Add Capability', 'Create capability', [
           { name: 'title', label: 'Capability title', type: 'text', required: true, placeholder: 'e.g., Systems Thinking' },
-          { name: 'pillarCode', label: 'Pillar code', type: 'select', required: true, options: [
-            { value: 'futureSkills', label: 'Future Skills' },
-            { value: 'leadership', label: 'Leadership' },
-            { value: 'impact', label: 'Impact' },
+          { name: 'pillarCode', label: 'Legacy family code', type: 'select', required: true, options: [
+            { value: 'futureSkills', label: 'Think, Make & Navigate AI' },
+            { value: 'leadership', label: 'Communicate & Lead' },
+            { value: 'impact', label: 'Build for the World' },
           ]},
           { name: 'progressionDescriptor', label: 'Progression descriptor', type: 'textarea', placeholder: 'Describe learning progression from emerging to advanced.' },
         ]),

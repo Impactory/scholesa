@@ -6,6 +6,10 @@ import { functions } from '@/src/firebase/client-init';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { RoleRouteGuard } from '@/src/components/auth/RoleRouteGuard';
 import { Spinner } from '@/src/components/ui/Spinner';
+import {
+  getLegacyPillarFamilyLabel,
+  normalizeLegacyPillarCode,
+} from '@/src/lib/curriculum/architecture';
 
 /* ───── Types (match buildParentLearnerSummary return) ───── */
 
@@ -316,16 +320,22 @@ function normalizeLearner(raw: Record<string, unknown>): LearnerPassportData | n
   };
 }
 
-/* ───── Pillar colours ───── */
+/* ───── Legacy family colours ───── */
 
-const PILLAR_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  'Future Skills': { bg: 'bg-blue-50', text: 'text-blue-800', border: 'border-blue-200' },
-  'Leadership & Agency': { bg: 'bg-amber-50', text: 'text-amber-800', border: 'border-amber-200' },
-  'Impact & Innovation': { bg: 'bg-emerald-50', text: 'text-emerald-800', border: 'border-emerald-200' },
+const LEGACY_FAMILY_COLORS: Record<string, { bg: string; text: string; border: string }> = {
+  FUTURE_SKILLS: { bg: 'bg-blue-50', text: 'text-blue-800', border: 'border-blue-200' },
+  LEADERSHIP_AGENCY: { bg: 'bg-amber-50', text: 'text-amber-800', border: 'border-amber-200' },
+  IMPACT_INNOVATION: { bg: 'bg-emerald-50', text: 'text-emerald-800', border: 'border-emerald-200' },
 };
 
+function legacyFamilyLabel(pillar: string | null) {
+  const normalized = normalizeLegacyPillarCode(pillar);
+  return normalized ? getLegacyPillarFamilyLabel(normalized) : (pillar ?? 'Other');
+}
+
 function pillarColor(pillar: string | null) {
-  return PILLAR_COLORS[pillar ?? ''] ?? { bg: 'bg-gray-50', text: 'text-gray-700', border: 'border-gray-200' };
+  const normalized = normalizeLegacyPillarCode(pillar);
+  return LEGACY_FAMILY_COLORS[normalized ?? ''] ?? { bg: 'bg-gray-50', text: 'text-gray-700', border: 'border-gray-200' };
 }
 
 /* ───── Component ───── */
@@ -374,7 +384,7 @@ export function LearnerPassportExport() {
         <div style="border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin-bottom:12px;background:#fafafa">
           <h3 style="margin:0 0 8px;font-size:16px;color:#111827">${c.title}</h3>
           <table style="border-collapse:collapse;font-size:13px;width:100%">
-            <tr><td style="color:#6b7280;padding:2px 12px 2px 0;width:160px">Pillar</td><td>${c.pillar ?? '—'}</td></tr>
+            <tr><td style="color:#6b7280;padding:2px 12px 2px 0;width:160px">Legacy family</td><td>${legacyFamilyLabel(c.pillar)}</td></tr>
             <tr><td style="color:#6b7280;padding:2px 12px 2px 0">Level</td><td><strong>${levelLabel(c.latestLevel)}</strong></td></tr>
             <tr><td style="color:#6b7280;padding:2px 12px 2px 0">Evidence</td><td>${c.evidenceCount} records · ${c.verifiedArtifactCount} verified artifacts</td></tr>
             <tr><td style="color:#6b7280;padding:2px 12px 2px 0">Proof-of-Learning</td><td>${proofLabel(c.proofOfLearningStatus)}</td></tr>
@@ -423,11 +433,11 @@ export function LearnerPassportExport() {
   </span>
 </p>
 
-<h2>Pillar Progress</h2>
+<h2>Legacy Family Progress</h2>
 <div class="stat-grid">
-  <div class="stat"><div class="stat-val">${pct(learner.capabilitySnapshot.futureSkills)}</div><div class="stat-label">Future Skills</div></div>
-  <div class="stat"><div class="stat-val">${pct(learner.capabilitySnapshot.leadership)}</div><div class="stat-label">Leadership &amp; Agency</div></div>
-  <div class="stat"><div class="stat-val">${pct(learner.capabilitySnapshot.impact)}</div><div class="stat-label">Impact &amp; Innovation</div></div>
+  <div class="stat"><div class="stat-val">${pct(learner.capabilitySnapshot.futureSkills)}</div><div class="stat-label">${getLegacyPillarFamilyLabel('FUTURE_SKILLS')}</div></div>
+  <div class="stat"><div class="stat-val">${pct(learner.capabilitySnapshot.leadership)}</div><div class="stat-label">${getLegacyPillarFamilyLabel('LEADERSHIP_AGENCY')}</div></div>
+  <div class="stat"><div class="stat-val">${pct(learner.capabilitySnapshot.impact)}</div><div class="stat-label">${getLegacyPillarFamilyLabel('IMPACT_INNOVATION')}</div></div>
 </div>
 
 <h2>Evidence Summary</h2>
@@ -485,10 +495,10 @@ ${claimsHtml}
     lines.push(`Generated: ${formatDate(learner.ideationPassport.generatedAt)}`);
     lines.push(`Capability Band: ${bandLabel(learner.capabilitySnapshot.band)}`);
     lines.push('');
-    lines.push('── Pillar Progress ──');
-    lines.push(`  Future Skills:        ${pct(learner.capabilitySnapshot.futureSkills)}`);
-    lines.push(`  Leadership & Agency:  ${pct(learner.capabilitySnapshot.leadership)}`);
-    lines.push(`  Impact & Innovation:  ${pct(learner.capabilitySnapshot.impact)}`);
+    lines.push('── Legacy Family Progress ──');
+    lines.push(`  Think, Make & Navigate AI: ${pct(learner.capabilitySnapshot.futureSkills)}`);
+    lines.push(`  Communicate & Lead:       ${pct(learner.capabilitySnapshot.leadership)}`);
+    lines.push(`  Build for the World:      ${pct(learner.capabilitySnapshot.impact)}`);
     lines.push(`  Overall:              ${pct(learner.capabilitySnapshot.overall)}`);
     lines.push('');
     lines.push('── Evidence Summary ──');
@@ -510,7 +520,7 @@ ${claimsHtml}
     for (const claim of learner.ideationPassport.claims) {
       lines.push('');
       lines.push(`  ${claim.title}`);
-      lines.push(`    Pillar:          ${claim.pillar ?? '—'}`);
+      lines.push(`    Legacy family:   ${legacyFamilyLabel(claim.pillar)}`);
       lines.push(`    Level:           ${levelLabel(claim.latestLevel)}`);
       lines.push(`    Evidence:        ${claim.evidenceCount} records, ${claim.verifiedArtifactCount} verified artifacts`);
       lines.push(`    Proof-of-Learn:  ${proofLabel(claim.proofOfLearningStatus)}`);
@@ -636,7 +646,7 @@ function PassportDocument({ learner }: { learner: LearnerPassportData }) {
   const claimsByPillar = useMemo(() => {
     const map = new Map<string, PassportClaim[]>();
     for (const c of learner.ideationPassport.claims) {
-      const key = c.pillar ?? 'Other';
+      const key = legacyFamilyLabel(c.pillar);
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(c);
     }
@@ -663,13 +673,13 @@ function PassportDocument({ learner }: { learner: LearnerPassportData }) {
         </div>
       </div>
 
-      {/* ── Pillar Progress ── */}
+      {/* ── Legacy Family Progress ── */}
       <section className="mb-6">
-        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Pillar Progress</h3>
+        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Legacy Family Progress</h3>
         <div className="grid grid-cols-3 gap-4">
-          <PillarCard label="Future Skills" value={learner.capabilitySnapshot.futureSkills} />
-          <PillarCard label="Leadership & Agency" value={learner.capabilitySnapshot.leadership} />
-          <PillarCard label="Impact & Innovation" value={learner.capabilitySnapshot.impact} />
+          <PillarCard label={getLegacyPillarFamilyLabel('FUTURE_SKILLS')} value={learner.capabilitySnapshot.futureSkills} />
+          <PillarCard label={getLegacyPillarFamilyLabel('LEADERSHIP_AGENCY')} value={learner.capabilitySnapshot.leadership} />
+          <PillarCard label={getLegacyPillarFamilyLabel('IMPACT_INNOVATION')} value={learner.capabilitySnapshot.impact} />
         </div>
       </section>
 
@@ -732,7 +742,7 @@ function PassportDocument({ learner }: { learner: LearnerPassportData }) {
               <thead>
                 <tr className="border-b border-gray-200 text-left text-gray-500 text-xs uppercase">
                   <th className="pb-2 pr-3">Artifact</th>
-                  <th className="pb-2 pr-3">Pillar</th>
+                  <th className="pb-2 pr-3">Legacy family</th>
                   <th className="pb-2 pr-3">Status</th>
                   <th className="pb-2 pr-3">Proof</th>
                   <th className="pb-2 pr-3">AI</th>
@@ -743,7 +753,7 @@ function PassportDocument({ learner }: { learner: LearnerPassportData }) {
                 {learner.portfolioItemsPreview.slice(0, 20).map((item) => (
                   <tr key={item.id} className="border-b border-gray-100">
                     <td className="py-1.5 pr-3 font-medium text-gray-900">{item.title}</td>
-                    <td className="py-1.5 pr-3 text-gray-600">{item.pillar ?? '—'}</td>
+                    <td className="py-1.5 pr-3 text-gray-600">{legacyFamilyLabel(item.pillar)}</td>
                     <td className="py-1.5 pr-3">
                       <VerificationBadge status={item.verificationStatus} />
                     </td>

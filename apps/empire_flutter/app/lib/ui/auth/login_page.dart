@@ -13,26 +13,26 @@ import '../widgets/scholesa_logo.dart';
 
 const Map<String, String> _loginZhCn = <String, String>{
   'Education 2.0\nPlatform': '教育 2.0\n平台',
-  'Empowering K-9 learning studios with Future Skills,\nLeadership & Agency, and Impact & Innovation.':
-      '以未来技能、\n领导力与自主性、影响力与创新\n赋能 K-9 学习工作室。',
+  'Empowering K-12 schools with mission-based learning,\nevidence-rich portfolios, and stage-based AI governance.':
+      '通过任务式学习、证据型作品集和分阶段 AI 治理，赋能 K-12 学校。',
   'Mission-based learning': '任务式学习',
   'Habit coaching': '习惯教练',
   'Portfolio showcase': '作品集展示',
-  'Future Skills': '未来技能',
-  'Leadership': '领导力',
-  'Impact': '影响力',
+  'Discoverers': '发现者',
+  'Builders': '建构者',
+  'Innovators': '创新者',
 };
 
 const Map<String, String> _loginZhTw = <String, String>{
   'Education 2.0\nPlatform': '教育 2.0\n平台',
-  'Empowering K-9 learning studios with Future Skills,\nLeadership & Agency, and Impact & Innovation.':
-      '以未來技能、\n領導力與自主性、影響力與創新\n賦能 K-9 學習工作室。',
+  'Empowering K-12 schools with mission-based learning,\nevidence-rich portfolios, and stage-based AI governance.':
+      '透過任務式學習、證據型作品集和分階段 AI 治理，賦能 K-12 學校。',
   'Mission-based learning': '任務式學習',
   'Habit coaching': '習慣教練',
   'Portfolio showcase': '作品集展示',
-  'Future Skills': '未來技能',
-  'Leadership': '領導力',
-  'Impact': '影響力',
+  'Discoverers': '發現者',
+  'Builders': '建構者',
+  'Innovators': '創新者',
 };
 
 String _tLogin(BuildContext context, String input) {
@@ -574,7 +574,7 @@ class _LoginPageState extends State<LoginPage>
                         const SizedBox(height: 24),
                         Text(
                           _tLogin(context,
-                              'Empowering K-9 learning studios with Future Skills,\nLeadership & Agency, and Impact & Innovation.'),
+                              'Empowering K-12 schools with mission-based learning,\nevidence-rich portfolios, and stage-based AI governance.'),
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.white.withValues(alpha: 0.9),
@@ -595,13 +595,13 @@ class _LoginPageState extends State<LoginPage>
                         // Bottom pillars
                         Row(
                           children: <Widget>[
-                            _buildPillarChip(_tLogin(context, 'Future Skills'),
+                            _buildPillarChip(_tLogin(context, 'Discoverers'),
                                 ScholesaColors.futureSkills),
                             const SizedBox(width: 8),
-                            _buildPillarChip(_tLogin(context, 'Leadership'),
+                            _buildPillarChip(_tLogin(context, 'Builders'),
                                 ScholesaColors.leadership),
                             const SizedBox(width: 8),
-                            _buildPillarChip(_tLogin(context, 'Impact'),
+                            _buildPillarChip(_tLogin(context, 'Innovators'),
                                 ScholesaColors.impact),
                           ],
                         ),

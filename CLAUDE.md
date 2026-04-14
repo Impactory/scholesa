@@ -2,7 +2,7 @@
 
 ## Product Identity
 
-Scholesa is a **capability-first evidence platform** for K-9 learning studios and schools. It is NOT a marks-first LMS or a percentage-first gradebook. Students are evaluated by what they can do, explain, improve, and demonstrate over time.
+Scholesa is a **capability-first evidence platform** for K-12 schools and learning studios. It is NOT a marks-first LMS or a percentage-first gradebook. Students are evaluated by what they can do, explain, improve, and demonstrate over time.
 
 Every system, route, schema, and workflow must support one or more of these functions:
 1. **Capture** evidence

@@ -19,6 +19,7 @@ import {
   rubricTemplatesCollection,
   processDomainsCollection,
 } from '@/src/firebase/firestore/collections';
+import { getLegacyPillarFamilyLabel } from '@/src/lib/curriculum/architecture';
 import type { Mission } from '@/src/types/schema';
 import { invalidateCapabilityCache } from '@/src/lib/capabilities/useCapabilities';
 import { RoleRouteGuard } from '@/src/components/auth/RoleRouteGuard';
@@ -28,9 +29,9 @@ import type { Capability, PillarCode, RubricTemplate, ProgressionDescriptors, Pr
 /* ───── Constants ───── */
 
 const PILLAR_OPTIONS: { value: PillarCode; label: string; color: string }[] = [
-  { value: 'FUTURE_SKILLS', label: 'Future Skills', color: 'bg-blue-100 text-blue-800 border-blue-300' },
-  { value: 'LEADERSHIP_AGENCY', label: 'Leadership & Agency', color: 'bg-amber-100 text-amber-800 border-amber-300' },
-  { value: 'IMPACT_INNOVATION', label: 'Impact & Innovation', color: 'bg-emerald-100 text-emerald-800 border-emerald-300' },
+  { value: 'FUTURE_SKILLS', label: getLegacyPillarFamilyLabel('FUTURE_SKILLS'), color: 'bg-blue-100 text-blue-800 border-blue-300' },
+  { value: 'LEADERSHIP_AGENCY', label: getLegacyPillarFamilyLabel('LEADERSHIP_AGENCY'), color: 'bg-amber-100 text-amber-800 border-amber-300' },
+  { value: 'IMPACT_INNOVATION', label: getLegacyPillarFamilyLabel('IMPACT_INNOVATION'), color: 'bg-emerald-100 text-emerald-800 border-emerald-300' },
 ];
 
 const LEVEL_LABELS = ['Beginning', 'Developing', 'Proficient', 'Advanced'] as const;
@@ -663,12 +664,12 @@ function CapabilitiesTab({
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <select
-            aria-label="Filter by pillar"
+            aria-label="Filter by legacy family"
             value={filterPillar}
             onChange={(e) => setFilterPillar(e.target.value as PillarCode | 'all')}
             className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
           >
-            <option value="all">All Pillars</option>
+            <option value="all">All Legacy Families</option>
             {PILLAR_OPTIONS.map((p) => (
               <option key={p.value} value={p.value}>{p.label}</option>
             ))}
@@ -914,9 +915,9 @@ function CapabilityFormModal({
 
           {/* Pillar */}
           <div>
-            <label className="block text-sm font-medium text-gray-700">Pillar *</label>
+            <label className="block text-sm font-medium text-gray-700">Legacy family *</label>
             <select
-              aria-label="Select pillar"
+              aria-label="Select legacy family"
               value={form.pillarCode}
               onChange={(e) => setForm((prev) => ({ ...prev, pillarCode: e.target.value as PillarCode }))}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm"

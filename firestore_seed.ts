@@ -89,9 +89,9 @@ const users: User[] = [
 ];
 
 const pillars: Pillar[] = [
-  { code: 'tech', name: 'Future Skills', color: '#2563eb' },
-  { code: 'lead', name: 'Leadership & Agency', color: '#16a34a' },
-  { code: 'impact', name: 'Impact & Innovation', color: '#eab308' },
+  { code: 'tech', name: 'Think, Make & Navigate AI', color: '#2563eb' },
+  { code: 'lead', name: 'Communicate & Lead', color: '#16a34a' },
+  { code: 'impact', name: 'Build for the World', color: '#eab308' },
 ];
 
 const mission: Mission = {

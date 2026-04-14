@@ -6,6 +6,7 @@
  */
 
 import type { AgeBand } from '@/src/types/schema';
+import { getAiAllowedTaskTypesForStage } from '@/src/lib/curriculum/architecture';
 
 export interface GradeBandPolicy {
   // Core settings
@@ -106,6 +107,23 @@ export interface GradeBandPolicy {
   };
 }
 
+function buildAiCoach(
+  stageId: 'discoverers' | 'builders' | 'explorers' | 'innovators',
+  options: Pick<GradeBandPolicy['aiCoach'], 'requireTeacherGuidance' | 'explainBackRequired'>
+): GradeBandPolicy['aiCoach'] {
+  const allowedTasks = new Set(getAiAllowedTaskTypesForStage(stageId));
+  return {
+    enabled: allowedTasks.size > 0,
+    modes: {
+      hint: allowedTasks.has('hint_generation'),
+      rubricCheck: allowedTasks.has('rubric_check'),
+      debug: allowedTasks.has('debug_assistance'),
+      critique: allowedTasks.has('critique_feedback'),
+    },
+    ...options,
+  };
+}
+
 /**
  * Grade Band Policies by age group
  */
@@ -120,17 +138,10 @@ export const GRADE_BAND_POLICIES: Record<AgeBand, GradeBandPolicy> = {
     missionChoiceCount: 2,
     allowCustomMissions: false,
     
-    aiCoach: {
-      enabled: true,
-      modes: {
-        hint: true,
-        rubricCheck: false,
-        debug: false,
-        critique: false
-      },
-      requireTeacherGuidance: true, // Teacher must approve AI use
-      explainBackRequired: false // Too young for complex explain-back
-    },
+    aiCoach: buildAiCoach('discoverers', {
+      requireTeacherGuidance: true,
+      explainBackRequired: false,
+    }),
     
     social: {
       peerFeedback: {
@@ -209,17 +220,10 @@ export const GRADE_BAND_POLICIES: Record<AgeBand, GradeBandPolicy> = {
     missionChoiceCount: 3,
     allowCustomMissions: false,
     
-    aiCoach: {
-      enabled: true,
-      modes: {
-        hint: true,
-        rubricCheck: false,
-        debug: true, // Ask questions mode
-        critique: false
-      },
+    aiCoach: buildAiCoach('builders', {
       requireTeacherGuidance: false,
-      explainBackRequired: true
-    },
+      explainBackRequired: true,
+    }),
     
     social: {
       peerFeedback: {
@@ -298,17 +302,10 @@ export const GRADE_BAND_POLICIES: Record<AgeBand, GradeBandPolicy> = {
     missionChoiceCount: 3,
     allowCustomMissions: true,
     
-    aiCoach: {
-      enabled: true,
-      modes: {
-        hint: true,
-        rubricCheck: true,
-        debug: true,
-        critique: false // Not full critique yet
-      },
+    aiCoach: buildAiCoach('explorers', {
       requireTeacherGuidance: false,
-      explainBackRequired: true
-    },
+      explainBackRequired: true,
+    }),
     
     social: {
       peerFeedback: {
@@ -387,17 +384,10 @@ export const GRADE_BAND_POLICIES: Record<AgeBand, GradeBandPolicy> = {
     missionChoiceCount: 3,
     allowCustomMissions: true,
     
-    aiCoach: {
-      enabled: true,
-      modes: {
-        hint: true,
-        rubricCheck: true,
-        debug: true,
-        critique: true // Full AI critique
-      },
+    aiCoach: buildAiCoach('innovators', {
       requireTeacherGuidance: false,
-      explainBackRequired: true
-    },
+      explainBackRequired: true,
+    }),
     
     social: {
       peerFeedback: {

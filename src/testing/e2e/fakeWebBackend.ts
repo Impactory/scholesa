@@ -244,7 +244,7 @@ function defaultState(): StoreState {
       {
         id: 'session-future-skills',
         siteId: 'site-alpha',
-        title: 'Future Skills Studio',
+        title: 'Skills Studio',
         educatorIds: ['educator-alpha'],
         status: 'scheduled',
         updatedAt: DEFAULT_TIMESTAMP,

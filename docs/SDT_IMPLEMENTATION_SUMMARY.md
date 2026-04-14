@@ -2,7 +2,7 @@
 
 ## Overview
 
-A comprehensive Self-Determination Theory (SDT) based motivation system for K-9 learners with age-appropriate feature gating and telemetry.
+A comprehensive Self-Determination Theory (SDT) based motivation system for K-12 learners with age-appropriate feature gating and telemetry.
 
 **Core Equation**: Motivation = Autonomy + Competence + Belonging
 
@@ -637,7 +637,7 @@ SDT_IMPLEMENTATION_SUMMARY.md (this file, updated)
 
 > "Motivation = Autonomy (choice) + Competence (visible progress) + Belonging (team + recognition)"
 
-This implementation productizes Self-Determination Theory into an app-ready system that helps K-9 learners develop intrinsic motivation through:
+This implementation productizes Self-Determination Theory into an app-ready system that helps K-12 learners develop intrinsic motivation through:
 
 1. **Autonomy**: Choice of difficulty, themes, goals
 2. **Competence**: Micro-skills, evidence, fast feedback

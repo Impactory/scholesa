@@ -8,6 +8,7 @@ import '../../i18n/bos_coaching_i18n.dart';
 import '../../i18n/parent_surface_i18n.dart';
 import '../../auth/app_state.dart';
 import '../../ui/auth/global_session_menu.dart';
+import '../../domain/curriculum/curriculum_display.g.dart';
 import 'parent_models.dart';
 import 'parent_service.dart';
 
@@ -1266,12 +1267,12 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
   }
 
   Color _getPillarColor(String pillar) {
-    switch (pillar) {
-      case 'Future Skills':
+    switch (CurriculumDisplay.legacyFamilyCodeFromAny(pillar)) {
+      case CurriculumLegacyFamilyCode.future_skills:
         return const Color(0xFF3B82F6);
-      case 'Leadership & Agency':
+      case CurriculumLegacyFamilyCode.leadership_agency:
         return const Color(0xFF8B5CF6);
-      case 'Impact & Innovation':
+      case CurriculumLegacyFamilyCode.impact_innovation:
         return const Color(0xFF10B981);
       default:
         return Colors.grey;

@@ -1,17 +1,17 @@
 {
   "landing": {
-    "title": "Scholesa – Future Skills Academy",
-    "subtitle": "The operating system for K–9 learning studios and schools.",
+    "title": "Scholesa – Skills-First Learning OS",
+    "subtitle": "The operating system for K–12 schools and learning studios.",
     "tagline": "Learn with purpose. Build future-ready skills every day.",
     "login": "Login",
     "loginCta": "Login",
     "register": "Register",
     "registerArrow": "Register →",
     "pillars": {
-      "title": "The 3 Pillars of Scholesa",
-      "future_skills": "Future Skills",
-      "leadership_agency": "Leadership & Agency",
-      "impact_innovation": "Impact & Innovation"
+      "title": "Scholesa Curriculum Architecture",
+      "future_skills": "Think, Make & Navigate AI",
+      "leadership_agency": "Communicate & Lead",
+      "impact_innovation": "Build for the World"
     },
     "stakeholders": {
       "title": "One Platform for Every Stakeholder",

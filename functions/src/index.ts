@@ -30,6 +30,10 @@ import {
   __voiceSystemInternals,
 } from './voiceSystem';
 import { applyKidFriendlyConversationalTone } from './aiCoachTone';
+import {
+  getLegacyFamilyDisplayLabel,
+  normalizeLegacyFamilyCode,
+} from './curriculumDisplay.generated';
 
 admin.initializeApp();
 
@@ -2328,20 +2332,14 @@ function normalizeParentPillarKey(value: unknown): 'futureSkills' | 'leadership'
 }
 
 function parentPillarLabelFromCodes(value: unknown): string {
-  if (!Array.isArray(value)) return 'Future Skills';
+  if (!Array.isArray(value)) return getLegacyFamilyDisplayLabel('FUTURE_SKILLS');
   for (const entry of value) {
-    switch (normalizeParentPillarKey(entry)) {
-      case 'futureSkills':
-        return 'Future Skills';
-      case 'leadership':
-        return 'Leadership & Agency';
-      case 'impact':
-        return 'Impact & Innovation';
-      default:
-        break;
+    const familyCode = normalizeLegacyFamilyCode(entry);
+    if (familyCode) {
+      return getLegacyFamilyDisplayLabel(familyCode);
     }
   }
-  return 'Future Skills';
+  return getLegacyFamilyDisplayLabel('FUTURE_SKILLS');
 }
 
 function formatCompactCount(value: number): string {
@@ -2955,6 +2953,7 @@ async function buildParentLearnerSummary(params: {
         aiHasExplainItBackEvidence: hasExplainItBack || hasLearnerExplainBackEvent,
         aiHasEducatorAiFeedback: hasAiFeedbackSignal,
         aiAssistanceDetails,
+        source: typeof row.source === 'string' && row.source.trim() ? row.source.trim() : null,
         reviewingEducatorName: reviewerName,
         reviewedAt,
         rubricRawScore,

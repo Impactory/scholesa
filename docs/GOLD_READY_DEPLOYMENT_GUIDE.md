@@ -8,7 +8,7 @@
 
 ## Platform Overview
 
-Scholesa is a **capability-first evidence platform** for K-9 learning studios. Every deployment decision is subordinate to one test: does this surface correctly capture, verify, interpret, or communicate evidence of learner capability?
+Scholesa is a **capability-first evidence platform** for K-12 schools and learning studios. Every deployment decision is subordinate to one test: does this surface correctly capture, verify, interpret, or communicate evidence of learner capability?
 
 ### Surfaces and Deploy Targets
 

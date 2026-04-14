@@ -10,6 +10,7 @@ import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
 import '../../auth/app_state.dart';
 import '../../ui/auth/global_session_menu.dart';
+import '../../domain/curriculum/curriculum_display.g.dart';
 import 'parent_models.dart';
 import 'parent_service.dart';
 
@@ -798,12 +799,12 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
   }
 
   Color _getPillarColor(String pillar) {
-    switch (pillar) {
-      case 'Future Skills':
+    switch (CurriculumDisplay.legacyFamilyCodeFromAny(pillar)) {
+      case CurriculumLegacyFamilyCode.future_skills:
         return Colors.blue;
-      case 'Leadership & Agency':
+      case CurriculumLegacyFamilyCode.leadership_agency:
         return Colors.purple;
-      case 'Impact & Innovation':
+      case CurriculumLegacyFamilyCode.impact_innovation:
         return Colors.green;
       default:
         return Colors.grey;

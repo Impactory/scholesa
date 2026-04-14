@@ -3,7 +3,8 @@
 > rubric system described here does not exist in the codebase. The current
 > rubric system is in CapabilityGrowthEngine (Flutter) and applyRubricToEvidence
 > (Cloud Functions). Do not implement from this spec without reconciling with
-> the current evidence chain architecture.
+> the current evidence chain architecture and the canonical K-12 curriculum
+> architecture in `src/lib/curriculum/architecture.ts`.
 > Flagged: March 2026 constitutional audit.
 
 # 45_CURRICULUM_VERSIONING_RUBRICS_SPEC.md

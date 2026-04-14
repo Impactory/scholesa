@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import '../../domain/curriculum/curriculum_display.g.dart';
 
 typedef InlineTranslations = Map<String, String>;
 
@@ -13,18 +14,30 @@ class InlineLocaleText {
     InlineTranslations es = const <String, String>{},
     InlineTranslations th = const <String, String>{},
   }) {
-    switch (_canonicalLocale(Localizations.localeOf(context))) {
+    final String locale = _canonicalLocale(Localizations.localeOf(context));
+    final String translated;
+    switch (locale) {
       case 'zh-CN':
-        return zhCn[input] ?? zhTw[input] ?? input;
+        translated = zhCn[input] ?? zhTw[input] ?? input;
+        break;
       case 'zh-TW':
-        return zhTw[input] ?? zhCn[input] ?? input;
+        translated = zhTw[input] ?? zhCn[input] ?? input;
+        break;
       case 'es':
-        return es[input] ?? input;
+        translated = es[input] ?? input;
+        break;
       case 'th':
-        return th[input] ?? input;
+        translated = th[input] ?? input;
+        break;
       default:
-        return input;
+        translated = input;
+        break;
     }
+    return CurriculumDisplay.localizeDisplayText(
+      input,
+      locale,
+      fallback: translated,
+    );
   }
 
   static String canonicalLocale(Locale locale) => _canonicalLocale(locale);

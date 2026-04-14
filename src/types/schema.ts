@@ -1,7 +1,19 @@
 import { Timestamp } from 'firebase/firestore';
 
 export type UserRole = 'learner' | 'parent' | 'educator' | 'hq' | 'siteLead' | 'partner';
+/**
+ * Legacy three-family capability grouping retained for backward compatibility.
+ * The canonical curriculum model is six strands defined in
+ * `src/lib/curriculum/architecture.ts`.
+ */
 export type PillarCode = 'FUTURE_SKILLS' | 'LEADERSHIP_AGENCY' | 'IMPACT_INNOVATION';
+export type CurriculumStrandId =
+  | 'think'
+  | 'make'
+  | 'communicate'
+  | 'lead'
+  | 'navigate_ai'
+  | 'build_for_the_world';
 export type StageId = 'discoverers' | 'builders' | 'explorers' | 'innovators';
 export type AiPolicyTier = 'A' | 'B' | 'C' | 'D';
 export type UxComplexity = 'simple' | 'guided' | 'autonomous' | 'professional';

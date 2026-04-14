@@ -39,6 +39,7 @@ interface GrowthEvent {
 interface PortfolioItem {
   id: string;
   title: string;
+  source?: string | null;
   verificationStatus: 'verified' | 'unverified' | 'pending';
   aiDisclosure:
     | 'none'
@@ -479,6 +480,21 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
                         <div className="flex flex-wrap items-start justify-between gap-2">
                           <p className="text-sm font-medium text-app-foreground">{item.title}</p>
                           <div className="flex gap-1.5">
+                            {item.source === 'educator_observation' && (
+                              <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-800">
+                                Educator observed
+                              </span>
+                            )}
+                            {item.source === 'reflection' && (
+                              <span className="rounded-full bg-teal-100 px-2 py-0.5 text-xs font-medium text-teal-800">
+                                Reflection
+                              </span>
+                            )}
+                            {item.source === 'checkpoint_submission' && (
+                              <span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-800">
+                                Checkpoint
+                              </span>
+                            )}
                             <span
                               className={`rounded-full px-2 py-0.5 text-xs font-medium ${verifCfg.className}`}
                             >

@@ -9,7 +9,7 @@
 
 ## What we are building
 Scholesa’s Empire platform is a **school operating system** for Education 2.0:
-- Learners build **habits** aligned to pillars.
+- Learners build visible capability growth across stages and strands.
 - Educators run class operations with minimal friction and high clarity.
 - Parents reinforce at home with simple, safe actions.
 - Partners contribute programs and mission packs with governed workflows.
@@ -19,11 +19,17 @@ This is designed for **in-person physical classes** first.
 
 ---
 
-## The 3 pillars (non-negotiable)
-Every meaningful learning activity and evidence should map to one or more pillars:
-1) **FUTURE_SKILLS**
-2) **LEADERSHIP_AGENCY**
-3) **IMPACT_INNOVATION**
+## Current Curriculum Alignment
+Canonical curriculum architecture now lives in `src/lib/curriculum/architecture.ts` and `docs/76_CURRICULUM_ARCHITECTURE_ALIGNMENT.md`.
+
+Scholesa is now defined as a **K-12 future-readiness operating system** with:
+1) Four stages: **Discoverers**, **Builders**, **Explorers**, **Innovators**
+2) Six capability strands: **Think**, **Make**, **Communicate**, **Lead**, **Navigate AI**, **Build for the World**
+3) A recurring annual rhythm: **Understand -> Design -> Test -> Showcase**
+4) A non-negotiable lesson routine: **Hook -> Micro-skill -> Build sprint -> Checkpoint -> Share-out -> Reflection**
+5) A five-layer proof model: **Process**, **Product**, **Thinking**, **Improvement**, **Integrity**
+
+The older three-pillar language remains only as a compatibility layer for legacy data and analytics.
 
 ---
 
