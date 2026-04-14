@@ -4,8 +4,12 @@ import '../../ui/localization/inline_locale_text.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import 'curriculum_display.g.dart';
 
+CurriculumLegacyFamilyCode? maybeCurriculumLegacyFamilyCode(String? value) {
+  return CurriculumDisplay.legacyFamilyCodeFromAny(value);
+}
+
 CurriculumLegacyFamilyCode normalizeCurriculumLegacyFamilyCode(String? value) {
-  return CurriculumDisplay.legacyFamilyCodeFromAny(value) ??
+  return maybeCurriculumLegacyFamilyCode(value) ??
       CurriculumLegacyFamilyCode.future_skills;
 }
 

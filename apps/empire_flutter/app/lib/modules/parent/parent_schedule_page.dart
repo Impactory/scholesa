@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'parent_models.dart';
 import 'parent_service.dart';
+import '../../domain/curriculum/curriculum_family_ui.dart';
 import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
@@ -1042,7 +1043,10 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
                 ),
                 Expanded(
                   child: _WeekStat(
-                    label: _t('Future Skills'),
+                    label: curriculumLegacyFamilyDisplayLabel(
+                      context,
+                      CurriculumLegacyFamilyCode.future_skills,
+                    ),
                     value: '$futureSkillsCount',
                     icon: Icons.code,
                     color: ScholesaColors.futureSkills,
@@ -1055,7 +1059,10 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
                 ),
                 Expanded(
                   child: _WeekStat(
-                    label: _t('Leadership'),
+                    label: curriculumLegacyFamilyDisplayLabel(
+                      context,
+                      CurriculumLegacyFamilyCode.leadership_agency,
+                    ),
                     value: '$leadershipCount',
                     icon: Icons.emoji_events,
                     color: ScholesaColors.leadership,
@@ -1068,7 +1075,10 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
                 ),
                 Expanded(
                   child: _WeekStat(
-                    label: _t('Impact'),
+                    label: curriculumLegacyFamilyDisplayLabel(
+                      context,
+                      CurriculumLegacyFamilyCode.impact_innovation,
+                    ),
                     value: '$impactCount',
                     icon: Icons.eco,
                     color: ScholesaColors.impact,
@@ -1288,14 +1298,7 @@ class _ParentSchedulePageState extends State<ParentSchedulePage> {
   }
 
   String _pillarLabel(String key) {
-    switch (key) {
-      case 'leadership':
-        return _t('Leadership');
-      case 'impact':
-        return _t('Impact');
-      default:
-        return _t('Future Skills');
-    }
+    return curriculumLegacyFamilyDisplayLabelFromAny(context, key);
   }
 
   Color _pillarColor(String key) {

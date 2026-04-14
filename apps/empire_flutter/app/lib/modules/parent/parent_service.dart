@@ -778,7 +778,9 @@ class ParentService extends ChangeNotifier {
                   ? _asTrimmedString(item['capabilityId'])
                   : _asTrimmedString(item['title']),
               pillar: _asTrimmedString(item['pillar']).isEmpty
-                  ? 'Future Skills'
+                  ? CurriculumDisplay.legacyFamilyStorageLabel(
+                      CurriculumLegacyFamilyCode.future_skills,
+                    )
                   : _asTrimmedString(item['pillar']),
               level: _toInt(item['level']) ?? 0,
               linkedEvidenceRecordIds: List<String>.from(
@@ -865,7 +867,9 @@ class ParentService extends ChangeNotifier {
               title: _asTrimmedString(item['title']),
               description: _asTrimmedString(item['description']),
               pillar: _asTrimmedString(item['pillar']).isEmpty
-                  ? 'Future Skills'
+                  ? CurriculumDisplay.legacyFamilyStorageLabel(
+                      CurriculumLegacyFamilyCode.future_skills,
+                    )
                   : _asTrimmedString(item['pillar']),
               type: _asTrimmedString(item['type']).isEmpty
                   ? 'project'
@@ -975,7 +979,9 @@ class ParentService extends ChangeNotifier {
                   ? _asTrimmedString(item['capabilityId'])
                   : _asTrimmedString(item['title']),
               pillar: _asTrimmedString(item['pillar']).isEmpty
-                  ? 'Future Skills'
+                  ? CurriculumDisplay.legacyFamilyStorageLabel(
+                      CurriculumLegacyFamilyCode.future_skills,
+                    )
                   : _asTrimmedString(item['pillar']),
               latestLevel: _toInt(item['latestLevel']) ?? 0,
               evidenceCount: _toInt(item['evidenceCount']) ?? 0,

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../domain/curriculum/curriculum_family_ui.dart';
 import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
 import '../../services/firestore_service.dart';
@@ -100,14 +101,9 @@ String _activeSiteIdForAppState(AppState appState) {
 }
 
 String _pillarCodeForSession(String pillarLabel) {
-  final String normalized = pillarLabel.trim().toLowerCase();
-  if (normalized.contains('leadership')) {
-    return 'LEAD';
-  }
-  if (normalized.contains('impact')) {
-    return 'IMP';
-  }
-  return 'FS';
+  return curriculumLegacyFamilyShortCode(
+    normalizeCurriculumLegacyFamilyCode(pillarLabel),
+  );
 }
 
 Future<List<_CapabilityOption>> _loadCapabilityOptionsForSession({
@@ -158,11 +154,9 @@ class EducatorSessionsPage extends StatefulWidget {
 class _EducatorSessionsPageState extends State<EducatorSessionsPage>
     with SingleTickerProviderStateMixin {
   static const List<String> _tabs = <String>['upcoming', 'ongoing', 'past'];
-  static const List<String> _supportedFilterStatuses = <String>[
+  static final List<String> _supportedFilterStatuses = <String>[
     'all',
-    'future_skills',
-    'leadership',
-    'impact',
+    ...CurriculumLegacyFamilyCode.values.map(curriculumLegacyFamilyMissionCode),
   ];
 
   late TabController _tabController;
@@ -597,53 +591,30 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
               },
             ),
             const SizedBox(width: 8),
-            _FilterChip(
-              label: _tEducatorSessions(context, 'Future Skills'),
-              isSelected: _filterStatus == 'future_skills',
-              color: ScholesaColors.futureSkills,
-              onTap: () {
-                TelemetryService.instance.logEvent(
-                  event: 'cta.clicked',
-                  metadata: const <String, dynamic>{
-                    'cta': 'educator_sessions_filter_future_skills'
+            ...CurriculumLegacyFamilyCode.values
+                .expand<Widget>((CurriculumLegacyFamilyCode code) {
+              final String filterValue = curriculumLegacyFamilyMissionCode(code);
+              final bool isLast =
+                  code == CurriculumLegacyFamilyCode.values.last;
+              return <Widget>[
+                _FilterChip(
+                  label: curriculumLegacyFamilyDisplayLabel(context, code),
+                  isSelected: _filterStatus == filterValue,
+                  color: curriculumLegacyFamilyColor(code),
+                  onTap: () {
+                    TelemetryService.instance.logEvent(
+                      event: 'cta.clicked',
+                      metadata: <String, dynamic>{
+                        'cta': 'educator_sessions_filter_$filterValue',
+                      },
+                    );
+                    _setFilterStatus(filterValue);
+                    _logScheduleViewed(trigger: 'filter_$filterValue');
                   },
-                );
-                _setFilterStatus('future_skills');
-                _logScheduleViewed(trigger: 'filter_future_skills');
-              },
-            ),
-            const SizedBox(width: 8),
-            _FilterChip(
-              label: _tEducatorSessions(context, 'Leadership'),
-              isSelected: _filterStatus == 'leadership',
-              color: ScholesaColors.leadership,
-              onTap: () {
-                TelemetryService.instance.logEvent(
-                  event: 'cta.clicked',
-                  metadata: const <String, dynamic>{
-                    'cta': 'educator_sessions_filter_leadership'
-                  },
-                );
-                _setFilterStatus('leadership');
-                _logScheduleViewed(trigger: 'filter_leadership');
-              },
-            ),
-            const SizedBox(width: 8),
-            _FilterChip(
-              label: _tEducatorSessions(context, 'Impact'),
-              isSelected: _filterStatus == 'impact',
-              color: ScholesaColors.impact,
-              onTap: () {
-                TelemetryService.instance.logEvent(
-                  event: 'cta.clicked',
-                  metadata: const <String, dynamic>{
-                    'cta': 'educator_sessions_filter_impact'
-                  },
-                );
-                _setFilterStatus('impact');
-                _logScheduleViewed(trigger: 'filter_impact');
-              },
-            ),
+                ),
+                if (!isLast) const SizedBox(width: 8),
+              ];
+            }).toList(growable: false),
           ],
         ),
       ),
@@ -787,7 +758,9 @@ class _CreateSessionDialogState extends State<_CreateSessionDialog> {
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _coTeacherIdsController = TextEditingController();
   final TextEditingController _aideIdsController = TextEditingController();
-  String _pillar = 'Future Skills';
+  String _pillar = curriculumLegacyFamilyStorageLabel(
+    CurriculumLegacyFamilyCode.future_skills,
+  );
   bool _generateJoinCode = true;
   bool _isSubmitting = false;
 
@@ -972,20 +945,16 @@ class _CreateSessionDialogState extends State<_CreateSessionDialog> {
               initialValue: _pillar,
               decoration: InputDecoration(
                   labelText: _tEducatorSessions(context, 'Pillar')),
-              items: <DropdownMenuItem<String>>[
-                DropdownMenuItem<String>(
-                  value: 'Future Skills',
-                  child: Text(_tEducatorSessions(context, 'Future Skills')),
-                ),
-                DropdownMenuItem<String>(
-                  value: 'Leadership',
-                  child: Text(_tEducatorSessions(context, 'Leadership')),
-                ),
-                DropdownMenuItem<String>(
-                  value: 'Impact',
-                  child: Text(_tEducatorSessions(context, 'Impact')),
-                ),
-              ],
+              items: CurriculumLegacyFamilyCode.values
+                  .map((CurriculumLegacyFamilyCode code) {
+                final String value = curriculumLegacyFamilyStorageLabel(code);
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(
+                    curriculumLegacyFamilyDisplayLabel(context, code),
+                  ),
+                );
+              }).toList(growable: false),
               onChanged: (String? value) {
                 if (value != null) {
                   TelemetryService.instance.logEvent(
@@ -1171,29 +1140,15 @@ class _SessionCard extends StatelessWidget {
   }
 
   Color _getPillarColor() {
-    switch (session.pillar.toLowerCase()) {
-      case 'future skills':
-        return ScholesaColors.futureSkills;
-      case 'leadership':
-        return ScholesaColors.leadership;
-      case 'impact':
-        return ScholesaColors.impact;
-      default:
-        return ScholesaColors.educator;
-    }
+    return curriculumLegacyFamilyColor(
+      normalizeCurriculumLegacyFamilyCode(session.pillar),
+    );
   }
 
   IconData _getPillarIcon() {
-    switch (session.pillar.toLowerCase()) {
-      case 'future skills':
-        return Icons.code;
-      case 'leadership':
-        return Icons.emoji_events;
-      case 'impact':
-        return Icons.eco;
-      default:
-        return Icons.school;
-    }
+    return curriculumLegacyFamilyIcon(
+      normalizeCurriculumLegacyFamilyCode(session.pillar),
+    );
   }
 
   Color _getStatusColor() {

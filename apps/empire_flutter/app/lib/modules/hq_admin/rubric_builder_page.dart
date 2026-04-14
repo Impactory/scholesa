@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../auth/app_state.dart';
+import '../../domain/curriculum/curriculum_family_ui.dart';
 import '../../i18n/evidence_chain_i18n.dart';
 import '../../services/firestore_service.dart';
 
@@ -25,19 +26,24 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
   // Form state
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
-  String _selectedPillar = 'futureSkills';
+  String _selectedPillar = curriculumLegacyFamilySchemaCode(
+    CurriculumLegacyFamilyCode.future_skills,
+  );
   List<_RubricLevel> _levels = <_RubricLevel>[];
   bool _isSubmitting = false;
-
-  static const List<Map<String, String>> _pillars = <Map<String, String>>[
-    <String, String>{'value': 'futureSkills', 'label': 'Future Skills'},
-    <String, String>{'value': 'leadership', 'label': 'Leadership'},
-    <String, String>{'value': 'impact', 'label': 'Impact'},
-  ];
 
   FirestoreService get _firestoreService => context.read<FirestoreService>();
 
   String _t(String input) => EvidenceChainI18n.text(context, input);
+
+  List<Map<String, String>> get _pillarOptions {
+    return CurriculumLegacyFamilyCode.values
+        .map((CurriculumLegacyFamilyCode code) => <String, String>{
+              'value': curriculumLegacyFamilySchemaCode(code),
+              'label': curriculumLegacyFamilyDisplayLabel(context, code),
+            })
+        .toList(growable: false);
+  }
 
   @override
   void initState() {
@@ -81,7 +87,9 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
   void _openCreateForm() {
     _nameController.clear();
     _descriptionController.clear();
-    _selectedPillar = 'futureSkills';
+    _selectedPillar = curriculumLegacyFamilySchemaCode(
+      CurriculumLegacyFamilyCode.future_skills,
+    );
     _levels = <_RubricLevel>[
       _RubricLevel(name: 'Emerging', criteria: '', score: 1),
       _RubricLevel(name: 'Developing', criteria: '', score: 2),
@@ -95,7 +103,10 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
   void _openEditForm(Map<String, dynamic> rubric) {
     _nameController.text = rubric['name'] as String? ?? '';
     _descriptionController.text = rubric['description'] as String? ?? '';
-    _selectedPillar = rubric['pillarCode'] as String? ?? 'futureSkills';
+    _selectedPillar = rubric['pillarCode'] as String? ??
+        curriculumLegacyFamilySchemaCode(
+          CurriculumLegacyFamilyCode.future_skills,
+        );
 
     final List<dynamic> rawLevels =
         rubric['levels'] as List<dynamic>? ?? <dynamic>[];
@@ -318,10 +329,10 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
                 labelText: _t('Pillar'),
                 border: OutlineInputBorder(),
               ),
-              items: _pillars
+              items: _pillarOptions
                   .map((Map<String, String> p) => DropdownMenuItem<String>(
                         value: p['value'],
-                        child: Text(_t(p['label']!)),
+                        child: Text(p['label']!),
                       ))
                   .toList(),
               onChanged: (String? val) {

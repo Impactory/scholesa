@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../auth/app_state.dart';
+import '../../domain/curriculum/curriculum_family_ui.dart';
 import '../../i18n/site_surface_i18n.dart';
 import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
@@ -1492,27 +1493,10 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
 
   String _sessionPillar(Map<String, dynamic> data) {
     final String direct = ((data['pillar'] as String?) ?? '').trim();
-    if (direct.isNotEmpty) return direct;
-    final String code =
-        ((data['pillarCode'] as String?) ?? '').trim().toLowerCase();
-    switch (code) {
-      case 'future_skills':
-      case 'future-skills':
-      case 'future skills':
-        return 'Future Skills';
-      case 'leadership_agency':
-      case 'leadership-agency':
-      case 'leadership':
-      case 'leadership & agency':
-        return 'Leadership';
-      case 'impact_innovation':
-      case 'impact-innovation':
-      case 'impact':
-      case 'impact & innovation':
-        return 'Impact';
-      default:
-        return 'Future Skills';
+    if (direct.isNotEmpty) {
+      return curriculumLegacyFamilyStorageLabelFromAny(direct);
     }
+    return curriculumLegacyFamilyStorageLabelFromAny(data['pillarCode'] as String?);
   }
 
   DateTime? _toDateTime(dynamic value) {
@@ -1576,31 +1560,15 @@ class _SiteSessionsPageState extends State<SiteSessionsPage> {
   }
 
   String _pillarCode(String pillar) {
-    switch (pillar.toLowerCase()) {
-      case 'leadership':
-      case 'leadership & agency':
-        return 'leadership_agency';
-      case 'impact':
-      case 'impact & innovation':
-        return 'impact_innovation';
-      case 'future skills':
-      default:
-        return 'future_skills';
-    }
+    return curriculumLegacyFamilySessionCode(
+      normalizeCurriculumLegacyFamilyCode(pillar),
+    );
   }
 
   String _capabilityMappingPillarCode(String pillar) {
-    switch (pillar.trim().toLowerCase()) {
-      case 'leadership':
-      case 'leadership & agency':
-        return 'LEAD';
-      case 'impact':
-      case 'impact & innovation':
-        return 'IMP';
-      case 'future skills':
-      default:
-        return 'FS';
-    }
+    return curriculumLegacyFamilyShortCode(
+      normalizeCurriculumLegacyFamilyCode(pillar),
+    );
   }
 }
 
@@ -2177,7 +2145,9 @@ class _CreateSessionSheet extends StatefulWidget {
 class _CreateSessionSheetState extends State<_CreateSessionSheet> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _learnerCountController = TextEditingController();
-  String _selectedPillar = 'Future Skills';
+  String _selectedPillar = curriculumLegacyFamilyStorageLabel(
+    CurriculumLegacyFamilyCode.future_skills,
+  );
   String? _selectedEducatorId;
   String? _selectedRoom;
   String _selectedTime = '4:00 PM';
@@ -2251,55 +2221,33 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                   ),
                   const SizedBox(height: 8),
                   Row(
-                    children: <Widget>[
-                      _PillarOption(
-                        label: _tSiteSessions(context, 'Future Skills'),
-                        color: ScholesaColors.futureSkills,
-                        isSelected: _selectedPillar == 'Future Skills',
-                        onTap: () {
-                          TelemetryService.instance.logEvent(
-                            event: 'cta.clicked',
-                            metadata: const <String, dynamic>{
-                              'cta':
-                                  'site_sessions_create_select_pillar_future_skills',
-                            },
-                          );
-                          setState(() => _selectedPillar = 'Future Skills');
-                        },
-                      ),
-                      const SizedBox(width: 8),
-                      _PillarOption(
-                        label: _tSiteSessions(context, 'Leadership'),
-                        color: ScholesaColors.leadership,
-                        isSelected: _selectedPillar == 'Leadership',
-                        onTap: () {
-                          TelemetryService.instance.logEvent(
-                            event: 'cta.clicked',
-                            metadata: const <String, dynamic>{
-                              'cta':
-                                  'site_sessions_create_select_pillar_leadership',
-                            },
-                          );
-                          setState(() => _selectedPillar = 'Leadership');
-                        },
-                      ),
-                      const SizedBox(width: 8),
-                      _PillarOption(
-                        label: _tSiteSessions(context, 'Impact'),
-                        color: ScholesaColors.impact,
-                        isSelected: _selectedPillar == 'Impact',
-                        onTap: () {
-                          TelemetryService.instance.logEvent(
-                            event: 'cta.clicked',
-                            metadata: const <String, dynamic>{
-                              'cta':
-                                  'site_sessions_create_select_pillar_impact',
-                            },
-                          );
-                          setState(() => _selectedPillar = 'Impact');
-                        },
-                      ),
-                    ],
+                    children: CurriculumLegacyFamilyCode.values
+                        .expand<Widget>((CurriculumLegacyFamilyCode code) {
+                      final String value = curriculumLegacyFamilyStorageLabel(code);
+                      final bool isLast =
+                          code == CurriculumLegacyFamilyCode.values.last;
+                      return <Widget>[
+                        _PillarOption(
+                          label: curriculumLegacyFamilyDisplayLabel(
+                            context,
+                            code,
+                          ),
+                          color: curriculumLegacyFamilyColor(code),
+                          isSelected: _selectedPillar == value,
+                          onTap: () {
+                            TelemetryService.instance.logEvent(
+                              event: 'cta.clicked',
+                              metadata: <String, dynamic>{
+                                'cta':
+                                    'site_sessions_create_select_legacy_family_${curriculumLegacyFamilyMissionCode(code)}',
+                              },
+                            );
+                            setState(() => _selectedPillar = value);
+                          },
+                        ),
+                        if (!isLast) const SizedBox(width: 8),
+                      ];
+                    }).toList(growable: false),
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(

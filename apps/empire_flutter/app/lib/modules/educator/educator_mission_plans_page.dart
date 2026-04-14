@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../domain/curriculum/curriculum_family_ui.dart';
 import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
 import '../../services/firestore_service.dart';
@@ -113,11 +114,9 @@ class EducatorMissionPlansPage extends StatefulWidget {
 
 class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
   static const String _allPillarsFilter = '__all_pillars__';
-  static const List<String> _supportedPillarFilters = <String>[
+  static final List<String> _supportedPillarFilters = <String>[
     _allPillarsFilter,
-    'Future Skills',
-    'Leadership & Agency',
-    'Impact & Innovation',
+    ...CurriculumLegacyFamilyCode.values.map(curriculumLegacyFamilyStorageLabel),
   ];
 
   List<_MissionPlan> _missionPlans = <_MissionPlan>[];
@@ -163,6 +162,11 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
     if (candidate == 'All Pillars') {
       return _allPillarsFilter;
     }
+    final CurriculumLegacyFamilyCode? code =
+        maybeCurriculumLegacyFamilyCode(candidate);
+    if (code != null) {
+      return curriculumLegacyFamilyStorageLabel(code);
+    }
     return _allPillarsFilter;
   }
 
@@ -170,7 +174,7 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
     if (value == _allPillarsFilter) {
       return _tEducatorMissionPlans(context, 'All Pillars');
     }
-    return _tEducatorMissionPlans(context, value);
+    return curriculumLegacyFamilyDisplayLabelFromAny(context, value);
   }
 
   Future<void> _loadSavedPillarFilter() async {
@@ -404,19 +408,10 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
   }
 
   Widget _buildPillarIcon(String pillar) {
-    IconData icon;
-    Color color = _getPillarColor(pillar);
-
-    switch (pillar) {
-      case 'Future Skills':
-        icon = Icons.psychology_rounded;
-      case 'Leadership & Agency':
-        icon = Icons.groups_rounded;
-      case 'Impact & Innovation':
-        icon = Icons.lightbulb_rounded;
-      default:
-        icon = Icons.star_rounded;
-    }
+    final CurriculumLegacyFamilyCode code =
+        normalizeCurriculumLegacyFamilyCode(pillar);
+    final IconData icon = curriculumLegacyFamilyIcon(code);
+    final Color color = _getPillarColor(pillar);
 
     return Container(
       padding: const EdgeInsets.all(10),
@@ -429,16 +424,9 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
   }
 
   Color _getPillarColor(String pillar) {
-    switch (pillar) {
-      case 'Future Skills':
-        return Colors.blue;
-      case 'Leadership & Agency':
-        return Colors.purple;
-      case 'Impact & Innovation':
-        return Colors.green;
-      default:
-        return Colors.grey;
-    }
+    return curriculumLegacyFamilyColor(
+      normalizeCurriculumLegacyFamilyCode(pillar),
+    );
   }
 
   Widget _buildStatusChip(PlanStatus status) {
@@ -544,28 +532,18 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                       setLocalState(() => selected = value);
                     },
                   ),
-                  _buildFilterOption(
-                    value: 'Future Skills',
-                    label: _pillarFilterLabel('Future Skills'),
-                    selected: selected,
-                    onChanged: (String value) {
-                      setLocalState(() => selected = value);
-                    },
-                  ),
-                  _buildFilterOption(
-                    value: 'Leadership & Agency',
-                    label: _pillarFilterLabel('Leadership & Agency'),
-                    selected: selected,
-                    onChanged: (String value) {
-                      setLocalState(() => selected = value);
-                    },
-                  ),
-                  _buildFilterOption(
-                    value: 'Impact & Innovation',
-                    label: _pillarFilterLabel('Impact & Innovation'),
-                    selected: selected,
-                    onChanged: (String value) {
-                      setLocalState(() => selected = value);
+                  ...CurriculumLegacyFamilyCode.values.map(
+                    (CurriculumLegacyFamilyCode code) {
+                      final String value =
+                          curriculumLegacyFamilyStorageLabel(code);
+                      return _buildFilterOption(
+                        value: value,
+                        label: _pillarFilterLabel(value),
+                        selected: selected,
+                        onChanged: (String nextValue) {
+                          setLocalState(() => selected = nextValue);
+                        },
+                      );
                     },
                   ),
                 ],
@@ -892,7 +870,8 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
     final TextEditingController descriptionController = TextEditingController(
       text: plan?.description ?? '',
     );
-    String selectedPillar = plan?.pillar ?? 'Future Skills';
+    String selectedPillar =
+        curriculumLegacyFamilyStorageLabelFromAny(plan?.pillar);
     String selectedDifficulty = plan?.difficulty ?? 'beginner';
     final Set<String> evidenceDefaults = <String>{
       ...(plan?.evidenceDefaults ?? const <String>[
@@ -961,20 +940,16 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
                     labelText: _tEducatorMissionPlans(context, 'Pillar'),
                     border: const OutlineInputBorder(),
                   ),
-                  items: <DropdownMenuItem<String>>[
-                    DropdownMenuItem<String>(
-                        value: 'Future Skills',
-                        child: Text(
-                            _tEducatorMissionPlans(context, 'Future Skills'))),
-                    DropdownMenuItem<String>(
-                        value: 'Leadership & Agency',
-                        child: Text(_tEducatorMissionPlans(
-                            context, 'Leadership & Agency'))),
-                    DropdownMenuItem<String>(
-                        value: 'Impact & Innovation',
-                        child: Text(_tEducatorMissionPlans(
-                            context, 'Impact & Innovation'))),
-                  ],
+                  items: CurriculumLegacyFamilyCode.values
+                      .map((CurriculumLegacyFamilyCode code) {
+                    final String value = curriculumLegacyFamilyStorageLabel(code);
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(
+                        curriculumLegacyFamilyDisplayLabel(context, code),
+                      ),
+                    );
+                  }).toList(growable: false),
                   onChanged: (String? value) {
                     if (value != null) {
                       TelemetryService.instance.logEvent(
@@ -1768,30 +1743,13 @@ class _EducatorMissionPlansPageState extends State<EducatorMissionPlansPage> {
   }
 
   String _canonicalPillar(String? pillar) {
-    switch ((pillar ?? '').trim().toLowerCase()) {
-      case 'future skills':
-      case 'future_skills':
-        return 'Future Skills';
-      case 'leadership & agency':
-      case 'leadership':
-        return 'Leadership & Agency';
-      case 'impact & innovation':
-      case 'impact':
-        return 'Impact & Innovation';
-      default:
-        return 'Future Skills';
-    }
+    return curriculumLegacyFamilyStorageLabelFromAny(pillar);
   }
 
   String _pillarCodeFromLabel(String pillar) {
-    switch (pillar) {
-      case 'Leadership & Agency':
-        return 'leadership';
-      case 'Impact & Innovation':
-        return 'impact';
-      default:
-        return 'future_skills';
-    }
+    return curriculumLegacyFamilyMissionCode(
+      normalizeCurriculumLegacyFamilyCode(pillar),
+    );
   }
 
   String _statusKey(PlanStatus status) {

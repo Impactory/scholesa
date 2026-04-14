@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
+import '../../domain/curriculum/curriculum_family_ui.dart';
 import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/auth/global_session_menu.dart';
@@ -830,14 +831,7 @@ class _ReviewSheetState extends State<_ReviewSheet> {
   }
 
   String _pillarLabel(String pillarCode) {
-    switch (pillarCode) {
-      case 'leadership':
-        return _tEducatorMissionReview(context, 'Leadership');
-      case 'impact':
-        return _tEducatorMissionReview(context, 'Impact');
-      default:
-        return _tEducatorMissionReview(context, 'Future Skills');
-    }
+    return curriculumLegacyFamilyDisplayLabelFromAny(context, pillarCode);
   }
 
   String _buildAiDraft() {

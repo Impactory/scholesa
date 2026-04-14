@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../auth/app_state.dart';
+import '../../domain/curriculum/curriculum_family_ui.dart';
 import '../../domain/models.dart';
 import '../../domain/repositories.dart';
 import '../../i18n/learner_surface_i18n.dart';
@@ -184,35 +185,21 @@ class _LearnerCredentialsPageState extends State<LearnerCredentialsPage> {
   }
 
   String _pillarLabel(String code) {
-    switch (code.trim().toLowerCase()) {
-      case 'future_skills':
-      case 'future skills':
-        return _t('Future Skills');
-      case 'leadership':
-      case 'leadership_agency':
-        return _t('Leadership');
-      case 'impact':
-      case 'impact_innovation':
-        return _t('Impact');
-      default:
-        return code.trim().isEmpty ? _t('Credentials') : code.trim();
+    final CurriculumLegacyFamilyCode? legacyFamilyCode =
+        maybeCurriculumLegacyFamilyCode(code);
+    if (legacyFamilyCode == null) {
+      return code.trim().isEmpty ? _t('Credentials') : code.trim();
     }
+    return curriculumLegacyFamilyDisplayLabel(context, legacyFamilyCode);
   }
 
   Color _pillarColor(String code) {
-    switch (code.trim().toLowerCase()) {
-      case 'future_skills':
-      case 'future skills':
-        return ScholesaColors.futureSkills;
-      case 'leadership':
-      case 'leadership_agency':
-        return ScholesaColors.leadership;
-      case 'impact':
-      case 'impact_innovation':
-        return ScholesaColors.impact;
-      default:
-        return ScholesaColors.learner;
+    final CurriculumLegacyFamilyCode? legacyFamilyCode =
+        maybeCurriculumLegacyFamilyCode(code);
+    if (legacyFamilyCode == null) {
+      return ScholesaColors.learner;
     }
+    return curriculumLegacyFamilyColor(legacyFamilyCode);
   }
 
   Widget _buildEmptyState() {

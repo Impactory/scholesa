@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../domain/curriculum/curriculum_family_ui.dart';
 import '../../services/telemetry_service.dart';
 import '../localization/inline_locale_text.dart';
 import '../theme/scholesa_theme.dart';
 
 const Map<String, String> _learnerWidgetsZhCn = <String, String>{
-  'Future Skills': '未来技能',
-  'Leadership': '领导力',
-  'Impact': '影响力',
   'Not Started': '未开始',
   'In Progress': '进行中',
   'Submitted': '已提交',
@@ -26,9 +24,6 @@ const Map<String, String> _learnerWidgetsZhCn = <String, String>{
 };
 
 const Map<String, String> _learnerWidgetsZhTw = <String, String>{
-  'Future Skills': '未來技能',
-  'Leadership': '領導力',
-  'Impact': '影響力',
   'Not Started': '未開始',
   'In Progress': '進行中',
   'Submitted': '已提交',
@@ -77,43 +72,20 @@ class MissionCard extends StatelessWidget {
   final VoidCallback? onTap;
   final VoidCallback? onContinue;
 
+  CurriculumLegacyFamilyCode get _pillarCode {
+    return normalizeCurriculumLegacyFamilyCode(pillar);
+  }
+
   Color get pillarColor {
-    switch (pillar) {
-      case 'future_skills':
-        return ScholesaColors.futureSkills;
-      case 'leadership':
-        return ScholesaColors.leadership;
-      case 'impact':
-        return ScholesaColors.impact;
-      default:
-        return ScholesaColors.primary;
-    }
+    return curriculumLegacyFamilyColor(_pillarCode);
   }
 
   String pillarLabel(BuildContext context) {
-    switch (pillar) {
-      case 'future_skills':
-        return _tLearnerWidgets(context, 'Future Skills');
-      case 'leadership':
-        return _tLearnerWidgets(context, 'Leadership');
-      case 'impact':
-        return _tLearnerWidgets(context, 'Impact');
-      default:
-        return pillar;
-    }
+    return curriculumLegacyFamilyDisplayLabel(context, _pillarCode);
   }
 
   IconData get pillarIcon {
-    switch (pillar) {
-      case 'future_skills':
-        return Icons.rocket_launch_rounded;
-      case 'leadership':
-        return Icons.psychology_rounded;
-      case 'impact':
-        return Icons.eco_rounded;
-      default:
-        return Icons.star_rounded;
-    }
+    return curriculumLegacyFamilyIcon(_pillarCode);
   }
 
   String statusLabel(BuildContext context) {

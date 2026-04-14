@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../auth/app_state.dart';
+import '../../domain/curriculum/curriculum_family_ui.dart';
 import '../../services/export_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
@@ -508,19 +509,28 @@ class _ParentChildPageState extends State<ParentChildPage> {
       child: Column(
         children: <Widget>[
           _buildPillarRow(
-            label: _t('Future Skills'),
+            label: curriculumLegacyFamilyDisplayLabel(
+              context,
+              CurriculumLegacyFamilyCode.future_skills,
+            ),
             value: learner.pillarProgress['futureSkills'] ?? 0,
             color: const Color(0xFF3B82F6),
           ),
           const SizedBox(height: 12),
           _buildPillarRow(
-            label: _t('Leadership & Agency'),
+            label: curriculumLegacyFamilyDisplayLabel(
+              context,
+              CurriculumLegacyFamilyCode.leadership_agency,
+            ),
             value: learner.pillarProgress['leadership'] ?? 0,
             color: const Color(0xFF8B5CF6),
           ),
           const SizedBox(height: 12),
           _buildPillarRow(
-            label: _t('Impact & Innovation'),
+            label: curriculumLegacyFamilyDisplayLabel(
+              context,
+              CurriculumLegacyFamilyCode.impact_innovation,
+            ),
             value: learner.pillarProgress['impact'] ?? 0,
             color: const Color(0xFF10B981),
           ),

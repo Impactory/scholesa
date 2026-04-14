@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../domain/curriculum/curriculum_family_ui.dart';
 import '../../services/firestore_service.dart';
 import '../../services/export_service.dart';
 import '../../services/telemetry_service.dart';
@@ -1613,19 +1614,28 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
                   ),
                   const SizedBox(height: 12),
                   _ProgressBar(
-                    label: _tEducatorLearners(context, 'Future Skills'),
+                    label: curriculumLegacyFamilyDisplayLabel(
+                      context,
+                      CurriculumLegacyFamilyCode.future_skills,
+                    ),
                     progress: learner.futureSkillsProgress,
                     color: ScholesaColors.futureSkills,
                   ),
                   const SizedBox(height: 8),
                   _ProgressBar(
-                    label: _tEducatorLearners(context, 'Leadership'),
+                    label: curriculumLegacyFamilyDisplayLabel(
+                      context,
+                      CurriculumLegacyFamilyCode.leadership_agency,
+                    ),
                     progress: learner.leadershipProgress,
                     color: ScholesaColors.leadership,
                   ),
                   const SizedBox(height: 8),
                   _ProgressBar(
-                    label: _tEducatorLearners(context, 'Impact'),
+                    label: curriculumLegacyFamilyDisplayLabel(
+                      context,
+                      CurriculumLegacyFamilyCode.impact_innovation,
+                    ),
                     progress: learner.impactProgress,
                     color: ScholesaColors.impact,
                   ),

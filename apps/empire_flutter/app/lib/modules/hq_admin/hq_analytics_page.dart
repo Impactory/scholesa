@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
 
 import '../../auth/app_state.dart';
+import '../../domain/curriculum/curriculum_family_ui.dart';
 import '../../i18n/shared_role_surface_i18n.dart';
 import '../../services/analytics_service.dart';
 import '../../services/export_service.dart';
@@ -335,7 +336,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
 
     if (_pillarAnalyticsData.isNotEmpty) {
       buffer
-        ..writeln('Pillar Performance')
+        ..writeln(_t('Pillar Performance'))
         ..writeln('------------------');
       for (final _PillarAnalyticsData item in _pillarAnalyticsData) {
         buffer.writeln(
@@ -2066,7 +2067,9 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
           _pillarAnalyticsData = snapshot.pillarAnalytics
               .map(
                 (Map<String, dynamic> row) => _PillarAnalyticsData(
-                  pillar: (row['pillar'] as String?) ?? 'Future Skills',
+                  pillar: curriculumLegacyFamilyStorageLabelFromAny(
+                    row['pillar'] as String?,
+                  ),
                   progress: ((row['progress'] as num?) ?? 0).toDouble(),
                   learners: (row['learners'] as num?)?.toInt() ?? 0,
                   missions: (row['missions'] as num?)?.toInt() ?? 0,
@@ -2186,11 +2189,7 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
               .get();
 
       final Map<String, String> missionPillarById = <String, String>{};
-      final Map<String, int> missionsByPillar = <String, int>{
-        'Future Skills': 0,
-        'Leadership': 0,
-        'Impact': 0,
-      };
+      final Map<String, int> missionsByPillar = _emptyPillarCountMap();
 
       for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
           in missionsSnapshot.docs) {
@@ -2266,21 +2265,10 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
           <String, String>{};
       final Map<String, int> latestCapabilityLevelByLearner = <String, int>{};
       final Map<String, DateTime> latestGrowthAtByLearner = <String, DateTime>{};
-      final Map<String, int> attemptsByPillar = <String, int>{
-        'Future Skills': 0,
-        'Leadership': 0,
-        'Impact': 0,
-      };
-      final Map<String, int> completedByPillar = <String, int>{
-        'Future Skills': 0,
-        'Leadership': 0,
-        'Impact': 0,
-      };
-      final Map<String, Set<String>> learnersByPillar = <String, Set<String>>{
-        'Future Skills': <String>{},
-        'Leadership': <String>{},
-        'Impact': <String>{},
-      };
+      final Map<String, int> attemptsByPillar = _emptyPillarCountMap();
+      final Map<String, int> completedByPillar = _emptyPillarCountMap();
+      final Map<String, Set<String>> learnersByPillar =
+          _emptyPillarLearnerMap();
 
       for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
           in attemptsSnapshot.docs) {
@@ -2354,29 +2342,18 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
         }
       }
 
-      final List<_PillarAnalyticsData> pillarData = <_PillarAnalyticsData>[
-        _buildPillarData(
-          pillar: 'Future Skills',
-          missionsByPillar: missionsByPillar,
-          attemptsByPillar: attemptsByPillar,
-          completedByPillar: completedByPillar,
-          learnersByPillar: learnersByPillar,
-        ),
-        _buildPillarData(
-          pillar: 'Leadership',
-          missionsByPillar: missionsByPillar,
-          attemptsByPillar: attemptsByPillar,
-          completedByPillar: completedByPillar,
-          learnersByPillar: learnersByPillar,
-        ),
-        _buildPillarData(
-          pillar: 'Impact',
-          missionsByPillar: missionsByPillar,
-          attemptsByPillar: attemptsByPillar,
-          completedByPillar: completedByPillar,
-          learnersByPillar: learnersByPillar,
-        ),
-      ];
+      final List<_PillarAnalyticsData> pillarData =
+          CurriculumLegacyFamilyCode.values
+              .map(
+                (CurriculumLegacyFamilyCode code) => _buildPillarData(
+                  pillar: curriculumLegacyFamilyStorageLabel(code),
+                  missionsByPillar: missionsByPillar,
+                  attemptsByPillar: attemptsByPillar,
+                  completedByPillar: completedByPillar,
+                  learnersByPillar: learnersByPillar,
+                ),
+              )
+              .toList(growable: false);
 
       final Set<String> rankedLearnerIds = <String>{
         ...reviewedEvidenceByLearner.keys,
@@ -2756,6 +2733,22 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
     return null;
   }
 
+  Map<String, int> _emptyPillarCountMap() {
+    return <String, int>{
+      for (final CurriculumLegacyFamilyCode code
+          in CurriculumLegacyFamilyCode.values)
+        curriculumLegacyFamilyStorageLabel(code): 0,
+    };
+  }
+
+  Map<String, Set<String>> _emptyPillarLearnerMap() {
+    return <String, Set<String>>{
+      for (final CurriculumLegacyFamilyCode code
+          in CurriculumLegacyFamilyCode.values)
+        curriculumLegacyFamilyStorageLabel(code): <String>{},
+    };
+  }
+
   _PillarAnalyticsData _buildPillarData({
     required String pillar,
     required Map<String, int> missionsByPillar,
@@ -2780,65 +2773,55 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
   String _pillarLabelFromData(Map<String, dynamic> data) {
     final String direct = ((data['pillar'] as String?) ?? '').trim();
     if (direct.isNotEmpty) {
-      return _normalizePillarLabel(direct);
+      return curriculumLegacyFamilyStorageLabelFromAny(direct);
     }
     final String code = ((data['pillarCode'] as String?) ?? '').trim();
     if (code.isNotEmpty) {
-      return _normalizePillarLabel(code);
+      return curriculumLegacyFamilyStorageLabelFromAny(code);
     }
     final List<dynamic> pillarCodes =
         (data['pillarCodes'] as List?) ?? <dynamic>[];
     if (pillarCodes.isNotEmpty) {
-      return _normalizePillarLabel(pillarCodes.first.toString());
+      return curriculumLegacyFamilyStorageLabelFromAny(
+        pillarCodes.first.toString(),
+      );
     }
-    return 'Future Skills';
+    return curriculumLegacyFamilyStorageLabel(
+      CurriculumLegacyFamilyCode.future_skills,
+    );
   }
 
   String _pillarLabelFromAttempt(Map<String, dynamic> data, String? fallback) {
     final String direct = ((data['pillar'] as String?) ?? '').trim();
     if (direct.isNotEmpty) {
-      return _normalizePillarLabel(direct);
+      return curriculumLegacyFamilyStorageLabelFromAny(direct);
     }
     final String code = ((data['pillarCode'] as String?) ?? '').trim();
     if (code.isNotEmpty) {
-      return _normalizePillarLabel(code);
+      return curriculumLegacyFamilyStorageLabelFromAny(code);
     }
     if (fallback != null && fallback.trim().isNotEmpty) {
-      return _normalizePillarLabel(fallback);
+      return curriculumLegacyFamilyStorageLabelFromAny(fallback);
     }
-    return 'Future Skills';
+    return curriculumLegacyFamilyStorageLabel(
+      CurriculumLegacyFamilyCode.future_skills,
+    );
   }
 
   String _normalizePillarLabel(String raw) {
-    final String normalized = raw.trim().toLowerCase();
-    if (normalized.contains('future')) return 'Future Skills';
-    if (normalized.contains('leadership')) return 'Leadership';
-    if (normalized.contains('impact')) return 'Impact';
-    return 'Future Skills';
+    return curriculumLegacyFamilyStorageLabelFromAny(raw);
   }
 
   IconData _pillarIcon(String pillar) {
-    switch (_normalizePillarLabel(pillar)) {
-      case 'Leadership':
-        return Icons.emoji_events;
-      case 'Impact':
-        return Icons.eco;
-      case 'Future Skills':
-      default:
-        return Icons.code;
-    }
+    return curriculumLegacyFamilyIcon(
+      normalizeCurriculumLegacyFamilyCode(pillar),
+    );
   }
 
   Color _pillarColor(String pillar) {
-    switch (_normalizePillarLabel(pillar)) {
-      case 'Leadership':
-        return ScholesaColors.leadership;
-      case 'Impact':
-        return ScholesaColors.impact;
-      case 'Future Skills':
-      default:
-        return ScholesaColors.futureSkills;
-    }
+    return curriculumLegacyFamilyColor(
+      normalizeCurriculumLegacyFamilyCode(pillar),
+    );
   }
 }
 

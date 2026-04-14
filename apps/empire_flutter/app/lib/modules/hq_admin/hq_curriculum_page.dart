@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 
 import '../../auth/app_state.dart';
+import '../../domain/curriculum/curriculum_family_ui.dart';
 import '../../i18n/shared_role_surface_i18n.dart';
 import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
@@ -1171,18 +1172,10 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
   }
 
   Widget _buildPillarIcon(String pillar) {
-    IconData icon;
-    Color color = _getPillarColor(pillar);
-    switch (pillar) {
-      case 'Future Skills':
-        icon = Icons.psychology_rounded;
-      case 'Leadership & Agency':
-        icon = Icons.groups_rounded;
-      case 'Impact & Innovation':
-        icon = Icons.lightbulb_rounded;
-      default:
-        icon = Icons.star_rounded;
-    }
+    final CurriculumLegacyFamilyCode code =
+        normalizeCurriculumLegacyFamilyCode(pillar);
+    final IconData icon = curriculumLegacyFamilyIcon(code);
+    final Color color = _getPillarColor(pillar);
 
     return Container(
       padding: const EdgeInsets.all(10),
@@ -1194,16 +1187,9 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
   }
 
   Color _getPillarColor(String pillar) {
-    switch (pillar) {
-      case 'Future Skills':
-        return Colors.blue;
-      case 'Leadership & Agency':
-        return Colors.purple;
-      case 'Impact & Innovation':
-        return Colors.green;
-      default:
-        return Colors.grey;
-    }
+    return curriculumLegacyFamilyColor(
+      normalizeCurriculumLegacyFamilyCode(pillar),
+    );
   }
 
   void _showCurriculumDetails(_Curriculum curriculum) {
@@ -1585,7 +1571,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
         TextEditingController(text: curriculum.misconceptionTags.join(', '));
     final TextEditingController capabilityMappingsController =
         TextEditingController(text: curriculum.capabilityTitles.join(', '));
-    String selectedPillar = curriculum.pillar;
+    String selectedPillar =
+        curriculumLegacyFamilyStorageLabelFromAny(curriculum.pillar);
     String selectedTemplate = curriculum.template;
     String selectedDifficulty = curriculum.difficulty;
     String selectedMediaFormat = curriculum.mediaFormat;
@@ -1678,22 +1665,16 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                           BorderSide(color: ScholesaColors.primary, width: 1.5),
                     ),
                   ),
-                  items: <DropdownMenuItem<String>>[
-                    DropdownMenuItem<String>(
-                      value: 'Future Skills',
-                      child: Text(_tHqCurriculum(context, 'Future Skills')),
-                    ),
-                    DropdownMenuItem<String>(
-                      value: 'Leadership & Agency',
-                      child:
-                          Text(_tHqCurriculum(context, 'Leadership & Agency')),
-                    ),
-                    DropdownMenuItem<String>(
-                      value: 'Impact & Innovation',
-                      child:
-                          Text(_tHqCurriculum(context, 'Impact & Innovation')),
-                    ),
-                  ],
+                  items: CurriculumLegacyFamilyCode.values
+                      .map((CurriculumLegacyFamilyCode code) {
+                    final String value = curriculumLegacyFamilyStorageLabel(code);
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(
+                        curriculumLegacyFamilyDisplayLabel(context, code),
+                      ),
+                    );
+                  }).toList(growable: false),
                   onChanged: (String? value) {
                     if (value != null) {
                       setLocalState(() => selectedPillar = value);
@@ -1905,7 +1886,8 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
         TextEditingController();
     final TextEditingController capabilityMappingsController =
         TextEditingController();
-    String selectedPillar = initialPillar ?? 'Future Skills';
+    String selectedPillar =
+        curriculumLegacyFamilyStorageLabelFromAny(initialPillar);
     String selectedTemplate = _templateOptions.first;
     String selectedDifficulty = _difficultyOptions[1];
     String selectedMediaFormat = _mediaFormatOptions.first;
@@ -1984,22 +1966,16 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
                           BorderSide(color: ScholesaColors.primary, width: 1.5),
                     ),
                   ),
-                  items: <DropdownMenuItem<String>>[
-                    DropdownMenuItem<String>(
-                      value: 'Future Skills',
-                      child: Text(_tHqCurriculum(context, 'Future Skills')),
-                    ),
-                    DropdownMenuItem<String>(
-                      value: 'Leadership & Agency',
-                      child:
-                          Text(_tHqCurriculum(context, 'Leadership & Agency')),
-                    ),
-                    DropdownMenuItem<String>(
-                      value: 'Impact & Innovation',
-                      child:
-                          Text(_tHqCurriculum(context, 'Impact & Innovation')),
-                    ),
-                  ],
+                  items: CurriculumLegacyFamilyCode.values
+                      .map((CurriculumLegacyFamilyCode code) {
+                    final String value = curriculumLegacyFamilyStorageLabel(code);
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(
+                        curriculumLegacyFamilyDisplayLabel(context, code),
+                      ),
+                    );
+                  }).toList(growable: false),
                   onChanged: (String? value) {
                     if (value != null) {
                       setLocalState(() => selectedPillar = value);
@@ -4053,18 +4029,22 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
   String _pillarFromData(Map<String, dynamic> data) {
     final String? direct = data['pillar'] as String?;
     if (direct != null && direct.trim().isNotEmpty) {
-      return direct.trim();
+      return curriculumLegacyFamilyStorageLabelFromAny(direct);
     }
     final String? pillarCode = data['pillarCode'] as String?;
     if (pillarCode != null && pillarCode.trim().isNotEmpty) {
-      return _pillarLabelFromCode(pillarCode);
+      return curriculumLegacyFamilyStorageLabelFromAny(pillarCode);
     }
     final List<dynamic> pillarCodes =
         (data['pillarCodes'] as List?) ?? <dynamic>[];
     if (pillarCodes.isNotEmpty) {
-      return _pillarLabelFromCode(pillarCodes.first.toString());
+      return curriculumLegacyFamilyStorageLabelFromAny(
+        pillarCodes.first.toString(),
+      );
     }
-    return 'Future Skills';
+    return curriculumLegacyFamilyStorageLabel(
+      CurriculumLegacyFamilyCode.future_skills,
+    );
   }
 
   List<_SessionCapabilityReadiness> _mapSessionReadiness(
@@ -4134,7 +4114,9 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
             sessionId: sessionId,
             sessionTitle:
                 ((data['sessionTitle'] as String?) ?? 'Session').trim(),
-            pillar: ((data['pillar'] as String?) ?? 'Future Skills').trim(),
+            pillar: curriculumLegacyFamilyStorageLabelFromAny(
+              (data['pillar'] as String?) ?? '',
+            ),
             siteId: ((data['siteId'] as String?) ?? '').trim(),
             requesterName:
                 ((data['requesterName'] as String?) ?? 'Unknown').trim(),
@@ -4232,9 +4214,10 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
 
       final String missionPillarCode =
           (data['pillarCode'] as String? ?? '').trim();
-      final String missionPillar = _pillarFromData(data).trim().toLowerCase();
+      final CurriculumLegacyFamilyCode missionFamilyCode =
+          normalizeCurriculumLegacyFamilyCode(_pillarFromData(data));
       final bool pillarMatches = missionPillarCode == pillarCode ||
-          missionPillar == pillar.trim().toLowerCase();
+          missionFamilyCode == normalizeCurriculumLegacyFamilyCode(pillar);
       if (!pillarMatches) {
         return false;
       }
@@ -4397,24 +4380,13 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
   }
 
   String _pillarLabelFromCode(String raw) {
-    final String code = raw.trim().toUpperCase();
-    switch (code) {
-      case 'LEAD':
-      case 'LEADERSHIP':
-        return 'Leadership & Agency';
-      case 'IMP':
-      case 'IMPACT':
-        return 'Impact & Innovation';
-      default:
-        return 'Future Skills';
-    }
+    return curriculumLegacyFamilyStorageLabelFromAny(raw);
   }
 
   String _pillarCodeFromLabel(String label) {
-    final String value = label.trim().toLowerCase();
-    if (value.contains('leadership')) return 'LEAD';
-    if (value.contains('impact')) return 'IMP';
-    return 'FS';
+    return curriculumLegacyFamilyShortCode(
+      normalizeCurriculumLegacyFamilyCode(label),
+    );
   }
 
   String _capabilityPillarCode(Map<String, dynamic> data) {

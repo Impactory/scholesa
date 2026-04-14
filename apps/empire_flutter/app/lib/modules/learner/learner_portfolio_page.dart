@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../domain/curriculum/curriculum_family_ui.dart';
 import '../../domain/models.dart';
 import '../../domain/repositories.dart';
 import '../../services/firestore_service.dart';
@@ -95,7 +96,8 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
     final String goal = _learnerProfile?.portfolioGoal?.trim() ?? '';
     if (goal.isNotEmpty) return goal;
     return _t(
-        'Build a confident weekly shipping rhythm across Future Skills missions.');
+      'Build a confident weekly shipping rhythm across Future Skills missions.',
+    );
   }
 
   String _effectiveHighlight() {
@@ -645,28 +647,16 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
 
   String _primaryPillarLabel(PortfolioItemModel item) {
     for (final String code in item.pillarCodes) {
-      switch (_normalizePillarKey(code)) {
-        case 'future_skills':
-          return _t('Future Skills');
-        case 'leadership':
-          return _t('Leadership');
-        case 'impact':
-          return _t('Impact');
-      }
+      return curriculumLegacyFamilyDisplayLabelFromAny(context, code);
     }
     return _t('Projects');
   }
 
   Color _projectColor(PortfolioItemModel item) {
     for (final String code in item.pillarCodes) {
-      switch (_normalizePillarKey(code)) {
-        case 'future_skills':
-          return ScholesaColors.futureSkills;
-        case 'leadership':
-          return ScholesaColors.leadership;
-        case 'impact':
-          return ScholesaColors.impact;
-      }
+      return curriculumLegacyFamilyColor(
+        normalizeCurriculumLegacyFamilyCode(code),
+      );
     }
     return ScholesaColors.learner;
   }
@@ -685,29 +675,21 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
   }
 
   String _credentialPillarLabel(String code) {
-    switch (_normalizePillarKey(code)) {
-      case 'future_skills':
-        return _t('Future Skills');
-      case 'leadership':
-        return _t('Leadership');
-      case 'impact':
-        return _t('Impact');
-      default:
-        return code.trim().isEmpty ? _t('Credentials') : code.trim();
+    final CurriculumLegacyFamilyCode? legacyFamilyCode =
+        maybeCurriculumLegacyFamilyCode(code);
+    if (legacyFamilyCode == null) {
+      return code.trim().isEmpty ? _t('Credentials') : code.trim();
     }
+    return curriculumLegacyFamilyDisplayLabel(context, legacyFamilyCode);
   }
 
   Color _credentialPillarColor(String code) {
-    switch (_normalizePillarKey(code)) {
-      case 'future_skills':
-        return ScholesaColors.futureSkills;
-      case 'leadership':
-        return ScholesaColors.leadership;
-      case 'impact':
-        return ScholesaColors.impact;
-      default:
-        return ScholesaColors.learner;
+    final CurriculumLegacyFamilyCode? legacyFamilyCode =
+        maybeCurriculumLegacyFamilyCode(code);
+    if (legacyFamilyCode == null) {
+      return ScholesaColors.learner;
     }
+    return curriculumLegacyFamilyColor(legacyFamilyCode);
   }
 
   List<_PortfolioSignal> _portfolioSignals() {
@@ -1211,7 +1193,10 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
           Expanded(
             child: _PillarStatCard(
               icon: Icons.code,
-              label: _t('Future Skills'),
+              label: curriculumLegacyFamilyDisplayLabel(
+                context,
+                CurriculumLegacyFamilyCode.future_skills,
+              ),
               count: _projectsForPillar('future_skills'),
               caption: _t('Projects'),
               color: ScholesaColors.futureSkills,
@@ -1221,7 +1206,10 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
           Expanded(
             child: _PillarStatCard(
               icon: Icons.emoji_events,
-              label: _t('Leadership'),
+              label: curriculumLegacyFamilyDisplayLabel(
+                context,
+                CurriculumLegacyFamilyCode.leadership_agency,
+              ),
               count: _projectsForPillar('leadership'),
               caption: _t('Projects'),
               color: ScholesaColors.leadership,
@@ -1231,7 +1219,10 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
           Expanded(
             child: _PillarStatCard(
               icon: Icons.eco,
-              label: _t('Impact'),
+              label: curriculumLegacyFamilyDisplayLabel(
+                context,
+                CurriculumLegacyFamilyCode.impact_innovation,
+              ),
               count: _projectsForPillar('impact'),
               caption: _t('Projects'),
               color: ScholesaColors.impact,

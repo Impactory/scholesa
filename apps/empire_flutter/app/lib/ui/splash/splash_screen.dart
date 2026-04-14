@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
+import '../../domain/curriculum/curriculum_family_ui.dart';
 import '../theme/scholesa_theme.dart';
 import '../widgets/scholesa_logo.dart';
 
@@ -141,7 +142,7 @@ class _SplashScreenState extends State<SplashScreen>
 
                   // Tagline
                   Text(
-                    'Education 2.0 Platform',
+                    'K-12 Skills-First Platform',
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.white.withValues(alpha: 0.7),
@@ -151,7 +152,7 @@ class _SplashScreenState extends State<SplashScreen>
 
                   const SizedBox(height: 60),
 
-                  // Loading indicator with pillar colors
+                  // Loading indicator with legacy-family colors
                   _buildPillarLoadingIndicator(),
 
                   const SizedBox(height: 24),
@@ -168,7 +169,7 @@ class _SplashScreenState extends State<SplashScreen>
               ),
             ),
 
-            // Three pillars at bottom
+            // Legacy curriculum family chips
             Positioned(
               bottom: 40,
               left: 0,
@@ -187,7 +188,7 @@ class _SplashScreenState extends State<SplashScreen>
 
   List<Widget> _buildFloatingOrbs() {
     return <Widget>[
-      // Future Skills orb (blue)
+      // Legacy family orb (blue)
       _buildOrb(
         color: ScholesaColors.futureSkills,
         size: 200,
@@ -195,7 +196,7 @@ class _SplashScreenState extends State<SplashScreen>
         right: -50,
         delay: 0,
       ),
-      // Leadership orb (purple)
+      // Legacy family orb (purple)
       _buildOrb(
         color: ScholesaColors.leadership,
         size: 150,
@@ -203,7 +204,7 @@ class _SplashScreenState extends State<SplashScreen>
         left: -30,
         delay: 2,
       ),
-      // Impact orb (green)
+      // Legacy family orb (green)
       _buildOrb(
         color: ScholesaColors.impact,
         size: 180,
@@ -324,15 +325,18 @@ class _SplashScreenState extends State<SplashScreen>
   Widget _buildPillarChips() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
-      children: <Widget>[
-        _buildPillarChip('Future Skills', ScholesaColors.futureSkills,
-            Icons.rocket_launch_rounded),
-        const SizedBox(width: 12),
-        _buildPillarChip(
-            'Leadership', ScholesaColors.leadership, Icons.psychology_rounded),
-        const SizedBox(width: 12),
-        _buildPillarChip('Impact', ScholesaColors.impact, Icons.public_rounded),
-      ],
+      children: CurriculumLegacyFamilyCode.values
+          .expand<Widget>((CurriculumLegacyFamilyCode code) {
+        final bool isLast = code == CurriculumLegacyFamilyCode.values.last;
+        return <Widget>[
+          _buildPillarChip(
+            curriculumLegacyFamilyDisplayLabel(context, code),
+            curriculumLegacyFamilyColor(code),
+            curriculumLegacyFamilyIcon(code),
+          ),
+          if (!isLast) const SizedBox(width: 12),
+        ];
+      }).toList(growable: false),
     );
   }
 

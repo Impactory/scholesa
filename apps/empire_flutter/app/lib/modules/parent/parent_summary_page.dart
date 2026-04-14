@@ -8,7 +8,7 @@ import '../../i18n/bos_coaching_i18n.dart';
 import '../../i18n/parent_surface_i18n.dart';
 import '../../auth/app_state.dart';
 import '../../ui/auth/global_session_menu.dart';
-import '../../domain/curriculum/curriculum_display.g.dart';
+import '../../domain/curriculum/curriculum_family_ui.dart';
 import 'parent_models.dart';
 import 'parent_service.dart';
 
@@ -1077,21 +1077,30 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
           const SizedBox(height: 12),
           _PillarProgressBar(
             emoji: '🚀',
-            label: _t('Future Skills'),
+            label: curriculumLegacyFamilyDisplayLabel(
+              context,
+              CurriculumLegacyFamilyCode.future_skills,
+            ),
             progress: learner.pillarProgress['futureSkills'] ?? 0,
             color: const Color(0xFF3B82F6),
           ),
           const SizedBox(height: 12),
           _PillarProgressBar(
             emoji: '👑',
-            label: _t('Leadership & Agency'),
+            label: curriculumLegacyFamilyDisplayLabel(
+              context,
+              CurriculumLegacyFamilyCode.leadership_agency,
+            ),
             progress: learner.pillarProgress['leadership'] ?? 0,
             color: const Color(0xFF8B5CF6),
           ),
           const SizedBox(height: 12),
           _PillarProgressBar(
             emoji: '💡',
-            label: _t('Impact & Innovation'),
+            label: curriculumLegacyFamilyDisplayLabel(
+              context,
+              CurriculumLegacyFamilyCode.impact_innovation,
+            ),
             progress: learner.pillarProgress['impact'] ?? 0,
             color: const Color(0xFF10B981),
           ),
@@ -1267,7 +1276,7 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
   }
 
   Color _getPillarColor(String pillar) {
-    switch (CurriculumDisplay.legacyFamilyCodeFromAny(pillar)) {
+    switch (normalizeCurriculumLegacyFamilyCode(pillar)) {
       case CurriculumLegacyFamilyCode.future_skills:
         return const Color(0xFF3B82F6);
       case CurriculumLegacyFamilyCode.leadership_agency:

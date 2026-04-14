@@ -102,6 +102,54 @@ export const CURRICULUM_COPY_ALIASES = [
   },
   {
     "aliases": [
+      "Pillar Performance"
+    ],
+    "display": {
+      "en": "Legacy Family Performance",
+      "zh-CN": "旧版家族表现",
+      "zh-TW": "舊版家族表現",
+      "es": "Rendimiento por familia heredada",
+      "th": "ผลการดำเนินงานตามกลุ่มเดิม"
+    }
+  },
+  {
+    "aliases": [
+      "Pillar Progress (Site Average)"
+    ],
+    "display": {
+      "en": "Legacy Family Progress (Site Average)",
+      "zh-CN": "旧版家族进展（站点平均）",
+      "zh-TW": "舊版家族進展（站點平均）",
+      "es": "Progreso por familia heredada (promedio del sitio)",
+      "th": "ความก้าวหน้าตามกลุ่มเดิม (ค่าเฉลี่ยของไซต์)"
+    }
+  },
+  {
+    "aliases": [
+      "No pillar data available"
+    ],
+    "display": {
+      "en": "No legacy family data available",
+      "zh-CN": "暂无旧版家族数据",
+      "zh-TW": "暫無舊版家族資料",
+      "es": "No hay datos de familias heredadas disponibles",
+      "th": "ยังไม่มีข้อมูลกลุ่มเดิม"
+    }
+  },
+  {
+    "aliases": [
+      "Pillar progress telemetry is not available for this site yet."
+    ],
+    "display": {
+      "en": "Legacy family progress telemetry is not available for this site yet.",
+      "zh-CN": "该站点的旧版家族进展遥测数据尚不可用。",
+      "zh-TW": "該站點的舊版家族進展遙測資料尚不可用。",
+      "es": "La telemetría del progreso por familia heredada aún no está disponible para este sitio.",
+      "th": "ข้อมูลเทเลเมทรีความก้าวหน้าตามกลุ่มเดิมสำหรับไซต์นี้ยังไม่พร้อมใช้งาน"
+    }
+  },
+  {
+    "aliases": [
       "All pillars",
       "All Pillars"
     ],
