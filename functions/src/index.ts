@@ -9456,10 +9456,13 @@ export const processCheckpointMasteryUpdate = onCall(async (request: CallableReq
         });
       }
 
+      const LEVEL_TO_NUMBER_SK: Record<string, number> = { emerging: 1, developing: 2, proficient: 3, advanced: 4 };
+
       const growthRef = db.collection('capabilityGrowthEvents').doc();
       batch.set(growthRef, {
         learnerId,
         capabilityId,
+        level: LEVEL_TO_NUMBER_SK[newLevel] ?? 1,
         fromLevel: currentLevel,
         toLevel: newLevel,
         educatorId: educatorId || 'system',
@@ -9470,7 +9473,6 @@ export const processCheckpointMasteryUpdate = onCall(async (request: CallableReq
       });
 
       // Write skillMastery for the skill that triggered this growth
-      const LEVEL_TO_NUMBER_SK: Record<string, number> = { emerging: 1, developing: 2, proficient: 3, advanced: 4 };
       const skillMasteryRef = db.collection('skillMastery').doc(`${learnerId}_${skillId}`);
       batch.set(skillMasteryRef, {
         learnerId,
@@ -9605,6 +9607,7 @@ export const processCheckpointMasteryUpdate = onCall(async (request: CallableReq
         capabilityId,
         siteId,
         pillarCode,
+        level: LEVEL_TO_NUMBER[newLevel] ?? 1,
         fromLevel: currentLevel,
         toLevel: newLevel,
         educatorId: educatorId || 'system',
