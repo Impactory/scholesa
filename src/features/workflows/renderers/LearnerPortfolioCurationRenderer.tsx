@@ -63,7 +63,6 @@ interface PortfolioItem {
 interface CapabilityMastery {
   id: string;
   capabilityId: string;
-  capabilityTitle: string;
   pillarCode: PillarCode;
   level: number;
   learnerId: string;
@@ -71,10 +70,9 @@ interface CapabilityMastery {
 
 interface GrowthEvent {
   id: string;
-  capabilityTitle: string;
+  capabilityId: string;
   pillarCode: PillarCode;
-  fromLevel: number;
-  toLevel: number;
+  level: number;
   createdAt: string | null;
 }
 
@@ -157,7 +155,7 @@ function levelBarWidth(level: number): string {
 export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRendererProps) {
   const trackInteraction = useInteractionTracking();
   const siteId = ctx.profile?.siteIds?.[0] ?? null;
-  const { capabilityList } = useCapabilities(siteId);
+  const { capabilityList, resolveTitle } = useCapabilities(siteId);
 
   // Derive pillar options from live capabilities, falling back to defaults
   const pillarOptions = React.useMemo(() => {
@@ -282,12 +280,17 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
       setMasteries(
         masterySnap.docs.map((d: QueryDocumentSnapshot<DocumentData>) => {
           const data = d.data();
+          const latest =
+            typeof data.latestLevel === 'number'
+              ? data.latestLevel
+              : typeof data.level === 'number'
+                ? data.level
+                : 0;
           return {
             id: d.id,
             capabilityId: asString(data.capabilityId, ''),
-            capabilityTitle: asString(data.capabilityTitle, 'Unknown'),
             pillarCode: (asString(data.pillarCode, '') || 'FUTURE_SKILLS') as PillarCode,
-            level: typeof data.level === 'number' ? data.level : 0,
+            level: latest,
             learnerId: asString(data.learnerId, ctx.uid),
           };
         })
@@ -296,12 +299,17 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
       setGrowthEvents(
         growthSnap.docs.map((d: QueryDocumentSnapshot<DocumentData>) => {
           const data = d.data();
+          const level =
+            typeof data.level === 'number'
+              ? data.level
+              : typeof data.toLevel === 'number'
+                ? data.toLevel
+                : 0;
           return {
             id: d.id,
-            capabilityTitle: asString(data.capabilityTitle, 'Unknown'),
+            capabilityId: asString(data.capabilityId, ''),
             pillarCode: (asString(data.pillarCode, '') || 'FUTURE_SKILLS') as PillarCode,
-            fromLevel: typeof data.fromLevel === 'number' ? data.fromLevel : 0,
-            toLevel: typeof data.toLevel === 'number' ? data.toLevel : 0,
+            level,
             createdAt: toIso(data.createdAt),
           };
         })
@@ -335,6 +343,8 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
         capabilityTitles: [],
         reflectionIds: [] as string[],
         learnerId: ctx.uid,
+        siteId: ctx.profile?.siteIds?.[0] ?? '',
+        source: 'learner_curation',
         createdAt: serverTimestamp(),
       });
 
@@ -482,7 +492,7 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
                             data-testid={`mastery-${m.id}`}
                           >
                             <span className="w-40 truncate text-sm text-app-foreground">
-                              {m.capabilityTitle}
+                              {resolveTitle(m.capabilityId)}
                             </span>
                             <div className="flex-1">
                               <div className="h-2 rounded-full bg-app-canvas">
@@ -518,10 +528,8 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
                       <span className={`rounded-full px-2 py-0.5 font-medium ${pillarBadgeClass(ev.pillarCode)}`}>
                         {pillarLabel(ev.pillarCode)}
                       </span>
-                      <span className="text-app-foreground font-medium">{ev.capabilityTitle}</span>
-                      <span>
-                        Level {ev.fromLevel} &rarr; {ev.toLevel}
-                      </span>
+                      <span className="text-app-foreground font-medium">{resolveTitle(ev.capabilityId)}</span>
+                      <span>Now at Level {ev.level}/4</span>
                     </li>
                   ))}
                 </ul>

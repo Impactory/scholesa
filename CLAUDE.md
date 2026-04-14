@@ -158,7 +158,7 @@ export default function Page() {
 }
 ```
 
-All data loading, CRUD, and UI rendering is handled generically by `WorkflowRoutePage` + `workflowData.ts`. This means **every route renders through the same generic record-list UI** with title/subtitle/status/metadata cards. There are no dedicated domain-specific components for capability frameworks, rubric builders, evidence review, portfolio curation, or growth visualization.
+All data loading and CRUD is handled generically by `WorkflowRoutePage` + `workflowData.ts`. Operational routes (messaging, billing, incidents, provisioning) render through the generic record-list UI with title/subtitle/status/metadata cards. Evidence-chain routes dispatch through `src/features/workflows/customRouteRenderers.tsx` to **dedicated domain renderers** in `src/features/workflows/renderers/` — covering capability framework authoring, rubric building/applying, educator evidence capture and review, proof-of-learning assembly, learner portfolio curation, progress reports, guardian capability views, passport export, and implementation health. Adding a new evidence-chain surface means building a renderer there, not extending the generic card UI.
 
 ### Routes by Role
 
@@ -169,6 +169,33 @@ All data loading, CRUD, and UI rendering is handled generically by `WorkflowRout
 **Partner** (5): `/partner/listings`, `/partner/contracts`, `/partner/deliverables`, `/partner/integrations`, `/partner/payouts`
 **HQ** (11): `/hq/user-admin`, `/hq/role-switcher`, `/hq/sites`, `/hq/analytics`, `/hq/billing`, `/hq/approvals`, `/hq/audit`, `/hq/safety`, `/hq/integrations-health`, `/hq/curriculum`, `/hq/feature-flags`
 **Common** (4): `/messages`, `/notifications`, `/profile`, `/settings`
+
+## Curriculum Architecture v1 (canonical)
+
+Scholesa is a **K-12 future-readiness operating system**. The curriculum master (`docs/Scholesa_Curriculum_Architecture_Master_v1.pdf`, April 2026) is translated into live repo contracts — all new curriculum, rubric, and analytics work must start here, not from legacy pillar vocabulary.
+
+- **Six strands**: Think · Make · Communicate · Lead · Navigate AI · Build for the World
+- **Four stages**: Discoverers (1–3, teacher-led AI) · Builders (4–6, guided assistive) · Explorers (7–9, analytical/critique) · Innovators (10–12, audited advanced use)
+- **Annual cycle**: Understand → Design → Test → Showcase
+- **Lesson moves (non-negotiable)**: Hook · Micro-skill · Build sprint · Checkpoint · Share-out · Reflection
+- **Five proof layers**: Process · Product · Thinking · Improvement · Integrity — no major task may be scored on final artifact alone
+- **Three portfolio views**: Timeline · Capability · Best-work showcase
+
+Canonical code sources:
+
+| File | Purpose |
+|------|---------|
+| `src/lib/curriculum/architecture.ts` | TS contract: strands, stages, cycles, moves, proof layers, portfolio views, `LEGACY_PILLAR_ALIGNMENT` |
+| `src/lib/policies/aiPolicyTierGate.ts` | Stage-aware AI governance |
+| `src/lib/policies/gradeBandPolicy.ts` | Grade-band product behavior |
+| `config/curriculum_display.json` | Shared display source (regenerate via `npm run generate:curriculum-display`) |
+| `functions/src/curriculumDisplay.generated.ts` | Generated backend mirror |
+| `apps/empire_flutter/app/lib/domain/curriculum/curriculum_display.g.dart` | Generated Flutter mirror |
+| `docs/76_CURRICULUM_ARCHITECTURE_ALIGNMENT.md` | Master-doc → repo alignment |
+| `docs/45_CURRICULUM_VERSIONING_RUBRICS_SPEC.md` | Versioning + rubrics spec |
+| `src/__tests__/curriculum-architecture-contract.test.ts` | Contract tests |
+
+**Legacy compatibility**: the three-pillar model (`FUTURE_SKILLS` / `LEADERSHIP_AGENCY` / `IMPACT_INNOVATION`) still appears in storage, analytics aggregates, and some read models. Treat it as a compatibility roll-up of the canonical six strands, resolved through `LEGACY_PILLAR_ALIGNMENT`. New product copy says **K-12** and names strands/stages directly — never "3 Pillars" or "K-9".
 
 ## Evidence Chain — Schema Types (src/types/schema.ts)
 
@@ -220,7 +247,7 @@ Key Firestore collections for evidence chain:
 ### Architectural Patterns
 
 - **Locale-first routing**: All web routes parameterized by `[locale]` — URL structure is `/en/...`, `/es/...`, etc.
-- **Generic workflow rendering**: All routes use the same `WorkflowRoutePage` component with record-list UI
+- **Workflow rendering**: Operational routes share the generic record-list UI; evidence-chain routes dispatch to dedicated renderers via `customRouteRenderers.tsx`
 - **Role-based access**: Enforced at 4 layers — Firebase Auth claims, Firestore rules, web route metadata, Flutter role gate
 - **Offline-first mobile**: Flutter uses Isar for local state with a sync queue
 - **AI services**: Internal only — no external AI providers. Enforced via `npm run ai:internal-only:all`
@@ -310,131 +337,56 @@ All checks must pass before merge.
 
 ---
 
-## Evidence Chain Audit (Current State)
+## Evidence Chain State (2026-04-13, RC3 pre-freeze)
 
-### A. What Exists and Is Aligned
+### A. End-to-end wiring that is in place
 
-**1. Firestore schema types** (`src/types/schema.ts`) — Rich, well-designed types for the full evidence chain: `Checkpoint`, `MissionAttempt`, `ReflectionEntry`, `SkillEvidence`, `PortfolioItem`, `AICoachInteraction`, `Badge`/`BadgeAward`, `ParentSnapshot`, `PeerFeedback`, `MotivationAnalytics`, `MicroSkill`, `MissionVariant`, `ShowcaseSubmission`, `WeeklyGoal`. These types model capability-first learning correctly.
+**1. Schema + rules** — `src/types/schema.ts` models the full chain; `firestore.rules` enforces HQ-only capability writes, educator-only rubric/growth writes (append-only `capabilityGrowthEvents`), learner-owned proof bundles, site-scoped evidence records, parent-linked reads.
 
-**2. Firestore security rules** — Correctly implement the evidence chain permissions:
-- `capabilities`: HQ-only write (aligned with Admin-HQ framework ownership)
-- `capabilityGrowthEvents`: Educator create-only, append-only, immutable (correct provenance)
-- `capabilityMastery`: Educator write, parent-linked read (correct growth tracking)
-- `rubrics` / `rubricApplications`: Educator write (correct)
-- `proofOfLearningBundles`: Learner create/update (learner-owned proof)
-- `portfolioItems`: Learner + educator create, parent-linked read
-- `evidenceRecords`: Educator write, site-scoped (correct)
+**2. Admin-HQ authoring surface** — `HqCapabilityFrameworkRenderer` + `CapabilityFrameworkEditor` define capabilities, progression descriptors, and strand alignment. `HqRubricBuilderRenderer` manages rubric templates. `/hq/curriculum` renders through these custom renderers, not the generic card UI.
 
-**3. Parent dashboard backend** (`functions/src/index.ts`, `buildParentLearnerSummary`) — A comprehensive evidence chain *reader* that aggregates from 7+ collections (`portfolioItems`, `evidenceRecords`, `capabilityMastery`, `capabilityGrowthEvents`, `learnerReflections`, `missionAttempts`, `proofOfLearningBundles`) into:
-- **Capability snapshot**: pillar-level mastery (futureSkills, leadership, impact) normalized to 0-1 scale, banded as strong/developing/emerging
-- **Portfolio snapshot**: artifact counts, verified counts, evidence-linked counts, badge counts
-- **Ideation passport**: mission attempts, completed missions, reflections, voice interactions, collaboration signals, evidence-backed capability claims
-- **Growth timeline**: per-capability progression with educator names, rubric scores, linked evidence, proof-of-learning status
-- **Portfolio items preview**: each artifact with proof details (ExplainItBack, OralCheck, MiniRebuild), AI disclosure status, reviewer info, rubric scores, progression descriptors, checkpoint mappings
-- **Evidence summary**: record count, reviewed count, portfolio-linked count, verification prompts
+**3. Educator capture + review surface** — `EducatorTodayRenderer`, `EducatorEvidenceCaptureRenderer` (hosts `EducatorFeedbackForm` + `EducatorEvidenceCapture`), `EducatorEvidenceReviewRenderer` (with revision-history UI and site-scoped queues), `EducatorRubricApplyRenderer` (hosts `RubricReviewPanel`), `EducatorProofReviewRenderer`, `EducatorAiAuditRenderer`. Revision resubmission flow closes the loop with learners, including portfolio-item sync.
 
-**4. AI transparency model** — Multi-layered:
-- `AICoachInteraction` schema: captures mode, question, response, explain-it-back requirement, version history check
-- `PortfolioItem.aiDisclosureStatus`: 6 nuanced values (`learner-ai-not-used`, `learner-ai-verified`, `learner-ai-verification-gap`, `educator-feedback-ai`, `no-learner-ai-signal`, `not-available`)
-- Backend computation: AI disclosure status is *derived* from multiple signals (proof bundle declarations, interaction events, explain-it-back events, educator AI feedback) — not just self-reported
-- BOS runtime: detects AI-dependency patterns (rapid submit after AI help, heavy AI use, verification gaps)
+**4. Learner surface** — `LearnerCheckpointRenderer`, `LearnerReflectionsRenderer`, `LearnerProofAssemblyRenderer` (ExplainItBack + OralCheck + MiniRebuild), `LearnerPortfolioCurationRenderer`, `LearnerEvidenceTimelineRenderer`, `LearnerProgressReportRenderer`, `LearnerShowcasePeerReviewRenderer`, `LearnerMiloOSRenderer`. Revision-required items surface as banners on `/learner/today`.
 
-**5. Proof-of-learning verification model** — Backend computes proof status from 3 verification methods: ExplainItBack + OralCheck + MiniRebuild. All three = "verified", any subset = "partial", none = "missing". Proof bundles are fetched from `proofOfLearningBundles` collection with version history and excerpts.
+**5. Guardian surface** — `GuardianCapabilityViewRenderer` renders strand/legacy-family breakdowns with source badges (educator observed / reflection / checkpoint); `GuardianPassportRenderer` exports the passport view; `ParentAnalyticsDashboard` is wired into `/parent/summary`. Route-aware section focus lets deep links land on passport/portfolio/growth directly.
 
-**6. BOS runtime** (`functions/src/bosRuntime.ts`) — Real implementation with orchestration, intervention scoring, MVL scoring. Tracks `checkpoint_submitted`, `artifact_submitted` events. Computes cognition proxy from checkpoint success rates. Autonomy risk detection with 5 signals.
+**6. Admin-School surface** — `SiteImplementationHealthRenderer` shows educator readiness and evidence-coverage gaps at `/site/dashboard` (and related site routes).
 
-**7. Voice system** (`functions/src/voiceSystem.ts`) — Real implementation with role-based command policies, checkpoint-aware context, rubric feedback drafting for teachers.
+**7. Growth write engine (real, not seeded)** — Two callables close the missing write path:
+- `applyRubricToEvidence` (`functions/src/index.ts:8646`) — atomic write of rubric application → `capabilityMastery` update (`latestLevel`) → append-only `capabilityGrowthEvents` entry.
+- `processCheckpointMasteryUpdate` (`functions/src/index.ts:9345`) — checkpoint completion → mastery + growth event. Checkpoints with no mapped `capabilityId` now emit a surface warning instead of silently writing to a fallback capability (phantom-growth prevention).
 
-**8. Individual UI components** (exist but not wired into routes):
-- `EducatorFeedbackForm.tsx` — structured observation capture (engagement, participation, motivation profile, strategies)
-- `CheckpointSubmission.tsx` — checkpoint submission with skill-based questions
-- `ReflectionJournal.tsx` — metacognitive reflection with emoji scales
-- `ShowcaseSubmissionForm.tsx` — showcase submission with visibility controls
-- `AICoachScreen.tsx` — AI coaching with hint/verify/debug modes
-- `ParentAnalyticsDashboard.tsx` — SDT scores, activities, engagement insights
+**8. Parent dashboard reader** — `buildParentLearnerSummary` aggregates from 7+ collections into a **capability snapshot** (strand-level mastery, with legacy-pillar roll-up resolved via `LEGACY_PILLAR_ALIGNMENT`, normalized 0–1, banded strong/developing/emerging), portfolio snapshot, ideation passport, growth timeline with educator provenance, portfolio items preview with per-artifact proof details, AI disclosure, rubric scores, progression descriptors, checkpoint mappings, and evidence summary.
 
-**9. Role-based access** — 4-layer enforcement (Auth claims, Firestore rules, route metadata, Flutter gate) is structurally sound.
+**9. AI transparency** — `AICoachInteraction` capture, `PortfolioItem.aiDisclosureStatus` with 6 derived values, BOS runtime detection of AI-dependency patterns, `EducatorAiAuditRenderer` for educator oversight.
 
-**10. Synthetic test data** — 14,400 evidence bundles in `docs/scholesa_synthetic_fulltesting_pack_v2/` with evidence records, teacher observations, AI traces, and integrity assessments.
+**10. Honesty entrypoints gated** — `src/__tests__/skills-first-honesty-entrypoints.test.ts` enforces K-12 skills-first wording across landing, manifest, locales, and dashboards; blocks resurrection of "Future Skills Academy", "K–9", and "3 Pillars" copy. Legacy-pillar UI is explicitly labeled as "Legacy Curriculum Families" / "Legacy Families".
 
-### B. What Exists But Needs Refactor
+**11. Curriculum contract landed** — `src/lib/curriculum/architecture.ts` + generated displays (web, Flutter, backend) + `src/__tests__/curriculum-architecture-contract.test.ts`.
 
-**1. Generic workflow UI** — ALL 46 routes render through `WorkflowRoutePage` showing flat record-list cards. This is appropriate for operational routes (messaging, billing, incidents) but **wrong for evidence chain routes**:
-- `/hq/curriculum` shows missions as flat cards — no capability framework builder, no rubric template editor
-- `/educator/missions/review` shows submissions as flat cards — no rubric application interface
-- `/learner/portfolio` allows adding portfolio items — but no guided evidence curation
-- `/parent/summary` and `/parent/portfolio` show computed snapshots — but through the same generic card renderer, losing the rich data structure the backend computes
+**12. Seed data** — Evidence-chain seed scripts now cover capabilities, rubrics, rubric applications, evidence records, mastery, growth events, portfolio items, and proof bundles (not just users/sites/sessions/missions).
 
-**2. Backend-to-UI gap** — The `buildParentLearnerSummary` function produces deeply structured evidence data (growth timelines, passport claims, AI disclosure details, proof excerpts), but the `workflowData.ts` frontend flattens this into generic `WorkflowRecord` cards with title/subtitle/status/metadata. The rich structure is computed but not rendered.
+### B. What still needs work
 
-**3. HQ curriculum route** — Currently only manages `missions` (CRUD) and `trainingCycles`. Does NOT manage capabilities, rubrics, checkpoints, progression descriptors, or micro-skills.
+**1. Legacy-pillar compatibility layer is visible** — The three-pillar vocabulary (`futureSkills` / `leadership` / `impact`) still flows through parent-dashboard snapshots, analytics aggregates, and some storage shapes. It is honestly labeled as a compatibility roll-up, but the six-strand model should become the primary read shape over time.
 
-**4. Evidence components not wired to routes** — `EducatorFeedbackForm`, `CheckpointSubmission`, `ReflectionJournal`, `ShowcaseSubmissionForm`, `AICoachScreen`, `ParentAnalyticsDashboard` exist as standalone components but are not integrated into the workflow route system.
+**2. Growth events not back-linked on timeline** — `LearnerEvidenceTimelineRenderer` does not yet reverse-query from `capabilityGrowthEvents` to the triggering evidence record.
 
-**5. `workflowData.ts` monolith** (~4500 lines) — All route-specific data loading, CRUD, and business logic in a single file. Needs decomposition by domain.
+**3. No educator annotation layer on timeline** — Educators can't annotate a learner's timeline in-place.
 
-### C. What Is Fake, Partial, or Misleading
+**4. `workflowData.ts` remains a ~4500-line monolith** — Decomposition by domain is still pending and makes the file hard to navigate.
 
-**1. No educator observation in routes** — `EducatorFeedbackForm.tsx` exists with full implementation, but educators have no way to reach it from `/educator/today` or `/educator/missions/review`. The 10-second evidence capture rule cannot be met.
+**5. Flutter offline queue missing evidence ops** — Offline capture/review for evidence remains a separate track; only non-evidence ops queue reliably.
 
-**2. No rubric builder or application UI** — `rubrics` and `rubricApplications` collections exist in Firestore rules, but there is no route or UI for creating/applying rubrics.
+**6. Partner-facing outputs** — Contract/deliverable/showcase surfaces render, but partner-facing evidence views should remain gated until the educator/learner trust loop has more real-world signal.
 
-**3. No proof-of-learning assembly workflow** — The backend *reads* proof bundles beautifully, but there is no learner-facing UI to *create* proof bundles (assemble ExplainItBack, OralCheck, MiniRebuild).
+**7. Design-only types** — `MicroSkill`, `MissionVariant`, `WeeklyGoal`, `MotivationAnalytics` have schema entries but limited write paths and no Firestore rules of their own.
 
-**4. No capability growth *write* path** — `capabilityMastery` and `capabilityGrowthEvents` collections are read by the parent dashboard backend, but no code *writes* to these collections in response to rubric applications or checkpoint completions. Growth data must currently be seeded manually.
+### C. Current verdict
 
-**5. Rich parent data rendered as flat cards** — The parent dashboard backend computes growth timelines, passport claims, portfolio previews with proof details, AI disclosure, and rubric scores. But `workflowData.ts` converts these into generic `WorkflowRecord` objects, losing most of the structure.
+**Beta, gold-candidate.** The evidence chain is wired end-to-end: HQ authoring → educator capture/review → learner artifact/reflection/checkpoint/proof → rubric or checkpoint callable → mastery + growth write → portfolio linkage → guardian passport/analytics. The read side is strong; the write side is real (not seeded). Remaining gaps are distribution polish (Flutter offline evidence ops), passport wallet surfaces, legacy-pillar cleanup, and timeline back-links — not missing limbs of the chain.
 
-**6. MicroSkill, MissionVariant, WeeklyGoal, MotivationAnalytics** — Types exist in `schema.ts` with no Firestore rules or write paths. Design-only.
+**Before claiming any new evidence-chain feature is done**, verify: (a) it writes through `applyRubricToEvidence` or `processCheckpointMasteryUpdate` if it produces growth, (b) it site-scopes queries, (c) it names strands/stages rather than pillars in new copy, (d) the relevant custom renderer (not the generic card UI) renders it, (e) the `skills-first-honesty-entrypoints` test still passes, and (f) revision/resubmission flow is considered if it is a learner-educator exchange.
 
-### D. What Is Missing
-
-**1. Capability Framework admin UI** — No way for Admin-HQ to define frameworks, progression descriptors, or map capabilities to units/projects/checkpoints. The `capabilities` collection exists but has no management surface.
-
-**2. Dedicated evidence chain UI components** — The route system needs domain-specific renderers for:
-- Growth timeline visualization (data exists in backend, no renderer)
-- Portfolio curation with evidence linking (schema supports it, no UI)
-- Passport/capability report view (backend computes claims, no output format)
-- Rubric builder and application interface
-- Evidence review dashboard for educators
-
-**3. Capability growth write engine** — The logic that connects rubric applications -> mastery updates -> growth events does not exist.
-
-**4. Admin-School implementation health** — No dashboard showing educator readiness, evidence coverage gaps, or implementation quality metrics.
-
-**5. Canonical seeded data for evidence chain** — Seed scripts create users/sites/sessions/missions but NOT capabilities, rubrics, evidence records, mastery, growth events, portfolio items, or proof bundles.
-
-### E. Most Blocked Role
-
-**Admin-HQ** — Cannot define capability frameworks, rubrics, or progression descriptors. Without these, the entire downstream chain has no structural foundation.
-
-Second most blocked: **Educator** — Has components (`EducatorFeedbackForm`, `CheckpointSubmission`) but they aren't reachable from workflow routes. Evidence capture is possible in code but not in practice.
-
-Third most blocked: **Learner** — Can add portfolio items but cannot assemble proof bundles, and the growth engine doesn't update from their submissions.
-
-### F. Highest-Risk Break in the Evidence Chain
-
-**Two critical breaks:**
-
-1. **Admin-HQ setup -> Session runtime**: No UI to define capability frameworks. Everything downstream depends on this.
-
-2. **Rubric/checkpoint completion -> Growth update**: No write path from evidence events to `capabilityMastery` / `capabilityGrowthEvents`. The parent dashboard backend beautifully *reads* growth data, but nothing *writes* it. The read side is gold-quality; the write side is absent.
-
-### G. Current Recommendation
-
-**Not ready for gold. Beta-candidate with caveats.**
-
-The backend evidence aggregation is surprisingly strong — `buildParentLearnerSummary` is a ~800-line function that correctly joins 7+ collections, computes growth bands, AI disclosure status, proof verification status, and passport claims. The schema types are pedagogically correct. The security rules are right. Individual UI components for evidence capture exist.
-
-**The gap is integration:** components exist in isolation (backend aggregation, UI components, types, rules) but are not connected into end-to-end flows through the route system. The generic `WorkflowRoutePage` card renderer sits between the rich backend and the user, flattening everything.
-
-### H. Build Priority (To Strengthen Evidence Chain)
-
-1. **Admin-HQ capability framework + rubric management UI** (unblocks the entire chain)
-2. **Wire existing components into routes** (EducatorFeedbackForm -> educator routes, CheckpointSubmission -> learner routes, ParentAnalyticsDashboard -> parent routes)
-3. **Domain-specific route renderers** replacing generic cards for evidence chain routes (growth timeline, portfolio curation, passport view)
-4. **Capability growth write engine** (rubric application -> mastery update -> growth event)
-5. **Proof-of-learning assembly UI** for learners (ExplainItBack, OralCheck, MiniRebuild)
-6. **Canonical seed data** covering the full evidence chain for demo/dev/UAT
-7. **Admin-School implementation health dashboard**
-8. **Partner-facing outputs** (only after trust is proven)
+**Note**: this audit replaces an earlier, more pessimistic one. If you find stale "no write path" / "no rubric builder" / "no framework editor" claims anywhere in docs, treat them as historical — the current state above is authoritative.

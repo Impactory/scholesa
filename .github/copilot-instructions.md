@@ -1,6 +1,6 @@
 # Scholesa Platform – AI Coding Agent Instructions
 
-**Scholesa** is a capability-first evidence platform for K-9 learning studios and schools, built on Next.js + Firebase with role-based features. Students are evaluated by what they can do, explain, improve, and demonstrate over time.
+**Scholesa** is a capability-first evidence platform for K-12 schools and learning studios, built on Next.js + Firebase with role-based features. Students are evaluated by what they can do, explain, improve, and demonstrate over time.
 
 ## Stack & Architecture
 

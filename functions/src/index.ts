@@ -2342,6 +2342,17 @@ function parentPillarLabelFromCodes(value: unknown): string {
   return getLegacyFamilyDisplayLabel('FUTURE_SKILLS');
 }
 
+function legacyFamilyLabelForParentKey(key: 'futureSkills' | 'leadership' | 'impact'): string {
+  switch (key) {
+    case 'futureSkills':
+      return 'Think, Make & Navigate AI';
+    case 'leadership':
+      return 'Communicate & Lead';
+    case 'impact':
+      return 'Build for the World';
+  }
+}
+
 function formatCompactCount(value: number): string {
   if (value >= 1_000_000) {
     return `${(value / 1_000_000).toFixed(1)}M`;
@@ -3301,6 +3312,11 @@ async function buildParentLearnerSummary(params: {
       impact,
       overall: capabilityOverall,
       band: capabilityBand,
+      familyLabels: {
+        futureSkills: legacyFamilyLabelForParentKey('futureSkills'),
+        leadership: legacyFamilyLabelForParentKey('leadership'),
+        impact: legacyFamilyLabelForParentKey('impact'),
+      },
     },
     evidenceSummary,
     growthSummary,

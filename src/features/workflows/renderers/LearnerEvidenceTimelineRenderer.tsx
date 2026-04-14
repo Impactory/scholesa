@@ -38,6 +38,13 @@ import {
 
 type EvidenceType = 'artifact' | 'reflection' | 'checkpoint' | 'proof_bundle' | 'mission_attempt';
 
+interface GrowthLink {
+  id: string;
+  capabilityId: string;
+  level: number;
+  createdAt: string;
+}
+
 interface TimelineItem {
   id: string;
   type: EvidenceType;
@@ -50,7 +57,21 @@ interface TimelineItem {
   aiDisclosureStatus?: string;
   proofStatus?: 'missing' | 'partial' | 'verified';
   linkedItemIds?: string[]; // ref to portfolio item, etc.
+  growthTriggered?: GrowthLink[];
   metadata?: Record<string, unknown>;
+}
+
+const LEVEL_WORD_TO_NUMBER: Record<string, number> = {
+  emerging: 1,
+  developing: 2,
+  proficient: 3,
+  advanced: 4,
+};
+
+function normalizeGrowthLevel(value: unknown): number {
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') return LEVEL_WORD_TO_NUMBER[value.toLowerCase()] ?? 0;
+  return 0;
 }
 
 function toIso(val: unknown): string {
@@ -129,7 +150,7 @@ export default function LearnerEvidenceTimelineRenderer({ ctx }: CustomRouteRend
     setLoading(true);
     setError(null);
     try {
-      const [portfolioSnap, reflectionsSnap, checkpointsSnap, proofSnap, missionsSnap] = await Promise.all([
+      const [portfolioSnap, reflectionsSnap, checkpointsSnap, proofSnap, missionsSnap, growthSnap] = await Promise.all([
         getDocs(
           query(
             collection(firestore, 'portfolioItems'),
@@ -170,7 +191,45 @@ export default function LearnerEvidenceTimelineRenderer({ ctx }: CustomRouteRend
             limit(50)
           )
         ),
+        getDocs(
+          query(
+            collection(firestore, 'capabilityGrowthEvents'),
+            where('learnerId', '==', learnerId),
+            limit(200)
+          )
+        ),
       ]);
+
+      // Build growth-event back-links: every capabilityGrowthEvent points to one or more
+      // triggering sources (missionAttemptId, checkpointId, linkedPortfolioItemIds). We
+      // index them here so each timeline item can surface the growth it caused.
+      const growthByMission = new Map<string, GrowthLink[]>();
+      const growthByCheckpoint = new Map<string, GrowthLink[]>();
+      const growthByPortfolio = new Map<string, GrowthLink[]>();
+      const pushGrowth = (map: Map<string, GrowthLink[]>, key: string, link: GrowthLink) => {
+        if (!key) return;
+        const bucket = map.get(key) ?? [];
+        bucket.push(link);
+        map.set(key, bucket);
+      };
+      growthSnap.docs.forEach((d) => {
+        const data = d.data();
+        const capabilityId = typeof data.capabilityId === 'string' ? data.capabilityId : '';
+        if (!capabilityId) return;
+        const link: GrowthLink = {
+          id: d.id,
+          capabilityId,
+          level: normalizeGrowthLevel(data.level ?? data.toLevel),
+          createdAt: toIso(data.createdAt),
+        };
+        if (typeof data.missionAttemptId === 'string') pushGrowth(growthByMission, data.missionAttemptId, link);
+        if (typeof data.checkpointId === 'string') pushGrowth(growthByCheckpoint, data.checkpointId, link);
+        if (Array.isArray(data.linkedPortfolioItemIds)) {
+          for (const pid of data.linkedPortfolioItemIds) {
+            if (typeof pid === 'string') pushGrowth(growthByPortfolio, pid, link);
+          }
+        }
+      });
 
       // Build proof bundle map for quick lookup
       const proofByItem = new Map<string, QueryDocumentSnapshot<DocumentData>>();
@@ -201,6 +260,7 @@ export default function LearnerEvidenceTimelineRenderer({ ctx }: CustomRouteRend
           aiDisclosureStatus: data.aiDisclosureStatus,
           proofStatus: proofData?.verificationStatus || 'missing',
           linkedItemIds: proofData ? [proofData.id] : [],
+          growthTriggered: growthByPortfolio.get(d.id),
           metadata: {
             artifacts: data.artifacts,
             source: data.source,
@@ -243,6 +303,7 @@ export default function LearnerEvidenceTimelineRenderer({ ctx }: CustomRouteRend
           pillarCodes: [],
           capabilityIds: data.capabilityId ? [data.capabilityId] : [],
           aiDisclosureStatus: data.aiAssistanceUsed ? 'learner-ai-verified' : 'learner-ai-not-used',
+          growthTriggered: growthByCheckpoint.get(d.id),
           metadata: {
             answer: data.answer,
             explainItBack: data.explainItBack,
@@ -264,6 +325,7 @@ export default function LearnerEvidenceTimelineRenderer({ ctx }: CustomRouteRend
           status: ((data.reviewStatus as string) || (data.status as string) || 'submitted') as 'pending' | 'submitted' | 'reviewing' | 'verified',
           pillarCodes: [],
           capabilityIds: data.capabilityIds || [],
+          growthTriggered: growthByMission.get(d.id),
           metadata: {
             missionId: data.missionId,
             status: data.status,
@@ -376,6 +438,23 @@ export default function LearnerEvidenceTimelineRenderer({ ctx }: CustomRouteRend
                       <span>Pillars: {item.pillarCodes.join(', ')}</span>
                     )}
                   </div>
+
+                  {item.growthTriggered && item.growthTriggered.length > 0 && (
+                    <div
+                      className="mt-2 rounded-md border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-800"
+                      data-testid={`growth-triggered-${item.id}`}
+                    >
+                      <div className="font-semibold">Triggered capability growth</div>
+                      <ul className="mt-1 space-y-0.5">
+                        {item.growthTriggered.map((g) => (
+                          <li key={g.id}>
+                            {resolveTitle(g.capabilityId)}
+                            {g.level > 0 ? ` — now Level ${g.level}/4` : ''}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
