@@ -24,7 +24,7 @@ import {
   portfolioItemsCollection,
   proofOfLearningBundlesCollection,
 } from '@/src/firebase/firestore/collections';
-import type { WorkflowContext } from '@/src/features/workflows/workflowData';
+import type { CustomRouteRendererProps } from '../customRouteRenderers';
 import type { ProofOfLearningBundle } from '@/src/types/schema';
 import {
   ShieldCheckIcon,
@@ -102,8 +102,8 @@ function computeVerificationStatus(
   return 'missing';
 }
 
-export default function LearnerProofAssemblyRenderer({ ctx }: { ctx: WorkflowContext }) {
-  const learnerId = ctx.profile?.uid || '';
+export default function LearnerProofAssemblyRenderer({ ctx }: CustomRouteRendererProps) {
+  const learnerId = ctx.uid;
   const [portfolioItems, setPortfolioItems] = useState<PortfolioItemSummary[]>([]);
   const [bundles, setBundles] = useState<Map<string, ProofBundle>>(new Map());
   const [loading, setLoading] = useState(true);

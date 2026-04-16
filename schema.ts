@@ -30,6 +30,23 @@ export type {
   Capability,
   CapabilityMastery,
   CapabilityGrowthEvent,
+  // Evidence chain types added in Sprint 1-5
+  Badge,
+  BadgeAward,
+  AutonomyIntervention,
+  ProofOfLearningBundle,
+  SkillEvidence,
+  MicroSkill,
+  MissionVariant,
+  Crew,
+  Checkpoint,
+  ReflectionEntry,
+  AICoachInteraction,
+  ShowcaseSubmission,
+  WeeklyGoal,
+  ParentSnapshot,
+  PeerFeedback,
+  MotivationAnalytics,
 } from '@/src/types/schema';
 
 // AuditLog — defined here as it has no canonical equivalent yet

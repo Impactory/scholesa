@@ -590,6 +590,12 @@ service cloud.firestore {
       allow create, update: if isEducator();
       allow delete: if false;
     }
+    // Assessment rubrics: HQ-managed capability rubric templates (HqCapabilityFrameworkRenderer).
+    match /assessmentRubrics/{id} {
+      allow read: if isAuthenticated();
+      allow create, update: if isHQ() || isEducator();
+      allow delete: if isHQ();
+    }
     match /rubricApplications/{id} {
       allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
       allow create, update: if isEducator();
