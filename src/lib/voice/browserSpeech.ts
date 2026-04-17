@@ -47,7 +47,27 @@ function pickVoice(locale?: string): SpeechSynthesisVoice | null {
   return voices.find((voice) => voice.default) ?? voices[0] ?? null;
 }
 
-export function speakBrowserText(text: string, locale?: string): boolean {
+interface SpeechProsodyHints {
+  rate?: 'slow' | 'measured' | 'normal' | 'fast';
+  tone?: 'supportive' | 'engaging' | 'encouraging' | 'professional';
+  emotionalState?: string;
+}
+
+const RATE_VALUES: Record<string, number> = {
+  slow: 0.78,
+  measured: 0.88,
+  normal: 0.96,
+  fast: 1.08,
+};
+
+const PITCH_VALUES: Record<string, number> = {
+  supportive: 1.05,
+  engaging: 1.08,
+  encouraging: 1.04,
+  professional: 1.0,
+};
+
+export function speakBrowserText(text: string, locale?: string, prosody?: SpeechProsodyHints): boolean {
   if (!canUseBrowserSpeechSynthesis()) {
     return false;
   }
@@ -60,8 +80,8 @@ export function speakBrowserText(text: string, locale?: string): boolean {
   const utterance = new SpeechSynthesisUtterance(trimmedText);
   const voice = pickVoice(locale);
   utterance.lang = locale?.trim() || voice?.lang || window.navigator.language || 'en-US';
-  utterance.rate = 0.96;
-  utterance.pitch = 1.02;
+  utterance.rate = RATE_VALUES[prosody?.rate ?? 'normal'] ?? 0.96;
+  utterance.pitch = PITCH_VALUES[prosody?.tone ?? 'professional'] ?? 1.02;
   utterance.volume = 1;
   if (voice) {
     utterance.voice = voice;

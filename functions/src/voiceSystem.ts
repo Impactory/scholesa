@@ -4,6 +4,7 @@ import * as admin from 'firebase-admin';
 import { HttpsError } from 'firebase-functions/v2/https';
 import {
   callInternalInferenceJson,
+  callInternalInferenceStream,
   isInternalInferenceRequired,
   type InternalInferenceAuthMode,
   type InternalInferenceCallResult,
@@ -178,6 +179,13 @@ interface BosPolicyHint {
   reasonCodes: string[];
 }
 
+interface VoiceRecentTurn {
+  intent: string;
+  responseMode: string;
+  emotionalState: string;
+  timestamp: number;
+}
+
 interface VoiceLearningSnapshot {
   profileId: string;
   actorId: string;
@@ -189,6 +197,7 @@ interface VoiceLearningSnapshot {
   lastUnderstandingConfidence?: number;
   needsScaffoldCount: number;
   frustrationSignalCount: number;
+  recentTurns?: VoiceRecentTurn[];
 }
 
 interface RoleIntelligenceLearnerProfile {
@@ -1423,7 +1432,9 @@ function buildAdaptiveLocalizedResponse(
   if (understanding.responseMode === 'plan') nextStep = localized.planningStep;
   if (understanding.intent === 'reflection') nextStep = localized.reflectionStep;
   const pieces = [base];
-  if (understanding.emotionalState === 'frustrated') pieces.push(localized.frustrationSupport);
+  if (understanding.emotionalState === 'frustrated' || understanding.emotionalState === 'confused') {
+    pieces.push(localized.frustrationSupport);
+  }
   pieces.push(nextStep);
   if (understanding.needsScaffold && understanding.responseMode !== 'safety') {
     pieces.push(localized.scaffoldPrompt);
@@ -2583,7 +2594,7 @@ async function upsertBosLearningProfile(payload: {
     if (payload.understanding.needsScaffold) {
       metrics.needsScaffoldCount = admin.firestore.FieldValue.increment(1);
     }
-    if (payload.understanding.emotionalState === 'frustrated') {
+    if (payload.understanding.emotionalState === 'frustrated' || payload.understanding.emotionalState === 'confused') {
       metrics.frustrationSignalCount = admin.firestore.FieldValue.increment(1);
     }
     learning.lastIntent = payload.understanding.intent;
@@ -2593,6 +2604,12 @@ async function upsertBosLearningProfile(payload: {
     learning.lastEmotionalState = payload.understanding.emotionalState;
     learning.lastUnderstandingConfidence = payload.understanding.confidence;
     learning.lastTopicTags = payload.understanding.topicTags;
+    learning.recentTurnEntry = {
+      intent: payload.understanding.intent,
+      responseMode: payload.understanding.responseMode,
+      emotionalState: payload.understanding.emotionalState,
+      timestamp: Date.now(),
+    };
   }
 
   const updateDoc: Record<string, unknown> = {
@@ -2618,13 +2635,31 @@ async function upsertBosLearningProfile(payload: {
 
   await admin.firestore().runTransaction(async (transaction) => {
     const profileSnap = await transaction.get(profileRef);
+    const recentTurnEntry = learning.recentTurnEntry as VoiceRecentTurn | undefined;
+    delete learning.recentTurnEntry;
+
     if (!profileSnap.exists) {
-      transaction.set(profileRef, {
+      const initDoc = {
         ...updateDoc,
         createdAtIso: nowIso,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      }, { merge: true });
+      };
+      if (recentTurnEntry && Object.keys(learning).length > 0) {
+        (initDoc as Record<string, unknown>).learning = { ...learning, recentTurns: [recentTurnEntry] };
+      }
+      transaction.set(profileRef, initDoc, { merge: true });
       return;
+    }
+    if (recentTurnEntry) {
+      const existing = profileSnap.data()?.learning?.recentTurns;
+      const turns: VoiceRecentTurn[] = Array.isArray(existing) ? existing.slice(0, 4) : [];
+      turns.unshift(recentTurnEntry);
+      if (Object.keys(learning).length > 0) {
+        learning.recentTurns = turns;
+      }
+      if (updateDoc.learning && typeof updateDoc.learning === 'object') {
+        (updateDoc.learning as Record<string, unknown>).recentTurns = turns;
+      }
     }
     transaction.set(profileRef, updateDoc, { merge: true });
   });
@@ -2695,6 +2730,7 @@ function toInferenceLearningSnapshot(snapshot: VoiceLearningSnapshot | null): Re
     lastUnderstandingConfidence: snapshot.lastUnderstandingConfidence,
     needsScaffoldCount: snapshot.needsScaffoldCount,
     frustrationSignalCount: snapshot.frustrationSignalCount,
+    recentTurns: snapshot.recentTurns?.slice(0, 5) ?? [],
   };
 }
 
@@ -2724,7 +2760,21 @@ async function loadVoiceLearningSnapshot(
         : clampProbability(firstNumber(learning.lastUnderstandingConfidence)!),
     needsScaffoldCount: Math.max(0, Math.floor(toFiniteNumber(metrics.needsScaffoldCount, 0))),
     frustrationSignalCount: Math.max(0, Math.floor(toFiniteNumber(metrics.frustrationSignalCount, 0))),
+    recentTurns: parseRecentTurns(learning.recentTurns),
   };
+}
+
+function parseRecentTurns(raw: unknown): VoiceRecentTurn[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((t): t is Record<string, unknown> => t !== null && typeof t === 'object')
+    .slice(0, 5)
+    .map((t) => ({
+      intent: typeof t.intent === 'string' ? t.intent : 'general_support',
+      responseMode: typeof t.responseMode === 'string' ? t.responseMode : 'hint',
+      emotionalState: typeof t.emotionalState === 'string' ? t.emotionalState : 'neutral',
+      timestamp: typeof t.timestamp === 'number' ? t.timestamp : 0,
+    }));
 }
 
 function nonZeroSignalCount(values: number[]): number {
@@ -4057,6 +4107,132 @@ export async function handleVoiceAudio(req: Request, res: Response): Promise<voi
   }
 }
 
+function enrichWithSsmlProsody(
+  text: string,
+  understanding: VoiceUnderstandingSignal,
+  role: VoiceRequesterRole,
+  gradeBand: GradeBand,
+  locale: VoiceLocale,
+): string {
+  if (!text.trim()) return text;
+  const rate = understanding.needsScaffold || understanding.emotionalState === 'frustrated' || understanding.emotionalState === 'confused'
+    ? '80%'
+    : understanding.complexity === 'high' ? '90%' : '100%';
+  const pitch = understanding.emotionalState === 'frustrated' || understanding.emotionalState === 'confused'
+    ? '+3%'
+    : understanding.emotionalState === 'excited' || understanding.emotionalState === 'curious'
+      ? '+5%'
+      : role === 'teacher' || role === 'parent' || role === 'admin'
+        ? '+0%'
+        : '+2%';
+  const breakMs = understanding.emotionalState === 'frustrated' || understanding.emotionalState === 'confused' ? 400
+    : gradeBand === 'K-5' && understanding.needsScaffold ? 500
+    : 250;
+
+  const escaped = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+  const withBreaks = escaped.replace(
+    /([.!?。！？])\s+/g,
+    `$1 <break time="${breakMs}ms"/> `,
+  );
+
+  return `<speak><prosody rate="${rate}" pitch="${pitch}">${withBreaks}</prosody></speak>`;
+}
+
+export async function handleTtsStream(req: Request, res: Response): Promise<void> {
+  try {
+    const body = typeof req.body === 'object' && req.body !== null
+      ? req.body as Record<string, unknown>
+      : {};
+
+    const authContext = await resolveAuthContext(req, body);
+    await assertActiveSchoolConsent(authContext.siteId);
+
+    const settings = await loadVoiceSettings(authContext.siteId);
+    const locale = resolveLocale(body.locale, req, settings.allowedLocales);
+    const ttsInputText = normalizeString(body.text);
+    if (!ttsInputText) {
+      throw new VoiceHttpError(400, 'invalid_argument', 'text is required for streaming TTS.');
+    }
+
+    const understanding: VoiceUnderstandingSignal = {
+      intent: 'general_support',
+      complexity: 'medium',
+      needsScaffold: Boolean(body.needsScaffold),
+      emotionalState: (normalizeString(body.emotionalState) as VoiceEmotionalState) ?? 'neutral',
+      confidence: 1.0,
+      responseMode: 'hint',
+      topicTags: [],
+    };
+
+    const ssml = enrichWithSsmlProsody(
+      ttsInputText, understanding, authContext.requesterRole,
+      authContext.gradeBand, locale,
+    );
+
+    const knownNames = extractKnownNames(body);
+    const speech = redactTextForSpeech(ssml, knownNames);
+    const voiceProfile = chooseVoiceProfile(locale, authContext.requesterRole, authContext.gradeBand);
+    const traceId = resolveTraceId(req, body);
+    const requestId = resolveRequestId(req);
+
+    const streamResult = await callInternalInferenceStream({
+      service: 'tts',
+      body: {
+        text: speech.speechText,
+        locale,
+        voiceProfile,
+        format: 'opus',
+        streaming: true,
+      },
+      context: {
+        traceId,
+        siteId: authContext.siteId,
+        role: authContext.role,
+        gradeBand: authContext.gradeBand,
+        locale,
+        policyVersion: VOICE_POLICY_VERSION,
+        requestId,
+        callerService: 'voice-tts-stream',
+      },
+      timeoutMs: 15_000,
+    });
+
+    if (!streamResult.ok || !streamResult.stream) {
+      const fallbackAudio = synthesizeAudioWave(ttsInputText, locale);
+      res.status(200).set({
+        'Content-Type': 'audio/wav',
+        'Content-Length': String(fallbackAudio.length),
+        'X-TTS-Source': 'fallback',
+      }).send(fallbackAudio);
+      return;
+    }
+
+    res.status(200).set({
+      'Content-Type': 'audio/ogg; codecs=opus',
+      'Transfer-Encoding': 'chunked',
+      'Cache-Control': 'no-cache',
+      'X-TTS-Source': 'stream',
+    });
+
+    const reader = streamResult.stream.getReader();
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        res.write(Buffer.from(value));
+      }
+    } finally {
+      reader.releaseLock();
+    }
+    res.end();
+  } catch (error) {
+    responseError(res, error);
+  }
+}
+
 export async function handleVoiceApi(req: Request, res: Response): Promise<void> {
   if (req.method === 'OPTIONS') {
     res.status(204).send('');
@@ -4075,6 +4251,10 @@ export async function handleVoiceApi(req: Request, res: Response): Promise<void>
     await handleTtsSpeak(req, res);
     return;
   }
+  if (path === '/tts/stream') {
+    await handleTtsStream(req, res);
+    return;
+  }
   if (path.startsWith('/voice/audio/')) {
     await handleVoiceAudio(req, res);
     return;
@@ -4083,7 +4263,7 @@ export async function handleVoiceApi(req: Request, res: Response): Promise<void>
     error: 'not_found',
     message: 'Unknown voice endpoint.',
     path,
-    supported: ['/copilot/message', '/voice/transcribe', '/tts/speak', '/voice/audio/:token'],
+    supported: ['/copilot/message', '/voice/transcribe', '/tts/speak', '/tts/stream', '/voice/audio/:token'],
   });
 }
 
@@ -4094,6 +4274,7 @@ export const __voiceSystemInternals = {
   deriveBosModeToolHints,
   deriveUnderstandingSignal,
   detectLanguageCompatibility,
+  enrichWithSsmlProsody,
   extractInternalBosPayload,
   evaluateSafetyDecision,
   normalizeRequesterRole,

@@ -252,6 +252,40 @@ class VoiceRuntimeService {
     return (confidence.clamp(0.0, 1.0) as num).toDouble();
   }
 
+  Future<Uint8List> requestStreamingTts({
+    required String text,
+    required String locale,
+    String? emotionalState,
+    bool needsScaffold = false,
+  }) async {
+    final String idToken = await _requiredIdToken();
+    final Uri endpoint = _voiceApiUri('/tts/stream');
+
+    final http.Response response = await http
+        .post(
+          endpoint,
+          headers: <String, String>{
+            'Authorization': 'Bearer $idToken',
+            'Content-Type': 'application/json',
+            'x-scholesa-locale': locale,
+          },
+          body: jsonEncode(<String, dynamic>{
+            'text': text,
+            'locale': locale,
+            'emotionalState': emotionalState ?? 'neutral',
+            'needsScaffold': needsScaffold,
+          }),
+        )
+        .timeout(const Duration(seconds: 15));
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception(
+          'Streaming TTS is unavailable right now (${response.statusCode})');
+    }
+
+    return response.bodyBytes;
+  }
+
   Uri _voiceApiUri(String path) {
     final String projectId = Firebase.app().options.projectId;
     final String cleanedPath = path.startsWith('/') ? path : '/$path';

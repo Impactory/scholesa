@@ -221,6 +221,40 @@ export async function transcribeVoiceAudio(req: TranscribeVoiceRequest): Promise
   return response.json() as Promise<TranscribeVoiceResponse>;
 }
 
+export interface StreamTtsRequest {
+  idToken: string;
+  text: string;
+  locale: string;
+  emotionalState?: string;
+  needsScaffold?: boolean;
+}
+
+export async function streamTtsSpeech(req: StreamTtsRequest): Promise<Response> {
+  const baseUrl = defaultVoiceApiBaseUrl();
+  if (!baseUrl) throw new Error('Voice help is unavailable right now.');
+  const locale = normalizeLocale(req.locale);
+  const requestId = createVoiceRequestId('voice-tts-stream');
+
+  return withTimeout(
+    aiSafeFetch(`${baseUrl}/tts/stream`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${req.idToken}`,
+        'Content-Type': 'application/json',
+        'x-request-id': requestId,
+        'x-scholesa-locale': locale,
+      },
+      body: JSON.stringify({
+        text: req.text,
+        locale,
+        emotionalState: req.emotionalState ?? 'neutral',
+        needsScaffold: req.needsScaffold ?? false,
+      }),
+    }, 'voiceService.ttsStream'),
+    15_000,
+  );
+}
+
 export function voiceApiConfigured(): boolean {
   return Boolean(defaultVoiceApiBaseUrl());
 }

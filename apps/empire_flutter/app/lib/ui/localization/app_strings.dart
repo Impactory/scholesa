@@ -171,6 +171,29 @@ class AppStrings {
           'Coach with parent-friendly phrasing that supports the learner without giving answers.',
       'ai.role.staff':
           'Respond as an instructional co-pilot with concise pedagogical suggestions.',
+      'ai.voice.confidence.high': 'MiloOS understood your request clearly.',
+      'ai.voice.confidence.medium':
+          'MiloOS may not have fully understood. Try rephrasing if the response does not match.',
+      'ai.voice.confidence.low':
+          'MiloOS had difficulty understanding. Please try again slowly.',
+      'ai.voice.streaming.connecting': 'Connecting to MiloOS voice...',
+      'ai.voice.streaming.listening': 'Listening...',
+      'ai.voice.streaming.processing': 'Thinking...',
+      'ai.voice.streaming.speaking': 'Speaking...',
+      'ai.voice.streaming.error':
+          'Voice connection was interrupted. Please try again.',
+      'ai.voice.settings.title': 'Voice settings',
+      'ai.voice.settings.voiceProfile': 'Voice style',
+      'ai.voice.emotion.confused':
+          'It looks like this is tricky. Let me break it down differently.',
+      'ai.voice.emotion.bored':
+          'Let us try a different angle to make this more interesting.',
+      'ai.voice.emotion.curious':
+          'Great question! Let us explore that further.',
+      'ai.voice.emotion.excited':
+          'Love the energy! Let us put that into action.',
+      'ai.voice.stt.languageMismatch':
+          'It sounds like you may be speaking a different language. Would you like to switch?',
     },
     'zh-CN': <String, String>{
       'auth.welcomeBack': '欢迎回来',
@@ -305,6 +328,21 @@ class AppStrings {
       'ai.role.learner': '请直接面向学习者，用支持性且符合年龄的教练语气回应。',
       'ai.role.parent': '请使用适合家长的表达方式，在不给答案的前提下支持学习者。',
       'ai.role.staff': '请以教学副驾驶的方式回应，给出简洁的教学建议。',
+      'ai.voice.confidence.high': 'MiloOS 清晰地理解了你的请求。',
+      'ai.voice.confidence.medium': 'MiloOS 可能没有完全理解。如果回答不对，请换种方式表述。',
+      'ai.voice.confidence.low': 'MiloOS 理解有困难。请说慢一些再试。',
+      'ai.voice.streaming.connecting': '正在连接 MiloOS 语音...',
+      'ai.voice.streaming.listening': '正在聆听...',
+      'ai.voice.streaming.processing': '正在思考...',
+      'ai.voice.streaming.speaking': '正在讲话...',
+      'ai.voice.streaming.error': '语音连接中断，请重试。',
+      'ai.voice.settings.title': '语音设置',
+      'ai.voice.settings.voiceProfile': '语音风格',
+      'ai.voice.emotion.confused': '看起来这有点难，让我换个方式来解释。',
+      'ai.voice.emotion.bored': '换个角度试试，让它变得更有趣。',
+      'ai.voice.emotion.curious': '好问题！我们深入探讨一下。',
+      'ai.voice.emotion.excited': '太棒了！把这份热情用在行动上吧。',
+      'ai.voice.stt.languageMismatch': '你似乎在说另一种语言。要切换吗？',
     },
     'zh-TW': <String, String>{
       'auth.welcomeBack': '歡迎回來',
@@ -439,6 +477,21 @@ class AppStrings {
       'ai.role.learner': '請直接面向學習者，以支持性且符合年齡的教練語氣回應。',
       'ai.role.parent': '請使用適合家長的表達方式，在不直接給答案的前提下支持學習者。',
       'ai.role.staff': '請以教學副駕的方式回應，提供簡潔的教學建議。',
+      'ai.voice.confidence.high': 'MiloOS 清楚理解了你的請求。',
+      'ai.voice.confidence.medium': 'MiloOS 可能未完全理解。如果回答不對，請換種方式表述。',
+      'ai.voice.confidence.low': 'MiloOS 理解有困難。請說慢一些再試。',
+      'ai.voice.streaming.connecting': '正在連接 MiloOS 語音...',
+      'ai.voice.streaming.listening': '正在聆聽...',
+      'ai.voice.streaming.processing': '正在思考...',
+      'ai.voice.streaming.speaking': '正在講話...',
+      'ai.voice.streaming.error': '語音連線中斷，請重試。',
+      'ai.voice.settings.title': '語音設定',
+      'ai.voice.settings.voiceProfile': '語音風格',
+      'ai.voice.emotion.confused': '看起來這有點難，讓我換個方式來解釋。',
+      'ai.voice.emotion.bored': '換個角度試試，讓它變得更有趣。',
+      'ai.voice.emotion.curious': '好問題！我們深入探討一下。',
+      'ai.voice.emotion.excited': '太棒了！把這份熱情用在行動上吧。',
+      'ai.voice.stt.languageMismatch': '你似乎在說另一種語言。要切換嗎？',
     },
   };
 
