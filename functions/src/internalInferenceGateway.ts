@@ -180,6 +180,108 @@ function sanitizeErrorCode(error: unknown): string {
   return normalized.length > 0 ? normalized.slice(0, 120) : 'unknown_error';
 }
 
+export interface InternalInferenceStreamResult {
+  ok: boolean;
+  stream?: ReadableStream<Uint8Array>;
+  errorCode?: string;
+  meta: {
+    service: InternalInferenceService;
+    route: 'internal' | 'local';
+    endpoint?: string;
+    audience?: string;
+    authMode: InternalInferenceAuthMode;
+    statusCode?: number;
+  };
+}
+
+export async function callInternalInferenceStream<
+  TBody extends Record<string, unknown>,
+>(options: InternalInferenceInvocationOptions<TBody>): Promise<InternalInferenceStreamResult> {
+  const endpoint = resolveEndpoint(options.service);
+  const timeoutMs = Number.isFinite(options.timeoutMs) && (options.timeoutMs ?? 0) > 0
+    ? Number(options.timeoutMs)
+    : DEFAULT_TIMEOUT_MS;
+
+  if (!endpoint) {
+    return {
+      ok: false,
+      errorCode: 'endpoint_not_configured',
+      meta: { service: options.service, route: 'local', authMode: resolveAuthMode() },
+    };
+  }
+
+  let auth: { authMode: InternalInferenceAuthMode; token?: string; audience?: string };
+  try {
+    auth = await mintInternalAuthorizationToken(options.service, endpoint, timeoutMs);
+  } catch (error) {
+    return {
+      ok: false,
+      errorCode: sanitizeErrorCode(error),
+      meta: { service: options.service, route: 'internal', endpoint, authMode: resolveAuthMode() },
+    };
+  }
+
+  const requestId = options.context.requestId ?? `inference-${options.service}-${randomUUID()}`;
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    Accept: 'application/octet-stream',
+    'X-Trace-Id': options.context.traceId,
+    'X-Site-Id': options.context.siteId,
+    'X-Role': options.context.role,
+    'X-Grade-Band': options.context.gradeBand,
+    'X-Locale': options.context.locale,
+    'X-Policy-Version': options.context.policyVersion,
+    'X-Request-Id': requestId,
+    'X-Caller-Service': options.context.callerService,
+    'X-Inference-Service': options.service,
+  };
+  if (auth.token) {
+    headers.Authorization = `Bearer ${auth.token}`;
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await guardedFetch(endpoint, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(options.body),
+      signal: controller.signal,
+    }, { source: `internalInference.${options.service}.stream`, mode: 'internal-ai-only' });
+
+    if (!response.ok) {
+      return {
+        ok: false,
+        errorCode: `http_${response.status}`,
+        meta: {
+          service: options.service, route: 'internal', endpoint,
+          audience: auth.audience, authMode: auth.authMode, statusCode: response.status,
+        },
+      };
+    }
+
+    return {
+      ok: true,
+      stream: response.body ?? undefined,
+      meta: {
+        service: options.service, route: 'internal', endpoint,
+        audience: auth.audience, authMode: auth.authMode, statusCode: response.status,
+      },
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      errorCode: sanitizeErrorCode(error),
+      meta: {
+        service: options.service, route: 'internal', endpoint,
+        audience: auth.audience, authMode: auth.authMode,
+      },
+    };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function callInternalInferenceJson<
   TBody extends Record<string, unknown>,
   TResponse = Record<string, unknown>,

@@ -10,7 +10,7 @@ import {
 } from './internalInferenceGateway';
 import { isCoppaConsentActive } from './coppaGuards';
 
-export const SUPPORTED_VOICE_LOCALES = ['en', 'zh-CN', 'zh-TW', 'th'] as const;
+export const SUPPORTED_VOICE_LOCALES = ['en', 'es', 'zh-CN', 'zh-TW', 'th'] as const;
 export type VoiceLocale = (typeof SUPPORTED_VOICE_LOCALES)[number];
 type VoiceRole = 'student' | 'teacher' | 'admin';
 export type VoiceRequesterRole = VoiceRole | 'parent';
@@ -23,17 +23,22 @@ type VoiceIntent =
   | 'planning_request'
   | 'reflection'
   | 'safety_support'
-  | 'general_support';
+  | 'general_support'
+  | 'checkpoint_help'
+  | 'portfolio_review'
+  | 'capability_inquiry'
+  | 'peer_feedback'
+  | 'revision_inquiry';
 type VoiceComplexity = 'low' | 'medium' | 'high';
-type VoiceEmotionalState = 'frustrated' | 'neutral' | 'confident';
+type VoiceEmotionalState = 'frustrated' | 'confused' | 'bored' | 'neutral' | 'curious' | 'confident' | 'excited';
 type VoiceResponseMode = 'hint' | 'explain' | 'translate' | 'plan' | 'safety';
 type UnderstandingSource = 'heuristic' | 'model' | 'blended';
 type ResponseGenerationSource = 'local' | 'model' | 'guardrail';
 
 const VOICE_POLICY_VERSION = 'voice-policy-2026-02-23';
-const _VOICE_MODEL_VERSION = 'voice-orchestrator-v1';
-const _STT_MODEL_VERSION = 'scholesa-stt-internal-v1';
-const _TTS_MODEL_VERSION = 'scholesa-tts-internal-v1';
+const _VOICE_MODEL_VERSION = 'voice-orchestrator-v2';
+const _STT_MODEL_VERSION = 'scholesa-stt-v2';
+const _TTS_MODEL_VERSION = 'scholesa-tts-v2';
 const MIN_AUTONOMOUS_STUDENT_CONFIDENCE = 0.97;
 const MIN_AUTONOMOUS_POLICY_CONFIDENCE = 0.97;
 const AUDIO_TOKEN_TTL_MS = 5 * 60 * 1000;
@@ -44,6 +49,7 @@ const SCHOOL_CONSENT_COLLECTION = 'coppaSchoolConsents';
 
 const LOW_CONFIDENCE_STUDENT_SUPPORT: Record<VoiceLocale, string> = {
   en: 'I want to be careful here. Tell me what you have already tried, and I can help with the next safe step. If you need a full check, ask your educator to review it with you.',
+  es: 'Quiero ser cuidadoso aquí. Dime qué has intentado ya y puedo ayudarte con el siguiente paso seguro. Si necesitas una revisión completa, pide a tu profesor que lo revise contigo.',
   'zh-CN': '我想更谨慎一点。先告诉我你已经试过什么，我可以帮你想下一步更安全的做法。如果你需要完整检查，请老师和你一起看。',
   'zh-TW': '我想更謹慎一點。先告訴我你已經試過什麼，我可以幫你想下一步更安全的做法。如果你需要完整檢查，請老師和你一起看。',
   th: 'ฉันอยากระวังให้มากขึ้น ลองบอกก่อนว่าคุณได้ลองอะไรไปแล้วบ้าง แล้วฉันจะช่วยคิดขั้นต่อไปที่ปลอดภัยให้ ถ้าต้องการตรวจแบบครบถ้วน ให้ครูช่วยดูไปด้วยกัน',
@@ -51,6 +57,7 @@ const LOW_CONFIDENCE_STUDENT_SUPPORT: Record<VoiceLocale, string> = {
 
 const UNAVAILABLE_STUDENT_SUPPORT: Record<VoiceLocale, string> = {
   en: 'MiloOS is not ready to give a reliable answer right now. Share your work so far, or ask your educator to review the next step with you.',
+  es: 'MiloOS no está listo para dar una respuesta confiable ahora. Comparte tu trabajo hasta ahora, o pide a tu profesor que revise el siguiente paso contigo.',
   'zh-CN': 'MiloOS 现在还不能提供足够可靠的回答。你可以先分享你目前的思路，或者请老师陪你一起看下一步。',
   'zh-TW': 'MiloOS 現在還不能提供足夠可靠的回答。你可以先分享你目前的思路，或者請老師陪你一起看下一步。',
   th: 'MiloOS ยังไม่พร้อมให้คำตอบที่เชื่อถือได้ในตอนนี้ ลองเล่าสิ่งที่ทำมาถึงตอนนี้ หรือให้ครูช่วยดูขั้นต่อไปกับคุณ',
@@ -58,6 +65,7 @@ const UNAVAILABLE_STUDENT_SUPPORT: Record<VoiceLocale, string> = {
 
 const HEURISTIC_ONLY_STUDENT_SUPPORT: Record<VoiceLocale, string> = {
   en: 'I may not have understood your voice request well enough yet. Tell me the exact step you are stuck on, and I will help with one small next move.',
+  es: 'Puede que aún no haya entendido bien tu solicitud de voz. Dime exactamente en qué paso estás atascado y te ayudaré con un pequeño avance.',
   'zh-CN': '我现在可能还没有足够准确地理解你的语音请求。请告诉我你具体卡在哪一步，我会先帮你想一个小的下一步。',
   'zh-TW': '我現在可能還沒有足夠準確地理解你的語音請求。請告訴我你具體卡在哪一步，我會先幫你想一個小的下一步。',
   th: 'ตอนนี้ฉันอาจยังเข้าใจคำขอเสียงของคุณได้ไม่ชัดพอ ลองบอกว่าคุณติดอยู่ตรงขั้นไหน แล้วฉันจะช่วยคิดก้าวเล็ก ๆ ถัดไปให้',
@@ -267,6 +275,10 @@ const LOCALE_ALIASES: Record<string, VoiceLocale> = {
   en: 'en',
   'en-us': 'en',
   'en-gb': 'en',
+  es: 'es',
+  'es-es': 'es',
+  'es-mx': 'es',
+  'es-419': 'es',
   zh: 'zh-CN',
   'zh-cn': 'zh-CN',
   'zh-hans': 'zh-CN',
@@ -283,6 +295,8 @@ const INJECTION_PATTERNS = [
   /system prompt/i,
   /developer mode/i,
   /reveal .*prompt/i,
+  /ignor(a|ar) (todas? las? )?instrucciones/i,
+  /modo desarrollador/i,
   /忽略所有(规则|規則)/,
   /忽略.*指令/,
   /顯示.*提示/,
@@ -294,6 +308,9 @@ const CROSS_TENANT_PATTERNS = [
   /another student'?s data/i,
   /whole database/i,
   /cross[- ]tenant/i,
+  /otra? (escuela|sitio|distrito)/i,
+  /datos de otro estudiante/i,
+  /toda la base de datos/i,
   /隔壁(学校|學校)/,
   /其他(学校|校区|租户|站点)/,
   /其他學校|其他租戶/,
@@ -305,6 +322,8 @@ const TOOL_ESCALATION_PATTERNS = [
   /admin tool/i,
   /data export/i,
   /show me .*database/i,
+  /herramienta de admin/i,
+  /exportar datos/i,
   /系统提示词/,
   /系統提示詞/,
   /管理员工具/,
@@ -318,6 +337,9 @@ const SELF_HARM_PATTERNS = [
   /hurt someone/i,
   /\bself[- ]?harm\b/i,
   /\bkill myself\b/i,
+  /hacerme da[ñn]o/i,
+  /hacerle da[ñn]o a alguien/i,
+  /\bsuicid(io|arme)\b/i,
   /伤害别人/,
   /傷害別人/,
   /ทำร้ายคน/,
@@ -330,6 +352,9 @@ const HARMFUL_CONTENT_PATTERNS = [
   /build (a )?weapon/i,
   /how to hurt/i,
   /make a bomb/i,
+  /construir (un )?arma/i,
+  /c[óo]mo hacer da[ñn]o/i,
+  /hacer una bomba/i,
   /制作武器/,
   /製作武器/,
   /อาวุธ/,
@@ -339,6 +364,9 @@ const FOCUS_NUDGE_PATTERNS = [
   /\bI('| )?m bored\b/i,
   /\bthis is dumb\b/i,
   /don'?t want to do this/i,
+  /estoy aburrido/i,
+  /esto es tonto/i,
+  /no quiero hacer esto/i,
   /ไม่อยากทำแล้ว/,
   /我不想做了/,
   /我不想做了/,
@@ -350,6 +378,9 @@ const TEACHER_PRODUCTIVITY_PATTERNS = [
   /mixed abilities/i,
   /message to a parent/i,
   /parent message/i,
+  /diferenciaci[óo]n/i,
+  /habilidades mixtas/i,
+  /mensaje (a|para) (un )?padre/i,
   /分层|差异化|差異化/,
   /ผู้ปกครอง/,
 ];
@@ -358,6 +389,9 @@ const HINT_REQUEST_PATTERNS = [
   /\bhint\b/i,
   /\bnext step\b/i,
   /give me a clue/i,
+  /\bpista\b/i,
+  /siguiente paso/i,
+  /dame una pista/i,
   /提示|線索/,
   /ช่วยใบ้/,
 ];
@@ -366,13 +400,18 @@ const EXPLAIN_REQUEST_PATTERNS = [
   /\bexplain\b/i,
   /\bwhy\b/i,
   /break this down/i,
+  /\bexplica\b/i,
+  /\bpor qu[ée]\b/i,
+  /desgl[óo]same esto/i,
   /講解|解释|解釋|原因/,
   /อธิบาย/,
 ];
 
 const TRANSLATION_PATTERNS = [
   /\btranslate\b/i,
-  /\bin (english|chinese|thai)\b/i,
+  /\bin (english|chinese|thai|spanish)\b/i,
+  /\btraduc(e|ir)\b/i,
+  /en (ingl[ée]s|chino|tailand[ée]s|espa[ñn]ol)/i,
   /翻译|翻譯|轉成/,
   /แปล/,
 ];
@@ -381,6 +420,9 @@ const PLANNING_PATTERNS = [
   /\bplan\b/i,
   /\bchecklist\b/i,
   /\bnext\b.*\bdo\b/i,
+  /\bplan(ear|ificar)\b/i,
+  /lista de pasos/i,
+  /qu[ée] hago (ahora|despu[ée]s)/i,
   /步骤|步驟|清单|清單/,
   /แผน|ขั้นตอน/,
 ];
@@ -389,6 +431,9 @@ const REFLECTION_PATTERNS = [
   /\bi learned\b/i,
   /\bi understood\b/i,
   /\bsummary\b/i,
+  /\baprend[íi]\b/i,
+  /\bentend[íi]\b/i,
+  /\bresumen\b/i,
   /我学会|我學會|总结|總結/,
   /ฉันเรียนรู้|สรุป/,
 ];
@@ -398,6 +443,10 @@ const FRUSTRATION_PATTERNS = [
   /\bconfused\b/i,
   /\bfrustrat(ed|ing)\b/i,
   /\bcan'?t\b/i,
+  /\batascad[oa]\b/i,
+  /\bconfundid[oa]\b/i,
+  /\bfrustrad[oa]\b/i,
+  /no puedo/i,
   /卡住|不会|不會|好难|好難/,
   /งง|ยากมาก|ทำไม่ได้/,
 ];
@@ -406,6 +455,9 @@ const CONFIDENCE_PATTERNS = [
   /\bI can\b/i,
   /\bgot it\b/i,
   /\bunderstand now\b/i,
+  /\bya puedo\b/i,
+  /\bya entend[íi]\b/i,
+  /\blo tengo\b/i,
   /我会了|我會了|我懂了/,
   /เข้าใจแล้ว|ทำได้/,
 ];
@@ -415,6 +467,10 @@ const HIGH_COMPLEXITY_PATTERNS = [
   /\bderive\b/i,
   /\banaly(s|z)e\b/i,
   /\bcompare\b/i,
+  /\bdemostra(r|ci[óo]n)\b/i,
+  /\bderiva(r)?\b/i,
+  /\banali(z|s)ar\b/i,
+  /\bcomparar\b/i,
   /证明|證明|推导|推導|分析|比較/,
   /พิสูจน์|วิเคราะห์/,
 ];
@@ -424,16 +480,109 @@ const LOW_COMPLEXITY_PATTERNS = [
   /\bspell\b/i,
   /\bcount\b/i,
   /\bwhat is\b/i,
+  /\bleer\b/i,
+  /\bdeletrear\b/i,
+  /\bcontar\b/i,
+  /\bqu[ée] es\b/i,
   /朗读|朗讀|拼写|拼寫|数数|數數/,
   /อ่าน|สะกด|นับ/,
 ];
 
 const TOPIC_TAG_PATTERNS: Array<{ tag: string; patterns: RegExp[] }> = [
-  { tag: 'math', patterns: [/\bmath\b/i, /\balgebra\b/i, /\bgeometry\b/i, /数学|數學|คณิต/] },
-  { tag: 'science', patterns: [/\bscience\b/i, /\bphysics\b/i, /\bchemistry\b/i, /科学|科學|วิทยา/] },
-  { tag: 'language', patterns: [/\breading\b/i, /\bwriting\b/i, /\bgrammar\b/i, /阅读|閱讀|写作|寫作|ภาษา/] },
-  { tag: 'coding', patterns: [/\bcod(e|ing)\b/i, /\bpython\b/i, /\bjavascript\b/i, /编程|程式|เขียนโค้ด/] },
-  { tag: 'history', patterns: [/\bhistory\b/i, /\bcivilization\b/i, /历史|歷史|ประวัติ/] },
+  { tag: 'math', patterns: [/\bmath\b/i, /\balgebra\b/i, /\bgeometry\b/i, /\bmatem[áa]ticas?\b/i, /\b[áa]lgebra\b/i, /\bgeometr[íi]a\b/i, /数学|數學|คณิต/] },
+  { tag: 'science', patterns: [/\bscience\b/i, /\bphysics\b/i, /\bchemistry\b/i, /\bciencias?\b/i, /\bf[íi]sica\b/i, /\bqu[íi]mica\b/i, /科学|科學|วิทยา/] },
+  { tag: 'language', patterns: [/\breading\b/i, /\bwriting\b/i, /\bgrammar\b/i, /\blectura\b/i, /\bescritura\b/i, /\bgram[áa]tica\b/i, /阅读|閱讀|写作|寫作|ภาษา/] },
+  { tag: 'coding', patterns: [/\bcod(e|ing)\b/i, /\bpython\b/i, /\bjavascript\b/i, /\bprogramaci[óo]n\b/i, /编程|程式|เขียนโค้ด/] },
+  { tag: 'history', patterns: [/\bhistory\b/i, /\bcivilization\b/i, /\bhistoria\b/i, /\bcivilizaci[óo]n\b/i, /历史|歷史|ประวัติ/] },
+];
+
+const CHECKPOINT_HELP_PATTERNS = [
+  /\bcheckpoint\b/i,
+  /help (me )?(with|on|at) (the |this )?checkpoint/i,
+  /\bpunto de control\b/i,
+  /ayuda (con|en) (el )?checkpoint/i,
+  /检查点|檢查點/,
+  /จุดตรวจ/,
+];
+
+const PORTFOLIO_REVIEW_PATTERNS = [
+  /\bportfolio\b/i,
+  /show my (portfolio|work)/i,
+  /\bportafolio\b/i,
+  /muestra mi (portafolio|trabajo)/i,
+  /作品集|作品夹/,
+  /พอร์ตโฟลิโอ|ผลงาน/,
+];
+
+const CAPABILITY_INQUIRY_PATTERNS = [
+  /what (capability|skill) am I/i,
+  /which (capability|strand)/i,
+  /what am I (working on|learning|building)/i,
+  /qu[ée] (habilidad|competencia) estoy/i,
+  /qu[ée] estoy (aprendiendo|trabajando)/i,
+  /我在学什么|我在學什麼|正在学的|正在學的/,
+  /ฉันกำลังเรียนรู้อะไร|ทักษะอะไร/,
+];
+
+const PEER_FEEDBACK_PATTERNS = [
+  /peer (feedback|review)/i,
+  /give feedback to/i,
+  /review (a |my )?classmate/i,
+  /retroalimentaci[óo]n (de|entre) pares/i,
+  /revisar (al|el trabajo del) compa[ñn]ero/i,
+  /同伴反馈|同儕回饋|互评|互評/,
+  /เพื่อนให้ความเห็น|รีวิวเพื่อน/,
+];
+
+const REVISION_INQUIRY_PATTERNS = [
+  /what (do I )?need to (fix|revise|redo)/i,
+  /revision(s)? needed/i,
+  /what('| i)?s wrong/i,
+  /qu[ée] (tengo que|debo) (corregir|revisar)/i,
+  /revisiones necesarias/i,
+  /需要修改什么|需要修改什麼|要改什么|要改什麼/,
+  /ต้องแก้ไขอะไร|แก้ไขตรงไหน/,
+];
+
+const CONFUSED_PATTERNS = [
+  /\bI don'?t (understand|get it)\b/i,
+  /\bwhat do you mean\b/i,
+  /\bI('| a)?m lost\b/i,
+  /no (entiendo|comprendo)/i,
+  /qu[ée] quieres decir/i,
+  /不明白|不懂|什么意思|什麼意思/,
+  /ไม่เข้าใจ|หมายความว่าอะไร/,
+];
+
+const BORED_PATTERNS = [
+  /\bso boring\b/i,
+  /\bwhen (is|does) (this|it) end\b/i,
+  /\bI('| a)?m bored\b/i,
+  /\bqu[ée] aburrido\b/i,
+  /\bcu[áa]ndo termina\b/i,
+  /好无聊|好無聊|什么时候结束|什麼時候結束/,
+  /น่าเบื่อมาก|เมื่อไหร่จะจบ/,
+];
+
+const CURIOUS_PATTERNS = [
+  /\bwhy does\b/i,
+  /\bhow come\b/i,
+  /\btell me more\b/i,
+  /\bI('| a)?m curious\b/i,
+  /\bpor qu[ée]\b.*\bfunciona\b/i,
+  /cu[ée]ntame m[áa]s/i,
+  /为什么会|為什麼會|想多了解/,
+  /อยากรู้เพิ่ม|ทำไมถึง/,
+];
+
+const EXCITED_PATTERNS = [
+  /\bthis is (so |really )?(cool|awesome|amazing)\b/i,
+  /\bI love this\b/i,
+  /\bso (fun|exciting)\b/i,
+  /\bqu[ée] (genial|increíble)\b/i,
+  /\bme encanta\b/i,
+  /太棒了|好酷|好厉害|好厲害/,
+  /เจ๋งมาก|สนุกมาก/,
 ];
 
 const EMAIL_PATTERN = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g;
@@ -465,6 +614,15 @@ const LOCALE_TEXT: Record<VoiceLocale, {
     teacherProductive: 'Here is a quick draft: Tier 1 core task, Tier 2 scaffolded supports, Tier 3 extension challenge, plus accommodations and check-in prompts.',
     teacherGeneric: 'I can help with concise class-ready drafts, differentiation ideas, and supportive parent communication.',
     adminGeneric: 'I can guide setup and non-sensitive troubleshooting. I will not expose secrets, keys, or raw student exports.',
+  },
+  es: {
+    blocked: 'No puedo ayudar con esa solicitud. Puedo ayudarte con apoyo de aprendizaje seguro y apropiado para la escuela.',
+    escalated: 'Me alegra que me lo hayas dicho. Por favor contacta a un adulto de confianza o al consejero escolar ahora. No estás solo.',
+    focusNudge: 'Te escucho. Hagamos un paso pequeño: lee la primera línea y dime algo que notes. ¿Quieres una pista o que lo lea en voz alta?',
+    studentGeneric: 'Vamos paso a paso. Dime qué parte te parece más difícil y te daré una pista corta.',
+    teacherProductive: 'Aquí tienes un borrador rápido: tarea base Nivel 1, apoyos con andamiaje Nivel 2, desafío de extensión Nivel 3, más adaptaciones y preguntas de verificación.',
+    teacherGeneric: 'Puedo ayudar con borradores listos para clase, ideas de diferenciación y comunicación de apoyo con padres.',
+    adminGeneric: 'Puedo guiar la configuración y la resolución de problemas no sensibles. No expondré secretos, claves ni exportaciones de datos de estudiantes.',
   },
   'zh-CN': {
     blocked: '我无法协助该请求。我可以改为提供安全、适合学校场景的学习帮助。',
@@ -512,6 +670,15 @@ const LOCALE_INTELLIGENCE_TEXT: Record<VoiceLocale, {
     reflectionStep: 'Share one thing you learned and one thing you still want to improve.',
     frustrationSupport: 'You are not behind. We can shrink this into a smaller step.',
     scaffoldPrompt: 'I will keep each step short so you can respond quickly.',
+  },
+  es: {
+    hintStep: 'Intenta un paso concreto y luego dime qué cambió.',
+    explainStep: 'Puedo explicar con una razón corta y luego una pregunta rápida.',
+    translationStep: 'Puedo mantener el mismo significado y cambiar a tu idioma preferido.',
+    planningStep: 'Hagamos un plan de tres pasos y completemos el primero.',
+    reflectionStep: 'Comparte algo que aprendiste y algo que aún quieres mejorar.',
+    frustrationSupport: 'No estás atrasado. Podemos dividir esto en un paso más pequeño.',
+    scaffoldPrompt: 'Mantendré cada paso corto para que puedas responder rápido.',
   },
   'zh-CN': {
     hintStep: '先做一个具体小步骤，然后告诉我发生了什么变化。',
@@ -1064,6 +1231,11 @@ function clampProbability(value: number): number {
 function inferVoiceIntent(message: string, role: VoiceRequesterRole, safetyOutcome: SafetyOutcome): VoiceIntent {
   if (safetyOutcome !== 'allowed' && safetyOutcome !== 'modified') return 'safety_support';
   if (TRANSLATION_PATTERNS.some((pattern) => pattern.test(message))) return 'translation_request';
+  if (CHECKPOINT_HELP_PATTERNS.some((pattern) => pattern.test(message))) return 'checkpoint_help';
+  if (PORTFOLIO_REVIEW_PATTERNS.some((pattern) => pattern.test(message))) return 'portfolio_review';
+  if (CAPABILITY_INQUIRY_PATTERNS.some((pattern) => pattern.test(message))) return 'capability_inquiry';
+  if (PEER_FEEDBACK_PATTERNS.some((pattern) => pattern.test(message))) return 'peer_feedback';
+  if (REVISION_INQUIRY_PATTERNS.some((pattern) => pattern.test(message))) return 'revision_inquiry';
   if (HINT_REQUEST_PATTERNS.some((pattern) => pattern.test(message))) return 'hint_request';
   if (EXPLAIN_REQUEST_PATTERNS.some((pattern) => pattern.test(message))) return 'explain_request';
   if (PLANNING_PATTERNS.some((pattern) => pattern.test(message))) return 'planning_request';
@@ -1085,6 +1257,10 @@ function inferVoiceComplexity(message: string): VoiceComplexity {
 
 function inferVoiceEmotionalState(message: string): VoiceEmotionalState {
   if (FRUSTRATION_PATTERNS.some((pattern) => pattern.test(message))) return 'frustrated';
+  if (CONFUSED_PATTERNS.some((pattern) => pattern.test(message))) return 'confused';
+  if (BORED_PATTERNS.some((pattern) => pattern.test(message))) return 'bored';
+  if (EXCITED_PATTERNS.some((pattern) => pattern.test(message))) return 'excited';
+  if (CURIOUS_PATTERNS.some((pattern) => pattern.test(message))) return 'curious';
   if (CONFIDENCE_PATTERNS.some((pattern) => pattern.test(message))) return 'confident';
   return 'neutral';
 }
@@ -1103,6 +1279,9 @@ function responseModeForIntent(intent: VoiceIntent): VoiceResponseMode {
   if (intent === 'translation_request') return 'translate';
   if (intent === 'planning_request') return 'plan';
   if (intent === 'explain_request' || intent === 'reflection') return 'explain';
+  if (intent === 'capability_inquiry' || intent === 'portfolio_review') return 'explain';
+  if (intent === 'checkpoint_help' || intent === 'revision_inquiry') return 'hint';
+  if (intent === 'peer_feedback') return 'explain';
   if (intent === 'safety_support') return 'safety';
   return 'hint';
 }
@@ -1403,6 +1582,7 @@ function deriveBosModeToolHints(role: VoiceRequesterRole, policyHint: BosPolicyH
 function detectLanguageCompatibility(text: string, locale: VoiceLocale): boolean {
   if (!text.trim()) return false;
   if (locale === 'en') return /[A-Za-z]/.test(text);
+  if (locale === 'es') return /[A-Za-z\u00C0-\u024F]/.test(text);
   if (locale === 'zh-CN') return /[\u4e00-\u9fff]/.test(text);
   if (locale === 'zh-TW') return /[\u4e00-\u9fff]/.test(text);
   if (locale === 'th') return /[\u0E00-\u0E7F]/.test(text);
@@ -1678,8 +1858,12 @@ function isInternalAudioUrl(urlValue: string): boolean {
 }
 
 function chooseVoiceProfile(locale: VoiceLocale, role: VoiceRequesterRole, gradeBand: GradeBand): string {
-  if (role === 'student' && gradeBand === 'K-5') return `${locale}.k5_safe_neutral`;
-  if (role === 'teacher' || role === 'parent' || role === 'admin') return `${locale}.professional_concise`;
+  if (role === 'student' && gradeBand === 'K-5') return `${locale}.k5_warm_mentor`;
+  if (role === 'student' && gradeBand === '6-8') return `${locale}.ms_peer_coach`;
+  if (role === 'student' && gradeBand === '9-12') return `${locale}.hs_direct_tutor`;
+  if (role === 'teacher') return `${locale}.educator_assistant`;
+  if (role === 'parent') return `${locale}.guardian_narrator`;
+  if (role === 'admin') return `${locale}.educator_assistant`;
   return `${locale}.student_neutral`;
 }
 
@@ -1704,8 +1888,13 @@ function buildTtsStyleHints(input: {
     : input.understanding.complexity === 'high'
     ? 'measured'
     : 'normal';
-  const tone = input.understanding.emotionalState === 'frustrated'
+  const emotionalState = input.understanding.emotionalState;
+  const tone = emotionalState === 'frustrated' || emotionalState === 'confused'
     ? 'supportive'
+    : emotionalState === 'bored'
+    ? 'engaging'
+    : emotionalState === 'excited' || emotionalState === 'curious'
+    ? 'encouraging'
     : input.role === 'teacher' || input.role === 'parent' || input.role === 'admin'
     ? 'professional'
     : 'encouraging';
@@ -1871,7 +2060,7 @@ function synthesizeAudioWave(text: string, locale: VoiceLocale): Buffer {
   const durationSeconds = Math.min(6, Math.max(1, normalized.length * 0.04));
   const sampleCount = Math.max(1, Math.floor(sampleRate * durationSeconds));
   const pcm = Buffer.alloc(sampleCount * 2);
-  const localeBias = locale === 'th' ? 30 : locale === 'zh-CN' ? 45 : locale === 'zh-TW' ? 60 : 0;
+  const localeBias = locale === 'th' ? 30 : locale === 'zh-CN' ? 45 : locale === 'zh-TW' ? 60 : locale === 'es' ? 15 : 0;
   for (let i = 0; i < sampleCount; i += 1) {
     const charCode = normalized.charCodeAt(i % normalized.length);
     const frequency = 200 + ((charCode + localeBias) % 180);

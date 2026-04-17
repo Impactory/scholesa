@@ -571,7 +571,54 @@
     "footerTip": "จำไว้ว่า AI ช่วยให้คุณคิด ไม่ได้ทำงานแทนคุณ",
     "errorFallback": "ตอนนี้ฉันมีปัญหาอยู่ ลองถามใหม่อีกแบบหนึ่ง หรือขอความช่วยเหลือจากครู",
     "spokenResponseHeadline": "MiloOS ตอบด้วยเสียงแล้ว",
-    "replaySpokenResponse": "เล่นเสียงตอบกลับอีกครั้ง"
+    "replaySpokenResponse": "เล่นเสียงตอบกลับอีกครั้ง",
+    "voiceConfidence": {
+      "high": "MiloOS เข้าใจคำขอชัดเจน",
+      "medium": "MiloOS อาจเข้าใจไม่ครบ ลองพูดใหม่",
+      "low": "MiloOS เข้าใจยาก กรุณาพูดช้าลง"
+    },
+    "voiceStreaming": {
+      "connecting": "กำลังเชื่อมต่อเสียง...",
+      "listening": "กำลังฟัง...",
+      "processing": "กำลังคิด...",
+      "speaking": "กำลังพูด...",
+      "error": "การเชื่อมต่อเสียงขาด กรุณาลองใหม่",
+      "retry": "ลองเสียงอีกครั้ง"
+    },
+    "voiceSettings": {
+      "title": "ตั้งค่าเสียง",
+      "voiceProfile": "รูปแบบเสียง",
+      "profileWarm": "พี่เลี้ยงอบอุ่น",
+      "profilePlayful": "ไกด์สนุก",
+      "profilePeer": "โค้ชเพื่อน",
+      "profileDirect": "ติวเตอร์ตรงไปตรงมา",
+      "profileProfessional": "มืออาชีพ",
+      "speechRate": "ความเร็วเสียง",
+      "rateSlow": "ช้า",
+      "rateNormal": "ปกติ",
+      "rateFast": "เร็ว",
+      "autoSpeak": "พูดตอบอัตโนมัติ",
+      "language": "ภาษาเสียง"
+    },
+    "emotion": {
+      "confusedSupport": "ดูเหมือนจะยาก ให้อธิบายอีกแบบนะ",
+      "boredNudge": "ลองมุมใหม่ให้น่าสนใจกว่านี้",
+      "curiousEncourage": "คำถามดี! มาสำรวจกันต่อ",
+      "excitedChannel": "เยี่ยม! เอาพลังนี้ไปลงมือทำ"
+    },
+    "intent": {
+      "checkpointHelp": "ช่วยเตรียมจุดตรวจนี้ได้",
+      "portfolioReview": "ให้ช่วยดูผลงานของคุณ",
+      "capabilityInquiry": "คุณกำลังพัฒนาทักษะนี้",
+      "peerFeedback": "ช่วยให้หรือรับฟีดแบ็กเพื่อนได้",
+      "revisionInquiry": "สิ่งที่ต้องแก้ไขมีดังนี้"
+    },
+    "sttConfidence": {
+      "label": "ความมั่นใจในการรับรู้",
+      "tooltip": "MiloOS เข้าใจเสียงคุณชัดแค่ไหน",
+      "partial": "กำลังฟังอยู่...",
+      "languageMismatch": "ดูเหมือนคุณพูดภาษาอื่น ต้องการสลับไหม?"
+    }
   },
   "bosCoaching": {
     "sessionLoopTitle": "สัญญาณการเรียนรู้ของคาบนี้",

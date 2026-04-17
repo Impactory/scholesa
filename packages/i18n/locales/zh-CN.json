@@ -571,7 +571,54 @@
     "footerTip": "请记住：AI 帮助你思考，不替你完成任务。",
     "errorFallback": "我现在遇到了一点问题。请换一种问法，或请老师提供帮助。",
     "spokenResponseHeadline": "MiloOS 已用语音回答。",
-    "replaySpokenResponse": "再次播放语音回答"
+    "replaySpokenResponse": "再次播放语音回答",
+    "voiceConfidence": {
+      "high": "MiloOS 清晰地理解了你的请求。",
+      "medium": "MiloOS 可能没有完全理解。如果回答不对，请换种方式表述。",
+      "low": "MiloOS 理解有困难。请说慢一些再试。"
+    },
+    "voiceStreaming": {
+      "connecting": "正在连接 MiloOS 语音...",
+      "listening": "正在聆听...",
+      "processing": "正在思考...",
+      "speaking": "正在讲话...",
+      "error": "语音连接中断，请重试。",
+      "retry": "重试语音"
+    },
+    "voiceSettings": {
+      "title": "语音设置",
+      "voiceProfile": "语音风格",
+      "profileWarm": "温暖导师",
+      "profilePlayful": "趣味向导",
+      "profilePeer": "同伴教练",
+      "profileDirect": "直接导师",
+      "profileProfessional": "专业风格",
+      "speechRate": "语速",
+      "rateSlow": "慢",
+      "rateNormal": "正常",
+      "rateFast": "快",
+      "autoSpeak": "自动播放语音回答",
+      "language": "语音语言"
+    },
+    "emotion": {
+      "confusedSupport": "看起来这有点难，让我换个方式来解释。",
+      "boredNudge": "换个角度试试，让它变得更有趣。",
+      "curiousEncourage": "好问题！我们深入探讨一下。",
+      "excitedChannel": "太棒了！把这份热情用在行动上吧。"
+    },
+    "intent": {
+      "checkpointHelp": "我可以帮你准备这个检查点。",
+      "portfolioReview": "让我帮你查看你的作品集。",
+      "capabilityInquiry": "你目前正在提升这项能力。",
+      "peerFeedback": "我可以帮你进行同伴互评。",
+      "revisionInquiry": "以下是需要修改的内容。"
+    },
+    "sttConfidence": {
+      "label": "识别置信度",
+      "tooltip": "MiloOS 对你语音的理解清晰度。越高越好。",
+      "partial": "仍在聆听...",
+      "languageMismatch": "你似乎在说另一种语言。要切换吗？"
+    }
   },
   "bosCoaching": {
     "sessionLoopTitle": "课堂学习信号",

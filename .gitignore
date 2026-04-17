@@ -52,6 +52,7 @@ yarn-error.log*
 !locales/zh-TW.json
 !locales/th.json
 !packages/i18n/locales/en.json
+!packages/i18n/locales/es.json
 !packages/i18n/locales/zh-CN.json
 !packages/i18n/locales/zh-TW.json
 !packages/i18n/locales/th.json

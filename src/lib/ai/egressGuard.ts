@@ -9,6 +9,8 @@ const DEFAULT_INTERNAL_AI_HOST_MARKERS = [
   'scholesa-ai',
   'scholesa-tts',
   'scholesa-stt',
+  'scholesa-tts-v2',
+  'scholesa-stt-v2',
   'cloudfunctions.net',
   'a.run.app',
   'localhost',

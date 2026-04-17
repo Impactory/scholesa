@@ -525,7 +525,7 @@
   "aiCoach": {
     "title": "MiloOS",
     "tooltip": "Ask for help",
-    "openAria": "Open MiloOS",
+    "openAria": "Abrir MiloOS",
     "minimizeAria": "Minimize MiloOS",
     "teacherGuidance": "Check with your teacher before using MiloOS.",
     "howCanIHelp": "How can I help you today?",
@@ -566,62 +566,62 @@
     "explainBackPlaceholder": "Tell me what you learned...",
     "submitExplanation": "Submit Explanation",
     "explainBackSuccess": "Great explanation!",
-    "voiceRequirements": "Sign in, enable microphone access, and finish voice setup before using voice help.",
+    "voiceRequirements": "Inicia sesión, habilita el micrófono y termina la configuración de voz antes de usar la ayuda por voz.",
     "askAnother": "Ask another question",
     "footerTip": "Remember: AI helps you think, not do the work.",
     "errorFallback": "I am having trouble right now. Try asking in a different way, or ask your teacher for help.",
-    "spokenResponseHeadline": "MiloOS answered out loud.",
-    "replaySpokenResponse": "Replay spoken response",
+    "spokenResponseHeadline": "MiloOS respondió en voz alta.",
+    "replaySpokenResponse": "Reproducir respuesta hablada",
     "voiceConfidence": {
-      "high": "MiloOS understood your request clearly.",
-      "medium": "MiloOS may not have fully understood. Try rephrasing if the response does not match.",
-      "low": "MiloOS had difficulty understanding. Please try again slowly."
+      "high": "MiloOS entendió tu solicitud claramente.",
+      "medium": "MiloOS puede no haber entendido completamente. Intenta reformular si la respuesta no coincide.",
+      "low": "MiloOS tuvo dificultad para entender. Por favor intenta de nuevo más lento."
     },
     "voiceStreaming": {
-      "connecting": "Connecting to MiloOS voice...",
-      "listening": "Listening...",
-      "processing": "Thinking...",
-      "speaking": "Speaking...",
-      "error": "Voice connection was interrupted. Please try again.",
-      "retry": "Retry voice"
+      "connecting": "Conectando con la voz de MiloOS...",
+      "listening": "Escuchando...",
+      "processing": "Pensando...",
+      "speaking": "Hablando...",
+      "error": "La conexión de voz se interrumpió. Por favor intenta de nuevo.",
+      "retry": "Reintentar voz"
     },
     "voiceSettings": {
-      "title": "Voice settings",
-      "voiceProfile": "Voice style",
-      "profileWarm": "Warm mentor",
-      "profilePlayful": "Playful guide",
-      "profilePeer": "Peer coach",
-      "profileDirect": "Direct tutor",
-      "profileProfessional": "Professional",
-      "speechRate": "Speech speed",
-      "rateSlow": "Slow",
+      "title": "Configuración de voz",
+      "voiceProfile": "Estilo de voz",
+      "profileWarm": "Mentor cálido",
+      "profilePlayful": "Guía divertido",
+      "profilePeer": "Compañero coach",
+      "profileDirect": "Tutor directo",
+      "profileProfessional": "Profesional",
+      "speechRate": "Velocidad del habla",
+      "rateSlow": "Lento",
       "rateNormal": "Normal",
-      "rateFast": "Fast",
-      "autoSpeak": "Automatically speak responses",
-      "language": "Voice language"
+      "rateFast": "Rápido",
+      "autoSpeak": "Hablar respuestas automáticamente",
+      "language": "Idioma de voz"
     },
     "emotion": {
-      "confusedSupport": "It looks like this is tricky. Let me break it down differently.",
-      "boredNudge": "Let us try a different angle to make this more interesting.",
-      "curiousEncourage": "Great question! Let us explore that further.",
-      "excitedChannel": "Love the energy! Let us put that into action."
+      "confusedSupport": "Parece que esto es difícil. Déjame explicarlo de otra manera.",
+      "boredNudge": "Probemos un enfoque diferente para hacerlo más interesante.",
+      "curiousEncourage": "¡Gran pregunta! Exploremos eso más.",
+      "excitedChannel": "¡Me encanta la energía! Pongámosla en acción."
     },
     "intent": {
-      "checkpointHelp": "I can help you prepare for this checkpoint.",
-      "portfolioReview": "Let me help you review your portfolio.",
-      "capabilityInquiry": "You are currently working on this capability.",
-      "peerFeedback": "I can help you give or review peer feedback.",
-      "revisionInquiry": "Here is what needs revision."
+      "checkpointHelp": "Puedo ayudarte a prepararte para este punto de control.",
+      "portfolioReview": "Déjame ayudarte a revisar tu portafolio.",
+      "capabilityInquiry": "Actualmente estás trabajando en esta competencia.",
+      "peerFeedback": "Puedo ayudarte a dar o revisar retroalimentación de pares.",
+      "revisionInquiry": "Esto es lo que necesita revisión."
     },
     "sttConfidence": {
-      "label": "Recognition confidence",
-      "tooltip": "How clearly MiloOS understood your speech. Higher is better.",
-      "partial": "Still listening...",
-      "languageMismatch": "It sounds like you may be speaking a different language. Would you like to switch?"
+      "label": "Confianza del reconocimiento",
+      "tooltip": "Qué tan claramente MiloOS entendió tu voz. Más alto es mejor.",
+      "partial": "Aún escuchando...",
+      "languageMismatch": "Parece que estás hablando en otro idioma. ¿Te gustaría cambiar?"
     }
   },
   "bosCoaching": {
-    "sessionLoopTitle": "Session Learning Signals",
+    "sessionLoopTitle": "Señales de aprendizaje de la sesión",
     "sessionLoopSubtitle": "Latest learning signals for this session",
     "sessionLoopEmpty": "No session learning signals yet",
     "familyLearningTitle": "Family Learning Signals",
@@ -636,14 +636,14 @@
     "cognition": "Cognition",
     "engagement": "Engagement",
     "integrity": "Integrity",
-    "improvementScore": "Growth Trend",
+    "improvementScore": "Tendencia de crecimiento",
     "activeGoals": "Active Learning Goals",
-    "mvlStatus": "Understanding Check",
+    "mvlStatus": "Comprobación de comprensión",
     "mvlActive": "In Progress",
     "mvlPassed": "Passed",
     "mvlFailed": "Challenged",
     "loadingInsights": "Loading learning insights...",
     "errorLoadingInsights": "Unable to load insights; try again later",
-    "latestSignal": "Latest Update"
+    "latestSignal": "Actualización más reciente"
   }
 }
