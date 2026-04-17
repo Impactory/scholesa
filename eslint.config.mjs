@@ -26,6 +26,7 @@ export default tseslint.config(
       "**/public/precache*.js",
       "**/public/workbox-*.js",
       "**/*-generated/**",
+      "**/*.generated.ts",
     ],
   },
   {

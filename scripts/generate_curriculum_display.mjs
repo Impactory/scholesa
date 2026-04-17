@@ -55,6 +55,7 @@ function toDart(value, indent = 0) {
 function buildTsModule() {
   return `// GENERATED FILE. Do not edit directly.
 // Source: config/curriculum_display.json
+/* eslint-disable quotes */
 
 export type SupportedCurriculumDisplayLocale = ${locales.map((locale) => JSON.stringify(locale)).join(' | ')};
 export type CurriculumLegacyFamilyCode = ${legacyFamilies.map((entry) => JSON.stringify(entry.code)).join(' | ')};
