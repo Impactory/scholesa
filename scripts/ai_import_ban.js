@@ -21,6 +21,8 @@ const POLICY_FILE_ALLOWLIST = new Set([
   'services/scholesa-compliance/src/checks/vendorDomainBan.js',
   'services/scholesa-compliance/src/checks/vendorSecretBan.js',
   'services/scholesa-compliance/src/checks/runtimeEgressProof.js',
+  // Egress-guard regression test verifies the blocker rejects the banned vendor URL.
+  'functions/src/moderationGuards.test.ts',
 ]);
 
 function shouldInclude(_fullPath, relativePath) {

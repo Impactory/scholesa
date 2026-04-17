@@ -26,8 +26,11 @@ describe('AI help wording availability', () => {
     expect(popupSource).toContain("{t('aiCoach.voiceRequirements')}");
     expect(popupSource).toContain("{t('aiCoach.footerTip')}");
     expect(popupSource).toContain('useSpokenResponse');
-    expect(popupSource).toContain('MiloOS answered out loud.');
-    expect(popupSource).toContain('Replay spoken response');
+    expect(popupSource).toContain("{t('aiCoach.spokenResponseHeadline')}");
+    expect(popupSource).toContain("{t('aiCoach.replaySpokenResponse')}");
+    const enLocaleSource = readRepoFile('packages', 'i18n', 'locales', 'en.json');
+    expect(enLocaleSource).toContain('"spokenResponseHeadline": "MiloOS answered out loud."');
+    expect(enLocaleSource).toContain('"replaySpokenResponse": "Replay spoken response"');
     expect(popupSource).toContain('Open MiloOS from the learner workspace to record explain-back for this session.');
     expect(popupSource).toContain('Explain-back recorded for this MiloOS session.');
     expect(popupSource).toContain('Unable to record explain-back right now. Open the learner MiloOS screen or try again later.');

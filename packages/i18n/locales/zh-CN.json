@@ -38,7 +38,11 @@
       "submit": "登录",
       "submitting": "正在登录...",
       "invalidCredentials": "邮箱或密码无效。",
-      "switchToRegister": "还没有账户？立即注册"
+      "switchToRegister": "还没有账户？立即注册",
+      "ssoFailed": "企业登录失败。请重试或联系学校管理员。",
+      "enterpriseHeading": "或使用企业 SSO 继续",
+      "loadingEnterprise": "正在加载企业登录选项…",
+      "ssoUnavailable": "此学校暂无可用的企业登录提供方。"
     },
     "register": {
       "title": "创建账户",
@@ -60,7 +64,17 @@
       "submit": "注册",
       "submitting": "正在创建账户...",
       "fallbackError": "注册失败，请重试。",
-      "switchToLogin": "已有账户？去登录"
+      "switchToLogin": "已有账户？去登录",
+      "consent": {
+        "ageBandLabel": "此账户主要使用者的年龄",
+        "ageBandSelectPrompt": "选择年龄范围",
+        "ageBandUnder13": "13 岁以下",
+        "under13Banner": "13 岁以下儿童的账户需要家长或监护人同意。请由家长或监护人完成此注册。",
+        "parentGuardianConfirm": "我确认自己是该儿童的家长或监护人，并同意其使用本平台。",
+        "privacyPolicyLinkText": "隐私政策",
+        "termsOfServiceLinkText": "服务条款",
+        "crossBorderNotice": "您的数据可能在加拿大和美国进行处理。注册账户即表示您确认此跨境数据传输。"
+      }
     },
     "legacyLogin": {
       "title": "登录到您的账户",
@@ -273,7 +287,20 @@
         "lastActive": "最近活跃"
       },
       "trendUp": "比上个{{period}}有所提升",
-      "trendDown": "比上个{{period}}低于目标"
+      "trendDown": "比上个{{period}}低于目标",
+      "voice": {
+        "capture": "语音采集",
+        "unavailable": "暂无数据",
+        "unavailableShare": "暂无占比",
+        "reliability": "语音可靠性",
+        "avgCaptureSuccess": "平均采集成功率",
+        "escalationsThisPeriod": "本{{period}}升级次数",
+        "captureAttempts": "采集尝试次数",
+        "captureTrend": "语音采集趋势",
+        "captureTrendHelper": "所选{{period}}窗口内的近期采集成功率。",
+        "attentionTitle": "语音采集需关注",
+        "attentionBody": "应用仅清晰采集了最近尝试的 {{rate}}，本{{period}}发生 {{escalations}} 次升级。在采集改善之前请谨慎解读语音支持趋势。"
+      }
     },
     "student": {
       "headerTitle": "我的学习分析",
@@ -377,7 +404,8 @@
       "emerging": "刚刚开始",
       "developing": "持续发展中",
       "proficient": "已经会应用",
-      "mastery": "已有充分证据"
+      "mastery": "已有充分证据",
+      "unavailable": "暂无数据"
     },
     "evidenceCollected": "已收集 {{count}} 条证据",
     "goalTargetDate": "目标日期：{{date}}"
@@ -541,7 +569,9 @@
     "voiceRequirements": "请先登录、启用麦克风权限，并完成语音设置后再使用语音帮助。",
     "askAnother": "再问一个问题",
     "footerTip": "请记住：AI 帮助你思考，不替你完成任务。",
-    "errorFallback": "我现在遇到了一点问题。请换一种问法，或请老师提供帮助。"
+    "errorFallback": "我现在遇到了一点问题。请换一种问法，或请老师提供帮助。",
+    "spokenResponseHeadline": "MiloOS 已用语音回答。",
+    "replaySpokenResponse": "再次播放语音回答"
   },
   "bosCoaching": {
     "sessionLoopTitle": "课堂学习信号",

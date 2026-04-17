@@ -20,6 +20,8 @@ const POLICY_FILE_ALLOWLIST = new Set([
   'scripts/ai_policy_common.js',
   'src/lib/ai/egressGuard.ts',
   'functions/src/security/egressGuard.ts',
+  // Egress-guard regression test verifies the blocker rejects the banned vendor URL.
+  'functions/src/moderationGuards.test.ts',
 ]);
 
 function readFile(relativePath) {

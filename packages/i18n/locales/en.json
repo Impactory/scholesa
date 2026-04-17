@@ -38,7 +38,11 @@
       "submit": "Sign in",
       "submitting": "Signing in...",
       "invalidCredentials": "Invalid email or password.",
-      "switchToRegister": "Don’t have an account? Sign up"
+      "switchToRegister": "Don’t have an account? Sign up",
+      "ssoFailed": "Enterprise sign-in failed. Please try again or contact your school administrator.",
+      "enterpriseHeading": "Or continue with enterprise SSO",
+      "loadingEnterprise": "Loading enterprise sign-in options…",
+      "ssoUnavailable": "No enterprise sign-in providers are available for this site."
     },
     "register": {
       "title": "Create an account",
@@ -60,7 +64,17 @@
       "submit": "Sign up",
       "submitting": "Creating account...",
       "fallbackError": "Failed to register. Please try again.",
-      "switchToLogin": "Already have an account? Log in"
+      "switchToLogin": "Already have an account? Log in",
+      "consent": {
+        "ageBandLabel": "Age of the primary user of this account",
+        "ageBandSelectPrompt": "Select age range",
+        "ageBandUnder13": "Under 13",
+        "under13Banner": "Accounts for children under 13 require parental/guardian consent. A parent or guardian must complete this registration.",
+        "parentGuardianConfirm": "I confirm I am the parent/guardian of this child and consent to their use of this platform.",
+        "privacyPolicyLinkText": "Privacy Policy",
+        "termsOfServiceLinkText": "Terms of Service",
+        "crossBorderNotice": "Your data may be processed in Canada and the United States. By creating an account, you acknowledge this cross-border data transfer."
+      }
     },
     "legacyLogin": {
       "title": "Sign in to your account",
@@ -273,7 +287,20 @@
         "lastActive": "Last Active"
       },
       "trendUp": "Improving vs last {{period}}",
-      "trendDown": "Below target vs last {{period}}"
+      "trendDown": "Below target vs last {{period}}",
+      "voice": {
+        "capture": "Voice Capture",
+        "unavailable": "Unavailable",
+        "unavailableShare": "an unavailable share",
+        "reliability": "Voice Reliability",
+        "avgCaptureSuccess": "Average capture success",
+        "escalationsThisPeriod": "Escalations this {{period}}",
+        "captureAttempts": "Capture attempts",
+        "captureTrend": "Voice Capture Trend",
+        "captureTrendHelper": "Recent capture success across the selected {{period}} window.",
+        "attentionTitle": "Voice capture needs attention",
+        "attentionBody": "The app clearly captured only {{rate}} of recent attempts, with {{escalations}} escalations in this {{period}}. Read voice support trends carefully until capture improves."
+      }
     },
     "student": {
       "headerTitle": "My Learning Analytics",
@@ -377,7 +404,8 @@
       "emerging": "Getting Started",
       "developing": "Building",
       "proficient": "Applying",
-      "mastery": "Strong Evidence"
+      "mastery": "Strong Evidence",
+      "unavailable": "Unavailable"
     },
     "evidenceCollected": "{{count}} evidence collected",
     "goalTargetDate": "Target: {{date}}"
@@ -541,7 +569,9 @@
     "voiceRequirements": "Sign in, enable microphone access, and finish voice setup before using voice help.",
     "askAnother": "Ask another question",
     "footerTip": "Remember: AI helps you think, not do the work.",
-    "errorFallback": "I am having trouble right now. Try asking in a different way, or ask your teacher for help."
+    "errorFallback": "I am having trouble right now. Try asking in a different way, or ask your teacher for help.",
+    "spokenResponseHeadline": "MiloOS answered out loud.",
+    "replaySpokenResponse": "Replay spoken response"
   },
   "bosCoaching": {
     "sessionLoopTitle": "Session Learning Signals",

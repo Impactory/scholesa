@@ -723,7 +723,7 @@ Guidance: ${
         {response && (
           <div className="space-y-3">
             <div className="bg-purple-50 rounded-lg p-3 text-sm">
-              <p className="font-medium text-purple-900 mb-2">MiloOS answered out loud.</p>
+              <p className="font-medium text-purple-900 mb-2">{t('aiCoach.spokenResponseHeadline')}</p>
               <p className="text-app-foreground">
                 {spokenResponseStatus || 'Replay the spoken response if you need to hear it again.'}
               </p>
@@ -737,7 +737,7 @@ Guidance: ${
                   className="mt-3 inline-flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-medium text-purple-900 ring-1 ring-purple-200 transition-colors hover:bg-purple-100"
                 >
                   <Volume2Icon className="h-4 w-4" />
-                  <span>Replay spoken response</span>
+                  <span>{t('aiCoach.replaySpokenResponse')}</span>
                 </button>
               ) : null}
             </div>

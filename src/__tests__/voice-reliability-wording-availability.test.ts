@@ -19,9 +19,13 @@ describe('voice reliability wording availability', () => {
     expect(guidanceSource).toContain('Low capture lowers confidence because there are fewer clear voice examples across sites.');
     expect(guidanceSource).toContain('Green bars mean capture stayed strong, amber means read voice support trends carefully, and red means there was not enough clear voice evidence to rely on for that period.');
 
-    expect(dashboardSource).toContain('Voice capture needs attention');
-    expect(dashboardSource).toContain('The app clearly captured only');
-    expect(dashboardSource).toContain('Read voice support trends carefully until capture improves.');
+    const enLocale = JSON.parse(readRepoFile('packages', 'i18n', 'locales', 'en.json'));
+    const voiceStrings = enLocale?.analytics?.educator?.voice ?? {};
+    expect(voiceStrings.attentionTitle).toBe('Voice capture needs attention');
+    expect(voiceStrings.attentionBody).toContain('The app clearly captured only');
+    expect(voiceStrings.attentionBody).toContain('Read voice support trends carefully until capture improves.');
+    expect(dashboardSource).toContain("t('analytics.educator.voice.attentionTitle')");
+    expect(dashboardSource).toContain("t('analytics.educator.voice.attentionBody'");
 
     expect(hqDashboardSource).toContain('Low values mean the app had fewer clear voice inputs to work from.');
 

@@ -297,7 +297,7 @@ export function AnalyticsDashboard() {
         />
         <SummaryCard
           title={t('analytics.educator.summary.avgEngagement')}
-          value={avgEngagement != null ? `${Math.round(avgEngagement)}%` : 'Unavailable'}
+          value={avgEngagement != null ? `${Math.round(avgEngagement)}%` : t('analytics.educator.voice.unavailable')}
           icon={ActivityIcon}
           color="green"
           trend={avgEngagement == null ? undefined : avgEngagement > 70 ? 'up' : 'down'}
@@ -322,8 +322,8 @@ export function AnalyticsDashboard() {
           t={t}
         />
         <SummaryCard
-          title="Voice Capture"
-          value={siteVoiceMetrics.avgCaptureSuccess != null ? `${siteVoiceMetrics.avgCaptureSuccess}%` : 'Unavailable'}
+          title={t('analytics.educator.voice.capture')}
+          value={siteVoiceMetrics.avgCaptureSuccess != null ? `${siteVoiceMetrics.avgCaptureSuccess}%` : t('analytics.educator.voice.unavailable')}
           icon={ActivityIcon}
           color="purple"
           helperText={VOICE_RELIABILITY_HELPER_TEXT.siteUnavailable}
@@ -335,34 +335,34 @@ export function AnalyticsDashboard() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-          <h3 className="text-sm font-medium text-gray-700">Voice Reliability</h3>
+          <h3 className="text-sm font-medium text-gray-700">{t('analytics.educator.voice.reliability')}</h3>
           <p className="mt-1 text-xs text-gray-500">
             {VOICE_RELIABILITY_HELPER_TEXT.siteTrustBoundary}
           </p>
           <div className="mt-2 flex flex-wrap items-baseline gap-4">
             <div>
               <div className="text-2xl font-semibold text-gray-900">
-                {siteVoiceMetrics.avgCaptureSuccess != null ? `${siteVoiceMetrics.avgCaptureSuccess}%` : 'Unavailable'}
+                {siteVoiceMetrics.avgCaptureSuccess != null ? `${siteVoiceMetrics.avgCaptureSuccess}%` : t('analytics.educator.voice.unavailable')}
               </div>
-              <div className="text-xs text-gray-500">Average capture success</div>
+              <div className="text-xs text-gray-500">{t('analytics.educator.voice.avgCaptureSuccess')}</div>
             </div>
             <div>
               <div className="text-2xl font-semibold text-gray-900">{siteVoiceMetrics.escalationCount}</div>
-              <div className="text-xs text-gray-500">Escalations this {timeRange}</div>
+              <div className="text-xs text-gray-500">{t('analytics.educator.voice.escalationsThisPeriod', { period: timeRange })}</div>
             </div>
             <div>
               <div className="text-2xl font-semibold text-gray-900">{siteVoiceMetrics.captureAttempts}</div>
-              <div className="text-xs text-gray-500">Capture attempts</div>
+              <div className="text-xs text-gray-500">{t('analytics.educator.voice.captureAttempts')}</div>
             </div>
           </div>
           <VoiceReliabilityLegend />
         </div>
         <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-          <h3 className="text-sm font-medium text-gray-700">Voice Capture Trend</h3>
-          <p className="mt-1 text-xs text-gray-500">Recent capture success across the selected {timeRange} window.</p>
+          <h3 className="text-sm font-medium text-gray-700">{t('analytics.educator.voice.captureTrend')}</h3>
+          <p className="mt-1 text-xs text-gray-500">{t('analytics.educator.voice.captureTrendHelper', { period: timeRange })}</p>
           {siteVoiceMetrics.trendPoints.length === 0 || siteVoiceMetrics.trendPoints.every((point) => point.value == null) ? (
             <div className="mt-4 h-32 flex items-center justify-center text-sm text-gray-500 border border-gray-200 rounded-lg">
-              Unavailable
+              {t('analytics.educator.voice.unavailable')}
             </div>
           ) : (
             <div className="mt-4 grid grid-cols-7 gap-2 items-end h-32 rounded-lg border border-gray-200 p-3">
@@ -414,10 +414,16 @@ export function AnalyticsDashboard() {
             <AlertTriangleIcon className={`h-5 w-5 mt-0.5 mr-3 ${criticalVoiceCapture ? 'text-red-600' : 'text-amber-600'}`} />
             <div>
               <h3 className={`text-sm font-medium ${criticalVoiceCapture ? 'text-red-800' : 'text-amber-800'}`}>
-                Voice capture needs attention
+                {t('analytics.educator.voice.attentionTitle')}
               </h3>
               <p className={`mt-1 text-sm ${criticalVoiceCapture ? 'text-red-700' : 'text-amber-700'}`}>
-                The app clearly captured only {siteVoiceMetrics.avgCaptureSuccess != null ? `${siteVoiceMetrics.avgCaptureSuccess}%` : 'an unavailable share'} of recent attempts, with {siteVoiceMetrics.escalationCount} escalations in this {timeRange}. Read voice support trends carefully until capture improves.
+                {t('analytics.educator.voice.attentionBody', {
+                  rate: siteVoiceMetrics.avgCaptureSuccess != null
+                    ? `${siteVoiceMetrics.avgCaptureSuccess}%`
+                    : t('analytics.educator.voice.unavailableShare'),
+                  escalations: siteVoiceMetrics.escalationCount,
+                  period: timeRange,
+                })}
               </p>
             </div>
           </div>
@@ -500,7 +506,7 @@ export function AnalyticsDashboard() {
         </h3>
         {trendPoints.every((point) => point.value == null) ? (
           <div className="h-40 flex items-center justify-center text-sm text-gray-500 border border-gray-200 rounded-lg">
-            Unavailable
+            {t('analytics.educator.voice.unavailable')}
           </div>
         ) : (
           <div className="grid grid-cols-7 gap-2 md:gap-3 items-end h-44 rounded-lg border border-gray-200 p-3">

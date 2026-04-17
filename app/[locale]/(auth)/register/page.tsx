@@ -217,7 +217,7 @@ export default function RegisterPage() {
             {/* Age band selection */}
             <div>
               <label htmlFor="age-band" className="block text-sm font-medium leading-6 text-app-foreground">
-                Age of the primary user of this account
+                {t('auth.register.consent.ageBandLabel')}
               </label>
               <select
                 id="age-band"
@@ -233,9 +233,9 @@ export default function RegisterPage() {
                 }}
               >
                 <option value="" disabled>
-                  Select age range
+                  {t('auth.register.consent.ageBandSelectPrompt')}
                 </option>
-                <option value="under13">Under 13</option>
+                <option value="under13">{t('auth.register.consent.ageBandUnder13')}</option>
                 <option value="13-17">13-17</option>
                 <option value="18+">18+</option>
               </select>
@@ -244,7 +244,7 @@ export default function RegisterPage() {
             {/* Under-13 COPPA banner */}
             {isUnder13 && (
               <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-600 dark:bg-amber-900/30 dark:text-amber-200">
-                Accounts for children under 13 require parental/guardian consent. A parent or guardian must complete this registration.
+                {t('auth.register.consent.under13Banner')}
               </div>
             )}
 
@@ -260,7 +260,7 @@ export default function RegisterPage() {
                   className="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
                 />
                 <label htmlFor="parent-consent" className="text-sm text-app-foreground">
-                  I confirm I am the parent/guardian of this child and consent to their use of this platform.
+                  {t('auth.register.consent.parentGuardianConfirm')}
                 </label>
               </div>
             )}
@@ -278,7 +278,7 @@ export default function RegisterPage() {
               <label htmlFor="privacy-consent" className="text-sm text-app-foreground">
                 I agree to the{' '}
                 <a href={`/${locale}/privacy`} target="_blank" rel="noopener noreferrer" className="font-medium text-app-primary hover:text-app-primary-emphasis underline">
-                  Privacy Policy
+                  {t('auth.register.consent.privacyPolicyLinkText')}
                 </a>{' '}
                 and consent to the processing of personal information as described.
               </label>
@@ -297,7 +297,7 @@ export default function RegisterPage() {
               <label htmlFor="tos-consent" className="text-sm text-app-foreground">
                 I agree to the{' '}
                 <a href={`/${locale}/terms`} target="_blank" rel="noopener noreferrer" className="font-medium text-app-primary hover:text-app-primary-emphasis underline">
-                  Terms of Service
+                  {t('auth.register.consent.termsOfServiceLinkText')}
                 </a>
                 .
               </label>
@@ -305,7 +305,7 @@ export default function RegisterPage() {
 
             {/* PIPEDA cross-border disclosure */}
             <p className="text-xs text-app-muted">
-              Your data may be processed in Canada and the United States. By creating an account, you acknowledge this cross-border data transfer.
+              {t('auth.register.consent.crossBorderNotice')}
             </p>
           </div>
 

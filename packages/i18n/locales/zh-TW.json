@@ -38,7 +38,11 @@
       "submit": "登入",
       "submitting": "登入中...",
       "invalidCredentials": "電子郵件或密碼無效。",
-      "switchToRegister": "還沒有帳戶？立即註冊"
+      "switchToRegister": "還沒有帳戶？立即註冊",
+      "ssoFailed": "企業登入失敗。請重試或聯絡學校管理員。",
+      "enterpriseHeading": "或使用企業 SSO 繼續",
+      "loadingEnterprise": "正在載入企業登入選項…",
+      "ssoUnavailable": "此學校暫無可用的企業登入提供方。"
     },
     "register": {
       "title": "建立帳戶",
@@ -60,7 +64,17 @@
       "submit": "註冊",
       "submitting": "建立帳戶中...",
       "fallbackError": "註冊失敗，請稍後再試。",
-      "switchToLogin": "已經有帳戶？前往登入"
+      "switchToLogin": "已經有帳戶？前往登入",
+      "consent": {
+        "ageBandLabel": "此帳戶主要使用者的年齡",
+        "ageBandSelectPrompt": "選擇年齡範圍",
+        "ageBandUnder13": "13 歲以下",
+        "under13Banner": "13 歲以下兒童的帳戶需要家長或監護人同意。請由家長或監護人完成此註冊。",
+        "parentGuardianConfirm": "我確認自己是該兒童的家長或監護人，並同意其使用本平台。",
+        "privacyPolicyLinkText": "隱私政策",
+        "termsOfServiceLinkText": "服務條款",
+        "crossBorderNotice": "您的資料可能在加拿大與美國進行處理。註冊帳戶即表示您確認此跨境資料傳輸。"
+      }
     },
     "legacyLogin": {
       "title": "登入您的帳戶",
@@ -273,7 +287,20 @@
         "lastActive": "最近活躍"
       },
       "trendUp": "比上個{{period}}有所提升",
-      "trendDown": "比上個{{period}}低於目標"
+      "trendDown": "比上個{{period}}低於目標",
+      "voice": {
+        "capture": "語音擷取",
+        "unavailable": "暫無資料",
+        "unavailableShare": "暫無占比",
+        "reliability": "語音可靠度",
+        "avgCaptureSuccess": "平均擷取成功率",
+        "escalationsThisPeriod": "本{{period}}升級次數",
+        "captureAttempts": "擷取嘗試次數",
+        "captureTrend": "語音擷取趨勢",
+        "captureTrendHelper": "所選{{period}}區間內的近期擷取成功率。",
+        "attentionTitle": "語音擷取需關注",
+        "attentionBody": "應用僅清楚擷取最近嘗試的 {{rate}}，本{{period}}發生 {{escalations}} 次升級。在擷取改善前請謹慎解讀語音支援趨勢。"
+      }
     },
     "student": {
       "headerTitle": "我的學習分析",
@@ -377,7 +404,8 @@
       "emerging": "剛開始",
       "developing": "持續發展中",
       "proficient": "已經會應用",
-      "mastery": "已有充分證據"
+      "mastery": "已有充分證據",
+      "unavailable": "暫無資料"
     },
     "evidenceCollected": "已收集 {{count}} 項證據",
     "goalTargetDate": "目標日期：{{date}}"
@@ -541,7 +569,9 @@
     "voiceRequirements": "請先登入、啟用麥克風權限，並完成語音設定後再使用語音幫助。",
     "askAnother": "再問一個問題",
     "footerTip": "請記住：AI 幫助你思考，不替你完成任務。",
-    "errorFallback": "我現在遇到了一點問題。請換一種問法，或請老師提供幫助。"
+    "errorFallback": "我現在遇到了一點問題。請換一種問法，或請老師提供幫助。",
+    "spokenResponseHeadline": "MiloOS 已用語音回答。",
+    "replaySpokenResponse": "再次播放語音回答"
   },
   "bosCoaching": {
     "sessionLoopTitle": "課堂學習訊號",

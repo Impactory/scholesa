@@ -435,7 +435,7 @@ function SkillCard({ skill, t }: SkillCardProps) {
           </span>
         ) : (
           <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600">
-            Unavailable
+            {t('motivation.skillLevel.unavailable')}
           </span>
         )}
       </div>
