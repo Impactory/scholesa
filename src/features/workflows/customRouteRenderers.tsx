@@ -93,6 +93,9 @@ const EducatorSessionsRenderer = lazy(
 const LearnerEvidenceTimelineRenderer = lazy(
   () => import('./renderers/LearnerEvidenceTimelineRenderer')
 );
+const SiteEvidenceHealthRenderer = lazy(
+  () => import('./renderers/SiteEvidenceHealthRenderer')
+);
 
 const CUSTOM_ROUTE_RENDERERS: Partial<
   Record<WorkflowPath, ComponentType<CustomRouteRendererProps>>
@@ -129,6 +132,7 @@ const CUSTOM_ROUTE_RENDERERS: Partial<
   '/parent/passport': GuardianPassportRenderer,
   // Site
   '/site/dashboard': SiteImplementationHealthRenderer,
+  '/site/evidence-health': SiteEvidenceHealthRenderer,
 };
 
 /**

@@ -58,6 +58,7 @@ describe('Custom renderer registry covers all evidence chain routes', () => {
     '/parent/passport',
     // Site
     '/site/dashboard',
+    '/site/evidence-health',
   ];
 
   for (const route of evidenceChainRoutes) {
@@ -178,6 +179,9 @@ describe('Renderers delegate to real evidence components', () => {
     );
     expect(source).toContain('getParentDashboardBundle');
     expect(source).toContain('httpsCallable');
+    expect(source).toContain('resolveActiveSiteId');
+    expect(source).toContain('callable({ parentId: ctx.uid, siteId })');
+    expect(source).toContain('data-testid="guardian-view-site-required"');
   });
 
   it('GuardianPassportRenderer delegates to GuardianCapabilityViewRenderer', () => {
@@ -221,6 +225,14 @@ describe('Renderers delegate to real evidence components', () => {
     expect(source).toContain('capabilityGrowthEvents');
     expect(source).toContain('proofOfLearningBundles');
     expect(source).toContain('data-testid="site-implementation-site-required"');
+  });
+
+  it('SiteEvidenceHealthRenderer delegates to SiteEvidenceHealthDashboard', () => {
+    const source = readSrcFile(
+      'features', 'workflows', 'renderers', 'SiteEvidenceHealthRenderer.tsx'
+    );
+    expect(source).toContain('SiteEvidenceHealthDashboard');
+    expect(source).toContain('@/src/components/analytics/SiteEvidenceHealthDashboard');
   });
 
   it('GuardianCapabilityViewRenderer normalizes the parent bundle contract and quarantines engagement signals', () => {
@@ -332,6 +344,19 @@ describe('LearnerProofAssemblyRenderer proof bundle writes', () => {
     expect(source).toContain('partial');
     expect(source).toContain('verified');
   });
+
+  it('site-scopes proof assembly and mirrors proof fields onto portfolio items', () => {
+    expect(source).toContain('resolveActiveSiteId');
+    expect(source).toContain("where('siteId', '==', siteId)");
+    expect(source).toContain('proofHasExplainItBack');
+    expect(source).toContain('proofExplainItBackExcerpt');
+    expect(source).toContain('proofCheckpointCount');
+  });
+
+  it('falls back to portfolio proof fields when no persisted proof bundle exists', () => {
+    expect(source).toContain('portfolioProofFallback');
+    expect(source).toContain('proofBundleId ?? `portfolio-${item.id}`');
+  });
 });
 
 /* ───── LearnerPortfolioCurationRenderer evidence-linked portfolio ───── */
@@ -360,6 +385,19 @@ describe('LearnerPortfolioCurationRenderer evidence-linked portfolio', () => {
   it('creates new portfolioItems with addDoc', () => {
     expect(source).toContain('addDoc');
     expect(source).toContain('portfolioItems');
+  });
+
+  it('requires capability linkage when creating new portfolio items', () => {
+    expect(source).toContain('portfolio-item-capability-select');
+    expect(source).toContain('capabilityIds: [selectedCapability.id]');
+    expect(source).toContain('capabilityTitles: [selectedCapability.title ?? selectedCapability.name]');
+    expect(source).not.toContain('capabilityIds: [],');
+  });
+
+  it('scopes learner portfolio reads and writes to the resolved active site', () => {
+    expect(source).toContain('resolveActiveSiteId');
+    expect(source).toContain("where('siteId', '==', siteId)");
+    expect(source).toContain('data-testid="learner-portfolio-site-required"');
   });
 
   it('supports AI disclosure tracking', () => {

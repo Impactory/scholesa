@@ -94,6 +94,58 @@ describe('ProofOfLearningVerification site context', () => {
     expect(source).toContain('data-testid="proof-verification-site-required"');
     expect(source).toContain('Select an active site before reviewing proof-of-learning evidence.');
   });
+
+  it('keeps verification success messaging honest when no linked capabilities are processed', () => {
+    expect(source).toContain('capabilitiesProcessed');
+    expect(source).toContain('Verified — proof confirmed. No linked capability growth was updated.');
+  });
+
+  it('prefills educator proof review from the saved portfolio proof fields', () => {
+    expect(source).toContain('item.proofHasExplainItBack === true');
+    expect(source).toContain('item.proofExplainItBackExcerpt');
+    expect(source).toContain('item.verificationNotes');
+  });
+});
+
+/* ───── LearnerProofAssemblyRenderer site context ───── */
+
+describe('LearnerProofAssemblyRenderer site context', () => {
+  const source = readSrcFile(
+    'features',
+    'workflows',
+    'renderers',
+    'LearnerProofAssemblyRenderer.tsx'
+  );
+
+  it('resolves site context through the shared active-site helper', () => {
+    expect(source).toContain('resolveActiveSiteId');
+  });
+
+  it('shows an explicit no-site blocked state', () => {
+    expect(source).toContain('data-testid="learner-proof-assembly-site-required"');
+    expect(source).toContain('Select an active site before assembling proof-of-learning.');
+  });
+});
+
+/* ───── LearnerPortfolioCurationRenderer site context ───── */
+
+describe('LearnerPortfolioCurationRenderer site context', () => {
+  const source = readSrcFile(
+    'features',
+    'workflows',
+    'renderers',
+    'LearnerPortfolioCurationRenderer.tsx'
+  );
+
+  it('resolves site context through the shared active-site helper', () => {
+    expect(source).toContain('resolveActiveSiteId');
+    expect(source).not.toContain('const siteId = ctx.profile?.siteIds?.[0] ?? null;');
+  });
+
+  it('shows an explicit no-site blocked state', () => {
+    expect(source).toContain('data-testid="learner-portfolio-site-required"');
+    expect(source).toContain('Select an active site before curating portfolio evidence.');
+  });
 });
 
 /* ───── EducatorEvidenceReviewRenderer site context ───── */
@@ -202,6 +254,32 @@ describe('LearnerPassportExport learner contract', () => {
   it('uses learner-specific empty-state wording', () => {
     expect(source).toContain('No passport evidence is available yet.');
     expect(source).not.toContain('No linked learners found.');
+  });
+});
+
+/* ───── GuardianCapabilityViewRenderer site provenance ───── */
+
+describe('GuardianCapabilityViewRenderer site provenance', () => {
+  const source = readSrcFile(
+    'features',
+    'workflows',
+    'renderers',
+    'GuardianCapabilityViewRenderer.tsx'
+  );
+
+  it('uses shared active-site resolution', () => {
+    expect(source).toContain('resolveActiveSiteId');
+  });
+
+  it('passes the resolved site into the guardian dashboard callable', () => {
+    expect(source).toContain('getParentDashboardBundle');
+    expect(source).toContain('siteId');
+    expect(source).toContain('callable({ parentId: ctx.uid, siteId })');
+  });
+
+  it('shows an explicit no-site blocked state', () => {
+    expect(source).toContain('data-testid="guardian-view-site-required"');
+    expect(source).toContain('Select an active site before viewing your family evidence summary.');
   });
 });
 
@@ -431,6 +509,19 @@ describe('verifyProofOfLearning callable', () => {
       )
     );
     expect(section).toContain('educator');
+  });
+
+  it('syncs the linked proof bundle alongside portfolio proof fields', () => {
+    const section = functionsSource.slice(
+      functionsSource.indexOf('export const verifyProofOfLearning'),
+      functionsSource.indexOf(
+        'export const',
+        functionsSource.indexOf('export const verifyProofOfLearning') + 40
+      )
+    );
+    expect(section).toContain("collection('proofOfLearningBundles')");
+    expect(section).toContain('proofExplainItBackExcerpt');
+    expect(section).toContain('verificationPromptSource');
   });
 });
 

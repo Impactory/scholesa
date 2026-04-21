@@ -19,6 +19,7 @@ import {
 import { firestore } from '@/src/firebase/client-init';
 import { Spinner } from '@/src/components/ui/Spinner';
 import { useInteractionTracking } from '@/src/hooks/useTelemetry';
+import { resolveActiveSiteId } from '@/src/lib/auth/activeSite';
 import { useCapabilities } from '@/src/lib/capabilities/useCapabilities';
 import {
   getLegacyPillarFamilyDisplayLabel,
@@ -154,7 +155,7 @@ function levelBarWidth(level: number): string {
 
 export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRendererProps) {
   const trackInteraction = useInteractionTracking();
-  const siteId = ctx.profile?.siteIds?.[0] ?? null;
+  const siteId = resolveActiveSiteId(ctx.profile);
   const { capabilityList, resolveTitle } = useCapabilities(siteId);
 
   // Derive pillar options from live capabilities, falling back to defaults
@@ -186,10 +187,24 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
   const [newArtifactUrl, setNewArtifactUrl] = useState('');
   const [newAiDisclosure, setNewAiDisclosure] = useState<AiDisclosure>('none');
   const [newReflection, setNewReflection] = useState('');
+  const [newCapabilityId, setNewCapabilityId] = useState('');
   const [saving, setSaving] = useState(false);
+
+  const capabilitiesForSelectedPillar = capabilityList.filter(
+    (capability) =>
+      normalizeLegacyPillarCode(capability.pillarCode ?? '') === normalizeLegacyPillarCode(newPillar),
+  );
 
   // ---- Data loading ----
   const loadData = useCallback(async () => {
+    if (!siteId) {
+      setPortfolioItems([]);
+      setMasteries([]);
+      setGrowthEvents([]);
+      setLoading(false);
+      setError(null);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -198,26 +213,30 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
           query(
             collection(firestore, 'portfolioItems'),
             where('learnerId', '==', ctx.uid),
+            where('siteId', '==', siteId),
             orderBy('createdAt', 'desc')
           )
         ),
         getDocs(
           query(
             collection(firestore, 'capabilityMastery'),
-            where('learnerId', '==', ctx.uid)
+            where('learnerId', '==', ctx.uid),
+            where('siteId', '==', siteId)
           )
         ),
         getDocs(
           query(
             collection(firestore, 'capabilityGrowthEvents'),
             where('learnerId', '==', ctx.uid),
+            where('siteId', '==', siteId),
             limit(20)
           )
         ),
         getDocs(
           query(
             collection(firestore, 'proofOfLearningBundles'),
-            where('learnerId', '==', ctx.uid)
+            where('learnerId', '==', ctx.uid),
+            where('siteId', '==', siteId)
           )
         ),
       ]);
@@ -319,7 +338,7 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
     } finally {
       setLoading(false);
     }
-  }, [ctx.uid]);
+  }, [ctx.uid, siteId]);
 
   useEffect(() => {
     void loadData();
@@ -328,22 +347,41 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
   // ---- Actions ----
 
   const handleAddItem = async () => {
-    if (!newTitle.trim()) return;
+    if (!siteId) {
+      setError('Select an active site before adding portfolio evidence.');
+      return;
+    }
+    if (!newTitle.trim()) {
+      setError('Add a title before saving this portfolio item.');
+      return;
+    }
+    if (!newCapabilityId) {
+      setError('Link this portfolio item to a capability before saving it.');
+      return;
+    }
+
+    const selectedCapability = capabilityList.find((capability) => capability.id === newCapabilityId);
+    if (!selectedCapability) {
+      setError('Choose a valid capability before saving this portfolio item.');
+      return;
+    }
+
     setSaving(true);
+    setError(null);
     try {
       const portfolioDoc = await addDoc(collection(firestore, 'portfolioItems'), {
         title: newTitle.trim(),
         description: newDescription.trim(),
-        pillarCode: newPillar,
+        pillarCode: selectedCapability.pillarCode ?? newPillar,
         artifactUrl: newArtifactUrl.trim(),
         aiDisclosure: newAiDisclosure,
         verificationStatus: 'pending',
         proofOfLearning: false,
-        capabilityIds: [],
-        capabilityTitles: [],
+        capabilityIds: [selectedCapability.id],
+        capabilityTitles: [selectedCapability.title ?? selectedCapability.name],
         reflectionIds: [] as string[],
         learnerId: ctx.uid,
-        siteId: ctx.profile?.siteIds?.[0] ?? '',
+        siteId,
         source: 'learner_curation',
         createdAt: serverTimestamp(),
       });
@@ -352,7 +390,7 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
       if (newReflection.trim()) {
         const reflectionDoc = await addDoc(collection(firestore, 'learnerReflections'), {
           learnerId: ctx.uid,
-          siteId: ctx.profile?.siteIds?.[0] ?? '',
+          siteId,
           portfolioItemId: portfolioDoc.id,
           proudOf: newReflection.trim(),
           nextIWill: '',
@@ -366,15 +404,18 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
 
       trackInteraction('feature_discovered', {
         cta: 'portfolio_item_added',
-        pillar: newPillar,
+        pillar: selectedCapability.pillarCode ?? newPillar,
+        capabilityId: selectedCapability.id,
         aiDisclosure: newAiDisclosure,
         hasReflection: newReflection.trim().length > 0,
       });
       setNewTitle('');
       setNewDescription('');
+      setNewPillar((selectedCapability.pillarCode as PillarCode | undefined) ?? 'FUTURE_SKILLS');
       setNewArtifactUrl('');
       setNewAiDisclosure('none');
       setNewReflection('');
+      setNewCapabilityId('');
       setShowAddForm(false);
       await loadData();
     } catch (err) {
@@ -421,6 +462,26 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
         normalizeLegacyPillarCode(m.pillarCode) === normalizeLegacyPillarCode(pillar.value),
     ),
   }));
+
+  if (!siteId) {
+    return (
+      <section className="space-y-6" data-testid="learner-portfolio-curation">
+        <header className="rounded-xl border border-app bg-app-surface-raised p-6">
+          <h1 className="text-2xl font-bold text-app-foreground">My Portfolio</h1>
+          <p className="mt-1 text-sm text-app-muted">
+            Curate evidence of your learning journey, track capability growth, and showcase your best
+            work.
+          </p>
+        </header>
+        <div
+          className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"
+          data-testid="learner-portfolio-site-required"
+        >
+          Select an active site before curating portfolio evidence.
+        </div>
+      </section>
+    );
+  }
 
   // ---- Render ----
   return (
@@ -591,7 +652,19 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
                     <span className="text-xs font-medium text-app-muted">Legacy family *</span>
                     <select
                       value={newPillar}
-                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setNewPillar(e.target.value as PillarCode)}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                        const pillar = e.target.value as PillarCode;
+                        setNewPillar(pillar);
+                        const capabilityStillMatches = capabilityList.some(
+                          (capability) =>
+                            capability.id === newCapabilityId &&
+                            normalizeLegacyPillarCode(capability.pillarCode ?? '') ===
+                              normalizeLegacyPillarCode(pillar),
+                        );
+                        if (!capabilityStillMatches) {
+                          setNewCapabilityId('');
+                        }
+                      }}
                       className="w-full rounded-md border border-app bg-app-canvas px-3 py-2 text-sm text-app-foreground"
                       data-testid="portfolio-item-pillar-select"
                     >
@@ -602,7 +675,41 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
                       ))}
                     </select>
                   </label>
+
+                  <label className="space-y-1">
+                    <span className="text-xs font-medium text-app-muted">Capability *</span>
+                    <select
+                      value={newCapabilityId}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                        const capabilityId = e.target.value;
+                        setNewCapabilityId(capabilityId);
+                        const selectedCapability = capabilityList.find((capability) => capability.id === capabilityId);
+                        if (selectedCapability?.pillarCode) {
+                          setNewPillar(selectedCapability.pillarCode as PillarCode);
+                        }
+                      }}
+                      className="w-full rounded-md border border-app bg-app-canvas px-3 py-2 text-sm text-app-foreground"
+                      data-testid="portfolio-item-capability-select"
+                    >
+                      <option value="">Select the capability this evidence demonstrates</option>
+                      {capabilitiesForSelectedPillar.map((capability) => (
+                        <option key={capability.id} value={capability.id}>
+                          {capability.title ?? capability.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                 </div>
+
+                {capabilitiesForSelectedPillar.length === 0 && (
+                  <div
+                    className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900"
+                    data-testid="portfolio-item-capability-required"
+                  >
+                    No capabilities are configured for this legacy family yet. Choose a different family
+                    or ask your school to publish capabilities before adding this evidence.
+                  </div>
+                )}
 
                 <label className="block space-y-1">
                   <span className="text-xs font-medium text-app-muted">Description</span>
@@ -667,7 +774,7 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
 
                 <button
                   type="button"
-                  disabled={saving || !newTitle.trim()}
+                  disabled={saving || !newTitle.trim() || !newCapabilityId}
                   onClick={() => void handleAddItem()}
                   className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
                   data-testid="add-portfolio-item-submit"

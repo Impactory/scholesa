@@ -206,6 +206,7 @@ interface UserRecord {
   role?: string;
   siteIds?: string[];
   activeSiteId?: string;
+  studioId?: string;
   learnerIds?: string[];
   parentIds?: string[];
   educatorIds?: string[];
@@ -2365,7 +2366,11 @@ function formatCompactCount(value: number): string {
 
 function hasSiteAccess(profile: UserRecord, siteId: string): boolean {
   if (!siteId.trim()) return false;
-  return (profile.siteIds ?? []).includes(siteId) || profile.activeSiteId === siteId;
+  return (
+    (profile.siteIds ?? []).includes(siteId) ||
+    profile.activeSiteId === siteId ||
+    profile.studioId === siteId
+  );
 }
 
 function resolveRoleSiteId(
@@ -2382,7 +2387,7 @@ function resolveRoleSiteId(
   if (actorRole === 'hq') {
     return undefined;
   }
-  const siteId = profile.activeSiteId ?? profile.siteIds?.[0];
+  const siteId = profile.activeSiteId ?? profile.siteIds?.[0] ?? profile.studioId;
   if (!siteId) {
     throw new HttpsError('permission-denied', 'No active site context available.');
   }
@@ -2659,6 +2664,27 @@ async function buildParentLearnerSummary(params: {
       .sort((left, right) => Date.parse(String(left.createdAt ?? '1970-01-01')) - Date.parse(String(right.createdAt ?? '1970-01-01')));
   };
 
+  const firstBoolean = (...values: unknown[]): boolean | null => {
+    for (const value of values) {
+      if (typeof value === 'boolean') return value;
+    }
+    return null;
+  };
+
+  const firstNumber = (...values: unknown[]): number | null => {
+    for (const value of values) {
+      if (typeof value === 'number' && Number.isFinite(value)) return value;
+    }
+    return null;
+  };
+
+  const firstTrimmedString = (...values: unknown[]): string | null => {
+    for (const value of values) {
+      if (typeof value === 'string' && value.trim()) return value.trim();
+    }
+    return null;
+  };
+
   const evidenceDates = evidenceRows
     .map((row) => parseDateFromUnknown(row.observedAt ?? row.growthUpdatedAt ?? row.createdAt))
     .filter((value): value is Date => value instanceof Date)
@@ -2785,12 +2811,26 @@ async function buildParentLearnerSummary(params: {
         : '';
       const proofBundle = proofBundleId ? proofBundleDetails[proofBundleId] : undefined;
       const proofCheckpoints = buildProofCheckpoints(proofBundle);
-      const hasExplainItBack = proofBundleSummary?.hasExplainItBack === true;
-      const hasOralCheck = proofBundleSummary?.hasOralCheck === true;
-      const hasMiniRebuild = proofBundleSummary?.hasMiniRebuild === true;
-      const proofCheckpointCount = typeof proofBundleSummary?.checkpointCount === 'number'
-        ? proofBundleSummary.checkpointCount
-        : proofCheckpoints.length;
+      const hasExplainItBack = firstBoolean(
+        row.proofHasExplainItBack,
+        proofBundleSummary?.hasExplainItBack,
+        proofBundle?.hasExplainItBack,
+      ) ?? false;
+      const hasOralCheck = firstBoolean(
+        row.proofHasOralCheck,
+        proofBundleSummary?.hasOralCheck,
+        proofBundle?.hasOralCheck,
+      ) ?? false;
+      const hasMiniRebuild = firstBoolean(
+        row.proofHasMiniRebuild,
+        proofBundleSummary?.hasMiniRebuild,
+        proofBundle?.hasMiniRebuild,
+      ) ?? false;
+      const proofCheckpointCount = firstNumber(
+        row.proofCheckpointCount,
+        proofBundleSummary?.checkpointCount,
+        proofCheckpoints.length,
+      ) ?? 0;
       const hasLearnerAiDisclosure = proofBundleSummary?.hasLearnerAiDisclosure === true;
       const learnerAiDeclaredUsed = proofBundleSummary?.aiAssistanceUsed === true;
       const directProofOfLearningStatus = typeof row.proofOfLearningStatus === 'string'
@@ -2945,18 +2985,21 @@ async function buildParentLearnerSummary(params: {
         proofHasOralCheck: hasOralCheck,
         proofHasMiniRebuild: hasMiniRebuild,
         proofCheckpointCount,
-        proofExplainItBackExcerpt:
-          typeof proofBundle?.explainItBack === 'string' && proofBundle.explainItBack.trim()
-            ? proofBundle.explainItBack.trim()
-            : null,
-        proofOralCheckExcerpt:
-          typeof proofBundle?.oralCheckResponse === 'string' && proofBundle.oralCheckResponse.trim()
-            ? proofBundle.oralCheckResponse.trim()
-            : null,
-        proofMiniRebuildExcerpt:
-          typeof proofBundle?.miniRebuildPlan === 'string' && proofBundle.miniRebuildPlan.trim()
-            ? proofBundle.miniRebuildPlan.trim()
-            : null,
+        proofExplainItBackExcerpt: firstTrimmedString(
+          row.proofExplainItBackExcerpt,
+          proofBundle?.explainItBackExcerpt,
+          proofBundle?.explainItBack,
+        ),
+        proofOralCheckExcerpt: firstTrimmedString(
+          row.proofOralCheckExcerpt,
+          proofBundle?.oralCheckExcerpt,
+          proofBundle?.oralCheckResponse,
+        ),
+        proofMiniRebuildExcerpt: firstTrimmedString(
+          row.proofMiniRebuildExcerpt,
+          proofBundle?.miniRebuildExcerpt,
+          proofBundle?.miniRebuildPlan,
+        ),
         proofCheckpoints,
         aiHasLearnerDisclosure: hasLearnerAiDisclosure,
         aiLearnerDeclaredUsed: learnerAiDeclaredUsed,
@@ -3103,12 +3146,17 @@ async function buildParentLearnerSummary(params: {
         : '';
       const proofBundle = proofBundleId ? proofBundleDetails[proofBundleId] : undefined;
       const proofCheckpoints = buildProofCheckpoints(proofBundle);
-      const proofCheckpointCount = matchingMissionAttempts
-        .map((entry) => {
-          const summary = entry.proofBundleSummary as Record<string, unknown> | undefined;
-          return typeof summary?.checkpointCount === 'number' ? summary.checkpointCount : 0;
-        })
-        .reduce((max, value) => Math.max(max, value), 0);
+      const latestProofBundleSummary = latestMissionAttempt?.proofBundleSummary as Record<string, unknown> | undefined;
+      const proofCheckpointCount = firstNumber(
+        latestPortfolio?.proofCheckpointCount,
+        latestProofBundleSummary?.checkpointCount,
+        matchingMissionAttempts
+          .map((entry) => {
+            const summary = entry.proofBundleSummary as Record<string, unknown> | undefined;
+            return typeof summary?.checkpointCount === 'number' ? summary.checkpointCount : 0;
+          })
+          .reduce((max, value) => Math.max(max, value), 0),
+      ) ?? 0;
       const reviewerId = latestGrowth
         ? (typeof latestGrowth.educatorId === 'string' ? latestGrowth.educatorId.trim() : '')
         : typeof latestPortfolio?.educatorId === 'string' && latestPortfolio.educatorId.trim()
@@ -3175,31 +3223,54 @@ async function buildParentLearnerSummary(params: {
         missionAttemptIds: Array.from(missionAttemptIds),
         progressionDescriptors,
         checkpointMappings,
-        proofOfLearningStatus,
+        proofOfLearningStatus: firstTrimmedString(latestPortfolio?.proofOfLearningStatus, proofOfLearningStatus) ?? 'missing',
         aiDisclosureStatus,
         latestEvidenceAt: latestEvidenceAt?.toISOString() ?? null,
         verificationStatus: verifiedArtifactCount > 0 ? 'reviewed' : matchingEvidence.length > 0 ? 'captured' : null,
-        proofHasExplainItBack: hasExplainItBack,
-        proofHasOralCheck: hasOralCheck,
-        proofHasMiniRebuild: hasMiniRebuild,
+        proofHasExplainItBack: firstBoolean(
+          latestPortfolio?.proofHasExplainItBack,
+          latestProofBundleSummary?.hasExplainItBack,
+          proofBundle?.hasExplainItBack,
+          hasExplainItBack,
+        ) ?? false,
+        proofHasOralCheck: firstBoolean(
+          latestPortfolio?.proofHasOralCheck,
+          latestProofBundleSummary?.hasOralCheck,
+          proofBundle?.hasOralCheck,
+          hasOralCheck,
+        ) ?? false,
+        proofHasMiniRebuild: firstBoolean(
+          latestPortfolio?.proofHasMiniRebuild,
+          latestProofBundleSummary?.hasMiniRebuild,
+          proofBundle?.hasMiniRebuild,
+          hasMiniRebuild,
+        ) ?? false,
         proofCheckpointCount,
-        proofExplainItBackExcerpt:
-          typeof proofBundle?.explainItBack === 'string' && proofBundle.explainItBack.trim()
-            ? proofBundle.explainItBack.trim()
-            : null,
-        proofOralCheckExcerpt:
-          typeof proofBundle?.oralCheckResponse === 'string' && proofBundle.oralCheckResponse.trim()
-            ? proofBundle.oralCheckResponse.trim()
-            : null,
-        proofMiniRebuildExcerpt:
-          typeof proofBundle?.miniRebuildPlan === 'string' && proofBundle.miniRebuildPlan.trim()
-            ? proofBundle.miniRebuildPlan.trim()
-            : null,
+        proofExplainItBackExcerpt: firstTrimmedString(
+          latestPortfolio?.proofExplainItBackExcerpt,
+          proofBundle?.explainItBackExcerpt,
+          proofBundle?.explainItBack,
+        ),
+        proofOralCheckExcerpt: firstTrimmedString(
+          latestPortfolio?.proofOralCheckExcerpt,
+          proofBundle?.oralCheckExcerpt,
+          proofBundle?.oralCheckResponse,
+        ),
+        proofMiniRebuildExcerpt: firstTrimmedString(
+          latestPortfolio?.proofMiniRebuildExcerpt,
+          proofBundle?.miniRebuildExcerpt,
+          proofBundle?.miniRebuildPlan,
+        ),
         proofCheckpoints,
         aiHasLearnerDisclosure: hasLearnerAiDisclosure,
         aiLearnerDeclaredUsed: learnerAiDeclaredUsed,
         aiHelpEventCount: learnerAiEventCount,
-        aiHasExplainItBackEvidence: hasExplainItBack || hasLearnerExplainBackEvent,
+        aiHasExplainItBackEvidence:
+          (firstBoolean(
+            latestPortfolio?.proofHasExplainItBack,
+            latestProofBundleSummary?.hasExplainItBack,
+            proofBundle?.hasExplainItBack,
+          ) ?? false) || hasLearnerExplainBackEvent,
         aiHasEducatorAiFeedback: hasAiFeedbackSignal,
         aiAssistanceDetails,
         reviewingEducatorName: reviewerName,
@@ -9110,6 +9181,21 @@ export const verifyProofOfLearning = onCall(async (request: CallableRequest<{
 
   const checkpointCount = [proofChecks?.explainItBack, proofChecks?.oralCheck, proofChecks?.miniRebuild]
     .filter(Boolean).length;
+  const explainItBackExcerpt = typeof excerpts?.explainItBack === 'string' && excerpts.explainItBack.trim()
+    ? excerpts.explainItBack.trim()
+    : null;
+  const oralCheckExcerpt = typeof excerpts?.oralCheck === 'string' && excerpts.oralCheck.trim()
+    ? excerpts.oralCheck.trim()
+    : null;
+  const miniRebuildExcerpt = typeof excerpts?.miniRebuild === 'string' && excerpts.miniRebuild.trim()
+    ? excerpts.miniRebuild.trim()
+    : null;
+  const normalizedEducatorNotes = typeof educatorNotes === 'string' && educatorNotes.trim()
+    ? educatorNotes.trim()
+    : null;
+  const normalizedResubmissionReason = typeof resubmissionReason === 'string' && resubmissionReason.trim()
+    ? resubmissionReason.trim()
+    : null;
 
   const batch = db.batch();
 
@@ -9121,17 +9207,38 @@ export const verifyProofOfLearning = onCall(async (request: CallableRequest<{
     proofHasOralCheck: proofChecks?.oralCheck ?? false,
     proofHasMiniRebuild: proofChecks?.miniRebuild ?? false,
     proofCheckpointCount: checkpointCount,
+    proofExplainItBackExcerpt: explainItBackExcerpt,
+    proofOralCheckExcerpt: oralCheckExcerpt,
+    proofMiniRebuildExcerpt: miniRebuildExcerpt,
+    verificationNotes: normalizedEducatorNotes,
+    verificationPrompt: normalizedResubmissionReason,
+    verificationPromptSource: normalizedResubmissionReason ? 'educator_review' : null,
     updatedAt: FieldValue.serverTimestamp(),
   };
-  if (excerpts?.explainItBack) portfolioUpdate.proofExplainItBackExcerpt = excerpts.explainItBack;
-  if (excerpts?.oralCheck) portfolioUpdate.proofOralCheckExcerpt = excerpts.oralCheck;
-  if (excerpts?.miniRebuild) portfolioUpdate.proofMiniRebuildExcerpt = excerpts.miniRebuild;
-  if (educatorNotes) portfolioUpdate.verificationNotes = educatorNotes;
-  if (resubmissionReason) {
-    portfolioUpdate.verificationPrompt = resubmissionReason;
-    portfolioUpdate.verificationPromptSource = 'educator_review';
-  }
   batch.update(portfolioRef, portfolioUpdate);
+
+  const proofBundleId = typeof portfolioData.proofBundleId === 'string' ? portfolioData.proofBundleId.trim() : '';
+  if (proofBundleId) {
+    const proofBundleRef = db.collection('proofOfLearningBundles').doc(proofBundleId);
+    const proofBundleSnap = await proofBundleRef.get();
+    const proofBundleData = proofBundleSnap.data() ?? {};
+    batch.set(proofBundleRef, {
+      learnerId,
+      portfolioItemId,
+      siteId,
+      hasExplainItBack: proofChecks?.explainItBack ?? false,
+      hasOralCheck: proofChecks?.oralCheck ?? false,
+      hasMiniRebuild: proofChecks?.miniRebuild ?? false,
+      explainItBackExcerpt,
+      oralCheckExcerpt,
+      miniRebuildExcerpt,
+      verificationStatus: proofOfLearningStatus === 'not-available' ? 'missing' : proofOfLearningStatus,
+      educatorVerifierId: verificationStatus === 'verified' ? educatorId : null,
+      version: typeof proofBundleData.version === 'number' ? proofBundleData.version + 1 : 1,
+      createdAt: proofBundleData.createdAt ?? FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+  }
 
   const growthEventIds: string[] = [];
   const capabilityIds: string[] = Array.isArray(portfolioData.capabilityIds) ? portfolioData.capabilityIds : [];

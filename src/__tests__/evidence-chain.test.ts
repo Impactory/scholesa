@@ -62,7 +62,17 @@ describe('Evidence chain schema contracts', () => {
     )?.[0] ?? '';
     expect(piBlock).toContain('verificationStatus');
     expect(piBlock).toContain('proofOfLearningStatus');
+    expect(piBlock).toContain('proofHasExplainItBack');
+    expect(piBlock).toContain('proofExplainItBackExcerpt');
     expect(piBlock).toContain('capabilityTitles');
+  });
+
+  it('ProofOfLearningBundle carries site provenance and pending review state', () => {
+    const pbBlock = schemaSource.match(
+      /export interface ProofOfLearningBundle \{[\s\S]*?\n\}/
+    )?.[0] ?? '';
+    expect(pbBlock).toContain('siteId');
+    expect(pbBlock).toContain("'pending_review'");
   });
 
   it('EvidenceRecord links to capability and educator', () => {
@@ -168,8 +178,10 @@ describe('Evidence chain route pages exist', () => {
 
   const pages = [
     'hq/capabilities/page.tsx',
+    'educator/today/page.tsx',
     'educator/verification/page.tsx',
     'parent/passport/page.tsx',
+    'site/evidence-health/page.tsx',
   ];
 
   for (const pagePath of pages) {
@@ -185,6 +197,22 @@ describe('Evidence chain route pages exist', () => {
     expect(source).toContain('WorkflowRoutePage');
     expect(source).toContain("routePath='/parent/passport'");
     expect(source).not.toContain('LearnerPassportExport');
+  });
+
+  it('educator/today/page.tsx routes through WorkflowRoutePage instead of the legacy dashboard', () => {
+    const fullPath = path.join(appDir, 'educator', 'today', 'page.tsx');
+    const source = fs.readFileSync(fullPath, 'utf8');
+    expect(source).toContain('WorkflowRoutePage');
+    expect(source).toContain("routePath='/educator/today'");
+    expect(source).not.toContain('EducatorDashboardToday');
+  });
+
+  it('site/evidence-health/page.tsx routes through WorkflowRoutePage', () => {
+    const fullPath = path.join(appDir, 'site', 'evidence-health', 'page.tsx');
+    const source = fs.readFileSync(fullPath, 'utf8');
+    expect(source).toContain('WorkflowRoutePage');
+    expect(source).toContain("routePath='/site/evidence-health'");
+    expect(source).not.toContain('SiteEvidenceHealthDashboard');
   });
 });
 
@@ -266,6 +294,8 @@ describe('Functions backend evidence chain callables', () => {
     expect(functionsSource).toContain('portfolioItemsPreview');
     expect(functionsSource).toContain('evidenceSummary');
     expect(functionsSource).toContain('capabilitySnapshot');
+    expect(functionsSource).toContain('row.proofExplainItBackExcerpt');
+    expect(functionsSource).toContain('proofBundle?.explainItBackExcerpt');
   });
 
   it('applyRubricToEvidence sets verificationStatus', () => {

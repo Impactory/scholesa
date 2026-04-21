@@ -35,6 +35,10 @@ const STATUS_COLORS: Record<string, string> = {
   'needs-resubmission': 'bg-red-100 text-red-800',
 };
 
+interface VerifyProofOfLearningResult {
+  capabilitiesProcessed?: number;
+}
+
 /* ───── Main Component ───── */
 
 export function ProofOfLearningVerification() {
@@ -203,7 +207,7 @@ export function ProofOfLearningVerification() {
                     setSaving(true);
                     try {
                       const verifyPoL = httpsCallable(functions, 'verifyProofOfLearning');
-                      await verifyPoL({
+                      const result = await verifyPoL({
                         portfolioItemId: selectedItem.id,
                         verificationStatus: verdictData.verificationStatus,
                         proofOfLearningStatus: verdictData.proofOfLearningStatus,
@@ -220,9 +224,16 @@ export function ProofOfLearningVerification() {
                         educatorNotes: verdictData.verificationNotes,
                         resubmissionReason: verdictData.verificationPrompt,
                       });
+                      const capabilitiesProcessed =
+                        typeof (result.data as VerifyProofOfLearningResult | undefined)
+                          ?.capabilitiesProcessed === 'number'
+                          ? (result.data as VerifyProofOfLearningResult).capabilitiesProcessed ?? 0
+                          : 0;
                       setSuccessMessage(
                         verdictData.verificationStatus === 'verified'
-                          ? 'Verified — capability growth updated.'
+                          ? capabilitiesProcessed > 0
+                            ? 'Verified — capability growth updated.'
+                            : 'Verified — proof confirmed. No linked capability growth was updated.'
                           : 'Verification updated.'
                       );
                       setTimeout(() => setSuccessMessage(null), 3000);
@@ -277,11 +288,43 @@ function VerificationPanel({
 
   // Reset form when item changes
   useEffect(() => {
-    setChecks({ explainItBack: false, oralCheck: false, miniRebuild: false });
-    setExcerpts({ explainItBack: '', oralCheck: '', miniRebuild: '' });
-    setEducatorNotes('');
-    setResubmissionReason('');
-  }, [item.id]);
+    const explainItBackChecked =
+      item.proofHasExplainItBack === true
+      || (typeof item.proofExplainItBackExcerpt === 'string' && item.proofExplainItBackExcerpt.trim().length > 0);
+    const oralCheckChecked =
+      item.proofHasOralCheck === true
+      || (typeof item.proofOralCheckExcerpt === 'string' && item.proofOralCheckExcerpt.trim().length > 0);
+    const miniRebuildChecked =
+      item.proofHasMiniRebuild === true
+      || (typeof item.proofMiniRebuildExcerpt === 'string' && item.proofMiniRebuildExcerpt.trim().length > 0);
+    setChecks({
+      explainItBack: explainItBackChecked,
+      oralCheck: oralCheckChecked,
+      miniRebuild: miniRebuildChecked,
+    });
+    setExcerpts({
+      explainItBack: typeof item.proofExplainItBackExcerpt === 'string' ? item.proofExplainItBackExcerpt : '',
+      oralCheck: typeof item.proofOralCheckExcerpt === 'string' ? item.proofOralCheckExcerpt : '',
+      miniRebuild: typeof item.proofMiniRebuildExcerpt === 'string' ? item.proofMiniRebuildExcerpt : '',
+    });
+    setEducatorNotes(typeof item.verificationNotes === 'string' ? item.verificationNotes : '');
+    setResubmissionReason(
+      item.verificationStatus === 'pending' && typeof item.verificationPrompt === 'string'
+        ? item.verificationPrompt
+        : ''
+    );
+  }, [
+    item.id,
+    item.proofHasExplainItBack,
+    item.proofHasOralCheck,
+    item.proofHasMiniRebuild,
+    item.proofExplainItBackExcerpt,
+    item.proofOralCheckExcerpt,
+    item.proofMiniRebuildExcerpt,
+    item.verificationNotes,
+    item.verificationPrompt,
+    item.verificationStatus,
+  ]);
 
   const checkedCount = Object.values(checks).filter(Boolean).length;
   const canVerify = checkedCount >= 2; // At least 2 of 3 proof checks
@@ -421,6 +464,9 @@ function VerificationPanel({
             proofHasExplainItBack: checks.explainItBack,
             proofHasOralCheck: checks.oralCheck,
             proofHasMiniRebuild: checks.miniRebuild,
+            ...(excerpts.explainItBack ? { proofExplainItBackExcerpt: excerpts.explainItBack } : {}),
+            ...(excerpts.oralCheck ? { proofOralCheckExcerpt: excerpts.oralCheck } : {}),
+            ...(excerpts.miniRebuild ? { proofMiniRebuildExcerpt: excerpts.miniRebuild } : {}),
             ...(educatorNotes ? { verificationNotes: educatorNotes } : {}),
             proofCheckpointCount: checkedCount,
           })}
@@ -445,9 +491,17 @@ function VerificationPanel({
               if (!resubmissionReason.trim()) return;
               onVerify({
                 verificationStatus: 'pending',
-                proofOfLearningStatus: 'missing',
+                proofOfLearningStatus: checkedCount > 0 ? 'partial' : 'missing',
+                proofHasExplainItBack: checks.explainItBack,
+                proofHasOralCheck: checks.oralCheck,
+                proofHasMiniRebuild: checks.miniRebuild,
+                ...(excerpts.explainItBack ? { proofExplainItBackExcerpt: excerpts.explainItBack } : {}),
+                ...(excerpts.oralCheck ? { proofOralCheckExcerpt: excerpts.oralCheck } : {}),
+                ...(excerpts.miniRebuild ? { proofMiniRebuildExcerpt: excerpts.miniRebuild } : {}),
+                ...(educatorNotes ? { verificationNotes: educatorNotes } : {}),
                 verificationPrompt: resubmissionReason.trim(),
                 verificationPromptSource: 'educator_review',
+                proofCheckpointCount: checkedCount,
               });
             }}
             disabled={saving || !resubmissionReason.trim()}

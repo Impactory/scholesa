@@ -1,5 +1,5 @@
-import { SiteEvidenceHealthDashboard } from '@/src/components/analytics/SiteEvidenceHealthDashboard';
+import { WorkflowRoutePage } from '@/src/features/workflows/WorkflowRoutePage';
 
-export default function SiteEvidenceHealthPage() {
-  return <SiteEvidenceHealthDashboard />;
+export default function WorkflowPage() {
+  return <WorkflowRoutePage routePath='/site/evidence-health' />;
 }

@@ -25,7 +25,7 @@ import {
   proofOfLearningBundlesCollection,
 } from '@/src/firebase/firestore/collections';
 import type { CustomRouteRendererProps } from '../customRouteRenderers';
-import type { ProofOfLearningBundle } from '@/src/types/schema';
+import type { PortfolioItem, ProofOfLearningBundle } from '@/src/types/schema';
 import {
   ShieldCheckIcon,
   FileTextIcon,
@@ -37,12 +37,21 @@ import {
   AlertCircleIcon,
   ClockIcon,
 } from 'lucide-react';
+import { resolveActiveSiteId } from '@/src/lib/auth/activeSite';
 
 interface PortfolioItemSummary {
   id: string;
   title: string;
   type: string;
   createdAt: Timestamp | null;
+  proofBundleId?: string;
+  proofOfLearningStatus?: 'not-available' | 'missing' | 'partial' | 'verified';
+  proofHasExplainItBack?: boolean;
+  proofHasOralCheck?: boolean;
+  proofHasMiniRebuild?: boolean;
+  proofExplainItBackExcerpt?: string;
+  proofOralCheckExcerpt?: string;
+  proofMiniRebuildExcerpt?: string;
 }
 
 interface ProofBundle {
@@ -102,8 +111,52 @@ function computeVerificationStatus(
   return 'missing';
 }
 
+function portfolioProofFallback(
+  item: PortfolioItemSummary | undefined
+): ProofBundle | null {
+  if (!item) return null;
+  const hasExplainItBack = item.proofHasExplainItBack === true;
+  const hasOralCheck = item.proofHasOralCheck === true;
+  const hasMiniRebuild = item.proofHasMiniRebuild === true;
+  const explainItBackExcerpt = item.proofExplainItBackExcerpt?.trim() || undefined;
+  const oralCheckExcerpt = item.proofOralCheckExcerpt?.trim() || undefined;
+  const miniRebuildExcerpt = item.proofMiniRebuildExcerpt?.trim() || undefined;
+  const proofOfLearningStatus = item.proofOfLearningStatus;
+
+  if (
+    !proofOfLearningStatus &&
+    !hasExplainItBack &&
+    !hasOralCheck &&
+    !hasMiniRebuild &&
+    !explainItBackExcerpt &&
+    !oralCheckExcerpt &&
+    !miniRebuildExcerpt
+  ) {
+    return null;
+  }
+
+  return {
+    id: item.proofBundleId ?? `portfolio-${item.id}`,
+    portfolioItemId: item.id,
+    hasExplainItBack,
+    hasOralCheck,
+    hasMiniRebuild,
+    explainItBackExcerpt,
+    oralCheckExcerpt,
+    miniRebuildExcerpt,
+    verificationStatus:
+      proofOfLearningStatus === 'verified'
+        ? 'verified'
+        : proofOfLearningStatus === 'partial'
+          ? 'partial'
+          : 'missing',
+    version: 1,
+  };
+}
+
 export default function LearnerProofAssemblyRenderer({ ctx }: CustomRouteRendererProps) {
   const learnerId = ctx.uid;
+  const siteId = resolveActiveSiteId(ctx.profile);
   const [portfolioItems, setPortfolioItems] = useState<PortfolioItemSummary[]>([]);
   const [bundles, setBundles] = useState<Map<string, ProofBundle>>(new Map());
   const [loading, setLoading] = useState(true);
@@ -117,22 +170,42 @@ export default function LearnerProofAssemblyRenderer({ ctx }: CustomRouteRendere
   const [draftMiniRebuild, setDraftMiniRebuild] = useState('');
 
   const loadData = useCallback(async () => {
-    if (!learnerId) return;
+    if (!learnerId || !siteId) {
+      setPortfolioItems([]);
+      setBundles(new Map());
+      setLoading(false);
+      setError(null);
+      return;
+    }
     setLoading(true);
+    setError(null);
     try {
       // Load portfolio items
-      const piQuery = query(portfolioItemsCollection, where('learnerId', '==', learnerId));
+      const piQuery = query(
+        portfolioItemsCollection,
+        where('learnerId', '==', learnerId),
+        where('siteId', '==', siteId)
+      );
       const piSnap = await getDocs(piQuery);
       const items: PortfolioItemSummary[] = piSnap.docs.map((d) => {
-        const data = d.data();
+        const data = d.data() as Partial<PortfolioItem> & { type?: string };
         return {
           id: d.id,
-          title: (data as unknown as Record<string, unknown>).title as string || 'Untitled',
-          type: (data as unknown as Record<string, unknown>).type as string || 'artifact',
-          createdAt: (data as unknown as Record<string, unknown>).createdAt as Timestamp | null,
+          title: data.title || 'Untitled',
+          type: data.type || 'artifact',
+          createdAt: (data.createdAt as Timestamp | null | undefined) ?? null,
+          proofBundleId: data.proofBundleId,
+          proofOfLearningStatus: data.proofOfLearningStatus,
+          proofHasExplainItBack: data.proofHasExplainItBack === true,
+          proofHasOralCheck: data.proofHasOralCheck === true,
+          proofHasMiniRebuild: data.proofHasMiniRebuild === true,
+          proofExplainItBackExcerpt: data.proofExplainItBackExcerpt,
+          proofOralCheckExcerpt: data.proofOralCheckExcerpt,
+          proofMiniRebuildExcerpt: data.proofMiniRebuildExcerpt,
         };
       });
       setPortfolioItems(items);
+      const sitePortfolioItemIds = new Set(items.map((item) => item.id));
 
       // Load proof bundles for this learner
       const pbQuery = query(
@@ -143,6 +216,12 @@ export default function LearnerProofAssemblyRenderer({ ctx }: CustomRouteRendere
       const bundleMap = new Map<string, ProofBundle>();
       pbSnap.docs.forEach((d) => {
         const data = d.data() as ProofOfLearningBundle;
+        if (!sitePortfolioItemIds.has(data.portfolioItemId)) {
+          return;
+        }
+        if (typeof data.siteId === 'string' && data.siteId.trim() && data.siteId.trim() !== siteId) {
+          return;
+        }
         bundleMap.set(data.portfolioItemId, {
           id: d.id,
           portfolioItemId: data.portfolioItemId,
@@ -165,10 +244,10 @@ export default function LearnerProofAssemblyRenderer({ ctx }: CustomRouteRendere
     } finally {
       setLoading(false);
     }
-  }, [learnerId]);
+  }, [learnerId, siteId]);
 
   useEffect(() => {
-    loadData();
+    void loadData();
   }, [loadData]);
 
   const handleExpand = (itemId: string) => {
@@ -177,20 +256,34 @@ export default function LearnerProofAssemblyRenderer({ ctx }: CustomRouteRendere
       return;
     }
     setExpandedItem(itemId);
-    const existing = bundles.get(itemId);
+    const existing = bundles.get(itemId) ?? portfolioProofFallback(
+      portfolioItems.find((item) => item.id === itemId),
+    );
     setDraftExplainItBack(existing?.explainItBackExcerpt || '');
     setDraftOralCheck(existing?.oralCheckExcerpt || '');
     setDraftMiniRebuild(existing?.miniRebuildExcerpt || '');
   };
 
   const handleSaveProof = async (portfolioItemId: string) => {
-    if (!learnerId) return;
+    if (!learnerId || !siteId) return;
     setSaving(true);
     try {
       const hasEIB = draftExplainItBack.trim().length > 0;
       const hasOC = draftOralCheck.trim().length > 0;
       const hasMR = draftMiniRebuild.trim().length > 0;
       const verificationStatus = computeVerificationStatus(hasEIB, hasOC, hasMR);
+      const proofCheckpointCount = [hasEIB, hasOC, hasMR].filter(Boolean).length;
+      const proofMirrorFields = {
+        proofOfLearningStatus: verificationStatus,
+        proofHasExplainItBack: hasEIB,
+        proofHasOralCheck: hasOC,
+        proofHasMiniRebuild: hasMR,
+        proofCheckpointCount,
+        proofExplainItBackExcerpt: draftExplainItBack.trim() || null,
+        proofOralCheckExcerpt: draftOralCheck.trim() || null,
+        proofMiniRebuildExcerpt: draftMiniRebuild.trim() || null,
+        updatedAt: serverTimestamp(),
+      };
 
       const existing = bundles.get(portfolioItemId);
       if (existing) {
@@ -204,13 +297,14 @@ export default function LearnerProofAssemblyRenderer({ ctx }: CustomRouteRendere
           oralCheckExcerpt: draftOralCheck.trim() || null,
           miniRebuildExcerpt: draftMiniRebuild.trim() || null,
           verificationStatus,
+          siteId,
           version: existing.version + 1,
           updatedAt: serverTimestamp(),
         });
         // Back-link: update portfolio item with proof bundle ID and status
         await updateDoc(doc(db, 'portfolioItems', portfolioItemId), {
           proofBundleId: existing.id,
-          proofOfLearningStatus: verificationStatus,
+          ...proofMirrorFields,
         });
         setBundles((prev) => {
           const next = new Map(prev);
@@ -232,6 +326,7 @@ export default function LearnerProofAssemblyRenderer({ ctx }: CustomRouteRendere
         const docRef = await addDoc(proofOfLearningBundlesCollection, {
           learnerId,
           portfolioItemId,
+          siteId,
           hasExplainItBack: hasEIB,
           hasOralCheck: hasOC,
           hasMiniRebuild: hasMR,
@@ -246,7 +341,7 @@ export default function LearnerProofAssemblyRenderer({ ctx }: CustomRouteRendere
         // Back-link: update portfolio item with proof bundle ID and status
         await updateDoc(doc(db, 'portfolioItems', portfolioItemId), {
           proofBundleId: docRef.id,
-          proofOfLearningStatus: verificationStatus,
+          ...proofMirrorFields,
         });
         setBundles((prev) => {
           const next = new Map(prev);
@@ -279,11 +374,25 @@ export default function LearnerProofAssemblyRenderer({ ctx }: CustomRouteRendere
     );
   }
 
+  if (!siteId) {
+    return (
+      <div
+        data-testid="learner-proof-assembly-site-required"
+        className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"
+      >
+        Select an active site before assembling proof-of-learning.
+      </div>
+    );
+  }
+
+  const proofStates = portfolioItems
+    .map((item) => bundles.get(item.id) ?? portfolioProofFallback(item))
+    .filter((bundle): bundle is ProofBundle => bundle !== null);
   const totalItems = portfolioItems.length;
-  const verified = Array.from(bundles.values()).filter(
+  const verified = proofStates.filter(
     (b) => b.verificationStatus === 'verified'
   ).length;
-  const partial = Array.from(bundles.values()).filter(
+  const partial = proofStates.filter(
     (b) => b.verificationStatus === 'partial'
   ).length;
 
@@ -325,7 +434,7 @@ export default function LearnerProofAssemblyRenderer({ ctx }: CustomRouteRendere
       ) : (
         <div className="space-y-3">
           {portfolioItems.map((item) => {
-            const bundle = bundles.get(item.id);
+            const bundle = bundles.get(item.id) ?? portfolioProofFallback(item);
             const isExpanded = expandedItem === item.id;
             return (
               <div

@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '@/src/firebase/client-init';
 import { Spinner } from '@/src/components/ui/Spinner';
+import { resolveActiveSiteId } from '@/src/lib/auth/activeSite';
 import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import type { CustomRouteRendererProps } from '../customRouteRenderers';
 
@@ -448,6 +449,7 @@ function PillarProgressBar({ pillar }: { key?: React.Key; pillar: PillarProgress
 
 export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRendererProps) {
   const trackInteraction = useInteractionTracking();
+  const siteId = resolveActiveSiteId(ctx.profile);
   const [learners, setLearners] = useState<LearnerSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -467,14 +469,20 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
   const focusRef = useRef<HTMLDivElement | null>(null);
 
   const fetchData = useCallback(async () => {
+    if (!siteId) {
+      setLearners([]);
+      setError(null);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
-      const callable = httpsCallable<{ parentId: string }, ParentDashboardBundle>(
+      const callable = httpsCallable<{ parentId: string; siteId?: string }, ParentDashboardBundle>(
         functions,
         'getParentDashboardBundle'
       );
-      const result = await callable({ parentId: ctx.uid });
+      const result = await callable({ parentId: ctx.uid, siteId });
       const bundle = result.data;
 
       setLearners((bundle.learners ?? []).map(normalizeLearnerSummary));
@@ -484,7 +492,7 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
     } finally {
       setLoading(false);
     }
-  }, [ctx, trackInteraction]);
+  }, [ctx.uid, siteId, trackInteraction]);
 
   useEffect(() => {
     void fetchData();
@@ -526,6 +534,20 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
         >
           Try again
         </button>
+      </section>
+    );
+  }
+
+  if (!siteId) {
+    return (
+      <section
+        className="rounded-xl border border-amber-200 bg-amber-50 p-8 text-center"
+        data-testid="guardian-view-site-required"
+      >
+        <h2 className="text-lg font-semibold text-amber-900">Active site required</h2>
+        <p className="mt-2 text-sm text-amber-700">
+          Select an active site before viewing your family evidence summary.
+        </p>
       </section>
     );
   }

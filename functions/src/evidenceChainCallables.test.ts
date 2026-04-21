@@ -256,6 +256,21 @@ describe('buildParentLearnerSummary integration', () => {
     const indexModule = await import('./index');
     expect(indexModule.getParentDashboardBundle).toBeDefined();
   });
+
+  it('resolveRoleSiteId and hasSiteAccess support legacy studioId fallback', async () => {
+    const fs = await import('fs');
+    const path = await import('path');
+    const source = fs.readFileSync(
+      path.join(__dirname, 'index.ts'),
+      'utf-8'
+    );
+
+    const helperStart = source.indexOf('function hasSiteAccess');
+    const helperEnd = source.indexOf('async function fetchUsersByIds', helperStart);
+    const helperSection = source.slice(helperStart, helperEnd);
+    expect(helperSection).toContain('profile.studioId === siteId');
+    expect(helperSection).toContain('profile.activeSiteId ?? profile.siteIds?.[0] ?? profile.studioId');
+  });
 });
 
 describe('verifyProofOfLearning evidence chain writes', () => {
@@ -279,6 +294,8 @@ describe('verifyProofOfLearning evidence chain writes', () => {
     expect(proofFn).toContain("collection('capabilityMastery')");
     expect(proofFn).toContain("collection('capabilityGrowthEvents')");
     expect(proofFn).toContain("collection('portfolioItems')");
+    expect(proofFn).toContain("collection('proofOfLearningBundles')");
+    expect(proofFn).toContain('proofExplainItBackExcerpt');
   });
 });
 

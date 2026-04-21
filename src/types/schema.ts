@@ -269,6 +269,13 @@ export interface PortfolioItem {
   rubricApplicationId?: string;
   proofBundleId?: string;
   proofOfLearningStatus?: 'not-available' | 'missing' | 'partial' | 'verified';
+  proofHasExplainItBack?: boolean;
+  proofHasOralCheck?: boolean;
+  proofHasMiniRebuild?: boolean;
+  proofCheckpointCount?: number;
+  proofExplainItBackExcerpt?: string;
+  proofOralCheckExcerpt?: string;
+  proofMiniRebuildExcerpt?: string;
   aiAssistanceUsed?: boolean;
   aiAssistanceDetails?: string;
   aiDisclosureStatus?:
@@ -280,6 +287,7 @@ export interface PortfolioItem {
       | 'not-available';
   educatorId?: string;
   verificationPrompt?: string;
+  verificationNotes?: string;
   verificationStatus?: 'pending' | 'reviewed' | 'verified';
   source?: string;
   createdAt: Timestamp;
@@ -923,6 +931,7 @@ export interface ProofOfLearningBundle {
   id: string;
   learnerId: string;
   portfolioItemId: string;
+  siteId?: string;
   capabilityId?: string;
 
   // Three verification methods
@@ -936,7 +945,7 @@ export interface ProofOfLearningBundle {
   miniRebuildExcerpt?: string;
 
   // Verification status (derived from methods present)
-  verificationStatus: 'missing' | 'partial' | 'verified';
+  verificationStatus: 'missing' | 'partial' | 'pending_review' | 'verified';
   educatorVerifierId?: string;
 
   version: number;
