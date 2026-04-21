@@ -178,6 +178,24 @@ describe('Collection naming consistency', () => {
     expect(rubricFn).toContain('currentLevel:');
   });
 
+  it('applyRubricToEvidence refuses growth writes until proof-of-learning is verified', async () => {
+    const fs = await import('fs');
+    const path = await import('path');
+    const source = fs.readFileSync(
+      path.join(__dirname, 'index.ts'),
+      'utf-8'
+    );
+
+    const rubricStart = source.indexOf('export const applyRubricToEvidence');
+    const rubricEnd = source.indexOf('export const', rubricStart + 1);
+    const rubricFn = source.slice(rubricStart, rubricEnd);
+
+    expect(rubricFn).toContain("'failed-precondition'");
+    expect(rubricFn).toContain('Verify proof-of-learning before applying a rubric that updates capability growth.');
+    expect(rubricFn).toContain('proofOfLearningStatus');
+    expect(rubricFn).toContain("collection('portfolioItems')");
+  });
+
   it('processCheckpointMasteryUpdate writes latestLevel alongside currentLevel', async () => {
     const fs = await import('fs');
     const path = await import('path');
@@ -212,6 +230,25 @@ describe('Collection naming consistency', () => {
     expect(checkpointFn).not.toContain('siteCapabilities.docs;');
     expect(checkpointFn).toContain('targetCapDocs.length === 0');
     expect(checkpointFn).toContain('No capability mapping found');
+  });
+
+  it('processCheckpointMasteryUpdate requires verified proof on linked checkpoint artifacts', async () => {
+    const fs = await import('fs');
+    const path = await import('path');
+    const source = fs.readFileSync(
+      path.join(__dirname, 'index.ts'),
+      'utf-8'
+    );
+
+    const checkpointStart = source.indexOf('export const processCheckpointMasteryUpdate');
+    const checkpointEnd = source.indexOf('export const', checkpointStart + 1);
+    const checkpointFn = source.slice(checkpointStart, checkpointEnd);
+
+    expect(checkpointFn).toContain('portfolioItemId');
+    expect(checkpointFn).toContain("collection('portfolioItems')");
+    expect(checkpointFn).toContain('proofOfLearningStatus');
+    expect(checkpointFn).toContain('Verify proof-of-learning for the linked checkpoint artifact before updating capability growth.');
+    expect(checkpointFn).toContain('Checkpoint growth is recorded from proof verification on the linked portfolio artifact.');
   });
 
   it('evaluateBadgeEligibility reads both currentLevel and latestLevel', async () => {

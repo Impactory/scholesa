@@ -95,7 +95,6 @@ interface RubricFormState {
   /** Used when no structured rubric is available (fallback mode) */
   level: SimpleLevelName;
   feedback: string;
-  proofVerified: boolean;
   /** Per-criterion scores when a structured rubric is loaded */
   criterionScores: Record<string, CriterionScore>;
 }
@@ -156,7 +155,6 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
   const [rubricForm, setRubricForm] = useState<RubricFormState>({
     level: 'Proficient',
     feedback: '',
-    proofVerified: false,
     criterionScores: {},
   });
 
@@ -181,6 +179,8 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
     explainItBack: string | null;
     aiAssistanceUsed: boolean;
     aiAssistanceDetails: string | null;
+    portfolioItemId: string | null;
+    proofOfLearningStatus: string | null;
     status: string;
     createdAt: string | null;
   }
@@ -223,9 +223,9 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
     }
     setLoading(true);
     setError(null);
-    try {
-      const snap = await getDocs(
-        query(
+      try {
+        const snap = await getDocs(
+          query(
           collection(firestore, 'missionAttempts'),
           where('siteId', '==', educatorSiteId),
           where('status', 'in', ['submitted', 'pending_review']),
@@ -374,28 +374,50 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
           collection(firestore, 'checkpointHistory'),
           where('siteId', '==', educatorSiteId),
           where('status', '==', 'submitted'),
-          orderBy('createdAt', 'desc')
-        )
-      );
-      setCheckpoints(
-        snap.docs.map((d) => {
-          const data = d.data();
-          return {
-            id: d.id,
-            learnerId: asString(data.learnerId, ''),
-            siteId: asString(data.siteId, ''),
-            answer: asString(data.answer, ''),
-            explainItBack: typeof data.explainItBack === 'string' ? data.explainItBack : null,
-            aiAssistanceUsed: Boolean(data.aiAssistanceUsed),
-            aiAssistanceDetails: typeof data.aiAssistanceDetails === 'string' ? data.aiAssistanceDetails : null,
-            status: asString(data.status, 'submitted'),
-            createdAt: toIso(data.createdAt),
-          };
-        })
-      );
-    } catch (err) {
-      console.warn('Failed to load checkpoints:', err);
-    } finally {
+            orderBy('createdAt', 'desc')
+          )
+        );
+        const checkpointRows = await Promise.all(
+          snap.docs.map(async (d) => {
+            const data = d.data();
+            const portfolioItemId =
+              typeof data.portfolioItemId === 'string' ? data.portfolioItemId : null;
+            let proofOfLearningStatus: string | null = null;
+
+            if (portfolioItemId) {
+              try {
+                const portfolioSnap = await getDoc(doc(portfolioItemsCollection, portfolioItemId));
+                if (portfolioSnap.exists()) {
+                  const portfolioData = portfolioSnap.data();
+                  proofOfLearningStatus =
+                    typeof portfolioData.proofOfLearningStatus === 'string'
+                      ? portfolioData.proofOfLearningStatus
+                      : null;
+                }
+              } catch (portfolioErr) {
+                console.warn('Failed to load checkpoint portfolio proof status:', portfolioErr);
+              }
+            }
+
+            return {
+              id: d.id,
+              learnerId: asString(data.learnerId, ''),
+              siteId: asString(data.siteId, ''),
+              answer: asString(data.answer, ''),
+              explainItBack: typeof data.explainItBack === 'string' ? data.explainItBack : null,
+              aiAssistanceUsed: Boolean(data.aiAssistanceUsed),
+              aiAssistanceDetails: typeof data.aiAssistanceDetails === 'string' ? data.aiAssistanceDetails : null,
+              portfolioItemId,
+              proofOfLearningStatus,
+              status: asString(data.status, 'submitted'),
+              createdAt: toIso(data.createdAt),
+            };
+          })
+        );
+        setCheckpoints(checkpointRows);
+      } catch (err) {
+        console.warn('Failed to load checkpoints:', err);
+      } finally {
       setCheckpointLoading(false);
     }
   }, [educatorSiteId]);
@@ -484,6 +506,7 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
   const handleCheckpointReview = useCallback(
     async (cp: CheckpointItem, isCorrect: boolean) => {
       setCheckpointSaving(cp.id);
+      setCheckpointGrowthWarning(null);
       try {
         // 1. Update checkpoint status
         await updateDoc(doc(firestore, 'checkpointHistory', cp.id), {
@@ -493,25 +516,51 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
           reviewedAt: serverTimestamp(),
         });
 
-        // 2. If correct, call processCheckpointMasteryUpdate to trigger growth
+        // 2. If correct, only legacy checkpoints without a linked portfolio item
+        // should use the checkpoint mastery callable. Proof-linked checkpoints
+        // update growth during proof verification.
         if (isCorrect) {
-          const processCheckpoint = httpsCallable<unknown, { updated: boolean; reason?: string }>(
-            functions,
-            'processCheckpointMasteryUpdate'
-          );
-          const growthResult = await processCheckpoint({
-            learnerId: cp.learnerId,
-            siteId: cp.siteId,
-            checkpointId: cp.id,
-            skillIds: [], // capability resolved from checkpoint.capabilityId or checkpointMappings
-            passed: true,
-            educatorId: ctx.uid,
-          });
-          if (!growthResult.data.updated) {
-            setCheckpointGrowthWarning(
-              'Checkpoint marked correct, but capability growth was not triggered — no capability is mapped to this checkpoint. ' +
-              'Ask Admin-HQ to link a capability, or apply a rubric below to update growth manually.'
+          let linkedProofStatus = cp.proofOfLearningStatus;
+          if (cp.portfolioItemId) {
+            try {
+              const portfolioSnap = await getDoc(doc(portfolioItemsCollection, cp.portfolioItemId));
+              if (portfolioSnap.exists()) {
+                const portfolioData = portfolioSnap.data();
+                linkedProofStatus =
+                  typeof portfolioData.proofOfLearningStatus === 'string'
+                    ? portfolioData.proofOfLearningStatus
+                    : linkedProofStatus;
+              }
+            } catch (portfolioErr) {
+              console.warn('Failed to refresh checkpoint proof status:', portfolioErr);
+            }
+          }
+
+          if (cp.portfolioItemId) {
+            if (linkedProofStatus !== 'verified') {
+              setCheckpointGrowthWarning(
+                'Checkpoint reviewed. Capability growth will update after proof-of-learning is verified in the proof review flow.'
+              );
+            }
+          } else {
+            const processCheckpoint = httpsCallable<unknown, { updated: boolean; reason?: string }>(
+              functions,
+              'processCheckpointMasteryUpdate'
             );
+            const growthResult = await processCheckpoint({
+              learnerId: cp.learnerId,
+              siteId: cp.siteId,
+              checkpointId: cp.id,
+              skillIds: [], // capability resolved from checkpoint.capabilityId or checkpointMappings
+              passed: true,
+              educatorId: ctx.uid,
+            });
+            if (!growthResult.data.updated) {
+              setCheckpointGrowthWarning(
+                growthResult.data.reason ||
+                  'Checkpoint marked correct, but capability growth was not triggered.'
+              );
+            }
           }
         }
 
@@ -630,6 +679,11 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
         setSaving(null);
         return;
       }
+      if (attempt.proofOfLearningStatus !== 'verified') {
+        setError('Verify proof-of-learning before applying a rubric that updates capability growth.');
+        setSaving(null);
+        return;
+      }
 
       // Build scores array for the callable
       let callableScores: { criterionId: string; capabilityId: string; processDomainId?: string; pillarCode: string; score: number; maxScore: number }[];
@@ -714,7 +768,6 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
       setRubricForm({
         level: 'Proficient',
         feedback: '',
-        proofVerified: false,
         criterionScores: {},
       });
       await loadAttempts();
@@ -771,7 +824,7 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
         <h1 className="text-2xl font-bold text-app-foreground">Evidence Review</h1>
         <p className="mt-2 text-sm text-app-muted">
           Review learner mission submissions, apply rubrics, and record capability growth. Submissions
-          awaiting your review appear below.
+          awaiting your review appear below. Capability growth is only recorded after proof-of-learning is verified.
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <span className="rounded-full bg-app-canvas px-3 py-1 text-xs font-medium text-app-muted">
@@ -1054,7 +1107,6 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
                         setRubricForm({
                           level: 'Proficient',
                           feedback: '',
-                          proofVerified: false,
                           criterionScores: {},
                         });
                         void loadRubricForAttempt(attempt);
@@ -1351,26 +1403,23 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
                       />
                     </label>
 
-                    <label className="flex items-center gap-2 text-sm text-app-foreground">
-                      <input
-                        type="checkbox"
-                        checked={rubricForm.proofVerified}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          setRubricForm((prev: RubricFormState) => ({
-                            ...prev,
-                            proofVerified: e.target.checked,
-                          }))
-                        }
-                        className="rounded border-app"
-                        data-testid={`rubric-proof-verified-${attempt.id}`}
-                      />
-                      Proof of learning verified
-                    </label>
+                    <div
+                      className={`rounded-md border px-3 py-2 text-sm ${
+                        attempt.proofOfLearningStatus === 'verified'
+                          ? 'border-green-200 bg-green-50 text-green-800'
+                          : 'border-amber-200 bg-amber-50 text-amber-900'
+                      }`}
+                      data-testid={`rubric-proof-gate-${attempt.id}`}
+                    >
+                      {attempt.proofOfLearningStatus === 'verified'
+                        ? 'Proof of learning is verified. Rubric review can now update capability growth.'
+                        : 'Rubric review can be drafted here, but capability growth only updates after proof-of-learning is verified in the proof review flow.'}
+                    </div>
 
                     <div className="flex gap-2">
                       <button
                         type="button"
-                        disabled={isSaving || !rubricForm.feedback.trim()}
+                        disabled={isSaving || !rubricForm.feedback.trim() || attempt.proofOfLearningStatus !== 'verified'}
                         onClick={() => void handleApplyRubric(attempt)}
                         className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
                         data-testid={`rubric-submit-${attempt.id}`}
@@ -1618,6 +1667,19 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
                         <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">
                           Checkpoint
                         </span>
+                        {cp.proofOfLearningStatus && cp.proofOfLearningStatus !== 'not-available' && (
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                              cp.proofOfLearningStatus === 'verified'
+                                ? 'bg-green-100 text-green-800'
+                                : cp.proofOfLearningStatus === 'partial'
+                                  ? 'bg-amber-100 text-amber-800'
+                                  : 'bg-gray-100 text-gray-700'
+                            }`}
+                          >
+                            PoL: {cp.proofOfLearningStatus}
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="rounded-lg bg-app-canvas p-3 text-sm text-app-foreground">
@@ -1629,6 +1691,20 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
                           Explain-it-back
                         </span>
                         <p className="mt-1">{cp.explainItBack}</p>
+                      </div>
+                    )}
+                    {cp.portfolioItemId && (
+                      <div
+                        className={`rounded-lg border p-3 text-sm ${
+                          cp.proofOfLearningStatus === 'verified'
+                            ? 'border-green-200 bg-green-50 text-green-800'
+                            : 'border-amber-200 bg-amber-50 text-amber-900'
+                        }`}
+                        data-testid={`checkpoint-proof-gate-${cp.id}`}
+                      >
+                        {cp.proofOfLearningStatus === 'verified'
+                          ? 'Linked proof is verified. Capability growth is recorded from the proof verification record.'
+                          : 'Marking this checkpoint correct reviews the submission, but capability growth stays blocked until proof-of-learning is verified.'}
                       </div>
                     )}
                     <div className="flex gap-2">

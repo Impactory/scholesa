@@ -5,23 +5,29 @@
  *
  * Shows the learner their checkpoint history from the `checkpointHistory`
  * collection and lets them submit answers with explain-it-back.
- * Writes to `checkpointHistory` (not portfolioItems) to match the Flutter
- * implementation and the Firestore rules (learner self-write allowed).
+ * Each submission now creates a linked portfolio artifact so checkpoint proof
+ * moves through the same proof-of-learning and growth contract as other
+ * evidence-chain surfaces.
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  addDoc,
   collection,
+  doc,
+  getDoc,
   getDocs,
   limit,
   orderBy,
   query,
   serverTimestamp,
+  writeBatch,
   where,
 } from 'firebase/firestore';
 import { firestore } from '@/src/firebase/client-init';
+import { portfolioItemsCollection } from '@/src/firebase/firestore/collections';
+import { resolveActiveSiteId } from '@/src/lib/auth/activeSite';
 import { useCapabilities } from '@/src/lib/capabilities/useCapabilities';
+import type { PortfolioItem } from '@/src/types/schema';
 import type { CustomRouteRendererProps } from '../customRouteRenderers';
 import {
   CheckCircleIcon,
@@ -39,11 +45,13 @@ interface CheckpointRecord {
   answer: string | null;
   explainItBack: string | null;
   explainItBackRequired: boolean;
-  status: 'submitted' | 'passed' | 'failed' | 'pending_review';
-  isCorrect: boolean;
-  feedback: string | null;
-  aiAssistanceUsed: boolean;
-  createdAt: string | null;
+   status: 'submitted' | 'passed' | 'failed' | 'pending_review' | 'reviewed';
+   isCorrect: boolean | null;
+   feedback: string | null;
+   aiAssistanceUsed: boolean;
+   portfolioItemId: string | null;
+   proofOfLearningStatus: 'missing' | 'partial' | 'verified' | 'not-available' | null;
+   createdAt: string | null;
 }
 
 function toIso(val: unknown): string | null {
@@ -54,9 +62,11 @@ function toIso(val: unknown): string | null {
   return null;
 }
 
-function statusBadge(status: CheckpointRecord['status'], isCorrect: boolean) {
+function statusBadge(status: CheckpointRecord['status'], isCorrect: boolean | null) {
   if (status === 'passed' || isCorrect)
     return <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">Passed</span>;
+  if (status === 'reviewed')
+    return <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">Reviewed</span>;
   if (status === 'failed')
     return <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800">Needs review</span>;
   if (status === 'pending_review')
@@ -66,7 +76,7 @@ function statusBadge(status: CheckpointRecord['status'], isCorrect: boolean) {
 
 export default function LearnerCheckpointRenderer({ ctx }: CustomRouteRendererProps) {
   const learnerId = ctx.uid;
-  const siteId = ctx.profile?.siteIds?.[0] || ctx.profile?.activeSiteId || '';
+  const siteId = resolveActiveSiteId(ctx.profile);
   const { capabilityList } = useCapabilities(siteId || null);
 
   const [records, setRecords] = useState<CheckpointRecord[]>([]);
@@ -85,7 +95,12 @@ export default function LearnerCheckpointRenderer({ ctx }: CustomRouteRendererPr
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const loadCheckpoints = useCallback(async () => {
-    if (!learnerId) return;
+    if (!learnerId || !siteId) {
+      setRecords([]);
+      setLoading(false);
+      setError(null);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -93,13 +108,33 @@ export default function LearnerCheckpointRenderer({ ctx }: CustomRouteRendererPr
         query(
           collection(firestore, 'checkpointHistory'),
           where('learnerId', '==', learnerId),
+          where('siteId', '==', siteId),
           orderBy('createdAt', 'desc'),
           limit(50)
         )
       );
-      setRecords(
-        snap.docs.map((d) => {
+      const checkpointRows = await Promise.all(
+        snap.docs.map(async (d) => {
           const data = d.data();
+          const portfolioItemId =
+            typeof data.portfolioItemId === 'string' ? data.portfolioItemId : null;
+          let proofOfLearningStatus: CheckpointRecord['proofOfLearningStatus'] = null;
+
+          if (portfolioItemId) {
+            try {
+              const portfolioSnap = await getDoc(doc(portfolioItemsCollection, portfolioItemId));
+              if (portfolioSnap.exists()) {
+                const portfolioData = portfolioSnap.data();
+                proofOfLearningStatus =
+                  typeof portfolioData.proofOfLearningStatus === 'string'
+                    ? (portfolioData.proofOfLearningStatus as CheckpointRecord['proofOfLearningStatus'])
+                    : null;
+              }
+            } catch (portfolioErr) {
+              console.warn('Failed to load checkpoint proof status:', portfolioErr);
+            }
+          }
+
           return {
             id: d.id,
             missionId: (data.missionId as string) || null,
@@ -109,12 +144,17 @@ export default function LearnerCheckpointRenderer({ ctx }: CustomRouteRendererPr
             explainItBack: (data.explainItBack as string) || null,
             explainItBackRequired: Boolean(data.explainItBackRequired),
             status: (data.status as CheckpointRecord['status']) || 'submitted',
-            isCorrect: Boolean(data.isCorrect),
+            isCorrect: typeof data.isCorrect === 'boolean' ? data.isCorrect : null,
             feedback: (data.feedback as string) || null,
             aiAssistanceUsed: Boolean(data.aiAssistanceUsed),
+            portfolioItemId,
+            proofOfLearningStatus,
             createdAt: toIso(data.createdAt),
           };
         })
+      );
+      setRecords(
+        checkpointRows
       );
     } catch (err) {
       console.error('Failed to load checkpoints:', err);
@@ -122,7 +162,7 @@ export default function LearnerCheckpointRenderer({ ctx }: CustomRouteRendererPr
     } finally {
       setLoading(false);
     }
-  }, [learnerId]);
+  }, [learnerId, siteId]);
 
   useEffect(() => {
     loadCheckpoints();
@@ -140,26 +180,59 @@ export default function LearnerCheckpointRenderer({ ctx }: CustomRouteRendererPr
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const checkpointRef = await addDoc(collection(firestore, 'checkpointHistory'), {
+      const batch = writeBatch(firestore);
+      const checkpointRef = doc(collection(firestore, 'checkpointHistory'));
+      const portfolioRef = doc(portfolioItemsCollection);
+      const explainItBackText = explainItBack.trim();
+      const selectedCapability = capabilityList.find((cap) => cap.id === selectedCapabilityId) ?? null;
+      const proofOfLearningStatus = explainItBackText ? 'partial' : 'missing';
+
+      batch.set(portfolioRef, {
+        learnerId,
+        siteId,
+        title: selectedCapability
+          ? `Checkpoint: ${selectedCapability.title ?? selectedCapability.name}`
+          : 'Checkpoint',
+        description: answer.trim(),
+        pillarCodes: selectedCapability?.pillarCode ? [selectedCapability.pillarCode] : [],
+        artifacts: [],
+        capabilityIds: selectedCapabilityId ? [selectedCapabilityId] : [],
+        capabilityTitles: selectedCapability
+          ? [selectedCapability.title ?? selectedCapability.name]
+          : [],
+        aiAssistanceUsed: aiUsed,
+        aiAssistanceDetails: aiUsed ? aiDetails.trim() : undefined,
+        aiDisclosureStatus: aiUsed ? 'learner-ai-verified' : 'learner-ai-not-used',
+        verificationStatus: 'pending',
+        proofOfLearningStatus,
+        proofHasExplainItBack: explainItBackText.length > 0,
+        proofHasOralCheck: false,
+        proofHasMiniRebuild: false,
+        proofCheckpointCount: explainItBackText.length > 0 ? 1 : 0,
+        proofExplainItBackExcerpt: explainItBackText || undefined,
+        source: 'checkpoint_submission',
+        createdAt: serverTimestamp(),
+      } as unknown as Omit<PortfolioItem, 'id'>);
+
+      batch.set(checkpointRef, {
         learnerId,
         siteId,
         missionId: null,
         capabilityId: selectedCapabilityId || null,
         checkpointNumber: null,
         answer: answer.trim(),
-        explainItBack: explainItBack.trim() || null,
-        explainItBackRequired: explainItBack.trim().length > 0,
+        explainItBack: explainItBackText || null,
+        explainItBackRequired: explainItBackText.length > 0,
         status: 'submitted',
         isCorrect: null,
         feedback: null,
         aiAssistanceUsed: aiUsed,
         aiAssistanceDetails: aiUsed ? aiDetails.trim() : null,
+        portfolioItemId: portfolioRef.id,
         createdAt: serverTimestamp(),
       });
-      // checkpointRef.id is available for downstream linkage; the educator
-      // reviews checkpointHistory directly and can trigger
-      // processCheckpointMasteryUpdate after marking isCorrect.
-      void checkpointRef;
+
+      await batch.commit();
       setAnswer('');
       setExplainItBack('');
       setAiUsed(false);
@@ -174,6 +247,17 @@ export default function LearnerCheckpointRenderer({ ctx }: CustomRouteRendererPr
       setSubmitting(false);
     }
   };
+
+  if (!siteId) {
+    return (
+      <div
+        data-testid="learner-checkpoints-site-required"
+        className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"
+      >
+        Select an active site before submitting checkpoints or viewing checkpoint evidence.
+      </div>
+    );
+  }
 
   if (loading) {
     return <div className="p-6 text-center text-gray-500">Loading checkpoints...</div>;
@@ -374,6 +458,19 @@ export default function LearnerCheckpointRenderer({ ctx }: CustomRouteRendererPr
                     )}
                     {r.aiAssistanceUsed && (
                       <p className="text-xs text-amber-600">AI assistance was used for this checkpoint.</p>
+                    )}
+                    {r.portfolioItemId && (
+                      <div
+                        className={`rounded-md border px-3 py-2 text-xs ${
+                          r.proofOfLearningStatus === 'verified'
+                            ? 'border-green-200 bg-green-50 text-green-800'
+                            : 'border-amber-200 bg-amber-50 text-amber-900'
+                        }`}
+                      >
+                        {r.proofOfLearningStatus === 'verified'
+                          ? 'Proof of learning is verified for this checkpoint artifact.'
+                          : 'Next step: complete proof-of-learning so this checkpoint can support capability growth.'}
+                      </div>
                     )}
                   </div>
                 )}

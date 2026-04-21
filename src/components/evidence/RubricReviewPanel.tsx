@@ -4,7 +4,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { httpsCallable } from 'firebase/functions';
 import { getDocs, query, where } from 'firebase/firestore';
 import { functions } from '@/src/firebase/client-init';
-import { rubricTemplatesCollection, processDomainsCollection } from '@/src/firebase/firestore/collections';
+import {
+  rubricTemplatesCollection,
+  processDomainsCollection,
+  portfolioItemsCollection,
+} from '@/src/firebase/firestore/collections';
 import { useCapabilities } from '@/src/lib/capabilities/useCapabilities';
 import type { RubricTemplate, ProcessDomain } from '@/src/types/schema';
 
@@ -16,6 +20,7 @@ interface RubricReviewPanelProps {
   siteId: string;
   description: string;
   capabilityId?: string;
+  proofVerified?: boolean;
   onComplete: () => void;
   onCancel: () => void;
 }
@@ -62,6 +67,7 @@ export function RubricReviewPanel({
   siteId,
   description,
   capabilityId: preselectedCapabilityId,
+  proofVerified = false,
   onComplete,
   onCancel,
 }: RubricReviewPanelProps) {
@@ -83,6 +89,8 @@ export function RubricReviewPanel({
   const [domainScores, setDomainScores] = useState<ScoreEntry[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resolvedProofVerified, setResolvedProofVerified] = useState(proofVerified);
+  const [loadingProofState, setLoadingProofState] = useState(!proofVerified);
 
   // Load published rubric templates for the site
   useEffect(() => {
@@ -113,6 +121,74 @@ export function RubricReviewPanel({
       }
     })();
   }, [siteId]);
+
+  useEffect(() => {
+    if (proofVerified) {
+      setResolvedProofVerified(true);
+      setLoadingProofState(false);
+      return;
+    }
+    if (!siteId) {
+      setResolvedProofVerified(false);
+      setLoadingProofState(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    void (async () => {
+      setLoadingProofState(true);
+      try {
+        const portfolioSnaps = [];
+        if (missionAttemptId) {
+          portfolioSnaps.push(
+            getDocs(
+              query(
+                portfolioItemsCollection,
+                where('siteId', '==', siteId),
+                where('missionAttemptId', '==', missionAttemptId)
+              )
+            )
+          );
+        }
+        for (const evidenceRecordId of evidenceRecordIds) {
+          portfolioSnaps.push(
+            getDocs(
+              query(
+                portfolioItemsCollection,
+                where('siteId', '==', siteId),
+                where('evidenceRecordIds', 'array-contains', evidenceRecordId)
+              )
+            )
+          );
+        }
+
+        const results = await Promise.all(portfolioSnaps);
+        const hasVerifiedProof = results.some((snap) =>
+          snap.docs.some((doc) => doc.data().proofOfLearningStatus === 'verified')
+        );
+
+        if (!cancelled) {
+          setResolvedProofVerified(hasVerifiedProof);
+        }
+      } catch (err) {
+        console.warn('RubricReviewPanel: failed to resolve proof-of-learning status:', err);
+        if (!cancelled) {
+          setResolvedProofVerified(false);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingProofState(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [proofVerified, siteId, missionAttemptId, evidenceRecordIds]);
+
+  const effectiveProofVerified = proofVerified || resolvedProofVerified;
 
   // When a template is selected, populate scores from its criteria
   const applyTemplate = useCallback((templateId: string) => {
@@ -240,6 +316,10 @@ export function RubricReviewPanel({
   );
 
   const handleSubmit = useCallback(async () => {
+    if (!effectiveProofVerified) {
+      setError('Verify proof-of-learning before applying a rubric that updates capability growth.');
+      return;
+    }
     if (!canSubmit) return;
     setSaving(true);
     setError(null);
@@ -269,7 +349,7 @@ export function RubricReviewPanel({
     } finally {
       setSaving(false);
     }
-  }, [canSubmit, evidenceRecordIds, missionAttemptId, learnerId, siteId, scores, domainScores, selectedTemplateId, onComplete]);
+  }, [effectiveProofVerified, canSubmit, evidenceRecordIds, missionAttemptId, learnerId, siteId, scores, domainScores, selectedTemplateId, onComplete]);
 
   const unusedCapabilities = useMemo(
     () => capabilityList.filter((c) => !scores.some((s) => s.capabilityId === c.id)),
@@ -459,6 +539,23 @@ export function RubricReviewPanel({
         </p>
       )}
 
+      <p
+        className={`rounded-md border px-3 py-2 text-xs ${
+          loadingProofState
+            ? 'border-blue-200 bg-blue-50 text-blue-800'
+            : effectiveProofVerified
+            ? 'border-green-200 bg-green-50 text-green-800'
+            : 'border-amber-200 bg-amber-50 text-amber-900'
+        }`}
+        data-testid="rubric-review-proof-gate"
+      >
+        {loadingProofState
+          ? 'Checking proof-of-learning status before allowing capability growth updates.'
+          : effectiveProofVerified
+          ? 'Proof of learning is verified. This rubric review can update capability growth.'
+          : 'Verify proof-of-learning before applying a rubric that updates capability growth.'}
+      </p>
+
       {error && (
         <p className="text-xs text-red-600 bg-red-50 rounded-md px-3 py-2 border border-red-200">
           {error}
@@ -470,7 +567,7 @@ export function RubricReviewPanel({
         <button
           type="button"
           onClick={() => void handleSubmit()}
-          disabled={!canSubmit || saving}
+          disabled={!canSubmit || saving || loadingProofState || !effectiveProofVerified}
           className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
         >
           {saving ? 'Applying...' : `Apply Rubric (${scores.length + domainScores.length} scores)`}

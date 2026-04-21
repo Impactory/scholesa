@@ -140,11 +140,14 @@ describe('Renderers delegate to real evidence components', () => {
     const source = readSrcFile(
       'features', 'workflows', 'renderers', 'LearnerCheckpointRenderer.tsx'
     );
-    // Purpose-built checkpoint UI — reads from and writes to checkpointHistory
+    // Purpose-built checkpoint UI — writes checkpointHistory plus a linked portfolio artifact
     expect(source).toContain('checkpointHistory');
+    expect(source).toContain('portfolioItemsCollection');
+    expect(source).toContain('portfolioItemId: portfolioRef.id');
     expect(source).toContain('explainItBack');
     expect(source).toContain('learnerId');
-    expect(source).toContain('addDoc');
+    expect(source).toContain('writeBatch');
+    expect(source).toContain('resolveActiveSiteId');
   });
 
   it('LearnerReflectionsRenderer → ReflectionJournal with auth context', () => {
@@ -309,6 +312,19 @@ describe('EducatorEvidenceReviewRenderer capability growth write path', () => {
     expect(source).toContain('growthResult.data.updated');
     expect(source).toContain('checkpointGrowthWarning');
     expect(source).toContain('checkpoint-growth-warning');
+  });
+
+  it('treats proof-linked checkpoints as reviewed evidence instead of a growth side-channel', () => {
+    expect(source).toContain('cp.portfolioItemId');
+    expect(source).toContain('Capability growth will update after proof-of-learning is verified in the proof review flow.');
+    expect(source).toContain('Linked proof is verified. Capability growth is recorded from the proof verification record.');
+    expect(source).toContain('data-testid={`checkpoint-proof-gate-${cp.id}`}');
+  });
+
+  it('shows a truthful proof gate before rubric-driven growth', () => {
+    expect(source).toContain("attempt.proofOfLearningStatus !== 'verified'");
+    expect(source).toContain('Verify proof-of-learning before applying a rubric that updates capability growth.');
+    expect(source).not.toContain('rubric-proof-verified-');
   });
 });
 

@@ -127,6 +127,56 @@ describe('LearnerProofAssemblyRenderer site context', () => {
   });
 });
 
+describe('Rubric proof gate honesty', () => {
+  const reviewSource = readSrcFile(
+    'features',
+    'workflows',
+    'renderers',
+    'EducatorEvidenceReviewRenderer.tsx'
+  );
+  const panelSource = readSrcFile('components', 'evidence', 'RubricReviewPanel.tsx');
+
+  it('requires verified proof before educator rubric review can update growth', () => {
+    expect(reviewSource).toContain("attempt.proofOfLearningStatus !== 'verified'");
+    expect(reviewSource).toContain('Verify proof-of-learning before applying a rubric that updates capability growth.');
+    expect(reviewSource).not.toContain('rubric-proof-verified-');
+  });
+
+  it('keeps the shared rubric review panel blocked until proof is verified', () => {
+    expect(panelSource).toContain('proofVerified = false');
+    expect(panelSource).toContain('data-testid="rubric-review-proof-gate"');
+    expect(panelSource).toContain('Verify proof-of-learning before applying a rubric that updates capability growth.');
+  });
+});
+
+describe('Checkpoint proof chain honesty', () => {
+  const learnerCheckpointSource = readSrcFile(
+    'features',
+    'workflows',
+    'renderers',
+    'LearnerCheckpointRenderer.tsx'
+  );
+  const educatorReviewSource = readSrcFile(
+    'features',
+    'workflows',
+    'renderers',
+    'EducatorEvidenceReviewRenderer.tsx'
+  );
+
+  it('links learner checkpoints into portfolio evidence for proof review', () => {
+    expect(learnerCheckpointSource).toContain('portfolioItemsCollection');
+    expect(learnerCheckpointSource).toContain("source: 'checkpoint_submission'");
+    expect(learnerCheckpointSource).toContain('proofOfLearningStatus');
+    expect(learnerCheckpointSource).toContain('portfolioItemId: portfolioRef.id');
+  });
+
+  it('keeps educator checkpoint review truthful about proof before growth', () => {
+    expect(educatorReviewSource).toContain('cp.portfolioItemId');
+    expect(educatorReviewSource).toContain('Checkpoint reviewed. Capability growth will update after proof-of-learning is verified in the proof review flow.');
+    expect(educatorReviewSource).toContain('Linked proof is verified. Capability growth is recorded from the proof verification record.');
+  });
+});
+
 /* ───── LearnerPortfolioCurationRenderer site context ───── */
 
 describe('LearnerPortfolioCurationRenderer site context', () => {

@@ -298,7 +298,7 @@ describe('Functions backend evidence chain callables', () => {
     expect(functionsSource).toContain('proofBundle?.explainItBackExcerpt');
   });
 
-  it('applyRubricToEvidence sets verificationStatus', () => {
+  it('applyRubricToEvidence gates growth on verified proof-of-learning', () => {
     const applyRubricSection = functionsSource.slice(
       functionsSource.indexOf('export const applyRubricToEvidence'),
       functionsSource.indexOf(
@@ -306,7 +306,27 @@ describe('Functions backend evidence chain callables', () => {
         functionsSource.indexOf('export const applyRubricToEvidence') + 10
       )
     );
+
+    expect(applyRubricSection).toContain("'failed-precondition'");
+    expect(applyRubricSection).toContain('Verify proof-of-learning before applying a rubric that updates capability growth.');
+    expect(applyRubricSection).toContain('proofOfLearningStatus');
+    expect(applyRubricSection).toContain('portfolioItems');
     expect(applyRubricSection).toContain('verificationStatus');
+  });
+
+  it('processCheckpointMasteryUpdate refuses checkpoint growth before verified proof', () => {
+    const checkpointSection = functionsSource.slice(
+      functionsSource.indexOf('export const processCheckpointMasteryUpdate'),
+      functionsSource.indexOf(
+        'export const',
+        functionsSource.indexOf('export const processCheckpointMasteryUpdate') + 10
+      )
+    );
+
+    expect(checkpointSection).toContain('portfolioItemId');
+    expect(checkpointSection).toContain('proofOfLearningStatus');
+    expect(checkpointSection).toContain('Verify proof-of-learning for the linked checkpoint artifact before updating capability growth.');
+    expect(checkpointSection).toContain('Checkpoint growth is recorded from proof verification on the linked portfolio artifact.');
   });
 });
 

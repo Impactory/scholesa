@@ -8806,6 +8806,49 @@ export const applyRubricToEvidence = onCall(async (request: CallableRequest<{
   }
 
   const db = admin.firestore();
+  const relatedPortfolioDocs = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
+
+  if (hasMission) {
+    const missionPortfolioSnap = await db
+      .collection('portfolioItems')
+      .where('missionAttemptId', '==', missionAttemptId!)
+      .limit(20)
+      .get();
+    for (const doc of missionPortfolioSnap.docs) {
+      relatedPortfolioDocs.set(doc.id, doc);
+    }
+  }
+
+  if (safeEvidenceRecordIds.length > 0) {
+    for (let i = 0; i < safeEvidenceRecordIds.length; i += 30) {
+      const evidenceChunk = safeEvidenceRecordIds.slice(i, i + 30);
+      const evidencePortfolioSnap = await db
+        .collection('portfolioItems')
+        .where('evidenceRecordIds', 'array-contains-any', evidenceChunk)
+        .limit(30)
+        .get();
+      for (const doc of evidencePortfolioSnap.docs) {
+        relatedPortfolioDocs.set(doc.id, doc);
+      }
+    }
+  }
+
+  const proofVerified = Array.from(relatedPortfolioDocs.values()).some((doc) => {
+    const data = doc.data() ?? {};
+    const rowSiteId = typeof data.siteId === 'string' ? data.siteId.trim() : '';
+    const proofStatus = typeof data.proofOfLearningStatus === 'string'
+      ? data.proofOfLearningStatus.trim()
+      : '';
+    return (!rowSiteId || rowSiteId === siteId) && proofStatus === 'verified';
+  });
+
+  if (!proofVerified) {
+    throw new HttpsError(
+      'failed-precondition',
+      'Verify proof-of-learning before applying a rubric that updates capability growth.'
+    );
+  }
+
   const batch = db.batch();
 
   // 1. Create the RubricApplication document
@@ -9502,6 +9545,8 @@ export const evaluateBadgeEligibility = onCall(async (request: CallableRequest<{
 /**
  * When a checkpoint is marked as passed, update the learner's capability
  * mastery for linked skills and emit a growth event if the level changes.
+ * Proof-linked checkpoints must now update growth through verifyProofOfLearning
+ * on the linked portfolio artifact instead of checkpoint correctness alone.
  */
 export const processCheckpointMasteryUpdate = onCall(async (request: CallableRequest<{
   learnerId: string;
@@ -9523,6 +9568,55 @@ export const processCheckpointMasteryUpdate = onCall(async (request: CallableReq
   if (!passed) return { updated: false, reason: 'Checkpoint not passed' };
 
   const db = admin.firestore();
+  if (checkpointId && typeof checkpointId === 'string') {
+    const checkpointSnap = await db.collection('checkpointHistory').doc(checkpointId).get();
+    if (!checkpointSnap.exists) {
+      return { updated: false, reason: 'Checkpoint record not found.' };
+    }
+
+    const checkpointData = checkpointSnap.data() ?? {};
+    const checkpointPortfolioItemId =
+      typeof checkpointData.portfolioItemId === 'string' && checkpointData.portfolioItemId.trim()
+        ? checkpointData.portfolioItemId.trim()
+        : null;
+
+    if (!checkpointPortfolioItemId) {
+      return {
+        updated: false,
+        reason:
+          'Checkpoint must be linked to a portfolio artifact before it can update capability growth.',
+      };
+    }
+
+    const portfolioSnap = await db.collection('portfolioItems').doc(checkpointPortfolioItemId).get();
+    if (!portfolioSnap.exists) {
+      return {
+        updated: false,
+        reason: 'Linked portfolio artifact not found for this checkpoint.',
+      };
+    }
+
+    const portfolioData = portfolioSnap.data() ?? {};
+    const proofStatus =
+      typeof portfolioData.proofOfLearningStatus === 'string'
+        ? portfolioData.proofOfLearningStatus.trim()
+        : '';
+
+    if (proofStatus !== 'verified') {
+      return {
+        updated: false,
+        reason:
+          'Verify proof-of-learning for the linked checkpoint artifact before updating capability growth.',
+      };
+    }
+
+    return {
+      updated: false,
+      reason:
+        'Checkpoint growth is recorded from proof verification on the linked portfolio artifact.',
+    };
+  }
+
   const LEVEL_ORDER = ['emerging', 'developing', 'proficient', 'advanced'];
   const batch = db.batch();
   const growthEvents: Array<{ capabilityId: string; from: string | null; to: string }> = [];
