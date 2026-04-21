@@ -18,6 +18,7 @@ import {
 } from '@/src/firebase/firestore/collections';
 import { Spinner } from '@/src/components/ui/Spinner';
 import { useInteractionTracking } from '@/src/hooks/useTelemetry';
+import { resolveActiveSiteId } from '@/src/lib/auth/activeSite';
 import type { CustomRouteRendererProps } from '../customRouteRenderers';
 
 // ---------------------------------------------------------------------------
@@ -222,34 +223,35 @@ export default function EducatorTodayRenderer({ ctx }: CustomRouteRendererProps)
   const [pendingReviewCount, setPendingReviewCount] = useState(0);
   const [awaitingRevisionCount, setAwaitingRevisionCount] = useState(0);
 
-  const siteId = ctx.profile?.siteIds?.[0] ?? null;
-  const educatorSiteId = ctx.profile?.studioId || siteId || '';
+  const educatorSiteId = resolveActiveSiteId(ctx.profile) ?? '';
 
   const loadData = useCallback(async () => {
-    setLoading(true);
     setError(null);
+    if (!educatorSiteId) {
+      setSessions([]);
+      setLearners([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
     try {
       // Load sessions and learners in parallel
       const sessionsQuery = query(
         collection(firestore, 'sessions'),
+        where('siteId', '==', educatorSiteId),
         where('educatorIds', 'array-contains', ctx.uid),
         orderBy('startDate', 'asc'),
         limit(20)
       );
 
-      const learnersQuery = siteId
-        ? query(
-            collection(firestore, 'users'),
-            where('role', '==', 'learner'),
-            where('siteIds', 'array-contains', siteId),
-            limit(50)
-          )
-        : null;
+      const learnersQuery = query(
+        collection(firestore, 'users'),
+        where('role', '==', 'learner'),
+        where('siteIds', 'array-contains', educatorSiteId),
+        limit(50)
+      );
 
-      const promises: Promise<unknown>[] = [getDocs(sessionsQuery)];
-      if (learnersQuery) promises.push(getDocs(learnersQuery));
-
-      const results = await Promise.all(promises);
+      const results = await Promise.all([getDocs(sessionsQuery), getDocs(learnersQuery)]);
       const sessionsSnap = results[0] as Awaited<ReturnType<typeof getDocs>>;
 
       setSessions(
@@ -266,21 +268,19 @@ export default function EducatorTodayRenderer({ ctx }: CustomRouteRendererProps)
         })
       );
 
-      if (results[1]) {
-        const learnersSnap = results[1] as Awaited<ReturnType<typeof getDocs>>;
-        setLearners(
-          learnersSnap.docs.map((d) => ({
-            id: d.id,
-            displayName: asString((d.data() as Record<string, unknown>)['displayName'], d.id),
-          }))
-        );
-      }
+      const learnersSnap = results[1] as Awaited<ReturnType<typeof getDocs>>;
+      setLearners(
+        learnersSnap.docs.map((d) => ({
+          id: d.id,
+          displayName: asString((d.data() as Record<string, unknown>)['displayName'], d.id),
+        }))
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load today view.');
     } finally {
       setLoading(false);
     }
-  }, [ctx.uid, siteId]);
+  }, [ctx.uid, educatorSiteId]);
 
   useEffect(() => {
     void loadData();
@@ -288,7 +288,11 @@ export default function EducatorTodayRenderer({ ctx }: CustomRouteRendererProps)
 
   // Load review queue counts
   const loadQueueCounts = useCallback(async () => {
-    if (!educatorSiteId) return;
+    if (!educatorSiteId) {
+      setPendingReviewCount(0);
+      setAwaitingRevisionCount(0);
+      return;
+    }
     try {
       const [pendingSnap, revisionSnap] = await Promise.all([
         getDocs(
@@ -427,7 +431,17 @@ export default function EducatorTodayRenderer({ ctx }: CustomRouteRendererProps)
         </div>
       )}
 
-      {loading ? (
+      {!educatorSiteId ? (
+        <div
+          className="rounded-xl border border-amber-200 bg-amber-50 p-8 text-center text-sm text-amber-900"
+          data-testid="educator-today-site-required"
+        >
+          <p className="font-semibold">Active site required</p>
+          <p className="mt-1 text-amber-700">
+            Select an active site before capturing live classroom observations.
+          </p>
+        </div>
+      ) : loading ? (
         <div className="flex min-h-[240px] items-center justify-center rounded-xl border border-app bg-app-surface">
           <div className="flex items-center gap-2 text-app-muted">
             <Spinner />
@@ -453,7 +467,7 @@ export default function EducatorTodayRenderer({ ctx }: CustomRouteRendererProps)
                 learnerId={selectedLearnerId}
                 learnerName={selectedLearnerName}
                 educatorId={ctx.uid}
-                siteId={siteId ?? ''}
+                siteId={educatorSiteId}
                 sessionId={sessions.find((s) => s.status === 'active')?.id ?? sessions[0]?.id}
                 onSuccess={() => {
                   setObservationOpen(false);

@@ -122,6 +122,38 @@ describe('EducatorEvidenceReviewRenderer site context', () => {
   });
 });
 
+/* ───── EducatorTodayRenderer site context ───── */
+
+describe('EducatorTodayRenderer site context', () => {
+  const source = readSrcFile(
+    'features',
+    'workflows',
+    'renderers',
+    'EducatorTodayRenderer.tsx'
+  );
+
+  it('resolves site context through the shared active-site helper', () => {
+    expect(source).toContain('resolveActiveSiteId');
+    expect(source).not.toContain('const siteId = ctx.profile?.siteIds?.[0] ?? null;');
+    expect(source).not.toContain('const educatorSiteId = ctx.profile?.studioId || siteId || \'\';');
+  });
+
+  it('site-scopes today sessions, learner roster, and review queue counts', () => {
+    expect(source).toContain("where('siteId', '==', educatorSiteId)");
+    expect(source).toContain("where('siteIds', 'array-contains', educatorSiteId)");
+    expect(source).toContain("where('status', 'in', ['submitted', 'pending_review'])");
+  });
+
+  it('passes the resolved site into quick evidence capture writes', () => {
+    expect(source).toContain('siteId={educatorSiteId}');
+  });
+
+  it('shows an explicit no-site blocked state', () => {
+    expect(source).toContain('data-testid="educator-today-site-required"');
+    expect(source).toContain('Select an active site before capturing live classroom observations.');
+  });
+});
+
 /* ───── LearnerEvidenceSubmission ───── */
 
 describe('LearnerEvidenceSubmission component', () => {

@@ -221,6 +221,16 @@ describe('Renderers delegate to real evidence components', () => {
     expect(source).toContain('Supplemental engagement signals');
     expect(source).toContain('do not replace the evidence-backed capability');
   });
+
+  it('EducatorTodayRenderer uses canonical site context for live capture', () => {
+    const source = readSrcFile(
+      'features', 'workflows', 'renderers', 'EducatorTodayRenderer.tsx'
+    );
+    expect(source).toContain('resolveActiveSiteId');
+    expect(source).toContain("where('siteId', '==', educatorSiteId)");
+    expect(source).toContain('siteId={educatorSiteId}');
+    expect(source).toContain('data-testid="educator-today-site-required"');
+  });
 });
 
 /* ───── EducatorEvidenceReviewRenderer growth write path ───── */
