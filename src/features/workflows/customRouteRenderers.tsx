@@ -78,6 +78,9 @@ const LearnerReflectionsRenderer = lazy(
 const LearnerShowcasePeerReviewRenderer = lazy(
   () => import('./renderers/LearnerShowcasePeerReviewRenderer')
 );
+const LearnerMissionsRenderer = lazy(
+  () => import('./renderers/LearnerMissionsRenderer')
+);
 const HqRubricBuilderRenderer = lazy(
   () => import('./renderers/HqRubricBuilderRenderer')
 );
@@ -118,6 +121,7 @@ const CUSTOM_ROUTE_RENDERERS: Partial<
   '/educator/sessions': EducatorSessionsRenderer,
   // Learner
   '/learner/today': LearnerProgressReportRenderer,
+  '/learner/missions': LearnerMissionsRenderer,
   '/learner/portfolio': LearnerPortfolioCurationRenderer,
   '/learner/timeline': LearnerEvidenceTimelineRenderer,
   '/learner/proof-assembly': LearnerProofAssemblyRenderer,

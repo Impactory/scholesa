@@ -42,6 +42,7 @@ describe('Custom renderer registry covers all evidence chain routes', () => {
     '/educator/rubrics/apply',
     // Learner
     '/learner/today',
+    '/learner/missions',
     '/learner/portfolio',
     '/learner/proof-assembly',
     '/learner/checkpoints',
@@ -151,6 +152,14 @@ describe('Renderers delegate to real evidence components', () => {
     expect(source).toContain('learnerId');
     expect(source).toContain('writeBatch');
     expect(source).toContain('resolveActiveSiteId');
+  });
+
+  it('LearnerMissionsRenderer → LearnerEvidenceSubmission', () => {
+    const source = readSrcFile(
+      'features', 'workflows', 'renderers', 'LearnerMissionsRenderer.tsx'
+    );
+    expect(source).toContain('LearnerEvidenceSubmission');
+    expect(source).toContain('@/src/components/evidence/LearnerEvidenceSubmission');
   });
 
   it('LearnerReflectionsRenderer → ReflectionJournal with auth context', () => {

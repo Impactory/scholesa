@@ -179,6 +179,7 @@ describe('Evidence chain route pages exist', () => {
   const pages = [
     'hq/capabilities/page.tsx',
     'educator/today/page.tsx',
+    'learner/missions/page.tsx',
     'educator/verification/page.tsx',
     'parent/passport/page.tsx',
     'site/evidence-health/page.tsx',
@@ -205,6 +206,22 @@ describe('Evidence chain route pages exist', () => {
     expect(source).toContain('WorkflowRoutePage');
     expect(source).toContain("routePath='/educator/today'");
     expect(source).not.toContain('EducatorDashboardToday');
+  });
+
+  it('learner/missions/page.tsx routes through WorkflowRoutePage so custom renderer wiring controls the live flow', () => {
+    const fullPath = path.join(appDir, 'learner', 'missions', 'page.tsx');
+    const source = fs.readFileSync(fullPath, 'utf8');
+    expect(source).toContain('WorkflowRoutePage');
+    expect(source).toContain("routePath='/learner/missions'");
+  });
+
+  it('learner/portfolio/page.tsx routes through WorkflowRoutePage instead of the legacy split view', () => {
+    const fullPath = path.join(appDir, 'learner', 'portfolio', 'page.tsx');
+    const source = fs.readFileSync(fullPath, 'utf8');
+    expect(source).toContain('WorkflowRoutePage');
+    expect(source).toContain("routePath='/learner/portfolio'");
+    expect(source).not.toContain('LearnerPortfolioBrowser');
+    expect(source).not.toContain('LearnerEvidenceSubmission');
   });
 
   it('site/evidence-health/page.tsx routes through WorkflowRoutePage', () => {
