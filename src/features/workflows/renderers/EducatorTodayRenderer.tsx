@@ -4,10 +4,12 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   addDoc,
   collection,
+  documentId,
   getDocs,
   orderBy,
   query,
   serverTimestamp,
+  Timestamp,
   where,
   limit,
 } from 'firebase/firestore';
@@ -27,17 +29,21 @@ import type { CustomRouteRendererProps } from '../customRouteRenderers';
 // ---------------------------------------------------------------------------
 
 interface SessionRow {
-  id: string;
+  occurrenceId: string;
+  sessionId: string;
   title: string;
   description: string;
   status: string;
   startDate: string | null;
   siteId: string;
+  rosterSource: 'attendance' | 'enrollment' | 'none';
+  learners: LearnerOption[];
 }
 
 interface LearnerOption {
   id: string;
   displayName: string;
+  attendanceStatus?: 'present' | 'late' | 'absent';
 }
 
 // ---------------------------------------------------------------------------
@@ -75,6 +81,14 @@ function formatDate(iso: string | null): string {
   }
 }
 
+function chunkValues<T>(values: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let index = 0; index < values.length; index += size) {
+    chunks.push(values.slice(index, index + size));
+  }
+  return chunks;
+}
+
 // ---------------------------------------------------------------------------
 // Quick Evidence Capture — writes to evidenceRecords (evidence chain)
 // ---------------------------------------------------------------------------
@@ -84,7 +98,7 @@ function QuickEvidenceCapture({
   learnerName,
   educatorId,
   siteId,
-  sessionId,
+  sessionOccurrenceId,
   onSuccess,
   onCancel,
 }: {
@@ -92,7 +106,7 @@ function QuickEvidenceCapture({
   learnerName: string;
   educatorId: string;
   siteId: string;
-  sessionId?: string;
+  sessionOccurrenceId?: string;
   onSuccess: () => void;
   onCancel: () => void;
 }) {
@@ -121,7 +135,7 @@ function QuickEvidenceCapture({
         learnerId,
         educatorId,
         siteId,
-        sessionId: sessionId || null,
+        sessionOccurrenceId: sessionOccurrenceId || undefined,
         description: trimmed,
         capabilityId: selectedCapabilityId || undefined,
         capabilityMapped: Boolean(selectedCapabilityId),
@@ -244,9 +258,9 @@ export default function EducatorTodayRenderer({ ctx }: CustomRouteRendererProps)
   const trackInteraction = useInteractionTracking();
 
   const [sessions, setSessions] = useState<SessionRow[]>([]);
-  const [learners, setLearners] = useState<LearnerOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedSessionOccurrenceId, setSelectedSessionOccurrenceId] = useState('');
 
   // Quick observation state
   const [observationOpen, setObservationOpen] = useState(false);
@@ -263,52 +277,187 @@ export default function EducatorTodayRenderer({ ctx }: CustomRouteRendererProps)
     setError(null);
     if (!educatorSiteId) {
       setSessions([]);
-      setLearners([]);
       setLoading(false);
       return;
     }
     setLoading(true);
     try {
-      // Load sessions and learners in parallel
-      const sessionsQuery = query(
-        collection(firestore, 'sessions'),
-        where('siteId', '==', educatorSiteId),
-        where('educatorIds', 'array-contains', ctx.uid),
-        orderBy('startDate', 'asc'),
-        limit(20)
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999);
+
+      const [occurrencesSnap, siteLearnersSnap, legacyLearnersSnap] = await Promise.all([
+        getDocs(
+          query(
+            collection(firestore, 'sessionOccurrences'),
+            where('siteId', '==', educatorSiteId),
+            where('educatorId', '==', ctx.uid),
+            where('date', '>=', Timestamp.fromDate(todayStart)),
+            where('date', '<=', Timestamp.fromDate(todayEnd)),
+            limit(20)
+          )
+        ),
+        getDocs(
+          query(
+            collection(firestore, 'users'),
+            where('role', '==', 'learner'),
+            where('siteIds', 'array-contains', educatorSiteId),
+            limit(200)
+          )
+        ),
+        getDocs(
+          query(
+            collection(firestore, 'users'),
+            where('role', '==', 'learner'),
+            where('studioId', '==', educatorSiteId),
+            limit(200)
+          )
+        ),
+      ]);
+
+      const occurrenceDocs = occurrencesSnap.docs.map((d) => ({
+        occurrenceId: d.id,
+        data: d.data() as Record<string, unknown>,
+      }));
+      const sessionIds = Array.from(
+        new Set(
+          occurrenceDocs
+            .map((entry) => asString(entry.data['sessionId'], ''))
+            .filter((value) => value.length > 0)
+        )
       );
+      const occurrenceIds = occurrenceDocs.map((entry) => entry.occurrenceId);
 
-      const learnersQuery = query(
-        collection(firestore, 'users'),
-        where('role', '==', 'learner'),
-        where('siteIds', 'array-contains', educatorSiteId),
-        limit(50)
-      );
+      const [sessionBatchSnaps, enrollmentBatchSnaps, attendanceBatchSnaps] = await Promise.all([
+        Promise.all(
+          chunkValues(sessionIds, 10).map((ids) =>
+            getDocs(query(collection(firestore, 'sessions'), where(documentId(), 'in', ids)))
+          )
+        ),
+        Promise.all(
+          chunkValues(sessionIds, 10).map((ids) =>
+            getDocs(
+              query(
+                collection(firestore, 'enrollments'),
+                where('sessionId', 'in', ids),
+                where('status', '==', 'active'),
+                limit(200)
+              )
+            )
+          )
+        ),
+        Promise.all(
+          chunkValues(occurrenceIds, 10).map((ids) =>
+            getDocs(
+              query(
+                collection(firestore, 'attendanceRecords'),
+                where('sessionOccurrenceId', 'in', ids),
+                limit(200)
+              )
+            )
+          )
+        ),
+      ]);
 
-      const results = await Promise.all([getDocs(sessionsQuery), getDocs(learnersQuery)]);
-      const sessionsSnap = results[0] as Awaited<ReturnType<typeof getDocs>>;
+      const sessionMap = new Map<string, Record<string, unknown>>();
+      for (const snap of sessionBatchSnaps) {
+        for (const docSnap of snap.docs) {
+          sessionMap.set(docSnap.id, docSnap.data() as Record<string, unknown>);
+        }
+      }
 
-      setSessions(
-        sessionsSnap.docs.map((d) => {
-          const data = d.data() as Record<string, unknown>;
+      const learnerMap = new Map<string, LearnerOption>();
+      for (const learnersSnap of [siteLearnersSnap, legacyLearnersSnap]) {
+        for (const learnerDoc of learnersSnap.docs) {
+          const data = learnerDoc.data() as Record<string, unknown>;
+          const learnerId = asString(data['uid'], learnerDoc.id);
+          if (!learnerMap.has(learnerId)) {
+            learnerMap.set(learnerId, {
+              id: learnerId,
+              displayName: asString(data['displayName'], learnerId),
+            });
+          }
+        }
+      }
+
+      const enrollmentMap = new Map<string, Set<string>>();
+      for (const snap of enrollmentBatchSnaps) {
+        for (const enrollmentDoc of snap.docs) {
+          const data = enrollmentDoc.data() as Record<string, unknown>;
+          const sessionId = asString(data['sessionId'], '');
+          const learnerId = asString(data['learnerId'], '');
+          if (!sessionId || !learnerId) continue;
+          const learnersForSession = enrollmentMap.get(sessionId) ?? new Set<string>();
+          learnersForSession.add(learnerId);
+          enrollmentMap.set(sessionId, learnersForSession);
+        }
+      }
+
+      const attendanceMap = new Map<string, Map<string, 'present' | 'late' | 'absent'>>();
+      for (const snap of attendanceBatchSnaps) {
+        for (const attendanceDoc of snap.docs) {
+          const data = attendanceDoc.data() as Record<string, unknown>;
+          const occurrenceId = asString(data['sessionOccurrenceId'], '');
+          const learnerId = asString(data['learnerId'] || data['userId'], '');
+          const status = asString(data['status'], '');
+          if (
+            !occurrenceId ||
+            !learnerId ||
+            (status !== 'present' && status !== 'late' && status !== 'absent')
+          ) {
+            continue;
+          }
+          const statusMap = attendanceMap.get(occurrenceId) ?? new Map<string, 'present' | 'late' | 'absent'>();
+          statusMap.set(learnerId, status);
+          attendanceMap.set(occurrenceId, statusMap);
+        }
+      }
+
+      const loadedSessions = occurrenceDocs
+        .map((entry) => {
+          const sessionId = asString(entry.data['sessionId'], '');
+          const sessionData = sessionMap.get(sessionId) ?? {};
+          const enrollmentIds = Array.from(enrollmentMap.get(sessionId) ?? []);
+          const attendanceStatusMap = attendanceMap.get(entry.occurrenceId);
+          const liveLearnerIds = attendanceStatusMap
+            ? Array.from(attendanceStatusMap.entries())
+                .filter(([, status]) => status === 'present' || status === 'late')
+                .map(([learnerId]) => learnerId)
+            : enrollmentIds;
+          const rosterSource: SessionRow['rosterSource'] = attendanceStatusMap
+            ? 'attendance'
+            : liveLearnerIds.length > 0
+              ? 'enrollment'
+              : 'none';
+
+          const learners = liveLearnerIds
+            .map((learnerId) => ({
+              id: learnerId,
+              displayName: learnerMap.get(learnerId)?.displayName ?? learnerId,
+              attendanceStatus: attendanceStatusMap?.get(learnerId),
+            }))
+            .sort((left, right) => left.displayName.localeCompare(right.displayName));
+
           return {
-            id: d.id,
-            title: asString(data['title'] || data['name'], d.id),
-            description: asString(data['description'], ''),
-            status: asString(data['status'], 'scheduled'),
-            startDate: toIso(data['startTime'] || data['startDate']),
-            siteId: asString(data['siteId'], ''),
+            occurrenceId: entry.occurrenceId,
+            sessionId,
+            title: asString(sessionData['title'] || sessionData['name'], sessionId || entry.occurrenceId),
+            description: asString(sessionData['description'], ''),
+            status: asString(sessionData['status'], 'scheduled'),
+            startDate: toIso(entry.data['date'] || sessionData['startTime'] || sessionData['startDate']),
+            siteId: asString(entry.data['siteId'] || sessionData['siteId'], ''),
+            rosterSource,
+            learners,
           };
         })
-      );
+        .sort((left, right) => {
+          const leftTime = left.startDate ? new Date(left.startDate).getTime() : Number.MAX_SAFE_INTEGER;
+          const rightTime = right.startDate ? new Date(right.startDate).getTime() : Number.MAX_SAFE_INTEGER;
+          return leftTime - rightTime;
+        });
 
-      const learnersSnap = results[1] as Awaited<ReturnType<typeof getDocs>>;
-      setLearners(
-        learnersSnap.docs.map((d) => ({
-          id: d.id,
-          displayName: asString((d.data() as Record<string, unknown>)['displayName'], d.id),
-        }))
-      );
+      setSessions(loadedSessions);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load today view.');
     } finally {
@@ -319,6 +468,19 @@ export default function EducatorTodayRenderer({ ctx }: CustomRouteRendererProps)
   useEffect(() => {
     void loadData();
   }, [loadData]);
+
+  useEffect(() => {
+    if (sessions.length === 0) {
+      setSelectedSessionOccurrenceId('');
+      return;
+    }
+    if (sessions.some((session) => session.occurrenceId === selectedSessionOccurrenceId)) {
+      return;
+    }
+    const preferredSession =
+      sessions.find((session) => session.status === 'in_progress') ?? sessions[0];
+    setSelectedSessionOccurrenceId(preferredSession.occurrenceId);
+  }, [sessions, selectedSessionOccurrenceId]);
 
   // Load review queue counts
   const loadQueueCounts = useCallback(async () => {
@@ -364,6 +526,18 @@ export default function EducatorTodayRenderer({ ctx }: CustomRouteRendererProps)
     setObservationOpen(true);
     trackInteraction('feature_discovered', { cta: 'quick_observation_opened' });
   };
+
+  const selectedSession =
+    sessions.find((session) => session.occurrenceId === selectedSessionOccurrenceId) ?? sessions[0] ?? null;
+  const quickObservationLearners = selectedSession?.learners ?? [];
+
+  useEffect(() => {
+    if (!selectedLearnerId) return;
+    if (quickObservationLearners.some((learner) => learner.id === selectedLearnerId)) return;
+    setObservationOpen(false);
+    setSelectedLearnerId(null);
+    setSelectedLearnerName('');
+  }, [quickObservationLearners, selectedLearnerId]);
 
   return (
     <section className="space-y-6" data-testid="educator-today">
@@ -493,8 +667,44 @@ export default function EducatorTodayRenderer({ ctx }: CustomRouteRendererProps)
               Quick Observation
             </h2>
             <p className="text-xs text-app-muted">
-              Capture a learner observation in under 10 seconds. Select a learner to begin.
+              Capture a learner observation in under 10 seconds from the live session roster.
             </p>
+
+            {sessions.length > 0 ? (
+              <label className="block space-y-1">
+                <span className="text-xs font-medium text-app-muted">Live session</span>
+                <select
+                  value={selectedSessionOccurrenceId}
+                  onChange={(event) => {
+                    setSelectedSessionOccurrenceId(event.target.value);
+                    setObservationOpen(false);
+                    setSelectedLearnerId(null);
+                    setSelectedLearnerName('');
+                  }}
+                  className="w-full rounded-md border border-app bg-app-canvas px-3 py-2 text-sm text-app-foreground"
+                  data-testid="quick-observation-session"
+                >
+                  {sessions.map((session) => (
+                    <option key={session.occurrenceId} value={session.occurrenceId}>
+                      {session.title} {session.startDate ? `• ${formatDate(session.startDate)}` : ''}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+
+            {selectedSession ? (
+              <div
+                className="rounded-lg border border-app bg-app-canvas px-3 py-2 text-xs text-app-muted"
+                data-testid="quick-observation-roster-source"
+              >
+                {selectedSession.rosterSource === 'attendance'
+                  ? 'Showing present learners from attendance for this session occurrence.'
+                  : selectedSession.rosterSource === 'enrollment'
+                    ? 'Attendance is not recorded yet. Showing the enrolled learner roster for this session.'
+                    : 'No enrolled learners were found for this session yet.'}
+              </div>
+            ) : null}
 
             {observationOpen && selectedLearnerId ? (
               <QuickEvidenceCapture
@@ -502,7 +712,7 @@ export default function EducatorTodayRenderer({ ctx }: CustomRouteRendererProps)
                 learnerName={selectedLearnerName}
                 educatorId={ctx.uid}
                 siteId={educatorSiteId}
-                sessionId={sessions.find((s) => s.status === 'active')?.id ?? sessions[0]?.id}
+                sessionOccurrenceId={selectedSession?.occurrenceId}
                 onSuccess={() => {
                   setObservationOpen(false);
                   setSelectedLearnerId(null);
@@ -517,12 +727,16 @@ export default function EducatorTodayRenderer({ ctx }: CustomRouteRendererProps)
               />
             ) : (
               <div className="flex flex-wrap gap-2">
-                {learners.length === 0 ? (
+                {!selectedSession ? (
                   <span className="text-xs text-app-muted">
-                    No learners found for this site.
+                    No live session occurrence found for today.
+                  </span>
+                ) : quickObservationLearners.length === 0 ? (
+                  <span className="text-xs text-app-muted">
+                    No learners are available for quick capture in this session yet.
                   </span>
                 ) : (
-                  learners.map((l) => (
+                  quickObservationLearners.map((l) => (
                     <button
                       key={l.id}
                       type="button"
@@ -551,7 +765,7 @@ export default function EducatorTodayRenderer({ ctx }: CustomRouteRendererProps)
               <ul className="space-y-2" data-testid="sessions-list">
                 {sessions.map((s) => (
                   <li
-                    key={s.id}
+                    key={s.occurrenceId}
                     className="flex items-center justify-between rounded-lg border border-app bg-app-surface p-3"
                   >
                     <div>
@@ -561,11 +775,20 @@ export default function EducatorTodayRenderer({ ctx }: CustomRouteRendererProps)
                       {s.description && (
                         <p className="text-xs text-app-muted mt-0.5">{s.description}</p>
                       )}
+                      <p className="mt-1 text-xs text-app-muted">
+                        {s.learners.length}{' '}
+                        {s.learners.length === 1 ? 'learner' : 'learners'} ready for quick capture
+                        {s.rosterSource === 'attendance'
+                          ? ' from attendance'
+                          : s.rosterSource === 'enrollment'
+                            ? ' from enrollment'
+                            : ''}
+                      </p>
                     </div>
                     <div className="flex items-center gap-2">
                       <span
                         className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                          s.status === 'active'
+                          s.status === 'in_progress'
                             ? 'bg-green-100 text-green-800'
                             : 'bg-gray-100 text-gray-600'
                         }`}

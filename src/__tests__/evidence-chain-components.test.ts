@@ -247,6 +247,7 @@ describe('EducatorTodayRenderer site context', () => {
   it('site-scopes today sessions, learner roster, and review queue counts', () => {
     expect(source).toContain("where('siteId', '==', educatorSiteId)");
     expect(source).toContain("where('siteIds', 'array-contains', educatorSiteId)");
+    expect(source).toContain("where('educatorId', '==', ctx.uid)");
     expect(source).toContain("where('status', 'in', ['submitted', 'pending_review'])");
   });
 
@@ -254,11 +255,34 @@ describe('EducatorTodayRenderer site context', () => {
     expect(source).toContain('siteId={educatorSiteId}');
   });
 
+  it('uses session occurrences, enrollments, and attendance records to build the live roster', () => {
+    expect(source).toContain("collection(firestore, 'sessionOccurrences')");
+    expect(source).toContain("collection(firestore, 'enrollments')");
+    expect(source).toContain("collection(firestore, 'attendanceRecords')");
+    expect(source).toContain("where('sessionOccurrenceId', 'in', ids)");
+    expect(source).toContain("where('status', '==', 'active')");
+  });
+
   it('requires capability linkage before creating portfolio-backed live evidence', () => {
     expect(source).toContain('Select a capability before flagging this observation as portfolio evidence.');
     expect(source).toContain('capabilityId: selectedCapabilityId || undefined');
     expect(source).toContain('evidenceRecordIds: [evidenceRef.id]');
     expect(source).not.toContain('evidenceRecordId: evidenceRef.id');
+  });
+
+  it('writes quick observations against sessionOccurrenceId instead of legacy sessionId', () => {
+    const addDocBlock = source.slice(
+      source.indexOf("await addDoc(collection(firestore, 'evidenceRecords')"),
+      source.indexOf('});', source.indexOf("await addDoc(collection(firestore, 'evidenceRecords')")) + 3
+    );
+    expect(addDocBlock).toContain('sessionOccurrenceId: sessionOccurrenceId || undefined');
+    expect(addDocBlock).not.toContain('sessionId: sessionId || null');
+  });
+
+  it('renders a live session selector and roster source banner for quick capture', () => {
+    expect(source).toContain('data-testid="quick-observation-session"');
+    expect(source).toContain('data-testid="quick-observation-roster-source"');
+    expect(source).toContain('Showing present learners from attendance for this session occurrence.');
   });
 
   it('shows an explicit no-site blocked state', () => {

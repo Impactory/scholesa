@@ -264,6 +264,9 @@ describe('Renderers delegate to real evidence components', () => {
     expect(source).toContain('siteId={educatorSiteId}');
     expect(source).toContain('quick-evidence-capability');
     expect(source).toContain('evidenceRecordIds: [evidenceRef.id]');
+    expect(source).toContain('sessionOccurrenceId={selectedSession?.occurrenceId}');
+    expect(source).toContain('data-testid="quick-observation-session"');
+    expect(source).toContain("collection(firestore, 'attendanceRecords')");
     expect(source).toContain('data-testid="educator-today-site-required"');
   });
 
