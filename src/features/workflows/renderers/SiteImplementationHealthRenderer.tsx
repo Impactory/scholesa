@@ -18,6 +18,7 @@ import {
   where,
 } from 'firebase/firestore';
 import { firestore } from '@/src/firebase/client-init';
+import { resolveActiveSiteId } from '@/src/lib/auth/activeSite';
 import type { CustomRouteRendererProps } from '../customRouteRenderers';
 import {
   ActivityIcon,
@@ -70,14 +71,18 @@ function healthScore(metrics: HealthMetrics): { score: number; label: string; co
 }
 
 export default function SiteImplementationHealthRenderer({ ctx }: CustomRouteRendererProps) {
-  const siteId = ctx.profile?.siteIds?.[0] || ctx.profile?.activeSiteId || '';
+  const siteId = resolveActiveSiteId(ctx.profile);
   const [metrics, setMetrics] = useState<HealthMetrics | null>(null);
   const [siteName, setSiteName] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const loadMetrics = useCallback(async () => {
-    if (!siteId) return;
+    if (!siteId) {
+      setMetrics(null);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
@@ -178,8 +183,19 @@ export default function SiteImplementationHealthRenderer({ ctx }: CustomRouteRen
   }, [siteId, ctx]);
 
   useEffect(() => {
-    loadMetrics();
+    void loadMetrics();
   }, [loadMetrics]);
+
+  if (!siteId) {
+    return (
+      <div
+        data-testid="site-implementation-site-required"
+        className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"
+      >
+        Select an active site before reviewing implementation health.
+      </div>
+    );
+  }
 
   if (!metrics) {
     return (

@@ -2,18 +2,16 @@
 
 /**
  * Parent Analytics Dashboard
- * 
- * Shows parents their child's/children's:
- * - Overall engagement and progress
- * - SDT scores
- * - Recent activities and achievements
- * - Upcoming goals and deadlines
- * - Educator feedback
+ *
+ * Provides secondary engagement and motivation signals for guardians.
+ * This panel is intentionally supplemental and should not be used as a
+ * substitute for evidence-backed capability, proof, or growth judgments.
  */
 
 import React, { useState, useEffect } from 'react';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { db } from '@/src/firebase/client-init';
+import { resolveActiveSiteId } from '@/src/lib/auth/activeSite';
 import { collection, query, where, getDocs, orderBy, limit, doc, getDoc } from 'firebase/firestore';
 import {
   UserIcon,
@@ -25,7 +23,6 @@ import {
   BellIcon
 } from 'lucide-react';
 import { usePageViewTracking } from '@/src/hooks/useTelemetry';
-import { CapabilityGuidancePanel } from '@/src/components/analytics/CapabilityGuidancePanel';
 
 interface ChildData {
   childId: string;
@@ -68,7 +65,7 @@ export function ParentAnalyticsDashboard() {
   const [selectedChild, setSelectedChild] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   
-  const siteId = profile?.activeSiteId || profile?.siteIds?.[0] || '';
+  const siteId = resolveActiveSiteId(profile) ?? '';
   const parentId = profile?.uid || '';
 
   const clampPercent = (value: number): number => {
@@ -80,7 +77,12 @@ export function ParentAnalyticsDashboard() {
   };
 
   useEffect(() => {
-    if (!parentId || !siteId) return;
+    if (!parentId || !siteId) {
+      setChildren([]);
+      setSelectedChild(null);
+      setLoading(false);
+      return;
+    }
     
     const fetchChildren = async () => {
       setLoading(true);
@@ -239,6 +241,17 @@ export function ParentAnalyticsDashboard() {
       </div>
     );
   }
+
+  if (!siteId) {
+    return (
+      <div
+        data-testid="parent-analytics-site-required"
+        className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"
+      >
+        Select an active site before viewing supplemental engagement signals.
+      </div>
+    );
+  }
   
   const currentChild = children.find(c => c.childId === selectedChild);
   
@@ -255,8 +268,11 @@ export function ParentAnalyticsDashboard() {
     <div className="space-y-6">
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-500 to-cyan-600 rounded-lg p-8 text-white">
-        <h1 className="text-3xl font-bold mb-2">Parent Dashboard</h1>
-        <p className="text-blue-100">Track your child's learning journey and celebrate their growth</p>
+        <h1 className="text-3xl font-bold mb-2">Supplemental Engagement Signals</h1>
+        <p className="text-blue-100">
+          These signals describe participation and motivation patterns. They do not replace
+          evidence-backed capability, proof, or growth judgments.
+        </p>
       </div>
       
       {/* Child Selector */}
@@ -311,7 +327,7 @@ export function ParentAnalyticsDashboard() {
         <div className="px-6 py-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
             <BookOpenIcon className="h-5 w-5" />
-            Recent Activities
+            Recent Participation Signals
           </h2>
         </div>
         <div className="divide-y divide-gray-100">
@@ -341,7 +357,7 @@ export function ParentAnalyticsDashboard() {
         <div className="px-6 py-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
             <TargetIcon className="h-5 w-5" />
-            Learning Goals
+            Goals in Progress
           </h2>
         </div>
         <div className="p-6 space-y-4">
@@ -375,7 +391,7 @@ export function ParentAnalyticsDashboard() {
         <div className="px-6 py-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
             <AwardIcon className="h-5 w-5" />
-            Recent Achievements
+            Recognitions &amp; Milestones
           </h2>
         </div>
         <div className="p-6">
@@ -426,26 +442,19 @@ export function ParentAnalyticsDashboard() {
           <div>
             <h3 className="font-semibold text-gray-900 mb-1">
               {currentChild.engagementScore == null && 'Engagement evidence unavailable'}
-              {currentChild.engagementScore != null && currentChild.engagementScore >= 70 && '🎉 Your child is thriving!'}
-              {currentChild.engagementScore != null && currentChild.engagementScore >= 40 && currentChild.engagementScore < 70 && '👍 Good progress'}
-              {currentChild.engagementScore != null && currentChild.engagementScore < 40 && '💪 Needs encouragement'}
+              {currentChild.engagementScore != null && currentChild.engagementScore >= 70 && 'High recent engagement signal'}
+              {currentChild.engagementScore != null && currentChild.engagementScore >= 40 && currentChild.engagementScore < 70 && 'Mixed recent engagement signal'}
+              {currentChild.engagementScore != null && currentChild.engagementScore < 40 && 'Low recent engagement signal'}
             </h3>
             <p className="text-sm text-gray-700">
               {currentChild.engagementScore == null && 'Scholesa does not have enough verified analytics for a trustworthy engagement summary yet.'}
-              {currentChild.engagementScore != null && currentChild.engagementScore >= 70 && 'They are highly engaged and making excellent progress. Keep celebrating their wins!'}
-              {currentChild.engagementScore != null && currentChild.engagementScore >= 40 && currentChild.engagementScore < 70 && 'They are on the right track. Consider encouraging them to set new goals.'}
-              {currentChild.engagementScore != null && currentChild.engagementScore < 40 && 'They may need extra support. Talk to them about their interests and what they enjoy learning.'}
+              {currentChild.engagementScore != null && currentChild.engagementScore >= 70 && 'Recent participation looks strong. Use the capability and proof sections above for evidence-backed learning claims.'}
+              {currentChild.engagementScore != null && currentChild.engagementScore >= 40 && currentChild.engagementScore < 70 && 'Participation is mixed right now. This is a support signal, not a mastery judgment.'}
+              {currentChild.engagementScore != null && currentChild.engagementScore < 40 && 'Participation looks low right now. Treat this as a prompt to check in, not as evidence that capability growth is weak.'}
             </p>
           </div>
         </div>
       </div>
-      
-      {/* Capability Growth Guidance */}
-      <CapabilityGuidancePanel
-        learnerId={currentChild.childId}
-        siteId={siteId}
-        learnerName={currentChild.childName}
-      />
     </div>
   );
 }

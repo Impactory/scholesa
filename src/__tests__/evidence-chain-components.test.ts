@@ -96,6 +96,32 @@ describe('ProofOfLearningVerification site context', () => {
   });
 });
 
+/* ───── EducatorEvidenceReviewRenderer site context ───── */
+
+describe('EducatorEvidenceReviewRenderer site context', () => {
+  const source = readSrcFile(
+    'features',
+    'workflows',
+    'renderers',
+    'EducatorEvidenceReviewRenderer.tsx'
+  );
+
+  it('resolves site context through the shared active-site helper', () => {
+    expect(source).toContain('resolveActiveSiteId');
+    expect(source).not.toContain('const educatorSiteId = ctx.profile?.studioId || ctx.profile?.siteIds?.[0] || \'\';');
+  });
+
+  it('uses the resolved active site for rubric lookup and apply fallbacks', () => {
+    expect(source).toContain('const siteId = mission?.siteId || educatorSiteId;');
+    expect(source).not.toContain("ctx.profile?.siteIds?.[0] || ''");
+  });
+
+  it('shows an explicit no-site blocked state', () => {
+    expect(source).toContain('data-testid="educator-review-site-required"');
+    expect(source).toContain('Select an active site before reviewing learner evidence and applying rubric decisions.');
+  });
+});
+
 /* ───── LearnerEvidenceSubmission ───── */
 
 describe('LearnerEvidenceSubmission component', () => {
@@ -253,6 +279,31 @@ describe('CapabilityGuidancePanel guardian interpretation', () => {
   });
 });
 
+/* ───── ParentAnalyticsDashboard guardian honesty ───── */
+
+describe('ParentAnalyticsDashboard guardian honesty', () => {
+  const source = readSrcFile('components', 'analytics', 'ParentAnalyticsDashboard.tsx');
+
+  it('uses shared active-site resolution', () => {
+    expect(source).toContain('resolveActiveSiteId');
+  });
+
+  it('shows an explicit no-site blocked state', () => {
+    expect(source).toContain('data-testid="parent-analytics-site-required"');
+    expect(source).toContain('Select an active site before viewing supplemental engagement signals.');
+  });
+
+  it('frames engagement as secondary to evidence-backed capability judgments', () => {
+    expect(source).toContain('These signals describe participation and motivation patterns.');
+    expect(source).toContain('They do not replace');
+    expect(source).toContain('evidence-backed capability, proof, or growth judgments.');
+  });
+
+  it('does not embed CapabilityGuidancePanel inside the engagement panel', () => {
+    expect(source).not.toContain('CapabilityGuidancePanel');
+  });
+});
+
 /* ───── verifyProofOfLearning callable ───── */
 
 describe('verifyProofOfLearning callable', () => {
@@ -358,9 +409,18 @@ describe('SiteEvidenceHealthDashboard school health view', () => {
     expect(source.length).toBeGreaterThan(200);
   });
 
+  it('resolves site context through the shared active-site helper', () => {
+    expect(source).toContain('resolveActiveSiteId');
+    expect(source).not.toContain('const siteId = profile?.activeSiteId ?? profile?.studioId ?? null;');
+  });
+
   it('queries evidence records by site and period', () => {
     expect(source).toContain('evidenceRecordsCollection');
     expect(source).toContain("where('siteId', '==', siteId)");
+  });
+
+  it('queries learners and educators by canonical site membership', () => {
+    expect(source).toContain("where('siteIds', 'array-contains', siteId)");
   });
 
   it('calculates learner coverage', () => {
@@ -382,6 +442,11 @@ describe('SiteEvidenceHealthDashboard school health view', () => {
 
   it('alerts on low coverage', () => {
     expect(source).toContain('data-testid="evidence-health-alert"');
+  });
+
+  it('shows an explicit no-site blocked state', () => {
+    expect(source).toContain('data-testid="evidence-health-site-required"');
+    expect(source).toContain('Select an active site before reviewing school evidence health.');
   });
 
   it('uses RoleRouteGuard for site/hq access', () => {

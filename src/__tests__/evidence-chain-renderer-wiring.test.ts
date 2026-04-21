@@ -200,10 +200,26 @@ describe('Renderers delegate to real evidence components', () => {
     const source = readSrcFile(
       'features', 'workflows', 'renderers', 'SiteImplementationHealthRenderer.tsx'
     );
+    expect(source).toContain('resolveActiveSiteId');
     expect(source).toContain('rubricApplications');
     expect(source).toContain('evidenceRecords');
     expect(source).toContain('capabilityGrowthEvents');
     expect(source).toContain('proofOfLearningBundles');
+    expect(source).toContain('data-testid="site-implementation-site-required"');
+  });
+
+  it('GuardianCapabilityViewRenderer normalizes the parent bundle contract and quarantines engagement signals', () => {
+    const source = readSrcFile(
+      'features', 'workflows', 'renderers', 'GuardianCapabilityViewRenderer.tsx'
+    );
+    expect(source).toContain('normalizeLearnerSummary');
+    expect(source).toContain('learnerName');
+    expect(source).toContain('capabilitySnapshot');
+    expect(source).toContain('pillarProgress');
+    expect(source).toContain('portfolioItemsPreview');
+    expect(source).toContain('updatedCapabilityCount');
+    expect(source).toContain('Supplemental engagement signals');
+    expect(source).toContain('do not replace the evidence-backed capability');
   });
 });
 
@@ -213,6 +229,12 @@ describe('EducatorEvidenceReviewRenderer capability growth write path', () => {
   const source = readSrcFile(
     'features', 'workflows', 'renderers', 'EducatorEvidenceReviewRenderer.tsx'
   );
+
+  it('uses canonical active-site resolution and honest blocked state', () => {
+    expect(source).toContain('resolveActiveSiteId');
+    expect(source).toContain('data-testid="educator-review-site-required"');
+    expect(source).toContain('Select an active site before reviewing learner evidence and applying rubric decisions.');
+  });
 
   it('writes to rubricApplications', () => {
     expect(source).toContain('rubricApplications');

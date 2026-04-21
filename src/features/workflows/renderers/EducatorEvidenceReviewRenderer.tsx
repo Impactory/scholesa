@@ -20,6 +20,7 @@ import { firestore, functions } from '@/src/firebase/client-init';
 import { rubricTemplatesCollection, portfolioItemsCollection } from '@/src/firebase/firestore/collections';
 import { Spinner } from '@/src/components/ui/Spinner';
 import { useInteractionTracking } from '@/src/hooks/useTelemetry';
+import { resolveActiveSiteId } from '@/src/lib/auth/activeSite';
 import {
   RubricManager,
   type AssessmentRubric,
@@ -209,11 +210,17 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
   const [portfolioLoading, setPortfolioLoading] = useState(false);
   const [portfolioSaving, setPortfolioSaving] = useState<string | null>(null);
 
-  const educatorSiteId = ctx.profile?.studioId || ctx.profile?.siteIds?.[0] || '';
+  const educatorSiteId = resolveActiveSiteId(ctx.profile) ?? '';
 
   // ---- Data loading ----
   const loadAttempts = useCallback(async () => {
-    if (!educatorSiteId) return;
+    if (!educatorSiteId) {
+      setAttempts([]);
+      setLearners({});
+      setMissions({});
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -355,7 +362,11 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
 
   // ---- Checkpoint loading ----
   const loadCheckpoints = useCallback(async () => {
-    if (!educatorSiteId) return;
+    if (!educatorSiteId) {
+      setCheckpoints([]);
+      setCheckpointLoading(false);
+      return;
+    }
     setCheckpointLoading(true);
     try {
       const snap = await getDocs(
@@ -395,7 +406,11 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
 
   // ---- Portfolio items loading (artifacts & reflections not linked to missionAttempts) ----
   const loadPortfolioQueue = useCallback(async () => {
-    if (!educatorSiteId) return;
+    if (!educatorSiteId) {
+      setPortfolioQueue([]);
+      setPortfolioLoading(false);
+      return;
+    }
     setPortfolioLoading(true);
     try {
       const snap = await getDocs(
@@ -526,7 +541,7 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
       setActiveHqTemplate(null);
       try {
         const mission = missions[attempt.missionId];
-        const siteId = mission?.siteId || ctx.profile?.siteIds?.[0] || '';
+        const siteId = mission?.siteId || educatorSiteId;
         const capabilityId = attempt.capabilityId || mission?.capabilityId || null;
 
         // 1. Try HQ rubricTemplates (the real source created by Admin-HQ)
@@ -598,7 +613,7 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
         setRubricLoading(false);
       }
     },
-    [missions, ctx.profile?.siteIds]
+    [missions, educatorSiteId]
   );
 
   // ---- Apply rubric ----
@@ -608,7 +623,13 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
     try {
       const capabilityId =
         attempt.capabilityId || missions[attempt.missionId]?.capabilityId || null;
-      const siteId = missions[attempt.missionId]?.siteId || ctx.profile?.siteIds?.[0] || '';
+      const siteId = missions[attempt.missionId]?.siteId || educatorSiteId;
+
+      if (!siteId) {
+        setError('Select an active site before reviewing evidence.');
+        setSaving(null);
+        return;
+      }
 
       // Build scores array for the callable
       let callableScores: { criterionId: string; capabilityId: string; processDomainId?: string; pillarCode: string; score: number; maxScore: number }[];
@@ -823,12 +844,11 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
       {!educatorSiteId ? (
         <div
           className="rounded-xl border border-amber-200 bg-amber-50 p-8 text-center text-sm text-amber-900"
-          data-testid="no-site-state"
+          data-testid="educator-review-site-required"
         >
-          <p className="font-semibold">No site assigned</p>
+          <p className="font-semibold">Active site required</p>
           <p className="mt-1 text-amber-700">
-            Your account is not linked to a site yet. Ask your Admin-School to assign you so you can
-            review learner evidence.
+            Select an active site before reviewing learner evidence and applying rubric decisions.
           </p>
         </div>
       ) : loading ? (

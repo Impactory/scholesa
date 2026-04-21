@@ -86,8 +86,8 @@ interface PassportClaim {
 interface LearnerSummary {
   learnerId: string;
   name: string;
-  currentLevelBand: 'strong' | 'developing' | 'emerging';
-  attendanceRate: number;
+  currentLevelBand: 'strong' | 'developing' | 'emerging' | 'not-yet-assessed';
+  attendanceRate: number | null;
   pillars: PillarProgress[];
   growthTimeline: GrowthEvent[];
   portfolioHighlights: PortfolioItem[];
@@ -110,7 +110,7 @@ interface LearnerSummary {
 }
 
 interface ParentDashboardBundle {
-  learners: LearnerSummary[];
+  learners: Array<Record<string, unknown>>;
 }
 
 // ---------------------------------------------------------------------------
@@ -121,6 +121,7 @@ const LEVEL_BAND_CONFIG: Record<string, { label: string; className: string }> = 
   strong: { label: 'Strong', className: 'bg-green-100 text-green-800' },
   developing: { label: 'Developing', className: 'bg-yellow-100 text-yellow-800' },
   emerging: { label: 'Emerging', className: 'bg-orange-100 text-orange-800' },
+  'not-yet-assessed': { label: 'Not yet assessed', className: 'bg-gray-100 text-gray-600' },
 };
 
 const PROOF_STATUS_CONFIG: Record<string, { label: string; className: string }> = {
@@ -165,6 +166,237 @@ function formatDate(iso: string): string {
   } catch {
     return iso;
   }
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+function asString(value: unknown, fallback = ''): string {
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : fallback;
+}
+
+function asNumber(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+function asStringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((entry): entry is string => typeof entry === 'string' && entry.trim().length > 0).map((entry) => entry.trim())
+    : [];
+}
+
+function toLevelBand(value: number | null): LearnerSummary['currentLevelBand'] {
+  if (value == null) return 'not-yet-assessed';
+  if (value >= 0.75) return 'strong';
+  if (value >= 0.45) return 'developing';
+  return 'emerging';
+}
+
+function toBandLabel(value: number | null): string {
+  return LEVEL_BAND_CONFIG[toLevelBand(value)].label;
+}
+
+function toPercent(value: number | null): number {
+  if (value == null) return 0;
+  return Math.max(0, Math.min(100, Math.round(value * 100)));
+}
+
+function normalizeProofStatus(value: unknown): GrowthEvent['proofStatus'] {
+  return value === 'verified' || value === 'partial' || value === 'missing'
+    ? value
+    : 'missing';
+}
+
+function normalizeVerificationStatus(value: unknown): PortfolioItem['verificationStatus'] {
+  if (value === 'verified' || value === 'reviewed') return 'verified';
+  if (value === 'pending' || value === 'captured') return 'pending';
+  return 'unverified';
+}
+
+function normalizeAiDisclosure(value: unknown): PortfolioItem['aiDisclosure'] {
+  const normalized = asString(value, 'not-available');
+  return [
+    'none',
+    'assisted',
+    'generated',
+    'learner-ai-not-used',
+    'learner-ai-verified',
+    'learner-ai-verification-gap',
+    'educator-feedback-ai',
+    'no-learner-ai-signal',
+    'not-available',
+  ].includes(normalized)
+    ? (normalized as PortfolioItem['aiDisclosure'])
+    : 'not-available';
+}
+
+function normalizeLearnerBand(summary: Record<string, unknown>): LearnerSummary['currentLevelBand'] {
+  const capabilitySnapshot = asRecord(summary.capabilitySnapshot);
+  const band = asString(capabilitySnapshot?.band);
+  if (
+    band === 'strong' ||
+    band === 'developing' ||
+    band === 'emerging'
+  ) {
+    return band;
+  }
+  return toLevelBand(asNumber(capabilitySnapshot?.overall));
+}
+
+function formatLevel(value: unknown): string {
+  const numeric = asNumber(value);
+  return numeric != null && numeric > 0 ? `Level ${numeric}/4` : 'Not yet assessed';
+}
+
+function normalizePillarProgress(summary: Record<string, unknown>): PillarProgress[] {
+  const pillarProgress = asRecord(summary.pillarProgress) ?? {};
+  const capabilitySnapshot = asRecord(summary.capabilitySnapshot) ?? {};
+  const familyLabels = asRecord(capabilitySnapshot.familyLabels) ?? {};
+  const pillars: Array<{ key: 'futureSkills' | 'leadership' | 'impact'; pillarCode: PillarProgress['pillarCode'] }> = [
+    { key: 'futureSkills', pillarCode: 'FUTURE_SKILLS' },
+    { key: 'leadership', pillarCode: 'LEADERSHIP_AGENCY' },
+    { key: 'impact', pillarCode: 'IMPACT_INNOVATION' },
+  ];
+
+  return pillars.map(({ key, pillarCode }) => {
+    const ratio = asNumber(pillarProgress[key]);
+    return {
+      pillarCode,
+      label: asString(familyLabels[key], pillarCode),
+      percent: toPercent(ratio),
+      bandLabel: toBandLabel(ratio),
+    };
+  });
+}
+
+function normalizeGrowthTimeline(summary: Record<string, unknown>): GrowthEvent[] {
+  const growthTimeline = Array.isArray(summary.growthTimeline) ? summary.growthTimeline : [];
+  return growthTimeline
+    .map((entry, index) => {
+      const row = asRecord(entry);
+      if (!row) return null;
+      const capabilityTitle = asString(row.title, asString(row.capabilityId, `Capability ${index + 1}`));
+      return {
+        id: asString(row.capabilityId, capabilityTitle) + ':' + asString(row.occurredAt, String(index)),
+        capabilityTitle,
+        levelAchieved: formatLevel(row.level),
+        educatorName: asString(row.reviewingEducatorName, 'Educator review pending'),
+        date: asString(row.occurredAt),
+        proofStatus: normalizeProofStatus(row.proofOfLearningStatus),
+      };
+    })
+    .filter((entry): entry is GrowthEvent => entry !== null);
+}
+
+function normalizePortfolioHighlights(summary: Record<string, unknown>): PortfolioItem[] {
+  const previewRows = Array.isArray(summary.portfolioItemsPreview) ? summary.portfolioItemsPreview : [];
+  const normalized: PortfolioItem[] = [];
+  previewRows.forEach((entry, index) => {
+    const row = asRecord(entry);
+    if (!row) return;
+    const rubricRawScore = asNumber(row.rubricRawScore);
+    const rubricMaxScore = asNumber(row.rubricMaxScore);
+    const rubricLevel = asNumber(row.rubricLevel);
+    normalized.push({
+      id: asString(row.id, `portfolio-item-${index + 1}`),
+      title: asString(row.title, 'Portfolio artifact'),
+      source: asString(row.source) || null,
+      verificationStatus: normalizeVerificationStatus(row.verificationStatus),
+      aiDisclosure: normalizeAiDisclosure(row.aiDisclosureStatus),
+      proofDetails: {
+        explainItBack: row.proofHasExplainItBack === true,
+        oralCheck: row.proofHasOralCheck === true,
+        miniRebuild: row.proofHasMiniRebuild === true,
+        explainItBackExcerpt: asString(row.proofExplainItBackExcerpt) || undefined,
+        oralCheckExcerpt: asString(row.proofOralCheckExcerpt) || undefined,
+        miniRebuildExcerpt: asString(row.proofMiniRebuildExcerpt) || undefined,
+        educatorVerifierName: asString(row.reviewingEducatorName) || undefined,
+      },
+      evidenceCount: asStringArray(row.evidenceRecordIds).length || undefined,
+      rubricScore:
+        rubricRawScore != null && rubricMaxScore != null
+          ? {
+              raw: rubricRawScore,
+              max: rubricMaxScore,
+              level: rubricLevel != null ? `Level ${rubricLevel}/4` : 'Scored',
+            }
+          : null,
+    });
+  });
+  return normalized;
+}
+
+function normalizeIdeationPassport(summary: Record<string, unknown>): IdeationPassportSummary | null {
+  const ideationPassport = asRecord(summary.ideationPassport);
+  if (!ideationPassport) return null;
+  const claims = Array.isArray(ideationPassport.claims) ? ideationPassport.claims : [];
+  const normalizedClaims: PassportClaim[] = [];
+  claims.forEach((entry) => {
+    const row = asRecord(entry);
+    if (!row) return;
+    normalizedClaims.push({
+      capabilityId: asString(row.capabilityId),
+      capabilityTitle: asString(row.title, asString(row.capabilityId, 'Capability')),
+      pillarCode: asString(row.pillar),
+      level: formatLevel(row.latestLevel),
+      evidenceCount: asNumber(row.evidenceCount) ?? 0,
+      proofStatus: normalizeProofStatus(row.proofOfLearningStatus),
+      aiDisclosureStatus: asString(row.aiDisclosureStatus, 'not-available'),
+      reviewerName: asString(row.reviewingEducatorName) || undefined,
+    });
+  });
+  return {
+    missionCount: asNumber(ideationPassport.completedMissions) ?? asNumber(ideationPassport.missionAttempts) ?? 0,
+    reflectionsCount: asNumber(ideationPassport.reflectionsSubmitted) ?? 0,
+    capabilityClaimsCount: normalizedClaims.length,
+    summaryText: asString(ideationPassport.summary),
+    claims: normalizedClaims,
+  };
+}
+
+function normalizeLearnerSummary(summary: Record<string, unknown>): LearnerSummary {
+  const capabilitySnapshot = asRecord(summary.capabilitySnapshot) ?? {};
+  const growthSummary = asRecord(summary.growthSummary);
+  const portfolioSnapshot = asRecord(summary.portfolioSnapshot);
+  const evidenceSummary = asRecord(summary.evidenceSummary);
+
+  return {
+    learnerId: asString(summary.learnerId),
+    name: asString(summary.learnerName, 'Learner'),
+    currentLevelBand: normalizeLearnerBand(summary),
+    attendanceRate: asNumber(summary.attendanceRate),
+    pillars: normalizePillarProgress(summary),
+    growthTimeline: normalizeGrowthTimeline(summary),
+    portfolioHighlights: normalizePortfolioHighlights(summary),
+    ideationPassport: normalizeIdeationPassport(summary),
+    evidenceSummary: evidenceSummary
+      ? {
+          recordCount: asNumber(evidenceSummary.recordCount) ?? 0,
+          reviewedCount: asNumber(evidenceSummary.reviewedCount) ?? 0,
+          portfolioLinkedCount: asNumber(evidenceSummary.portfolioLinkedCount) ?? 0,
+        }
+      : undefined,
+    growthSummary: growthSummary
+      ? {
+          capabilityCount: asNumber(growthSummary.capabilityCount) ?? 0,
+          updatedCount: asNumber(growthSummary.updatedCapabilityCount) ?? 0,
+          averageLevel: asNumber(growthSummary.averageLevel) ?? 0,
+        }
+      : undefined,
+    portfolioSnapshot: portfolioSnapshot
+      ? {
+          artifactCount: asNumber(portfolioSnapshot.artifactCount) ?? 0,
+          verifiedCount:
+            asNumber(portfolioSnapshot.verifiedArtifactCount) ??
+            asNumber(portfolioSnapshot.publishedArtifactCount) ??
+            0,
+          badgeCount: asNumber(portfolioSnapshot.badgeCount) ?? 0,
+        }
+      : undefined,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -245,7 +477,7 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
       const result = await callable({ parentId: ctx.uid });
       const bundle = result.data;
 
-      setLearners(bundle.learners ?? []);
+      setLearners((bundle.learners ?? []).map(normalizeLearnerSummary));
       trackInteraction('feature_discovered', { cta: 'guardian_capability_view_loaded' });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to load your family dashboard.');
@@ -342,9 +574,13 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
               <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${band.className}`}>
                 {band.label}
               </span>
-              <span className="text-sm text-app-muted">
-                Attendance: {Math.round(learner.attendanceRate * 100)}%
-              </span>
+              {learner.attendanceRate != null ? (
+                <span className="text-sm text-app-muted">
+                  Attendance: {Math.round(learner.attendanceRate * 100)}%
+                </span>
+              ) : (
+                <span className="text-sm text-app-muted">Attendance evidence unavailable</span>
+              )}
             </div>
 
             {/* ---- Capability Snapshot ---- */}
@@ -647,8 +883,12 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
           data-testid="parent-analytics-section"
         >
           <h2 className="mb-3 text-sm font-semibold text-app-foreground">
-            Engagement &amp; motivation insights
+            Supplemental engagement signals
           </h2>
+          <p className="mb-3 text-xs text-app-muted">
+            These participation and motivation signals do not replace the evidence-backed capability,
+            proof, and growth judgments shown above.
+          </p>
           <ParentAnalyticsDashboard />
         </div>
       )}

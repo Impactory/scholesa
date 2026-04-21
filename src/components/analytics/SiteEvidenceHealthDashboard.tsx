@@ -7,6 +7,7 @@ import {
   evidenceRecordsCollection,
   usersCollection,
 } from '@/src/firebase/firestore/collections';
+import { resolveActiveSiteId } from '@/src/lib/auth/activeSite';
 import { RoleRouteGuard } from '@/src/components/auth/RoleRouteGuard';
 import { Spinner } from '@/src/components/ui/Spinner';
 
@@ -44,13 +45,18 @@ function HealthCard({ label, value, sub }: { label: string; value: string; sub?:
 
 export function SiteEvidenceHealthDashboard() {
   const { profile, loading: authLoading } = useAuthContext();
-  const siteId = profile?.activeSiteId ?? profile?.studioId ?? null;
+  const siteId = resolveActiveSiteId(profile);
   const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState<HealthMetrics | null>(null);
   const [period, setPeriod] = useState<'week' | 'month'>('week');
 
   const loadMetrics = useCallback(async () => {
-    if (!siteId) return;
+    if (!siteId) {
+      setMetrics(null);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -63,7 +69,14 @@ export function SiteEvidenceHealthDashboard() {
       }
       periodStart.setHours(0, 0, 0, 0);
 
-      const [learnerSnap, evidenceSnap] = await Promise.all([
+      const [siteLearnerSnap, legacyLearnerSnap, evidenceSnap] = await Promise.all([
+        getDocs(
+          query(
+            usersCollection,
+            where('siteIds', 'array-contains', siteId),
+            where('role', '==', 'learner')
+          )
+        ),
         getDocs(
           query(
             usersCollection,
@@ -81,20 +94,51 @@ export function SiteEvidenceHealthDashboard() {
       ]);
 
       // Also load educators for name resolution
-      const educatorSnap = await getDocs(
-        query(
-          usersCollection,
-          where('studioId', '==', siteId),
-          where('role', '==', 'educator')
-        )
-      );
+      const [siteEducatorSnap, legacyEducatorSnap] = await Promise.all([
+        getDocs(
+          query(
+            usersCollection,
+            where('siteIds', 'array-contains', siteId),
+            where('role', '==', 'educator')
+          )
+        ),
+        getDocs(
+          query(
+            usersCollection,
+            where('studioId', '==', siteId),
+            where('role', '==', 'educator')
+          )
+        ),
+      ]);
 
-      const educatorNames = new Map<string, string>();
-      for (const d of educatorSnap.docs) {
-        educatorNames.set(d.data().uid, d.data().displayName ?? d.data().uid);
+      const learnerMap = new Map<string, string>();
+      for (const learnerSnap of [siteLearnerSnap, legacyLearnerSnap]) {
+        for (const learnerDoc of learnerSnap.docs) {
+          const data = learnerDoc.data();
+          const uid = typeof data.uid === 'string' && data.uid.trim().length > 0 ? data.uid : learnerDoc.id;
+          if (!learnerMap.has(uid)) {
+            learnerMap.set(uid, uid);
+          }
+        }
       }
 
-      const totalLearners = learnerSnap.size;
+      const educatorNames = new Map<string, string>();
+      for (const educatorSnap of [siteEducatorSnap, legacyEducatorSnap]) {
+        for (const d of educatorSnap.docs) {
+          const data = d.data();
+          const uid = typeof data.uid === 'string' && data.uid.trim().length > 0 ? data.uid : d.id;
+          if (!educatorNames.has(uid)) {
+            educatorNames.set(
+              uid,
+              typeof data.displayName === 'string' && data.displayName.trim().length > 0
+                ? data.displayName
+                : uid,
+            );
+          }
+        }
+      }
+
+      const totalLearners = learnerMap.size;
       const totalEvidence = evidenceSnap.size;
 
       // Aggregate per-educator and per-learner metrics
@@ -156,6 +200,19 @@ export function SiteEvidenceHealthDashboard() {
       <div className="flex items-center justify-center py-12">
         <Spinner />
       </div>
+    );
+  }
+
+  if (!siteId) {
+    return (
+      <RoleRouteGuard allowedRoles={['site', 'hq']}>
+        <section
+          data-testid="evidence-health-site-required"
+          className="mx-auto max-w-4xl rounded-xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-900"
+        >
+          Select an active site before reviewing school evidence health.
+        </section>
+      </RoleRouteGuard>
     );
   }
 
