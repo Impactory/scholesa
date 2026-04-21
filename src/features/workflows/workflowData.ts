@@ -24,6 +24,7 @@ import { firestore, functions } from '@/src/firebase/client-init';
 import type { UserProfile, UserRole } from '@/src/types/user';
 import type { WorkflowPath } from '@/src/lib/routing/workflowRoutes';
 import { loadCapabilitiesForSite, resolveCapabilityTitles } from '@/src/lib/capabilities/useCapabilities';
+import { resolveActiveSiteId } from '@/src/lib/auth/activeSite';
 
 async function loadE2EWorkflowBackend() {
   return import('@/src/testing/e2e/fakeWebBackend');
@@ -177,7 +178,7 @@ function canonicalizeFeatureFlagRow(row: Record<string, unknown>): Record<string
 }
 
 function activeSiteId(profile: UserProfile | null): string | null {
-  return profile?.activeSiteId || profile?.siteIds?.[0] || null;
+  return resolveActiveSiteId(profile);
 }
 
 function requireActiveSiteWorkflowContext(ctx: WorkflowContext): string {

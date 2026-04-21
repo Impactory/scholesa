@@ -251,6 +251,32 @@ describe('EvidenceRecord schema supports session linking', () => {
   });
 });
 
+/* ───── HQ capability framework site context ───── */
+
+describe('HQ capability framework site context', () => {
+  const editorSource = readSrcFile('components', 'capabilities', 'CapabilityFrameworkEditor.tsx');
+  const hqRendererSource = readSrcFile('features', 'workflows', 'renderers', 'HqCapabilityFrameworkRenderer.tsx');
+  const rubricRendererSource = readSrcFile('features', 'workflows', 'renderers', 'HqRubricBuilderRenderer.tsx');
+
+  it('resolves site context through the shared active-site helper', () => {
+    expect(editorSource).toContain('resolveActiveSiteId');
+    expect(editorSource).not.toContain('const siteId = profile?.studioId ?? null;');
+  });
+
+  it('shows an explicit blocked state when no site is selected', () => {
+    expect(editorSource).toContain('data-testid="hq-framework-site-required"');
+    expect(editorSource).toContain('Select an active site before editing capabilities');
+  });
+
+  it('passes route site context into the HQ framework renderer', () => {
+    expect(hqRendererSource).toContain('siteId={resolveActiveSiteId(ctx.profile)}');
+  });
+
+  it('passes route site context into the HQ rubric renderer', () => {
+    expect(rubricRendererSource).toContain('siteId={resolveActiveSiteId(ctx.profile)}');
+  });
+});
+
 /* ───── SiteEvidenceHealthDashboard ───── */
 
 describe('SiteEvidenceHealthDashboard school health view', () => {

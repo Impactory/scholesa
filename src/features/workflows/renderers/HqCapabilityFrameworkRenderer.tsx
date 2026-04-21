@@ -12,10 +12,11 @@
  */
 
 import { CapabilityFrameworkEditor } from '@/src/components/capabilities/CapabilityFrameworkEditor';
+import { resolveActiveSiteId } from '@/src/lib/auth/activeSite';
 import type { CustomRouteRendererProps } from '../customRouteRenderers';
 
-export function HqCapabilityFrameworkRenderer(_props: CustomRouteRendererProps) {
-  return <CapabilityFrameworkEditor initialTab="capabilities" />;
+export function HqCapabilityFrameworkRenderer({ ctx }: CustomRouteRendererProps) {
+  return <CapabilityFrameworkEditor initialTab="capabilities" siteId={resolveActiveSiteId(ctx.profile)} />;
 }
 
 export default HqCapabilityFrameworkRenderer;

@@ -19,6 +19,7 @@ import {
   rubricTemplatesCollection,
   processDomainsCollection,
 } from '@/src/firebase/firestore/collections';
+import { resolveActiveSiteId } from '@/src/lib/auth/activeSite';
 import { getLegacyPillarFamilyLabel } from '@/src/lib/curriculum/architecture';
 import type { Mission } from '@/src/types/schema';
 import { invalidateCapabilityCache } from '@/src/lib/capabilities/useCapabilities';
@@ -100,11 +101,12 @@ const EMPTY_RUBRIC_FORM: RubricTemplateFormData = {
 
 interface CapabilityFrameworkEditorProps {
   initialTab?: TabKey;
+  siteId?: string | null;
 }
 
-export function CapabilityFrameworkEditor({ initialTab }: CapabilityFrameworkEditorProps = {}) {
+export function CapabilityFrameworkEditor({ initialTab, siteId }: CapabilityFrameworkEditorProps = {}) {
   const { user, profile, loading: authLoading } = useAuthContext();
-  const siteId = profile?.studioId ?? null;
+  const resolvedSiteId = useMemo(() => siteId || resolveActiveSiteId(profile), [siteId, profile]);
 
   const [capabilities, setCapabilities] = useState<Capability[]>([]);
   const [missions, setMissions] = useState<Mission[]>([]);
@@ -126,13 +128,20 @@ export function CapabilityFrameworkEditor({ initialTab }: CapabilityFrameworkEdi
   /* ───── Data Loading ───── */
 
   const loadData = useCallback(async () => {
-    if (!siteId) return;
-    setLoading(true);
     setErrorMessage(null);
+    if (!resolvedSiteId) {
+      setCapabilities([]);
+      setRubricTemplates([]);
+      setMissions([]);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
     try {
       const [capSnap, rubSnap, missionSnap] = await Promise.all([
-        getDocs(query(capabilitiesCollection, where('siteId', '==', siteId), orderBy('pillarCode'), orderBy('sortOrder'))),
-        getDocs(query(rubricTemplatesCollection, where('siteId', '==', siteId), orderBy('updatedAt', 'desc'))),
+        getDocs(query(capabilitiesCollection, where('siteId', '==', resolvedSiteId), orderBy('pillarCode'), orderBy('sortOrder'))),
+        getDocs(query(rubricTemplatesCollection, where('siteId', '==', resolvedSiteId), orderBy('updatedAt', 'desc'))),
         getDocs(query(missionsCollection, orderBy('order'))),
       ]);
       setCapabilities(capSnap.docs.map((d) => ({ ...d.data(), id: d.id }) as Capability));
@@ -144,11 +153,12 @@ export function CapabilityFrameworkEditor({ initialTab }: CapabilityFrameworkEdi
     } finally {
       setLoading(false);
     }
-  }, [siteId]);
+  }, [resolvedSiteId]);
 
   useEffect(() => {
-    if (siteId) loadData();
-  }, [siteId, loadData]);
+    if (authLoading) return;
+    void loadData();
+  }, [authLoading, loadData]);
 
   /* ───── Filtered data ───── */
 
@@ -185,6 +195,18 @@ export function CapabilityFrameworkEditor({ initialTab }: CapabilityFrameworkEdi
     setTimeout(() => setErrorMessage(null), 5000);
   }, []);
 
+  const requireSiteContext = useCallback(
+    (actionLabel: string): string | null => {
+      if (resolvedSiteId) {
+        return resolvedSiteId;
+      }
+
+      flashError(`Select an active site before ${actionLabel}.`);
+      return null;
+    },
+    [resolvedSiteId, flashError],
+  );
+
   /* ───── Capability CRUD ───── */
 
   const openCreateCapability = useCallback(() => {
@@ -210,7 +232,8 @@ export function CapabilityFrameworkEditor({ initialTab }: CapabilityFrameworkEdi
   }, []);
 
   const saveCapability = useCallback(async () => {
-    if (!siteId || !user) return;
+    const activeSiteId = requireSiteContext('saving capabilities');
+    if (!activeSiteId || !user) return;
     const title = capabilityForm.title.trim();
     if (!title) { flashError('Title is required.'); return; }
 
@@ -246,7 +269,7 @@ export function CapabilityFrameworkEditor({ initialTab }: CapabilityFrameworkEdi
           pillarCode: capabilityForm.pillarCode,
           domain: 'human' as const,
           description: capabilityForm.descriptor.trim() || title,
-          siteId,
+          siteId: activeSiteId,
           descriptor: capabilityForm.descriptor.trim() || undefined,
           sortOrder: capabilityForm.sortOrder,
           ...(capabilityForm.unitMappings.length > 0 ? { unitMappings: capabilityForm.unitMappings } : {}),
@@ -260,7 +283,7 @@ export function CapabilityFrameworkEditor({ initialTab }: CapabilityFrameworkEdi
         } as unknown as Omit<Capability, 'id'>);
         flash('Capability created.');
       }
-      if (siteId) invalidateCapabilityCache(siteId);
+      invalidateCapabilityCache(activeSiteId);
       setShowCapabilityForm(false);
       await loadData();
     } catch (err) {
@@ -269,7 +292,7 @@ export function CapabilityFrameworkEditor({ initialTab }: CapabilityFrameworkEdi
     } finally {
       setSaving(false);
     }
-  }, [siteId, user, capabilityForm, editingCapabilityId, flash, flashError, loadData]);
+  }, [requireSiteContext, user, capabilityForm, editingCapabilityId, flash, flashError, loadData]);
 
   const archiveCapability = useCallback(async (cap: Capability) => {
     if (!confirm(`Archive "${cap.title}"? It will no longer appear in new rubric selections.`)) return;
@@ -277,7 +300,7 @@ export function CapabilityFrameworkEditor({ initialTab }: CapabilityFrameworkEdi
     try {
       const ref = doc(capabilitiesCollection, cap.id);
       await updateDoc(ref, { status: 'archived', updatedAt: serverTimestamp() });
-      if (siteId) invalidateCapabilityCache(siteId);
+      if (resolvedSiteId) invalidateCapabilityCache(resolvedSiteId);
       flash('Capability archived.');
       await loadData();
     } catch (err) {
@@ -315,10 +338,10 @@ export function CapabilityFrameworkEditor({ initialTab }: CapabilityFrameworkEdi
   }, []);
 
   const removeCriterion = useCallback((index: number) => {
-    setRubricForm((prev) => ({
-      ...prev,
-      criteria: prev.criteria.filter((_, i) => i !== index),
-    }));
+      setRubricForm((prev) => ({
+        ...prev,
+        criteria: prev.criteria.filter((_, i) => i !== index),
+      }));
   }, []);
 
   const updateCriterion = useCallback((index: number, field: string, value: string | number) => {
@@ -329,7 +352,8 @@ export function CapabilityFrameworkEditor({ initialTab }: CapabilityFrameworkEdi
   }, []);
 
   const saveRubricTemplate = useCallback(async () => {
-    if (!siteId || !user) return;
+    const activeSiteId = requireSiteContext('saving rubric templates');
+    if (!activeSiteId || !user) return;
     const title = rubricForm.title.trim();
     if (!title) { flashError('Title is required.'); return; }
     if (rubricForm.criteria.length === 0) { flashError('At least one criterion is required.'); return; }
@@ -374,7 +398,7 @@ export function CapabilityFrameworkEditor({ initialTab }: CapabilityFrameworkEdi
       } else {
         await addDoc(rubricTemplatesCollection, {
           title,
-          siteId,
+          siteId: activeSiteId,
           capabilityIds,
           criteria,
           status: rubricForm.status,
@@ -392,7 +416,7 @@ export function CapabilityFrameworkEditor({ initialTab }: CapabilityFrameworkEdi
     } finally {
       setSaving(false);
     }
-  }, [siteId, user, rubricForm, editingRubricId, capabilityMap, flash, flashError, loadData]);
+  }, [requireSiteContext, user, rubricForm, editingRubricId, capabilityMap, flash, flashError, loadData]);
 
   /* ───── Process Domain State & CRUD ───── */
 
@@ -402,20 +426,25 @@ export function CapabilityFrameworkEditor({ initialTab }: CapabilityFrameworkEdi
   const [processDomainForm, setProcessDomainForm] = useState<ProcessDomainFormData>(EMPTY_PROCESS_DOMAIN_FORM);
 
   const loadProcessDomains = useCallback(async () => {
-    if (!siteId) return;
+    if (!resolvedSiteId) {
+      setProcessDomains([]);
+      return;
+    }
+
     try {
       const snap = await getDocs(
-        query(processDomainsCollection, where('siteId', '==', siteId), orderBy('sortOrder')),
+        query(processDomainsCollection, where('siteId', '==', resolvedSiteId), orderBy('sortOrder')),
       );
       setProcessDomains(snap.docs.map((d) => ({ ...d.data(), id: d.id }) as ProcessDomain));
     } catch (err) {
       console.error('Failed to load process domains', err);
     }
-  }, [siteId]);
+  }, [resolvedSiteId]);
 
   useEffect(() => {
-    if (siteId) loadProcessDomains();
-  }, [siteId, loadProcessDomains]);
+    if (authLoading) return;
+    void loadProcessDomains();
+  }, [authLoading, loadProcessDomains]);
 
   const openCreateProcessDomain = useCallback(() => {
     setEditingProcessDomainId(null);
@@ -437,7 +466,8 @@ export function CapabilityFrameworkEditor({ initialTab }: CapabilityFrameworkEdi
   }, []);
 
   const saveProcessDomain = useCallback(async () => {
-    if (!siteId || !user) return;
+    const activeSiteId = requireSiteContext('saving process domains');
+    if (!activeSiteId || !user) return;
     const title = processDomainForm.title.trim();
     if (!title) { flashError('Title is required.'); return; }
 
@@ -460,7 +490,7 @@ export function CapabilityFrameworkEditor({ initialTab }: CapabilityFrameworkEdi
       } else {
         await addDoc(processDomainsCollection, {
           title,
-          siteId,
+          siteId: activeSiteId,
           descriptor: processDomainForm.descriptor.trim() || undefined,
           sortOrder: processDomainForm.sortOrder,
           ...(hasProgression ? { progressionDescriptors: processDomainForm.progressionDescriptors } : {}),
@@ -478,7 +508,7 @@ export function CapabilityFrameworkEditor({ initialTab }: CapabilityFrameworkEdi
     } finally {
       setSaving(false);
     }
-  }, [siteId, user, processDomainForm, editingProcessDomainId, flash, flashError, loadProcessDomains]);
+  }, [requireSiteContext, user, processDomainForm, editingProcessDomainId, flash, flashError, loadProcessDomains]);
 
   const archiveProcessDomain = useCallback(async (pd: ProcessDomain) => {
     if (!confirm(`Archive "${pd.title}"?`)) return;
@@ -525,112 +555,123 @@ export function CapabilityFrameworkEditor({ initialTab }: CapabilityFrameworkEdi
           </div>
         )}
 
-        {/* ───── Tabs ───── */}
-        <div className="mb-6 border-b border-gray-200">
-          <nav className="-mb-px flex gap-6">
-            <button
-              onClick={() => setActiveTab('capabilities')}
-              className={`pb-3 text-sm font-medium border-b-2 ${
-                activeTab === 'capabilities'
-                  ? 'border-indigo-600 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Capabilities ({capabilities.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('rubricTemplates')}
-              className={`pb-3 text-sm font-medium border-b-2 ${
-                activeTab === 'rubricTemplates'
-                  ? 'border-indigo-600 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Rubric Templates ({rubricTemplates.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('processDomains')}
-              className={`pb-3 text-sm font-medium border-b-2 ${
-                activeTab === 'processDomains'
-                  ? 'border-indigo-600 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Process Domains ({processDomains.length})
-            </button>
-          </nav>
-        </div>
-
-        {loading ? (
-          <div className="flex justify-center py-12"><Spinner /></div>
-        ) : activeTab === 'capabilities' ? (
-          <CapabilitiesTab
-            capsByPillar={capsByPillar}
-            filterPillar={filterPillar}
-            setFilterPillar={setFilterPillar}
-            onCreateCapability={openCreateCapability}
-            onEditCapability={openEditCapability}
-            onArchiveCapability={archiveCapability}
-            saving={saving}
-            totalCount={capabilities.length}
-          />
-        ) : activeTab === 'rubricTemplates' ? (
-          <RubricTemplatesTab
-            rubricTemplates={rubricTemplates}
-            capabilityMap={capabilityMap}
-            onCreateRubric={openCreateRubric}
-            onEditRubric={openEditRubric}
-          />
+        {!resolvedSiteId ? (
+          <div
+            data-testid="hq-framework-site-required"
+            className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900"
+          >
+            Select an active site before editing capabilities, rubric templates, or process domains.
+          </div>
         ) : (
-          <ProcessDomainsTab
-            processDomains={processDomains}
-            onCreateProcessDomain={openCreateProcessDomain}
-            onEditProcessDomain={openEditProcessDomain}
-            onArchiveProcessDomain={archiveProcessDomain}
-            saving={saving}
-          />
-        )}
+          <>
+            {/* ───── Tabs ───── */}
+            <div className="mb-6 border-b border-gray-200">
+              <nav className="-mb-px flex gap-6">
+                <button
+                  onClick={() => setActiveTab('capabilities')}
+                  className={`pb-3 text-sm font-medium border-b-2 ${
+                    activeTab === 'capabilities'
+                      ? 'border-indigo-600 text-indigo-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Capabilities ({capabilities.length})
+                </button>
+                <button
+                  onClick={() => setActiveTab('rubricTemplates')}
+                  className={`pb-3 text-sm font-medium border-b-2 ${
+                    activeTab === 'rubricTemplates'
+                      ? 'border-indigo-600 text-indigo-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Rubric Templates ({rubricTemplates.length})
+                </button>
+                <button
+                  onClick={() => setActiveTab('processDomains')}
+                  className={`pb-3 text-sm font-medium border-b-2 ${
+                    activeTab === 'processDomains'
+                      ? 'border-indigo-600 text-indigo-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Process Domains ({processDomains.length})
+                </button>
+              </nav>
+            </div>
 
-        {/* ───── Capability Form Modal ───── */}
-        {showCapabilityForm && (
-          <CapabilityFormModal
-            form={capabilityForm}
-            setForm={setCapabilityForm}
-            missions={missions}
-            isEditing={!!editingCapabilityId}
-            saving={saving}
-            onSave={saveCapability}
-            onCancel={() => setShowCapabilityForm(false)}
-          />
-        )}
+            {loading ? (
+              <div className="flex justify-center py-12"><Spinner /></div>
+            ) : activeTab === 'capabilities' ? (
+              <CapabilitiesTab
+                capsByPillar={capsByPillar}
+                filterPillar={filterPillar}
+                setFilterPillar={setFilterPillar}
+                onCreateCapability={openCreateCapability}
+                onEditCapability={openEditCapability}
+                onArchiveCapability={archiveCapability}
+                saving={saving}
+                totalCount={capabilities.length}
+              />
+            ) : activeTab === 'rubricTemplates' ? (
+              <RubricTemplatesTab
+                rubricTemplates={rubricTemplates}
+                capabilityMap={capabilityMap}
+                onCreateRubric={openCreateRubric}
+                onEditRubric={openEditRubric}
+              />
+            ) : (
+              <ProcessDomainsTab
+                processDomains={processDomains}
+                onCreateProcessDomain={openCreateProcessDomain}
+                onEditProcessDomain={openEditProcessDomain}
+                onArchiveProcessDomain={archiveProcessDomain}
+                saving={saving}
+              />
+            )}
 
-        {/* ───── Rubric Template Form Modal ───── */}
-        {showRubricForm && (
-          <RubricTemplateFormModal
-            form={rubricForm}
-            setForm={setRubricForm}
-            capabilities={capabilities}
-            processDomains={processDomains}
-            isEditing={!!editingRubricId}
-            saving={saving}
-            onSave={saveRubricTemplate}
-            onCancel={() => setShowRubricForm(false)}
-            addCriterion={addCriterion}
-            removeCriterion={removeCriterion}
-            updateCriterion={updateCriterion}
-          />
-        )}
+            {/* ───── Capability Form Modal ───── */}
+            {showCapabilityForm && (
+              <CapabilityFormModal
+                form={capabilityForm}
+                setForm={setCapabilityForm}
+                missions={missions}
+                isEditing={!!editingCapabilityId}
+                saving={saving}
+                onSave={saveCapability}
+                onCancel={() => setShowCapabilityForm(false)}
+              />
+            )}
 
-        {/* ───── Process Domain Form Modal ───── */}
-        {showProcessDomainForm && (
-          <ProcessDomainFormModal
-            form={processDomainForm}
-            setForm={setProcessDomainForm}
-            isEditing={!!editingProcessDomainId}
-            saving={saving}
-            onSave={saveProcessDomain}
-            onCancel={() => setShowProcessDomainForm(false)}
-          />
+            {/* ───── Rubric Template Form Modal ───── */}
+            {showRubricForm && (
+              <RubricTemplateFormModal
+                form={rubricForm}
+                setForm={setRubricForm}
+                capabilities={capabilities}
+                processDomains={processDomains}
+                isEditing={!!editingRubricId}
+                saving={saving}
+                onSave={saveRubricTemplate}
+                onCancel={() => setShowRubricForm(false)}
+                addCriterion={addCriterion}
+                removeCriterion={removeCriterion}
+                updateCriterion={updateCriterion}
+              />
+            )}
+
+            {/* ───── Process Domain Form Modal ───── */}
+            {showProcessDomainForm && (
+              <ProcessDomainFormModal
+                form={processDomainForm}
+                setForm={setProcessDomainForm}
+                isEditing={!!editingProcessDomainId}
+                saving={saving}
+                onSave={saveProcessDomain}
+                onCancel={() => setShowProcessDomainForm(false)}
+              />
+            )}
+          </>
         )}
       </div>
     </RoleRouteGuard>
