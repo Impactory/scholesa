@@ -173,6 +173,10 @@ export default function LearnerCheckpointRenderer({ ctx }: CustomRouteRendererPr
       setSubmitError('Please write your answer.');
       return;
     }
+    if (!selectedCapabilityId) {
+      setSubmitError('Select a capability before submitting checkpoint evidence.');
+      return;
+    }
     if (!learnerId || !siteId) {
       setSubmitError('Unable to submit — not authenticated.');
       return;
@@ -300,18 +304,24 @@ export default function LearnerCheckpointRenderer({ ctx }: CustomRouteRendererPr
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Capability <span className="text-xs text-gray-400">(what skill is this checkpoint for?)</span>
               </label>
-              <select
-                value={selectedCapabilityId}
-                onChange={(e) => setSelectedCapabilityId(e.target.value)}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
-              >
-                <option value="">General checkpoint (no specific capability)</option>
-                {capabilityList.map((cap) => (
-                  <option key={cap.id} value={cap.id}>
-                    {cap.title ?? cap.name} ({cap.pillarCode.replace(/_/g, ' ')})
-                  </option>
-                ))}
-              </select>
+              {capabilityList.length > 0 ? (
+                <select
+                  value={selectedCapabilityId}
+                  onChange={(e) => setSelectedCapabilityId(e.target.value)}
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+                >
+                  <option value="">Select a capability…</option>
+                  {capabilityList.map((cap) => (
+                    <option key={cap.id} value={cap.id}>
+                      {cap.title ?? cap.name} ({cap.pillarCode.replace(/_/g, ' ')})
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                  No capabilities are defined for this site yet. Ask HQ or your educator to map checkpoint evidence before submitting.
+                </p>
+              )}
             </div>
           )}
 
@@ -369,7 +379,7 @@ export default function LearnerCheckpointRenderer({ ctx }: CustomRouteRendererPr
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={submitting || !answer.trim()}
+              disabled={submitting || !answer.trim() || !selectedCapabilityId}
               className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
             >
               {submitting ? 'Submitting...' : 'Submit'}

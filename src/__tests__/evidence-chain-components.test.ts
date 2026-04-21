@@ -168,6 +168,8 @@ describe('Checkpoint proof chain honesty', () => {
     expect(learnerCheckpointSource).toContain("source: 'checkpoint_submission'");
     expect(learnerCheckpointSource).toContain('proofOfLearningStatus');
     expect(learnerCheckpointSource).toContain('portfolioItemId: portfolioRef.id');
+    expect(learnerCheckpointSource).toContain('Select a capability before submitting checkpoint evidence.');
+    expect(learnerCheckpointSource).not.toContain('General checkpoint (no specific capability)');
   });
 
   it('keeps educator checkpoint review truthful about proof before growth', () => {
@@ -248,6 +250,13 @@ describe('EducatorTodayRenderer site context', () => {
 
   it('passes the resolved site into quick evidence capture writes', () => {
     expect(source).toContain('siteId={educatorSiteId}');
+  });
+
+  it('requires capability linkage before creating portfolio-backed live evidence', () => {
+    expect(source).toContain('Select a capability before flagging this observation as portfolio evidence.');
+    expect(source).toContain('capabilityId: selectedCapabilityId || undefined');
+    expect(source).toContain('evidenceRecordIds: [evidenceRef.id]');
+    expect(source).not.toContain('evidenceRecordId: evidenceRef.id');
   });
 
   it('shows an explicit no-site blocked state', () => {
@@ -404,6 +413,13 @@ describe('LearnerEvidenceSubmission component', () => {
 
   it('links to capabilities', () => {
     expect(source).toContain('capabilityId');
+  });
+
+  it('requires capability linkage for learner-created proof items', () => {
+    expect(source).toContain('Select at least one capability before submitting portfolio evidence.');
+    expect(source).toContain('Select at least one capability before saving a reflection to your evidence portfolio.');
+    expect(source).toContain('This checkpoint is not linked to a capability yet.');
+    expect(source).toContain("where('siteId', '==', siteId)");
   });
 
   it('writes to portfolioItemsCollection', () => {
@@ -572,6 +588,19 @@ describe('verifyProofOfLearning callable', () => {
     expect(section).toContain("collection('proofOfLearningBundles')");
     expect(section).toContain('proofExplainItBackExcerpt');
     expect(section).toContain('verificationPromptSource');
+  });
+
+  it('refuses verified proof when capability linkage is missing', () => {
+    const section = functionsSource.slice(
+      functionsSource.indexOf('export const verifyProofOfLearning'),
+      functionsSource.indexOf(
+        'export const',
+        functionsSource.indexOf('export const verifyProofOfLearning') + 40
+      )
+    );
+    expect(section).toContain("'failed-precondition'");
+    expect(section).toContain('Link at least one capability to this evidence before verifying proof-of-learning so capability growth can be recorded.');
+    expect(section).toContain('evidenceRecordIds');
   });
 });
 

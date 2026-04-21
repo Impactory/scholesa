@@ -196,6 +196,24 @@ describe('Collection naming consistency', () => {
     expect(rubricFn).toContain("collection('portfolioItems')");
   });
 
+  it('verifyProofOfLearning refuses verified proof without capability linkage', async () => {
+    const fs = await import('fs');
+    const path = await import('path');
+    const source = fs.readFileSync(
+      path.join(__dirname, 'index.ts'),
+      'utf-8'
+    );
+
+    const verifyStart = source.indexOf('export const verifyProofOfLearning');
+    const verifyEnd = source.indexOf('export const', verifyStart + 1);
+    const verifyFn = source.slice(verifyStart, verifyEnd);
+
+    expect(verifyFn).toContain("'failed-precondition'");
+    expect(verifyFn).toContain('Link at least one capability to this evidence before verifying proof-of-learning so capability growth can be recorded.');
+    expect(verifyFn).toContain('evidenceRecordIds');
+    expect(verifyFn).toContain('linkedEvidenceRecordIds: evidenceRecordIds');
+  });
+
   it('processCheckpointMasteryUpdate writes latestLevel alongside currentLevel', async () => {
     const fs = await import('fs');
     const path = await import('path');

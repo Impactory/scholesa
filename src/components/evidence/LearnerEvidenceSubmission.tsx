@@ -72,6 +72,7 @@ export function LearnerEvidenceSubmission() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Artifact form state
   const [artifactTitle, setArtifactTitle] = useState('');
@@ -226,6 +227,7 @@ export function LearnerEvidenceSubmission() {
     if (!newContent || !learnerId || !siteId) return;
     setResubmitting(revisionId);
     setSuccessMessage(null);
+    setSubmitError(null);
     try {
       // Read current doc to get the history array so we can stamp the resubmission
       const revItem = revisions.find((r) => r.id === revisionId);
@@ -289,7 +291,7 @@ export function LearnerEvidenceSubmission() {
       void loadPortfolio();
     } catch (err) {
       console.error('Failed to resubmit revision', err);
-      setSuccessMessage('Failed to resubmit. Please try again.');
+      setSubmitError('Failed to resubmit. Please try again.');
     } finally {
       setResubmitting(null);
     }
@@ -307,7 +309,7 @@ export function LearnerEvidenceSubmission() {
     if (!siteId) return;
     void (async () => {
       try {
-        const snap = await getDocs(query(missionsCollection, limit(100)));
+        const snap = await getDocs(query(missionsCollection, where('siteId', '==', siteId), limit(100)));
         setMissions(snap.docs.map((d) => ({ ...d.data(), id: d.id } as Mission)));
       } catch (err) {
         console.error('Failed to load missions', err);
@@ -319,8 +321,13 @@ export function LearnerEvidenceSubmission() {
   // Artifact submission
   const handleSubmitArtifact = async () => {
     if (!learnerId || !siteId || !artifactTitle.trim()) return;
+    if (selectedCapabilityIds.length === 0) {
+      setSubmitError('Select at least one capability before submitting portfolio evidence.');
+      return;
+    }
     setSaving(true);
     setSuccessMessage(null);
+    setSubmitError(null);
     try {
       const artifacts = artifactUrl.trim() ? [artifactUrl.trim()] : [];
       const pillarCodes = derivedPillarCodes.length > 0 ? derivedPillarCodes : selectedPillarCodes;
@@ -355,7 +362,7 @@ export function LearnerEvidenceSubmission() {
       void loadPortfolio();
     } catch (err) {
       console.error('Failed to submit artifact', err);
-      setSuccessMessage('Failed to submit artifact. Please try again.');
+      setSubmitError('Failed to submit artifact. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -364,8 +371,13 @@ export function LearnerEvidenceSubmission() {
   // Reflection submission
   const handleSubmitReflection = async () => {
     if (!learnerId || !siteId || !reflectionContent.trim()) return;
+    if (reflectionCapabilityIds.length === 0) {
+      setSubmitError('Select at least one capability before saving a reflection to your evidence portfolio.');
+      return;
+    }
     setSaving(true);
     setSuccessMessage(null);
+    setSubmitError(null);
     try {
       // Create portfolio item first so reflection can reference it
       const reflectionPillarCodes: PillarCode[] = [];
@@ -410,7 +422,7 @@ export function LearnerEvidenceSubmission() {
       void loadPortfolio();
     } catch (err) {
       console.error('Failed to save reflection', err);
-      setSuccessMessage('Failed to save reflection. Please try again.');
+      setSubmitError('Failed to save reflection. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -421,9 +433,15 @@ export function LearnerEvidenceSubmission() {
     if (!learnerId || !siteId || !checkpointMissionId || !checkpointContent.trim()) return;
     setSaving(true);
     setSuccessMessage(null);
+    setSubmitError(null);
     try {
       const mission = missions.find((m) => m.id === checkpointMissionId);
       const capIds = mission?.capabilityIds ?? [];
+      if (capIds.length === 0) {
+        setSubmitError('This checkpoint is not linked to a capability yet. Ask HQ or your educator to map it before submitting evidence.');
+        setSaving(false);
+        return;
+      }
       const pillarCodes = mission?.pillarCodes ?? [];
       const attachmentUrls = checkpointAttachmentUrl.trim()
         ? [checkpointAttachmentUrl.trim()]
@@ -475,7 +493,7 @@ export function LearnerEvidenceSubmission() {
       void loadPortfolio();
     } catch (err) {
       console.error('Failed to submit checkpoint evidence', err);
-      setSuccessMessage('Failed to submit checkpoint evidence. Please try again.');
+      setSubmitError('Failed to submit checkpoint evidence. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -507,9 +525,19 @@ export function LearnerEvidenceSubmission() {
     );
   }
 
-  const canSubmitArtifact = artifactTitle.trim().length > 0 && !saving;
-  const canSubmitReflection = reflectionContent.trim().length > 0 && !saving;
-  const canSubmitCheckpoint = checkpointMissionId.length > 0 && checkpointContent.trim().length > 0 && !saving;
+  const selectedCheckpointMission = missions.find((m) => m.id === checkpointMissionId) ?? null;
+  const selectedCheckpointMissionHasCapabilities =
+    (selectedCheckpointMission?.capabilityIds?.length ?? 0) > 0;
+
+  const canSubmitArtifact =
+    artifactTitle.trim().length > 0 && selectedCapabilityIds.length > 0 && !saving;
+  const canSubmitReflection =
+    reflectionContent.trim().length > 0 && reflectionCapabilityIds.length > 0 && !saving;
+  const canSubmitCheckpoint =
+    checkpointMissionId.length > 0 &&
+    checkpointContent.trim().length > 0 &&
+    selectedCheckpointMissionHasCapabilities &&
+    !saving;
 
   const statusBadge = (status?: string) => {
     if (!status || status === 'pending') return <span className="rounded bg-yellow-100 px-1.5 py-0.5 text-xs font-medium text-yellow-800">Pending review</span>;
@@ -539,6 +567,12 @@ export function LearnerEvidenceSubmission() {
         {successMessage && (
           <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-sm font-medium text-green-800" data-testid="submission-success">
             {successMessage}
+          </div>
+        )}
+
+        {submitError && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-800" data-testid="submission-error">
+            {submitError}
           </div>
         )}
 
@@ -721,7 +755,7 @@ export function LearnerEvidenceSubmission() {
 
             {/* Capability selection */}
             <fieldset className="space-y-1">
-              <legend className="text-xs font-medium text-app-muted">Which capabilities does this show? (optional)</legend>
+              <legend className="text-xs font-medium text-app-muted">Which capabilities does this show? *</legend>
               {capabilities.length > 0 ? (
                 <div className="grid gap-1 max-h-40 overflow-y-auto rounded-md border border-app bg-app-canvas p-2">
                   {capabilities.map((c) => (
@@ -744,10 +778,16 @@ export function LearnerEvidenceSubmission() {
                 </div>
               ) : (
                 <p className="text-xs text-app-muted bg-app-canvas rounded-md px-3 py-2 border border-app">
-                  No capabilities defined yet. Your teacher will map your work to capabilities during review.
+                  No capabilities are defined for this site yet. Ask HQ or your educator to define capabilities before submitting evidence for proof review.
                 </p>
               )}
             </fieldset>
+
+            {selectedCapabilityIds.length === 0 && capabilities.length > 0 && (
+              <p className="text-xs text-amber-700">
+                Select at least one capability so this artifact can contribute to capability growth after proof verification.
+              </p>
+            )}
 
             {/* AI disclosure */}
             <div className="rounded-md border border-app bg-app-canvas p-3 space-y-2" data-testid="ai-disclosure">
@@ -809,7 +849,7 @@ export function LearnerEvidenceSubmission() {
             {/* Capability link for reflection */}
             {capabilities.length > 0 && (
               <fieldset className="space-y-1">
-                <legend className="text-xs font-medium text-app-muted">Which capabilities is this reflection about?</legend>
+                <legend className="text-xs font-medium text-app-muted">Which capabilities is this reflection about? *</legend>
                 <div className="grid gap-1 max-h-32 overflow-y-auto rounded-md border border-app bg-app-canvas p-2">
                   {capabilities.map((c) => (
                     <label key={c.id} className="flex items-center gap-2 text-sm text-app-foreground">
@@ -829,6 +869,18 @@ export function LearnerEvidenceSubmission() {
                   ))}
                 </div>
               </fieldset>
+            )}
+
+            {capabilities.length === 0 && (
+              <p className="text-xs text-app-muted bg-app-canvas rounded-md px-3 py-2 border border-app">
+                No capabilities are defined for this site yet. Ask HQ or your educator to define capabilities before saving reflections as evidence.
+              </p>
+            )}
+
+            {reflectionCapabilityIds.length === 0 && capabilities.length > 0 && (
+              <p className="text-xs text-amber-700">
+                Link this reflection to at least one capability so it can support trustworthy growth updates.
+              </p>
             )}
 
             {/* AI disclosure for reflection */}
@@ -895,7 +947,13 @@ export function LearnerEvidenceSubmission() {
             {checkpointMissionId && (() => {
               const mission = missions.find((m) => m.id === checkpointMissionId);
               const capIds = mission?.capabilityIds ?? [];
-              if (capIds.length === 0) return null;
+              if (capIds.length === 0) {
+                return (
+                  <div className="text-xs text-amber-900 rounded-md border border-amber-200 bg-amber-50 px-3 py-2">
+                    This checkpoint is not linked to a capability yet. Ask HQ or your educator to map it before submitting evidence.
+                  </div>
+                );
+              }
               return (
                 <div className="text-xs text-app-muted rounded-md border border-app bg-app-canvas px-3 py-2">
                   <span className="font-medium">Linked capabilities: </span>

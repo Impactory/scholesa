@@ -9218,9 +9218,28 @@ export const verifyProofOfLearning = onCall(async (request: CallableRequest<{
   const portfolioData = portfolioSnap.data() ?? {};
   const learnerId = portfolioData.learnerId as string;
   const siteId = portfolioData.siteId as string;
+  const capabilityIds: string[] = Array.isArray(portfolioData.capabilityIds)
+    ? portfolioData.capabilityIds
+        .filter((value: unknown): value is string => typeof value === 'string')
+        .map((value: string) => value.trim())
+        .filter((value: string) => value.length > 0)
+    : [];
+  const evidenceRecordIds: string[] = Array.isArray(portfolioData.evidenceRecordIds)
+    ? portfolioData.evidenceRecordIds
+        .filter((value: unknown): value is string => typeof value === 'string')
+        .map((value: string) => value.trim())
+        .filter((value: string) => value.length > 0)
+    : [];
 
   // Verify educator has access to this site
   await requireRoleAndSite(educatorId, ['educator', 'siteLead', 'site', 'hq', 'admin'], siteId);
+
+  if (verificationStatus === 'verified' && capabilityIds.length === 0) {
+    throw new HttpsError(
+      'failed-precondition',
+      'Link at least one capability to this evidence before verifying proof-of-learning so capability growth can be recorded.'
+    );
+  }
 
   const checkpointCount = [proofChecks?.explainItBack, proofChecks?.oralCheck, proofChecks?.miniRebuild]
     .filter(Boolean).length;
@@ -9284,7 +9303,6 @@ export const verifyProofOfLearning = onCall(async (request: CallableRequest<{
   }
 
   const growthEventIds: string[] = [];
-  const capabilityIds: string[] = Array.isArray(portfolioData.capabilityIds) ? portfolioData.capabilityIds : [];
 
   // 2. If verified and capabilities are linked, create growth events + update mastery
   if (verificationStatus === 'verified' && capabilityIds.length > 0) {
@@ -9308,7 +9326,7 @@ export const verifyProofOfLearning = onCall(async (request: CallableRequest<{
         rawScore: checkpointCount,
         maxScore: 3,
         evidenceId: portfolioItemId,
-        linkedEvidenceRecordIds: [portfolioItemId],
+        linkedEvidenceRecordIds: evidenceRecordIds,
         linkedPortfolioItemIds: [portfolioItemId],
         rubricApplicationId: null,
         educatorId,

@@ -259,6 +259,8 @@ describe('Renderers delegate to real evidence components', () => {
     expect(source).toContain('resolveActiveSiteId');
     expect(source).toContain("where('siteId', '==', educatorSiteId)");
     expect(source).toContain('siteId={educatorSiteId}');
+    expect(source).toContain('quick-evidence-capability');
+    expect(source).toContain('evidenceRecordIds: [evidenceRef.id]');
     expect(source).toContain('data-testid="educator-today-site-required"');
   });
 
