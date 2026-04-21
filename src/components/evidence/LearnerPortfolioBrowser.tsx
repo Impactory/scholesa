@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getDocs, orderBy, query, where } from 'firebase/firestore';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { portfolioItemsCollection } from '@/src/firebase/firestore/collections';
+import { resolveActiveSiteId } from '@/src/lib/auth/activeSite';
 import { useCapabilities } from '@/src/lib/capabilities/useCapabilities';
 import { getLegacyPillarFamilyLabel } from '@/src/lib/curriculum/architecture';
 import { Spinner } from '@/src/components/ui/Spinner';
@@ -20,7 +21,7 @@ type FilterSource = 'all' | 'artifact' | 'reflection' | 'checkpoint';
 
 export function LearnerPortfolioBrowser() {
   const { user, profile, loading: authLoading } = useAuthContext();
-  const siteId = profile?.studioId ?? null;
+  const siteId = resolveActiveSiteId(profile);
   const learnerId = user?.uid ?? null;
   const { resolveTitle, loading: capLoading } = useCapabilities(siteId);
 
@@ -31,13 +32,19 @@ export function LearnerPortfolioBrowser() {
   const [filterPillar, setFilterPillar] = useState<PillarCode | 'all'>('all');
 
   const loadItems = useCallback(async () => {
-    if (!learnerId) return;
+    if (!learnerId || !siteId) {
+      setItems([]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
       const snap = await getDocs(
         query(
           portfolioItemsCollection,
           where('learnerId', '==', learnerId),
+          where('siteId', '==', siteId),
           orderBy('createdAt', 'desc')
         )
       );
@@ -48,11 +55,12 @@ export function LearnerPortfolioBrowser() {
     } finally {
       setLoading(false);
     }
-  }, [learnerId]);
+  }, [learnerId, siteId]);
 
   useEffect(() => {
-    if (learnerId) void loadItems();
-  }, [learnerId, loadItems]);
+    if (authLoading) return;
+    if (learnerId && siteId) void loadItems();
+  }, [authLoading, learnerId, siteId, loadItems]);
 
   const filtered = useMemo(() => {
     let result = items;
@@ -73,6 +81,17 @@ export function LearnerPortfolioBrowser() {
       <div className="flex items-center gap-2 text-app-muted py-8 justify-center">
         <Spinner />
         <span className="text-sm">Loading portfolio...</span>
+      </div>
+    );
+  }
+
+  if (!learnerId || !siteId) {
+    return (
+      <div
+        data-testid="portfolio-browser-site-required"
+        className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-900"
+      >
+        Select an active site before browsing your portfolio evidence.
       </div>
     );
   }

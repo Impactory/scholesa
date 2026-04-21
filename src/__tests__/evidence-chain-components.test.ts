@@ -105,6 +105,11 @@ describe('LearnerEvidenceSubmission component', () => {
     expect(source.length).toBeGreaterThan(200);
   });
 
+  it('resolves site context through the shared active-site helper', () => {
+    expect(source).toContain('resolveActiveSiteId');
+    expect(source).not.toContain('const siteId = profile?.studioId ?? null;');
+  });
+
   it('supports artifact submission', () => {
     expect(source).toContain('artifact');
   });
@@ -172,6 +177,23 @@ describe('LearnerEvidenceSubmission component', () => {
     expect(source).toContain('learnerReflectionsCollection');
   });
 
+  it('site-scopes learner portfolio reads', () => {
+    expect(source).toContain("where('siteId', '==', siteId)");
+  });
+
+  it('site-scopes revision reads', () => {
+    const revisionsBlock = source.slice(
+      source.indexOf('const loadRevisions'),
+      source.indexOf('const handleResubmit')
+    );
+    expect(revisionsBlock).toContain("where('siteId', '==', siteId)");
+  });
+
+  it('shows an explicit no-site blocked state', () => {
+    expect(source).toContain('data-testid="learner-evidence-site-required"');
+    expect(source).toContain('Select an active site before submitting learner evidence');
+  });
+
   it('uses RoleRouteGuard for access control', () => {
     expect(source).toContain('RoleRouteGuard');
   });
@@ -180,6 +202,26 @@ describe('LearnerEvidenceSubmission component', () => {
     expect(source).toContain('Submit Artifact');
     expect(source).toContain('Write Reflection');
     expect(source).toContain('Checkpoint Evidence');
+  });
+});
+
+/* ───── LearnerPortfolioBrowser ───── */
+
+describe('LearnerPortfolioBrowser component', () => {
+  const source = readSrcFile('components', 'evidence', 'LearnerPortfolioBrowser.tsx');
+
+  it('resolves site context through the shared active-site helper', () => {
+    expect(source).toContain('resolveActiveSiteId');
+    expect(source).not.toContain('const siteId = profile?.studioId ?? null;');
+  });
+
+  it('site-scopes learner portfolio reads', () => {
+    expect(source).toContain("where('siteId', '==', siteId)");
+  });
+
+  it('shows an explicit no-site blocked state', () => {
+    expect(source).toContain('data-testid="portfolio-browser-site-required"');
+    expect(source).toContain('Select an active site before browsing your portfolio evidence.');
   });
 });
 

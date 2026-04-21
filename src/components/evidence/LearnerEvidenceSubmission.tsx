@@ -19,6 +19,7 @@ import {
   missionsCollection,
   missionAttemptsCollection,
 } from '@/src/firebase/firestore/collections';
+import { resolveActiveSiteId } from '@/src/lib/auth/activeSite';
 import { useCapabilities } from '@/src/lib/capabilities/useCapabilities';
 import { RoleRouteGuard } from '@/src/components/auth/RoleRouteGuard';
 import { Spinner } from '@/src/components/ui/Spinner';
@@ -62,7 +63,7 @@ interface RevisionItem {
 
 export function LearnerEvidenceSubmission() {
   const { user, profile, loading: authLoading } = useAuthContext();
-  const siteId = profile?.studioId ?? null;
+  const siteId = resolveActiveSiteId(profile);
   const learnerId = user?.uid ?? null;
 
   const { capabilityList: capabilities, resolveTitle } = useCapabilities(siteId);
@@ -112,13 +113,19 @@ export function LearnerEvidenceSubmission() {
 
   // Load learner's own portfolio items
   const loadPortfolio = useCallback(async () => {
-    if (!learnerId || !siteId) return;
+    if (!learnerId || !siteId) {
+      setPortfolio([]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
       const snap = await getDocs(
         query(
           portfolioItemsCollection,
           where('learnerId', '==', learnerId),
+          where('siteId', '==', siteId),
           orderBy('createdAt', 'desc'),
           limit(20)
         )
@@ -150,12 +157,17 @@ export function LearnerEvidenceSubmission() {
 
   // Load missionAttempts with status 'revision' for the current learner
   const loadRevisions = useCallback(async () => {
-    if (!learnerId) return;
+    if (!learnerId || !siteId) {
+      setRevisions([]);
+      return;
+    }
+
     try {
       const snap = await getDocs(
         query(
           missionAttemptsCollection,
           where('learnerId', '==', learnerId),
+          where('siteId', '==', siteId),
           where('status', '==', 'revision'),
           orderBy('updatedAt', 'desc'),
           limit(20)
@@ -206,12 +218,12 @@ export function LearnerEvidenceSubmission() {
     } catch (err) {
       console.error('Failed to load revisions', err);
     }
-  }, [learnerId, revisionEdits]);
+  }, [learnerId, siteId, revisionEdits]);
 
   // Resubmit a revised missionAttempt
   const handleResubmit = async (revisionId: string) => {
     const newContent = revisionEdits[revisionId]?.trim();
-    if (!newContent || !learnerId) return;
+    if (!newContent || !learnerId || !siteId) return;
     setResubmitting(revisionId);
     setSuccessMessage(null);
     try {
@@ -250,6 +262,7 @@ export function LearnerEvidenceSubmission() {
           query(
             portfolioItemsCollection,
             where('missionAttemptId', '==', revisionId),
+            where('siteId', '==', siteId),
             limit(1)
           )
         );
@@ -485,8 +498,11 @@ export function LearnerEvidenceSubmission() {
 
   if (!siteId || !learnerId) {
     return (
-      <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-900">
-        No site assigned. Portfolio requires a site context.
+      <div
+        data-testid="learner-evidence-site-required"
+        className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-900"
+      >
+        Select an active site before submitting learner evidence or viewing your portfolio.
       </div>
     );
   }
