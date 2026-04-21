@@ -246,6 +246,7 @@ describe('Evidence chain Firestore rules', () => {
   const requiredCollections = [
     'evidenceRecords',
     'portfolioItems',
+    'checkpoints',
     'capabilityGrowthEvents',
     'capabilityMastery',
     'rubricTemplates',
@@ -324,7 +325,10 @@ describe('Functions backend evidence chain callables', () => {
     );
 
     expect(checkpointSection).toContain('portfolioItemId');
+    expect(checkpointSection).toContain('checkpointDefinitionId');
+    expect(checkpointSection).toContain("collection('checkpoints')");
     expect(checkpointSection).toContain('proofOfLearningStatus');
+    expect(checkpointSection).toContain('HQ-authored checkpoint definition');
     expect(checkpointSection).toContain('Verify proof-of-learning for the linked checkpoint artifact before updating capability growth.');
     expect(checkpointSection).toContain('Checkpoint growth is recorded from proof verification on the linked portfolio artifact.');
   });

@@ -210,8 +210,10 @@ describe('Collection naming consistency', () => {
 
     expect(verifyFn).toContain("'failed-precondition'");
     expect(verifyFn).toContain('Link at least one capability to this evidence before verifying proof-of-learning so capability growth can be recorded.');
+    expect(verifyFn).toContain('checkpointDefinitionId');
+    expect(verifyFn).toContain("collection('checkpoints')");
     expect(verifyFn).toContain('evidenceRecordIds');
-    expect(verifyFn).toContain('linkedEvidenceRecordIds: evidenceRecordIds');
+    expect(verifyFn).toContain('linkedEvidenceRecordIds');
   });
 
   it('processCheckpointMasteryUpdate writes latestLevel alongside currentLevel', async () => {
@@ -243,11 +245,13 @@ describe('Collection naming consistency', () => {
     const checkpointEnd = source.indexOf('export const', checkpointStart + 1);
     const checkpointFn = source.slice(checkpointStart, checkpointEnd);
 
-    // Must guard against phantom growth by requiring a capability target.
-    // The fallback to siteCapabilities.docs (all caps) has been removed.
-    expect(checkpointFn).not.toContain('siteCapabilities.docs;');
-    expect(checkpointFn).toContain('targetCapDocs.length === 0');
-    expect(checkpointFn).toContain('No capability mapping found');
+    // Must guard against phantom growth by requiring a canonical checkpoint
+    // definition instead of inferring from capability checkpointMappings.
+    expect(checkpointFn).toContain('checkpointDefinitionId');
+    expect(checkpointFn).toContain("collection('checkpoints')");
+    expect(checkpointFn).toContain('HQ-authored checkpoint definition');
+    expect(checkpointFn).toContain('Checkpoint updates require a canonical checkpoint definition or mapped skill IDs');
+    expect(checkpointFn).not.toContain('checkpointMappings');
   });
 
   it('processCheckpointMasteryUpdate requires verified proof on linked checkpoint artifacts', async () => {
@@ -263,6 +267,8 @@ describe('Collection naming consistency', () => {
     const checkpointFn = source.slice(checkpointStart, checkpointEnd);
 
     expect(checkpointFn).toContain('portfolioItemId');
+    expect(checkpointFn).toContain('checkpointDefinitionId');
+    expect(checkpointFn).toContain("collection('checkpoints')");
     expect(checkpointFn).toContain("collection('portfolioItems')");
     expect(checkpointFn).toContain('proofOfLearningStatus');
     expect(checkpointFn).toContain('Verify proof-of-learning for the linked checkpoint artifact before updating capability growth.');

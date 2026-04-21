@@ -24,10 +24,9 @@ import {
   where,
 } from 'firebase/firestore';
 import { firestore } from '@/src/firebase/client-init';
-import { portfolioItemsCollection } from '@/src/firebase/firestore/collections';
+import { checkpointsCollection, portfolioItemsCollection } from '@/src/firebase/firestore/collections';
 import { resolveActiveSiteId } from '@/src/lib/auth/activeSite';
-import { useCapabilities } from '@/src/lib/capabilities/useCapabilities';
-import type { PortfolioItem } from '@/src/types/schema';
+import type { Checkpoint, PortfolioItem } from '@/src/types/schema';
 import type { CustomRouteRendererProps } from '../customRouteRenderers';
 import {
   CheckCircleIcon,
@@ -39,9 +38,13 @@ import {
 
 interface CheckpointRecord {
   id: string;
+  checkpointDefinitionId: string | null;
+  checkpointLabel: string | null;
   missionId: string | null;
   missionTitle: string | null;
   checkpointNumber: number | null;
+  capabilityId: string | null;
+  capabilityTitle: string | null;
   answer: string | null;
   explainItBack: string | null;
   explainItBackRequired: boolean;
@@ -51,7 +54,19 @@ interface CheckpointRecord {
    aiAssistanceUsed: boolean;
    portfolioItemId: string | null;
    proofOfLearningStatus: 'missing' | 'partial' | 'verified' | 'not-available' | null;
-   createdAt: string | null;
+  createdAt: string | null;
+}
+
+interface CheckpointDefinitionOption {
+  id: string;
+  title: string;
+  description: string | null;
+  missionId: string | null;
+  missionTitle: string | null;
+  checkpointNumber: number | null;
+  capabilityId: string;
+  capabilityTitle: string | null;
+  pillarCode: PortfolioItem['pillarCodes'][number] | null;
 }
 
 function toIso(val: unknown): string | null {
@@ -77,9 +92,9 @@ function statusBadge(status: CheckpointRecord['status'], isCorrect: boolean | nu
 export default function LearnerCheckpointRenderer({ ctx }: CustomRouteRendererProps) {
   const learnerId = ctx.uid;
   const siteId = resolveActiveSiteId(ctx.profile);
-  const { capabilityList } = useCapabilities(siteId || null);
 
   const [records, setRecords] = useState<CheckpointRecord[]>([]);
+  const [checkpointDefinitions, setCheckpointDefinitions] = useState<CheckpointDefinitionOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -90,9 +105,56 @@ export default function LearnerCheckpointRenderer({ ctx }: CustomRouteRendererPr
   const [explainItBack, setExplainItBack] = useState('');
   const [aiUsed, setAiUsed] = useState(false);
   const [aiDetails, setAiDetails] = useState('');
-  const [selectedCapabilityId, setSelectedCapabilityId] = useState('');
+  const [selectedCheckpointId, setSelectedCheckpointId] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const loadCheckpointDefinitions = useCallback(async () => {
+    if (!siteId) {
+      setCheckpointDefinitions([]);
+      return;
+    }
+    try {
+      const snap = await getDocs(
+        query(
+          checkpointsCollection,
+          where('siteId', '==', siteId),
+          where('status', '==', 'active')
+        )
+      );
+      const options = snap.docs
+        .map((checkpointDoc) => {
+          const data = checkpointDoc.data() as Checkpoint;
+          if (!data.capabilityId) return null;
+          return {
+            id: checkpointDoc.id,
+            title: data.title,
+            description: data.description ?? null,
+            missionId: data.missionId ?? null,
+            missionTitle: data.missionTitle ?? null,
+            checkpointNumber:
+              typeof data.checkpointNumber === 'number' ? data.checkpointNumber : null,
+            capabilityId: data.capabilityId,
+            capabilityTitle: data.capabilityTitle ?? null,
+            pillarCode: typeof data.pillarCode === 'string' ? data.pillarCode : null,
+          } satisfies CheckpointDefinitionOption;
+        })
+        .filter((checkpoint): checkpoint is CheckpointDefinitionOption => Boolean(checkpoint))
+        .sort((a, b) => {
+          const missionCompare = (a.missionTitle ?? '').localeCompare(b.missionTitle ?? '');
+          if (missionCompare !== 0) return missionCompare;
+          const numberCompare =
+            (a.checkpointNumber ?? Number.MAX_SAFE_INTEGER) -
+            (b.checkpointNumber ?? Number.MAX_SAFE_INTEGER);
+          if (numberCompare !== 0) return numberCompare;
+          return a.title.localeCompare(b.title);
+        });
+      setCheckpointDefinitions(options);
+    } catch (err) {
+      console.error('Failed to load checkpoint definitions:', err);
+      setError('Failed to load checkpoint definitions. Please try again.');
+    }
+  }, [siteId]);
 
   const loadCheckpoints = useCallback(async () => {
     if (!learnerId || !siteId) {
@@ -137,9 +199,15 @@ export default function LearnerCheckpointRenderer({ ctx }: CustomRouteRendererPr
 
           return {
             id: d.id,
+            checkpointDefinitionId:
+              typeof data.checkpointDefinitionId === 'string' ? data.checkpointDefinitionId : null,
+            checkpointLabel: typeof data.checkpointLabel === 'string' ? data.checkpointLabel : null,
             missionId: (data.missionId as string) || null,
             missionTitle: (data.missionTitle as string) || null,
             checkpointNumber: typeof data.checkpointNumber === 'number' ? data.checkpointNumber : null,
+            capabilityId: typeof data.capabilityId === 'string' ? data.capabilityId : null,
+            capabilityTitle:
+              typeof data.capabilityTitle === 'string' ? data.capabilityTitle : null,
             answer: (data.answer as string) || null,
             explainItBack: (data.explainItBack as string) || null,
             explainItBackRequired: Boolean(data.explainItBackRequired),
@@ -168,13 +236,17 @@ export default function LearnerCheckpointRenderer({ ctx }: CustomRouteRendererPr
     loadCheckpoints();
   }, [loadCheckpoints]);
 
+  useEffect(() => {
+    void loadCheckpointDefinitions();
+  }, [loadCheckpointDefinitions]);
+
   const handleSubmit = async () => {
     if (!answer.trim()) {
       setSubmitError('Please write your answer.');
       return;
     }
-    if (!selectedCapabilityId) {
-      setSubmitError('Select a capability before submitting checkpoint evidence.');
+    if (!selectedCheckpointId) {
+      setSubmitError('Select an assigned checkpoint before submitting checkpoint evidence.');
       return;
     }
     if (!learnerId || !siteId) {
@@ -188,21 +260,28 @@ export default function LearnerCheckpointRenderer({ ctx }: CustomRouteRendererPr
       const checkpointRef = doc(collection(firestore, 'checkpointHistory'));
       const portfolioRef = doc(portfolioItemsCollection);
       const explainItBackText = explainItBack.trim();
-      const selectedCapability = capabilityList.find((cap) => cap.id === selectedCapabilityId) ?? null;
+      const selectedCheckpoint =
+        checkpointDefinitions.find((checkpoint) => checkpoint.id === selectedCheckpointId) ?? null;
+      if (!selectedCheckpoint) {
+        setSubmitError('The selected checkpoint could not be found. Refresh and try again.');
+        setSubmitting(false);
+        return;
+      }
       const proofOfLearningStatus = explainItBackText ? 'partial' : 'missing';
 
       batch.set(portfolioRef, {
         learnerId,
         siteId,
-        title: selectedCapability
-          ? `Checkpoint: ${selectedCapability.title ?? selectedCapability.name}`
-          : 'Checkpoint',
+        title: selectedCheckpoint.missionTitle
+          ? `Checkpoint: ${selectedCheckpoint.missionTitle} — ${selectedCheckpoint.title}`
+          : `Checkpoint: ${selectedCheckpoint.title}`,
         description: answer.trim(),
-        pillarCodes: selectedCapability?.pillarCode ? [selectedCapability.pillarCode] : [],
+        checkpointDefinitionId: selectedCheckpoint.id,
+        pillarCodes: selectedCheckpoint.pillarCode ? [selectedCheckpoint.pillarCode] : [],
         artifacts: [],
-        capabilityIds: selectedCapabilityId ? [selectedCapabilityId] : [],
-        capabilityTitles: selectedCapability
-          ? [selectedCapability.title ?? selectedCapability.name]
+        capabilityIds: [selectedCheckpoint.capabilityId],
+        capabilityTitles: selectedCheckpoint.capabilityTitle
+          ? [selectedCheckpoint.capabilityTitle]
           : [],
         aiAssistanceUsed: aiUsed,
         aiAssistanceDetails: aiUsed ? aiDetails.trim() : undefined,
@@ -221,9 +300,13 @@ export default function LearnerCheckpointRenderer({ ctx }: CustomRouteRendererPr
       batch.set(checkpointRef, {
         learnerId,
         siteId,
-        missionId: null,
-        capabilityId: selectedCapabilityId || null,
-        checkpointNumber: null,
+        checkpointDefinitionId: selectedCheckpoint.id,
+        checkpointLabel: selectedCheckpoint.title,
+        missionId: selectedCheckpoint.missionId,
+        missionTitle: selectedCheckpoint.missionTitle,
+        capabilityId: selectedCheckpoint.capabilityId,
+        capabilityTitle: selectedCheckpoint.capabilityTitle,
+        checkpointNumber: selectedCheckpoint.checkpointNumber,
         answer: answer.trim(),
         explainItBack: explainItBackText || null,
         explainItBackRequired: explainItBackText.length > 0,
@@ -241,7 +324,7 @@ export default function LearnerCheckpointRenderer({ ctx }: CustomRouteRendererPr
       setExplainItBack('');
       setAiUsed(false);
       setAiDetails('');
-      setSelectedCapabilityId('');
+      setSelectedCheckpointId('');
       setShowForm(false);
       await loadCheckpoints();
     } catch (err) {
@@ -272,7 +355,15 @@ export default function LearnerCheckpointRenderer({ ctx }: CustomRouteRendererPr
       {error && (
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
           {error}
-          <button className="ml-3 underline" onClick={loadCheckpoints}>Retry</button>
+          <button
+            className="ml-3 underline"
+            onClick={() => {
+              void loadCheckpoints();
+              void loadCheckpointDefinitions();
+            }}
+          >
+            Retry
+          </button>
         </div>
       )}
 
@@ -299,31 +390,54 @@ export default function LearnerCheckpointRenderer({ ctx }: CustomRouteRendererPr
         <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-4 space-y-3">
           <h3 className="font-medium text-gray-900">Submit a Checkpoint</h3>
 
-          {capabilityList.length > 0 && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Capability <span className="text-xs text-gray-400">(what skill is this checkpoint for?)</span>
-              </label>
-              {capabilityList.length > 0 ? (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Checkpoint <span className="text-red-500">*</span>
+            </label>
+            {checkpointDefinitions.length > 0 ? (
+              <>
                 <select
-                  value={selectedCapabilityId}
-                  onChange={(e) => setSelectedCapabilityId(e.target.value)}
+                  value={selectedCheckpointId}
+                  onChange={(e) => setSelectedCheckpointId(e.target.value)}
                   className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
                 >
-                  <option value="">Select a capability…</option>
-                  {capabilityList.map((cap) => (
-                    <option key={cap.id} value={cap.id}>
-                      {cap.title ?? cap.name} ({cap.pillarCode.replace(/_/g, ' ')})
+                  <option value="">Select an assigned checkpoint…</option>
+                  {checkpointDefinitions.map((checkpoint) => (
+                    <option key={checkpoint.id} value={checkpoint.id}>
+                      {checkpoint.missionTitle
+                        ? `${checkpoint.missionTitle} — `
+                        : ''}
+                      {checkpoint.title}
+                      {checkpoint.checkpointNumber != null ? ` (#${checkpoint.checkpointNumber})` : ''}
                     </option>
                   ))}
                 </select>
-              ) : (
-                <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-                  No capabilities are defined for this site yet. Ask HQ or your educator to map checkpoint evidence before submitting.
-                </p>
-              )}
-            </div>
-          )}
+                {selectedCheckpointId && (
+                  <div className="mt-2 rounded-md border border-indigo-100 bg-white px-3 py-2 text-xs text-gray-600">
+                    {(() => {
+                      const selectedCheckpoint = checkpointDefinitions.find((checkpoint) => checkpoint.id === selectedCheckpointId);
+                      if (!selectedCheckpoint) return null;
+                      return (
+                        <>
+                          <p className="font-medium text-gray-800">{selectedCheckpoint.title}</p>
+                          {selectedCheckpoint.capabilityTitle && (
+                            <p>Capability: {selectedCheckpoint.capabilityTitle}</p>
+                          )}
+                          {selectedCheckpoint.description && (
+                            <p className="mt-1 text-gray-500">{selectedCheckpoint.description}</p>
+                          )}
+                        </>
+                      );
+                    })()}
+                  </div>
+                )}
+              </>
+            ) : (
+              <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                No HQ-authored checkpoints are available for this site yet. Ask your educator or HQ to define checkpoint evidence before submitting.
+              </p>
+            )}
+          </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -379,14 +493,18 @@ export default function LearnerCheckpointRenderer({ ctx }: CustomRouteRendererPr
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={submitting || !answer.trim() || !selectedCapabilityId}
+              disabled={submitting || !answer.trim() || !selectedCheckpointId}
               className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
             >
               {submitting ? 'Submitting...' : 'Submit'}
             </button>
             <button
               type="button"
-              onClick={() => { setShowForm(false); setSubmitError(null); }}
+              onClick={() => {
+                setShowForm(false);
+                setSubmitError(null);
+                setSelectedCheckpointId('');
+              }}
               className="rounded-md bg-white border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
               Cancel
@@ -424,7 +542,11 @@ export default function LearnerCheckpointRenderer({ ctx }: CustomRouteRendererPr
                     <div className="text-left">
                       <p className="text-sm font-medium text-gray-900">
                         {r.missionTitle
-                          ? `${r.missionTitle}${r.checkpointNumber != null ? ` — #${r.checkpointNumber}` : ''}`
+                          ? `${r.missionTitle}${r.checkpointNumber != null ? ` — #${r.checkpointNumber}` : ''}${r.checkpointLabel ? ` · ${r.checkpointLabel}` : ''}`
+                          : r.checkpointLabel
+                          ? r.checkpointNumber != null
+                            ? `${r.checkpointLabel} (#${r.checkpointNumber})`
+                            : r.checkpointLabel
                           : r.checkpointNumber != null
                           ? `Checkpoint #${r.checkpointNumber}`
                           : 'Checkpoint'}
@@ -458,6 +580,12 @@ export default function LearnerCheckpointRenderer({ ctx }: CustomRouteRendererPr
                       <div>
                         <p className="text-xs font-medium text-indigo-600 mb-1">Explain-it-back</p>
                         <p className="text-sm text-gray-800 whitespace-pre-wrap">{r.explainItBack}</p>
+                      </div>
+                    )}
+                    {(r.capabilityTitle || r.capabilityId) && (
+                      <div>
+                        <p className="text-xs font-medium text-gray-500 mb-1">Capability</p>
+                        <p className="text-sm text-gray-800">{r.capabilityTitle ?? r.capabilityId}</p>
                       </div>
                     )}
                     {r.feedback && (

@@ -175,6 +175,12 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
     id: string;
     learnerId: string;
     siteId: string;
+    checkpointDefinitionId: string | null;
+    checkpointLabel: string | null;
+    missionTitle: string | null;
+    checkpointNumber: number | null;
+    capabilityId: string | null;
+    capabilityTitle: string | null;
     answer: string;
     explainItBack: string | null;
     aiAssistanceUsed: boolean;
@@ -403,6 +409,16 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
               id: d.id,
               learnerId: asString(data.learnerId, ''),
               siteId: asString(data.siteId, ''),
+              checkpointDefinitionId:
+                typeof data.checkpointDefinitionId === 'string' ? data.checkpointDefinitionId : null,
+              checkpointLabel:
+                typeof data.checkpointLabel === 'string' ? data.checkpointLabel : null,
+              missionTitle: typeof data.missionTitle === 'string' ? data.missionTitle : null,
+              checkpointNumber:
+                typeof data.checkpointNumber === 'number' ? data.checkpointNumber : null,
+              capabilityId: typeof data.capabilityId === 'string' ? data.capabilityId : null,
+              capabilityTitle:
+                typeof data.capabilityTitle === 'string' ? data.capabilityTitle : null,
               answer: asString(data.answer, ''),
               explainItBack: typeof data.explainItBack === 'string' ? data.explainItBack : null,
               aiAssistanceUsed: Boolean(data.aiAssistanceUsed),
@@ -1683,6 +1699,18 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
                       </div>
                     </div>
                     <div className="rounded-lg bg-app-canvas p-3 text-sm text-app-foreground">
+                      {(cp.missionTitle || cp.checkpointLabel || cp.capabilityTitle || cp.capabilityId) && (
+                        <div className="mb-2 space-y-1 text-xs text-app-muted">
+                          <p className="font-medium text-app-foreground">
+                            {cp.missionTitle
+                              ? `${cp.missionTitle}${cp.checkpointNumber != null ? ` — #${cp.checkpointNumber}` : ''}${cp.checkpointLabel ? ` · ${cp.checkpointLabel}` : ''}`
+                              : cp.checkpointLabel ?? 'Checkpoint'}
+                          </p>
+                          {(cp.capabilityTitle || cp.capabilityId) && (
+                            <p>Capability: {cp.capabilityTitle ?? cp.capabilityId}</p>
+                          )}
+                        </div>
+                      )}
                       {cp.answer}
                     </div>
                     {cp.explainItBack && (

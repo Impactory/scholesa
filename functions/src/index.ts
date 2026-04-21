@@ -9218,21 +9218,67 @@ export const verifyProofOfLearning = onCall(async (request: CallableRequest<{
   const portfolioData = portfolioSnap.data() ?? {};
   const learnerId = portfolioData.learnerId as string;
   const siteId = portfolioData.siteId as string;
-  const capabilityIds: string[] = Array.isArray(portfolioData.capabilityIds)
+  let capabilityIds: string[] = Array.isArray(portfolioData.capabilityIds)
     ? portfolioData.capabilityIds
         .filter((value: unknown): value is string => typeof value === 'string')
         .map((value: string) => value.trim())
         .filter((value: string) => value.length > 0)
     : [];
-  const evidenceRecordIds: string[] = Array.isArray(portfolioData.evidenceRecordIds)
+  let capabilityTitles: string[] = Array.isArray(portfolioData.capabilityTitles)
+    ? portfolioData.capabilityTitles
+        .filter((value: unknown): value is string => typeof value === 'string')
+        .map((value: string) => value.trim())
+        .filter((value: string) => value.length > 0)
+    : [];
+  const linkedEvidenceRecordIds: string[] = Array.isArray(portfolioData.evidenceRecordIds)
     ? portfolioData.evidenceRecordIds
         .filter((value: unknown): value is string => typeof value === 'string')
         .map((value: string) => value.trim())
         .filter((value: string) => value.length > 0)
     : [];
+  const checkpointDefinitionId =
+    typeof portfolioData.checkpointDefinitionId === 'string' && portfolioData.checkpointDefinitionId.trim()
+      ? portfolioData.checkpointDefinitionId.trim()
+      : '';
 
   // Verify educator has access to this site
   await requireRoleAndSite(educatorId, ['educator', 'siteLead', 'site', 'hq', 'admin'], siteId);
+
+  if (checkpointDefinitionId) {
+    const checkpointDefinitionSnap = await db.collection('checkpoints').doc(checkpointDefinitionId).get();
+    if (!checkpointDefinitionSnap.exists) {
+      throw new HttpsError(
+        'failed-precondition',
+        'Checkpoint-linked proof cannot be verified until the canonical checkpoint definition exists.'
+      );
+    }
+
+    const checkpointDefinition = checkpointDefinitionSnap.data() ?? {};
+    const canonicalCapabilityId =
+      typeof checkpointDefinition.capabilityId === 'string' ? checkpointDefinition.capabilityId.trim() : '';
+    const canonicalCapabilityTitle =
+      typeof checkpointDefinition.capabilityTitle === 'string'
+        ? checkpointDefinition.capabilityTitle.trim()
+        : '';
+    const checkpointDefinitionSiteId =
+      typeof checkpointDefinition.siteId === 'string' ? checkpointDefinition.siteId.trim() : '';
+
+    if (!canonicalCapabilityId) {
+      throw new HttpsError(
+        'failed-precondition',
+        'Checkpoint-linked proof cannot be verified until the canonical checkpoint definition maps to a capability.'
+      );
+    }
+    if (checkpointDefinitionSiteId && checkpointDefinitionSiteId !== siteId) {
+      throw new HttpsError(
+        'failed-precondition',
+        'Checkpoint-linked proof cannot be verified against a checkpoint definition from another site.'
+      );
+    }
+
+    capabilityIds = [canonicalCapabilityId];
+    capabilityTitles = canonicalCapabilityTitle ? [canonicalCapabilityTitle] : capabilityTitles;
+  }
 
   if (verificationStatus === 'verified' && capabilityIds.length === 0) {
     throw new HttpsError(
@@ -9277,6 +9323,12 @@ export const verifyProofOfLearning = onCall(async (request: CallableRequest<{
     verificationPromptSource: normalizedResubmissionReason ? 'educator_review' : null,
     updatedAt: FieldValue.serverTimestamp(),
   };
+  if (capabilityIds.length > 0) {
+    portfolioUpdate.capabilityIds = capabilityIds;
+  }
+  if (capabilityTitles.length > 0) {
+    portfolioUpdate.capabilityTitles = capabilityTitles;
+  }
   batch.update(portfolioRef, portfolioUpdate);
 
   const proofBundleId = typeof portfolioData.proofBundleId === 'string' ? portfolioData.proofBundleId.trim() : '';
@@ -9326,7 +9378,7 @@ export const verifyProofOfLearning = onCall(async (request: CallableRequest<{
         rawScore: checkpointCount,
         maxScore: 3,
         evidenceId: portfolioItemId,
-        linkedEvidenceRecordIds: evidenceRecordIds,
+        linkedEvidenceRecordIds,
         linkedPortfolioItemIds: [portfolioItemId],
         rubricApplicationId: null,
         educatorId,
@@ -9593,6 +9645,45 @@ export const processCheckpointMasteryUpdate = onCall(async (request: CallableReq
     }
 
     const checkpointData = checkpointSnap.data() ?? {};
+    const checkpointDefinitionId =
+      typeof checkpointData.checkpointDefinitionId === 'string' && checkpointData.checkpointDefinitionId.trim()
+        ? checkpointData.checkpointDefinitionId.trim()
+        : null;
+
+    if (!checkpointDefinitionId) {
+      return {
+        updated: false,
+        reason:
+          'Checkpoint must reference an HQ-authored checkpoint definition before it can update capability growth.',
+      };
+    }
+
+    const checkpointDefinitionSnap = await db.collection('checkpoints').doc(checkpointDefinitionId).get();
+    if (!checkpointDefinitionSnap.exists) {
+      return {
+        updated: false,
+        reason: 'Canonical checkpoint definition not found for this checkpoint submission.',
+      };
+    }
+
+    const checkpointDefinition = checkpointDefinitionSnap.data() ?? {};
+    if (checkpointDefinition.siteId !== siteId) {
+      return {
+        updated: false,
+        reason: 'Canonical checkpoint definition is outside the active site scope.',
+      };
+    }
+
+    if (
+      typeof checkpointDefinition.capabilityId !== 'string' ||
+      !checkpointDefinition.capabilityId.trim()
+    ) {
+      return {
+        updated: false,
+        reason: 'Canonical checkpoint definition must map to a capability before learner evidence can use it.',
+      };
+    }
+
     const checkpointPortfolioItemId =
       typeof checkpointData.portfolioItemId === 'string' && checkpointData.portfolioItemId.trim()
         ? checkpointData.portfolioItemId.trim()
@@ -9640,8 +9731,8 @@ export const processCheckpointMasteryUpdate = onCall(async (request: CallableReq
   const growthEvents: Array<{ capabilityId: string; from: string | null; to: string }> = [];
 
   // Strategy: if skillIds are provided, use skill→capability lookup.
-  // Otherwise, count all passed checkpoints + evidence records for the learner
-  // to determine growth progression.
+  // Otherwise refuse the update — checkpoint-only growth must flow through a
+  // canonical checkpoint definition and proof verification on the linked artifact.
 
   if (skillIds && skillIds.length > 0) {
     // Skill-based path: look up capability from microSkillIds
@@ -9743,155 +9834,11 @@ export const processCheckpointMasteryUpdate = onCall(async (request: CallableReq
       growthEvents.push({ capabilityId, from: currentLevel, to: newLevel });
     }
   } else {
-    // No skillIds — checkpoint-only path.
-    // Count all passed checkpoints for this learner as evidence of overall growth.
-    const passedCheckpoints = await db
-      .collection('checkpointHistory')
-      .where('learnerId', '==', learnerId)
-      .where('isCorrect', '==', true)
-      .get();
-
-    const evidenceCount = passedCheckpoints.size;
-    if (evidenceCount === 0) return { updated: false, reason: 'No passed checkpoints' };
-
-    // Find all capabilities for this site
-    const siteCapabilities = await db
-      .collection('capabilities')
-      .where('siteId', '==', siteId)
-      .where('status', '==', 'active')
-      .get();
-
-    // Precision routing: require an explicit capability target — either from the checkpoint
-    // itself or from HQ-configured checkpointMappings. Never scatter growth events across
-    // all site capabilities; that would create phantom mastery without real evidence provenance.
-    let targetCapDocs: FirebaseFirestore.QueryDocumentSnapshot[] = [];
-
-    // Source 1: checkpoint doc has an explicit capabilityId (learner-selected at submission)
-    let checkpointCapabilityId: string | null = null;
-    if (checkpointId) {
-      const cpDoc = await db.collection('checkpointHistory').doc(checkpointId).get();
-      if (cpDoc.exists) {
-        const cpData = cpDoc.data();
-        if (cpData && typeof cpData.capabilityId === 'string' && cpData.capabilityId) {
-          checkpointCapabilityId = cpData.capabilityId;
-        }
-      }
-    }
-
-    if (checkpointCapabilityId) {
-      const directMatch = siteCapabilities.docs.filter((d) => d.id === checkpointCapabilityId);
-      if (directMatch.length > 0) targetCapDocs = directMatch;
-    } else if (checkpointId) {
-      // Source 2: capability checkpointMappings (HQ-configured label or ID match)
-      const mapped = siteCapabilities.docs.filter((capDoc) => {
-        const mappings = capDoc.data().checkpointMappings;
-        if (!Array.isArray(mappings)) return false;
-        return mappings.some((m: Record<string, unknown>) =>
-          m.checkpointId === checkpointId || m.label === checkpointId
-        );
-      });
-      if (mapped.length > 0) targetCapDocs = mapped;
-    }
-
-    // If no capability can be identified, refuse to write phantom growth events.
-    // The checkpoint must be mapped by the learner (capabilityId on submission) or
-    // by HQ (checkpointMappings on capability doc) before it can drive growth.
-    if (targetCapDocs.length === 0) {
-      return { updated: false, reason: 'No capability mapping found for this checkpoint. Map the checkpoint to a capability via checkpointMappings or have the learner select a capability at submission.' };
-    }
-
-    for (const capDoc of targetCapDocs) {
-      const capabilityId = capDoc.id;
-      const pillarCode = (capDoc.data().pillarCode as string) ?? '';
-
-      const masteryId = `${learnerId}_${capabilityId}`;
-      const masteryRef = db.collection('capabilityMastery').doc(masteryId);
-      const masterySnap = await masteryRef.get();
-      const masteryData = masterySnap.data() ?? {};
-
-      const currentLevel = masterySnap.exists
-        ? (masteryData.currentLevel as string) || 'emerging'
-        : null;
-      const currentIdx = currentLevel ? LEVEL_ORDER.indexOf(currentLevel) : -1;
-
-      // Per-capability evidence: count evidence records mapped to this capability
-      const capEvidenceSnap = await db
-        .collection('evidenceRecords')
-        .where('learnerId', '==', learnerId)
-        .where('capabilityId', '==', capabilityId)
-        .get();
-
-      const totalEvidence = capEvidenceSnap.size + (evidenceCount > 0 ? 1 : 0);
-      let newLevel = 'emerging';
-      if (totalEvidence >= 5) newLevel = 'advanced';
-      else if (totalEvidence >= 3) newLevel = 'proficient';
-      else if (totalEvidence >= 1) newLevel = 'developing';
-
-      const newIdx = LEVEL_ORDER.indexOf(newLevel);
-      if (newIdx <= currentIdx) continue;
-
-      const LEVEL_TO_NUMBER: Record<string, number> = { emerging: 1, developing: 2, proficient: 3, advanced: 4 };
-
-      if (masterySnap.exists) {
-        batch.update(masteryRef, {
-          currentLevel: newLevel,
-          latestLevel: LEVEL_TO_NUMBER[newLevel] ?? 1,
-          previousLevel: currentLevel,
-          evidenceCount: totalEvidence,
-          lastAssessedBy: educatorId || 'system',
-          lastAssessedAt: FieldValue.serverTimestamp(),
-          updatedAt: FieldValue.serverTimestamp(),
-        });
-      } else {
-        batch.set(masteryRef, {
-          learnerId,
-          capabilityId,
-          siteId,
-          pillarCode,
-          currentLevel: newLevel,
-          latestLevel: LEVEL_TO_NUMBER[newLevel] ?? 1,
-          previousLevel: null,
-          evidenceCount: totalEvidence,
-          lastAssessedBy: educatorId || 'system',
-          lastAssessedAt: FieldValue.serverTimestamp(),
-          updatedAt: FieldValue.serverTimestamp(),
-        });
-      }
-
-      const growthRef = db.collection('capabilityGrowthEvents').doc();
-      batch.set(growthRef, {
-        learnerId,
-        capabilityId,
-        siteId,
-        pillarCode,
-        level: LEVEL_TO_NUMBER[newLevel] ?? 1,
-        fromLevel: currentLevel,
-        toLevel: newLevel,
-        educatorId: educatorId || 'system',
-        source: 'checkpoint',
-        checkpointId: checkpointId || null,
-        createdAt: FieldValue.serverTimestamp(),
-      });
-
-      growthEvents.push({ capabilityId, from: currentLevel, to: newLevel });
-
-      // Write skillMastery for any microSkillIds linked to this capability
-      const capMicroSkillIds = capDoc.data().microSkillIds;
-      if (Array.isArray(capMicroSkillIds)) {
-        for (const msId of capMicroSkillIds) {
-          if (typeof msId !== 'string' || !msId.trim()) continue;
-          const skillMasteryRef = db.collection('skillMastery').doc(`${learnerId}_${msId}`);
-          batch.set(skillMasteryRef, {
-            learnerId,
-            microSkillId: msId,
-            capabilityId,
-            level: LEVEL_TO_NUMBER[newLevel] ?? 1,
-            siteId,
-            updatedAt: FieldValue.serverTimestamp(),
-          }, { merge: true });
-        }
-      }
-    }
+    return {
+      updated: false,
+      reason:
+        'Checkpoint updates require a canonical checkpoint definition or mapped skill IDs before capability growth can be evaluated.',
+    };
   }
 
   if (growthEvents.length > 0) {

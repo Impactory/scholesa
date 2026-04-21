@@ -140,10 +140,13 @@ describe('Renderers delegate to real evidence components', () => {
     const source = readSrcFile(
       'features', 'workflows', 'renderers', 'LearnerCheckpointRenderer.tsx'
     );
-    // Purpose-built checkpoint UI — writes checkpointHistory plus a linked portfolio artifact
+    // Purpose-built checkpoint UI — reads canonical checkpoints, then writes
+    // checkpointHistory plus a linked portfolio artifact.
+    expect(source).toContain('checkpointsCollection');
     expect(source).toContain('checkpointHistory');
     expect(source).toContain('portfolioItemsCollection');
     expect(source).toContain('portfolioItemId: portfolioRef.id');
+    expect(source).toContain('checkpointDefinitionId');
     expect(source).toContain('explainItBack');
     expect(source).toContain('learnerId');
     expect(source).toContain('writeBatch');
@@ -318,6 +321,8 @@ describe('EducatorEvidenceReviewRenderer capability growth write path', () => {
 
   it('treats proof-linked checkpoints as reviewed evidence instead of a growth side-channel', () => {
     expect(source).toContain('cp.portfolioItemId');
+    expect(source).toContain('checkpointDefinitionId');
+    expect(source).toContain('checkpointLabel');
     expect(source).toContain('Capability growth will update after proof-of-learning is verified in the proof review flow.');
     expect(source).toContain('Linked proof is verified. Capability growth is recorded from the proof verification record.');
     expect(source).toContain('data-testid={`checkpoint-proof-gate-${cp.id}`}');

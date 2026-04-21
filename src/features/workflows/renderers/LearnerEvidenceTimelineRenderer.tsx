@@ -291,13 +291,21 @@ export default function LearnerEvidenceTimelineRenderer({ ctx }: CustomRouteRend
       });
 
       // Checkpoints
-      checkpointsSnap.docs.forEach((d) => {
-        const data = d.data();
-        timelineItems.push({
-          id: d.id,
-          type: 'checkpoint',
-          title: data.missionTitle ? `Checkpoint: ${data.missionTitle}` : 'Checkpoint',
-          description: data.answer,
+        checkpointsSnap.docs.forEach((d) => {
+          const data = d.data();
+          const checkpointLabel =
+            typeof data.checkpointLabel === 'string' && data.checkpointLabel.trim()
+              ? data.checkpointLabel.trim()
+              : null;
+          timelineItems.push({
+            id: d.id,
+            type: 'checkpoint',
+            title: data.missionTitle
+              ? `Checkpoint: ${data.missionTitle}${checkpointLabel ? ` — ${checkpointLabel}` : ''}`
+              : checkpointLabel
+              ? `Checkpoint: ${checkpointLabel}`
+              : 'Checkpoint',
+            description: data.answer,
           createdAt: toIso(data.createdAt),
           status: (data.isCorrect ? 'verified' : (data.status as string) || 'submitted') as 'pending' | 'submitted' | 'reviewing' | 'verified',
           pillarCodes: [],

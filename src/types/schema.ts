@@ -266,6 +266,7 @@ export interface PortfolioItem {
   reflectionIds?: string[]; // S1-6: linked ReflectionEntry documents
   growthEventIds?: string[];
   missionAttemptId?: string;
+  checkpointDefinitionId?: string;
   rubricApplicationId?: string;
   proofBundleId?: string;
   proofOfLearningStatus?: 'not-available' | 'missing' | 'partial' | 'verified';
@@ -984,35 +985,23 @@ export interface SprintSession {
 }
 
 /**
- * Checkpoint (fast feedback point)
+ * Canonical checkpoint definition authored by HQ and reused at runtime.
+ * Collection: checkpoints
  */
 export interface Checkpoint {
   id: string;
-  sprintSessionId: string;
-  learnerId: string;
   siteId: string;
-  
-  checkpointNumber: number; // 1, 2, 3...
-  
-  // What was submitted
-  uploadUrl?: string;
-  explainItBack: string; // Student explains their work
-  
-  // Feedback (teacher or AI)
-  feedbackGivenBy: 'teacher' | 'ai' | 'peer';
-  feedbackGivenByUserId?: string;
-  feedback: string;
-  nextStepSuggestion?: string;
-  
-  // Pass/needs revision
-  status: 'passed' | 'needs_revision';
-  attemptNumber: number;
-
-  // AI disclosure (S1-7)
-  aiAssistanceUsed?: boolean;
-  aiAssistanceDetails?: string;
-
+  capabilityId: string;
+  capabilityTitle?: string;
+  pillarCode?: PillarCode;
+  missionId?: string;
+  missionTitle?: string;
+  title: string;
+  description?: string;
+  checkpointNumber?: number;
+  status: 'active' | 'archived';
   createdAt: Timestamp;
+  updatedAt: Timestamp;
 }
 
 /**
@@ -1269,6 +1258,9 @@ export interface CheckpointMapping {
   label: string;
   checkpointId?: string;
   description?: string;
+  missionId?: string;
+  missionTitle?: string;
+  checkpointNumber?: number;
 }
 
 export interface RubricTemplateCriterion {

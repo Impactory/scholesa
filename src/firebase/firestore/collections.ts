@@ -46,6 +46,7 @@ import type {
   ProcessDomain,
   ProcessDomainMastery,
   ProcessDomainGrowthEvent,
+  Checkpoint,
   SkillEvidence,
   ProofOfLearningBundle,
 } from '@/src/types/schema';
@@ -105,6 +106,7 @@ export const evidenceRecordsCollection = createCollection<EvidenceRecord>('evide
 export const rubricApplicationsCollection = createCollection<RubricApplication>('rubricApplications');
 export const rubricTemplatesCollection = createCollection<RubricTemplate>('rubricTemplates');
 export const learnerReflectionsCollection = createCollection<LearnerReflection>('learnerReflections');
+export const checkpointsCollection = createCollection<Checkpoint>('checkpoints');
 
 // Process Domains
 export const processDomainsCollection = createCollection<ProcessDomain>('processDomains');

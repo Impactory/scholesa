@@ -10,11 +10,14 @@ import {
   query,
   serverTimestamp,
   updateDoc,
+  writeBatch,
   where,
 } from 'firebase/firestore';
+import { firestore } from '@/src/firebase/client-init';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import {
   capabilitiesCollection,
+  checkpointsCollection,
   missionsCollection,
   rubricTemplatesCollection,
   processDomainsCollection,
@@ -25,7 +28,15 @@ import type { Mission } from '@/src/types/schema';
 import { invalidateCapabilityCache } from '@/src/lib/capabilities/useCapabilities';
 import { RoleRouteGuard } from '@/src/components/auth/RoleRouteGuard';
 import { Spinner } from '@/src/components/ui/Spinner';
-import type { Capability, PillarCode, RubricTemplate, ProgressionDescriptors, ProcessDomain, CheckpointMapping } from '@/src/types/schema';
+import type {
+  Capability,
+  PillarCode,
+  RubricTemplate,
+  ProgressionDescriptors,
+  ProcessDomain,
+  CheckpointMapping,
+  Checkpoint,
+} from '@/src/types/schema';
 
 /* ───── Constants ───── */
 
@@ -43,6 +54,16 @@ function pillarClass(pillarCode: PillarCode): string {
 
 function pillarLabel(pillarCode: PillarCode): string {
   return PILLAR_OPTIONS.find((p) => p.value === pillarCode)?.label ?? pillarCode;
+}
+
+function sortCheckpointMappings(a: CheckpointMapping, b: CheckpointMapping): number {
+  const missionCompare = (a.missionTitle ?? '').localeCompare(b.missionTitle ?? '');
+  if (missionCompare !== 0) return missionCompare;
+
+  const numberCompare = (a.checkpointNumber ?? Number.MAX_SAFE_INTEGER) - (b.checkpointNumber ?? Number.MAX_SAFE_INTEGER);
+  if (numberCompare !== 0) return numberCompare;
+
+  return a.label.localeCompare(b.label);
 }
 
 /* ───── Types ───── */
@@ -109,6 +130,7 @@ export function CapabilityFrameworkEditor({ initialTab, siteId }: CapabilityFram
   const resolvedSiteId = useMemo(() => siteId || resolveActiveSiteId(profile), [siteId, profile]);
 
   const [capabilities, setCapabilities] = useState<Capability[]>([]);
+  const [checkpoints, setCheckpoints] = useState<Checkpoint[]>([]);
   const [missions, setMissions] = useState<Mission[]>([]);
   const [rubricTemplates, setRubricTemplates] = useState<RubricTemplate[]>([]);
   const [loading, setLoading] = useState(true);
@@ -129,22 +151,32 @@ export function CapabilityFrameworkEditor({ initialTab, siteId }: CapabilityFram
 
   const loadData = useCallback(async () => {
     setErrorMessage(null);
-    if (!resolvedSiteId) {
-      setCapabilities([]);
-      setRubricTemplates([]);
-      setMissions([]);
-      setLoading(false);
+      if (!resolvedSiteId) {
+        setCapabilities([]);
+        setCheckpoints([]);
+        setRubricTemplates([]);
+        setMissions([]);
+        setLoading(false);
       return;
     }
 
     setLoading(true);
     try {
-      const [capSnap, rubSnap, missionSnap] = await Promise.all([
+      const [capSnap, checkpointSnap, rubSnap, missionSnap] = await Promise.all([
         getDocs(query(capabilitiesCollection, where('siteId', '==', resolvedSiteId), orderBy('pillarCode'), orderBy('sortOrder'))),
+        getDocs(query(checkpointsCollection, where('siteId', '==', resolvedSiteId))),
         getDocs(query(rubricTemplatesCollection, where('siteId', '==', resolvedSiteId), orderBy('updatedAt', 'desc'))),
-        getDocs(query(missionsCollection, orderBy('order'))),
+        getDocs(query(missionsCollection, where('siteId', '==', resolvedSiteId), orderBy('order'))),
       ]);
       setCapabilities(capSnap.docs.map((d) => ({ ...d.data(), id: d.id }) as Capability));
+      setCheckpoints(
+        checkpointSnap.docs
+          .map((d) => {
+            const data = d.data() as Checkpoint;
+            return { ...data, id: d.id };
+          })
+          .filter((checkpoint) => checkpoint.status !== 'archived')
+      );
       setRubricTemplates(rubSnap.docs.map((d) => ({ ...d.data(), id: d.id }) as RubricTemplate));
       setMissions(missionSnap.docs.map((d) => ({ ...d.data(), id: d.id }) as Mission));
     } catch (err) {
@@ -183,6 +215,12 @@ export function CapabilityFrameworkEditor({ initialTab, siteId }: CapabilityFram
     return m;
   }, [capabilities]);
 
+  const missionMap = useMemo(() => {
+    const m = new Map<string, Mission>();
+    for (const mission of missions) m.set(mission.id, mission);
+    return m;
+  }, [missions]);
+
   /* ───── Flash Messages ───── */
 
   const flash = useCallback((msg: string) => {
@@ -216,6 +254,19 @@ export function CapabilityFrameworkEditor({ initialTab, siteId }: CapabilityFram
   }, []);
 
   const openEditCapability = useCallback((cap: Capability) => {
+    const checkpointMappings =
+      checkpoints
+        .filter((checkpoint) => checkpoint.capabilityId === cap.id && checkpoint.status !== 'archived')
+        .map((checkpoint) => ({
+          checkpointId: checkpoint.id,
+          label: checkpoint.title,
+          description: checkpoint.description,
+          missionId: checkpoint.missionId,
+          missionTitle: checkpoint.missionTitle,
+          checkpointNumber: checkpoint.checkpointNumber,
+        }))
+        .sort(sortCheckpointMappings);
+
     setEditingCapabilityId(cap.id);
     setCapabilityForm({
       title: cap.title ?? cap.name,
@@ -226,10 +277,12 @@ export function CapabilityFrameworkEditor({ initialTab, siteId }: CapabilityFram
         beginning: '', developing: '', proficient: '', advanced: '',
       },
       unitMappings: cap.unitMappings ?? [],
-      checkpointMappings: cap.checkpointMappings ?? [],
+      checkpointMappings: checkpointMappings.length > 0
+        ? checkpointMappings
+        : [...(cap.checkpointMappings ?? [])].sort(sortCheckpointMappings),
     });
     setShowCapabilityForm(true);
-  }, []);
+  }, [checkpoints]);
 
   const saveCapability = useCallback(async () => {
     const activeSiteId = requireSiteContext('saving capabilities');
@@ -237,52 +290,156 @@ export function CapabilityFrameworkEditor({ initialTab, siteId }: CapabilityFram
     const title = capabilityForm.title.trim();
     if (!title) { flashError('Title is required.'); return; }
 
+    let normalizedCheckpointMappings: CheckpointMapping[] = [];
+    try {
+      normalizedCheckpointMappings = capabilityForm.checkpointMappings
+        .flatMap((mapping) => {
+          const label = mapping.label.trim();
+          const description = mapping.description?.trim() || undefined;
+          const checkpointId = mapping.checkpointId?.trim() || undefined;
+          const missionId = mapping.missionId?.trim() || undefined;
+          const checkpointNumber =
+            typeof mapping.checkpointNumber === 'number'
+              ? Math.trunc(mapping.checkpointNumber)
+              : Number.parseInt(String(mapping.checkpointNumber ?? ''), 10);
+
+          if (!label && !description && !missionId && !checkpointId && !Number.isFinite(checkpointNumber)) {
+            return [];
+          }
+          if (!label) {
+            throw new Error('Each checkpoint definition needs a title.');
+          }
+          if (!missionId) {
+            throw new Error(`Select a mission for checkpoint "${label}".`);
+          }
+          if (!Number.isFinite(checkpointNumber) || checkpointNumber <= 0) {
+            throw new Error(`Add a checkpoint number for "${label}".`);
+          }
+
+          const mission = missionMap.get(missionId);
+          if (!mission) {
+            throw new Error(`Mission for checkpoint "${label}" could not be found in the active site.`);
+          }
+
+          return [{
+            checkpointId,
+            label,
+            description,
+            missionId,
+            missionTitle: mission.title,
+            checkpointNumber,
+          } satisfies CheckpointMapping];
+        })
+        .sort(sortCheckpointMappings);
+    } catch (err) {
+      flashError(err instanceof Error ? err.message : 'Checkpoint definitions are incomplete.');
+      return;
+    }
+
     setSaving(true);
     try {
       const normalizedTitle = title.toLowerCase().replace(/\s+/g, '_');
       const hasProgression = Object.values(capabilityForm.progressionDescriptors).some((v) => v.trim());
+      const descriptor = capabilityForm.descriptor.trim();
+
+      const batch = writeBatch(firestore);
+      const capabilityRef = editingCapabilityId
+        ? doc(capabilitiesCollection, editingCapabilityId)
+        : doc(capabilitiesCollection);
+      const capabilityId = capabilityRef.id;
+      const existingCheckpointDocs = checkpoints.filter((checkpoint) => checkpoint.capabilityId === capabilityId);
+      const existingCheckpointMap = new Map(existingCheckpointDocs.map((checkpoint) => [checkpoint.id, checkpoint]));
+      const retainedCheckpointIds = new Set<string>();
+
+      const syncedCheckpointMappings = normalizedCheckpointMappings.map((mapping) => {
+        const checkpointRef =
+          mapping.checkpointId && existingCheckpointMap.has(mapping.checkpointId)
+            ? doc(checkpointsCollection, mapping.checkpointId)
+            : doc(checkpointsCollection);
+
+        retainedCheckpointIds.add(checkpointRef.id);
+
+        const existingCheckpoint = existingCheckpointMap.get(checkpointRef.id);
+        batch.set(
+          checkpointRef,
+          {
+            siteId: activeSiteId,
+            capabilityId,
+            capabilityTitle: title,
+            pillarCode: capabilityForm.pillarCode,
+            missionId: mapping.missionId,
+            missionTitle: mapping.missionTitle,
+            title: mapping.label,
+            description: mapping.description,
+            checkpointNumber: mapping.checkpointNumber,
+            status: 'active',
+            createdAt: existingCheckpoint?.createdAt ?? serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          } as Omit<Checkpoint, 'id'>,
+          { merge: true }
+        );
+
+        return {
+          checkpointId: checkpointRef.id,
+          label: mapping.label,
+          description: mapping.description,
+          missionId: mapping.missionId,
+          missionTitle: mapping.missionTitle,
+          checkpointNumber: mapping.checkpointNumber,
+        } satisfies CheckpointMapping;
+      });
+
+      for (const checkpoint of existingCheckpointDocs) {
+        if (retainedCheckpointIds.has(checkpoint.id)) continue;
+        batch.set(
+          doc(checkpointsCollection, checkpoint.id),
+          {
+            status: 'archived',
+            updatedAt: serverTimestamp(),
+          },
+          { merge: true }
+        );
+      }
+
+      const capabilityPayload = {
+        title,
+        name: title,
+        normalizedTitle,
+        pillarCode: capabilityForm.pillarCode,
+        descriptor: descriptor || deleteField(),
+        sortOrder: capabilityForm.sortOrder,
+        unitMappings: capabilityForm.unitMappings.length > 0 ? capabilityForm.unitMappings : deleteField(),
+        checkpointMappings: syncedCheckpointMappings.length > 0 ? syncedCheckpointMappings : deleteField(),
+        progressionDescriptors: hasProgression
+          ? capabilityForm.progressionDescriptors
+          : deleteField(),
+        updatedAt: serverTimestamp(),
+      };
 
       if (editingCapabilityId) {
-        const ref = doc(capabilitiesCollection, editingCapabilityId);
-        await updateDoc(ref, {
-          title,
-          name: title,
-          normalizedTitle,
-          pillarCode: capabilityForm.pillarCode,
-          descriptor: capabilityForm.descriptor.trim() || undefined,
-          sortOrder: capabilityForm.sortOrder,
-          unitMappings: capabilityForm.unitMappings.length > 0 ? capabilityForm.unitMappings : deleteField(),
-          checkpointMappings: capabilityForm.checkpointMappings.length > 0
-            ? capabilityForm.checkpointMappings.filter((cm) => cm.label.trim())
-            : deleteField(),
-          ...(hasProgression
-            ? { progressionDescriptors: capabilityForm.progressionDescriptors }
-            : { progressionDescriptors: deleteField() }),
-          updatedAt: serverTimestamp(),
-        });
-        flash('Capability updated.');
+        batch.update(capabilityRef, capabilityPayload);
       } else {
-        await addDoc(capabilitiesCollection, {
+        batch.set(capabilityRef, {
           title,
           name: title,
           normalizedTitle,
           pillarCode: capabilityForm.pillarCode,
           domain: 'human' as const,
-          description: capabilityForm.descriptor.trim() || title,
-          siteId: activeSiteId,
-          descriptor: capabilityForm.descriptor.trim() || undefined,
-          sortOrder: capabilityForm.sortOrder,
+          description: descriptor || title,
+          ...(descriptor ? { descriptor } : {}),
           ...(capabilityForm.unitMappings.length > 0 ? { unitMappings: capabilityForm.unitMappings } : {}),
-          ...(capabilityForm.checkpointMappings.filter((cm) => cm.label.trim()).length > 0
-            ? { checkpointMappings: capabilityForm.checkpointMappings.filter((cm) => cm.label.trim()) }
-            : {}),
+          ...(syncedCheckpointMappings.length > 0 ? { checkpointMappings: syncedCheckpointMappings } : {}),
           ...(hasProgression ? { progressionDescriptors: capabilityForm.progressionDescriptors } : {}),
+          sortOrder: capabilityForm.sortOrder,
+          siteId: activeSiteId,
           status: 'active' as const,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
         } as unknown as Omit<Capability, 'id'>);
-        flash('Capability created.');
       }
+
+      await batch.commit();
+      flash(editingCapabilityId ? 'Capability updated.' : 'Capability created.');
       invalidateCapabilityCache(activeSiteId);
       setShowCapabilityForm(false);
       await loadData();
@@ -292,14 +449,35 @@ export function CapabilityFrameworkEditor({ initialTab, siteId }: CapabilityFram
     } finally {
       setSaving(false);
     }
-  }, [requireSiteContext, user, capabilityForm, editingCapabilityId, flash, flashError, loadData]);
+  }, [
+    requireSiteContext,
+    user,
+    capabilityForm,
+    editingCapabilityId,
+    flash,
+    flashError,
+    loadData,
+    missionMap,
+    checkpoints,
+  ]);
 
   const archiveCapability = useCallback(async (cap: Capability) => {
     if (!confirm(`Archive "${cap.title}"? It will no longer appear in new rubric selections.`)) return;
     setSaving(true);
     try {
+      const batch = writeBatch(firestore);
       const ref = doc(capabilitiesCollection, cap.id);
-      await updateDoc(ref, { status: 'archived', updatedAt: serverTimestamp() });
+      batch.update(ref, { status: 'archived', updatedAt: serverTimestamp() });
+      checkpoints
+        .filter((checkpoint) => checkpoint.capabilityId === cap.id && checkpoint.status !== 'archived')
+        .forEach((checkpoint) => {
+          batch.set(
+            doc(checkpointsCollection, checkpoint.id),
+            { status: 'archived', updatedAt: serverTimestamp() },
+            { merge: true }
+          );
+        });
+      await batch.commit();
       if (resolvedSiteId) invalidateCapabilityCache(resolvedSiteId);
       flash('Capability archived.');
       await loadData();
@@ -309,7 +487,7 @@ export function CapabilityFrameworkEditor({ initialTab, siteId }: CapabilityFram
     } finally {
       setSaving(false);
     }
-  }, [siteId, flash, flashError, loadData]);
+  }, [checkpoints, resolvedSiteId, flash, flashError, loadData]);
 
   /* ───── Rubric Template CRUD ───── */
 
@@ -1042,7 +1220,10 @@ function CapabilityFormModal({
                 onClick={() =>
                   setForm((prev) => ({
                     ...prev,
-                    checkpointMappings: [...prev.checkpointMappings, { label: '', description: '' }],
+                    checkpointMappings: [
+                      ...prev.checkpointMappings,
+                      { label: '', description: '', missionId: '', checkpointNumber: 1 },
+                    ],
                   }))
                 }
                 className="rounded bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-200"
@@ -1051,7 +1232,7 @@ function CapabilityFormModal({
               </button>
             </div>
             <p className="text-xs text-gray-400 mb-2">
-              Define named checkpoints (assessment points) for this capability.
+              Define canonical checkpoints for this capability. Learners and educators will use these authored checkpoint definitions at runtime.
             </p>
             {form.checkpointMappings.length === 0 ? (
               <p className="text-xs text-gray-400 italic">No checkpoints defined.</p>
@@ -1074,20 +1255,49 @@ function CapabilityFormModal({
                         className="block w-full rounded-md border border-gray-300 px-2 py-1 text-xs shadow-sm"
                         placeholder="Checkpoint label (e.g., Mid-sprint check)"
                       />
-                      <input
-                        type="text"
-                        value={cm.checkpointId ?? ''}
-                        onChange={(e) =>
-                          setForm((prev) => ({
-                            ...prev,
-                            checkpointMappings: prev.checkpointMappings.map((c, j) =>
-                              j === i ? { ...c, checkpointId: e.target.value } : c
-                            ),
-                          }))
-                        }
-                        className="block w-full rounded-md border border-gray-300 px-2 py-1 text-xs shadow-sm font-mono"
-                        placeholder="Checkpoint ID (paste from checkpoint doc, optional)"
-                      />
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        <select
+                          value={cm.missionId ?? ''}
+                          onChange={(e) =>
+                            setForm((prev) => ({
+                              ...prev,
+                              checkpointMappings: prev.checkpointMappings.map((c, j) =>
+                                j === i ? { ...c, missionId: e.target.value } : c
+                              ),
+                            }))
+                          }
+                          className="block w-full rounded-md border border-gray-300 px-2 py-1 text-xs shadow-sm"
+                        >
+                          <option value="">Select mission…</option>
+                          {missions.map((mission) => (
+                            <option key={mission.id} value={mission.id}>
+                              {mission.title}
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          type="number"
+                          min={1}
+                          value={cm.checkpointNumber ?? ''}
+                          onChange={(e) =>
+                            setForm((prev) => ({
+                              ...prev,
+                              checkpointMappings: prev.checkpointMappings.map((c, j) =>
+                                j === i
+                                  ? {
+                                      ...c,
+                                      checkpointNumber: e.target.value
+                                        ? Number.parseInt(e.target.value, 10)
+                                        : undefined,
+                                    }
+                                  : c
+                              ),
+                            }))
+                          }
+                          className="block w-full rounded-md border border-gray-300 px-2 py-1 text-xs shadow-sm"
+                          placeholder="Checkpoint number"
+                        />
+                      </div>
                       <input
                         type="text"
                         value={cm.description ?? ''}
@@ -1102,6 +1312,11 @@ function CapabilityFormModal({
                         className="block w-full rounded-md border border-gray-300 px-2 py-1 text-xs shadow-sm"
                         placeholder="Description (optional)"
                       />
+                      {cm.checkpointId && (
+                        <p className="text-[11px] font-mono text-gray-500">
+                          Canonical checkpoint ID: {cm.checkpointId}
+                        </p>
+                      )}
                     </div>
                     <button
                       type="button"

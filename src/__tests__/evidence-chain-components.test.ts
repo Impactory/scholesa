@@ -165,11 +165,13 @@ describe('Checkpoint proof chain honesty', () => {
 
   it('links learner checkpoints into portfolio evidence for proof review', () => {
     expect(learnerCheckpointSource).toContain('portfolioItemsCollection');
+    expect(learnerCheckpointSource).toContain('checkpointsCollection');
     expect(learnerCheckpointSource).toContain("source: 'checkpoint_submission'");
     expect(learnerCheckpointSource).toContain('proofOfLearningStatus');
     expect(learnerCheckpointSource).toContain('portfolioItemId: portfolioRef.id');
-    expect(learnerCheckpointSource).toContain('Select a capability before submitting checkpoint evidence.');
-    expect(learnerCheckpointSource).not.toContain('General checkpoint (no specific capability)');
+    expect(learnerCheckpointSource).toContain('checkpointDefinitionId');
+    expect(learnerCheckpointSource).toContain('Select an assigned checkpoint before submitting checkpoint evidence.');
+    expect(learnerCheckpointSource).toContain('No HQ-authored checkpoints are available for this site yet.');
   });
 
   it('keeps educator checkpoint review truthful about proof before growth', () => {
@@ -742,6 +744,7 @@ describe('Evidence chain collection exports completeness', () => {
     'sessionOccurrencesCollection',
     'sessionsCollection',
     'evidenceRecordsCollection',
+    'checkpointsCollection',
     'portfolioItemsCollection',
     'learnerReflectionsCollection',
     'capabilityGrowthEventsCollection',
@@ -779,23 +782,34 @@ describe('CapabilityFrameworkEditor unit mapping', () => {
     expect(source).toContain('missions.map');
   });
 
-  it('saves unitMappings on create', () => {
-    const createBlock = source.slice(
-      source.indexOf('await addDoc(capabilitiesCollection'),
-      source.indexOf(');', source.indexOf('await addDoc(capabilitiesCollection')) + 1
+  it('saves unitMappings in the shared capability payload', () => {
+    const payloadBlock = source.slice(
+      source.indexOf('const capabilityPayload = {'),
+      source.indexOf('if (editingCapabilityId)', source.indexOf('const capabilityPayload = {'))
     );
-    expect(createBlock).toContain('unitMappings');
-  });
-
-  it('saves unitMappings on update', () => {
-    const updateBlock = source.slice(
-      source.indexOf('await updateDoc('),
-      source.indexOf(');', source.indexOf('await updateDoc(')) + 1
-    );
-    expect(updateBlock).toContain('unitMappings');
+    expect(payloadBlock).toContain('unitMappings');
+    expect(payloadBlock).toContain('checkpointMappings: syncedCheckpointMappings');
   });
 
   it('populates unitMappings when editing existing capability', () => {
     expect(source).toContain('unitMappings: cap.unitMappings');
+  });
+
+  it('imports canonical checkpoint definitions', () => {
+    expect(source).toContain('checkpointsCollection');
+    expect(source).toContain('useState<Checkpoint[]>');
+  });
+
+  it('syncs authored checkpoint mappings into checkpoint docs', () => {
+    expect(source).toContain('writeBatch(firestore)');
+    expect(source).toContain('capabilityTitle: title');
+    expect(source).toContain('checkpointMappings: syncedCheckpointMappings');
+    expect(source).toContain("status: 'active'");
+  });
+
+  it('requires mission and checkpoint number instead of pasted checkpoint ids', () => {
+    expect(source).toContain('Select a mission for checkpoint');
+    expect(source).toContain('Add a checkpoint number');
+    expect(source).not.toContain('Checkpoint ID (paste from checkpoint doc, optional)');
   });
 });

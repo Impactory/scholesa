@@ -110,6 +110,11 @@ service cloud.firestore {
     match /aiInteractionLogs/{id} { allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator() || isHQ()); allow create: if isAuthenticated(); allow update: if isEducator(); allow delete: if false; }
     match /aiCoachInteractions/{id} { allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator() || isHQ()); allow create: if isAuthenticated(); allow update: if false; allow delete: if false; }
     match /missions/{id} { allow read: if isAuthenticated(); allow write: if isHQ(); }
+    match /checkpoints/{id} {
+      allow read: if isAuthenticated() && isSiteScopedRead(resource.data);
+      allow create, update: if isHQ() && isSiteScopedWrite(request.resource.data);
+      allow delete: if false;
+    }
     // Mission steps subcollection: HQ/educator writes, authenticated reads
     match /missions/{missionId}/steps/{stepId} {
       allow read: if isAuthenticated();
