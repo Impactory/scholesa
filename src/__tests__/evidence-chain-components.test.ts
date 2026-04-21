@@ -24,6 +24,11 @@ function readSrcFile(...segments: string[]): string {
 describe('EducatorEvidenceCapture session context linking', () => {
   const source = readSrcFile('components', 'evidence', 'EducatorEvidenceCapture.tsx');
 
+  it('resolves site context through the shared active-site helper', () => {
+    expect(source).toContain('resolveActiveSiteId');
+    expect(source).not.toContain('const siteId = profile?.studioId ?? null;');
+  });
+
   it('imports sessionOccurrencesCollection', () => {
     expect(source).toContain('sessionOccurrencesCollection');
   });
@@ -52,6 +57,10 @@ describe('EducatorEvidenceCapture session context linking', () => {
     expect(source).toContain('Timestamp.fromDate(todayEnd)');
   });
 
+  it('queries learners by canonical siteIds membership', () => {
+    expect(source).toContain("where('siteIds', 'array-contains', siteId)");
+  });
+
   it('renders a session selector in the form', () => {
     expect(source).toContain('data-testid="evidence-session"');
   });
@@ -63,6 +72,27 @@ describe('EducatorEvidenceCapture session context linking', () => {
       source.indexOf('};', source.indexOf('const resetForm')) + 2
     );
     expect(resetBlock).not.toContain('setSelectedSessionOccurrenceId');
+  });
+
+  it('shows an explicit no-site blocked state', () => {
+    expect(source).toContain('data-testid="evidence-capture-site-required"');
+    expect(source).toContain('Select an active site before capturing evidence');
+  });
+});
+
+/* ───── ProofOfLearningVerification site context ───── */
+
+describe('ProofOfLearningVerification site context', () => {
+  const source = readSrcFile('components', 'evidence', 'ProofOfLearningVerification.tsx');
+
+  it('resolves site context through the shared active-site helper', () => {
+    expect(source).toContain('resolveActiveSiteId');
+    expect(source).not.toContain('const siteId = profile?.studioId ?? null;');
+  });
+
+  it('shows an explicit no-site blocked state', () => {
+    expect(source).toContain('data-testid="proof-verification-site-required"');
+    expect(source).toContain('Select an active site before reviewing proof-of-learning evidence.');
   });
 });
 

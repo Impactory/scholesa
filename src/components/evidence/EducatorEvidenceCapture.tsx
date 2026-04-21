@@ -18,6 +18,7 @@ import {
   usersCollection,
 } from '@/src/firebase/firestore/collections';
 import { Timestamp } from 'firebase/firestore';
+import { resolveActiveSiteId } from '@/src/lib/auth/activeSite';
 import { useCapabilities } from '@/src/lib/capabilities/useCapabilities';
 import { RoleRouteGuard } from '@/src/components/auth/RoleRouteGuard';
 import { RubricReviewPanel } from '@/src/components/evidence/RubricReviewPanel';
@@ -57,7 +58,7 @@ interface RecentEvidence {
 
 export function EducatorEvidenceCapture() {
   const { user, profile, loading: authLoading } = useAuthContext();
-  const siteId = profile?.studioId ?? null;
+  const siteId = resolveActiveSiteId(profile);
 
   const { capabilityList: capabilities, resolveTitle } = useCapabilities(siteId);
   const [learners, setLearners] = useState<LearnerOption[]>([]);
@@ -98,9 +99,22 @@ export function EducatorEvidenceCapture() {
       const todayEnd = new Date();
       todayEnd.setHours(23, 59, 59, 999);
 
-      const [learnerSnap, evidenceSnap, occurrenceSnap] = await Promise.all([
+      const [siteLearnerSnap, legacyLearnerSnap, evidenceSnap, occurrenceSnap] = await Promise.all([
         getDocs(
-          query(usersCollection, where('studioId', '==', siteId), where('role', '==', 'learner'), orderBy('displayName'))
+          query(
+            usersCollection,
+            where('siteIds', 'array-contains', siteId),
+            where('role', '==', 'learner'),
+            limit(200)
+          )
+        ),
+        getDocs(
+          query(
+            usersCollection,
+            where('studioId', '==', siteId),
+            where('role', '==', 'learner'),
+            limit(200)
+          )
         ),
         getDocs(
           query(evidenceRecordsCollection, where('siteId', '==', siteId), orderBy('createdAt', 'desc'), limit(20))
@@ -132,6 +146,25 @@ export function EducatorEvidenceCapture() {
         }
       }
 
+      const learnerMap = new Map<string, LearnerOption>();
+      for (const learnerSnap of [siteLearnerSnap, legacyLearnerSnap]) {
+        for (const learnerDoc of learnerSnap.docs) {
+          const data = learnerDoc.data();
+          const uid = typeof data.uid === 'string' && data.uid.trim().length > 0 ? data.uid : learnerDoc.id;
+          if (!learnerMap.has(uid)) {
+            learnerMap.set(uid, {
+              uid,
+              displayName: typeof data.displayName === 'string' && data.displayName.trim().length > 0
+                ? data.displayName
+                : uid,
+            });
+          }
+        }
+      }
+      const learnerList = Array.from(learnerMap.values()).sort((left, right) =>
+        left.displayName.localeCompare(right.displayName),
+      );
+
       const fmt = (d: Date) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       setTodaySessions(
         occurrenceSnap.docs.map((d) => {
@@ -144,15 +177,10 @@ export function EducatorEvidenceCapture() {
         })
       );
 
-      setLearners(
-        learnerSnap.docs.map((d) => ({
-          uid: d.data().uid,
-          displayName: d.data().displayName,
-        }))
-      );
+      setLearners(learnerList);
 
       const learnerNames = new Map<string, string>();
-      for (const d of learnerSnap.docs) learnerNames.set(d.data().uid, d.data().displayName);
+      for (const learner of learnerList) learnerNames.set(learner.uid, learner.displayName);
 
       setRecentEvidence(
         evidenceSnap.docs.map((d) => {
@@ -262,8 +290,11 @@ export function EducatorEvidenceCapture() {
 
   if (!siteId) {
     return (
-      <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-900">
-        No site assigned. Evidence capture requires a site context.
+      <div
+        data-testid="evidence-capture-site-required"
+        className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-900"
+      >
+        Select an active site before capturing evidence during live sessions.
       </div>
     );
   }

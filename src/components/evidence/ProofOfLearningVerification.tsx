@@ -14,6 +14,7 @@ import {
   portfolioItemsCollection,
 } from '@/src/firebase/firestore/collections';
 import { functions } from '@/src/firebase/client-init';
+import { resolveActiveSiteId } from '@/src/lib/auth/activeSite';
 import { useCapabilities } from '@/src/lib/capabilities/useCapabilities';
 import { RoleRouteGuard } from '@/src/components/auth/RoleRouteGuard';
 import { Spinner } from '@/src/components/ui/Spinner';
@@ -38,7 +39,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 export function ProofOfLearningVerification() {
   const { user, profile, loading: authLoading } = useAuthContext();
-  const siteId = profile?.studioId ?? null;
+  const siteId = resolveActiveSiteId(profile);
   const { resolveTitle, loading: capLoading } = useCapabilities(siteId);
 
   const [items, setItems] = useState<PortfolioItem[]>([]);
@@ -52,7 +53,13 @@ export function ProofOfLearningVerification() {
   /* ───── Load portfolio items needing verification ───── */
 
   const loadItems = useCallback(async () => {
-    if (!siteId) return;
+    setLoadError(null);
+    if (!siteId) {
+      setItems([]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
       // Load items that are pending or reviewed (not yet verified)
@@ -79,8 +86,9 @@ export function ProofOfLearningVerification() {
   }, [siteId]);
 
   useEffect(() => {
-    loadItems();
-  }, [loadItems]);
+    if (authLoading) return;
+    void loadItems();
+  }, [authLoading, loadItems]);
 
   /* ───── Filtered items ───── */
 
@@ -94,6 +102,16 @@ export function ProofOfLearningVerification() {
 
   if (authLoading || capLoading) return <div className="flex justify-center py-12"><Spinner /></div>;
   if (!user || !profile) return <div className="p-6 text-sm text-gray-500">Not authenticated.</div>;
+  if (!siteId) {
+    return (
+      <div
+        data-testid="proof-verification-site-required"
+        className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900"
+      >
+        Select an active site before reviewing proof-of-learning evidence.
+      </div>
+    );
+  }
 
   return (
     <RoleRouteGuard allowedRoles={['hq', 'educator']}>
