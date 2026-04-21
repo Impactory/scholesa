@@ -154,6 +154,57 @@ describe('EducatorTodayRenderer site context', () => {
   });
 });
 
+/* ───── LearnerProgressReportRenderer site context ───── */
+
+describe('LearnerProgressReportRenderer site context', () => {
+  const source = readSrcFile(
+    'features',
+    'workflows',
+    'renderers',
+    'LearnerProgressReportRenderer.tsx'
+  );
+
+  it('resolves site context through the shared active-site helper', () => {
+    expect(source).toContain('resolveActiveSiteId');
+    expect(source).not.toContain("const siteId = ctx.profile?.siteIds?.[0] || '';");
+  });
+
+  it('passes the resolved site into learner passport export and MiloOS coach', () => {
+    expect(source).toContain('<LearnerPassportExport siteId={siteId} />');
+    expect(source).toContain('<AICoachScreen learnerId={ctx.uid} siteId={siteId} />');
+  });
+
+  it('shows an explicit no-site blocked state', () => {
+    expect(source).toContain('data-testid="learner-progress-site-required"');
+    expect(source).toContain('Select an active site before viewing your progress report and MiloOS coach.');
+  });
+});
+
+/* ───── LearnerPassportExport learner contract ───── */
+
+describe('LearnerPassportExport learner contract', () => {
+  const source = readSrcFile('components', 'passport', 'LearnerPassportExport.tsx');
+
+  it('uses shared active-site resolution', () => {
+    expect(source).toContain('resolveActiveSiteId');
+  });
+
+  it('uses a learner-safe passport callable instead of the parent bundle', () => {
+    expect(source).toContain('getLearnerPassportBundle');
+    expect(source).not.toContain('getParentDashboardBundle');
+  });
+
+  it('shows an explicit no-site blocked state', () => {
+    expect(source).toContain('data-testid="learner-passport-site-required"');
+    expect(source).toContain('Select an active site before viewing your evidence-backed passport.');
+  });
+
+  it('uses learner-specific empty-state wording', () => {
+    expect(source).toContain('No passport evidence is available yet.');
+    expect(source).not.toContain('No linked learners found.');
+  });
+});
+
 /* ───── LearnerEvidenceSubmission ───── */
 
 describe('LearnerEvidenceSubmission component', () => {
@@ -380,6 +431,30 @@ describe('verifyProofOfLearning callable', () => {
       )
     );
     expect(section).toContain('educator');
+  });
+});
+
+describe('getLearnerPassportBundle callable', () => {
+  const functionsSource = fs.readFileSync(
+    path.join(functionsDir, 'index.ts'),
+    'utf8'
+  );
+
+  it('exports a learner-safe passport callable', () => {
+    expect(functionsSource).toContain('export const getLearnerPassportBundle');
+    expect(functionsSource).toContain("requireRoleAndSite(authUid, ['learner'], requestedSiteId)");
+  });
+
+  it('reuses the existing evidence-backed learner summary builder', () => {
+    const section = functionsSource.slice(
+      functionsSource.indexOf('export const getLearnerPassportBundle'),
+      functionsSource.indexOf(
+        'async function computeRoleDashboardStats',
+        functionsSource.indexOf('export const getLearnerPassportBundle')
+      )
+    );
+    expect(section).toContain('buildParentLearnerSummary');
+    expect(section).toContain('learners: [learnerSummary]');
   });
 });
 

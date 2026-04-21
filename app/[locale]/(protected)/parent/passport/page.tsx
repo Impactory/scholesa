@@ -1,5 +1,5 @@
-import { LearnerPassportExport } from '@/src/components/passport/LearnerPassportExport';
+import { WorkflowRoutePage } from '@/src/features/workflows/WorkflowRoutePage';
 
-export default function PassportPage() {
-  return <LearnerPassportExport />;
+export default function WorkflowPage() {
+  return <WorkflowRoutePage routePath='/parent/passport' />;
 }

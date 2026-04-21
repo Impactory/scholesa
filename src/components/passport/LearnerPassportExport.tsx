@@ -6,6 +6,7 @@ import { functions } from '@/src/firebase/client-init';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { RoleRouteGuard } from '@/src/components/auth/RoleRouteGuard';
 import { Spinner } from '@/src/components/ui/Spinner';
+import { resolveActiveSiteId } from '@/src/lib/auth/activeSite';
 import {
   getLegacyPillarFamilyLabel,
   normalizeLegacyPillarCode,
@@ -340,22 +341,30 @@ function pillarColor(pillar: string | null) {
 
 /* ───── Component ───── */
 
-export function LearnerPassportExport() {
+export function LearnerPassportExport({ siteId: initialSiteId }: { siteId?: string | null } = {}) {
   const { user, profile, loading: authLoading } = useAuthContext();
   const [learners, setLearners] = useState<LearnerPassportData[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const siteId = profile?.activeSiteId ?? profile?.siteIds?.[0] ?? null;
+  const siteId = initialSiteId ?? resolveActiveSiteId(profile) ?? null;
 
   const fetchPassport = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+    if (!siteId) {
+      setLearners([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
-      const callable = httpsCallable(functions, 'getParentDashboardBundle');
-      const response = await callable({ siteId: siteId || undefined, locale: 'en', range: 'all' });
+      const callable = httpsCallable(functions, 'getLearnerPassportBundle');
+      const response = await callable({ siteId, locale: 'en', range: 'all' });
       const payload = (response.data ?? {}) as Record<string, unknown>;
       const rawLearners = Array.isArray(payload.learners) ? payload.learners : [];
       const normalized = rawLearners
@@ -555,7 +564,7 @@ ${claimsHtml}
 
   if (authLoading || loading) {
     return (
-      <RoleRouteGuard allowedRoles={['learner', 'parent', 'site', 'hq']}>
+      <RoleRouteGuard allowedRoles={['learner']}>
         <div className="flex items-center justify-center min-h-[400px]">
           <Spinner />
         </div>
@@ -563,9 +572,27 @@ ${claimsHtml}
     );
   }
 
+  if (!siteId) {
+    return (
+      <RoleRouteGuard allowedRoles={['learner']}>
+        <div className="p-6">
+          <div
+            className="rounded-lg border border-amber-200 bg-amber-50 p-8 text-center text-sm text-amber-900"
+            data-testid="learner-passport-site-required"
+          >
+            <p className="font-semibold">Active site required</p>
+            <p className="mt-1 text-amber-700">
+              Select an active site before viewing your evidence-backed passport.
+            </p>
+          </div>
+        </div>
+      </RoleRouteGuard>
+    );
+  }
+
   if (error) {
     return (
-      <RoleRouteGuard allowedRoles={['learner', 'parent', 'site', 'hq']}>
+      <RoleRouteGuard allowedRoles={['learner']}>
         <div className="p-6">
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <p className="text-red-800 text-sm">{error}</p>
@@ -578,10 +605,10 @@ ${claimsHtml}
 
   if (learners.length === 0) {
     return (
-      <RoleRouteGuard allowedRoles={['learner', 'parent', 'site', 'hq']}>
+      <RoleRouteGuard allowedRoles={['learner']}>
         <div className="p-6">
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
-            <p className="text-gray-600">No linked learners found. Passport data will appear once learners have evidence.</p>
+            <p className="text-gray-600">No passport evidence is available yet. Your passport will appear once reviewed evidence is linked into your growth record.</p>
           </div>
         </div>
       </RoleRouteGuard>
@@ -589,7 +616,7 @@ ${claimsHtml}
   }
 
   return (
-    <RoleRouteGuard allowedRoles={['learner', 'parent', 'site', 'hq']}>
+    <RoleRouteGuard allowedRoles={['learner']}>
       <div className="max-w-4xl mx-auto p-6 print:p-0 print:max-w-none">
         {/* ── Header (screen only) ── */}
         <div className="flex items-center justify-between mb-6 print:hidden">

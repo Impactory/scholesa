@@ -178,6 +178,14 @@ describe('Evidence chain route pages exist', () => {
       expect(fs.existsSync(fullPath)).toBe(true);
     });
   }
+
+  it('parent/passport/page.tsx routes through WorkflowRoutePage instead of learner export', () => {
+    const fullPath = path.join(appDir, 'parent', 'passport', 'page.tsx');
+    const source = fs.readFileSync(fullPath, 'utf8');
+    expect(source).toContain('WorkflowRoutePage');
+    expect(source).toContain("routePath='/parent/passport'");
+    expect(source).not.toContain('LearnerPassportExport');
+  });
 });
 
 /* ───── Component files exist ───── */

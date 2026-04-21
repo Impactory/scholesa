@@ -187,6 +187,21 @@ describe('Renderers delegate to real evidence components', () => {
     expect(source).toContain('GuardianCapabilityViewRenderer');
   });
 
+  it('parent passport page delegates to WorkflowRoutePage instead of learner passport export', () => {
+    const source = readSrcFile(
+      '..',
+      'app',
+      '[locale]',
+      '(protected)',
+      'parent',
+      'passport',
+      'page.tsx'
+    );
+    expect(source).toContain('WorkflowRoutePage');
+    expect(source).toContain("routePath='/parent/passport'");
+    expect(source).not.toContain('LearnerPassportExport');
+  });
+
   it('LearnerMiloOSRenderer → AICoachScreen with autonomy risk awareness', () => {
     const source = readSrcFile(
       'features', 'workflows', 'renderers', 'LearnerMiloOSRenderer.tsx'
@@ -230,6 +245,15 @@ describe('Renderers delegate to real evidence components', () => {
     expect(source).toContain("where('siteId', '==', educatorSiteId)");
     expect(source).toContain('siteId={educatorSiteId}');
     expect(source).toContain('data-testid="educator-today-site-required"');
+  });
+
+  it('LearnerProgressReportRenderer uses canonical site context for passport output', () => {
+    const source = readSrcFile(
+      'features', 'workflows', 'renderers', 'LearnerProgressReportRenderer.tsx'
+    );
+    expect(source).toContain('resolveActiveSiteId');
+    expect(source).toContain('<LearnerPassportExport siteId={siteId} />');
+    expect(source).toContain('data-testid="learner-progress-site-required"');
   });
 });
 

@@ -12,6 +12,7 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { getDocs, query, where, limit } from 'firebase/firestore';
 import { missionAttemptsCollection } from '@/src/firebase/firestore/collections';
+import { resolveActiveSiteId } from '@/src/lib/auth/activeSite';
 import type { CustomRouteRendererProps } from '../customRouteRenderers';
 import { BrainIcon, ChevronDownIcon, ChevronUpIcon, BarChart3Icon } from 'lucide-react';
 
@@ -32,7 +33,7 @@ const AICoachScreen = dynamic(
 export default function LearnerProgressReportRenderer({ ctx }: CustomRouteRendererProps) {
   const [showCoach, setShowCoach] = useState(false);
   const [revisionCount, setRevisionCount] = useState(0);
-  const siteId = ctx.profile?.siteIds?.[0] || '';
+  const siteId = resolveActiveSiteId(ctx.profile) ?? '';
 
   const checkRevisions = useCallback(async () => {
     if (!ctx.uid) return;
@@ -81,41 +82,55 @@ export default function LearnerProgressReportRenderer({ ctx }: CustomRouteRender
         </Link>
       )}
 
-      {/* Progress section */}
-      <div>
-        <div className="flex items-center gap-2 mb-2">
-          <BarChart3Icon className="h-5 w-5 text-indigo-600" />
-          <h2 className="text-xl font-bold text-gray-900">My Progress</h2>
-        </div>
-        <p className="text-sm text-gray-500 mb-4">
-          Your capability growth, evidence, and learning passport.
-        </p>
-        <LearnerPassportExport />
-      </div>
-
-      {/* MiloOS Coach toggle */}
-      <div className="border border-indigo-200 rounded-lg overflow-hidden">
-        <button
-          onClick={() => setShowCoach(!showCoach)}
-          className="w-full flex items-center justify-between p-4 bg-indigo-50 hover:bg-indigo-100 transition-colors"
+      {!siteId ? (
+        <div
+          className="rounded-xl border border-amber-200 bg-amber-50 p-8 text-center text-sm text-amber-900"
+          data-testid="learner-progress-site-required"
         >
-          <div className="flex items-center gap-2">
-            <BrainIcon className="h-5 w-5 text-indigo-600" />
-            <span className="font-medium text-indigo-900">MiloOS Coach</span>
-            <span className="text-xs text-indigo-600">— Hints, rubric checks & debugging</span>
+          <p className="font-semibold">Active site required</p>
+          <p className="mt-1 text-amber-700">
+            Select an active site before viewing your progress report and MiloOS coach.
+          </p>
+        </div>
+      ) : (
+        <>
+      {/* Progress section */}
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <BarChart3Icon className="h-5 w-5 text-indigo-600" />
+            <h2 className="text-xl font-bold text-gray-900">My Progress</h2>
           </div>
-          {showCoach ? (
-            <ChevronUpIcon className="h-4 w-4 text-indigo-600" />
-          ) : (
-            <ChevronDownIcon className="h-4 w-4 text-indigo-600" />
+          <p className="text-sm text-gray-500 mb-4">
+            Your capability growth, evidence, and learning passport.
+          </p>
+          <LearnerPassportExport siteId={siteId} />
+        </div>
+
+        {/* MiloOS Coach toggle */}
+        <div className="border border-indigo-200 rounded-lg overflow-hidden">
+          <button
+            onClick={() => setShowCoach(!showCoach)}
+            className="w-full flex items-center justify-between p-4 bg-indigo-50 hover:bg-indigo-100 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <BrainIcon className="h-5 w-5 text-indigo-600" />
+              <span className="font-medium text-indigo-900">MiloOS Coach</span>
+              <span className="text-xs text-indigo-600">— Hints, rubric checks & debugging</span>
+            </div>
+            {showCoach ? (
+              <ChevronUpIcon className="h-4 w-4 text-indigo-600" />
+            ) : (
+              <ChevronDownIcon className="h-4 w-4 text-indigo-600" />
+            )}
+          </button>
+          {showCoach && (
+            <div className="p-4 bg-white">
+              <AICoachScreen learnerId={ctx.uid} siteId={siteId} />
+            </div>
           )}
-        </button>
-        {showCoach && (
-          <div className="p-4 bg-white">
-            <AICoachScreen learnerId={ctx.uid} siteId={siteId} />
-          </div>
-        )}
-      </div>
+        </div>
+        </>
+      )}
     </div>
   );
 }

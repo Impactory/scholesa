@@ -3504,6 +3504,44 @@ export const getParentDashboardBundle = onCall(async (request: CallableRequest<{
   };
 });
 
+export const getLearnerPassportBundle = onCall(async (request: CallableRequest<{
+  siteId?: string;
+  locale?: string;
+  range?: string;
+}>) => {
+  const authUid = request.auth?.uid;
+  if (!authUid) {
+    throw new HttpsError('unauthenticated', 'Authentication required.');
+  }
+
+  const requestedSiteId =
+    typeof request.data?.siteId === 'string' && request.data.siteId.trim().length > 0
+      ? request.data.siteId.trim()
+      : undefined;
+  const { profile } = await requireRoleAndSite(authUid, ['learner'], requestedSiteId);
+  const siteId = resolveRoleSiteId(profile, 'learner', requestedSiteId);
+
+  const learnerSummary = await buildParentLearnerSummary({
+    learnerId: authUid,
+    siteId,
+  });
+
+  if (!learnerSummary) {
+    throw new HttpsError('not-found', 'Learner passport data unavailable.');
+  }
+
+  return {
+    learnerId: authUid,
+    siteId: siteId ?? null,
+    locale: normalizeTelemetryLocale(request.data?.locale),
+    range:
+      typeof request.data?.range === 'string' && request.data.range.trim().length > 0
+        ? request.data.range.trim()
+        : 'all',
+    learners: [learnerSummary],
+  };
+});
+
 async function computeRoleDashboardStats(params: {
   role: Role;
   uid: string;
