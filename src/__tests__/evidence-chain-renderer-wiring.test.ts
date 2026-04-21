@@ -416,7 +416,7 @@ describe('LearnerPortfolioCurationRenderer evidence-linked portfolio', () => {
   it('requires capability linkage when creating new portfolio items', () => {
     expect(source).toContain('portfolio-item-capability-select');
     expect(source).toContain('capabilityIds: [selectedCapability.id]');
-    expect(source).toContain('capabilityTitles: [selectedCapability.title ?? selectedCapability.name]');
+    expect(source).toContain('capabilityTitles: [resolveTitle(selectedCapability.id)]');
     expect(source).not.toContain('capabilityIds: [],');
   });
 
@@ -428,6 +428,36 @@ describe('LearnerPortfolioCurationRenderer evidence-linked portfolio', () => {
 
   it('supports AI disclosure tracking', () => {
     expect(source).toMatch(/aiDisclosure|aiAssistance/i);
+  });
+
+  it('writes canonical portfolio item fields instead of legacy learner curation fields', () => {
+    const addDocBlock = source.slice(
+      source.indexOf('const portfolioDoc = await addDoc(portfolioItemsCollection'),
+      source.indexOf('} as unknown as Omit<PortfolioItemRecord, \'id\'>);') +
+        '} as unknown as Omit<PortfolioItemRecord, \'id\'>);'.length
+    );
+    expect(addDocBlock).toContain('pillarCodes');
+    expect(addDocBlock).toContain('artifacts');
+    expect(addDocBlock).toContain('proofOfLearningStatus');
+    expect(addDocBlock).toContain('aiDisclosureStatus');
+    expect(addDocBlock).toContain("source: 'learner_submission'");
+    expect(addDocBlock).not.toContain("source: 'learner_curation'");
+    expect(addDocBlock).not.toContain('pillarCode: selectedCapability.pillarCode ?? newPillar');
+    expect(addDocBlock).not.toContain('artifactUrl: newArtifactUrl.trim()');
+    expect(addDocBlock).not.toContain('aiDisclosure: newAiDisclosure');
+    expect(addDocBlock).not.toContain('proofOfLearning: false');
+  });
+
+  it('creates linked learnerReflections with canonical content while preserving reflection prompts', () => {
+    const handler = source.slice(
+      source.indexOf('const handleAddItem'),
+      source.indexOf('const handleMarkAsShowcase')
+    );
+    expect(handler).toContain('learnerReflectionsCollection');
+    expect(handler).toContain('content: newReflection.trim()');
+    expect(handler).toContain('proudOf: newReflection.trim()');
+    expect(handler).toContain("nextIWill: ''");
+    expect(handler).toContain('reflectionIds: [reflectionDoc.id]');
   });
 });
 

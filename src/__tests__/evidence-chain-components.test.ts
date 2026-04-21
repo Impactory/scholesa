@@ -200,6 +200,32 @@ describe('LearnerPortfolioCurationRenderer site context', () => {
     expect(source).toContain('data-testid="learner-portfolio-site-required"');
     expect(source).toContain('Select an active site before curating portfolio evidence.');
   });
+
+  it('writes canonical portfolio fields for learner-created artifacts', () => {
+    const addDocBlock = source.slice(
+      source.indexOf('const portfolioDoc = await addDoc(portfolioItemsCollection'),
+      source.indexOf('} as unknown as Omit<PortfolioItemRecord, \'id\'>);') +
+        '} as unknown as Omit<PortfolioItemRecord, \'id\'>);'.length
+    );
+    expect(addDocBlock).toContain('portfolioItemsCollection');
+    expect(addDocBlock).toContain('pillarCodes');
+    expect(addDocBlock).toContain('artifacts');
+    expect(addDocBlock).toContain('proofOfLearningStatus: \'not-available\'');
+    expect(addDocBlock).toContain('aiDisclosureStatus');
+    expect(addDocBlock).not.toContain('artifactUrl: newArtifactUrl.trim()');
+    expect(addDocBlock).not.toContain('aiDisclosure: newAiDisclosure');
+    expect(addDocBlock).not.toContain('proofOfLearning: false');
+  });
+
+  it('back-links optional reflections through learnerReflectionsCollection', () => {
+    const handler = source.slice(
+      source.indexOf('const handleAddItem'),
+      source.indexOf('const handleMarkAsShowcase')
+    );
+    expect(handler).toContain('learnerReflectionsCollection');
+    expect(handler).toContain('content: newReflection.trim()');
+    expect(handler).toContain('reflectionIds: [reflectionDoc.id]');
+  });
 });
 
 /* ───── EducatorEvidenceReviewRenderer site context ───── */

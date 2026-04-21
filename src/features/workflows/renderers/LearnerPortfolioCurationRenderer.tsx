@@ -22,6 +22,11 @@ import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import { resolveActiveSiteId } from '@/src/lib/auth/activeSite';
 import { useCapabilities } from '@/src/lib/capabilities/useCapabilities';
 import {
+  learnerReflectionsCollection,
+  portfolioItemsCollection,
+} from '@/src/firebase/firestore/collections';
+import type { PortfolioItem as PortfolioItemRecord } from '@/src/types/schema';
+import {
   getLegacyPillarFamilyDisplayLabel,
   normalizeLegacyPillarCode,
 } from '@/src/lib/curriculum/architecture';
@@ -145,6 +150,60 @@ function aiDisclosureLabel(disclosure: AiDisclosure): string {
   return AI_DISCLOSURE_OPTIONS.find((o) => o.value === disclosure)?.label ?? disclosure;
 }
 
+function aiDisclosureFromRecord(record: Record<string, unknown>): AiDisclosure {
+  const aiDisclosureStatus =
+    typeof record.aiDisclosureStatus === 'string' ? record.aiDisclosureStatus.trim() : '';
+  switch (aiDisclosureStatus) {
+    case 'learner-ai-not-used':
+      return 'none';
+    case 'learner-ai-verified':
+      return 'assisted_can_explain';
+    case 'learner-ai-verification-gap':
+    case 'educator-feedback-ai':
+      return 'assisted_needs_verification';
+    case 'no-learner-ai-signal':
+    case 'not-available':
+      return 'unknown';
+    default:
+      if (typeof record.aiAssistanceUsed === 'boolean') {
+        return record.aiAssistanceUsed ? 'assisted_needs_verification' : 'none';
+      }
+      return (['none', 'assisted_can_explain', 'assisted_needs_verification', 'unknown'].includes(
+        asString(record.aiDisclosure, ''),
+      )
+        ? record.aiDisclosure
+        : 'unknown') as AiDisclosure;
+  }
+}
+
+function aiFieldsFromDisclosure(disclosure: AiDisclosure): {
+  aiAssistanceUsed?: boolean;
+  aiDisclosureStatus: NonNullable<PortfolioItemRecord['aiDisclosureStatus']>;
+} {
+  switch (disclosure) {
+    case 'none':
+      return {
+        aiAssistanceUsed: false,
+        aiDisclosureStatus: 'learner-ai-not-used',
+      };
+    case 'assisted_can_explain':
+      return {
+        aiAssistanceUsed: true,
+        aiDisclosureStatus: 'learner-ai-verified',
+      };
+    case 'assisted_needs_verification':
+      return {
+        aiAssistanceUsed: true,
+        aiDisclosureStatus: 'learner-ai-verification-gap',
+      };
+    case 'unknown':
+    default:
+      return {
+        aiDisclosureStatus: 'no-learner-ai-signal',
+      };
+  }
+}
+
 function levelBarWidth(level: number): string {
   return `${Math.min(Math.max(level, 0), 4) * 25}%`;
 }
@@ -242,7 +301,7 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
       ]);
 
       // Build proof bundle lookup by portfolioItemId
-      const proofByItem = new Map<string, ProofBundleSummary>();
+        const proofByItem = new Map<string, ProofBundleSummary>();
       proofSnap.docs.forEach((d: QueryDocumentSnapshot<DocumentData>) => {
         const data = d.data();
         const piId = data.portfolioItemId as string;
@@ -262,34 +321,42 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
       setPortfolioItems(
         itemsSnap.docs.map((d: QueryDocumentSnapshot<DocumentData>) => {
           const data = d.data();
+          const pillarCodes = Array.isArray(data.pillarCodes)
+            ? data.pillarCodes.filter((value: unknown): value is PillarCode => typeof value === 'string')
+            : [];
+          const artifacts = Array.isArray(data.artifacts)
+            ? data.artifacts.filter((value: unknown): value is string => typeof value === 'string')
+            : [];
+          const proofOfLearningStatus = asString(data.proofOfLearningStatus, '');
+          const capabilityIds = Array.isArray(data.capabilityIds)
+            ? data.capabilityIds.filter((value: unknown): value is string => typeof value === 'string')
+            : Array.isArray(data.linkedCapabilityIds)
+              ? data.linkedCapabilityIds.filter((value: unknown): value is string => typeof value === 'string')
+              : [];
+          const capabilityTitles = Array.isArray(data.capabilityTitles)
+            ? data.capabilityTitles.filter((value: unknown): value is string => typeof value === 'string')
+            : Array.isArray(data.linkedCapabilityTitles)
+              ? data.linkedCapabilityTitles.filter((value: unknown): value is string => typeof value === 'string')
+              : capabilityIds.map((capabilityId) => resolveTitle(capabilityId));
           return {
             id: d.id,
             title: asString(data.title, 'Untitled'),
             description: asString(data.description, ''),
-            pillarCode: (asString(data.pillarCode, '') || 'FUTURE_SKILLS') as PillarCode,
-            artifactUrl: asString(data.artifactUrl, ''),
-            aiDisclosure: (['none', 'assisted_can_explain', 'assisted_needs_verification'].includes(
-              data.aiDisclosure
-            )
-              ? data.aiDisclosure
-              : 'unknown') as AiDisclosure,
+            pillarCode: (pillarCodes[0] || asString(data.pillarCode, '') || 'FUTURE_SKILLS') as PillarCode,
+            artifactUrl: artifacts[0] || asString(data.artifactUrl, ''),
+            aiDisclosure: aiDisclosureFromRecord(data),
             verificationStatus: (['pending', 'reviewed', 'verified'].includes(
               data.verificationStatus
             )
               ? data.verificationStatus
               : 'pending') as VerificationStatus,
-            proofOfLearning: data.proofOfLearning === true,
+            proofOfLearning:
+              proofOfLearningStatus.length > 0
+                ? proofOfLearningStatus !== 'missing' && proofOfLearningStatus !== 'not-available'
+                : data.proofOfLearning === true,
             proofBundle: proofByItem.get(d.id) || null,
-            capabilityIds: Array.isArray(data.capabilityIds)
-              ? data.capabilityIds
-              : Array.isArray(data.linkedCapabilityIds)
-                ? data.linkedCapabilityIds
-                : [],
-            linkedCapabilityTitles: Array.isArray(data.linkedCapabilityTitles)
-              ? data.linkedCapabilityTitles
-              : Array.isArray(data.capabilityTitles)
-                ? data.capabilityTitles
-                : [],
+            capabilityIds,
+            linkedCapabilityTitles: capabilityTitles,
             learnerId: asString(data.learnerId, ctx.uid),
             createdAt: toIso(data.createdAt),
           };
@@ -338,7 +405,7 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
     } finally {
       setLoading(false);
     }
-  }, [ctx.uid, siteId]);
+  }, [ctx.uid, resolveTitle, siteId]);
 
   useEffect(() => {
     void loadData();
@@ -369,36 +436,58 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
     setSaving(true);
     setError(null);
     try {
-      const portfolioDoc = await addDoc(collection(firestore, 'portfolioItems'), {
-        title: newTitle.trim(),
-        description: newDescription.trim(),
-        pillarCode: selectedCapability.pillarCode ?? newPillar,
-        artifactUrl: newArtifactUrl.trim(),
-        aiDisclosure: newAiDisclosure,
-        verificationStatus: 'pending',
-        proofOfLearning: false,
-        capabilityIds: [selectedCapability.id],
-        capabilityTitles: [selectedCapability.title ?? selectedCapability.name],
-        reflectionIds: [] as string[],
+      const pillarCodes = [
+        (selectedCapability.pillarCode ?? newPillar) as PortfolioItemRecord['pillarCodes'][number],
+      ];
+      const artifacts = newArtifactUrl.trim() ? [newArtifactUrl.trim()] : [];
+      const aiFields = aiFieldsFromDisclosure(newAiDisclosure);
+      const portfolioAiPayload =
+        typeof aiFields.aiAssistanceUsed === 'boolean'
+          ? { aiAssistanceUsed: aiFields.aiAssistanceUsed }
+          : {};
+      const portfolioDoc = await addDoc(portfolioItemsCollection, {
         learnerId: ctx.uid,
         siteId,
-        source: 'learner_curation',
+        title: newTitle.trim(),
+        description: newDescription.trim(),
+        pillarCodes,
+        artifacts,
+        verificationStatus: 'pending',
+        proofOfLearningStatus: 'not-available',
+        capabilityIds: [selectedCapability.id],
+        capabilityTitles: [resolveTitle(selectedCapability.id)],
+        reflectionIds: [] as string[],
+        source: 'learner_submission',
+        aiDisclosureStatus: aiFields.aiDisclosureStatus,
         createdAt: serverTimestamp(),
-      });
+        ...portfolioAiPayload,
+      } as unknown as Omit<PortfolioItemRecord, 'id'>);
 
       // S1-6: Create linked reflection if provided
       if (newReflection.trim()) {
-        const reflectionDoc = await addDoc(collection(firestore, 'learnerReflections'), {
+        const reflectionPayload: Record<string, unknown> = {
           learnerId: ctx.uid,
           siteId,
+          content: newReflection.trim(),
           portfolioItemId: portfolioDoc.id,
+          capabilityIds: [selectedCapability.id],
+          pillarCodes,
           proudOf: newReflection.trim(),
           nextIWill: '',
           createdAt: serverTimestamp(),
-        });
+          updatedAt: serverTimestamp(),
+        };
+        if (typeof aiFields.aiAssistanceUsed === 'boolean') {
+          reflectionPayload.aiAssistanceUsed = aiFields.aiAssistanceUsed;
+        }
+        const reflectionDoc = await addDoc(
+          learnerReflectionsCollection,
+          reflectionPayload as DocumentData,
+        );
         // Back-link the reflection to the portfolio item
         await updateDoc(portfolioDoc, {
           reflectionIds: [reflectionDoc.id],
+          updatedAt: serverTimestamp(),
         });
       }
 
