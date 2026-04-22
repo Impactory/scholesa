@@ -80,7 +80,7 @@ gcloud run deploy "$CLOUD_RUN_SERVICE" \
   --project "$GCP_PROJECT_ID" \
   --region "$GCP_REGION" \
   --platform managed \
-  "${no_traffic_args[@]}" \
+  ${no_traffic_args[@]+"${no_traffic_args[@]}"} \
   --allow-unauthenticated
 
 if [[ "$NO_TRAFFIC_DEPLOY" != "1" && "$NO_TRAFFIC_DEPLOY" != "true" ]]; then
