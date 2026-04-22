@@ -119,6 +119,7 @@ describe('ProofOfLearningVerification site context', () => {
     expect(source).toContain('capabilitiesReadyForRubric');
     expect(source).toContain('Verified — proof confirmed. Ready for rubric application.');
     expect(source).toContain('Open Rubric Application');
+    expect(source).toContain('?portfolioItemId=${encodeURIComponent(item.id)}');
   });
 
   it('prefills educator proof review from the saved portfolio proof fields', () => {

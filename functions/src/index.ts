@@ -8771,6 +8771,7 @@ interface RubricScoreInput {
 export const applyRubricToEvidence = onCall(async (request: CallableRequest<{
   evidenceRecordIds: string[];
   missionAttemptId?: string;
+  portfolioItemId?: string;
   learnerId: string;
   siteId: string;
   rubricId?: string;
@@ -8779,12 +8780,13 @@ export const applyRubricToEvidence = onCall(async (request: CallableRequest<{
   const educatorId = request.auth?.uid;
   await requireRoleAndSite(educatorId, ['educator', 'siteLead', 'site', 'hq', 'admin'], request.data?.siteId);
 
-  const { evidenceRecordIds, missionAttemptId, learnerId, siteId, rubricId, scores } = request.data ?? {};
+  const { evidenceRecordIds, missionAttemptId, portfolioItemId, learnerId, siteId, rubricId, scores } = request.data ?? {};
 
   const hasEvidence = Array.isArray(evidenceRecordIds) && evidenceRecordIds.length > 0;
   const hasMission = typeof missionAttemptId === 'string' && missionAttemptId.length > 0;
-  if (!hasEvidence && !hasMission) {
-    throw new HttpsError('invalid-argument', 'Either evidenceRecordIds or missionAttemptId is required.');
+  const hasPortfolioItem = typeof portfolioItemId === 'string' && portfolioItemId.length > 0;
+  if (!hasEvidence && !hasMission && !hasPortfolioItem) {
+    throw new HttpsError('invalid-argument', 'Evidence, mission attempt, or portfolio item context is required.');
   }
   const safeEvidenceRecordIds = hasEvidence ? evidenceRecordIds : [];
   if (!learnerId || typeof learnerId !== 'string') {
@@ -8806,7 +8808,24 @@ export const applyRubricToEvidence = onCall(async (request: CallableRequest<{
   }
 
   const db = admin.firestore();
-  const relatedPortfolioDocs = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
+  const relatedPortfolioDocs = new Map<string, FirebaseFirestore.DocumentSnapshot>();
+
+  if (hasPortfolioItem) {
+    const canonicalPortfolioDoc = await db.collection('portfolioItems').doc(portfolioItemId!).get();
+    if (!canonicalPortfolioDoc.exists) {
+      throw new HttpsError('not-found', 'Portfolio item not found.');
+    }
+    const canonicalPortfolioData = canonicalPortfolioDoc.data() ?? {};
+    const canonicalLearnerId = typeof canonicalPortfolioData.learnerId === 'string' ? canonicalPortfolioData.learnerId : '';
+    const canonicalSiteId = typeof canonicalPortfolioData.siteId === 'string' ? canonicalPortfolioData.siteId.trim() : '';
+    if (canonicalLearnerId !== learnerId) {
+      throw new HttpsError('failed-precondition', 'Portfolio item learner does not match rubric target.');
+    }
+    if (canonicalSiteId && canonicalSiteId !== siteId) {
+      throw new HttpsError('permission-denied', 'Portfolio item site does not match active educator site.');
+    }
+    relatedPortfolioDocs.set(canonicalPortfolioDoc.id, canonicalPortfolioDoc);
+  }
 
   if (hasMission) {
     const missionPortfolioSnap = await db
@@ -8859,6 +8878,7 @@ export const applyRubricToEvidence = onCall(async (request: CallableRequest<{
     educatorId,
     rubricId: rubricId ?? null,
     missionAttemptId: missionAttemptId ?? null,
+    portfolioItemId: portfolioItemId ?? null,
     evidenceRecordIds: safeEvidenceRecordIds,
     scores: scores.map((s) => ({
       criterionId: s.criterionId,
@@ -8931,7 +8951,7 @@ export const applyRubricToEvidence = onCall(async (request: CallableRequest<{
       maxScore,
       missionAttemptId: missionAttemptId ?? null,
       linkedEvidenceRecordIds: safeEvidenceRecordIds,
-      linkedPortfolioItemIds: [],
+      linkedPortfolioItemIds: hasPortfolioItem ? [portfolioItemId!] : [],
       rubricApplicationId: rubricAppRef.id,
       educatorId,
       createdAt: FieldValue.serverTimestamp(),
@@ -9054,8 +9074,28 @@ export const applyRubricToEvidence = onCall(async (request: CallableRequest<{
   // Group pillar codes from scored capabilities
   const pillarCodes = [...new Set(scores.map((s) => s.pillarCode).filter(Boolean))];
 
+  if (hasPortfolioItem) {
+    const canonicalPortfolioDoc = relatedPortfolioDocs.get(portfolioItemId!);
+    const canonicalPortfolioData = canonicalPortfolioDoc?.data() ?? {};
+    const existingCapabilityIds: string[] = Array.isArray(canonicalPortfolioData.capabilityIds)
+      ? canonicalPortfolioData.capabilityIds.filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+      : [];
+    const existingPillarCodes: string[] = Array.isArray(canonicalPortfolioData.pillarCodes)
+      ? canonicalPortfolioData.pillarCodes.filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+      : [];
+    portfolioBatch.set(db.collection('portfolioItems').doc(portfolioItemId!), {
+      capabilityIds: [...new Set([...existingCapabilityIds, ...capabilityIds])],
+      pillarCodes: [...new Set([...existingPillarCodes, ...pillarCodes])],
+      growthEventIds,
+      rubricApplicationId: rubricAppRef.id,
+      educatorReviewedBy: educatorId,
+      updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+    portfolioItemIds.push(portfolioItemId!);
+  }
+
   // Read evidence records to extract artifact data for portfolio
-  if (safeEvidenceRecordIds.length > 0) {
+  if (!hasPortfolioItem && safeEvidenceRecordIds.length > 0) {
     const evidenceDocs = await Promise.all(
       safeEvidenceRecordIds.map((id) => db.collection('evidenceRecords').doc(id).get())
     );
@@ -9095,7 +9135,7 @@ export const applyRubricToEvidence = onCall(async (request: CallableRequest<{
   }
 
   // 4b. Create portfolio item from mission attempt if no evidence records
-  if (hasMission && safeEvidenceRecordIds.length === 0) {
+  if (!hasPortfolioItem && hasMission && safeEvidenceRecordIds.length === 0) {
     const missionDoc = await db.collection('missionAttempts').doc(missionAttemptId!).get();
     const missionData = missionDoc.exists ? (missionDoc.data() ?? {}) : {};
     const missionTitle = typeof missionData.missionTitle === 'string'
@@ -9130,7 +9170,7 @@ export const applyRubricToEvidence = onCall(async (request: CallableRequest<{
   }
 
   // 4c. Update any existing learner-created portfolioItems linked to this missionAttempt
-  if (hasMission) {
+  if (!hasPortfolioItem && hasMission) {
     const existingPiSnap = await db.collection('portfolioItems')
       .where('missionAttemptId', '==', missionAttemptId)
       .limit(10)

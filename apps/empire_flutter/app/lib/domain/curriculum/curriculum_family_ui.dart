@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../ui/localization/inline_locale_text.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import 'curriculum_display.g.dart';
+export 'curriculum_display.g.dart' show CurriculumLegacyFamilyCode;
 
 CurriculumLegacyFamilyCode? maybeCurriculumLegacyFamilyCode(String? value) {
   return CurriculumDisplay.legacyFamilyCodeFromAny(value);

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { httpsCallable } from 'firebase/functions';
-import { getDocs, query, where } from 'firebase/firestore';
+import { doc, getDoc, getDocs, query, where } from 'firebase/firestore';
 import { functions } from '@/src/firebase/client-init';
 import {
   rubricTemplatesCollection,
@@ -13,6 +13,7 @@ import { useCapabilities } from '@/src/lib/capabilities/useCapabilities';
 import type { RubricTemplate, ProcessDomain } from '@/src/types/schema';
 
 interface RubricReviewPanelProps {
+  portfolioItemId?: string;
   evidenceRecordIds: string[];
   missionAttemptId?: string;
   learnerId: string;
@@ -60,6 +61,7 @@ function scoreLevelsForMax(maxScore: number): { value: number; label: string; co
 }
 
 export function RubricReviewPanel({
+  portfolioItemId,
   evidenceRecordIds,
   missionAttemptId,
   learnerId,
@@ -139,7 +141,10 @@ export function RubricReviewPanel({
     void (async () => {
       setLoadingProofState(true);
       try {
-        const portfolioSnaps = [];
+        const portfolioSnaps: Array<Promise<unknown>> = [];
+        const directPortfolioSnap = portfolioItemId
+          ? getDoc(doc(portfolioItemsCollection, portfolioItemId))
+          : null;
         if (missionAttemptId) {
           portfolioSnaps.push(
             getDocs(
@@ -163,10 +168,16 @@ export function RubricReviewPanel({
           );
         }
 
+        const directResult = directPortfolioSnap ? await directPortfolioSnap : null;
         const results = await Promise.all(portfolioSnaps);
-        const hasVerifiedProof = results.some((snap) =>
-          snap.docs.some((doc) => doc.data().proofOfLearningStatus === 'verified')
+        const directProofVerified =
+          directResult?.exists() === true && directResult.data().proofOfLearningStatus === 'verified';
+        const relatedProofVerified = results.some((snap) =>
+          (snap as { docs: Array<{ data: () => Record<string, unknown> }> }).docs.some(
+            (docSnap) => docSnap.data().proofOfLearningStatus === 'verified'
+          )
         );
+        const hasVerifiedProof = directProofVerified || relatedProofVerified;
 
         if (!cancelled) {
           setResolvedProofVerified(hasVerifiedProof);
@@ -186,7 +197,7 @@ export function RubricReviewPanel({
     return () => {
       cancelled = true;
     };
-  }, [proofVerified, siteId, missionAttemptId, evidenceRecordIds]);
+  }, [proofVerified, siteId, missionAttemptId, evidenceRecordIds, portfolioItemId]);
 
   const effectiveProofVerified = proofVerified || resolvedProofVerified;
 
@@ -328,6 +339,7 @@ export function RubricReviewPanel({
       const applyRubric = httpsCallable(functions, 'applyRubricToEvidence');
       const allScores = [...scores, ...domainScores];
       await applyRubric({
+        portfolioItemId: portfolioItemId ?? undefined,
         evidenceRecordIds,
         missionAttemptId: missionAttemptId ?? undefined,
         learnerId,
@@ -349,7 +361,7 @@ export function RubricReviewPanel({
     } finally {
       setSaving(false);
     }
-  }, [effectiveProofVerified, canSubmit, evidenceRecordIds, missionAttemptId, learnerId, siteId, scores, domainScores, selectedTemplateId, onComplete]);
+  }, [effectiveProofVerified, canSubmit, portfolioItemId, evidenceRecordIds, missionAttemptId, learnerId, siteId, scores, domainScores, selectedTemplateId, onComplete]);
 
   const unusedCapabilities = useMemo(
     () => capabilityList.filter((c) => !scores.some((s) => s.capabilityId === c.id)),

@@ -196,6 +196,26 @@ describe('Collection naming consistency', () => {
     expect(rubricFn).toContain("collection('portfolioItems')");
   });
 
+  it('applyRubricToEvidence can continue on the verified canonical portfolio item', async () => {
+    const fs = await import('fs');
+    const path = await import('path');
+    const source = fs.readFileSync(
+      path.join(__dirname, 'index.ts'),
+      'utf-8'
+    );
+
+    const rubricStart = source.indexOf('export const applyRubricToEvidence');
+    const rubricEnd = source.indexOf('export const', rubricStart + 1);
+    const rubricFn = source.slice(rubricStart, rubricEnd);
+
+    expect(rubricFn).toContain('portfolioItemId?: string;');
+    expect(rubricFn).toContain('portfolioItemId: portfolioItemId ?? null');
+    expect(rubricFn).toContain('if (hasPortfolioItem)');
+    expect(rubricFn).toContain('rubricApplicationId: rubricAppRef.id');
+    expect(rubricFn).toContain('educatorReviewedBy: educatorId');
+    expect(rubricFn).toContain('!hasPortfolioItem && safeEvidenceRecordIds.length > 0');
+  });
+
   it('verifyProofOfLearning refuses verified proof without capability linkage', async () => {
     const fs = await import('fs');
     const path = await import('path');

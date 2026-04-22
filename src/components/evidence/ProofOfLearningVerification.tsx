@@ -207,7 +207,7 @@ export function ProofOfLearningVerification() {
                   item={selectedItem}
                   resolveTitle={resolveTitle}
                   saving={saving}
-                  rubricApplyHref={rubricApplyHref}
+                  rubricApplyBaseHref={rubricApplyHref}
                   showRubricCta={profile.role === 'educator'}
                   onVerify={async (verdictData) => {
                     setSaving(true);
@@ -272,14 +272,14 @@ function VerificationPanel({
   item,
   resolveTitle,
   saving,
-  rubricApplyHref,
+  rubricApplyBaseHref,
   showRubricCta,
   onVerify,
 }: {
   item: PortfolioItem;
   resolveTitle: (id: string) => string;
   saving: boolean;
-  rubricApplyHref: string;
+  rubricApplyBaseHref: string;
   showRubricCta: boolean;
   onVerify: (data: Record<string, unknown>) => Promise<void>;
 }) {
@@ -409,7 +409,7 @@ function VerificationPanel({
             After proof is verified, apply a rubric to interpret this evidence and update capability growth.
           </p>
           <a
-            href={rubricApplyHref}
+            href={`${rubricApplyBaseHref}?portfolioItemId=${encodeURIComponent(item.id)}`}
             className="mt-2 inline-flex rounded-md border border-blue-300 bg-white px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100"
           >
             Open Rubric Application

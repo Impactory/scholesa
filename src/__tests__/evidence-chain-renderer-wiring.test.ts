@@ -135,6 +135,8 @@ describe('Renderers delegate to real evidence components', () => {
       'features', 'workflows', 'renderers', 'EducatorRubricApplyRenderer.tsx'
     );
     expect(source).toContain('EducatorEvidenceCapture');
+    expect(source).toContain('RubricReviewPanel');
+    expect(source).toContain("searchParams?.get('portfolioItemId')");
   });
 
   it('LearnerCheckpointRenderer reads/writes checkpointHistory collection', () => {

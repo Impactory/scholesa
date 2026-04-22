@@ -15,7 +15,7 @@ COPY . ./
 RUN npm run build
 
 # Prune dev dependencies and create minimal production install
-RUN npm prune --production
+RUN npm prune --omit=dev
 
 # Production image
 FROM node:24-bullseye-slim AS runner
