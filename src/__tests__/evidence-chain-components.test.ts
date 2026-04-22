@@ -6,7 +6,7 @@
  *   - EducatorEvidenceCapture links evidence to session occurrences
  *   - LearnerEvidenceSubmission captures artifacts, reflections, AI disclosure
  *   - CapabilityGuidancePanel interprets capability bands for guardians
- *   - verifyProofOfLearning callable exists and creates growth events
+ *   - verifyProofOfLearning callable exists and preserves the proof→rubric boundary
  */
 
 import fs from 'fs';
@@ -85,6 +85,15 @@ describe('EducatorEvidenceCapture session context linking', () => {
     expect(source).not.toContain('(not linked to a session)');
   });
 
+  it('requires capability linkage before creating a portfolio-backed educator observation', () => {
+    expect(source).toContain('Select a capability before flagging this observation as portfolio evidence.');
+    expect(source).toContain('portfolioItemsCollection');
+    expect(source).toContain('evidenceRecordIds: [evidenceRef.id]');
+    expect(source).toContain("proofOfLearningStatus: 'missing'");
+    expect(source).toContain("source: 'educator_observation'");
+    expect(source).not.toContain('evidenceRecordId: evidenceRef.id');
+  });
+
   it('shows an explicit no-site blocked state', () => {
     expect(source).toContain('data-testid="evidence-capture-site-required"');
     expect(source).toContain('Select an active site before capturing evidence');
@@ -107,8 +116,9 @@ describe('ProofOfLearningVerification site context', () => {
   });
 
   it('keeps verification success messaging honest when no linked capabilities are processed', () => {
-    expect(source).toContain('capabilitiesProcessed');
-    expect(source).toContain('Verified — proof confirmed. No linked capability growth was updated.');
+    expect(source).toContain('capabilitiesReadyForRubric');
+    expect(source).toContain('Verified — proof confirmed. Ready for rubric application.');
+    expect(source).toContain('Open Rubric Application');
   });
 
   it('prefills educator proof review from the saved portfolio proof fields', () => {
@@ -601,69 +611,40 @@ describe('verifyProofOfLearning callable', () => {
     path.join(functionsDir, 'index.ts'),
     'utf8'
   );
+  const verifyStart = functionsSource.indexOf('export const verifyProofOfLearning');
+  const verifyEnd = functionsSource.indexOf('\n});', verifyStart);
+  const verifySection = functionsSource.slice(
+    verifyStart,
+    verifyEnd > verifyStart ? verifyEnd + 4 : verifyStart + 8000
+  );
 
   it('exports verifyProofOfLearning as onCall', () => {
     expect(functionsSource).toContain('export const verifyProofOfLearning');
   });
 
-  it('creates capability growth events atomically', () => {
-    const section = functionsSource.slice(
-      functionsSource.indexOf('export const verifyProofOfLearning'),
-      functionsSource.indexOf(
-        'export const',
-        functionsSource.indexOf('export const verifyProofOfLearning') + 40
-      )
-    );
-    expect(section).toContain('capabilityGrowthEvents');
-    expect(section).toContain('batch');
+  it('keeps proof verification separate from capability growth writes', () => {
+    expect(verifySection).toContain('batch');
+    expect(verifySection).not.toContain('capabilityGrowthEvents');
   });
 
-  it('upserts capability mastery', () => {
-    const section = functionsSource.slice(
-      functionsSource.indexOf('export const verifyProofOfLearning'),
-      functionsSource.indexOf(
-        'export const',
-        functionsSource.indexOf('export const verifyProofOfLearning') + 40
-      )
-    );
-    expect(section).toContain('capabilityMastery');
+  it('does not upsert capability mastery directly', () => {
+    expect(verifySection).not.toContain('capabilityMastery');
   });
 
   it('validates educator role', () => {
-    const section = functionsSource.slice(
-      functionsSource.indexOf('export const verifyProofOfLearning'),
-      functionsSource.indexOf(
-        'export const',
-        functionsSource.indexOf('export const verifyProofOfLearning') + 40
-      )
-    );
-    expect(section).toContain('educator');
+    expect(verifySection).toContain('educator');
   });
 
   it('syncs the linked proof bundle alongside portfolio proof fields', () => {
-    const section = functionsSource.slice(
-      functionsSource.indexOf('export const verifyProofOfLearning'),
-      functionsSource.indexOf(
-        'export const',
-        functionsSource.indexOf('export const verifyProofOfLearning') + 40
-      )
-    );
-    expect(section).toContain("collection('proofOfLearningBundles')");
-    expect(section).toContain('proofExplainItBackExcerpt');
-    expect(section).toContain('verificationPromptSource');
+    expect(verifySection).toContain("collection('proofOfLearningBundles')");
+    expect(verifySection).toContain('proofExplainItBackExcerpt');
+    expect(verifySection).toContain('verificationPromptSource');
   });
 
   it('refuses verified proof when capability linkage is missing', () => {
-    const section = functionsSource.slice(
-      functionsSource.indexOf('export const verifyProofOfLearning'),
-      functionsSource.indexOf(
-        'export const',
-        functionsSource.indexOf('export const verifyProofOfLearning') + 40
-      )
-    );
-    expect(section).toContain("'failed-precondition'");
-    expect(section).toContain('Link at least one capability to this evidence before verifying proof-of-learning so capability growth can be recorded.');
-    expect(section).toContain('evidenceRecordIds');
+    expect(verifySection).toContain("'failed-precondition'");
+    expect(verifySection).toContain('Link at least one capability to this evidence before verifying proof-of-learning so the evidence can move into rubric interpretation.');
+    expect(verifySection).toContain('evidenceRecordIds');
   });
 });
 

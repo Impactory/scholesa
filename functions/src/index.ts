@@ -9173,8 +9173,8 @@ export const applyRubricToEvidence = onCall(async (request: CallableRequest<{
 
 /**
  * Verify Proof-of-Learning for a portfolio item.
- * When verified, creates CapabilityGrowthEvents and updates CapabilityMastery
- * for each linked capability, completing the evidence chain.
+ * Verification confirms authenticity and proof readiness, but capability growth
+ * is only recorded later through rubric interpretation.
  */
 export const verifyProofOfLearning = onCall(async (request: CallableRequest<{
   portfolioItemId: string;
@@ -9283,7 +9283,7 @@ export const verifyProofOfLearning = onCall(async (request: CallableRequest<{
   if (verificationStatus === 'verified' && capabilityIds.length === 0) {
     throw new HttpsError(
       'failed-precondition',
-      'Link at least one capability to this evidence before verifying proof-of-learning so capability growth can be recorded.'
+      'Link at least one capability to this evidence before verifying proof-of-learning so the evidence can move into rubric interpretation.'
     );
   }
 
@@ -9354,67 +9354,6 @@ export const verifyProofOfLearning = onCall(async (request: CallableRequest<{
     }, { merge: true });
   }
 
-  const growthEventIds: string[] = [];
-
-  // 2. If verified and capabilities are linked, create growth events + update mastery
-  if (verificationStatus === 'verified' && capabilityIds.length > 0) {
-    for (const capabilityId of capabilityIds) {
-      // Read capability to get pillarCode
-      const capSnap = await db.collection('capabilities').doc(capabilityId).get();
-      const pillarCode = capSnap.exists ? (capSnap.data()?.pillarCode ?? '') : '';
-
-      // Create growth event recording PoL verification
-      const growthRef = db.collection('capabilityGrowthEvents').doc();
-      growthEventIds.push(growthRef.id);
-      const POL_LEVEL_MAP: Record<number, string> = { 1: 'emerging', 2: 'developing', 3: 'proficient', 4: 'advanced' };
-      batch.set(growthRef, {
-        learnerId,
-        capabilityId,
-        siteId,
-        pillarCode,
-        level: checkpointCount, // 1-3 based on proof checks passed
-        fromLevel: null,
-        toLevel: POL_LEVEL_MAP[checkpointCount] ?? 'emerging',
-        rawScore: checkpointCount,
-        maxScore: 3,
-        evidenceId: portfolioItemId,
-        linkedEvidenceRecordIds,
-        linkedPortfolioItemIds: [portfolioItemId],
-        rubricApplicationId: null,
-        educatorId,
-        source: 'proof_of_learning',
-        createdAt: FieldValue.serverTimestamp(),
-      });
-
-      // Upsert CapabilityMastery
-      const masteryId = `${learnerId}_${capabilityId}`;
-      const masteryRef = db.collection('capabilityMastery').doc(masteryId);
-      const masterySnap = await masteryRef.get();
-      const masteryData = masterySnap.data() ?? {};
-      const priorGrowthEventIds: string[] = Array.isArray(masteryData.growthEventIds) ? masteryData.growthEventIds : [];
-      const priorEvidenceIds: string[] = Array.isArray(masteryData.evidenceIds) ? masteryData.evidenceIds : [];
-
-      const NUMBER_TO_LEVEL_POL: Record<number, string> = { 1: 'emerging', 2: 'developing', 3: 'proficient', 4: 'advanced' };
-      const resolvedLevel = Math.max(checkpointCount, (masteryData.latestLevel as number) ?? 0);
-
-      batch.set(masteryRef, {
-        learnerId,
-        capabilityId,
-        siteId,
-        pillarCode,
-        latestLevel: resolvedLevel,
-        currentLevel: NUMBER_TO_LEVEL_POL[resolvedLevel] ?? 'emerging',
-        highestLevel: Math.max(checkpointCount, (masteryData.highestLevel as number) ?? 0),
-        latestEvidenceId: portfolioItemId,
-        evidenceIds: [...new Set([portfolioItemId, ...priorEvidenceIds])],
-        growthEventIds: [...new Set([growthRef.id, ...priorGrowthEventIds])],
-        proofOfLearningVerified: true,
-        createdAt: masteryData.createdAt ?? FieldValue.serverTimestamp(),
-        updatedAt: FieldValue.serverTimestamp(),
-      }, { merge: true });
-    }
-  }
-
   await batch.commit();
 
   // 3. Back-link: update associated mission attempt with proof bundle summary
@@ -9454,8 +9393,7 @@ export const verifyProofOfLearning = onCall(async (request: CallableRequest<{
   return {
     portfolioItemId,
     verificationStatus,
-    growthEventIds,
-    capabilitiesProcessed: capabilityIds.length,
+    capabilitiesReadyForRubric: verificationStatus === 'verified' ? capabilityIds.length : 0,
   };
 });
 

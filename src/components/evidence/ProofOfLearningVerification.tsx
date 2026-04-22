@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import {
   getDocs,
   limit,
@@ -36,7 +37,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 interface VerifyProofOfLearningResult {
-  capabilitiesProcessed?: number;
+  capabilitiesReadyForRubric?: number;
 }
 
 /* ───── Main Component ───── */
@@ -45,6 +46,9 @@ export function ProofOfLearningVerification() {
   const { user, profile, loading: authLoading } = useAuthContext();
   const siteId = resolveActiveSiteId(profile);
   const { resolveTitle, loading: capLoading } = useCapabilities(siteId);
+  const pathname = usePathname();
+  const locale = pathname?.split('/').filter(Boolean)[0] ?? 'en';
+  const rubricApplyHref = `/${locale}/educator/rubrics/apply`;
 
   const [items, setItems] = useState<PortfolioItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -203,6 +207,8 @@ export function ProofOfLearningVerification() {
                   item={selectedItem}
                   resolveTitle={resolveTitle}
                   saving={saving}
+                  rubricApplyHref={rubricApplyHref}
+                  showRubricCta={profile.role === 'educator'}
                   onVerify={async (verdictData) => {
                     setSaving(true);
                     try {
@@ -224,16 +230,16 @@ export function ProofOfLearningVerification() {
                         educatorNotes: verdictData.verificationNotes,
                         resubmissionReason: verdictData.verificationPrompt,
                       });
-                      const capabilitiesProcessed =
+                      const capabilitiesReadyForRubric =
                         typeof (result.data as VerifyProofOfLearningResult | undefined)
-                          ?.capabilitiesProcessed === 'number'
-                          ? (result.data as VerifyProofOfLearningResult).capabilitiesProcessed ?? 0
+                          ?.capabilitiesReadyForRubric === 'number'
+                          ? (result.data as VerifyProofOfLearningResult).capabilitiesReadyForRubric ?? 0
                           : 0;
                       setSuccessMessage(
                         verdictData.verificationStatus === 'verified'
-                          ? capabilitiesProcessed > 0
-                            ? 'Verified — capability growth updated.'
-                            : 'Verified — proof confirmed. No linked capability growth was updated.'
+                          ? capabilitiesReadyForRubric > 0
+                            ? 'Verified — proof confirmed. Ready for rubric application.'
+                            : 'Verified — proof confirmed.'
                           : 'Verification updated.'
                       );
                       setTimeout(() => setSuccessMessage(null), 3000);
@@ -266,11 +272,15 @@ function VerificationPanel({
   item,
   resolveTitle,
   saving,
+  rubricApplyHref,
+  showRubricCta,
   onVerify,
 }: {
   item: PortfolioItem;
   resolveTitle: (id: string) => string;
   saving: boolean;
+  rubricApplyHref: string;
+  showRubricCta: boolean;
   onVerify: (data: Record<string, unknown>) => Promise<void>;
 }) {
   const [checks, setChecks] = useState<Record<string, boolean>>({
@@ -386,6 +396,24 @@ function VerificationPanel({
         <div className="mb-4 rounded border border-purple-200 bg-purple-50 p-3">
           <h4 className="text-xs font-semibold text-purple-800">Verification Prompt</h4>
           <p className="mt-1 text-xs text-purple-700">{item.verificationPrompt}</p>
+        </div>
+      )}
+
+      {showRubricCta && item.capabilityIds && item.capabilityIds.length > 0 && (
+        <div
+          className="mb-4 rounded border border-blue-200 bg-blue-50 p-3"
+          data-testid="proof-verification-rubric-cta"
+        >
+          <h4 className="text-xs font-semibold text-blue-800">Next step after proof verification</h4>
+          <p className="mt-1 text-xs text-blue-700">
+            After proof is verified, apply a rubric to interpret this evidence and update capability growth.
+          </p>
+          <a
+            href={rubricApplyHref}
+            className="mt-2 inline-flex rounded-md border border-blue-300 bg-white px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100"
+          >
+            Open Rubric Application
+          </a>
         </div>
       )}
 

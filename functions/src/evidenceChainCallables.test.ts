@@ -205,11 +205,11 @@ describe('Collection naming consistency', () => {
     );
 
     const verifyStart = source.indexOf('export const verifyProofOfLearning');
-    const verifyEnd = source.indexOf('export const', verifyStart + 1);
-    const verifyFn = source.slice(verifyStart, verifyEnd);
+    const verifyEnd = source.indexOf('\n});', verifyStart);
+    const verifyFn = source.slice(verifyStart, verifyEnd > verifyStart ? verifyEnd + 4 : verifyStart + 8000);
 
     expect(verifyFn).toContain("'failed-precondition'");
-    expect(verifyFn).toContain('Link at least one capability to this evidence before verifying proof-of-learning so capability growth can be recorded.');
+    expect(verifyFn).toContain('Link at least one capability to this evidence before verifying proof-of-learning so the evidence can move into rubric interpretation.');
     expect(verifyFn).toContain('checkpointDefinitionId');
     expect(verifyFn).toContain("collection('checkpoints')");
     expect(verifyFn).toContain('evidenceRecordIds');
@@ -340,7 +340,7 @@ describe('verifyProofOfLearning evidence chain writes', () => {
     expect(indexModule.verifyProofOfLearning).toBeDefined();
   });
 
-  it('writes to capabilityMastery and capabilityGrowthEvents', async () => {
+  it('updates proof records without writing capabilityMastery or capabilityGrowthEvents directly', async () => {
     const fs = await import('fs');
     const path = await import('path');
     const source = fs.readFileSync(
@@ -349,14 +349,15 @@ describe('verifyProofOfLearning evidence chain writes', () => {
     );
 
     const proofStart = source.indexOf('export const verifyProofOfLearning');
-    const proofEnd = source.indexOf('export const', proofStart + 1);
-    const proofFn = source.slice(proofStart, proofEnd);
+    const proofEnd = source.indexOf('\n});', proofStart);
+    const proofFn = source.slice(proofStart, proofEnd > proofStart ? proofEnd + 4 : proofStart + 8000);
 
-    expect(proofFn).toContain("collection('capabilityMastery')");
-    expect(proofFn).toContain("collection('capabilityGrowthEvents')");
     expect(proofFn).toContain("collection('portfolioItems')");
     expect(proofFn).toContain("collection('proofOfLearningBundles')");
     expect(proofFn).toContain('proofExplainItBackExcerpt');
+    expect(proofFn).toContain('capabilitiesReadyForRubric');
+    expect(proofFn).not.toContain("collection('capabilityMastery')");
+    expect(proofFn).not.toContain("collection('capabilityGrowthEvents')");
   });
 });
 

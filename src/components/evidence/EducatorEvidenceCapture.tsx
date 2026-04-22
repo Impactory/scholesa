@@ -15,6 +15,7 @@ import {
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import {
   evidenceRecordsCollection,
+  portfolioItemsCollection,
   sessionOccurrencesCollection,
   sessionsCollection,
   usersCollection,
@@ -26,7 +27,7 @@ import { useCapabilities } from '@/src/lib/capabilities/useCapabilities';
 import { RoleRouteGuard } from '@/src/components/auth/RoleRouteGuard';
 import { RubricReviewPanel } from '@/src/components/evidence/RubricReviewPanel';
 import { Spinner } from '@/src/components/ui/Spinner';
-import type { EvidenceRecord, Session, SessionOccurrence } from '@/src/types/schema';
+import type { EvidenceRecord, PortfolioItem, Session, SessionOccurrence } from '@/src/types/schema';
 
 const PHASE_OPTIONS: { value: EvidenceRecord['phaseKey']; label: string }[] = [
   { value: 'retrieval_warm_up', label: 'Retrieval / Warm-up' },
@@ -110,6 +111,7 @@ export function EducatorEvidenceCapture() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
   // Form state
   const [selectedLearnerId, setSelectedLearnerId] = useState('');
@@ -406,24 +408,31 @@ export function EducatorEvidenceCapture() {
     setPhaseKey(undefined);
     setPortfolioCandidate(false);
     setAiAssistanceNoted(false);
+    setFormError(null);
     // Keep selectedLearnerId and selectedSessionOccurrenceId for quick successive logs
   };
 
   const handleSubmit = async () => {
-    if (!user || !siteId || !selectedLearnerId || !description.trim()) return;
+    const trimmed = description.trim();
+    if (!user || !siteId || !selectedLearnerId || !trimmed) return;
+    if (portfolioCandidate && !selectedCapabilityId) {
+      setFormError('Select a capability before flagging this observation as portfolio evidence.');
+      return;
+    }
     setSaving(true);
     setSuccessMessage(null);
+    setFormError(null);
 
     const capabilityId = selectedCapability?.id ?? null;
     const mapped = !!capabilityId;
 
     try {
-      await addDoc(evidenceRecordsCollection, {
+      const evidenceRef = await addDoc(evidenceRecordsCollection, {
         learnerId: selectedLearnerId,
         educatorId: user.uid,
         siteId,
         sessionOccurrenceId: selectedSession?.occurrenceId ?? undefined,
-        description: description.trim(),
+        description: trimmed,
         capabilityId: capabilityId ?? undefined,
         capabilityMapped: mapped,
         phaseKey,
@@ -435,6 +444,27 @@ export function EducatorEvidenceCapture() {
         updatedAt: serverTimestamp(),
       } as unknown as Omit<EvidenceRecord, 'id'>);
 
+      if (portfolioCandidate) {
+        await addDoc(portfolioItemsCollection, {
+          learnerId: selectedLearnerId,
+          siteId,
+          title: `Observation: ${trimmed.slice(0, 60)}${trimmed.length > 60 ? '...' : ''}`,
+          description: trimmed,
+          pillarCodes: selectedCapability?.pillarCode ? [selectedCapability.pillarCode] : [],
+          artifacts: [],
+          evidenceRecordIds: [evidenceRef.id],
+          capabilityIds: capabilityId ? [capabilityId] : [],
+          capabilityTitles: capabilityId ? [resolveTitle(capabilityId)] : [],
+          aiAssistanceUsed: false,
+          aiDisclosureStatus: 'not-available',
+          verificationStatus: 'pending',
+          proofOfLearningStatus: 'missing',
+          source: 'educator_observation',
+          educatorId: user.uid,
+          createdAt: serverTimestamp(),
+        } as unknown as Omit<PortfolioItem, 'id'>);
+      }
+
       const learnerName = learnerNameMap.get(selectedLearnerId) ?? selectedLearnerId;
       setSuccessMessage(`Logged for ${learnerName}`);
       resetForm();
@@ -445,7 +475,7 @@ export function EducatorEvidenceCapture() {
           id: `temp-${Date.now()}`,
           learnerName,
           learnerId: selectedLearnerId,
-          description: description.trim(),
+          description: trimmed,
           capabilityId: capabilityId ?? undefined,
           capabilityMapped: mapped,
           rubricStatus: 'pending',
@@ -489,7 +519,11 @@ export function EducatorEvidenceCapture() {
     );
   }
 
-  const canSubmit = !!selectedLearnerId && description.trim().length > 0 && !saving;
+  const canSubmit =
+    !!selectedLearnerId &&
+    description.trim().length > 0 &&
+    (!portfolioCandidate || !!selectedCapabilityId) &&
+    !saving;
 
   return (
     <RoleRouteGuard allowedRoles={['educator', 'site', 'hq']}>
@@ -656,6 +690,12 @@ export function EducatorEvidenceCapture() {
               </label>
             </div>
           </div>
+
+          {formError && (
+            <p className="text-sm text-red-600" data-testid="evidence-form-error">
+              {formError}
+            </p>
+          )}
 
 
 
