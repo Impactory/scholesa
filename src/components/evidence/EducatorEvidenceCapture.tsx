@@ -356,11 +356,11 @@ export function EducatorEvidenceCapture() {
           )
         );
         for (const portfolioDoc of portfolioSnap.docs) {
-          const portfolioData = portfolioDoc.data() as Record<string, unknown>;
+          const portfolioData = portfolioDoc.data();
           const portfolioSource = asString(portfolioData.source, '');
           const isRubricArtifact = portfolioSource.includes('rubric');
           const linkedEvidenceIds = Array.isArray(portfolioData.evidenceRecordIds)
-            ? portfolioData.evidenceRecordIds.filter((value): value is string => typeof value === 'string')
+            ? portfolioData.evidenceRecordIds
             : [];
           for (const evidenceId of linkedEvidenceIds) {
             const existing = portfolioByEvidenceId.get(evidenceId);
