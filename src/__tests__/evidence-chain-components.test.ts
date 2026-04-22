@@ -88,9 +88,12 @@ describe('EducatorEvidenceCapture session context linking', () => {
   it('requires capability linkage before creating a portfolio-backed educator observation', () => {
     expect(source).toContain('Select a capability before flagging this observation as portfolio evidence.');
     expect(source).toContain('portfolioItemsCollection');
+    expect(source).toContain("where('evidenceRecordIds', 'array-contains-any', evidenceIds)");
+    expect(source).toContain('portfolioItemId={reviewingEvidence.portfolioItemId}');
     expect(source).toContain('evidenceRecordIds: [evidenceRef.id]');
     expect(source).toContain("proofOfLearningStatus: 'missing'");
     expect(source).toContain("source: 'educator_observation'");
+    expect(source).toContain('portfolioItemId = portfolioRef.id');
     expect(source).not.toContain('evidenceRecordId: evidenceRef.id');
   });
 

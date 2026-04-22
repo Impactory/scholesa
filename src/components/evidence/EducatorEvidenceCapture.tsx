@@ -57,6 +57,7 @@ interface RecentEvidence {
   id: string;
   learnerName: string;
   learnerId: string;
+  portfolioItemId?: string;
   description: string;
   capabilityId?: string;
   capabilityMapped: boolean;
@@ -345,6 +346,34 @@ export function EducatorEvidenceCapture() {
 
       setSiteLearners(learnerList);
 
+      const evidenceIds = evidenceSnap.docs.map((docSnap) => docSnap.id);
+      const portfolioByEvidenceId = new Map<string, { id: string; source: string }>();
+      if (evidenceIds.length > 0) {
+        const portfolioSnap = await getDocs(
+          query(
+            portfolioItemsCollection,
+            where('evidenceRecordIds', 'array-contains-any', evidenceIds)
+          )
+        );
+        for (const portfolioDoc of portfolioSnap.docs) {
+          const portfolioData = portfolioDoc.data() as Record<string, unknown>;
+          const portfolioSource = asString(portfolioData.source, '');
+          const isRubricArtifact = portfolioSource.includes('rubric');
+          const linkedEvidenceIds = Array.isArray(portfolioData.evidenceRecordIds)
+            ? portfolioData.evidenceRecordIds.filter((value): value is string => typeof value === 'string')
+            : [];
+          for (const evidenceId of linkedEvidenceIds) {
+            const existing = portfolioByEvidenceId.get(evidenceId);
+            if (!existing || (existing.source.includes('rubric') && !isRubricArtifact)) {
+              portfolioByEvidenceId.set(evidenceId, {
+                id: portfolioDoc.id,
+                source: portfolioSource,
+              });
+            }
+          }
+        }
+      }
+
       const learnerNames = new Map<string, string>();
       for (const learner of learnerList) learnerNames.set(learner.uid, learner.displayName);
       for (const session of loadedSessions) {
@@ -360,6 +389,7 @@ export function EducatorEvidenceCapture() {
             id: d.id,
             learnerName: learnerNames.get(data.learnerId) ?? data.learnerId,
             learnerId: data.learnerId ?? '',
+            portfolioItemId: portfolioByEvidenceId.get(d.id)?.id,
             description: data.description,
             capabilityId: data.capabilityId ?? undefined,
             capabilityMapped: data.capabilityMapped ?? false,
@@ -444,8 +474,9 @@ export function EducatorEvidenceCapture() {
         updatedAt: serverTimestamp(),
       } as unknown as Omit<EvidenceRecord, 'id'>);
 
+      let portfolioItemId: string | undefined;
       if (portfolioCandidate) {
-        await addDoc(portfolioItemsCollection, {
+        const portfolioRef = await addDoc(portfolioItemsCollection, {
           learnerId: selectedLearnerId,
           siteId,
           title: `Observation: ${trimmed.slice(0, 60)}${trimmed.length > 60 ? '...' : ''}`,
@@ -463,6 +494,7 @@ export function EducatorEvidenceCapture() {
           educatorId: user.uid,
           createdAt: serverTimestamp(),
         } as unknown as Omit<PortfolioItem, 'id'>);
+        portfolioItemId = portfolioRef.id;
       }
 
       const learnerName = learnerNameMap.get(selectedLearnerId) ?? selectedLearnerId;
@@ -475,6 +507,7 @@ export function EducatorEvidenceCapture() {
           id: `temp-${Date.now()}`,
           learnerName,
           learnerId: selectedLearnerId,
+          portfolioItemId,
           description: trimmed,
           capabilityId: capabilityId ?? undefined,
           capabilityMapped: mapped,
@@ -714,6 +747,7 @@ export function EducatorEvidenceCapture() {
         {/* Rubric review panel */}
         {reviewingEvidence && siteId && (
           <RubricReviewPanel
+            portfolioItemId={reviewingEvidence.portfolioItemId}
             evidenceRecordIds={[reviewingEvidence.id]}
             learnerId={reviewingEvidence.learnerId}
             learnerName={reviewingEvidence.learnerName}

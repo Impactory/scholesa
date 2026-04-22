@@ -192,8 +192,8 @@
 ### 3A. Evidence Chain Functions (Aligned)
 | Function | Purpose |
 |----------|---------|
-| `applyRubricToEvidence` | Educator rubric → RubricApplication + CapabilityGrowthEvent + CapabilityMastery + ProcessDomainGrowthEvent + ProcessDomainMastery |
-| `verifyProofOfLearning` | PoL verification → CapabilityGrowthEvent + CapabilityMastery update |
+| `applyRubricToEvidence` | Educator rubric → RubricApplication + CapabilityGrowthEvent + CapabilityMastery + ProcessDomainGrowthEvent + ProcessDomainMastery, while preserving canonical `portfolioItemId` provenance when supplied |
+| `verifyProofOfLearning` | PoL verification authenticity boundary → proof state + proof bundle + canonical linkage updates, returns `capabilitiesReadyForRubric` (no direct growth write) |
 | `getParentDashboardBundle` | Aggregates all evidence data for parent/passport views |
 | `bosScoreMvl` + `bosSubmitMvlEvidence` | Minimal viable learning evidence submission (BOS runtime) |
 | `genAiCoach` | Internal AI inference with COPPA grade-band gating |
@@ -257,21 +257,26 @@ All 46 collections in `src/firebase/firestore/collections.ts` have TypeScript-ty
 
 ## §6. P0 BLOCKERS TO CAPABILITY-FIRST LAUNCH
 
-**None.** All 10 gold workflows are verified end-to-end. The evidence chain is connected:
+Gold blockers remain. The evidence chain is connected more truthfully than the April 2 snapshot, but not all workflows are gold-certified end to end:
 
 ```
 HQ defines capabilities + rubrics + process domains
   → Educator runs session + logs observation (<10s)
     → Learner submits artifact/reflection/checkpoint + AI disclosure
-      → Educator applies rubric (4-level, capabilities + process domains)
-        → OR Educator verifies proof-of-learning (explain-it-back, oral, rebuild)
-          → Growth engine: atomic batch → CapabilityGrowthEvent → CapabilityMastery update
+      → Educator verifies proof-of-learning where authenticity is required
+        → Educator applies rubric on the same canonical portfolio item (4-level, capabilities + process domains)
+          → Growth engine: atomic batch / checkpoint callable → CapabilityGrowthEvent → CapabilityMastery update
             → Portfolio: browsable with verification status + AI badges
               → Passport: evidence-backed claims + growth timeline + export
                 → Parent: per-learner capability bands + growth + portfolio highlights
 ```
 
-G1–G12 all closed. No broken links in the chain.
+Recent educator-side fixes closed three live gaps in the chain:
+- verified proof now hands off into rubric application on the same portfolio item
+- mission review now preserves canonical artifact provenance during rubric application
+- proof-linked checkpoints now stay visible as `pending_proof` until growth can be recorded truthfully
+
+Remaining gold blockers now sit mainly in communication/read-side parity rather than missing write paths.
 
 ---
 
@@ -287,8 +292,8 @@ G1–G12 all closed. No broken links in the chain.
 - **Fix**: `MissionAttempt` schema now has `capabilityIds` and `pillarCodes` fields. Creation copies from `Mission`. CRUD views resolve and display capability titles via `enrichRecordsWithCapabilityTitles()`.
 
 ### P1-C. Educator Mission Review → Rubric Integration — ✅ DONE
-- **Gap**: `/educator/missions/review` showed mission submissions as a CRUD list but could not apply rubrics.
-- **Fix**: Extended `WorkflowRoutePage` with `renderRecordDetail` prop for inline assessment panels. Mission review page now renders `RubricReviewPanel` inline per record. Cloud Function `applyRubricToEvidence` extended with `missionAttemptId` support — creates `RubricApplication`, `CapabilityGrowthEvent`, `CapabilityMastery` upserts, mission attempt status update, and portfolio creation from mission data, all in atomic batch. Learner names resolved at query time via `enrichRecordsWithLearnerNames`.
+- **Gap**: `/educator/missions/review` showed mission submissions as a CRUD list but could not apply rubrics canonically.
+- **Fix**: Mission review now renders rubric assessment inline, enriches attempts with linked `portfolioItemId`, and forwards that canonical artifact identity into `applyRubricToEvidence` so rubric growth does not fork provenance away from verified work.
 
 ### P1-D. Parent Portfolio Capability Mapping — ✅ DONE
 - **Gap**: Parent portfolio items showed no capability tags.
@@ -311,8 +316,8 @@ G1–G12 all closed. No broken links in the chain.
 1. **EducatorEvidenceCapture** — Under 10 seconds per observation. Retains session/learner context across entries. Real Firestore writes with full provenance.
 2. **LearnerEvidenceSubmission** — Three evidence types (artifact, reflection, checkpoint) each with AI disclosure. Creates companion portfolio items with cross-links.
 3. **RubricReviewPanel** — Template-driven 4-level scoring with progression descriptors. Scores both capabilities and process domains. Calls atomic backend callable.
-4. **ProofOfLearningVerification** — 3-point verification (explain-it-back, oral check, mini rebuild) with excerpt capture. Creates growth events from proof signals.
-5. **Growth Engine** — Append-only `CapabilityGrowthEvent` trail. Atomic batch writes for mastery upserts. Both rubric and PoL paths produce growth.
+4. **ProofOfLearningVerification** — 3-point verification (explain-it-back, oral check, mini rebuild) with excerpt capture. Verifies authenticity, updates proof state, and hands educators into rubric application on the same canonical portfolio item.
+5. **Growth Engine** — Append-only `CapabilityGrowthEvent` trail. Atomic mastery/growth writes remain rubric/checkpoint-owned; proof verification no longer writes growth directly.
 6. **LearnerPassportExport** — Evidence-backed claims per capability with rubric scores, PoL status, AI disclosure, educator attribution. Text + print export.
 
 ### Architecture
@@ -367,11 +372,11 @@ G1–G12 all closed. No broken links in the chain.
 
 ---
 
-## §11. GOLD-READY WORKFLOW VERIFICATION (10/10 ✅)
+## §11. GOLD-READY WORKFLOW VERIFICATION (current state: mixed / not certified)
 
 ### WF1. Curriculum admin can define capabilities and map them to units/checkpoints
 
-**Status**: ✅ VERIFIED
+**Status**: ◐ PARTIAL
 
 **Evidence**:
 - ✅ `CapabilityFrameworkEditor.tsx` — Full CRUD for capabilities: title, pillar (FUTURE_SKILLS/LEADERSHIP_AGENCY/IMPACT_INNOVATION), descriptor, sortOrder
@@ -448,26 +453,31 @@ G1–G12 all closed. No broken links in the chain.
 - Educator sees original evidence: title, description, capability count, evidence record count, artifact count, capabilities mapped (pill badges), AI disclosure detail
 - Checkboxes for each proof check with conditional textareas for excerpts, educator notes field
 - Two submit paths: "Verify" (needs ≥2 checks) and "Mark reviewed" (no requirement)
-- `verifyProofOfLearning` callable (`index.ts:~8249-8320`): updates `PortfolioItem` with `verificationStatus`/`proofOfLearningStatus`/proof excerpts, creates `CapabilityGrowthEvent` with `source: 'proof_of_learning'`, upserts `CapabilityMastery`
+- `verifyProofOfLearning` callable updates `PortfolioItem` proof fields, proof bundles, and canonical linkage, and returns `capabilitiesReadyForRubric`
+- Verified proof now deep-links into `/educator/rubrics/apply?portfolioItemId=...`
+- `EducatorRubricApplyRenderer` and `RubricReviewPanel` continue rubric application on the same verified portfolio item
 - Atomic batch commit
 
-**Blocker**: None
+**Blocker**: Proof review is now truthful and canonical, but broader workflow certification across all evidence surfaces is still incomplete.
 
 ---
 
 ### WF6. Capability growth updates over time from evidence
 
-**Status**: ✅ VERIFIED
+**Status**: ◐ PARTIAL
 
 **Evidence**:
 - ✅ `applyRubricToEvidence` callable creates `capabilityGrowthEvents` with: `level` (1-4), `rawScore`, `maxScore`, `linkedEvidenceRecordIds`, `linkedPortfolioItemIds`, `rubricApplicationId`, `educatorId`, `createdAt`
-- ✅ `verifyProofOfLearning` callable creates `capabilityGrowthEvent` with `source: 'proof_of_learning'`, `level = checkpointCount` (1-3)
-- ✅ Both callables upsert `capabilityMastery` with `latestLevel`, `highestLevel`, `evidenceIds[]`, `growthEventIds[]`
+- ✅ `verifyProofOfLearning` no longer writes `capabilityGrowthEvents` or `capabilityMastery` directly
+- ✅ Mission review now forwards linked `portfolioItemId` into `applyRubricToEvidence`, preserving canonical artifact provenance
+- ✅ Proof-linked checkpoints now stay in the queue as `pending_proof` until proof is verified and the educator can record growth truthfully
 - ✅ Growth events are append-only, queryable by `learnerId` + `createdAt`
 - ✅ `LearnerPassportExport.tsx` renders growth timeline (15 most recent): capability title, level, educator name, rubric scores
 - ✅ `CapabilityGuidancePanel.tsx` shows per-pillar average level + band (strong/developing/emerging)
 - ✅ Flutter has custom growth visualizations in `parent_summary_page.dart` (level progression bars per capability)
 - ✅ **G11 CLOSED**: `LearnerDashboardToday.tsx` custom dashboard with capability guidance panel, recent growth events, active missions, today's sessions — replaces generic session list
+
+**Blocker**: Timeline/report surfaces still do not consume all evidence backlinks end to end, so this workflow is real but not yet gold-certified.
 
 **Blocker**: None
 
@@ -612,19 +622,19 @@ G1–G12 all closed. No broken links in the chain.
 | Learner submits checkpoints → mission | WF3 | ✅ | `missionAttemptId` linkage (G2) |
 | Educator applies rubric with template | WF4 | ✅ | Template selector, descriptors, `rubricId` (G3) |
 | Educator scores process domains | WF4 | ✅ | `RubricReviewPanel` process domain scoring cards (G10) |
-| Educator verifies proof-of-learning | WF5 | ✅ | 3 verification methods, excerpts, atomic growth |
-| Growth events created atomically | WF6 | ✅ | Both rubric + PoL callables |
+| Educator verifies proof-of-learning | WF5 | ◐ | 3 verification methods, excerpts, canonical rubric handoff; authenticity-only, not direct growth |
+| Growth events created atomically | WF6 | ◐ | Rubric + checkpoint callables; proof-linked checkpoints recover via `pending_proof` |
 | Growth visible on web dashboard | WF6 | ✅ | `LearnerDashboardToday.tsx` growth events + capability bands (G11) |
 | Portfolio browsable with filters | WF7 | ✅ | `LearnerPortfolioBrowser.tsx` |
-| Passport from real evidence | WF8 | ✅ | `LearnerPassportExport.tsx` via callable |
-| AI disclosure captured + displayed | WF9 | ✅ | All surfaces: submission, portfolio, passport |
-| Parent answers "what can my child do?" | WF10 | ✅ | `ParentSummaryDashboard.tsx` per-learner capability bands + growth (G12) |
-| Educator answers "what needs attention?" | WF10 | ✅ | `EducatorDashboardToday.tsx` review queue + snapshots (G12) |
-| Learner answers "how am I growing?" | WF10 | ✅ | `LearnerDashboardToday.tsx` capability growth + bands (G11) |
+| Passport from real evidence | WF8 | ◐ | `LearnerPassportExport.tsx` via callable, but reporting provenance is still incomplete end to end |
+| AI disclosure captured + displayed | WF9 | ◐ | Stronger across submission, portfolio, and passport, but not yet uniform on every artifact path |
+| Parent answers "what can my child do?" | WF10 | ◐ | `ParentSummaryDashboard.tsx` exists, but downstream communication still drops some provenance |
+| Educator answers "what needs attention?" | WF10 | ◐ | `EducatorDashboardToday.tsx` review queue is real, but not every trust-critical surface has full evidence parity |
+| Learner answers "how am I growing?" | WF10 | ◐ | `LearnerDashboardToday.tsx` shows growth and bands, but timeline provenance is still incomplete |
 
 ---
 
-## §15. BUILD & TEST VERIFICATION — April 2, 2026
+## §15. BUILD & TEST VERIFICATION — historical April 2 snapshot plus later targeted current-state reruns
 
 | Check | Result | Command |
 |-------|--------|---------|
@@ -654,10 +664,10 @@ G1–G12 all closed. No broken links in the chain.
 
 This audit classifies every major route (69), schema type (69), cloud function (63), and Firestore collection (135 rules / 46 typed) against Scholesa's capability-first evidence model across 8 dimensions.
 
-**What exists and is aligned**: 9 custom routes, 48 components, 15 core schema types, 5 evidence chain callables — the complete gold core.
-**What exists but needs refactor**: 5 routes (missions, parent portfolio, curriculum) need capability binding in UI.
-**What is fake, partial, or misleading**: 2 legacy schema types (`AccountabilityKPI`, `ParentSnapshot`) — both unused. 1 fake route (`/learner/habits`).
-**What is missing**: Learner capability profile synthesis type/view.
-**Which role is most blocked**: None for launch. Guardian is most blocked for GA depth (parent portfolio lacks capability tags).
-**Highest-risk break in evidence chain**: None. Chain is intact HQ→educator→learner→rubric/PoL→growth→portfolio→passport→parent.
-**Recommendation**: ✅ GOLD-READY for capability-first launch.
+**What exists and is aligned**: HQ capability/rubric/checkpoint authoring, educator evidence capture/review, proof review, rubric growth writes, portfolio linkage, and passport/guardian read paths are all real and connected.
+**What exists but needs refactor**: Timeline/reporting provenance, legacy-pillar compatibility read models, and Flutter/offline evidence parity.
+**What is fake, partial, or misleading**: Any doc or surface that still claims proof verification writes growth directly, or that all 10 gold workflows are fully certified end to end.
+**What is missing**: Full evidence-backlinked learner timeline/report communication and broader workflow-level certification with real data.
+**Which role is most blocked**: Learner/guardian interpretation is now the most blocked because downstream communication still drops some provenance even though the write paths are much stronger.
+**Highest-risk break in evidence chain**: Read-side provenance gaps — especially timeline/report surfaces that still do not consume all growth → evidence backlinks end to end.
+**Recommendation**: ⚠️ BETA-READY, NOT GOLD-READY.
