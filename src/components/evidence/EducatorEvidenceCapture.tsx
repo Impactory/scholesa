@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   addDoc,
+  collection,
+  documentId,
   getDocs,
   orderBy,
   query,
@@ -17,13 +19,14 @@ import {
   sessionsCollection,
   usersCollection,
 } from '@/src/firebase/firestore/collections';
+import { firestore } from '@/src/firebase/client-init';
 import { Timestamp } from 'firebase/firestore';
 import { resolveActiveSiteId } from '@/src/lib/auth/activeSite';
 import { useCapabilities } from '@/src/lib/capabilities/useCapabilities';
 import { RoleRouteGuard } from '@/src/components/auth/RoleRouteGuard';
 import { RubricReviewPanel } from '@/src/components/evidence/RubricReviewPanel';
 import { Spinner } from '@/src/components/ui/Spinner';
-import type { EvidenceRecord } from '@/src/types/schema';
+import type { EvidenceRecord, Session, SessionOccurrence } from '@/src/types/schema';
 
 const PHASE_OPTIONS: { value: EvidenceRecord['phaseKey']; label: string }[] = [
   { value: 'retrieval_warm_up', label: 'Retrieval / Warm-up' },
@@ -36,12 +39,17 @@ const PHASE_OPTIONS: { value: EvidenceRecord['phaseKey']; label: string }[] = [
 
 interface SessionOption {
   occurrenceId: string;
+  sessionId: string;
   label: string;
+  status: string;
+  rosterSource: 'attendance' | 'enrollment' | 'none';
+  learners: LearnerOption[];
 }
 
 interface LearnerOption {
   uid: string;
   displayName: string;
+  attendanceStatus?: 'present' | 'late' | 'absent';
 }
 
 interface RecentEvidence {
@@ -56,12 +64,47 @@ interface RecentEvidence {
   portfolioCandidate: boolean;
 }
 
+type SessionRecord = Session & Record<string, unknown>;
+type SessionOccurrenceRecord = SessionOccurrence & Record<string, unknown>;
+
+function asString(value: unknown, fallback: string): string {
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : fallback;
+}
+
+function chunkValues<T>(values: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let index = 0; index < values.length; index += size) {
+    chunks.push(values.slice(index, index + size));
+  }
+  return chunks;
+}
+
+function formatSessionTime(value: unknown): string | null {
+  if (
+    value &&
+    typeof value === 'object' &&
+    'toDate' in value &&
+    typeof (value as { toDate: () => Date }).toDate === 'function'
+  ) {
+    return (value as { toDate: () => Date }).toDate().toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  }
+
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  return null;
+}
+
 export function EducatorEvidenceCapture() {
   const { user, profile, loading: authLoading } = useAuthContext();
   const siteId = resolveActiveSiteId(profile);
 
   const { capabilityList: capabilities, resolveTitle } = useCapabilities(siteId);
-  const [learners, setLearners] = useState<LearnerOption[]>([]);
+  const [siteLearners, setSiteLearners] = useState<LearnerOption[]>([]);
   const [todaySessions, setTodaySessions] = useState<SessionOption[]>([]);
   const [recentEvidence, setRecentEvidence] = useState<RecentEvidence[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,11 +121,29 @@ export function EducatorEvidenceCapture() {
   const [selectedSessionOccurrenceId, setSelectedSessionOccurrenceId] = useState('');
   const [reviewingEvidence, setReviewingEvidence] = useState<RecentEvidence | null>(null);
 
+  const selectedSession = useMemo(
+    () =>
+      todaySessions.find((session) => session.occurrenceId === selectedSessionOccurrenceId) ??
+      todaySessions[0] ??
+      null,
+    [todaySessions, selectedSessionOccurrenceId]
+  );
+
+  const learners = useMemo(
+    () => (selectedSession ? selectedSession.learners : siteLearners),
+    [selectedSession, siteLearners]
+  );
+
   const learnerNameMap = useMemo(() => {
     const map = new Map<string, string>();
-    for (const l of learners) map.set(l.uid, l.displayName);
+    for (const learner of siteLearners) map.set(learner.uid, learner.displayName);
+    for (const session of todaySessions) {
+      for (const learner of session.learners) {
+        map.set(learner.uid, learner.displayName);
+      }
+    }
     return map;
-  }, [learners]);
+  }, [siteLearners, todaySessions]);
 
   const selectedCapability = useMemo(
     () => capabilities.find((c) => c.id === selectedCapabilityId) ?? null,
@@ -90,10 +151,12 @@ export function EducatorEvidenceCapture() {
   );
 
   const loadData = useCallback(async () => {
-    if (!siteId) return;
+    if (!siteId || !user) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
-      // Build today's date range for session occurrence query
       const todayStart = new Date();
       todayStart.setHours(0, 0, 0, 0);
       const todayEnd = new Date();
@@ -123,26 +186,62 @@ export function EducatorEvidenceCapture() {
           query(
             sessionOccurrencesCollection,
             where('siteId', '==', siteId),
+            where('educatorId', '==', user.uid),
             where('date', '>=', Timestamp.fromDate(todayStart)),
             where('date', '<=', Timestamp.fromDate(todayEnd))
           )
         ),
       ]);
 
-      // Resolve parent session docs for time labels
-      const sessionIds = Array.from(new Set(occurrenceSnap.docs.map((d) => d.data().sessionId)));
-      const sessionTimeMap = new Map<string, { start: Date; end: Date }>();
-      if (sessionIds.length > 0) {
-        // Firestore 'in' supports up to 30 values, should be fine for daily sessions
-        const sessionSnap = await getDocs(
-          query(sessionsCollection, where('__name__', 'in', sessionIds.slice(0, 30)))
-        );
-        for (const sd of sessionSnap.docs) {
-          const s = sd.data();
-          sessionTimeMap.set(sd.id, {
-            start: s.startTime?.toDate?.() ?? new Date(),
-            end: s.endTime?.toDate?.() ?? new Date(),
-          });
+      const occurrenceDocs = occurrenceSnap.docs.map((docSnap) => ({
+        occurrenceId: docSnap.id,
+        data: docSnap.data() as SessionOccurrenceRecord,
+      }));
+
+      const sessionIds = Array.from(
+        new Set(
+          occurrenceDocs
+            .map((entry) => asString(entry.data['sessionId'], ''))
+            .filter((value) => value.length > 0)
+        )
+      );
+      const occurrenceIds = occurrenceDocs.map((entry) => entry.occurrenceId);
+
+      const [sessionBatchSnaps, enrollmentBatchSnaps, attendanceBatchSnaps] = await Promise.all([
+        Promise.all(
+          chunkValues(sessionIds, 10).map((ids) =>
+            getDocs(query(sessionsCollection, where(documentId(), 'in', ids)))
+          )
+        ),
+        Promise.all(
+          chunkValues(sessionIds, 10).map((ids) =>
+            getDocs(
+              query(
+                collection(firestore, 'enrollments'),
+                where('sessionId', 'in', ids),
+                where('status', '==', 'active'),
+                limit(200)
+              )
+            )
+          )
+        ),
+        Promise.all(
+          chunkValues(occurrenceIds, 10).map((ids) =>
+            getDocs(
+              query(
+                collection(firestore, 'attendanceRecords'),
+                where('sessionOccurrenceId', 'in', ids),
+                limit(200)
+              )
+            )
+          )
+        ),
+      ]);
+
+      const sessionMap = new Map<string, SessionRecord>();
+      for (const sessionSnap of sessionBatchSnaps) {
+        for (const sessionDoc of sessionSnap.docs) {
+          sessionMap.set(sessionDoc.id, sessionDoc.data() as SessionRecord);
         }
       }
 
@@ -162,25 +261,95 @@ export function EducatorEvidenceCapture() {
         }
       }
       const learnerList = Array.from(learnerMap.values()).sort((left, right) =>
-        left.displayName.localeCompare(right.displayName),
+        left.displayName.localeCompare(right.displayName)
       );
 
-      const fmt = (d: Date) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      setTodaySessions(
-        occurrenceSnap.docs.map((d) => {
-          const occ = d.data();
-          const times = sessionTimeMap.get(occ.sessionId);
-          const label = times
-            ? `${fmt(times.start)} – ${fmt(times.end)}`
-            : `Session ${occ.sessionId.slice(0, 6)}`;
-          return { occurrenceId: d.id, label };
+      const enrollmentMap = new Map<string, Set<string>>();
+      for (const snap of enrollmentBatchSnaps) {
+        for (const enrollmentDoc of snap.docs) {
+          const data = enrollmentDoc.data() as Record<string, unknown>;
+          const sessionId = asString(data['sessionId'], '');
+          const learnerId = asString(data['learnerId'], '');
+          if (!sessionId || !learnerId) continue;
+          const learnersForSession = enrollmentMap.get(sessionId) ?? new Set<string>();
+          learnersForSession.add(learnerId);
+          enrollmentMap.set(sessionId, learnersForSession);
+        }
+      }
+
+      const attendanceMap = new Map<string, Map<string, 'present' | 'late' | 'absent'>>();
+      for (const snap of attendanceBatchSnaps) {
+        for (const attendanceDoc of snap.docs) {
+          const data = attendanceDoc.data() as Record<string, unknown>;
+          const occurrenceId = asString(data['sessionOccurrenceId'], '');
+          const learnerId = asString(data['learnerId'] || data['userId'], '');
+          const status = asString(data['status'], '');
+          if (
+            !occurrenceId ||
+            !learnerId ||
+            (status !== 'present' && status !== 'late' && status !== 'absent')
+          ) {
+            continue;
+          }
+          const statuses = attendanceMap.get(occurrenceId) ?? new Map<string, 'present' | 'late' | 'absent'>();
+          statuses.set(learnerId, status);
+          attendanceMap.set(occurrenceId, statuses);
+        }
+      }
+
+      const loadedSessions = occurrenceDocs
+        .map((entry) => {
+          const sessionId = asString(entry.data['sessionId'], '');
+          const sessionData = sessionMap.get(sessionId);
+          const sessionEnrollments = Array.from(enrollmentMap.get(sessionId) ?? []);
+          const attendanceStatuses = attendanceMap.get(entry.occurrenceId);
+          const liveLearnerIds = attendanceStatuses
+            ? Array.from(attendanceStatuses.entries())
+                .filter(([, status]) => status === 'present' || status === 'late')
+                .map(([learnerId]) => learnerId)
+            : sessionEnrollments;
+          const rosterSource: SessionOption['rosterSource'] = attendanceStatuses
+            ? 'attendance'
+            : liveLearnerIds.length > 0
+              ? 'enrollment'
+              : 'none';
+          const learners = liveLearnerIds
+            .map((learnerId) => ({
+              uid: learnerId,
+              displayName: learnerMap.get(learnerId)?.displayName ?? learnerId,
+              attendanceStatus: attendanceStatuses?.get(learnerId),
+            }))
+            .sort((left, right) => left.displayName.localeCompare(right.displayName));
+          const sessionTitle = asString(
+            sessionData?.['title'] || sessionData?.['name'],
+            sessionId ? `Session ${sessionId.slice(0, 6)}` : `Session ${entry.occurrenceId.slice(0, 6)}`
+          );
+          const startLabel = formatSessionTime(sessionData?.['startTime']);
+          const endLabel = formatSessionTime(sessionData?.['endTime']);
+          const timeLabel =
+            startLabel && endLabel ? `${startLabel} – ${endLabel}` : startLabel ?? endLabel;
+          return {
+            occurrenceId: entry.occurrenceId,
+            sessionId,
+            status: asString(entry.data['status'] || sessionData?.['status'], 'scheduled'),
+            label: timeLabel ? `${sessionTitle} • ${timeLabel}` : sessionTitle,
+            rosterSource,
+            learners,
+          };
         })
-      );
+        .sort((left, right) => left.label.localeCompare(right.label));
 
-      setLearners(learnerList);
+      setTodaySessions(loadedSessions);
+
+      setSiteLearners(learnerList);
 
       const learnerNames = new Map<string, string>();
       for (const learner of learnerList) learnerNames.set(learner.uid, learner.displayName);
+      for (const session of loadedSessions) {
+        for (const learner of session.learners) {
+          learnerNames.set(learner.uid, learner.displayName);
+        }
+      }
 
       setRecentEvidence(
         evidenceSnap.docs.map((d) => {
@@ -204,11 +373,32 @@ export function EducatorEvidenceCapture() {
     } finally {
       setLoading(false);
     }
-  }, [siteId]);
+  }, [siteId, user]);
 
   useEffect(() => {
-    if (!authLoading && siteId) void loadData();
-  }, [authLoading, siteId, loadData]);
+    if (!authLoading && siteId && user) void loadData();
+  }, [authLoading, siteId, user, loadData]);
+
+  useEffect(() => {
+    if (todaySessions.length === 0) {
+      setSelectedSessionOccurrenceId('');
+      return;
+    }
+
+    if (todaySessions.some((session) => session.occurrenceId === selectedSessionOccurrenceId)) {
+      return;
+    }
+
+    const preferredSession =
+      todaySessions.find((session) => session.status === 'in_progress') ?? todaySessions[0];
+    setSelectedSessionOccurrenceId(preferredSession.occurrenceId);
+  }, [todaySessions, selectedSessionOccurrenceId]);
+
+  useEffect(() => {
+    if (!selectedLearnerId) return;
+    if (learners.some((learner) => learner.uid === selectedLearnerId)) return;
+    setSelectedLearnerId('');
+  }, [learners, selectedLearnerId]);
 
   const resetForm = () => {
     setDescription('');
@@ -232,7 +422,7 @@ export function EducatorEvidenceCapture() {
         learnerId: selectedLearnerId,
         educatorId: user.uid,
         siteId,
-        sessionOccurrenceId: selectedSessionOccurrenceId || undefined,
+        sessionOccurrenceId: selectedSession?.occurrenceId ?? undefined,
         description: description.trim(),
         capabilityId: capabilityId ?? undefined,
         capabilityMapped: mapped,
@@ -330,7 +520,6 @@ export function EducatorEvidenceCapture() {
                 onChange={(e) => setSelectedSessionOccurrenceId(e.target.value)}
                 className="w-full rounded-md border border-app bg-app-canvas px-3 py-2 text-sm text-app-foreground"
               >
-                <option value="">(not linked to a session)</option>
                 {todaySessions.map((s) => (
                   <option key={s.occurrenceId} value={s.occurrenceId}>
                     {s.label}
@@ -339,28 +528,53 @@ export function EducatorEvidenceCapture() {
               </select>
             ) : (
               <p className="text-xs text-app-muted bg-app-surface rounded-md px-3 py-2 border border-app">
-                No sessions scheduled today. Evidence will be saved without a session link.
+                No live session occurrence is available today. Evidence will be saved without a
+                session link.
               </p>
             )}
           </label>
 
+          {selectedSession && (
+            <div
+              className="rounded-md border border-app bg-app-canvas px-3 py-2 text-xs text-app-muted"
+              data-testid="evidence-roster-source"
+            >
+              {selectedSession.rosterSource === 'attendance'
+                ? 'Showing present learners from attendance for this session occurrence.'
+                : selectedSession.rosterSource === 'enrollment'
+                  ? 'Attendance is not recorded yet. Showing the enrolled learner roster for this session.'
+                  : 'No enrolled learners were found for this session yet.'}
+            </div>
+          )}
+
           {/* Row 1: Learner + Phase */}
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="space-y-1">
-              <span className="text-xs font-medium text-app-muted">Learner *</span>
+              <span className="text-xs font-medium text-app-muted">
+                Learner {selectedSession ? '(live roster)' : '(active site)'} *
+              </span>
               <select
                 data-testid="evidence-learner"
                 value={selectedLearnerId}
                 onChange={(e) => setSelectedLearnerId(e.target.value)}
+                disabled={learners.length === 0}
                 className="w-full rounded-md border border-app bg-app-canvas px-3 py-2 text-sm text-app-foreground"
               >
-                <option value="">Select learner</option>
+                <option value="">
+                  {selectedSession ? 'Select learner from this session' : 'Select learner'}
+                </option>
                 {learners.map((l) => (
                   <option key={l.uid} value={l.uid}>
                     {l.displayName}
                   </option>
                 ))}
               </select>
+              {selectedSession && learners.length === 0 ? (
+                <p className="text-xs text-app-muted">
+                  No learners are available from attendance or active enrollments for this session
+                  yet.
+                </p>
+              ) : null}
             </label>
 
             <label className="space-y-1">

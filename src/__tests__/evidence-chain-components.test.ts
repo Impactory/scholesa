@@ -53,16 +53,23 @@ describe('EducatorEvidenceCapture session context linking', () => {
 
   it('queries today session occurrences by siteId and date range', () => {
     expect(source).toContain("where('siteId', '==', siteId)");
+    expect(source).toContain("where('educatorId', '==', user.uid)");
     expect(source).toContain('Timestamp.fromDate(todayStart)');
     expect(source).toContain('Timestamp.fromDate(todayEnd)');
   });
 
-  it('queries learners by canonical siteIds membership', () => {
+  it('builds the live learner roster from attendance first and active enrollments second', () => {
     expect(source).toContain("where('siteIds', 'array-contains', siteId)");
+    expect(source).toContain("collection(firestore, 'enrollments')");
+    expect(source).toContain("collection(firestore, 'attendanceRecords')");
+    expect(source).toContain("where('sessionOccurrenceId', 'in', ids)");
+    expect(source).toContain("where('status', '==', 'active')");
   });
 
-  it('renders a session selector in the form', () => {
+  it('renders a live session selector and roster provenance banner in the form', () => {
     expect(source).toContain('data-testid="evidence-session"');
+    expect(source).toContain('data-testid="evidence-roster-source"');
+    expect(source).toContain('Showing present learners from attendance for this session occurrence.');
   });
 
   it('keeps session selection sticky across logs', () => {
@@ -72,6 +79,10 @@ describe('EducatorEvidenceCapture session context linking', () => {
       source.indexOf('};', source.indexOf('const resetForm')) + 2
     );
     expect(resetBlock).not.toContain('setSelectedSessionOccurrenceId');
+  });
+
+  it('does not offer a manual no-session option when a live session exists', () => {
+    expect(source).not.toContain('(not linked to a session)');
   });
 
   it('shows an explicit no-site blocked state', () => {

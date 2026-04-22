@@ -1,5 +1,5 @@
-import { EducatorEvidenceCapture } from '@/src/components/evidence/EducatorEvidenceCapture';
+import { WorkflowRoutePage } from '@/src/features/workflows/WorkflowRoutePage';
 
 export default function EvidencePage() {
-  return <EducatorEvidenceCapture />;
+  return <WorkflowRoutePage routePath='/educator/evidence' />;
 }

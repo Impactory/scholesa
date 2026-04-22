@@ -178,6 +178,7 @@ describe('Evidence chain route pages exist', () => {
 
   const pages = [
     'hq/capabilities/page.tsx',
+    'educator/evidence/page.tsx',
     'educator/today/page.tsx',
     'learner/missions/page.tsx',
     'educator/verification/page.tsx',
@@ -206,6 +207,14 @@ describe('Evidence chain route pages exist', () => {
     expect(source).toContain('WorkflowRoutePage');
     expect(source).toContain("routePath='/educator/today'");
     expect(source).not.toContain('EducatorDashboardToday');
+  });
+
+  it('educator/evidence/page.tsx routes through WorkflowRoutePage instead of directly importing the evidence component', () => {
+    const fullPath = path.join(appDir, 'educator', 'evidence', 'page.tsx');
+    const source = fs.readFileSync(fullPath, 'utf8');
+    expect(source).toContain('WorkflowRoutePage');
+    expect(source).toContain("routePath='/educator/evidence'");
+    expect(source).not.toContain('EducatorEvidenceCapture');
   });
 
   it('learner/missions/page.tsx routes through WorkflowRoutePage so custom renderer wiring controls the live flow', () => {
