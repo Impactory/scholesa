@@ -1,13 +1,13 @@
-# Scholesa Capability-First Audit — April 2, 2026
+# Scholesa Capability-First Audit — April 2, 2026 (updated 2026-04-22)
 
 > Comprehensive audit of every major route, component, schema, and workflow against Scholesa's capability-first evidence model.
 > Classifies each item as: aligned and usable / reusable with modification / misleading / LMS-shaped / fake / disconnected / missing.
 
 ---
 
-## FINAL RECOMMENDATION: ✅ GOLD-READY
+## FINAL RECOMMENDATION: ⚠️ BETA-READY, NOT GOLD-READY
 
-**10/10 gold workflows verified end-to-end.** Zero active P0 blockers. Evidence chain unbroken from HQ capability setup through family-facing passport output. Platform is ready for capability-first launch.
+**The core evidence chain is real and materially stronger, but Scholesa is not yet gold-ready.** Recent work tightened the proof boundary, preserved canonical portfolio provenance through rubric application, and fixed proof-linked checkpoint growth dead-ends. However, downstream communication surfaces still have incomplete provenance consumption, legacy compatibility remains visible, and several workflows remain partial rather than gold-certified.
 
 | Metric | Value |
 |--------|-------|
@@ -16,8 +16,8 @@
 | Firestore collections (typed web) | 46 |
 | Firestore rules collections | 135 |
 | Cloud Functions | 63 exported |
-| Gold workflows verified | 10/10 |
-| P0 blockers | 0 |
+| Gold workflows verified | Not blanket-certified |
+| P0 blockers | Gold-blocking gaps remain |
 | P1 systems needed (GA credibility) | 6 |
 | TypeScript | Clean (exit 0) |
 | Jest (web) | 25 suites, 183/183 pass |
@@ -59,7 +59,7 @@
 | `/educator/sessions` | `sessions` collection | **Operational (aligned)** | Session scheduling supports evidence chain by creating session context. |
 | `/educator/attendance` | `attendanceRecords` collection | **Operational (aligned)** | Attendance ≠ mastery, but required for studio operations. |
 | `/educator/learners` | `users` collection | **Operational** | Roster view. No learner profile synthesis. |
-| `/educator/missions/review` | `missionAttempts` collection | **Reusable with modification** | Review queue exists but no rubric assessment UI. Could embed RubricReviewPanel. |
+| `/educator/missions/review` | `missionAttempts` collection | **Aligned and reusable** | Review queue now embeds rubric assessment, preserves linked `portfolioItemId` when present, and writes through the canonical callable path. |
 | `/educator/mission-plans` | `missions` collection | **Reusable with modification** | Mission authoring but not mapped to capability sequencing. |
 | `/educator/learner-supports` | `learnerSupports` collection | **Operational** | Intervention tracking. Not capability-informed. |
 | `/educator/integrations` | callable | **Operational** | External system connections (Clever, LTI). |

@@ -337,7 +337,7 @@ All checks must pass before merge.
 
 ---
 
-## Evidence Chain State (2026-04-13, RC3 pre-freeze)
+## Evidence Chain State (2026-04-22, post educator-proof handoff)
 
 ### A. End-to-end wiring that is in place
 
@@ -345,7 +345,7 @@ All checks must pass before merge.
 
 **2. Admin-HQ authoring surface** — `HqCapabilityFrameworkRenderer` + `CapabilityFrameworkEditor` define capabilities, progression descriptors, and strand alignment. `HqRubricBuilderRenderer` manages rubric templates. `/hq/curriculum` renders through these custom renderers, not the generic card UI.
 
-**3. Educator capture + review surface** — `EducatorTodayRenderer`, `EducatorEvidenceCaptureRenderer` (hosts `EducatorFeedbackForm` + `EducatorEvidenceCapture`), `EducatorEvidenceReviewRenderer` (with revision-history UI and site-scoped queues), `EducatorRubricApplyRenderer` (hosts `RubricReviewPanel`), `EducatorProofReviewRenderer`, `EducatorAiAuditRenderer`. Revision resubmission flow closes the loop with learners, including portfolio-item sync.
+**3. Educator capture + review surface** — `EducatorTodayRenderer`, `EducatorEvidenceCaptureRenderer` (hosts `EducatorFeedbackForm` + `EducatorEvidenceCapture`), `EducatorEvidenceReviewRenderer` (with revision-history UI, site-scoped queues, mission-review portfolio linkage, and `pending_proof` checkpoint recovery), `EducatorRubricApplyRenderer` (fallback evidence flow + direct verified-portfolio handoff into `RubricReviewPanel`), `EducatorProofReviewRenderer`, `EducatorAiAuditRenderer`. Live educator capture now resolves educator-scoped session occurrences, attendance-first rosters, and canonical `sessionOccurrenceId`; revision resubmission flow closes the loop with learners, including portfolio-item sync.
 
 **4. Learner surface** — `LearnerCheckpointRenderer`, `LearnerReflectionsRenderer`, `LearnerProofAssemblyRenderer` (ExplainItBack + OralCheck + MiniRebuild), `LearnerPortfolioCurationRenderer`, `LearnerEvidenceTimelineRenderer`, `LearnerProgressReportRenderer`, `LearnerShowcasePeerReviewRenderer`, `LearnerMiloOSRenderer`. Revision-required items surface as banners on `/learner/today`.
 
@@ -353,9 +353,11 @@ All checks must pass before merge.
 
 **6. Admin-School surface** — `SiteImplementationHealthRenderer` shows educator readiness and evidence-coverage gaps at `/site/dashboard` (and related site routes).
 
-**7. Growth write engine (real, not seeded)** — Two callables close the missing write path:
-- `applyRubricToEvidence` (`functions/src/index.ts:8646`) — atomic write of rubric application → `capabilityMastery` update (`latestLevel`) → append-only `capabilityGrowthEvents` entry.
-- `processCheckpointMasteryUpdate` (`functions/src/index.ts:9345`) — checkpoint completion → mastery + growth event. Checkpoints with no mapped `capabilityId` now emit a surface warning instead of silently writing to a fallback capability (phantom-growth prevention).
+**7. Growth write engine + proof boundary (real, not seeded)** — The chain now separates authenticity from interpretation while preserving canonical provenance:
+- `applyRubricToEvidence` (`functions/src/index.ts`) — atomic rubric application → `capabilityMastery` / `processDomainMastery` updates → append-only growth events. When `portfolioItemId` is provided, it updates the existing verified canonical portfolio item in place instead of forking into duplicate `rubric-*` artifacts.
+- `processCheckpointMasteryUpdate` (`functions/src/index.ts`) — checkpoint completion → mastery + growth event. Checkpoints with no mapped `capabilityId` emit a surface warning instead of silently writing to a fallback capability (phantom-growth prevention).
+- `verifyProofOfLearning` (`functions/src/index.ts`) — authenticity boundary only. It updates proof state, proof bundles, and canonical linkage, returns `capabilitiesReadyForRubric`, and no longer writes `capabilityGrowthEvents` or `capabilityMastery` directly.
+- `ProofOfLearningVerification.tsx` now deep-links educators into `/educator/rubrics/apply?portfolioItemId=...`, and mission review forwards the same canonical `portfolioItemId` when rubricing verified work.
 
 **8. Parent dashboard reader** — `buildParentLearnerSummary` aggregates from 7+ collections into a **capability snapshot** (strand-level mastery, with legacy-pillar roll-up resolved via `LEGACY_PILLAR_ALIGNMENT`, normalized 0–1, banded strong/developing/emerging), portfolio snapshot, ideation passport, growth timeline with educator provenance, portfolio items preview with per-artifact proof details, AI disclosure, rubric scores, progression descriptors, checkpoint mappings, and evidence summary.
 
@@ -371,7 +373,7 @@ All checks must pass before merge.
 
 **1. Legacy-pillar compatibility layer is visible** — The three-pillar vocabulary (`futureSkills` / `leadership` / `impact`) still flows through parent-dashboard snapshots, analytics aggregates, and some storage shapes. It is honestly labeled as a compatibility roll-up, but the six-strand model should become the primary read shape over time.
 
-**2. Growth events not back-linked on timeline** — `LearnerEvidenceTimelineRenderer` does not yet reverse-query from `capabilityGrowthEvents` to the triggering evidence record.
+**2. Growth events not fully back-linked on timeline** — `LearnerEvidenceTimelineRenderer` now links growth by `missionAttemptId`, `checkpointId`, and `linkedPortfolioItemIds`, but it still does not reverse-link direct `linkedEvidenceRecordIds` into educator-observation evidence cards.
 
 **3. No educator annotation layer on timeline** — Educators can't annotate a learner's timeline in-place.
 
@@ -385,8 +387,8 @@ All checks must pass before merge.
 
 ### C. Current verdict
 
-**Beta, gold-candidate.** The evidence chain is wired end-to-end: HQ authoring → educator capture/review → learner artifact/reflection/checkpoint/proof → rubric or checkpoint callable → mastery + growth write → portfolio linkage → guardian passport/analytics. The read side is strong; the write side is real (not seeded). Remaining gaps are distribution polish (Flutter offline evidence ops), passport wallet surfaces, legacy-pillar cleanup, and timeline back-links — not missing limbs of the chain.
+**Beta, gold-candidate.** The evidence chain is wired end-to-end: HQ authoring → educator capture/review → learner artifact/reflection/checkpoint/proof → rubric or checkpoint callable → mastery + growth write → portfolio linkage → guardian passport/analytics. The write side is now stricter and more truthful: proof verification is authenticity-only, verified proof hands off into rubric application on the same portfolio item, mission review preserves canonical artifact provenance, and proof-linked checkpoints no longer disappear before growth can be recorded. Remaining gaps are timeline back-links, legacy-pillar cleanup, Flutter offline evidence ops, and broader distribution polish — not missing limbs of the chain.
 
-**Before claiming any new evidence-chain feature is done**, verify: (a) it writes through `applyRubricToEvidence` or `processCheckpointMasteryUpdate` if it produces growth, (b) it site-scopes queries, (c) it names strands/stages rather than pillars in new copy, (d) the relevant custom renderer (not the generic card UI) renders it, (e) the `skills-first-honesty-entrypoints` test still passes, and (f) revision/resubmission flow is considered if it is a learner-educator exchange.
+**Before claiming any new evidence-chain feature is done**, verify: (a) it writes through `applyRubricToEvidence` or `processCheckpointMasteryUpdate` if it produces growth, (b) proof verification remains authenticity-only, (c) any proof or mission review handoff preserves the canonical `portfolioItemId`, (d) it site-scopes queries, (e) it names strands/stages rather than pillars in new copy, (f) the relevant custom renderer (not the generic card UI) renders it, and (g) the `skills-first-honesty-entrypoints` test still passes.
 
 **Note**: this audit replaces an earlier, more pessimistic one. If you find stale "no write path" / "no rubric builder" / "no framework editor" claims anywhere in docs, treat them as historical — the current state above is authoritative.
