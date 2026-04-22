@@ -4379,10 +4379,6 @@ class _HqCurriculumPageState extends State<HqCurriculumPage>
         .replaceAll(RegExp(r'^_|_$'), '');
   }
 
-  String _pillarLabelFromCode(String raw) {
-    return curriculumLegacyFamilyStorageLabelFromAny(raw);
-  }
-
   String _pillarCodeFromLabel(String label) {
     return curriculumLegacyFamilyShortCode(
       normalizeCurriculumLegacyFamilyCode(label),

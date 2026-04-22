@@ -320,6 +320,10 @@ describe('EducatorEvidenceReviewRenderer capability growth write path', () => {
     expect(source).toContain('missionAttempts');
   });
 
+  it('passes the canonical portfolio item into mission rubric application when available', () => {
+    expect(source).toContain('portfolioItemId: attempt.portfolioItemId ?? undefined');
+  });
+
   it('uses Firestore batch for atomicity', () => {
     expect(source).toMatch(/batch|writeBatch|setDoc|addDoc/);
   });
@@ -337,8 +341,10 @@ describe('EducatorEvidenceReviewRenderer capability growth write path', () => {
     expect(source).toContain('cp.portfolioItemId');
     expect(source).toContain('checkpointDefinitionId');
     expect(source).toContain('checkpointLabel');
-    expect(source).toContain('Capability growth will update after proof-of-learning is verified in the proof review flow.');
-    expect(source).toContain('Linked proof is verified. Capability growth is recorded from the proof verification record.');
+    expect(source).toContain("where('status', 'in', ['submitted', 'pending_proof'])");
+    expect(source).toContain('Checkpoint correctness saved. Verify the linked proof-of-learning, then record capability growth from this review surface.');
+    expect(source).toContain('Linked proof is verified. Confirm this checkpoint again to record capability growth.');
+    expect(source).toContain('Record growth');
     expect(source).toContain('data-testid={`checkpoint-proof-gate-${cp.id}`}');
   });
 

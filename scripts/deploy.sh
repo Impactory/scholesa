@@ -249,10 +249,57 @@ resolve_project_id() {
 }
 
 # ── Deploy targets ─────────────────────────────────────────────
+
+# Extract exported function names from compiled index.js without loading the module
+get_function_names() {
+  node -e '
+    const fs = require("fs");
+    const src = fs.readFileSync(process.argv[1], "utf8");
+    const matches = src.match(/^exports\.(\w+)\s*=/gm) || [];
+    const names = [...new Set(matches.map(m => m.match(/exports\.(\w+)/)[1]))];
+    console.log(names.join(" "));
+  ' "$REPO_ROOT/functions/lib/index.js"
+}
+
 deploy_functions() {
   functions_build
-  log "Deploying Cloud Functions..."
-  (cd "$REPO_ROOT" && firebase_cmd deploy --only functions)
+
+  local func_names
+  func_names=$(get_function_names) || fail "Unable to read exported function names from functions/lib/index.js"
+
+  local batch_size=30
+  local batch=()
+  local batch_num=1
+  local total
+  total=$(echo "$func_names" | wc -w | tr -d ' ')
+  log "Deploying $total Cloud Functions in batches of $batch_size to stay within GCP quota..."
+
+  export SCHOLESA_PREDEPLOY_DONE=1
+
+  for fn in $func_names; do
+    batch+=("$fn")
+    if [[ ${#batch[@]} -eq $batch_size ]]; then
+      local only_str
+      only_str="functions:$(IFS=,; echo "${batch[*]}")"
+      log "Deploying batch $batch_num (${#batch[@]} functions)..."
+      (cd "$REPO_ROOT" && firebase_cmd deploy --only "$only_str") || fail "Batch $batch_num deploy failed"
+      batch=()
+      batch_num=$((batch_num + 1))
+      if [[ -n "$func_names" ]]; then
+        log "Batch complete. Waiting 90s before next batch to respect GCP quota..."
+        sleep 90
+      fi
+    fi
+  done
+
+  if [[ ${#batch[@]} -gt 0 ]]; then
+    local only_str
+    only_str="functions:$(IFS=,; echo "${batch[*]}")"
+    log "Deploying final batch $batch_num (${#batch[@]} functions)..."
+    (cd "$REPO_ROOT" && firebase_cmd deploy --only "$only_str") || fail "Final batch deploy failed"
+  fi
+
+  unset SCHOLESA_PREDEPLOY_DONE
   log "Functions deployed ✓"
 }
 

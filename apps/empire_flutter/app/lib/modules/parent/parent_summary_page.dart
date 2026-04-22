@@ -1283,8 +1283,6 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
         return const Color(0xFF8B5CF6);
       case CurriculumLegacyFamilyCode.impact_innovation:
         return const Color(0xFF10B981);
-      default:
-        return Colors.grey;
     }
   }
 

@@ -2808,10 +2808,6 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
     );
   }
 
-  String _normalizePillarLabel(String raw) {
-    return curriculumLegacyFamilyStorageLabelFromAny(raw);
-  }
-
   IconData _pillarIcon(String pillar) {
     return curriculumLegacyFamilyIcon(
       normalizeCurriculumLegacyFamilyCode(pillar),

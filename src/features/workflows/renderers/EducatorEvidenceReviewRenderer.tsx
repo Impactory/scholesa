@@ -57,6 +57,7 @@ interface MissionAttempt {
   id: string;
   learnerId: string;
   missionId: string;
+  portfolioItemId: string | null;
   status: string;
   content: string;
   attachmentUrls: string[];
@@ -245,6 +246,7 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
           id: d.id,
           learnerId: asString(data.learnerId, ''),
           missionId: asString(data.missionId, ''),
+          portfolioItemId: null,
           status: asString(data.status, 'submitted'),
           content: asString(data.content, ''),
           attachmentUrls: Array.isArray(data.attachmentUrls) ? data.attachmentUrls : [],
@@ -292,6 +294,7 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
               const polStatus = typeof piRaw.proofOfLearningStatus === 'string' ? piRaw.proofOfLearningStatus : null;
               const match = loaded.find((a) => a.id === mAttemptId);
               if (match && polStatus) {
+                match.portfolioItemId = piDoc.id;
                 match.proofOfLearningStatus = polStatus;
               }
             }
@@ -379,10 +382,10 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
         query(
           collection(firestore, 'checkpointHistory'),
           where('siteId', '==', educatorSiteId),
-          where('status', '==', 'submitted'),
-            orderBy('createdAt', 'desc')
-          )
-        );
+          where('status', 'in', ['submitted', 'pending_proof']),
+          orderBy('createdAt', 'desc')
+        )
+      );
         const checkpointRows = await Promise.all(
           snap.docs.map(async (d) => {
             const data = d.data();
@@ -524,19 +527,8 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
       setCheckpointSaving(cp.id);
       setCheckpointGrowthWarning(null);
       try {
-        // 1. Update checkpoint status
-        await updateDoc(doc(firestore, 'checkpointHistory', cp.id), {
-          isCorrect,
-          status: 'reviewed',
-          reviewedBy: ctx.uid,
-          reviewedAt: serverTimestamp(),
-        });
-
-        // 2. If correct, only legacy checkpoints without a linked portfolio item
-        // should use the checkpoint mastery callable. Proof-linked checkpoints
-        // update growth during proof verification.
+        let linkedProofStatus = cp.proofOfLearningStatus;
         if (isCorrect) {
-          let linkedProofStatus = cp.proofOfLearningStatus;
           if (cp.portfolioItemId) {
             try {
               const portfolioSnap = await getDoc(doc(portfolioItemsCollection, cp.portfolioItemId));
@@ -551,13 +543,25 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
               console.warn('Failed to refresh checkpoint proof status:', portfolioErr);
             }
           }
+        }
 
-          if (cp.portfolioItemId) {
-            if (linkedProofStatus !== 'verified') {
-              setCheckpointGrowthWarning(
-                'Checkpoint reviewed. Capability growth will update after proof-of-learning is verified in the proof review flow.'
-              );
-            }
+        const pendingProof = isCorrect && Boolean(cp.portfolioItemId) && linkedProofStatus !== 'verified';
+
+        // 1. Update checkpoint status
+        await updateDoc(doc(firestore, 'checkpointHistory', cp.id), {
+          isCorrect,
+          status: pendingProof ? 'pending_proof' : 'reviewed',
+          reviewedBy: ctx.uid,
+          reviewedAt: serverTimestamp(),
+        });
+
+        // 2. If correct, proof-linked checkpoints stay visible until proof is
+        // verified, then this same review action records capability growth.
+        if (isCorrect) {
+          if (pendingProof) {
+            setCheckpointGrowthWarning(
+              'Checkpoint correctness saved. Verify the linked proof-of-learning, then record capability growth from this review surface.'
+            );
           } else {
             const processCheckpoint = httpsCallable<unknown, { updated: boolean; reason?: string }>(
               functions,
@@ -581,9 +585,7 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
         }
 
         trackInteraction('feature_discovered', { feature: 'checkpoint_reviewed', checkpointId: cp.id, isCorrect });
-
-        // Remove from list
-        setCheckpoints((prev) => prev.filter((c) => c.id !== cp.id));
+        await loadCheckpoints();
       } catch (err) {
         console.error('Failed to review checkpoint:', err);
         setError('Failed to review checkpoint. Please try again.');
@@ -591,7 +593,7 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
         setCheckpointSaving(null);
       }
     },
-    [ctx.uid, trackInteraction]
+    [ctx.uid, loadCheckpoints, trackInteraction]
   );
 
   // ---- Loaded HQ rubric template for current attempt ----
@@ -761,6 +763,7 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
       await applyRubric({
         evidenceRecordIds: [],
         missionAttemptId: attempt.id,
+        portfolioItemId: attempt.portfolioItemId ?? undefined,
         learnerId: attempt.learnerId,
         siteId,
         rubricId: activeHqTemplate?.id ?? activeRubric?.id ?? undefined,
@@ -1731,18 +1734,28 @@ export default function EducatorEvidenceReviewRenderer({ ctx }: CustomRouteRende
                         data-testid={`checkpoint-proof-gate-${cp.id}`}
                       >
                         {cp.proofOfLearningStatus === 'verified'
-                          ? 'Linked proof is verified. Capability growth is recorded from the proof verification record.'
-                          : 'Marking this checkpoint correct reviews the submission, but capability growth stays blocked until proof-of-learning is verified.'}
+                          ? cp.status === 'pending_proof'
+                            ? 'Linked proof is verified. Confirm this checkpoint again to record capability growth.'
+                            : 'Linked proof is verified. Mark this checkpoint correct to record capability growth.'
+                          : cp.status === 'pending_proof'
+                            ? 'Checkpoint correctness is saved. Verify the linked proof-of-learning, then confirm again here to record capability growth.'
+                            : 'Marking this checkpoint correct saves the review, but capability growth stays blocked until proof-of-learning is verified.'}
                       </div>
                     )}
                     <div className="flex gap-2">
                       <button
                         type="button"
-                        disabled={cpSaving}
+                        disabled={cpSaving || (cp.status === 'pending_proof' && cp.proofOfLearningStatus !== 'verified')}
                         onClick={() => void handleCheckpointReview(cp, true)}
                         className="rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50"
                       >
-                        {cpSaving ? 'Saving...' : 'Correct'}
+                        {cpSaving
+                          ? 'Saving...'
+                          : cp.status === 'pending_proof' && cp.proofOfLearningStatus === 'verified'
+                            ? 'Record growth'
+                            : cp.status === 'pending_proof'
+                              ? 'Waiting for proof'
+                              : 'Correct'}
                       </button>
                       <button
                         type="button"

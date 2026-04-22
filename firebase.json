@@ -10,8 +10,8 @@
     "source": "functions",
     "runtime": "nodejs24",
     "predeploy": [
-      "cd functions && npm run build",
-      "cd functions && npm run verify:gen2"
+      "test \"${SCHOLESA_PREDEPLOY_DONE:-0}\" = \"1\" || (cd functions && npm run build)",
+      "test \"${SCHOLESA_PREDEPLOY_DONE:-0}\" = \"1\" || (cd functions && npm run verify:gen2)"
     ]
   },
   "emulators": {

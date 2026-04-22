@@ -161,6 +161,7 @@ describe('Rubric proof gate honesty', () => {
   it('requires verified proof before educator rubric review can update growth', () => {
     expect(reviewSource).toContain("attempt.proofOfLearningStatus !== 'verified'");
     expect(reviewSource).toContain('Verify proof-of-learning before applying a rubric that updates capability growth.');
+    expect(reviewSource).toContain('portfolioItemId: attempt.portfolioItemId ?? undefined');
     expect(reviewSource).not.toContain('rubric-proof-verified-');
   });
 
@@ -198,8 +199,10 @@ describe('Checkpoint proof chain honesty', () => {
 
   it('keeps educator checkpoint review truthful about proof before growth', () => {
     expect(educatorReviewSource).toContain('cp.portfolioItemId');
-    expect(educatorReviewSource).toContain('Checkpoint reviewed. Capability growth will update after proof-of-learning is verified in the proof review flow.');
-    expect(educatorReviewSource).toContain('Linked proof is verified. Capability growth is recorded from the proof verification record.');
+    expect(educatorReviewSource).toContain("where('status', 'in', ['submitted', 'pending_proof'])");
+    expect(educatorReviewSource).toContain('Checkpoint correctness saved. Verify the linked proof-of-learning, then record capability growth from this review surface.');
+    expect(educatorReviewSource).toContain('Linked proof is verified. Confirm this checkpoint again to record capability growth.');
+    expect(educatorReviewSource).toContain('Record growth');
   });
 });
 
