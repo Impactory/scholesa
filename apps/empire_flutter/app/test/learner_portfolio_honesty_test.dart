@@ -656,7 +656,9 @@ void main() {
 
     expect(find.text('Mission ready for review • Prototype evidence'),
         findsOneWidget);
-    expect(find.text('Future Skills'), findsWidgets);
+    // 'Future Skills' legacy storage label now renders through the canonical
+    // strand display as 'Think, Make & Navigate AI'.
+    expect(find.text('Think, Make & Navigate AI'), findsWidgets);
     expect(find.text('Evidence linked • Reviewed'), findsOneWidget);
     expect(find.text('Prototype evidence'), findsOneWidget);
     // Growth event detail ("Capability update: ... Level 4 ...") is now written

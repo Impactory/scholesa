@@ -96,8 +96,11 @@ void main() {
     expect(find.text('Credentials'), findsOneWidget);
     expect(find.text('Future Skills Sprint'), findsOneWidget);
     expect(find.text('Issued 3/18/2026'), findsOneWidget);
-    expect(find.text('Future Skills'), findsOneWidget);
-    expect(find.text('Leadership'), findsOneWidget);
+    // Legacy pillar codes now render through the canonical strand display:
+    // 'future_skills' -> 'Think, Make & Navigate AI'
+    // 'leadership'    -> 'Communicate & Lead'
+    expect(find.text('Think, Make & Navigate AI'), findsOneWidget);
+    expect(find.text('Communicate & Lead'), findsOneWidget);
     expect(find.text('Skills tagged: 2'), findsOneWidget);
   });
 

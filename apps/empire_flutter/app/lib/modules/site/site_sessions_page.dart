@@ -2220,33 +2220,30 @@ class _CreateSessionSheetState extends State<_CreateSessionSheet> {
                     style: TextStyle(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 8),
-                  Row(
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
                     children: CurriculumLegacyFamilyCode.values
-                        .expand<Widget>((CurriculumLegacyFamilyCode code) {
+                        .map<Widget>((CurriculumLegacyFamilyCode code) {
                       final String value = curriculumLegacyFamilyStorageLabel(code);
-                      final bool isLast =
-                          code == CurriculumLegacyFamilyCode.values.last;
-                      return <Widget>[
-                        _PillarOption(
-                          label: curriculumLegacyFamilyDisplayLabel(
-                            context,
-                            code,
-                          ),
-                          color: curriculumLegacyFamilyColor(code),
-                          isSelected: _selectedPillar == value,
-                          onTap: () {
-                            TelemetryService.instance.logEvent(
-                              event: 'cta.clicked',
-                              metadata: <String, dynamic>{
-                                'cta':
-                                    'site_sessions_create_select_legacy_family_${curriculumLegacyFamilyMissionCode(code)}',
-                              },
-                            );
-                            setState(() => _selectedPillar = value);
-                          },
+                      return _PillarOption(
+                        label: curriculumLegacyFamilyDisplayLabel(
+                          context,
+                          code,
                         ),
-                        if (!isLast) const SizedBox(width: 8),
-                      ];
+                        color: curriculumLegacyFamilyColor(code),
+                        isSelected: _selectedPillar == value,
+                        onTap: () {
+                          TelemetryService.instance.logEvent(
+                            event: 'cta.clicked',
+                            metadata: <String, dynamic>{
+                              'cta':
+                                  'site_sessions_create_select_legacy_family_${curriculumLegacyFamilyMissionCode(code)}',
+                            },
+                          );
+                          setState(() => _selectedPillar = value);
+                        },
+                      );
                     }).toList(growable: false),
                   ),
                   const SizedBox(height: 16),

@@ -205,9 +205,25 @@ void main() {
       );
 
       expect(find.text('家庭仪表板'), findsOneWidget);
-      expect(find.text('学习支柱'), findsOneWidget);
       expect(find.text('家庭学习概览'), findsOneWidget);
       expect(find.text('家庭证据视图'), findsOneWidget);
+
+      // The legacy-family section (formerly "Learning Pillars" / 学习支柱)
+      // now renders through the honesty alias as "旧版课程家族" and sits
+      // below several newer sections (MiloOS coach, BOS loop insights)
+      // in the CustomScrollView. Drag until it is visible.
+      final Finder pageScrollable = find
+          .descendant(
+            of: find.byType(ParentSummaryPage),
+            matching: find.byType(Scrollable),
+          )
+          .first;
+      await tester.scrollUntilVisible(
+        find.text('旧版课程家族'),
+        300,
+        scrollable: pageScrollable,
+      );
+      expect(find.text('旧版课程家族'), findsOneWidget);
     });
 
     testWidgets('parent summary localizes unavailable learner labels in zh-CN',
@@ -264,7 +280,12 @@ void main() {
 
       expect(find.text('孩子详情'), findsOneWidget);
       expect(find.text('查看同意记录'), findsOneWidget);
-      expect(find.text('学习支柱'), findsOneWidget);
+
+      // The legacy-family section (formerly "Learning Pillars" / 学习支柱)
+      // now renders through the honesty alias as "旧版课程家族". The ListView
+      // builds children up-front so the heading exists offstage even when
+      // it sits below the test viewport.
+      expect(find.text('旧版课程家族', skipOffstage: false), findsOneWidget);
     });
 
     testWidgets('parent consent renders zh-TW strings',

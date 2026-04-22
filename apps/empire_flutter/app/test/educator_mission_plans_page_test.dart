@@ -488,10 +488,12 @@ void main() {
     await tester.tap(find.byIcon(Icons.filter_list_rounded));
     await tester.pumpAndSettle();
     final Finder filterDialog = find.byType(AlertDialog);
+    // Legacy family 'Leadership & Agency' renders through the canonical
+    // strand display as 'Communicate & Lead'.
     await tester.tap(
       find.descendant(
         of: filterDialog,
-        matching: find.text('Leadership & Agency'),
+        matching: find.text('Communicate & Lead'),
       ),
     );
     await tester.pumpAndSettle();

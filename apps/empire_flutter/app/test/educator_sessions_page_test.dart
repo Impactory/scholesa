@@ -358,7 +358,9 @@ void main() {
     expect(find.text('Leadership Circle'), findsOneWidget);
     expect(find.text('Impact Expo'), findsNothing);
 
-    await tester.tap(_filterChipLabel('Leadership'));
+    // Legacy storage label 'Leadership' renders as the canonical strand
+    // display 'Communicate & Lead' via curriculum display localization.
+    await tester.tap(_filterChipLabel('Communicate & Lead'));
     await tester.pumpAndSettle();
 
     expect(find.text('Leadership Circle'), findsOneWidget);
