@@ -52,6 +52,25 @@ interface GrowthTimelineEntry {
   missionAttemptId: string | null;
 }
 
+interface ProcessDomainSnapshotEntry {
+  processDomainId: string;
+  title: string;
+  currentLevel: number | null;
+  highestLevel: number | null;
+  evidenceCount: number;
+  updatedAt: string | null;
+}
+
+interface ProcessDomainGrowthEntry {
+  processDomainId: string;
+  title: string;
+  fromLevel: number | null;
+  toLevel: number | null;
+  reviewingEducatorName: string | null;
+  evidenceCount: number;
+  createdAt: string | null;
+}
+
 interface PortfolioItemPreview {
   id: string;
   title: string;
@@ -108,6 +127,8 @@ interface LearnerPassportData {
     latestGrowthAt: string | null;
   };
   growthTimeline: GrowthTimelineEntry[];
+  processDomainSnapshot: ProcessDomainSnapshotEntry[];
+  processDomainGrowthTimeline: ProcessDomainGrowthEntry[];
   portfolioSnapshot: {
     artifactCount: number;
     publishedArtifactCount: number;
@@ -240,6 +261,34 @@ function buildPassportTextLines(learner: LearnerPassportData): string[] {
   lines.push(`  Portfolio-Linked:     ${learner.evidenceSummary.portfolioLinkedCount}`);
   lines.push(`  Pending prompts:      ${learner.evidenceSummary.verificationPromptCount}`);
   lines.push(`  Latest Evidence:      ${formatDate(learner.evidenceSummary.latestEvidenceAt)}`);
+  lines.push('');
+  lines.push('── Process Domain Progress ──');
+  if (learner.processDomainSnapshot.length === 0) {
+    lines.push('  No process domain progress has been recorded yet.');
+  }
+  for (const domain of learner.processDomainSnapshot) {
+    lines.push('');
+    lines.push(`  ${domain.title}`);
+    lines.push(`    Current level:   ${levelLabel(domain.currentLevel)}`);
+    lines.push(`    Highest level:   ${levelLabel(domain.highestLevel)}`);
+    lines.push(`    Evidence count:  ${domain.evidenceCount}`);
+    if (domain.updatedAt) {
+      lines.push(`    Updated:         ${formatDate(domain.updatedAt)}`);
+    }
+  }
+  lines.push('');
+  lines.push('── Recent Process Domain Growth ──');
+  if (learner.processDomainGrowthTimeline.length === 0) {
+    lines.push('  No process domain growth events have been recorded yet.');
+  }
+  for (const event of learner.processDomainGrowthTimeline.slice(0, 10)) {
+    lines.push(`  ${formatDate(event.createdAt)} · ${event.title}`);
+    lines.push(`    Level change:    ${levelLabel(event.fromLevel)} -> ${levelLabel(event.toLevel)}`);
+    lines.push(`    Evidence count:  ${event.evidenceCount}`);
+    if (event.reviewingEducatorName) {
+      lines.push(`    Reviewed by:     ${event.reviewingEducatorName}`);
+    }
+  }
   lines.push('');
   lines.push('── Portfolio Snapshot ──');
   lines.push(`  Total Artifacts:      ${learner.portfolioSnapshot.artifactCount}`);
@@ -435,6 +484,39 @@ function normalizeLearner(raw: Record<string, unknown>): LearnerPassportData | n
     }
   }
 
+  const processDomainSnapshot: ProcessDomainSnapshotEntry[] = [];
+  if (Array.isArray(raw.processDomainSnapshot)) {
+    for (const entry of raw.processDomainSnapshot) {
+      if (!entry || typeof entry !== 'object') continue;
+      const r = entry as Record<string, unknown>;
+      processDomainSnapshot.push({
+        processDomainId: str(r.processDomainId),
+        title: str(r.title, str(r.processDomainId, 'Process domain')),
+        currentLevel: fin(r.currentLevel),
+        highestLevel: fin(r.highestLevel),
+        evidenceCount: fin(r.evidenceCount) ?? 0,
+        updatedAt: str(r.updatedAt) || null,
+      });
+    }
+  }
+
+  const processDomainGrowthTimeline: ProcessDomainGrowthEntry[] = [];
+  if (Array.isArray(raw.processDomainGrowthTimeline)) {
+    for (const entry of raw.processDomainGrowthTimeline) {
+      if (!entry || typeof entry !== 'object') continue;
+      const r = entry as Record<string, unknown>;
+      processDomainGrowthTimeline.push({
+        processDomainId: str(r.processDomainId),
+        title: str(r.title, str(r.processDomainId, 'Process domain')),
+        fromLevel: fin(r.fromLevel),
+        toLevel: fin(r.toLevel),
+        reviewingEducatorName: str(r.reviewingEducatorName) || null,
+        evidenceCount: fin(r.evidenceCount) ?? 0,
+        createdAt: str(r.createdAt) || null,
+      });
+    }
+  }
+
   const portfolioItemsPreview: PortfolioItemPreview[] = [];
   if (Array.isArray(raw.portfolioItemsPreview)) {
     for (const p of raw.portfolioItemsPreview) {
@@ -504,6 +586,8 @@ function normalizeLearner(raw: Record<string, unknown>): LearnerPassportData | n
       latestGrowthAt: str(gs.latestGrowthAt) || null,
     },
     growthTimeline,
+    processDomainSnapshot,
+    processDomainGrowthTimeline,
     portfolioSnapshot: {
       artifactCount: fin(ps.artifactCount) ?? 0,
       publishedArtifactCount: fin(ps.publishedArtifactCount) ?? 0,
@@ -685,6 +769,31 @@ export function LearnerPassportExport({ siteId: initialSiteId }: { siteId?: stri
           <div style="font-size:12px;color:#6b7280;margin-top:6px">${entry.linkedEvidenceRecordIds.length} evidence · ${entry.linkedPortfolioItemIds.length} portfolio${entry.missionAttemptId ? ' · mission-linked' : ''}</div>
         </div>`).join('');
 
+    const processDomainSnapshotHtml = learner.processDomainSnapshot.length === 0
+      ? '<p style="color:#6b7280;font-size:14px">No process domain progress has been recorded yet.</p>'
+      : learner.processDomainSnapshot.map((domain) => `
+        <div style="border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-bottom:10px;background:#ffffff">
+          <div style="font-size:14px;font-weight:600;color:#111827">${escapeHtml(domain.title)}</div>
+          <div style="font-size:12px;color:#6b7280;margin-top:6px">Current level: ${escapeHtml(levelLabel(domain.currentLevel))} · Highest level: ${escapeHtml(levelLabel(domain.highestLevel))}</div>
+          <div style="font-size:12px;color:#6b7280;margin-top:4px">${domain.evidenceCount} evidence · Updated ${escapeHtml(formatDate(domain.updatedAt))}</div>
+        </div>`).join('');
+
+    const processDomainGrowthHtml = learner.processDomainGrowthTimeline.length === 0
+      ? '<p style="color:#6b7280;font-size:14px">No process domain growth events have been recorded yet.</p>'
+      : learner.processDomainGrowthTimeline.slice(0, 10).map((entry) => `
+        <div style="border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-bottom:10px;background:#ffffff">
+          <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start">
+            <div>
+              <div style="font-size:14px;font-weight:600;color:#111827">${escapeHtml(entry.title)}</div>
+              <div style="font-size:12px;color:#6b7280;margin-top:4px">${escapeHtml(formatDate(entry.createdAt))}${entry.reviewingEducatorName ? ` · ${escapeHtml(entry.reviewingEducatorName)}` : ''}</div>
+            </div>
+            <div style="font-size:12px;color:#374151;text-align:right">
+              <div>${escapeHtml(levelLabel(entry.fromLevel))} → ${escapeHtml(levelLabel(entry.toLevel))}</div>
+              <div>${entry.evidenceCount} evidence</div>
+            </div>
+          </div>
+        </div>`).join('');
+
     const reportBasisHtml = `<div style="border:1px solid #dbeafe;background:#eff6ff;border-radius:12px;padding:14px 16px;font-size:13px;color:#1e3a8a;line-height:1.6;margin-bottom:20px">
   <strong>Report basis</strong><br/>
   This export summarizes reviewed evidence, linked portfolio artifacts, and recorded growth events. Participation signals do not replace capability judgments.<br/>
@@ -750,6 +859,12 @@ ${reportBasisHtml}
   <tr><td style="color:#6b7280">Badges</td><td>${learner.portfolioSnapshot.badgeCount}</td></tr>
   <tr><td style="color:#6b7280">Projects</td><td>${learner.portfolioSnapshot.projectCount}</td></tr>
 </table>
+
+<h2>Process Domain Progress</h2>
+${processDomainSnapshotHtml}
+
+<h2>Recent Process Domain Growth</h2>
+${processDomainGrowthHtml}
 
 <h2>Ideation Activity</h2>
 <table>
@@ -1021,6 +1136,47 @@ function PassportDocument({ learner }: { learner: LearnerPassportData }) {
           <StatCard label="Latest Level" value={levelLabel(learner.growthSummary.latestLevel)} />
         </div>
       </section>
+
+      {(learner.processDomainSnapshot.length > 0 || learner.processDomainGrowthTimeline.length > 0) && (
+        <section className="mb-6">
+          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Process Domains</h3>
+          {learner.processDomainSnapshot.length > 0 ? (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {learner.processDomainSnapshot.map((domain) => (
+                <div key={domain.processDomainId} className="rounded-lg border border-gray-200 bg-white p-3">
+                  <div className="font-medium text-gray-900">{domain.title}</div>
+                  <div className="mt-1 text-xs text-gray-500">
+                    Current {levelLabel(domain.currentLevel)} · Highest {levelLabel(domain.highestLevel)}
+                  </div>
+                  <div className="mt-1 text-xs text-gray-500">
+                    {domain.evidenceCount} evidence · Updated {formatDate(domain.updatedAt)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500 italic">No process domain progress has been recorded yet.</p>
+          )}
+          {learner.processDomainGrowthTimeline.length > 0 && (
+            <div className="mt-4 space-y-1.5">
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500">Recent process domain growth</h4>
+              {learner.processDomainGrowthTimeline.slice(0, 10).map((entry, index) => (
+                <div key={`${entry.processDomainId}-${index}`} className="flex items-center gap-3 border-b border-gray-50 py-1 text-sm">
+                  <span className="w-20 shrink-0 text-xs text-gray-400">{formatDate(entry.createdAt)}</span>
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-800">{entry.title}</div>
+                    <div className="mt-0.5 text-[11px] text-gray-500">
+                      {levelLabel(entry.fromLevel)} to {levelLabel(entry.toLevel)}
+                      {entry.reviewingEducatorName ? ` · ${entry.reviewingEducatorName}` : ''}
+                      {entry.evidenceCount > 0 ? ` · ${entry.evidenceCount} evidence` : ''}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
 
       {/* ── Capability Claims ── */}
       <section className="mb-6">

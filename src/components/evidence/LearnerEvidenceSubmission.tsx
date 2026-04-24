@@ -391,6 +391,7 @@ export function LearnerEvidenceSubmission() {
         artifacts: reflectionArtifacts,
         capabilityIds: reflectionCapabilityIds,
         capabilityTitles: reflectionCapabilityIds.map((cid) => resolveTitle(cid)),
+        reflectionIds: [] as string[],
         aiAssistanceUsed: reflectionAiUsed,
         aiAssistanceDetails: reflectionAiUsed ? reflectionAiDetails.trim() : undefined,
         aiDisclosureStatus: reflectionAiUsed ? 'learner-ai-verified' : 'learner-ai-not-used',
@@ -401,7 +402,7 @@ export function LearnerEvidenceSubmission() {
       } as unknown as Omit<PortfolioItem, 'id'>);
 
       // Create reflection linked to the portfolio item
-      await addDoc(learnerReflectionsCollection, {
+      const reflectionDoc = await addDoc(learnerReflectionsCollection, {
         learnerId,
         siteId,
         content: reflectionContent.trim(),
@@ -412,6 +413,11 @@ export function LearnerEvidenceSubmission() {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       } as unknown as Omit<LearnerReflection, 'id'>);
+
+      await updateDoc(portfolioRef, {
+        reflectionIds: [reflectionDoc.id],
+        updatedAt: serverTimestamp(),
+      });
 
       setSuccessMessage('Reflection saved!');
       setReflectionContent('');

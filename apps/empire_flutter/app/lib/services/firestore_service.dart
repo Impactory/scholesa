@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
@@ -7,11 +8,17 @@ class FirestoreService {
   FirestoreService({
     FirebaseFirestore? firestore,
     FirebaseAuth? auth,
+    FirebaseFunctions? functions,
   })  : _firestore = firestore ?? FirebaseFirestore.instance,
-        _auth = auth ?? FirebaseAuth.instance;
+        _auth = auth ?? FirebaseAuth.instance,
+        _functionsOverride = functions;
 
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
+  final FirebaseFunctions? _functionsOverride;
+
+  FirebaseFunctions get _functions =>
+      _functionsOverride ?? FirebaseFunctions.instance;
 
   FirebaseAuth get auth => _auth;
 
@@ -567,9 +574,12 @@ class FirestoreService {
     required String response,
     int? engagementRating,
     int? confidenceRating,
+    bool? aiAssistanceUsed,
+    String? aiAssistanceDetails,
   }) async {
-    final DocumentReference<Map<String, dynamic>> docRef =
-        await _firestore.collection('learnerReflections').add(<String, dynamic>{
+    final HttpsCallable callable = _functions.httpsCallable('submitReflection');
+    final HttpsCallableResult<dynamic> result =
+        await callable.call(<String, dynamic>{
       'learnerId': learnerId,
       'siteId': siteId,
       'sessionId': sessionId,
@@ -578,9 +588,15 @@ class FirestoreService {
       'response': response,
       'engagementRating': engagementRating,
       'confidenceRating': confidenceRating,
-      'createdAt': FieldValue.serverTimestamp(),
+      if (aiAssistanceUsed != null) 'aiAssistanceUsed': aiAssistanceUsed,
+      if (aiAssistanceDetails != null && aiAssistanceDetails.trim().isNotEmpty)
+        'aiAssistanceDetails': aiAssistanceDetails.trim(),
     });
-    return docRef.id;
+    final dynamic data = result.data;
+    if (data is Map && data['reflectionId'] is String) {
+      return data['reflectionId'] as String;
+    }
+    throw StateError('submitReflection callable did not return a reflectionId');
   }
 
   /// Log a MiloOS interaction
@@ -672,13 +688,15 @@ class FirestoreService {
     final Map<String, dynamic> updates = <String, dynamic>{
       'updatedAt': FieldValue.serverTimestamp(),
     };
-    if (hasExplainItBack != null) updates['hasExplainItBack'] = hasExplainItBack;
+    if (hasExplainItBack != null)
+      updates['hasExplainItBack'] = hasExplainItBack;
     if (hasOralCheck != null) updates['hasOralCheck'] = hasOralCheck;
     if (hasMiniRebuild != null) updates['hasMiniRebuild'] = hasMiniRebuild;
     if (explainItBackExcerpt != null) {
       updates['explainItBackExcerpt'] = explainItBackExcerpt;
     }
-    if (oralCheckExcerpt != null) updates['oralCheckExcerpt'] = oralCheckExcerpt;
+    if (oralCheckExcerpt != null)
+      updates['oralCheckExcerpt'] = oralCheckExcerpt;
     if (miniRebuildExcerpt != null) {
       updates['miniRebuildExcerpt'] = miniRebuildExcerpt;
     }

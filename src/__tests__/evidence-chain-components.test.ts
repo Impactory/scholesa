@@ -401,6 +401,8 @@ describe('LearnerPassportExport learner contract', () => {
     expect(source).toContain('missionAttemptIds');
     expect(source).toContain('linkedEvidenceRecordIds');
     expect(source).toContain('linkedPortfolioItemIds');
+    expect(source).toContain('processDomainSnapshot');
+    expect(source).toContain('processDomainGrowthTimeline');
     expect(source).toContain('proofCheckpointCount');
     expect(source).toContain('reviewedAt');
     expect(source).toContain('verificationPrompt');
@@ -417,12 +419,18 @@ describe('LearnerPassportExport learner contract', () => {
     expect(source).toContain("await import('jspdf')");
     expect(source).toContain('navigator.share');
     expect(source).toContain('navigator.clipboard?.writeText');
+    expect(source).toContain('const processDomainSnapshotHtml =');
+    expect(source).toContain('const processDomainGrowthHtml =');
     expect(source).toContain('<h2>Portfolio Artifacts</h2>');
+    expect(source).toContain('<h2>Process Domain Progress</h2>');
+    expect(source).toContain('<h2>Recent Process Domain Growth</h2>');
     expect(source).toContain('<h2>Growth Timeline</h2>');
     expect(source).toContain('Pending verification prompts:');
     expect(source).toContain('compatibility roll-up of the current curriculum strands');
     expect(source).toContain('Featured AI disclosure:');
     expect(source).toContain('── Portfolio Artifacts ──');
+    expect(source).toContain('── Process Domain Progress ──');
+    expect(source).toContain('── Recent Process Domain Growth ──');
     expect(source).toContain('── Growth Timeline ──');
     expect(source).toContain('── Report Basis ──');
     expect(source).toContain('Share Family Summary');
@@ -458,6 +466,8 @@ describe('GuardianCapabilityViewRenderer site provenance', () => {
   it('retains bundle provenance on growth timeline, portfolio highlights, and passport claims', () => {
     expect(source).toContain('linkedEvidenceRecordIds');
     expect(source).toContain('linkedPortfolioItemIds');
+    expect(source).toContain('processDomainSnapshot');
+    expect(source).toContain('processDomainGrowthTimeline');
     expect(source).toContain('proofCheckpointCount');
     expect(source).toContain('verifiedArtifactCount');
     expect(source).toContain('progressionDescriptor');
@@ -474,7 +484,6 @@ describe('GuardianCapabilityViewRenderer site provenance', () => {
     expect(source).toContain('Share family summary');
     expect(source).toContain('Export PDF');
   });
-<<<<<<< HEAD
 
   it('also exposes the same family-safe share and export actions on the parent summary route', () => {
     expect(source).toContain("const isSummaryRoute = ctx.routePath === '/parent/summary'");
@@ -482,8 +491,15 @@ describe('GuardianCapabilityViewRenderer site provenance', () => {
     expect(source).toContain('Export or share a family-safe summary of reviewed evidence, linked artifacts, and recorded growth');
     expect(source).toContain('Featured AI disclosure:');
   });
-=======
->>>>>>> 8cc7583b1e5a87bbbc6756bf8dd7ac4ca6b3499c
+
+  it('surfaces titled process-domain progress in the family passport and on-screen view', () => {
+    expect(source).toContain('normalizeProcessDomainSnapshot');
+    expect(source).toContain('normalizeProcessDomainGrowthTimeline');
+    expect(source).toContain('── Process Domains ──');
+    expect(source).toContain('── Recent Process Domain Growth ──');
+    expect(source).toContain('Process domains');
+    expect(source).toContain('Recent process domain growth');
+  });
 });
 
 /* ───── LearnerEvidenceSubmission ───── */
@@ -572,6 +588,19 @@ describe('LearnerEvidenceSubmission component', () => {
     expect(artifactHandler).toContain('aiAssistanceDetails: aiUsed ? aiDetails.trim() : undefined');
     expect(reflectionHandler).toContain('aiAssistanceDetails: reflectionAiUsed ? reflectionAiDetails.trim() : undefined');
     expect(checkpointHandler).toContain('aiAssistanceDetails: checkpointAiUsed ? checkpointAiDetails.trim() : undefined');
+  });
+
+  it('back-links reflection submissions onto the canonical portfolio item', () => {
+    const reflectionHandler = source.slice(
+      source.indexOf('const handleSubmitReflection'),
+      source.indexOf('const handleSubmitCheckpoint')
+    );
+
+    expect(reflectionHandler).toContain('reflectionIds: [] as string[]');
+    expect(reflectionHandler).toContain('const reflectionDoc = await addDoc(learnerReflectionsCollection');
+    expect(reflectionHandler).toContain('portfolioItemId: portfolioRef.id');
+    expect(reflectionHandler).toContain('await updateDoc(portfolioRef, {');
+    expect(reflectionHandler).toContain('reflectionIds: [reflectionDoc.id]');
   });
 
   it('links to capabilities', () => {

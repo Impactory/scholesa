@@ -41,6 +41,25 @@ interface GrowthEvent {
   rubricScore: { raw: number; max: number } | null;
 }
 
+interface ProcessDomainSnapshotEntry {
+  processDomainId: string;
+  title: string;
+  currentLevel: string;
+  highestLevel: string;
+  evidenceCount: number;
+  updatedAt: string | null;
+}
+
+interface ProcessDomainGrowthEvent {
+  id: string;
+  processDomainTitle: string;
+  fromLevel: string;
+  toLevel: string;
+  educatorName: string;
+  date: string | null;
+  evidenceCount: number;
+}
+
 interface PortfolioItem {
   id: string;
   title: string;
@@ -110,6 +129,8 @@ interface LearnerSummary {
   attendanceRate: number | null;
   pillars: PillarProgress[];
   growthTimeline: GrowthEvent[];
+  processDomainSnapshot: ProcessDomainSnapshotEntry[];
+  processDomainGrowthTimeline: ProcessDomainGrowthEvent[];
   portfolioHighlights: PortfolioItem[];
   ideationPassport: IdeationPassportSummary | null;
   evidenceSummary?: {
@@ -408,6 +429,45 @@ function normalizeIdeationPassport(summary: Record<string, unknown>): IdeationPa
   };
 }
 
+function normalizeProcessDomainSnapshot(summary: Record<string, unknown>): ProcessDomainSnapshotEntry[] {
+  const snapshot = Array.isArray(summary.processDomainSnapshot) ? summary.processDomainSnapshot : [];
+  return snapshot
+    .map((entry, index) => {
+      const row = asRecord(entry);
+      if (!row) return null;
+      return {
+        processDomainId: asString(row.processDomainId, `process-domain-${index + 1}`),
+        title: asString(row.title, asString(row.processDomainId, 'Process domain')),
+        currentLevel: formatLevel(row.currentLevel),
+        highestLevel: formatLevel(row.highestLevel),
+        evidenceCount: asNumber(row.evidenceCount) ?? 0,
+        updatedAt: asString(row.updatedAt) || null,
+      };
+    })
+    .filter((entry): entry is ProcessDomainSnapshotEntry => entry !== null);
+}
+
+function normalizeProcessDomainGrowthTimeline(summary: Record<string, unknown>): ProcessDomainGrowthEvent[] {
+  const growthTimeline = Array.isArray(summary.processDomainGrowthTimeline)
+    ? summary.processDomainGrowthTimeline
+    : [];
+  return growthTimeline
+    .map((entry, index) => {
+      const row = asRecord(entry);
+      if (!row) return null;
+      return {
+        id: `${asString(row.processDomainId, `process-domain-${index + 1}`)}:${asString(row.createdAt, String(index))}`,
+        processDomainTitle: asString(row.title, asString(row.processDomainId, 'Process domain')),
+        fromLevel: formatLevel(row.fromLevel),
+        toLevel: formatLevel(row.toLevel),
+        educatorName: asString(row.reviewingEducatorName, 'Educator review pending'),
+        date: asString(row.createdAt) || null,
+        evidenceCount: asNumber(row.evidenceCount) ?? 0,
+      };
+    })
+    .filter((entry): entry is ProcessDomainGrowthEvent => entry !== null);
+}
+
 function normalizeLearnerSummary(summary: Record<string, unknown>): LearnerSummary {
   const capabilitySnapshot = asRecord(summary.capabilitySnapshot) ?? {};
   const growthSummary = asRecord(summary.growthSummary);
@@ -421,134 +481,13 @@ function normalizeLearnerSummary(summary: Record<string, unknown>): LearnerSumma
     attendanceRate: asNumber(summary.attendanceRate),
     pillars: normalizePillarProgress(summary),
     growthTimeline: normalizeGrowthTimeline(summary),
+    processDomainSnapshot: normalizeProcessDomainSnapshot(summary),
+    processDomainGrowthTimeline: normalizeProcessDomainGrowthTimeline(summary),
     portfolioHighlights: normalizePortfolioHighlights(summary),
     ideationPassport: normalizeIdeationPassport(summary),
     evidenceSummary: evidenceSummary
       ? {
           recordCount: asNumber(evidenceSummary.recordCount) ?? 0,
-
-    function buildGuardianPassportTextLines(learner: LearnerSummary): string[] {
-      const pendingPrompts = learner.portfolioHighlights.filter(
-        (item) => typeof item.verificationPrompt === 'string' && item.verificationPrompt.trim().length > 0,
-      );
-      const lines: string[] = [];
-      lines.push('═══════════════════════════════════════════');
-      lines.push('  SCHOLESA FAMILY PASSPORT SUMMARY');
-      lines.push('═══════════════════════════════════════════');
-      lines.push('');
-      lines.push(`Learner: ${learner.name}`);
-      lines.push(`Prepared: ${formatDate(new Date().toISOString())}`);
-      lines.push(`Capability Band: ${LEVEL_BAND_CONFIG[learner.currentLevelBand]?.label ?? 'Not yet assessed'}`);
-      lines.push('');
-      lines.push('── Report Basis ──');
-      lines.push('  This summary reflects reviewed evidence, linked portfolio artifacts, and recorded growth events.');
-      lines.push('  Participation signals do not replace capability judgments.');
-      lines.push(`  Pending verification prompts: ${pendingPrompts.length}`);
-      lines.push('');
-      lines.push('── Capability Snapshot ──');
-      if (learner.pillars.length === 0) {
-        lines.push('  No capability snapshot is available yet.');
-      }
-      for (const pillar of learner.pillars) {
-        lines.push(`  ${pillar.label}: ${pillar.percent}% (${pillar.bandLabel})`);
-      }
-      lines.push('');
-      lines.push('── Evidence Summary ──');
-      if (learner.evidenceSummary) {
-        lines.push(`  Evidence records:      ${learner.evidenceSummary.recordCount}`);
-        lines.push(`  Reviewed:              ${learner.evidenceSummary.reviewedCount}`);
-        lines.push(`  Portfolio-linked:      ${learner.evidenceSummary.portfolioLinkedCount}`);
-      } else {
-        lines.push('  Evidence summary unavailable.');
-      }
-      lines.push('');
-      lines.push('── Capability Claims ──');
-      if (!learner.ideationPassport?.claims || learner.ideationPassport.claims.length === 0) {
-        lines.push('  No capability claims backed by reviewed evidence yet.');
-      } else {
-        for (const claim of learner.ideationPassport.claims) {
-          lines.push('');
-          lines.push(`  ${claim.capabilityTitle}`);
-          lines.push(`    Level:           ${claim.level}`);
-          lines.push(`    Evidence:        ${claim.evidenceCount} evidence, ${claim.verifiedArtifactCount} verified artifacts`);
-          lines.push(`    Provenance:      ${claim.portfolioItemCount} portfolio item(s), ${claim.missionAttemptCount} mission attempt(s)`);
-          lines.push(`    Proof-of-Learn:  ${PROOF_STATUS_CONFIG[claim.proofStatus]?.label ?? 'Missing'}`);
-          lines.push(`    AI Disclosure:   ${AI_DISCLOSURE_CONFIG[claim.aiDisclosureStatus]?.label ?? 'Not assessed'}`);
-          if (claim.reviewerName) {
-            lines.push(`    Reviewed by:     ${claim.reviewerName}${claim.reviewedAt ? ` (${formatDate(claim.reviewedAt)})` : ''}`);
-          }
-          if (claim.rubricScore) {
-            lines.push(`    Rubric Score:    ${claim.rubricScore.raw}/${claim.rubricScore.max}`);
-          }
-          if (claim.progressionDescriptor) {
-            lines.push(`    Descriptor:      ${claim.progressionDescriptor}`);
-          }
-        }
-      }
-      lines.push('');
-      lines.push('── Portfolio Highlights ──');
-      if (learner.portfolioHighlights.length === 0) {
-        lines.push('  No portfolio highlights are available yet.');
-      } else {
-        for (const item of learner.portfolioHighlights.slice(0, 5)) {
-          lines.push('');
-          lines.push(`  ${item.title}`);
-          lines.push(`    Status:          ${VERIFICATION_CONFIG[item.verificationStatus]?.label ?? 'Unverified'}`);
-          lines.push(`    AI Disclosure:   ${AI_DISCLOSURE_CONFIG[item.aiDisclosure]?.label ?? 'Not assessed'}`);
-          lines.push(`    Proof methods:   ${[
-            item.proofDetails.explainItBack ? 'ExplainItBack' : null,
-            item.proofDetails.oralCheck ? 'OralCheck' : null,
-            item.proofDetails.miniRebuild ? 'MiniRebuild' : null,
-          ].filter(Boolean).join(' · ') || '—'}`);
-          if (item.verificationPrompt) {
-            lines.push(`    Verify next:     ${item.verificationPrompt}`);
-          }
-        }
-      }
-      lines.push('');
-      lines.push('── Recent Growth ──');
-      if (learner.growthTimeline.length === 0) {
-        lines.push('  No growth events have been recorded yet.');
-      } else {
-        for (const event of learner.growthTimeline.slice(0, 5)) {
-          lines.push(`  ${formatDate(event.date)} · ${event.capabilityTitle}`);
-          lines.push(`    Level:           ${event.levelAchieved}`);
-          lines.push(`    Proof status:    ${PROOF_STATUS_CONFIG[event.proofStatus]?.label ?? 'Missing'}`);
-          lines.push(`    Provenance:      ${event.linkedEvidenceCount} evidence, ${event.linkedPortfolioCount} portfolio${event.missionAttemptId ? ', mission-linked' : ''}`);
-        }
-      }
-      lines.push('');
-      lines.push('═══════════════════════════════════════════');
-      lines.push(`  ${learner.ideationPassport?.summaryText ?? 'No family passport summary available yet.'}`);
-      lines.push('═══════════════════════════════════════════');
-      return lines;
-    }
-
-    function buildGuardianFamilyShareSummary(learner: LearnerSummary): string {
-      const pendingPrompts = learner.portfolioHighlights
-        .filter((item) => typeof item.verificationPrompt === 'string' && item.verificationPrompt.trim().length > 0)
-        .slice(0, 2);
-      const topClaims = learner.ideationPassport?.claims?.slice(0, 3) ?? [];
-
-      return [
-        `Scholesa family summary for ${learner.name}`,
-        `Prepared ${formatDate(new Date().toISOString())}`,
-        'This summary reflects reviewed evidence, linked artifacts, and recorded growth events.',
-        `Capability band: ${LEVEL_BAND_CONFIG[learner.currentLevelBand]?.label ?? 'Not yet assessed'}`,
-        `Reviewed evidence: ${learner.evidenceSummary?.reviewedCount ?? 0}`,
-        `Pending verification prompts: ${pendingPrompts.length}`,
-        '',
-        'Current evidence-backed claims:',
-        ...(topClaims.length > 0
-          ? topClaims.map((claim) => `- ${claim.capabilityTitle}: ${claim.level} with ${claim.evidenceCount} evidence record(s)`)
-          : ['- No capability claims backed by reviewed evidence yet.']),
-        '',
-        'Next verification prompts:',
-        ...(pendingPrompts.length > 0
-          ? pendingPrompts.map((item) => `- ${item.title}: ${item.verificationPrompt}`)
-          : ['- No pending verification prompts in this summary.']),
-      ].join('\n');
-    }
           reviewedCount: asNumber(evidenceSummary.reviewedCount) ?? 0,
           portfolioLinkedCount: asNumber(evidenceSummary.portfolioLinkedCount) ?? 0,
         }
@@ -556,7 +495,6 @@ function normalizeLearnerSummary(summary: Record<string, unknown>): LearnerSumma
     growthSummary: growthSummary
       ? {
           capabilityCount: asNumber(growthSummary.capabilityCount) ?? 0,
-      const [shareFeedback, setShareFeedback] = useState<{ learnerId: string; message: string } | null>(null);
           updatedCount: asNumber(growthSummary.updatedCapabilityCount) ?? 0,
           averageLevel: asNumber(growthSummary.averageLevel) ?? 0,
         }
@@ -609,6 +547,21 @@ function buildGuardianPassportTextLines(learner: LearnerSummary): string[] {
     lines.push('  Evidence summary unavailable.');
   }
   lines.push('');
+  lines.push('── Process Domains ──');
+  if (learner.processDomainSnapshot.length === 0) {
+    lines.push('  No process domain progress has been recorded yet.');
+  } else {
+    for (const domain of learner.processDomainSnapshot) {
+      lines.push(`  ${domain.title}`);
+      lines.push(`    Current level:   ${domain.currentLevel}`);
+      lines.push(`    Highest level:   ${domain.highestLevel}`);
+      lines.push(`    Evidence:        ${domain.evidenceCount}`);
+      if (domain.updatedAt) {
+        lines.push(`    Updated:         ${formatDate(domain.updatedAt)}`);
+      }
+    }
+  }
+  lines.push('');
   lines.push('── Capability Claims ──');
   if (!learner.ideationPassport?.claims || learner.ideationPassport.claims.length === 0) {
     lines.push('  No capability claims backed by reviewed evidence yet.');
@@ -650,6 +603,18 @@ function buildGuardianPassportTextLines(learner: LearnerSummary): string[] {
       if (item.verificationPrompt) {
         lines.push(`    Verify next:     ${item.verificationPrompt}`);
       }
+    }
+  }
+  lines.push('');
+  lines.push('── Recent Process Domain Growth ──');
+  if (learner.processDomainGrowthTimeline.length === 0) {
+    lines.push('  No process domain growth events have been recorded yet.');
+  } else {
+    for (const event of learner.processDomainGrowthTimeline.slice(0, 5)) {
+      lines.push(`  ${formatDate(event.date ?? new Date().toISOString())} · ${event.processDomainTitle}`);
+      lines.push(`    Level change:    ${event.fromLevel} -> ${event.toLevel}`);
+      lines.push(`    Reviewed by:     ${event.educatorName}`);
+      lines.push(`    Evidence:        ${event.evidenceCount}`);
     }
   }
   lines.push('');
@@ -772,13 +737,9 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
     },
   };
   const focus = ROUTE_FOCUS[ctx.routePath ?? ''] ?? null;
-<<<<<<< HEAD
   const isSummaryRoute = ctx.routePath === '/parent/summary';
   const isPassportRoute = ctx.routePath === '/parent/passport';
   const showGuardianShareActions = isPassportRoute || isSummaryRoute;
-=======
-  const isPassportRoute = ctx.routePath === '/parent/passport';
->>>>>>> 8cc7583b1e5a87bbbc6756bf8dd7ac4ca6b3499c
   const focusRef = useRef<HTMLDivElement | null>(null);
 
   const fetchData = useCallback(async () => {
@@ -1098,6 +1059,58 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
             )}
 
             {/* ---- Portfolio Highlights ---- */}
+            {(learner.processDomainSnapshot.length > 0 || learner.processDomainGrowthTimeline.length > 0) && (
+              <div className="rounded-lg border border-app bg-app-surface-raised p-4">
+                <h3 className="mb-3 text-sm font-semibold text-app-foreground">
+                  Process domains
+                </h3>
+                {learner.processDomainSnapshot.length > 0 ? (
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {learner.processDomainSnapshot.map((domain) => (
+                      <div
+                        key={domain.processDomainId}
+                        className="rounded-md border border-app bg-app-canvas p-3"
+                      >
+                        <p className="text-sm font-medium text-app-foreground">{domain.title}</p>
+                        <p className="mt-1 text-xs text-app-muted">
+                          Current {domain.currentLevel} · Highest {domain.highestLevel}
+                        </p>
+                        <p className="mt-1 text-xs text-app-muted">
+                          {domain.evidenceCount} evidence{domain.evidenceCount === 1 ? '' : ' records'}
+                          {domain.updatedAt ? ` · Updated ${formatDate(domain.updatedAt)}` : ''}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-app-muted">No process domain progress has been recorded yet.</p>
+                )}
+                {learner.processDomainGrowthTimeline.length > 0 && (
+                  <div className="mt-4">
+                    <h4 className="mb-2 text-xs font-semibold text-app-foreground">Recent process domain growth</h4>
+                    <ul className="space-y-2">
+                      {learner.processDomainGrowthTimeline.slice(0, 5).map((event) => (
+                        <li
+                          key={event.id}
+                          className="rounded-md border border-app bg-app-canvas p-3"
+                        >
+                          <p className="text-sm font-medium text-app-foreground">{event.processDomainTitle}</p>
+                          <p className="mt-1 text-xs text-app-muted">
+                            {event.fromLevel} to {event.toLevel}
+                          </p>
+                          <p className="mt-1 text-xs text-app-muted">
+                            Reviewed by {event.educatorName}
+                            {event.date ? ` · ${formatDate(event.date)}` : ''}
+                            {event.evidenceCount > 0 ? ` · ${event.evidenceCount} evidence` : ''}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+
             {learner.portfolioHighlights.length > 0 && (
               <div
                 id="guardian-portfolio-highlights"
@@ -1240,11 +1253,7 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
                     <h3 className="text-sm font-semibold text-app-foreground">
                       Ideation Passport
                     </h3>
-<<<<<<< HEAD
                     {showGuardianShareActions && (
-=======
-                    {isPassportRoute && (
->>>>>>> 8cc7583b1e5a87bbbc6756bf8dd7ac4ca6b3499c
                       <p className="mt-1 max-w-2xl text-xs text-app-muted">
                         Export or share a family-safe summary of reviewed evidence, linked artifacts, and recorded growth for {learner.name}.
                       </p>
@@ -1255,11 +1264,7 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
                       </p>
                     )}
                   </div>
-<<<<<<< HEAD
                   {showGuardianShareActions && (
-=======
-                  {isPassportRoute && (
->>>>>>> 8cc7583b1e5a87bbbc6756bf8dd7ac4ca6b3499c
                     <div className="flex flex-wrap gap-2">
                       <button
                         type="button"

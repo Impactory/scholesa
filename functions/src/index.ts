@@ -2539,7 +2539,7 @@ async function buildParentLearnerSummary(params: {
     attendanceRate = null;
   }
 
-  const [portfolioSnap, evidenceSnap, masterySnap, growthSnap, reflectionsSnap, missionAttemptsSnap, interactionEventsSnap, capabilitiesSnap, pdMasterySnap, pdGrowthSnap] =
+  const [portfolioSnap, evidenceSnap, masterySnap, growthSnap, reflectionsSnap, missionAttemptsSnap, interactionEventsSnap, capabilitiesSnap, processDomainsSnap, pdMasterySnap, pdGrowthSnap] =
     await Promise.all([
       admin.firestore().collection('portfolioItems').where('learnerId', '==', learnerId).limit(100).get().catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
       admin.firestore().collection('evidenceRecords').where('learnerId', '==', learnerId).limit(100).get().catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
@@ -2550,6 +2550,9 @@ async function buildParentLearnerSummary(params: {
       admin.firestore().collection('interactionEvents').where('actorId', '==', learnerId).limit(400).get().catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
       siteId
         ? admin.firestore().collection('capabilities').where('siteId', '==', siteId).get().catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] }))
+        : Promise.resolve({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] }),
+      siteId
+        ? admin.firestore().collection('processDomains').where('siteId', '==', siteId).get().catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] }))
         : Promise.resolve({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] }),
       admin.firestore().collection('processDomainMastery').where('learnerId', '==', learnerId).limit(100).get().catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
       admin.firestore().collection('processDomainGrowthEvents').where('learnerId', '==', learnerId).limit(100).get().catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
@@ -2589,6 +2592,13 @@ async function buildParentLearnerSummary(params: {
     const data = doc.data();
     const title = typeof data.title === 'string' ? data.title.trim() : '';
     if (title) capabilityTitlesById.set(doc.id, title);
+  }
+
+  const processDomainTitlesById = new Map<string, string>();
+  for (const doc of processDomainsSnap.docs) {
+    const data = doc.data();
+    const title = typeof data.title === 'string' ? data.title.trim() : '';
+    if (title) processDomainTitlesById.set(doc.id, title);
   }
 
   const reviewerIds = Array.from(
@@ -3112,19 +3122,25 @@ async function buildParentLearnerSummary(params: {
         const eventType = typeof entry.eventType === 'string' ? entry.eventType.trim().toLowerCase() : '';
         return eventType === 'explain_it_back_submitted';
       });
+      const directAiDisclosureStatus = firstTrimmedString(
+        ...matchingPortfolio.map((entry) => entry.aiDisclosureStatus),
+        ...matchingEvidence.map((entry) => entry.aiDisclosureStatus),
+      );
       const aiDisclosureStatus = hasLearnerAiDisclosure
         ? learnerAiDeclaredUsed
           ? hasExplainItBack
             ? 'learner-ai-verified'
             : 'learner-ai-verification-gap'
           : 'learner-ai-not-used'
+        : directAiDisclosureStatus
+        ? directAiDisclosureStatus
         : learnerAiEventCount > 0
         ? hasLearnerExplainBackEvent
           ? 'learner-ai-verified'
           : 'learner-ai-verification-gap'
         : hasAiFeedbackSignal
         ? 'educator-feedback-ai'
-        : matchingMissionAttempts.length > 0
+        : matchingMissionAttempts.length > 0 || matchingPortfolio.length > 0 || matchingEvidence.length > 0
         ? 'no-learner-ai-signal'
         : 'not-available';
       const matchingGrowthByRecency = [...matchingGrowth].sort((left, right) => {
@@ -3400,10 +3416,12 @@ async function buildParentLearnerSummary(params: {
     processDomainSnapshot: pdMasterySnap.docs
       .map((d) => {
         const data = d.data() as Record<string, unknown>;
+        const processDomainId = typeof data.processDomainId === 'string' ? data.processDomainId : d.id;
         return {
-          processDomainId: typeof data.processDomainId === 'string' ? data.processDomainId : d.id,
-          currentLevel: data.currentLevel ?? data.latestLevel ?? null,
-          highestLevel: data.highestLevel ?? data.latestLevel ?? null,
+          processDomainId,
+          title: processDomainTitlesById.get(processDomainId) ?? processDomainId,
+          currentLevel: firstNumber(data.latestLevel, data.currentLevel),
+          highestLevel: firstNumber(data.highestLevel, data.latestLevel, data.currentLevel),
           evidenceCount: typeof data.evidenceCount === 'number' ? data.evidenceCount : 0,
           updatedAt: parseDateFromUnknown(data.updatedAt)?.toISOString() ?? null,
         };
@@ -3412,11 +3430,21 @@ async function buildParentLearnerSummary(params: {
     processDomainGrowthTimeline: pdGrowthSnap.docs
       .map((d) => {
         const data = d.data() as Record<string, unknown>;
+        const processDomainId = typeof data.processDomainId === 'string' ? data.processDomainId : '';
+        const educatorId = typeof data.educatorId === 'string' ? data.educatorId : '';
+        const evidenceIds = Array.isArray(data.linkedEvidenceRecordIds)
+          ? data.linkedEvidenceRecordIds.filter((entry): entry is string => typeof entry === 'string' && entry.trim().length > 0)
+          : Array.isArray(data.evidenceIds)
+          ? data.evidenceIds.filter((entry): entry is string => typeof entry === 'string' && entry.trim().length > 0)
+          : [];
         return {
-          processDomainId: typeof data.processDomainId === 'string' ? data.processDomainId : '',
+          processDomainId,
+          title: processDomainTitlesById.get(processDomainId) ?? processDomainId,
           fromLevel: data.fromLevel ?? null,
           toLevel: data.toLevel ?? data.level ?? null,
-          educatorId: typeof data.educatorId === 'string' ? data.educatorId : '',
+          educatorId,
+          reviewingEducatorName: educatorId ? reviewerNames[educatorId] ?? null : null,
+          evidenceCount: evidenceIds.length,
           createdAt: parseDateFromUnknown(data.createdAt)?.toISOString() ?? null,
         };
       })
@@ -7246,12 +7274,17 @@ export const submitEducatorFeedback = onCall(async (request: CallableRequest<{
 export const submitReflection = onCall(async (request: CallableRequest<{
   learnerId: string;
   siteId: string;
-  proudOf: string;
-  nextIWill: string;
+  proudOf?: string;
+  nextIWill?: string;
+  prompt?: string;
+  response?: string;
   sprintSessionId?: string;
+  sessionId?: string;
   missionId?: string;
   effortLevel?: 1 | 2 | 3 | 4 | 5;
   enjoymentLevel?: 1 | 2 | 3 | 4 | 5;
+  engagementRating?: 1 | 2 | 3 | 4 | 5;
+  confidenceRating?: 1 | 2 | 3 | 4 | 5;
   effectiveStrategy?: string;
   aiAssistanceUsed?: boolean;
   aiAssistanceDetails?: string;
@@ -7263,84 +7296,166 @@ export const submitReflection = onCall(async (request: CallableRequest<{
     siteId,
     proudOf,
     nextIWill,
+    prompt,
+    response,
     sprintSessionId,
+    sessionId,
     missionId,
     effortLevel,
     enjoymentLevel,
+    engagementRating,
+    confidenceRating,
     effectiveStrategy,
     aiAssistanceUsed,
     aiAssistanceDetails,
   } = request.data;
 
-  if (!learnerId || !siteId || !proudOf || !nextIWill) {
-    throw new HttpsError('invalid-argument', 'Missing required fields: learnerId, siteId, proudOf, nextIWill');
+  const normalizedPrompt = typeof prompt === 'string' && prompt.trim().length > 0
+    ? prompt.trim()
+    : typeof proudOf === 'string'
+      ? proudOf.trim()
+      : '';
+  const normalizedResponse = typeof response === 'string' && response.trim().length > 0
+    ? response.trim()
+    : typeof nextIWill === 'string'
+      ? nextIWill.trim()
+      : '';
+  const normalizedSessionId = typeof sessionId === 'string' && sessionId.trim().length > 0
+    ? sessionId.trim()
+    : typeof sprintSessionId === 'string'
+      ? sprintSessionId.trim()
+      : '';
+  const hasPromptResponseShape = typeof prompt === 'string' || typeof response === 'string';
+
+  if (!learnerId || !siteId || !normalizedPrompt || !normalizedResponse) {
+    throw new HttpsError('invalid-argument', 'Missing required fields: learnerId, siteId, and a reflection prompt/response pair');
   }
 
   if (uid !== learnerId) {
     throw new HttpsError('permission-denied', 'Learners can only submit their own reflections');
   }
 
+  const db = admin.firestore();
+  const reflectionRef = db.collection('learnerReflections').doc();
+  const portfolioRef = db.collection('portfolioItems').doc();
+  const evidenceRef = db.collection('evidenceRecords').doc();
+  const interactionRef = db.collection('interactionEvents').doc();
+  const reflectionType = normalizedSessionId ? 'session_reflection' : missionId ? 'mission_reflection' : 'free_reflection';
+  const reflectionContent = [
+    hasPromptResponseShape ? `Prompt: ${normalizedPrompt}` : `Proud of: ${normalizedPrompt}`,
+    hasPromptResponseShape ? `Reflection: ${normalizedResponse}` : `Next I will: ${normalizedResponse}`,
+    effectiveStrategy ? `Strategy that helped: ${effectiveStrategy.trim()}` : null,
+  ].filter((value): value is string => Boolean(value && value.trim().length > 0)).join('\n');
+  const reflectionTitle = `Reflection: ${normalizedPrompt.slice(0, 60)}${normalizedPrompt.length > 60 ? '…' : ''}`;
+  const aiDisclosureStatus = aiAssistanceUsed === true
+    ? 'learner-ai-verified'
+    : aiAssistanceUsed === false
+      ? 'learner-ai-not-used'
+      : 'not-available';
+
   const reflectionDoc: Record<string, unknown> = {
     learnerId,
     siteId,
-    proudOf,
-    nextIWill,
-    sprintSessionId: sprintSessionId || null,
+    content: reflectionContent,
+    proudOf: normalizedPrompt,
+    nextIWill: normalizedResponse,
+    prompt: normalizedPrompt,
+    response: normalizedResponse,
+    sprintSessionId: normalizedSessionId || null,
+    sessionId: normalizedSessionId || null,
     missionId: missionId || null,
-    reflectionType: sprintSessionId ? 'session_reflection' : missionId ? 'mission_reflection' : 'free_reflection',
+    reflectionType,
+    portfolioItemId: portfolioRef.id,
     createdAt: FieldValue.serverTimestamp(),
   };
 
   if (effortLevel) reflectionDoc.effortLevel = effortLevel;
   if (enjoymentLevel) reflectionDoc.enjoymentLevel = enjoymentLevel;
+  if (engagementRating) reflectionDoc.engagementRating = engagementRating;
+  if (confidenceRating) reflectionDoc.confidenceRating = confidenceRating;
   if (effectiveStrategy) reflectionDoc.effectiveStrategy = effectiveStrategy;
-  reflectionDoc.aiAssistanceUsed = aiAssistanceUsed ?? false;
+  if (typeof aiAssistanceUsed === 'boolean') {
+    reflectionDoc.aiAssistanceUsed = aiAssistanceUsed;
+  }
   if (aiAssistanceDetails) reflectionDoc.aiAssistanceDetails = aiAssistanceDetails;
 
-  const reflectionRef = await admin.firestore().collection('learnerReflections').add(reflectionDoc);
+  const portfolioDoc: Record<string, unknown> = {
+    learnerId,
+    siteId,
+    title: reflectionTitle,
+    description: reflectionContent,
+    pillarCodes: [],
+    artifacts: [],
+    reflectionIds: [reflectionRef.id],
+    aiDisclosureStatus,
+    verificationStatus: 'pending',
+    proofOfLearningStatus: 'not-available',
+    source: 'reflection',
+    createdAt: FieldValue.serverTimestamp(),
+  };
+  if (typeof aiAssistanceUsed === 'boolean') {
+    portfolioDoc.aiAssistanceUsed = aiAssistanceUsed;
+  }
+  if (aiAssistanceDetails) {
+    portfolioDoc.aiAssistanceDetails = aiAssistanceDetails;
+  }
 
-  // Create evidence record so reflections appear in educator review queue
-  await admin.firestore().collection('evidenceRecords').add({
+  const evidenceRecordDoc: Record<string, unknown> = {
     learnerId,
     siteId,
     educatorId: null,
-    description: `Reflection: ${proudOf.slice(0, 200)}`,
+    description: `Reflection: ${normalizedPrompt.slice(0, 200)}`,
     sourceType: 'reflection',
     sourceId: reflectionRef.id,
-    aiAssistanceNoted: aiAssistanceUsed ?? false,
+    linkedPortfolioItemId: portfolioRef.id,
+    linkedPortfolioItemIds: [portfolioRef.id],
+    portfolioStatus: 'linked',
+    portfolioCandidate: true,
+    aiDisclosureStatus,
+    aiAssistanceNoted: aiAssistanceUsed === true,
     rubricStatus: 'pending',
     growthStatus: 'pending',
+    reflectionNote: reflectionContent,
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
-  });
+  };
 
-  // Log interaction event for BOS scoring
-  await admin.firestore().collection('interactionEvents').add({
+  const interactionEventDoc: Record<string, unknown> = {
     eventType: 'reflection.submitted',
     siteId,
     actorId: learnerId,
     actorRole: 'learner',
-    sessionOccurrenceId: sprintSessionId || null,
+    sessionOccurrenceId: normalizedSessionId || null,
     payload: {
       reflectionId: reflectionRef.id,
+      portfolioItemId: portfolioRef.id,
       missionId: missionId || null,
-      hasEffort: !!effortLevel,
-      hasEnjoyment: !!enjoymentLevel,
+      hasEffort: !!effortLevel || !!confidenceRating,
+      hasEnjoyment: !!enjoymentLevel || !!engagementRating,
       hasStrategy: !!effectiveStrategy,
+      aiDisclosureStatus,
     },
     createdAt: FieldValue.serverTimestamp(),
-  });
+  };
 
+  const batch = db.batch();
+  batch.set(portfolioRef, portfolioDoc);
+  batch.set(reflectionRef, reflectionDoc);
+  batch.set(evidenceRef, evidenceRecordDoc);
+  batch.set(interactionRef, interactionEventDoc);
+  await batch.commit();
+
+  // Log interaction event for BOS scoring
   // Log telemetry
   await persistTelemetryEvent({
     event: 'learner.reflection.submitted',
     userId: uid,
     role: 'learner',
     siteId,
-    metadata: { reflectionId: reflectionRef.id, missionId: missionId || null },
+    metadata: { reflectionId: reflectionRef.id, portfolioItemId: portfolioRef.id, missionId: missionId || null },
   });
 
-  return { reflectionId: reflectionRef.id };
+  return { reflectionId: reflectionRef.id, portfolioItemId: portfolioRef.id };
 });
 
 /**

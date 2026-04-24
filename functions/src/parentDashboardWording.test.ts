@@ -68,5 +68,15 @@ describe('parent dashboard wording honesty', () => {
     expect(growthBlock).toContain('reviewingEducatorName: reviewerId ? reviewerNames[reviewerId] ?? null : null');
     expect(growthBlock).toContain('rubricRawScore:');
     expect(growthBlock).toContain('missionAttemptId:');
+
+    const summaryTailBlock = indexSource.slice(
+      indexSource.indexOf('processDomainSnapshot: pdMasterySnap.docs'),
+      indexSource.indexOf('};\n}\n\nasync function loadParentUpcomingEvents')
+    );
+
+    expect(summaryTailBlock).toContain('processDomainSnapshot: pdMasterySnap.docs');
+    expect(summaryTailBlock).toContain('processDomainGrowthTimeline: pdGrowthSnap.docs');
+    expect(summaryTailBlock).toContain('title: processDomainTitlesById.get(processDomainId) ?? processDomainId');
+    expect(summaryTailBlock).toContain('reviewingEducatorName: educatorId ? reviewerNames[educatorId] ?? null : null');
   });
 });

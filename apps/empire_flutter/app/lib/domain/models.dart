@@ -1232,8 +1232,8 @@ class PortfolioItemModel {
       ),
       growthEventIds: List<String>.from(
           data['growthEventIds'] as List? ?? const <String>[]),
-      reflectionIds: List<String>.from(
-          data['reflectionIds'] as List? ?? const <String>[]),
+      reflectionIds:
+          List<String>.from(data['reflectionIds'] as List? ?? const <String>[]),
       missionAttemptId: data['missionAttemptId'] as String?,
       rubricApplicationId: data['rubricApplicationId'] as String?,
       proofBundleId: data['proofBundleId'] as String?,
@@ -1384,12 +1384,12 @@ class PortfolioItemModel {
       aiDisclosureStatus: aiDisclosureStatus ?? this.aiDisclosureStatus,
       educatorId: educatorId ?? this.educatorId,
       verificationPrompt: verificationPrompt ?? this.verificationPrompt,
-        verificationPromptSource:
+      verificationPromptSource:
           verificationPromptSource ?? this.verificationPromptSource,
       verificationStatus: verificationStatus ?? this.verificationStatus,
-        progressionDescriptors:
+      progressionDescriptors:
           progressionDescriptors ?? this.progressionDescriptors,
-        checkpointMappings: checkpointMappings ?? this.checkpointMappings,
+      checkpointMappings: checkpointMappings ?? this.checkpointMappings,
       source: source ?? this.source,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -6804,8 +6804,7 @@ class CheckpointModel {
   final String? aiAssistanceDetails;
   final Timestamp? createdAt;
 
-  factory CheckpointModel.fromDoc(
-      DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory CheckpointModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? <String, dynamic>{};
     return CheckpointModel(
       id: doc.id,
@@ -6818,16 +6817,15 @@ class CheckpointModel {
       question: data['question'] as String? ?? '',
       learnerResponse: data['learnerResponse'] as String? ?? '',
       isCorrect: data['isCorrect'] as bool? ?? false,
-      explainItBackRequired:
-          data['explainItBackRequired'] as bool? ?? false,
+      explainItBackRequired: data['explainItBackRequired'] as bool? ?? false,
       explainItBackResponse: data['explainItBackResponse'] as String?,
       educatorId: data['educatorId'] as String?,
       score: data['score'] as int?,
       order: data['order'] as int?,
       guidance: data['guidance'] as String?,
-      requiredEvidenceTypes: (data['requiredEvidenceTypes'] as List<dynamic>?)
-              ?.cast<String>() ??
-          const <String>[],
+      requiredEvidenceTypes:
+          (data['requiredEvidenceTypes'] as List<dynamic>?)?.cast<String>() ??
+              const <String>[],
       aiAssistanceUsed: data['aiAssistanceUsed'] as bool?,
       aiAssistanceDetails: data['aiAssistanceDetails'] as String?,
       createdAt: data['createdAt'] as Timestamp?,
@@ -6900,13 +6898,19 @@ class ReflectionEntryModel {
       id: doc.id,
       learnerId: data['learnerId'] as String? ?? '',
       siteId: data['siteId'] as String? ?? '',
-      sessionId: data['sessionId'] as String?,
+      sessionId:
+          data['sessionId'] as String? ?? data['sprintSessionId'] as String?,
       missionId: data['missionId'] as String?,
       portfolioItemId: data['portfolioItemId'] as String?,
-      prompt: data['prompt'] as String? ?? '',
-      response: data['response'] as String? ?? '',
-      engagementRating: data['engagementRating'] as int?,
-      confidenceRating: data['confidenceRating'] as int?,
+      prompt: data['prompt'] as String? ?? data['proudOf'] as String? ?? '',
+      response: data['response'] as String? ??
+          data['nextIWill'] as String? ??
+          data['content'] as String? ??
+          '',
+      engagementRating:
+          data['engagementRating'] as int? ?? data['enjoymentLevel'] as int?,
+      confidenceRating:
+          data['confidenceRating'] as int? ?? data['effortLevel'] as int?,
       educatorNotes: data['educatorNotes'] as String?,
       aiAssistanceUsed: data['aiAssistanceUsed'] as bool?,
       aiAssistanceDetails: data['aiAssistanceDetails'] as String?,
@@ -6954,6 +6958,7 @@ class SkillEvidenceModel {
   final String learnerId;
   final String skillId;
   final String capabilityId;
+
   /// One of: artifact, observation, checkpoint, reflection
   final String evidenceType;
   final String evidenceRefId;
@@ -7020,6 +7025,7 @@ class AICoachInteractionModel {
   final String id;
   final String learnerId;
   final String? sessionId;
+
   /// One of: hint, verify, debug, explain
   final String mode;
   final String question;
@@ -7041,12 +7047,11 @@ class AICoachInteractionModel {
       mode: data['mode'] as String? ?? 'hint',
       question: data['question'] as String? ?? '',
       response: data['response'] as String? ?? '',
-      explainItBackRequired:
-          data['explainItBackRequired'] as bool? ?? false,
+      explainItBackRequired: data['explainItBackRequired'] as bool? ?? false,
       explainItBackPassed: data['explainItBackPassed'] as bool?,
       versionHistoryCheck: data['versionHistoryCheck'] as bool?,
-      toolsUsed: List<String>.from(
-          data['toolsUsed'] as List? ?? const <String>[]),
+      toolsUsed:
+          List<String>.from(data['toolsUsed'] as List? ?? const <String>[]),
       durationMs: data['durationMs'] as int?,
       createdAt: data['createdAt'] as Timestamp?,
     );
@@ -7153,13 +7158,13 @@ class MicroSkillModel {
   final String pillarCode;
   final String name;
   final String description;
+
   /// Map of level name (e.g. "emerging") to descriptor text
   final Map<String, String> rubricLevels;
   final Timestamp? createdAt;
   final Timestamp? updatedAt;
 
-  factory MicroSkillModel.fromDoc(
-      DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory MicroSkillModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? <String, dynamic>{};
     return MicroSkillModel(
       id: doc.id,
@@ -7201,6 +7206,7 @@ class MissionVariantModel {
 
   final String id;
   final String missionId;
+
   /// One of: easy, standard, challenge
   final String difficultyLevel;
   final String description;
@@ -7256,8 +7262,10 @@ class ShowcaseSubmissionModel {
   final String portfolioItemId;
   final String title;
   final String description;
+
   /// One of: public, school, class
   final String visibility;
+
   /// One of: pending, approved, rejected
   final String approvalStatus;
   final String? approvedBy;
@@ -7319,13 +7327,13 @@ class WeeklyGoalModel {
   final Timestamp? weekStartDate;
   final String goalText;
   final String? targetCapabilityId;
+
   /// One of: active, completed, abandoned
   final String status;
   final String? reflectionOnCompletion;
   final Timestamp? createdAt;
 
-  factory WeeklyGoalModel.fromDoc(
-      DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory WeeklyGoalModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? <String, dynamic>{};
     return WeeklyGoalModel(
       id: doc.id,
@@ -7384,6 +7392,7 @@ class ProofOfLearningBundleModel {
   final String? explainItBackExcerpt;
   final String? oralCheckExcerpt;
   final String? miniRebuildExcerpt;
+
   /// One of: missing, partial, verified
   final String verificationStatus;
   final String? educatorVerifierId;
@@ -7405,8 +7414,7 @@ class ProofOfLearningBundleModel {
       explainItBackExcerpt: data['explainItBackExcerpt'] as String?,
       oralCheckExcerpt: data['oralCheckExcerpt'] as String?,
       miniRebuildExcerpt: data['miniRebuildExcerpt'] as String?,
-      verificationStatus:
-          data['verificationStatus'] as String? ?? 'missing',
+      verificationStatus: data['verificationStatus'] as String? ?? 'missing',
       educatorVerifierId: data['educatorVerifierId'] as String?,
       version: data['version'] as int? ?? 1,
       createdAt: data['createdAt'] as Timestamp?,
@@ -7453,28 +7461,27 @@ class StageModel {
   final List<int> gradeRange;
   final String description;
   final List<String> focusAreas;
+
   /// One of: A, B, C, D
   final String aiPolicyTier;
+
   /// One of: simple, guided, autonomous, professional
   final String uxComplexity;
   final int defaultSessionDuration;
   final Timestamp? createdAt;
 
-  factory StageModel.fromDoc(
-      DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory StageModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? <String, dynamic>{};
     return StageModel(
       id: doc.id,
       name: data['name'] as String? ?? '',
-      gradeRange:
-          List<int>.from(data['gradeRange'] as List? ?? const <int>[]),
+      gradeRange: List<int>.from(data['gradeRange'] as List? ?? const <int>[]),
       description: data['description'] as String? ?? '',
       focusAreas:
           List<String>.from(data['focusAreas'] as List? ?? const <String>[]),
       aiPolicyTier: data['aiPolicyTier'] as String? ?? 'A',
       uxComplexity: data['uxComplexity'] as String? ?? 'simple',
-      defaultSessionDuration:
-          data['defaultSessionDuration'] as int? ?? 60,
+      defaultSessionDuration: data['defaultSessionDuration'] as int? ?? 60,
       createdAt: data['createdAt'] as Timestamp?,
     );
   }
@@ -7529,7 +7536,8 @@ class BadgeModel {
       description: data['description'] as String? ?? '',
       iconUrl: data['iconUrl'] as String?,
       requiredMicroSkillIds:
-          (data['requiredMicroSkillIds'] as List<dynamic>?)?.cast<String>() ?? [],
+          (data['requiredMicroSkillIds'] as List<dynamic>?)?.cast<String>() ??
+              [],
       requiredEvidenceCount: data['requiredEvidenceCount'] as int? ?? 0,
       requiredCapabilityId: data['requiredCapabilityId'] as String?,
       requiredMasteryLevel: data['requiredMasteryLevel'] as String?,
@@ -7580,7 +7588,8 @@ class BadgeAwardModel {
       badgeId: data['badgeId'] as String? ?? '',
       learnerId: data['learnerId'] as String? ?? '',
       siteId: data['siteId'] as String? ?? '',
-      evidenceIds: (data['evidenceIds'] as List<dynamic>?)?.cast<String>() ?? [],
+      evidenceIds:
+          (data['evidenceIds'] as List<dynamic>?)?.cast<String>() ?? [],
       awardedAt: data['awardedAt'] as Timestamp?,
       awardedBy: data['awardedBy'] as String?,
     );
@@ -7621,12 +7630,15 @@ class AutonomyInterventionModel {
   final String? sessionId;
   final List<Map<String, dynamic>> riskSignals;
   final double totalRiskScore;
+
   /// One of: nudge, scaffold, handoff, revisit, pace
   final String interventionType;
+
   /// One of: low, medium, high
   final String salience;
   final List<String> reasonCodes;
   final bool mvlGateTriggered;
+
   /// One of: resolved, escalated, dismissed
   final String? outcome;
   final Timestamp? resolvedAt;

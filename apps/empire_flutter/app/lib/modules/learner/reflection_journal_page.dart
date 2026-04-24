@@ -24,8 +24,10 @@ class _ReflectionJournalPageState extends State<ReflectionJournalPage> {
 
   final TextEditingController _promptController = TextEditingController();
   final TextEditingController _responseController = TextEditingController();
+  final TextEditingController _aiDetailsController = TextEditingController();
   double _engagementRating = 3.0;
   double _confidenceRating = 3.0;
+  bool _aiUsed = false;
 
   static const List<String> _reflectionPrompts = <String>[
     'What did I learn today that surprised me?',
@@ -47,11 +49,11 @@ class _ReflectionJournalPageState extends State<ReflectionJournalPage> {
   void dispose() {
     _promptController.dispose();
     _responseController.dispose();
+    _aiDetailsController.dispose();
     super.dispose();
   }
 
-  String _learnerId(AppState appState) =>
-      appState.userId?.trim() ?? '';
+  String _learnerId(AppState appState) => appState.userId?.trim() ?? '';
 
   String _siteId(AppState appState) {
     final String active = appState.activeSiteId?.trim() ?? '';
@@ -144,12 +146,16 @@ class _ReflectionJournalPageState extends State<ReflectionJournalPage> {
         response: response,
         engagementRating: _engagementRating.round(),
         confidenceRating: _confidenceRating.round(),
+        aiAssistanceUsed: _aiUsed,
+        aiAssistanceDetails: _aiUsed ? _aiDetailsController.text.trim() : null,
       );
       _promptController.clear();
       _responseController.clear();
+      _aiDetailsController.clear();
       setState(() {
         _engagementRating = 3.0;
         _confidenceRating = 3.0;
+        _aiUsed = false;
         _showNewForm = false;
       });
       _showSnackBar(_t('Reflection saved!'));
@@ -166,8 +172,7 @@ class _ReflectionJournalPageState extends State<ReflectionJournalPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor:
-            isError ? Theme.of(context).colorScheme.error : null,
+        backgroundColor: isError ? Theme.of(context).colorScheme.error : null,
       ),
     );
   }
@@ -224,12 +229,12 @@ class _ReflectionJournalPageState extends State<ReflectionJournalPage> {
                             ),
                           ),
                         ),
-                      ..._reflections.map((ReflectionEntryModel reflection) =>
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 12.0),
-                            child:
-                                _buildReflectionCard(reflection, theme, colors),
-                          )),
+                      ..._reflections
+                          .map((ReflectionEntryModel reflection) => Padding(
+                                padding: const EdgeInsets.only(bottom: 12.0),
+                                child: _buildReflectionCard(
+                                    reflection, theme, colors),
+                              )),
                     ],
                   ),
                 ),
@@ -305,6 +310,25 @@ class _ReflectionJournalPageState extends State<ReflectionJournalPage> {
               ),
             ),
             const SizedBox(height: 16.0),
+
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              value: _aiUsed,
+              onChanged: (bool? value) =>
+                  setState(() => _aiUsed = value ?? false),
+              title: Text(_t('I used AI tools to help with this reflection')),
+            ),
+            if (_aiUsed) ...<Widget>[
+              const SizedBox(height: 8.0),
+              TextField(
+                controller: _aiDetailsController,
+                decoration: InputDecoration(
+                  hintText: _t('Which AI tools did you use? (optional)'),
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 16.0),
+            ],
 
             // Engagement rating
             Text('${_t('Engagement')}: ${_engagementRating.round()}/5',
@@ -416,6 +440,26 @@ class _ReflectionJournalPageState extends State<ReflectionJournalPage> {
                 style: theme.textTheme.bodyMedium,
               ),
             ),
+            if (reflection.aiAssistanceUsed != null ||
+                (reflection.aiAssistanceDetails?.trim().isNotEmpty ??
+                    false)) ...<Widget>[
+              const SizedBox(height: 8.0),
+              Text(
+                reflection.aiAssistanceUsed == true
+                    ? _t('AI support was disclosed for this reflection.')
+                    : _t(
+                        'Learner declared no AI support was used for this reflection.'),
+                style: theme.textTheme.bodySmall,
+              ),
+              if (reflection.aiAssistanceDetails?.trim().isNotEmpty ?? false)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4.0),
+                  child: Text(
+                    '${_t('AI details')}: ${reflection.aiAssistanceDetails!.trim()}',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                ),
+            ],
           ],
         ),
       ),

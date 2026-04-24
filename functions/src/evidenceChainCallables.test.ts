@@ -114,6 +114,13 @@ describe('Evidence chain callable exports', () => {
     expect(source).toContain('export const verifyProofOfLearning');
   });
 
+  it('submitReflection is exported in index.ts', async () => {
+    const fs = await import('fs');
+    const path = await import('path');
+    const source = fs.readFileSync(path.join(__dirname, 'index.ts'), 'utf-8');
+    expect(source).toContain('export const submitReflection');
+  });
+
   it('getParentDashboardBundle is exported in index.ts', async () => {
     const fs = await import('fs');
     const path = await import('path');
@@ -236,6 +243,28 @@ describe('Collection naming consistency', () => {
     expect(verifyFn).toContain('linkedEvidenceRecordIds');
   });
 
+  it('submitReflection creates canonical portfolio linkage and preserves AI disclosure state', async () => {
+    const fs = await import('fs');
+    const path = await import('path');
+    const source = fs.readFileSync(
+      path.join(__dirname, 'index.ts'),
+      'utf-8'
+    );
+
+    const reflectionStart = source.indexOf('export const submitReflection');
+    const reflectionEnd = source.indexOf('export const', reflectionStart + 1);
+    const reflectionFn = source.slice(reflectionStart, reflectionEnd);
+
+    expect(reflectionFn).toContain("db.collection('portfolioItems').doc()");
+    expect(reflectionFn).toContain('content: reflectionContent');
+    expect(reflectionFn).toContain('portfolioItemId: portfolioRef.id');
+    expect(reflectionFn).toContain('reflectionIds: [reflectionRef.id]');
+    expect(reflectionFn).toContain("source: 'reflection'");
+    expect(reflectionFn).toContain('aiDisclosureStatus');
+    expect(reflectionFn).toContain('linkedPortfolioItemId: portfolioRef.id');
+    expect(reflectionFn).toContain('portfolioStatus: \'linked\'');
+  });
+
   it('processCheckpointMasteryUpdate writes latestLevel alongside currentLevel', async () => {
     const fs = await import('fs');
     const path = await import('path');
@@ -331,6 +360,9 @@ describe('buildParentLearnerSummary integration', () => {
     const summaryEnd = source.indexOf('\nexport ', summaryStart + 1);
     const summarySection = source.slice(summaryStart, summaryEnd > summaryStart ? summaryEnd : summaryStart + 50000);
     expect(summarySection).toContain('latestLevel');
+    expect(summarySection).toContain('processDomainSnapshot');
+    expect(summarySection).toContain('processDomainGrowthTimeline');
+    expect(summarySection).toContain('processDomainTitlesById');
   });
 
   it('getParentDashboardBundle callable is exported', async () => {

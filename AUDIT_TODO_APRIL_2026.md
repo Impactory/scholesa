@@ -321,7 +321,7 @@ Remaining gold blockers now sit mainly in communication/read-side parity rather 
 3. **RubricReviewPanel** — Template-driven 4-level scoring with progression descriptors. Scores both capabilities and process domains. Calls atomic backend callable.
 4. **ProofOfLearningVerification** — 3-point verification (explain-it-back, oral check, mini rebuild) with excerpt capture. Verifies authenticity, updates proof state, and hands educators into rubric application on the same canonical portfolio item.
 5. **Growth Engine** — Append-only `CapabilityGrowthEvent` trail. Atomic mastery/growth writes remain rubric/checkpoint-owned; proof verification no longer writes growth directly.
-6. **LearnerPassportExport** — Evidence-backed claims per capability with rubric scores, PoL status, AI disclosure, educator attribution. Text + print export.
+6. **LearnerPassportExport** — Evidence-backed claims plus process-domain progress with rubric scores, PoL status, AI disclosure, educator attribution. Text, HTML, PDF, print, and family-safe share export.
 
 ### Architecture
 7. **Firestore Security** — Site-scoped, role-checked, ownership-enforced. 135 collection rules. Default-deny on unlisted.
@@ -347,12 +347,12 @@ Remaining gold blockers now sit mainly in communication/read-side parity rather 
 
 ### Phase 2: Assessment Depth (Medium Effort)
 5. ~~**P1-C**: Embed `RubricReviewPanel` in `/educator/missions/review`~~ ✅
-6. **P1-A**: Create learner capability profile synthesis view
-7. Process domain progress display in passport + portfolio views
+6. ~~**P1-A**: Create learner capability profile synthesis view~~ ✅
+7. ~~Process domain progress display in passport + portfolio views~~ ✅
 
 ### Phase 3: Operational Hardening
 8. **P1-F**: Add typed collection references for top-priority untyped collections
-9. E2E emulator test: full evidence chain (capability → session → evidence → rubric → PoL → mastery → passport)
+9. ~~E2E emulator test: full evidence chain (capability → session → evidence → rubric → PoL → mastery → passport)~~ ✅
 10. Mobile viewport QA for educator evidence capture + learner submission
 
 ### Phase 4: Platform Expansion
@@ -509,11 +509,12 @@ Remaining gold blockers now sit mainly in communication/read-side parity rather 
 - Callable aggregates: `capabilityMastery`, `capabilityGrowthEvents`, `portfolioItems`, `evidenceRecords`, `missionAttempts`, `learnerReflections` (+ more)
 - Per-capability claims: `evidenceCount`, `verifiedArtifactCount`, `proofOfLearningStatus`, `rubricRawScore`/`rubricMaxScore`, `progressionDescriptors`, `aiDisclosureStatus`, `reviewingEducatorName`, `reviewedAt`
 - Parent-facing `GuardianCapabilityViewRenderer` / `GuardianPassportRenderer` now retain linked evidence counts, linked portfolio counts, mission linkage, rubric scores, proof-method signals, and review attribution instead of collapsing that provenance during normalization.
+- Learner and guardian passport/report surfaces now also render titled process-domain snapshot + recent process-domain growth from the callable summaries instead of dropping that read-side evidence slice.
 - Capability band calculation: normalized per-pillar score → strong/developing/emerging band
 - Growth timeline rendered: up to 15 events with capability title, level, date, educator name, rubric score, and evidence/portfolio linkage counts
 - Export: learner and parent web passport surfaces now provide text export, dedicated PDF export, browser print, and a family-safe share summary; learner web also keeps portable HTML export for browser viewing/archive, and Flutter parent child detail now exposes passport actions for text export plus family-summary sharing
 - Honest empty state: "No capability claims backed by evidence yet"
-- ⚠️ Remaining gaps: web passport routes and the Flutter parent child passport surface now have concrete export/share actions, but there is still no unified publish/share workflow across every reporting surface, and disclosure/provenance are still not perfectly uniform across every artifact path.
+- ⚠️ Remaining gaps: web learner/guardian passport routes now include process-domain read-side coverage and concrete export/share actions, but there is still no unified publish/share workflow across every reporting surface, Flutter learner/guardian read-side parity is still incomplete for this slice, and disclosure/provenance are still not perfectly uniform across every artifact path.
 
 **Blocker**: Cross-role report/publish workflow polish and uniform provenance parity across every remaining artifact path.
 
@@ -647,6 +648,7 @@ Remaining gold blockers now sit mainly in communication/read-side parity rather 
 | Next.js build | ✅ BUILD_EXIT=0, 69 routes | `npx next build --webpack` |
 | Functions build | ✅ Compiled | `cd functions && npm run build` |
 | Functions tests | ✅ 33 suites, 127/127 pass | `cd functions && npx jest --runInBand --forceExit` |
+| Evidence-chain emulator integration | ✅ session-backed evidence → proof → rubric → mastery → learner passport + guardian bundle | `npm run test:integration:evidence-chain` |
 | Flutter tests | ✅ 317+ pass, 0 fail | `cd apps/empire_flutter/app && flutter test` |
 
 ---
