@@ -165,6 +165,32 @@ beforeEach(async () => {
       status: 'draft',
     });
 
+    await setDoc(doc(db, 'capabilityMastery', 'mastery-1'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      capabilityId: 'capability-1',
+      latestLevel: 3,
+      currentLevel: 3,
+      updatedAt: Date.now(),
+    });
+
+    await setDoc(doc(db, 'capabilityGrowthEvents', 'growth-1'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      capabilityId: 'capability-1',
+      level: 3,
+      occurredAt: Date.now(),
+    });
+
+    await setDoc(doc(db, 'proofOfLearningBundles', 'proof-1'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      portfolioItemId: 'portfolio-1',
+      verificationStatus: 'verified',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+
     await setDoc(doc(db, 'credentials', 'credential-1'), {
       siteId: 'site1',
       learnerId: learnerUser.uid,
@@ -1125,6 +1151,43 @@ describe('Portfolio Access', () => {
   test('unlinked parent cannot read learner portfolio item', async () => {
     const db = testEnv.authenticatedContext(otherParentUser.uid).firestore();
     await assertFails(getDoc(doc(db, 'portfolioItems', 'portfolio-1')));
+  });
+});
+
+describe('Passport evidence chain access', () => {
+  test('learner can read their own capability mastery', async () => {
+    const db = testEnv.authenticatedContext(learnerUser.uid).firestore();
+    await assertSucceeds(getDoc(doc(db, 'capabilityMastery', 'mastery-1')));
+  });
+
+  test('linked parent can read learner capability mastery', async () => {
+    const db = testEnv.authenticatedContext(parentUser.uid).firestore();
+    await assertSucceeds(getDoc(doc(db, 'capabilityMastery', 'mastery-1')));
+  });
+
+  test('unlinked parent cannot read learner capability mastery', async () => {
+    const db = testEnv.authenticatedContext(otherParentUser.uid).firestore();
+    await assertFails(getDoc(doc(db, 'capabilityMastery', 'mastery-1')));
+  });
+
+  test('linked parent can read learner growth provenance', async () => {
+    const db = testEnv.authenticatedContext(parentUser.uid).firestore();
+    await assertSucceeds(getDoc(doc(db, 'capabilityGrowthEvents', 'growth-1')));
+  });
+
+  test('unlinked parent cannot read learner growth provenance', async () => {
+    const db = testEnv.authenticatedContext(otherParentUser.uid).firestore();
+    await assertFails(getDoc(doc(db, 'capabilityGrowthEvents', 'growth-1')));
+  });
+
+  test('linked parent can read learner proof bundle provenance', async () => {
+    const db = testEnv.authenticatedContext(parentUser.uid).firestore();
+    await assertSucceeds(getDoc(doc(db, 'proofOfLearningBundles', 'proof-1')));
+  });
+
+  test('unlinked parent cannot read learner proof bundle provenance', async () => {
+    const db = testEnv.authenticatedContext(otherParentUser.uid).firestore();
+    await assertFails(getDoc(doc(db, 'proofOfLearningBundles', 'proof-1')));
   });
 });
 

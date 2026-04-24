@@ -503,6 +503,13 @@ export function LearnerPassportExport({ siteId: initialSiteId }: { siteId?: stri
           <div style="font-size:12px;color:#6b7280;margin-top:6px">${entry.linkedEvidenceRecordIds.length} evidence · ${entry.linkedPortfolioItemIds.length} portfolio${entry.missionAttemptId ? ' · mission-linked' : ''}</div>
         </div>`).join('');
 
+    const reportBasisHtml = `<div style="border:1px solid #dbeafe;background:#eff6ff;border-radius:12px;padding:14px 16px;font-size:13px;color:#1e3a8a;line-height:1.6;margin-bottom:20px">
+  <strong>Report basis</strong><br/>
+  This export summarizes reviewed evidence, linked portfolio artifacts, and recorded growth events. Participation signals do not replace capability judgments.<br/>
+  Legacy family progress is shown here as a compatibility roll-up of the current curriculum strands.<br/>
+  Pending verification prompts: ${learner.evidenceSummary.verificationPromptCount}
+</div>`;
+
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -536,6 +543,8 @@ export function LearnerPassportExport({ siteId: initialSiteId }: { siteId?: stri
   </span>
 </p>
 
+${reportBasisHtml}
+
 <h2>Legacy Family Progress</h2>
 <div class="stat-grid">
   <div class="stat"><div class="stat-val">${pct(learner.capabilitySnapshot.futureSkills)}</div><div class="stat-label">${getLegacyPillarFamilyLabel('FUTURE_SKILLS')}</div></div>
@@ -548,6 +557,7 @@ export function LearnerPassportExport({ siteId: initialSiteId }: { siteId?: stri
   <tr><td style="color:#6b7280;width:200px">Evidence Records</td><td>${learner.evidenceSummary.recordCount}</td></tr>
   <tr><td style="color:#6b7280">Reviewed</td><td>${learner.evidenceSummary.reviewedCount}</td></tr>
   <tr><td style="color:#6b7280">Portfolio-Linked</td><td>${learner.evidenceSummary.portfolioLinkedCount}</td></tr>
+  <tr><td style="color:#6b7280">Pending Verification Prompts</td><td>${learner.evidenceSummary.verificationPromptCount}</td></tr>
   <tr><td style="color:#6b7280">Latest Evidence</td><td>${formatDate(learner.evidenceSummary.latestEvidenceAt)}</td></tr>
 </table>
 
@@ -604,6 +614,12 @@ ${growthHtml}
     lines.push(`Generated: ${formatDate(learner.ideationPassport.generatedAt)}`);
     lines.push(`Capability Band: ${bandLabel(learner.capabilitySnapshot.band)}`);
     lines.push('');
+    lines.push('── Report Basis ──');
+    lines.push('  This passport summarizes reviewed evidence, linked artifacts, and recorded growth events.');
+    lines.push('  Participation signals do not replace capability judgments.');
+    lines.push('  Legacy family progress is a compatibility roll-up of the current curriculum strands.');
+    lines.push(`  Pending verification prompts: ${learner.evidenceSummary.verificationPromptCount}`);
+    lines.push('');
     lines.push('── Legacy Family Progress ──');
     lines.push(`  Think, Make & Navigate AI: ${pct(learner.capabilitySnapshot.futureSkills)}`);
     lines.push(`  Communicate & Lead:       ${pct(learner.capabilitySnapshot.leadership)}`);
@@ -614,6 +630,7 @@ ${growthHtml}
     lines.push(`  Evidence Records:     ${learner.evidenceSummary.recordCount}`);
     lines.push(`  Reviewed:             ${learner.evidenceSummary.reviewedCount}`);
     lines.push(`  Portfolio-Linked:     ${learner.evidenceSummary.portfolioLinkedCount}`);
+    lines.push(`  Pending prompts:      ${learner.evidenceSummary.verificationPromptCount}`);
     lines.push(`  Latest Evidence:      ${formatDate(learner.evidenceSummary.latestEvidenceAt)}`);
     lines.push('');
     lines.push('── Portfolio Snapshot ──');
@@ -772,6 +789,10 @@ ${growthHtml}
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Ideation Passport</h1>
             <p className="text-sm text-gray-500 mt-1">Evidence-backed learner capability report</p>
+            <p className="mt-2 max-w-2xl text-xs text-gray-500">
+              Export a family-safe copy of reviewed evidence, linked artifacts, and recorded growth.
+              Pending verification prompts remain visible in the export as next questions, not completed claims.
+            </p>
           </div>
           <div className="flex gap-2">
             {learners.length > 1 && (

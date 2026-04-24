@@ -411,10 +411,14 @@ describe('LearnerPassportExport learner contract', () => {
     expect(source).toContain('function escapeHtml');
     expect(source).toContain('const portfolioHtml =');
     expect(source).toContain('const growthHtml =');
+    expect(source).toContain('const reportBasisHtml =');
     expect(source).toContain('<h2>Portfolio Artifacts</h2>');
     expect(source).toContain('<h2>Growth Timeline</h2>');
+    expect(source).toContain('Pending verification prompts:');
+    expect(source).toContain('compatibility roll-up of the current curriculum strands');
     expect(source).toContain('── Portfolio Artifacts ──');
     expect(source).toContain('── Growth Timeline ──');
+    expect(source).toContain('── Report Basis ──');
   });
 });
 
@@ -520,6 +524,25 @@ describe('LearnerEvidenceSubmission component', () => {
 
   it('captures AI disclosure', () => {
     expect(source).toContain('aiAssistanceUsed');
+  });
+
+  it('persists AI explanation details across artifact, reflection, and checkpoint writes', () => {
+    const artifactHandler = source.slice(
+      source.indexOf('const handleSubmitArtifact'),
+      source.indexOf('const handleSubmitReflection')
+    );
+    const reflectionHandler = source.slice(
+      source.indexOf('const handleSubmitReflection'),
+      source.indexOf('const handleSubmitCheckpoint')
+    );
+    const checkpointHandler = source.slice(
+      source.indexOf('const handleSubmitCheckpoint'),
+      source.indexOf('// Auto-clear success message')
+    );
+
+    expect(artifactHandler).toContain('aiAssistanceDetails: aiUsed ? aiDetails.trim() : undefined');
+    expect(reflectionHandler).toContain('aiAssistanceDetails: reflectionAiUsed ? reflectionAiDetails.trim() : undefined');
+    expect(checkpointHandler).toContain('aiAssistanceDetails: checkpointAiUsed ? checkpointAiDetails.trim() : undefined');
   });
 
   it('links to capabilities', () => {
