@@ -478,6 +478,7 @@ describe('GuardianCapabilityViewRenderer site provenance', () => {
     expect(source).toContain("const isSummaryRoute = ctx.routePath === '/parent/summary'");
     expect(source).toContain('const showGuardianShareActions = isPassportRoute || isSummaryRoute');
     expect(source).toContain('Export or share a family-safe summary of reviewed evidence, linked artifacts, and recorded growth');
+    expect(source).toContain('Featured AI disclosure:');
   });
 });
 

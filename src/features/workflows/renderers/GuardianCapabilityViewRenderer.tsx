@@ -552,6 +552,9 @@ function buildGuardianFamilyShareSummary(learner: LearnerSummary): string {
     .filter((item) => typeof item.verificationPrompt === 'string' && item.verificationPrompt.trim().length > 0)
     .slice(0, 2);
   const topClaims = learner.ideationPassport?.claims?.slice(0, 3) ?? [];
+  const featuredAiDisclosure = topClaims.length > 0
+    ? AI_DISCLOSURE_CONFIG[topClaims[0].aiDisclosureStatus]?.label ?? 'Not assessed'
+    : null;
 
   return [
     `Scholesa family summary for ${learner.name}`,
@@ -559,6 +562,7 @@ function buildGuardianFamilyShareSummary(learner: LearnerSummary): string {
     'This summary reflects reviewed evidence, linked artifacts, and recorded growth events.',
     `Capability band: ${LEVEL_BAND_CONFIG[learner.currentLevelBand]?.label ?? 'Not yet assessed'}`,
     `Reviewed evidence: ${learner.evidenceSummary?.reviewedCount ?? 0}`,
+    ...(featuredAiDisclosure ? [`Featured AI disclosure: ${featuredAiDisclosure}`] : []),
     `Pending verification prompts: ${pendingPrompts.length}`,
     '',
     'Current evidence-backed claims:',

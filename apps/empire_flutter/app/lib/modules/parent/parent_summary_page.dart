@@ -1025,6 +1025,8 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
         _buildProgressionDescriptorsDetail(featuredProgressionDescriptors);
     final String proofDetail =
         _buildProofSummary(featuredClaim, featuredPortfolioItem);
+    final String aiSummary =
+        _buildAiSummary(featuredClaim, featuredPortfolioItem);
     final int capabilityPercent =
         (learner.capabilitySnapshot.overall * 100).round();
     final String nextFocus = _buildNextFocusAnswer(
@@ -1054,6 +1056,9 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
     if (proofDetail.isNotEmpty) {
       lines.add('${_t('Proof of Learning')}: $proofDetail');
     }
+    if (aiSummary.isNotEmpty) {
+      lines.add('${_t('AI Disclosure')}: $aiSummary');
+    }
     if (learner.growthTimeline.isNotEmpty) {
       lines.add('');
       lines.add(_t('Recent growth timeline'));
@@ -1070,6 +1075,8 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
     final PassportClaim? featuredClaim = _selectFeaturedClaim(learner);
     final PortfolioPreviewItem? featuredPortfolioItem =
         _selectFeaturedPortfolioItem(learner);
+    final String aiSummary =
+        _buildAiSummary(featuredClaim, featuredPortfolioItem);
     final String nextFocus = _buildNextFocusAnswer(
       learner,
       featuredClaim,
@@ -1083,6 +1090,7 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
       'Capability band: ${_titleCase(learner.capabilitySnapshot.band)}',
       'Reviewed evidence: ${learner.evidenceSummary.reviewedCount}',
       'Reviewed/Verified artifacts: ${learner.portfolioSnapshot.verifiedArtifactCount}',
+      if (aiSummary.isNotEmpty) 'AI disclosure: $aiSummary',
       'Pending verification prompts: ${learner.evidenceSummary.verificationPromptCount}',
       '',
       'Current evidence-backed focus:',
@@ -1205,6 +1213,49 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
       );
     }
     return parts.join(' • ');
+  }
+
+  String _buildAiSummary(
+    PassportClaim? claim,
+    PortfolioPreviewItem? item,
+  ) {
+    final String? aiDisclosure =
+        (item?.aiDisclosureStatus?.trim().isNotEmpty == true)
+            ? item!.aiDisclosureStatus
+            : claim?.aiDisclosureStatus;
+    if (aiDisclosure?.trim().isNotEmpty != true) {
+      return '';
+    }
+    final List<String> parts = <String>[
+      _formatAiDisclosure(aiDisclosure),
+    ];
+    final String? aiDetail =
+        (item?.aiAssistanceDetails?.trim().isNotEmpty == true)
+            ? item!.aiAssistanceDetails!.trim()
+            : claim?.aiAssistanceDetails?.trim();
+    if (aiDetail?.isNotEmpty == true) {
+      parts.add('${_t('Learner AI details')}: $aiDetail');
+    }
+    return parts.join(' • ');
+  }
+
+  String _formatAiDisclosure(String? value) {
+    switch ((value ?? '').trim().toLowerCase()) {
+      case 'learner-ai-verified':
+        return _t('Learner AI use disclosed with explain-back evidence');
+      case 'learner-ai-verification-gap':
+        return _t('Learner AI use detected without explain-back evidence');
+      case 'learner-ai-not-used':
+        return _t('Learner declared no AI support used');
+      case 'educator-feedback-ai':
+        return _t('AI-assisted educator feedback visible');
+      case 'no-learner-ai-signal':
+        return _t('No learner AI-use signal linked to this claim');
+      case 'not-available':
+        return _t('No linked mission attempt');
+      default:
+        return _t('Unknown');
+    }
   }
 
   String _titleCase(String value) {

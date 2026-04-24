@@ -214,6 +214,9 @@ LearnerSummary _richLearnerSummary() {
           ),
         ],
         proofOfLearningStatus: 'verified',
+        aiDisclosureStatus: 'learner-ai-not-used',
+        aiAssistanceDetails:
+            'Learner noted that the prototype notes were drafted without AI support.',
         reviewingEducatorName: 'Coach Rivera',
         rubricLevel: 3,
       ),
@@ -239,6 +242,10 @@ LearnerSummary _richLearnerSummary() {
             ),
           ],
           proofOfLearningStatus: 'verified',
+          aiDisclosureStatus: 'learner-ai-not-used',
+          aiHasLearnerDisclosure: true,
+          aiAssistanceDetails:
+              'Learner noted that the prototype notes were drafted without AI support.',
           latestEvidenceAt: now,
           verificationStatus: 'reviewed',
           reviewingEducatorName: 'Coach Rivera',
@@ -498,6 +505,8 @@ void main() {
     expect(savedFileContent, contains('Family Dashboard Summary'));
     expect(savedFileContent, contains('What can this learner do now?'));
     expect(savedFileContent, contains('Recent growth timeline'));
+    expect(savedFileContent, contains('AI Disclosure'));
+    expect(savedFileContent, contains('Learner declared no AI support used'));
   });
 
   testWidgets('parent summary copies a family-safe share summary',
@@ -535,6 +544,8 @@ void main() {
 
     expect(find.text('Family summary copied for sharing.'), findsOneWidget);
     expect(copiedText, contains('Scholesa family summary for Avery Stone'));
+    expect(copiedText,
+        contains('AI disclosure: Learner declared no AI support used'));
     expect(copiedText, contains('Current evidence-backed focus:'));
     expect(copiedText, contains('Next verification prompt:'));
   });
