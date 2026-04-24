@@ -54,8 +54,8 @@ const EducatorTodayRenderer = lazy(
 const LearnerProofAssemblyRenderer = lazy(
   () => import('./renderers/LearnerProofAssemblyRenderer')
 );
-const LearnerProgressReportRenderer = lazy(
-  () => import('./renderers/LearnerProgressReportRenderer')
+const LearnerTodayRenderer = lazy(
+  () => import('./renderers/LearnerTodayRenderer')
 );
 const SiteImplementationHealthRenderer = lazy(
   () => import('./renderers/SiteImplementationHealthRenderer')
@@ -123,7 +123,7 @@ const CUSTOM_ROUTE_RENDERERS: Partial<
   '/educator/rubrics/apply': EducatorRubricApplyRenderer,
   '/educator/sessions': EducatorSessionsRenderer,
   // Learner
-  '/learner/today': LearnerProgressReportRenderer,
+  '/learner/today': LearnerTodayRenderer,
   '/learner/missions': LearnerMissionsRenderer,
   '/learner/portfolio': LearnerPortfolioCurationRenderer,
   '/learner/timeline': LearnerEvidenceTimelineRenderer,

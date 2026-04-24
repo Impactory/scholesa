@@ -164,6 +164,18 @@ describe('Renderers delegate to real evidence components', () => {
     expect(source).toContain('@/src/components/evidence/LearnerEvidenceSubmission');
   });
 
+  it('LearnerTodayRenderer uses the dedicated learner dashboard for /learner/today', () => {
+    const registrySource = readSrcFile(
+      'features', 'workflows', 'customRouteRenderers.tsx'
+    );
+    const source = readSrcFile(
+      'features', 'workflows', 'renderers', 'LearnerTodayRenderer.tsx'
+    );
+    expect(registrySource).toContain("'/learner/today': LearnerTodayRenderer");
+    expect(source).toContain('LearnerDashboardToday');
+    expect(source).toContain('@/src/components/dashboards/LearnerDashboardToday');
+  });
+
   it('LearnerHabitsRenderer uses persisted habits instead of routing habits to MiloOS', () => {
     const registrySource = readSrcFile(
       'features', 'workflows', 'customRouteRenderers.tsx'
