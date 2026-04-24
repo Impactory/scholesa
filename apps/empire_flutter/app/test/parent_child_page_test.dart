@@ -162,7 +162,20 @@ LearnerSummary _sampleLearner() {
       badgeCount: 1,
       projectCount: 2,
     ),
-    ideationPassport: const IdeationPassport(reflectionsSubmitted: 2),
+    ideationPassport: const IdeationPassport(
+      reflectionsSubmitted: 2,
+      claims: <PassportClaim>[
+        PassportClaim(
+          capabilityId: 'cap-1',
+          title: 'Evidence-backed reasoning',
+          pillar: 'Impact',
+          latestLevel: 3,
+          evidenceCount: 2,
+          verifiedArtifactCount: 1,
+          aiDisclosureStatus: 'learner-ai-not-used',
+        ),
+      ],
+    ),
     recentActivities: <RecentActivity>[
       RecentActivity(
         id: 'activity-1',
@@ -396,6 +409,8 @@ void main() {
 
     expect(find.text('Family summary copied for sharing.'), findsOneWidget);
     expect(copiedText, contains('Scholesa family summary for Ava Learner'));
+    expect(copiedText,
+        contains('AI disclosure: Learner declared no AI support used'));
     expect(copiedText, contains('Current evidence-backed claims:'));
     expect(copiedText, contains('Pending verification prompts:'));
   });

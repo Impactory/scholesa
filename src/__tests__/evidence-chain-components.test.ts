@@ -421,6 +421,7 @@ describe('LearnerPassportExport learner contract', () => {
     expect(source).toContain('<h2>Growth Timeline</h2>');
     expect(source).toContain('Pending verification prompts:');
     expect(source).toContain('compatibility roll-up of the current curriculum strands');
+    expect(source).toContain('Featured AI disclosure:');
     expect(source).toContain('── Portfolio Artifacts ──');
     expect(source).toContain('── Growth Timeline ──');
     expect(source).toContain('── Report Basis ──');
@@ -473,6 +474,7 @@ describe('GuardianCapabilityViewRenderer site provenance', () => {
     expect(source).toContain('Share family summary');
     expect(source).toContain('Export PDF');
   });
+<<<<<<< HEAD
 
   it('also exposes the same family-safe share and export actions on the parent summary route', () => {
     expect(source).toContain("const isSummaryRoute = ctx.routePath === '/parent/summary'");
@@ -480,6 +482,8 @@ describe('GuardianCapabilityViewRenderer site provenance', () => {
     expect(source).toContain('Export or share a family-safe summary of reviewed evidence, linked artifacts, and recorded growth');
     expect(source).toContain('Featured AI disclosure:');
   });
+=======
+>>>>>>> 8cc7583b1e5a87bbbc6756bf8dd7ac4ca6b3499c
 });
 
 /* ───── LearnerEvidenceSubmission ───── */

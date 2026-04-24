@@ -334,6 +334,9 @@ function buildFamilyShareSummary(learner: LearnerPassportData): string {
   const nextPrompts = learner.portfolioItemsPreview
     .filter((item) => typeof item.verificationPrompt === 'string' && item.verificationPrompt.trim().length > 0)
     .slice(0, 2);
+  const featuredAiDisclosure = topClaims.length > 0
+    ? aiLabel(topClaims[0].aiDisclosureStatus)
+    : null;
 
   return [
     `Scholesa family summary for ${learner.learnerName ?? learner.learnerId}`,
@@ -342,6 +345,7 @@ function buildFamilyShareSummary(learner: LearnerPassportData): string {
     `Capability band: ${bandLabel(learner.capabilitySnapshot.band)}`,
     `Reviewed evidence: ${learner.evidenceSummary.reviewedCount}`,
     `Verified artifacts: ${learner.portfolioSnapshot.verifiedArtifactCount}`,
+    ...(featuredAiDisclosure ? [`Featured AI disclosure: ${featuredAiDisclosure}`] : []),
     `Pending verification prompts: ${learner.evidenceSummary.verificationPromptCount}`,
     '',
     'Current evidence-backed claims:',

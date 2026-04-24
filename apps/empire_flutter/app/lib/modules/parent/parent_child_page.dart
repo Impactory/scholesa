@@ -823,6 +823,9 @@ class _ParentChildPageState extends State<ParentChildPage> {
           .map((String prompt) => prompt.trim())
           .where((String prompt) => prompt.isNotEmpty),
     ].take(2).toList();
+    final String? featuredAiDisclosure = topClaims.isNotEmpty
+        ? _formatAiDisclosure(topClaims.first.aiDisclosureStatus)
+        : null;
 
     final List<String> lines = <String>[
       'Scholesa family summary for ${_safeLearnerName(learner.learnerName)}',
@@ -831,6 +834,9 @@ class _ParentChildPageState extends State<ParentChildPage> {
       'Capability band: ${_titleCase(learner.capabilitySnapshot.band)}',
       'Reviewed evidence: ${learner.evidenceSummary.reviewedCount}',
       'Reviewed/Verified artifacts: ${learner.portfolioSnapshot.verifiedArtifactCount}',
+      if (featuredAiDisclosure != null &&
+          featuredAiDisclosure.trim().isNotEmpty)
+        'AI disclosure: $featuredAiDisclosure',
       'Pending verification prompts: ${learner.evidenceSummary.verificationPromptCount}',
       '',
       'Current evidence-backed claims:',
