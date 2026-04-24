@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../services/telemetry_service.dart';
+import '../../services/export_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
 import '../../i18n/bos_coaching_i18n.dart';
@@ -23,6 +25,8 @@ class ParentSummaryPage extends StatefulWidget {
 class _ParentSummaryPageState extends State<ParentSummaryPage> {
   int _selectedLearnerIndex = 0;
   static const String _canonicalLearnerUnavailableLabel = 'Learner unavailable';
+  static const String _summaryActionExport = 'export';
+  static const String _summaryActionShare = 'share';
 
   String _t(String input) {
     return ParentSurfaceI18n.text(context, input);
@@ -105,7 +109,8 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
 
   @override
   Widget build(BuildContext context) {
-    return MiloRuntimeScope(child: Scaffold(
+    return MiloRuntimeScope(
+        child: Scaffold(
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -143,7 +148,8 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
 
             return CustomScrollView(
               slivers: <Widget>[
-                SliverToBoxAdapter(child: _buildHeader(service)),
+                SliverToBoxAdapter(
+                    child: _buildHeader(service, selectedLearner)),
                 if (service.error != null)
                   SliverToBoxAdapter(child: _buildStaleDataBanner()),
                 if (service.learnerSummaries.length > 1)
@@ -200,7 +206,7 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
     ));
   }
 
-  Widget _buildHeader(ParentService service) {
+  Widget _buildHeader(ParentService service, LearnerSummary selectedLearner) {
     return SafeArea(
       bottom: false,
       child: Padding(
@@ -254,6 +260,32 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
                 await service.loadParentData();
               },
               icon: const Icon(Icons.refresh, color: ScholesaColors.parent),
+            ),
+            PopupMenuButton<String>(
+              tooltip: _t('Summary Actions'),
+              icon: const Icon(
+                Icons.ios_share_outlined,
+                color: ScholesaColors.parent,
+              ),
+              onSelected: (String value) async {
+                if (value == _summaryActionExport) {
+                  await _exportFamilySummary(selectedLearner);
+                  return;
+                }
+                if (value == _summaryActionShare) {
+                  await _shareFamilySummary(selectedLearner);
+                }
+              },
+              itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                PopupMenuItem<String>(
+                  value: _summaryActionShare,
+                  child: Text(_t('Share Family Summary')),
+                ),
+                PopupMenuItem<String>(
+                  value: _summaryActionExport,
+                  child: Text(_t('Export Summary')),
+                ),
+              ],
             ),
             const SessionMenuButton(
               foregroundColor: ScholesaColors.parent,
@@ -881,6 +913,188 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
     return parts.join(' • ');
   }
 
+  Future<void> _exportFamilySummary(LearnerSummary learner) async {
+    final String summary = _buildFamilySummaryExport(learner);
+    final String fileName = 'family-summary-${learner.learnerId}.txt';
+    try {
+      final String? savedLocation = await ExportService.instance.saveTextFile(
+        fileName: fileName,
+        content: summary,
+      );
+      if (!mounted || savedLocation == null) {
+        return;
+      }
+      TelemetryService.instance.logEvent(
+        event: 'export.downloaded',
+        metadata: <String, dynamic>{
+          'module': 'parent_summary',
+          'surface': 'family_dashboard',
+          'learner_id': learner.learnerId,
+          'file_name': fileName,
+        },
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_t('Family summary exported.')),
+        ),
+      );
+    } on UnsupportedError catch (error) {
+      debugPrint(
+          'Export unsupported for parent summary download, copying summary instead: $error');
+      await Clipboard.setData(ClipboardData(text: summary));
+      TelemetryService.instance.logEvent(
+        event: 'parent.summary_export.copied',
+        metadata: <String, dynamic>{
+          'learner_id': learner.learnerId,
+          'fallback': 'clipboard',
+        },
+      );
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_t('Family summary copied for sharing.')),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_t('Unable to export family summary right now.')),
+          backgroundColor: ScholesaColors.error,
+        ),
+      );
+    }
+  }
+
+  Future<void> _shareFamilySummary(LearnerSummary learner) async {
+    final String summary = _buildFamilyShareSummary(learner);
+    try {
+      await Clipboard.setData(ClipboardData(text: summary));
+      TelemetryService.instance.logEvent(
+        event: 'cta.clicked',
+        metadata: <String, dynamic>{
+          'cta': 'parent_summary_share_family_summary',
+          'learner_id': learner.learnerId,
+        },
+      );
+      TelemetryService.instance.logEvent(
+        event: 'notification.requested',
+        metadata: <String, dynamic>{
+          'module': 'parent_summary',
+          'surface': 'family_dashboard',
+          'learner_id': learner.learnerId,
+          'delivery': 'clipboard',
+        },
+      );
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_t('Family summary copied for sharing.')),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_t('Unable to copy family summary right now.')),
+          backgroundColor: ScholesaColors.error,
+        ),
+      );
+    }
+  }
+
+  String _buildFamilySummaryExport(LearnerSummary learner) {
+    final PassportClaim? featuredClaim = _selectFeaturedClaim(learner);
+    final PortfolioPreviewItem? featuredPortfolioItem =
+        _selectFeaturedPortfolioItem(learner);
+    final List<String> featuredProgressionDescriptors =
+        _featuredProgressionDescriptors(featuredClaim, featuredPortfolioItem);
+    final List<VerificationCheckpointMapping> featuredCheckpointMappings =
+        _featuredCheckpointMappings(featuredClaim, featuredPortfolioItem);
+    final String verificationCriteria =
+        _buildVerificationCriteriaDetail(featuredCheckpointMappings);
+    final String progressionDescriptors =
+        _buildProgressionDescriptorsDetail(featuredProgressionDescriptors);
+    final String proofDetail =
+        _buildProofSummary(featuredClaim, featuredPortfolioItem);
+    final int capabilityPercent =
+        (learner.capabilitySnapshot.overall * 100).round();
+    final String nextFocus = _buildNextFocusAnswer(
+      learner,
+      featuredClaim,
+      featuredPortfolioItem,
+    );
+
+    final List<String> lines = <String>[
+      _t('Family Dashboard Summary'),
+      '${_t('Learner')}: ${_displayLearnerName(learner.learnerName)}',
+      '${_t('Prepared')}: ${DateTime.now().toIso8601String()}',
+      '${_t('What can this learner do now?')}: ${_buildCapabilityAnswer(learner, featuredClaim, capabilityPercent, progressionDescriptors)}',
+      '${_t('What evidence proves it?')}: ${_buildEvidenceAnswer(learner, featuredClaim, featuredPortfolioItem, verificationCriteria)}',
+      '${_t('How are they growing?')}: ${_buildGrowthAnswer(learner, featuredClaim, proofDetail)}',
+      '${_t('What should they work on next?')}: $nextFocus',
+      '',
+      '${_t('Capability Snapshot')}: ${_buildFeaturedCapabilityFocus(featuredClaim, featuredPortfolioItem)}',
+    ];
+
+    if (progressionDescriptors.isNotEmpty) {
+      lines.add('${_t('Progression Descriptors')}: $progressionDescriptors');
+    }
+    if (verificationCriteria.isNotEmpty) {
+      lines.add('${_t('Verification Criteria')}: $verificationCriteria');
+    }
+    if (proofDetail.isNotEmpty) {
+      lines.add('${_t('Proof of Learning')}: $proofDetail');
+    }
+    if (learner.growthTimeline.isNotEmpty) {
+      lines.add('');
+      lines.add(_t('Recent growth timeline'));
+      lines.addAll(
+        learner.growthTimeline.take(4).map((GrowthTimelineEntry entry) =>
+            '- ${_formatGrowthTimelineEntry(entry)}'),
+      );
+    }
+
+    return lines.join('\n');
+  }
+
+  String _buildFamilyShareSummary(LearnerSummary learner) {
+    final PassportClaim? featuredClaim = _selectFeaturedClaim(learner);
+    final PortfolioPreviewItem? featuredPortfolioItem =
+        _selectFeaturedPortfolioItem(learner);
+    final String nextFocus = _buildNextFocusAnswer(
+      learner,
+      featuredClaim,
+      featuredPortfolioItem,
+    );
+
+    return <String>[
+      'Scholesa family summary for ${_displayLearnerName(learner.learnerName)}',
+      'Prepared: ${DateTime.now().toIso8601String()}',
+      'This summary reflects reviewed evidence, linked artifacts, and recorded growth events.',
+      'Capability band: ${_titleCase(learner.capabilitySnapshot.band)}',
+      'Reviewed evidence: ${learner.evidenceSummary.reviewedCount}',
+      'Reviewed/Verified artifacts: ${learner.portfolioSnapshot.verifiedArtifactCount}',
+      'Pending verification prompts: ${learner.evidenceSummary.verificationPromptCount}',
+      '',
+      'Current evidence-backed focus:',
+      featuredClaim != null
+          ? '- ${featuredClaim.title}: ${_levelLabel(featuredClaim.latestLevel)} with ${featuredClaim.evidenceCount} evidence record(s)'
+          : '- No capability claims backed by reviewed evidence yet.',
+      '',
+      'Next verification prompt:',
+      '- $nextFocus',
+    ].join('\n');
+  }
+
   String _buildNextFocusAnswer(
     LearnerSummary learner,
     PassportClaim? featuredClaim,
@@ -982,7 +1196,8 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
       parts.add('${_t('Reviewed by')}: ${item!.reviewingEducatorName}');
     }
     if ((item?.rubricLevel ?? 0) > 0) {
-      parts.add('${_t('Rubric level')}: ${_levelLabel(item!.rubricLevel ?? 0)}');
+      parts
+          .add('${_t('Rubric level')}: ${_levelLabel(item!.rubricLevel ?? 0)}');
     } else if ((claim?.rubricRawScore ?? 0) > 0 &&
         (claim?.rubricMaxScore ?? 0) > 0) {
       parts.add(
@@ -1114,7 +1329,9 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
     final Map<String, List<GrowthTimelineEntry>> byCapability =
         <String, List<GrowthTimelineEntry>>{};
     for (final GrowthTimelineEntry entry in learner.growthTimeline) {
-      byCapability.putIfAbsent(entry.capabilityId, () => <GrowthTimelineEntry>[]).add(entry);
+      byCapability
+          .putIfAbsent(entry.capabilityId, () => <GrowthTimelineEntry>[])
+          .add(entry);
     }
     // Sort entries within each capability by date
     for (final List<GrowthTimelineEntry> entries in byCapability.values) {
@@ -1241,8 +1458,7 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
                     ),
                   if (latest.proofOfLearningStatus?.trim().isNotEmpty == true)
                     Text(
-                      _formatTimelineProofStatus(
-                          latest.proofOfLearningStatus!),
+                      _formatTimelineProofStatus(latest.proofOfLearningStatus!),
                       style: TextStyle(
                         fontSize: 10,
                         color: Colors.grey[500],

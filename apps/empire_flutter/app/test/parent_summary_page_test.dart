@@ -2,6 +2,7 @@ import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
@@ -9,6 +10,7 @@ import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/modules/parent/parent_models.dart';
 import 'package:scholesa_app/modules/parent/parent_service.dart';
 import 'package:scholesa_app/modules/parent/parent_summary_page.dart';
+import 'package:scholesa_app/services/export_service.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
 
 class _FakeFirebaseAuth implements FirebaseAuth {
@@ -301,6 +303,10 @@ Future<void> _pumpPage(
 }
 
 void main() {
+  setUp(() {
+    ExportService.instance.debugSaveTextFile = null;
+  });
+
   testWidgets(
       'parent summary empty state persists linked learner review requests',
       (WidgetTester tester) async {
@@ -458,5 +464,78 @@ void main() {
     );
     expect(find.text('Proof of Learning'), findsOneWidget);
     expect(find.textContaining('Coach Rivera'), findsWidgets);
+  });
+
+  testWidgets('parent summary exports a family-safe dashboard summary',
+      (WidgetTester tester) async {
+    String? savedFileName;
+    String? savedFileContent;
+    ExportService.instance.debugSaveTextFile = ({
+      required String fileName,
+      required String content,
+      required String mimeType,
+    }) async {
+      savedFileName = fileName;
+      savedFileContent = content;
+      return '/tmp/$fileName';
+    };
+
+    await _pumpPage(
+      tester,
+      parentService: _StubParentService(
+        parentId: 'parent-1',
+        learnerSummaries: <LearnerSummary>[_richLearnerSummary()],
+      ),
+    );
+
+    await tester.tap(find.byTooltip('Summary Actions'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Export Summary').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Family summary exported.'), findsOneWidget);
+    expect(savedFileName, 'family-summary-learner-1.txt');
+    expect(savedFileContent, contains('Family Dashboard Summary'));
+    expect(savedFileContent, contains('What can this learner do now?'));
+    expect(savedFileContent, contains('Recent growth timeline'));
+  });
+
+  testWidgets('parent summary copies a family-safe share summary',
+      (WidgetTester tester) async {
+    String? copiedText;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (MethodCall methodCall) async {
+        if (methodCall.method == 'Clipboard.setData') {
+          final Object? args = methodCall.arguments;
+          if (args is Map) {
+            copiedText = args['text'] as String?;
+          }
+        }
+        return null;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null);
+    });
+
+    await _pumpPage(
+      tester,
+      parentService: _StubParentService(
+        parentId: 'parent-1',
+        learnerSummaries: <LearnerSummary>[_richLearnerSummary()],
+      ),
+    );
+
+    await tester.tap(find.byTooltip('Summary Actions'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Share Family Summary').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Family summary copied for sharing.'), findsOneWidget);
+    expect(copiedText, contains('Scholesa family summary for Avery Stone'));
+    expect(copiedText, contains('Current evidence-backed focus:'));
+    expect(copiedText, contains('Next verification prompt:'));
   });
 }
