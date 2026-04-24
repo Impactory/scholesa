@@ -164,6 +164,21 @@ describe('Renderers delegate to real evidence components', () => {
     expect(source).toContain('@/src/components/evidence/LearnerEvidenceSubmission');
   });
 
+  it('LearnerHabitsRenderer uses persisted habits instead of routing habits to MiloOS', () => {
+    const registrySource = readSrcFile(
+      'features', 'workflows', 'customRouteRenderers.tsx'
+    );
+    const source = readSrcFile(
+      'features', 'workflows', 'renderers', 'LearnerHabitsRenderer.tsx'
+    );
+    expect(registrySource).toContain("'/learner/habits': LearnerHabitsRenderer");
+    expect(source).toContain("collection(firestore, 'habits')");
+    expect(source).toContain("collection(firestore, 'habitLogs')");
+    expect(source).toContain('writeBatch');
+    expect(source).toContain('handleCompleteHabit');
+    expect(source).toContain('data-testid={`habit-complete-${habit.id}`}');
+  });
+
   it('LearnerReflectionsRenderer → ReflectionJournal with auth context', () => {
     const source = readSrcFile(
       'features', 'workflows', 'renderers', 'LearnerReflectionsRenderer.tsx'

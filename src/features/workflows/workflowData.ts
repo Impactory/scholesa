@@ -3769,10 +3769,10 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
       return {
         records: applyRouteActionLabels(await queryCollectionRecords({
           routePath: ctx.routePath,
-          collectionName: 'learnerReflections',
-          constraints: [where('learnerId', '==', ctx.uid), orderBy('createdAt', 'desc')],
-          titleKeys: ['proudOf', 'effectiveStrategy'],
-          subtitleKeys: ['nextIWill'],
+          collectionName: 'habits',
+          constraints: [where('learnerId', '==', ctx.uid), limit(30)],
+          titleKeys: ['title'],
+          subtitleKeys: ['description', 'category', 'frequency'],
           statusKeys: [],
           editable: false,
           deletable: false,
@@ -3782,7 +3782,7 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
         canRefresh: true,
         createLabel: 'Create',
         createConfig: null,
-        guidanceText: 'Learning habits are tracked through reflections, checkpoint patterns, and MiloOS learning support signals.',
+        guidanceText: 'Learning habits are persisted separately from evidence claims. They support learner routines, but they do not count as capability mastery on their own.',
       };
     case '/educator/observations':
       return {
@@ -4684,8 +4684,16 @@ export async function createWorkflowRecord(
         learnerId: ctx.uid,
         title: requireStringValue(input, 'title', 'Habit name'),
         description: optionalStringValue(input, 'description') || '',
-        status: 'active',
-        streak: 0,
+        emoji: optionalStringValue(input, 'emoji') || '*',
+        category: optionalStringValue(input, 'category') || 'learning',
+        frequency: optionalStringValue(input, 'frequency') || 'daily',
+        preferredTime: optionalStringValue(input, 'preferredTime') || 'anytime',
+        targetMinutes: 10,
+        currentStreak: 0,
+        longestStreak: 0,
+        totalCompletions: 0,
+        isActive: true,
+        buildingPhaseStartDate: serverTimestamp(),
         updatedAt: serverTimestamp(),
         createdAt: serverTimestamp(),
       });

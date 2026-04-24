@@ -47,11 +47,12 @@
 
 ### 1B. Generic Workflow Routes (38 via WorkflowRoutePage)
 
-#### Learner (2 routes)
+#### Learner (1 route + 1 dedicated habit workflow)
 | Route | Data Source | Classification | Notes |
 |-------|------------|----------------|-------|
 | `/learner/missions` | `missionAttempts` collection | **Reusable with modification** | CRUD list of mission attempts; no capability binding in UI. Could add capability tags. |
-| `/learner/habits` | `habits` collection | ~~**Fake / disconnected**~~ **REMOVED** | Route, handler, and page deleted. No `Habit` interface in schema. |
+
+`/learner/habits` now renders through a dedicated `LearnerHabitsRenderer` backed by persisted `habits` and `habitLogs` documents. It is operationally real and end-to-end for learner routine tracking, but it intentionally stays separate from capability mastery claims.
 
 #### Educator (7 routes)
 | Route | Data Source | Classification | Notes |
@@ -340,7 +341,7 @@ Remaining gold blockers now sit mainly in communication/read-side parity rather 
 1. ~~**P1-E**: Deprecate `AccountabilityKPI` + `ParentSnapshot` in schema~~ ✅
 2. ~~**P1-D**: Add capability tags to parent portfolio view~~ ✅
 3. ~~**P1-B**: Add capability tags to mission CRUD views~~ ✅
-4. ~~Remove `/learner/habits` route (no schema backing)~~ ✅
+4. ~~Restore `/learner/habits` as a dedicated persisted habit workflow instead of a disconnected placeholder~~ ✅
 
 ### Phase 2: Assessment Depth (Medium Effort)
 5. ~~**P1-C**: Embed `RubricReviewPanel` in `/educator/missions/review`~~ ✅
@@ -366,7 +367,7 @@ Remaining gold blockers now sit mainly in communication/read-side parity rather 
 | **Aligned and usable** | 48 components, 9 routes, 15 schema types, 5 callables | Evidence chain core |
 | **Reusable with modification** | 5 routes, 4 schema types | Missions, parent portfolio, curriculum |
 | **Misleading / LMS-shaped** | 2 schema types | `AccountabilityKPI`, `ParentSnapshot` (both legacy, unused) |
-| **Fake / disconnected** | 0 routes | `/learner/habits` removed |
+| **Fake / disconnected** | 0 routes | None |
 | **Operational (not evidence)** | 32 routes, 30+ schema types, 32+ functions | Sessions, billing, ops, partner, admin |
 | **Missing** | 0 | `LearnerCapabilityProfile` added to schema |
 
@@ -600,7 +601,7 @@ Remaining gold blockers now sit mainly in communication/read-side parity rather 
 |----|-------|----------|--------|
 | B1 | 38/47 page routes use generic CRUD list UI | BETA-SAFE | G11/G12 addresses the 9 critical routes |
 | B2 | ~89 Firestore collections have rules but no TS web types | BETA-SAFE | Add as web surfaces need them |
-| B3 | `/learner/habits` had no schema backing | ~~BETA-SAFE~~ **FIXED** | Route removed from web |
+| B3 | `/learner/habits` had no trustworthy web backing | ~~BETA-SAFE~~ **FIXED** | Dedicated web habits renderer now reads and writes persisted `habits` and `habitLogs` data |
 | B4 | Partner role thin UX | BETA-SAFE | Defer to partner onboarding |
 | B5 | Global content catalog readable by all auth users | BETA-SAFE | Intentional shared model |
 | B6 | 37 npm vulns (all transitive, no safe fixes) | BETA-SAFE | Monitor upstream |
