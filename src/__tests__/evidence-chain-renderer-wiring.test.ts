@@ -228,6 +228,19 @@ describe('Renderers delegate to real evidence components', () => {
     expect(source).toContain('data-testid="guardian-view-site-required"');
   });
 
+  it('pins parent summary and passport to the guardian evidence surfaces', () => {
+    const registrySource = readSrcFile(
+      'features', 'workflows', 'customRouteRenderers.tsx'
+    );
+    const guardianSource = readSrcFile(
+      'features', 'workflows', 'renderers', 'GuardianCapabilityViewRenderer.tsx'
+    );
+    expect(registrySource).toContain("'/parent/summary': GuardianCapabilityViewRenderer");
+    expect(registrySource).toContain("'/parent/passport': GuardianPassportRenderer");
+    expect(guardianSource).toContain("'/parent/passport': {");
+    expect(guardianSource).toContain('guardian-ideation-passport');
+  });
+
   it('GuardianPassportRenderer delegates to GuardianCapabilityViewRenderer', () => {
     const source = readSrcFile(
       'features', 'workflows', 'renderers', 'GuardianPassportRenderer.tsx'
@@ -472,6 +485,8 @@ describe('LearnerPortfolioCurationRenderer evidence-linked portfolio', () => {
 
   it('supports AI disclosure tracking', () => {
     expect(source).toMatch(/aiDisclosure|aiAssistance/i);
+    expect(source).toContain('newAiDetails');
+    expect(source).toContain('portfolio-item-ai-details-input');
   });
 
   it('writes canonical portfolio item fields instead of legacy learner curation fields', () => {
@@ -484,6 +499,7 @@ describe('LearnerPortfolioCurationRenderer evidence-linked portfolio', () => {
     expect(addDocBlock).toContain('artifacts');
     expect(addDocBlock).toContain('proofOfLearningStatus');
     expect(addDocBlock).toContain('aiDisclosureStatus');
+    expect(addDocBlock).toContain('aiAssistanceDetails');
     expect(addDocBlock).toContain("source: 'learner_submission'");
     expect(addDocBlock).not.toContain("source: 'learner_curation'");
     expect(addDocBlock).not.toContain('pillarCode: selectedCapability.pillarCode ?? newPillar');
@@ -502,6 +518,7 @@ describe('LearnerPortfolioCurationRenderer evidence-linked portfolio', () => {
     expect(handler).toContain('proudOf: newReflection.trim()');
     expect(handler).toContain("nextIWill: ''");
     expect(handler).toContain('reflectionIds: [reflectionDoc.id]');
+    expect(handler).toContain('reflectionPayload.aiAssistanceDetails = aiDetails');
   });
 });
 

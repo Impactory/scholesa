@@ -245,6 +245,7 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
   const [newPillar, setNewPillar] = useState<PillarCode>('FUTURE_SKILLS');
   const [newArtifactUrl, setNewArtifactUrl] = useState('');
   const [newAiDisclosure, setNewAiDisclosure] = useState<AiDisclosure>('none');
+  const [newAiDetails, setNewAiDetails] = useState('');
   const [newReflection, setNewReflection] = useState('');
   const [newCapabilityId, setNewCapabilityId] = useState('');
   const [saving, setSaving] = useState(false);
@@ -253,6 +254,9 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
     (capability) =>
       normalizeLegacyPillarCode(capability.pillarCode ?? '') === normalizeLegacyPillarCode(newPillar),
   );
+  const aiDisclosureNeedsDetails =
+    newAiDisclosure === 'assisted_can_explain'
+    || newAiDisclosure === 'assisted_needs_verification';
 
   // ---- Data loading ----
   const loadData = useCallback(async () => {
@@ -441,6 +445,12 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
       ];
       const artifacts = newArtifactUrl.trim() ? [newArtifactUrl.trim()] : [];
       const aiFields = aiFieldsFromDisclosure(newAiDisclosure);
+      const aiDetails =
+        typeof aiFields.aiAssistanceUsed === 'boolean'
+        && aiFields.aiAssistanceUsed
+        && newAiDetails.trim()
+          ? newAiDetails.trim()
+          : undefined;
       const portfolioAiPayload =
         typeof aiFields.aiAssistanceUsed === 'boolean'
           ? { aiAssistanceUsed: aiFields.aiAssistanceUsed }
@@ -459,6 +469,7 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
         reflectionIds: [] as string[],
         source: 'learner_submission',
         aiDisclosureStatus: aiFields.aiDisclosureStatus,
+        aiAssistanceDetails: aiDetails,
         createdAt: serverTimestamp(),
         ...portfolioAiPayload,
       } as unknown as Omit<PortfolioItemRecord, 'id'>);
@@ -479,6 +490,9 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
         };
         if (typeof aiFields.aiAssistanceUsed === 'boolean') {
           reflectionPayload.aiAssistanceUsed = aiFields.aiAssistanceUsed;
+        }
+        if (aiDetails) {
+          reflectionPayload.aiAssistanceDetails = aiDetails;
         }
         const reflectionDoc = await addDoc(
           learnerReflectionsCollection,
@@ -503,6 +517,7 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
       setNewPillar((selectedCapability.pillarCode as PillarCode | undefined) ?? 'FUTURE_SKILLS');
       setNewArtifactUrl('');
       setNewAiDisclosure('none');
+      setNewAiDetails('');
       setNewReflection('');
       setNewCapabilityId('');
       setShowAddForm(false);
@@ -844,6 +859,19 @@ export default function LearnerPortfolioCurationRenderer({ ctx }: CustomRouteRen
                     </label>
                   ))}
                 </fieldset>
+
+                {aiDisclosureNeedsDetails && (
+                  <label className="block space-y-1">
+                    <span className="text-xs font-medium text-app-muted">AI details</span>
+                    <textarea
+                      value={newAiDetails}
+                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewAiDetails(e.target.value)}
+                      placeholder="What did AI help with, and what did you change or explain yourself?"
+                      className="w-full rounded-md border border-app bg-app-canvas px-3 py-2 text-sm text-app-foreground min-h-16"
+                      data-testid="portfolio-item-ai-details-input"
+                    />
+                  </label>
+                )}
 
                 {/* Reflection linkage (S1-6) */}
                 <label className="block space-y-1">

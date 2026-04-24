@@ -394,6 +394,28 @@ describe('LearnerPassportExport learner contract', () => {
     expect(source).toContain('No passport evidence is available yet.');
     expect(source).not.toContain('No linked learners found.');
   });
+
+  it('retains provenance-rich claim and growth fields from the learner passport bundle', () => {
+    expect(source).toContain('evidenceRecordIds');
+    expect(source).toContain('portfolioItemIds');
+    expect(source).toContain('missionAttemptIds');
+    expect(source).toContain('linkedEvidenceRecordIds');
+    expect(source).toContain('linkedPortfolioItemIds');
+    expect(source).toContain('proofCheckpointCount');
+    expect(source).toContain('reviewedAt');
+    expect(source).toContain('verificationPrompt');
+    expect(source).toContain('aiAssistanceDetails');
+  });
+
+  it('exports a shareable passport with portfolio and growth provenance, not claims alone', () => {
+    expect(source).toContain('function escapeHtml');
+    expect(source).toContain('const portfolioHtml =');
+    expect(source).toContain('const growthHtml =');
+    expect(source).toContain('<h2>Portfolio Artifacts</h2>');
+    expect(source).toContain('<h2>Growth Timeline</h2>');
+    expect(source).toContain('── Portfolio Artifacts ──');
+    expect(source).toContain('── Growth Timeline ──');
+  });
 });
 
 /* ───── GuardianCapabilityViewRenderer site provenance ───── */
@@ -419,6 +441,15 @@ describe('GuardianCapabilityViewRenderer site provenance', () => {
   it('shows an explicit no-site blocked state', () => {
     expect(source).toContain('data-testid="guardian-view-site-required"');
     expect(source).toContain('Select an active site before viewing your family evidence summary.');
+  });
+
+  it('retains bundle provenance on growth timeline, portfolio highlights, and passport claims', () => {
+    expect(source).toContain('linkedEvidenceRecordIds');
+    expect(source).toContain('linkedPortfolioItemIds');
+    expect(source).toContain('proofCheckpointCount');
+    expect(source).toContain('verifiedArtifactCount');
+    expect(source).toContain('progressionDescriptor');
+    expect(source).toContain('guardian-ideation-passport');
   });
 });
 

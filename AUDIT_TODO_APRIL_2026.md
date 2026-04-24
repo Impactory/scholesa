@@ -38,8 +38,8 @@
 | `/educator/evidence` | EducatorEvidenceCapture | educator | ✅ | ✅ | flows→ | — | ✅ | — | ✅ | — |
 | `/educator/verification` | ProofOfLearningVerification | educator | ✅ | ✅ | flows→ | — | ✅ | — | ✅ | — |
 | `/learner/portfolio` | LearnerPortfolioBrowser + LearnerEvidenceSubmission | learner | ✅ | ✅ | ✅ | — | — | ✅ | ✅ | — |
-| `/parent/summary` | ParentSummaryDashboard | parent | ✅ | ✅ | ✅ | — | — | — | ✅ | — |
-| `/parent/passport` | LearnerPassportExport | parent | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | ✅ |
+| `/parent/summary` | GuardianCapabilityViewRenderer | parent | ✅ | ✅ | ✅ | — | — | — | ✅ | — |
+| `/parent/passport` | GuardianPassportRenderer | parent | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | ✅ |
 | `/site/evidence-health` | SiteEvidenceHealthDashboard | site | ✅ | ✅ | — | — | — | — | — | — |
 | `/hq/capabilities` | CapabilityFrameworkEditor | hq | ✅ | — | — | ✅ | — | — | — | — |
 
@@ -503,16 +503,17 @@ Remaining gold blockers now sit mainly in communication/read-side parity rather 
 **Status**: ✅ VERIFIED
 
 **Evidence**:
-- `LearnerPassportExport.tsx` calls `getParentDashboardBundle` callable with `{ siteId, locale, range: 'all' }`
+- `LearnerPassportExport.tsx` calls `getLearnerPassportBundle` callable with `{ siteId, locale, range: 'all' }`
 - Callable aggregates: `capabilityMastery`, `capabilityGrowthEvents`, `portfolioItems`, `evidenceRecords`, `missionAttempts`, `learnerReflections` (+ more)
 - Per-capability claims: `evidenceCount`, `verifiedArtifactCount`, `proofOfLearningStatus`, `rubricRawScore`/`rubricMaxScore`, `progressionDescriptors`, `aiDisclosureStatus`, `reviewingEducatorName`, `reviewedAt`
+- Parent-facing `GuardianCapabilityViewRenderer` / `GuardianPassportRenderer` now retain linked evidence counts, linked portfolio counts, mission linkage, rubric scores, proof-method signals, and review attribution instead of collapsing that provenance during normalization.
 - Capability band calculation: normalized per-pillar score → strong/developing/emerging band
-- Growth timeline rendered: up to 15 events with capability title, level, date, educator name, rubric score
+- Growth timeline rendered: up to 15 events with capability title, level, date, educator name, rubric score, and evidence/portfolio linkage counts
 - Export: text export (`handleExportText`) + browser print/PDF (`handlePrint`)
 - Honest empty state: "No capability claims backed by evidence yet"
-- ⚠️ Minor gap: No dedicated PDF download button (uses browser print dialog) — acceptable for beta
+- ⚠️ Remaining gaps: No dedicated PDF download button (uses browser print dialog), no polished family-safe publish/share workflow, and disclosure/provenance are still not perfectly uniform across every artifact path.
 
-**Blocker**: None
+**Blocker**: Report/publish workflow polish and uniform provenance parity across every remaining artifact path.
 
 ---
 
@@ -543,7 +544,7 @@ Remaining gold blockers now sit mainly in communication/read-side parity rather 
 - ✅ **G12 CLOSED**: All three critical web dashboards now have custom UIs:
   - **`/learner/today`** — `LearnerDashboardToday.tsx`: capability guidance, recent growth events, active missions, today's sessions. Learner CAN answer "how am I growing?"
   - **`/educator/today`** — `EducatorDashboardToday.tsx`: today's sessions with learner counts, review queue (pending evidence + PoL), pillar capability snapshots, recent evidence. Educator CAN answer "what needs attention?"
-  - **`/parent/summary`** — `ParentSummaryDashboard.tsx`: calls `getParentDashboardBundle`, per-learner capability snapshots with band + pillar scores, growth timeline, portfolio highlights. Parent CAN answer "what can my child do?"
+  - **`/parent/summary`** — `GuardianCapabilityViewRenderer.tsx`: calls `getParentDashboardBundle`, per-learner capability snapshots with band + pillar scores, growth timeline, portfolio highlights, and passport-linked provenance details. Parent CAN answer "what can my child do?"
 
 **Blocker**: None
 
@@ -591,7 +592,7 @@ Remaining gold blockers now sit mainly in communication/read-side parity rather 
 - **Fix**: Created `LearnerDashboardToday.tsx` replacing `WorkflowRoutePage`. Custom dashboard with: capability guidance panel (pillar progress + bands), recent growth events, active missions, today's sessions. Data from direct Firestore queries.
 
 ### G12. Web `/educator/today` and `/parent/summary` generic CRUD lists — ✅ CLOSED
-- **Fix**: Created `EducatorDashboardToday.tsx` (sessions, review queue, pillar snapshots, recent evidence) and `ParentSummaryDashboard.tsx` (calls `getParentDashboardBundle`, per-learner capability snapshots with band + pillar scores, growth timeline, portfolio highlights). Both replace `WorkflowRoutePage`.
+- **Fix**: Created `EducatorDashboardToday.tsx` (sessions, review queue, pillar snapshots, recent evidence) and routed `/parent/summary` through `GuardianCapabilityViewRenderer.tsx` backed by `getParentDashboardBundle` so the parent summary uses the same evidence-backed family surface as the rest of the guardian workflow. Both replace the generic `WorkflowRoutePage` fallback.
 
 ---
 
@@ -627,11 +628,11 @@ Remaining gold blockers now sit mainly in communication/read-side parity rather 
 | Growth events created atomically | WF6 | ◐ | Rubric + checkpoint callables; proof-linked checkpoints recover via `pending_proof` |
 | Growth visible on web dashboard | WF6 | ✅ | `LearnerDashboardToday.tsx` growth events + capability bands (G11) |
 | Portfolio browsable with filters | WF7 | ✅ | `LearnerPortfolioBrowser.tsx` |
-| Passport from real evidence | WF8 | ◐ | `LearnerPassportExport.tsx` via callable, but reporting provenance is still incomplete end to end |
+| Passport from real evidence | WF8 | ◐ | `LearnerPassportExport.tsx` and guardian passport surfaces now consume richer claim/growth provenance via callables, but publish/export polish and full parity are still incomplete |
 | AI disclosure captured + displayed | WF9 | ◐ | Stronger across submission, portfolio, and passport, but not yet uniform on every artifact path |
-| Parent answers "what can my child do?" | WF10 | ◐ | `ParentSummaryDashboard.tsx` exists, but downstream communication still drops some provenance |
+| Parent answers "what can my child do?" | WF10 | ◐ | `GuardianCapabilityViewRenderer.tsx` is the real web parent summary surface and now preserves more provenance, but downstream communication is still not uniformly polished |
 | Educator answers "what needs attention?" | WF10 | ◐ | `EducatorDashboardToday.tsx` review queue is real, but not every trust-critical surface has full evidence parity |
-| Learner answers "how am I growing?" | WF10 | ◐ | `LearnerDashboardToday.tsx` shows growth and bands, and the learner timeline now shows direct evidence-linked growth plus standalone proof bundles, but report/guardian provenance is still incomplete |
+| Learner answers "how am I growing?" | WF10 | ◐ | `LearnerDashboardToday.tsx` shows growth and bands, the learner timeline shows direct evidence-linked growth plus standalone proof bundles, and passport/report surfaces are stronger, but communication parity is still incomplete |
 
 ---
 

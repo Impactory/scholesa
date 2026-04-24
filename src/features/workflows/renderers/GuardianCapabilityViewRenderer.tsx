@@ -35,11 +35,16 @@ interface GrowthEvent {
   educatorName: string;
   date: string;
   proofStatus: 'verified' | 'partial' | 'missing';
+  linkedEvidenceCount: number;
+  linkedPortfolioCount: number;
+  missionAttemptId?: string | null;
+  rubricScore?: { raw: number; max: number } | null;
 }
 
 interface PortfolioItem {
   id: string;
   title: string;
+  capabilityTitles: string[];
   source?: string | null;
   verificationStatus: 'verified' | 'unverified' | 'pending';
   aiDisclosure:
@@ -61,7 +66,11 @@ interface PortfolioItem {
     miniRebuildExcerpt?: string;
     educatorVerifierName?: string;
   };
+  reviewedAt?: string | null;
   evidenceCount?: number;
+  proofCheckpointCount?: number;
+  missionAttemptId?: string | null;
+  verificationPrompt?: string | null;
   rubricScore?: { raw: number; max: number; level: string } | null;
 }
 
@@ -79,9 +88,19 @@ interface PassportClaim {
   pillarCode: string;
   level: string;
   evidenceCount: number;
+  verifiedArtifactCount: number;
+  portfolioItemCount: number;
+  missionAttemptCount: number;
   proofStatus: 'verified' | 'partial' | 'missing';
   aiDisclosureStatus: string;
   reviewerName?: string;
+  reviewedAt?: string | null;
+  rubricScore?: { raw: number; max: number } | null;
+  proofHasExplainItBack: boolean;
+  proofHasOralCheck: boolean;
+  proofHasMiniRebuild: boolean;
+  proofCheckpointCount: number;
+  progressionDescriptor?: string;
 }
 
 interface LearnerSummary {
@@ -287,6 +306,16 @@ function normalizeGrowthTimeline(summary: Record<string, unknown>): GrowthEvent[
         educatorName: asString(row.reviewingEducatorName, 'Educator review pending'),
         date: asString(row.occurredAt),
         proofStatus: normalizeProofStatus(row.proofOfLearningStatus),
+        linkedEvidenceCount: asStringArray(row.linkedEvidenceRecordIds).length,
+        linkedPortfolioCount: asStringArray(row.linkedPortfolioItemIds).length,
+        missionAttemptId: asString(row.missionAttemptId) || null,
+        rubricScore:
+          asNumber(row.rubricRawScore) != null && asNumber(row.rubricMaxScore) != null
+            ? {
+                raw: asNumber(row.rubricRawScore) ?? 0,
+                max: asNumber(row.rubricMaxScore) ?? 0,
+              }
+            : null,
       };
     })
     .filter((entry): entry is GrowthEvent => entry !== null);
@@ -304,6 +333,7 @@ function normalizePortfolioHighlights(summary: Record<string, unknown>): Portfol
     normalized.push({
       id: asString(row.id, `portfolio-item-${index + 1}`),
       title: asString(row.title, 'Portfolio artifact'),
+      capabilityTitles: asStringArray(row.capabilityTitles),
       source: asString(row.source) || null,
       verificationStatus: normalizeVerificationStatus(row.verificationStatus),
       aiDisclosure: normalizeAiDisclosure(row.aiDisclosureStatus),
@@ -316,7 +346,11 @@ function normalizePortfolioHighlights(summary: Record<string, unknown>): Portfol
         miniRebuildExcerpt: asString(row.proofMiniRebuildExcerpt) || undefined,
         educatorVerifierName: asString(row.reviewingEducatorName) || undefined,
       },
+      reviewedAt: asString(row.reviewedAt) || null,
       evidenceCount: asStringArray(row.evidenceRecordIds).length || undefined,
+      proofCheckpointCount: asNumber(row.proofCheckpointCount) ?? undefined,
+      missionAttemptId: asString(row.missionAttemptId) || null,
+      verificationPrompt: asString(row.verificationPrompt) || null,
       rubricScore:
         rubricRawScore != null && rubricMaxScore != null
           ? {
@@ -344,9 +378,25 @@ function normalizeIdeationPassport(summary: Record<string, unknown>): IdeationPa
       pillarCode: asString(row.pillar),
       level: formatLevel(row.latestLevel),
       evidenceCount: asNumber(row.evidenceCount) ?? 0,
+      verifiedArtifactCount: asNumber(row.verifiedArtifactCount) ?? 0,
+      portfolioItemCount: asStringArray(row.portfolioItemIds).length,
+      missionAttemptCount: asStringArray(row.missionAttemptIds).length,
       proofStatus: normalizeProofStatus(row.proofOfLearningStatus),
       aiDisclosureStatus: asString(row.aiDisclosureStatus, 'not-available'),
       reviewerName: asString(row.reviewingEducatorName) || undefined,
+      reviewedAt: asString(row.reviewedAt) || null,
+      rubricScore:
+        asNumber(row.rubricRawScore) != null && asNumber(row.rubricMaxScore) != null
+          ? {
+              raw: asNumber(row.rubricRawScore) ?? 0,
+              max: asNumber(row.rubricMaxScore) ?? 0,
+            }
+          : null,
+      proofHasExplainItBack: row.proofHasExplainItBack === true,
+      proofHasOralCheck: row.proofHasOralCheck === true,
+      proofHasMiniRebuild: row.proofHasMiniRebuild === true,
+      proofCheckpointCount: asNumber(row.proofCheckpointCount) ?? 0,
+      progressionDescriptor: asStringArray(row.progressionDescriptors)[0] || undefined,
     });
   });
   return {
@@ -463,6 +513,10 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
     '/parent/portfolio': {
       sectionId: 'guardian-portfolio-highlights',
       subtitle: "Review your child's portfolio work and proof of learning.",
+    },
+    '/parent/passport': {
+      sectionId: 'guardian-ideation-passport',
+      subtitle: "See the capability claims, proof, and review trail that make up your child's passport.",
     },
   };
   const focus = ROUTE_FOCUS[ctx.routePath ?? ''] ?? null;
@@ -697,6 +751,11 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
                           <p className="text-xs text-app-muted">
                             Reviewed by {event.educatorName} &middot; {formatDate(event.date)}
                           </p>
+                          <p className="text-xs text-app-muted">
+                            {event.linkedEvidenceCount} evidence &middot; {event.linkedPortfolioCount} portfolio item{event.linkedPortfolioCount === 1 ? '' : 's'}
+                            {event.missionAttemptId ? ' · mission-linked' : ''}
+                            {event.rubricScore ? ` · rubric ${event.rubricScore.raw}/${event.rubricScore.max}` : ''}
+                          </p>
                         </div>
                         <span
                           className={`whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${proofCfg.className}`}
@@ -736,7 +795,14 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
                         data-testid={`portfolio-item-${item.id}`}
                       >
                         <div className="flex flex-wrap items-start justify-between gap-2">
-                          <p className="text-sm font-medium text-app-foreground">{item.title}</p>
+                          <div>
+                            <p className="text-sm font-medium text-app-foreground">{item.title}</p>
+                            {item.capabilityTitles.length > 0 && (
+                              <p className="mt-1 text-xs text-app-muted">
+                                {item.capabilityTitles.join(', ')}
+                              </p>
+                            )}
+                          </div>
                           <div className="flex gap-1.5">
                             {item.source === 'educator_observation' && (
                               <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-800">
@@ -811,14 +877,20 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
                           {item.proofDetails.educatorVerifierName && (
                             <span>Verified by: {item.proofDetails.educatorVerifierName}</span>
                           )}
+                          {item.reviewedAt && <span>Reviewed: {formatDate(item.reviewedAt)}</span>}
                           {typeof item.evidenceCount === 'number' && item.evidenceCount > 0 && (
                             <span>{item.evidenceCount} evidence record{item.evidenceCount !== 1 ? 's' : ''}</span>
                           )}
+                          {typeof item.proofCheckpointCount === 'number' && item.proofCheckpointCount > 0 && (
+                            <span>{item.proofCheckpointCount} checkpoint{item.proofCheckpointCount !== 1 ? 's' : ''}</span>
+                          )}
+                          {item.missionAttemptId && <span>Mission-linked</span>}
                           {item.rubricScore && (
                             <span>
                               Rubric: {item.rubricScore.raw}/{item.rubricScore.max} ({item.rubricScore.level})
                             </span>
                           )}
+                          {item.verificationPrompt && <span>Prompt: {item.verificationPrompt}</span>}
                         </div>
                       </li>
                     );
@@ -830,6 +902,8 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
             {/* ---- Ideation Passport Summary ---- */}
             {learner.ideationPassport && (
               <div
+                id="guardian-ideation-passport"
+                ref={focus?.sectionId === 'guardian-ideation-passport' && learnerIdx === 0 ? focusRef : undefined}
                 className="rounded-lg border border-app bg-app-surface-raised p-4"
                 data-testid={`ideation-passport-${learner.learnerId}`}
               >
@@ -883,9 +957,21 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
                               {claimAiCfg.label}
                             </span>
                             <span className="text-app-muted">{claim.evidenceCount} evidence</span>
+                            <span className="text-app-muted">{claim.verifiedArtifactCount} verified artifacts</span>
+                            {claim.portfolioItemCount > 0 && <span className="text-app-muted">{claim.portfolioItemCount} portfolio item{claim.portfolioItemCount === 1 ? '' : 's'}</span>}
+                            {claim.missionAttemptCount > 0 && <span className="text-app-muted">{claim.missionAttemptCount} mission attempt{claim.missionAttemptCount === 1 ? '' : 's'}</span>}
                             {claim.reviewerName && (
                               <span className="text-app-muted">by {claim.reviewerName}</span>
                             )}
+                            {claim.reviewedAt && <span className="text-app-muted">{formatDate(claim.reviewedAt)}</span>}
+                            {claim.rubricScore && <span className="text-app-muted">rubric {claim.rubricScore.raw}/{claim.rubricScore.max}</span>}
+                            {(claim.proofHasExplainItBack || claim.proofHasOralCheck || claim.proofHasMiniRebuild) && (
+                              <span className="text-app-muted">
+                                proof: {[claim.proofHasExplainItBack ? 'E' : null, claim.proofHasOralCheck ? 'O' : null, claim.proofHasMiniRebuild ? 'R' : null].filter(Boolean).join('·')}
+                              </span>
+                            )}
+                            {claim.proofCheckpointCount > 0 && <span className="text-app-muted">{claim.proofCheckpointCount} checkpoints</span>}
+                            {claim.progressionDescriptor && <span className="italic text-app-muted">&ldquo;{claim.progressionDescriptor}&rdquo;</span>}
                           </li>
                         );
                       })}

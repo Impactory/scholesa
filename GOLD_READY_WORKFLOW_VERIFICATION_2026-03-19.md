@@ -107,7 +107,8 @@ Only active product code paths were considered. A workflow is not "verified" unl
 - `apps/empire_flutter/app/lib/modules/parent/parent_child_page.dart` now renders an `Ideation Passport` section from those evidence-backed claims.
 - `apps/empire_flutter/app/lib/modules/parent/parent_child_page.dart` now exports an `Ideation Passport` text report with claim-by-claim evidence counts, verification status, proof-of-learning status, AI visibility status, and direct evidence/portfolio item/mission attempt IDs.
 - `apps/empire_flutter/app/lib/modules/parent/parent_portfolio_page.dart` exports portfolio summaries with evidence-linked, proof-of-learning, AI visibility, and provenance details included.
-- Blockers that keep this workflow partial: Passport/report outputs still do not consume capability growth records and evidence backlinks end to end, and there is still no polished publishable family-safe Passport workflow or richer final report artifact.
+- Parent and learner passport/report surfaces now consume richer capability-growth backlinks, review attribution, proof-method context, and evidence/portfolio/mission linkage counts from the callable payloads.
+- Blockers that keep this workflow partial: there is still no polished publishable family-safe Passport workflow, richer final report artifact, or perfectly uniform provenance/display parity across every remaining product path.
 - Remaining gap: there is still no polished family-safe publishing flow, no richer formatted Passport document, and learner-facing AI-use disclosure is still only partial because claims and portfolio output are stronger for canonically linked artifacts, but not yet uniform across every product path.
 - Current judgment: partial.
 
