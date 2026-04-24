@@ -31,4 +31,42 @@ describe('parent dashboard wording honesty', () => {
     expect(passportBlock).toContain('progressionDescriptors,');
     expect(passportBlock).toContain('checkpointMappings,');
   });
+
+  it('keeps portfolio, passport, and growth provenance fields in the callable summary payload', () => {
+    const indexSource = readFunctionsFile('index.ts');
+    const portfolioBlock = indexSource.slice(
+      indexSource.indexOf('const portfolioItemsPreview = portfolioRows'),
+      indexSource.indexOf('const reflectionDates = reflectionRows'),
+    );
+    const passportBlock = indexSource.slice(
+      indexSource.indexOf('const passportClaims = masteryRows'),
+      indexSource.indexOf('const ideationPassport: Record<string, unknown> = {'),
+    );
+    const growthBlock = indexSource.slice(
+      indexSource.indexOf('const growthTimeline = growthRows'),
+      indexSource.indexOf('const currentLevel = resolveParentCurrentLevel'),
+    );
+
+    expect(portfolioBlock).toContain('evidenceRecordIds:');
+    expect(portfolioBlock).toContain('missionAttemptId: missionAttemptId || null');
+    expect(portfolioBlock).toContain('verificationPrompt:');
+    expect(portfolioBlock).toContain('proofCheckpointCount,');
+    expect(portfolioBlock).toContain('aiAssistanceDetails,');
+    expect(portfolioBlock).toContain('reviewingEducatorName: reviewerName');
+    expect(portfolioBlock).toContain('rubricRawScore,');
+
+    expect(passportBlock).toContain('evidenceRecordIds:');
+    expect(passportBlock).toContain('portfolioItemIds:');
+    expect(passportBlock).toContain('missionAttemptIds:');
+    expect(passportBlock).toContain('proofCheckpointCount,');
+    expect(passportBlock).toContain('aiAssistanceDetails,');
+    expect(passportBlock).toContain('reviewingEducatorName: reviewerName');
+    expect(passportBlock).toContain('rubricRawScore,');
+
+    expect(growthBlock).toContain('linkedEvidenceRecordIds:');
+    expect(growthBlock).toContain('linkedPortfolioItemIds:');
+    expect(growthBlock).toContain('reviewingEducatorName: reviewerId ? reviewerNames[reviewerId] ?? null : null');
+    expect(growthBlock).toContain('rubricRawScore:');
+    expect(growthBlock).toContain('missionAttemptId:');
+  });
 });

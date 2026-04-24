@@ -6,7 +6,7 @@ Scholesa is a capability-first evidence platform for K-12 schools and learning s
 
 | Surface | Primary paths | Notes |
 | --- | --- | --- |
-| Web app | `app/`, `src/`, `public/`, `locales/` | Next.js 16 App Router with locale-first URLs, 69 routes, and protected role workflows |
+| Web app | `app/`, `src/`, `public/`, `locales/` | Next.js 16 App Router with locale-first URLs, 69 total app routes, and 62 protected workflow paths |
 | Flutter app | `apps/empire_flutter/app/` | Mobile and multi-platform client with its own router, role dashboard, offline queue, MiloOS runtime, and learning signal surfaces |
 | Backend | `functions/src/` | Firebase Functions v2 on Node 24 for workflow ops, billing, MiloOS orchestration, voice, telemetry, and policy enforcement |
 | Compliance operator | `services/scholesa-compliance/` | Separate Node service and CLI for compliance scans and gates |

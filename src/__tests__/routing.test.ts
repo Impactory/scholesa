@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { proxy } from '@/proxy';
-import { ROLE_DEFAULT_WORKFLOW_ROUTE, WORKFLOW_ROUTE_DEFINITIONS } from '@/src/lib/routing/workflowRoutes';
+import { ALL_WORKFLOW_PATHS, ROLE_DEFAULT_WORKFLOW_ROUTE, WORKFLOW_ROUTE_DEFINITIONS } from '@/src/lib/routing/workflowRoutes';
 
 describe('Routing contracts', () => {
   it('redirects locale aliases to canonical locales', () => {
@@ -39,6 +39,30 @@ describe('Routing contracts', () => {
     for (const route of Object.values(ROLE_DEFAULT_WORKFLOW_ROUTE)) {
       expect(workflowPaths.has(`/${route}` as (typeof WORKFLOW_ROUTE_DEFINITIONS)[number]['path'])).toBe(true);
     }
+  });
+
+  it('keeps the protected workflow inventory aligned to the current 62-path registry', () => {
+    expect(ALL_WORKFLOW_PATHS).toHaveLength(62);
+    expect(WORKFLOW_ROUTE_DEFINITIONS).toHaveLength(62);
+
+    const counts = WORKFLOW_ROUTE_DEFINITIONS.reduce<Record<string, number>>((acc, route) => {
+      const segment = route.path.split('/')[1] || 'common';
+      acc[segment] = (acc[segment] ?? 0) + 1;
+      return acc;
+    }, {});
+
+    expect(counts).toEqual({
+      learner: 9,
+      educator: 13,
+      parent: 6,
+      site: 11,
+      partner: 5,
+      hq: 14,
+      messages: 1,
+      notifications: 1,
+      profile: 1,
+      settings: 1,
+    });
   });
 
   it('includes the governed site Clever workflow route', () => {

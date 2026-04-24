@@ -29,7 +29,7 @@ If this chain is broken, the platform is not ready.
 
 ## Monorepo Structure
 
-- **Next.js web app** (App Router, locale-first, 69 routes) — `app/`, `src/`
+- **Next.js web app** (App Router, locale-first, 69 total app routes / 62 protected workflow paths) — `app/`, `src/`
 - **Flutter mobile/desktop client** (WASM web, iOS, Android, macOS) — `apps/empire_flutter/app/`
 - **Firebase Functions v2 backend** — `functions/`
 - **Compliance operator service** — `services/scholesa-compliance/`
@@ -148,7 +148,7 @@ test/                      # Root Jest & Playwright E2E tests
 
 ## Workflow Route Architecture
 
-All 46 protected web routes are defined in `src/lib/routing/workflowRoutes.ts` as `WorkflowRouteDefinition` objects with `path`, `allowedRoles`, `navGroup`, and `dataMode` (firestore | callable | hybrid).
+All 62 protected workflow routes are defined in `src/lib/routing/workflowRoutes.ts` as `WorkflowRouteDefinition` objects with `path`, `allowedRoles`, `navGroup`, and `dataMode` (firestore | callable | hybrid).
 
 Route pages in `app/[locale]/(protected)/` are thin wrappers:
 ```tsx
@@ -158,16 +158,16 @@ export default function Page() {
 }
 ```
 
-All data loading and CRUD is handled generically by `WorkflowRoutePage` + `workflowData.ts`. Operational routes (messaging, billing, incidents, provisioning) render through the generic record-list UI with title/subtitle/status/metadata cards. Evidence-chain routes dispatch through `src/features/workflows/customRouteRenderers.tsx` to **dedicated domain renderers** in `src/features/workflows/renderers/` — covering capability framework authoring, rubric building/applying, educator evidence capture and review, proof-of-learning assembly, learner portfolio curation, progress reports, guardian capability views, passport export, and implementation health. Adding a new evidence-chain surface means building a renderer there, not extending the generic card UI.
+All data loading and CRUD is handled generically by `WorkflowRoutePage` + `workflowData.ts`. Operational routes (messaging, billing, incidents, provisioning) render through the generic record-list UI with title/subtitle/status/metadata cards. Evidence-chain routes dispatch through `src/features/workflows/customRouteRenderers.tsx` to **dedicated domain renderers** in `src/features/workflows/renderers/` — covering capability framework authoring, rubric building/applying, educator evidence capture and review, proof-of-learning assembly, learner portfolio curation, progress reports, guardian capability views, passport export, and implementation health. Current split: 62 protected workflow routes total, 29 dedicated custom-rendered evidence surfaces, and 33 generic workflow routes. Adding a new evidence-chain surface means building a renderer there, not extending the generic card UI.
 
 ### Routes by Role
 
-**Learner** (4): `/learner/today`, `/learner/missions`, `/learner/habits`, `/learner/portfolio`
-**Educator** (8): `/educator/today`, `/educator/attendance`, `/educator/sessions`, `/educator/learners`, `/educator/missions/review`, `/educator/mission-plans`, `/educator/learner-supports`, `/educator/integrations`
-**Parent** (4): `/parent/summary`, `/parent/billing`, `/parent/schedule`, `/parent/portfolio`
-**Site** (10): `/site/checkin`, `/site/provisioning`, `/site/dashboard`, `/site/sessions`, `/site/ops`, `/site/incidents`, `/site/identity`, `/site/clever`, `/site/integrations-health`, `/site/billing`
+**Learner** (9): `/learner/today`, `/learner/missions`, `/learner/portfolio`, `/learner/timeline`, `/learner/checkpoints`, `/learner/peer-feedback`, `/learner/proof-assembly`, `/learner/reflections`, `/learner/habits`
+**Educator** (13): `/educator/today`, `/educator/attendance`, `/educator/sessions`, `/educator/learners`, `/educator/missions/review`, `/educator/mission-plans`, `/educator/learner-supports`, `/educator/evidence`, `/educator/observations`, `/educator/proof-review`, `/educator/rubrics/apply`, `/educator/verification`, `/educator/integrations`
+**Parent** (6): `/parent/summary`, `/parent/billing`, `/parent/schedule`, `/parent/portfolio`, `/parent/growth-timeline`, `/parent/passport`
+**Site** (11): `/site/checkin`, `/site/provisioning`, `/site/dashboard`, `/site/sessions`, `/site/ops`, `/site/incidents`, `/site/identity`, `/site/clever`, `/site/integrations-health`, `/site/billing`, `/site/evidence-health`
 **Partner** (5): `/partner/listings`, `/partner/contracts`, `/partner/deliverables`, `/partner/integrations`, `/partner/payouts`
-**HQ** (11): `/hq/user-admin`, `/hq/role-switcher`, `/hq/sites`, `/hq/analytics`, `/hq/billing`, `/hq/approvals`, `/hq/audit`, `/hq/safety`, `/hq/integrations-health`, `/hq/curriculum`, `/hq/feature-flags`
+**HQ** (14): `/hq/user-admin`, `/hq/role-switcher`, `/hq/sites`, `/hq/analytics`, `/hq/billing`, `/hq/approvals`, `/hq/audit`, `/hq/safety`, `/hq/integrations-health`, `/hq/curriculum`, `/hq/capabilities`, `/hq/capability-frameworks`, `/hq/rubric-builder`, `/hq/feature-flags`
 **Common** (4): `/messages`, `/notifications`, `/profile`, `/settings`
 
 ## Curriculum Architecture v1 (canonical)

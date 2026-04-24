@@ -11,7 +11,7 @@
 
 | Metric | Value |
 |--------|-------|
-| Web routes | 69 (9 custom capability-aligned + 38 generic CRUD + 10 redirects + 6 API + 2 auth + 4 shared) |
+| Web routes | 69 total app routes per Next.js build; 62 protected workflow paths in `workflowRoutes.ts` (29 dedicated custom-rendered evidence surfaces + 33 generic workflow routes) |
 | Schema types | 69 exported interfaces |
 | Firestore collections (typed web) | 46 |
 | Firestore rules collections | 135 |
@@ -27,9 +27,11 @@
 
 ---
 
-## §1. FULL ROUTE CLASSIFICATION (69 routes)
+## §1. ROUTE INVENTORY AND GOLD-CRITICAL CLASSIFICATION (69 total app routes / 62 protected workflow paths)
 
-### 1A. Capability-First Aligned Routes (9 custom components)
+The full live route inventory is maintained in `docs/ROUTE_MODULE_MATRIX.md`. This audit section classifies the gold-gate custom evidence slice and the remaining workflow buckets rather than pretending the smaller tables below are the whole registry.
+
+### 1A. Gold-Gate Custom Evidence Route Slice (9 of 29 dedicated evidence surfaces)
 
 | Route | Component | Role | Cap Track | Evidence | Portfolio | Rubric | PoL | AI Trans | Growth | Profile Gen |
 |-------|-----------|------|-----------|----------|-----------|--------|-----|----------|--------|-------------|
@@ -43,18 +45,18 @@
 | `/site/evidence-health` | SiteEvidenceHealthDashboard | site | ✅ | ✅ | — | — | — | — | — | — |
 | `/hq/capabilities` | CapabilityFrameworkEditor | hq | ✅ | — | — | ✅ | — | — | — | — |
 
-**Classification: ALIGNED AND USABLE** — These 9 routes are the gold core. Each connects to real Firestore data and serves the evidence chain.
+**Classification: ALIGNED AND USABLE** — These 9 routes are the gold-gate slice inside the larger 29-route custom evidence surface set. Each connects to real Firestore data and serves the evidence chain.
 
-### 1B. Generic Workflow Routes (38 via WorkflowRoutePage)
+### 1B. Remaining Workflow Route Buckets
 
-#### Learner (1 route + 1 dedicated habit workflow)
+#### Learner Operational Remainder
 | Route | Data Source | Classification | Notes |
 |-------|------------|----------------|-------|
 | `/learner/missions` | `missionAttempts` collection | **Reusable with modification** | CRUD list of mission attempts; no capability binding in UI. Could add capability tags. |
 
 `/learner/habits` now renders through a dedicated `LearnerHabitsRenderer` backed by persisted `habits` and `habitLogs` documents. It is operationally real and end-to-end for learner routine tracking, but it intentionally stays separate from capability mastery claims.
 
-#### Educator (7 routes)
+#### Educator Operational Remainder
 | Route | Data Source | Classification | Notes |
 |-------|------------|----------------|-------|
 | `/educator/sessions` | `sessions` collection | **Operational (aligned)** | Session scheduling supports evidence chain by creating session context. |
@@ -65,14 +67,14 @@
 | `/educator/learner-supports` | `learnerSupports` collection | **Operational** | Intervention tracking. Not capability-informed. |
 | `/educator/integrations` | callable | **Operational** | External system connections (Clever, LTI). |
 
-#### Parent (3 routes)
+#### Parent Operational Remainder
 | Route | Data Source | Classification | Notes |
 |-------|------------|----------------|-------|
 | `/parent/portfolio` | `portfolioItems` collection | **Reusable with modification** | CRUD list; no capability mapping in parent view. Could show capability tags. |
 | `/parent/billing` | callable | **Operational** | Billing/subscriptions. Not evidence-related. |
 | `/parent/schedule` | `sessionOccurrences` collection | **Operational** | Calendar visibility. |
 
-#### Site Admin (10 routes)
+#### Site Admin Operational Remainder
 | Route | Classification | Notes |
 |-------|----------------|-------|
 | `/site/dashboard` | **Operational** | Daily site overview. |
@@ -86,7 +88,7 @@
 | `/site/integrations-health` | **Operational** | Integration health monitoring. |
 | `/site/billing` | **Operational** | Billing ops. |
 
-#### HQ Admin (11 routes)
+#### HQ Admin Operational Remainder
 | Route | Classification | Notes |
 |-------|----------------|-------|
 | `/hq/sites` | **Operational** | Network site management. |

@@ -1,6 +1,6 @@
 # Route Module Matrix
 
-Last updated: 2026-03-18
+Last updated: 2026-04-23
 
 This matrix maps the currently implemented route surfaces to their entry files and backing modules.
 
@@ -13,6 +13,7 @@ For current Flutter route proof status and remaining blind spots, see `docs/FLUT
 - Most protected workflow pages are thin wrappers over `src/features/workflows/WorkflowRoutePage.tsx`.
 - Canonical web workflow metadata lives in `src/lib/routing/workflowRoutes.ts`.
 - In normal runtime those workflow routes load through `src/features/workflows/workflowData.ts` against Firestore and callable backends. The browser E2E harness switches that same layer into the explicit fake backend when `NEXT_PUBLIC_E2E_TEST_MODE=1`.
+- There are currently 62 protected workflow paths: 29 dedicated custom-rendered evidence surfaces and 33 generic workflow surfaces.
 
 ## Web Public and Redirect Routes
 
@@ -38,8 +39,13 @@ All routes below render through `src/features/workflows/WorkflowRoutePage.tsx` w
 | --- | --- | --- | --- |
 | `/:locale/learner/today` | learner, educator, hq | `app/[locale]/(protected)/learner/today/page.tsx` | firestore |
 | `/:locale/learner/missions` | learner, educator, hq | `app/[locale]/(protected)/learner/missions/page.tsx` | firestore |
-| `/:locale/learner/habits` | learner, educator, hq | `app/[locale]/(protected)/learner/habits/page.tsx` | firestore |
 | `/:locale/learner/portfolio` | learner, educator, hq | `app/[locale]/(protected)/learner/portfolio/page.tsx` | firestore |
+| `/:locale/learner/timeline` | learner, educator, hq | `app/[locale]/(protected)/learner/timeline/page.tsx` | firestore |
+| `/:locale/learner/checkpoints` | learner, educator, hq | `app/[locale]/(protected)/learner/checkpoints/page.tsx` | firestore |
+| `/:locale/learner/peer-feedback` | learner, educator, hq | `app/[locale]/(protected)/learner/peer-feedback/page.tsx` | firestore |
+| `/:locale/learner/proof-assembly` | learner, educator, hq | `app/[locale]/(protected)/learner/proof-assembly/page.tsx` | firestore |
+| `/:locale/learner/reflections` | learner, educator, hq | `app/[locale]/(protected)/learner/reflections/page.tsx` | firestore |
+| `/:locale/learner/habits` | learner, educator, hq | `app/[locale]/(protected)/learner/habits/page.tsx` | firestore |
 | `/:locale/educator/today` | educator, site, hq | `app/[locale]/(protected)/educator/today/page.tsx` | firestore |
 | `/:locale/educator/attendance` | educator, site, hq | `app/[locale]/(protected)/educator/attendance/page.tsx` | firestore |
 | `/:locale/educator/sessions` | educator, site, hq | `app/[locale]/(protected)/educator/sessions/page.tsx` | firestore |
@@ -47,11 +53,18 @@ All routes below render through `src/features/workflows/WorkflowRoutePage.tsx` w
 | `/:locale/educator/missions/review` | educator, site, hq | `app/[locale]/(protected)/educator/missions/review/page.tsx` | firestore |
 | `/:locale/educator/mission-plans` | educator, site, hq | `app/[locale]/(protected)/educator/mission-plans/page.tsx` | firestore |
 | `/:locale/educator/learner-supports` | educator, site, hq | `app/[locale]/(protected)/educator/learner-supports/page.tsx` | firestore |
+| `/:locale/educator/evidence` | educator, site, hq | `app/[locale]/(protected)/educator/evidence/page.tsx` | firestore |
+| `/:locale/educator/observations` | educator, site, hq | `app/[locale]/(protected)/educator/observations/page.tsx` | firestore |
+| `/:locale/educator/proof-review` | educator, site, hq | `app/[locale]/(protected)/educator/proof-review/page.tsx` | firestore |
+| `/:locale/educator/rubrics/apply` | educator, site, hq | `app/[locale]/(protected)/educator/rubrics/apply/page.tsx` | callable |
+| `/:locale/educator/verification` | educator, site, hq | `app/[locale]/(protected)/educator/verification/page.tsx` | firestore |
 | `/:locale/educator/integrations` | educator, site, hq | `app/[locale]/(protected)/educator/integrations/page.tsx` | callable |
 | `/:locale/parent/summary` | parent, hq | `app/[locale]/(protected)/parent/summary/page.tsx` | hybrid |
 | `/:locale/parent/billing` | parent, hq | `app/[locale]/(protected)/parent/billing/page.tsx` | callable |
 | `/:locale/parent/schedule` | parent, hq | `app/[locale]/(protected)/parent/schedule/page.tsx` | firestore |
 | `/:locale/parent/portfolio` | parent, hq | `app/[locale]/(protected)/parent/portfolio/page.tsx` | firestore |
+| `/:locale/parent/growth-timeline` | parent, site, hq | `app/[locale]/(protected)/parent/growth-timeline/page.tsx` | firestore |
+| `/:locale/parent/passport` | parent, site, hq | `app/[locale]/(protected)/parent/passport/page.tsx` | callable |
 | `/:locale/site/checkin` | site, hq | `app/[locale]/(protected)/site/checkin/page.tsx` | firestore |
 | `/:locale/site/provisioning` | site, hq | `app/[locale]/(protected)/site/provisioning/page.tsx` | firestore |
 | `/:locale/site/dashboard` | site, hq | `app/[locale]/(protected)/site/dashboard/page.tsx` | hybrid |
@@ -62,21 +75,25 @@ All routes below render through `src/features/workflows/WorkflowRoutePage.tsx` w
 | `/:locale/site/clever` | site, hq | `app/[locale]/(protected)/site/clever/page.tsx` | hybrid |
 | `/:locale/site/integrations-health` | site, hq | `app/[locale]/(protected)/site/integrations-health/page.tsx` | callable |
 | `/:locale/site/billing` | site, hq | `app/[locale]/(protected)/site/billing/page.tsx` | callable |
+| `/:locale/site/evidence-health` | site, hq | `app/[locale]/(protected)/site/evidence-health/page.tsx` | firestore |
 | `/:locale/partner/listings` | partner, hq | `app/[locale]/(protected)/partner/listings/page.tsx` | firestore |
 | `/:locale/partner/contracts` | partner, hq | `app/[locale]/(protected)/partner/contracts/page.tsx` | firestore |
 | `/:locale/partner/deliverables` | partner, hq | `app/[locale]/(protected)/partner/deliverables/page.tsx` | firestore |
 | `/:locale/partner/integrations` | partner, hq | `app/[locale]/(protected)/partner/integrations/page.tsx` | firestore |
-| `/:locale/partner/payouts` | partner, hq | `app/[locale]/(protected)/partner/payouts/page.tsx` | firestore |
+| `/:locale/partner/payouts` | partner, hq | `app/[locale]/(protected)/partner/payouts/page.tsx` | callable |
 | `/:locale/hq/user-admin` | hq | `app/[locale]/(protected)/hq/user-admin/page.tsx` | callable |
 | `/:locale/hq/role-switcher` | hq | `app/[locale]/(protected)/hq/role-switcher/page.tsx` | callable |
-| `/:locale/hq/sites` | hq | `app/[locale]/(protected)/hq/sites/page.tsx` | callable |
+| `/:locale/hq/sites` | hq | `app/[locale]/(protected)/hq/sites/page.tsx` | firestore |
 | `/:locale/hq/analytics` | hq | `app/[locale]/(protected)/hq/analytics/page.tsx` | callable |
 | `/:locale/hq/billing` | hq | `app/[locale]/(protected)/hq/billing/page.tsx` | callable |
 | `/:locale/hq/approvals` | hq | `app/[locale]/(protected)/hq/approvals/page.tsx` | callable |
 | `/:locale/hq/audit` | hq | `app/[locale]/(protected)/hq/audit/page.tsx` | callable |
 | `/:locale/hq/safety` | hq | `app/[locale]/(protected)/hq/safety/page.tsx` | callable |
 | `/:locale/hq/integrations-health` | hq | `app/[locale]/(protected)/hq/integrations-health/page.tsx` | callable |
-| `/:locale/hq/curriculum` | hq | `app/[locale]/(protected)/hq/curriculum/page.tsx` | callable |
+| `/:locale/hq/curriculum` | hq | `app/[locale]/(protected)/hq/curriculum/page.tsx` | firestore |
+| `/:locale/hq/capabilities` | hq | `app/[locale]/(protected)/hq/capabilities/page.tsx` | firestore |
+| `/:locale/hq/capability-frameworks` | hq | `app/[locale]/(protected)/hq/capability-frameworks/page.tsx` | firestore |
+| `/:locale/hq/rubric-builder` | hq | `app/[locale]/(protected)/hq/rubric-builder/page.tsx` | firestore |
 | `/:locale/hq/feature-flags` | hq | `app/[locale]/(protected)/hq/feature-flags/page.tsx` | callable |
 | `/:locale/messages` | all authenticated roles | `app/[locale]/(protected)/messages/page.tsx` | firestore |
 | `/:locale/notifications` | all authenticated roles | `app/[locale]/(protected)/notifications/page.tsx` | firestore |
