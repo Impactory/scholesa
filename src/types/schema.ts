@@ -1431,6 +1431,8 @@ export interface CapabilityGrowthEvent {
   siteId: string;
   rubricApplicationId?: string;
   evidenceIds: string[];
+  linkedEvidenceRecordIds?: string[];
+  linkedPortfolioItemIds?: string[];
   rawScore?: number;
   maxScore?: number;
   createdAt: Timestamp;

@@ -501,6 +501,13 @@ describe('LearnerEvidenceTimelineRenderer all-evidence synthesis', () => {
     expect(source).toContain('proofOfLearningBundles');
   });
 
+  it('renders proof bundles as standalone timeline entries', () => {
+    expect(source).toContain("type: 'proof_bundle'");
+    expect(source).toContain('Proof of learning');
+    expect(source).toContain('portfolioItemId');
+    expect(source).toContain('hasExplainItBack');
+  });
+
   it('reads missionAttempts', () => {
     expect(source).toContain('missionAttempts');
   });
@@ -516,6 +523,13 @@ describe('LearnerEvidenceTimelineRenderer all-evidence synthesis', () => {
 
   it('shows proof status on evidence items', () => {
     expect(source).toMatch(/proofStatus|proof_bundle/i);
+  });
+
+  it('back-links growth from linked evidence records as well as portfolio items', () => {
+    expect(source).toContain('linkedEvidenceRecordIds');
+    expect(source).toContain('growthByEvidence');
+    expect(source).toContain('evidenceRecordIds');
+    expect(source).toContain('mergeGrowthLinks');
   });
 
   it('orders items chronologically', () => {

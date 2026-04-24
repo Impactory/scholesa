@@ -83,6 +83,52 @@ function toIso(val: unknown): string {
   return new Date(0).toISOString();
 }
 
+function mergeGrowthLinks(...groups: Array<GrowthLink[] | undefined>): GrowthLink[] | undefined {
+  const merged = new Map<string, GrowthLink>();
+  groups.forEach((group) => {
+    group?.forEach((link) => {
+      merged.set(link.id, link);
+    });
+  });
+  return merged.size > 0 ? Array.from(merged.values()) : undefined;
+}
+
+function proofBundleStatusToTimelineStatus(status: unknown): TimelineItem['status'] {
+  switch (status) {
+    case 'verified':
+      return 'verified';
+    case 'pending_review':
+      return 'submitted';
+    case 'partial':
+      return 'pending';
+    default:
+      return 'pending';
+  }
+}
+
+function proofBundleStatusToBadgeStatus(status: unknown): TimelineItem['proofStatus'] {
+  if (status === 'verified') return 'verified';
+  if (status === 'partial' || status === 'pending_review') return 'partial';
+  return 'missing';
+}
+
+function summarizeProofBundle(data: DocumentData): string | undefined {
+  const methods: string[] = [];
+  if (data.hasExplainItBack === true) methods.push('Explain it back');
+  if (data.hasOralCheck === true) methods.push('Oral check');
+  if (data.hasMiniRebuild === true) methods.push('Mini rebuild');
+
+  const excerpt = [data.explainItBackExcerpt, data.oralCheckExcerpt, data.miniRebuildExcerpt].find(
+    (value): value is string => typeof value === 'string' && value.trim().length > 0
+  );
+
+  const summary = methods.length > 0 ? `Methods: ${methods.join(', ')}` : 'Proof bundle started';
+  if (!excerpt) return summary;
+
+  const trimmedExcerpt = excerpt.trim();
+  return `${summary}. ${trimmedExcerpt.slice(0, 120)}${trimmedExcerpt.length > 120 ? '…' : ''}`;
+}
+
 function getEvidenceIcon(type: EvidenceType) {
   switch (type) {
     case 'artifact':
@@ -201,11 +247,13 @@ export default function LearnerEvidenceTimelineRenderer({ ctx }: CustomRouteRend
       ]);
 
       // Build growth-event back-links: every capabilityGrowthEvent points to one or more
-      // triggering sources (missionAttemptId, checkpointId, linkedPortfolioItemIds). We
+      // triggering sources (missionAttemptId, checkpointId, linkedPortfolioItemIds,
+      // linkedEvidenceRecordIds). We
       // index them here so each timeline item can surface the growth it caused.
       const growthByMission = new Map<string, GrowthLink[]>();
       const growthByCheckpoint = new Map<string, GrowthLink[]>();
       const growthByPortfolio = new Map<string, GrowthLink[]>();
+      const growthByEvidence = new Map<string, GrowthLink[]>();
       const pushGrowth = (map: Map<string, GrowthLink[]>, key: string, link: GrowthLink) => {
         if (!key) return;
         const bucket = map.get(key) ?? [];
@@ -229,9 +277,22 @@ export default function LearnerEvidenceTimelineRenderer({ ctx }: CustomRouteRend
             if (typeof pid === 'string') pushGrowth(growthByPortfolio, pid, link);
           }
         }
+        const linkedEvidenceRecordIds = Array.isArray(data.linkedEvidenceRecordIds)
+          ? data.linkedEvidenceRecordIds
+          : Array.isArray(data.evidenceIds)
+            ? data.evidenceIds
+            : [];
+        linkedEvidenceRecordIds.forEach((evidenceId) => {
+          if (typeof evidenceId === 'string') pushGrowth(growthByEvidence, evidenceId, link);
+        });
       });
 
       // Build proof bundle map for quick lookup
+      const portfolioById = new Map<string, QueryDocumentSnapshot<DocumentData>>();
+      portfolioSnap.docs.forEach((d) => {
+        portfolioById.set(d.id, d);
+      });
+
       const proofByItem = new Map<string, QueryDocumentSnapshot<DocumentData>>();
       proofSnap.docs.forEach((d) => {
         const data = d.data();
@@ -247,6 +308,10 @@ export default function LearnerEvidenceTimelineRenderer({ ctx }: CustomRouteRend
         const data = d.data();
         const proofDoc = proofByItem.get(d.id);
         const proofData = proofDoc?.data();
+        const evidenceRecordIds = Array.isArray(data.evidenceRecordIds)
+          ? data.evidenceRecordIds.filter((value): value is string => typeof value === 'string')
+          : [];
+        const growthFromEvidence = evidenceRecordIds.flatMap((evidenceId) => growthByEvidence.get(evidenceId) ?? []);
 
         timelineItems.push({
           id: d.id,
@@ -260,10 +325,55 @@ export default function LearnerEvidenceTimelineRenderer({ ctx }: CustomRouteRend
           aiDisclosureStatus: data.aiDisclosureStatus,
           proofStatus: proofData?.verificationStatus || 'missing',
           linkedItemIds: proofData ? [proofData.id] : [],
-          growthTriggered: growthByPortfolio.get(d.id),
+          growthTriggered: mergeGrowthLinks(growthByPortfolio.get(d.id), growthFromEvidence),
           metadata: {
             artifacts: data.artifacts,
+            evidenceRecordIds,
             source: data.source,
+          },
+        });
+      });
+
+      // Proof bundles
+      proofSnap.docs.forEach((d) => {
+        const data = d.data();
+        const portfolioItemId = typeof data.portfolioItemId === 'string' ? data.portfolioItemId : '';
+        const linkedPortfolioData = portfolioItemId ? portfolioById.get(portfolioItemId)?.data() : undefined;
+        const capabilityIds = Array.isArray(linkedPortfolioData?.capabilityIds)
+          ? linkedPortfolioData.capabilityIds.filter((value): value is string => typeof value === 'string')
+          : typeof data.capabilityId === 'string' && data.capabilityId.trim()
+            ? [data.capabilityId.trim()]
+            : [];
+        const pillarCodes = Array.isArray(linkedPortfolioData?.pillarCodes)
+          ? linkedPortfolioData.pillarCodes.filter((value): value is string => typeof value === 'string')
+          : [];
+        const linkedTitle =
+          typeof linkedPortfolioData?.title === 'string' && linkedPortfolioData.title.trim()
+            ? linkedPortfolioData.title.trim()
+            : null;
+
+        timelineItems.push({
+          id: d.id,
+          type: 'proof_bundle',
+          title: linkedTitle ? `Proof of learning: ${linkedTitle}` : 'Proof of learning bundle',
+          description: summarizeProofBundle(data),
+          createdAt: toIso(data.updatedAt || data.createdAt),
+          status: proofBundleStatusToTimelineStatus(data.verificationStatus),
+          pillarCodes,
+          capabilityIds,
+          aiDisclosureStatus:
+            typeof linkedPortfolioData?.aiDisclosureStatus === 'string'
+              ? linkedPortfolioData.aiDisclosureStatus
+              : undefined,
+          proofStatus: proofBundleStatusToBadgeStatus(data.verificationStatus),
+          linkedItemIds: portfolioItemId ? [portfolioItemId] : undefined,
+          metadata: {
+            portfolioItemId,
+            hasExplainItBack: data.hasExplainItBack === true,
+            hasOralCheck: data.hasOralCheck === true,
+            hasMiniRebuild: data.hasMiniRebuild === true,
+            educatorVerifierId: data.educatorVerifierId,
+            version: data.version,
           },
         });
       });

@@ -614,7 +614,7 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
                 ),
                 if (!isLast) const SizedBox(width: 8),
               ];
-            }).toList(growable: false),
+            }),
           ],
         ),
       ),

@@ -7,7 +7,7 @@
 
 ## FINAL RECOMMENDATION: ⚠️ BETA-READY, NOT GOLD-READY
 
-**The core evidence chain is real and materially stronger, but Scholesa is not yet gold-ready.** Recent work tightened the proof boundary, preserved canonical portfolio provenance through rubric application, and fixed proof-linked checkpoint growth dead-ends. However, downstream communication surfaces still have incomplete provenance consumption, legacy compatibility remains visible, and several workflows remain partial rather than gold-certified.
+**The core evidence chain is real and materially stronger, but Scholesa is not yet gold-ready.** Recent work tightened the proof boundary, preserved canonical portfolio provenance through rubric application, fixed proof-linked checkpoint growth dead-ends, reused canonical portfolio items during live observation rubric review, taught the learner timeline to back-link direct evidence-triggered growth, and promoted proof bundles into standalone learner timeline entries. However, downstream communication surfaces still have incomplete provenance consumption, legacy compatibility remains visible, and several workflows remain partial rather than gold-certified.
 
 | Metric | Value |
 |--------|-------|
@@ -477,7 +477,7 @@ Remaining gold blockers now sit mainly in communication/read-side parity rather 
 - ✅ Flutter has custom growth visualizations in `parent_summary_page.dart` (level progression bars per capability)
 - ✅ **G11 CLOSED**: `LearnerDashboardToday.tsx` custom dashboard with capability guidance panel, recent growth events, active missions, today's sessions — replaces generic session list
 
-**Blocker**: Timeline/report surfaces still do not consume all evidence backlinks end to end, so this workflow is real but not yet gold-certified.
+**Blocker**: Report surfaces and some remaining read-side communication still do not consume all evidence backlinks end to end, so this workflow is real but not yet gold-certified.
 
 **Blocker**: None
 
@@ -630,7 +630,7 @@ Remaining gold blockers now sit mainly in communication/read-side parity rather 
 | AI disclosure captured + displayed | WF9 | ◐ | Stronger across submission, portfolio, and passport, but not yet uniform on every artifact path |
 | Parent answers "what can my child do?" | WF10 | ◐ | `ParentSummaryDashboard.tsx` exists, but downstream communication still drops some provenance |
 | Educator answers "what needs attention?" | WF10 | ◐ | `EducatorDashboardToday.tsx` review queue is real, but not every trust-critical surface has full evidence parity |
-| Learner answers "how am I growing?" | WF10 | ◐ | `LearnerDashboardToday.tsx` shows growth and bands, but timeline provenance is still incomplete |
+| Learner answers "how am I growing?" | WF10 | ◐ | `LearnerDashboardToday.tsx` shows growth and bands, and the learner timeline now shows direct evidence-linked growth plus standalone proof bundles, but report/guardian provenance is still incomplete |
 
 ---
 
@@ -665,9 +665,9 @@ Remaining gold blockers now sit mainly in communication/read-side parity rather 
 This audit classifies every major route (69), schema type (69), cloud function (63), and Firestore collection (135 rules / 46 typed) against Scholesa's capability-first evidence model across 8 dimensions.
 
 **What exists and is aligned**: HQ capability/rubric/checkpoint authoring, educator evidence capture/review, proof review, rubric growth writes, portfolio linkage, and passport/guardian read paths are all real and connected.
-**What exists but needs refactor**: Timeline/reporting provenance, legacy-pillar compatibility read models, and Flutter/offline evidence parity.
+**What exists but needs refactor**: Reporting provenance, legacy-pillar compatibility read models, and Flutter/offline evidence parity.
 **What is fake, partial, or misleading**: Any doc or surface that still claims proof verification writes growth directly, or that all 10 gold workflows are fully certified end to end.
-**What is missing**: Full evidence-backlinked learner timeline/report communication and broader workflow-level certification with real data.
+**What is missing**: Full report/passport communication that consumes evidence backlinks end to end, plus broader workflow-level certification with real data.
 **Which role is most blocked**: Learner/guardian interpretation is now the most blocked because downstream communication still drops some provenance even though the write paths are much stronger.
-**Highest-risk break in evidence chain**: Read-side provenance gaps — especially timeline/report surfaces that still do not consume all growth → evidence backlinks end to end.
+**Highest-risk break in evidence chain**: Read-side provenance gaps — especially report/passport surfaces that still do not consume all growth → evidence backlinks end to end.
 **Recommendation**: ⚠️ BETA-READY, NOT GOLD-READY.
