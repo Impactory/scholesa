@@ -931,7 +931,7 @@ void main() {
       expect(find.text('Prototype Reflection'), findsOneWidget);
       expect(find.text('Studio Review'), findsOneWidget);
       expect(find.text('Hidden Project'), findsNothing);
-      expect(find.text('Export Passport'), findsOneWidget);
+      expect(find.text('Passport Actions'), findsOneWidget);
       expect(find.text('View Consent'), findsOneWidget);
     });
 
@@ -1997,7 +1997,10 @@ void main() {
         findsOneWidget,
       );
 
-      await tester.tap(find.text('Export Passport'));
+      await tester.tap(find.text('Passport Actions'));
+      await tester.pump();
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Export Passport').last);
       await tester.pump();
       await tester.pumpAndSettle();
 

@@ -270,7 +270,9 @@ void main() {
       child: const ParentChildPage(learnerId: 'learner-1'),
     );
 
-    await tester.tap(find.text('Export Passport'));
+    await tester.tap(find.text('Passport Actions'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Export Passport').last);
     await tester.pumpAndSettle();
 
     expect(find.text('Ideation Passport downloaded.'), findsOneWidget);
@@ -318,7 +320,9 @@ void main() {
       child: const ParentChildPage(learnerId: 'learner-1'),
     );
 
-    await tester.tap(find.text('Export Passport'));
+    await tester.tap(find.text('Passport Actions'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Export Passport').last);
     await tester.pumpAndSettle();
 
     expect(find.text('Ideation Passport copied for sharing.'), findsOneWidget);
@@ -347,11 +351,53 @@ void main() {
       child: const ParentChildPage(learnerId: 'learner-1'),
     );
 
-    await tester.tap(find.text('Export Passport'));
+    await tester.tap(find.text('Passport Actions'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Export Passport').last);
     await tester.pumpAndSettle();
 
     expect(find.text('Unable to download Ideation Passport right now.'),
         findsOneWidget);
+  });
+
+  testWidgets('parent child page copies family summary for sharing',
+      (WidgetTester tester) async {
+    String? copiedText;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (MethodCall methodCall) async {
+        if (methodCall.method == 'Clipboard.setData') {
+          final Object? args = methodCall.arguments;
+          if (args is Map) {
+            copiedText = args['text'] as String?;
+          }
+        }
+        return null;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null);
+    });
+
+    await _pumpPage(
+      tester,
+      parentService: _StubParentService(
+        parentId: 'parent-1',
+        learnerSummaries: <LearnerSummary>[_sampleLearner()],
+      ),
+      child: const ParentChildPage(learnerId: 'learner-1'),
+    );
+
+    await tester.tap(find.text('Passport Actions'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Share Family Summary'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Family summary copied for sharing.'), findsOneWidget);
+    expect(copiedText, contains('Scholesa family summary for Ava Learner'));
+    expect(copiedText, contains('Current evidence-backed claims:'));
+    expect(copiedText, contains('Pending verification prompts:'));
   });
 
   testWidgets('parent child page shows explicit not linked state',

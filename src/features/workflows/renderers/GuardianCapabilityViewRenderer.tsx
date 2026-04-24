@@ -426,6 +426,129 @@ function normalizeLearnerSummary(summary: Record<string, unknown>): LearnerSumma
     evidenceSummary: evidenceSummary
       ? {
           recordCount: asNumber(evidenceSummary.recordCount) ?? 0,
+
+    function buildGuardianPassportTextLines(learner: LearnerSummary): string[] {
+      const pendingPrompts = learner.portfolioHighlights.filter(
+        (item) => typeof item.verificationPrompt === 'string' && item.verificationPrompt.trim().length > 0,
+      );
+      const lines: string[] = [];
+      lines.push('═══════════════════════════════════════════');
+      lines.push('  SCHOLESA FAMILY PASSPORT SUMMARY');
+      lines.push('═══════════════════════════════════════════');
+      lines.push('');
+      lines.push(`Learner: ${learner.name}`);
+      lines.push(`Prepared: ${formatDate(new Date().toISOString())}`);
+      lines.push(`Capability Band: ${LEVEL_BAND_CONFIG[learner.currentLevelBand]?.label ?? 'Not yet assessed'}`);
+      lines.push('');
+      lines.push('── Report Basis ──');
+      lines.push('  This summary reflects reviewed evidence, linked portfolio artifacts, and recorded growth events.');
+      lines.push('  Participation signals do not replace capability judgments.');
+      lines.push(`  Pending verification prompts: ${pendingPrompts.length}`);
+      lines.push('');
+      lines.push('── Capability Snapshot ──');
+      if (learner.pillars.length === 0) {
+        lines.push('  No capability snapshot is available yet.');
+      }
+      for (const pillar of learner.pillars) {
+        lines.push(`  ${pillar.label}: ${pillar.percent}% (${pillar.bandLabel})`);
+      }
+      lines.push('');
+      lines.push('── Evidence Summary ──');
+      if (learner.evidenceSummary) {
+        lines.push(`  Evidence records:      ${learner.evidenceSummary.recordCount}`);
+        lines.push(`  Reviewed:              ${learner.evidenceSummary.reviewedCount}`);
+        lines.push(`  Portfolio-linked:      ${learner.evidenceSummary.portfolioLinkedCount}`);
+      } else {
+        lines.push('  Evidence summary unavailable.');
+      }
+      lines.push('');
+      lines.push('── Capability Claims ──');
+      if (!learner.ideationPassport?.claims || learner.ideationPassport.claims.length === 0) {
+        lines.push('  No capability claims backed by reviewed evidence yet.');
+      } else {
+        for (const claim of learner.ideationPassport.claims) {
+          lines.push('');
+          lines.push(`  ${claim.capabilityTitle}`);
+          lines.push(`    Level:           ${claim.level}`);
+          lines.push(`    Evidence:        ${claim.evidenceCount} evidence, ${claim.verifiedArtifactCount} verified artifacts`);
+          lines.push(`    Provenance:      ${claim.portfolioItemCount} portfolio item(s), ${claim.missionAttemptCount} mission attempt(s)`);
+          lines.push(`    Proof-of-Learn:  ${PROOF_STATUS_CONFIG[claim.proofStatus]?.label ?? 'Missing'}`);
+          lines.push(`    AI Disclosure:   ${AI_DISCLOSURE_CONFIG[claim.aiDisclosureStatus]?.label ?? 'Not assessed'}`);
+          if (claim.reviewerName) {
+            lines.push(`    Reviewed by:     ${claim.reviewerName}${claim.reviewedAt ? ` (${formatDate(claim.reviewedAt)})` : ''}`);
+          }
+          if (claim.rubricScore) {
+            lines.push(`    Rubric Score:    ${claim.rubricScore.raw}/${claim.rubricScore.max}`);
+          }
+          if (claim.progressionDescriptor) {
+            lines.push(`    Descriptor:      ${claim.progressionDescriptor}`);
+          }
+        }
+      }
+      lines.push('');
+      lines.push('── Portfolio Highlights ──');
+      if (learner.portfolioHighlights.length === 0) {
+        lines.push('  No portfolio highlights are available yet.');
+      } else {
+        for (const item of learner.portfolioHighlights.slice(0, 5)) {
+          lines.push('');
+          lines.push(`  ${item.title}`);
+          lines.push(`    Status:          ${VERIFICATION_CONFIG[item.verificationStatus]?.label ?? 'Unverified'}`);
+          lines.push(`    AI Disclosure:   ${AI_DISCLOSURE_CONFIG[item.aiDisclosure]?.label ?? 'Not assessed'}`);
+          lines.push(`    Proof methods:   ${[
+            item.proofDetails.explainItBack ? 'ExplainItBack' : null,
+            item.proofDetails.oralCheck ? 'OralCheck' : null,
+            item.proofDetails.miniRebuild ? 'MiniRebuild' : null,
+          ].filter(Boolean).join(' · ') || '—'}`);
+          if (item.verificationPrompt) {
+            lines.push(`    Verify next:     ${item.verificationPrompt}`);
+          }
+        }
+      }
+      lines.push('');
+      lines.push('── Recent Growth ──');
+      if (learner.growthTimeline.length === 0) {
+        lines.push('  No growth events have been recorded yet.');
+      } else {
+        for (const event of learner.growthTimeline.slice(0, 5)) {
+          lines.push(`  ${formatDate(event.date)} · ${event.capabilityTitle}`);
+          lines.push(`    Level:           ${event.levelAchieved}`);
+          lines.push(`    Proof status:    ${PROOF_STATUS_CONFIG[event.proofStatus]?.label ?? 'Missing'}`);
+          lines.push(`    Provenance:      ${event.linkedEvidenceCount} evidence, ${event.linkedPortfolioCount} portfolio${event.missionAttemptId ? ', mission-linked' : ''}`);
+        }
+      }
+      lines.push('');
+      lines.push('═══════════════════════════════════════════');
+      lines.push(`  ${learner.ideationPassport?.summaryText ?? 'No family passport summary available yet.'}`);
+      lines.push('═══════════════════════════════════════════');
+      return lines;
+    }
+
+    function buildGuardianFamilyShareSummary(learner: LearnerSummary): string {
+      const pendingPrompts = learner.portfolioHighlights
+        .filter((item) => typeof item.verificationPrompt === 'string' && item.verificationPrompt.trim().length > 0)
+        .slice(0, 2);
+      const topClaims = learner.ideationPassport?.claims?.slice(0, 3) ?? [];
+
+      return [
+        `Scholesa family summary for ${learner.name}`,
+        `Prepared ${formatDate(new Date().toISOString())}`,
+        'This summary reflects reviewed evidence, linked artifacts, and recorded growth events.',
+        `Capability band: ${LEVEL_BAND_CONFIG[learner.currentLevelBand]?.label ?? 'Not yet assessed'}`,
+        `Reviewed evidence: ${learner.evidenceSummary?.reviewedCount ?? 0}`,
+        `Pending verification prompts: ${pendingPrompts.length}`,
+        '',
+        'Current evidence-backed claims:',
+        ...(topClaims.length > 0
+          ? topClaims.map((claim) => `- ${claim.capabilityTitle}: ${claim.level} with ${claim.evidenceCount} evidence record(s)`)
+          : ['- No capability claims backed by reviewed evidence yet.']),
+        '',
+        'Next verification prompts:',
+        ...(pendingPrompts.length > 0
+          ? pendingPrompts.map((item) => `- ${item.title}: ${item.verificationPrompt}`)
+          : ['- No pending verification prompts in this summary.']),
+      ].join('\n');
+    }
           reviewedCount: asNumber(evidenceSummary.reviewedCount) ?? 0,
           portfolioLinkedCount: asNumber(evidenceSummary.portfolioLinkedCount) ?? 0,
         }
@@ -433,6 +556,7 @@ function normalizeLearnerSummary(summary: Record<string, unknown>): LearnerSumma
     growthSummary: growthSummary
       ? {
           capabilityCount: asNumber(growthSummary.capabilityCount) ?? 0,
+      const [shareFeedback, setShareFeedback] = useState<{ learnerId: string; message: string } | null>(null);
           updatedCount: asNumber(growthSummary.updatedCapabilityCount) ?? 0,
           averageLevel: asNumber(growthSummary.averageLevel) ?? 0,
         }
@@ -520,6 +644,7 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
     },
   };
   const focus = ROUTE_FOCUS[ctx.routePath ?? ''] ?? null;
+  const isPassportRoute = ctx.routePath === '/parent/passport';
   const focusRef = useRef<HTMLDivElement | null>(null);
 
   const fetchData = useCallback(async () => {
@@ -558,6 +683,75 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
       focusRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }, [loading, focus]);
+
+  useEffect(() => {
+    if (!shareFeedback) return;
+    const timeout = window.setTimeout(() => setShareFeedback(null), 4000);
+    return () => window.clearTimeout(timeout);
+  }, [shareFeedback]);
+
+  const handleShareSummary = useCallback(async (learner: LearnerSummary) => {
+    const shareText = buildGuardianFamilyShareSummary(learner);
+    try {
+      if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+        await navigator.share({
+          title: `Scholesa family summary for ${learner.name}`,
+          text: shareText,
+        });
+        setShareFeedback({ learnerId: learner.learnerId, message: 'Family summary ready to share.' });
+        return;
+      }
+
+      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareText);
+        setShareFeedback({ learnerId: learner.learnerId, message: 'Family summary copied to clipboard.' });
+        return;
+      }
+
+      setShareFeedback({ learnerId: learner.learnerId, message: 'Sharing is unavailable in this browser. Use Export Text instead.' });
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
+      setShareFeedback({ learnerId: learner.learnerId, message: 'Sharing is unavailable in this browser. Use Export Text instead.' });
+    }
+  }, []);
+
+  const handleExportText = useCallback((learner: LearnerSummary) => {
+    const lines = buildGuardianPassportTextLines(learner);
+    const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `family-passport-${learner.learnerId}.txt`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }, []);
+
+  const handleExportPdf = useCallback(async (learner: LearnerSummary) => {
+    const { jsPDF } = await import('jspdf');
+    const pdf = new jsPDF({ unit: 'pt', format: 'letter' });
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const marginX = 40;
+    const marginY = 48;
+    const lineHeight = 14;
+    const maxWidth = pageWidth - (marginX * 2);
+    let y = marginY;
+
+    pdf.setFont('courier', 'normal');
+    pdf.setFontSize(10);
+
+    for (const line of buildGuardianPassportTextLines(learner)) {
+      const wrapped = pdf.splitTextToSize(line, maxWidth) as string[];
+      if (y + (wrapped.length * lineHeight) > pageHeight - marginY) {
+        pdf.addPage();
+        y = marginY;
+      }
+      pdf.text(wrapped, marginX, y);
+      y += Math.max(wrapped.length, 1) * lineHeight;
+    }
+
+    pdf.save(`family-passport-${learner.learnerId}.pdf`);
+  }, []);
 
   // -- Loading state --
   if (loading) {
@@ -907,9 +1101,48 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
                 className="rounded-lg border border-app bg-app-surface-raised p-4"
                 data-testid={`ideation-passport-${learner.learnerId}`}
               >
-                <h3 className="mb-3 text-sm font-semibold text-app-foreground">
-                  Ideation Passport
-                </h3>
+                <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h3 className="text-sm font-semibold text-app-foreground">
+                      Ideation Passport
+                    </h3>
+                    {isPassportRoute && (
+                      <p className="mt-1 max-w-2xl text-xs text-app-muted">
+                        Export or share a family-safe summary of reviewed evidence, linked artifacts, and recorded growth for {learner.name}.
+                      </p>
+                    )}
+                    {shareFeedback?.learnerId === learner.learnerId && (
+                      <p className="mt-1 text-xs font-medium text-emerald-700" data-testid={`guardian-passport-share-feedback-${learner.learnerId}`}>
+                        {shareFeedback.message}
+                      </p>
+                    )}
+                  </div>
+                  {isPassportRoute && (
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => { void handleShareSummary(learner); }}
+                        className="rounded-md border border-app bg-app-canvas px-3 py-2 text-xs font-medium text-app-foreground"
+                      >
+                        Share family summary
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleExportText(learner)}
+                        className="rounded-md border border-app bg-app-canvas px-3 py-2 text-xs font-medium text-app-foreground"
+                      >
+                        Export text
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { void handleExportPdf(learner); }}
+                        className="rounded-md border border-app bg-app-canvas px-3 py-2 text-xs font-medium text-app-foreground"
+                      >
+                        Export PDF
+                      </button>
+                    </div>
+                  )}
+                </div>
                 <div className="mb-3 flex flex-wrap gap-4 text-sm text-app-muted">
                   <span>
                     <strong className="text-app-foreground">

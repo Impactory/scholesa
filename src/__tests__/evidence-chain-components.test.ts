@@ -412,6 +412,11 @@ describe('LearnerPassportExport learner contract', () => {
     expect(source).toContain('const portfolioHtml =');
     expect(source).toContain('const growthHtml =');
     expect(source).toContain('const reportBasisHtml =');
+    expect(source).toContain('buildPassportTextLines');
+    expect(source).toContain('buildFamilyShareSummary');
+    expect(source).toContain("await import('jspdf')");
+    expect(source).toContain('navigator.share');
+    expect(source).toContain('navigator.clipboard?.writeText');
     expect(source).toContain('<h2>Portfolio Artifacts</h2>');
     expect(source).toContain('<h2>Growth Timeline</h2>');
     expect(source).toContain('Pending verification prompts:');
@@ -419,6 +424,8 @@ describe('LearnerPassportExport learner contract', () => {
     expect(source).toContain('── Portfolio Artifacts ──');
     expect(source).toContain('── Growth Timeline ──');
     expect(source).toContain('── Report Basis ──');
+    expect(source).toContain('Share Family Summary');
+    expect(source).toContain('Export PDF');
   });
 });
 
@@ -454,6 +461,17 @@ describe('GuardianCapabilityViewRenderer site provenance', () => {
     expect(source).toContain('verifiedArtifactCount');
     expect(source).toContain('progressionDescriptor');
     expect(source).toContain('guardian-ideation-passport');
+  });
+
+  it('adds family-safe share and PDF export actions on the parent passport route', () => {
+    expect(source).toContain("const isPassportRoute = ctx.routePath === '/parent/passport'");
+    expect(source).toContain('buildGuardianPassportTextLines');
+    expect(source).toContain('buildGuardianFamilyShareSummary');
+    expect(source).toContain("await import('jspdf')");
+    expect(source).toContain('navigator.share');
+    expect(source).toContain('navigator.clipboard?.writeText');
+    expect(source).toContain('Share family summary');
+    expect(source).toContain('Export PDF');
   });
 });
 

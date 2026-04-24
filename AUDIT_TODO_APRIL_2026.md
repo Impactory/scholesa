@@ -511,11 +511,11 @@ Remaining gold blockers now sit mainly in communication/read-side parity rather 
 - Parent-facing `GuardianCapabilityViewRenderer` / `GuardianPassportRenderer` now retain linked evidence counts, linked portfolio counts, mission linkage, rubric scores, proof-method signals, and review attribution instead of collapsing that provenance during normalization.
 - Capability band calculation: normalized per-pillar score → strong/developing/emerging band
 - Growth timeline rendered: up to 15 events with capability title, level, date, educator name, rubric score, and evidence/portfolio linkage counts
-- Export: text export (`handleExportText`) + browser print/PDF (`handlePrint`)
+- Export: learner and parent web passport surfaces now provide text export, dedicated PDF export, browser print, and a family-safe share summary; learner web also keeps portable HTML export for browser viewing/archive, and Flutter parent child detail now exposes passport actions for text export plus family-summary sharing
 - Honest empty state: "No capability claims backed by evidence yet"
-- ⚠️ Remaining gaps: No dedicated PDF download button (uses browser print dialog), no polished family-safe publish/share workflow, and disclosure/provenance are still not perfectly uniform across every artifact path.
+- ⚠️ Remaining gaps: web passport routes and the Flutter parent child passport surface now have concrete export/share actions, but there is still no unified publish/share workflow across every reporting surface, and disclosure/provenance are still not perfectly uniform across every artifact path.
 
-**Blocker**: Report/publish workflow polish and uniform provenance parity across every remaining artifact path.
+**Blocker**: Cross-role report/publish workflow polish and uniform provenance parity across every remaining artifact path.
 
 ---
 
@@ -630,7 +630,7 @@ Remaining gold blockers now sit mainly in communication/read-side parity rather 
 | Growth events created atomically | WF6 | ◐ | Rubric + checkpoint callables; proof-linked checkpoints recover via `pending_proof` |
 | Growth visible on web dashboard | WF6 | ✅ | `LearnerDashboardToday.tsx` growth events + capability bands (G11) |
 | Portfolio browsable with filters | WF7 | ✅ | `LearnerPortfolioBrowser.tsx` |
-| Passport from real evidence | WF8 | ◐ | `LearnerPassportExport.tsx` and guardian passport surfaces now consume richer claim, portfolio, and growth provenance via callables, and learner export output now carries artifact/growth detail too, but publish/export polish and full parity are still incomplete |
+| Passport from real evidence | WF8 | ◐ | `LearnerPassportExport.tsx` plus guardian passport surfaces now consume richer claim, portfolio, and growth provenance via callables; learner and parent web passport routes offer dedicated PDF/share actions; and Flutter parent child detail now exposes passport export/share actions too, but unified publish/share workflow parity and full provenance consistency are still incomplete |
 | AI disclosure captured + displayed | WF9 | ◐ | Stronger across submission, portfolio, and passport, and non-mission learner portfolio curation now preserves AI detail text as well as status, but not yet uniform on every artifact path |
 | Parent answers "what can my child do?" | WF10 | ◐ | `GuardianCapabilityViewRenderer.tsx` is the real web parent summary surface and now preserves more provenance, but downstream communication is still not uniformly polished |
 | Educator answers "what needs attention?" | WF10 | ◐ | `EducatorDashboardToday.tsx` review queue is real, but not every trust-critical surface has full evidence parity |

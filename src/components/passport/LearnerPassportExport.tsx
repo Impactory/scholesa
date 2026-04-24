@@ -212,6 +212,150 @@ function summarizeProofMethods(
   ].filter(Boolean).join(' · ') || '—';
 }
 
+function buildPassportTextLines(learner: LearnerPassportData): string[] {
+  const lines: string[] = [];
+  lines.push('═══════════════════════════════════════════');
+  lines.push('  SCHOLESA IDEATION PASSPORT');
+  lines.push('═══════════════════════════════════════════');
+  lines.push('');
+  lines.push(`Learner: ${learner.learnerName ?? 'Unknown'}`);
+  lines.push(`Generated: ${formatDate(learner.ideationPassport.generatedAt)}`);
+  lines.push(`Capability Band: ${bandLabel(learner.capabilitySnapshot.band)}`);
+  lines.push('');
+  lines.push('── Report Basis ──');
+  lines.push('  This passport summarizes reviewed evidence, linked artifacts, and recorded growth events.');
+  lines.push('  Participation signals do not replace capability judgments.');
+  lines.push('  Legacy family progress is a compatibility roll-up of the current curriculum strands.');
+  lines.push(`  Pending verification prompts: ${learner.evidenceSummary.verificationPromptCount}`);
+  lines.push('');
+  lines.push('── Legacy Family Progress ──');
+  lines.push(`  Think, Make & Navigate AI: ${pct(learner.capabilitySnapshot.futureSkills)}`);
+  lines.push(`  Communicate & Lead:       ${pct(learner.capabilitySnapshot.leadership)}`);
+  lines.push(`  Build for the World:      ${pct(learner.capabilitySnapshot.impact)}`);
+  lines.push(`  Overall:              ${pct(learner.capabilitySnapshot.overall)}`);
+  lines.push('');
+  lines.push('── Evidence Summary ──');
+  lines.push(`  Evidence Records:     ${learner.evidenceSummary.recordCount}`);
+  lines.push(`  Reviewed:             ${learner.evidenceSummary.reviewedCount}`);
+  lines.push(`  Portfolio-Linked:     ${learner.evidenceSummary.portfolioLinkedCount}`);
+  lines.push(`  Pending prompts:      ${learner.evidenceSummary.verificationPromptCount}`);
+  lines.push(`  Latest Evidence:      ${formatDate(learner.evidenceSummary.latestEvidenceAt)}`);
+  lines.push('');
+  lines.push('── Portfolio Snapshot ──');
+  lines.push(`  Total Artifacts:      ${learner.portfolioSnapshot.artifactCount}`);
+  lines.push(`  Verified Artifacts:   ${learner.portfolioSnapshot.verifiedArtifactCount}`);
+  lines.push(`  Badges:               ${learner.portfolioSnapshot.badgeCount}`);
+  lines.push(`  Projects:             ${learner.portfolioSnapshot.projectCount}`);
+  lines.push('');
+  lines.push('── Capability Claims ──');
+  if (learner.ideationPassport.claims.length === 0) {
+    lines.push('  No capability claims backed by evidence yet.');
+  }
+  for (const claim of learner.ideationPassport.claims) {
+    lines.push('');
+    lines.push(`  ${claim.title}`);
+    lines.push(`    Legacy family:   ${legacyFamilyLabel(claim.pillar)}`);
+    lines.push(`    Level:           ${levelLabel(claim.latestLevel)}`);
+    lines.push(`    Evidence:        ${claim.evidenceCount} records, ${claim.verifiedArtifactCount} verified artifacts`);
+    lines.push(`    Provenance:      ${claim.evidenceRecordIds.length} evidence, ${claim.portfolioItemIds.length} portfolio, ${claim.missionAttemptIds.length} mission`);
+    lines.push(`    Proof-of-Learn:  ${proofLabel(claim.proofOfLearningStatus)}`);
+    lines.push(`    AI Disclosure:   ${aiLabel(claim.aiDisclosureStatus)}`);
+    if (claim.reviewingEducatorName) {
+      lines.push(`    Reviewed by:     ${claim.reviewingEducatorName} (${formatDate(claim.reviewedAt)})`);
+    }
+    if (claim.rubricRawScore != null && claim.rubricMaxScore != null) {
+      lines.push(`    Rubric Score:    ${claim.rubricRawScore}/${claim.rubricMaxScore}`);
+    }
+    if (claim.progressionDescriptors.length > 0) {
+      lines.push(`    Descriptor:      ${claim.progressionDescriptors[0]}`);
+    }
+  }
+  lines.push('');
+  lines.push('── Portfolio Artifacts ──');
+  if (learner.portfolioItemsPreview.length === 0) {
+    lines.push('  No portfolio artifacts are linked into this passport yet.');
+  }
+  for (const item of learner.portfolioItemsPreview.slice(0, 20)) {
+    lines.push('');
+    lines.push(`  ${item.title}`);
+    lines.push(`    Legacy family:   ${legacyFamilyLabel(item.pillar)}`);
+    lines.push(`    Capabilities:    ${item.capabilityTitles.join(', ') || 'No capability tags'}`);
+    lines.push(`    Status:          ${item.verificationStatus ?? 'pending'}`);
+    lines.push(`    Proof-of-Learn:  ${proofLabel(item.proofOfLearningStatus)}`);
+    lines.push(`    AI Disclosure:   ${aiLabel(item.aiDisclosureStatus)}`);
+    if (item.aiAssistanceDetails) {
+      lines.push(`    AI Details:      ${item.aiAssistanceDetails}`);
+    }
+    lines.push(`    Provenance:      ${item.evidenceRecordIds.length} evidence, ${item.missionAttemptId ? 'mission-linked' : 'standalone artifact'}, ${item.source ?? item.type}`);
+    lines.push(`    Proof methods:   ${summarizeProofMethods(item.proofHasExplainItBack, item.proofHasOralCheck, item.proofHasMiniRebuild, item.proofCheckpointCount)}`);
+    if (item.reviewingEducatorName) {
+      lines.push(`    Reviewed by:     ${item.reviewingEducatorName} (${formatDate(item.reviewedAt)})`);
+    }
+    if (item.rubricRawScore != null && item.rubricMaxScore != null) {
+      lines.push(`    Rubric Score:    ${item.rubricRawScore}/${item.rubricMaxScore}`);
+    }
+    if (item.verificationPrompt) {
+      lines.push(`    Verify next:     ${item.verificationPrompt}`);
+    }
+  }
+  lines.push('');
+  lines.push('── Growth Timeline ──');
+  if (learner.growthTimeline.length === 0) {
+    lines.push('  No growth events have been recorded yet.');
+  }
+  for (const entry of learner.growthTimeline.slice(0, 15)) {
+    lines.push(`  ${formatDate(entry.occurredAt)} · ${entry.title}`);
+    lines.push(`    Level:           ${levelLabel(entry.level)}`);
+    lines.push(`    Proof-of-Learn:  ${proofLabel(entry.proofOfLearningStatus ?? 'missing')}`);
+    lines.push(`    Provenance:      ${entry.linkedEvidenceRecordIds.length} evidence, ${entry.linkedPortfolioItemIds.length} portfolio${entry.missionAttemptId ? ', mission-linked' : ''}`);
+    if (entry.reviewingEducatorName) {
+      lines.push(`    Reviewed by:     ${entry.reviewingEducatorName}`);
+    }
+    if (entry.rubricRawScore != null && entry.rubricMaxScore != null) {
+      lines.push(`    Rubric Score:    ${entry.rubricRawScore}/${entry.rubricMaxScore}`);
+    }
+  }
+  lines.push('');
+  lines.push('── Ideation Activity ──');
+  lines.push(`  Missions Attempted:   ${learner.ideationPassport.missionAttempts}`);
+  lines.push(`  Missions Completed:   ${learner.ideationPassport.completedMissions}`);
+  lines.push(`  Reflections:          ${learner.ideationPassport.reflectionsSubmitted}`);
+  lines.push(`  Voice Interactions:   ${learner.ideationPassport.voiceInteractions}`);
+  lines.push(`  Collaboration:        ${learner.ideationPassport.collaborationSignals}`);
+  lines.push('');
+  lines.push('═══════════════════════════════════════════');
+  lines.push(`  ${learner.ideationPassport.summary}`);
+  lines.push('═══════════════════════════════════════════');
+  return lines;
+}
+
+function buildFamilyShareSummary(learner: LearnerPassportData): string {
+  const topClaims = learner.ideationPassport.claims.slice(0, 3);
+  const nextPrompts = learner.portfolioItemsPreview
+    .filter((item) => typeof item.verificationPrompt === 'string' && item.verificationPrompt.trim().length > 0)
+    .slice(0, 2);
+
+  return [
+    `Scholesa family summary for ${learner.learnerName ?? learner.learnerId}`,
+    `Generated ${formatDate(learner.ideationPassport.generatedAt)}`,
+    'This summary reflects reviewed evidence, linked artifacts, and recorded growth events.',
+    `Capability band: ${bandLabel(learner.capabilitySnapshot.band)}`,
+    `Reviewed evidence: ${learner.evidenceSummary.reviewedCount}`,
+    `Verified artifacts: ${learner.portfolioSnapshot.verifiedArtifactCount}`,
+    `Pending verification prompts: ${learner.evidenceSummary.verificationPromptCount}`,
+    '',
+    'Current evidence-backed claims:',
+    ...(topClaims.length > 0
+      ? topClaims.map((claim) => `- ${claim.title}: ${levelLabel(claim.latestLevel)} with ${claim.evidenceCount} evidence record(s)`)
+      : ['- No capability claims backed by reviewed evidence yet.']),
+    '',
+    'Next verification prompts:',
+    ...(nextPrompts.length > 0
+      ? nextPrompts.map((item) => `- ${item.title}: ${item.verificationPrompt}`)
+      : ['- No pending verification prompts in this export.']),
+  ].join('\n');
+}
+
 function normalizeLearner(raw: Record<string, unknown>): LearnerPassportData | null {
   const learnerId = str(raw.learnerId);
   if (!learnerId) return null;
@@ -406,6 +550,7 @@ export function LearnerPassportExport({ siteId: initialSiteId }: { siteId?: stri
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [shareFeedback, setShareFeedback] = useState<string | null>(null);
 
   const siteId = initialSiteId ?? resolveActiveSiteId(profile) ?? null;
 
@@ -442,7 +587,40 @@ export function LearnerPassportExport({ siteId: initialSiteId }: { siteId?: stri
 
   const learner = learners[selectedIndex] ?? null;
 
+  useEffect(() => {
+    if (!shareFeedback) return;
+    const timeout = window.setTimeout(() => setShareFeedback(null), 4000);
+    return () => window.clearTimeout(timeout);
+  }, [shareFeedback]);
+
   const handlePrint = useCallback(() => { window.print(); }, []);
+
+  const handleShareSummary = useCallback(async () => {
+    if (!learner) return;
+    const shareText = buildFamilyShareSummary(learner);
+
+    try {
+      if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+        await navigator.share({
+          title: `Scholesa family summary for ${learner.learnerName ?? learner.learnerId}`,
+          text: shareText,
+        });
+        setShareFeedback('Family summary ready to share.');
+        return;
+      }
+
+      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareText);
+        setShareFeedback('Family summary copied to clipboard.');
+        return;
+      }
+
+      setShareFeedback('Sharing is unavailable in this browser. Use Export Text instead.');
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
+      setShareFeedback('Sharing is unavailable in this browser. Use Export Text instead.');
+    }
+  }, [learner]);
 
   const handleExportHtml = useCallback(() => {
     if (!learner) return;
@@ -603,121 +781,38 @@ ${growthHtml}
     URL.revokeObjectURL(url);
   }, [learner]);
 
+  const handleExportPdf = useCallback(async () => {
+    if (!learner) return;
+
+    const { jsPDF } = await import('jspdf');
+    const pdf = new jsPDF({ unit: 'pt', format: 'letter' });
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const marginX = 40;
+    const marginY = 48;
+    const lineHeight = 14;
+    const maxWidth = pageWidth - (marginX * 2);
+    let y = marginY;
+
+    pdf.setFont('courier', 'normal');
+    pdf.setFontSize(10);
+
+    for (const line of buildPassportTextLines(learner)) {
+      const wrapped = pdf.splitTextToSize(line, maxWidth) as string[];
+      if (y + (wrapped.length * lineHeight) > pageHeight - marginY) {
+        pdf.addPage();
+        y = marginY;
+      }
+      pdf.text(wrapped, marginX, y);
+      y += Math.max(wrapped.length, 1) * lineHeight;
+    }
+
+    pdf.save(`ideation-passport-${learner.learnerId}.pdf`);
+  }, [learner]);
+
   const handleExportText = useCallback(() => {
     if (!learner) return;
-    const lines: string[] = [];
-    lines.push('═══════════════════════════════════════════');
-    lines.push('  SCHOLESA IDEATION PASSPORT');
-    lines.push('═══════════════════════════════════════════');
-    lines.push('');
-    lines.push(`Learner: ${learner.learnerName ?? 'Unknown'}`);
-    lines.push(`Generated: ${formatDate(learner.ideationPassport.generatedAt)}`);
-    lines.push(`Capability Band: ${bandLabel(learner.capabilitySnapshot.band)}`);
-    lines.push('');
-    lines.push('── Report Basis ──');
-    lines.push('  This passport summarizes reviewed evidence, linked artifacts, and recorded growth events.');
-    lines.push('  Participation signals do not replace capability judgments.');
-    lines.push('  Legacy family progress is a compatibility roll-up of the current curriculum strands.');
-    lines.push(`  Pending verification prompts: ${learner.evidenceSummary.verificationPromptCount}`);
-    lines.push('');
-    lines.push('── Legacy Family Progress ──');
-    lines.push(`  Think, Make & Navigate AI: ${pct(learner.capabilitySnapshot.futureSkills)}`);
-    lines.push(`  Communicate & Lead:       ${pct(learner.capabilitySnapshot.leadership)}`);
-    lines.push(`  Build for the World:      ${pct(learner.capabilitySnapshot.impact)}`);
-    lines.push(`  Overall:              ${pct(learner.capabilitySnapshot.overall)}`);
-    lines.push('');
-    lines.push('── Evidence Summary ──');
-    lines.push(`  Evidence Records:     ${learner.evidenceSummary.recordCount}`);
-    lines.push(`  Reviewed:             ${learner.evidenceSummary.reviewedCount}`);
-    lines.push(`  Portfolio-Linked:     ${learner.evidenceSummary.portfolioLinkedCount}`);
-    lines.push(`  Pending prompts:      ${learner.evidenceSummary.verificationPromptCount}`);
-    lines.push(`  Latest Evidence:      ${formatDate(learner.evidenceSummary.latestEvidenceAt)}`);
-    lines.push('');
-    lines.push('── Portfolio Snapshot ──');
-    lines.push(`  Total Artifacts:      ${learner.portfolioSnapshot.artifactCount}`);
-    lines.push(`  Verified Artifacts:   ${learner.portfolioSnapshot.verifiedArtifactCount}`);
-    lines.push(`  Badges:               ${learner.portfolioSnapshot.badgeCount}`);
-    lines.push(`  Projects:             ${learner.portfolioSnapshot.projectCount}`);
-    lines.push('');
-    lines.push('── Capability Claims ──');
-    if (learner.ideationPassport.claims.length === 0) {
-      lines.push('  No capability claims backed by evidence yet.');
-    }
-    for (const claim of learner.ideationPassport.claims) {
-      lines.push('');
-      lines.push(`  ${claim.title}`);
-      lines.push(`    Legacy family:   ${legacyFamilyLabel(claim.pillar)}`);
-      lines.push(`    Level:           ${levelLabel(claim.latestLevel)}`);
-      lines.push(`    Evidence:        ${claim.evidenceCount} records, ${claim.verifiedArtifactCount} verified artifacts`);
-      lines.push(`    Provenance:      ${claim.evidenceRecordIds.length} evidence, ${claim.portfolioItemIds.length} portfolio, ${claim.missionAttemptIds.length} mission`);
-      lines.push(`    Proof-of-Learn:  ${proofLabel(claim.proofOfLearningStatus)}`);
-      lines.push(`    AI Disclosure:   ${aiLabel(claim.aiDisclosureStatus)}`);
-      if (claim.reviewingEducatorName) {
-        lines.push(`    Reviewed by:     ${claim.reviewingEducatorName} (${formatDate(claim.reviewedAt)})`);
-      }
-      if (claim.rubricRawScore != null && claim.rubricMaxScore != null) {
-        lines.push(`    Rubric Score:    ${claim.rubricRawScore}/${claim.rubricMaxScore}`);
-      }
-      if (claim.progressionDescriptors.length > 0) {
-        lines.push(`    Descriptor:      ${claim.progressionDescriptors[0]}`);
-      }
-    }
-    lines.push('');
-    lines.push('── Portfolio Artifacts ──');
-    if (learner.portfolioItemsPreview.length === 0) {
-      lines.push('  No portfolio artifacts are linked into this passport yet.');
-    }
-    for (const item of learner.portfolioItemsPreview.slice(0, 20)) {
-      lines.push('');
-      lines.push(`  ${item.title}`);
-      lines.push(`    Legacy family:   ${legacyFamilyLabel(item.pillar)}`);
-      lines.push(`    Capabilities:    ${item.capabilityTitles.join(', ') || 'No capability tags'}`);
-      lines.push(`    Status:          ${item.verificationStatus ?? 'pending'}`);
-      lines.push(`    Proof-of-Learn:  ${proofLabel(item.proofOfLearningStatus)}`);
-      lines.push(`    AI Disclosure:   ${aiLabel(item.aiDisclosureStatus)}`);
-      if (item.aiAssistanceDetails) {
-        lines.push(`    AI Details:      ${item.aiAssistanceDetails}`);
-      }
-      lines.push(`    Provenance:      ${item.evidenceRecordIds.length} evidence, ${item.missionAttemptId ? 'mission-linked' : 'standalone artifact'}, ${item.source ?? item.type}`);
-      lines.push(`    Proof methods:   ${summarizeProofMethods(item.proofHasExplainItBack, item.proofHasOralCheck, item.proofHasMiniRebuild, item.proofCheckpointCount)}`);
-      if (item.reviewingEducatorName) {
-        lines.push(`    Reviewed by:     ${item.reviewingEducatorName} (${formatDate(item.reviewedAt)})`);
-      }
-      if (item.rubricRawScore != null && item.rubricMaxScore != null) {
-        lines.push(`    Rubric Score:    ${item.rubricRawScore}/${item.rubricMaxScore}`);
-      }
-      if (item.verificationPrompt) {
-        lines.push(`    Verify next:     ${item.verificationPrompt}`);
-      }
-    }
-    lines.push('');
-    lines.push('── Growth Timeline ──');
-    if (learner.growthTimeline.length === 0) {
-      lines.push('  No growth events have been recorded yet.');
-    }
-    for (const entry of learner.growthTimeline.slice(0, 15)) {
-      lines.push(`  ${formatDate(entry.occurredAt)} · ${entry.title}`);
-      lines.push(`    Level:           ${levelLabel(entry.level)}`);
-      lines.push(`    Proof-of-Learn:  ${proofLabel(entry.proofOfLearningStatus ?? 'missing')}`);
-      lines.push(`    Provenance:      ${entry.linkedEvidenceRecordIds.length} evidence, ${entry.linkedPortfolioItemIds.length} portfolio${entry.missionAttemptId ? ', mission-linked' : ''}`);
-      if (entry.reviewingEducatorName) {
-        lines.push(`    Reviewed by:     ${entry.reviewingEducatorName}`);
-      }
-      if (entry.rubricRawScore != null && entry.rubricMaxScore != null) {
-        lines.push(`    Rubric Score:    ${entry.rubricRawScore}/${entry.rubricMaxScore}`);
-      }
-    }
-    lines.push('');
-    lines.push('── Ideation Activity ──');
-    lines.push(`  Missions Attempted:   ${learner.ideationPassport.missionAttempts}`);
-    lines.push(`  Missions Completed:   ${learner.ideationPassport.completedMissions}`);
-    lines.push(`  Reflections:          ${learner.ideationPassport.reflectionsSubmitted}`);
-    lines.push(`  Voice Interactions:   ${learner.ideationPassport.voiceInteractions}`);
-    lines.push(`  Collaboration:        ${learner.ideationPassport.collaborationSignals}`);
-    lines.push('');
-    lines.push('═══════════════════════════════════════════');
-    lines.push(`  ${learner.ideationPassport.summary}`);
-    lines.push('═══════════════════════════════════════════');
+    const lines = buildPassportTextLines(learner);
 
     const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
@@ -793,8 +888,13 @@ ${growthHtml}
               Export a family-safe copy of reviewed evidence, linked artifacts, and recorded growth.
               Pending verification prompts remain visible in the export as next questions, not completed claims.
             </p>
+            {shareFeedback && (
+              <p className="mt-2 text-xs font-medium text-emerald-700" data-testid="learner-passport-share-feedback">
+                {shareFeedback}
+              </p>
+            )}
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {learners.length > 1 && (
               <select
                 value={selectedIndex}
@@ -808,6 +908,14 @@ ${growthHtml}
             )}
             <button
               type="button"
+              onClick={() => { void handleShareSummary(); }}
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              title="Share a family-safe evidence summary with native share when available, or copy it to the clipboard"
+            >
+              Share Family Summary
+            </button>
+            <button
+              type="button"
               onClick={handleExportText}
               className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
             >
@@ -817,9 +925,17 @@ ${growthHtml}
               type="button"
               onClick={handleExportHtml}
               className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-              title="Download a portable HTML file — open in any browser and use File › Print to save as PDF"
+              title="Download a portable HTML file for browser viewing or archival"
             >
-              Export HTML / PDF
+              Export HTML
+            </button>
+            <button
+              type="button"
+              onClick={() => { void handleExportPdf(); }}
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              title="Download a dedicated PDF artifact of this evidence-backed passport"
+            >
+              Export PDF
             </button>
             <button
               type="button"

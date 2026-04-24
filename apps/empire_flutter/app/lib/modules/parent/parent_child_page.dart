@@ -31,6 +31,9 @@ class _ParentChildPageState extends State<ParentChildPage> {
 
   String _t(String input) => ParentSurfaceI18n.text(context, input);
 
+  static const String _passportActionExport = 'export';
+  static const String _passportActionShare = 'share';
+
   String _levelLabel(int level) {
     switch (level) {
       case 1:
@@ -93,11 +96,44 @@ class _ParentChildPageState extends State<ParentChildPage> {
             icon: const Icon(Icons.refresh_rounded),
             tooltip: _t('Refresh'),
           ),
-          TextButton.icon(
-            onPressed: learner == null ? null : () => _exportPassport(learner),
-            icon: const Icon(Icons.download_rounded),
-            label: Text(_t('Export Passport')),
-            style: TextButton.styleFrom(foregroundColor: Colors.white),
+          PopupMenuButton<String>(
+            enabled: learner != null,
+            tooltip: _t('Passport Actions'),
+            onSelected: learner == null
+                ? null
+                : (String value) async {
+                    if (value == _passportActionExport) {
+                      await _exportPassport(learner);
+                      return;
+                    }
+                    if (value == _passportActionShare) {
+                      await _shareFamilySummary(learner);
+                    }
+                  },
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              PopupMenuItem<String>(
+                value: _passportActionShare,
+                child: Text(_t('Share Family Summary')),
+              ),
+              PopupMenuItem<String>(
+                value: _passportActionExport,
+                child: Text(_t('Export Passport')),
+              ),
+            ],
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  const Icon(Icons.assignment_outlined, color: Colors.white),
+                  const SizedBox(width: 6),
+                  Text(
+                    _t('Passport Actions'),
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
           ),
           TextButton.icon(
             onPressed: () {
@@ -730,6 +766,88 @@ class _ParentChildPageState extends State<ParentChildPage> {
         ),
       );
     }
+  }
+
+  Future<void> _shareFamilySummary(LearnerSummary learner) async {
+    final String summary = _buildFamilyShareSummary(learner);
+    try {
+      await Clipboard.setData(ClipboardData(text: summary));
+      TelemetryService.instance.logEvent(
+        event: 'cta.clicked',
+        metadata: <String, dynamic>{
+          'cta': 'parent_child_share_family_summary',
+          'learner_id': learner.learnerId,
+        },
+      );
+      TelemetryService.instance.logEvent(
+        event: 'notification.requested',
+        metadata: <String, dynamic>{
+          'module': 'parent_child',
+          'surface': 'passport_share_summary',
+          'learner_id': learner.learnerId,
+          'delivery': 'clipboard',
+        },
+      );
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_t('Family summary copied for sharing.')),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_t('Unable to copy family summary right now.')),
+          backgroundColor: ScholesaColors.error,
+        ),
+      );
+    }
+  }
+
+  String _buildFamilyShareSummary(LearnerSummary learner) {
+    final IdeationPassport passport = learner.ideationPassport;
+    final List<PassportClaim> topClaims = passport.claims.take(3).toList();
+    final List<String> nextPrompts = <String>[
+      ...passport.claims
+          .expand((PassportClaim claim) => claim.checkpointMappings)
+          .map((VerificationCheckpointMapping mapping) => mapping.guidance)
+          .where((String guidance) => guidance.trim().isNotEmpty),
+      ...learner.portfolioItemsPreview
+          .map((PortfolioPreviewItem item) => item.verificationPrompt)
+          .whereType<String>()
+          .map((String prompt) => prompt.trim())
+          .where((String prompt) => prompt.isNotEmpty),
+    ].take(2).toList();
+
+    final List<String> lines = <String>[
+      'Scholesa family summary for ${_safeLearnerName(learner.learnerName)}',
+      'Generated: ${(passport.generatedAt ?? DateTime.now()).toIso8601String()}',
+      'This summary reflects reviewed evidence, linked artifacts, and recorded growth events.',
+      'Capability band: ${_titleCase(learner.capabilitySnapshot.band)}',
+      'Reviewed evidence: ${learner.evidenceSummary.reviewedCount}',
+      'Reviewed/Verified artifacts: ${learner.portfolioSnapshot.verifiedArtifactCount}',
+      'Pending verification prompts: ${learner.evidenceSummary.verificationPromptCount}',
+      '',
+      'Current evidence-backed claims:',
+      if (topClaims.isEmpty)
+        'No capability claims backed by reviewed evidence yet.',
+      ...topClaims.map(
+        (PassportClaim claim) =>
+            '- ${claim.title}: ${_levelLabel(claim.latestLevel)} with ${claim.evidenceCount} evidence record(s)',
+      ),
+      '',
+      'Next verification prompts:',
+      if (nextPrompts.isEmpty)
+        'No pending verification prompts in this summary.',
+      ...nextPrompts.map((String prompt) => '- $prompt'),
+    ];
+
+    return lines.join('\n');
   }
 
   String _buildPassportExport(LearnerSummary learner) {
