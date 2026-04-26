@@ -43,7 +43,7 @@ export function LearnerDashboardToday() {
   const [sessions, setSessions] = useState<SessionInfo[]>([]);
   const [recentGrowth, setRecentGrowth] = useState<CapabilityGrowthEvent[]>([]);
   const [activeMissions, setActiveMissions] = useState<MissionAttemptInfo[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const { resolveTitle } = useCapabilities(siteId);
 

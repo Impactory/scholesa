@@ -54,7 +54,7 @@ export function EducatorDashboardToday() {
   const [reviewQueue, setReviewQueue] = useState<ReviewQueueStats>({ pendingEvidence: 0, pendingVerification: 0 });
   const [pillarSnapshots, setPillarSnapshots] = useState<PillarSnapshot[]>([]);
   const [recentEvidence, setRecentEvidence] = useState<EvidenceRecord[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
   const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {

@@ -9385,12 +9385,6 @@ export const verifyProofOfLearning = onCall(async (request: CallableRequest<{
         .map((value: string) => value.trim())
         .filter((value: string) => value.length > 0)
     : [];
-  const linkedEvidenceRecordIds: string[] = Array.isArray(portfolioData.evidenceRecordIds)
-    ? portfolioData.evidenceRecordIds
-        .filter((value: unknown): value is string => typeof value === 'string')
-        .map((value: string) => value.trim())
-        .filter((value: string) => value.length > 0)
-    : [];
   const checkpointDefinitionId =
     typeof portfolioData.checkpointDefinitionId === 'string' && portfolioData.checkpointDefinitionId.trim()
       ? portfolioData.checkpointDefinitionId.trim()

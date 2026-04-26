@@ -146,6 +146,7 @@ function buildDartModule() {
   const localeUnion = locales.map((locale) => escapeDartString(locale)).join(', ');
   return `// GENERATED FILE. Do not edit directly.
 // Source: config/curriculum_display.json
+// ignore_for_file: constant_identifier_names
 
 enum CurriculumLegacyFamilyCode {
   ${legacyFamilies.map((entry) => entry.code.toLowerCase()).join(',\n  ')},

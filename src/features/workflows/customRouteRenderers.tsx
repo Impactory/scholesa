@@ -90,9 +90,6 @@ const HqRubricBuilderRenderer = lazy(
 const GuardianPassportRenderer = lazy(
   () => import('./renderers/GuardianPassportRenderer')
 );
-const LearnerMiloOSRenderer = lazy(
-  () => import('./renderers/LearnerMiloOSRenderer')
-);
 const EducatorSessionsRenderer = lazy(
   () => import('./renderers/EducatorSessionsRenderer')
 );

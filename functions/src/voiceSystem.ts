@@ -4112,7 +4112,7 @@ function enrichWithSsmlProsody(
   understanding: VoiceUnderstandingSignal,
   role: VoiceRequesterRole,
   gradeBand: GradeBand,
-  locale: VoiceLocale,
+  _locale: VoiceLocale,
 ): string {
   if (!text.trim()) return text;
   const rate = understanding.needsScaffold || understanding.emotionalState === 'frustrated' || understanding.emotionalState === 'confused'

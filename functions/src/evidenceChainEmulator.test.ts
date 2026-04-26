@@ -15,7 +15,7 @@ const PROOF_BUNDLE_ID = 'proof-bundle-1';
 process.env.GCLOUD_PROJECT = PROJECT_ID;
 process.env.FIRESTORE_EMULATOR_HOST = process.env.FIRESTORE_EMULATOR_HOST || '127.0.0.1:8080';
 
-const admin = require('firebase-admin') as typeof import('firebase-admin');
+import * as admin from 'firebase-admin';
 
 type EvidenceChainFunctions = typeof import('./index');
 
