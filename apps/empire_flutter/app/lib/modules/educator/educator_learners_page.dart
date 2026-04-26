@@ -1,11 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/curriculum/curriculum_family_ui.dart';
 import '../../services/firestore_service.dart';
-import '../../services/export_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
@@ -13,6 +11,7 @@ import '../../auth/app_state.dart';
 import '../../i18n/bos_coaching_i18n.dart';
 import '../../i18n/workflow_surface_i18n.dart';
 import '../../ui/auth/global_session_menu.dart';
+import '../reports/report_actions.dart';
 import 'educator_models.dart';
 import 'educator_service.dart';
 
@@ -121,7 +120,8 @@ class _EducatorLearnersPageState extends State<EducatorLearnersPage> {
 
   @override
   Widget build(BuildContext context) {
-    return MiloRuntimeScope(child: Scaffold(
+    return MiloRuntimeScope(
+        child: Scaffold(
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -1072,15 +1072,17 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
           .get();
       if (!mounted) return;
       final Map<String, dynamic>? episodeData = snap.docs.isNotEmpty
-          ? <String, dynamic>{'id': snap.docs.first.id, ...snap.docs.first.data()}
+          ? <String, dynamic>{
+              'id': snap.docs.first.id,
+              ...snap.docs.first.data()
+            }
           : null;
       setState(() {
         _activeMvlEpisode = episodeData;
         _isLoadingMvl = false;
         _hasContestabilityRequest =
             episodeData?['contestabilityStatus'] == 'pending';
-        _contestabilityReason =
-            episodeData?['contestabilityReason'] as String?;
+        _contestabilityReason = episodeData?['contestabilityReason'] as String?;
       });
     } catch (error) {
       debugPrint('Failed to load MVL episode: $error');
@@ -1168,8 +1170,8 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
       setState(() => _isResolvingContestability = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_tEducatorLearners(
-              context, 'Contestability request resolved')),
+          content: Text(
+              _tEducatorLearners(context, 'Contestability request resolved')),
           backgroundColor: ScholesaColors.success,
         ),
       );
@@ -1180,8 +1182,8 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
       setState(() => _isResolvingContestability = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_tEducatorLearners(
-              context, 'Contestability resolution failed')),
+          content: Text(
+              _tEducatorLearners(context, 'Contestability resolution failed')),
           backgroundColor: Colors.red,
         ),
       );
@@ -1350,6 +1352,16 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
     try {
       final FirestoreService firestoreService =
           context.read<FirestoreService>();
+      final String fileName = 'practice-plan-${learner.id}-$_selectedLane.txt';
+      final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+      final String successMessage =
+          _tEducatorLearners(context, 'Practice plan downloaded.');
+      final String copiedMessage =
+          _tEducatorLearners(context, 'Practice plan copied for sharing.');
+      final String errorMessage = _tEducatorLearners(
+        context,
+        'Unable to download practice plan right now.',
+      );
       await firestoreService.firestore.collection('practiceExports').add(
         <String, dynamic>{
           'siteId': siteId,
@@ -1361,51 +1373,27 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
           'createdAt': DateTime.now().toIso8601String(),
         },
       );
-      final String fileName = 'practice-plan-${learner.id}-$_selectedLane.txt';
-      final String? savedLocation = await ExportService.instance.saveTextFile(
+      await ReportActions.exportText(
+        messenger: messenger,
+        isMounted: () => mounted,
         fileName: fileName,
         content: printablePlan,
-      );
-      if (savedLocation == null || !mounted) {
-        return;
-      }
-      TelemetryService.instance.logEvent(
-        event: 'export.downloaded',
+        module: 'educator_learners',
+        surface: 'learner_detail_practice_plan',
+        copiedEventName: 'educator.practice_plan_export.copied',
+        successMessage: successMessage,
+        copiedMessage: copiedMessage,
+        errorMessage: errorMessage,
+        unsupportedLogMessage:
+            'Export unsupported for educator practice plan download, copying plan instead',
+        learnerId: learner.id,
+        role: 'educator',
+        siteId: siteId,
         metadata: <String, dynamic>{
-          'learner_id': learner.id,
+          'educator_id': educatorId,
           'lane': _selectedLane,
           'export_type': 'printable_practice',
-          'file_name': fileName,
         },
-      );
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _tEducatorLearners(context, 'Practice plan downloaded.'),
-          ),
-          backgroundColor: ScholesaColors.educator,
-        ),
-      );
-    } on UnsupportedError catch (error) {
-      debugPrint(
-          'Export unsupported for educator practice plan download, copying plan instead: $error');
-      await Clipboard.setData(ClipboardData(text: printablePlan));
-      TelemetryService.instance.logEvent(
-        event: 'educator.practice_plan_export.copied',
-        metadata: <String, dynamic>{
-          'learner_id': learner.id,
-          'lane': _selectedLane,
-          'fallback': 'clipboard',
-        },
-      );
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _tEducatorLearners(context, 'Practice plan copied for sharing.'),
-          ),
-          backgroundColor: ScholesaColors.educator,
-        ),
       );
     } catch (_) {
       if (!mounted) return;
@@ -1684,19 +1672,17 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
                             (event['capabilityTitle'] as String?) ??
                                 (event['capabilityId'] as String?) ??
                                 '';
-                        final int level =
-                            (event['level'] as int?) ?? 0;
-                        final int rawScore =
-                            (event['rawScore'] as int?) ?? 0;
-                        final int maxScore =
-                            (event['maxScore'] as int?) ?? 0;
+                        final int level = (event['level'] as int?) ?? 0;
+                        final int rawScore = (event['rawScore'] as int?) ?? 0;
+                        final int maxScore = (event['maxScore'] as int?) ?? 0;
                         final String pillar =
                             (event['pillarCode'] as String?) ?? '';
                         final Timestamp? createdAt =
                             event['createdAt'] as Timestamp?;
                         final String educatorId =
                             (event['educatorId'] as String?) ?? '';
-                        final Color pillarColor = _getPillarColorForCode(pillar);
+                        final Color pillarColor =
+                            _getPillarColorForCode(pillar);
 
                         return Container(
                           margin: const EdgeInsets.only(bottom: 8),
@@ -1727,7 +1713,8 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 8, vertical: 3),
                                     decoration: BoxDecoration(
-                                      color: pillarColor.withValues(alpha: 0.12),
+                                      color:
+                                          pillarColor.withValues(alpha: 0.12),
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Text(
@@ -1963,8 +1950,8 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
                                 child: SizedBox(
                                   width: 20,
                                   height: 20,
-                                  child: CircularProgressIndicator(
-                                      strokeWidth: 2),
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2),
                                 ),
                               ),
                             ),
@@ -1972,7 +1959,8 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
                       ),
                     ),
                   ],
-                  if (_hasContestabilityRequest && _activeMvlEpisode != null) ...<Widget>[
+                  if (_hasContestabilityRequest &&
+                      _activeMvlEpisode != null) ...<Widget>[
                     const SizedBox(height: 24),
                     Container(
                       width: double.infinity,
@@ -2038,8 +2026,7 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
                                 child: OutlinedButton(
                                   onPressed: _isResolvingContestability
                                       ? null
-                                      : () =>
-                                          _resolveContestability('upheld'),
+                                      : () => _resolveContestability('upheld'),
                                   style: OutlinedButton.styleFrom(
                                     foregroundColor: Colors.orange.shade700,
                                     side: BorderSide(
@@ -2073,8 +2060,8 @@ class _LearnerDetailSheetState extends State<_LearnerDetailSheet> {
                                 child: SizedBox(
                                   width: 20,
                                   height: 20,
-                                  child: CircularProgressIndicator(
-                                      strokeWidth: 2),
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2),
                                 ),
                               ),
                             ),
