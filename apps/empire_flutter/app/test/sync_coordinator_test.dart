@@ -343,7 +343,9 @@ void main() {
 
   // ── Evidence chain collection targeting ─────────────────────
   group('Evidence chain collection targeting', () {
-    test('observationCapture OpType targets evidenceRecords (not observationRecords)', () {
+    test(
+        'observationCapture OpType targets evidenceRecords (not observationRecords)',
+        () {
       // Read the source file to verify the correct collection name.
       // This test guards against regression of the offline/online
       // collection mismatch bug where observations synced from offline
@@ -353,13 +355,15 @@ void main() {
       ).readAsStringSync();
 
       final int obsCaseIdx = source.indexOf('OpType.observationCapture');
-      expect(obsCaseIdx, isNot(-1), reason: 'observationCapture case must exist');
+      expect(obsCaseIdx, isNot(-1),
+          reason: 'observationCapture case must exist');
 
       final String obsSection = source.substring(obsCaseIdx, obsCaseIdx + 250);
       expect(
         obsSection,
         contains("'evidenceRecords'"),
-        reason: 'offline observation sync must target evidenceRecords collection',
+        reason:
+            'offline observation sync must target evidenceRecords collection',
       );
       expect(
         obsSection,
@@ -368,7 +372,8 @@ void main() {
       );
     });
 
-    test('bosEventIngest routes through Cloud Function (not direct Firestore)', () {
+    test('bosEventIngest routes through Cloud Function (not direct Firestore)',
+        () {
       final String source = File(
         'lib/offline/sync_coordinator.dart',
       ).readAsStringSync();
@@ -380,7 +385,93 @@ void main() {
       expect(
         bosSection,
         contains('bosIngestEvent'),
-        reason: 'Must route through bosIngestEvent Cloud Function for FDM, sanitization, COPPA',
+        reason:
+            'Must route through bosIngestEvent Cloud Function for FDM, sanitization, COPPA',
+      );
+    });
+
+    test('rubricApply routes through growth Cloud Function', () {
+      final String source = File(
+        'lib/offline/sync_coordinator.dart',
+      ).readAsStringSync();
+
+      final int rubricCaseIdx = source.indexOf('case OpType.rubricApply');
+      expect(rubricCaseIdx, isNot(-1), reason: 'rubricApply case must exist');
+
+      final int bosCaseIdx = source.indexOf('case OpType.bosEventIngest');
+      final String rubricSection = source.substring(rubricCaseIdx, bosCaseIdx);
+      expect(
+        rubricSection,
+        contains('_syncQueuedRubricApply'),
+        reason:
+            'offline rubric apply replay must use the shared growth callable path',
+      );
+      expect(
+        rubricSection,
+        isNot(contains("collection('rubricApplications')")),
+        reason:
+            'offline rubric apply must not create disconnected rubric applications',
+      );
+      expect(
+        source,
+        contains("httpsCallable('applyRubricToEvidence')"),
+        reason:
+            'rubric apply replay must update growth through server validation',
+      );
+    });
+
+    test('legacy rubricApplication op routes through growth Cloud Function',
+        () {
+      final String source = File(
+        'lib/offline/sync_coordinator.dart',
+      ).readAsStringSync();
+
+      final int rubricCaseIdx = source.indexOf('case OpType.rubricApplication');
+      expect(rubricCaseIdx, isNot(-1),
+          reason: 'rubricApplication case must exist');
+
+      final int growthCaseIdx =
+          source.indexOf('case OpType.capabilityGrowthEvent');
+      final String rubricSection =
+          source.substring(rubricCaseIdx, growthCaseIdx);
+      expect(
+        rubricSection,
+        contains('_syncQueuedRubricApply'),
+        reason:
+            'legacy rubricApplication replay must use the same callable-backed growth path',
+      );
+      expect(
+        rubricSection,
+        isNot(contains("collection('rubricApplications')")),
+        reason:
+            'legacy rubricApplication replay must not create disconnected rubric docs',
+      );
+    });
+
+    test('capabilityGrowthEvent op is server-owned output', () {
+      final String source = File(
+        'lib/offline/sync_coordinator.dart',
+      ).readAsStringSync();
+
+      final int growthCaseIdx =
+          source.indexOf('case OpType.capabilityGrowthEvent');
+      expect(growthCaseIdx, isNot(-1),
+          reason: 'capabilityGrowthEvent case must exist');
+
+      final int checkpointCaseIdx =
+          source.indexOf('case OpType.checkpointVerification');
+      final String growthSection =
+          source.substring(growthCaseIdx, checkpointCaseIdx);
+      expect(
+        growthSection,
+        contains('StateError'),
+        reason: 'offline sync must fail direct queued growth-event writes',
+      );
+      expect(
+        growthSection,
+        isNot(contains("collection('capabilityGrowthEvents')")),
+        reason:
+            'capabilityGrowthEvents must remain server-owned append-only output',
       );
     });
 
@@ -418,8 +509,7 @@ void main() {
       ];
 
       for (final String opName in requiredOps) {
-        final bool exists =
-            OpType.values.any((OpType op) => op.name == opName);
+        final bool exists = OpType.values.any((OpType op) => op.name == opName);
         expect(exists, isTrue, reason: 'OpType.$opName must exist');
       }
     });

@@ -152,7 +152,10 @@ class SyncCoordinator extends ChangeNotifier {
             .set(payload);
         break;
       case OpType.presenceCheckout:
-        await firestore.collection('checkins').doc(op.idempotencyKey).set(payload);
+        await firestore
+            .collection('checkins')
+            .doc(op.idempotencyKey)
+            .set(payload);
         break;
       case OpType.incidentSubmit:
         await firestore
@@ -221,17 +224,12 @@ class SyncCoordinator extends ChangeNotifier {
             .set(payload);
         break;
       case OpType.rubricApplication:
-        await firestore
-            .collection('rubricApplications')
-            .doc(op.idempotencyKey)
-            .set(payload);
+        await _syncQueuedRubricApply(payload);
         break;
       case OpType.capabilityGrowthEvent:
-        await firestore
-            .collection('capabilityGrowthEvents')
-            .doc(op.idempotencyKey)
-            .set(payload);
-        break;
+        throw StateError(
+          'capabilityGrowthEvent is server-owned; queue rubricApply or checkpointSubmit instead',
+        );
       case OpType.checkpointVerification:
         await firestore
             .collection('checkpointVerifications')
@@ -312,13 +310,7 @@ class SyncCoordinator extends ChangeNotifier {
         });
         break;
       case OpType.rubricApply:
-        await firestore
-            .collection('rubricApplications')
-            .doc(op.idempotencyKey)
-            .set(<String, dynamic>{
-          ...payload,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
+        await _syncQueuedRubricApply(payload);
         break;
       case OpType.bosEventIngest:
         // Route through Cloud Function to ensure FDM extraction, rate
@@ -332,8 +324,7 @@ class SyncCoordinator extends ChangeNotifier {
           'gradeBand': payload['gradeBand'] as String? ?? '',
           if (payload['sessionOccurrenceId'] != null)
             'sessionOccurrenceId': payload['sessionOccurrenceId'],
-          if (payload['missionId'] != null)
-            'missionId': payload['missionId'],
+          if (payload['missionId'] != null) 'missionId': payload['missionId'],
           if (payload['checkpointId'] != null)
             'checkpointId': payload['checkpointId'],
           'payload': <String, dynamic>{
@@ -348,12 +339,156 @@ class SyncCoordinator extends ChangeNotifier {
               'actorIdPseudo': payload['actorIdPseudo'],
             if (payload['assignmentId'] != null)
               'assignmentId': payload['assignmentId'],
-            if (payload['lessonId'] != null)
-              'lessonId': payload['lessonId'],
+            if (payload['lessonId'] != null) 'lessonId': payload['lessonId'],
           },
         });
         break;
     }
+  }
+
+  Future<void> _syncQueuedRubricApply(Map<String, dynamic> payload) async {
+    final String learnerId = _requiredPayloadString(payload, 'learnerId');
+    final String siteId = _requiredPayloadString(payload, 'siteId');
+    final List<String> evidenceRecordIds = <String>{
+      ..._stringListFromPayload(payload['evidenceRecordIds']),
+      ..._stringListFromPayload(payload['evidenceIds']),
+    }.toList(growable: false);
+    final String missionAttemptId =
+        _optionalPayloadString(payload, 'missionAttemptId');
+    final String portfolioItemId =
+        _optionalPayloadString(payload, 'portfolioItemId');
+    if (evidenceRecordIds.isEmpty &&
+        missionAttemptId.isEmpty &&
+        portfolioItemId.isEmpty) {
+      throw StateError(
+        'rubric replay requires evidenceRecordIds/evidenceIds, missionAttemptId, or portfolioItemId',
+      );
+    }
+
+    await FirebaseFunctions.instance
+        .httpsCallable('applyRubricToEvidence')
+        .call(<String, dynamic>{
+      'learnerId': learnerId,
+      'siteId': siteId,
+      'evidenceRecordIds': evidenceRecordIds,
+      'scores': _rubricScoresFromPayload(payload),
+      if (missionAttemptId.isNotEmpty) 'missionAttemptId': missionAttemptId,
+      if (portfolioItemId.isNotEmpty) 'portfolioItemId': portfolioItemId,
+      if (_optionalPayloadString(payload, 'rubricId').isNotEmpty)
+        'rubricId': _optionalPayloadString(payload, 'rubricId'),
+    });
+  }
+
+  List<Map<String, dynamic>> _rubricScoresFromPayload(
+    Map<String, dynamic> payload,
+  ) {
+    final Object? rawScores = payload['scores'];
+    if (rawScores is List && rawScores.isNotEmpty) {
+      final List<Map<String, dynamic>> normalizedScores = rawScores
+          .whereType<Map>()
+          .map((Map score) => Map<String, dynamic>.from(score))
+          .where(
+            (Map<String, dynamic> score) =>
+                _optionalPayloadString(score, 'capabilityId').isNotEmpty,
+          )
+          .map((Map<String, dynamic> score) => <String, dynamic>{
+                'criterionId':
+                    _criterionIdFromScore(score, payload['idempotencyKey']),
+                'capabilityId': _requiredPayloadString(score, 'capabilityId'),
+                'pillarCode': _optionalPayloadString(score, 'pillarCode')
+                        .isNotEmpty
+                    ? _optionalPayloadString(score, 'pillarCode')
+                    : _optionalPayloadString(payload, 'pillarCode').isNotEmpty
+                        ? _optionalPayloadString(payload, 'pillarCode')
+                        : 'FUTURE_SKILLS',
+                'score': (score['score'] as num?)?.toInt() ?? 0,
+                'maxScore': (score['maxScore'] as num?)?.toInt() ?? 4,
+                if (_optionalPayloadString(score, 'processDomainId').isNotEmpty)
+                  'processDomainId':
+                      _optionalPayloadString(score, 'processDomainId'),
+              })
+          .toList(growable: false);
+      if (normalizedScores.isNotEmpty) {
+        return normalizedScores;
+      }
+    }
+
+    final String capabilityId = _requiredPayloadString(payload, 'capabilityId');
+    return <Map<String, dynamic>>[
+      <String, dynamic>{
+        'criterionId':
+            _optionalPayloadString(payload, 'rubricApplicationId').isNotEmpty
+                ? _optionalPayloadString(payload, 'rubricApplicationId')
+                : _optionalPayloadString(payload, 'idempotencyKey').isNotEmpty
+                    ? _optionalPayloadString(payload, 'idempotencyKey')
+                    : 'offline-rubric',
+        'capabilityId': capabilityId,
+        'pillarCode': _optionalPayloadString(payload, 'pillarCode').isNotEmpty
+            ? _optionalPayloadString(payload, 'pillarCode')
+            : 'FUTURE_SKILLS',
+        'score': _scoreFromRubricLevel(payload['rubricLevel'] as String?),
+        'maxScore': (payload['maxScore'] as num?)?.toInt() ?? 4,
+        if (_optionalPayloadString(payload, 'processDomainId').isNotEmpty)
+          'processDomainId': _optionalPayloadString(payload, 'processDomainId'),
+      },
+    ];
+  }
+
+  String _criterionIdFromScore(
+    Map<String, dynamic> score,
+    Object? fallbackId,
+  ) {
+    final String criterionId = _optionalPayloadString(score, 'criterionId');
+    if (criterionId.isNotEmpty) return criterionId;
+    final String rubricApplicationId =
+        _optionalPayloadString(score, 'rubricApplicationId');
+    if (rubricApplicationId.isNotEmpty) return rubricApplicationId;
+    if (fallbackId is String && fallbackId.trim().isNotEmpty) {
+      return fallbackId.trim();
+    }
+    return 'offline-rubric';
+  }
+
+  int _scoreFromRubricLevel(String? level) {
+    switch (level?.trim().toLowerCase()) {
+      case 'advanced':
+        return 4;
+      case 'proficient':
+        return 3;
+      case 'developing':
+        return 2;
+      case 'emerging':
+      default:
+        return 1;
+    }
+  }
+
+  List<String> _stringListFromPayload(Object? value) {
+    if (value is! List) return const <String>[];
+    return value
+        .whereType<String>()
+        .map((String id) => id.trim())
+        .where((String id) => id.isNotEmpty)
+        .toList(growable: false);
+  }
+
+  String _requiredPayloadString(
+    Map<String, dynamic> payload,
+    String fieldName,
+  ) {
+    final String value = _optionalPayloadString(payload, fieldName);
+    if (value.isEmpty) {
+      throw StateError('rubric replay requires a non-empty $fieldName');
+    }
+    return value;
+  }
+
+  String _optionalPayloadString(
+    Map<String, dynamic> payload,
+    String fieldName,
+  ) {
+    final Object? value = payload[fieldName];
+    return value is String ? value.trim() : '';
   }
 
   /// Force retry all failed ops
