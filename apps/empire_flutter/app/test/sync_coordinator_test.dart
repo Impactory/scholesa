@@ -475,6 +475,39 @@ void main() {
       );
     });
 
+    test('checkpointSubmit captures history and routes eligible mastery', () {
+      final String source = File(
+        'lib/offline/sync_coordinator.dart',
+      ).readAsStringSync();
+
+      final int checkpointCaseIdx =
+          source.indexOf('case OpType.checkpointSubmit');
+      expect(checkpointCaseIdx, isNot(-1),
+          reason: 'checkpointSubmit case must exist');
+
+      final int reflectionCaseIdx =
+          source.indexOf('case OpType.reflectionSubmit');
+      final String checkpointSection =
+          source.substring(checkpointCaseIdx, reflectionCaseIdx);
+      expect(
+        checkpointSection,
+        contains("collection('checkpointHistory')"),
+        reason:
+            'offline checkpoint replay must preserve checkpoint evidence capture',
+      );
+      expect(
+        checkpointSection,
+        contains('_syncQueuedCheckpointMasteryIfEligible'),
+        reason:
+            'passed skill-linked educator checkpoints must be offered to server mastery evaluation',
+      );
+      expect(
+        source,
+        contains("httpsCallable('processCheckpointMasteryUpdate')"),
+        reason: 'checkpoint mastery must be routed through server validation',
+      );
+    });
+
     test('proofBundleUpdate requires non-empty bundleId', () {
       final String source = File(
         'lib/offline/sync_coordinator.dart',

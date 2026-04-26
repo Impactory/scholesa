@@ -246,6 +246,10 @@ class SyncCoordinator extends ChangeNotifier {
           ...payload,
           'createdAt': FieldValue.serverTimestamp(),
         });
+        await _syncQueuedCheckpointMasteryIfEligible(
+          payload,
+          op.idempotencyKey,
+        );
         break;
       case OpType.reflectionSubmit:
         await firestore
@@ -379,6 +383,49 @@ class SyncCoordinator extends ChangeNotifier {
     });
   }
 
+  Future<void> _syncQueuedCheckpointMasteryIfEligible(
+    Map<String, dynamic> payload,
+    String? queuedCheckpointId,
+  ) async {
+    final bool passed =
+        payload['passed'] == true || payload['isCorrect'] == true;
+    if (!passed) return;
+
+    final List<String> skillIds = <String>{
+      ..._stringListFromPayload(payload['skillIds']),
+      if (_optionalPayloadString(payload, 'skillId').isNotEmpty)
+        _optionalPayloadString(payload, 'skillId'),
+    }.toList(growable: false);
+    if (skillIds.isEmpty) return;
+
+    final String educatorId = _optionalPayloadString(payload, 'educatorId');
+    if (educatorId.isEmpty) return;
+
+    final String checkpointDefinitionId =
+        _optionalPayloadString(payload, 'checkpointDefinitionId');
+    final String portfolioItemId =
+        _optionalPayloadString(payload, 'portfolioItemId');
+    final String payloadCheckpointId =
+        _optionalPayloadString(payload, 'checkpointId');
+    final bool hasCanonicalCheckpointContext =
+        checkpointDefinitionId.isNotEmpty && portfolioItemId.isNotEmpty;
+    final String replayCheckpointId = payloadCheckpointId.isNotEmpty
+        ? payloadCheckpointId
+        : queuedCheckpointId?.trim() ?? '';
+
+    await FirebaseFunctions.instance
+        .httpsCallable('processCheckpointMasteryUpdate')
+        .call(<String, dynamic>{
+      'learnerId': _requiredCheckpointPayloadString(payload, 'learnerId'),
+      'siteId': _requiredCheckpointPayloadString(payload, 'siteId'),
+      'skillIds': skillIds,
+      'passed': true,
+      'educatorId': educatorId,
+      if (hasCanonicalCheckpointContext && replayCheckpointId.isNotEmpty)
+        'checkpointId': replayCheckpointId,
+    });
+  }
+
   List<Map<String, dynamic>> _rubricScoresFromPayload(
     Map<String, dynamic> payload,
   ) {
@@ -479,6 +526,17 @@ class SyncCoordinator extends ChangeNotifier {
     final String value = _optionalPayloadString(payload, fieldName);
     if (value.isEmpty) {
       throw StateError('rubric replay requires a non-empty $fieldName');
+    }
+    return value;
+  }
+
+  String _requiredCheckpointPayloadString(
+    Map<String, dynamic> payload,
+    String fieldName,
+  ) {
+    final String value = _optionalPayloadString(payload, fieldName);
+    if (value.isEmpty) {
+      throw StateError('checkpoint replay requires a non-empty $fieldName');
     }
     return value;
   }
