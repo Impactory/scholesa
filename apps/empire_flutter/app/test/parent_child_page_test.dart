@@ -176,6 +176,21 @@ LearnerSummary _sampleLearner() {
         ),
       ],
     ),
+    growthTimeline: <GrowthTimelineEntry>[
+      GrowthTimelineEntry(
+        capabilityId: 'cap-1',
+        title: 'Evidence-backed reasoning',
+        pillar: 'Impact',
+        level: 3,
+        linkedEvidenceRecordIds: const <String>['ev-1'],
+        linkedPortfolioItemIds: const <String>['portfolio-1'],
+        proofOfLearningStatus: 'verified',
+        occurredAt: now,
+        reviewingEducatorName: 'Coach Rivera',
+        rubricRawScore: 3,
+        rubricMaxScore: 4,
+      ),
+    ],
     recentActivities: <RecentActivity>[
       RecentActivity(
         id: 'activity-1',
@@ -412,6 +427,10 @@ void main() {
     expect(copiedText,
         contains('AI disclosure: Learner declared no AI support used'));
     expect(copiedText, contains('Current evidence-backed claims:'));
+    expect(copiedText, contains('Recent growth provenance:'));
+    expect(copiedText, contains('Evidence-backed reasoning • Proficient'));
+    expect(copiedText, contains('1 evidence records linked'));
+    expect(copiedText, contains('1 portfolio artifacts linked'));
     expect(copiedText, contains('Pending verification prompts:'));
   });
 

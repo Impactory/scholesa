@@ -781,6 +781,14 @@ class _ParentChildPageState extends State<ParentChildPage> {
         (PassportClaim claim) =>
             '- ${claim.title}: ${_levelLabel(claim.latestLevel)} with ${claim.evidenceCount} evidence record(s)',
       ),
+      if (learner.growthTimeline.isNotEmpty) ...<String>[
+        '',
+        'Recent growth provenance:',
+        ...learner.growthTimeline.take(2).map(
+              (GrowthTimelineEntry entry) =>
+                  '- ${_formatGrowthTimelineEntry(entry)}',
+            ),
+      ],
       '',
       'Next verification prompts:',
       if (nextPrompts.isEmpty)
@@ -789,6 +797,37 @@ class _ParentChildPageState extends State<ParentChildPage> {
     ];
 
     return lines.join('\n');
+  }
+
+  String _formatGrowthTimelineEntry(GrowthTimelineEntry entry) {
+    final List<String> parts = <String>[
+      entry.title,
+      _levelLabel(entry.level),
+    ];
+    if ((entry.rubricRawScore ?? 0) > 0 && (entry.rubricMaxScore ?? 0) > 0) {
+      parts.add(
+          '${_t('rubric')} ${entry.rubricRawScore}/${entry.rubricMaxScore}');
+    }
+    if (entry.reviewingEducatorName?.trim().isNotEmpty == true) {
+      parts.add('${_t('reviewed by')} ${entry.reviewingEducatorName}');
+    }
+    if (entry.linkedEvidenceRecordIds.isNotEmpty) {
+      parts.add(
+          '${entry.linkedEvidenceRecordIds.length} ${_t('evidence records linked')}');
+    }
+    if (entry.linkedPortfolioItemIds.isNotEmpty) {
+      parts.add(
+          '${entry.linkedPortfolioItemIds.length} ${_t('portfolio artifacts linked')}');
+    }
+    if (entry.proofOfLearningStatus?.trim().isNotEmpty == true) {
+      parts.add('${_t('proof')} ${_titleCase(entry.proofOfLearningStatus!)}');
+    }
+    if (entry.occurredAt != null) {
+      final DateTime value = entry.occurredAt!;
+      parts.add(
+          '${value.month.toString().padLeft(2, '0')}/${value.day.toString().padLeft(2, '0')}/${value.year}');
+    }
+    return parts.join(' • ');
   }
 
   String _buildPassportExport(LearnerSummary learner) {

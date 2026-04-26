@@ -547,6 +547,10 @@ void main() {
     expect(copiedText,
         contains('AI disclosure: Learner declared no AI support used'));
     expect(copiedText, contains('Current evidence-backed focus:'));
+    expect(copiedText, contains('Recent growth provenance:'));
+    expect(copiedText, contains('Evidence-backed reasoning • Proficient'));
+    expect(copiedText, contains('1 evidence records linked'));
+    expect(copiedText, contains('1 portfolio artifacts linked'));
     expect(copiedText, contains('Next verification prompt:'));
   });
 }

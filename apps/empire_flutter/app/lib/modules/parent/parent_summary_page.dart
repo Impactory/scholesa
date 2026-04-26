@@ -1032,6 +1032,14 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
       featuredClaim != null
           ? '- ${featuredClaim.title}: ${_levelLabel(featuredClaim.latestLevel)} with ${featuredClaim.evidenceCount} evidence record(s)'
           : '- No capability claims backed by reviewed evidence yet.',
+      if (learner.growthTimeline.isNotEmpty) ...<String>[
+        '',
+        'Recent growth provenance:',
+        ...learner.growthTimeline.take(2).map(
+              (GrowthTimelineEntry entry) =>
+                  '- ${_formatGrowthTimelineEntry(entry)}',
+            ),
+      ],
       '',
       'Next verification prompt:',
       '- $nextFocus',
