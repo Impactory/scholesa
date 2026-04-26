@@ -1,17 +1,15 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../auth/app_state.dart';
 import '../../domain/models.dart';
 import '../../domain/repositories.dart';
 import '../../i18n/site_surface_i18n.dart';
-import '../../services/export_service.dart';
-import '../../services/telemetry_service.dart';
 import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
+import '../reports/report_actions.dart';
 
 String _tSiteAudit(BuildContext context, String input) {
   return SiteSurfaceI18n.text(context, input);
@@ -61,7 +59,8 @@ class _SiteAuditPageState extends State<SiteAuditPage> {
           ),
           IconButton(
             tooltip: _tSiteAudit(context, 'Export Audit Log'),
-            onPressed: _isLoading || _auditLogs.isEmpty ? null : _exportAuditLogs,
+            onPressed:
+                _isLoading || _auditLogs.isEmpty ? null : _exportAuditLogs,
             icon: const Icon(Icons.download_rounded),
           ),
           const SessionMenuButton(
@@ -138,7 +137,8 @@ class _SiteAuditPageState extends State<SiteAuditPage> {
         .toSet()
         .length;
     final int entityCount = _auditLogs
-        .map((AuditLogModel log) => '${_normalizedValue(log.entityType)}:${_normalizedValue(log.entityId)}')
+        .map((AuditLogModel log) =>
+            '${_normalizedValue(log.entityType)}:${_normalizedValue(log.entityId)}')
         .where((String value) => value != ':')
         .toSet()
         .length;
@@ -389,68 +389,27 @@ class _SiteAuditPageState extends State<SiteAuditPage> {
 
     final String fileName = _auditExportFileName();
     final String exportContent = export.toString().trim();
-    try {
-      final String? savedLocation = await ExportService.instance.saveTextFile(
-        fileName: fileName,
-        content: exportContent,
-      );
-      if (savedLocation == null || !mounted) {
-        return;
-      }
-      TelemetryService.instance.logEvent(
-        event: 'export.downloaded',
-        role: 'site',
-        siteId: _siteId,
-        metadata: <String, dynamic>{
-          'module': 'site_audit',
-          'file_name': fileName,
-          'entry_count': _auditLogs.length,
-        },
-      );
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _tSiteAudit(context, 'Audit export downloaded.'),
-          ),
-        ),
-      );
-    } on UnsupportedError catch (error) {
-      debugPrint(
-          'Export unsupported for site audit export, copying content instead: $error');
-      await Clipboard.setData(ClipboardData(text: exportContent));
-      TelemetryService.instance.logEvent(
-        event: 'site.audit_export.copied',
-        role: 'site',
-        siteId: _siteId,
-        metadata: <String, dynamic>{
-          'module': 'site_audit',
-          'file_name': fileName,
-          'entry_count': _auditLogs.length,
-          'fallback': 'clipboard',
-        },
-      );
-      if (!mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _tSiteAudit(context, 'Audit export copied for sharing.'),
-          ),
-        ),
-      );
-    } catch (_) {
-      if (!mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _tSiteAudit(context, 'Unable to export audit logs right now.'),
-          ),
-        ),
-      );
-    }
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+    await ReportActions.exportText(
+      messenger: messenger,
+      isMounted: () => mounted,
+      fileName: fileName,
+      content: exportContent,
+      module: 'site_audit',
+      surface: 'site_audit',
+      copiedEventName: 'site.audit_export.copied',
+      successMessage: _tSiteAudit(context, 'Audit export downloaded.'),
+      copiedMessage: _tSiteAudit(context, 'Audit export copied for sharing.'),
+      errorMessage:
+          _tSiteAudit(context, 'Unable to export audit logs right now.'),
+      unsupportedLogMessage:
+          'Export unsupported for site audit export, copying content instead',
+      role: 'site',
+      siteId: _siteId,
+      metadata: <String, dynamic>{
+        'entry_count': _auditLogs.length,
+      },
+    );
   }
 
   String _auditExportFileName() {

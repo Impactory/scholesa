@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../auth/app_state.dart';
 import '../../services/analytics_service.dart';
-import '../../services/export_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../services/workflow_bridge_service.dart';
 import '../../i18n/site_dashboard_i18n.dart';
 import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
+import '../reports/report_actions.dart';
 
 /// Site Dashboard Page - Analytics and overview for site administrators
 class SiteDashboardPage extends StatefulWidget {
@@ -199,13 +198,12 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
     });
     final bool hadKpiPacks = _kpiPacks.isNotEmpty;
     try {
-      final List<Map<String, dynamic>> rows =
-          widget.kpiPacksLoader != null
-              ? await widget.kpiPacksLoader!(siteId, 12)
-              : await _workflowBridgeService.listKpiPacks(
-                  siteId: siteId,
-                  limit: 12,
-                );
+      final List<Map<String, dynamic>> rows = widget.kpiPacksLoader != null
+          ? await widget.kpiPacksLoader!(siteId, 12)
+          : await _workflowBridgeService.listKpiPacks(
+              siteId: siteId,
+              limit: 12,
+            );
       if (!mounted) return;
       final List<_KpiPackSummary> packs = rows
           .map(
@@ -238,8 +236,10 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
       if (!mounted) return;
       setState(() {
         _kpiPacksError = hadKpiPacks
-            ? _t('Unable to refresh KPI packs right now. Showing the last successful data.')
-            : _t('We could not load KPI packs right now. Retry to check the current state.');
+            ? _t(
+                'Unable to refresh KPI packs right now. Showing the last successful data.')
+            : _t(
+                'We could not load KPI packs right now. Retry to check the current state.');
       });
     } finally {
       if (mounted) {
@@ -354,7 +354,8 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                   color: ScholesaColors.site.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.refresh_rounded, color: ScholesaColors.site),
+                child: const Icon(Icons.refresh_rounded,
+                    color: ScholesaColors.site),
               ),
             ),
             IconButton(
@@ -996,15 +997,21 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                 ),
               ),
             ),
-          if (!_isLoadingActivities && _activitiesError != null && _activities.isEmpty)
+          if (!_isLoadingActivities &&
+              _activitiesError != null &&
+              _activities.isEmpty)
             _buildRetryLoadErrorCard(
               title: _t('Recent activity is temporarily unavailable'),
               message: _activitiesError!,
               onRetry: _loadRecentActivity,
             ),
-          if (!_isLoadingActivities && _activitiesError != null && _activities.isNotEmpty)
+          if (!_isLoadingActivities &&
+              _activitiesError != null &&
+              _activities.isNotEmpty)
             _buildStaleDataBanner(_activitiesError!),
-          if (!_isLoadingActivities && _activitiesError == null && _activities.isEmpty)
+          if (!_isLoadingActivities &&
+              _activitiesError == null &&
+              _activities.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: Center(
@@ -1088,52 +1095,33 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
     }
     final String fileName = _siteReportFileName();
     final String reportContent = _buildSiteReportExport();
-    try {
-      final String? savedLocation = await ExportService.instance.saveTextFile(
-        fileName: fileName,
-        content: reportContent,
-      );
-      if (savedLocation == null || !mounted) {
-        return;
-      }
-      TelemetryService.instance.logEvent(
-        event: 'export.downloaded',
-        metadata: <String, dynamic>{
-          'surface': 'site_dashboard',
-          'period': _selectedPeriod,
-          'file_name': fileName,
-        },
-      );
-      await _persistReportGeneratedEvent(
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+    await ReportActions.exportText(
+      messenger: messenger,
+      isMounted: () => mounted,
+      fileName: fileName,
+      content: reportContent,
+      module: 'site_dashboard',
+      surface: 'site_dashboard',
+      copiedEventName: 'site.report_export.copied',
+      successMessage: _t('Site report exported.'),
+      copiedMessage: _t('Site report copied for sharing.'),
+      errorMessage: _t('Unable to export site report right now.'),
+      unsupportedLogMessage:
+          'Export unsupported for site dashboard report, copying report instead',
+      metadata: <String, dynamic>{
+        'period': _selectedPeriod,
+      },
+      onDownloaded: () => _persistReportGeneratedEvent(
         fileName: fileName,
         status: 'downloaded',
-      );
-    } on UnsupportedError catch (error) {
-      debugPrint(
-          'Export unsupported for site dashboard report, copying report instead: $error');
-      await Clipboard.setData(ClipboardData(text: reportContent));
-      TelemetryService.instance.logEvent(
-        event: 'site.report_export.copied',
-        metadata: <String, dynamic>{
-          'surface': 'site_dashboard',
-          'period': _selectedPeriod,
-          'file_name': fileName,
-          'fallback': 'clipboard',
-        },
-      );
-      await _persistReportGeneratedEvent(
+      ),
+      onCopied: () => _persistReportGeneratedEvent(
         fileName: fileName,
         status: 'copied',
-      );
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_t('Unable to export site report right now.')),
-          backgroundColor: ScholesaColors.error,
-        ),
-      );
-    }
+      ),
+      showSuccessSnackBar: false,
+    );
   }
 
   bool _hasExportableReportData() {
@@ -1152,8 +1140,9 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
 
   String _buildSiteReportExport() {
     final AppState? appState = _maybeAppState();
-    final String siteId =
-        (appState?.activeSiteId ?? '').trim().isNotEmpty ? appState!.activeSiteId!.trim() : _t('Site unavailable');
+    final String siteId = (appState?.activeSiteId ?? '').trim().isNotEmpty
+        ? appState!.activeSiteId!.trim()
+        : _t('Site unavailable');
     final StringBuffer buffer = StringBuffer()
       ..writeln(_t('Export Site Report'))
       ..writeln('Generated: ${DateTime.now().toIso8601String()}')
@@ -1165,7 +1154,8 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
 
     final TelemetryDashboardMetrics? metrics = _metrics;
     if (metrics == null) {
-      buffer.writeln(_metricsError ?? _t('No site dashboard data to export yet.'));
+      buffer.writeln(
+          _metricsError ?? _t('No site dashboard data to export yet.'));
     } else {
       buffer.writeln(
         'Weekly accountability adherence: '
@@ -1330,8 +1320,9 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
     final String activitySubtitle = copied
         ? '${_selectedPeriod[0].toUpperCase()}${_selectedPeriod.substring(1)} ${_t('report export copied')}'
         : '${_selectedPeriod[0].toUpperCase()}${_selectedPeriod.substring(1)} ${_t('report export downloaded')}';
-    final String snackbarMessage =
-        copied ? _t('Site report copied for sharing.') : _t('Site report exported.');
+    final String snackbarMessage = copied
+        ? _t('Site report copied for sharing.')
+        : _t('Site report exported.');
 
     if (appState == null || firestoreService == null) {
       if (!mounted) return;
@@ -1360,7 +1351,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
     }
 
     final String siteId = (appState.activeSiteId ??
-        (appState.siteIds.isNotEmpty ? appState.siteIds.first : ''))
+            (appState.siteIds.isNotEmpty ? appState.siteIds.first : ''))
         .trim();
 
     if (siteId.isNotEmpty) {
@@ -1389,9 +1380,9 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
   Future<void> _loadRecentActivity() async {
     final AppState? appState = _maybeAppState();
     final String siteId = ((appState?.activeSiteId) ??
-        ((appState?.siteIds.isNotEmpty ?? false)
-          ? appState!.siteIds.first
-          : ''))
+            ((appState?.siteIds.isNotEmpty ?? false)
+                ? appState!.siteIds.first
+                : ''))
         .trim();
 
     if (!mounted) return;
@@ -1407,9 +1398,8 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
             await widget.recentActivityLoader!(siteId);
         if (!mounted) return;
         setState(() {
-          _activities = rows
-              .map(_siteActivityFromLoaderRow)
-              .toList(growable: false);
+          _activities =
+              rows.map(_siteActivityFromLoaderRow).toList(growable: false);
           _activitiesError = null;
         });
         return;
@@ -1500,8 +1490,8 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
         final ({IconData icon, Color color}) visual =
             _mapActivityVisual(action);
         final String subtitle = action == 'Export Site Report'
-          ? '${_selectedPeriod[0].toUpperCase()}${_selectedPeriod.substring(1)} ${status == 'downloaded' ? _t('report export downloaded') : status == 'copied' ? _t('report export copied') : _t('report export request logged')}'
-          : _t('Site operation event');
+            ? '${_selectedPeriod[0].toUpperCase()}${_selectedPeriod.substring(1)} ${status == 'downloaded' ? _t('report export downloaded') : status == 'copied' ? _t('report export copied') : _t('report export request logged')}'
+            : _t('Site operation event');
         feed.add(
           _TimedSiteActivity(
             at: at,
@@ -1537,8 +1527,10 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
       if (!mounted) return;
       setState(() {
         _activitiesError = hadActivities
-            ? _t('Unable to refresh recent activity right now. Showing the last successful data.')
-            : _t('We could not load recent activity right now. Retry to check the current state.');
+            ? _t(
+                'Unable to refresh recent activity right now. Showing the last successful data.')
+            : _t(
+                'We could not load recent activity right now. Retry to check the current state.');
       });
     } finally {
       if (mounted) {
