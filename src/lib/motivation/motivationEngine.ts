@@ -29,6 +29,11 @@ import {
   increment
 } from 'firebase/firestore';
 import { db } from '@/src/firebase/client-init';
+import {
+  peerFeedbackCollection,
+  recognitionBadgesCollection,
+  showcaseSubmissionsCollection,
+} from '@/src/firebase/firestore/collections';
 import type {
   DifficultyLevel,
   AgeBand,
@@ -558,7 +563,7 @@ export class BelongingEngine {
     recognition: Omit<RecognitionBadge, 'id' | 'createdAt'>,
     giverGrade: number
   ): Promise<string> {
-    const docRef = await addDoc(collection(db, 'recognitionBadges'), {
+    const docRef = await addDoc(recognitionBadgesCollection, {
       ...recognition,
       createdAt: Timestamp.now()
     });
@@ -583,14 +588,24 @@ export class BelongingEngine {
     artifactId: string,
     caption: string
   ): Promise<void> {
-    const showcaseRef = doc(db, 'showcaseSubmissions', artifactId);
+    const showcaseRef = doc(showcaseSubmissionsCollection, artifactId);
     
     await setDoc(showcaseRef, {
       learnerId,
       siteId,
       artifactId,
       caption,
+      title: caption || 'Showcase artifact',
+      description: caption || 'Showcase artifact',
+      artifactType: 'document',
+      artifactUrl: artifactId,
+      microSkillIds: [],
+      recognitions: [],
+      visibleToCrew: true,
+      visibleToSite: true,
       submittedAt: Timestamp.now(),
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
       likes: 0,
       comments: []
     });
@@ -614,14 +629,22 @@ export class BelongingEngine {
     feedback: string,
     stars: number
   ): Promise<void> {
-    await addDoc(collection(db, 'peerFeedback'), {
+    await addDoc(peerFeedbackCollection, {
+      fromLearnerId: giverId,
+      toLearnerId: recipientId,
+      siteId,
+      showcaseSubmissionId: artifactId,
+      iLike: feedback,
+      iWonder: '',
+      nextStep: '',
+      flagged: false,
       giverId,
       recipientId,
-      siteId,
       artifactId,
       feedback,
       stars,
-      createdAt: Timestamp.now()
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
     });
     
     // Track belonging (giver)
@@ -641,7 +664,7 @@ export class BelongingEngine {
     limitCount: number = 10
   ): Promise<RecognitionBadge[]> {
     const q = query(
-      collection(db, 'recognitionBadges'),
+      recognitionBadgesCollection,
       where('recipientId', '==', learnerId),
       where('siteId', '==', siteId),
       orderBy('createdAt', 'desc'),

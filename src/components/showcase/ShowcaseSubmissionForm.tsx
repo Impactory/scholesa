@@ -9,8 +9,8 @@
 
 import React, { useState } from 'react';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
-import { db } from '@/src/firebase/client-init';
-import { collection, addDoc, Timestamp } from 'firebase/firestore';
+import { addDoc, Timestamp } from 'firebase/firestore';
+import { showcaseSubmissionsCollection } from '@/src/firebase/firestore/collections';
 import { useBelongingTracking } from '@/src/hooks/useTelemetry';
 import { SparklesIcon, XIcon, ImageIcon, GlobeIcon, UsersIcon } from 'lucide-react';
 
@@ -62,19 +62,27 @@ export function ShowcaseSubmissionForm({
       const showcaseData = {
         learnerId,
         siteId,
+        learnerName: profile?.displayName || 'Learner',
         title: title.trim(),
         description: description.trim(),
+        artifactType: 'document' as const,
+        artifactUrl: artifactUrl || '',
+        microSkillIds: [],
+        recognitions: [],
         visibility,
+        visibleToCrew: visibility === 'site',
+        visibleToSite: true,
         missionId: missionId || null,
         attemptId: attemptId || null,
-        artifactUrl: artifactUrl || null,
         submittedAt: Timestamp.now(),
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
         viewCount: 0,
         likeCount: 0,
-        commentCount: 0
+        commentCount: 0,
       };
       
-      const showcaseRef = await addDoc(collection(db, 'showcaseSubmissions'), showcaseData);
+      const showcaseRef = await addDoc(showcaseSubmissionsCollection, showcaseData);
       const showcaseId = showcaseRef.id;
       
       // Track showcase submission event

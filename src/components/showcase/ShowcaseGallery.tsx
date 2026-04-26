@@ -15,8 +15,8 @@ import Image from 'next/image';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { ShowcaseSubmissionForm } from './ShowcaseSubmissionForm';
 import { PeerRecognitionForm } from '@/src/components/recognition/PeerRecognitionForm';
-import { collection, query, where, getDocs, orderBy, limit, Timestamp } from 'firebase/firestore';
-import { db } from '@/src/firebase/client-init';
+import { query, where, getDocs, orderBy, limit, Timestamp } from 'firebase/firestore';
+import { showcaseSubmissionsCollection } from '@/src/firebase/firestore/collections';
 import { 
   SparklesIcon, 
   HeartIcon, 
@@ -64,7 +64,7 @@ export function ShowcaseGallery() {
       setLoading(true);
       try {
         // Query showcase submissions
-        const showcaseRef = collection(db, 'showcaseSubmissions');
+        const showcaseRef = showcaseSubmissionsCollection;
         let q = query(
           showcaseRef,
           where('siteId', '==', siteId),
@@ -95,8 +95,8 @@ export function ShowcaseGallery() {
             siteId: data.siteId,
             title: data.title,
             description: data.description,
-            visibility: data.visibility,
-            recognitionCount: readFiniteNumber(data.recognitionCount),
+            visibility: data.visibility || 'site',
+            recognitionCount: Array.isArray(data.recognitions) ? data.recognitions.length : null,
             viewCount: readFiniteNumber(data.viewCount),
             artifactUrl: data.artifactUrl,
             createdAt: (data.createdAt as Timestamp).toDate()

@@ -912,6 +912,10 @@ describe('Evidence chain collection exports completeness', () => {
     'capabilityMasteryCollection',
     'rubricApplicationsCollection',
     'rubricTemplatesCollection',
+    'showcaseSubmissionsCollection',
+    'peerFeedbackCollection',
+    'learnerProfilesCollection',
+    'recognitionBadgesCollection',
   ];
 
   for (const name of evidenceCollections) {
@@ -919,6 +923,44 @@ describe('Evidence chain collection exports completeness', () => {
       expect(collectionsSource).toContain(`export const ${name}`);
     });
   }
+});
+
+describe('P1-F typed collection reconciliation', () => {
+  const workflowDataSource = readSrcFile('features', 'workflows', 'workflowData.ts');
+  const showcaseRendererSource = readSrcFile(
+    'features',
+    'workflows',
+    'renderers',
+    'LearnerShowcasePeerReviewRenderer.tsx'
+  );
+  const showcaseFormSource = readSrcFile('components', 'showcase', 'ShowcaseSubmissionForm.tsx');
+  const showcaseGallerySource = readSrcFile('components', 'showcase', 'ShowcaseGallery.tsx');
+  const motivationSource = readSrcFile('lib', 'motivation', 'motivationEngine.ts');
+
+  it('keeps learner profile and peer feedback writes on typed refs', () => {
+    expect(workflowDataSource).toContain('learnerProfilesCollection');
+    expect(workflowDataSource).toContain('peerFeedbackCollection');
+    expect(workflowDataSource).not.toContain("collection(firestore, 'learnerProfiles')");
+    expect(workflowDataSource).not.toContain("collection(firestore, 'peerFeedback')");
+  });
+
+  it('keeps showcase and peer-review surfaces on typed refs', () => {
+    const combinedShowcaseSource = [showcaseRendererSource, showcaseFormSource, showcaseGallerySource].join('\n');
+    expect(combinedShowcaseSource).toContain('showcaseSubmissionsCollection');
+    expect(showcaseRendererSource).toContain('peerFeedbackCollection');
+    expect(combinedShowcaseSource).not.toContain("collection(firestore, 'showcaseSubmissions')");
+    expect(combinedShowcaseSource).not.toContain("collection(db, 'showcaseSubmissions')");
+    expect(showcaseRendererSource).not.toContain("collection(firestore, 'peerFeedback')");
+  });
+
+  it('keeps motivation belonging writes on typed refs', () => {
+    expect(motivationSource).toContain('showcaseSubmissionsCollection');
+    expect(motivationSource).toContain('peerFeedbackCollection');
+    expect(motivationSource).toContain('recognitionBadgesCollection');
+    expect(motivationSource).not.toContain("collection(db, 'showcaseSubmissions')");
+    expect(motivationSource).not.toContain("collection(db, 'peerFeedback')");
+    expect(motivationSource).not.toContain("collection(db, 'recognitionBadges')");
+  });
 });
 
 /* ───── CapabilityFrameworkEditor unit/checkpoint mapping ───── */

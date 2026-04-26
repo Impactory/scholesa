@@ -10,7 +10,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   addDoc,
-  collection,
   getDocs,
   query,
   where,
@@ -18,7 +17,10 @@ import {
   limit,
   serverTimestamp,
 } from 'firebase/firestore';
-import { firestore } from '@/src/firebase/client-init';
+import {
+  peerFeedbackCollection,
+  showcaseSubmissionsCollection,
+} from '@/src/firebase/firestore/collections';
 import type { CustomRouteRendererProps } from '../customRouteRenderers';
 import {
   SparklesIcon,
@@ -91,7 +93,7 @@ export default function LearnerShowcasePeerReviewRenderer({ ctx }: CustomRouteRe
       // Load showcase submissions for this site
       const showcaseSnap = await getDocs(
         query(
-          collection(firestore, 'showcaseSubmissions'),
+          showcaseSubmissionsCollection,
           where('siteId', '==', siteId),
           where('visibleToSite', '==', true),
           orderBy('createdAt', 'desc'),
@@ -119,17 +121,30 @@ export default function LearnerShowcasePeerReviewRenderer({ ctx }: CustomRouteRe
       // Load peer feedback for displayed items
       if (showcaseItems.length > 0) {
         const itemIds = showcaseItems.map((i) => i.id).slice(0, 10);
-        const fbSnap = await getDocs(
-          query(
-            collection(firestore, 'peerFeedback'),
-            where('targetId', 'in', itemIds),
-            orderBy('createdAt', 'desc')
-          )
-        );
+        const [canonicalFbSnap, legacyFbSnap] = await Promise.all([
+          getDocs(
+            query(
+              peerFeedbackCollection,
+              where('showcaseSubmissionId', 'in', itemIds),
+              orderBy('createdAt', 'desc')
+            )
+          ),
+          getDocs(
+            query(
+              peerFeedbackCollection,
+              where('targetId', 'in', itemIds),
+              orderBy('createdAt', 'desc')
+            )
+          ),
+        ]);
         const fbMap = new Map<string, PeerFeedbackEntry[]>();
-        fbSnap.docs.forEach((d) => {
+        const seenFeedbackIds = new Set<string>();
+        [...canonicalFbSnap.docs, ...legacyFbSnap.docs].forEach((d) => {
+          if (seenFeedbackIds.has(d.id)) return;
+          seenFeedbackIds.add(d.id);
           const data = d.data();
-          const targetId = data.targetId as string;
+          const targetId = data.showcaseSubmissionId || data.targetId || '';
+          if (!targetId) return;
           const entry: PeerFeedbackEntry = {
             id: d.id,
             showcaseId: targetId,
@@ -161,7 +176,7 @@ export default function LearnerShowcasePeerReviewRenderer({ ctx }: CustomRouteRe
     if (!newTitle.trim() || !learnerId || !siteId) return;
     setSubmitting(true);
     try {
-      await addDoc(collection(firestore, 'showcaseSubmissions'), {
+      await addDoc(showcaseSubmissionsCollection, {
         learnerId,
         siteId,
         title: newTitle.trim(),
@@ -174,6 +189,7 @@ export default function LearnerShowcasePeerReviewRenderer({ ctx }: CustomRouteRe
         visibleToCrew: true,
         visibleToSite: true,
         createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
       });
       setNewTitle('');
       setNewDescription('');
@@ -192,17 +208,21 @@ export default function LearnerShowcasePeerReviewRenderer({ ctx }: CustomRouteRe
     if (!fbILike.trim() && !fbIWonder.trim() && !fbNextStep.trim()) return;
     setSendingFeedback(true);
     try {
-      await addDoc(collection(firestore, 'peerFeedback'), {
+      const targetItem = items.find((item) => item.id === targetId);
+      await addDoc(peerFeedbackCollection, {
+        showcaseSubmissionId: targetId,
         targetId,
         targetType: 'showcase',
         fromLearnerId: learnerId,
         fromLearnerName: ctx.profile?.displayName || 'Peer',
+        toLearnerId: targetItem?.learnerId || '',
         siteId,
         iLike: fbILike.trim(),
         iWonder: fbIWonder.trim(),
         nextStep: fbNextStep.trim(),
         flagged: false,
         createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
       });
       setFbILike('');
       setFbIWonder('');

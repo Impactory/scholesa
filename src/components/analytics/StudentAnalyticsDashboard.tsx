@@ -15,6 +15,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { db } from '@/src/firebase/client-init';
 import { collection, query, where, orderBy, getDocs, Timestamp } from 'firebase/firestore';
+import { recognitionBadgesCollection } from '@/src/firebase/firestore/collections';
 import { useSDTScores, useChildActivity } from '@/src/hooks/useRealtimeAnalytics';
 import {
   AwardIcon,
@@ -108,7 +109,7 @@ export function StudentAnalyticsDashboard() {
         
         // Get recognition received
         const recognitionQuery = query(
-          collection(db, 'recognitionBadges'),
+          recognitionBadgesCollection,
           where('recipientId', '==', learnerId),
           where('siteId', '==', siteId)
         );

@@ -873,6 +873,23 @@ export interface Badge {
 }
 
 /**
+ * Peer recognition record stored in recognitionBadges by legacy belonging surfaces.
+ */
+export interface RecognitionBadge {
+  id: string;
+  recipientId: string;
+  giverId: string;
+  giverName: string;
+  siteId: string;
+  studioId?: string;
+  sessionOccurrenceId?: string;
+  recognitionType: RecognitionType;
+  message: string;
+  isPublic: boolean;
+  createdAt: Timestamp;
+}
+
+/**
  * Badge award to a learner
  */
 export interface BadgeAward {
@@ -1011,6 +1028,7 @@ export interface ShowcaseSubmission {
   id: string;
   learnerId: string;
   siteId: string;
+  learnerName?: string;
   crewId?: string;
   
   // What they're showcasing
@@ -1032,8 +1050,21 @@ export interface ShowcaseSubmission {
   }[];
   
   // Visibility
+  visibility?: 'site' | 'program' | 'public';
   visibleToCrew: boolean;
   visibleToSite: boolean;
+
+  // Optional linkage + engagement metadata used by showcase surfaces
+  artifactId?: string;
+  caption?: string;
+  missionId?: string | null;
+  attemptId?: string | null;
+  submittedAt?: Timestamp;
+  viewCount?: number;
+  likeCount?: number;
+  commentCount?: number;
+  likes?: number;
+  comments?: unknown[];
 
   // AI disclosure (S1-7)
   aiAssistanceUsed?: boolean;
@@ -1185,6 +1216,7 @@ export interface ParentSnapshot {
 export interface PeerFeedback {
   id: string;
   fromLearnerId: string;
+  fromLearnerName?: string;
   toLearnerId: string;
   siteId: string;
   
@@ -1202,11 +1234,42 @@ export interface PeerFeedback {
   moderatedBy?: string;
   moderatedAt?: Timestamp;
 
+  // Legacy compatibility fields (kept until old records are fully migrated)
+  giverId?: string;
+  recipientId?: string;
+  authorId?: string;
+  targetLearnerId?: string;
+  feedbackText?: string;
+  artifactId?: string;
+  missionId?: string | null;
+  feedback?: string;
+  stars?: number;
+  status?: string;
+  targetId?: string;
+  targetType?: 'showcase' | 'mission' | 'other';
+
   // AI disclosure (S1-7)
   aiAssistanceUsed?: boolean;
   aiAssistanceDetails?: string;
 
   createdAt: Timestamp;
+  updatedAt?: Timestamp;
+}
+
+/**
+ * Learner profile record used by provisioning and workflow data forms.
+ */
+export interface LearnerProfile {
+  id: string;
+  siteId: string;
+  learnerId: string;
+  userId: string;
+  displayName: string;
+  email: string;
+  gradeLevel?: number;
+  notes?: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
 }
 
 /**

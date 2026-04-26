@@ -16,6 +16,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { db } from '@/src/firebase/client-init';
 import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
+import { recognitionBadgesCollection } from '@/src/firebase/firestore/collections';
 import { TelemetryService } from '@/src/lib/telemetry/telemetryService';
 import { GoalSettingForm } from '@/src/components/goals/GoalSettingForm';
 import { 
@@ -166,7 +167,7 @@ export function StudentMotivationProfile() {
         
         // Fetch recognition count from recognitionBadges collection
         const recognitionQuery = query(
-          collection(db, 'recognitionBadges'),
+          recognitionBadgesCollection,
           where('recipientId', '==', learnerId),
           where('siteId', '==', siteId)
         );

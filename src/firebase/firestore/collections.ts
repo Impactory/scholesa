@@ -49,6 +49,10 @@ import type {
   Checkpoint,
   SkillEvidence,
   ProofOfLearningBundle,
+  ShowcaseSubmission,
+  PeerFeedback,
+  LearnerProfile,
+  RecognitionBadge,
 } from '@/src/types/schema';
 
 // Helper to create typed collection
@@ -57,6 +61,10 @@ const createCollection = <T = DocumentData>(collectionName: string) => {
 };
 
 type MissionAttemptWrite = Omit<MissionAttempt, 'id'>;
+type ShowcaseSubmissionWrite = Omit<ShowcaseSubmission, 'id'>;
+type PeerFeedbackWrite = Omit<PeerFeedback, 'id'>;
+type LearnerProfileWrite = Omit<LearnerProfile, 'id'>;
+type RecognitionBadgeWrite = Omit<RecognitionBadge, 'id'>;
 
 // Define the collections
 export const usersCollection = createCollection<UserProfile>('users');
@@ -116,3 +124,7 @@ export const processDomainGrowthEventsCollection = createCollection<ProcessDomai
 // Evidence Engine
 export const skillEvidenceCollection = createCollection<SkillEvidence>('skillEvidence');
 export const proofOfLearningBundlesCollection = createCollection<ProofOfLearningBundle>('proofOfLearningBundles');
+export const showcaseSubmissionsCollection = createCollection<ShowcaseSubmissionWrite>('showcaseSubmissions');
+export const peerFeedbackCollection = createCollection<PeerFeedbackWrite>('peerFeedback');
+export const learnerProfilesCollection = createCollection<LearnerProfileWrite>('learnerProfiles');
+export const recognitionBadgesCollection = createCollection<RecognitionBadgeWrite>('recognitionBadges');

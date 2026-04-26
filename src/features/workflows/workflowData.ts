@@ -21,6 +21,10 @@ import {
   type QueryConstraint,
 } from 'firebase/firestore';
 import { firestore, functions } from '@/src/firebase/client-init';
+import {
+  learnerProfilesCollection,
+  peerFeedbackCollection,
+} from '@/src/firebase/firestore/collections';
 import type { UserProfile, UserRole } from '@/src/types/user';
 import type { WorkflowPath } from '@/src/lib/routing/workflowRoutes';
 import { loadCapabilitiesForSite, resolveCapabilityTitles } from '@/src/lib/capabilities/useCapabilities';
@@ -3702,7 +3706,7 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
         records: applyRouteActionLabels(await queryCollectionRecords({
           routePath: ctx.routePath,
           collectionName: 'peerFeedback',
-          constraints: [where('authorId', '==', ctx.uid), orderBy('createdAt', 'desc')],
+          constraints: [where('fromLearnerId', '==', ctx.uid), orderBy('createdAt', 'desc')],
           titleKeys: ['iLike'],
           subtitleKeys: ['iWonder', 'nextStep'],
           statusKeys: ['flagged'],
@@ -4032,7 +4036,7 @@ async function createOrLinkLearnerProfile(params: {
       };
   await setDoc(userRef, baseUserData, { merge: true });
 
-  const profileRef = doc(collection(firestore, 'learnerProfiles'), learnerId);
+  const profileRef = doc(learnerProfilesCollection, learnerId);
   const gradeLevelRaw = params.gradeLevel?.trim();
   const gradeLevel = gradeLevelRaw && gradeLevelRaw.length > 0 ? Number(gradeLevelRaw) : null;
   await setDoc(profileRef, {
@@ -4638,13 +4642,21 @@ export async function createWorkflowRecord(
       }, { merge: true });
       return;
     case '/learner/peer-feedback': {
-      await addDoc(collection(firestore, 'peerFeedback'), {
-        siteId: activeSiteId(ctx.profile),
+      const toLearnerId = requireStringValue(input, 'targetLearnerId', 'Learner');
+      const feedbackText = requireStringValue(input, 'feedbackText', 'Feedback');
+      await addDoc(peerFeedbackCollection, {
+        siteId: activeSiteId(ctx.profile) || '',
+        fromLearnerId: ctx.uid,
         authorId: ctx.uid,
-        targetLearnerId: requireStringValue(input, 'targetLearnerId', 'Learner'),
-        feedbackText: requireStringValue(input, 'feedbackText', 'Feedback'),
+        toLearnerId,
+        targetLearnerId: toLearnerId,
+        iLike: feedbackText,
+        iWonder: '',
+        nextStep: '',
+        feedbackText,
         missionId: optionalStringValue(input, 'missionId') || null,
         status: 'submitted',
+        flagged: false,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
