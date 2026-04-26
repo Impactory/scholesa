@@ -7,6 +7,7 @@ import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { RoleRouteGuard } from '@/src/components/auth/RoleRouteGuard';
 import { Spinner } from '@/src/components/ui/Spinner';
 import { resolveActiveSiteId } from '@/src/lib/auth/activeSite';
+import { downloadTextReport, shareTextWithFallback } from '@/src/lib/reports/shareExport';
 import {
   getLegacyPillarFamilyLabel,
   normalizeLegacyPillarCode,
@@ -686,28 +687,22 @@ export function LearnerPassportExport({ siteId: initialSiteId }: { siteId?: stri
   const handleShareSummary = useCallback(async () => {
     if (!learner) return;
     const shareText = buildFamilyShareSummary(learner);
+    const result = await shareTextWithFallback({
+      title: `Scholesa family summary for ${learner.learnerName ?? learner.learnerId}`,
+      text: shareText,
+    });
 
-    try {
-      if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
-        await navigator.share({
-          title: `Scholesa family summary for ${learner.learnerName ?? learner.learnerId}`,
-          text: shareText,
-        });
-        setShareFeedback('Family summary ready to share.');
-        return;
-      }
-
-      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(shareText);
-        setShareFeedback('Family summary copied to clipboard.');
-        return;
-      }
-
-      setShareFeedback('Sharing is unavailable in this browser. Use Export Text instead.');
-    } catch (err) {
-      if (err instanceof DOMException && err.name === 'AbortError') return;
-      setShareFeedback('Sharing is unavailable in this browser. Use Export Text instead.');
+    if (result === 'aborted') return;
+    if (result === 'shared') {
+      setShareFeedback('Family summary ready to share.');
+      return;
     }
+
+    setShareFeedback(
+      result === 'copied'
+        ? 'Family summary copied to clipboard.'
+        : 'Sharing is unavailable in this browser. Use Export Text instead.'
+    );
   }, [learner]);
 
   const handleExportHtml = useCallback(() => {
@@ -931,15 +926,10 @@ ${growthHtml}
 
   const handleExportText = useCallback(() => {
     if (!learner) return;
-    const lines = buildPassportTextLines(learner);
-
-    const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `ideation-passport-${learner.learnerId}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadTextReport({
+      fileName: `ideation-passport-${learner.learnerId}.txt`,
+      lines: buildPassportTextLines(learner),
+    });
   }, [learner]);
 
   if (authLoading || loading) {

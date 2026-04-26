@@ -7,6 +7,7 @@ import { functions } from '@/src/firebase/client-init';
 import { Spinner } from '@/src/components/ui/Spinner';
 import { resolveActiveSiteId } from '@/src/lib/auth/activeSite';
 import { useInteractionTracking } from '@/src/hooks/useTelemetry';
+import { downloadTextReport, shareTextWithFallback } from '@/src/lib/reports/shareExport';
 import type { CustomRouteRendererProps } from '../customRouteRenderers';
 
 const ParentAnalyticsDashboard = dynamic(
@@ -469,7 +470,6 @@ function normalizeProcessDomainGrowthTimeline(summary: Record<string, unknown>):
 }
 
 function normalizeLearnerSummary(summary: Record<string, unknown>): LearnerSummary {
-  const capabilitySnapshot = asRecord(summary.capabilitySnapshot) ?? {};
   const growthSummary = asRecord(summary.growthSummary);
   const portfolioSnapshot = asRecord(summary.portfolioSnapshot);
   const evidenceSummary = asRecord(summary.evidenceSummary);
@@ -787,38 +787,31 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
 
   const handleShareSummary = useCallback(async (learner: LearnerSummary) => {
     const shareText = buildGuardianFamilyShareSummary(learner);
-    try {
-      if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
-        await navigator.share({
-          title: `Scholesa family summary for ${learner.name}`,
-          text: shareText,
-        });
-        setShareFeedback({ learnerId: learner.learnerId, message: 'Family summary ready to share.' });
-        return;
-      }
+    const result = await shareTextWithFallback({
+      title: `Scholesa family summary for ${learner.name}`,
+      text: shareText,
+    });
 
-      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(shareText);
-        setShareFeedback({ learnerId: learner.learnerId, message: 'Family summary copied to clipboard.' });
-        return;
-      }
-
-      setShareFeedback({ learnerId: learner.learnerId, message: 'Sharing is unavailable in this browser. Use Export Text instead.' });
-    } catch (err) {
-      if (err instanceof DOMException && err.name === 'AbortError') return;
-      setShareFeedback({ learnerId: learner.learnerId, message: 'Sharing is unavailable in this browser. Use Export Text instead.' });
+    if (result === 'aborted') return;
+    if (result === 'shared') {
+      setShareFeedback({ learnerId: learner.learnerId, message: 'Family summary ready to share.' });
+      return;
     }
+
+    setShareFeedback({
+      learnerId: learner.learnerId,
+      message:
+        result === 'copied'
+          ? 'Family summary copied to clipboard.'
+          : 'Sharing is unavailable in this browser. Use Export Text instead.',
+    });
   }, []);
 
   const handleExportText = useCallback((learner: LearnerSummary) => {
-    const lines = buildGuardianPassportTextLines(learner);
-    const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = `family-passport-${learner.learnerId}.txt`;
-    anchor.click();
-    URL.revokeObjectURL(url);
+    downloadTextReport({
+      fileName: `family-passport-${learner.learnerId}.txt`,
+      lines: buildGuardianPassportTextLines(learner),
+    });
   }, []);
 
   const handleExportPdf = useCallback(async (learner: LearnerSummary) => {

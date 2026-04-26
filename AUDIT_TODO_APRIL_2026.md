@@ -519,9 +519,9 @@ Remaining gold blockers now sit mainly in communication/read-side parity rather 
 - Learner and guardian passport/report surfaces now also render titled process-domain snapshot + recent process-domain growth from the callable summaries instead of dropping that read-side evidence slice.
 - Capability band calculation: normalized per-pillar score → strong/developing/emerging band
 - Growth timeline rendered: up to 15 events with capability title, level, date, educator name, rubric score, and evidence/portfolio linkage counts
-- Export: learner and parent web passport surfaces now provide text export, dedicated PDF export, browser print, and a family-safe share summary; learner web also keeps portable HTML export for browser viewing/archive, and Flutter parent child detail now exposes passport actions for text export plus family-summary sharing
+- Export: learner and parent web passport surfaces now provide text export, dedicated PDF export, browser print, and a family-safe share summary; learner web also keeps portable HTML export for browser viewing/archive; web family-summary sharing now uses a shared native-share → clipboard → unavailable fallback; and Flutter parent child detail now exposes passport actions for text export plus family-summary sharing
 - Honest empty state: "No capability claims backed by evidence yet"
-- ⚠️ Remaining gaps: web learner/guardian passport routes now include process-domain read-side coverage and concrete export/share actions, but there is still no unified publish/share workflow across every reporting surface, Flutter learner/guardian read-side parity is still incomplete for this slice, and disclosure/provenance are still not perfectly uniform across every artifact path.
+- ⚠️ Remaining gaps: web learner/guardian passport routes now include process-domain read-side coverage, concrete export/share actions, and a shared web fallback helper, but there is still no unified publish/share workflow across every reporting surface, Flutter learner/guardian read-side parity is still incomplete for this slice, and disclosure/provenance are still not perfectly uniform across every artifact path.
 
 **Blocker**: Cross-role report/publish workflow polish and uniform provenance parity across every remaining artifact path.
 
@@ -638,7 +638,7 @@ Remaining gold blockers now sit mainly in communication/read-side parity rather 
 | Growth events created atomically | WF6 | ◐ | Rubric + checkpoint callables; proof-linked checkpoints recover via `pending_proof` |
 | Growth visible on web dashboard | WF6 | ✅ | `LearnerDashboardToday.tsx` growth events + capability bands (G11) |
 | Portfolio browsable with filters | WF7 | ✅ | `LearnerPortfolioBrowser.tsx` |
-| Passport from real evidence | WF8 | ◐ | `LearnerPassportExport.tsx` plus guardian passport surfaces now consume richer claim, portfolio, and growth provenance via callables; learner and parent web passport routes offer dedicated PDF/share actions; and Flutter parent child detail now exposes passport export/share actions too, but unified publish/share workflow parity and full provenance consistency are still incomplete |
+| Passport from real evidence | WF8 | ◐ | `LearnerPassportExport.tsx` plus guardian passport surfaces now consume richer claim, portfolio, and growth provenance via callables; learner and parent web passport routes offer dedicated PDF/share actions through a shared browser fallback helper; and Flutter parent child detail now exposes passport export/share actions too, but unified publish/share workflow parity and full provenance consistency are still incomplete |
 | AI disclosure captured + displayed | WF9 | ◐ | Stronger across submission, portfolio, and passport, and non-mission learner portfolio curation now preserves AI detail text as well as status, but not yet uniform on every artifact path |
 | Parent answers "what can my child do?" | WF10 | ◐ | `GuardianCapabilityViewRenderer.tsx` is the real web parent summary surface and now preserves more provenance, but downstream communication is still not uniformly polished |
 | Educator answers "what needs attention?" | WF10 | ◐ | `EducatorDashboardToday.tsx` review queue is real, but not every trust-critical surface has full evidence parity |
@@ -659,6 +659,7 @@ Remaining gold blockers now sit mainly in communication/read-side parity rather 
 | P1-F typed collection reconciliation | ✅ 139/139 focused evidence-chain component/source-contract tests | `npm test -- --runTestsByPath src/__tests__/evidence-chain-components.test.ts` |
 | Mobile evidence workflow viewport QA | ✅ 2/2 Playwright mobile browser tests | `npx playwright test --config playwright.config.ts test/e2e/mobile-evidence-workflows.e2e.spec.ts` |
 | E2E fake-mode infrastructure quieting | ✅ 11/11 focused SSO, telemetry, and Navigation locale guard tests | `npm test -- --runTestsByPath src/__tests__/enterprise-sso.test.ts src/__tests__/e2e-infrastructure-noise.test.ts src/__tests__/navigation-signout-availability.test.ts` |
+| Report share/export web helper | ✅ 3/3 focused share fallback unit tests | `npm test -- --runTestsByPath src/__tests__/report-share-export.test.ts` |
 | Flutter tests | ✅ 317+ pass, 0 fail | `cd apps/empire_flutter/app && flutter test` |
 
 ---
