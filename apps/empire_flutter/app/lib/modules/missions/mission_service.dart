@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
-import 'dart:math' as math;
 import '../../offline/offline_queue.dart';
 import '../../offline/sync_coordinator.dart';
 import '../../services/firestore_service.dart';
@@ -2149,6 +2148,7 @@ class MissionService extends ChangeNotifier {
         }
       }
 
+      final Set<String> linkedEvidenceRecordIdsForRubric = <String>{};
       if (resolvedRubricId.isNotEmpty && normalizedRubricScores.isNotEmpty) {
         final Map<String, List<Map<String, dynamic>>> rubricScoresByCapability =
             <String, List<Map<String, dynamic>>>{};
@@ -2188,16 +2188,6 @@ class MissionService extends ChangeNotifier {
                 (String value) => value.isNotEmpty,
                 orElse: () => '',
               );
-          final int capabilityRawScore = capabilityScores.fold<int>(
-            0,
-            (int total, Map<String, dynamic> score) =>
-                total + ((score['score'] as num?)?.toInt() ?? 0),
-          );
-          final int capabilityMaxScore = capabilityScores.fold<int>(
-            0,
-            (int total, Map<String, dynamic> score) =>
-                total + ((score['maxScore'] as num?)?.toInt() ?? 0),
-          );
           final String pillarCode = capabilityScores
               .map((Map<String, dynamic> score) =>
                   (score['pillarCode'] as String? ?? '').trim())
@@ -2205,15 +2195,6 @@ class MissionService extends ChangeNotifier {
                 (String value) => value.isNotEmpty,
                 orElse: () => '',
               );
-          final int nextLevel = capabilityMaxScore <= 0
-              ? 0
-              : math.max(
-                  1,
-                  math.min(
-                    4,
-                    ((capabilityRawScore / capabilityMaxScore) * 4).ceil(),
-                  ),
-                );
 
           // NOTE: capabilityMastery + capabilityGrowthEvents writes are
           // delegated to the applyRubricToEvidence Cloud Function after
@@ -2258,6 +2239,7 @@ class MissionService extends ChangeNotifier {
           for (final QueryDocumentSnapshot<Map<String, dynamic>> evidenceDoc
               in matchingEvidenceDocs) {
             final Map<String, dynamic> evidenceData = evidenceDoc.data();
+            linkedEvidenceRecordIdsForRubric.add(evidenceDoc.id);
             batch.set(
               evidenceDoc.reference,
               <String, dynamic>{
@@ -2266,11 +2248,8 @@ class MissionService extends ChangeNotifier {
                 if (rubricCapabilityTitle.isNotEmpty)
                   'capabilityLabel': rubricCapabilityTitle,
                 'rubricStatus': 'linked',
-                'growthStatus': 'updated',
+                'growthStatus': 'pending',
                 'linkedMissionAttemptId': canonicalAttemptRef.id,
-                'latestCapabilityLevel': nextLevel,
-                'growthUpdatedBy': reviewerId,
-                'growthUpdatedAt': FieldValue.serverTimestamp(),
               },
               SetOptions(merge: true),
             );
@@ -2485,7 +2464,9 @@ class MissionService extends ChangeNotifier {
             'learnerId': reviewLearnerId,
             'siteId': reviewSiteId,
             'missionAttemptId': canonicalAttemptRef.id,
-            'evidenceRecordIds': <String>[],
+            'evidenceRecordIds': linkedEvidenceRecordIdsForRubric.toList(
+              growable: false,
+            ),
             'scores': normalizedRubricScores
                 .where((Map<String, dynamic> s) =>
                     ((s['capabilityId'] as String?) ?? '').trim().isNotEmpty)

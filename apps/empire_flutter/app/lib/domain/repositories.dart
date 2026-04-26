@@ -376,8 +376,9 @@ class CapabilityMasteryRepository {
     return snap.docs.map(CapabilityMasteryModel.fromDoc).toList();
   }
 
-  Future<void> upsert(CapabilityMasteryModel model) =>
-      _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
+  Future<void> upsert(CapabilityMasteryModel model) => throw StateError(
+        'capabilityMastery is server-owned; use applyRubricToEvidence or processCheckpointMasteryUpdate.',
+      );
 }
 
 class CapabilityGrowthEventRepository {
@@ -396,8 +397,9 @@ class CapabilityGrowthEventRepository {
     return snap.docs.map(CapabilityGrowthEventModel.fromDoc).toList();
   }
 
-  Future<void> upsert(CapabilityGrowthEventModel model) =>
-      _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
+  Future<void> upsert(CapabilityGrowthEventModel model) => throw StateError(
+        'capabilityGrowthEvents are server-owned append-only output; use applyRubricToEvidence or processCheckpointMasteryUpdate.',
+      );
 }
 
 class MissionRepository {
@@ -971,20 +973,9 @@ class RubricApplicationRepository {
   CollectionReference<Map<String, dynamic>> get _col =>
       FirebaseFirestore.instance.collection('rubricApplications');
 
-  Future<void> upsert(RubricApplicationModel model) async {
-    await _col.doc(model.id).set(model.toMap(), SetOptions(merge: true));
-    try {
-      await TelemetryService.instance.logEvent(
-        event: 'rubric.applied',
-        siteId: model.siteId,
-        metadata: <String, dynamic>{
-          'rubricId': model.rubricId,
-          'missionAttemptId': model.missionAttemptId,
-          'scoreCount': model.scores.length,
-        },
+  Future<void> upsert(RubricApplicationModel model) => throw StateError(
+        'rubricApplications are server-owned; use applyRubricToEvidence.',
       );
-    } catch (_) {}
-  }
 
   Future<List<RubricApplicationModel>> listByAttempt(String missionAttemptId,
       {int limit = 10}) async {
@@ -2792,8 +2783,7 @@ class AICoachInteractionRepository {
     return doc.id;
   }
 
-  Future<List<AICoachInteractionModel>> listByLearner(
-      String learnerId) async {
+  Future<List<AICoachInteractionModel>> listByLearner(String learnerId) async {
     final snap = await _col
         .where('learnerId', isEqualTo: learnerId)
         .orderBy('createdAt', descending: true)
@@ -2801,8 +2791,7 @@ class AICoachInteractionRepository {
     return snap.docs.map(AICoachInteractionModel.fromDoc).toList();
   }
 
-  Future<List<AICoachInteractionModel>> listBySession(
-      String sessionId) async {
+  Future<List<AICoachInteractionModel>> listBySession(String sessionId) async {
     final snap = await _col
         .where('sessionId', isEqualTo: sessionId)
         .orderBy('createdAt', descending: true)
@@ -2820,8 +2809,7 @@ class PeerFeedbackRepository {
     return doc.id;
   }
 
-  Future<List<PeerFeedbackModel>> listForLearner(
-      String toLearnerId) async {
+  Future<List<PeerFeedbackModel>> listForLearner(String toLearnerId) async {
     final snap = await _col
         .where('toLearnerId', isEqualTo: toLearnerId)
         .orderBy('createdAt', descending: true)
@@ -2829,8 +2817,7 @@ class PeerFeedbackRepository {
     return snap.docs.map(PeerFeedbackModel.fromDoc).toList();
   }
 
-  Future<List<PeerFeedbackModel>> listByAuthor(
-      String fromLearnerId) async {
+  Future<List<PeerFeedbackModel>> listByAuthor(String fromLearnerId) async {
     final snap = await _col
         .where('fromLearnerId', isEqualTo: fromLearnerId)
         .orderBy('createdAt', descending: true)
@@ -2908,8 +2895,7 @@ class EvidenceRecordRepository {
         .toList();
   }
 
-  Future<List<Map<String, dynamic>>> listByLearner(
-      String learnerId) async {
+  Future<List<Map<String, dynamic>>> listByLearner(String learnerId) async {
     final snap = await _col
         .where('learnerId', isEqualTo: learnerId)
         .orderBy('createdAt', descending: true)
@@ -2929,8 +2915,7 @@ class ShowcaseSubmissionRepository {
     return doc.id;
   }
 
-  Future<List<ShowcaseSubmissionModel>> listByLearner(
-      String learnerId) async {
+  Future<List<ShowcaseSubmissionModel>> listByLearner(String learnerId) async {
     final snap = await _col
         .where('learnerId', isEqualTo: learnerId)
         .orderBy('createdAt', descending: true)
@@ -2982,8 +2967,7 @@ class LearnerNextStepRepository {
     return snap.docs.map(_fromDoc).toList();
   }
 
-  LearnerNextStepModel _fromDoc(
-      DocumentSnapshot<Map<String, dynamic>> doc) {
+  LearnerNextStepModel _fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
     final d = doc.data() ?? <String, dynamic>{};
     return LearnerNextStepModel(
       id: doc.id,

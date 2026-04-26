@@ -333,7 +333,7 @@ Remaining gold blockers now sit mainly in communication/read-side parity rather 
 ### Architecture
 7. **Firestore Security** — Site-scoped, role-checked, ownership-enforced. 135 collection rules. Default-deny on unlisted.
 8. **63 Cloud Functions** — All real, zero stubs. Evidence chain callables are atomic. Segregated concerns (auth, billing, evidence, motivation, ops).
-9. **Flutter Parity** — Custom dashboards for all roles, offline sync queue, queued `rubricApply` / legacy `rubricApplication` replay through `applyRubricToEvidence`, eligible offline checkpoint replay through `processCheckpointMasteryUpdate`, queued `capabilityGrowthEvent` direct writes blocked as server-owned output, and legacy Flutter growth helpers closed so rubric interpretation routes through `applyRubricToEvidence` while direct mastery/growth helpers fail closed.
+9. **Flutter Parity** — Custom dashboards for all roles, offline sync queue, queued `rubricApply` / legacy `rubricApplication` replay through `applyRubricToEvidence`, eligible offline checkpoint replay through `processCheckpointMasteryUpdate`, queued `capabilityGrowthEvent` direct writes blocked as server-owned output, legacy Flutter growth helpers closed so rubric interpretation routes through `applyRubricToEvidence`, direct mastery/growth helpers fail closed, and generic Flutter repositories for `rubricApplications`, `capabilityMastery`, and `capabilityGrowthEvents` no longer expose client-side write paths.
 10. **Test Coverage** — 183 web tests, 127 function tests, 317+ Flutter tests. All green. Total: 627+ tests.
 
 ### Platform Operations
@@ -480,7 +480,7 @@ Remaining gold blockers now sit mainly in communication/read-side parity rather 
 - ✅ `applyRubricToEvidence` callable creates `capabilityGrowthEvents` with: `level` (1-4), `rawScore`, `maxScore`, `linkedEvidenceRecordIds`, `linkedPortfolioItemIds`, `rubricApplicationId`, `educatorId`, `createdAt`
 - ✅ `verifyProofOfLearning` no longer writes `capabilityGrowthEvents` or `capabilityMastery` directly
 - ✅ Mission review now forwards linked `portfolioItemId` into `applyRubricToEvidence`, preserving canonical artifact provenance
-- ✅ Flutter mission review no longer creates client-owned `rubricApplications`; it calls `applyRubricToEvidence` and links the returned server-created `rubricApplicationId` back to the reviewed attempt, evidence records, and portfolio items.
+- ✅ Flutter mission review no longer creates client-owned `rubricApplications`; it calls `applyRubricToEvidence` with linked evidence IDs, leaves evidence `growthStatus` pending until the callable records growth, and links the returned server-created `rubricApplicationId` back to the reviewed attempt, evidence records, and portfolio items.
 - ✅ Proof-linked checkpoints now stay in the queue as `pending_proof` until proof is verified and the educator can record growth truthfully
 - ✅ Growth events are append-only, queryable by `learnerId` + `createdAt`
 - ✅ `LearnerPassportExport.tsx` renders growth timeline (15 most recent): capability title, level, educator name, rubric scores
@@ -491,6 +491,7 @@ Remaining gold blockers now sit mainly in communication/read-side parity rather 
 - ✅ Flutter offline `checkpointSubmit` always preserves `checkpointHistory` capture and routes passed, skill-linked educator checkpoint payloads through `processCheckpointMasteryUpdate` for server-side mastery evaluation.
 - ✅ Legacy Flutter `CapabilityGrowthEngine.processRubricApplication` now calls `applyRubricToEvidence` with evidence, mission, or portfolio context instead of writing `capabilityGrowthEvents` / `capabilityMastery` locally.
 - ✅ Legacy Flutter `FirestoreService.applyRubric` now routes through `applyRubricToEvidence` and refuses evidence-free rubric interpretation; `updateCapabilityMastery` and `createCapabilityGrowthEvent` fail closed as server-owned paths.
+- ✅ Legacy Flutter repository write affordances for `rubricApplications`, `capabilityMastery`, and `capabilityGrowthEvents` now fail closed; remaining references are read-side collection queries.
 - ✅ **G11 CLOSED**: `LearnerDashboardToday.tsx` custom dashboard with capability guidance panel, recent growth events, active missions, today's sessions — replaces generic session list
 
 **Blocker**: Report surfaces and some remaining read-side communication still do not consume all evidence backlinks end to end, so this workflow is not gold-certified.
