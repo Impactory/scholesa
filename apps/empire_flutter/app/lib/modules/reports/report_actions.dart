@@ -21,6 +21,7 @@ class ReportActions {
     required String copiedMessage,
     required String errorMessage,
     required String unsupportedLogMessage,
+    Map<String, dynamic> metadata = const <String, dynamic>{},
   }) async {
     try {
       final String? savedLocation = await ExportService.instance.saveTextFile(
@@ -37,6 +38,7 @@ class ReportActions {
           'surface': surface,
           'learner_id': learnerId,
           'file_name': fileName,
+          ...metadata,
         },
       );
       messenger.showSnackBar(
@@ -50,6 +52,7 @@ class ReportActions {
         metadata: <String, dynamic>{
           'learner_id': learnerId,
           'fallback': 'clipboard',
+          ...metadata,
         },
       );
       if (!isMounted()) {
@@ -81,6 +84,7 @@ class ReportActions {
     required String cta,
     required String successMessage,
     required String errorMessage,
+    Map<String, dynamic> metadata = const <String, dynamic>{},
   }) async {
     try {
       await Clipboard.setData(ClipboardData(text: content));
@@ -89,6 +93,7 @@ class ReportActions {
         metadata: <String, dynamic>{
           'cta': cta,
           'learner_id': learnerId,
+          ...metadata,
         },
       );
       TelemetryService.instance.logEvent(
@@ -98,6 +103,7 @@ class ReportActions {
           'surface': surface,
           'learner_id': learnerId,
           'delivery': 'clipboard',
+          ...metadata,
         },
       );
       if (!isMounted()) {

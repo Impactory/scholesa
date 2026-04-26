@@ -1,6 +1,7 @@
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nested/nested.dart';
@@ -11,9 +12,12 @@ import 'package:scholesa_app/modules/parent/parent_models.dart';
 import 'package:scholesa_app/modules/parent/parent_portfolio_page.dart';
 import 'package:scholesa_app/modules/parent/parent_service.dart';
 import 'package:scholesa_app/runtime/learning_runtime_provider.dart';
+import 'package:scholesa_app/services/export_service.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
 
 class _FakeFirebaseAuth extends Fake implements FirebaseAuth {}
+
+String? _clipboardText;
 
 FirestoreService _buildFirestoreService() {
   return FirestoreService(
@@ -148,8 +152,33 @@ LearnerSummary _buildLearnerSummaryWithPortfolioItems() {
 }
 
 void main() {
+  setUpAll(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, (
+      MethodCall methodCall,
+    ) async {
+      if (methodCall.method == 'Clipboard.setData') {
+        final Map<Object?, Object?>? arguments =
+            methodCall.arguments as Map<Object?, Object?>?;
+        _clipboardText = arguments?['text']?.toString();
+      }
+      return null;
+    });
+  });
+
+  tearDownAll(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, null);
+  });
+
   setUp(() {
+    _clipboardText = null;
+    ExportService.instance.debugSaveTextFile = null;
     SharedPreferences.setMockInitialValues(<String, Object>{});
+  });
+
+  tearDown(() {
+    ExportService.instance.debugSaveTextFile = null;
   });
 
   testWidgets(
@@ -230,5 +259,39 @@ void main() {
     expect(find.text('Solar Oven Prototype'), findsNothing);
     expect(find.text('AI guidance unavailable right now.'), findsOneWidget);
     expect(find.byIcon(Icons.expand_less), findsOneWidget);
+  });
+
+  testWidgets(
+      'parent portfolio download copies evidence summary when file export is unsupported',
+      (WidgetTester tester) async {
+    ExportService.instance.debugSaveTextFile = ({
+      required String fileName,
+      required String content,
+      required String mimeType,
+    }) async {
+      throw UnsupportedError('File export is not supported on this platform.');
+    };
+    final _StubParentService service = _StubParentService(
+      parentId: 'parent-test-1',
+      learnerSummaries: <LearnerSummary>[
+        _buildLearnerSummaryWithPortfolioItems(),
+      ],
+    );
+
+    await _pumpPage(
+      tester,
+      parentService: service,
+    );
+
+    await tester.tap(find.text('Solar Oven Prototype'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Download Summary'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Portfolio summary copied for sharing.'), findsOneWidget);
+    expect(_clipboardText, isNotNull);
+    expect(_clipboardText, contains('Portfolio'));
+    expect(_clipboardText, contains('Portfolio Item ID: project-1'));
+    expect(_clipboardText, contains('Title: Solar Oven Prototype'));
   });
 }

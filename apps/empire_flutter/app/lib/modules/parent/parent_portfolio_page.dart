@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../i18n/parent_surface_i18n.dart';
-import '../../services/export_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
@@ -11,6 +9,7 @@ import '../../runtime/runtime.dart';
 import '../../auth/app_state.dart';
 import '../../ui/auth/global_session_menu.dart';
 import '../../domain/curriculum/curriculum_display.g.dart';
+import '../reports/report_actions.dart';
 import 'parent_models.dart';
 import 'parent_service.dart';
 
@@ -165,7 +164,8 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
 
   @override
   Widget build(BuildContext context) {
-    return MiloRuntimeScope(child: Scaffold(
+    return MiloRuntimeScope(
+        child: Scaffold(
       backgroundColor: ScholesaColors.background,
       appBar: AppBar(
         title: Text(_t('Portfolio')),
@@ -209,8 +209,8 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
               _buildAiCoachingSection(context),
               if (service.learnerSummaries.isNotEmpty)
                 _buildLearnerSnapshotStrip(service),
-              if (service.learnerSummaries
-                  .any((LearnerSummary l) => l.ideationPassport.claims.isNotEmpty))
+              if (service.learnerSummaries.any(
+                  (LearnerSummary l) => l.ideationPassport.claims.isNotEmpty))
                 _buildPassportClaimsSection(service),
               Expanded(
                 child: TabBarView(
@@ -468,8 +468,7 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        if (claims.length > 1 ||
-            (claims.isNotEmpty))
+        if (claims.length > 1 || (claims.isNotEmpty))
           Padding(
             padding: const EdgeInsets.only(bottom: 6, top: 4),
             child: Text(
@@ -1116,44 +1115,25 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
         return;
       }
 
-      final String? savedLocation = await ExportService.instance.saveTextFile(
+      await ReportActions.exportText(
+        messenger: messenger,
+        isMounted: () => mounted,
         fileName: _portfolioSummaryFileName(item),
         content: portfolioSummary,
-      );
-      if (savedLocation == null || !mounted) {
-        return;
-      }
-      TelemetryService.instance.logEvent(
-        event: 'export.downloaded',
-        metadata: <String, dynamic>{
-          'module': 'parent_portfolio',
-          'surface': 'portfolio_detail_sheet',
-          'item_id': item.id,
-          'file_name': _portfolioSummaryFileName(item),
-        },
-      );
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(_t('Portfolio summary downloaded.')),
-        ),
-      );
-    } on UnsupportedError catch (error) {
-      debugPrint(
-          'Export unsupported for parent portfolio download, copying summary instead: $error');
-      await Clipboard.setData(ClipboardData(text: portfolioSummary));
-      TelemetryService.instance.logEvent(
-        event: 'parent.portfolio_download.copied',
         metadata: <String, dynamic>{
           'item_id': item.id,
-          'fallback': 'clipboard',
         },
+        learnerId: item.learnerId,
+        module: 'parent_portfolio',
+        surface: 'portfolio_detail_sheet',
+        copiedEventName: 'parent.portfolio_download.copied',
+        successMessage: _t('Portfolio summary downloaded.'),
+        copiedMessage: _t('Portfolio summary copied for sharing.'),
+        errorMessage: _t('Unable to download portfolio summary right now.'),
+        unsupportedLogMessage:
+            'Export unsupported for parent portfolio download, copying summary instead',
       );
-      if (!mounted) return;
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(_t('Portfolio summary copied for sharing.')),
-        ),
-      );
+      return;
     } catch (error) {
       debugPrint(
           'Failed to process parent portfolio $requestType request: $error');
@@ -1284,6 +1264,7 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
         items.add(
           _PortfolioItem(
             id: item.id,
+            learnerId: learner.learnerId,
             title: item.title,
             pillar: item.pillar,
             type: item.type == 'badge' ? _ItemType.badge : _ItemType.project,
@@ -1647,6 +1628,7 @@ enum _ItemType { project, badge }
 class _PortfolioItem {
   const _PortfolioItem({
     required this.id,
+    required this.learnerId,
     required this.title,
     required this.pillar,
     required this.type,
@@ -1687,6 +1669,7 @@ class _PortfolioItem {
   });
 
   final String id;
+  final String learnerId;
   final String title;
   final String pillar;
   final _ItemType type;
