@@ -240,7 +240,7 @@ describe('Collection naming consistency', () => {
     expect(verifyFn).toContain('checkpointDefinitionId');
     expect(verifyFn).toContain("collection('checkpoints')");
     expect(verifyFn).toContain('evidenceRecordIds');
-    expect(verifyFn).toContain('linkedEvidenceRecordIds');
+    expect(verifyFn).toContain('linkedPortfolioItemId: portfolioItemId');
   });
 
   it('submitReflection creates canonical portfolio linkage and preserves AI disclosure state', async () => {
