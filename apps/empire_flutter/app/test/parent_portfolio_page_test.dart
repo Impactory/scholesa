@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -88,6 +89,7 @@ Future<void> _pumpPage(
       providers: <SingleChildWidget>[
         ChangeNotifierProvider<AppState>.value(value: _buildParentState()),
         ChangeNotifierProvider<ParentService>.value(value: parentService),
+        Provider<FirestoreService>.value(value: parentService.firestoreService),
         Provider<LearningRuntimeProvider?>.value(value: null),
       ],
       child: MaterialApp(
@@ -114,6 +116,7 @@ Future<void> _pumpPage(
 }
 
 LearnerSummary _buildLearnerSummaryWithPortfolioItems() {
+  final DateTime reviewedAt = DateTime(2026, 3, 21);
   return LearnerSummary(
     learnerId: 'learner-1',
     learnerName: 'Asha Example',
@@ -138,6 +141,37 @@ LearnerSummary _buildLearnerSummaryWithPortfolioItems() {
         pillar: 'Impact',
         type: 'project',
         completedAt: DateTime(2026, 3, 20),
+        verificationStatus: 'reviewed',
+        evidenceLinked: true,
+        capabilityTitles: const <String>['Evidence-backed reasoning'],
+        evidenceRecordIds: const <String>['ev-project-1'],
+        missionAttemptId: 'attempt-project-1',
+        verificationPrompt:
+            'Ask the learner to explain the test result without notes.',
+        progressionDescriptors: const <String>[
+          'Learner connects prototype changes to observed heat data.',
+        ],
+        checkpointMappings: const <VerificationCheckpointMapping>[
+          VerificationCheckpointMapping(
+            phase: 'review',
+            guidance: 'Explain the test result without notes.',
+          ),
+        ],
+        proofOfLearningStatus: 'verified',
+        aiDisclosureStatus: 'learner-ai-not-used',
+        proofHasExplainItBack: true,
+        proofHasOralCheck: true,
+        proofHasMiniRebuild: true,
+        proofCheckpointCount: 3,
+        aiHasLearnerDisclosure: true,
+        aiLearnerDeclaredUsed: false,
+        aiHasExplainItBackEvidence: true,
+        aiAssistanceDetails: 'Learner declared no AI support used.',
+        reviewingEducatorName: 'Coach Rivera',
+        reviewedAt: reviewedAt,
+        rubricRawScore: 3,
+        rubricMaxScore: 4,
+        rubricLevel: 3,
       ),
       PortfolioPreviewItem(
         id: 'badge-1',
@@ -285,6 +319,11 @@ void main() {
 
     await tester.tap(find.text('Solar Oven Prototype'));
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Download Summary'),
+      600,
+      scrollable: find.byType(Scrollable).last,
+    );
     await tester.tap(find.text('Download Summary'));
     await tester.pumpAndSettle();
 
@@ -293,5 +332,68 @@ void main() {
     expect(_clipboardText, contains('Portfolio'));
     expect(_clipboardText, contains('Portfolio Item ID: project-1'));
     expect(_clipboardText, contains('Title: Solar Oven Prototype'));
+    expect(_clipboardText, contains('Proof of Learning: Proof verified'));
+    expect(_clipboardText,
+        contains('AI Disclosure: Learner declared no AI support used'));
+    expect(_clipboardText, contains('Rubric score: 3/4'));
+    expect(_clipboardText, contains('Evidence Record IDs: ev-project-1'));
+  });
+
+  testWidgets(
+      'parent portfolio share request carries evidence provenance for review',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _FakeFirebaseAuth(),
+    );
+    final _StubParentService service = _StubParentService(
+      parentId: 'parent-test-1',
+      learnerSummaries: <LearnerSummary>[
+        _buildLearnerSummaryWithPortfolioItems(),
+      ],
+      firestoreService: firestoreService,
+    );
+
+    await _pumpPage(
+      tester,
+      parentService: service,
+    );
+
+    await tester.tap(find.text('Solar Oven Prototype'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Request Share'),
+      600,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.text('Request Share'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Portfolio share request submitted.'), findsOneWidget);
+
+    final QuerySnapshot<Map<String, dynamic>> requests =
+        await firestore.collection('supportRequests').get();
+    expect(requests.docs, hasLength(1));
+    final Map<String, dynamic> request = requests.docs.single.data();
+    expect(request['requestType'], 'portfolio_share');
+    expect(request['source'], 'parent_portfolio_request_share');
+    expect(request['message'], contains('Evidence review summary:'));
+    expect(request['message'], contains('Proof of Learning: Proof verified'));
+    expect(request['message'],
+        contains('AI Disclosure: Learner declared no AI support used'));
+    expect(request['message'], contains('Rubric score: 3/4'));
+    expect(request['message'], contains('Evidence Record IDs: ev-project-1'));
+
+    final Map<String, dynamic> metadata =
+        request['metadata'] as Map<String, dynamic>;
+    expect(metadata['itemId'], 'project-1');
+    expect(metadata['learnerId'], 'learner-1');
+    expect(metadata['verificationStatus'], 'reviewed');
+    expect(metadata['proofOfLearningStatus'], 'verified');
+    expect(metadata['aiDisclosureStatus'], 'learner-ai-not-used');
+    expect(metadata['evidenceRecordIds'], <String>['ev-project-1']);
+    expect(metadata['rubricRawScore'], 3);
+    expect(metadata['rubricMaxScore'], 4);
   });
 }

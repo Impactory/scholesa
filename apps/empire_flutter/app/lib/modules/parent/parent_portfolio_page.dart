@@ -1199,10 +1199,8 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
       message: <String>[
         'Please review and share this portfolio item through the approved parent-safe process.',
         '',
-        'Portfolio Item ID: ${item.id}',
-        'Title: ${item.title}',
-        'Pillar: ${item.pillar}',
-        'Completed At: ${item.completedAt.toIso8601String()}',
+        'Evidence review summary:',
+        _buildPortfolioSummary(context, item),
       ].join('\n'),
       metadata: <String, dynamic>{
         'itemId': item.id,
@@ -1210,6 +1208,19 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
         'pillar': item.pillar,
         'itemType': item.type.name,
         'completedAt': item.completedAt.toIso8601String(),
+        'learnerId': item.learnerId,
+        'verificationStatus': item.verificationStatus,
+        'evidenceLinked': item.evidenceLinked,
+        'capabilityTitles': item.capabilityTitles,
+        'evidenceRecordIds': item.evidenceRecordIds,
+        'missionAttemptId': item.missionAttemptId,
+        'proofOfLearningStatus': item.proofOfLearningStatus,
+        'aiDisclosureStatus': item.aiDisclosureStatus,
+        'reviewingEducatorName': item.reviewingEducatorName,
+        'reviewedAt': item.reviewedAt?.toIso8601String(),
+        'rubricRawScore': item.rubricRawScore,
+        'rubricMaxScore': item.rubricMaxScore,
+        'rubricLevel': item.rubricLevel,
       },
     );
   }
