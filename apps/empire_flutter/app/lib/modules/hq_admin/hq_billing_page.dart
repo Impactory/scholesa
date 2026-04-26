@@ -1,14 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../i18n/workflow_surface_i18n.dart';
 import '../../auth/app_state.dart';
-import '../../services/export_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
+import '../reports/report_actions.dart';
 
 String _tHqBilling(BuildContext context, String input) {
   return WorkflowSurfaceI18n.text(context, input);
@@ -682,61 +681,31 @@ class _HqBillingPageState extends State<HqBillingPage>
     }
     final String fileName = _financialExportFileName();
     final String exportContent = _buildFinancialExport();
-    try {
-      final String? savedLocation = await ExportService.instance.saveTextFile(
-        fileName: fileName,
-        content: exportContent,
-      );
-      if (savedLocation == null || !mounted) {
-        return;
-      }
-      TelemetryService.instance.logEvent(
-        event: 'export.downloaded',
-        metadata: <String, dynamic>{
-          'module': 'hq_billing',
-          'surface': 'header',
-          'site': _selectedSite,
-          'period': _selectedPeriod,
-          'file_name': fileName,
-        },
-      );
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_tHqBilling(context, 'Financial export downloaded.')),
-        ),
-      );
-    } on UnsupportedError catch (_) {
-      if (!mounted) {
-        return;
-      }
-      await Clipboard.setData(ClipboardData(text: exportContent));
-      if (!mounted) return;
-      TelemetryService.instance.logEvent(
-        event: 'export.copied',
-        metadata: <String, dynamic>{
-          'module': 'hq_billing',
-          'surface': 'header',
-          'site': _selectedSite,
-          'period': _selectedPeriod,
-          'file_name': fileName,
-        },
-      );
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _tHqBilling(context, 'Financial export copied to clipboard.'),
-          ),
-        ),
-      );
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-              _tHqBilling(context, 'Unable to export financials right now.')),
-        ),
-      );
-    }
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+    final AppState? appState = context.read<AppState?>();
+    final String siteId = (appState?.activeSiteId ?? '').trim();
+    await ReportActions.exportText(
+      messenger: messenger,
+      isMounted: () => mounted,
+      fileName: fileName,
+      content: exportContent,
+      module: 'hq_billing',
+      surface: 'header',
+      copiedEventName: 'export.copied',
+      successMessage: _tHqBilling(context, 'Financial export downloaded.'),
+      copiedMessage:
+          _tHqBilling(context, 'Financial export copied to clipboard.'),
+      errorMessage:
+          _tHqBilling(context, 'Unable to export financials right now.'),
+      unsupportedLogMessage:
+          'Export unsupported for HQ billing financial export, copying content instead',
+      role: 'hq',
+      siteId: siteId.isEmpty ? null : siteId,
+      metadata: <String, dynamic>{
+        'site': _selectedSite,
+        'period': _selectedPeriod,
+      },
+    );
   }
 
   String _financialExportFileName() {
@@ -1133,69 +1102,32 @@ class _InvoiceCard extends StatelessWidget {
     final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
     final String reminder = _buildInvoiceReminder(context);
     final String fileName = _invoiceReminderFileName();
-    try {
-      final String? savedLocation = await ExportService.instance.saveTextFile(
-        fileName: fileName,
-        content: reminder,
-      );
-      if (savedLocation == null || !context.mounted) {
-        return;
-      }
-
-      TelemetryService.instance.logEvent(
-        event: 'export.downloaded',
-        metadata: <String, dynamic>{
-          'module': 'hq_billing',
-          'surface': 'invoice_card',
-          'invoice_id': invoice['id'],
-          'status': invoice['status'],
-          'file_name': fileName,
-        },
-      );
-
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            _tHqBilling(context, 'Invoice reminder downloaded.'),
-          ),
-        ),
-      );
-    } on UnsupportedError catch (_) {
-      if (!context.mounted) {
-        return;
-      }
-      await Clipboard.setData(ClipboardData(text: reminder));
-      if (!context.mounted) return;
-      TelemetryService.instance.logEvent(
-        event: 'export.copied',
-        metadata: <String, dynamic>{
-          'module': 'hq_billing',
-          'surface': 'invoice_card',
-          'invoice_id': invoice['id'],
-          'status': invoice['status'],
-          'file_name': fileName,
-        },
-      );
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            _tHqBilling(context, 'Invoice reminder copied to clipboard.'),
-          ),
-        ),
-      );
-    } catch (_) {
-      if (!context.mounted) return;
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            _tHqBilling(
-              context,
-              'Unable to download invoice reminder right now.',
-            ),
-          ),
-        ),
-      );
-    }
+    final AppState? appState = context.read<AppState?>();
+    final String siteId = (appState?.activeSiteId ?? '').trim();
+    await ReportActions.exportText(
+      messenger: messenger,
+      isMounted: () => context.mounted,
+      fileName: fileName,
+      content: reminder,
+      module: 'hq_billing',
+      surface: 'invoice_card',
+      copiedEventName: 'export.copied',
+      successMessage: _tHqBilling(context, 'Invoice reminder downloaded.'),
+      copiedMessage:
+          _tHqBilling(context, 'Invoice reminder copied to clipboard.'),
+      errorMessage: _tHqBilling(
+        context,
+        'Unable to download invoice reminder right now.',
+      ),
+      unsupportedLogMessage:
+          'Export unsupported for HQ billing invoice reminder, copying content instead',
+      role: 'hq',
+      siteId: siteId.isEmpty ? null : siteId,
+      metadata: <String, dynamic>{
+        'invoice_id': invoice['id'],
+        'status': invoice['status'],
+      },
+    );
   }
 
   String _buildInvoiceReminder(BuildContext context) {

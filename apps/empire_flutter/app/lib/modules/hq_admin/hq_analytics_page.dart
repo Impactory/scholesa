@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/services.dart';
 
 import '../../auth/app_state.dart';
 import '../../domain/curriculum/curriculum_family_ui.dart';
 import '../../i18n/shared_role_surface_i18n.dart';
 import '../../services/analytics_service.dart';
-import '../../services/export_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../services/workflow_bridge_service.dart';
 import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
+import '../reports/report_actions.dart';
 
 /// HQ Analytics Page - Platform-wide analytics and insights
 class HqAnalyticsPage extends StatefulWidget {
@@ -219,7 +218,8 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
         decoration: BoxDecoration(
           color: ScholesaColors.error.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: ScholesaColors.error.withValues(alpha: 0.25)),
+          border:
+              Border.all(color: ScholesaColors.error.withValues(alpha: 0.25)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -850,21 +850,20 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                 _t('No KPI packs yet'),
                 style: TextStyle(color: Colors.grey[600]),
               )
-            else
-              ...<Widget>[
-                if (_kpiPacksError != null)
-                  _buildStaleDataBanner(
-                    _t(
-                      'Unable to refresh KPI packs right now. Showing the last successful data.',
-                    ),
+            else ...<Widget>[
+              if (_kpiPacksError != null)
+                _buildStaleDataBanner(
+                  _t(
+                    'Unable to refresh KPI packs right now. Showing the last successful data.',
                   ),
-                ..._kpiPacks.take(3).map(((_HqKpiPackSummary pack) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: _HqKpiPackCard(pack: pack),
-                  );
-                })),
-              ],
+                ),
+              ..._kpiPacks.take(3).map(((_HqKpiPackSummary pack) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: _HqKpiPackCard(pack: pack),
+                );
+              })),
+            ],
           ],
         ),
       ),
@@ -1364,12 +1363,12 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-              if (_supplementalError != null)
-                _buildStaleDataBanner(
-                  _t(
-                    'Unable to refresh supplemental analytics right now. Showing the last successful data.',
-                  ),
+            if (_supplementalError != null)
+              _buildStaleDataBanner(
+                _t(
+                  'Unable to refresh supplemental analytics right now. Showing the last successful data.',
                 ),
+              ),
             Text(
               _t('HQ MiloOS feedback'),
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
@@ -1643,56 +1642,29 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
     }
     final String fileName = _analyticsExportFileName();
     final String exportContent = _buildAnalyticsExport();
-    try {
-      final String? savedLocation = await ExportService.instance.saveTextFile(
-        fileName: fileName,
-        content: exportContent,
-      );
-      if (savedLocation == null || !mounted) {
-        return;
-      }
-      TelemetryService.instance.logEvent(
-        event: 'export.downloaded',
-        metadata: <String, dynamic>{
-          'surface': 'hq_analytics',
-          'site': _selectedSite,
-          'period': _selectedPeriod,
-          'file_name': fileName,
-        },
-      );
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_t('HQ analytics export downloaded.')),
-        ),
-      );
-    } on UnsupportedError catch (error) {
-      debugPrint(
-          'Export unsupported for HQ analytics export, copying content instead: $error');
-      await Clipboard.setData(ClipboardData(text: exportContent));
-      TelemetryService.instance.logEvent(
-        event: 'hq.analytics_export.copied',
-        metadata: <String, dynamic>{
-          'surface': 'hq_analytics',
-          'site': _selectedSite,
-          'period': _selectedPeriod,
-          'file_name': fileName,
-          'fallback': 'clipboard',
-        },
-      );
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_t('HQ analytics export copied to clipboard.')),
-        ),
-      );
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_t('Unable to export HQ analytics right now.')),
-        ),
-      );
-    }
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+    final AppState? appState = context.read<AppState?>();
+    final String siteId = (appState?.activeSiteId ?? '').trim();
+    await ReportActions.exportText(
+      messenger: messenger,
+      isMounted: () => mounted,
+      fileName: fileName,
+      content: exportContent,
+      module: 'hq_analytics',
+      surface: 'hq_analytics',
+      copiedEventName: 'hq.analytics_export.copied',
+      successMessage: _t('HQ analytics export downloaded.'),
+      copiedMessage: _t('HQ analytics export copied to clipboard.'),
+      errorMessage: _t('Unable to export HQ analytics right now.'),
+      unsupportedLogMessage:
+          'Export unsupported for HQ analytics export, copying content instead',
+      role: 'hq',
+      siteId: siteId.isEmpty ? null : siteId,
+      metadata: <String, dynamic>{
+        'site': _selectedSite,
+        'period': _selectedPeriod,
+      },
+    );
   }
 
   String _analyticsExportFileName() {
@@ -2093,17 +2065,19 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                   rank: (row['rank'] as num?)?.toInt() ?? 1,
                   name: (row['name'] as String?) ?? 'Learner',
                   site: (row['site'] as String?) ?? _t('All Sites'),
-                reviewedEvidenceCount:
-                  (row['reviewedEvidenceCount'] as num?)?.toInt() ??
-                      (row['missionsCompleted'] as num?)?.toInt() ?? 0,
-                capabilityUpdates:
-                  (row['capabilityUpdates'] as num?)?.toInt() ?? 0,
-                reviewedDays: (row['reviewedDays'] as num?)?.toInt() ??
-                  (row['streak'] as num?)?.toInt() ?? 0,
-                latestCapabilityTitle:
-                  (row['latestCapabilityTitle'] as String?)?.trim(),
-                latestCapabilityLevel:
-                  (row['latestCapabilityLevel'] as num?)?.toInt() ?? 0,
+                  reviewedEvidenceCount:
+                      (row['reviewedEvidenceCount'] as num?)?.toInt() ??
+                          (row['missionsCompleted'] as num?)?.toInt() ??
+                          0,
+                  capabilityUpdates:
+                      (row['capabilityUpdates'] as num?)?.toInt() ?? 0,
+                  reviewedDays: (row['reviewedDays'] as num?)?.toInt() ??
+                      (row['streak'] as num?)?.toInt() ??
+                      0,
+                  latestCapabilityTitle:
+                      (row['latestCapabilityTitle'] as String?)?.trim(),
+                  latestCapabilityLevel:
+                      (row['latestCapabilityLevel'] as num?)?.toInt() ?? 0,
                 ),
               )
               .toList(growable: false);
@@ -2121,18 +2095,18 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
                       ((snapshot.bosMiaFeedback!['avgUsefulness'] as num?) ?? 0)
                           .toDouble(),
                   avgReliability:
-                      ((snapshot.bosMiaFeedback!['avgReliability'] as num?) ?? 0)
+                      ((snapshot.bosMiaFeedback!['avgReliability'] as num?) ??
+                              0)
                           .toDouble(),
                   avgVoiceQuality:
-                      ((snapshot.bosMiaFeedback!['avgVoiceQuality'] as num?) ?? 0)
+                      ((snapshot.bosMiaFeedback!['avgVoiceQuality'] as num?) ??
+                              0)
                           .toDouble(),
-                  topRecommendation:
-                      (snapshot.bosMiaFeedback!['topRecommendation']
-                              as String?) ??
-                          'scale_with_guardrails',
-                  topIssue:
-                      (snapshot.bosMiaFeedback!['topIssue'] as String?) ??
-                          'telemetry_gaps',
+                  topRecommendation: (snapshot
+                          .bosMiaFeedback!['topRecommendation'] as String?) ??
+                      'scale_with_guardrails',
+                  topIssue: (snapshot.bosMiaFeedback!['topIssue'] as String?) ??
+                      'telemetry_gaps',
                 );
           _supplementalError = null;
         });
@@ -2264,7 +2238,8 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
       final Map<String, String> latestCapabilityTitleByLearner =
           <String, String>{};
       final Map<String, int> latestCapabilityLevelByLearner = <String, int>{};
-      final Map<String, DateTime> latestGrowthAtByLearner = <String, DateTime>{};
+      final Map<String, DateTime> latestGrowthAtByLearner =
+          <String, DateTime>{};
       final Map<String, int> attemptsByPillar = _emptyPillarCountMap();
       final Map<String, int> completedByPillar = _emptyPillarCountMap();
       final Map<String, Set<String>> learnersByPillar =
@@ -2297,9 +2272,9 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
             reviewStatus == 'reviewed';
         if (completed) {
           reviewedEvidenceByLearner[learnerId] =
-            (reviewedEvidenceByLearner[learnerId] ?? 0) + 1;
-          final DateTime? createdAt =
-              _toDateTime(data['createdAt']) ?? _toDateTime(data['submittedAt']);
+              (reviewedEvidenceByLearner[learnerId] ?? 0) + 1;
+          final DateTime? createdAt = _toDateTime(data['createdAt']) ??
+              _toDateTime(data['submittedAt']);
           if (createdAt != null) {
             final String dayKey =
                 '${createdAt.year}-${createdAt.month}-${createdAt.day}';
@@ -2406,8 +2381,8 @@ class _HqAnalyticsPageState extends State<HqAnalyticsPage> {
             capabilityUpdates: capabilityUpdatesByLearner[learnerId] ?? 0,
             reviewedDays: streak,
             latestCapabilityTitle: latestCapabilityTitleByLearner[learnerId],
-            latestCapabilityLevel: latestCapabilityLevelByLearner[learnerId] ??
-                0,
+            latestCapabilityLevel:
+                latestCapabilityLevelByLearner[learnerId] ?? 0,
           ),
         );
       }
