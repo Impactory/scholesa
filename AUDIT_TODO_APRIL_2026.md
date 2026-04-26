@@ -642,7 +642,7 @@ Remaining gold blockers now sit mainly in communication/read-side parity rather 
 | AI disclosure captured + displayed | WF9 | ◐ | Stronger across submission, portfolio, and passport, and non-mission learner portfolio curation now preserves AI detail text as well as status, but not yet uniform on every artifact path |
 | Parent answers "what can my child do?" | WF10 | ◐ | `GuardianCapabilityViewRenderer.tsx` is the real web parent summary surface and now preserves more provenance, but downstream communication is still not uniformly polished |
 | Educator answers "what needs attention?" | WF10 | ◐ | `EducatorDashboardToday.tsx` review queue is real, but not every trust-critical surface has full evidence parity |
-| Learner answers "how am I growing?" | WF10 | ◐ | `LearnerDashboardToday.tsx` shows growth and bands, the learner timeline shows direct evidence-linked growth plus standalone proof bundles, and passport/report surfaces are stronger, but communication parity is still incomplete |
+| Learner answers "how am I growing?" | WF10 | ◐ | `LearnerDashboardToday.tsx` shows growth and bands, the learner timeline shows direct evidence-linked growth plus standalone proof bundles, passport/report surfaces are stronger, and learner progress revision reminders now site-scope their read path; communication parity is still incomplete |
 
 ---
 
@@ -661,6 +661,7 @@ Remaining gold blockers now sit mainly in communication/read-side parity rather 
 | E2E fake-mode infrastructure quieting | ✅ 11/11 focused SSO, telemetry, and Navigation locale guard tests | `npm test -- --runTestsByPath src/__tests__/enterprise-sso.test.ts src/__tests__/e2e-infrastructure-noise.test.ts src/__tests__/navigation-signout-availability.test.ts` |
 | Report share/export web helper | ✅ 3/3 focused share fallback unit tests | `npm test -- --runTestsByPath src/__tests__/report-share-export.test.ts` |
 | Flutter shared learner/guardian report actions | ✅ 41/41 focused parent summary + child passport + parent portfolio + learner portfolio widget tests; analyzer clean | `cd apps/empire_flutter/app && flutter test test/parent_summary_page_test.dart test/parent_child_page_test.dart test/parent_portfolio_page_test.dart test/learner_site_surfaces_localization_test.dart test/learner_portfolio_honesty_test.dart`; `flutter analyze lib/modules/reports/report_actions.dart lib/modules/learner/learner_portfolio_page.dart lib/modules/parent/parent_summary_page.dart lib/modules/parent/parent_child_page.dart lib/modules/parent/parent_portfolio_page.dart test/parent_portfolio_page_test.dart test/learner_site_surfaces_localization_test.dart` |
+| Learner progress revision site-scoping | ✅ 314/314 focused evidence-chain component + renderer contract tests; TypeScript clean | `npm test -- --runTestsByPath src/__tests__/evidence-chain-components.test.ts src/__tests__/evidence-chain-renderer-wiring.test.ts`; `npx tsc --noEmit --pretty false --incremental false` |
 | Flutter tests | ✅ 317+ pass, 0 fail | `cd apps/empire_flutter/app && flutter test` |
 
 ---

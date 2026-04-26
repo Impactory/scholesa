@@ -365,6 +365,16 @@ describe('LearnerProgressReportRenderer site context', () => {
     expect(source).toContain('<AICoachScreen learnerId={ctx.uid} siteId={siteId} />');
   });
 
+  it('site-scopes learner revision alert reads', () => {
+    const revisionsBlock = source.slice(
+      source.indexOf('const checkRevisions'),
+      source.indexOf('useEffect(() => {')
+    );
+    expect(revisionsBlock).toContain('!ctx.uid || !siteId');
+    expect(revisionsBlock).toContain("where('siteId', '==', siteId)");
+    expect(revisionsBlock).toContain('[ctx.uid, siteId]');
+  });
+
   it('shows an explicit no-site blocked state', () => {
     expect(source).toContain('data-testid="learner-progress-site-required"');
     expect(source).toContain('Select an active site before viewing your progress report and MiloOS coach.');
@@ -417,8 +427,8 @@ describe('LearnerPassportExport learner contract', () => {
     expect(source).toContain('buildPassportTextLines');
     expect(source).toContain('buildFamilyShareSummary');
     expect(source).toContain("await import('jspdf')");
-    expect(source).toContain('navigator.share');
-    expect(source).toContain('navigator.clipboard?.writeText');
+    expect(source).toContain('shareTextWithFallback');
+    expect(source).toContain('downloadTextReport');
     expect(source).toContain('const processDomainSnapshotHtml =');
     expect(source).toContain('const processDomainGrowthHtml =');
     expect(source).toContain('<h2>Portfolio Artifacts</h2>');
@@ -479,8 +489,8 @@ describe('GuardianCapabilityViewRenderer site provenance', () => {
     expect(source).toContain('buildGuardianPassportTextLines');
     expect(source).toContain('buildGuardianFamilyShareSummary');
     expect(source).toContain("await import('jspdf')");
-    expect(source).toContain('navigator.share');
-    expect(source).toContain('navigator.clipboard?.writeText');
+    expect(source).toContain('shareTextWithFallback');
+    expect(source).toContain('downloadTextReport');
     expect(source).toContain('Share family summary');
     expect(source).toContain('Export PDF');
   });

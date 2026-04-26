@@ -36,12 +36,16 @@ export default function LearnerProgressReportRenderer({ ctx }: CustomRouteRender
   const siteId = resolveActiveSiteId(ctx.profile) ?? '';
 
   const checkRevisions = useCallback(async () => {
-    if (!ctx.uid) return;
+    if (!ctx.uid || !siteId) {
+      setRevisionCount(0);
+      return;
+    }
     try {
       const snap = await getDocs(
         query(
           missionAttemptsCollection,
           where('learnerId', '==', ctx.uid),
+          where('siteId', '==', siteId),
           where('status', '==', 'revision'),
           limit(20)
         )
@@ -50,7 +54,7 @@ export default function LearnerProgressReportRenderer({ ctx }: CustomRouteRender
     } catch {
       // non-critical — don't block the page
     }
-  }, [ctx.uid]);
+  }, [ctx.uid, siteId]);
 
   useEffect(() => {
     void checkRevisions();
