@@ -688,15 +688,17 @@ class FirestoreService {
     final Map<String, dynamic> updates = <String, dynamic>{
       'updatedAt': FieldValue.serverTimestamp(),
     };
-    if (hasExplainItBack != null)
+    if (hasExplainItBack != null) {
       updates['hasExplainItBack'] = hasExplainItBack;
+    }
     if (hasOralCheck != null) updates['hasOralCheck'] = hasOralCheck;
     if (hasMiniRebuild != null) updates['hasMiniRebuild'] = hasMiniRebuild;
     if (explainItBackExcerpt != null) {
       updates['explainItBackExcerpt'] = explainItBackExcerpt;
     }
-    if (oralCheckExcerpt != null)
+    if (oralCheckExcerpt != null) {
       updates['oralCheckExcerpt'] = oralCheckExcerpt;
+    }
     if (miniRebuildExcerpt != null) {
       updates['miniRebuildExcerpt'] = miniRebuildExcerpt;
     }
@@ -744,18 +746,37 @@ class FirestoreService {
     List<String> evidenceRefIds = const <String>[],
     required String siteId,
   }) async {
-    final DocumentReference<Map<String, dynamic>> docRef =
-        await _firestore.collection('rubricApplications').add(<String, dynamic>{
+    final List<String> evidenceRecordIds = evidenceRefIds
+        .map((String id) => id.trim())
+        .where((String id) => id.isNotEmpty)
+        .toList(growable: false);
+    if (evidenceRecordIds.isEmpty) {
+      throw StateError(
+        'Rubric application requires evidence context; use GrowthEngineService with verified evidence.',
+      );
+    }
+
+    final HttpsCallableResult<dynamic> result = await _functions
+        .httpsCallable('applyRubricToEvidence')
+        .call(<String, dynamic>{
       'learnerId': learnerId,
-      'capabilityId': capabilityId,
-      'educatorId': educatorId,
-      'level': level,
-      'feedback': feedback,
-      'evidenceRefIds': evidenceRefIds,
       'siteId': siteId,
-      'createdAt': FieldValue.serverTimestamp(),
+      'evidenceRecordIds': evidenceRecordIds,
+      'scores': <Map<String, dynamic>>[
+        <String, dynamic>{
+          'criterionId': 'firestore-service-rubric',
+          'capabilityId': capabilityId,
+          'pillarCode': 'FUTURE_SKILLS',
+          'score': _scoreFromRubricLevel(level),
+          'maxScore': 4,
+        },
+      ],
+      if (feedback != null && feedback.trim().isNotEmpty) 'feedback': feedback,
     });
-    return docRef.id;
+    final Map<dynamic, dynamic>? data = result.data is Map<dynamic, dynamic>
+        ? result.data as Map<dynamic, dynamic>
+        : null;
+    return data?['rubricApplicationId'] as String? ?? '';
   }
 
   /// Update capability mastery level
@@ -765,17 +786,9 @@ class FirestoreService {
     required String newLevel,
     required String educatorId,
   }) async {
-    final String docId = '${learnerId}_$capabilityId';
-    await _firestore
-        .collection('capabilityMastery')
-        .doc(docId)
-        .set(<String, dynamic>{
-      'learnerId': learnerId,
-      'capabilityId': capabilityId,
-      'currentLevel': newLevel,
-      'lastAssessedBy': educatorId,
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    throw StateError(
+      'capabilityMastery is server-owned; use applyRubricToEvidence or processCheckpointMasteryUpdate.',
+    );
   }
 
   /// Create an append-only capability growth event (immutable provenance)
@@ -789,20 +802,28 @@ class FirestoreService {
     List<String> evidenceIds = const <String>[],
     required String siteId,
   }) async {
-    final DocumentReference<Map<String, dynamic>> docRef = await _firestore
-        .collection('capabilityGrowthEvents')
-        .add(<String, dynamic>{
-      'learnerId': learnerId,
-      'capabilityId': capabilityId,
-      'fromLevel': fromLevel,
-      'toLevel': toLevel,
-      'educatorId': educatorId,
-      'rubricApplicationId': rubricApplicationId,
-      'evidenceIds': evidenceIds,
-      'siteId': siteId,
-      'createdAt': FieldValue.serverTimestamp(),
-    });
-    return docRef.id;
+    throw StateError(
+      'capabilityGrowthEvents are server-owned append-only output; use applyRubricToEvidence or processCheckpointMasteryUpdate.',
+    );
+  }
+
+  int _scoreFromRubricLevel(String level) {
+    final int? numericScore = int.tryParse(level.trim());
+    if (numericScore != null) {
+      return numericScore.clamp(1, 4).toInt();
+    }
+
+    switch (level.trim().toLowerCase()) {
+      case 'advanced':
+        return 4;
+      case 'proficient':
+        return 3;
+      case 'developing':
+        return 2;
+      case 'emerging':
+      default:
+        return 1;
+    }
   }
 
   /// Get checkpoints by learner

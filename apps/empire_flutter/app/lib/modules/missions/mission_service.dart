@@ -1769,29 +1769,36 @@ class MissionService extends ChangeNotifier {
               .toList() ??
           const <Map<String, dynamic>>[];
     }
-          final List<String> progressionDescriptors =
-            _stringListFromDynamic(data['progressionDescriptors']).isNotEmpty
-              ? _stringListFromDynamic(data['progressionDescriptors'])
-              : _stringListFromDynamic(missionData?['progressionDescriptors'])
-                  .isNotEmpty
+    final List<String> progressionDescriptors =
+        _stringListFromDynamic(data['progressionDescriptors']).isNotEmpty
+            ? _stringListFromDynamic(data['progressionDescriptors'])
+            : _stringListFromDynamic(missionData?['progressionDescriptors'])
+                    .isNotEmpty
                 ? _stringListFromDynamic(missionData?['progressionDescriptors'])
                 : _stringListFromDynamic(
-                  rubricId.isEmpty
-                    ? null
-                    : (await _firestore.collection('rubrics').doc(rubricId).get())
-                      .data()?['progressionDescriptors'],
+                    rubricId.isEmpty
+                        ? null
+                        : (await _firestore
+                                .collection('rubrics')
+                                .doc(rubricId)
+                                .get())
+                            .data()?['progressionDescriptors'],
                   );
-          final List<Map<String, dynamic>> checkpointMappings =
-            _checkpointMappingsFromDynamic(data['checkpointMappings']).isNotEmpty
-              ? _checkpointMappingsFromDynamic(data['checkpointMappings'])
-              : _checkpointMappingsFromDynamic(missionData?['checkpointMappings'])
-                  .isNotEmpty
-                ? _checkpointMappingsFromDynamic(missionData?['checkpointMappings'])
+    final List<Map<String, dynamic>> checkpointMappings =
+        _checkpointMappingsFromDynamic(data['checkpointMappings']).isNotEmpty
+            ? _checkpointMappingsFromDynamic(data['checkpointMappings'])
+            : _checkpointMappingsFromDynamic(missionData?['checkpointMappings'])
+                    .isNotEmpty
+                ? _checkpointMappingsFromDynamic(
+                    missionData?['checkpointMappings'])
                 : _checkpointMappingsFromDynamic(
-                  rubricId.isEmpty
-                    ? null
-                    : (await _firestore.collection('rubrics').doc(rubricId).get())
-                      .data()?['checkpointMappings'],
+                    rubricId.isEmpty
+                        ? null
+                        : (await _firestore
+                                .collection('rubrics')
+                                .doc(rubricId)
+                                .get())
+                            .data()?['checkpointMappings'],
                   );
 
     final String missionTitle =
@@ -1922,35 +1929,42 @@ class MissionService extends ChangeNotifier {
       final String? resolvedRubricTitle = rubricTitle?.trim().isNotEmpty == true
           ? rubricTitle!.trim()
           : submissionData['rubricTitle'] as String?;
-        final DocumentSnapshot<Map<String, dynamic>> missionSnapshot =
+      final DocumentSnapshot<Map<String, dynamic>> missionSnapshot =
           missionId.isEmpty
-            ? await _firestore.collection('missions').doc('__missing__').get()
-            : await _firestore.collection('missions').doc(missionId).get();
-        final Map<String, dynamic> missionData =
+              ? await _firestore.collection('missions').doc('__missing__').get()
+              : await _firestore.collection('missions').doc(missionId).get();
+      final Map<String, dynamic> missionData =
           missionSnapshot.data() ?? <String, dynamic>{};
-        final DocumentSnapshot<Map<String, dynamic>> rubricSnapshot =
+      final DocumentSnapshot<Map<String, dynamic>> rubricSnapshot =
           resolvedRubricId.isEmpty
-            ? await _firestore.collection('rubrics').doc('__missing__').get()
-            : await _firestore.collection('rubrics').doc(resolvedRubricId).get();
-        final Map<String, dynamic> rubricData =
+              ? await _firestore.collection('rubrics').doc('__missing__').get()
+              : await _firestore
+                  .collection('rubrics')
+                  .doc(resolvedRubricId)
+                  .get();
+      final Map<String, dynamic> rubricData =
           rubricSnapshot.data() ?? <String, dynamic>{};
-        final List<String> progressionDescriptors =
-          _stringListFromDynamic(submissionData['progressionDescriptors'])
+      final List<String> progressionDescriptors = _stringListFromDynamic(
+                  submissionData['progressionDescriptors'])
               .isNotEmpty
-            ? _stringListFromDynamic(submissionData['progressionDescriptors'])
-            : _stringListFromDynamic(missionData['progressionDescriptors'])
-                .isNotEmpty
+          ? _stringListFromDynamic(submissionData['progressionDescriptors'])
+          : _stringListFromDynamic(missionData['progressionDescriptors'])
+                  .isNotEmpty
               ? _stringListFromDynamic(missionData['progressionDescriptors'])
               : _stringListFromDynamic(rubricData['progressionDescriptors']);
-        final List<Map<String, dynamic>> checkpointMappings =
+      final List<Map<String, dynamic>> checkpointMappings =
           _checkpointMappingsFromDynamic(submissionData['checkpointMappings'])
-              .isNotEmpty
-            ? _checkpointMappingsFromDynamic(submissionData['checkpointMappings'])
-            : _checkpointMappingsFromDynamic(missionData['checkpointMappings'])
-                .isNotEmpty
-              ? _checkpointMappingsFromDynamic(missionData['checkpointMappings'])
-              : _checkpointMappingsFromDynamic(rubricData['checkpointMappings']);
-        final List<String> hqVerificationCriteria = checkpointMappings
+                  .isNotEmpty
+              ? _checkpointMappingsFromDynamic(
+                  submissionData['checkpointMappings'])
+              : _checkpointMappingsFromDynamic(
+                          missionData['checkpointMappings'])
+                      .isNotEmpty
+                  ? _checkpointMappingsFromDynamic(
+                      missionData['checkpointMappings'])
+                  : _checkpointMappingsFromDynamic(
+                      rubricData['checkpointMappings']);
+      final List<String> hqVerificationCriteria = checkpointMappings
           .map(_checkpointGuidanceLine)
           .where((String value) => value.isNotEmpty)
           .toList(growable: false);
@@ -2007,6 +2021,12 @@ class MissionService extends ChangeNotifier {
             total + ((score['maxScore'] as num?)?.toInt() ?? 0),
       );
       final WriteBatch batch = _firestore.batch();
+      final Map<String, DocumentReference<Map<String, dynamic>>>
+          rubricLinkedEvidenceRefs =
+          <String, DocumentReference<Map<String, dynamic>>>{};
+      final Map<String, DocumentReference<Map<String, dynamic>>>
+          rubricLinkedPortfolioRefs =
+          <String, DocumentReference<Map<String, dynamic>>>{};
 
       batch.update(canonicalAttemptRef, <String, dynamic>{
         'missionId': missionId,
@@ -2130,29 +2150,6 @@ class MissionService extends ChangeNotifier {
       }
 
       if (resolvedRubricId.isNotEmpty && normalizedRubricScores.isNotEmpty) {
-        final DocumentReference<Map<String, dynamic>> rubricApplicationRef =
-            _firestore
-                .collection('rubricApplications')
-                .doc(canonicalAttemptRef.id);
-        batch.set(
-            rubricApplicationRef,
-            <String, dynamic>{
-              'siteId': reviewSiteId,
-              'missionAttemptId': canonicalAttemptRef.id,
-              'submissionId': submissionId,
-              'educatorId': reviewerId,
-              'rubricId': resolvedRubricId,
-              'scores': normalizedRubricScores,
-              'overallNote': trimmedFeedback,
-              if (progressionDescriptors.isNotEmpty)
-                'progressionDescriptors': progressionDescriptors,
-              if (checkpointMappings.isNotEmpty)
-                'checkpointMappings': checkpointMappings,
-              'createdAt': FieldValue.serverTimestamp(),
-              'updatedAt': FieldValue.serverTimestamp(),
-            },
-            SetOptions(merge: true));
-
         final Map<String, List<Map<String, dynamic>>> rubricScoresByCapability =
             <String, List<Map<String, dynamic>>>{};
         for (final Map<String, dynamic> score in normalizedRubricScores) {
@@ -2271,13 +2268,14 @@ class MissionService extends ChangeNotifier {
                 'rubricStatus': 'linked',
                 'growthStatus': 'updated',
                 'linkedMissionAttemptId': canonicalAttemptRef.id,
-                'linkedRubricApplicationId': rubricApplicationRef.id,
                 'latestCapabilityLevel': nextLevel,
                 'growthUpdatedBy': reviewerId,
                 'growthUpdatedAt': FieldValue.serverTimestamp(),
               },
               SetOptions(merge: true),
             );
+            rubricLinkedEvidenceRefs[evidenceDoc.reference.path] =
+                evidenceDoc.reference;
 
             final bool portfolioCandidate =
                 evidenceData['portfolioCandidate'] == true;
@@ -2343,9 +2341,10 @@ class MissionService extends ChangeNotifier {
             if (verificationPrompt.isNotEmpty) {
               verificationPrompts.add(verificationPrompt);
             }
-            final String resolvedVerificationPrompt = verificationPrompt.isNotEmpty
-              ? verificationPrompt
-              : hqVerificationCriteria.join('\n');
+            final String resolvedVerificationPrompt =
+                verificationPrompt.isNotEmpty
+                    ? verificationPrompt
+                    : hqVerificationCriteria.join('\n');
             final bool hasExplainItBack =
                 proofBundleSummary?['hasExplainItBack'] == true;
             final bool hasOralCheck =
@@ -2405,7 +2404,6 @@ class MissionService extends ChangeNotifier {
                 capabilityTitle,
               ]),
               'missionAttemptId': canonicalAttemptRef.id,
-              'rubricApplicationId': rubricApplicationRef.id,
               if (proofBundleId != null) 'proofBundleId': proofBundleId,
               'proofCheckpointCount': proofCheckpoints.length,
               'proofOfLearningStatus': proofOfLearningStatus,
@@ -2455,6 +2453,8 @@ class MissionService extends ChangeNotifier {
                 portfolioItemWrite,
                 SetOptions(merge: true),
               );
+              rubricLinkedPortfolioRefs[portfolioItemRef.path] =
+                  portfolioItemRef;
             }
 
             batch.set(
@@ -2478,9 +2478,10 @@ class MissionService extends ChangeNotifier {
           reviewSiteId != null &&
           reviewSiteId.isNotEmpty) {
         try {
-          await FirebaseFunctions.instance
-              .httpsCallable('applyRubricToEvidence')
-              .call(<String, dynamic>{
+          final HttpsCallableResult<dynamic> callableResult =
+              await FirebaseFunctions.instance
+                  .httpsCallable('applyRubricToEvidence')
+                  .call(<String, dynamic>{
             'learnerId': reviewLearnerId,
             'siteId': reviewSiteId,
             'missionAttemptId': canonicalAttemptRef.id,
@@ -2500,6 +2501,47 @@ class MissionService extends ChangeNotifier {
                     })
                 .toList(growable: false),
           });
+          final Map<dynamic, dynamic>? callableData =
+              callableResult.data is Map<dynamic, dynamic>
+                  ? callableResult.data as Map<dynamic, dynamic>
+                  : null;
+          final String serverRubricApplicationId =
+              (callableData?['rubricApplicationId'] as String? ?? '').trim();
+          if (serverRubricApplicationId.isNotEmpty) {
+            final WriteBatch rubricLinkageBatch = _firestore.batch();
+            rubricLinkageBatch.set(
+              canonicalAttemptRef,
+              <String, dynamic>{
+                'rubricApplicationId': serverRubricApplicationId,
+                'updatedAt': FieldValue.serverTimestamp(),
+              },
+              SetOptions(merge: true),
+            );
+            for (final DocumentReference<Map<String, dynamic>> evidenceRef
+                in rubricLinkedEvidenceRefs.values) {
+              rubricLinkageBatch.set(
+                evidenceRef,
+                <String, dynamic>{
+                  'linkedRubricApplicationId': serverRubricApplicationId,
+                  'rubricStatus': 'linked',
+                  'updatedAt': FieldValue.serverTimestamp(),
+                },
+                SetOptions(merge: true),
+              );
+            }
+            for (final DocumentReference<Map<String, dynamic>> portfolioRef
+                in rubricLinkedPortfolioRefs.values) {
+              rubricLinkageBatch.set(
+                portfolioRef,
+                <String, dynamic>{
+                  'rubricApplicationId': serverRubricApplicationId,
+                  'updatedAt': FieldValue.serverTimestamp(),
+                },
+                SetOptions(merge: true),
+              );
+            }
+            await rubricLinkageBatch.commit();
+          }
         } catch (e) {
           // Non-blocking: batch already committed evidence/portfolio linkage.
           // Mastery will be updated on next rubric apply or manual sync.
@@ -2698,9 +2740,10 @@ class MissionService extends ChangeNotifier {
   }
 
   String _checkpointGuidanceLine(Map<String, dynamic> mapping) {
-    final String phaseLabel =
-        (mapping['phaseLabel'] as String? ?? mapping['phaseKey'] as String? ?? '')
-            .trim();
+    final String phaseLabel = (mapping['phaseLabel'] as String? ??
+            mapping['phaseKey'] as String? ??
+            '')
+        .trim();
     final String guidance =
         (mapping['guidance'] as String? ?? mapping['prompt'] as String? ?? '')
             .trim();

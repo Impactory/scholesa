@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -37,6 +39,51 @@ void main() {
       expect(service.applyRubric, isA<Function>());
       expect(service.updateCapabilityMastery, isA<Function>());
       expect(service.createCapabilityGrowthEvent, isA<Function>());
+    });
+
+    test('interpretation writes stay server-owned', () {
+      final String source = File(
+        'lib/services/firestore_service.dart',
+      ).readAsStringSync();
+
+      final int applyStart = source.indexOf('Future<String> applyRubric');
+      final int masteryStart =
+          source.indexOf('Future<void> updateCapabilityMastery');
+      final int growthStart =
+          source.indexOf('Future<String> createCapabilityGrowthEvent');
+      final int readsStart = source.indexOf('/// Get checkpoints by learner');
+      expect(applyStart, isNot(-1));
+      expect(masteryStart, isNot(-1));
+      expect(growthStart, isNot(-1));
+      expect(readsStart, isNot(-1));
+
+      final String applySection = source.substring(applyStart, masteryStart);
+      expect(
+        applySection,
+        contains("httpsCallable('applyRubricToEvidence')"),
+        reason: 'legacy rubric helper must use server-side growth validation',
+      );
+      expect(
+        applySection,
+        isNot(contains("collection('rubricApplications')")),
+        reason: 'legacy rubric helper must not create disconnected rubric docs',
+      );
+
+      final String masterySection = source.substring(masteryStart, growthStart);
+      expect(masterySection, contains('server-owned'));
+      expect(
+        masterySection,
+        isNot(contains("collection('capabilityMastery')")),
+        reason: 'clients must not write capability mastery directly',
+      );
+
+      final String growthSection = source.substring(growthStart, readsStart);
+      expect(growthSection, contains('server-owned append-only output'));
+      expect(
+        growthSection,
+        isNot(contains("collection('capabilityGrowthEvents')")),
+        reason: 'clients must not write append-only growth events directly',
+      );
     });
 
     test('service has evidence read methods', () {

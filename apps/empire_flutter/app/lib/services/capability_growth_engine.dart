@@ -1,44 +1,34 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
 import '../domain/models.dart';
 import '../domain/repositories.dart';
 import 'telemetry_service.dart';
 
 /// The capability growth engine connects rubric applications to capability
-/// mastery updates, portfolio item enrichment, and next-step generation.
+/// mastery updates through the server-owned growth callable.
 ///
 /// This is the "interpret" step of the evidence chain:
-///   rubric applied → growth event created → mastery updated →
-///   portfolio enriched → next steps generated
+///   rubric applied → server validation → growth event/mastery/portfolio update
 class CapabilityGrowthEngine {
   CapabilityGrowthEngine({
-    CapabilityGrowthEventRepository? growthEventRepo,
-    CapabilityMasteryRepository? masteryRepo,
-    PortfolioItemRepository? portfolioItemRepo,
     EvidenceRecordRepository? evidenceRepo,
-    LearnerNextStepRepository? nextStepRepo,
-    CheckpointRepository? checkpointRepo,
     FirebaseFirestore? firestore,
-  })  : _growthEventRepo =
-            growthEventRepo ?? CapabilityGrowthEventRepository(),
-        _masteryRepo = masteryRepo ?? CapabilityMasteryRepository(),
-        _portfolioItemRepo = portfolioItemRepo ?? PortfolioItemRepository(),
-        _evidenceRepo = evidenceRepo ?? EvidenceRecordRepository(),
-        _nextStepRepo = nextStepRepo ?? LearnerNextStepRepository(),
-        _checkpointRepo = checkpointRepo ?? CheckpointRepository(),
-        _firestore = firestore ?? FirebaseFirestore.instance;
+    FirebaseFunctions? functions,
+  })  : _evidenceRepo = evidenceRepo ?? EvidenceRecordRepository(),
+        _firestore = firestore ?? FirebaseFirestore.instance,
+        _functionsOverride = functions;
 
-  final CapabilityGrowthEventRepository _growthEventRepo;
-  final CapabilityMasteryRepository _masteryRepo;
-  final PortfolioItemRepository _portfolioItemRepo;
   final EvidenceRecordRepository _evidenceRepo;
-  final LearnerNextStepRepository _nextStepRepo;
-  final CheckpointRepository _checkpointRepo;
   final FirebaseFirestore _firestore;
+  final FirebaseFunctions? _functionsOverride;
+  FirebaseFunctions get _functions =>
+      _functionsOverride ?? FirebaseFunctions.instance;
 
   /// Process a rubric application and propagate through the evidence chain.
   ///
-  /// This is the critical path: rubric → growth event → mastery → portfolio.
+  /// This is the critical path: rubric → Cloud Function validation →
+  /// growth event → mastery → portfolio.
   Future<CapabilityGrowthResult> processRubricApplication({
     required RubricApplicationModel rubricApplication,
     required String learnerId,
@@ -56,98 +46,51 @@ class CapabilityGrowthEngine {
     final int rawScore = _computeRawScore(rubricApplication.scores);
     final int maxScore = _computeMaxScore(rubricApplication.scores);
     final int level = _deriveLevel(rawScore, maxScore);
-
-    // 1. Create growth event
-    final String growthEventId =
-        '${capabilityId}_${learnerId}_${Timestamp.now().millisecondsSinceEpoch}';
-    final growthEvent = CapabilityGrowthEventModel(
-      id: growthEventId,
-      learnerId: learnerId,
-      capabilityId: capabilityId,
-      pillarCode: pillarCode,
-      level: level,
-      rawScore: rawScore,
-      maxScore: maxScore,
-      capabilityTitle: capabilityTitle,
-      siteId: siteId,
-      evidenceId: evidenceRecordId,
-      missionAttemptId: missionAttemptId,
-      rubricApplicationId: rubricApplication.id,
-      educatorId: educatorId,
-      progressionDescriptors: progressionDescriptors,
-      checkpointMappings: checkpointMappings,
-      createdAt: Timestamp.now(),
-    );
-    await _growthEventRepo.upsert(growthEvent);
-
-    // 2. Update capability mastery
-    final existingMasteries = await _masteryRepo.listByLearner(learnerId);
-    final existing = existingMasteries
-        .where((m) => m.capabilityId == capabilityId)
-        .toList();
-
-    final List<String> evidenceIds;
-    final int highestLevel;
-    if (existing.isNotEmpty) {
-      final current = existing.first;
-      evidenceIds = <String>[
-        ...current.evidenceIds,
-        if (evidenceRecordId != null) evidenceRecordId,
-      ];
-      highestLevel =
-          level > current.highestLevel ? level : current.highestLevel;
-    } else {
-      evidenceIds = <String>[
-        if (evidenceRecordId != null) evidenceRecordId,
-      ];
-      highestLevel = level;
-    }
-
-    final masteryId = existing.isNotEmpty
-        ? existing.first.id
-        : '${capabilityId}_$learnerId';
-    final mastery = CapabilityMasteryModel(
-      id: masteryId,
-      learnerId: learnerId,
-      capabilityId: capabilityId,
-      pillarCode: pillarCode,
-      latestLevel: level,
-      highestLevel: highestLevel,
-      capabilityTitle: capabilityTitle,
-      siteId: siteId,
-      latestEvidenceId: evidenceRecordId,
-      latestMissionAttemptId: missionAttemptId,
-      evidenceIds: evidenceIds,
-      createdAt: existing.isNotEmpty ? existing.first.createdAt : null,
-      updatedAt: Timestamp.now(),
-    );
-    await _masteryRepo.upsert(mastery);
-
-    // 3. Enrich portfolio item if provided
-    if (portfolioItemId != null && portfolioItemId.isNotEmpty) {
-      await _enrichPortfolioItem(
-        portfolioItemId: portfolioItemId,
-        growthEventId: growthEventId,
-        capabilityId: capabilityId,
-        capabilityTitle: capabilityTitle,
-        rubricApplicationId: rubricApplication.id,
-        level: level,
-        progressionDescriptors: progressionDescriptors,
-        checkpointMappings: checkpointMappings,
+    final List<String> evidenceRecordIds = <String>[
+      if (evidenceRecordId != null && evidenceRecordId.trim().isNotEmpty)
+        evidenceRecordId.trim(),
+    ];
+    final String resolvedMissionAttemptId = _firstNonEmpty(
+        <String?>[missionAttemptId, rubricApplication.missionAttemptId]);
+    final String resolvedPortfolioItemId =
+        _firstNonEmpty(<String?>[portfolioItemId]);
+    if (evidenceRecordIds.isEmpty &&
+        resolvedMissionAttemptId.isEmpty &&
+        resolvedPortfolioItemId.isEmpty) {
+      throw StateError(
+        'Capability growth requires evidence, mission attempt, or portfolio item context.',
       );
     }
 
-    // 4. Generate next steps
-    await _generateNextSteps(
-      learnerId: learnerId,
-      siteId: siteId,
-      capabilityId: capabilityId,
-      pillarCode: pillarCode,
-      currentLevel: level,
-      capabilityTitle: capabilityTitle,
-    );
+    final HttpsCallableResult<dynamic> callableResult = await _functions
+        .httpsCallable('applyRubricToEvidence')
+        .call(<String, dynamic>{
+      'learnerId': learnerId,
+      'siteId': siteId,
+      'rubricId': rubricApplication.rubricId,
+      'evidenceRecordIds': evidenceRecordIds,
+      'scores': _rubricScoresForCallable(
+        rubricApplication: rubricApplication,
+        capabilityId: capabilityId,
+        pillarCode: pillarCode,
+        fallbackLevel: level,
+      ),
+      if (resolvedMissionAttemptId.isNotEmpty)
+        'missionAttemptId': resolvedMissionAttemptId,
+      if (resolvedPortfolioItemId.isNotEmpty)
+        'portfolioItemId': resolvedPortfolioItemId,
+    });
 
-    // 5. Telemetry
+    final Map<dynamic, dynamic>? data =
+        callableResult.data is Map<dynamic, dynamic>
+            ? callableResult.data as Map<dynamic, dynamic>
+            : null;
+    final List<String> growthEventIds = _stringListFromDynamic(
+      data?['growthEventIds'],
+    );
+    final String serverRubricApplicationId =
+        data?['rubricApplicationId'] as String? ?? rubricApplication.id;
+
     try {
       await TelemetryService.instance.logEvent(
         event: 'capability.growth.processed',
@@ -159,16 +102,17 @@ class CapabilityGrowthEngine {
           'level': level,
           'rawScore': rawScore,
           'maxScore': maxScore,
-          'rubricApplicationId': rubricApplication.id,
+          'rubricApplicationId': serverRubricApplicationId,
           'hasPortfolioItem': portfolioItemId != null,
           'hasEvidence': evidenceRecordId != null,
+          'serverRouted': true,
         },
       );
     } catch (_) {}
 
     return CapabilityGrowthResult(
-      growthEventId: growthEventId,
-      masteryId: masteryId,
+      growthEventId: growthEventIds.isNotEmpty ? growthEventIds.first : '',
+      masteryId: '${learnerId}_$capabilityId',
       level: level,
       rawScore: rawScore,
       maxScore: maxScore,
@@ -236,86 +180,73 @@ class CapabilityGrowthEngine {
     return docRef.id;
   }
 
-  Future<void> _enrichPortfolioItem({
-    required String portfolioItemId,
-    required String growthEventId,
-    required String capabilityId,
-    String? capabilityTitle,
-    required String rubricApplicationId,
-    required int level,
-    List<String> progressionDescriptors = const [],
-    List<Map<String, dynamic>> checkpointMappings = const [],
-  }) async {
-    final existing = await _portfolioItemRepo.getById(portfolioItemId);
-    if (existing == null) return;
-
-    final updatedGrowthIds = <String>[
-      ...existing.growthEventIds,
-      growthEventId,
-    ];
-    final updatedCapIds = <String>{
-      ...existing.capabilityIds,
-      capabilityId,
-    }.toList();
-    final updatedCapTitles = <String>{
-      ...existing.capabilityTitles,
-      if (capabilityTitle != null) capabilityTitle,
-    }.toList();
-
-    await _portfolioItemRepo.patch(portfolioItemId, <String, dynamic>{
-      'growthEventIds': updatedGrowthIds,
-      'capabilityIds': updatedCapIds,
-      'capabilityTitles': updatedCapTitles,
-      'rubricApplicationId': rubricApplicationId,
-      'progressionDescriptors': progressionDescriptors,
-      'checkpointMappings': checkpointMappings,
-      'updatedAt': Timestamp.now(),
-    });
-  }
-
-  Future<void> _generateNextSteps({
-    required String learnerId,
-    required String siteId,
+  List<Map<String, dynamic>> _rubricScoresForCallable({
+    required RubricApplicationModel rubricApplication,
     required String capabilityId,
     required String pillarCode,
-    required int currentLevel,
-    String? capabilityTitle,
-  }) async {
-    final targetLevel = currentLevel + 1;
+    required int fallbackLevel,
+  }) {
+    final List<Map<String, dynamic>> normalizedScores = rubricApplication.scores
+        .where(
+          (Map<String, dynamic> score) => _firstNonEmpty(
+                  <String?>[score['capabilityId'] as String?, capabilityId])
+              .isNotEmpty,
+        )
+        .map((Map<String, dynamic> score) => <String, dynamic>{
+              'criterionId': _firstNonEmpty(<String?>[
+                score['criterionId'] as String?,
+                rubricApplication.id,
+              ]),
+              'capabilityId': _firstNonEmpty(<String?>[
+                score['capabilityId'] as String?,
+                capabilityId,
+              ]),
+              'pillarCode': _firstNonEmpty(<String?>[
+                score['pillarCode'] as String?,
+                pillarCode,
+                'FUTURE_SKILLS',
+              ]),
+              'score': (score['score'] as num?)?.toInt() ?? fallbackLevel,
+              'maxScore': (score['maxScore'] as num?)?.toInt() ?? 4,
+              if (_firstNonEmpty(<String?>[score['processDomainId'] as String?])
+                  .isNotEmpty)
+                'processDomainId': score['processDomainId'],
+            })
+        .where((Map<String, dynamic> score) =>
+            (score['score'] as int) >= 0 &&
+            (score['maxScore'] as int) > 0 &&
+            (score['score'] as int) <= (score['maxScore'] as int))
+        .toList(growable: false);
+    if (normalizedScores.isNotEmpty) {
+      return normalizedScores;
+    }
 
-    // Check for checkpoints at the next level
-    final checkpoints =
-        await _checkpointRepo.listByCapability(capabilityId);
-    final nextCheckpoint = checkpoints
-        .where((c) => (c.order ?? 0) >= targetLevel)
-        .toList()
-      ..sort((a, b) => (a.order ?? 0).compareTo(b.order ?? 0));
+    return <Map<String, dynamic>>[
+      <String, dynamic>{
+        'criterionId': rubricApplication.id,
+        'capabilityId': capabilityId,
+        'pillarCode': pillarCode.isNotEmpty ? pillarCode : 'FUTURE_SKILLS',
+        'score': fallbackLevel.clamp(1, 4),
+        'maxScore': 4,
+      },
+    ];
+  }
 
-    final stepId = '${capabilityId}_${learnerId}_next_$targetLevel';
-    final step = LearnerNextStepModel(
-      id: stepId,
-      siteId: siteId,
-      learnerId: learnerId,
-      capabilityId: capabilityId,
-      pillarCode: pillarCode,
-      stepType: 'capability_next_level',
-      title:
-          'Reach level $targetLevel in ${capabilityTitle ?? capabilityId}',
-      description: nextCheckpoint.isNotEmpty
-          ? nextCheckpoint.first.guidance
-          : null,
-      currentLevel: currentLevel,
-      targetLevel: targetLevel,
-      requiredEvidenceTypes: nextCheckpoint.isNotEmpty
-          ? nextCheckpoint.first.requiredEvidenceTypes
-          : const <String>[],
-      checkpointId:
-          nextCheckpoint.isNotEmpty ? nextCheckpoint.first.id : null,
-      generatedBy: 'system',
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
-    );
-    await _nextStepRepo.upsert(step);
+  List<String> _stringListFromDynamic(Object? value) {
+    if (value is! List) return const <String>[];
+    return value
+        .whereType<String>()
+        .map((String id) => id.trim())
+        .where((String id) => id.isNotEmpty)
+        .toList(growable: false);
+  }
+
+  String _firstNonEmpty(List<String?> values) {
+    for (final String? value in values) {
+      final String trimmed = value?.trim() ?? '';
+      if (trimmed.isNotEmpty) return trimmed;
+    }
+    return '';
   }
 
   int _computeRawScore(List<Map<String, dynamic>> scores) {

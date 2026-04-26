@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:scholesa_app/services/growth_engine_service.dart';
@@ -51,6 +53,75 @@ void main() {
         siteId: 'site1',
         skillId: 'skill1',
         isCorrect: false,
+      );
+    });
+  });
+
+  group('Legacy capability growth engine boundary', () {
+    test('rubric growth is callable-backed, not client direct-write', () {
+      final String source = File(
+        'lib/services/capability_growth_engine.dart',
+      ).readAsStringSync();
+
+      final int processStart = source.indexOf('processRubricApplication');
+      expect(processStart, isNot(-1));
+      final int captureStart = source.indexOf('captureEvidence', processStart);
+      final String processSection =
+          source.substring(processStart, captureStart);
+
+      expect(
+        processSection,
+        contains("httpsCallable('applyRubricToEvidence')"),
+        reason: 'legacy rubric processing must use server validation',
+      );
+      expect(
+        processSection,
+        isNot(contains("collection('capabilityGrowthEvents')")),
+        reason: 'clients must not write growth events directly',
+      );
+      expect(
+        processSection,
+        isNot(contains("collection('capabilityMastery')")),
+        reason: 'clients must not write mastery directly',
+      );
+    });
+  });
+
+  group('Mission review growth boundary', () {
+    test('mission review uses callable-owned rubric application creation', () {
+      final String source = File(
+        'lib/modules/missions/mission_service.dart',
+      ).readAsStringSync();
+
+      final int reviewStart = source.indexOf('Future<bool> submitReview');
+      expect(reviewStart, isNot(-1));
+      final int resolveStart = source.indexOf(
+        'Future<DocumentReference<Map<String, dynamic>>> _resolveReviewAttemptRef',
+        reviewStart,
+      );
+      final String reviewSection = source.substring(reviewStart, resolveStart);
+
+      expect(
+        reviewSection,
+        contains("httpsCallable('applyRubricToEvidence')"),
+        reason:
+            'mission review rubric interpretation must route through server validation',
+      );
+      expect(
+        reviewSection,
+        isNot(contains("collection('rubricApplications')")),
+        reason:
+            'mission review must not fork a client-created rubric application',
+      );
+      expect(
+        reviewSection,
+        isNot(contains("collection('capabilityGrowthEvents')")),
+        reason: 'mission review must not write growth events directly',
+      );
+      expect(
+        reviewSection,
+        isNot(contains("collection('capabilityMastery')")),
+        reason: 'mission review must not write mastery directly',
       );
     });
   });
