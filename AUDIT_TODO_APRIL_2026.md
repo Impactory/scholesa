@@ -7,7 +7,7 @@
 
 ## FINAL RECOMMENDATION: ⚠️ BETA-READY, NOT GOLD-READY
 
-**The core evidence chain is real and materially stronger, but Scholesa is not yet gold-ready.** Recent work tightened the proof boundary, preserved canonical portfolio provenance through rubric application, fixed proof-linked checkpoint growth dead-ends, reused canonical portfolio items during live observation rubric review, taught the learner timeline to back-link direct evidence-triggered growth, and promoted proof bundles into standalone learner timeline entries. However, downstream communication surfaces still have incomplete provenance consumption, legacy compatibility remains visible, and several workflows remain partial rather than gold-certified.
+**The core evidence chain is real and materially stronger, but Scholesa is not yet gold-ready.** Recent work tightened the proof boundary, preserved canonical portfolio provenance through rubric application, fixed proof-linked checkpoint growth dead-ends, reused canonical portfolio items during live observation rubric review, taught the learner timeline to back-link direct evidence-triggered growth, promoted proof bundles into standalone learner timeline entries, and verified the live educator/learner evidence surfaces on phone-width web viewports. However, downstream communication surfaces still have incomplete provenance consumption, legacy compatibility remains visible, and several workflows remain partial rather than gold-certified.
 
 | Metric | Value |
 |--------|-------|
@@ -312,6 +312,12 @@ Remaining gold blockers now sit mainly in communication/read-side parity rather 
 - **Validation**: `npx tsc --noEmit --pretty false --incremental false`; `npm test -- --runTestsByPath src/__tests__/evidence-chain-components.test.ts` (139/139 pass).
 - **Residual risk**: `recognitionBadges` is still semantically overloaded by legacy belonging recognition records and evidence-based badge definitions. The typed web ref closes the immediate untyped-access gap; a future data-model cleanup should split peer recognition from badge definitions instead of expanding this collection further.
 
+### P1-G. Mobile Viewport QA for Evidence Capture — ✅ DONE
+- **Gap**: Educator live evidence capture and learner evidence submission had no browser-level phone viewport coverage, so the 10-second classroom workflow could regress without detection.
+- **Fix**: Added focused Playwright mobile coverage for `/educator/evidence` and `/learner/missions`; restored the root mobile viewport metadata and Tailwind utility layers so responsive classes actually apply in browser rendering; hardened evidence capture/submission status rows and learner submission tabs for narrow screens.
+- **Validation**: `npx playwright test --config playwright.config.ts test/e2e/mobile-evidence-workflows.e2e.spec.ts` (2/2 pass, no SSO/telemetry/i18n missing-key noise); `npx tsc --noEmit --pretty false --incremental false`; `npm test -- --runTestsByPath src/__tests__/enterprise-sso.test.ts src/__tests__/e2e-infrastructure-noise.test.ts src/__tests__/navigation-signout-availability.test.ts` (11/11 pass).
+- **E2E infrastructure cleanup**: Explicit fake-mode SSO provider discovery returns an empty provider list without requiring Firebase Admin; telemetry tracking returns deterministic fake IDs without calling Firebase Functions; shared Navigation sign-out copy exists in all root runtime locales.
+
 ---
 
 ## §8. EXISTING STRENGTHS WORTH PRESERVING
@@ -354,7 +360,7 @@ Remaining gold blockers now sit mainly in communication/read-side parity rather 
 ### Phase 3: Operational Hardening
 8. ~~**P1-F**: Add typed collection references for top-priority untyped collections~~ ✅
 9. ~~E2E emulator test: full evidence chain (capability → session → evidence → rubric → PoL → mastery → passport)~~ ✅
-10. Mobile viewport QA for educator evidence capture + learner submission
+10. ~~Mobile viewport QA for educator evidence capture + learner submission~~ ✅
 
 ### Phase 4: Platform Expansion
 11. Custom dashboards for remaining high-value generic routes
@@ -651,6 +657,8 @@ Remaining gold blockers now sit mainly in communication/read-side parity rather 
 | Functions tests | ✅ 33 suites, 127/127 pass | `cd functions && npx jest --runInBand --forceExit` |
 | Evidence-chain emulator integration | ✅ session-backed evidence → proof → rubric → mastery → learner passport + guardian bundle | `npm run test:integration:evidence-chain` |
 | P1-F typed collection reconciliation | ✅ 139/139 focused evidence-chain component/source-contract tests | `npm test -- --runTestsByPath src/__tests__/evidence-chain-components.test.ts` |
+| Mobile evidence workflow viewport QA | ✅ 2/2 Playwright mobile browser tests | `npx playwright test --config playwright.config.ts test/e2e/mobile-evidence-workflows.e2e.spec.ts` |
+| E2E fake-mode infrastructure quieting | ✅ 11/11 focused SSO, telemetry, and Navigation locale guard tests | `npm test -- --runTestsByPath src/__tests__/enterprise-sso.test.ts src/__tests__/e2e-infrastructure-noise.test.ts src/__tests__/navigation-signout-availability.test.ts` |
 | Flutter tests | ✅ 317+ pass, 0 fail | `cd apps/empire_flutter/app && flutter test` |
 
 ---

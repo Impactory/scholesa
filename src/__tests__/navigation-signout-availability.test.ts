@@ -32,6 +32,17 @@ describe('protected web logout availability', () => {
     expect(navigationSource).toContain('<Button');
   });
 
+  it('provides localized shared Navigation copy in every root locale', () => {
+    for (const locale of ['en', 'es', 'th', 'zh-CN', 'zh-TW']) {
+      const messages = JSON.parse(
+        fs.readFileSync(path.join(repoRoot, 'locales', `${locale}.json`), 'utf8')
+      );
+
+      expect(messages.navigation.signedInAs).toContain('{{identity}}');
+      expect(messages.navigation.signOut).toBeTruthy();
+    }
+  });
+
   it('keeps every governed workflow page under the protected layout shell', () => {
     for (const routePath of ALL_WORKFLOW_PATHS) {
       const pagePath = path.join(

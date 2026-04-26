@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   --scholesa-font-stack: "Noto Sans", "Noto Sans SC", "Noto Sans TC", "Noto Sans Thai", "PingFang SC", "PingFang TC", "Microsoft YaHei", "Nirmala UI", "Leelawadee UI", "Inter", "Segoe UI", sans-serif;
   --background: 210 40% 98%;

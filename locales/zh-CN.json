@@ -23,6 +23,14 @@
       "hq": "总部与网络"
     }
   },
+  "navigation": {
+    "signedInAs": "当前登录：{{identity}}",
+    "signOut": "退出登录",
+    "themeSystem": "系统",
+    "themeLight": "浅色",
+    "themeDark": "深色",
+    "themeLabel": "主题"
+  },
   "educator_plan": {
     "title": "规划课程",
     "offline": "离线：操作将稍后同步",

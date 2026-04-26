@@ -3,7 +3,6 @@ import { defineConfig, devices } from '@playwright/test';
 const baseURL = process.env.PLAYWRIGHT_BASE_URL || 'http://127.0.0.1:3002';
 
 const nextEnv = [
-  'NODE_ENV=production',
   'NEXT_TELEMETRY_DISABLED=1',
   'NEXT_PUBLIC_E2E_TEST_MODE=1',
   'NEXT_PUBLIC_FIREBASE_API_KEY=demo-api-key',
@@ -40,7 +39,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `bash -lc '${nextEnv} npx next build --webpack && ${nextEnv} PORT=3002 npx next start -H 127.0.0.1 -p 3002'`,
+    command: `bash -lc '${nextEnv} PORT=3002 npx next dev --webpack -H 127.0.0.1 -p 3002'`,
     url: baseURL,
     timeout: 300_000,
     reuseExistingServer: false,

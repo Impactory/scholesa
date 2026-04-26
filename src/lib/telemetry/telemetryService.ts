@@ -254,6 +254,10 @@ export class TelemetryService {
         browser: enrichedPayload.browser
       }) as Record<string, unknown>;
 
+      if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+        return `e2e-${canonicalEvent}-${Date.now()}`;
+      }
+
       const logTelemetryEvent = httpsCallable(functions, 'logTelemetryEvent');
       await logTelemetryEvent({
         event: canonicalEvent,

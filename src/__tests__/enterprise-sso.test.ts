@@ -19,9 +19,37 @@ function buildQueryMock(docs: Array<{ id: string; data: () => Record<string, unk
 }
 
 describe('enterprise SSO auth routes', () => {
+  const originalE2EMode = process.env.NEXT_PUBLIC_E2E_TEST_MODE;
+
   beforeEach(() => {
     mockedGetAdminAuth.mockReset();
     mockedGetAdminDb.mockReset();
+    if (originalE2EMode === undefined) {
+      delete process.env.NEXT_PUBLIC_E2E_TEST_MODE;
+    } else {
+      process.env.NEXT_PUBLIC_E2E_TEST_MODE = originalE2EMode;
+    }
+  });
+
+  afterAll(() => {
+    if (originalE2EMode === undefined) {
+      delete process.env.NEXT_PUBLIC_E2E_TEST_MODE;
+    } else {
+      process.env.NEXT_PUBLIC_E2E_TEST_MODE = originalE2EMode;
+    }
+  });
+
+  it('returns no enterprise providers in explicit E2E mode without requiring Admin SDK', async () => {
+    process.env.NEXT_PUBLIC_E2E_TEST_MODE = '1';
+
+    const response = await getEnterpriseProviders(
+      new Request('https://scholesa.test/api/auth/sso/providers')
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.providers).toEqual([]);
+    expect(mockedGetAdminDb).not.toHaveBeenCalled();
   });
 
   it('lists enabled enterprise providers with locale-aware labels', async () => {

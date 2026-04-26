@@ -24,6 +24,8 @@
     }
   },
   "navigation": {
+    "signedInAs": "Sesión iniciada como {{identity}}",
+    "signOut": "Cerrar sesión",
     "themeSystem": "Sistema",
     "themeLight": "Claro",
     "themeDark": "Oscuro",

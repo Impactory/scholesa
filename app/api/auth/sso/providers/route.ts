@@ -13,6 +13,10 @@ export async function GET(request: Request) {
   const email = searchParams.get('email');
   const siteId = searchParams.get('siteId');
 
+  if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+    return NextResponse.json({ providers: [] }, { status: 200 });
+  }
+
   const db = getAdminDb();
   const snap = await db.collection('enterpriseSsoProviders')
     .where('enabled', '==', true)

@@ -24,6 +24,8 @@
     }
   },
   "navigation": {
+    "signedInAs": "ลงชื่อเข้าใช้เป็น {{identity}}",
+    "signOut": "ออกจากระบบ",
     "themeSystem": "ระบบ",
     "themeLight": "สว่าง",
     "themeDark": "มืด",
