@@ -641,6 +641,11 @@ function buildGuardianFamilyShareSummary(learner: LearnerSummary): string {
     .filter((item) => typeof item.verificationPrompt === 'string' && item.verificationPrompt.trim().length > 0)
     .slice(0, 2);
   const topClaims = learner.ideationPassport?.claims?.slice(0, 3) ?? [];
+  const recentGrowth = learner.growthTimeline.slice(0, 3);
+  const recentProcessGrowth = learner.processDomainGrowthTimeline.slice(0, 2);
+  const featuredPortfolio = learner.portfolioHighlights
+    .filter((item) => (item.evidenceCount ?? 0) > 0 || item.missionAttemptId)
+    .slice(0, 2);
   const featuredAiDisclosure = topClaims.length > 0
     ? AI_DISCLOSURE_CONFIG[topClaims[0].aiDisclosureStatus]?.label ?? 'Not assessed'
     : null;
@@ -656,14 +661,80 @@ function buildGuardianFamilyShareSummary(learner: LearnerSummary): string {
     '',
     'Current evidence-backed claims:',
     ...(topClaims.length > 0
-      ? topClaims.map((claim) => `- ${claim.capabilityTitle}: ${claim.level} with ${claim.evidenceCount} evidence record(s)`)
+      ? topClaims.map(formatGuardianFamilyShareClaimLine)
       : ['- No capability claims backed by reviewed evidence yet.']),
+    '',
+    'Recent growth provenance:',
+    ...(recentGrowth.length > 0
+      ? recentGrowth.map(formatGuardianFamilyShareGrowthLine)
+      : ['- No growth events have been recorded yet.']),
+    '',
+    'Recent process-domain growth:',
+    ...(recentProcessGrowth.length > 0
+      ? recentProcessGrowth.map(formatGuardianFamilyShareProcessGrowthLine)
+      : ['- No process-domain growth events have been recorded yet.']),
+    '',
+    'Featured portfolio evidence:',
+    ...(featuredPortfolio.length > 0
+      ? featuredPortfolio.map(formatGuardianFamilySharePortfolioLine)
+      : ['- No reviewed portfolio highlights are linked into this summary yet.']),
     '',
     'Next verification prompts:',
     ...(pendingPrompts.length > 0
       ? pendingPrompts.map((item) => `- ${item.title}: ${item.verificationPrompt}`)
       : ['- No pending verification prompts in this summary.']),
   ].join('\n');
+}
+
+function formatGuardianFamilyShareClaimLine(claim: PassportClaim): string {
+  return [
+    `- ${claim.capabilityTitle}: ${claim.level}`,
+    `${claim.evidenceCount} evidence record(s)`,
+    `${claim.verifiedArtifactCount} verified artifact(s)`,
+    `${claim.portfolioItemCount} portfolio link(s)`,
+    `${claim.missionAttemptCount} mission link(s)`,
+    `proof ${PROOF_STATUS_CONFIG[claim.proofStatus]?.label ?? 'Missing'}`,
+    `AI ${AI_DISCLOSURE_CONFIG[claim.aiDisclosureStatus]?.label ?? 'Not assessed'}`,
+    claim.rubricScore ? `rubric ${claim.rubricScore.raw}/${claim.rubricScore.max}` : null,
+    claim.reviewerName
+      ? `reviewed by ${claim.reviewerName}${claim.reviewedAt ? ` (${formatDate(claim.reviewedAt)})` : ''}`
+      : null,
+  ].filter(Boolean).join(' • ');
+}
+
+function formatGuardianFamilyShareGrowthLine(event: GrowthEvent): string {
+  return [
+    `- ${event.capabilityTitle}: ${event.levelAchieved}`,
+    `proof ${PROOF_STATUS_CONFIG[event.proofStatus]?.label ?? 'Missing'}`,
+    event.rubricScore ? `rubric ${event.rubricScore.raw}/${event.rubricScore.max}` : null,
+    event.educatorName ? `reviewed by ${event.educatorName}` : null,
+    `${event.linkedEvidenceCount} evidence link(s)`,
+    `${event.linkedPortfolioCount} portfolio link(s)`,
+    event.missionAttemptId ? 'mission-linked' : null,
+    `date ${formatDate(event.date)}`,
+  ].filter(Boolean).join(' • ');
+}
+
+function formatGuardianFamilyShareProcessGrowthLine(event: ProcessDomainGrowthEvent): string {
+  return [
+    `- ${event.processDomainTitle}: ${event.fromLevel} -> ${event.toLevel}`,
+    `${event.evidenceCount} evidence link(s)`,
+    event.educatorName ? `reviewed by ${event.educatorName}` : null,
+    `date ${formatDate(event.date ?? new Date().toISOString())}`,
+  ].filter(Boolean).join(' • ');
+}
+
+function formatGuardianFamilySharePortfolioLine(item: PortfolioItem): string {
+  return [
+    `- ${item.title}`,
+    item.capabilityTitles.length > 0 ? `capabilities ${item.capabilityTitles.join(', ')}` : null,
+    `${item.evidenceCount ?? 0} evidence link(s)`,
+    item.missionAttemptId ? 'mission-linked' : 'standalone artifact',
+    `status ${VERIFICATION_CONFIG[item.verificationStatus]?.label ?? 'Unverified'}`,
+    `AI ${AI_DISCLOSURE_CONFIG[item.aiDisclosure]?.label ?? 'Not assessed'}`,
+    item.rubricScore ? `rubric ${item.rubricScore.raw}/${item.rubricScore.max} (${item.rubricScore.level})` : null,
+    item.proofDetails.educatorVerifierName ? `verified by ${item.proofDetails.educatorVerifierName}` : null,
+  ].filter(Boolean).join(' • ');
 }
 
 // ---------------------------------------------------------------------------

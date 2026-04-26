@@ -20,10 +20,10 @@
 | P0 blockers | Gold-blocking gaps remain |
 | P1 systems needed (GA credibility) | 6 |
 | TypeScript | Clean (exit 0) |
-| Jest (web) | 25 suites, 183/183 pass |
+| Jest (web) | 31 suites, 472/472 pass |
 | Next.js build | 69 routes, exit 0 |
 | Functions tests | 33 suites, 127/127 pass |
-| Flutter tests | 317+ pass, 0 fail |
+| Flutter tests | 318+ pass, 0 fail |
 
 ---
 
@@ -334,7 +334,7 @@ Remaining gold blockers now sit mainly in communication/read-side parity rather 
 7. **Firestore Security** — Site-scoped, role-checked, ownership-enforced. 135 collection rules. Default-deny on unlisted.
 8. **63 Cloud Functions** — All real, zero stubs. Evidence chain callables are atomic. Segregated concerns (auth, billing, evidence, motivation, ops).
 9. **Flutter Parity** — Custom dashboards for all roles, offline sync queue, queued `rubricApply` / legacy `rubricApplication` replay through `applyRubricToEvidence`, eligible offline checkpoint replay through `processCheckpointMasteryUpdate`, queued `capabilityGrowthEvent` direct writes blocked as server-owned output, legacy Flutter growth helpers closed so rubric interpretation routes through `applyRubricToEvidence`, direct mastery/growth helpers fail closed, and generic Flutter repositories for `rubricApplications`, `capabilityMastery`, and `capabilityGrowthEvents` no longer expose client-side write paths.
-10. **Test Coverage** — 183 web tests, 127 function tests, 317+ Flutter tests. All green. Total: 627+ tests.
+10. **Test Coverage** — 472 web tests, 127 function tests, 318+ Flutter tests. All green. Total: 917+ tests.
 
 ### Platform Operations
 11. **WorkflowRoutePage** — Generic CRUD framework serves 38 routes consistently. Data loading, role gating, create/edit/delete all handled.
@@ -524,7 +524,7 @@ Remaining gold blockers now sit mainly in communication/read-side parity rather 
 - Learner and guardian passport/report surfaces now also render titled process-domain snapshot + recent process-domain growth from the callable summaries instead of dropping that read-side evidence slice.
 - Capability band calculation: normalized per-pillar score → strong/developing/emerging band
 - Growth timeline rendered: up to 15 events with capability title, level, date, educator name, rubric score, and evidence/portfolio linkage counts
-- Export: learner and parent web passport surfaces now provide text export, dedicated PDF export, browser print, and a family-safe share summary; learner web also keeps portable HTML export for browser viewing/archive; web family-summary sharing now uses a shared native-share → clipboard → unavailable fallback; Flutter learner/guardian report actions now use a role-neutral shared helper for parent summary export/share, parent child passport export/share, parent portfolio summary download fallback, and learner portfolio clipboard sharing while preserving each surface's evidence-specific report text; Flutter parent summary and parent child family-share text now includes recent growth provenance with rubric, educator, linked evidence, linked portfolio, proof, and date details; Flutter parent portfolio share requests now persist the full evidence review summary plus structured proof, AI, rubric, educator, evidence, and mission metadata for approved staff-mediated sharing; and Flutter learner portfolio sharing now copies a provenance-aware report that carries reviewed artifacts, linked evidence/growth counts, proof-of-learning checks, capability updates, and AI disclosure.
+- Export: learner and parent web passport surfaces now provide text export, dedicated PDF export, browser print, and a family-safe share summary; learner web also keeps portable HTML export for browser viewing/archive; web learner and guardian family-summary sharing now includes current claim, recent growth, and featured portfolio provenance with proof, AI, rubric, reviewer, evidence, portfolio, and mission linkage before using the shared native-share → clipboard → unavailable fallback; guardian sharing also carries recent process-domain growth provenance from the parent dashboard bundle; Flutter learner/guardian report actions now use a role-neutral shared helper for parent summary export/share, parent child passport export/share, parent portfolio summary download fallback, and learner portfolio clipboard sharing while preserving each surface's evidence-specific report text; Flutter parent summary and parent child family-share text now includes recent growth provenance with rubric, educator, linked evidence, linked portfolio, proof, and date details; Flutter parent portfolio share requests now persist the full evidence review summary plus structured proof, AI, rubric, educator, evidence, and mission metadata for approved staff-mediated sharing; and Flutter learner portfolio sharing now copies a provenance-aware report that carries reviewed artifacts, linked evidence/growth counts and IDs, mission/proof/rubric/educator identifiers, proof-of-learning checks, capability updates, and AI disclosure.
 - Honest empty state: "No capability claims backed by evidence yet"
 - ⚠️ Remaining gaps: web learner/guardian passport routes now include process-domain read-side coverage, concrete export/share actions, and a shared web fallback helper; Flutter learner/guardian report actions now share common export/share mechanics across the trust-critical family/portfolio surfaces touched in this slice; but there is still no unified publish/share workflow across every reporting surface, and disclosure/provenance are still not perfectly uniform across every artifact path.
 
@@ -644,7 +644,7 @@ Remaining gold blockers now sit mainly in communication/read-side parity rather 
 | Growth events created atomically | WF6 | ◐ | Rubric + checkpoint callables; proof-linked checkpoints recover via `pending_proof` |
 | Growth visible on web dashboard | WF6 | ✅ | `LearnerDashboardToday.tsx` growth events + capability bands (G11) |
 | Portfolio browsable with filters | WF7 | ✅ | `LearnerPortfolioBrowser.tsx` |
-| Passport from real evidence | WF8 | ◐ | `LearnerPassportExport.tsx` plus guardian passport surfaces now consume richer claim, portfolio, and growth provenance via callables; learner and parent web passport routes offer dedicated PDF/share actions through a shared browser fallback helper; Flutter learner/guardian report actions now use `ReportActions` for parent summary, parent child passport, parent portfolio summary download fallback, and learner portfolio sharing; Flutter learner portfolio sharing preserves reviewed artifact, evidence/growth, proof, capability, and AI disclosure provenance; but unified publish/share workflow parity and full provenance consistency are still incomplete |
+| Passport from real evidence | WF8 | ◐ | `LearnerPassportExport.tsx` plus guardian passport surfaces now consume richer claim, portfolio, and growth provenance via callables; learner and parent web passport routes offer dedicated PDF/share actions through a shared browser fallback helper; web learner and guardian family-share summaries now carry claim/growth/portfolio proof, AI, rubric, reviewer, and linkage provenance, with guardian sharing also carrying process-domain growth provenance; Flutter learner/guardian report actions now use `ReportActions` for parent summary, parent child passport, parent portfolio summary download fallback, and learner portfolio sharing; Flutter learner portfolio sharing preserves reviewed artifact, evidence/growth IDs, mission/proof/rubric/educator identifiers, proof, capability, and AI disclosure provenance; but unified publish/share workflow parity and full provenance consistency are still incomplete |
 | AI disclosure captured + displayed | WF9 | ◐ | Stronger across submission, portfolio, and passport, and non-mission learner portfolio curation now preserves AI detail text as well as status, but not yet uniform on every artifact path |
 | Parent answers "what can my child do?" | WF10 | ◐ | `GuardianCapabilityViewRenderer.tsx` is the real web parent summary surface and now preserves more provenance, but downstream communication is still not uniformly polished |
 | Educator answers "what needs attention?" | WF10 | ◐ | `EducatorDashboardToday.tsx` review queue is real, but not every trust-critical surface has full evidence parity |
@@ -656,8 +656,8 @@ Remaining gold blockers now sit mainly in communication/read-side parity rather 
 
 | Check | Result | Command |
 |-------|--------|---------|
-| TypeScript | ✅ EXIT=0 | `npx tsc --noEmit` |
-| Jest (web) | ✅ 25 suites, 183/183 pass | `npx jest --runInBand` |
+| TypeScript | ✅ EXIT=0 | `npm run typecheck -- --pretty false` |
+| Jest (web) | ✅ 31 suites, 472/472 pass | `npm test` |
 | Next.js build | ✅ BUILD_EXIT=0, 69 routes | `npx next build --webpack` |
 | Functions build | ✅ Compiled | `cd functions && npm run build` |
 | Functions tests | ✅ 33 suites, 127/127 pass | `cd functions && npx jest --runInBand --forceExit` |

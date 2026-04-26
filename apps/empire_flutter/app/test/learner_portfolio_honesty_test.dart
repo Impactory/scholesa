@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -787,5 +788,160 @@ void main() {
       ),
       findsOneWidget,
     );
+  });
+
+  testWidgets('learner portfolio share report preserves evidence provenance',
+      (WidgetTester tester) async {
+    String? copiedText;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (MethodCall methodCall) async {
+        if (methodCall.method == 'Clipboard.setData') {
+          final Object? args = methodCall.arguments;
+          if (args is Map) {
+            copiedText = args['text'] as String?;
+          }
+        }
+        return null;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null);
+    });
+
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+
+    await firestore.collection('capabilityGrowthEvents').doc('growth-1').set(
+      <String, dynamic>{
+        'learnerId': 'learner-1',
+        'siteId': 'site-1',
+        'capabilityId': 'cap-prototype-evidence',
+        'capabilityTitle': 'Prototype evidence',
+        'pillarCode': 'future_skills',
+        'level': 3,
+        'rawScore': 3,
+        'maxScore': 4,
+        'missionAttemptId': 'attempt-1',
+        'rubricApplicationId': 'rubric-app-1',
+        'educatorId': 'educator-1',
+        'progressionDescriptors': const <String>[
+          'Learner connects prototype changes to observed tradeoffs.',
+        ],
+        'createdAt': Timestamp.fromDate(DateTime(2026, 3, 18, 11)),
+      },
+    );
+
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      _buildHarness(
+        appState: _buildLearnerState(),
+        firestoreService: firestoreService,
+        child: LearnerPortfolioPage(
+          portfolioStateLoader: (String learnerId, String siteId) async {
+            return LearnerPortfolioSnapshot(
+              profile: LearnerProfileModel(
+                id: 'profile-1',
+                learnerId: learnerId,
+                siteId: siteId,
+                onboardingCompleted: true,
+                portfolioHeadline: 'Evidence builder',
+                portfolioGoal: 'Explain prototype decisions with evidence',
+                portfolioHighlight: 'Solar oven prototype',
+              ),
+              items: <PortfolioItemModel>[
+                PortfolioItemModel(
+                  id: 'portfolio-1',
+                  learnerId: learnerId,
+                  siteId: siteId,
+                  title: 'Reviewed robot prototype',
+                  description: 'Reviewed evidence-backed prototype artifact.',
+                  artifactUrls: const <String>['https://example.com/robot.png'],
+                  pillarCodes: const <String>['future_skills'],
+                  evidenceRecordIds: const <String>['evidence-1'],
+                  capabilityIds: const <String>['cap-prototype-evidence'],
+                  capabilityTitles: const <String>['Prototype evidence'],
+                  growthEventIds: const <String>['growth-1'],
+                  missionAttemptId: 'attempt-1',
+                  proofBundleId: 'proof-1',
+                  rubricApplicationId: 'rubric-app-1',
+                  proofCheckpointCount: 1,
+                  proofOfLearningStatus: 'verified',
+                  checkpointSummary:
+                      'Checkpoint summary carried into the reviewed portfolio item.',
+                  reflectionNote: 'Reviewed reflection captured by educator.',
+                  proofHasExplainItBack: true,
+                  proofHasOralCheck: true,
+                  proofHasMiniRebuild: true,
+                  proofExplainItBackExcerpt:
+                      'I explained how sensor evidence changed the prototype.',
+                  aiDisclosureStatus: 'learner-ai-not-used',
+                  aiAssistanceDetails: 'Learner declared no AI support used.',
+                  educatorId: 'educator-1',
+                  verificationPrompt:
+                      'Explain why this prototype path best matched the evidence.',
+                  verificationStatus: 'reviewed',
+                  progressionDescriptors: const <String>[
+                    'Learner connects prototype changes to observed tradeoffs.',
+                  ],
+                  createdAt: Timestamp.fromDate(DateTime(2026, 3, 18, 10)),
+                  updatedAt: Timestamp.fromDate(DateTime(2026, 3, 18, 11)),
+                ),
+                PortfolioItemModel(
+                  id: 'pending-1',
+                  learnerId: learnerId,
+                  siteId: siteId,
+                  title: 'Draft field notes',
+                  description: 'Saved after class and still awaiting review.',
+                  pillarCodes: const <String>['impact'],
+                  verificationStatus: 'pending',
+                  verificationPrompt:
+                      'Bring evidence notes to the next educator check-in.',
+                  createdAt: Timestamp.fromDate(DateTime(2026, 3, 19, 10)),
+                  updatedAt: Timestamp.fromDate(DateTime(2026, 3, 19, 11)),
+                ),
+              ],
+              credentials: const <CredentialModel>[],
+            );
+          },
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Share'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Portfolio summary copied for sharing.'), findsOneWidget);
+    expect(copiedText, contains('Share Portfolio'));
+    expect(copiedText, contains('Reviewed projects: 1'));
+    expect(copiedText,
+        contains('Evidence links: 1 evidence record • 1 growth event'));
+    expect(copiedText, contains('Reviewed robot prototype'));
+    expect(
+        copiedText, contains('Provenance: 1 evidence record • 1 growth event'));
+    expect(copiedText, contains('Evidence IDs: evidence-1'));
+    expect(copiedText, contains('Growth Event IDs: growth-1'));
+    expect(copiedText, contains('Mission Attempt ID: attempt-1'));
+    expect(copiedText, contains('Proof Bundle ID: proof-1'));
+    expect(copiedText, contains('Rubric Application ID: rubric-app-1'));
+    expect(copiedText, contains('Educator Review ID: educator-1'));
+    expect(copiedText,
+        contains('Capability update: Prototype evidence • Level 3'));
+    expect(copiedText, contains('Reviewed score 3/4'));
+    expect(copiedText, contains('Proof of learning: Verified'));
+    expect(copiedText,
+        contains('AI disclosure: Learner said no AI support was used'));
+    expect(copiedText, contains('Awaiting educator review'));
+    expect(copiedText, contains('Draft field notes'));
+    expect(
+        copiedText, contains('Next verification prompt: Bring evidence notes'));
   });
 }

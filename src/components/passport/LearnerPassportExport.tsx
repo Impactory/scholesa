@@ -381,6 +381,10 @@ function buildPassportTextLines(learner: LearnerPassportData): string[] {
 
 function buildFamilyShareSummary(learner: LearnerPassportData): string {
   const topClaims = learner.ideationPassport.claims.slice(0, 3);
+  const recentGrowth = learner.growthTimeline.slice(0, 3);
+  const featuredPortfolio = learner.portfolioItemsPreview
+    .filter((item) => item.evidenceLinked || item.evidenceRecordIds.length > 0)
+    .slice(0, 2);
   const nextPrompts = learner.portfolioItemsPreview
     .filter((item) => typeof item.verificationPrompt === 'string' && item.verificationPrompt.trim().length > 0)
     .slice(0, 2);
@@ -400,14 +404,73 @@ function buildFamilyShareSummary(learner: LearnerPassportData): string {
     '',
     'Current evidence-backed claims:',
     ...(topClaims.length > 0
-      ? topClaims.map((claim) => `- ${claim.title}: ${levelLabel(claim.latestLevel)} with ${claim.evidenceCount} evidence record(s)`)
+      ? topClaims.map(formatFamilyShareClaimLine)
       : ['- No capability claims backed by reviewed evidence yet.']),
+    '',
+    'Recent growth provenance:',
+    ...(recentGrowth.length > 0
+      ? recentGrowth.map(formatFamilyShareGrowthLine)
+      : ['- No growth events have been recorded yet.']),
+    '',
+    'Featured portfolio evidence:',
+    ...(featuredPortfolio.length > 0
+      ? featuredPortfolio.map(formatFamilySharePortfolioLine)
+      : ['- No reviewed portfolio artifacts are linked into this export yet.']),
     '',
     'Next verification prompts:',
     ...(nextPrompts.length > 0
       ? nextPrompts.map((item) => `- ${item.title}: ${item.verificationPrompt}`)
       : ['- No pending verification prompts in this export.']),
   ].join('\n');
+}
+
+function formatFamilyShareClaimLine(claim: PassportClaim): string {
+  return [
+    `- ${claim.title}: ${levelLabel(claim.latestLevel)}`,
+    `${claim.evidenceCount} evidence record(s)`,
+    `${claim.verifiedArtifactCount} verified artifact(s)`,
+    `proof ${proofLabel(claim.proofOfLearningStatus)}`,
+    `AI ${aiLabel(claim.aiDisclosureStatus)}`,
+    claim.rubricRawScore != null && claim.rubricMaxScore != null
+      ? `rubric ${claim.rubricRawScore}/${claim.rubricMaxScore}`
+      : null,
+    claim.reviewingEducatorName
+      ? `reviewed by ${claim.reviewingEducatorName} (${formatDate(claim.reviewedAt)})`
+      : null,
+    `${claim.evidenceRecordIds.length} evidence links, ${claim.portfolioItemIds.length} portfolio links, ${claim.missionAttemptIds.length} mission links`,
+  ].filter(Boolean).join(' • ');
+}
+
+function formatFamilyShareGrowthLine(entry: GrowthTimelineEntry): string {
+  return [
+    `- ${entry.title}: ${levelLabel(entry.level)}`,
+    `proof ${proofLabel(entry.proofOfLearningStatus ?? 'missing')}`,
+    entry.rubricRawScore != null && entry.rubricMaxScore != null
+      ? `rubric ${entry.rubricRawScore}/${entry.rubricMaxScore}`
+      : null,
+    entry.reviewingEducatorName ? `reviewed by ${entry.reviewingEducatorName}` : null,
+    `${entry.linkedEvidenceRecordIds.length} evidence links`,
+    `${entry.linkedPortfolioItemIds.length} portfolio links`,
+    entry.missionAttemptId ? 'mission-linked' : null,
+    `date ${formatDate(entry.occurredAt)}`,
+  ].filter(Boolean).join(' • ');
+}
+
+function formatFamilySharePortfolioLine(item: PortfolioItemPreview): string {
+  return [
+    `- ${item.title}`,
+    item.capabilityTitles.length > 0 ? `capabilities ${item.capabilityTitles.join(', ')}` : null,
+    `${item.evidenceRecordIds.length} evidence links`,
+    item.missionAttemptId ? 'mission-linked' : 'standalone artifact',
+    `proof ${proofLabel(item.proofOfLearningStatus)}`,
+    `AI ${aiLabel(item.aiDisclosureStatus)}`,
+    item.rubricRawScore != null && item.rubricMaxScore != null
+      ? `rubric ${item.rubricRawScore}/${item.rubricMaxScore}`
+      : null,
+    item.reviewingEducatorName
+      ? `reviewed by ${item.reviewingEducatorName} (${formatDate(item.reviewedAt)})`
+      : null,
+  ].filter(Boolean).join(' • ');
 }
 
 function normalizeLearner(raw: Record<string, unknown>): LearnerPassportData | null {

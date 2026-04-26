@@ -2006,6 +2006,7 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
     }
 
     final List<String> detailLines = <String>[
+      ..._provenanceLinkDetailLines(item),
       ..._growthDetailLines(item),
       ..._proofDetailLines(item),
       ..._verificationDetailLines(item),
@@ -2016,7 +2017,7 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
         .expand((String line) => line.split('\n'))
         .map((String line) => line.trim())
         .where((String line) => line.isNotEmpty)
-        .take(8)
+        .take(20)
         .toList(growable: false);
 
     for (final String detailLine in detailLines) {
@@ -2053,6 +2054,41 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
     }
 
     return parts.join(' • ');
+  }
+
+  List<String> _provenanceLinkDetailLines(PortfolioItemModel item) {
+    final List<String> lines = <String>[];
+    final List<String> evidenceIds = item.evidenceRecordIds
+        .map((String id) => id.trim())
+        .where((String id) => id.isNotEmpty)
+        .toList(growable: false);
+    final List<String> growthIds = item.growthEventIds
+        .map((String id) => id.trim())
+        .where((String id) => id.isNotEmpty)
+        .toList(growable: false);
+
+    if (evidenceIds.isNotEmpty) {
+      lines.add('${_t('Evidence IDs')}: ${evidenceIds.join(', ')}');
+    }
+    if (growthIds.isNotEmpty) {
+      lines.add('${_t('Growth Event IDs')}: ${growthIds.join(', ')}');
+    }
+    if ((item.missionAttemptId?.trim().isNotEmpty ?? false)) {
+      lines
+          .add('${_t('Mission Attempt ID')}: ${item.missionAttemptId!.trim()}');
+    }
+    if ((item.proofBundleId?.trim().isNotEmpty ?? false)) {
+      lines.add('${_t('Proof Bundle ID')}: ${item.proofBundleId!.trim()}');
+    }
+    if ((item.rubricApplicationId?.trim().isNotEmpty ?? false)) {
+      lines.add(
+        '${_t('Rubric Application ID')}: ${item.rubricApplicationId!.trim()}',
+      );
+    }
+    if ((item.educatorId?.trim().isNotEmpty ?? false)) {
+      lines.add('${_t('Educator Review ID')}: ${item.educatorId!.trim()}');
+    }
+    return lines;
   }
 
   String _countLabel(int count, String singular, String plural) {

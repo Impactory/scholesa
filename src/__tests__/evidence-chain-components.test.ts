@@ -438,6 +438,17 @@ describe('LearnerPassportExport learner contract', () => {
     expect(source).toContain('Pending verification prompts:');
     expect(source).toContain('compatibility roll-up of the current curriculum strands');
     expect(source).toContain('Featured AI disclosure:');
+    expect(source).toContain('Recent growth provenance:');
+    expect(source).toContain('Featured portfolio evidence:');
+    expect(source).toContain('formatFamilyShareClaimLine');
+    expect(source).toContain('formatFamilyShareGrowthLine');
+    expect(source).toContain('formatFamilySharePortfolioLine');
+    expect(source).toContain('proof ${proofLabel(claim.proofOfLearningStatus)}');
+    expect(source).toContain('AI ${aiLabel(claim.aiDisclosureStatus)}');
+    expect(source).toContain('rubric ${claim.rubricRawScore}/${claim.rubricMaxScore}');
+    expect(source).toContain('reviewed by ${claim.reviewingEducatorName}');
+    expect(source).toContain('${entry.linkedEvidenceRecordIds.length} evidence links');
+    expect(source).toContain('${entry.linkedPortfolioItemIds.length} portfolio links');
     expect(source).toContain('── Portfolio Artifacts ──');
     expect(source).toContain('── Process Domain Progress ──');
     expect(source).toContain('── Recent Process Domain Growth ──');
@@ -500,6 +511,18 @@ describe('GuardianCapabilityViewRenderer site provenance', () => {
     expect(source).toContain('const showGuardianShareActions = isPassportRoute || isSummaryRoute');
     expect(source).toContain('Export or share a family-safe summary of reviewed evidence, linked artifacts, and recorded growth');
     expect(source).toContain('Featured AI disclosure:');
+    expect(source).toContain('Recent growth provenance:');
+    expect(source).toContain('Recent process-domain growth:');
+    expect(source).toContain('Featured portfolio evidence:');
+    expect(source).toContain('formatGuardianFamilyShareClaimLine');
+    expect(source).toContain('formatGuardianFamilyShareGrowthLine');
+    expect(source).toContain('formatGuardianFamilyShareProcessGrowthLine');
+    expect(source).toContain('formatGuardianFamilySharePortfolioLine');
+    expect(source).toContain('proof ${PROOF_STATUS_CONFIG[claim.proofStatus]?.label');
+    expect(source).toContain('AI ${AI_DISCLOSURE_CONFIG[claim.aiDisclosureStatus]?.label');
+    expect(source).toContain('rubric ${claim.rubricScore.raw}/${claim.rubricScore.max}');
+    expect(source).toContain('${event.linkedEvidenceCount} evidence link(s)');
+    expect(source).toContain('${event.linkedPortfolioCount} portfolio link(s)');
   });
 
   it('surfaces titled process-domain progress in the family passport and on-screen view', () => {
