@@ -640,10 +640,9 @@ void main() {
         .collection('missionAssignments')
         .doc('assignment-1')
         .get();
-    final DocumentSnapshot<Map<String, dynamic>> rubricApplicationDoc =
-        await firestore.collection('rubricApplications').doc(attemptId).get();
-    // capabilityMastery + capabilityGrowthEvents are now written server-side
-    // by the applyRubricToEvidence Cloud Function, not the client batch.
+    // rubricApplications, capabilityMastery, and capabilityGrowthEvents are
+    // now written server-side by the applyRubricToEvidence Cloud Function, not
+    // the client batch.
     final DocumentSnapshot<Map<String, dynamic>> evidenceDoc =
         await firestore.collection('evidenceRecords').doc('evidence-1').get();
     final DocumentSnapshot<Map<String, dynamic>> portfolioDoc =
@@ -658,14 +657,6 @@ void main() {
     expect(submissionDoc.exists, isFalse);
     expect(assignmentDoc.data()?['reviewStatus'], 'approved');
     expect(assignmentDoc.data()?['rubricTotalScore'], 7);
-    expect(rubricApplicationDoc.exists, isTrue);
-    expect(rubricApplicationDoc.data()?['missionAttemptId'], attemptId);
-    expect((rubricApplicationDoc.data()?['scores'] as List?)?.length, 2);
-    expect(rubricApplicationDoc.data()?['progressionDescriptors'], <String>[
-      'Secure: explain how the prototype evidence supports the claim.',
-    ]);
-    expect((rubricApplicationDoc.data()?['checkpointMappings'] as List?)?.length,
-        1);
     expect(evidenceDoc.data()?['growthStatus'], 'updated');
     expect(evidenceDoc.data()?['linkedMissionAttemptId'], attemptId);
     expect(portfolioDoc.exists, isTrue);

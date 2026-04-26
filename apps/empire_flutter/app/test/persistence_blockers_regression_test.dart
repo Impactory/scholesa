@@ -322,18 +322,8 @@ void main() {
       expect(attemptDoc.data()?['aiFeedbackBy'], 'educator-9');
       expect(attemptDoc.data()?['aiFeedbackAt'], isNotNull);
 
-      final DocumentSnapshot<Map<String, dynamic>> rubricApplicationDoc =
-          await firestore
-              .collection('rubricApplications')
-              .doc('attempt-1')
-              .get();
-      expect(rubricApplicationDoc.exists, isTrue);
-      expect(rubricApplicationDoc.data()?['missionAttemptId'], 'attempt-1');
-      expect(rubricApplicationDoc.data()?['rubricId'], 'rubric-1');
-      expect(
-        (rubricApplicationDoc.data()?['scores'] as List?)?.length,
-        2,
-      );
+      // rubricApplications are now written server-side by the
+      // applyRubricToEvidence Cloud Function, not the client batch.
 
       final DocumentSnapshot<Map<String, dynamic>> portfolioDoc =
           await firestore.collection('portfolioItems').doc('evidence-1').get();
