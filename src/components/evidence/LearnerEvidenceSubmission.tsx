@@ -683,11 +683,11 @@ export function LearnerEvidenceSubmission() {
         )}
 
         {/* Tab selector */}
-        <div className="flex gap-1 rounded-lg bg-app-surface p-1" data-testid="submission-tabs">
+        <div className="grid grid-cols-1 gap-1 rounded-lg bg-app-surface p-1 sm:grid-cols-3" data-testid="submission-tabs">
           <button
             type="button"
             onClick={() => setActiveTab('artifact')}
-            className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+            className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
               activeTab === 'artifact'
                 ? 'bg-primary text-primary-foreground'
                 : 'text-app-muted hover:text-app-foreground'
@@ -698,7 +698,7 @@ export function LearnerEvidenceSubmission() {
           <button
             type="button"
             onClick={() => setActiveTab('reflection')}
-            className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+            className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
               activeTab === 'reflection'
                 ? 'bg-primary text-primary-foreground'
                 : 'text-app-muted hover:text-app-foreground'
@@ -709,7 +709,7 @@ export function LearnerEvidenceSubmission() {
           <button
             type="button"
             onClick={() => setActiveTab('checkpoint')}
-            className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+            className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
               activeTab === 'checkpoint'
                 ? 'bg-primary text-primary-foreground'
                 : 'text-app-muted hover:text-app-foreground'
@@ -1047,14 +1047,14 @@ export function LearnerEvidenceSubmission() {
                   key={item.id}
                   className="rounded-lg border border-app bg-app-canvas p-3 text-sm"
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
                       <span className="font-medium text-app-foreground">{item.title}</span>
                       {item.description && (
                         <p className="mt-1 text-app-muted line-clamp-2">{item.description}</p>
                       )}
                     </div>
-                    <div className="flex flex-col gap-1 shrink-0 items-end">
+                    <div className="flex shrink-0 flex-col items-start gap-1 sm:items-end">
                       {statusBadge(item.verificationStatus)}
                       {polBadge(item.proofOfLearningStatus)}
                     </div>

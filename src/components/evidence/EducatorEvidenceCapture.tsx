@@ -779,8 +779,8 @@ export function EducatorEvidenceCapture() {
                   key={ev.id}
                   className="rounded-lg border border-app bg-app-canvas p-3 text-sm"
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
                       <span className="font-medium text-app-foreground">{ev.learnerName}</span>
                       <span className="mx-1 text-app-muted">—</span>
                       <span className="text-app-foreground">{ev.description}</span>

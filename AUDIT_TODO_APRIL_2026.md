@@ -1,4 +1,4 @@
-# Scholesa Capability-First Audit — April 2, 2026 (updated 2026-04-22)
+# Scholesa Capability-First Audit — April 2, 2026 (updated 2026-04-26)
 
 > Comprehensive audit of every major route, component, schema, and workflow against Scholesa's capability-first evidence model.
 > Classifies each item as: aligned and usable / reusable with modification / misleading / LMS-shaped / fake / disconnected / missing.
@@ -12,8 +12,8 @@
 | Metric | Value |
 |--------|-------|
 | Web routes | 69 total app routes per Next.js build; 62 protected workflow paths in `workflowRoutes.ts` (29 dedicated custom-rendered evidence surfaces + 33 generic workflow routes) |
-| Schema types | 69 exported interfaces |
-| Firestore collections (typed web) | 46 |
+| Schema types | 74 exported interfaces |
+| Firestore collections (typed web) | 52 |
 | Firestore rules collections | 135 |
 | Cloud Functions | 63 exported |
 | Gold workflows verified | Not blanket-certified |
@@ -216,11 +216,11 @@ Session management, billing, Clever sync, LTI, user admin, telemetry, incident o
 
 ## §4. FIRESTORE COLLECTIONS CLASSIFICATION
 
-### 4A. Typed Web Collections (46)
-All 46 collections in `src/firebase/firestore/collections.ts` have TypeScript-typed collection references. Includes all evidence chain collections.
+### 4A. Typed Web Collections (52)
+All 52 collection references in `src/firebase/firestore/collections.ts` are TypeScript-typed. Includes all evidence chain collections plus the top-priority P1-F web refs for `showcaseSubmissions`, `peerFeedback`, `learnerProfiles`, and `recognitionBadges`.
 
 ### 4B. Rules-Only Collections (~89 additional)
-135 total collection rules minus 46 typed = ~89 collections that exist in `firestore.rules` but have no typed web collection reference. Used by Flutter mobile client (Dart models), Firebase Functions (admin SDK), and BOS/MIA runtime services.
+135 total collection rules minus 52 typed = ~83 collections that exist in `firestore.rules` but have no typed web collection reference. Used by Flutter mobile client (Dart models), Firebase Functions (admin SDK), and BOS/MIA runtime services.
 
 ### 4C. Security Model
 | Layer | Status |
@@ -306,10 +306,11 @@ Remaining gold blockers now sit mainly in communication/read-side parity rather 
 - **Gap**: Legacy types conflating completion with mastery.
 - **Fix**: Both types marked `@deprecated` in `schema.ts` with JSDoc explaining the issue and pointing to evidence-backed alternatives.
 
-### P1-F. Untyped Collections Registry
+### P1-F. Untyped Collections Registry — ✅ TOP-PRIORITY WEB REFS DONE
 - **Gap**: ~89 Firestore collections have rules but no typed web collection reference. Used by Flutter/Functions but invisible to web.
-- **Fix**: Add typed references to `collections.ts` as web surfaces need them. Priority: `recognitionBadges`, `showcaseSubmissions`, `peerFeedback`, `learnerProfiles`.
-- **Risk**: Low — web doesn't need all 89; add on demand.
+- **Fix**: Added typed refs in `src/firebase/firestore/collections.ts` for `recognitionBadges`, `showcaseSubmissions`, `peerFeedback`, and `learnerProfiles`; reconciled active web writes/reads in showcase, peer feedback, learner profile provisioning, and motivation recognition paths.
+- **Validation**: `npx tsc --noEmit --pretty false --incremental false`; `npm test -- --runTestsByPath src/__tests__/evidence-chain-components.test.ts` (139/139 pass).
+- **Residual risk**: `recognitionBadges` is still semantically overloaded by legacy belonging recognition records and evidence-based badge definitions. The typed web ref closes the immediate untyped-access gap; a future data-model cleanup should split peer recognition from badge definitions instead of expanding this collection further.
 
 ---
 
@@ -351,7 +352,7 @@ Remaining gold blockers now sit mainly in communication/read-side parity rather 
 7. ~~Process domain progress display in passport + portfolio views~~ ✅
 
 ### Phase 3: Operational Hardening
-8. **P1-F**: Add typed collection references for top-priority untyped collections
+8. ~~**P1-F**: Add typed collection references for top-priority untyped collections~~ ✅
 9. ~~E2E emulator test: full evidence chain (capability → session → evidence → rubric → PoL → mastery → passport)~~ ✅
 10. Mobile viewport QA for educator evidence capture + learner submission
 
@@ -649,6 +650,7 @@ Remaining gold blockers now sit mainly in communication/read-side parity rather 
 | Functions build | ✅ Compiled | `cd functions && npm run build` |
 | Functions tests | ✅ 33 suites, 127/127 pass | `cd functions && npx jest --runInBand --forceExit` |
 | Evidence-chain emulator integration | ✅ session-backed evidence → proof → rubric → mastery → learner passport + guardian bundle | `npm run test:integration:evidence-chain` |
+| P1-F typed collection reconciliation | ✅ 139/139 focused evidence-chain component/source-contract tests | `npm test -- --runTestsByPath src/__tests__/evidence-chain-components.test.ts` |
 | Flutter tests | ✅ 317+ pass, 0 fail | `cd apps/empire_flutter/app && flutter test` |
 
 ---
