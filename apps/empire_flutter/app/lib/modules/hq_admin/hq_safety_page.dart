@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:provider/provider.dart';
+import '../../auth/app_state.dart';
 import '../../i18n/workflow_surface_i18n.dart';
-import '../../services/export_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
+import '../reports/report_actions.dart';
 
 String _tHqSafety(BuildContext context, String input) {
   return WorkflowSurfaceI18n.text(context, input);
@@ -228,7 +229,8 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
             ),
             const SizedBox(height: 16),
             Text(
-              _tHqSafety(context, 'Safety incidents are temporarily unavailable'),
+              _tHqSafety(
+                  context, 'Safety incidents are temporarily unavailable'),
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 18,
@@ -449,58 +451,28 @@ class _HqSafetyPageState extends State<HqSafetyPage> {
         _tHqSafety(context, 'Unable to download incident summary right now.');
     final String copiedMsg =
         _tHqSafety(context, 'Incident summary copied to clipboard.');
-    try {
-      final String? savedLocation = await ExportService.instance.saveTextFile(
-        fileName: fileName,
-        content: summary,
-      );
-      if (savedLocation == null || !mounted) return;
-
-      TelemetryService.instance.logEvent(
-        event: 'export.downloaded',
-        metadata: <String, dynamic>{
-          'module': 'hq_safety',
-          'surface': 'incident_details_sheet',
-          'incident_id': incident.id,
-          'severity': incident.severity.name,
-          'file_name': fileName,
-        },
-      );
-
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(successMessage),
-        ),
-      );
-    } on UnsupportedError catch (_) {
-      if (!mounted) return;
-
-      await Clipboard.setData(ClipboardData(text: summary));
-      if (!mounted) return;
-      TelemetryService.instance.logEvent(
-        event: 'export.copied',
-        metadata: <String, dynamic>{
-          'module': 'hq_safety',
-          'surface': 'incident_details_sheet',
-          'incident_id': incident.id,
-          'severity': incident.severity.name,
-          'file_name': fileName,
-        },
-      );
-
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(copiedMsg),
-        ),
-      );
-    } catch (_) {
-      if (!mounted) return;
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(failureMessage),
-        ),
-      );
-    }
+    final AppState? appState = context.read<AppState?>();
+    final String siteId = (appState?.activeSiteId ?? '').trim();
+    await ReportActions.exportText(
+      messenger: messenger,
+      isMounted: () => mounted,
+      fileName: fileName,
+      content: summary,
+      module: 'hq_safety',
+      surface: 'incident_details_sheet',
+      copiedEventName: 'export.copied',
+      successMessage: successMessage,
+      copiedMessage: copiedMsg,
+      errorMessage: failureMessage,
+      unsupportedLogMessage:
+          'Export unsupported for HQ safety incident summary, copying content instead',
+      role: 'hq',
+      siteId: siteId.isEmpty ? null : siteId,
+      metadata: <String, dynamic>{
+        'incident_id': incident.id,
+        'severity': incident.severity.name,
+      },
+    );
   }
 
   String _incidentSummaryFileName(_SafetyIncident incident) {

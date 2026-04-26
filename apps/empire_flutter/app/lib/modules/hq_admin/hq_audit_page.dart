@@ -1,13 +1,14 @@
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 
+import '../../auth/app_state.dart';
 import '../../i18n/workflow_surface_i18n.dart';
-import '../../services/export_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../services/workflow_bridge_service.dart';
 import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
+import '../reports/report_actions.dart';
 
 String _tHqAudit(BuildContext context, String input) {
   return WorkflowSurfaceI18n.text(context, input);
@@ -214,7 +215,8 @@ class _HqAuditPageState extends State<HqAuditPage> {
               const SizedBox(height: 16),
               if (_loadError != null)
                 _buildStaleDataBanner(
-                  _tHqAudit(context, 'Unable to refresh audit data right now. Showing the last successful data.'),
+                  _tHqAudit(context,
+                      'Unable to refresh audit data right now. Showing the last successful data.'),
                 ),
               _buildSectionHeader(
                 title: _tHqAudit(context, 'Audit Logs'),
@@ -503,17 +505,17 @@ class _HqAuditPageState extends State<HqAuditPage> {
     try {
       final List<Map<String, dynamic>> rows;
       if (widget.auditLogsLoader != null) {
-      rows = await widget.auditLogsLoader!();
+        rows = await widget.auditLogsLoader!();
       } else {
-      final HttpsCallable callable =
-        FirebaseFunctions.instance.httpsCallable('listAuditLogs');
-      final HttpsCallableResult<dynamic> result =
-        await callable.call(<String, dynamic>{'limit': 120});
-      final Map<String, dynamic> payload =
-        WorkflowBridgeService.asMap(result.data);
-      rows = (payload['logs'] as List<dynamic>? ?? <dynamic>[])
-        .map(WorkflowBridgeService.asMap)
-        .toList(growable: false);
+        final HttpsCallable callable =
+            FirebaseFunctions.instance.httpsCallable('listAuditLogs');
+        final HttpsCallableResult<dynamic> result =
+            await callable.call(<String, dynamic>{'limit': 120});
+        final Map<String, dynamic> payload =
+            WorkflowBridgeService.asMap(result.data);
+        rows = (payload['logs'] as List<dynamic>? ?? <dynamic>[])
+            .map(WorkflowBridgeService.asMap)
+            .toList(growable: false);
       }
       final List<_AuditLog> loadedLogs = rows
           .map((Map<String, dynamic> row) {
@@ -541,10 +543,10 @@ class _HqAuditPageState extends State<HqAuditPage> {
         ..sort(
             (_AuditLog a, _AuditLog b) => b.timestamp.compareTo(a.timestamp));
 
-        final List<Map<String, dynamic>> reviewsRaw =
+      final List<Map<String, dynamic>> reviewsRaw =
           widget.redTeamReviewsLoader != null
-            ? await widget.redTeamReviewsLoader!()
-            : await _workflowBridgeService.listRedTeamReviews(limit: 80);
+              ? await widget.redTeamReviewsLoader!()
+              : await _workflowBridgeService.listRedTeamReviews(limit: 80);
       final List<_RedTeamReview> loadedReviews =
           reviewsRaw.map((Map<String, dynamic> row) {
         return _RedTeamReview(
@@ -632,60 +634,31 @@ class _HqAuditPageState extends State<HqAuditPage> {
 
     final String fileName = _auditExportFileName();
     final String exportContent = export.toString().trim();
-    try {
-      final String? savedLocation = await ExportService.instance.saveTextFile(
-        fileName: fileName,
-        content: exportContent,
-      );
-      if (savedLocation == null || !mounted) {
-        return;
-      }
-      TelemetryService.instance.logEvent(
-        event: 'export.downloaded',
-        metadata: <String, dynamic>{
-          'module': 'hq_audit',
-          'filter': _filterCategory?.name ?? 'all',
-          'file_name': fileName,
-        },
-      );
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _tHqAudit(context, 'Audit export downloaded.'),
-          ),
-        ),
-      );
-    } on UnsupportedError catch (error) {
-      debugPrint(
-          'Export unsupported for HQ audit export, copying content instead: $error');
-      await Clipboard.setData(ClipboardData(text: exportContent));
-      TelemetryService.instance.logEvent(
-        event: 'hq.audit_export.copied',
-        metadata: <String, dynamic>{
-          'module': 'hq_audit',
-          'filter': _filterCategory?.name ?? 'all',
-          'file_name': fileName,
-          'fallback': 'clipboard',
-        },
-      );
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _tHqAudit(context, 'Audit export copied to clipboard.'),
-          ),
-        ),
-      );
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _tHqAudit(context, 'Unable to export audit logs right now.'),
-          ),
-        ),
-      );
-    }
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+    final AppState? appState = context.read<AppState?>();
+    final String siteId = (appState?.activeSiteId ?? '').trim();
+    await ReportActions.exportText(
+      messenger: messenger,
+      isMounted: () => mounted,
+      fileName: fileName,
+      content: exportContent,
+      module: 'hq_audit',
+      surface: 'hq_audit',
+      copiedEventName: 'hq.audit_export.copied',
+      successMessage: _tHqAudit(context, 'Audit export downloaded.'),
+      copiedMessage: _tHqAudit(context, 'Audit export copied to clipboard.'),
+      errorMessage:
+          _tHqAudit(context, 'Unable to export audit logs right now.'),
+      unsupportedLogMessage:
+          'Export unsupported for HQ audit export, copying content instead',
+      role: 'hq',
+      siteId: siteId.isEmpty ? null : siteId,
+      metadata: <String, dynamic>{
+        'filter': _filterCategory?.name ?? 'all',
+        'audit_log_count': filteredLogs.length,
+        'red_team_review_count': _redTeamReviews.length,
+      },
+    );
   }
 
   String _auditExportFileName() {

@@ -2,16 +2,16 @@ import 'dart:convert';
 
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 
+import '../../auth/app_state.dart';
 import '../../domain/models.dart';
 import '../../domain/repositories.dart';
 import '../../i18n/workflow_surface_i18n.dart';
 import '../../services/analytics_service.dart';
-import '../../services/export_service.dart';
-import '../../services/telemetry_service.dart';
 import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
+import '../reports/report_actions.dart';
 
 String _tHqExports(BuildContext context, String input) {
   return WorkflowSurfaceI18n.text(context, input);
@@ -55,7 +55,10 @@ class _HqExportsPageState extends State<HqExportsPage> {
   String? _safetyError;
 
   bool get _isLoadingAny =>
-      _isLoadingAnalytics || _isLoadingBilling || _isLoadingAudit || _isLoadingSafety;
+      _isLoadingAnalytics ||
+      _isLoadingBilling ||
+      _isLoadingAudit ||
+      _isLoadingSafety;
 
   bool get _hasReadyBundle =>
       _analyticsMetrics != null ||
@@ -64,14 +67,16 @@ class _HqExportsPageState extends State<HqExportsPage> {
       _safetyIncidentCount > 0;
 
   int get _billingRecordCount {
-    final Map<String, dynamic> payload = _billingPayload ?? const <String, dynamic>{};
+    final Map<String, dynamic> payload =
+        _billingPayload ?? const <String, dynamic>{};
     return _asMapList(payload['invoices']).length +
         _asMapList(payload['payments']).length +
         _asMapList(payload['subscriptions']).length;
   }
 
   int get _safetyIncidentCount =>
-      _asMapList((_safetyPayload ?? const <String, dynamic>{})['incidents']).length;
+      _asMapList((_safetyPayload ?? const <String, dynamic>{})['incidents'])
+          .length;
 
   @override
   void initState() {
@@ -97,7 +102,8 @@ class _HqExportsPageState extends State<HqExportsPage> {
           ),
           IconButton(
             tooltip: _tHqExports(context, 'Download Full Bundle'),
-            onPressed: _isLoadingAny || !_hasReadyBundle ? null : _downloadFullBundle,
+            onPressed:
+                _isLoadingAny || !_hasReadyBundle ? null : _downloadFullBundle,
             icon: const Icon(Icons.file_download_rounded),
           ),
           const SessionMenuButton(
@@ -130,7 +136,8 @@ class _HqExportsPageState extends State<HqExportsPage> {
               statusLabel: _analyticsMetrics == null
                   ? _tHqExports(context, 'Unavailable')
                   : _tHqExports(context, 'Ready'),
-              onDownload: _analyticsMetrics == null ? null : _downloadAnalyticsBundle,
+              onDownload:
+                  _analyticsMetrics == null ? null : _downloadAnalyticsBundle,
             ),
             _buildBundleCard(
               title: _tHqExports(context, 'Billing Bundle'),
@@ -144,7 +151,8 @@ class _HqExportsPageState extends State<HqExportsPage> {
               statusLabel: _billingRecordCount == 0
                   ? _tHqExports(context, 'Empty')
                   : _tHqExports(context, 'Ready'),
-              onDownload: _billingRecordCount == 0 ? null : _downloadBillingBundle,
+              onDownload:
+                  _billingRecordCount == 0 ? null : _downloadBillingBundle,
             ),
             _buildBundleCard(
               title: _tHqExports(context, 'Audit Bundle'),
@@ -154,7 +162,8 @@ class _HqExportsPageState extends State<HqExportsPage> {
               ),
               isLoading: _isLoadingAudit,
               error: _auditError,
-              countLabel: '${_auditLogs.length} ${_tHqExports(context, 'entries')}',
+              countLabel:
+                  '${_auditLogs.length} ${_tHqExports(context, 'entries')}',
               statusLabel: _auditLogs.isEmpty
                   ? _tHqExports(context, 'Empty')
                   : _tHqExports(context, 'Ready'),
@@ -168,11 +177,13 @@ class _HqExportsPageState extends State<HqExportsPage> {
               ),
               isLoading: _isLoadingSafety,
               error: _safetyError,
-              countLabel: '$_safetyIncidentCount ${_tHqExports(context, 'incidents')}',
+              countLabel:
+                  '$_safetyIncidentCount ${_tHqExports(context, 'incidents')}',
               statusLabel: _safetyIncidentCount == 0
                   ? _tHqExports(context, 'Empty')
                   : _tHqExports(context, 'Ready'),
-              onDownload: _safetyIncidentCount == 0 ? null : _downloadSafetyBundle,
+              onDownload:
+                  _safetyIncidentCount == 0 ? null : _downloadSafetyBundle,
             ),
           ],
         ),
@@ -248,7 +259,8 @@ class _HqExportsPageState extends State<HqExportsPage> {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
                     color: ScholesaColors.hq.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(999),
@@ -334,7 +346,8 @@ class _HqExportsPageState extends State<HqExportsPage> {
     try {
       final TelemetryDashboardMetrics metrics = widget.analyticsLoader != null
           ? await widget.analyticsLoader!()
-          : await _analyticsService.getTelemetryDashboardMetrics(period: 'month');
+          : await _analyticsService.getTelemetryDashboardMetrics(
+              period: 'month');
       if (!mounted) {
         return;
       }
@@ -510,7 +523,8 @@ class _HqExportsPageState extends State<HqExportsPage> {
     final StringBuffer buffer = StringBuffer()
       ..writeln('HQ Analytics Bundle')
       ..writeln('Generated: ${DateTime.now().toIso8601String()}')
-      ..writeln('Weekly accountability adherence: ${metrics.weeklyAccountabilityAdherenceRate.toStringAsFixed(1)}%')
+      ..writeln(
+          'Weekly accountability adherence: ${metrics.weeklyAccountabilityAdherenceRate.toStringAsFixed(1)}%')
       ..writeln('Educator review SLA hours: ${metrics.educatorReviewSlaHours}')
       ..writeln('Intervention total: ${metrics.interventionTotal}')
       ..writeln('Attendance trend points: ${metrics.attendanceTrend.length}')
@@ -526,9 +540,10 @@ class _HqExportsPageState extends State<HqExportsPage> {
       fileName: _bundleFileName('analytics'),
       content: buffer.toString().trim(),
       successMessage: _tHqExports(context, 'Analytics export downloaded.'),
-      copiedMessage: _tHqExports(context, 'Analytics export copied to clipboard.'),
-      failureMessage:
-          _tHqExports(context, 'Unable to download the analytics export right now.'),
+      copiedMessage:
+          _tHqExports(context, 'Analytics export copied to clipboard.'),
+      failureMessage: _tHqExports(
+          context, 'Unable to download the analytics export right now.'),
     );
   }
 
@@ -536,7 +551,8 @@ class _HqExportsPageState extends State<HqExportsPage> {
     if (_billingRecordCount == 0) {
       return;
     }
-    final Map<String, dynamic> payload = _billingPayload ?? const <String, dynamic>{};
+    final Map<String, dynamic> payload =
+        _billingPayload ?? const <String, dynamic>{};
     final List<Map<String, dynamic>> invoices = _asMapList(payload['invoices']);
     final List<Map<String, dynamic>> payments = _asMapList(payload['payments']);
     final List<Map<String, dynamic>> subscriptions =
@@ -571,9 +587,10 @@ class _HqExportsPageState extends State<HqExportsPage> {
       fileName: _bundleFileName('billing'),
       content: buffer.toString().trim(),
       successMessage: _tHqExports(context, 'Billing export downloaded.'),
-      copiedMessage: _tHqExports(context, 'Billing export copied to clipboard.'),
-      failureMessage:
-          _tHqExports(context, 'Unable to download the billing export right now.'),
+      copiedMessage:
+          _tHqExports(context, 'Billing export copied to clipboard.'),
+      failureMessage: _tHqExports(
+          context, 'Unable to download the billing export right now.'),
     );
   }
 
@@ -591,7 +608,8 @@ class _HqExportsPageState extends State<HqExportsPage> {
         ..writeln('Actor: ${log.actorRole} / ${log.actorId}')
         ..writeln('Entity: ${log.entityType} / ${log.entityId}')
         ..writeln('Site: ${log.siteId ?? 'global'}')
-        ..writeln('Created: ${log.createdAt?.toDate().toIso8601String() ?? 'n/a'}');
+        ..writeln(
+            'Created: ${log.createdAt?.toDate().toIso8601String() ?? 'n/a'}');
       if (log.details.isNotEmpty) {
         buffer.writeln('Details: ${jsonEncode(log.details)}');
       }
@@ -604,8 +622,8 @@ class _HqExportsPageState extends State<HqExportsPage> {
       content: buffer.toString().trim(),
       successMessage: _tHqExports(context, 'Audit export downloaded.'),
       copiedMessage: _tHqExports(context, 'Audit export copied to clipboard.'),
-      failureMessage:
-          _tHqExports(context, 'Unable to download the audit export right now.'),
+      failureMessage: _tHqExports(
+          context, 'Unable to download the audit export right now.'),
     );
   }
 
@@ -617,8 +635,8 @@ class _HqExportsPageState extends State<HqExportsPage> {
       ..writeln('HQ Safety Bundle')
       ..writeln('Generated: ${DateTime.now().toIso8601String()}')
       ..writeln('');
-    for (final Map<String, dynamic> row
-        in _asMapList((_safetyPayload ?? const <String, dynamic>{})['incidents'])) {
+    for (final Map<String, dynamic> row in _asMapList(
+        (_safetyPayload ?? const <String, dynamic>{})['incidents'])) {
       buffer.writeln(jsonEncode(row));
     }
     await _saveBundle(
@@ -628,8 +646,8 @@ class _HqExportsPageState extends State<HqExportsPage> {
       content: buffer.toString().trim(),
       successMessage: _tHqExports(context, 'Safety export downloaded.'),
       copiedMessage: _tHqExports(context, 'Safety export copied to clipboard.'),
-      failureMessage:
-          _tHqExports(context, 'Unable to download the safety export right now.'),
+      failureMessage: _tHqExports(
+          context, 'Unable to download the safety export right now.'),
     );
   }
 
@@ -641,16 +659,20 @@ class _HqExportsPageState extends State<HqExportsPage> {
     if (_analyticsMetrics != null) {
       buffer
         ..writeln('=== Analytics ===')
-        ..writeln('Weekly accountability adherence: ${_analyticsMetrics!.weeklyAccountabilityAdherenceRate.toStringAsFixed(1)}%')
+        ..writeln(
+            'Weekly accountability adherence: ${_analyticsMetrics!.weeklyAccountabilityAdherenceRate.toStringAsFixed(1)}%')
         ..writeln('Intervention total: ${_analyticsMetrics!.interventionTotal}')
         ..writeln('');
     }
     if (_billingRecordCount > 0) {
       buffer
         ..writeln('=== Billing ===')
-        ..writeln('Invoices: ${_asMapList((_billingPayload ?? const <String, dynamic>{})['invoices']).length}')
-        ..writeln('Payments: ${_asMapList((_billingPayload ?? const <String, dynamic>{})['payments']).length}')
-        ..writeln('Subscriptions: ${_asMapList((_billingPayload ?? const <String, dynamic>{})['subscriptions']).length}')
+        ..writeln(
+            'Invoices: ${_asMapList((_billingPayload ?? const <String, dynamic>{})['invoices']).length}')
+        ..writeln(
+            'Payments: ${_asMapList((_billingPayload ?? const <String, dynamic>{})['payments']).length}')
+        ..writeln(
+            'Subscriptions: ${_asMapList((_billingPayload ?? const <String, dynamic>{})['subscriptions']).length}')
         ..writeln('');
     }
     if (_auditLogs.isNotEmpty) {
@@ -671,9 +693,10 @@ class _HqExportsPageState extends State<HqExportsPage> {
       fileName: _bundleFileName('full'),
       content: buffer.toString().trim(),
       successMessage: _tHqExports(context, 'Full export bundle downloaded.'),
-      copiedMessage: _tHqExports(context, 'Full export bundle copied to clipboard.'),
-      failureMessage:
-          _tHqExports(context, 'Unable to download the full export bundle right now.'),
+      copiedMessage:
+          _tHqExports(context, 'Full export bundle copied to clipboard.'),
+      failureMessage: _tHqExports(
+          context, 'Unable to download the full export bundle right now.'),
     );
   }
 
@@ -686,50 +709,26 @@ class _HqExportsPageState extends State<HqExportsPage> {
     required String copiedMessage,
     required String failureMessage,
   }) async {
-    try {
-      final String? savedLocation = await ExportService.instance.saveTextFile(
-        fileName: fileName,
-        content: content,
-      );
-      if (savedLocation == null || !mounted) {
-        return;
-      }
-      TelemetryService.instance.logEvent(
-        event: 'export.downloaded',
-        metadata: <String, dynamic>{
-          'module': module,
-          'bundle_id': bundleId,
-          'file_name': fileName,
-        },
-      );
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(successMessage)),
-      );
-    } on UnsupportedError catch (_) {
-      if (!mounted) {
-        return;
-      }
-      await Clipboard.setData(ClipboardData(text: content));
-      if (!mounted) return;
-      TelemetryService.instance.logEvent(
-        event: 'export.copied',
-        metadata: <String, dynamic>{
-          'module': module,
-          'bundle_id': bundleId,
-          'file_name': fileName,
-        },
-      );
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(copiedMessage)),
-      );
-    } catch (_) {
-      if (!mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(failureMessage)),
-      );
-    }
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+    final AppState? appState = context.read<AppState?>();
+    final String siteId = (appState?.activeSiteId ?? '').trim();
+    await ReportActions.exportText(
+      messenger: messenger,
+      isMounted: () => mounted,
+      fileName: fileName,
+      content: content,
+      module: module,
+      surface: 'hq_exports',
+      copiedEventName: 'export.copied',
+      successMessage: successMessage,
+      copiedMessage: copiedMessage,
+      errorMessage: failureMessage,
+      unsupportedLogMessage:
+          'Export unsupported for HQ $bundleId bundle, copying content instead',
+      role: 'hq',
+      siteId: siteId.isEmpty ? null : siteId,
+      metadata: <String, dynamic>{'bundle_id': bundleId},
+    );
   }
 
   String _bundleFileName(String bundleId) {
