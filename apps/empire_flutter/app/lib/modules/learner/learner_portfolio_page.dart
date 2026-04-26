@@ -16,6 +16,7 @@ import '../../ui/auth/global_session_menu.dart';
 import '../../runtime/runtime.dart';
 import '../../auth/app_state.dart';
 import '../../i18n/learner_surface_i18n.dart';
+import '../reports/report_actions.dart';
 
 String _tLearnerPortfolio(BuildContext context, String input) {
   return LearnerSurfaceI18n.text(context, input);
@@ -1921,15 +1922,18 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
 
   Future<void> _sharePortfolio() async {
     final AppState appState = context.read<AppState>();
-    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
     final String shareText = _buildPortfolioShareReport(appState);
 
-    await Clipboard.setData(ClipboardData(text: shareText));
-    if (!mounted) return;
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(_t('Portfolio summary copied for sharing.')),
-      ),
+    await ReportActions.shareToClipboard(
+      messenger: ScaffoldMessenger.of(context),
+      isMounted: () => mounted,
+      content: shareText,
+      learnerId: appState.userId?.trim() ?? '',
+      module: 'learner_portfolio',
+      surface: 'portfolio_share_report',
+      cta: 'learner_portfolio_share_report',
+      successMessage: _t('Portfolio summary copied for sharing.'),
+      errorMessage: _t('Unable to copy portfolio summary right now.'),
     );
   }
 

@@ -10,7 +10,7 @@ import '../../auth/app_state.dart';
 import '../../ui/auth/global_session_menu.dart';
 import '../../domain/curriculum/curriculum_family_ui.dart';
 import 'parent_models.dart';
-import 'parent_report_actions.dart';
+import '../reports/report_actions.dart';
 import 'parent_service.dart';
 
 /// Parent Summary Page - Safe view for parents to see their children's progress
@@ -914,7 +914,7 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
 
   Future<void> _exportFamilySummary(LearnerSummary learner) async {
     final String summary = _buildFamilySummaryExport(learner);
-    await ParentReportActions.exportText(
+    await ReportActions.exportText(
       messenger: ScaffoldMessenger.of(context),
       isMounted: () => mounted,
       fileName: 'family-summary-${learner.learnerId}.txt',
@@ -933,7 +933,7 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
 
   Future<void> _shareFamilySummary(LearnerSummary learner) async {
     final String summary = _buildFamilyShareSummary(learner);
-    await ParentReportActions.shareToClipboard(
+    await ReportActions.shareToClipboard(
       messenger: ScaffoldMessenger.of(context),
       isMounted: () => mounted,
       content: summary,

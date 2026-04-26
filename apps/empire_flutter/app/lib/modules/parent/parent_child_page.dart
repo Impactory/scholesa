@@ -10,7 +10,7 @@ import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../i18n/parent_surface_i18n.dart';
 import 'parent_models.dart';
-import 'parent_report_actions.dart';
+import '../reports/report_actions.dart';
 import 'parent_service.dart';
 
 class ParentChildPage extends StatefulWidget {
@@ -712,7 +712,7 @@ class _ParentChildPageState extends State<ParentChildPage> {
 
   Future<void> _exportPassport(LearnerSummary learner) async {
     final String content = _buildPassportExport(learner);
-    await ParentReportActions.exportText(
+    await ReportActions.exportText(
       messenger: ScaffoldMessenger.of(context),
       isMounted: () => mounted,
       fileName: 'ideation-passport-${learner.learnerId}.txt',
@@ -731,7 +731,7 @@ class _ParentChildPageState extends State<ParentChildPage> {
 
   Future<void> _shareFamilySummary(LearnerSummary learner) async {
     final String summary = _buildFamilyShareSummary(learner);
-    await ParentReportActions.shareToClipboard(
+    await ReportActions.shareToClipboard(
       messenger: ScaffoldMessenger.of(context),
       isMounted: () => mounted,
       content: summary,

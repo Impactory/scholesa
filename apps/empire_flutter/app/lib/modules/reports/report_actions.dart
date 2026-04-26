@@ -5,8 +5,8 @@ import '../../services/export_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
-class ParentReportActions {
-  const ParentReportActions._();
+class ReportActions {
+  const ReportActions._();
 
   static Future<void> exportText({
     required ScaffoldMessengerState messenger,
