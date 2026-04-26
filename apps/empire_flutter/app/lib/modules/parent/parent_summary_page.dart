@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../services/telemetry_service.dart';
-import '../../services/export_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 import '../../runtime/runtime.dart';
 import '../../i18n/bos_coaching_i18n.dart';
@@ -12,6 +10,7 @@ import '../../auth/app_state.dart';
 import '../../ui/auth/global_session_menu.dart';
 import '../../domain/curriculum/curriculum_family_ui.dart';
 import 'parent_models.dart';
+import 'parent_report_actions.dart';
 import 'parent_service.dart';
 
 /// Parent Summary Page - Safe view for parents to see their children's progress
@@ -915,100 +914,36 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
 
   Future<void> _exportFamilySummary(LearnerSummary learner) async {
     final String summary = _buildFamilySummaryExport(learner);
-    final String fileName = 'family-summary-${learner.learnerId}.txt';
-    try {
-      final String? savedLocation = await ExportService.instance.saveTextFile(
-        fileName: fileName,
-        content: summary,
-      );
-      if (!mounted || savedLocation == null) {
-        return;
-      }
-      TelemetryService.instance.logEvent(
-        event: 'export.downloaded',
-        metadata: <String, dynamic>{
-          'module': 'parent_summary',
-          'surface': 'family_dashboard',
-          'learner_id': learner.learnerId,
-          'file_name': fileName,
-        },
-      );
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_t('Family summary exported.')),
-        ),
-      );
-    } on UnsupportedError catch (error) {
-      debugPrint(
-          'Export unsupported for parent summary download, copying summary instead: $error');
-      await Clipboard.setData(ClipboardData(text: summary));
-      TelemetryService.instance.logEvent(
-        event: 'parent.summary_export.copied',
-        metadata: <String, dynamic>{
-          'learner_id': learner.learnerId,
-          'fallback': 'clipboard',
-        },
-      );
-      if (!mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_t('Family summary copied for sharing.')),
-        ),
-      );
-    } catch (_) {
-      if (!mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_t('Unable to export family summary right now.')),
-          backgroundColor: ScholesaColors.error,
-        ),
-      );
-    }
+    await ParentReportActions.exportText(
+      messenger: ScaffoldMessenger.of(context),
+      isMounted: () => mounted,
+      fileName: 'family-summary-${learner.learnerId}.txt',
+      content: summary,
+      learnerId: learner.learnerId,
+      module: 'parent_summary',
+      surface: 'family_dashboard',
+      copiedEventName: 'parent.summary_export.copied',
+      successMessage: _t('Family summary exported.'),
+      copiedMessage: _t('Family summary copied for sharing.'),
+      errorMessage: _t('Unable to export family summary right now.'),
+      unsupportedLogMessage:
+          'Export unsupported for parent summary download, copying summary instead',
+    );
   }
 
   Future<void> _shareFamilySummary(LearnerSummary learner) async {
     final String summary = _buildFamilyShareSummary(learner);
-    try {
-      await Clipboard.setData(ClipboardData(text: summary));
-      TelemetryService.instance.logEvent(
-        event: 'cta.clicked',
-        metadata: <String, dynamic>{
-          'cta': 'parent_summary_share_family_summary',
-          'learner_id': learner.learnerId,
-        },
-      );
-      TelemetryService.instance.logEvent(
-        event: 'notification.requested',
-        metadata: <String, dynamic>{
-          'module': 'parent_summary',
-          'surface': 'family_dashboard',
-          'learner_id': learner.learnerId,
-          'delivery': 'clipboard',
-        },
-      );
-      if (!mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_t('Family summary copied for sharing.')),
-        ),
-      );
-    } catch (_) {
-      if (!mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_t('Unable to copy family summary right now.')),
-          backgroundColor: ScholesaColors.error,
-        ),
-      );
-    }
+    await ParentReportActions.shareToClipboard(
+      messenger: ScaffoldMessenger.of(context),
+      isMounted: () => mounted,
+      content: summary,
+      learnerId: learner.learnerId,
+      module: 'parent_summary',
+      surface: 'family_dashboard',
+      cta: 'parent_summary_share_family_summary',
+      successMessage: _t('Family summary copied for sharing.'),
+      errorMessage: _t('Unable to copy family summary right now.'),
+    );
   }
 
   String _buildFamilySummaryExport(LearnerSummary learner) {

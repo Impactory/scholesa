@@ -887,8 +887,8 @@ void main() {
               .doc('test-user-1')
               .get();
       expect(profileDoc.exists, isTrue);
-        expect(
-          profileDoc.data()?['portfolioHeadline'], 'Future Skills Builder • site-1');
+      expect(profileDoc.data()?['portfolioHeadline'],
+          'Future Skills Builder • site-1');
       expect(
         profileDoc.data()?['portfolioGoal'],
         'Ship one Future Skills prototype this week.',
@@ -966,20 +966,82 @@ void main() {
     testWidgets('learner portfolio share copies a real summary to clipboard',
         (WidgetTester tester) async {
       final Locale locale = const Locale('en');
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
       final FirestoreService firestoreService = FirestoreService(
-        firestore: FakeFirebaseFirestore(),
+        firestore: firestore,
         auth: _MockFirebaseAuth(),
       );
       final AppState appState = _buildAppState(
         role: UserRole.learner,
         locale: locale,
       );
+      await firestore.collection('capabilityGrowthEvents').doc('growth-1').set(
+        <String, Object?>{
+          'learnerId': 'test-user-1',
+          'siteId': 'site-1',
+          'capabilityId': 'cap-prototype-evidence',
+          'capabilityTitle': 'Prototype evidence',
+          'pillarCode': 'impact',
+          'level': 3,
+          'rawScore': 3,
+          'maxScore': 4,
+          'evidenceId': 'evidence-1',
+          'missionAttemptId': 'mission-attempt-1',
+          'rubricApplicationId': 'rubric-app-1',
+          'progressionDescriptors': const <String>[
+            'Tests prototype decisions against evidence.',
+          ],
+          'createdAt': Timestamp.fromDate(DateTime(2026, 3, 17, 10)),
+        },
+      );
 
       await tester.binding.setSurfaceSize(const Size(1280, 1800));
       await tester.pumpWidget(
         _buildHarness(
           locale: locale,
-          child: const LearnerPortfolioPage(),
+          child: LearnerPortfolioPage(
+            portfolioStateLoader: (String learnerId, String siteId) async {
+              return LearnerPortfolioSnapshot(
+                profile: LearnerProfileModel(
+                  id: learnerId,
+                  learnerId: learnerId,
+                  siteId: siteId,
+                  goals: const <String>['Explain evidence provenance'],
+                  portfolioHeadline: 'Prototype Builder',
+                  portfolioGoal: 'Explain the evidence behind each artifact.',
+                  portfolioHighlight: 'Latest highlight: Solar oven validation',
+                  onboardingCompleted: true,
+                ),
+                items: <PortfolioItemModel>[
+                  PortfolioItemModel(
+                    id: 'portfolio-1',
+                    siteId: siteId,
+                    learnerId: learnerId,
+                    title: 'Solar Oven Prototype',
+                    description: 'Built and tested a solar cooker.',
+                    pillarCodes: const <String>['impact'],
+                    evidenceRecordIds: const <String>['evidence-1'],
+                    capabilityIds: const <String>['cap-prototype-evidence'],
+                    capabilityTitles: const <String>['Prototype evidence'],
+                    growthEventIds: const <String>['growth-1'],
+                    missionAttemptId: 'mission-attempt-1',
+                    rubricApplicationId: 'rubric-app-1',
+                    proofBundleId: 'proof-1',
+                    proofOfLearningStatus: 'verified',
+                    proofHasExplainItBack: true,
+                    proofHasOralCheck: true,
+                    proofHasMiniRebuild: true,
+                    proofCheckpointCount: 1,
+                    checkpointSummary:
+                        'Completed the working prototype before review.',
+                    aiDisclosureStatus: 'learner-ai-not-used',
+                    verificationStatus: 'reviewed',
+                    updatedAt: Timestamp.fromDate(DateTime(2026, 3, 17, 10)),
+                  ),
+                ],
+              );
+            },
+          ),
           providers: <SingleChildWidget>[
             ChangeNotifierProvider<AppState>.value(value: appState),
             Provider<FirestoreService>.value(value: firestoreService),
@@ -996,6 +1058,34 @@ void main() {
       expect(_portfolioClipboardText, isNotNull);
       expect(_portfolioClipboardText, contains('Share Portfolio'));
       expect(_portfolioClipboardText, contains('Test User'));
+      expect(_portfolioClipboardText, contains('Report basis'));
+      expect(_portfolioClipboardText, contains('Reviewed projects: 1'));
+      expect(
+        _portfolioClipboardText,
+        contains('Evidence links: 1 evidence record • 1 growth event'),
+      );
+      expect(
+        _portfolioClipboardText,
+        contains(
+          'Provenance: 1 evidence record • 1 growth event • mission-linked • proof bundle linked • rubric-linked',
+        ),
+      );
+      expect(
+        _portfolioClipboardText,
+        contains(
+            'Capability update: Prototype evidence • Level 3 • Reviewed score 3/4'),
+      );
+      expect(_portfolioClipboardText, contains('Proof of learning: Verified'));
+      expect(
+        _portfolioClipboardText,
+        contains(
+          'Proof checks: Explain-it-back, Oral check, Mini-rebuild, 1 checkpoint',
+        ),
+      );
+      expect(
+        _portfolioClipboardText,
+        contains('AI disclosure: Learner said no AI support was used'),
+      );
     });
 
     testWidgets('site sessions renders zh-CN copy',

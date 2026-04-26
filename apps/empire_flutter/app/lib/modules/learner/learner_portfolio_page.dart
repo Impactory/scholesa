@@ -778,61 +778,64 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
 
   @override
   Widget build(BuildContext context) {
-    return MiloRuntimeScope(child: Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: <Color>[
-              ScholesaColors.learner.withValues(alpha: 0.05),
-              context.schSurface,
-              ScholesaColors.futureSkills.withValues(alpha: 0.03),
-            ],
+    return MiloRuntimeScope(
+      child: Scaffold(
+        body: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: <Color>[
+                ScholesaColors.learner.withValues(alpha: 0.05),
+                context.schSurface,
+                ScholesaColors.futureSkills.withValues(alpha: 0.03),
+              ],
+            ),
           ),
-        ),
-        child: NestedScrollView(
-          headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
-            return <Widget>[
-              SliverToBoxAdapter(child: _buildHeader()),
-              if (_portfolioLoadError != null)
-                SliverToBoxAdapter(
-                  child: _buildPortfolioBanner(_portfolioLoadError!),
-                ),
-              SliverToBoxAdapter(child: _buildProfileCard()),
-              SliverToBoxAdapter(child: _buildLevelProgress()),
-              SliverToBoxAdapter(child: _buildPillarStats()),
-              SliverToBoxAdapter(child: _buildAiCoachingSection(context)),
-              SliverToBoxAdapter(child: _buildTabBar()),
-            ];
-          },
-          body: TabBarView(
-            controller: _tabController,
-            children: <Widget>[
-              _buildBadgesList(),
-              _buildSkillsList(),
-              _buildProjectsList(),
-            ],
-          ),
-        ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          TelemetryService.instance.logEvent(
-            event: 'cta.clicked',
-            metadata: <String, dynamic>{
-              'module': 'learner_portfolio',
-              'cta_id': 'open_share_portfolio_dialog',
-              'surface': 'floating_action_button',
+          child: NestedScrollView(
+            headerSliverBuilder:
+                (BuildContext context, bool innerBoxIsScrolled) {
+              return <Widget>[
+                SliverToBoxAdapter(child: _buildHeader()),
+                if (_portfolioLoadError != null)
+                  SliverToBoxAdapter(
+                    child: _buildPortfolioBanner(_portfolioLoadError!),
+                  ),
+                SliverToBoxAdapter(child: _buildProfileCard()),
+                SliverToBoxAdapter(child: _buildLevelProgress()),
+                SliverToBoxAdapter(child: _buildPillarStats()),
+                SliverToBoxAdapter(child: _buildAiCoachingSection(context)),
+                SliverToBoxAdapter(child: _buildTabBar()),
+              ];
             },
-          );
-          _sharePortfolio();
-        },
-        backgroundColor: ScholesaColors.learner,
-        icon: const Icon(Icons.share),
-        label: Text(_t('Share')),
+            body: TabBarView(
+              controller: _tabController,
+              children: <Widget>[
+                _buildBadgesList(),
+                _buildSkillsList(),
+                _buildProjectsList(),
+              ],
+            ),
+          ),
+        ),
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: () {
+            TelemetryService.instance.logEvent(
+              event: 'cta.clicked',
+              metadata: <String, dynamic>{
+                'module': 'learner_portfolio',
+                'cta_id': 'open_share_portfolio_dialog',
+                'surface': 'floating_action_button',
+              },
+            );
+            _sharePortfolio();
+          },
+          backgroundColor: ScholesaColors.learner,
+          icon: const Icon(Icons.share),
+          label: Text(_t('Share')),
+        ),
       ),
-    ));
+    );
   }
 
   Widget _buildHeader() {
@@ -1593,12 +1596,14 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
     if (item.checkpointMappings.isNotEmpty) {
       final List<String> criteria = item.checkpointMappings
           .map((Map<String, dynamic> mapping) {
-            final String phaseLabel =
-                (mapping['phaseLabel'] as String? ?? mapping['phaseKey'] as String? ?? '')
-                    .trim();
-            final String guidance =
-                (mapping['guidance'] as String? ?? mapping['prompt'] as String? ?? '')
-                    .trim();
+            final String phaseLabel = (mapping['phaseLabel'] as String? ??
+                    mapping['phaseKey'] as String? ??
+                    '')
+                .trim();
+            final String guidance = (mapping['guidance'] as String? ??
+                    mapping['prompt'] as String? ??
+                    '')
+                .trim();
             if (guidance.isEmpty) {
               return '';
             }
@@ -1916,20 +1921,139 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
 
   Future<void> _sharePortfolio() async {
     final AppState appState = context.read<AppState>();
-    final String shareText = <String>[
-      _t('Share Portfolio'),
-      '${_learnerName(appState)} • ${_effectiveHeadline(appState)}',
-      _effectiveGoal(),
-      _effectiveHighlight(),
-    ].join('\n');
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+    final String shareText = _buildPortfolioShareReport(appState);
 
     await Clipboard.setData(ClipboardData(text: shareText));
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
+    messenger.showSnackBar(
       SnackBar(
         content: Text(_t('Portfolio summary copied for sharing.')),
       ),
     );
+  }
+
+  String _buildPortfolioShareReport(AppState appState) {
+    final List<PortfolioItemModel> reviewedItems = _reviewedPortfolioItems;
+    final List<PortfolioItemModel> awaitingReviewItems =
+        _awaitingReviewPortfolioItems;
+    final Set<String> evidenceRecordIds = reviewedItems
+        .expand((PortfolioItemModel item) => item.evidenceRecordIds)
+        .map((String id) => id.trim())
+        .where((String id) => id.isNotEmpty)
+        .toSet();
+    final Set<String> growthEventIds = reviewedItems
+        .expand((PortfolioItemModel item) => item.growthEventIds)
+        .map((String id) => id.trim())
+        .where((String id) => id.isNotEmpty)
+        .toSet();
+
+    final List<String> lines = <String>[
+      _t('Share Portfolio'),
+      '${_learnerName(appState)} • ${_effectiveHeadline(appState)}',
+      '${_t('Goal')}: ${_effectiveGoal()}',
+      '${_t('Highlight')}: ${_effectiveHighlight()}',
+      '',
+      '${_t('Report basis')}: ${_t('Reviewed artifacts, linked evidence records, proof-of-learning signals, AI disclosure, and recorded growth events.')}',
+      '${_t('Reviewed projects')}: ${reviewedItems.length}',
+      '${_t('Awaiting educator review')}: ${awaitingReviewItems.length}',
+      '${_t('Credentials')}: ${_credentials.length}',
+      '${_t('Evidence links')}: ${_countLabel(evidenceRecordIds.length, 'evidence record', 'evidence records')} • ${_countLabel(growthEventIds.length, 'growth event', 'growth events')}',
+      '',
+      _t('Reviewed portfolio artifacts'),
+    ];
+
+    if (reviewedItems.isEmpty) {
+      lines.add(_t('No reviewed portfolio artifacts yet.'));
+    } else {
+      for (final PortfolioItemModel item in reviewedItems.take(3)) {
+        lines.addAll(_portfolioShareItemLines(item));
+      }
+    }
+
+    if (awaitingReviewItems.isNotEmpty) {
+      lines.add('');
+      lines.add(_t('Awaiting educator review'));
+      for (final PortfolioItemModel item in awaitingReviewItems.take(3)) {
+        lines.add('- ${item.title.trim()}');
+        if ((item.verificationPrompt?.trim().isNotEmpty ?? false)) {
+          lines.add(
+            '  ${_t('Next verification prompt')}: ${item.verificationPrompt!.trim()}',
+          );
+        }
+      }
+    }
+
+    return lines.join('\n');
+  }
+
+  List<String> _portfolioShareItemLines(PortfolioItemModel item) {
+    final String verificationStatus =
+        (item.verificationStatus?.trim().isNotEmpty ?? false)
+            ? _titleCase(item.verificationStatus!.trim())
+            : _t('Reviewed');
+    final List<String> lines = <String>[
+      '- ${item.title.trim()}',
+      '  ${_t('Status')}: $verificationStatus',
+      '  ${_t('Provenance')}: ${_portfolioItemProvenance(item)}',
+    ];
+
+    if (item.capabilityTitles.isNotEmpty) {
+      lines.add('  ${_t('Capabilities')}: ${item.capabilityTitles.join(', ')}');
+    }
+
+    final List<String> detailLines = <String>[
+      ..._growthDetailLines(item),
+      ..._proofDetailLines(item),
+      ..._verificationDetailLines(item),
+      ..._reflectionDetailLines(item),
+      ..._artifactDetailLines(item),
+      ..._aiDetailLines(item),
+    ]
+        .expand((String line) => line.split('\n'))
+        .map((String line) => line.trim())
+        .where((String line) => line.isNotEmpty)
+        .take(8)
+        .toList(growable: false);
+
+    for (final String detailLine in detailLines) {
+      lines.add('  $detailLine');
+    }
+
+    return lines;
+  }
+
+  String _portfolioItemProvenance(PortfolioItemModel item) {
+    final List<String> parts = <String>[
+      _countLabel(
+        item.evidenceRecordIds
+            .where((String id) => id.trim().isNotEmpty)
+            .length,
+        'evidence record',
+        'evidence records',
+      ),
+      _countLabel(
+        item.growthEventIds.where((String id) => id.trim().isNotEmpty).length,
+        'growth event',
+        'growth events',
+      ),
+    ];
+
+    if ((item.missionAttemptId?.trim().isNotEmpty ?? false)) {
+      parts.add(_t('mission-linked'));
+    }
+    if ((item.proofBundleId?.trim().isNotEmpty ?? false)) {
+      parts.add(_t('proof bundle linked'));
+    }
+    if ((item.rubricApplicationId?.trim().isNotEmpty ?? false)) {
+      parts.add(_t('rubric-linked'));
+    }
+
+    return parts.join(' • ');
+  }
+
+  String _countLabel(int count, String singular, String plural) {
+    return count == 1 ? '1 ${_t(singular)}' : '$count ${_t(plural)}';
   }
 
   Widget _buildAiCoachingSection(BuildContext context) {
