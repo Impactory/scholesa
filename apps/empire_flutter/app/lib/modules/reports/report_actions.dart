@@ -113,6 +113,7 @@ class ReportActions {
 
     return <String, dynamic>{
       'report_provenance_signal_count': signalCount,
+      'report_provenance_contract_required': expected.isNotEmpty,
       'report_has_evidence_signal': hasEvidence,
       'report_has_growth_signal': hasGrowth,
       'report_has_portfolio_signal': hasPortfolio,
@@ -126,6 +127,24 @@ class ReportActions {
       'report_missing_provenance_signals': missing,
       'report_meets_provenance_contract': missing.isEmpty,
     };
+  }
+
+  static Map<String, dynamic> assertReportProvenanceContract(
+    String content, {
+    required Iterable<String> expectedSignals,
+    String reportName = 'report',
+  }) {
+    final Map<String, dynamic> metadata = reportProvenanceMetadata(
+      content,
+      expectedSignals: expectedSignals,
+    );
+    if (metadata['report_meets_provenance_contract'] != true) {
+      final Object? missing = metadata['report_missing_provenance_signals'];
+      throw StateError(
+        '$reportName is missing report provenance signals: $missing',
+      );
+    }
+    return metadata;
   }
 
   static bool _containsAny(String normalized, List<String> terms) {

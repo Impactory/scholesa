@@ -43,6 +43,7 @@ void main() {
         ReportActions.passportReportProvenanceSignals);
     expect(metadata['report_missing_provenance_signals'], isEmpty);
     expect(metadata['report_meets_provenance_contract'], isTrue);
+    expect(metadata['report_provenance_contract_required'], isTrue);
   });
 
   test('report provenance metadata exposes missing required signals', () {
@@ -54,6 +55,7 @@ void main() {
 
     expect(metadata['report_has_evidence_signal'], isTrue);
     expect(metadata['report_meets_provenance_contract'], isFalse);
+    expect(metadata['report_provenance_contract_required'], isTrue);
     expect(
       metadata['report_missing_provenance_signals'],
       containsAll(<String>[
@@ -79,6 +81,33 @@ void main() {
     expect(metadata['report_has_growth_signal'], isFalse);
     expect(metadata['report_has_portfolio_signal'], isFalse);
     expect(metadata['report_has_mission_signal'], isFalse);
+    expect(metadata['report_provenance_contract_required'], isFalse);
+  });
+
+  test('report provenance contract assertion supports release gates', () {
+    expect(
+      () => ReportActions.assertReportProvenanceContract(
+        _richEvidenceReport,
+        expectedSignals: ReportActions.passportReportProvenanceSignals,
+        reportName: 'learner passport',
+      ),
+      returnsNormally,
+    );
+
+    expect(
+      () => ReportActions.assertReportProvenanceContract(
+        'Family summary\nReviewed evidence: 1 evidence record',
+        expectedSignals: ReportActions.familySummaryProvenanceSignals,
+        reportName: 'weak family summary',
+      ),
+      throwsA(
+        isA<StateError>().having(
+          (StateError error) => error.message,
+          'message',
+          contains('weak family summary is missing report provenance signals'),
+        ),
+      ),
+    );
   });
 
   testWidgets('clipboard report telemetry includes provenance signal metadata',

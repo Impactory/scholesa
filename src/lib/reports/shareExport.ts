@@ -13,6 +13,7 @@ export type ReportProvenanceSignal =
 
 export interface ReportProvenanceMetadata {
   report_provenance_signal_count: number;
+  report_provenance_contract_required: boolean;
   report_has_evidence_signal: boolean;
   report_has_growth_signal: boolean;
   report_has_portfolio_signal: boolean;
@@ -134,6 +135,7 @@ export function reportProvenanceMetadata({
 
   return {
     report_provenance_signal_count: Object.values(signalPresence).filter(Boolean).length,
+    report_provenance_contract_required: expected.length > 0,
     report_has_evidence_signal: hasEvidence,
     report_has_growth_signal: hasGrowth,
     report_has_portfolio_signal: hasPortfolio,
@@ -147,6 +149,24 @@ export function reportProvenanceMetadata({
     report_missing_provenance_signals: missing,
     report_meets_provenance_contract: missing.length === 0,
   };
+}
+
+export function assertReportProvenanceContract({
+  text,
+  expectedSignals,
+  reportName = 'report',
+}: {
+  text: string;
+  expectedSignals: readonly ReportProvenanceSignal[];
+  reportName?: string;
+}): ReportProvenanceMetadata {
+  const metadata = reportProvenanceMetadata({ text, expectedSignals });
+  if (!metadata.report_meets_provenance_contract) {
+    throw new Error(
+      `${reportName} is missing report provenance signals: ${metadata.report_missing_provenance_signals.join(', ')}`
+    );
+  }
+  return metadata;
 }
 
 function containsAny(normalized: string, terms: readonly string[]): boolean {

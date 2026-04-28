@@ -1,4 +1,5 @@
 import {
+  assertReportProvenanceContract,
   downloadTextReport,
   familySummaryProvenanceSignals,
   passportReportProvenanceSignals,
@@ -78,6 +79,7 @@ describe('report share/export helpers', () => {
     expect(metadata.report_has_verification_prompt_signal).toBe(true);
     expect(metadata.report_missing_provenance_signals).toEqual([]);
     expect(metadata.report_meets_provenance_contract).toBe(true);
+    expect(metadata.report_provenance_contract_required).toBe(true);
   });
 
   it('exposes missing provenance signals for weak evidence-bearing reports', () => {
@@ -88,6 +90,7 @@ describe('report share/export helpers', () => {
 
     expect(metadata.report_has_evidence_signal).toBe(true);
     expect(metadata.report_meets_provenance_contract).toBe(false);
+    expect(metadata.report_provenance_contract_required).toBe(true);
     expect(metadata.report_missing_provenance_signals).toEqual(
       expect.arrayContaining([
         'growth',
@@ -131,5 +134,23 @@ describe('report share/export helpers', () => {
     expect(downloadMetadata).toHaveLength(1);
     expect(shareMetadata[0].report_meets_provenance_contract).toBe(true);
     expect(downloadMetadata[0].report_missing_provenance_signals).toEqual([]);
+  });
+
+  it('supports release-gate assertions for evidence-bearing reports', () => {
+    expect(() =>
+      assertReportProvenanceContract({
+        text: richEvidenceReport,
+        expectedSignals: passportReportProvenanceSignals,
+        reportName: 'learner passport',
+      })
+    ).not.toThrow();
+
+    expect(() =>
+      assertReportProvenanceContract({
+        text: 'Family summary\nReviewed evidence: 1 evidence record',
+        expectedSignals: familySummaryProvenanceSignals,
+        reportName: 'weak family summary',
+      })
+    ).toThrow('weak family summary is missing report provenance signals: growth, portfolio, proof, aiDisclosure, rubric, reviewer, verificationPrompt');
   });
 });
