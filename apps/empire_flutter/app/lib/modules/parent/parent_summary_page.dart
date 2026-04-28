@@ -929,6 +929,7 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
       unsupportedLogMessage:
           'Export unsupported for parent summary download, copying summary instead',
       expectedProvenanceSignals: ReportActions.passportReportProvenanceSignals,
+      enforceProvenanceContract: true,
     );
   }
 
@@ -945,6 +946,7 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
       successMessage: _t('Family summary copied for sharing.'),
       errorMessage: _t('Unable to copy family summary right now.'),
       expectedProvenanceSignals: ReportActions.familySummaryProvenanceSignals,
+      enforceProvenanceContract: true,
     );
   }
 

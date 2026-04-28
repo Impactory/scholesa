@@ -1134,6 +1134,7 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
             'Export unsupported for parent portfolio download, copying summary instead',
         expectedProvenanceSignals:
             ReportActions.portfolioReportProvenanceSignals,
+        enforceProvenanceContract: true,
       );
       return;
     } catch (error) {

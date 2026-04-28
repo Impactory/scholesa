@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:scholesa_app/modules/reports/report_actions.dart';
+import 'package:scholesa_app/services/export_service.dart';
 import 'package:scholesa_app/services/telemetry_service.dart';
 
 const String _richEvidenceReport = '''
@@ -20,6 +21,7 @@ void main() {
   tearDown(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(SystemChannels.platform, null);
+    ExportService.instance.debugSaveTextFile = null;
   });
 
   test('report provenance metadata detects evidence-chain signals', () {
@@ -177,5 +179,89 @@ void main() {
     expect(notificationMetadata['surface'], 'family_dashboard');
     expect(notificationMetadata['report_has_growth_signal'], isTrue);
     expect(notificationMetadata['report_has_ai_disclosure_signal'], isTrue);
+  });
+
+  testWidgets('enforced provenance contract blocks weak report delivery',
+      (WidgetTester tester) async {
+    int clipboardWrites = 0;
+    int exportAttempts = 0;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      SystemChannels.platform,
+      (MethodCall methodCall) async {
+        if (methodCall.method == 'Clipboard.setData') {
+          clipboardWrites += 1;
+        }
+        return null;
+      },
+    );
+    ExportService.instance.debugSaveTextFile = ({
+      required String fileName,
+      required String content,
+      required String mimeType,
+    }) async {
+      exportAttempts += 1;
+      return '/tmp/$fileName';
+    };
+
+    late ScaffoldMessengerState messenger;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (BuildContext context) {
+              messenger = ScaffoldMessenger.of(context);
+              return const SizedBox.shrink();
+            },
+          ),
+        ),
+      ),
+    );
+
+    await ReportActions.shareToClipboard(
+      messenger: messenger,
+      isMounted: () => true,
+      content: 'Family summary\nReviewed evidence: 1 evidence record',
+      module: 'parent_summary',
+      surface: 'family_dashboard',
+      cta: 'parent_summary_share_family_summary',
+      successMessage: 'Copied.',
+      errorMessage: 'Unable to copy.',
+      expectedProvenanceSignals: ReportActions.familySummaryProvenanceSignals,
+      enforceProvenanceContract: true,
+    );
+    await tester.pump();
+
+    await ReportActions.exportText(
+      messenger: messenger,
+      isMounted: () => true,
+      fileName: 'weak-passport.txt',
+      content: 'Family summary\nReviewed evidence: 1 evidence record',
+      module: 'parent_summary',
+      surface: 'family_dashboard',
+      copiedEventName: 'parent.summary_export.copied',
+      successMessage: 'Exported.',
+      copiedMessage: 'Copied.',
+      errorMessage: 'Unable to export.',
+      unsupportedLogMessage: 'Unsupported export',
+      expectedProvenanceSignals: ReportActions.passportReportProvenanceSignals,
+      enforceProvenanceContract: true,
+    );
+    await tester.pump();
+
+    expect(clipboardWrites, 0);
+    expect(exportAttempts, 0);
+    expect(
+      find.text(
+        'Unable to share because this report is missing evidence provenance.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Unable to export because this report is missing evidence provenance.',
+      ),
+      findsOneWidget,
+    );
   });
 }
