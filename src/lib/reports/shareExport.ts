@@ -1,6 +1,25 @@
 export type BrowserShareStatus = 'shared' | 'copied' | 'unavailable' | 'aborted' | 'contract-failed';
 export type ReportDownloadStatus = 'downloaded' | 'unavailable' | 'contract-failed';
 
+export type ReportShareAudience =
+  | 'learner'
+  | 'guardian'
+  | 'educator'
+  | 'site'
+  | 'hq'
+  | 'partner'
+  | 'external';
+export type ReportShareVisibility = 'private' | 'family' | 'staff' | 'site' | 'external' | 'public';
+
+export interface ReportSharePolicy {
+  audience: ReportShareAudience;
+  visibility: ReportShareVisibility;
+  requiresEvidenceProvenance?: boolean;
+  requiresGuardianContext?: boolean;
+  allowsExternalSharing?: boolean;
+  includesLearnerIdentifiers?: boolean;
+}
+
 export type ReportProvenanceSignal =
   | 'evidence'
   | 'growth'
@@ -27,6 +46,16 @@ export interface ReportProvenanceMetadata {
   report_expected_provenance_signals: ReportProvenanceSignal[];
   report_missing_provenance_signals: ReportProvenanceSignal[];
   report_meets_provenance_contract: boolean;
+  report_share_policy_declared: boolean;
+  report_share_audience: ReportShareAudience | 'unspecified';
+  report_share_visibility: ReportShareVisibility | 'unspecified';
+  report_share_requires_evidence_provenance: boolean;
+  report_share_requires_guardian_context: boolean;
+  report_share_allows_external_sharing: boolean;
+  report_share_includes_learner_identifiers: boolean;
+  report_share_family_safe: boolean;
+  report_missing_delivery_contract_fields: string[];
+  report_meets_delivery_contract: boolean;
 }
 
 type ReportProvenanceHandler = (metadata: ReportProvenanceMetadata) => void;
@@ -54,12 +83,32 @@ export const familySummaryProvenanceSignals: ReportProvenanceSignal[] = [
   'verificationPrompt',
 ];
 
+export const familyReportSharePolicy: ReportSharePolicy = {
+  audience: 'guardian',
+  visibility: 'family',
+  requiresEvidenceProvenance: true,
+  requiresGuardianContext: true,
+  allowsExternalSharing: false,
+  includesLearnerIdentifiers: true,
+};
+
+export const learnerPrivateReportSharePolicy: ReportSharePolicy = {
+  audience: 'learner',
+  visibility: 'private',
+  requiresEvidenceProvenance: true,
+  requiresGuardianContext: false,
+  allowsExternalSharing: false,
+  includesLearnerIdentifiers: true,
+};
+
 export function reportProvenanceMetadata({
   text,
   expectedSignals = [],
+  sharePolicy,
 }: {
   text: string;
   expectedSignals?: readonly ReportProvenanceSignal[];
+  sharePolicy?: ReportSharePolicy;
 }): ReportProvenanceMetadata {
   const normalized = text.toLowerCase();
   const hasEvidence = containsAny(normalized, [
@@ -133,6 +182,10 @@ export function reportProvenanceMetadata({
   };
   const expected = Array.from(new Set(expectedSignals)).filter((signal) => signal in signalPresence);
   const missing = expected.filter((signal) => !signalPresence[signal]);
+  const sharePolicyDeclared = Boolean(sharePolicy);
+  const missingDeliveryContractFields = expected.length > 0 && !sharePolicyDeclared ? ['sharePolicy'] : [];
+  const allowsExternalSharing = sharePolicy?.allowsExternalSharing === true;
+  const visibility = sharePolicy?.visibility;
 
   return {
     report_provenance_signal_count: Object.values(signalPresence).filter(Boolean).length,
@@ -149,6 +202,17 @@ export function reportProvenanceMetadata({
     report_expected_provenance_signals: expected,
     report_missing_provenance_signals: missing,
     report_meets_provenance_contract: missing.length === 0,
+    report_share_policy_declared: sharePolicyDeclared,
+    report_share_audience: sharePolicy?.audience ?? 'unspecified',
+    report_share_visibility: visibility ?? 'unspecified',
+    report_share_requires_evidence_provenance: sharePolicy?.requiresEvidenceProvenance === true,
+    report_share_requires_guardian_context: sharePolicy?.requiresGuardianContext === true,
+    report_share_allows_external_sharing: allowsExternalSharing,
+    report_share_includes_learner_identifiers: sharePolicy?.includesLearnerIdentifiers === true,
+    report_share_family_safe:
+      sharePolicyDeclared && !allowsExternalSharing && visibility !== 'external' && visibility !== 'public',
+    report_missing_delivery_contract_fields: missingDeliveryContractFields,
+    report_meets_delivery_contract: missing.length === 0 && missingDeliveryContractFields.length === 0,
   };
 }
 
@@ -179,18 +243,24 @@ export async function shareTextWithFallback({
   text,
   expectedProvenanceSignals = [],
   enforceProvenanceContract = false,
+  sharePolicy,
   onReportProvenance,
 }: {
   title: string;
   text: string;
   expectedProvenanceSignals?: readonly ReportProvenanceSignal[];
   enforceProvenanceContract?: boolean;
+  sharePolicy?: ReportSharePolicy;
   onReportProvenance?: ReportProvenanceHandler;
 }): Promise<BrowserShareStatus> {
-  const metadata = reportProvenanceMetadata({ text, expectedSignals: expectedProvenanceSignals });
+  const metadata = reportProvenanceMetadata({
+    text,
+    expectedSignals: expectedProvenanceSignals,
+    sharePolicy,
+  });
   onReportProvenance?.(metadata);
 
-  if (enforceProvenanceContract && !metadata.report_meets_provenance_contract) {
+  if (enforceProvenanceContract && !metadata.report_meets_delivery_contract) {
     return 'contract-failed';
   }
 
@@ -220,19 +290,25 @@ export function downloadTextReport({
   lines,
   expectedProvenanceSignals = [],
   enforceProvenanceContract = false,
+  sharePolicy,
   onReportProvenance,
 }: {
   fileName: string;
   lines: string[];
   expectedProvenanceSignals?: readonly ReportProvenanceSignal[];
   enforceProvenanceContract?: boolean;
+  sharePolicy?: ReportSharePolicy;
   onReportProvenance?: ReportProvenanceHandler;
 }): ReportDownloadStatus {
   const text = lines.join('\n');
-  const metadata = reportProvenanceMetadata({ text, expectedSignals: expectedProvenanceSignals });
+  const metadata = reportProvenanceMetadata({
+    text,
+    expectedSignals: expectedProvenanceSignals,
+    sharePolicy,
+  });
   onReportProvenance?.(metadata);
 
-  if (enforceProvenanceContract && !metadata.report_meets_provenance_contract) {
+  if (enforceProvenanceContract && !metadata.report_meets_delivery_contract) {
     return 'contract-failed';
   }
 

@@ -10,7 +10,9 @@ import { resolveActiveSiteId } from '@/src/lib/auth/activeSite';
 import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import {
   downloadTextReport,
+  familyReportSharePolicy,
   familySummaryProvenanceSignals,
+  learnerPrivateReportSharePolicy,
   passportReportProvenanceSignals,
   reportProvenanceMetadata,
   shareTextWithFallback,
@@ -765,6 +767,7 @@ export function LearnerPassportExport({ siteId: initialSiteId }: { siteId?: stri
       text: shareText,
       expectedProvenanceSignals: familySummaryProvenanceSignals,
       enforceProvenanceContract: true,
+      sharePolicy: familyReportSharePolicy,
       onReportProvenance: (metadata) => {
         reportMetadata = metadata;
       },
@@ -1000,6 +1003,7 @@ ${growthHtml}
     const reportMetadata = reportProvenanceMetadata({
       text: reportLines.join('\n'),
       expectedSignals: passportReportProvenanceSignals,
+      sharePolicy: learnerPrivateReportSharePolicy,
     });
     if (!reportMetadata.report_meets_provenance_contract) {
       trackInteraction('feature_discovered', {
@@ -1045,6 +1049,7 @@ ${growthHtml}
       lines: buildPassportTextLines(learner),
       expectedProvenanceSignals: passportReportProvenanceSignals,
       enforceProvenanceContract: true,
+      sharePolicy: learnerPrivateReportSharePolicy,
       onReportProvenance: (metadata) => {
         reportMetadata = metadata;
       },

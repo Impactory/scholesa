@@ -42,9 +42,29 @@ class ReportActions {
     'verificationPrompt',
   ];
 
+  static const Map<String, Object> familyReportSharePolicy = <String, Object>{
+    'audience': 'guardian',
+    'visibility': 'family',
+    'requiresEvidenceProvenance': true,
+    'requiresGuardianContext': true,
+    'allowsExternalSharing': false,
+    'includesLearnerIdentifiers': true,
+  };
+
+  static const Map<String, Object> learnerPrivateReportSharePolicy =
+      <String, Object>{
+    'audience': 'learner',
+    'visibility': 'private',
+    'requiresEvidenceProvenance': true,
+    'requiresGuardianContext': false,
+    'allowsExternalSharing': false,
+    'includesLearnerIdentifiers': true,
+  };
+
   static Map<String, dynamic> reportProvenanceMetadata(
     String content, {
     Iterable<String> expectedSignals = const <String>[],
+    Map<String, Object?> sharePolicy = const <String, Object?>{},
   }) {
     final String normalized = content.toLowerCase();
     final bool hasEvidence = _containsAny(normalized, const <String>[
@@ -110,6 +130,15 @@ class ReportActions {
     final List<String> missing = expected
         .where((String signal) => signalPresence[signal] != true)
         .toList(growable: false);
+    final bool sharePolicyDeclared = sharePolicy.isNotEmpty;
+    final List<String> missingDeliveryFields =
+        expected.isNotEmpty && !sharePolicyDeclared
+            ? <String>['sharePolicy']
+            : <String>[];
+    final String visibility =
+        sharePolicy['visibility'] as String? ?? 'unspecified';
+    final bool allowsExternalSharing =
+        sharePolicy['allowsExternalSharing'] == true;
 
     return <String, dynamic>{
       'report_provenance_signal_count': signalCount,
@@ -126,6 +155,23 @@ class ReportActions {
       'report_expected_provenance_signals': expected,
       'report_missing_provenance_signals': missing,
       'report_meets_provenance_contract': missing.isEmpty,
+      'report_share_policy_declared': sharePolicyDeclared,
+      'report_share_audience': sharePolicy['audience'] ?? 'unspecified',
+      'report_share_visibility': visibility,
+      'report_share_requires_evidence_provenance':
+          sharePolicy['requiresEvidenceProvenance'] == true,
+      'report_share_requires_guardian_context':
+          sharePolicy['requiresGuardianContext'] == true,
+      'report_share_allows_external_sharing': allowsExternalSharing,
+      'report_share_includes_learner_identifiers':
+          sharePolicy['includesLearnerIdentifiers'] == true,
+      'report_share_family_safe': sharePolicyDeclared &&
+          !allowsExternalSharing &&
+          visibility != 'external' &&
+          visibility != 'public',
+      'report_missing_delivery_contract_fields': missingDeliveryFields,
+      'report_meets_delivery_contract':
+          missing.isEmpty && missingDeliveryFields.isEmpty,
     };
   }
 
@@ -168,6 +214,7 @@ class ReportActions {
     String? siteId,
     Iterable<String> expectedProvenanceSignals = const <String>[],
     bool enforceProvenanceContract = false,
+    Map<String, Object?> sharePolicy = const <String, Object?>{},
     Map<String, dynamic> metadata = const <String, dynamic>{},
     Future<void> Function()? onDownloaded,
     Future<void> Function()? onCopied,
@@ -176,14 +223,37 @@ class ReportActions {
     final Map<String, dynamic> provenanceMetadata = reportProvenanceMetadata(
       content,
       expectedSignals: expectedProvenanceSignals,
+      sharePolicy: sharePolicy,
     );
     if (enforceProvenanceContract &&
-        provenanceMetadata['report_meets_provenance_contract'] != true) {
+        provenanceMetadata['report_meets_delivery_contract'] != true) {
+      final bool missingSharePolicy =
+          provenanceMetadata['report_share_policy_declared'] != true;
+      TelemetryService.instance.logEvent(
+        event: 'report.delivery_blocked',
+        role: role,
+        siteId: siteId,
+        metadata: <String, dynamic>{
+          'module': module,
+          'surface': surface,
+          if (learnerId != null) 'learner_id': learnerId,
+          'file_name': fileName,
+          ...provenanceMetadata,
+          ...metadata,
+          'report_action': 'export_text',
+          'report_delivery': 'contract-failed',
+          'report_block_reason': missingSharePolicy
+              ? 'missing_share_policy'
+              : 'missing_provenance',
+        },
+      );
       if (isMounted()) {
         messenger.showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
-              'Unable to export because this report is missing evidence provenance.',
+              missingSharePolicy
+                  ? 'Unable to export because this report is missing a sharing safety policy.'
+                  : 'Unable to export because this report is missing evidence provenance.',
             ),
             backgroundColor: ScholesaColors.error,
           ),
@@ -272,19 +342,43 @@ class ReportActions {
     String? siteId,
     Iterable<String> expectedProvenanceSignals = const <String>[],
     bool enforceProvenanceContract = false,
+    Map<String, Object?> sharePolicy = const <String, Object?>{},
     Map<String, dynamic> metadata = const <String, dynamic>{},
   }) async {
     final Map<String, dynamic> provenanceMetadata = reportProvenanceMetadata(
       content,
       expectedSignals: expectedProvenanceSignals,
+      sharePolicy: sharePolicy,
     );
     if (enforceProvenanceContract &&
-        provenanceMetadata['report_meets_provenance_contract'] != true) {
+        provenanceMetadata['report_meets_delivery_contract'] != true) {
+      final bool missingSharePolicy =
+          provenanceMetadata['report_share_policy_declared'] != true;
+      TelemetryService.instance.logEvent(
+        event: 'report.delivery_blocked',
+        role: role,
+        siteId: siteId,
+        metadata: <String, dynamic>{
+          'module': module,
+          'surface': surface,
+          'cta': cta,
+          if (learnerId != null) 'learner_id': learnerId,
+          ...provenanceMetadata,
+          ...metadata,
+          'report_action': 'share',
+          'report_delivery': 'contract-failed',
+          'report_block_reason': missingSharePolicy
+              ? 'missing_share_policy'
+              : 'missing_provenance',
+        },
+      );
       if (isMounted()) {
         messenger.showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
-              'Unable to share because this report is missing evidence provenance.',
+              missingSharePolicy
+                  ? 'Unable to share because this report is missing a sharing safety policy.'
+                  : 'Unable to share because this report is missing evidence provenance.',
             ),
             backgroundColor: ScholesaColors.error,
           ),

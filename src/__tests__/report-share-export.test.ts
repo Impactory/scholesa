@@ -1,7 +1,9 @@
 import {
   assertReportProvenanceContract,
   downloadTextReport,
+  familyReportSharePolicy,
   familySummaryProvenanceSignals,
+  learnerPrivateReportSharePolicy,
   passportReportProvenanceSignals,
   reportProvenanceMetadata,
   shareTextWithFallback,
@@ -65,6 +67,7 @@ describe('report share/export helpers', () => {
     const metadata = reportProvenanceMetadata({
       text: richEvidenceReport,
       expectedSignals: passportReportProvenanceSignals,
+      sharePolicy: familyReportSharePolicy,
     });
 
     expect(metadata.report_provenance_signal_count).toBe(9);
@@ -79,6 +82,13 @@ describe('report share/export helpers', () => {
     expect(metadata.report_has_verification_prompt_signal).toBe(true);
     expect(metadata.report_missing_provenance_signals).toEqual([]);
     expect(metadata.report_meets_provenance_contract).toBe(true);
+    expect(metadata.report_share_policy_declared).toBe(true);
+    expect(metadata.report_share_audience).toBe('guardian');
+    expect(metadata.report_share_visibility).toBe('family');
+    expect(metadata.report_share_requires_guardian_context).toBe(true);
+    expect(metadata.report_share_family_safe).toBe(true);
+    expect(metadata.report_missing_delivery_contract_fields).toEqual([]);
+    expect(metadata.report_meets_delivery_contract).toBe(true);
     expect(metadata.report_provenance_contract_required).toBe(true);
   });
 
@@ -118,6 +128,7 @@ describe('report share/export helpers', () => {
         title: 'Family summary',
         text: richEvidenceReport,
         expectedProvenanceSignals: familySummaryProvenanceSignals,
+        sharePolicy: familyReportSharePolicy,
         onReportProvenance: (metadata) => shareMetadata.push(metadata),
       })
     ).resolves.toBe('copied');
@@ -126,6 +137,7 @@ describe('report share/export helpers', () => {
       fileName: 'passport.txt',
       lines: richEvidenceReport.trim().split('\n'),
       expectedProvenanceSignals: passportReportProvenanceSignals,
+      sharePolicy: learnerPrivateReportSharePolicy,
       onReportProvenance: (metadata) => downloadMetadata.push(metadata),
     });
 
@@ -134,6 +146,33 @@ describe('report share/export helpers', () => {
     expect(downloadMetadata).toHaveLength(1);
     expect(shareMetadata[0].report_meets_provenance_contract).toBe(true);
     expect(downloadMetadata[0].report_missing_provenance_signals).toEqual([]);
+    expect(shareMetadata[0].report_share_audience).toBe('guardian');
+    expect(downloadMetadata[0].report_share_visibility).toBe('private');
+  });
+
+  it('fails closed when enforced evidence-bearing reports omit a share policy', async () => {
+    const share = jest.fn().mockResolvedValue(undefined);
+    const metadataEvents: ReportProvenanceMetadata[] = [];
+    Object.defineProperty(globalThis, 'navigator', {
+      configurable: true,
+      value: { share },
+    });
+
+    await expect(
+      shareTextWithFallback({
+        title: 'Passport',
+        text: richEvidenceReport,
+        expectedProvenanceSignals: passportReportProvenanceSignals,
+        enforceProvenanceContract: true,
+        onReportProvenance: (metadata) => metadataEvents.push(metadata),
+      })
+    ).resolves.toBe('contract-failed');
+
+    expect(share).not.toHaveBeenCalled();
+    expect(metadataEvents[0].report_meets_provenance_contract).toBe(true);
+    expect(metadataEvents[0].report_share_policy_declared).toBe(false);
+    expect(metadataEvents[0].report_missing_delivery_contract_fields).toEqual(['sharePolicy']);
+    expect(metadataEvents[0].report_meets_delivery_contract).toBe(false);
   });
 
   it('fails closed before sharing or downloading weak evidence-bearing reports', async () => {
@@ -150,6 +189,7 @@ describe('report share/export helpers', () => {
         text: 'Family summary\nReviewed evidence: 1 evidence record',
         expectedProvenanceSignals: familySummaryProvenanceSignals,
         enforceProvenanceContract: true,
+        sharePolicy: familyReportSharePolicy,
         onReportProvenance: (metadata) => metadataEvents.push(metadata),
       })
     ).resolves.toBe('contract-failed');
@@ -159,6 +199,7 @@ describe('report share/export helpers', () => {
       lines: ['Family summary', 'Reviewed evidence: 1 evidence record'],
       expectedProvenanceSignals: passportReportProvenanceSignals,
       enforceProvenanceContract: true,
+      sharePolicy: learnerPrivateReportSharePolicy,
       onReportProvenance: (metadata) => metadataEvents.push(metadata),
     });
 
@@ -169,6 +210,7 @@ describe('report share/export helpers', () => {
     expect(metadataEvents[1].report_missing_provenance_signals).toEqual(
       expect.arrayContaining(['growth', 'portfolio', 'mission', 'proof'])
     );
+    expect(metadataEvents[1].report_missing_delivery_contract_fields).toEqual([]);
   });
 
   it('supports release-gate assertions for evidence-bearing reports', () => {

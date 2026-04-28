@@ -728,6 +728,7 @@ class _ParentChildPageState extends State<ParentChildPage> {
           'Export unsupported for parent passport download, copying summary instead',
       expectedProvenanceSignals: ReportActions.passportReportProvenanceSignals,
       enforceProvenanceContract: true,
+      sharePolicy: ReportActions.familyReportSharePolicy,
     );
   }
 
@@ -745,6 +746,7 @@ class _ParentChildPageState extends State<ParentChildPage> {
       errorMessage: _t('Unable to copy family summary right now.'),
       expectedProvenanceSignals: ReportActions.familySummaryProvenanceSignals,
       enforceProvenanceContract: true,
+      sharePolicy: ReportActions.familyReportSharePolicy,
     );
   }
 

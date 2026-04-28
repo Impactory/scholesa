@@ -1135,6 +1135,7 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
         expectedProvenanceSignals:
             ReportActions.portfolioReportProvenanceSignals,
         enforceProvenanceContract: true,
+        sharePolicy: ReportActions.familyReportSharePolicy,
       );
       return;
     } catch (error) {

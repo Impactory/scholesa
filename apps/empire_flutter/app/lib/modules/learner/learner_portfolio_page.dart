@@ -1935,6 +1935,7 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
       errorMessage: _t('Unable to copy portfolio summary right now.'),
       expectedProvenanceSignals: ReportActions.portfolioReportProvenanceSignals,
       enforceProvenanceContract: true,
+      sharePolicy: ReportActions.learnerPrivateReportSharePolicy,
     );
   }
 

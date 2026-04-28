@@ -29,6 +29,7 @@ void main() {
         ReportActions.reportProvenanceMetadata(
       _richEvidenceReport,
       expectedSignals: ReportActions.passportReportProvenanceSignals,
+      sharePolicy: ReportActions.familyReportSharePolicy,
     );
 
     expect(metadata['report_provenance_signal_count'], 9);
@@ -46,6 +47,13 @@ void main() {
     expect(metadata['report_missing_provenance_signals'], isEmpty);
     expect(metadata['report_meets_provenance_contract'], isTrue);
     expect(metadata['report_provenance_contract_required'], isTrue);
+    expect(metadata['report_share_policy_declared'], isTrue);
+    expect(metadata['report_share_audience'], 'guardian');
+    expect(metadata['report_share_visibility'], 'family');
+    expect(metadata['report_share_requires_guardian_context'], isTrue);
+    expect(metadata['report_share_family_safe'], isTrue);
+    expect(metadata['report_missing_delivery_contract_fields'], isEmpty);
+    expect(metadata['report_meets_delivery_contract'], isTrue);
   });
 
   test('report provenance metadata exposes missing required signals', () {
@@ -84,6 +92,8 @@ void main() {
     expect(metadata['report_has_portfolio_signal'], isFalse);
     expect(metadata['report_has_mission_signal'], isFalse);
     expect(metadata['report_provenance_contract_required'], isFalse);
+    expect(metadata['report_share_policy_declared'], isFalse);
+    expect(metadata['report_meets_delivery_contract'], isTrue);
   });
 
   test('report provenance contract assertion supports release gates', () {
@@ -152,6 +162,7 @@ void main() {
           learnerId: 'learner-1',
           expectedProvenanceSignals:
               ReportActions.passportReportProvenanceSignals,
+          sharePolicy: ReportActions.familyReportSharePolicy,
         );
       },
     );
@@ -167,6 +178,10 @@ void main() {
     expect(ctaMetadata['report_has_mission_signal'], isTrue);
     expect(ctaMetadata['report_has_verification_prompt_signal'], isTrue);
     expect(ctaMetadata['report_meets_provenance_contract'], isTrue);
+    expect(ctaMetadata['report_share_audience'], 'guardian');
+    expect(ctaMetadata['report_share_visibility'], 'family');
+    expect(ctaMetadata['report_share_family_safe'], isTrue);
+    expect(ctaMetadata['report_meets_delivery_contract'], isTrue);
     expect(ctaMetadata['report_missing_provenance_signals'], isEmpty);
 
     final Map<String, dynamic> notificationEvent = events.firstWhere(
@@ -183,6 +198,7 @@ void main() {
 
   testWidgets('enforced provenance contract blocks weak report delivery',
       (WidgetTester tester) async {
+    final List<Map<String, dynamic>> events = <Map<String, dynamic>>[];
     int clipboardWrites = 0;
     int exportAttempts = 0;
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
@@ -218,50 +234,157 @@ void main() {
       ),
     );
 
-    await ReportActions.shareToClipboard(
-      messenger: messenger,
-      isMounted: () => true,
-      content: 'Family summary\nReviewed evidence: 1 evidence record',
-      module: 'parent_summary',
-      surface: 'family_dashboard',
-      cta: 'parent_summary_share_family_summary',
-      successMessage: 'Copied.',
-      errorMessage: 'Unable to copy.',
-      expectedProvenanceSignals: ReportActions.familySummaryProvenanceSignals,
-      enforceProvenanceContract: true,
-    );
-    await tester.pump();
-
-    await ReportActions.exportText(
-      messenger: messenger,
-      isMounted: () => true,
-      fileName: 'weak-passport.txt',
-      content: 'Family summary\nReviewed evidence: 1 evidence record',
-      module: 'parent_summary',
-      surface: 'family_dashboard',
-      copiedEventName: 'parent.summary_export.copied',
-      successMessage: 'Exported.',
-      copiedMessage: 'Copied.',
-      errorMessage: 'Unable to export.',
-      unsupportedLogMessage: 'Unsupported export',
-      expectedProvenanceSignals: ReportActions.passportReportProvenanceSignals,
-      enforceProvenanceContract: true,
+    await TelemetryService.runWithDispatcher(
+      (Map<String, dynamic> payload) async {
+        events.add(payload);
+      },
+      () async {
+        await ReportActions.shareToClipboard(
+          messenger: messenger,
+          isMounted: () => true,
+          content: 'Family summary\nReviewed evidence: 1 evidence record',
+          module: 'parent_summary',
+          surface: 'family_dashboard',
+          cta: 'parent_summary_share_family_summary',
+          successMessage: 'Copied.',
+          errorMessage: 'Unable to copy.',
+          expectedProvenanceSignals:
+              ReportActions.familySummaryProvenanceSignals,
+          enforceProvenanceContract: true,
+          sharePolicy: ReportActions.familyReportSharePolicy,
+        );
+      },
     );
     await tester.pump();
 
     expect(clipboardWrites, 0);
-    expect(exportAttempts, 0);
     expect(
       find.text(
         'Unable to share because this report is missing evidence provenance.',
       ),
       findsOneWidget,
     );
+    messenger.hideCurrentSnackBar();
+    await tester.pumpAndSettle();
+
+    await TelemetryService.runWithDispatcher(
+      (Map<String, dynamic> payload) async {
+        events.add(payload);
+      },
+      () async {
+        await ReportActions.exportText(
+          messenger: messenger,
+          isMounted: () => true,
+          fileName: 'weak-passport.txt',
+          content: 'Family summary\nReviewed evidence: 1 evidence record',
+          module: 'parent_summary',
+          surface: 'family_dashboard',
+          copiedEventName: 'parent.summary_export.copied',
+          successMessage: 'Exported.',
+          copiedMessage: 'Copied.',
+          errorMessage: 'Unable to export.',
+          unsupportedLogMessage: 'Unsupported export',
+          expectedProvenanceSignals:
+              ReportActions.passportReportProvenanceSignals,
+          enforceProvenanceContract: true,
+          sharePolicy: ReportActions.learnerPrivateReportSharePolicy,
+        );
+      },
+    );
+    await tester.pump();
+
+    expect(exportAttempts, 0);
     expect(
       find.text(
         'Unable to export because this report is missing evidence provenance.',
       ),
       findsOneWidget,
     );
+    final List<Map<String, dynamic>> blockedEvents = events
+        .where(
+          (Map<String, dynamic> payload) =>
+              payload['event'] == 'report.delivery_blocked',
+        )
+        .toList(growable: false);
+    expect(blockedEvents, hasLength(2));
+    expect(
+      (blockedEvents.first['metadata']
+          as Map<String, dynamic>)['report_block_reason'],
+      'missing_provenance',
+    );
+    expect(
+      (blockedEvents.last['metadata']
+          as Map<String, dynamic>)['report_delivery'],
+      'contract-failed',
+    );
+  });
+
+  testWidgets('enforced reports block rich content without a share policy',
+      (WidgetTester tester) async {
+    final List<Map<String, dynamic>> events = <Map<String, dynamic>>[];
+    int clipboardWrites = 0;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      SystemChannels.platform,
+      (MethodCall methodCall) async {
+        if (methodCall.method == 'Clipboard.setData') {
+          clipboardWrites += 1;
+        }
+        return null;
+      },
+    );
+
+    late ScaffoldMessengerState messenger;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (BuildContext context) {
+              messenger = ScaffoldMessenger.of(context);
+              return const SizedBox.shrink();
+            },
+          ),
+        ),
+      ),
+    );
+
+    await TelemetryService.runWithDispatcher(
+      (Map<String, dynamic> payload) async {
+        events.add(payload);
+      },
+      () async {
+        await ReportActions.shareToClipboard(
+          messenger: messenger,
+          isMounted: () => true,
+          content: _richEvidenceReport,
+          module: 'parent_summary',
+          surface: 'family_dashboard',
+          cta: 'parent_summary_share_family_summary',
+          successMessage: 'Copied.',
+          errorMessage: 'Unable to copy.',
+          expectedProvenanceSignals:
+              ReportActions.passportReportProvenanceSignals,
+          enforceProvenanceContract: true,
+        );
+      },
+    );
+    await tester.pump();
+
+    expect(clipboardWrites, 0);
+    expect(
+      find.text(
+        'Unable to share because this report is missing a sharing safety policy.',
+      ),
+      findsOneWidget,
+    );
+    final Map<String, dynamic> blockedEvent = events.firstWhere(
+      (Map<String, dynamic> payload) =>
+          payload['event'] == 'report.delivery_blocked',
+    );
+    final Map<String, dynamic> blockedMetadata =
+        blockedEvent['metadata'] as Map<String, dynamic>;
+    expect(blockedMetadata['report_meets_provenance_contract'], isTrue);
+    expect(blockedMetadata['report_meets_delivery_contract'], isFalse);
+    expect(blockedMetadata['report_block_reason'], 'missing_share_policy');
   });
 }

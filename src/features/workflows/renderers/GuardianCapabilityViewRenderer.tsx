@@ -9,6 +9,7 @@ import { resolveActiveSiteId } from '@/src/lib/auth/activeSite';
 import { useInteractionTracking } from '@/src/hooks/useTelemetry';
 import {
   downloadTextReport,
+  familyReportSharePolicy,
   familySummaryProvenanceSignals,
   passportReportProvenanceSignals,
   reportProvenanceMetadata,
@@ -882,6 +883,7 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
       text: shareText,
       expectedProvenanceSignals: familySummaryProvenanceSignals,
       enforceProvenanceContract: true,
+      sharePolicy: familyReportSharePolicy,
       onReportProvenance: (metadata) => {
         reportMetadata = metadata;
       },
@@ -924,6 +926,7 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
       lines: buildGuardianPassportTextLines(learner),
       expectedProvenanceSignals: passportReportProvenanceSignals,
       enforceProvenanceContract: true,
+      sharePolicy: familyReportSharePolicy,
       onReportProvenance: (metadata) => {
         reportMetadata = metadata;
       },
@@ -956,6 +959,7 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
     const reportMetadata = reportProvenanceMetadata({
       text: reportLines.join('\n'),
       expectedSignals: passportReportProvenanceSignals,
+      sharePolicy: familyReportSharePolicy,
     });
     if (!reportMetadata.report_meets_provenance_contract) {
       trackInteraction('feature_discovered', {

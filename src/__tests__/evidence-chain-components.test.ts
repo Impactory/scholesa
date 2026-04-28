@@ -433,6 +433,9 @@ describe('LearnerPassportExport learner contract', () => {
     expect(source).toContain('passportReportProvenanceSignals');
     expect(source).toContain('reportProvenanceMetadata');
     expect(source).toContain('onReportProvenance');
+    expect(source).toContain('enforceProvenanceContract: true');
+    expect(source).toContain('familyReportSharePolicy');
+    expect(source).toContain('learnerPrivateReportSharePolicy');
     expect(source).toContain('report_delivery');
     expect(source).toContain('const processDomainSnapshotHtml =');
     expect(source).toContain('const processDomainGrowthHtml =');
@@ -511,6 +514,8 @@ describe('GuardianCapabilityViewRenderer site provenance', () => {
     expect(source).toContain('passportReportProvenanceSignals');
     expect(source).toContain('reportProvenanceMetadata');
     expect(source).toContain('onReportProvenance');
+    expect(source).toContain('enforceProvenanceContract: true');
+    expect(source).toContain('familyReportSharePolicy');
     expect(source).toContain('report_delivery');
     expect(source).toContain('Share family summary');
     expect(source).toContain('Export PDF');
