@@ -167,11 +167,31 @@ class ReportActions {
     String? role,
     String? siteId,
     Iterable<String> expectedProvenanceSignals = const <String>[],
+    bool enforceProvenanceContract = false,
     Map<String, dynamic> metadata = const <String, dynamic>{},
     Future<void> Function()? onDownloaded,
     Future<void> Function()? onCopied,
     bool showSuccessSnackBar = true,
   }) async {
+    final Map<String, dynamic> provenanceMetadata = reportProvenanceMetadata(
+      content,
+      expectedSignals: expectedProvenanceSignals,
+    );
+    if (enforceProvenanceContract &&
+        provenanceMetadata['report_meets_provenance_contract'] != true) {
+      if (isMounted()) {
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Unable to export because this report is missing evidence provenance.',
+            ),
+            backgroundColor: ScholesaColors.error,
+          ),
+        );
+      }
+      return;
+    }
+
     try {
       final String? savedLocation = await ExportService.instance.saveTextFile(
         fileName: fileName,
@@ -189,10 +209,7 @@ class ReportActions {
           'surface': surface,
           if (learnerId != null) 'learner_id': learnerId,
           'file_name': fileName,
-          ...reportProvenanceMetadata(
-            content,
-            expectedSignals: expectedProvenanceSignals,
-          ),
+          ...provenanceMetadata,
           ...metadata,
         },
       );
@@ -215,10 +232,7 @@ class ReportActions {
           if (learnerId != null) 'learner_id': learnerId,
           'file_name': fileName,
           'fallback': 'clipboard',
-          ...reportProvenanceMetadata(
-            content,
-            expectedSignals: expectedProvenanceSignals,
-          ),
+          ...provenanceMetadata,
           ...metadata,
         },
       );
@@ -257,8 +271,28 @@ class ReportActions {
     String? role,
     String? siteId,
     Iterable<String> expectedProvenanceSignals = const <String>[],
+    bool enforceProvenanceContract = false,
     Map<String, dynamic> metadata = const <String, dynamic>{},
   }) async {
+    final Map<String, dynamic> provenanceMetadata = reportProvenanceMetadata(
+      content,
+      expectedSignals: expectedProvenanceSignals,
+    );
+    if (enforceProvenanceContract &&
+        provenanceMetadata['report_meets_provenance_contract'] != true) {
+      if (isMounted()) {
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Unable to share because this report is missing evidence provenance.',
+            ),
+            backgroundColor: ScholesaColors.error,
+          ),
+        );
+      }
+      return;
+    }
+
     try {
       await Clipboard.setData(ClipboardData(text: content));
       TelemetryService.instance.logEvent(
@@ -268,10 +302,7 @@ class ReportActions {
         metadata: <String, dynamic>{
           'cta': cta,
           if (learnerId != null) 'learner_id': learnerId,
-          ...reportProvenanceMetadata(
-            content,
-            expectedSignals: expectedProvenanceSignals,
-          ),
+          ...provenanceMetadata,
           ...metadata,
         },
       );
@@ -284,10 +315,7 @@ class ReportActions {
           'surface': surface,
           if (learnerId != null) 'learner_id': learnerId,
           'delivery': 'clipboard',
-          ...reportProvenanceMetadata(
-            content,
-            expectedSignals: expectedProvenanceSignals,
-          ),
+          ...provenanceMetadata,
           ...metadata,
         },
       );

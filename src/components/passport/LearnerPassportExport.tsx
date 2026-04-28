@@ -764,6 +764,7 @@ export function LearnerPassportExport({ siteId: initialSiteId }: { siteId?: stri
       title: `Scholesa family summary for ${learner.learnerName ?? learner.learnerId}`,
       text: shareText,
       expectedProvenanceSignals: familySummaryProvenanceSignals,
+      enforceProvenanceContract: true,
       onReportProvenance: (metadata) => {
         reportMetadata = metadata;
       },
@@ -778,6 +779,10 @@ export function LearnerPassportExport({ siteId: initialSiteId }: { siteId?: stri
     });
 
     if (result === 'aborted') return;
+    if (result === 'contract-failed') {
+      setShareFeedback('Sharing is blocked because this report is missing evidence provenance.');
+      return;
+    }
     if (result === 'shared') {
       setShareFeedback('Family summary ready to share.');
       return;
@@ -992,6 +997,21 @@ ${growthHtml}
     const lineHeight = 14;
     const maxWidth = pageWidth - (marginX * 2);
     const reportLines = buildPassportTextLines(learner);
+    const reportMetadata = reportProvenanceMetadata({
+      text: reportLines.join('\n'),
+      expectedSignals: passportReportProvenanceSignals,
+    });
+    if (!reportMetadata.report_meets_provenance_contract) {
+      trackInteraction('feature_discovered', {
+        cta: 'learner_passport_export_pdf',
+        learnerId: learner.learnerId,
+        report_action: 'export_pdf',
+        report_delivery: 'contract-failed',
+        ...reportMetadata,
+      });
+      setShareFeedback('Export is blocked because this report is missing evidence provenance.');
+      return;
+    }
     let y = marginY;
 
     pdf.setFont('courier', 'normal');
@@ -1013,10 +1033,7 @@ ${growthHtml}
       learnerId: learner.learnerId,
       report_action: 'export_pdf',
       report_delivery: 'downloaded',
-      ...reportProvenanceMetadata({
-        text: reportLines.join('\n'),
-        expectedSignals: passportReportProvenanceSignals,
-      }),
+      ...reportMetadata,
     });
   }, [learner, trackInteraction]);
 
@@ -1027,6 +1044,7 @@ ${growthHtml}
       fileName: `ideation-passport-${learner.learnerId}.txt`,
       lines: buildPassportTextLines(learner),
       expectedProvenanceSignals: passportReportProvenanceSignals,
+      enforceProvenanceContract: true,
       onReportProvenance: (metadata) => {
         reportMetadata = metadata;
       },
@@ -1035,9 +1053,12 @@ ${growthHtml}
       cta: 'learner_passport_export_text',
       learnerId: learner.learnerId,
       report_action: 'export_text',
-      report_delivery: downloaded ? 'downloaded' : 'unavailable',
+      report_delivery: downloaded,
       ...(reportMetadata ?? {}),
     });
+    if (downloaded === 'contract-failed') {
+      setShareFeedback('Export is blocked because this report is missing evidence provenance.');
+    }
   }, [learner, trackInteraction]);
 
   if (authLoading || loading) {

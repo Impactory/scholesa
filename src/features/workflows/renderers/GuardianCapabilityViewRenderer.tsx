@@ -881,6 +881,7 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
       title: `Scholesa family summary for ${learner.name}`,
       text: shareText,
       expectedProvenanceSignals: familySummaryProvenanceSignals,
+      enforceProvenanceContract: true,
       onReportProvenance: (metadata) => {
         reportMetadata = metadata;
       },
@@ -895,6 +896,13 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
     });
 
     if (result === 'aborted') return;
+    if (result === 'contract-failed') {
+      setShareFeedback({
+        learnerId: learner.learnerId,
+        message: 'Sharing is blocked because this report is missing evidence provenance.',
+      });
+      return;
+    }
     if (result === 'shared') {
       setShareFeedback({ learnerId: learner.learnerId, message: 'Family summary ready to share.' });
       return;
@@ -915,6 +923,7 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
       fileName: `family-passport-${learner.learnerId}.txt`,
       lines: buildGuardianPassportTextLines(learner),
       expectedProvenanceSignals: passportReportProvenanceSignals,
+      enforceProvenanceContract: true,
       onReportProvenance: (metadata) => {
         reportMetadata = metadata;
       },
@@ -923,9 +932,15 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
       cta: 'guardian_passport_export_text',
       learnerId: learner.learnerId,
       report_action: 'export_text',
-      report_delivery: downloaded ? 'downloaded' : 'unavailable',
+      report_delivery: downloaded,
       ...(reportMetadata ?? {}),
     });
+    if (downloaded === 'contract-failed') {
+      setShareFeedback({
+        learnerId: learner.learnerId,
+        message: 'Export is blocked because this report is missing evidence provenance.',
+      });
+    }
   }, [trackInteraction]);
 
   const handleExportPdf = useCallback(async (learner: LearnerSummary) => {
@@ -938,6 +953,24 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
     const lineHeight = 14;
     const maxWidth = pageWidth - (marginX * 2);
     const reportLines = buildGuardianPassportTextLines(learner);
+    const reportMetadata = reportProvenanceMetadata({
+      text: reportLines.join('\n'),
+      expectedSignals: passportReportProvenanceSignals,
+    });
+    if (!reportMetadata.report_meets_provenance_contract) {
+      trackInteraction('feature_discovered', {
+        cta: 'guardian_passport_export_pdf',
+        learnerId: learner.learnerId,
+        report_action: 'export_pdf',
+        report_delivery: 'contract-failed',
+        ...reportMetadata,
+      });
+      setShareFeedback({
+        learnerId: learner.learnerId,
+        message: 'Export is blocked because this report is missing evidence provenance.',
+      });
+      return;
+    }
     let y = marginY;
 
     pdf.setFont('courier', 'normal');
@@ -959,10 +992,7 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
       learnerId: learner.learnerId,
       report_action: 'export_pdf',
       report_delivery: 'downloaded',
-      ...reportProvenanceMetadata({
-        text: reportLines.join('\n'),
-        expectedSignals: passportReportProvenanceSignals,
-      }),
+      ...reportMetadata,
     });
   }, [trackInteraction]);
 

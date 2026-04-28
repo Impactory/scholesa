@@ -129,11 +129,46 @@ describe('report share/export helpers', () => {
       onReportProvenance: (metadata) => downloadMetadata.push(metadata),
     });
 
-    expect(downloaded).toBe(false);
+    expect(downloaded).toBe('unavailable');
     expect(shareMetadata).toHaveLength(1);
     expect(downloadMetadata).toHaveLength(1);
     expect(shareMetadata[0].report_meets_provenance_contract).toBe(true);
     expect(downloadMetadata[0].report_missing_provenance_signals).toEqual([]);
+  });
+
+  it('fails closed before sharing or downloading weak evidence-bearing reports', async () => {
+    const share = jest.fn().mockResolvedValue(undefined);
+    const metadataEvents: ReportProvenanceMetadata[] = [];
+    Object.defineProperty(globalThis, 'navigator', {
+      configurable: true,
+      value: { share },
+    });
+
+    await expect(
+      shareTextWithFallback({
+        title: 'Weak family summary',
+        text: 'Family summary\nReviewed evidence: 1 evidence record',
+        expectedProvenanceSignals: familySummaryProvenanceSignals,
+        enforceProvenanceContract: true,
+        onReportProvenance: (metadata) => metadataEvents.push(metadata),
+      })
+    ).resolves.toBe('contract-failed');
+
+    const downloaded = downloadTextReport({
+      fileName: 'weak-passport.txt',
+      lines: ['Family summary', 'Reviewed evidence: 1 evidence record'],
+      expectedProvenanceSignals: passportReportProvenanceSignals,
+      enforceProvenanceContract: true,
+      onReportProvenance: (metadata) => metadataEvents.push(metadata),
+    });
+
+    expect(share).not.toHaveBeenCalled();
+    expect(downloaded).toBe('contract-failed');
+    expect(metadataEvents).toHaveLength(2);
+    expect(metadataEvents[0].report_meets_provenance_contract).toBe(false);
+    expect(metadataEvents[1].report_missing_provenance_signals).toEqual(
+      expect.arrayContaining(['growth', 'portfolio', 'mission', 'proof'])
+    );
   });
 
   it('supports release-gate assertions for evidence-bearing reports', () => {
