@@ -242,7 +242,7 @@ function summarizeProofMethods(
   ].filter(Boolean).join(' · ') || '—';
 }
 
-function buildPassportTextLines(learner: LearnerPassportData): string[] {
+export function buildPassportTextLines(learner: LearnerPassportData): string[] {
   const lines: string[] = [];
   lines.push('═══════════════════════════════════════════');
   lines.push('  SCHOLESA IDEATION PASSPORT');
@@ -387,7 +387,7 @@ function buildPassportTextLines(learner: LearnerPassportData): string[] {
   return lines;
 }
 
-function buildFamilyShareSummary(learner: LearnerPassportData): string {
+export function buildFamilyShareSummary(learner: LearnerPassportData): string {
   const topClaims = learner.ideationPassport.claims.slice(0, 3);
   const recentGrowth = learner.growthTimeline.slice(0, 3);
   const featuredPortfolio = learner.portfolioItemsPreview

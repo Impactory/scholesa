@@ -519,7 +519,7 @@ function normalizeLearnerSummary(summary: Record<string, unknown>): LearnerSumma
   };
 }
 
-function buildGuardianPassportTextLines(learner: LearnerSummary): string[] {
+export function buildGuardianPassportTextLines(learner: LearnerSummary): string[] {
   const pendingPrompts = learner.portfolioHighlights.filter(
     (item) => typeof item.verificationPrompt === 'string' && item.verificationPrompt.trim().length > 0,
   );
@@ -654,7 +654,7 @@ function buildGuardianPassportTextLines(learner: LearnerSummary): string[] {
   return lines;
 }
 
-function buildGuardianFamilyShareSummary(learner: LearnerSummary): string {
+export function buildGuardianFamilyShareSummary(learner: LearnerSummary): string {
   const pendingPrompts = learner.portfolioHighlights
     .filter((item) => typeof item.verificationPrompt === 'string' && item.verificationPrompt.trim().length > 0)
     .slice(0, 2);
