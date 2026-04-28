@@ -153,7 +153,8 @@ void main() {
       expect(find.textContaining('Malformed 4'), findsOneWidget);
     });
 
-    testWidgets('learner loop hides latest update fallback when trend baseline is unavailable',
+    testWidgets(
+        'learner loop hides latest update fallback when trend baseline is unavailable',
         (WidgetTester tester) async {
       await tester.pumpWidget(
         MultiProvider(
@@ -204,8 +205,73 @@ void main() {
       expect(find.text('Data quality'), findsOneWidget);
       expect(find.textContaining('Incomplete 1'), findsOneWidget);
       expect(find.textContaining('Latest Update:'), findsNothing);
-      expect(find.textContaining('Growth Trend No current learning signals yet'),
+      expect(
+          find.textContaining('Growth Trend No current learning signals yet'),
           findsWidgets);
+    });
+
+    testWidgets('learner loop renders support journey explain-back gap',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: <SingleChildWidget>[
+            ChangeNotifierProvider<AppState>.value(value: _buildLearnerState()),
+          ],
+          child: MaterialApp(
+            theme: _testTheme,
+            home: Scaffold(
+              body: BosLearnerLoopInsightsCard(
+                title: 'Learning Support Snapshot',
+                subtitle: 'Current learning signals for this learner',
+                emptyLabel: 'No learning support snapshot yet',
+                learnerId: 'learner-1',
+                learnerName: 'Avery Chen',
+                insightsLoader: ({
+                  required String siteId,
+                  required String learnerId,
+                  required int lookbackDays,
+                }) async =>
+                    <String, dynamic>{
+                  'state': <String, dynamic>{
+                    'cognition': 0.72,
+                    'engagement': 0.68,
+                    'integrity': 0.91,
+                  },
+                  'mvl': <String, dynamic>{
+                    'active': 0,
+                    'passed': 1,
+                    'failed': 0,
+                  },
+                  'eventCounts': <String, dynamic>{
+                    'ai_help_opened': 2,
+                    'ai_help_used': 2,
+                    'explain_it_back_submitted': 1,
+                  },
+                  'verification': <String, dynamic>{
+                    'aiHelpOpened': 2,
+                    'aiHelpUsed': 2,
+                    'explainBackSubmitted': 1,
+                    'pendingExplainBack': 1,
+                  },
+                  'activeGoals': <String>['Explain the prototype tradeoff'],
+                  'stateAvailability': <String, dynamic>{
+                    'hasCurrentState': true,
+                    'hasTrendBaseline': false,
+                  },
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.pumpAndSettle();
+
+      expect(
+          find.textContaining('Support Journey 2/1/1 pending'), findsOneWidget);
+      expect(find.textContaining('Understanding Check 0/1/0'), findsOneWidget);
     });
 
     testWidgets('learner loop discloses synthetic preview payloads',

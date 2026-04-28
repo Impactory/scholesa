@@ -15,11 +15,17 @@ const PROOF_BUNDLE_ID = 'proof-bundle-1';
 process.env.GCLOUD_PROJECT = PROJECT_ID;
 process.env.FIRESTORE_EMULATOR_HOST = process.env.FIRESTORE_EMULATOR_HOST || '127.0.0.1:8080';
 
+import { createServer, type IncomingHttpHeaders, type Server } from 'http';
 import * as admin from 'firebase-admin';
 
 type EvidenceChainFunctions = typeof import('./index');
 
 let functionsModule: EvidenceChainFunctions;
+
+type CapturedInferenceRequest = {
+  headers: IncomingHttpHeaders;
+  body: Record<string, unknown>;
+};
 
 function authFor(uid: string) {
   return {
@@ -49,6 +55,78 @@ async function clearFirestore(): Promise<void> {
   }
 }
 
+async function startInternalInferenceServer(): Promise<{
+  url: string;
+  requests: CapturedInferenceRequest[];
+  close: () => Promise<void>;
+}> {
+  const requests: CapturedInferenceRequest[] = [];
+  const server = createServer((req, res) => {
+    let raw = '';
+    req.on('data', (chunk: Buffer) => {
+      raw += chunk.toString('utf8');
+    });
+    req.on('end', () => {
+      const body = raw.length > 0 ? JSON.parse(raw) as Record<string, unknown> : {};
+      requests.push({ headers: req.headers, body });
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        text: 'Test one prototype variable at a time, compare results, and explain the tradeoff in your own words.',
+        modelVersion: 'local-internal-llm-test-v1',
+        toolSuggestions: ['Run one comparison test', 'Write what changed'],
+        traceId: 'internal-trace-1',
+        policyVersion: 'internal-policy-test-v1',
+        safetyOutcome: 'allowed',
+        safetyReasonCode: 'none',
+        understanding: {
+          intent: 'explain_tradeoff',
+          complexity: 'moderate',
+          needsScaffold: true,
+          emotionalState: 'focused',
+          confidence: 0.99,
+          responseMode: 'coach',
+          topicTags: ['prototype tradeoffs'],
+        },
+      }));
+    });
+  });
+
+  await new Promise<void>((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(0, '127.0.0.1', () => {
+      server.off('error', reject);
+      resolve();
+    });
+  });
+
+  const address = server.address();
+  if (!address || typeof address === 'string') {
+    throw new Error('Internal inference test server did not bind a TCP port.');
+  }
+
+  return {
+    url: `http://127.0.0.1:${address.port}/v1/chat`,
+    requests,
+    close: () => new Promise<void>((resolve, reject) => {
+      (server as Server).close((error) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve();
+      });
+    }),
+  };
+}
+
+function restoreEnvVar(name: string, previousValue: string | undefined): void {
+  if (previousValue === undefined) {
+    delete process.env[name];
+    return;
+  }
+  process.env[name] = previousValue;
+}
+
 async function seedEvidenceChainFixture(): Promise<void> {
   const db = admin.firestore();
   const batch = db.batch();
@@ -59,6 +137,17 @@ async function seedEvidenceChainFixture(): Promise<void> {
   batch.set(db.collection('sites').doc(SITE_ID), {
     name: 'Studio One',
     status: 'active',
+    createdAt: observedAt,
+    updatedAt: observedAt,
+  });
+
+  batch.set(db.collection('coppaSchoolConsents').doc(SITE_ID), {
+    siteId: SITE_ID,
+    active: true,
+    agreementSigned: true,
+    educationalUseOnly: true,
+    parentNoticeProvided: true,
+    noStudentMarketing: true,
     createdAt: observedAt,
     updatedAt: observedAt,
   });
@@ -391,5 +480,272 @@ describe('Evidence chain emulator integration', () => {
         }),
       ]),
     );
+  });
+
+  it('drives MiloOS help through explain-back and learner-loop insight without mastery writes', async () => {
+    const db = admin.firestore();
+    const miloLearnerId = 'milo-learner-1';
+    const now = Date.now();
+    await Promise.all([
+      db.collection('users').doc(miloLearnerId).set({
+        email: 'milo-learner@example.com',
+        displayName: 'Milo Learner',
+        role: 'learner',
+        siteIds: [SITE_ID],
+        activeSiteId: SITE_ID,
+      }),
+      db.collection('orchestrationStates').doc(`${miloLearnerId}-latest`).set({
+        siteId: SITE_ID,
+        learnerId: miloLearnerId,
+        x_hat: { cognition: 0.82, engagement: 0.74, integrity: 0.93 },
+        P: { trace: 0.1, confidence: 0.95 },
+        lastUpdatedAt: admin.firestore.Timestamp.fromMillis(now),
+      }),
+      db.collection('orchestrationStates').doc(`${miloLearnerId}-baseline`).set({
+        siteId: SITE_ID,
+        learnerId: miloLearnerId,
+        x_hat: { cognition: 0.62, engagement: 0.58, integrity: 0.84 },
+        P: { trace: 0.2, confidence: 0.86 },
+        lastUpdatedAt: admin.firestore.Timestamp.fromMillis(now - 60 * 60 * 1000),
+      }),
+    ]);
+
+    const firstCoachResult = await functionsModule.genAiCoach.run(callableRequest(
+      miloLearnerId,
+      {
+        mode: 'explain',
+        siteId: SITE_ID,
+        gradeBand: 'G9_12',
+        conceptTags: ['prototype tradeoffs'],
+        studentInput: 'I need help explaining why our prototype tradeoff matters.',
+      },
+    ));
+
+    const firstOpenedEventId = firstCoachResult.meta.aiHelpOpenedEventId as string;
+    expect(firstOpenedEventId).toEqual(expect.any(String));
+    expect(firstCoachResult.requiresExplainBack).toBe(true);
+
+    const explainResult = await functionsModule.submitExplainBack.run(callableRequest(
+      miloLearnerId,
+      {
+        siteId: SITE_ID,
+        interactionId: firstOpenedEventId,
+        explainBack:
+          'I chose the lighter prototype because it made testing faster, but the tradeoff is that the structure needs extra bracing before showcase.',
+      },
+    ));
+
+    expect(explainResult).toMatchObject({ approved: true });
+
+    await functionsModule.genAiCoach.run(callableRequest(
+      miloLearnerId,
+      {
+        mode: 'hint',
+        siteId: SITE_ID,
+        gradeBand: 'G9_12',
+        conceptTags: ['iteration plan'],
+        studentInput: 'I need a hint for the next test plan step.',
+      },
+    ));
+
+    const eventSnap = await db.collection('interactionEvents')
+      .where('siteId', '==', SITE_ID)
+      .where('actorId', '==', miloLearnerId)
+      .get();
+    const events = eventSnap.docs.map((doc) => ({ id: doc.id, data: doc.data() }));
+    expect(events.map((event) => event.data.eventType)).toEqual(expect.arrayContaining([
+      'ai_help_opened',
+      'ai_help_used',
+      'ai_coach_response',
+      'explain_it_back_submitted',
+    ]));
+    for (const event of events) {
+      expect(event.data.timestamp).toBeDefined();
+      expect(event.data.createdAt).toBeDefined();
+    }
+    expect(events.find((event) => event.data.eventType === 'explain_it_back_submitted')?.data.payload).toMatchObject({
+      aiHelpOpenedEventId: firstOpenedEventId,
+      approved: true,
+      mode: 'explain',
+    });
+
+    const insights = await functionsModule.bosGetLearnerLoopInsights.run(callableRequest(
+      miloLearnerId,
+      {
+        siteId: SITE_ID,
+        learnerId: miloLearnerId,
+        lookbackDays: 30,
+      },
+    ));
+
+    expect(insights.state).toEqual({ cognition: 0.82, engagement: 0.74, integrity: 0.93 });
+    expect(insights.stateAvailability).toMatchObject({
+      validSamples: 2,
+      hasCurrentState: true,
+      hasTrendBaseline: true,
+    });
+    expect(insights.eventCounts).toMatchObject({
+      ai_help_opened: 2,
+      ai_help_used: 2,
+      ai_coach_response: 2,
+      explain_it_back_submitted: 1,
+    });
+    expect(insights.verification).toEqual({
+      aiHelpOpened: 2,
+      aiHelpUsed: 2,
+      explainBackSubmitted: 1,
+      pendingExplainBack: 1,
+    });
+    expect(insights.mvl).toEqual({ active: 0, passed: 0, failed: 0 });
+    expect(insights).not.toHaveProperty('capabilityMastery');
+    expect(insights).not.toHaveProperty('masteryLevel');
+
+    const masterySnap = await db.collection('capabilityMastery')
+      .where('learnerId', '==', miloLearnerId)
+      .get();
+    expect(masterySnap.empty).toBe(true);
+  });
+
+  it('uses configured internal inference in the MiloOS explain-back journey', async () => {
+    const db = admin.firestore();
+    const inferenceServer = await startInternalInferenceServer();
+    const previousLlmUrl = process.env.INTERNAL_LLM_INFERENCE_URL;
+    const previousAuthMode = process.env.INTERNAL_INFERENCE_AUTH_MODE;
+    const previousRequired = process.env.INTERNAL_INFERENCE_REQUIRED;
+    const internalLearnerId = 'milo-internal-learner-1';
+
+    try {
+      process.env.INTERNAL_LLM_INFERENCE_URL = inferenceServer.url;
+      process.env.INTERNAL_INFERENCE_AUTH_MODE = 'none';
+      process.env.INTERNAL_INFERENCE_REQUIRED = 'true';
+
+      await db.collection('users').doc(internalLearnerId).set({
+        email: 'milo-internal-learner@example.com',
+        displayName: 'Internal Milo Learner',
+        role: 'learner',
+        siteIds: [SITE_ID],
+        activeSiteId: SITE_ID,
+      });
+      await db.collection('orchestrationStates').doc(`${internalLearnerId}-latest`).set({
+        siteId: SITE_ID,
+        learnerId: internalLearnerId,
+        x_hat: { cognition: 0.78, engagement: 0.71, integrity: 0.94 },
+        P: { trace: 0.12, confidence: 0.94 },
+        lastUpdatedAt: admin.firestore.Timestamp.fromMillis(Date.now()),
+      });
+
+      const coachResult = await functionsModule.genAiCoach.run(callableRequest(
+        internalLearnerId,
+        {
+          mode: 'explain',
+          siteId: SITE_ID,
+          gradeBand: 'G9_12',
+          conceptTags: ['prototype tradeoffs'],
+          studentInput: 'Help me explain our prototype tradeoff without giving me the final answer.',
+        },
+      ));
+
+      expect(coachResult.message).toContain('prototype variable');
+      expect(coachResult.message).not.toContain('MiloOS is not ready to give a reliable answer right now');
+      expect(coachResult.requiresExplainBack).toBe(true);
+      expect(coachResult.meta).toMatchObject({
+        modelVersion: 'local-internal-llm-test-v1',
+        traceId: 'internal-trace-1',
+      });
+      expect(coachResult.metadata).toMatchObject({
+        safetyOutcome: 'allowed',
+        safetyReasonCode: 'none',
+        modelVersion: 'local-internal-llm-test-v1',
+        policyVersion: 'internal-policy-test-v1',
+      });
+
+      expect(inferenceServer.requests).toHaveLength(1);
+      expect(inferenceServer.requests[0].headers).toMatchObject({
+        'x-caller-service': 'genAiCoach',
+        'x-inference-service': 'llm',
+        'x-site-id': SITE_ID,
+        'x-role': 'learner',
+      });
+      expect(inferenceServer.requests[0].body).toMatchObject({
+        role: 'learner',
+        requesterRole: 'student',
+        gradeBand: 'G9_12',
+        coachMode: 'explain',
+        conceptTags: ['prototype tradeoffs'],
+        coppaBand: 'G9_12',
+      });
+
+      const openedEventId = coachResult.meta.aiHelpOpenedEventId as string;
+      const explainResult = await functionsModule.submitExplainBack.run(callableRequest(
+        internalLearnerId,
+        {
+          siteId: SITE_ID,
+          interactionId: openedEventId,
+          explainBack:
+            'I can explain the tradeoff by changing one variable at a time, comparing the result, and naming why the choice supports our prototype goal.',
+        },
+      ));
+      expect(explainResult).toMatchObject({ approved: true });
+
+      const eventsSnap = await db.collection('interactionEvents')
+        .where('siteId', '==', SITE_ID)
+        .where('actorId', '==', internalLearnerId)
+        .get();
+      const events = eventsSnap.docs.map((doc) => doc.data() as Record<string, any>);
+      expect(events).toEqual(expect.arrayContaining([
+        expect.objectContaining({ eventType: 'ai_help_opened' }),
+        expect.objectContaining({
+          eventType: 'ai_help_used',
+          payload: expect.objectContaining({
+            traceId: 'internal-trace-1',
+            policyVersion: 'internal-policy-test-v1',
+            safetyOutcome: 'allowed',
+            requiresExplainBack: true,
+          }),
+        }),
+        expect.objectContaining({
+          eventType: 'ai_coach_response',
+          payload: expect.objectContaining({
+            traceId: 'internal-trace-1',
+            safetyOutcome: 'allowed',
+            aiResponseText: expect.stringContaining('prototype variable'),
+          }),
+        }),
+        expect.objectContaining({
+          eventType: 'explain_it_back_submitted',
+          payload: expect.objectContaining({
+            aiHelpOpenedEventId: openedEventId,
+            approved: true,
+          }),
+        }),
+      ]));
+
+      const insights = await functionsModule.bosGetLearnerLoopInsights.run(callableRequest(
+        internalLearnerId,
+        {
+          siteId: SITE_ID,
+          learnerId: internalLearnerId,
+          lookbackDays: 30,
+        },
+      ));
+
+      expect(insights.eventCounts).toMatchObject({
+        ai_help_opened: 1,
+        ai_help_used: 1,
+        ai_coach_response: 1,
+        explain_it_back_submitted: 1,
+      });
+      expect(insights.verification).toEqual({
+        aiHelpOpened: 1,
+        aiHelpUsed: 1,
+        explainBackSubmitted: 1,
+        pendingExplainBack: 0,
+      });
+    } finally {
+      restoreEnvVar('INTERNAL_LLM_INFERENCE_URL', previousLlmUrl);
+      restoreEnvVar('INTERNAL_INFERENCE_AUTH_MODE', previousAuthMode);
+      restoreEnvVar('INTERNAL_INFERENCE_REQUIRED', previousRequired);
+      await inferenceServer.close();
+    }
   });
 });

@@ -40,6 +40,7 @@ class BosCoachingI18n {
     'mvlActive': '进行中',
     'mvlPassed': '已通过',
     'mvlFailed': '需加强',
+    'supportJourney': '支持流程',
     'loadingInsights': '正在加载学习洞察...',
     'errorLoadingInsights': '无法加载学习洞察，请稍后重试',
     'latestSignal': '最新更新',
@@ -54,12 +55,12 @@ class BosCoachingI18n {
     'signalUnavailable': '暂无当前学习信号',
     'partialSignals': '部分学习信号缺失，仅显示当前可用信息',
     'syntheticPreview': '当前为合成预览数据，请勿视为真实课堂证据或成长记录',
-        'dataQuality': '数据质量',
-        'verifiedSignalsOnly': '仅显示已验证的学习信号；缺失或格式错误的字段不会被伪装成低分。',
-        'qualityAvailable': '可用',
-        'qualityIncomplete': '覆盖不足',
-        'qualityMissing': '缺失',
-        'qualityMalformed': '格式错误',
+    'dataQuality': '数据质量',
+    'verifiedSignalsOnly': '仅显示已验证的学习信号；缺失或格式错误的字段不会被伪装成低分。',
+    'qualityAvailable': '可用',
+    'qualityIncomplete': '覆盖不足',
+    'qualityMissing': '缺失',
+    'qualityMalformed': '格式错误',
   };
 
   static const Map<String, String> _zhTwTranslations = <String, String>{
@@ -90,6 +91,7 @@ class BosCoachingI18n {
     'mvlActive': '進行中',
     'mvlPassed': '已通過',
     'mvlFailed': '需加強',
+    'supportJourney': '支持流程',
     'loadingInsights': '正在載入學習洞察...',
     'errorLoadingInsights': '無法載入學習洞察，請稍後再試',
     'latestSignal': '最新更新',
@@ -104,12 +106,12 @@ class BosCoachingI18n {
     'signalUnavailable': '目前沒有學習訊號',
     'partialSignals': '部分學習訊號缺失，僅顯示目前可用資訊',
     'syntheticPreview': '目前顯示的是合成預覽資料，請勿視為真實課堂證據或成長紀錄',
-        'dataQuality': '資料品質',
-        'verifiedSignalsOnly': '只顯示已驗證的學習訊號；缺失或格式錯誤的欄位不會被偽裝成低分。',
-        'qualityAvailable': '可用',
-        'qualityIncomplete': '覆蓋不足',
-        'qualityMissing': '缺失',
-        'qualityMalformed': '格式錯誤',
+    'dataQuality': '資料品質',
+    'verifiedSignalsOnly': '只顯示已驗證的學習訊號；缺失或格式錯誤的欄位不會被偽裝成低分。',
+    'qualityAvailable': '可用',
+    'qualityIncomplete': '覆蓋不足',
+    'qualityMissing': '缺失',
+    'qualityMalformed': '格式錯誤',
   };
 
   static const Map<String, String> _enTranslations = <String, String>{
@@ -143,6 +145,7 @@ class BosCoachingI18n {
     'mvlActive': 'In Progress',
     'mvlPassed': 'Passed',
     'mvlFailed': 'Challenged',
+    'supportJourney': 'Support Journey',
     'loadingInsights': 'Loading learning insights...',
     'errorLoadingInsights': 'Unable to load insights; try again later',
     'latestSignal': 'Latest Update',
@@ -236,6 +239,8 @@ class BosCoachingI18n {
   static String mvlActive(BuildContext context) => get(context, 'mvlActive');
   static String mvlPassed(BuildContext context) => get(context, 'mvlPassed');
   static String mvlFailed(BuildContext context) => get(context, 'mvlFailed');
+  static String supportJourney(BuildContext context) =>
+      get(context, 'supportJourney');
   static String loadingInsights(BuildContext context) =>
       get(context, 'loadingInsights');
   static String errorLoadingInsights(BuildContext context) =>
@@ -264,7 +269,8 @@ class BosCoachingI18n {
       get(context, 'partialSignals');
   static String syntheticPreview(BuildContext context) =>
       get(context, 'syntheticPreview');
-  static String dataQuality(BuildContext context) => get(context, 'dataQuality');
+  static String dataQuality(BuildContext context) =>
+      get(context, 'dataQuality');
   static String verifiedSignalsOnly(BuildContext context) =>
       get(context, 'verifiedSignalsOnly');
   static String qualityAvailable(BuildContext context) =>

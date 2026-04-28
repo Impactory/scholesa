@@ -883,6 +883,7 @@ async function checkAndMaybeCreateMvl(params: {
       integrityState: xHat?.integrity ?? null,
     },
     timestamp: FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
   });
 
   return {
@@ -1300,6 +1301,7 @@ export const genAiCoach = onCall(async (request) => {
     checkpointId: checkpointId || null,
     payload: { mode: coachMode, conceptTags: tags, coppaBand, gradeBandSource },
     timestamp: FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
   });
   const traceId = aiHelpOpenedRef.id;
 
@@ -1452,6 +1454,7 @@ export const genAiCoach = onCall(async (request) => {
       coppaBand,
     },
     timestamp: FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
   });
 
   // ── Emit ai_coach_response event (audit trail) ──
@@ -1483,6 +1486,7 @@ export const genAiCoach = onCall(async (request) => {
       aiResponseText: message.substring(0, 500),
     },
     timestamp: FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
   });
 
   // ── A2) Response contract ──────────────────
@@ -1622,6 +1626,7 @@ export const submitExplainBack = onCall(async (request) => {
   await admin.firestore().collection('interactionEvents').add({
     ...explainBackEvent,
     timestamp: FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
   });
 
   return {

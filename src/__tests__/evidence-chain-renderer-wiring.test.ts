@@ -184,6 +184,10 @@ describe('Renderers delegate to real evidence components', () => {
     expect(dashboardSource).toContain('MiloOSLearnerSupportSnapshot');
     expect(supportSnapshotSource).toContain('getMiloOSLearnerLoopInsights');
     expect(supportSnapshotSource).toContain('AICoachScreen');
+    expect(supportSnapshotSource).toContain('onLearnerLoopUpdated');
+    expect(supportSnapshotSource).toContain('ai_help_opened');
+    expect(supportSnapshotSource).toContain('explain_it_back_submitted');
+    expect(supportSnapshotSource).toContain('pendingExplainBack');
     expect(insightsHelperSource).toContain("'bosGetLearnerLoopInsights'");
   });
 
@@ -276,15 +280,19 @@ describe('Renderers delegate to real evidence components', () => {
     expect(source).not.toContain('LearnerPassportExport');
   });
 
-  it('LearnerMiloOSRenderer → AICoachScreen with autonomy risk awareness', () => {
+  it('LearnerMiloOSRenderer reads the server-owned MiloOS learner-loop model', () => {
     const source = readSrcFile(
       'features', 'workflows', 'renderers', 'LearnerMiloOSRenderer.tsx'
     );
     expect(source).toContain('AICoachScreen');
     expect(source).toContain('resolveActiveSiteId');
-    expect(source).toContain("where('siteId', '==', siteId)");
-    expect(source).toContain('aiInteractionLogs');
-    expect(source).toContain('autonomyRiskLevel');
+    expect(source).toContain('getMiloOSLearnerLoopInsights');
+    expect(source).toContain('pendingExplainBack');
+    expect(source).toContain('onLearnerLoopUpdated');
+    expect(source).toContain('support provenance, not capability mastery');
+    expect(source).not.toContain('aiInteractionLogs');
+    expect(source).not.toContain('missionAttempts');
+    expect(source).not.toContain('collection(firestore');
     expect(source).toContain('data-testid="learner-miloos-site-required"');
   });
 

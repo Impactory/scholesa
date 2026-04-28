@@ -23,6 +23,12 @@ export interface MiloOSLearnerLoopInsights {
     hasTrendBaseline: boolean;
   };
   eventCounts: Record<string, number>;
+  verification: {
+    aiHelpOpened: number;
+    aiHelpUsed: number;
+    explainBackSubmitted: number;
+    pendingExplainBack: number;
+  };
   mvl: {
     active: number;
     passed: number;

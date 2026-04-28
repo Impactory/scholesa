@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIcon, BrainIcon, CheckCircle2Icon, ShieldCheckIcon } from 'lucide-react';
 import {
   getMiloOSLearnerLoopInsights,
@@ -43,37 +43,37 @@ export function MiloOSLearnerSupportSnapshot({
   const [error, setError] = useState<string | null>(null);
   const [showCoach, setShowCoach] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadInsights() {
-      setLoading(true);
-      setError(null);
-      try {
-        const nextInsights = await getMiloOSLearnerLoopInsights({ learnerId, siteId, lookbackDays: 30 });
-        if (!cancelled) {
-          setInsights(nextInsights);
-        }
-      } catch (loadErr) {
-        console.error('Failed to load MiloOS learner loop insights', loadErr);
-        if (!cancelled) {
-          setInsights(null);
-          setError('MiloOS support snapshot is unavailable right now.');
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
+  const loadInsights = useCallback(async (isCancelled: () => boolean = () => false) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const nextInsights = await getMiloOSLearnerLoopInsights({ learnerId, siteId, lookbackDays: 30 });
+      if (!isCancelled()) {
+        setInsights(nextInsights);
+      }
+    } catch (loadErr) {
+      console.error('Failed to load MiloOS learner loop insights', loadErr);
+      if (!isCancelled()) {
+        setInsights(null);
+        setError('MiloOS support snapshot is unavailable right now.');
+      }
+    } finally {
+      if (!isCancelled()) {
+        setLoading(false);
       }
     }
+  }, [learnerId, siteId]);
 
-    void loadInsights();
+  useEffect(() => {
+    let cancelled = false;
+    void loadInsights(() => cancelled);
     return () => {
       cancelled = true;
     };
-  }, [learnerId, siteId]);
+  }, [loadInsights]);
 
   const eventCounts = insights?.eventCounts ?? {};
+  const verification = insights?.verification;
   const hasCurrentState = insights?.stateAvailability.hasCurrentState === true;
   const trendSummary = useMemo(() => summarizeTrend(insights), [insights]);
 
@@ -141,10 +141,11 @@ export function MiloOSLearnerSupportSnapshot({
           <CheckCircle2Icon className="h-5 w-5 text-emerald-600" />
           <div>
             <p className="text-sm font-semibold text-gray-900">
-              {formatCount(eventCounts.ai_help_used)} supported help turns
+              {formatCount(eventCounts.ai_help_opened)} support sessions opened
             </p>
             <p className="text-xs text-gray-500">
-              {formatCount(eventCounts.checkpoint_submitted)} checkpoints submitted
+              {formatCount(eventCounts.explain_it_back_submitted)} explain-backs /{' '}
+              {formatCount(verification?.pendingExplainBack)} pending
             </p>
           </div>
         </div>
@@ -163,7 +164,11 @@ export function MiloOSLearnerSupportSnapshot({
 
       {showCoach ? (
         <div className="mt-4 border-t border-gray-100 pt-4">
-          <AICoachScreen learnerId={learnerId} siteId={siteId} />
+          <AICoachScreen
+            learnerId={learnerId}
+            siteId={siteId}
+            onLearnerLoopUpdated={() => loadInsights()}
+          />
         </div>
       ) : null}
     </section>

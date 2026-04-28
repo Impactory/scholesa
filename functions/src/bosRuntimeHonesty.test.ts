@@ -48,6 +48,124 @@ jest.mock('./coppaGuards', () => ({
 import { __bosRuntimeInternals } from './bosRuntime';
 
 describe('bosRuntime honesty guards', () => {
+  it('reads learner-loop event time from createdAt before legacy timestamp fields', () => {
+    expect(__bosRuntimeInternals.readInteractionEventMillis({
+      createdAt: { toMillis: () => 2000 },
+      timestamp: { toMillis: () => 1000 },
+    })).toBe(2000);
+
+    expect(__bosRuntimeInternals.readInteractionEventMillis({
+      timestamp: { seconds: 3, nanoseconds: 500_000_000 },
+    })).toBe(3500);
+
+    expect(__bosRuntimeInternals.readInteractionEventMillis({
+      timestampIso: '2026-04-27T00:00:00.000Z',
+    })).toBe(Date.parse('2026-04-27T00:00:00.000Z'));
+  });
+
+  it('builds learner-loop insights from real state, event, goal, and MVL rows', () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const response = __bosRuntimeInternals.buildLearnerLoopInsightsResponse({
+      siteId: 'site-1',
+      learnerId: 'learner-1',
+      lookbackDays: 30,
+      generatedAt: '2026-04-27T00:00:00.000Z',
+      stateRows: [
+        {
+          id: 'latest',
+          data: { x_hat: { cognition: 1.2, engagement: -0.1, integrity: 0.9 } },
+        },
+        { id: 'bad', data: { x_hat: null } },
+        {
+          id: 'oldest',
+          data: { x_hat: { cognition: 0.5, engagement: 0.4, integrity: 0.6 } },
+        },
+      ],
+      eventRows: [
+        { id: 'opened-1', data: { eventType: 'ai_help_opened' } },
+        { id: 'opened-2', data: { eventType: 'ai_help_opened' } },
+        { id: 'help-1', data: { eventType: 'ai_help_used' } },
+        { id: 'response-1', data: { eventType: 'ai_coach_response' } },
+        { id: 'explain-1', data: { eventType: 'explain_it_back_submitted' } },
+        { id: 'mvl-1', data: { eventType: 'mvl_gate_triggered' } },
+        ...Array.from({ length: 6 }, (_, index) => ({
+          id: `goal-${index + 1}`,
+          data: {
+            eventType: 'ai_learning_goal_updated',
+            payload: { latest_goal: `Goal ${index + 1}` },
+          },
+        })),
+        { id: 'unknown-1', data: { eventType: 'not_a_loop_signal' } },
+      ],
+      mvlRows: [
+        { id: 'active-null', data: { resolution: null } },
+        { id: 'active-empty', data: { resolution: '' } },
+        { id: 'passed', data: { resolution: 'passed' } },
+        { id: 'failed', data: { resolution: 'failed' } },
+      ],
+    });
+
+    expect(response.state).toEqual({ cognition: 1, engagement: 0, integrity: 0.9 });
+    expect(response.trend).toEqual({
+      cognitionDelta: 0.5,
+      engagementDelta: -0.4,
+      integrityDelta: 0.30000000000000004,
+      improvementScore: 0.15000000000000002,
+    });
+    expect(response.stateAvailability).toEqual({
+      validSamples: 2,
+      hasCurrentState: true,
+      hasTrendBaseline: true,
+    });
+    expect(response.eventCounts).toEqual({
+      ai_help_opened: 2,
+      ai_help_used: 1,
+      ai_coach_response: 1,
+      ai_learning_goal_updated: 6,
+      mvl_gate_triggered: 1,
+      explain_it_back_submitted: 1,
+      checkpoint_submitted: 0,
+      artifact_submitted: 0,
+      mission_completed: 0,
+    });
+    expect(response.verification).toEqual({
+      aiHelpOpened: 2,
+      aiHelpUsed: 1,
+      explainBackSubmitted: 1,
+      pendingExplainBack: 1,
+    });
+    expect(response.mvl).toEqual({ active: 2, passed: 1, failed: 1 });
+    expect(response.activeGoals).toEqual(['Goal 1', 'Goal 2', 'Goal 3', 'Goal 4', 'Goal 5']);
+    expect(response.generatedAt).toBe('2026-04-27T00:00:00.000Z');
+    expect(warnSpy).toHaveBeenCalledWith('[BOS] Malformed orchestration state: bad');
+    warnSpy.mockRestore();
+  });
+
+  it('keeps empty learner-loop insights honest when no usable state exists', () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const response = __bosRuntimeInternals.buildLearnerLoopInsightsResponse({
+      siteId: 'site-1',
+      learnerId: 'learner-1',
+      lookbackDays: 7,
+      generatedAt: '2026-04-27T00:00:00.000Z',
+      stateRows: [{ id: 'malformed', data: { x_hat: undefined } }],
+      eventRows: [{ id: 'unknown', data: { eventType: 'unknown_event' } }],
+      mvlRows: [],
+    });
+
+    expect(response.state).toBeNull();
+    expect(response.trend).toBeNull();
+    expect(response.stateAvailability).toEqual({
+      validSamples: 0,
+      hasCurrentState: false,
+      hasTrendBaseline: false,
+    });
+    expect(response.eventCounts).toEqual(__bosRuntimeInternals.createLearnerLoopEventCounts());
+    expect(response.mvl).toEqual({ active: 0, passed: 0, failed: 0 });
+    expect(response.activeGoals).toEqual([]);
+    warnSpy.mockRestore();
+  });
+
   it('drops malformed orchestration provenance blocks from callable state payloads', () => {
     const sanitized = __bosRuntimeInternals.sanitizeOrchestrationStateResponse({
       siteId: 'site-1',

@@ -318,6 +318,11 @@ class _BosLearnerLoopInsightsCardState
                             accent,
                             context,
                           ),
+                          _metricChip(
+                            '${BosCoachingI18n.supportJourney(context)} ${parsed.supportJourneySummary(context)}',
+                            accent,
+                            context,
+                          ),
                         ],
                       ),
                       if (parsed.quality.hasWarnings) ...<Widget>[
@@ -531,6 +536,10 @@ class _LearnerLoopInsights {
     required this.activeMvl,
     required this.passedMvl,
     required this.failedMvl,
+    required this.aiHelpOpened,
+    required this.aiHelpUsed,
+    required this.explainBackSubmitted,
+    required this.pendingExplainBack,
     required this.activeGoals,
     required this.partialSignals,
     required this.syntheticPreview,
@@ -547,6 +556,10 @@ class _LearnerLoopInsights {
   final int? activeMvl;
   final int? passedMvl;
   final int? failedMvl;
+  final int? aiHelpOpened;
+  final int? aiHelpUsed;
+  final int? explainBackSubmitted;
+  final int? pendingExplainBack;
   final List<String> activeGoals;
   final bool partialSignals;
   final bool syntheticPreview;
@@ -559,9 +572,28 @@ class _LearnerLoopInsights {
         _asStringDynamicMap(payload['trend']) ?? <String, dynamic>{};
     final Map<String, dynamic> mvl =
         _asStringDynamicMap(payload['mvl']) ?? <String, dynamic>{};
+    final Map<String, dynamic> eventCounts =
+        _asStringDynamicMap(payload['eventCounts']) ?? <String, dynamic>{};
+    final Map<String, dynamic> verification =
+        _asStringDynamicMap(payload['verification']) ?? <String, dynamic>{};
     final Map<String, dynamic> availability =
         _asStringDynamicMap(payload['stateAvailability']) ??
             <String, dynamic>{};
+
+    final int? aiHelpOpened = _readInt(verification, 'aiHelpOpened') ??
+        _readInt(eventCounts, 'ai_help_opened');
+    final int? aiHelpUsed = _readInt(verification, 'aiHelpUsed') ??
+        _readInt(eventCounts, 'ai_help_used');
+    final int? explainBackSubmitted =
+        _readInt(verification, 'explainBackSubmitted') ??
+            _readInt(eventCounts, 'explain_it_back_submitted');
+    final int? pendingExplainBack =
+        _readInt(verification, 'pendingExplainBack') ??
+            _derivePendingExplainBack(
+              opened: aiHelpOpened,
+              used: aiHelpUsed,
+              submitted: explainBackSubmitted,
+            );
     final _InsightDataQuality quality = _InsightDataQuality.fromStatuses(
       <_FieldStatus>[
         _doubleStatus(state, 'cognition'),
@@ -595,6 +627,10 @@ class _LearnerLoopInsights {
       activeMvl: _readInt(mvl, 'active'),
       passedMvl: _readInt(mvl, 'passed'),
       failedMvl: _readInt(mvl, 'failed'),
+      aiHelpOpened: aiHelpOpened,
+      aiHelpUsed: aiHelpUsed,
+      explainBackSubmitted: explainBackSubmitted,
+      pendingExplainBack: pendingExplainBack,
       activeGoals: _readTrimmedStringList(payload, 'activeGoals'),
       partialSignals: quality.hasWarnings,
       syntheticPreview: _readBool(payload, 'synthetic') ?? false,
@@ -618,6 +654,10 @@ class _LearnerLoopInsights {
       activeMvl != null ||
       passedMvl != null ||
       failedMvl != null ||
+      aiHelpOpened != null ||
+      aiHelpUsed != null ||
+      explainBackSubmitted != null ||
+      pendingExplainBack != null ||
       activeGoals.isNotEmpty;
 
   bool get hasTrendSignals =>
@@ -646,6 +686,29 @@ class _LearnerLoopInsights {
     }
     return '$activeMvl/$passedMvl/$failedMvl';
   }
+
+  String supportJourneySummary(BuildContext context) {
+    if (aiHelpOpened == null ||
+        explainBackSubmitted == null ||
+        pendingExplainBack == null) {
+      return BosCoachingI18n.signalUnavailable(context);
+    }
+    return '$aiHelpOpened/$explainBackSubmitted/$pendingExplainBack pending';
+  }
+}
+
+int? _derivePendingExplainBack({
+  required int? opened,
+  required int? used,
+  required int? submitted,
+}) {
+  if (opened == null && used == null || submitted == null) {
+    return null;
+  }
+  final int expected =
+      (opened ?? 0) > (used ?? 0) ? (opened ?? 0) : (used ?? 0);
+  final int pending = expected - submitted;
+  return pending > 0 ? pending : 0;
 }
 
 enum _FieldStatus { available, missing, malformed }
@@ -717,9 +780,7 @@ _FieldStatus _boolStatus(Map<String, dynamic> source, String key) {
   if (!source.containsKey(key) || source[key] == null) {
     return _FieldStatus.missing;
   }
-  return source[key] is bool
-      ? _FieldStatus.available
-      : _FieldStatus.malformed;
+  return source[key] is bool ? _FieldStatus.available : _FieldStatus.malformed;
 }
 
 _FieldStatus _stringListStatus(Map<String, dynamic> source, String key) {

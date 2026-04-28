@@ -32,6 +32,7 @@ interface AICoachScreenProps {
   siteId: string;
   sprintSessionId?: string;
   missionId?: string;
+  onLearnerLoopUpdated?: () => void | Promise<void>;
 }
 
 type CoachMode = 'hint' | 'verify' | 'debug';
@@ -40,7 +41,8 @@ export function AICoachScreen({
   learnerId,
   siteId,
   sprintSessionId,
-  missionId
+  missionId,
+  onLearnerLoopUpdated,
 }: AICoachScreenProps) {
   const trackInteraction = useInteractionTracking();
   const { user } = useAuthContext();
@@ -58,6 +60,19 @@ export function AICoachScreen({
     replay: replaySpokenResponse,
     clear: clearSpokenResponse,
   } = useSpokenResponse({ locale });
+
+  const notifyLearnerLoopUpdated = () => {
+    try {
+      const maybePromise = onLearnerLoopUpdated?.();
+      if (maybePromise) {
+        void Promise.resolve(maybePromise).catch((notifyError) => {
+          console.error('Failed to refresh MiloOS learner-loop state:', notifyError);
+        });
+      }
+    } catch (notifyError) {
+      console.error('Failed to refresh MiloOS learner-loop state:', notifyError);
+    }
+  };
 
   const handleSubmitQuestion = async (questionOverride?: string) => {
     const resolvedQuestion = (questionOverride ?? question).trim();
@@ -86,6 +101,7 @@ export function AICoachScreen({
 
       const aiResponse = await sdtMotivation.requestAICoach(learnerId, siteId, request);
       setResponse(aiResponse);
+      notifyLearnerLoopUpdated();
       await playSpokenResponse(aiResponse.message);
     } catch (err) {
       console.error('MiloOS error:', err);
@@ -171,6 +187,7 @@ export function AICoachScreen({
             }
           : current,
       );
+      notifyLearnerLoopUpdated();
       trackInteraction('help_accessed', {
         cta: 'ai_coach_explain_back_recorded',
         mode,

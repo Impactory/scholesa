@@ -319,6 +319,15 @@
       ]
     },
     {
+      "collectionGroup": "interactionEvents",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "siteId", "order": "ASCENDING" },
+        { "fieldPath": "actorId", "order": "ASCENDING" },
+        { "fieldPath": "timestamp", "order": "DESCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "mvlEpisodes",
       "queryScope": "COLLECTION",
       "fields": [

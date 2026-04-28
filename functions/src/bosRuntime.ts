@@ -142,6 +142,258 @@ function asRecord(value: unknown): Record<string, unknown> | undefined {
   return value as Record<string, unknown>;
 }
 
+function timestampToMillis(value: unknown): number | null {
+  if (value instanceof Date) {
+    const millis = value.getTime();
+    return Number.isFinite(millis) ? millis : null;
+  }
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : null;
+  }
+  if (typeof value === 'string') {
+    const millis = Date.parse(value);
+    return Number.isFinite(millis) ? millis : null;
+  }
+  if (!value || typeof value !== 'object') return null;
+
+  const maybeTimestamp = value as { toMillis?: unknown };
+  if (typeof maybeTimestamp.toMillis === 'function') {
+    try {
+      const millis = maybeTimestamp.toMillis.call(value);
+      return typeof millis === 'number' && Number.isFinite(millis) ? millis : null;
+    } catch {
+      return null;
+    }
+  }
+
+  const record = asRecord(value);
+  const seconds = firstNumber(record?.seconds, record?._seconds);
+  if (seconds === undefined) return null;
+  const nanoseconds = firstNumber(record?.nanoseconds, record?._nanoseconds) ?? 0;
+  return seconds * 1000 + Math.floor(nanoseconds / 1_000_000);
+}
+
+function readInteractionEventMillis(eventData: Record<string, unknown>): number | null {
+  return timestampToMillis(eventData.createdAt)
+    ?? timestampToMillis(eventData.timestamp)
+    ?? timestampToMillis(eventData.timestampIso);
+}
+
+async function queryLearnerLoopInteractionEventsByTimeField(
+  siteId: string,
+  learnerId: string,
+  timeField: 'createdAt' | 'timestamp',
+  since: Date,
+  resultLimit: number,
+): Promise<admin.firestore.QueryDocumentSnapshot[]> {
+  const snap = await db.collection('interactionEvents')
+    .where('siteId', '==', siteId)
+    .where('actorId', '==', learnerId)
+    .where(timeField, '>=', since)
+    .orderBy(timeField, 'desc')
+    .limit(resultLimit)
+    .get();
+  return snap.docs;
+}
+
+async function loadLearnerLoopInteractionEvents(
+  siteId: string,
+  learnerId: string,
+  since: Date,
+  resultLimit: number,
+): Promise<admin.firestore.QueryDocumentSnapshot[]> {
+  const createdAtDocs = await queryLearnerLoopInteractionEventsByTimeField(
+    siteId,
+    learnerId,
+    'createdAt',
+    since,
+    resultLimit,
+  );
+
+  let timestampDocs: admin.firestore.QueryDocumentSnapshot[] = [];
+  try {
+    timestampDocs = await queryLearnerLoopInteractionEventsByTimeField(
+      siteId,
+      learnerId,
+      'timestamp',
+      since,
+      resultLimit,
+    );
+  } catch (error) {
+    console.warn('[BOS] learner loop legacy timestamp event fallback failed', {
+      siteId,
+      learnerId,
+      reason: error instanceof Error ? error.message : String(error),
+    });
+  }
+
+  const sinceMillis = since.getTime();
+  const docsById = new Map<string, admin.firestore.QueryDocumentSnapshot>();
+  for (const doc of [...createdAtDocs, ...timestampDocs]) {
+    docsById.set(doc.id, doc);
+  }
+
+  return Array.from(docsById.values())
+    .map((doc) => ({
+      doc,
+      millis: readInteractionEventMillis(doc.data() as Record<string, unknown>) ?? 0,
+    }))
+    .filter(({ millis }) => millis >= sinceMillis)
+    .sort((a, b) => b.millis - a.millis)
+    .slice(0, resultLimit)
+    .map(({ doc }) => doc);
+}
+
+type LearnerLoopInsightRow = {
+  id: string;
+  data: Record<string, unknown>;
+};
+
+const LEARNER_LOOP_EVENT_TYPES = [
+  'ai_help_opened',
+  'ai_help_used',
+  'ai_coach_response',
+  'ai_learning_goal_updated',
+  'mvl_gate_triggered',
+  'explain_it_back_submitted',
+  'checkpoint_submitted',
+  'artifact_submitted',
+  'mission_completed',
+] as const;
+
+function createLearnerLoopEventCounts(): Record<string, number> {
+  return Object.fromEntries(LEARNER_LOOP_EVENT_TYPES.map((eventType) => [eventType, 0]));
+}
+
+function buildLearnerLoopInsightsResponse(params: {
+  siteId: string;
+  learnerId: string;
+  lookbackDays: number;
+  stateRows: LearnerLoopInsightRow[];
+  eventRows: LearnerLoopInsightRow[];
+  mvlRows: LearnerLoopInsightRow[];
+  generatedAt?: string;
+}) {
+  const { siteId, learnerId, lookbackDays, eventRows, mvlRows } = params;
+  const states = params.stateRows
+    .map((row) => {
+      if (!row.data['x_hat'] || typeof row.data['x_hat'] !== 'object') {
+        console.warn(`[BOS] Malformed orchestration state: ${row.id}`);
+        return null;
+      }
+      return row.data;
+    })
+    .filter((state: Record<string, unknown> | null): state is Record<string, unknown> => state !== null);
+
+  const latestState = states.length > 0
+    ? ((states[0]['x_hat'] as Record<string, unknown> | undefined) ?? {})
+    : {};
+  const oldestState = states.length > 1
+    ? ((states[states.length - 1]['x_hat'] as Record<string, unknown> | undefined) ?? latestState)
+    : latestState;
+
+  const readStateMetric = (state: Record<string, unknown>, key: string) => {
+    const value = state[key];
+    return typeof value === 'number' && Number.isFinite(value) ? clamp(value) : null;
+  };
+
+  const latestCognition = readStateMetric(latestState, 'cognition');
+  const latestEngagement = readStateMetric(latestState, 'engagement');
+  const latestIntegrity = readStateMetric(latestState, 'integrity');
+
+  const oldestCognition = readStateMetric(oldestState, 'cognition');
+  const oldestEngagement = readStateMetric(oldestState, 'engagement');
+  const oldestIntegrity = readStateMetric(oldestState, 'integrity');
+
+  const deltaCognition = latestCognition != null && oldestCognition != null
+    ? latestCognition - oldestCognition
+    : null;
+  const deltaEngagement = latestEngagement != null && oldestEngagement != null
+    ? latestEngagement - oldestEngagement
+    : null;
+  const deltaIntegrity = latestIntegrity != null && oldestIntegrity != null
+    ? latestIntegrity - oldestIntegrity
+    : null;
+
+  const eventCounts = createLearnerLoopEventCounts();
+  const goals = new Set<string>();
+  for (const row of eventRows) {
+    const eventType = normalizeString(row.data.eventType) ?? '';
+    if (eventType in eventCounts) {
+      eventCounts[eventType] += 1;
+    }
+    if (eventType === 'ai_learning_goal_updated') {
+      const payload = asRecord(row.data.payload);
+      const latestGoal = normalizeString(payload?.latest_goal);
+      if (latestGoal) goals.add(latestGoal);
+    }
+  }
+
+  const aiHelpOpened = eventCounts.ai_help_opened ?? 0;
+  const aiHelpUsed = eventCounts.ai_help_used ?? 0;
+  const explainBackSubmitted = eventCounts.explain_it_back_submitted ?? 0;
+  const pendingExplainBack = Math.max(0, Math.max(aiHelpOpened, aiHelpUsed) - explainBackSubmitted);
+
+  let mvlActive = 0;
+  let mvlPassed = 0;
+  let mvlFailed = 0;
+  for (const row of mvlRows) {
+    const resolution = normalizeString(row.data.resolution);
+    if (!resolution) {
+      mvlActive += 1;
+    } else if (resolution === 'passed') {
+      mvlPassed += 1;
+    } else if (resolution === 'failed') {
+      mvlFailed += 1;
+    }
+  }
+
+  const improvementScore =
+    deltaCognition != null && deltaEngagement != null && deltaIntegrity != null
+      ? deltaCognition * 0.3 + deltaEngagement * 0.3 + deltaIntegrity * 0.4
+      : null;
+
+  return {
+    siteId,
+    learnerId,
+    lookbackDays,
+    state: latestCognition != null || latestEngagement != null || latestIntegrity != null
+      ? {
+          cognition: latestCognition,
+          engagement: latestEngagement,
+          integrity: latestIntegrity,
+        }
+      : null,
+    trend: deltaCognition != null || deltaEngagement != null || deltaIntegrity != null
+      ? {
+          cognitionDelta: deltaCognition,
+          engagementDelta: deltaEngagement,
+          integrityDelta: deltaIntegrity,
+          improvementScore,
+        }
+      : null,
+    stateAvailability: {
+      validSamples: states.length,
+      hasCurrentState: latestCognition != null || latestEngagement != null || latestIntegrity != null,
+      hasTrendBaseline: oldestCognition != null || oldestEngagement != null || oldestIntegrity != null,
+    },
+    eventCounts,
+    verification: {
+      aiHelpOpened,
+      aiHelpUsed,
+      explainBackSubmitted,
+      pendingExplainBack,
+    },
+    mvl: {
+      active: mvlActive,
+      passed: mvlPassed,
+      failed: mvlFailed,
+    },
+    activeGoals: Array.from(goals).slice(0, 5),
+    generatedAt: params.generatedAt ?? new Date().toISOString(),
+  };
+}
+
 function sanitizeOrchestrationStateResponse(stateData: Record<string, unknown>): Record<string, unknown> {
   const sanitized: Record<string, unknown> = {
     ...stateData,
@@ -1483,6 +1735,9 @@ export const bosGetOrchestrationState = onCall(
 );
 
 export const __bosRuntimeInternals = {
+  buildLearnerLoopInsightsResponse,
+  createLearnerLoopEventCounts,
+  readInteractionEventMillis,
   sanitizeOrchestrationStateResponse,
 };
 
@@ -2271,7 +2526,7 @@ export const bosGetLearnerLoopInsights = onCall(
       // Execute queries with Promise.all (Firebase will timeout at 30s server-side)
       const [
         statesSnap,
-        eventsSnap,
+        eventDocs,
         mvlSnap,
       ] = await Promise.all([
         db.collection('orchestrationStates')
@@ -2280,13 +2535,7 @@ export const bosGetLearnerLoopInsights = onCall(
           .orderBy('lastUpdatedAt', 'desc')
           .limit(20)
           .get(),
-        db.collection('interactionEvents')
-          .where('siteId', '==', siteId)
-          .where('actorId', '==', learnerId)
-          .where('createdAt', '>=', since)
-          .orderBy('createdAt', 'desc')
-          .limit(500)
-          .get(),
+        loadLearnerLoopInteractionEvents(siteId, learnerId, since, 500),
         db.collection('mvlEpisodes')
           .where('siteId', '==', siteId)
           .where('learnerId', '==', learnerId)
@@ -2296,123 +2545,23 @@ export const bosGetLearnerLoopInsights = onCall(
           .get(),
       ]);
 
-      const states = statesSnap.docs.map((doc: admin.firestore.QueryDocumentSnapshot) => {
-        const data = doc.data() as Record<string, unknown>;
-        // Validate state structure
-        if (!data['x_hat'] || typeof data['x_hat'] !== 'object') {
-          console.warn(`[BOS] Malformed orchestration state: ${doc.id}`);
-          return null;
-        }
-        return data;
-      }).filter((d: Record<string, unknown> | null): d is Record<string, unknown> => d !== null);
-
-      const latestState = states.length > 0
-        ? ((states[0]['x_hat'] as Record<string, unknown> | undefined) ?? {})
-        : {};
-      const oldestState = states.length > 1
-        ? ((states[states.length - 1]['x_hat'] as Record<string, unknown> | undefined) ?? latestState)
-        : latestState;
-
-      const readStateMetric = (state: Record<string, unknown>, key: string) => {
-        const value = state[key];
-        return typeof value === 'number' && Number.isFinite(value) ? clamp(value) : null;
-      };
-
-      const latestCognition = readStateMetric(latestState, 'cognition');
-      const latestEngagement = readStateMetric(latestState, 'engagement');
-      const latestIntegrity = readStateMetric(latestState, 'integrity');
-
-      const oldestCognition = readStateMetric(oldestState, 'cognition');
-      const oldestEngagement = readStateMetric(oldestState, 'engagement');
-      const oldestIntegrity = readStateMetric(oldestState, 'integrity');
-
-      const deltaCognition = latestCognition != null && oldestCognition != null
-        ? latestCognition - oldestCognition
-        : null;
-      const deltaEngagement = latestEngagement != null && oldestEngagement != null
-        ? latestEngagement - oldestEngagement
-        : null;
-      const deltaIntegrity = latestIntegrity != null && oldestIntegrity != null
-        ? latestIntegrity - oldestIntegrity
-        : null;
-
-      const eventCounts: Record<string, number> = {
-        ai_help_used: 0,
-        ai_coach_response: 0,
-        ai_learning_goal_updated: 0,
-        mvl_gate_triggered: 0,
-        checkpoint_submitted: 0,
-        artifact_submitted: 0,
-        mission_completed: 0,
-      };
-      const goals = new Set<string>();
-
-      for (const doc of eventsSnap.docs) {
-        const eventData = doc.data() as Record<string, unknown>;
-        const eventType = normalizeString(eventData.eventType) ?? '';
-        if (eventType in eventCounts) {
-          eventCounts[eventType] += 1;
-        }
-        if (eventType === 'ai_learning_goal_updated') {
-          const payload = asRecord(eventData.payload);
-          const latestGoal = normalizeString(payload?.latest_goal);
-          if (latestGoal) goals.add(latestGoal);
-        }
-      }
-
-      let mvlActive = 0;
-      let mvlPassed = 0;
-      let mvlFailed = 0;
-      for (const doc of mvlSnap.docs) {
-        const data = doc.data() as Record<string, unknown>;
-        const resolution = normalizeString(data.resolution);
-        if (!resolution) {
-          mvlActive += 1;
-        } else if (resolution === 'passed') {
-          mvlPassed += 1;
-        } else if (resolution === 'failed') {
-          mvlFailed += 1;
-        }
-      }
-
-      const improvementScore =
-        deltaCognition != null && deltaEngagement != null && deltaIntegrity != null
-          ? deltaCognition * 0.3 + deltaEngagement * 0.3 + deltaIntegrity * 0.4
-          : null;
-
-      return {
+      return buildLearnerLoopInsightsResponse({
         siteId,
         learnerId,
         lookbackDays,
-        state: latestCognition != null || latestEngagement != null || latestIntegrity != null
-          ? {
-              cognition: latestCognition,
-              engagement: latestEngagement,
-              integrity: latestIntegrity,
-            }
-          : null,
-        trend: deltaCognition != null || deltaEngagement != null || deltaIntegrity != null
-          ? {
-              cognitionDelta: deltaCognition,
-              engagementDelta: deltaEngagement,
-              integrityDelta: deltaIntegrity,
-              improvementScore,
-            }
-          : null,
-        stateAvailability: {
-          validSamples: states.length,
-          hasCurrentState: latestCognition != null || latestEngagement != null || latestIntegrity != null,
-          hasTrendBaseline: oldestCognition != null || oldestEngagement != null || oldestIntegrity != null,
-        },
-        eventCounts,
-        mvl: {
-          active: mvlActive,
-          passed: mvlPassed,
-          failed: mvlFailed,
-        },
-        activeGoals: Array.from(goals).slice(0, 5),
-        generatedAt: new Date().toISOString(),
-      };
+        stateRows: statesSnap.docs.map((doc: admin.firestore.QueryDocumentSnapshot) => ({
+          id: doc.id,
+          data: doc.data() as Record<string, unknown>,
+        })),
+        eventRows: eventDocs.map((doc) => ({
+          id: doc.id,
+          data: doc.data() as Record<string, unknown>,
+        })),
+        mvlRows: mvlSnap.docs.map((doc: admin.firestore.QueryDocumentSnapshot) => ({
+          id: doc.id,
+          data: doc.data() as Record<string, unknown>,
+        })),
+      });
     } catch (error) {
       // Log error for debugging
       console.error(`[BOS] learner loop query error for learnerId=${learnerId}, siteId=${siteId}:`, error);
@@ -2429,13 +2578,21 @@ export const bosGetLearnerLoopInsights = onCall(
           hasTrendBaseline: false,
         },
         eventCounts: {
+          ai_help_opened: 0,
           ai_help_used: 0,
           ai_coach_response: 0,
           ai_learning_goal_updated: 0,
           mvl_gate_triggered: 0,
+          explain_it_back_submitted: 0,
           checkpoint_submitted: 0,
           artifact_submitted: 0,
           mission_completed: 0,
+        },
+        verification: {
+          aiHelpOpened: 0,
+          aiHelpUsed: 0,
+          explainBackSubmitted: 0,
+          pendingExplainBack: 0,
         },
         mvl: {
           active: 0,
