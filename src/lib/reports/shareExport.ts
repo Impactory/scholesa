@@ -1,4 +1,5 @@
-export type BrowserShareStatus = 'shared' | 'copied' | 'unavailable' | 'aborted';
+export type BrowserShareStatus = 'shared' | 'copied' | 'unavailable' | 'aborted' | 'contract-failed';
+export type ReportDownloadStatus = 'downloaded' | 'unavailable' | 'contract-failed';
 
 export type ReportProvenanceSignal =
   | 'evidence'
@@ -177,16 +178,21 @@ export async function shareTextWithFallback({
   title,
   text,
   expectedProvenanceSignals = [],
+  enforceProvenanceContract = false,
   onReportProvenance,
 }: {
   title: string;
   text: string;
   expectedProvenanceSignals?: readonly ReportProvenanceSignal[];
+  enforceProvenanceContract?: boolean;
   onReportProvenance?: ReportProvenanceHandler;
 }): Promise<BrowserShareStatus> {
-  onReportProvenance?.(
-    reportProvenanceMetadata({ text, expectedSignals: expectedProvenanceSignals })
-  );
+  const metadata = reportProvenanceMetadata({ text, expectedSignals: expectedProvenanceSignals });
+  onReportProvenance?.(metadata);
+
+  if (enforceProvenanceContract && !metadata.report_meets_provenance_contract) {
+    return 'contract-failed';
+  }
 
   try {
     if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
@@ -213,17 +219,22 @@ export function downloadTextReport({
   fileName,
   lines,
   expectedProvenanceSignals = [],
+  enforceProvenanceContract = false,
   onReportProvenance,
 }: {
   fileName: string;
   lines: string[];
   expectedProvenanceSignals?: readonly ReportProvenanceSignal[];
+  enforceProvenanceContract?: boolean;
   onReportProvenance?: ReportProvenanceHandler;
-}): boolean {
+}): ReportDownloadStatus {
   const text = lines.join('\n');
-  onReportProvenance?.(
-    reportProvenanceMetadata({ text, expectedSignals: expectedProvenanceSignals })
-  );
+  const metadata = reportProvenanceMetadata({ text, expectedSignals: expectedProvenanceSignals });
+  onReportProvenance?.(metadata);
+
+  if (enforceProvenanceContract && !metadata.report_meets_provenance_contract) {
+    return 'contract-failed';
+  }
 
   if (
     typeof document === 'undefined' ||
@@ -232,7 +243,7 @@ export function downloadTextReport({
     typeof URL.revokeObjectURL !== 'function' ||
     typeof Blob === 'undefined'
   ) {
-    return false;
+    return 'unavailable';
   }
 
   const blob = new Blob([text], { type: 'text/plain' });
@@ -250,5 +261,5 @@ export function downloadTextReport({
     URL.revokeObjectURL(url);
   }
 
-  return true;
+  return 'downloaded';
 }
