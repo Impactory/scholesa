@@ -7,7 +7,15 @@ import { useAuthContext } from '@/src/firebase/auth/AuthProvider';
 import { RoleRouteGuard } from '@/src/components/auth/RoleRouteGuard';
 import { Spinner } from '@/src/components/ui/Spinner';
 import { resolveActiveSiteId } from '@/src/lib/auth/activeSite';
-import { downloadTextReport, shareTextWithFallback } from '@/src/lib/reports/shareExport';
+import { useInteractionTracking } from '@/src/hooks/useTelemetry';
+import {
+  downloadTextReport,
+  familySummaryProvenanceSignals,
+  passportReportProvenanceSignals,
+  reportProvenanceMetadata,
+  shareTextWithFallback,
+  type ReportProvenanceMetadata,
+} from '@/src/lib/reports/shareExport';
 import {
   getLegacyPillarFamilyLabel,
   normalizeLegacyPillarCode,
@@ -703,6 +711,7 @@ export function LearnerPassportExport({ siteId: initialSiteId }: { siteId?: stri
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [shareFeedback, setShareFeedback] = useState<string | null>(null);
+  const trackInteraction = useInteractionTracking();
 
   const siteId = initialSiteId ?? resolveActiveSiteId(profile) ?? null;
 
@@ -750,9 +759,22 @@ export function LearnerPassportExport({ siteId: initialSiteId }: { siteId?: stri
   const handleShareSummary = useCallback(async () => {
     if (!learner) return;
     const shareText = buildFamilyShareSummary(learner);
+    let reportMetadata: ReportProvenanceMetadata | null = null;
     const result = await shareTextWithFallback({
       title: `Scholesa family summary for ${learner.learnerName ?? learner.learnerId}`,
       text: shareText,
+      expectedProvenanceSignals: familySummaryProvenanceSignals,
+      onReportProvenance: (metadata) => {
+        reportMetadata = metadata;
+      },
+    });
+
+    trackInteraction('feature_discovered', {
+      cta: 'learner_passport_share_family_summary',
+      learnerId: learner.learnerId,
+      report_action: 'share',
+      report_delivery: result,
+      ...(reportMetadata ?? {}),
     });
 
     if (result === 'aborted') return;
@@ -766,7 +788,7 @@ export function LearnerPassportExport({ siteId: initialSiteId }: { siteId?: stri
         ? 'Family summary copied to clipboard.'
         : 'Sharing is unavailable in this browser. Use Export Text instead.'
     );
-  }, [learner]);
+  }, [learner, trackInteraction]);
 
   const handleExportHtml = useCallback(() => {
     if (!learner) return;
@@ -969,12 +991,13 @@ ${growthHtml}
     const marginY = 48;
     const lineHeight = 14;
     const maxWidth = pageWidth - (marginX * 2);
+    const reportLines = buildPassportTextLines(learner);
     let y = marginY;
 
     pdf.setFont('courier', 'normal');
     pdf.setFontSize(10);
 
-    for (const line of buildPassportTextLines(learner)) {
+    for (const line of reportLines) {
       const wrapped = pdf.splitTextToSize(line, maxWidth) as string[];
       if (y + (wrapped.length * lineHeight) > pageHeight - marginY) {
         pdf.addPage();
@@ -985,15 +1008,37 @@ ${growthHtml}
     }
 
     pdf.save(`ideation-passport-${learner.learnerId}.pdf`);
-  }, [learner]);
+    trackInteraction('feature_discovered', {
+      cta: 'learner_passport_export_pdf',
+      learnerId: learner.learnerId,
+      report_action: 'export_pdf',
+      report_delivery: 'downloaded',
+      ...reportProvenanceMetadata({
+        text: reportLines.join('\n'),
+        expectedSignals: passportReportProvenanceSignals,
+      }),
+    });
+  }, [learner, trackInteraction]);
 
   const handleExportText = useCallback(() => {
     if (!learner) return;
-    downloadTextReport({
+    let reportMetadata: ReportProvenanceMetadata | null = null;
+    const downloaded = downloadTextReport({
       fileName: `ideation-passport-${learner.learnerId}.txt`,
       lines: buildPassportTextLines(learner),
+      expectedProvenanceSignals: passportReportProvenanceSignals,
+      onReportProvenance: (metadata) => {
+        reportMetadata = metadata;
+      },
     });
-  }, [learner]);
+    trackInteraction('feature_discovered', {
+      cta: 'learner_passport_export_text',
+      learnerId: learner.learnerId,
+      report_action: 'export_text',
+      report_delivery: downloaded ? 'downloaded' : 'unavailable',
+      ...(reportMetadata ?? {}),
+    });
+  }, [learner, trackInteraction]);
 
   if (authLoading || loading) {
     return (

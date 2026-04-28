@@ -7,7 +7,14 @@ import { functions } from '@/src/firebase/client-init';
 import { Spinner } from '@/src/components/ui/Spinner';
 import { resolveActiveSiteId } from '@/src/lib/auth/activeSite';
 import { useInteractionTracking } from '@/src/hooks/useTelemetry';
-import { downloadTextReport, shareTextWithFallback } from '@/src/lib/reports/shareExport';
+import {
+  downloadTextReport,
+  familySummaryProvenanceSignals,
+  passportReportProvenanceSignals,
+  reportProvenanceMetadata,
+  shareTextWithFallback,
+  type ReportProvenanceMetadata,
+} from '@/src/lib/reports/shareExport';
 import type { CustomRouteRendererProps } from '../customRouteRenderers';
 
 const ParentAnalyticsDashboard = dynamic(
@@ -869,9 +876,22 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
 
   const handleShareSummary = useCallback(async (learner: LearnerSummary) => {
     const shareText = buildGuardianFamilyShareSummary(learner);
+    let reportMetadata: ReportProvenanceMetadata | null = null;
     const result = await shareTextWithFallback({
       title: `Scholesa family summary for ${learner.name}`,
       text: shareText,
+      expectedProvenanceSignals: familySummaryProvenanceSignals,
+      onReportProvenance: (metadata) => {
+        reportMetadata = metadata;
+      },
+    });
+
+    trackInteraction('feature_discovered', {
+      cta: 'guardian_passport_share_family_summary',
+      learnerId: learner.learnerId,
+      report_action: 'share',
+      report_delivery: result,
+      ...(reportMetadata ?? {}),
     });
 
     if (result === 'aborted') return;
@@ -887,14 +907,26 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
           ? 'Family summary copied to clipboard.'
           : 'Sharing is unavailable in this browser. Use Export Text instead.',
     });
-  }, []);
+  }, [trackInteraction]);
 
   const handleExportText = useCallback((learner: LearnerSummary) => {
-    downloadTextReport({
+    let reportMetadata: ReportProvenanceMetadata | null = null;
+    const downloaded = downloadTextReport({
       fileName: `family-passport-${learner.learnerId}.txt`,
       lines: buildGuardianPassportTextLines(learner),
+      expectedProvenanceSignals: passportReportProvenanceSignals,
+      onReportProvenance: (metadata) => {
+        reportMetadata = metadata;
+      },
     });
-  }, []);
+    trackInteraction('feature_discovered', {
+      cta: 'guardian_passport_export_text',
+      learnerId: learner.learnerId,
+      report_action: 'export_text',
+      report_delivery: downloaded ? 'downloaded' : 'unavailable',
+      ...(reportMetadata ?? {}),
+    });
+  }, [trackInteraction]);
 
   const handleExportPdf = useCallback(async (learner: LearnerSummary) => {
     const { jsPDF } = await import('jspdf');
@@ -905,12 +937,13 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
     const marginY = 48;
     const lineHeight = 14;
     const maxWidth = pageWidth - (marginX * 2);
+    const reportLines = buildGuardianPassportTextLines(learner);
     let y = marginY;
 
     pdf.setFont('courier', 'normal');
     pdf.setFontSize(10);
 
-    for (const line of buildGuardianPassportTextLines(learner)) {
+    for (const line of reportLines) {
       const wrapped = pdf.splitTextToSize(line, maxWidth) as string[];
       if (y + (wrapped.length * lineHeight) > pageHeight - marginY) {
         pdf.addPage();
@@ -921,7 +954,17 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
     }
 
     pdf.save(`family-passport-${learner.learnerId}.pdf`);
-  }, []);
+    trackInteraction('feature_discovered', {
+      cta: 'guardian_passport_export_pdf',
+      learnerId: learner.learnerId,
+      report_action: 'export_pdf',
+      report_delivery: 'downloaded',
+      ...reportProvenanceMetadata({
+        text: reportLines.join('\n'),
+        expectedSignals: passportReportProvenanceSignals,
+      }),
+    });
+  }, [trackInteraction]);
 
   // -- Loading state --
   if (loading) {

@@ -429,6 +429,11 @@ describe('LearnerPassportExport learner contract', () => {
     expect(source).toContain("await import('jspdf')");
     expect(source).toContain('shareTextWithFallback');
     expect(source).toContain('downloadTextReport');
+    expect(source).toContain('familySummaryProvenanceSignals');
+    expect(source).toContain('passportReportProvenanceSignals');
+    expect(source).toContain('reportProvenanceMetadata');
+    expect(source).toContain('onReportProvenance');
+    expect(source).toContain('report_delivery');
     expect(source).toContain('const processDomainSnapshotHtml =');
     expect(source).toContain('const processDomainGrowthHtml =');
     expect(source).toContain('<h2>Portfolio Artifacts</h2>');
@@ -502,6 +507,11 @@ describe('GuardianCapabilityViewRenderer site provenance', () => {
     expect(source).toContain("await import('jspdf')");
     expect(source).toContain('shareTextWithFallback');
     expect(source).toContain('downloadTextReport');
+    expect(source).toContain('familySummaryProvenanceSignals');
+    expect(source).toContain('passportReportProvenanceSignals');
+    expect(source).toContain('reportProvenanceMetadata');
+    expect(source).toContain('onReportProvenance');
+    expect(source).toContain('report_delivery');
     expect(source).toContain('Share family summary');
     expect(source).toContain('Export PDF');
   });
