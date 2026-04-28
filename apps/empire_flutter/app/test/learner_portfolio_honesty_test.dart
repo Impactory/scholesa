@@ -15,6 +15,7 @@ import 'package:scholesa_app/modules/educator/educator_mission_review_page.dart'
 import 'package:scholesa_app/modules/missions/mission_service.dart';
 import 'package:scholesa_app/modules/missions/missions_page.dart';
 import 'package:scholesa_app/modules/learner/learner_portfolio_page.dart';
+import 'package:scholesa_app/modules/reports/report_actions.dart';
 import 'package:scholesa_app/runtime/learning_runtime_provider.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
 
@@ -943,5 +944,13 @@ void main() {
     expect(copiedText, contains('Draft field notes'));
     expect(
         copiedText, contains('Next verification prompt: Bring evidence notes'));
+    expect(
+      () => ReportActions.assertReportProvenanceContract(
+        copiedText!,
+        expectedSignals: ReportActions.portfolioReportProvenanceSignals,
+        reportName: 'learner portfolio share report',
+      ),
+      returnsNormally,
+    );
   });
 }

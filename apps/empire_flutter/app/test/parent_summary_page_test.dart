@@ -10,6 +10,7 @@ import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/modules/parent/parent_models.dart';
 import 'package:scholesa_app/modules/parent/parent_service.dart';
 import 'package:scholesa_app/modules/parent/parent_summary_page.dart';
+import 'package:scholesa_app/modules/reports/report_actions.dart';
 import 'package:scholesa_app/services/export_service.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
 
@@ -527,6 +528,14 @@ void main() {
         savedFileContent,
         contains(
             'Verification Prompt: Review: Ask the learner to justify the prototype path without prompts.'));
+    expect(
+      () => ReportActions.assertReportProvenanceContract(
+        savedFileContent!,
+        expectedSignals: ReportActions.passportReportProvenanceSignals,
+        reportName: 'parent summary export',
+      ),
+      returnsNormally,
+    );
   });
 
   testWidgets('parent summary copies a family-safe share summary',
@@ -576,5 +585,13 @@ void main() {
     expect(copiedText, contains('mission-linked'));
     expect(copiedText, contains('rubric 3/4'));
     expect(copiedText, contains('Next verification prompt:'));
+    expect(
+      () => ReportActions.assertReportProvenanceContract(
+        copiedText!,
+        expectedSignals: ReportActions.familySummaryProvenanceSignals,
+        reportName: 'parent summary share',
+      ),
+      returnsNormally,
+    );
   });
 }

@@ -10,6 +10,7 @@ import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/modules/parent/parent_child_page.dart';
 import 'package:scholesa_app/modules/parent/parent_models.dart';
 import 'package:scholesa_app/modules/parent/parent_service.dart';
+import 'package:scholesa_app/modules/reports/report_actions.dart';
 import 'package:scholesa_app/services/export_service.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
 
@@ -352,6 +353,14 @@ void main() {
     expect(savedFileContent, contains('Mission Attempt ID: attempt-1'));
     expect(savedFileContent,
         contains('Verification Prompt: Explain the prototype tradeoff.'));
+    expect(
+      () => ReportActions.assertReportProvenanceContract(
+        savedFileContent!,
+        expectedSignals: ReportActions.passportReportProvenanceSignals,
+        reportName: 'parent child passport export',
+      ),
+      returnsNormally,
+    );
   });
 
   testWidgets(
@@ -405,6 +414,14 @@ void main() {
     expect(copiedText, contains('Featured Portfolio Evidence'));
     expect(copiedText, contains('Evidence IDs: ev-1'));
     expect(copiedText, contains('Mission Attempt ID: attempt-1'));
+    expect(
+      () => ReportActions.assertReportProvenanceContract(
+        copiedText!,
+        expectedSignals: ReportActions.passportReportProvenanceSignals,
+        reportName: 'parent child passport fallback copy',
+      ),
+      returnsNormally,
+    );
   });
 
   testWidgets(
@@ -480,6 +497,14 @@ void main() {
     expect(copiedText, contains('1 evidence records linked'));
     expect(copiedText, contains('1 portfolio artifacts linked'));
     expect(copiedText, contains('Pending verification prompts:'));
+    expect(
+      () => ReportActions.assertReportProvenanceContract(
+        copiedText!,
+        expectedSignals: ReportActions.familySummaryProvenanceSignals,
+        reportName: 'parent child family share',
+      ),
+      returnsNormally,
+    );
   });
 
   testWidgets('parent child page shows explicit not linked state',

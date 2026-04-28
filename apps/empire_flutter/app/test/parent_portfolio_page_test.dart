@@ -12,6 +12,7 @@ import 'package:scholesa_app/auth/app_state.dart';
 import 'package:scholesa_app/modules/parent/parent_models.dart';
 import 'package:scholesa_app/modules/parent/parent_portfolio_page.dart';
 import 'package:scholesa_app/modules/parent/parent_service.dart';
+import 'package:scholesa_app/modules/reports/report_actions.dart';
 import 'package:scholesa_app/runtime/learning_runtime_provider.dart';
 import 'package:scholesa_app/services/export_service.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
@@ -337,6 +338,14 @@ void main() {
         contains('AI Disclosure: Learner declared no AI support used'));
     expect(_clipboardText, contains('Rubric score: 3/4'));
     expect(_clipboardText, contains('Evidence Record IDs: ev-project-1'));
+    expect(
+      () => ReportActions.assertReportProvenanceContract(
+        _clipboardText!,
+        expectedSignals: ReportActions.portfolioReportProvenanceSignals,
+        reportName: 'parent portfolio summary download',
+      ),
+      returnsNormally,
+    );
   });
 
   testWidgets(
