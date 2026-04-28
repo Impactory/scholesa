@@ -19,6 +19,7 @@ import {
   limit,
 } from 'firebase/firestore';
 import { firestore } from '@/src/firebase/client-init';
+import { resolveActiveSiteId } from '@/src/lib/auth/activeSite';
 import type { CustomRouteRendererProps } from '../customRouteRenderers';
 import {
   BrainIcon,
@@ -54,13 +55,17 @@ function computeLocalRiskLevel(state: LearnerState): 'low' | 'medium' | 'high' {
 
 export default function LearnerMiloOSRenderer({ ctx }: CustomRouteRendererProps) {
   const learnerId = ctx.uid;
-  const siteId = ctx.profile?.siteIds?.[0] || '';
+  const siteId = resolveActiveSiteId(ctx.profile);
   const [learnerState, setLearnerState] = useState<LearnerState | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const loadState = useCallback(async () => {
-    if (!learnerId) return;
+    if (!learnerId || !siteId) {
+      setLearnerState(null);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       // Load recent interaction events to compute local risk display
@@ -69,6 +74,7 @@ export default function LearnerMiloOSRenderer({ ctx }: CustomRouteRendererProps)
           query(
             collection(firestore, 'aiInteractionLogs'),
             where('learnerId', '==', learnerId),
+            where('siteId', '==', siteId),
             orderBy('createdAt', 'desc'),
             limit(20)
           )
@@ -77,6 +83,7 @@ export default function LearnerMiloOSRenderer({ ctx }: CustomRouteRendererProps)
           query(
             collection(firestore, 'checkpointHistory'),
             where('learnerId', '==', learnerId),
+            where('siteId', '==', siteId),
             where('status', '==', 'passed'),
             orderBy('createdAt', 'desc'),
             limit(20)
@@ -86,6 +93,7 @@ export default function LearnerMiloOSRenderer({ ctx }: CustomRouteRendererProps)
           query(
             collection(firestore, 'missionAttempts'),
             where('learnerId', '==', learnerId),
+            where('siteId', '==', siteId),
             orderBy('submittedAt', 'desc'),
             limit(10)
           )
@@ -114,7 +122,7 @@ export default function LearnerMiloOSRenderer({ ctx }: CustomRouteRendererProps)
     } finally {
       setLoading(false);
     }
-  }, [learnerId]);
+  }, [learnerId, siteId]);
 
   useEffect(() => {
     loadState();
@@ -142,6 +150,20 @@ export default function LearnerMiloOSRenderer({ ctx }: CustomRouteRendererProps)
         'MiloOS has noticed you may be relying heavily on AI help. Try an independent attempt first — you might surprise yourself!',
     },
   };
+
+  if (!siteId) {
+    return (
+      <div
+        className="rounded-xl border border-amber-200 bg-amber-50 p-8 text-center text-sm text-amber-900"
+        data-testid="learner-miloos-site-required"
+      >
+        <p className="font-semibold">Active site required</p>
+        <p className="mt-1 text-amber-700">
+          Select an active site before using MiloOS learning support.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">

@@ -100,6 +100,7 @@ describe('AI help wording availability', () => {
     expect(screenSource).not.toContain('voiceError instanceof Error && voiceError.message');
 
     expect(dockSource).toContain('<AICoachPopup');
+    expect(dockSource).toContain('resolveActiveSiteId');
     expect(dockSource).toContain("t('common.userLabel')");
     expect(dockSource).toContain("console.error('Failed to load linked roster for AI assistant dock.'");
     expect(dockSource).not.toContain('AI Coach');

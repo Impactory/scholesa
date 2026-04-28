@@ -7,6 +7,7 @@ import { AICoachPopup } from './AICoachPopup';
 import { useI18n } from '@/src/lib/i18n/useI18n';
 import { fetchRoleLinkedRoster } from '@/src/lib/dashboard/roleDashboardApi';
 import { normalizeUserRole } from '@/src/lib/auth/roleAliases';
+import { resolveActiveSiteId } from '@/src/lib/auth/activeSite';
 
 function defaultGradeForRole(role: string | undefined): number {
   switch (role) {
@@ -35,8 +36,8 @@ export function GlobalAIAssistantDock() {
   const [linkedEducatorIds, setLinkedEducatorIds] = useState<string[]>([]);
 
   const activeSiteId = useMemo(
-    () => profile?.activeSiteId || profile?.siteIds?.[0] || '',
-    [profile?.activeSiteId, profile?.siteIds],
+    () => resolveActiveSiteId(profile) ?? '',
+    [profile],
   );
   const actorRole = normalizeUserRole(profile?.role) || 'learner';
 

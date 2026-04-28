@@ -17,7 +17,9 @@ import {
   missionAttemptsCollection,
 } from '@/src/firebase/firestore/collections';
 import { CapabilityGuidancePanel } from '@/src/components/analytics/CapabilityGuidancePanel';
+import { MiloOSLearnerSupportSnapshot } from '@/src/components/dashboards/MiloOSLearnerSupportSnapshot';
 import { useCapabilities } from '@/src/lib/capabilities/useCapabilities';
+import { resolveActiveSiteId } from '@/src/lib/auth/activeSite';
 import { Spinner } from '@/src/components/ui/Spinner';
 import type { CapabilityGrowthEvent } from '@/src/types/schema';
 
@@ -37,7 +39,7 @@ interface MissionAttemptInfo {
 
 export function LearnerDashboardToday() {
   const { user, profile, loading: authLoading } = useAuthContext();
-  const siteId = profile?.studioId ?? profile?.activeSiteId ?? null;
+  const siteId = resolveActiveSiteId(profile);
   const learnerId = user?.uid ?? null;
 
   const [sessions, setSessions] = useState<SessionInfo[]>([]);
@@ -48,7 +50,7 @@ export function LearnerDashboardToday() {
   const { resolveTitle } = useCapabilities(siteId);
 
   useEffect(() => {
-    if (!learnerId) return;
+    if (!learnerId || !siteId) return;
     let cancelled = false;
 
     async function load() {
@@ -59,6 +61,7 @@ export function LearnerDashboardToday() {
           query(
             collection(firestore, 'enrollments'),
             where('learnerId', '==', learnerId),
+            where('siteId', '==', siteId),
             where('status', '==', 'active'),
             limit(25),
           ),
@@ -89,6 +92,7 @@ export function LearnerDashboardToday() {
           query(
             capabilityGrowthEventsCollection,
             where('learnerId', '==', learnerId),
+            where('siteId', '==', siteId),
             orderBy('createdAt', 'desc'),
             limit(10),
           ),
@@ -100,6 +104,7 @@ export function LearnerDashboardToday() {
           query(
             missionAttemptsCollection,
             where('learnerId', '==', learnerId),
+            where('siteId', '==', siteId),
             where('status', '==', 'in_progress'),
             limit(10),
           ),
@@ -128,7 +133,7 @@ export function LearnerDashboardToday() {
 
     void load();
     return () => { cancelled = true; };
-  }, [learnerId]);
+  }, [learnerId, siteId]);
 
   if (authLoading) {
     return (
@@ -142,7 +147,7 @@ export function LearnerDashboardToday() {
   if (!learnerId || !siteId) {
     return (
       <div className="rounded-lg border border-gray-200 bg-white p-8 text-center text-sm text-gray-500">
-        Please sign in to view your dashboard.
+        Please sign in or select an active site to view your dashboard.
       </div>
     );
   }
@@ -172,6 +177,8 @@ export function LearnerDashboardToday() {
 
       {/* Capability Growth Panel */}
       <CapabilityGuidancePanel learnerId={learnerId} siteId={siteId} />
+
+      <MiloOSLearnerSupportSnapshot learnerId={learnerId} siteId={siteId} />
 
       {/* Today's Sessions */}
       <section>

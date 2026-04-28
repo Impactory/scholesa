@@ -171,19 +171,32 @@ describe('Renderers delegate to real evidence components', () => {
     const source = readSrcFile(
       'features', 'workflows', 'renderers', 'LearnerTodayRenderer.tsx'
     );
+    const dashboardSource = readSrcFile('components', 'dashboards', 'LearnerDashboardToday.tsx');
+    const supportSnapshotSource = readSrcFile(
+      'components', 'dashboards', 'MiloOSLearnerSupportSnapshot.tsx'
+    );
+    const insightsHelperSource = readSrcFile('lib', 'miloos', 'learnerLoopInsights.ts');
     expect(registrySource).toContain("'/learner/today': LearnerTodayRenderer");
     expect(source).toContain('LearnerDashboardToday');
     expect(source).toContain('@/src/components/dashboards/LearnerDashboardToday');
+    expect(dashboardSource).toContain('resolveActiveSiteId');
+    expect(dashboardSource).toContain("where('siteId', '==', siteId)");
+    expect(dashboardSource).toContain('MiloOSLearnerSupportSnapshot');
+    expect(supportSnapshotSource).toContain('getMiloOSLearnerLoopInsights');
+    expect(supportSnapshotSource).toContain('AICoachScreen');
+    expect(insightsHelperSource).toContain("'bosGetLearnerLoopInsights'");
   });
 
   it('LearnerHabitsRenderer uses persisted habits instead of routing habits to MiloOS', () => {
     const registrySource = readSrcFile(
       'features', 'workflows', 'customRouteRenderers.tsx'
     );
+    const routesSource = readSrcFile('lib', 'routing', 'workflowRoutes.ts');
     const source = readSrcFile(
       'features', 'workflows', 'renderers', 'LearnerHabitsRenderer.tsx'
     );
     expect(registrySource).toContain("'/learner/habits': LearnerHabitsRenderer");
+    expect(routesSource).toContain('Persisted learner routine tracking that stays separate from capability mastery claims.');
     expect(source).toContain("collection(firestore, 'habits')");
     expect(source).toContain("collection(firestore, 'habitLogs')");
     expect(source).toContain('writeBatch');
@@ -268,8 +281,11 @@ describe('Renderers delegate to real evidence components', () => {
       'features', 'workflows', 'renderers', 'LearnerMiloOSRenderer.tsx'
     );
     expect(source).toContain('AICoachScreen');
+    expect(source).toContain('resolveActiveSiteId');
+    expect(source).toContain("where('siteId', '==', siteId)");
     expect(source).toContain('aiInteractionLogs');
     expect(source).toContain('autonomyRiskLevel');
+    expect(source).toContain('data-testid="learner-miloos-site-required"');
   });
 
   it('SiteImplementationHealthRenderer queries evidence chain collections', () => {

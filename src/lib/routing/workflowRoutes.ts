@@ -157,7 +157,7 @@ export const WORKFLOW_ROUTE_DEFINITIONS: WorkflowRouteDefinition[] = [
   {
     path: '/learner/habits',
     title: 'Learning Habits',
-    description: 'MiloOS learning support with autonomy awareness and intervention state.',
+    description: 'Persisted learner routine tracking that stays separate from capability mastery claims.',
     allowedRoles: ['learner', 'educator', 'hq'],
     navGroup: 'learner',
     dataMode: 'firestore',

@@ -17,4 +17,12 @@ describe('functions MiloOS wording', () => {
     expect(indexSource).toContain("'MiloOS session ownership mismatch.'");
     expect(indexSource).not.toContain('Learner role required for AI coach.');
   });
+
+  it('keeps MiloOS learner callables site-scoped before audit writes', () => {
+    const indexSource = readFunctionsFile('index.ts');
+    const siteAccessGuards = indexSource.match(/if \(!hasSiteAccess\(profile, siteId\)\)/g) ?? [];
+
+    expect(siteAccessGuards.length).toBeGreaterThanOrEqual(2);
+    expect(indexSource).toContain("throw new HttpsError('permission-denied', 'Site access denied.');");
+  });
 });

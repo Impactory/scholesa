@@ -258,11 +258,12 @@ void main() {
               enforceProvenanceContract: true,
               sharePolicy: ReportActions.familyReportSharePolicy,
             );
+            await tester.pump();
+            await tester.pump();
           },
         ),
       ),
     );
-    await tester.pump();
 
     expect(shareRequestCalls, hasLength(1));
     expect(
@@ -487,6 +488,8 @@ void main() {
                   ReportActions.passportReportProvenanceSignals,
               enforceProvenanceContract: true,
             );
+            await tester.pump();
+            await tester.pump();
           },
         ),
       ),

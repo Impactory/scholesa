@@ -1260,6 +1260,9 @@ export const genAiCoach = onCall(async (request) => {
   if (!siteId) {
     throw new HttpsError('invalid-argument', 'siteId is required.');
   }
+  if (!hasSiteAccess(profile, siteId)) {
+    throw new HttpsError('permission-denied', 'Site access denied.');
+  }
 
   await assertActiveSchoolConsent(siteId);
   const { gradeBand: gb, coppaBand, source: gradeBandSource } = resolveGradeBandFromClaims(request, gradeBand);
@@ -1552,6 +1555,9 @@ export const submitExplainBack = onCall(async (request) => {
   }
   if (!explainBack) {
     throw new HttpsError('invalid-argument', 'explainBack is required.');
+  }
+  if (!hasSiteAccess(profile, siteId)) {
+    throw new HttpsError('permission-denied', 'Site access denied.');
   }
 
   await assertActiveSchoolConsent(siteId);
