@@ -1933,6 +1933,7 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
       cta: 'learner_portfolio_share_report',
       successMessage: _t('Portfolio summary copied for sharing.'),
       errorMessage: _t('Unable to copy portfolio summary right now.'),
+      expectedProvenanceSignals: ReportActions.portfolioReportProvenanceSignals,
     );
   }
 

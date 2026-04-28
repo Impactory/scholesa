@@ -726,6 +726,7 @@ class _ParentChildPageState extends State<ParentChildPage> {
       errorMessage: _t('Unable to download Ideation Passport right now.'),
       unsupportedLogMessage:
           'Export unsupported for parent passport download, copying summary instead',
+      expectedProvenanceSignals: ReportActions.passportReportProvenanceSignals,
     );
   }
 
@@ -741,6 +742,7 @@ class _ParentChildPageState extends State<ParentChildPage> {
       cta: 'parent_child_share_family_summary',
       successMessage: _t('Family summary copied for sharing.'),
       errorMessage: _t('Unable to copy family summary right now.'),
+      expectedProvenanceSignals: ReportActions.familySummaryProvenanceSignals,
     );
   }
 
@@ -902,6 +904,66 @@ class _ParentChildPageState extends State<ParentChildPage> {
         lines.add(
           '  ${_t('Mission Attempt IDs')}: ${claim.missionAttemptIds.join(', ')}',
         );
+      }
+      lines.add('');
+    }
+
+    if (learner.growthTimeline.isNotEmpty) {
+      lines.add(_t('Recent Growth Provenance'));
+      for (final GrowthTimelineEntry entry in learner.growthTimeline.take(5)) {
+        lines.add('- ${_formatGrowthTimelineEntry(entry)}');
+      }
+      lines.add('');
+    }
+
+    final List<PortfolioPreviewItem> featuredPortfolio =
+        learner.portfolioItemsPreview
+            .where(
+              (PortfolioPreviewItem item) =>
+                  item.evidenceLinked ||
+                  item.evidenceRecordIds.isNotEmpty ||
+                  item.missionAttemptId?.trim().isNotEmpty == true,
+            )
+            .take(5)
+            .toList();
+    if (featuredPortfolio.isNotEmpty) {
+      lines.add(_t('Featured Portfolio Evidence'));
+      for (final PortfolioPreviewItem item in featuredPortfolio) {
+        lines.add('- ${item.title}');
+        lines.add(
+            '  ${_t('Status')}: ${_titleCase(item.verificationStatus ?? 'pending')}');
+        lines.add(
+            '  ${_t('Proof of Learning')}: ${_titleCase(item.proofOfLearningStatus ?? 'missing')}');
+        lines.add(
+            '  ${_t('AI Disclosure')}: ${_formatAiDisclosure(item.aiDisclosureStatus)}');
+        lines
+            .add('  ${_t('Evidence Count')}: ${item.evidenceRecordIds.length}');
+        if (item.capabilityTitles.isNotEmpty) {
+          lines.add(
+              '  ${_t('Capabilities')}: ${item.capabilityTitles.join(', ')}');
+        }
+        if (item.reviewingEducatorName?.trim().isNotEmpty == true) {
+          lines.add('  ${_t('Reviewed by')}: ${item.reviewingEducatorName}');
+        }
+        if (item.reviewedAt != null) {
+          lines.add(
+              '  ${_t('Review date')}: ${item.reviewedAt!.month.toString().padLeft(2, '0')}/${item.reviewedAt!.day.toString().padLeft(2, '0')}/${item.reviewedAt!.year}');
+        }
+        if ((item.rubricRawScore ?? 0) > 0 && (item.rubricMaxScore ?? 0) > 0) {
+          lines.add(
+              '  ${_t('Rubric score')}: ${item.rubricRawScore}/${item.rubricMaxScore}');
+        }
+        if (item.evidenceRecordIds.isNotEmpty) {
+          lines.add(
+              '  ${_t('Evidence IDs')}: ${item.evidenceRecordIds.join(', ')}');
+        }
+        if (item.missionAttemptId?.trim().isNotEmpty == true) {
+          lines.add('  ${_t('Mission Attempt ID')}: ${item.missionAttemptId}');
+        }
+        if (item.verificationPrompt?.trim().isNotEmpty == true) {
+          lines.add(
+              '  ${_t('Verification Prompt')}: ${item.verificationPrompt}');
+        }
       }
       lines.add('');
     }

@@ -928,6 +928,7 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
       errorMessage: _t('Unable to export family summary right now.'),
       unsupportedLogMessage:
           'Export unsupported for parent summary download, copying summary instead',
+      expectedProvenanceSignals: ReportActions.passportReportProvenanceSignals,
     );
   }
 
@@ -943,6 +944,7 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
       cta: 'parent_summary_share_family_summary',
       successMessage: _t('Family summary copied for sharing.'),
       errorMessage: _t('Unable to copy family summary right now.'),
+      expectedProvenanceSignals: ReportActions.familySummaryProvenanceSignals,
     );
   }
 
@@ -1002,6 +1004,46 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
             '- ${_formatGrowthTimelineEntry(entry)}'),
       );
     }
+    if (featuredPortfolioItem != null) {
+      lines.add('');
+      lines.add(_t('Featured Portfolio Evidence'));
+      lines.add('- ${featuredPortfolioItem.title}');
+      lines.add(
+          '  ${_t('Artifact Review Status')}: ${_titleCase(featuredPortfolioItem.verificationStatus ?? 'pending')}');
+      lines.add(
+          '  ${_t('Proof of Learning')}: ${_formatTimelineProofStatus(featuredPortfolioItem.proofOfLearningStatus ?? 'missing')}');
+      lines.add(
+          '  ${_t('AI Disclosure')}: ${_formatAiDisclosure(featuredPortfolioItem.aiDisclosureStatus)}');
+      if (featuredPortfolioItem.capabilityTitles.isNotEmpty) {
+        lines.add(
+            '  ${_t('Capabilities')}: ${featuredPortfolioItem.capabilityTitles.join(', ')}');
+      }
+      if (featuredPortfolioItem.reviewingEducatorName?.trim().isNotEmpty ==
+          true) {
+        lines.add(
+            '  ${_t('Reviewed by')}: ${featuredPortfolioItem.reviewingEducatorName}');
+      }
+      if ((featuredPortfolioItem.rubricRawScore ?? 0) > 0 &&
+          (featuredPortfolioItem.rubricMaxScore ?? 0) > 0) {
+        lines.add(
+            '  ${_t('Rubric score')}: ${featuredPortfolioItem.rubricRawScore}/${featuredPortfolioItem.rubricMaxScore}');
+      } else if ((featuredPortfolioItem.rubricLevel ?? 0) > 0) {
+        lines.add(
+            '  ${_t('Rubric level')}: ${_levelLabel(featuredPortfolioItem.rubricLevel ?? 0)}');
+      }
+      if (featuredPortfolioItem.evidenceRecordIds.isNotEmpty) {
+        lines.add(
+            '  ${_t('Evidence IDs')}: ${featuredPortfolioItem.evidenceRecordIds.join(', ')}');
+      }
+      if (featuredPortfolioItem.missionAttemptId?.trim().isNotEmpty == true) {
+        lines.add(
+            '  ${_t('Mission Attempt ID')}: ${featuredPortfolioItem.missionAttemptId}');
+      }
+      if (featuredPortfolioItem.verificationPrompt?.trim().isNotEmpty == true) {
+        lines.add(
+            '  ${_t('Verification Prompt')}: ${featuredPortfolioItem.verificationPrompt}');
+      }
+    }
 
     return lines.join('\n');
   }
@@ -1039,6 +1081,11 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
               (GrowthTimelineEntry entry) =>
                   '- ${_formatGrowthTimelineEntry(entry)}',
             ),
+      ],
+      if (featuredPortfolioItem != null) ...<String>[
+        '',
+        'Featured portfolio evidence:',
+        '- ${_formatPortfolioEvidenceShareLine(featuredPortfolioItem)}',
       ],
       '',
       'Next verification prompt:',
@@ -1251,6 +1298,31 @@ class _ParentSummaryPageState extends State<ParentSummaryPage> {
       final DateTime value = entry.occurredAt!;
       parts.add(
           '${value.month.toString().padLeft(2, '0')}/${value.day.toString().padLeft(2, '0')}/${value.year}');
+    }
+    return parts.join(' • ');
+  }
+
+  String _formatPortfolioEvidenceShareLine(PortfolioPreviewItem item) {
+    final List<String> parts = <String>[
+      item.title,
+      _titleCase(item.verificationStatus ?? 'pending'),
+      '${item.evidenceRecordIds.length} ${_t('evidence records linked')}',
+      item.missionAttemptId?.trim().isNotEmpty == true
+          ? _t('mission-linked')
+          : _t('standalone artifact'),
+    ];
+    if (item.proofOfLearningStatus?.trim().isNotEmpty == true) {
+      parts.add(
+          '${_t('proof')} ${_formatTimelineProofStatus(item.proofOfLearningStatus!)}');
+    }
+    if (item.reviewingEducatorName?.trim().isNotEmpty == true) {
+      parts.add('${_t('reviewed by')} ${item.reviewingEducatorName}');
+    }
+    if ((item.rubricRawScore ?? 0) > 0 && (item.rubricMaxScore ?? 0) > 0) {
+      parts
+          .add('${_t('rubric')} ${item.rubricRawScore}/${item.rubricMaxScore}');
+    } else if ((item.rubricLevel ?? 0) > 0) {
+      parts.add('${_t('rubric')} ${_levelLabel(item.rubricLevel ?? 0)}');
     }
     return parts.join(' • ');
   }

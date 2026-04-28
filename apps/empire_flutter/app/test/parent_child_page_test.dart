@@ -172,10 +172,39 @@ LearnerSummary _sampleLearner() {
           latestLevel: 3,
           evidenceCount: 2,
           verifiedArtifactCount: 1,
+          evidenceRecordIds: <String>['ev-1'],
+          portfolioItemIds: <String>['portfolio-1'],
+          missionAttemptIds: <String>['attempt-1'],
+          proofOfLearningStatus: 'verified',
           aiDisclosureStatus: 'learner-ai-not-used',
+          reviewingEducatorName: 'Coach Rivera',
+          rubricRawScore: 3,
+          rubricMaxScore: 4,
         ),
       ],
     ),
+    portfolioItemsPreview: <PortfolioPreviewItem>[
+      PortfolioPreviewItem(
+        id: 'portfolio-1',
+        title: 'Prototype Reflection',
+        description: 'Explains iteration evidence.',
+        pillar: 'Impact',
+        type: 'reflection',
+        completedAt: now,
+        verificationStatus: 'reviewed',
+        evidenceLinked: true,
+        capabilityTitles: const <String>['Evidence-backed reasoning'],
+        evidenceRecordIds: const <String>['ev-1'],
+        missionAttemptId: 'attempt-1',
+        verificationPrompt: 'Explain the prototype tradeoff.',
+        proofOfLearningStatus: 'verified',
+        aiDisclosureStatus: 'learner-ai-not-used',
+        reviewingEducatorName: 'Coach Rivera',
+        reviewedAt: now,
+        rubricRawScore: 3,
+        rubricMaxScore: 4,
+      ),
+    ],
     growthTimeline: <GrowthTimelineEntry>[
       GrowthTimelineEntry(
         capabilityId: 'cap-1',
@@ -308,6 +337,21 @@ void main() {
     expect(savedFileContent, contains('Ideation Passport'));
     expect(savedFileContent, contains('Ava Learner'));
     expect(savedFileContent, contains('Reviewed/Verified Artifacts'));
+    expect(savedFileContent, contains('Evidence IDs: ev-1'));
+    expect(savedFileContent, contains('Portfolio Item IDs: portfolio-1'));
+    expect(savedFileContent, contains('Mission Attempt IDs: attempt-1'));
+    expect(savedFileContent, contains('Recent Growth Provenance'));
+    expect(
+        savedFileContent, contains('Evidence-backed reasoning • Proficient'));
+    expect(savedFileContent, contains('rubric 3/4'));
+    expect(savedFileContent, contains('reviewed by Coach Rivera'));
+    expect(savedFileContent, contains('1 evidence records linked'));
+    expect(savedFileContent, contains('1 portfolio artifacts linked'));
+    expect(savedFileContent, contains('Featured Portfolio Evidence'));
+    expect(savedFileContent, contains('Prototype Reflection'));
+    expect(savedFileContent, contains('Mission Attempt ID: attempt-1'));
+    expect(savedFileContent,
+        contains('Verification Prompt: Explain the prototype tradeoff.'));
   });
 
   testWidgets(
@@ -357,6 +401,10 @@ void main() {
     expect(copiedText, contains('Ideation Passport'));
     expect(copiedText, contains('Learner: Ava Learner'));
     expect(copiedText, contains('Reviewed/Verified Artifacts'));
+    expect(copiedText, contains('Recent Growth Provenance'));
+    expect(copiedText, contains('Featured Portfolio Evidence'));
+    expect(copiedText, contains('Evidence IDs: ev-1'));
+    expect(copiedText, contains('Mission Attempt ID: attempt-1'));
   });
 
   testWidgets(

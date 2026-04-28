@@ -595,11 +595,18 @@ function buildGuardianPassportTextLines(learner: LearnerSummary): string[] {
       lines.push(`  ${item.title}`);
       lines.push(`    Status:          ${VERIFICATION_CONFIG[item.verificationStatus]?.label ?? 'Unverified'}`);
       lines.push(`    AI Disclosure:   ${AI_DISCLOSURE_CONFIG[item.aiDisclosure]?.label ?? 'Not assessed'}`);
+      lines.push(`    Provenance:      ${item.evidenceCount ?? 0} evidence, ${item.missionAttemptId ? 'mission-linked' : 'standalone artifact'}, ${item.source ?? 'portfolio'}`);
       lines.push(`    Proof methods:   ${[
         item.proofDetails.explainItBack ? 'ExplainItBack' : null,
         item.proofDetails.oralCheck ? 'OralCheck' : null,
         item.proofDetails.miniRebuild ? 'MiniRebuild' : null,
       ].filter(Boolean).join(' · ') || '—'}`);
+      if (item.proofDetails.educatorVerifierName) {
+        lines.push(`    Reviewed by:     ${item.proofDetails.educatorVerifierName}${item.reviewedAt ? ` (${formatDate(item.reviewedAt)})` : ''}`);
+      }
+      if (item.rubricScore) {
+        lines.push(`    Rubric Score:    ${item.rubricScore.raw}/${item.rubricScore.max} (${item.rubricScore.level})`);
+      }
       if (item.verificationPrompt) {
         lines.push(`    Verify next:     ${item.verificationPrompt}`);
       }
@@ -626,6 +633,10 @@ function buildGuardianPassportTextLines(learner: LearnerSummary): string[] {
       lines.push(`  ${formatDate(event.date)} · ${event.capabilityTitle}`);
       lines.push(`    Level:           ${event.levelAchieved}`);
       lines.push(`    Proof status:    ${PROOF_STATUS_CONFIG[event.proofStatus]?.label ?? 'Missing'}`);
+      lines.push(`    Reviewed by:     ${event.educatorName}`);
+      if (event.rubricScore) {
+        lines.push(`    Rubric Score:    ${event.rubricScore.raw}/${event.rubricScore.max}`);
+      }
       lines.push(`    Provenance:      ${event.linkedEvidenceCount} evidence, ${event.linkedPortfolioCount} portfolio${event.missionAttemptId ? ', mission-linked' : ''}`);
     }
   }

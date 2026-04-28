@@ -1132,6 +1132,8 @@ class _ParentPortfolioPageState extends State<ParentPortfolioPage>
         errorMessage: _t('Unable to download portfolio summary right now.'),
         unsupportedLogMessage:
             'Export unsupported for parent portfolio download, copying summary instead',
+        expectedProvenanceSignals:
+            ReportActions.portfolioReportProvenanceSignals,
       );
       return;
     } catch (error) {

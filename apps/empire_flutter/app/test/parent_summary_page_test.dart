@@ -200,6 +200,9 @@ LearnerSummary _richLearnerSummary() {
         completedAt: now.subtract(const Duration(days: 1)),
         verificationStatus: 'reviewed',
         evidenceLinked: true,
+        capabilityTitles: const <String>['Evidence-backed reasoning'],
+        evidenceRecordIds: const <String>['ev-1'],
+        missionAttemptId: 'attempt-1',
         verificationPrompt:
             'Review: Ask the learner to justify the prototype path without prompts.',
         progressionDescriptors: const <String>[
@@ -218,6 +221,8 @@ LearnerSummary _richLearnerSummary() {
         aiAssistanceDetails:
             'Learner noted that the prototype notes were drafted without AI support.',
         reviewingEducatorName: 'Coach Rivera',
+        rubricRawScore: 3,
+        rubricMaxScore: 4,
         rubricLevel: 3,
       ),
     ],
@@ -231,6 +236,9 @@ LearnerSummary _richLearnerSummary() {
           latestLevel: 3,
           evidenceCount: 3,
           verifiedArtifactCount: 1,
+          evidenceRecordIds: <String>['ev-1'],
+          portfolioItemIds: <String>['portfolio-1'],
+          missionAttemptIds: <String>['attempt-1'],
           progressionDescriptors: const <String>[
             'Learner explains why the prototype choice fits the observed evidence.',
           ],
@@ -507,6 +515,18 @@ void main() {
     expect(savedFileContent, contains('Recent growth timeline'));
     expect(savedFileContent, contains('AI Disclosure'));
     expect(savedFileContent, contains('Learner declared no AI support used'));
+    expect(savedFileContent, contains('Featured Portfolio Evidence'));
+    expect(savedFileContent, contains('Prototype Evidence'));
+    expect(
+        savedFileContent, contains('Capabilities: Evidence-backed reasoning'));
+    expect(savedFileContent, contains('Reviewed by: Coach Rivera'));
+    expect(savedFileContent, contains('Rubric score: 3/4'));
+    expect(savedFileContent, contains('Evidence IDs: ev-1'));
+    expect(savedFileContent, contains('Mission Attempt ID: attempt-1'));
+    expect(
+        savedFileContent,
+        contains(
+            'Verification Prompt: Review: Ask the learner to justify the prototype path without prompts.'));
   });
 
   testWidgets('parent summary copies a family-safe share summary',
@@ -551,6 +571,10 @@ void main() {
     expect(copiedText, contains('Evidence-backed reasoning • Proficient'));
     expect(copiedText, contains('1 evidence records linked'));
     expect(copiedText, contains('1 portfolio artifacts linked'));
+    expect(copiedText, contains('Featured portfolio evidence:'));
+    expect(copiedText, contains('Prototype Evidence • Reviewed'));
+    expect(copiedText, contains('mission-linked'));
+    expect(copiedText, contains('rubric 3/4'));
     expect(copiedText, contains('Next verification prompt:'));
   });
 }

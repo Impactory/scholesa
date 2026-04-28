@@ -523,6 +523,10 @@ describe('GuardianCapabilityViewRenderer site provenance', () => {
     expect(source).toContain('rubric ${claim.rubricScore.raw}/${claim.rubricScore.max}');
     expect(source).toContain('${event.linkedEvidenceCount} evidence link(s)');
     expect(source).toContain('${event.linkedPortfolioCount} portfolio link(s)');
+    expect(source).toContain('${item.evidenceCount ?? 0} evidence, ${item.missionAttemptId ?');
+    expect(source).toContain('Rubric Score:    ${item.rubricScore.raw}/${item.rubricScore.max} (${item.rubricScore.level})');
+    expect(source).toContain('Reviewed by:     ${event.educatorName}');
+    expect(source).toContain('Rubric Score:    ${event.rubricScore.raw}/${event.rubricScore.max}');
   });
 
   it('surfaces titled process-domain progress in the family passport and on-screen view', () => {
