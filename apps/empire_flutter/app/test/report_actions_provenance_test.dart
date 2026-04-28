@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:scholesa_app/modules/reports/report_actions.dart';
 import 'package:scholesa_app/services/export_service.dart';
+import 'package:scholesa_app/services/report_delivery_audit_service.dart';
+import 'package:scholesa_app/services/report_share_request_service.dart';
 import 'package:scholesa_app/services/telemetry_service.dart';
 
 const String _richEvidenceReport = '''
@@ -196,6 +198,105 @@ void main() {
     expect(notificationMetadata['report_has_ai_disclosure_signal'], isTrue);
   });
 
+  testWidgets('clipboard report delivery writes durable audit payload',
+      (WidgetTester tester) async {
+    final List<Map<String, dynamic>> auditCalls = <Map<String, dynamic>>[];
+    final List<Map<String, dynamic>> shareRequestCalls =
+        <Map<String, dynamic>>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      SystemChannels.platform,
+      (MethodCall methodCall) async => null,
+    );
+
+    late ScaffoldMessengerState messenger;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (BuildContext context) {
+              messenger = ScaffoldMessenger.of(context);
+              return const SizedBox.shrink();
+            },
+          ),
+        ),
+      ),
+    );
+
+    await ReportShareRequestService.runWithCallableInvoker(
+      (String callableName, Map<String, dynamic> payload) async {
+        shareRequestCalls.add(<String, dynamic>{
+          'callableName': callableName,
+          'payload': payload,
+        });
+        return <String, dynamic>{'id': 'share-request-1'};
+      },
+      () => ReportDeliveryAuditService.runWithCallableInvoker(
+        (String callableName, Map<String, dynamic> payload) async {
+          auditCalls.add(<String, dynamic>{
+            'callableName': callableName,
+            'payload': payload,
+          });
+        },
+        () => TelemetryService.runWithDispatcher(
+          (_) async {},
+          () async {
+            await ReportActions.shareToClipboard(
+              messenger: messenger,
+              isMounted: () => true,
+              content: _richEvidenceReport,
+              module: 'parent_summary',
+              surface: 'family_dashboard',
+              cta: 'parent_summary_share_family_summary',
+              successMessage: 'Copied.',
+              errorMessage: 'Unable to copy.',
+              learnerId: 'learner-1',
+              role: 'parent',
+              siteId: 'site-1',
+              expectedProvenanceSignals:
+                  ReportActions.passportReportProvenanceSignals,
+              enforceProvenanceContract: true,
+              sharePolicy: ReportActions.familyReportSharePolicy,
+            );
+          },
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(shareRequestCalls, hasLength(1));
+    expect(
+      shareRequestCalls.single['callableName'],
+      'createReportShareRequest',
+    );
+    final Map<String, dynamic> sharePayload =
+        shareRequestCalls.single['payload'] as Map<String, dynamic>;
+    expect(sharePayload['siteId'], 'site-1');
+    expect(sharePayload['learnerId'], 'learner-1');
+    expect(sharePayload['reportAction'], 'share');
+    expect(sharePayload['reportDelivery'], 'copied');
+    expect(sharePayload['audience'], 'guardian');
+    expect(sharePayload['visibility'], 'family');
+    expect(auditCalls, hasLength(1));
+    expect(auditCalls.single['callableName'], 'recordReportDeliveryAudit');
+    final Map<String, dynamic> payload =
+        auditCalls.single['payload'] as Map<String, dynamic>;
+    expect(payload['siteId'], 'site-1');
+    expect(payload['learnerId'], 'learner-1');
+    expect(payload['reportAction'], 'share');
+    expect(payload['reportDelivery'], 'copied');
+    expect(payload['reportBlockReason'], isNull);
+    expect(payload['shareRequestId'], 'share-request-1');
+    expect(payload['module'], 'parent_summary');
+    expect(payload['surface'], 'family_dashboard');
+    expect(payload['cta'], 'parent_summary_share_family_summary');
+    final Map<String, dynamic> metadata =
+        payload['metadata'] as Map<String, dynamic>;
+    expect(metadata['report_share_policy_declared'], isTrue);
+    expect(metadata['report_meets_delivery_contract'], isTrue);
+    expect(metadata['report_has_verification_prompt_signal'], isTrue);
+  });
+
   testWidgets('enforced provenance contract blocks weak report delivery',
       (WidgetTester tester) async {
     final List<Map<String, dynamic>> events = <Map<String, dynamic>>[];
@@ -322,6 +423,9 @@ void main() {
   testWidgets('enforced reports block rich content without a share policy',
       (WidgetTester tester) async {
     final List<Map<String, dynamic>> events = <Map<String, dynamic>>[];
+    final List<Map<String, dynamic>> auditCalls = <Map<String, dynamic>>[];
+    final List<Map<String, dynamic>> shareRequestCalls =
+        <Map<String, dynamic>>[];
     int clipboardWrites = 0;
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
@@ -348,25 +452,44 @@ void main() {
       ),
     );
 
-    await TelemetryService.runWithDispatcher(
-      (Map<String, dynamic> payload) async {
-        events.add(payload);
+    await ReportShareRequestService.runWithCallableInvoker(
+      (String callableName, Map<String, dynamic> payload) async {
+        shareRequestCalls.add(<String, dynamic>{
+          'callableName': callableName,
+          'payload': payload,
+        });
+        return <String, dynamic>{'id': 'share-request-1'};
       },
-      () async {
-        await ReportActions.shareToClipboard(
-          messenger: messenger,
-          isMounted: () => true,
-          content: _richEvidenceReport,
-          module: 'parent_summary',
-          surface: 'family_dashboard',
-          cta: 'parent_summary_share_family_summary',
-          successMessage: 'Copied.',
-          errorMessage: 'Unable to copy.',
-          expectedProvenanceSignals:
-              ReportActions.passportReportProvenanceSignals,
-          enforceProvenanceContract: true,
-        );
-      },
+      () => ReportDeliveryAuditService.runWithCallableInvoker(
+        (String callableName, Map<String, dynamic> payload) async {
+          auditCalls.add(<String, dynamic>{
+            'callableName': callableName,
+            'payload': payload,
+          });
+        },
+        () => TelemetryService.runWithDispatcher(
+          (Map<String, dynamic> payload) async {
+            events.add(payload);
+          },
+          () async {
+            await ReportActions.shareToClipboard(
+              messenger: messenger,
+              isMounted: () => true,
+              content: _richEvidenceReport,
+              module: 'parent_summary',
+              surface: 'family_dashboard',
+              cta: 'parent_summary_share_family_summary',
+              successMessage: 'Copied.',
+              errorMessage: 'Unable to copy.',
+              learnerId: 'learner-1',
+              siteId: 'site-1',
+              expectedProvenanceSignals:
+                  ReportActions.passportReportProvenanceSignals,
+              enforceProvenanceContract: true,
+            );
+          },
+        ),
+      ),
     );
     await tester.pump();
 
@@ -386,5 +509,21 @@ void main() {
     expect(blockedMetadata['report_meets_provenance_contract'], isTrue);
     expect(blockedMetadata['report_meets_delivery_contract'], isFalse);
     expect(blockedMetadata['report_block_reason'], 'missing_share_policy');
+    expect(shareRequestCalls, isEmpty);
+    expect(auditCalls, hasLength(1));
+    expect(auditCalls.single['callableName'], 'recordReportDeliveryAudit');
+    final Map<String, dynamic> auditPayload =
+        auditCalls.single['payload'] as Map<String, dynamic>;
+    expect(auditPayload['reportDelivery'], 'contract-failed');
+    expect(auditPayload['reportBlockReason'], 'missing_share_policy');
+    expect(auditPayload['learnerId'], 'learner-1');
+    expect(auditPayload['siteId'], 'site-1');
+    final Map<String, dynamic> auditMetadata =
+        auditPayload['metadata'] as Map<String, dynamic>;
+    expect(auditMetadata['report_share_policy_declared'], isFalse);
+    expect(
+      auditMetadata['report_missing_delivery_contract_fields'],
+      <String>['sharePolicy'],
+    );
   });
 }

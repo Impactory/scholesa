@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../services/export_service.dart';
+import '../../services/report_delivery_audit_service.dart';
+import '../../services/report_share_request_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/theme/scholesa_theme.dart';
 
@@ -197,6 +201,94 @@ class ReportActions {
     return terms.any(normalized.contains);
   }
 
+  static String? _reportBlockReason(Map<String, dynamic> provenanceMetadata) {
+    final Object? missingFields =
+        provenanceMetadata['report_missing_delivery_contract_fields'];
+    if (missingFields is Iterable && missingFields.contains('sharePolicy')) {
+      return 'missing_share_policy';
+    }
+    final Object? missingSignals =
+        provenanceMetadata['report_missing_provenance_signals'];
+    if (missingSignals is Iterable && missingSignals.isNotEmpty) {
+      return 'missing_provenance';
+    }
+    return null;
+  }
+
+  static void _recordReportDeliveryLifecycle({
+    required String? siteId,
+    required String? learnerId,
+    required String reportAction,
+    required String reportDelivery,
+    required String module,
+    required String surface,
+    required String cta,
+    required Map<String, dynamic> provenanceMetadata,
+    required Map<String, dynamic> metadata,
+    String? fileName,
+  }) {
+    unawaited(
+      _recordReportDeliveryLifecycleAsync(
+        siteId: siteId,
+        learnerId: learnerId,
+        reportAction: reportAction,
+        reportDelivery: reportDelivery,
+        module: module,
+        surface: surface,
+        cta: cta,
+        fileName: fileName,
+        provenanceMetadata: provenanceMetadata,
+        metadata: metadata,
+      ),
+    );
+  }
+
+  static Future<void> _recordReportDeliveryLifecycleAsync({
+    required String? siteId,
+    required String? learnerId,
+    required String reportAction,
+    required String reportDelivery,
+    required String module,
+    required String surface,
+    required String cta,
+    required Map<String, dynamic> provenanceMetadata,
+    required Map<String, dynamic> metadata,
+    String? fileName,
+  }) async {
+    final Map<String, dynamic> mergedMetadata = <String, dynamic>{
+      ...provenanceMetadata,
+      ...metadata,
+    };
+    final String? shareRequestId =
+        await ReportShareRequestService.instance.create(
+      siteId: siteId,
+      learnerId: learnerId,
+      reportAction: reportAction,
+      reportDelivery: reportDelivery,
+      module: module,
+      surface: surface,
+      cta: cta,
+      fileName: fileName,
+      metadata: mergedMetadata,
+    );
+
+    await ReportDeliveryAuditService.instance.record(
+      siteId: siteId,
+      learnerId: learnerId,
+      reportAction: reportAction,
+      reportDelivery: reportDelivery,
+      reportBlockReason: reportDelivery == 'contract-failed'
+          ? _reportBlockReason(provenanceMetadata)
+          : null,
+      module: module,
+      surface: surface,
+      cta: cta,
+      fileName: fileName,
+      shareRequestId: shareRequestId,
+      metadata: mergedMetadata,
+    );
+  }
+
   static Future<void> exportText({
     required ScaffoldMessengerState messenger,
     required bool Function() isMounted,
@@ -247,6 +339,18 @@ class ReportActions {
               : 'missing_provenance',
         },
       );
+      _recordReportDeliveryLifecycle(
+        siteId: siteId,
+        learnerId: learnerId,
+        reportAction: 'export_text',
+        reportDelivery: 'contract-failed',
+        module: module,
+        surface: surface,
+        cta: copiedEventName,
+        fileName: fileName,
+        provenanceMetadata: provenanceMetadata,
+        metadata: metadata,
+      );
       if (isMounted()) {
         messenger.showSnackBar(
           SnackBar(
@@ -283,6 +387,18 @@ class ReportActions {
           ...metadata,
         },
       );
+      _recordReportDeliveryLifecycle(
+        siteId: siteId,
+        learnerId: learnerId,
+        reportAction: 'export_text',
+        reportDelivery: 'downloaded',
+        module: module,
+        surface: surface,
+        cta: copiedEventName,
+        fileName: fileName,
+        provenanceMetadata: provenanceMetadata,
+        metadata: metadata,
+      );
       await onDownloaded?.call();
       if (showSuccessSnackBar) {
         messenger.showSnackBar(
@@ -305,6 +421,18 @@ class ReportActions {
           ...provenanceMetadata,
           ...metadata,
         },
+      );
+      _recordReportDeliveryLifecycle(
+        siteId: siteId,
+        learnerId: learnerId,
+        reportAction: 'export_text',
+        reportDelivery: 'copied',
+        module: module,
+        surface: surface,
+        cta: copiedEventName,
+        fileName: fileName,
+        provenanceMetadata: provenanceMetadata,
+        metadata: metadata,
       );
       await onCopied?.call();
       if (!isMounted()) {
@@ -372,6 +500,17 @@ class ReportActions {
               : 'missing_provenance',
         },
       );
+      _recordReportDeliveryLifecycle(
+        siteId: siteId,
+        learnerId: learnerId,
+        reportAction: 'share',
+        reportDelivery: 'contract-failed',
+        module: module,
+        surface: surface,
+        cta: cta,
+        provenanceMetadata: provenanceMetadata,
+        metadata: metadata,
+      );
       if (isMounted()) {
         messenger.showSnackBar(
           SnackBar(
@@ -412,6 +551,17 @@ class ReportActions {
           ...provenanceMetadata,
           ...metadata,
         },
+      );
+      _recordReportDeliveryLifecycle(
+        siteId: siteId,
+        learnerId: learnerId,
+        reportAction: 'share',
+        reportDelivery: 'copied',
+        module: module,
+        surface: surface,
+        cta: cta,
+        provenanceMetadata: provenanceMetadata,
+        metadata: metadata,
       );
       if (!isMounted()) {
         return;

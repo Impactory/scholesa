@@ -294,6 +294,68 @@ export interface PortfolioItem {
   createdAt: Timestamp;
 }
 
+export type ReportShareRequestStatus = 'active' | 'revoked' | 'expired';
+export type ReportShareRequestAction = 'share' | 'export_text' | 'export_html' | 'export_pdf';
+export type ReportShareRequestDelivery =
+  | 'shared'
+  | 'copied'
+  | 'downloaded'
+  | 'unavailable'
+  | 'aborted'
+  | 'contract-failed';
+export type ReportShareRequestAudience =
+  | 'learner'
+  | 'guardian'
+  | 'educator'
+  | 'site'
+  | 'hq'
+  | 'partner'
+  | 'external';
+export type ReportShareRequestVisibility =
+  | 'private'
+  | 'family'
+  | 'staff'
+  | 'site'
+  | 'external'
+  | 'public';
+
+export interface ReportShareRequest {
+  id: string;
+  siteId: string;
+  learnerId: string;
+  createdBy: string;
+  createdByRole: UserRole | 'site';
+  status: ReportShareRequestStatus;
+  reportAction: ReportShareRequestAction;
+  reportDelivery?: ReportShareRequestDelivery;
+  audience: ReportShareRequestAudience;
+  visibility: ReportShareRequestVisibility;
+  source?: string;
+  surface?: string;
+  cta?: string;
+  fileName?: string;
+  sharePolicy: {
+    requiresEvidenceProvenance: boolean;
+    requiresGuardianContext: boolean;
+    allowsExternalSharing: boolean;
+    includesLearnerIdentifiers: boolean;
+  };
+  provenance: {
+    expectedSignals: string[];
+    missingSignals: string[];
+    meetsProvenanceContract: boolean;
+    meetsDeliveryContract: boolean;
+    sharePolicyDeclared: boolean;
+  };
+  deliveryAuditId?: string;
+  expiresAt: Timestamp;
+  revokedAt?: Timestamp;
+  revokedBy?: string;
+  revocationReason?: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
 export interface EnterpriseSsoProvider {
   id: string;
   providerId: string;

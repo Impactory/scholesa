@@ -436,6 +436,8 @@ describe('LearnerPassportExport learner contract', () => {
     expect(source).toContain('enforceProvenanceContract: true');
     expect(source).toContain('familyReportSharePolicy');
     expect(source).toContain('learnerPrivateReportSharePolicy');
+    expect(source).toContain('recordReportDeliveryLifecycle');
+    expect(source).toContain("reportAction: 'export_html'");
     expect(source).toContain('report_delivery');
     expect(source).toContain('const processDomainSnapshotHtml =');
     expect(source).toContain('const processDomainGrowthHtml =');
@@ -516,6 +518,7 @@ describe('GuardianCapabilityViewRenderer site provenance', () => {
     expect(source).toContain('onReportProvenance');
     expect(source).toContain('enforceProvenanceContract: true');
     expect(source).toContain('familyReportSharePolicy');
+    expect(source).toContain('recordReportDeliveryLifecycle');
     expect(source).toContain('report_delivery');
     expect(source).toContain('Share family summary');
     expect(source).toContain('Export PDF');
@@ -840,6 +843,80 @@ describe('getLearnerPassportBundle callable', () => {
     );
     expect(section).toContain('buildParentLearnerSummary');
     expect(section).toContain('learners: [learnerSummary]');
+  });
+});
+
+describe('recordReportDeliveryAudit callable', () => {
+  const functionsSource = fs.readFileSync(
+    path.join(functionsDir, 'index.ts'),
+    'utf8'
+  );
+  const auditStart = functionsSource.indexOf('export const recordReportDeliveryAudit');
+  const auditEnd = functionsSource.indexOf('export const processNotificationRequests', auditStart);
+  const auditSection = functionsSource.slice(
+    auditStart,
+    auditEnd > auditStart ? auditEnd : auditStart + 8000
+  );
+
+  it('exports a server-side report delivery audit callable', () => {
+    expect(functionsSource).toContain('export const recordReportDeliveryAudit');
+    expect(functionsSource).toContain('persistReportDeliveryAuditRecord');
+    expect(functionsSource).toContain('linkReportShareRequestDeliveryAuditRecord');
+  });
+
+  it('requires learner/site authorization before writing audit logs', () => {
+    expect(auditSection).toContain("['learner', 'parent', 'educator', 'site', 'hq']");
+    expect(auditSection).toContain('collectParentLinkedLearnerIds');
+    expect(auditSection).toContain('Learners can only audit their own report delivery.');
+    expect(auditSection).toContain('Learner is not linked to this site.');
+  });
+
+  it('refuses successful delivery audits that do not meet the report delivery contract', () => {
+    expect(auditSection).toContain("reportDelivery !== 'contract-failed'");
+    expect(auditSection).toContain('Delivered reports must meet the delivery contract.');
+    expect(auditSection).toContain('report_share_policy_declared');
+    expect(auditSection).toContain('report_meets_delivery_contract');
+  });
+
+  it('links successful delivery audits back to active share request records', () => {
+    expect(auditSection).toContain('shareRequestId');
+    expect(auditSection).toContain('Report share request does not match this delivery audit.');
+    expect(auditSection).toContain('Only active report share requests can be linked to delivery audit.');
+    expect(auditSection).toContain('deliveryAuditId: id');
+  });
+});
+
+describe('report share request lifecycle', () => {
+  const functionsSource = fs.readFileSync(
+    path.join(functionsDir, 'index.ts'),
+    'utf8'
+  );
+  const schemaSource = readSrcFile('types', 'schema.ts');
+  const rulesSource = fs.readFileSync(
+    path.join(process.cwd(), 'firestore.rules'),
+    'utf8'
+  );
+
+  it('defines a first-class report share request schema and collection', () => {
+    expect(schemaSource).toContain('export interface ReportShareRequest');
+    expect(schemaSource).toContain('status: ReportShareRequestStatus');
+    expect(schemaSource).toContain('expiresAt: Timestamp');
+    expect(schemaSource).toContain('revokedAt?: Timestamp');
+  });
+
+  it('keeps report share request writes server-owned in Firestore rules', () => {
+    expect(rulesSource).toContain('match /reportShareRequests/{id}');
+    expect(rulesSource).toContain('allow create, update, delete: if false');
+    expect(rulesSource).toContain('isParentLinkedToLearner(resource.data.learnerId)');
+  });
+
+  it('exports create and revoke callables with delivery contract and external-share gates', () => {
+    expect(functionsSource).toContain('export const createReportShareRequest');
+    expect(functionsSource).toContain('export const revokeReportShareRequest');
+    expect(functionsSource).toContain('Report share requests require a passing delivery contract.');
+    expect(functionsSource).toContain('External and partner report sharing requires explicit consent workflow support.');
+    expect(functionsSource).toContain('Only completed report deliveries can create active share requests.');
+    expect(functionsSource).toContain('report.share_request_revoked');
   });
 });
 

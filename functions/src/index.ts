@@ -17,6 +17,20 @@ import {
 } from './notificationPipeline';
 import { callInternalInferenceJson } from './internalInferenceGateway';
 import { persistLogoutAuditRecord } from './logoutAudit';
+import {
+  persistReportDeliveryAuditRecord,
+  type ReportDeliveryAuditAction,
+  type ReportDeliveryAuditStatus,
+} from './reportDeliveryAudit';
+import {
+  linkReportShareRequestDeliveryAuditRecord,
+  persistReportShareRequestRecord,
+  revokeReportShareRequestRecord,
+  type ReportShareRequestAction,
+  type ReportShareRequestAudience,
+  type ReportShareRequestDelivery,
+  type ReportShareRequestVisibility,
+} from './reportShareRequests';
 import { ANALYTICS_REPAIR_AUDIT_ACTIONS, buildAnalyticsRepairRunRecord } from './analyticsRepairRuns';
 import { matchesAuditLogFilters, normalizeAuditLogFilters } from './auditLogFilters';
 import { classifySepEntropyBand, summarizeVerificationSignalType } from './sepVerification';
@@ -252,6 +266,7 @@ function toCanonicalTelemetryRole(role: TelemetryRole): CanonicalTelemetryRole {
 
 const USERS_COLLECTION = 'users';
 const AUDIT_COLLECTION = 'auditLogs';
+const REPORT_SHARE_REQUESTS_COLLECTION = 'reportShareRequests';
 const TELEMETRY_COLLECTION = 'telemetryEvents';
 const ORDERS_COLLECTION = 'orders';
 const ENTITLEMENTS_COLLECTION = 'entitlements';
@@ -4386,6 +4401,486 @@ export const recordLogoutAudit = onCall(async (request: CallableRequest) => {
   });
 
   return { status: 'ok', id };
+});
+
+const REPORT_DELIVERY_ACTIONS = new Set<ReportDeliveryAuditAction>([
+  'share',
+  'export_text',
+  'export_html',
+  'export_pdf',
+]);
+
+const REPORT_DELIVERY_STATUSES = new Set<ReportDeliveryAuditStatus>([
+  'shared',
+  'copied',
+  'downloaded',
+  'unavailable',
+  'aborted',
+  'contract-failed',
+]);
+
+const REPORT_COMPLETED_DELIVERY_STATUSES = new Set<ReportDeliveryAuditStatus>([
+  'shared',
+  'copied',
+  'downloaded',
+]);
+
+const REPORT_SHARE_AUDIENCES = new Set<ReportShareRequestAudience>([
+  'learner',
+  'guardian',
+  'educator',
+  'site',
+  'hq',
+  'partner',
+  'external',
+]);
+
+const REPORT_SHARE_VISIBILITIES = new Set<ReportShareRequestVisibility>([
+  'private',
+  'family',
+  'staff',
+  'site',
+  'external',
+  'public',
+]);
+
+const REPORT_SHARE_MAX_EXPIRY_DAYS = 30;
+
+function readTrimmedField(data: Record<string, unknown> | undefined, key: string): string | undefined {
+  const value = data?.[key];
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : undefined;
+}
+
+function normalizeReportDeliveryAction(value: unknown): ReportDeliveryAuditAction {
+  if (typeof value !== 'string') {
+    throw new HttpsError('invalid-argument', 'reportAction is required.');
+  }
+  const normalized = value.trim() as ReportDeliveryAuditAction;
+  if (!REPORT_DELIVERY_ACTIONS.has(normalized)) {
+    throw new HttpsError('invalid-argument', 'Unsupported reportAction.');
+  }
+  return normalized;
+}
+
+function normalizeReportDeliveryStatus(value: unknown): ReportDeliveryAuditStatus {
+  if (typeof value !== 'string') {
+    throw new HttpsError('invalid-argument', 'reportDelivery is required.');
+  }
+  const normalized = value.trim() as ReportDeliveryAuditStatus;
+  if (!REPORT_DELIVERY_STATUSES.has(normalized)) {
+    throw new HttpsError('invalid-argument', 'Unsupported reportDelivery.');
+  }
+  return normalized;
+}
+
+function normalizeReportShareAudience(value: unknown): ReportShareRequestAudience {
+  if (typeof value !== 'string') {
+    throw new HttpsError('invalid-argument', 'Share audience is required.');
+  }
+  const normalized = value.trim() as ReportShareRequestAudience;
+  if (!REPORT_SHARE_AUDIENCES.has(normalized)) {
+    throw new HttpsError('invalid-argument', 'Unsupported share audience.');
+  }
+  return normalized;
+}
+
+function normalizeReportShareVisibility(value: unknown): ReportShareRequestVisibility {
+  if (typeof value !== 'string') {
+    throw new HttpsError('invalid-argument', 'Share visibility is required.');
+  }
+  const normalized = value.trim() as ReportShareRequestVisibility;
+  if (!REPORT_SHARE_VISIBILITIES.has(normalized)) {
+    throw new HttpsError('invalid-argument', 'Unsupported share visibility.');
+  }
+  return normalized;
+}
+
+function readStringArrayField(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value
+        .filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+        .map((item) => item.trim())
+        .slice(0, 20)
+    : [];
+}
+
+function resolveShareExpiry(data: Record<string, unknown>): Date {
+  const rawDays = typeof data.expiresInDays === 'number' && Number.isFinite(data.expiresInDays)
+    ? data.expiresInDays
+    : 7;
+  const days = Math.max(1, Math.min(REPORT_SHARE_MAX_EXPIRY_DAYS, Math.floor(rawDays)));
+  return new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+}
+
+async function requireReportShareContext(params: {
+  authUid: string | undefined;
+  data: Record<string, unknown>;
+}) {
+  const { authUid, data } = params;
+  if (!authUid) {
+    throw new HttpsError('unauthenticated', 'Authentication required.');
+  }
+
+  const actorProfile = await getUserProfile(authUid);
+  const actorRole = normalizeRoleValue(actorProfile?.role);
+  if (!actorProfile || !actorRole || !['learner', 'parent', 'educator', 'site', 'hq'].includes(actorRole)) {
+    throw new HttpsError('permission-denied', 'Insufficient role.');
+  }
+
+  const learnerId = readTrimmedField(data, 'learnerId');
+  if (!learnerId) {
+    throw new HttpsError('invalid-argument', 'learnerId is required.');
+  }
+
+  const learnerProfile = await getUserProfile(learnerId);
+  if (!learnerProfile || normalizeRoleValue(learnerProfile.role) !== 'learner') {
+    throw new HttpsError('not-found', 'Learner not found.');
+  }
+
+  const requestedSiteId = readTrimmedField(data, 'siteId');
+  let siteId = resolveRoleSiteId(actorProfile, actorRole, requestedSiteId);
+  siteId ??= learnerProfile.activeSiteId ?? learnerProfile.siteIds?.[0] ?? learnerProfile.studioId;
+  if (!siteId) {
+    throw new HttpsError('invalid-argument', 'siteId is required.');
+  }
+  if (actorRole !== 'hq' && !hasSiteAccess(actorProfile, siteId)) {
+    throw new HttpsError('permission-denied', 'Site access denied.');
+  }
+  if (!hasSiteAccess(learnerProfile, siteId)) {
+    throw new HttpsError('permission-denied', 'Learner is not linked to this site.');
+  }
+  if (actorRole === 'learner' && learnerId !== authUid) {
+    throw new HttpsError('permission-denied', 'Learners can only manage their own report shares.');
+  }
+  if (actorRole === 'parent') {
+    const linkedLearnerIds = await collectParentLinkedLearnerIds({ parentId: authUid, siteId });
+    if (!linkedLearnerIds.includes(learnerId)) {
+      throw new HttpsError('permission-denied', 'Parent is not linked to this learner.');
+    }
+  }
+
+  return { actorProfile, actorRole, learnerProfile, learnerId, siteId };
+}
+
+function resolveReportBlockReason(metadata: Record<string, unknown>, provided?: string): string | undefined {
+  if (provided) return provided;
+  const missingFields = Array.isArray(metadata.report_missing_delivery_contract_fields)
+    ? metadata.report_missing_delivery_contract_fields
+    : [];
+  if (missingFields.includes('sharePolicy')) return 'missing_share_policy';
+  const missingSignals = Array.isArray(metadata.report_missing_provenance_signals)
+    ? metadata.report_missing_provenance_signals
+    : [];
+  if (missingSignals.length > 0) return 'missing_provenance';
+  return undefined;
+}
+
+export const recordReportDeliveryAudit = onCall(async (request: CallableRequest<Record<string, unknown>>) => {
+  const authUid = request.auth?.uid;
+  if (!authUid) {
+    throw new HttpsError('unauthenticated', 'Authentication required.');
+  }
+
+  const actorProfile = await getUserProfile(authUid);
+  const actorRole = normalizeRoleValue(actorProfile?.role);
+  if (!actorProfile || !actorRole || !['learner', 'parent', 'educator', 'site', 'hq'].includes(actorRole)) {
+    throw new HttpsError('permission-denied', 'Insufficient role.');
+  }
+
+  if (request.data !== undefined && (typeof request.data !== 'object' || Array.isArray(request.data))) {
+    throw new HttpsError('invalid-argument', 'Request data must be an object.');
+  }
+  const data = request.data ?? {};
+  const learnerId = readTrimmedField(data, 'learnerId');
+  if (!learnerId) {
+    throw new HttpsError('invalid-argument', 'learnerId is required.');
+  }
+
+  const requestedSiteId = readTrimmedField(data, 'siteId');
+  const learnerProfile = await getUserProfile(learnerId);
+  if (!learnerProfile || normalizeRoleValue(learnerProfile.role) !== 'learner') {
+    throw new HttpsError('not-found', 'Learner not found.');
+  }
+
+  let siteId = resolveRoleSiteId(actorProfile, actorRole, requestedSiteId);
+  siteId ??= learnerProfile.activeSiteId ?? learnerProfile.siteIds?.[0] ?? learnerProfile.studioId;
+  if (!siteId) {
+    throw new HttpsError('invalid-argument', 'siteId is required for report delivery audit.');
+  }
+  if (actorRole !== 'hq' && !hasSiteAccess(actorProfile, siteId)) {
+    throw new HttpsError('permission-denied', 'Site access denied.');
+  }
+  if (!hasSiteAccess(learnerProfile, siteId)) {
+    throw new HttpsError('permission-denied', 'Learner is not linked to this site.');
+  }
+
+  if (actorRole === 'learner' && learnerId !== authUid) {
+    throw new HttpsError('permission-denied', 'Learners can only audit their own report delivery.');
+  }
+  if (actorRole === 'parent') {
+    const linkedLearnerIds = await collectParentLinkedLearnerIds({ parentId: authUid, siteId });
+    if (!linkedLearnerIds.includes(learnerId)) {
+      throw new HttpsError('permission-denied', 'Parent is not linked to this learner.');
+    }
+  }
+
+  const reportAction = normalizeReportDeliveryAction(data.reportAction);
+  const reportDelivery = normalizeReportDeliveryStatus(data.reportDelivery);
+  const metadataInput = data.metadata;
+  if (metadataInput !== undefined && (typeof metadataInput !== 'object' || Array.isArray(metadataInput))) {
+    throw new HttpsError('invalid-argument', 'metadata must be an object if provided.');
+  }
+
+  const { metadata, redactedPaths } = sanitizeTelemetryMetadata(
+    metadataInput as Record<string, unknown> | undefined,
+  );
+  const meetsDeliveryContract = metadata.report_meets_delivery_contract === true;
+  const hasSharePolicy = metadata.report_share_policy_declared === true;
+  if (reportDelivery !== 'contract-failed' && (!meetsDeliveryContract || !hasSharePolicy)) {
+    throw new HttpsError('failed-precondition', 'Delivered reports must meet the delivery contract.');
+  }
+  if (reportDelivery === 'contract-failed' && meetsDeliveryContract) {
+    throw new HttpsError('failed-precondition', 'Blocked report audit requires a failed delivery contract.');
+  }
+
+  const shareRequestId = readTrimmedField(data, 'shareRequestId');
+  if (shareRequestId) {
+    if (reportDelivery === 'contract-failed') {
+      throw new HttpsError('failed-precondition', 'Blocked report audits cannot link active share requests.');
+    }
+    const shareSnap = await admin
+      .firestore()
+      .collection(REPORT_SHARE_REQUESTS_COLLECTION)
+      .doc(shareRequestId)
+      .get();
+    if (!shareSnap.exists) {
+      throw new HttpsError('not-found', 'Report share request not found.');
+    }
+    const shareData = shareSnap.data() ?? {};
+    if (shareData.learnerId !== learnerId || shareData.siteId !== siteId) {
+      throw new HttpsError('permission-denied', 'Report share request does not match this delivery audit.');
+    }
+    if (shareData.status !== 'active') {
+      throw new HttpsError('failed-precondition', 'Only active report share requests can be linked to delivery audit.');
+    }
+  }
+
+  const reportBlockReason = reportDelivery === 'contract-failed'
+    ? resolveReportBlockReason(metadata, readTrimmedField(data, 'reportBlockReason'))
+    : undefined;
+  const id = await persistReportDeliveryAuditRecord({
+    actorId: authUid,
+    actorRole,
+    learnerId,
+    reportAction,
+    reportDelivery,
+    siteId,
+    reportBlockReason,
+    details: {
+      module: readTrimmedField(data, 'module') ?? null,
+      surface: readTrimmedField(data, 'surface') ?? null,
+      cta: readTrimmedField(data, 'cta') ?? null,
+      fileName: readTrimmedField(data, 'fileName') ?? null,
+      shareRequestId: shareRequestId ?? null,
+      ...metadata,
+      redactionApplied: redactedPaths.length > 0,
+      redactedPathCount: redactedPaths.length,
+    },
+    collectionName: AUDIT_COLLECTION,
+  });
+
+  if (shareRequestId) {
+    await linkReportShareRequestDeliveryAuditRecord({
+      shareRequestId,
+      deliveryAuditId: id,
+      reportDelivery: reportDelivery as ReportShareRequestDelivery,
+      collectionName: REPORT_SHARE_REQUESTS_COLLECTION,
+    });
+  }
+
+  return { status: 'ok', id };
+});
+
+export const createReportShareRequest = onCall(async (request: CallableRequest<Record<string, unknown>>) => {
+  if (request.data !== undefined && (typeof request.data !== 'object' || Array.isArray(request.data))) {
+    throw new HttpsError('invalid-argument', 'Request data must be an object.');
+  }
+  const data = request.data ?? {};
+  const { actorRole, learnerId, siteId } = await requireReportShareContext({
+    authUid: request.auth?.uid,
+    data,
+  });
+
+  const metadataInput = data.metadata;
+  if (metadataInput !== undefined && (typeof metadataInput !== 'object' || Array.isArray(metadataInput))) {
+    throw new HttpsError('invalid-argument', 'metadata must be an object if provided.');
+  }
+  const { metadata, redactedPaths } = sanitizeTelemetryMetadata(
+    metadataInput as Record<string, unknown> | undefined,
+  );
+
+  if (metadata.report_meets_delivery_contract !== true || metadata.report_share_policy_declared !== true) {
+    throw new HttpsError('failed-precondition', 'Report share requests require a passing delivery contract.');
+  }
+
+  const audience = normalizeReportShareAudience(
+    readTrimmedField(data, 'audience') ?? metadata.report_share_audience,
+  );
+  const visibility = normalizeReportShareVisibility(
+    readTrimmedField(data, 'visibility') ?? metadata.report_share_visibility,
+  );
+  const allowsExternalSharing = metadata.report_share_allows_external_sharing === true;
+  if (
+    allowsExternalSharing ||
+    audience === 'external' ||
+    audience === 'partner' ||
+    visibility === 'external' ||
+    visibility === 'public'
+  ) {
+    throw new HttpsError('failed-precondition', 'External and partner report sharing requires explicit consent workflow support.');
+  }
+
+  const reportAction = normalizeReportDeliveryAction(data.reportAction) as ReportShareRequestAction;
+  const reportDelivery = data.reportDelivery === undefined
+    ? undefined
+    : (normalizeReportDeliveryStatus(data.reportDelivery) as ReportShareRequestDelivery);
+  if (reportDelivery && !REPORT_COMPLETED_DELIVERY_STATUSES.has(reportDelivery)) {
+    throw new HttpsError('failed-precondition', 'Only completed report deliveries can create active share requests.');
+  }
+
+  const id = await persistReportShareRequestRecord({
+    actorId: request.auth!.uid,
+    actorRole,
+    learnerId,
+    siteId,
+    reportAction,
+    reportDelivery,
+    audience,
+    visibility,
+    source: readTrimmedField(data, 'source') ?? readTrimmedField(data, 'module'),
+    surface: readTrimmedField(data, 'surface'),
+    cta: readTrimmedField(data, 'cta'),
+    fileName: readTrimmedField(data, 'fileName'),
+    expiresAt: resolveShareExpiry(data),
+    sharePolicy: {
+      requiresEvidenceProvenance: metadata.report_share_requires_evidence_provenance === true,
+      requiresGuardianContext: metadata.report_share_requires_guardian_context === true,
+      allowsExternalSharing,
+      includesLearnerIdentifiers: metadata.report_share_includes_learner_identifiers === true,
+    },
+    provenance: {
+      expectedSignals: readStringArrayField(metadata.report_expected_provenance_signals),
+      missingSignals: readStringArrayField(metadata.report_missing_provenance_signals),
+      meetsProvenanceContract: metadata.report_meets_provenance_contract === true,
+      meetsDeliveryContract: metadata.report_meets_delivery_contract === true,
+      sharePolicyDeclared: metadata.report_share_policy_declared === true,
+    },
+    collectionName: REPORT_SHARE_REQUESTS_COLLECTION,
+  });
+
+  await admin.firestore().collection(AUDIT_COLLECTION).add({
+    actorId: request.auth!.uid,
+    actorRole,
+    userId: request.auth!.uid,
+    action: 'report.share_request_created',
+    entityType: 'reportShareRequest',
+    entityId: id,
+    targetType: 'learner',
+    targetId: learnerId,
+    siteId,
+    details: {
+      audience,
+      visibility,
+      reportAction,
+      reportDelivery: reportDelivery ?? null,
+      redactionApplied: redactedPaths.length > 0,
+      redactedPathCount: redactedPaths.length,
+    },
+    metadata: {
+      audience,
+      visibility,
+      reportAction,
+      reportDelivery: reportDelivery ?? null,
+    },
+    createdAt: FieldValue.serverTimestamp(),
+  });
+
+  return { status: 'ok', id };
+});
+
+export const revokeReportShareRequest = onCall(async (request: CallableRequest<Record<string, unknown>>) => {
+  if (!request.auth?.uid) {
+    throw new HttpsError('unauthenticated', 'Authentication required.');
+  }
+  if (request.data !== undefined && (typeof request.data !== 'object' || Array.isArray(request.data))) {
+    throw new HttpsError('invalid-argument', 'Request data must be an object.');
+  }
+  const data = request.data ?? {};
+  const shareRequestId = readTrimmedField(data, 'shareRequestId');
+  if (!shareRequestId) {
+    throw new HttpsError('invalid-argument', 'shareRequestId is required.');
+  }
+
+  const actorProfile = await getUserProfile(request.auth.uid);
+  const actorRole = normalizeRoleValue(actorProfile?.role);
+  if (!actorProfile || !actorRole || !['learner', 'parent', 'educator', 'site', 'hq'].includes(actorRole)) {
+    throw new HttpsError('permission-denied', 'Insufficient role.');
+  }
+
+  const shareRef = admin.firestore().collection(REPORT_SHARE_REQUESTS_COLLECTION).doc(shareRequestId);
+  const shareSnap = await shareRef.get();
+  if (!shareSnap.exists) {
+    throw new HttpsError('not-found', 'Report share request not found.');
+  }
+  const shareData = shareSnap.data() ?? {};
+  const learnerId = typeof shareData.learnerId === 'string' ? shareData.learnerId : '';
+  const siteId = typeof shareData.siteId === 'string' ? shareData.siteId : '';
+  if (!learnerId || !siteId) {
+    throw new HttpsError('failed-precondition', 'Report share request is missing learner or site linkage.');
+  }
+
+  if (actorRole !== 'hq' && !hasSiteAccess(actorProfile, siteId)) {
+    throw new HttpsError('permission-denied', 'Site access denied.');
+  }
+  if (actorRole === 'learner' && learnerId !== request.auth.uid) {
+    throw new HttpsError('permission-denied', 'Learners can only revoke their own report shares.');
+  }
+  if (actorRole === 'parent') {
+    const linkedLearnerIds = await collectParentLinkedLearnerIds({ parentId: request.auth.uid, siteId });
+    if (!linkedLearnerIds.includes(learnerId)) {
+      throw new HttpsError('permission-denied', 'Parent is not linked to this learner.');
+    }
+  }
+
+  const reason = readTrimmedField(data, 'reason');
+  await revokeReportShareRequestRecord({
+    shareRequestId,
+    actorId: request.auth.uid,
+    reason,
+    collectionName: REPORT_SHARE_REQUESTS_COLLECTION,
+  });
+  await admin.firestore().collection(AUDIT_COLLECTION).add({
+    actorId: request.auth.uid,
+    actorRole,
+    userId: request.auth.uid,
+    action: 'report.share_request_revoked',
+    entityType: 'reportShareRequest',
+    entityId: shareRequestId,
+    targetType: 'learner',
+    targetId: learnerId,
+    siteId,
+    details: {
+      reason: reason ?? null,
+      previousStatus: shareData.status ?? null,
+    },
+    metadata: {
+      reason: reason ?? null,
+      previousStatus: shareData.status ?? null,
+    },
+    createdAt: FieldValue.serverTimestamp(),
+  });
+
+  return { status: 'ok', id: shareRequestId };
 });
 
 export const processNotificationRequests = onSchedule('every 5 minutes', async () => {

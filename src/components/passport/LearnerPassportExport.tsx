@@ -18,6 +18,7 @@ import {
   shareTextWithFallback,
   type ReportProvenanceMetadata,
 } from '@/src/lib/reports/shareExport';
+import { recordReportDeliveryLifecycle } from '@/src/lib/reports/reportDeliveryLifecycle';
 import {
   getLegacyPillarFamilyLabel,
   normalizeLegacyPillarCode,
@@ -780,10 +781,20 @@ export function LearnerPassportExport({ siteId: initialSiteId }: { siteId?: stri
       report_delivery: result,
       ...(reportMetadata ?? {}),
     });
+    void recordReportDeliveryLifecycle({
+      siteId,
+      learnerId: learner.learnerId,
+      reportAction: 'share',
+      reportDelivery: result,
+      metadata: reportMetadata,
+      module: 'passport',
+      surface: 'learner_passport_export',
+      cta: 'learner_passport_share_family_summary',
+    });
 
     if (result === 'aborted') return;
     if (result === 'contract-failed') {
-      setShareFeedback('Sharing is blocked because this report is missing evidence provenance.');
+      setShareFeedback('Sharing is blocked because this report is missing evidence provenance or sharing policy.');
       return;
     }
     if (result === 'shared') {
@@ -796,10 +807,38 @@ export function LearnerPassportExport({ siteId: initialSiteId }: { siteId?: stri
         ? 'Family summary copied to clipboard.'
         : 'Sharing is unavailable in this browser. Use Export Text instead.'
     );
-  }, [learner, trackInteraction]);
+  }, [learner, siteId, trackInteraction]);
 
   const handleExportHtml = useCallback(() => {
     if (!learner) return;
+    const reportLines = buildPassportTextLines(learner);
+    const reportMetadata = reportProvenanceMetadata({
+      text: reportLines.join('\n'),
+      expectedSignals: passportReportProvenanceSignals,
+      sharePolicy: learnerPrivateReportSharePolicy,
+    });
+    if (!reportMetadata.report_meets_delivery_contract) {
+      trackInteraction('feature_discovered', {
+        cta: 'learner_passport_export_html',
+        learnerId: learner.learnerId,
+        report_action: 'export_html',
+        report_delivery: 'contract-failed',
+        ...reportMetadata,
+      });
+      void recordReportDeliveryLifecycle({
+        siteId,
+        learnerId: learner.learnerId,
+        reportAction: 'export_html',
+        reportDelivery: 'contract-failed',
+        metadata: reportMetadata,
+        module: 'passport',
+        surface: 'learner_passport_export',
+        cta: 'learner_passport_export_html',
+        fileName: `ideation-passport-${learner.learnerId}.html`,
+      });
+      setShareFeedback('Export is blocked because this report is missing evidence provenance or sharing policy.');
+      return;
+    }
     const claimsHtml = learner.ideationPassport.claims.length === 0
       ? '<p style="color:#6b7280;font-size:14px">No capability claims backed by evidence yet.</p>'
       : learner.ideationPassport.claims.map((c) => `
@@ -986,7 +1025,25 @@ ${growthHtml}
     a.download = `ideation-passport-${learner.learnerId}.html`;
     a.click();
     URL.revokeObjectURL(url);
-  }, [learner]);
+    trackInteraction('feature_discovered', {
+      cta: 'learner_passport_export_html',
+      learnerId: learner.learnerId,
+      report_action: 'export_html',
+      report_delivery: 'downloaded',
+      ...reportMetadata,
+    });
+    void recordReportDeliveryLifecycle({
+      siteId,
+      learnerId: learner.learnerId,
+      reportAction: 'export_html',
+      reportDelivery: 'downloaded',
+      metadata: reportMetadata,
+      module: 'passport',
+      surface: 'learner_passport_export',
+      cta: 'learner_passport_export_html',
+      fileName: `ideation-passport-${learner.learnerId}.html`,
+    });
+  }, [learner, siteId, trackInteraction]);
 
   const handleExportPdf = useCallback(async () => {
     if (!learner) return;
@@ -1005,7 +1062,7 @@ ${growthHtml}
       expectedSignals: passportReportProvenanceSignals,
       sharePolicy: learnerPrivateReportSharePolicy,
     });
-    if (!reportMetadata.report_meets_provenance_contract) {
+    if (!reportMetadata.report_meets_delivery_contract) {
       trackInteraction('feature_discovered', {
         cta: 'learner_passport_export_pdf',
         learnerId: learner.learnerId,
@@ -1013,7 +1070,18 @@ ${growthHtml}
         report_delivery: 'contract-failed',
         ...reportMetadata,
       });
-      setShareFeedback('Export is blocked because this report is missing evidence provenance.');
+      void recordReportDeliveryLifecycle({
+        siteId,
+        learnerId: learner.learnerId,
+        reportAction: 'export_pdf',
+        reportDelivery: 'contract-failed',
+        metadata: reportMetadata,
+        module: 'passport',
+        surface: 'learner_passport_export',
+        cta: 'learner_passport_export_pdf',
+        fileName: `ideation-passport-${learner.learnerId}.pdf`,
+      });
+      setShareFeedback('Export is blocked because this report is missing evidence provenance or sharing policy.');
       return;
     }
     let y = marginY;
@@ -1039,7 +1107,18 @@ ${growthHtml}
       report_delivery: 'downloaded',
       ...reportMetadata,
     });
-  }, [learner, trackInteraction]);
+    void recordReportDeliveryLifecycle({
+      siteId,
+      learnerId: learner.learnerId,
+      reportAction: 'export_pdf',
+      reportDelivery: 'downloaded',
+      metadata: reportMetadata,
+      module: 'passport',
+      surface: 'learner_passport_export',
+      cta: 'learner_passport_export_pdf',
+      fileName: `ideation-passport-${learner.learnerId}.pdf`,
+    });
+  }, [learner, siteId, trackInteraction]);
 
   const handleExportText = useCallback(() => {
     if (!learner) return;
@@ -1061,10 +1140,21 @@ ${growthHtml}
       report_delivery: downloaded,
       ...(reportMetadata ?? {}),
     });
+    void recordReportDeliveryLifecycle({
+      siteId,
+      learnerId: learner.learnerId,
+      reportAction: 'export_text',
+      reportDelivery: downloaded,
+      metadata: reportMetadata,
+      module: 'passport',
+      surface: 'learner_passport_export',
+      cta: 'learner_passport_export_text',
+      fileName: `ideation-passport-${learner.learnerId}.txt`,
+    });
     if (downloaded === 'contract-failed') {
-      setShareFeedback('Export is blocked because this report is missing evidence provenance.');
+      setShareFeedback('Export is blocked because this report is missing evidence provenance or sharing policy.');
     }
-  }, [learner, trackInteraction]);
+  }, [learner, siteId, trackInteraction]);
 
   if (authLoading || loading) {
     return (
