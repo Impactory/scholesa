@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import {
   collection,
@@ -118,12 +118,84 @@ const MILOOS_SUPPORT_EVENT_TYPES = new Set([
   'explain_it_back_submitted',
 ]);
 
+function buildLearnerAiSummaries(
+  loadedLearners: LearnerRow[],
+  loadedInteractions: AiInteractionRow[],
+  loadedMiloOSEvents: MiloOSInteractionEventRow[]
+): LearnerAiSummary[] {
+  const learnerMap: Record<string, LearnerRow> = {};
+  for (const learner of loadedLearners) learnerMap[learner.id] = learner;
+
+  const summaryMap: Record<string, LearnerAiSummary> = {};
+
+  const ensureSummary = (learnerId: string): LearnerAiSummary | null => {
+    if (!learnerId) return null;
+    if (!summaryMap[learnerId]) {
+      const learner = learnerMap[learnerId];
+      const stageId = learner?.stageId ?? null;
+      summaryMap[learnerId] = {
+        learnerId,
+        learnerName: learner?.displayName ?? learnerId,
+        stageId,
+        tier: getTierForStage(stageId ?? undefined),
+        totalInteractions: 0,
+        byMode: {},
+        blocked: 0,
+        helpfulCount: 0,
+        revisedCount: 0,
+        miloosSupport: createMiloOSSupportSummary(),
+      };
+    }
+    return summaryMap[learnerId];
+  };
+
+  for (const interaction of loadedInteractions) {
+    const summary = ensureSummary(interaction.learnerId);
+    if (!summary) continue;
+    summary.totalInteractions++;
+    summary.byMode[interaction.taskType] = (summary.byMode[interaction.taskType] || 0) + 1;
+    if (interaction.safetyOutcome === 'blocked') summary.blocked++;
+    if (interaction.wasHelpful === true) summary.helpfulCount++;
+    if (interaction.studentRevised === true) summary.revisedCount++;
+  }
+
+  for (const event of loadedMiloOSEvents) {
+    const summary = ensureSummary(event.learnerId);
+    if (!summary) continue;
+    if (event.eventType === 'ai_help_opened') summary.miloosSupport.opened++;
+    if (event.eventType === 'ai_help_used') summary.miloosSupport.used++;
+    if (event.eventType === 'explain_it_back_submitted') {
+      summary.miloosSupport.explainBackSubmitted++;
+    }
+    if (
+      event.createdAt &&
+      (!summary.miloosSupport.recentEventAt || event.createdAt > summary.miloosSupport.recentEventAt)
+    ) {
+      summary.miloosSupport.recentEventAt = event.createdAt;
+    }
+  }
+
+  for (const summary of Object.values(summaryMap)) {
+    summary.miloosSupport.pendingExplainBack = Math.max(
+      summary.miloosSupport.opened - summary.miloosSupport.explainBackSubmitted,
+      0
+    );
+  }
+
+  return Object.values(summaryMap).sort(
+    (a, b) =>
+      b.miloosSupport.pendingExplainBack - a.miloosSupport.pendingExplainBack ||
+      b.miloosSupport.opened + b.totalInteractions - (a.miloosSupport.opened + a.totalInteractions)
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
 export default function EducatorAiAuditRenderer({ ctx }: CustomRouteRendererProps) {
   const trackInteraction = useInteractionTracking();
+  const trackInteractionRef = useRef(trackInteraction);
 
   const [tab, setTab] = useState<ActiveTab>('ai-audit');
   const [loading, setLoading] = useState(true);
@@ -135,6 +207,10 @@ export default function EducatorAiAuditRenderer({ ctx }: CustomRouteRendererProp
   const [motivationSavedIds, setMotivationSavedIds] = useState<Set<string>>(new Set());
 
   const siteId = resolveActiveSiteId(ctx.profile);
+
+  useEffect(() => {
+    trackInteractionRef.current = trackInteraction;
+  }, [trackInteraction]);
 
   const loadData = useCallback(async () => {
     if (!siteId) {
@@ -148,6 +224,47 @@ export default function EducatorAiAuditRenderer({ ctx }: CustomRouteRendererProp
     setLoading(true);
     setError(null);
     try {
+      if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+        const { getE2ECollection } = await import('@/src/testing/e2e/fakeWebBackend');
+        const e2eUsers = getE2ECollection('users');
+        const loadedLearners: LearnerRow[] = e2eUsers
+          .filter((user) => (
+            user.role === 'learner' &&
+            Array.isArray(user.siteIds) &&
+            user.siteIds.includes(siteId)
+          ))
+          .map((user) => ({
+            id: asString(user.uid, ''),
+            displayName: asString(user.displayName, 'Unknown'),
+            email: asString(user.email, ''),
+            stageId: (user.stageId as StageId) || null,
+          }))
+          .filter((learner) => learner.id.length > 0);
+        const learnerMap: Record<string, LearnerRow> = {};
+        for (const learner of loadedLearners) learnerMap[learner.id] = learner;
+        const loadedMiloOSEvents: MiloOSInteractionEventRow[] = getE2ECollection('interactionEvents')
+          .filter((event) => event.siteId === siteId)
+          .map((event) => {
+            const eventType = asString(event.eventType, 'unknown');
+            const learnerId = asString(event.actorId, asString(event.learnerId, ''));
+            return {
+              id: asString(event.id, ''),
+              learnerId,
+              eventType,
+              createdAt: toIso(event.createdAt) ?? toIso(event.timestamp),
+            };
+          })
+          .filter((event) =>
+            Boolean(learnerMap[event.learnerId]) && MILOOS_SUPPORT_EVENT_TYPES.has(event.eventType)
+          );
+
+        setLearners(loadedLearners);
+        setInteractions([]);
+        setSummaries(buildLearnerAiSummaries(loadedLearners, [], loadedMiloOSEvents));
+        trackInteractionRef.current('feature_discovered', { cta: 'ai_audit_loaded' });
+        return;
+      }
+
       const learnersQuery = query(
         collection(firestore, 'users'),
         where('role', '==', 'learner'),
@@ -226,79 +343,15 @@ export default function EducatorAiAuditRenderer({ ctx }: CustomRouteRendererProp
 
       setLearners(loadedLearners);
       setInteractions(loadedInteractions);
+      setSummaries(buildLearnerAiSummaries(loadedLearners, loadedInteractions, loadedMiloOSEvents));
 
-      // Build per-learner summaries
-      const summaryMap: Record<string, LearnerAiSummary> = {};
-
-      const ensureSummary = (learnerId: string): LearnerAiSummary | null => {
-        if (!learnerId) return null;
-        if (!summaryMap[learnerId]) {
-          const learner = learnerMap[learnerId];
-          const stageId = learner?.stageId ?? null;
-          summaryMap[learnerId] = {
-            learnerId,
-            learnerName: learner?.displayName ?? learnerId,
-            stageId,
-            tier: getTierForStage(stageId ?? undefined),
-            totalInteractions: 0,
-            byMode: {},
-            blocked: 0,
-            helpfulCount: 0,
-            revisedCount: 0,
-            miloosSupport: createMiloOSSupportSummary(),
-          };
-        }
-        return summaryMap[learnerId];
-      };
-
-      for (const interaction of loadedInteractions) {
-        const summary = ensureSummary(interaction.learnerId);
-        if (!summary) continue;
-        summary.totalInteractions++;
-        summary.byMode[interaction.taskType] = (summary.byMode[interaction.taskType] || 0) + 1;
-        if (interaction.safetyOutcome === 'blocked') summary.blocked++;
-        if (interaction.wasHelpful === true) summary.helpfulCount++;
-        if (interaction.studentRevised === true) summary.revisedCount++;
-      }
-
-      for (const event of loadedMiloOSEvents) {
-        const summary = ensureSummary(event.learnerId);
-        if (!summary) continue;
-        if (event.eventType === 'ai_help_opened') summary.miloosSupport.opened++;
-        if (event.eventType === 'ai_help_used') summary.miloosSupport.used++;
-        if (event.eventType === 'explain_it_back_submitted') {
-          summary.miloosSupport.explainBackSubmitted++;
-        }
-        if (
-          event.createdAt &&
-          (!summary.miloosSupport.recentEventAt || event.createdAt > summary.miloosSupport.recentEventAt)
-        ) {
-          summary.miloosSupport.recentEventAt = event.createdAt;
-        }
-      }
-
-      for (const summary of Object.values(summaryMap)) {
-        summary.miloosSupport.pendingExplainBack = Math.max(
-          summary.miloosSupport.opened - summary.miloosSupport.explainBackSubmitted,
-          0
-        );
-      }
-
-      setSummaries(
-        Object.values(summaryMap).sort(
-          (a, b) =>
-            b.miloosSupport.pendingExplainBack - a.miloosSupport.pendingExplainBack ||
-            b.miloosSupport.opened + b.totalInteractions - (a.miloosSupport.opened + a.totalInteractions)
-        )
-      );
-
-      trackInteraction('feature_discovered', { cta: 'ai_audit_loaded' });
+      trackInteractionRef.current('feature_discovered', { cta: 'ai_audit_loaded' });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load AI audit data.');
     } finally {
       setLoading(false);
     }
-  }, [siteId, trackInteraction]);
+  }, [siteId]);
 
   useEffect(() => {
     void loadData();

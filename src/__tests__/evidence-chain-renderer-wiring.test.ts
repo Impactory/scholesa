@@ -728,6 +728,8 @@ describe('EducatorAiAuditRenderer motivation feedback wiring', () => {
     expect(source).toContain('resolveActiveSiteId');
     expect(source).toContain("collection(firestore, 'interactionEvents')");
     expect(source).toContain("where('siteId', '==', siteId)");
+    expect(source).toContain('buildLearnerAiSummaries');
+    expect(source).toContain("getE2ECollection('interactionEvents')");
     expect(source).toContain('MILOOS_SUPPORT_EVENT_TYPES');
     expect(source).toContain('pendingExplainBack');
     expect(source).toContain('MiloOS support provenance');
@@ -740,5 +742,17 @@ describe('EducatorAiAuditRenderer motivation feedback wiring', () => {
     expect(rulesSource).toContain(
       'allow read: if isHQ() || isAdminOrHQ() || (isEducator() && hasSiteField(resource.data) && isSiteScopedRead(resource.data));'
     );
+  });
+
+  it('has browser E2E coverage for educator MiloOS support provenance', () => {
+    const e2eSource = fs.readFileSync(
+      path.join(process.cwd(), 'test', 'e2e', 'miloos-educator-support-provenance.e2e.spec.ts'),
+      'utf8'
+    );
+    expect(e2eSource).toContain("page.goto('/en/educator/learners')");
+    expect(e2eSource).toContain('seedInteractionEvents');
+    expect(e2eSource).toContain('miloos-support-');
+    expect(e2eSource).toContain('support signals and verification gaps, not capability mastery');
+    expect(e2eSource).toContain('educator-other-site-opened');
   });
 });
