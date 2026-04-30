@@ -281,9 +281,16 @@ describe('Renderers delegate to real evidence components', () => {
   });
 
   it('LearnerMiloOSRenderer reads the server-owned MiloOS learner-loop model', () => {
+    const registrySource = readSrcFile(
+      'features', 'workflows', 'customRouteRenderers.tsx'
+    );
+    const routesSource = readSrcFile('lib', 'routing', 'workflowRoutes.ts');
     const source = readSrcFile(
       'features', 'workflows', 'renderers', 'LearnerMiloOSRenderer.tsx'
     );
+    expect(registrySource).toContain("'/learner/miloos': LearnerMiloOSRenderer");
+    expect(routesSource).toContain("path: '/learner/miloos'");
+    expect(routesSource).toContain("description: 'Learner support, explain-back verification, and support-journey provenance.'");
     expect(source).toContain('AICoachScreen');
     expect(source).toContain('resolveActiveSiteId');
     expect(source).toContain('getMiloOSLearnerLoopInsights');

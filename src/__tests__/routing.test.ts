@@ -41,9 +41,9 @@ describe('Routing contracts', () => {
     }
   });
 
-  it('keeps the protected workflow inventory aligned to the current 62-path registry', () => {
-    expect(ALL_WORKFLOW_PATHS).toHaveLength(62);
-    expect(WORKFLOW_ROUTE_DEFINITIONS).toHaveLength(62);
+  it('keeps the protected workflow inventory aligned to the current 63-path registry', () => {
+    expect(ALL_WORKFLOW_PATHS).toHaveLength(63);
+    expect(WORKFLOW_ROUTE_DEFINITIONS).toHaveLength(63);
 
     const counts = WORKFLOW_ROUTE_DEFINITIONS.reduce<Record<string, number>>((acc, route) => {
       const segment = route.path.split('/')[1] || 'common';
@@ -52,7 +52,7 @@ describe('Routing contracts', () => {
     }, {});
 
     expect(counts).toEqual({
-      learner: 9,
+      learner: 10,
       educator: 13,
       parent: 6,
       site: 11,
@@ -63,6 +63,18 @@ describe('Routing contracts', () => {
       profile: 1,
       settings: 1,
     });
+  });
+
+  it('includes the governed learner MiloOS support workflow route', () => {
+    expect(WORKFLOW_ROUTE_DEFINITIONS).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          path: '/learner/miloos',
+          allowedRoles: ['learner'],
+          dataMode: 'callable',
+        }),
+      ]),
+    );
   });
 
   it('includes the governed site Clever workflow route', () => {

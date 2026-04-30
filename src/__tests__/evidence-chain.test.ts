@@ -150,6 +150,7 @@ describe('Evidence chain route definitions', () => {
     { path: '/parent/passport', roles: ['parent'] },
     { path: '/educator/evidence', roles: ['educator'] },
     { path: '/parent/portfolio', roles: ['parent'] },
+    { path: '/learner/miloos', roles: ['learner'] },
   ];
 
   for (const route of evidenceRoutes) {
@@ -181,6 +182,7 @@ describe('Evidence chain route pages exist', () => {
     'educator/evidence/page.tsx',
     'educator/today/page.tsx',
     'learner/missions/page.tsx',
+    'learner/miloos/page.tsx',
     'educator/verification/page.tsx',
     'parent/passport/page.tsx',
     'site/evidence-health/page.tsx',
@@ -231,6 +233,15 @@ describe('Evidence chain route pages exist', () => {
     expect(source).toContain("routePath='/learner/portfolio'");
     expect(source).not.toContain('LearnerPortfolioBrowser');
     expect(source).not.toContain('LearnerEvidenceSubmission');
+  });
+
+  it('learner/miloos/page.tsx routes through WorkflowRoutePage so custom renderer wiring controls the live MiloOS flow', () => {
+    const fullPath = path.join(appDir, 'learner', 'miloos', 'page.tsx');
+    const source = fs.readFileSync(fullPath, 'utf8');
+    expect(source).toContain('WorkflowRoutePage');
+    expect(source).toContain("routePath='/learner/miloos'");
+    expect(source).not.toContain('LearnerMiloOSRenderer');
+    expect(source).not.toContain('AICoachScreen');
   });
 
   it('site/evidence-health/page.tsx routes through WorkflowRoutePage', () => {

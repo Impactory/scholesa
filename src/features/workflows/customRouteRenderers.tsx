@@ -81,6 +81,9 @@ const LearnerShowcasePeerReviewRenderer = lazy(
 const LearnerHabitsRenderer = lazy(
   () => import('./renderers/LearnerHabitsRenderer')
 );
+const LearnerMiloOSRenderer = lazy(
+  () => import('./renderers/LearnerMiloOSRenderer')
+);
 const LearnerMissionsRenderer = lazy(
   () => import('./renderers/LearnerMissionsRenderer')
 );
@@ -129,6 +132,7 @@ const CUSTOM_ROUTE_RENDERERS: Partial<
   '/learner/reflections': LearnerReflectionsRenderer,
   '/learner/peer-feedback': LearnerShowcasePeerReviewRenderer,
   '/learner/habits': LearnerHabitsRenderer,
+  '/learner/miloos': LearnerMiloOSRenderer,
   // Parent / Guardian
   '/parent/summary': GuardianCapabilityViewRenderer,
   '/parent/portfolio': GuardianCapabilityViewRenderer,

@@ -1,6 +1,6 @@
 # Route Module Matrix
 
-Last updated: 2026-04-23
+Last updated: 2026-04-27
 
 This matrix maps the currently implemented route surfaces to their entry files and backing modules.
 
@@ -13,7 +13,7 @@ For current Flutter route proof status and remaining blind spots, see `docs/FLUT
 - Most protected workflow pages are thin wrappers over `src/features/workflows/WorkflowRoutePage.tsx`.
 - Canonical web workflow metadata lives in `src/lib/routing/workflowRoutes.ts`.
 - In normal runtime those workflow routes load through `src/features/workflows/workflowData.ts` against Firestore and callable backends. The browser E2E harness switches that same layer into the explicit fake backend when `NEXT_PUBLIC_E2E_TEST_MODE=1`.
-- There are currently 62 protected workflow paths: 29 dedicated custom-rendered evidence surfaces and 33 generic workflow surfaces.
+- There are currently 63 protected workflow paths: 30 dedicated custom-rendered evidence surfaces and 33 generic workflow surfaces.
 
 ## Web Public and Redirect Routes
 
@@ -46,6 +46,7 @@ All routes below render through `src/features/workflows/WorkflowRoutePage.tsx` w
 | `/:locale/learner/proof-assembly` | learner, educator, hq | `app/[locale]/(protected)/learner/proof-assembly/page.tsx` | firestore |
 | `/:locale/learner/reflections` | learner, educator, hq | `app/[locale]/(protected)/learner/reflections/page.tsx` | firestore |
 | `/:locale/learner/habits` | learner, educator, hq | `app/[locale]/(protected)/learner/habits/page.tsx` | firestore |
+| `/:locale/learner/miloos` | learner | `app/[locale]/(protected)/learner/miloos/page.tsx` | callable |
 | `/:locale/educator/today` | educator, site, hq | `app/[locale]/(protected)/educator/today/page.tsx` | firestore |
 | `/:locale/educator/attendance` | educator, site, hq | `app/[locale]/(protected)/educator/attendance/page.tsx` | firestore |
 | `/:locale/educator/sessions` | educator, site, hq | `app/[locale]/(protected)/educator/sessions/page.tsx` | firestore |

@@ -21,6 +21,7 @@ export const ALL_WORKFLOW_PATHS = [
   '/learner/proof-assembly',
   '/learner/reflections',
   '/learner/habits',
+  '/learner/miloos',
   '/educator/today',
   '/educator/attendance',
   '/educator/sessions',
@@ -161,6 +162,14 @@ export const WORKFLOW_ROUTE_DEFINITIONS: WorkflowRouteDefinition[] = [
     allowedRoles: ['learner', 'educator', 'hq'],
     navGroup: 'learner',
     dataMode: 'firestore',
+  },
+  {
+    path: '/learner/miloos',
+    title: 'MiloOS Support',
+    description: 'Learner support, explain-back verification, and support-journey provenance.',
+    allowedRoles: ['learner'],
+    navGroup: 'learner',
+    dataMode: 'callable',
   },
   {
     path: '/educator/today',
