@@ -2,6 +2,10 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 
 const functions = getFunctions();
 
+async function loadE2EBackend() {
+  return import('@/src/testing/e2e/fakeWebBackend');
+}
+
 export interface MiloOSLearnerLoopInsights {
   siteId: string;
   learnerId: string;
@@ -44,6 +48,11 @@ export async function getMiloOSLearnerLoopInsights(params: {
   siteId: string;
   lookbackDays?: number;
 }): Promise<MiloOSLearnerLoopInsights> {
+  if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+    const { getE2EMiloOSLearnerLoopInsights } = await loadE2EBackend();
+    return getE2EMiloOSLearnerLoopInsights(params);
+  }
+
   const callable = httpsCallable<
     { learnerId: string; siteId: string; lookbackDays?: number },
     MiloOSLearnerLoopInsights

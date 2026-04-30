@@ -650,6 +650,7 @@ describe('EducatorAiAuditRenderer motivation feedback wiring', () => {
   const source = readSrcFile(
     'features', 'workflows', 'renderers', 'EducatorAiAuditRenderer.tsx'
   );
+  const rulesSource = readSrcFile('..', 'firestore.rules');
 
   it('imports EducatorFeedbackForm', () => {
     expect(source).toContain('EducatorFeedbackForm');
@@ -667,5 +668,23 @@ describe('EducatorAiAuditRenderer motivation feedback wiring', () => {
   it('shows saved confirmation after successful submission', () => {
     expect(source).toContain('motivationSavedIds');
     expect(source).toMatch(/Saved|saved/);
+  });
+
+  it('surfaces MiloOS support provenance and explain-back gaps for educators', () => {
+    expect(source).toContain('resolveActiveSiteId');
+    expect(source).toContain("collection(firestore, 'interactionEvents')");
+    expect(source).toContain("where('siteId', '==', siteId)");
+    expect(source).toContain('MILOOS_SUPPORT_EVENT_TYPES');
+    expect(source).toContain('pendingExplainBack');
+    expect(source).toContain('MiloOS support provenance');
+    expect(source).toContain('support signals and verification gaps, not capability mastery');
+    expect(source).toContain('data-testid={`miloos-support-${s.learnerId}`}');
+    expect(source).toContain('data-testid="educator-ai-audit-site-required"');
+  });
+
+  it('allows educator reads of interactionEvents only through site-scoped rules', () => {
+    expect(rulesSource).toContain(
+      'allow read: if isHQ() || isAdminOrHQ() || (isEducator() && hasSiteField(resource.data) && isSiteScopedRead(resource.data));'
+    );
   });
 });

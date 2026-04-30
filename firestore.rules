@@ -943,7 +943,7 @@ service cloud.firestore {
 
     // interactionEvents: client writes own events, server reads for FDM pipeline
     match /interactionEvents/{id} {
-      allow read: if isHQ() || isAdminOrHQ();
+      allow read: if isHQ() || isAdminOrHQ() || (isEducator() && hasSiteField(resource.data) && isSiteScopedRead(resource.data));
       allow create: if isAuthenticated() && (
         request.resource.data.userId == request.auth.uid ||
         request.resource.data.actorId == request.auth.uid  // Backend uses actorId field

@@ -249,6 +249,7 @@ export function AICoachScreen({
       {!mode && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <button
+            data-testid="ai-coach-mode-hint"
             onClick={() => {
               trackInteraction('feature_discovered', { cta: 'ai_coach_mode_hint' });
               setMode('hint');
@@ -263,6 +264,7 @@ export function AICoachScreen({
           </button>
 
           <button
+            data-testid="ai-coach-mode-verify"
             onClick={() => {
               trackInteraction('feature_discovered', { cta: 'ai_coach_mode_rubric_check' });
               setMode('verify');
@@ -277,6 +279,7 @@ export function AICoachScreen({
           </button>
 
           <button
+            data-testid="ai-coach-mode-debug"
             onClick={() => {
               trackInteraction('feature_discovered', { cta: 'ai_coach_mode_debug' });
               setMode('debug');
@@ -349,6 +352,7 @@ export function AICoachScreen({
                 What do you need help with?
               </label>
               <textarea
+                data-testid="ai-coach-question-input"
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
                 placeholder={
@@ -364,6 +368,7 @@ export function AICoachScreen({
             </div>
 
             <button
+              data-testid="ai-coach-submit-question"
               onClick={() => handleSubmitQuestion()}
               disabled={!question.trim() || loading || isTranscribing}
               className="w-full bg-indigo-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
@@ -415,7 +420,10 @@ export function AICoachScreen({
             </div>
           </div>
 
-          <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+          <div
+            data-testid="ai-coach-response-transcript"
+            className="rounded-lg border border-gray-200 bg-gray-50 p-4"
+          >
             <p className="text-sm font-medium text-gray-900">MiloOS response transcript</p>
             <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-gray-700">
               {response.message.trim()}
@@ -445,12 +453,14 @@ export function AICoachScreen({
                     In your own words, tell me what you learned and how you'll use it:
                   </p>
                   <textarea
+                    data-testid="ai-coach-explain-back-input"
                     value={explainBack}
                     onChange={(e) => setExplainBack(e.target.value)}
                     placeholder="Example: I learned that I need to use addEventListener to make the button interactive. I'll add that to my code and test it..."
                     className="w-full h-24 px-3 py-2 border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
                   />
                   <button
+                    data-testid="ai-coach-submit-explain-back"
                     onClick={handleSubmitExplainBack}
                     disabled={!explainBack.trim() || loading}
                     className="mt-3 w-full bg-yellow-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-yellow-700 disabled:bg-gray-300 disabled:cursor-not-allowed"

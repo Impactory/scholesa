@@ -673,6 +673,47 @@ describe('Support Interventions Collection', () => {
   });
 });
 
+describe('Interaction Events Collection', () => {
+  async function seedInteractionEvents() {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await setDoc(doc(db, 'interactionEvents', 'event-site1'), {
+        siteId: 'site1',
+        actorId: learnerUser.uid,
+        eventType: 'ai_help_opened',
+        createdAt: Date.now(),
+      });
+      await setDoc(doc(db, 'interactionEvents', 'event-site2'), {
+        siteId: 'site2',
+        actorId: 'learner-site2',
+        eventType: 'ai_help_opened',
+        createdAt: Date.now(),
+      });
+      await setDoc(doc(db, 'interactionEvents', 'event-nosite'), {
+        actorId: learnerUser.uid,
+        eventType: 'ai_help_opened',
+        createdAt: Date.now(),
+      });
+    });
+  }
+
+  test('educator can read same-site MiloOS support events', async () => {
+    await seedInteractionEvents();
+    const db = testEnv.authenticatedContext(educatorUser.uid).firestore();
+    await assertSucceeds(getDoc(doc(db, 'interactionEvents', 'event-site1')));
+    await assertSucceeds(
+      getDocs(query(collection(db, 'interactionEvents'), where('siteId', '==', 'site1')))
+    );
+  });
+
+  test('educator cannot read other-site or missing-site interaction events', async () => {
+    await seedInteractionEvents();
+    const db = testEnv.authenticatedContext(educatorUser.uid).firestore();
+    await assertFails(getDoc(doc(db, 'interactionEvents', 'event-site2')));
+    await assertFails(getDoc(doc(db, 'interactionEvents', 'event-nosite')));
+  });
+});
+
 describe('Federated Learning Prototype Collections', () => {
   test('HQ can read federated learning experiments', async () => {
     const db = testEnv.authenticatedContext(hqUser.uid).firestore();

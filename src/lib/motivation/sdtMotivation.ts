@@ -14,6 +14,10 @@ import type {
 
 const functions = getFunctions();
 
+async function loadE2EBackend() {
+  return import('@/src/testing/e2e/fakeWebBackend');
+}
+
 // ===== TYPES =====
 
 export interface MissionOption {
@@ -204,6 +208,11 @@ class SDTMotivationService {
     siteId: string,
     request: AICoachRequest
   ): Promise<AICoachResponse> {
+    if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+      const { requestE2EAICoach } = await loadE2EBackend();
+      return requestE2EAICoach(learnerId, siteId, request);
+    }
+
     // Route to genAiCoach (BOS contract-aligned Cloud Function)
     const callable = httpsCallable<
       AICoachRequest & { learnerId: string; siteId: string },
@@ -223,6 +232,11 @@ class SDTMotivationService {
     interactionId: string,
     explainBack: string
   ): Promise<{ approved: boolean; feedback?: string }> {
+    if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+      const { submitE2EExplainBack } = await loadE2EBackend();
+      return submitE2EExplainBack(learnerId, siteId, interactionId, explainBack);
+    }
+
     const callable = httpsCallable<any, any>(functions, 'submitExplainBack');
     const result = await callable({ learnerId, siteId, interactionId, explainBack });
     return result.data;

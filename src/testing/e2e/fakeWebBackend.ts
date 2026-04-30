@@ -5,6 +5,8 @@ import { Timestamp } from 'firebase/firestore';
 import { buildLocaleHeaders } from '@/src/lib/i18n/localeHeaders';
 import { normalizeLocale, type SupportedLocale } from '@/src/lib/i18n/config';
 import type { UserProfile, UserRole } from '@/src/types/user';
+import type { AICoachRequest, AICoachResponse } from '@/src/lib/motivation/sdtMotivation';
+import type { MiloOSLearnerLoopInsights } from '@/src/lib/miloos/learnerLoopInsights';
 import type {
   WorkflowContext,
   WorkflowCreateInput,
@@ -132,6 +134,20 @@ type MarketplaceListingRecord = {
   updatedAt: string;
 };
 
+type InteractionEventRecord = {
+  id: string;
+  siteId: string;
+  actorId: string;
+  learnerId?: string;
+  eventType: string;
+  createdAt: string;
+  timestamp: string;
+  interactionId?: string;
+  mode?: string;
+  studentInput?: string;
+  explainBack?: string;
+};
+
 type StoreState = {
   users: SeedUser[];
   sites: SiteRecord[];
@@ -145,6 +161,7 @@ type StoreState = {
   portfolioItems: PortfolioRecord[];
   missionAttempts: MissionAttemptRecord[];
   marketplaceListings: MarketplaceListingRecord[];
+  interactionEvents: InteractionEventRecord[];
 };
 
 const USERS: SeedUser[] = [
@@ -308,6 +325,7 @@ function defaultState(): StoreState {
     ],
     missionAttempts: [],
     marketplaceListings: [],
+    interactionEvents: [],
   };
 }
 
@@ -538,6 +556,164 @@ export function getE2ECollection(collectionName: string): Array<Record<string, u
   const state = readStore() as unknown as Record<string, Array<Record<string, unknown>>>;
   const collection = state[collectionName];
   return Array.isArray(collection) ? cloneState(collection) : [];
+}
+
+function appendInteractionEvent(
+  state: StoreState,
+  input: Omit<InteractionEventRecord, 'createdAt' | 'timestamp'>
+): InteractionEventRecord {
+  const createdAt = nowIso();
+  const event = {
+    ...input,
+    createdAt,
+    timestamp: createdAt,
+  };
+  state.interactionEvents.push(event);
+  return event;
+}
+
+function countEvents(events: InteractionEventRecord[], eventType: string): number {
+  return events.filter((event) => event.eventType === eventType).length;
+}
+
+export async function requestE2EAICoach(
+  learnerId: string,
+  siteId: string,
+  request: AICoachRequest
+): Promise<AICoachResponse> {
+  const state = readStore();
+  const openedEvent = appendInteractionEvent(state, {
+    id: nextId('miloos-opened'),
+    siteId,
+    actorId: learnerId,
+    learnerId,
+    eventType: 'ai_help_opened',
+    mode: request.mode,
+    studentInput: request.studentInput,
+  });
+  appendInteractionEvent(state, {
+    id: nextId('miloos-used'),
+    siteId,
+    actorId: learnerId,
+    learnerId,
+    eventType: 'ai_help_used',
+    interactionId: openedEvent.id,
+    mode: request.mode,
+    studentInput: request.studentInput,
+  });
+  appendInteractionEvent(state, {
+    id: nextId('miloos-response'),
+    siteId,
+    actorId: learnerId,
+    learnerId,
+    eventType: 'ai_coach_response',
+    interactionId: openedEvent.id,
+    mode: request.mode,
+    studentInput: request.studentInput,
+  });
+  writeStore(state);
+
+  return {
+    message:
+      'Try one small comparison test, write what changed, and explain why that evidence helps your prototype decision.',
+    mode: request.mode,
+    requiresExplainBack: true,
+    suggestedNextSteps: [
+      'Change one variable in the prototype',
+      'Record what changed before deciding the next move',
+    ],
+    learnerState: { cognition: 0.72, engagement: 0.68, integrity: 0.91 },
+    risk: {
+      reliability: { riskType: 'none', method: 'e2e_fake_backend', riskScore: 0, threshold: 1 },
+      autonomy: { riskType: 'none', signals: ['hint_only'], riskScore: 0, threshold: 1 },
+    },
+    mvl: { gateActive: false, episodeId: null, reason: null },
+    meta: {
+      version: 'e2e-miloos-learner-loop',
+      gradeBand: request.gradeBand || 'G7_9',
+      conceptTags: request.conceptTags || [],
+      aiHelpOpenedEventId: openedEvent.id,
+    },
+  };
+}
+
+export async function submitE2EExplainBack(
+  learnerId: string,
+  siteId: string,
+  interactionId: string,
+  explainBack: string
+): Promise<{ approved: boolean; feedback?: string }> {
+  const state = readStore();
+  const openedEvent = state.interactionEvents.find(
+    (event) => event.id === interactionId && event.actorId === learnerId && event.siteId === siteId
+  );
+
+  if (!openedEvent) {
+    throw new Error('Unknown E2E MiloOS interaction.');
+  }
+
+  appendInteractionEvent(state, {
+    id: nextId('miloos-explain-back'),
+    siteId,
+    actorId: learnerId,
+    learnerId,
+    eventType: 'explain_it_back_submitted',
+    interactionId,
+    mode: openedEvent.mode,
+    explainBack,
+  });
+  writeStore(state);
+
+  return {
+    approved: true,
+    feedback: 'Explain-back submitted. Your reflection is now attached to this MiloOS session.',
+  };
+}
+
+export async function getE2EMiloOSLearnerLoopInsights(params: {
+  learnerId: string;
+  siteId: string;
+  lookbackDays?: number;
+}): Promise<MiloOSLearnerLoopInsights> {
+  const state = readStore();
+  const events = state.interactionEvents.filter(
+    (event) => event.actorId === params.learnerId && event.siteId === params.siteId
+  );
+  const aiHelpOpened = countEvents(events, 'ai_help_opened');
+  const aiHelpUsed = countEvents(events, 'ai_help_used');
+  const explainBackSubmitted = countEvents(events, 'explain_it_back_submitted');
+
+  return {
+    siteId: params.siteId,
+    learnerId: params.learnerId,
+    lookbackDays: params.lookbackDays || 30,
+    state: events.length > 0 ? { cognition: 0.72, engagement: 0.68, integrity: 0.91 } : null,
+    trend: events.length > 0
+      ? { cognitionDelta: 0.04, engagementDelta: 0.03, integrityDelta: 0.02, improvementScore: 0.03 }
+      : null,
+    stateAvailability: {
+      validSamples: events.length > 0 ? 1 : 0,
+      hasCurrentState: events.length > 0,
+      hasTrendBaseline: events.length > 1,
+    },
+    eventCounts: events.reduce<Record<string, number>>((counts, event) => {
+      counts[event.eventType] = (counts[event.eventType] || 0) + 1;
+      return counts;
+    }, {}),
+    verification: {
+      aiHelpOpened,
+      aiHelpUsed,
+      explainBackSubmitted,
+      pendingExplainBack: Math.max(aiHelpOpened - explainBackSubmitted, 0),
+    },
+    mvl: {
+      active: 0,
+      passed: 0,
+      failed: 0,
+    },
+    activeGoals: [],
+    generatedAt: nowIso(),
+  };
 }
 
 export async function loadE2EWorkflowRecords(ctx: WorkflowContext): Promise<WorkflowLoadResult> {

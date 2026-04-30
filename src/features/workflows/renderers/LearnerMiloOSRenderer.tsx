@@ -186,19 +186,31 @@ export default function LearnerMiloOSRenderer({ ctx }: CustomRouteRendererProps)
 
       {!loading ? (
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          <div className="bg-white border border-gray-200 rounded-lg p-3 text-center">
+          <div
+            className="bg-white border border-gray-200 rounded-lg p-3 text-center"
+            data-testid="learner-miloos-support-opened"
+          >
             <p className="text-lg font-bold text-indigo-600">{supportOpened}</p>
             <p className="text-xs text-gray-500">Support opened</p>
           </div>
-          <div className="bg-white border border-gray-200 rounded-lg p-3 text-center">
+          <div
+            className="bg-white border border-gray-200 rounded-lg p-3 text-center"
+            data-testid="learner-miloos-support-used"
+          >
             <p className="text-lg font-bold text-purple-600">{supportUsed}</p>
             <p className="text-xs text-gray-500">Support used</p>
           </div>
-          <div className="bg-white border border-gray-200 rounded-lg p-3 text-center">
+          <div
+            className="bg-white border border-gray-200 rounded-lg p-3 text-center"
+            data-testid="learner-miloos-explain-backs"
+          >
             <p className="text-lg font-bold text-green-600">{explainBackSubmitted}</p>
             <p className="text-xs text-gray-500">Explain-backs</p>
           </div>
-          <div className="bg-white border border-gray-200 rounded-lg p-3 text-center">
+          <div
+            className="bg-white border border-gray-200 rounded-lg p-3 text-center"
+            data-testid="learner-miloos-pending-checks"
+          >
             <p className="text-lg font-bold text-red-600">{pendingExplainBack}</p>
             <p className="text-xs text-gray-500">Pending checks</p>
           </div>
