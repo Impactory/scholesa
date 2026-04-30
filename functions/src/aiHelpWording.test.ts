@@ -74,4 +74,20 @@ describe('functions MiloOS wording', () => {
     expect(hasInteractionEventIndex('createdAt')).toBe(true);
     expect(hasInteractionEventIndex('timestamp')).toBe(true);
   });
+
+  it('exposes MiloOS support provenance in parent summaries without mastery claims', () => {
+    const indexSource = readFunctionsFile('index.ts');
+    const summaryStart = indexSource.indexOf('async function buildParentLearnerSummary');
+    const summaryEnd = indexSource.indexOf('async function loadParentUpcomingEvents', summaryStart);
+    const summarySource = indexSource.slice(summaryStart, summaryEnd);
+
+    expect(summarySource).toContain('miloosSupportSummary');
+    expect(summarySource).toContain("'ai_help_opened'");
+    expect(summarySource).toContain("'ai_help_used'");
+    expect(summarySource).toContain("'explain_it_back_submitted'");
+    expect(summarySource).toContain('pendingExplainBack: miloosPendingExplainBack');
+    expect(summarySource).toContain('isMasteryEvidence: false');
+    expect(summarySource).not.toContain('miloosCapabilityMastery');
+    expect(summarySource).not.toContain('miloosMasteryLevel');
+  });
 });

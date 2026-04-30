@@ -132,6 +132,18 @@ interface PassportClaim {
   progressionDescriptor?: string;
 }
 
+type MiloOSSupportStatus = 'no-support-yet' | 'pending-explain-back' | 'support-verified';
+
+interface MiloOSSupportSummary {
+  supportOpened: number;
+  supportUsed: number;
+  explainBackSubmitted: number;
+  pendingExplainBack: number;
+  recentSupportAt: string | null;
+  status: MiloOSSupportStatus;
+  isMasteryEvidence: false;
+}
+
 interface LearnerSummary {
   learnerId: string;
   name: string;
@@ -148,6 +160,7 @@ interface LearnerSummary {
     reviewedCount: number;
     portfolioLinkedCount: number;
   };
+  miloosSupportSummary?: MiloOSSupportSummary;
   growthSummary?: {
     capabilityCount: number;
     updatedCount: number;
@@ -199,6 +212,15 @@ const AI_DISCLOSURE_CONFIG: Record<string, { label: string; className: string }>
   'educator-feedback-ai': { label: 'AI noted by educator', className: 'bg-blue-100 text-blue-700' },
   'no-learner-ai-signal': { label: 'AI status unknown', className: 'bg-yellow-100 text-yellow-700' },
   'not-available': { label: 'Not assessed', className: 'bg-gray-100 text-gray-500' },
+};
+
+const MILOOS_SUPPORT_STATUS_CONFIG: Record<MiloOSSupportStatus, {
+  label: string;
+  className: string;
+}> = {
+  'no-support-yet': { label: 'No support turns yet', className: 'bg-gray-100 text-gray-600' },
+  'pending-explain-back': { label: 'Explain-back needed', className: 'bg-orange-100 text-orange-700' },
+  'support-verified': { label: 'Support explained back', className: 'bg-green-100 text-green-700' },
 };
 
 const PILLAR_BAR_COLORS: Record<string, string> = {
@@ -478,6 +500,27 @@ function normalizeProcessDomainGrowthTimeline(summary: Record<string, unknown>):
     .filter((entry): entry is ProcessDomainGrowthEvent => entry !== null);
 }
 
+function normalizeMiloOSSupportSummary(
+  summary: Record<string, unknown>
+): LearnerSummary['miloosSupportSummary'] | undefined {
+  const raw = asRecord(summary.miloosSupportSummary);
+  if (!raw) return undefined;
+  const rawStatus = asString(raw.status, 'no-support-yet');
+  const status = rawStatus === 'pending-explain-back' || rawStatus === 'support-verified'
+    ? rawStatus
+    : 'no-support-yet';
+
+  return {
+    supportOpened: asNumber(raw.supportOpened) ?? 0,
+    supportUsed: asNumber(raw.supportUsed) ?? 0,
+    explainBackSubmitted: asNumber(raw.explainBackSubmitted) ?? 0,
+    pendingExplainBack: asNumber(raw.pendingExplainBack) ?? 0,
+    recentSupportAt: asString(raw.recentSupportAt) || null,
+    status,
+    isMasteryEvidence: false,
+  };
+}
+
 function normalizeLearnerSummary(summary: Record<string, unknown>): LearnerSummary {
   const growthSummary = asRecord(summary.growthSummary);
   const portfolioSnapshot = asRecord(summary.portfolioSnapshot);
@@ -501,6 +544,7 @@ function normalizeLearnerSummary(summary: Record<string, unknown>): LearnerSumma
           portfolioLinkedCount: asNumber(evidenceSummary.portfolioLinkedCount) ?? 0,
         }
       : undefined,
+    miloosSupportSummary: normalizeMiloOSSupportSummary(summary),
     growthSummary: growthSummary
       ? {
           capabilityCount: asNumber(growthSummary.capabilityCount) ?? 0,
@@ -554,6 +598,21 @@ export function buildGuardianPassportTextLines(learner: LearnerSummary): string[
     lines.push(`  Portfolio-linked:      ${learner.evidenceSummary.portfolioLinkedCount}`);
   } else {
     lines.push('  Evidence summary unavailable.');
+  }
+  lines.push('');
+  lines.push('── MiloOS Support Provenance ──');
+  if (learner.miloosSupportSummary) {
+    const support = learner.miloosSupportSummary;
+    lines.push(`  Support opened:      ${support.supportOpened}`);
+    lines.push(`  Support used:        ${support.supportUsed}`);
+    lines.push(`  Explain-backs:       ${support.explainBackSubmitted}`);
+    lines.push(`  Pending checks:      ${support.pendingExplainBack}`);
+    lines.push('  These are support and verification signals, not capability mastery.');
+    if (support.recentSupportAt) {
+      lines.push(`  Latest support:      ${formatDate(support.recentSupportAt)}`);
+    }
+  } else {
+    lines.push('  MiloOS support provenance unavailable.');
   }
   lines.push('');
   lines.push('── Process Domains ──');
@@ -669,6 +728,7 @@ export function buildGuardianFamilyShareSummary(learner: LearnerSummary): string
   const featuredAiDisclosure = topClaims.length > 0
     ? AI_DISCLOSURE_CONFIG[topClaims[0].aiDisclosureStatus]?.label ?? 'Not assessed'
     : null;
+  const miloosSupport = learner.miloosSupportSummary;
 
   return [
     `Scholesa family summary for ${learner.name}`,
@@ -677,6 +737,11 @@ export function buildGuardianFamilyShareSummary(learner: LearnerSummary): string
     `Capability band: ${LEVEL_BAND_CONFIG[learner.currentLevelBand]?.label ?? 'Not yet assessed'}`,
     `Reviewed evidence: ${learner.evidenceSummary?.reviewedCount ?? 0}`,
     ...(featuredAiDisclosure ? [`Featured AI disclosure: ${featuredAiDisclosure}`] : []),
+    ...(miloosSupport
+      ? [
+          `MiloOS support provenance: ${miloosSupport.supportOpened} opened, ${miloosSupport.supportUsed} used, ${miloosSupport.explainBackSubmitted} explain-back(s), ${miloosSupport.pendingExplainBack} pending; not capability mastery.`,
+        ]
+      : []),
     `Pending verification prompts: ${pendingPrompts.length}`,
     '',
     'Current evidence-backed claims:',
@@ -1201,6 +1266,62 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
                       {learner.portfolioSnapshot.badgeCount} badges
                     </p>
                   </div>
+                )}
+              </div>
+            )}
+
+            {learner.miloosSupportSummary && (
+              <div
+                className="rounded-lg border border-app bg-app-surface-raised p-4"
+                data-testid={`guardian-miloos-support-${learner.learnerId}`}
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h3 className="text-sm font-semibold text-app-foreground">
+                      MiloOS support provenance
+                    </h3>
+                    <p className="mt-1 text-xs text-app-muted">
+                      These are support signals and explain-back verification gaps, not capability mastery.
+                    </p>
+                  </div>
+                  <span
+                    className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                      MILOOS_SUPPORT_STATUS_CONFIG[learner.miloosSupportSummary.status].className
+                    }`}
+                  >
+                    {MILOOS_SUPPORT_STATUS_CONFIG[learner.miloosSupportSummary.status].label}
+                  </span>
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
+                  <div className="rounded-md border border-app bg-app-canvas p-3 text-center">
+                    <p className="text-lg font-bold text-app-foreground">
+                      {learner.miloosSupportSummary.supportOpened}
+                    </p>
+                    <p className="text-xs text-app-muted">Support opened</p>
+                  </div>
+                  <div className="rounded-md border border-app bg-app-canvas p-3 text-center">
+                    <p className="text-lg font-bold text-app-foreground">
+                      {learner.miloosSupportSummary.supportUsed}
+                    </p>
+                    <p className="text-xs text-app-muted">Support used</p>
+                  </div>
+                  <div className="rounded-md border border-app bg-app-canvas p-3 text-center">
+                    <p className="text-lg font-bold text-app-foreground">
+                      {learner.miloosSupportSummary.explainBackSubmitted}
+                    </p>
+                    <p className="text-xs text-app-muted">Explain-backs</p>
+                  </div>
+                  <div className="rounded-md border border-app bg-app-canvas p-3 text-center">
+                    <p className="text-lg font-bold text-app-foreground">
+                      {learner.miloosSupportSummary.pendingExplainBack}
+                    </p>
+                    <p className="text-xs text-app-muted">Pending checks</p>
+                  </div>
+                </div>
+                {learner.miloosSupportSummary.recentSupportAt && (
+                  <p className="mt-3 text-xs text-app-muted">
+                    Latest MiloOS support turn: {formatDate(learner.miloosSupportSummary.recentSupportAt)}
+                  </p>
                 )}
               </div>
             )}

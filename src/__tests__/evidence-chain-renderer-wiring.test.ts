@@ -303,6 +303,31 @@ describe('Renderers delegate to real evidence components', () => {
     expect(source).toContain('data-testid="learner-miloos-site-required"');
   });
 
+  it('MiloOS browser E2E uses fake callables only behind the E2E harness and checks no mastery write', () => {
+    const motivationSource = readSrcFile('lib', 'motivation', 'sdtMotivation.ts');
+    const insightsSource = readSrcFile('lib', 'miloos', 'learnerLoopInsights.ts');
+    const fakeBackendSource = readSrcFile('testing', 'e2e', 'fakeWebBackend.ts');
+    const e2eSource = fs.readFileSync(
+      path.join(process.cwd(), 'test', 'e2e', 'miloos-learner-loop.e2e.spec.ts'),
+      'utf8'
+    );
+
+    expect(motivationSource).toContain("NEXT_PUBLIC_E2E_TEST_MODE === '1'");
+    expect(motivationSource).toContain('requestE2EAICoach');
+    expect(motivationSource).toContain('submitE2EExplainBack');
+    expect(insightsSource).toContain("NEXT_PUBLIC_E2E_TEST_MODE === '1'");
+    expect(insightsSource).toContain('getE2EMiloOSLearnerLoopInsights');
+    expect(fakeBackendSource).toContain('interactionEvents');
+    expect(fakeBackendSource).toContain("eventType: 'ai_help_opened'");
+    expect(fakeBackendSource).toContain("eventType: 'ai_help_used'");
+    expect(fakeBackendSource).toContain("eventType: 'explain_it_back_submitted'");
+    expect(fakeBackendSource).toContain('pendingExplainBack: Math.max(aiHelpOpened - explainBackSubmitted, 0)');
+    expect(e2eSource).toContain("page.goto('/en/learner/miloos')");
+    expect(e2eSource).toContain("getCollection(page, 'interactionEvents')");
+    expect(e2eSource).toContain("getCollection(page, 'capabilityMastery')");
+    expect(e2eSource).toContain('expect(masteryRecords).toEqual([])');
+  });
+
   it('SiteImplementationHealthRenderer queries evidence chain collections', () => {
     const source = readSrcFile(
       'features', 'workflows', 'renderers', 'SiteImplementationHealthRenderer.tsx'

@@ -2611,6 +2611,47 @@ async function buildParentLearnerSummary(params: {
   const interactionEventRows: Array<Record<string, unknown>> = interactionEventsSnap.docs
     .map((doc) => ({ id: doc.id, ...(doc.data() as Record<string, unknown>) }))
     .filter(includeForSite);
+  const miloosSupportEventTypes = new Set([
+    'ai_help_opened',
+    'ai_help_used',
+    'ai_coach_response',
+    'explain_it_back_submitted',
+  ]);
+  const miloosSupportEvents = interactionEventRows.filter((row) => {
+    const eventType = typeof row.eventType === 'string' ? row.eventType.trim().toLowerCase() : '';
+    return miloosSupportEventTypes.has(eventType);
+  });
+  const countMiloOSSupportEvents = (eventType: string): number =>
+    miloosSupportEvents.filter((row) => {
+      const value = typeof row.eventType === 'string' ? row.eventType.trim().toLowerCase() : '';
+      return value === eventType;
+    }).length;
+  const miloosSupportOpened = countMiloOSSupportEvents('ai_help_opened');
+  const miloosSupportUsed = countMiloOSSupportEvents('ai_help_used');
+  const miloosExplainBackSubmitted = countMiloOSSupportEvents('explain_it_back_submitted');
+  const miloosPendingExplainBack = Math.max(
+    Math.max(miloosSupportOpened, miloosSupportUsed) - miloosExplainBackSubmitted,
+    0,
+  );
+  const miloosSupportDates = miloosSupportEvents
+    .map((row) => parseDateFromUnknown(row.createdAt ?? row.timestamp))
+    .filter((value): value is Date => value instanceof Date)
+    .sort((left, right) => right.getTime() - left.getTime());
+  const miloosSupportSummary = {
+    supportOpened: miloosSupportOpened,
+    supportUsed: miloosSupportUsed,
+    coachResponses: countMiloOSSupportEvents('ai_coach_response'),
+    explainBackSubmitted: miloosExplainBackSubmitted,
+    pendingExplainBack: miloosPendingExplainBack,
+    recentSupportAt: miloosSupportDates[0]?.toISOString() ?? null,
+    status:
+      miloosSupportOpened === 0 && miloosSupportUsed === 0
+        ? 'no-support-yet'
+        : miloosPendingExplainBack > 0
+        ? 'pending-explain-back'
+        : 'support-verified',
+    isMasteryEvidence: false,
+  };
 
   // Build authoritative capability ID → title map from the capabilities collection
   const capabilityTitlesById = new Map<string, string>();
@@ -3432,6 +3473,7 @@ async function buildParentLearnerSummary(params: {
       },
     },
     evidenceSummary,
+    miloosSupportSummary,
     growthSummary,
     growthTimeline,
     portfolioSnapshot,

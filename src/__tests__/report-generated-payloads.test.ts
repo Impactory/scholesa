@@ -253,6 +253,15 @@ const guardianLearner = {
     reviewedCount: 2,
     portfolioLinkedCount: 1,
   },
+  miloosSupportSummary: {
+    supportOpened: 2,
+    supportUsed: 2,
+    explainBackSubmitted: 1,
+    pendingExplainBack: 1,
+    recentSupportAt: '2026-03-22T10:00:00.000Z',
+    status: 'pending-explain-back',
+    isMasteryEvidence: false,
+  },
   growthSummary: {
     capabilityCount: 1,
     updatedCount: 1,
@@ -281,16 +290,23 @@ describe('generated web report payload provenance', () => {
   });
 
   it('asserts guardian passport text and family share payloads carry required provenance', () => {
+    const guardianPassportText = buildGuardianPassportTextLines(guardianLearner as any).join('\n');
+    const guardianShareText = buildGuardianFamilyShareSummary(guardianLearner as any);
+
     assertReportProvenanceContract({
-      text: buildGuardianPassportTextLines(guardianLearner as any).join('\n'),
+      text: guardianPassportText,
       expectedSignals: passportReportProvenanceSignals,
       reportName: 'guardian passport generated text',
     });
 
     assertReportProvenanceContract({
-      text: buildGuardianFamilyShareSummary(guardianLearner as any),
+      text: guardianShareText,
       expectedSignals: familySummaryProvenanceSignals,
       reportName: 'guardian family share generated text',
     });
+
+    expect(guardianPassportText).toContain('MiloOS Support Provenance');
+    expect(guardianPassportText).toContain('These are support and verification signals, not capability mastery.');
+    expect(guardianShareText).toContain('MiloOS support provenance: 2 opened, 2 used, 1 explain-back(s), 1 pending; not capability mastery.');
   });
 });

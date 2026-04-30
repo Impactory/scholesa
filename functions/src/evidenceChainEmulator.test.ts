@@ -493,6 +493,14 @@ describe('Evidence chain emulator integration', () => {
         role: 'learner',
         siteIds: [SITE_ID],
         activeSiteId: SITE_ID,
+        parentIds: [PARENT_ID],
+      }),
+      db.collection('users').doc(PARENT_ID).set({
+        learnerIds: [LEARNER_ID, miloLearnerId],
+        siteIds: [SITE_ID],
+        activeSiteId: SITE_ID,
+      }, {
+        merge: true,
       }),
       db.collection('orchestrationStates').doc(`${miloLearnerId}-latest`).set({
         siteId: SITE_ID,
@@ -604,6 +612,29 @@ describe('Evidence chain emulator integration', () => {
       .where('learnerId', '==', miloLearnerId)
       .get();
     expect(masterySnap.empty).toBe(true);
+
+    const parentBundle = await functionsModule.getParentDashboardBundle.run(callableRequest(
+      PARENT_ID,
+      {
+        siteId: SITE_ID,
+        locale: 'en',
+        range: 'all',
+      },
+    ));
+    const miloParentSummary = (parentBundle.learners as Array<Record<string, any>>).find(
+      (entry) => entry.learnerId === miloLearnerId,
+    );
+    expect(miloParentSummary?.miloosSupportSummary).toMatchObject({
+      supportOpened: 2,
+      supportUsed: 2,
+      coachResponses: 2,
+      explainBackSubmitted: 1,
+      pendingExplainBack: 1,
+      status: 'pending-explain-back',
+      isMasteryEvidence: false,
+    });
+    expect(miloParentSummary?.miloosSupportSummary).not.toHaveProperty('capabilityMastery');
+    expect(miloParentSummary?.miloosSupportSummary).not.toHaveProperty('masteryLevel');
   });
 
   it('uses configured internal inference in the MiloOS explain-back journey', async () => {
