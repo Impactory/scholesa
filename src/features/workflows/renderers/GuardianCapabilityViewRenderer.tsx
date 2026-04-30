@@ -871,6 +871,7 @@ function PillarProgressBar({ pillar }: { key?: React.Key; pillar: PillarProgress
 
 export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRendererProps) {
   const trackInteraction = useInteractionTracking();
+  const trackInteractionRef = useRef(trackInteraction);
   const siteId = resolveActiveSiteId(ctx.profile);
   const [learners, setLearners] = useState<LearnerSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -898,6 +899,10 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
   const showGuardianShareActions = isPassportRoute || isSummaryRoute;
   const focusRef = useRef<HTMLDivElement | null>(null);
 
+  useEffect(() => {
+    trackInteractionRef.current = trackInteraction;
+  }, [trackInteraction]);
+
   const fetchData = useCallback(async () => {
     if (!siteId) {
       setLearners([]);
@@ -908,6 +913,14 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
     setLoading(true);
     setError(null);
     try {
+      if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
+        const { getE2EParentDashboardBundle } = await import('@/src/testing/e2e/fakeWebBackend');
+        const bundle = await getE2EParentDashboardBundle({ parentId: ctx.uid, siteId });
+        setLearners((bundle.learners ?? []).map(normalizeLearnerSummary));
+        trackInteractionRef.current('feature_discovered', { cta: 'guardian_capability_view_loaded' });
+        return;
+      }
+
       const callable = httpsCallable<{ parentId: string; siteId?: string }, ParentDashboardBundle>(
         functions,
         'getParentDashboardBundle'
@@ -916,13 +929,13 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
       const bundle = result.data;
 
       setLearners((bundle.learners ?? []).map(normalizeLearnerSummary));
-      trackInteraction('feature_discovered', { cta: 'guardian_capability_view_loaded' });
+      trackInteractionRef.current('feature_discovered', { cta: 'guardian_capability_view_loaded' });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to load your family dashboard.');
     } finally {
       setLoading(false);
     }
-  }, [ctx.uid, siteId, trackInteraction]);
+  }, [ctx.uid, siteId]);
 
   useEffect(() => {
     void fetchData();
@@ -1293,25 +1306,37 @@ export default function GuardianCapabilityViewRenderer({ ctx }: CustomRouteRende
                   </span>
                 </div>
                 <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
-                  <div className="rounded-md border border-app bg-app-canvas p-3 text-center">
+                  <div
+                    className="rounded-md border border-app bg-app-canvas p-3 text-center"
+                    data-testid="guardian-miloos-support-opened"
+                  >
                     <p className="text-lg font-bold text-app-foreground">
                       {learner.miloosSupportSummary.supportOpened}
                     </p>
                     <p className="text-xs text-app-muted">Support opened</p>
                   </div>
-                  <div className="rounded-md border border-app bg-app-canvas p-3 text-center">
+                  <div
+                    className="rounded-md border border-app bg-app-canvas p-3 text-center"
+                    data-testid="guardian-miloos-support-used"
+                  >
                     <p className="text-lg font-bold text-app-foreground">
                       {learner.miloosSupportSummary.supportUsed}
                     </p>
                     <p className="text-xs text-app-muted">Support used</p>
                   </div>
-                  <div className="rounded-md border border-app bg-app-canvas p-3 text-center">
+                  <div
+                    className="rounded-md border border-app bg-app-canvas p-3 text-center"
+                    data-testid="guardian-miloos-explain-backs"
+                  >
                     <p className="text-lg font-bold text-app-foreground">
                       {learner.miloosSupportSummary.explainBackSubmitted}
                     </p>
                     <p className="text-xs text-app-muted">Explain-backs</p>
                   </div>
-                  <div className="rounded-md border border-app bg-app-canvas p-3 text-center">
+                  <div
+                    className="rounded-md border border-app bg-app-canvas p-3 text-center"
+                    data-testid="guardian-miloos-pending-checks"
+                  >
                     <p className="text-lg font-bold text-app-foreground">
                       {learner.miloosSupportSummary.pendingExplainBack}
                     </p>

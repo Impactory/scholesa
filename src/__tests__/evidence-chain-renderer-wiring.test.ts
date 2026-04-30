@@ -381,6 +381,11 @@ describe('Renderers delegate to real evidence components', () => {
     const source = readSrcFile(
       'features', 'workflows', 'renderers', 'GuardianCapabilityViewRenderer.tsx'
     );
+    const fakeBackendSource = readSrcFile('testing', 'e2e', 'fakeWebBackend.ts');
+    const e2eSource = fs.readFileSync(
+      path.join(process.cwd(), 'test', 'e2e', 'miloos-guardian-support-provenance.e2e.spec.ts'),
+      'utf8'
+    );
     expect(source).toContain('normalizeLearnerSummary');
     expect(source).toContain('learnerName');
     expect(source).toContain('capabilitySnapshot');
@@ -389,6 +394,15 @@ describe('Renderers delegate to real evidence components', () => {
     expect(source).toContain('updatedCapabilityCount');
     expect(source).toContain('Supplemental engagement signals');
     expect(source).toContain('do not replace the evidence-backed capability');
+    expect(source).toContain("NEXT_PUBLIC_E2E_TEST_MODE === '1'");
+    expect(source).toContain('getE2EParentDashboardBundle');
+    expect(source).toContain('trackInteractionRef');
+    expect(fakeBackendSource).toContain('getE2EParentDashboardBundle');
+    expect(e2eSource).toContain("page.goto('/en/parent/summary')");
+    expect(e2eSource).toContain('seedInteractionEvents');
+    expect(e2eSource).toContain('guardian-miloos-support-');
+    expect(e2eSource).toContain('not capability mastery');
+    expect(e2eSource).toContain('guardian-other-site-opened');
   });
 
   it('EducatorTodayRenderer uses canonical site context for live capture', () => {

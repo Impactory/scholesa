@@ -751,6 +751,91 @@ export async function getE2EMiloOSLearnerLoopInsights(params: {
   };
 }
 
+export async function getE2EParentDashboardBundle(params: {
+  parentId: string;
+  siteId: string;
+}): Promise<{ learners: Array<Record<string, unknown>> }> {
+  const state = readStore();
+  const linkedLearnerIds = linkedLearnerIdsForParent(params.parentId, state);
+  const learners = state.users.filter(
+    (user) =>
+      user.role === 'learner' &&
+      linkedLearnerIds.includes(user.uid) &&
+      user.siteIds?.includes(params.siteId)
+  );
+
+  return {
+    learners: learners.map((learner) => {
+      const supportEvents = state.interactionEvents.filter(
+        (event) =>
+          event.siteId === params.siteId &&
+          (event.actorId === learner.uid || event.learnerId === learner.uid)
+      );
+      const supportOpened = countEvents(supportEvents, 'ai_help_opened');
+      const supportUsed = countEvents(supportEvents, 'ai_help_used');
+      const explainBackSubmitted = countEvents(supportEvents, 'explain_it_back_submitted');
+      const pendingExplainBack = Math.max(supportOpened - explainBackSubmitted, 0);
+      const recentSupportAt = supportEvents
+        .map((event) => event.createdAt || event.timestamp)
+        .filter(Boolean)
+        .sort()
+        .at(-1) || null;
+      const portfolioItemsPreview = state.portfolioItems
+        .filter((item) => item.siteId === params.siteId && item.learnerId === learner.uid)
+        .map((item) => ({
+          id: item.id,
+          title: item.title,
+          capabilityTitles: ['Prototype iteration'],
+          verificationStatus: item.status === 'published' ? 'verified' : 'pending',
+          aiDisclosureStatus: 'learner-ai-not-used',
+        }));
+
+      return {
+        learnerId: learner.uid,
+        learnerName: learner.displayName,
+        capabilitySnapshot: {
+          overall: 0.52,
+          band: 'developing',
+          familyLabels: {
+            futureSkills: 'Think',
+            leadership: 'Lead',
+            impact: 'Build for the World',
+          },
+        },
+        pillarProgress: {
+          futureSkills: 0.6,
+          leadership: 0.45,
+          impact: 0.5,
+        },
+        portfolioItemsPreview,
+        portfolioSnapshot: {
+          artifactCount: portfolioItemsPreview.length,
+          verifiedCount: portfolioItemsPreview.length,
+          badgeCount: 0,
+        },
+        evidenceSummary: {
+          recordCount: 0,
+          reviewedCount: 0,
+          portfolioLinkedCount: portfolioItemsPreview.length,
+        },
+        miloosSupportSummary: {
+          supportOpened,
+          supportUsed,
+          explainBackSubmitted,
+          pendingExplainBack,
+          recentSupportAt,
+          status: pendingExplainBack > 0
+            ? 'pending-explain-back'
+            : supportOpened > 0
+            ? 'support-verified'
+            : 'no-support-yet',
+          isMasteryEvidence: false,
+        },
+      };
+    }),
+  };
+}
+
 export async function loadE2EWorkflowRecords(ctx: WorkflowContext): Promise<WorkflowLoadResult> {
   const state = readStore();
 
