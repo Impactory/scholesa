@@ -152,6 +152,7 @@ if (typeof window !== 'undefined' && isE2ETestMode) {
       signOut: (locale?: string) => Promise<void>;
       currentUid: () => string | null;
       getCollection: (collectionName: string) => Array<Record<string, unknown>>;
+      seedInteractionEvents: (events: Array<Record<string, unknown>>) => void;
     };
   }).__scholesaE2E = {
     signInAs: async (uid: string, locale?: string) => {
@@ -168,5 +169,8 @@ if (typeof window !== 'undefined' && isE2ETestMode) {
     },
     currentUid: () => e2eBackendModule?.currentE2EUid() ?? null,
     getCollection: (collectionName: string) => e2eBackendModule?.getE2ECollection(collectionName) ?? [],
+    seedInteractionEvents: (events: Array<Record<string, unknown>>) => {
+      e2eBackendModule?.seedE2EInteractionEvents(events as Parameters<E2EBackendModule['seedE2EInteractionEvents']>[0]);
+    },
   };
 }

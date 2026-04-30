@@ -148,6 +148,20 @@ type InteractionEventRecord = {
   explainBack?: string;
 };
 
+type SeedInteractionEventInput = {
+  id?: string;
+  siteId: string;
+  actorId: string;
+  learnerId?: string;
+  eventType: string;
+  createdAt?: string;
+  timestamp?: string;
+  interactionId?: string;
+  mode?: string;
+  studentInput?: string;
+  explainBack?: string;
+};
+
 type StoreState = {
   users: SeedUser[];
   sites: SiteRecord[];
@@ -556,6 +570,27 @@ export function getE2ECollection(collectionName: string): Array<Record<string, u
   const state = readStore() as unknown as Record<string, Array<Record<string, unknown>>>;
   const collection = state[collectionName];
   return Array.isArray(collection) ? cloneState(collection) : [];
+}
+
+export function seedE2EInteractionEvents(events: SeedInteractionEventInput[]): void {
+  const state = readStore();
+  events.forEach((input, index) => {
+    const createdAt = input.createdAt || input.timestamp || nowIso();
+    state.interactionEvents.push({
+      id: input.id || nextId(`seeded-miloos-event-${index}`),
+      siteId: input.siteId,
+      actorId: input.actorId,
+      learnerId: input.learnerId,
+      eventType: input.eventType,
+      createdAt,
+      timestamp: input.timestamp || createdAt,
+      interactionId: input.interactionId,
+      mode: input.mode,
+      studentInput: input.studentInput,
+      explainBack: input.explainBack,
+    });
+  });
+  writeStore(state);
 }
 
 function appendInteractionEvent(

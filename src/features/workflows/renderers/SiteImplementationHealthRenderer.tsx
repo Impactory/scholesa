@@ -35,11 +35,92 @@ interface HealthMetrics {
   totalLearners: number;
   learnersWithEvidence: number;
   learnersWithProofBundles: number;
+  learnersWithMiloOSSupport: number;
+  learnersWithPendingMiloOSExplainBack: number;
   totalEvidenceRecords: number;
   totalGrowthEvents: number;
   totalRubricApplications: number;
+  miloosSupportOpened: number;
+  miloosSupportUsed: number;
+  miloosExplainBackSubmitted: number;
+  miloosPendingExplainBack: number;
   averageEvidencePerLearner: number;
   proofVerificationRate: number;
+}
+
+interface MiloOSLearnerSupportCounts {
+  opened: number;
+  used: number;
+  explainBackSubmitted: number;
+}
+
+type MiloOSSupportMetrics = Pick<
+  HealthMetrics,
+  | 'learnersWithMiloOSSupport'
+  | 'learnersWithPendingMiloOSExplainBack'
+  | 'miloosSupportOpened'
+  | 'miloosSupportUsed'
+  | 'miloosExplainBackSubmitted'
+  | 'miloosPendingExplainBack'
+>;
+
+function deriveMiloOSSupportMetrics(
+  interactionEvents: Array<Record<string, unknown>>,
+  learnerIds: Set<string>
+): MiloOSSupportMetrics {
+  const miloosLearnerSupport = new Map<string, MiloOSLearnerSupportCounts>();
+  const ensureMiloOSLearner = (learnerId: string): MiloOSLearnerSupportCounts => {
+    const existing = miloosLearnerSupport.get(learnerId);
+    if (existing) return existing;
+    const created = { opened: 0, used: 0, explainBackSubmitted: 0 };
+    miloosLearnerSupport.set(learnerId, created);
+    return created;
+  };
+
+  interactionEvents.forEach((data) => {
+    const actorId = typeof data.actorId === 'string' ? data.actorId : '';
+    const eventLearnerId = typeof data.learnerId === 'string' ? data.learnerId : '';
+    const learnerId = actorId && learnerIds.has(actorId)
+      ? actorId
+      : eventLearnerId && learnerIds.has(eventLearnerId)
+      ? eventLearnerId
+      : '';
+    if (!learnerId) return;
+    const eventType = typeof data.eventType === 'string' ? data.eventType.trim().toLowerCase() : '';
+    if (!['ai_help_opened', 'ai_help_used', 'explain_it_back_submitted'].includes(eventType)) {
+      return;
+    }
+    const support = ensureMiloOSLearner(learnerId);
+    if (eventType === 'ai_help_opened') support.opened++;
+    if (eventType === 'ai_help_used') support.used++;
+    if (eventType === 'explain_it_back_submitted') support.explainBackSubmitted++;
+  });
+
+  let miloosSupportOpened = 0;
+  let miloosSupportUsed = 0;
+  let miloosExplainBackSubmitted = 0;
+  let miloosPendingExplainBack = 0;
+  let learnersWithMiloOSSupport = 0;
+  let learnersWithPendingMiloOSExplainBack = 0;
+  miloosLearnerSupport.forEach((support) => {
+    const learnerOpenedOrUsed = Math.max(support.opened, support.used);
+    const pendingExplainBack = Math.max(learnerOpenedOrUsed - support.explainBackSubmitted, 0);
+    miloosSupportOpened += support.opened;
+    miloosSupportUsed += support.used;
+    miloosExplainBackSubmitted += support.explainBackSubmitted;
+    miloosPendingExplainBack += pendingExplainBack;
+    if (learnerOpenedOrUsed > 0) learnersWithMiloOSSupport++;
+    if (pendingExplainBack > 0) learnersWithPendingMiloOSExplainBack++;
+  });
+
+  return {
+    learnersWithMiloOSSupport,
+    learnersWithPendingMiloOSExplainBack,
+    miloosSupportOpened,
+    miloosSupportUsed,
+    miloosExplainBackSubmitted,
+    miloosPendingExplainBack,
+  };
 }
 
 function healthScore(metrics: HealthMetrics): { score: number; label: string; color: string } {
@@ -86,19 +167,50 @@ export default function SiteImplementationHealthRenderer({ ctx }: CustomRouteRen
     setLoading(true);
     try {
       if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === '1') {
-        const { loadE2EWorkflowRecords } = await import('@/src/testing/e2e/fakeWebBackend');
+        const { getE2ECollection, loadE2EWorkflowRecords } = await import('@/src/testing/e2e/fakeWebBackend');
         const result = await loadE2EWorkflowRecords({ ...ctx, routePath: '/site/dashboard' });
         const siteRecord = result.records[0];
+        const e2eUsers = getE2ECollection('users');
+        const educatorIds = new Set(
+          e2eUsers
+            .filter((user) => (
+              user.role === 'educator' &&
+              Array.isArray(user.siteIds) &&
+              user.siteIds.includes(siteId)
+            ))
+            .map((user) => (typeof user.uid === 'string' ? user.uid : ''))
+            .filter(Boolean)
+        );
+        const learnerIds = new Set(
+          e2eUsers
+            .filter((user) => (
+              user.role === 'learner' &&
+              Array.isArray(user.siteIds) &&
+              user.siteIds.includes(siteId)
+            ))
+            .map((user) => (typeof user.uid === 'string' ? user.uid : ''))
+            .filter(Boolean)
+        );
+        const miloosSupport = deriveMiloOSSupportMetrics(
+          getE2ECollection('interactionEvents').filter((event) => event.siteId === siteId),
+          learnerIds
+        );
         setSiteName(siteRecord?.title ?? '');
         setMetrics({
-          totalEducators: 0,
+          totalEducators: educatorIds.size,
           educatorsWithRubricApplications: 0,
-          totalLearners: 0,
+          totalLearners: learnerIds.size,
           learnersWithEvidence: 0,
           learnersWithProofBundles: 0,
+          learnersWithMiloOSSupport: miloosSupport.learnersWithMiloOSSupport,
+          learnersWithPendingMiloOSExplainBack: miloosSupport.learnersWithPendingMiloOSExplainBack,
           totalEvidenceRecords: 0,
           totalGrowthEvents: 0,
           totalRubricApplications: 0,
+          miloosSupportOpened: miloosSupport.miloosSupportOpened,
+          miloosSupportUsed: miloosSupport.miloosSupportUsed,
+          miloosExplainBackSubmitted: miloosSupport.miloosExplainBackSubmitted,
+          miloosPendingExplainBack: miloosSupport.miloosPendingExplainBack,
           averageEvidencePerLearner: 0,
           proofVerificationRate: 0,
         });
@@ -111,12 +223,14 @@ export default function SiteImplementationHealthRenderer({ ctx }: CustomRouteRen
         rubricAppsSnap,
         evidenceSnap,
         growthSnap,
+        interactionEventsSnap,
       ] = await Promise.all([
         getDocs(query(collection(firestore, 'users'), where('siteIds', 'array-contains', siteId), where('role', '==', 'educator'))),
         getDocs(query(collection(firestore, 'users'), where('siteIds', 'array-contains', siteId), where('role', '==', 'learner'))),
         getDocs(query(collection(firestore, 'rubricApplications'), where('siteId', '==', siteId))),
         getDocs(query(collection(firestore, 'evidenceRecords'), where('siteId', '==', siteId))),
         getDocs(query(collection(firestore, 'capabilityGrowthEvents'), where('siteId', '==', siteId))),
+        getDocs(query(collection(firestore, 'interactionEvents'), where('siteId', '==', siteId))),
       ]);
 
       const educatorIds = new Set(educatorsSnap.docs.map((d) => d.id));
@@ -158,6 +272,11 @@ export default function SiteImplementationHealthRenderer({ ctx }: CustomRouteRen
         if (data.verificationStatus === 'verified') verifiedProofs++;
       });
 
+      const miloosSupport = deriveMiloOSSupportMetrics(
+        interactionEventsSnap.docs.map((d) => d.data()),
+        learnerIds
+      );
+
       const totalLearners = learnerIds.size;
       const totalEvidence = evidenceSnap.size;
       const totalProof = proofDocs.length;
@@ -168,9 +287,15 @@ export default function SiteImplementationHealthRenderer({ ctx }: CustomRouteRen
         totalLearners,
         learnersWithEvidence: learnersWithEvidence.size,
         learnersWithProofBundles: learnersWithProof.size,
+        learnersWithMiloOSSupport: miloosSupport.learnersWithMiloOSSupport,
+        learnersWithPendingMiloOSExplainBack: miloosSupport.learnersWithPendingMiloOSExplainBack,
         totalEvidenceRecords: totalEvidence,
         totalGrowthEvents: growthSnap.size,
         totalRubricApplications: rubricAppsSnap.size,
+        miloosSupportOpened: miloosSupport.miloosSupportOpened,
+        miloosSupportUsed: miloosSupport.miloosSupportUsed,
+        miloosExplainBackSubmitted: miloosSupport.miloosExplainBackSubmitted,
+        miloosPendingExplainBack: miloosSupport.miloosPendingExplainBack,
         averageEvidencePerLearner: totalLearners > 0 ? totalEvidence / totalLearners : 0,
         proofVerificationRate: totalProof > 0 ? verifiedProofs / totalProof : 0,
       });
@@ -288,6 +413,62 @@ export default function SiteImplementationHealthRenderer({ ctx }: CustomRouteRen
           <p className="text-2xl font-bold text-gray-900">{metrics.totalGrowthEvents}</p>
           <p className="text-xs text-gray-400">growth events recorded</p>
         </div>
+      </div>
+
+      <div
+        className="bg-white border border-gray-200 rounded-lg p-4"
+        data-testid="site-miloos-support-health"
+      >
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900">MiloOS support health</h3>
+            <p className="mt-1 text-xs text-gray-500">
+              These are support and explain-back verification signals, not capability mastery.
+            </p>
+          </div>
+          <span className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-700">
+            {metrics.learnersWithMiloOSSupport}/{metrics.totalLearners} learners used support
+          </span>
+        </div>
+        <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+          <div
+            className="rounded-md border border-gray-100 bg-gray-50 p-3 text-center"
+            data-testid="site-miloos-support-opened"
+          >
+            <p className="text-lg font-bold text-gray-900">{metrics.miloosSupportOpened}</p>
+            <p className="text-xs text-gray-500">Support opened</p>
+          </div>
+          <div
+            className="rounded-md border border-gray-100 bg-gray-50 p-3 text-center"
+            data-testid="site-miloos-support-used"
+          >
+            <p className="text-lg font-bold text-gray-900">{metrics.miloosSupportUsed}</p>
+            <p className="text-xs text-gray-500">Support used</p>
+          </div>
+          <div
+            className="rounded-md border border-gray-100 bg-gray-50 p-3 text-center"
+            data-testid="site-miloos-explain-backs"
+          >
+            <p className="text-lg font-bold text-gray-900">{metrics.miloosExplainBackSubmitted}</p>
+            <p className="text-xs text-gray-500">Explain-backs</p>
+          </div>
+          <div
+            className="rounded-md border border-gray-100 bg-gray-50 p-3 text-center"
+            data-testid="site-miloos-pending-checks"
+          >
+            <p className="text-lg font-bold text-gray-900">{metrics.miloosPendingExplainBack}</p>
+            <p className="text-xs text-gray-500">Pending checks</p>
+          </div>
+        </div>
+        {metrics.miloosPendingExplainBack > 0 ? (
+          <p className="mt-3 text-xs font-medium text-amber-700">
+            {metrics.learnersWithPendingMiloOSExplainBack} learner{metrics.learnersWithPendingMiloOSExplainBack === 1 ? '' : 's'} need MiloOS explain-back follow-up.
+          </p>
+        ) : (
+          <p className="mt-3 text-xs text-gray-500">
+            No pending MiloOS explain-back checks are visible for this site.
+          </p>
+        )}
       </div>
 
       {/* Detail rows */}

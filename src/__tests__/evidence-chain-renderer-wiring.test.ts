@@ -337,7 +337,36 @@ describe('Renderers delegate to real evidence components', () => {
     expect(source).toContain('evidenceRecords');
     expect(source).toContain('capabilityGrowthEvents');
     expect(source).toContain('proofOfLearningBundles');
+    expect(source).toContain("collection(firestore, 'interactionEvents')");
+    expect(source).toContain('deriveMiloOSSupportMetrics');
+    expect(source).toContain("getE2ECollection('interactionEvents')");
+    expect(source).toContain('MiloOS support health');
+    expect(source).toContain('support and explain-back verification signals, not capability mastery');
+    expect(source).toContain('data-testid="site-miloos-support-health"');
+    expect(source).toContain('data-testid="site-miloos-support-opened"');
+    expect(source).toContain('data-testid="site-miloos-support-used"');
+    expect(source).toContain('data-testid="site-miloos-explain-backs"');
+    expect(source).toContain('data-testid="site-miloos-pending-checks"');
+    expect(source).toContain('learnersWithPendingMiloOSExplainBack');
     expect(source).toContain('data-testid="site-implementation-site-required"');
+  });
+
+  it('MiloOS site support health browser E2E is harness-only and checks non-mastery copy', () => {
+    const clientInitSource = readSrcFile('firebase', 'client-init.ts');
+    const fakeBackendSource = readSrcFile('testing', 'e2e', 'fakeWebBackend.ts');
+    const e2eSource = fs.readFileSync(
+      path.join(process.cwd(), 'test', 'e2e', 'miloos-site-support-health.e2e.spec.ts'),
+      'utf8'
+    );
+
+    expect(clientInitSource).toContain('seedInteractionEvents');
+    expect(clientInitSource).toContain('isE2ETestMode');
+    expect(fakeBackendSource).toContain('seedE2EInteractionEvents');
+    expect(e2eSource).toContain("page.goto('/en/site/dashboard')");
+    expect(e2eSource).toContain('seedInteractionEvents');
+    expect(e2eSource).toContain('site-miloos-support-health');
+    expect(e2eSource).toContain('not capability mastery');
+    expect(e2eSource).toContain('site-miloos-pending-checks');
   });
 
   it('SiteEvidenceHealthRenderer delegates to SiteEvidenceHealthDashboard', () => {

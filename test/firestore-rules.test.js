@@ -706,9 +706,25 @@ describe('Interaction Events Collection', () => {
     );
   });
 
+  test('site admin can read same-site MiloOS support events for implementation health', async () => {
+    await seedInteractionEvents();
+    const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
+    await assertSucceeds(getDoc(doc(db, 'interactionEvents', 'event-site1')));
+    await assertSucceeds(
+      getDocs(query(collection(db, 'interactionEvents'), where('siteId', '==', 'site1')))
+    );
+  });
+
   test('educator cannot read other-site or missing-site interaction events', async () => {
     await seedInteractionEvents();
     const db = testEnv.authenticatedContext(educatorUser.uid).firestore();
+    await assertFails(getDoc(doc(db, 'interactionEvents', 'event-site2')));
+    await assertFails(getDoc(doc(db, 'interactionEvents', 'event-nosite')));
+  });
+
+  test('site admin cannot read other-site or missing-site interaction events', async () => {
+    await seedInteractionEvents();
+    const db = testEnv.authenticatedContext(siteAdminUser.uid).firestore();
     await assertFails(getDoc(doc(db, 'interactionEvents', 'event-site2')));
     await assertFails(getDoc(doc(db, 'interactionEvents', 'event-nosite')));
   });
