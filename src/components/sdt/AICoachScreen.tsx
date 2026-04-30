@@ -37,6 +37,12 @@ interface AICoachScreenProps {
 
 type CoachMode = 'hint' | 'verify' | 'debug';
 
+const audioUnavailableStatus =
+  'Audio was not available, so read the MiloOS answer below before explaining it back.';
+
+const spokenPlaybackFailedStatus =
+  'Spoken playback did not start, so read the MiloOS answer below before explaining it back.';
+
 export function AICoachScreen({
   learnerId,
   siteId,
@@ -102,13 +108,28 @@ export function AICoachScreen({
       const aiResponse = await sdtMotivation.requestAICoach(learnerId, siteId, request);
       setResponse(aiResponse);
       notifyLearnerLoopUpdated();
-      await playSpokenResponse(aiResponse.message);
+      try {
+        const deliveryMode = await playSpokenResponse(aiResponse.message);
+        if (deliveryMode === 'none') {
+          setStatusMessage(audioUnavailableStatus);
+        }
+      } catch (playbackError) {
+        console.error('MiloOS spoken response error:', playbackError);
+        setStatusMessage(spokenPlaybackFailedStatus);
+      }
     } catch (err) {
       console.error('MiloOS error:', err);
       setError('Unable to get MiloOS help right now. Try again or ask your teacher!');
     } finally {
       setLoading(false);
     }
+  };
+
+  const replayResponse = () => {
+    void replaySpokenResponse().catch((playbackError) => {
+      console.error('MiloOS spoken response replay error:', playbackError);
+      setStatusMessage(spokenPlaybackFailedStatus);
+    });
   };
 
   const { isListening, isTranscribing, startListening, stopListening } = useVoiceTranscription({
@@ -287,7 +308,11 @@ export function AICoachScreen({
 
           <div className="space-y-4">
             {statusMessage ? (
-              <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900">
+              <div
+                role="status"
+                aria-live="polite"
+                className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900"
+              >
                 {statusMessage}
               </div>
             ) : null}
@@ -363,7 +388,11 @@ export function AICoachScreen({
       {response && (
         <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-4">
           {statusMessage ? (
-            <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900">
+            <div
+              role="status"
+              aria-live="polite"
+              className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900"
+            >
               {statusMessage}
             </div>
           ) : null}
@@ -377,9 +406,7 @@ export function AICoachScreen({
                 {spokenResponseStatus || 'Replay the spoken response if you need to hear it again.'}
               </p>
               <button
-                onClick={() => {
-                  void replaySpokenResponse();
-                }}
+                onClick={replayResponse}
                 className="mt-3 inline-flex items-center gap-2 rounded-lg bg-purple-100 px-3 py-2 text-sm font-medium text-purple-900 transition-colors hover:bg-purple-200"
               >
                 <Volume2Icon className="w-4 h-4" />
@@ -388,13 +415,20 @@ export function AICoachScreen({
             </div>
           </div>
 
+          <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+            <p className="text-sm font-medium text-gray-900">MiloOS response transcript</p>
+            <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-gray-700">
+              {response.message.trim()}
+            </p>
+          </div>
+
           {/* Suggested Next Steps */}
           {response.suggestedNextSteps && response.suggestedNextSteps.length > 0 && (
             <div className="bg-blue-50 rounded-lg p-4">
               <p className="font-medium text-blue-900 mb-2">Try these next:</p>
               <ul className="list-disc list-inside space-y-1 text-sm text-blue-800">
-                {response.suggestedNextSteps.map((step, idx) => (
-                  <li key={idx}>{step}</li>
+                {response.suggestedNextSteps.map((step, index) => (
+                  <li key={index}>{step}</li>
                 ))}
               </ul>
             </div>
@@ -447,7 +481,7 @@ export function AICoachScreen({
 
       {/* Error */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
+        <div role="alert" className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
           {error}
         </div>
       )}

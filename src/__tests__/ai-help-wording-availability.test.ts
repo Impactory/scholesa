@@ -34,6 +34,9 @@ describe('AI help wording availability', () => {
     expect(popupSource).toContain('Open MiloOS from the learner workspace to record explain-back for this session.');
     expect(popupSource).toContain('Explain-back recorded for this MiloOS session.');
     expect(popupSource).toContain('Unable to record explain-back right now. Open the learner MiloOS screen or try again later.');
+    expect(popupSource).toContain('MiloOS response transcript');
+    expect(popupSource).toContain('Audio was not available, so read the MiloOS answer below before explaining it back.');
+    expect(popupSource).toContain('playResponseWithTranscriptStatus');
     expect(popupSource).toContain('MiloOS is being careful here because it could not understand the voice request clearly enough yet.');
     expect(popupSource).toContain('MiloOS answered with a simple local hint because it could not confirm the voice request clearly. Treat this as a prompt to think, not a verified reading of what you meant.');
     expect(popupSource).toContain('MiloOS used the model to write the reply, but it still could not confirm the voice request clearly.');
@@ -76,6 +79,8 @@ describe('AI help wording availability', () => {
     expect(screenSource).toContain('MiloOS');
     expect(screenSource).toContain('Ask MiloOS');
     expect(screenSource).toContain('MiloOS answered out loud.');
+    expect(screenSource).toContain('MiloOS response transcript');
+    expect(screenSource).toContain('Audio was not available, so read the MiloOS answer below before explaining it back.');
     expect(screenSource).toContain('Replay spoken response');
     expect(screenSource).toContain('useVoiceTranscription');
     expect(screenSource).toContain('useSpokenResponse');
@@ -88,7 +93,6 @@ describe('AI help wording availability', () => {
     expect(screenSource).toContain("console.error('Microphone capture unavailable for MiloOS screen:'");
     expect(screenSource).toContain("console.error('Voice transcription failed in MiloOS screen:'");
     expect(screenSource).toContain("console.error('MiloOS explain-back error:'");
-    expect(screenSource).not.toContain('{response.message}');
     expect(screenSource).not.toContain('Ask AI Coach');
     expect(screenSource).not.toContain('AI Coach says:');
     expect(screenSource).not.toContain('The AI Coach is here to help you think');

@@ -54,6 +54,12 @@ type CoachMode = 'hint' | 'rubric_check' | 'debug' | 'critique';
 
 type VoiceTransparencyMeta = CopilotVoiceResponse['metadata'];
 
+const audioUnavailableStatus =
+  'Audio was not available, so read the MiloOS answer below before explaining it back.';
+
+const spokenPlaybackFailedStatus =
+  'Spoken playback did not start, so read the MiloOS answer below before explaining it back.';
+
 function buildModeConfig(t: (key: string) => string) {
   return {
     hint: {
@@ -256,6 +262,25 @@ export function AICoachPopup({
     });
   };
 
+  const playResponseWithTranscriptStatus = async (answer: string, audioUrl?: string | null) => {
+    try {
+      const deliveryMode = await playSpokenResponse(answer, audioUrl);
+      if (deliveryMode === 'none') {
+        setStatusMessage(audioUnavailableStatus);
+      }
+    } catch (playbackError) {
+      console.error('MiloOS spoken response error:', playbackError);
+      setStatusMessage(spokenPlaybackFailedStatus);
+    }
+  };
+
+  const replayResponse = () => {
+    void replaySpokenResponse().catch((playbackError) => {
+      console.error('MiloOS spoken response replay error:', playbackError);
+      setStatusMessage(spokenPlaybackFailedStatus);
+    });
+  };
+
   const buildBosVoiceContext = (traceId?: string | null) => ({
     actorId,
     actorRole,
@@ -439,7 +464,7 @@ Guidance: ${
 
       setResponse(aiResponse);
       const audioUrl = voiceResponse.tts.available ? (voiceResponse.tts.audioUrl ?? null) : null;
-      await playSpokenResponse(aiResponse.answer, audioUrl);
+      await playResponseWithTranscriptStatus(aiResponse.answer, audioUrl);
       setCurrentLogId(aiResponse.logId);
 
       // Track telemetry
@@ -471,7 +496,7 @@ Guidance: ${
         gradeBand: grade <= 3 ? 'grades_1_3' : grade <= 6 ? 'grades_4_6' : grade <= 9 ? 'grades_7_9' : 'grades_10_12',
         traceId,
       });
-      await playSpokenResponse(localizedServiceUnavailable(locale));
+      await playResponseWithTranscriptStatus(localizedServiceUnavailable(locale));
       setVoiceTransparencyMessage('MiloOS could not understand this voice turn reliably, so it switched to a safer fallback reply.');
     } finally {
       setLoading(false);
@@ -583,7 +608,11 @@ Guidance: ${
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4">
         {statusMessage ? (
-          <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900">
+          <div
+            role="status"
+            aria-live="polite"
+            className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900"
+          >
             {statusMessage}
           </div>
         ) : null}
@@ -729,17 +758,20 @@ Guidance: ${
               </p>
               {spokenResponsePayload ? (
                 <button
-                  onClick={() => {
-                    void (async () => {
-                      await replaySpokenResponse();
-                    })();
-                  }}
+                  onClick={replayResponse}
                   className="mt-3 inline-flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-medium text-purple-900 ring-1 ring-purple-200 transition-colors hover:bg-purple-100"
                 >
                   <Volume2Icon className="h-4 w-4" />
                   <span>{t('aiCoach.replaySpokenResponse')}</span>
                 </button>
               ) : null}
+            </div>
+
+            <div className="rounded-lg border border-app bg-app-surface-muted p-3 text-sm">
+              <p className="font-medium text-app-foreground">MiloOS response transcript</p>
+              <p className="mt-2 whitespace-pre-wrap text-app-muted">
+                {response.answer.trim()}
+              </p>
             </div>
 
             {voiceTransparencyMessage ? (
@@ -785,8 +817,8 @@ Guidance: ${
             {response.citations && response.citations.length > 0 && (
               <div className="space-y-2 rounded-lg bg-app-surface-muted p-3 text-sm">
                 <p className="font-medium text-app-foreground">{t('aiCoach.basedOn')}</p>
-                {response.citations.map((citation, idx) => (
-                  <div key={idx} className="text-xs text-app-muted">
+                {response.citations.map((citation, index) => (
+                  <div key={index} className="text-xs text-app-muted">
                     • {citation.type || 'Context unavailable'}: {citation.snippet}
                   </div>
                 ))}
@@ -798,8 +830,8 @@ Guidance: ${
               <div className="bg-blue-50 rounded-lg p-3 text-sm">
                 <p className="font-medium text-blue-900 mb-2">{t('aiCoach.tryNext')}</p>
                 <ul className="list-disc list-inside space-y-1 text-blue-800 text-xs">
-                  {response.hints.map((step, idx) => (
-                    <li key={idx}>{step}</li>
+                  {response.hints.map((step, index) => (
+                    <li key={index}>{step}</li>
                   ))}
                 </ul>
               </div>

@@ -27,12 +27,17 @@ jest.mock('@/src/hooks/useVoiceTranscription', () => ({
   }),
 }));
 
+const mockPlaySpokenResponse = jest.fn();
+const mockReplaySpokenResponse = jest.fn();
+const mockClearSpokenResponse = jest.fn();
+let mockSpokenResponseStatus: string | null = null;
+
 jest.mock('@/src/hooks/useSpokenResponse', () => ({
   useSpokenResponse: () => ({
-    spokenResponseStatus: null,
-    play: jest.fn().mockResolvedValue(undefined),
-    replay: jest.fn().mockResolvedValue(undefined),
-    clear: jest.fn(),
+    spokenResponseStatus: mockSpokenResponseStatus,
+    play: mockPlaySpokenResponse,
+    replay: mockReplaySpokenResponse,
+    clear: mockClearSpokenResponse,
   }),
 }));
 
@@ -54,6 +59,10 @@ describe('AICoachScreen learner-loop refresh', () => {
   beforeEach(() => {
     requestAICoachMock.mockReset();
     submitExplainBackMock.mockReset();
+    mockPlaySpokenResponse.mockReset().mockResolvedValue('browser');
+    mockReplaySpokenResponse.mockReset().mockResolvedValue('browser');
+    mockClearSpokenResponse.mockReset();
+    mockSpokenResponseStatus = null;
   });
 
   it('notifies the parent read model after support response and explain-back submission', async () => {
@@ -125,5 +134,87 @@ describe('AICoachScreen learner-loop refresh', () => {
     expect(await screen.findByText('Explain-back submitted. Your reflection is now attached to this MiloOS session.'))
       .toBeInTheDocument();
     expect(onLearnerLoopUpdated).toHaveBeenCalledTimes(2);
+  });
+
+  it('shows a readable transcript when spoken playback is unavailable', async () => {
+    requestAICoachMock.mockResolvedValue({
+      message: 'Change one prototype variable, run one comparison, and explain what changed.',
+      mode: 'hint',
+      requiresExplainBack: true,
+      suggestedNextSteps: ['Run one comparison test'],
+      learnerState: null,
+      risk: {
+        reliability: { riskType: 'none', method: 'test', riskScore: 0, threshold: 1 },
+        autonomy: { riskType: 'none', signals: [], riskScore: 0, threshold: 1 },
+      },
+      mvl: { gateActive: false, episodeId: null, reason: null },
+      meta: {
+        version: 'test',
+        gradeBand: 'G9_12',
+        conceptTags: ['prototype'],
+        aiHelpOpenedEventId: 'opened-1',
+      },
+    });
+    mockPlaySpokenResponse.mockResolvedValue('none');
+
+    render(<AICoachScreen learnerId="learner-1" siteId="site-1" />);
+
+    fireEvent.click(screen.getByText('Give me a hint'));
+    fireEvent.change(screen.getByPlaceholderText(/I'm trying to make the button change color/i), {
+      target: { value: 'How should I test this change?' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Ask MiloOS' }));
+
+    expect(await screen.findByText('MiloOS response transcript')).toBeInTheDocument();
+    expect(screen.getByText('Change one prototype variable, run one comparison, and explain what changed.'))
+      .toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Audio was not available, so read the MiloOS answer below before explaining it back.'
+    );
+    expect(screen.queryByText(/Unable to get MiloOS help right now/i)).not.toBeInTheDocument();
+  });
+
+  it('keeps the transcript available when spoken playback throws', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    requestAICoachMock.mockResolvedValue({
+      message: 'Describe the bug in one sentence, then test the smallest possible change.',
+      mode: 'debug',
+      requiresExplainBack: true,
+      suggestedNextSteps: ['Write the smallest failing case'],
+      learnerState: null,
+      risk: {
+        reliability: { riskType: 'none', method: 'test', riskScore: 0, threshold: 1 },
+        autonomy: { riskType: 'none', signals: [], riskScore: 0, threshold: 1 },
+      },
+      mvl: { gateActive: false, episodeId: null, reason: null },
+      meta: {
+        version: 'test',
+        gradeBand: 'G9_12',
+        conceptTags: ['debugging'],
+        aiHelpOpenedEventId: 'opened-2',
+      },
+    });
+    mockPlaySpokenResponse.mockRejectedValue(new Error('speech failed'));
+
+    render(<AICoachScreen learnerId="learner-1" siteId="site-1" />);
+
+    fireEvent.click(screen.getByText('Help me debug'));
+    fireEvent.change(screen.getByPlaceholderText(/My code runs but the answer is wrong/i), {
+      target: { value: 'How do I debug this?' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Ask MiloOS' }));
+
+    expect(await screen.findByText('MiloOS response transcript')).toBeInTheDocument();
+    expect(screen.getByText('Describe the bug in one sentence, then test the smallest possible change.'))
+      .toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Spoken playback did not start, so read the MiloOS answer below before explaining it back.'
+    );
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      'MiloOS spoken response error:',
+      expect.any(Error)
+    );
+    consoleErrorSpy.mockRestore();
   });
 });
