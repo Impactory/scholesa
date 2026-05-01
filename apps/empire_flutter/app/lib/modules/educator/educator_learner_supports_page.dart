@@ -21,15 +21,22 @@ typedef LearnerSupportPlansLoader = Future<List<Map<String, dynamic>>> Function(
   String siteId,
 );
 
+typedef MiloOSSupportProvenanceLoader = Future<List<Map<String, dynamic>>> Function(
+  BuildContext context,
+  String siteId,
+);
+
 /// Educator learner supports page for tracking learner wellbeing & accommodations
 /// Based on docs/09_LEARNER_SUPPORT_ACCOMMODATIONS_SPEC.md
 class EducatorLearnerSupportsPage extends StatefulWidget {
   const EducatorLearnerSupportsPage({
     this.supportPlansLoader,
+    this.miloosSupportProvenanceLoader,
     super.key,
   });
 
   final LearnerSupportPlansLoader? supportPlansLoader;
+  final MiloOSSupportProvenanceLoader? miloosSupportProvenanceLoader;
 
   @override
   State<EducatorLearnerSupportsPage> createState() =>
@@ -43,6 +50,8 @@ class _EducatorLearnerSupportsPageState
 
   Map<String, _PersistedSupportPlan> _supportPlanOverrides =
       <String, _PersistedSupportPlan>{};
+    Map<String, _MiloOSLearnerSupportProvenance> _miloosSupportByLearner =
+      <String, _MiloOSLearnerSupportProvenance>{};
   String _searchQuery = '';
   String? _loadError;
 
@@ -64,6 +73,7 @@ class _EducatorLearnerSupportsPageState
   Future<void> _loadSupportPlansAndLearners() async {
     await context.read<EducatorService>().loadLearners();
     await _loadPersistedSupportPlans();
+    await _loadMiloOSSupportProvenance();
   }
 
   String _activeSiteId() {
@@ -134,6 +144,87 @@ class _EducatorLearnerSupportsPageState
           return row;
         })
         .toList(growable: false);
+  }
+
+  Future<void> _loadMiloOSSupportProvenance() async {
+    final String siteId = _activeSiteId();
+    if (siteId.isEmpty || !mounted) {
+      return;
+    }
+
+    try {
+      final BuildContext ctx = context;
+      final List<Map<String, dynamic>> rows =
+          widget.miloosSupportProvenanceLoader != null
+            ? await widget.miloosSupportProvenanceLoader!(ctx, siteId)
+              : await _loadMiloOSSupportRows(siteId);
+      final Map<String, _MiloOSLearnerSupportProvenance> next =
+          _deriveMiloOSSupportByLearner(rows);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _miloosSupportByLearner = next;
+      });
+    } catch (error) {
+      debugPrint('Failed to load MiloOS support provenance: $error');
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _loadError ??= 'Failed to load MiloOS support provenance: $error';
+      });
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> _loadMiloOSSupportRows(
+    String siteId,
+  ) async {
+    final FirestoreService firestoreService = context.read<FirestoreService>();
+    final QuerySnapshot<Map<String, dynamic>> snapshot = await firestoreService
+        .firestore
+        .collection('interactionEvents')
+        .where('siteId', isEqualTo: siteId)
+        .get();
+
+    return snapshot.docs
+        .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+          final Map<String, dynamic> row = Map<String, dynamic>.from(doc.data());
+          row['documentId'] = doc.id;
+          return row;
+        })
+        .toList(growable: false);
+  }
+
+  Map<String, _MiloOSLearnerSupportProvenance> _deriveMiloOSSupportByLearner(
+    List<Map<String, dynamic>> rows,
+  ) {
+    final Map<String, _MiloOSLearnerSupportProvenance> byLearner =
+        <String, _MiloOSLearnerSupportProvenance>{};
+
+    for (final Map<String, dynamic> row in rows) {
+      final String learnerId = _trimmed(row['actorId']).isNotEmpty
+          ? _trimmed(row['actorId'])
+          : _trimmed(row['learnerId']);
+      if (learnerId.isEmpty) {
+        continue;
+      }
+      final String eventType = _trimmed(row['eventType']).toLowerCase();
+      if (!<String>{
+        'ai_help_opened',
+        'ai_help_used',
+        'ai_coach_response',
+        'explain_it_back_submitted',
+      }.contains(eventType)) {
+        continue;
+      }
+      final _MiloOSLearnerSupportProvenance current =
+          byLearner[learnerId] ??
+              _MiloOSLearnerSupportProvenance(learnerId: learnerId);
+      byLearner[learnerId] = current.withEvent(eventType);
+    }
+
+    return byLearner;
   }
 
   @override
@@ -261,6 +352,7 @@ class _EducatorLearnerSupportsPageState
                   learnerName: service.learners.first.name,
                   accentColor: ScholesaColors.educator,
                 ),
+              _buildMiloOSSupportProvenanceSection(visibleSupports),
               _buildSummaryCards(visibleSupports),
               if (_searchQuery.isNotEmpty) ...<Widget>[
                 const SizedBox(height: 16),
@@ -282,6 +374,146 @@ class _EducatorLearnerSupportsPageState
         },
       ),
     ));
+  }
+
+  Widget _buildMiloOSSupportProvenanceSection(
+    List<_LearnerSupport> visibleSupports,
+  ) {
+    final List<_LearnerSupport> supportsWithMiloOS = visibleSupports
+        .where((support) =>
+            _miloosSupportByLearner[support.learnerId]?.hasSupport == true)
+        .toList(growable: false);
+    final int pendingCount = supportsWithMiloOS.fold<int>(
+      0,
+      (int total, _LearnerSupport support) =>
+          total + (_miloosSupportByLearner[support.learnerId]?.pending ?? 0),
+    );
+
+    return Container(
+      margin: const EdgeInsets.only(top: 16, bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: ScholesaColors.educator.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: ScholesaColors.educator.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              const Icon(
+                Icons.psychology_alt_rounded,
+                color: ScholesaColors.educator,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  _tEducatorLearnerSupports(
+                    context,
+                    'MiloOS Support Provenance',
+                  ),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: ScholesaColors.textPrimary,
+                  ),
+                ),
+              ),
+              _SupportPill(
+                label:
+                    '${_tEducatorLearnerSupports(context, 'Pending')}: $pendingCount',
+                color: pendingCount > 0 ? Colors.orange : ScholesaColors.success,
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _tEducatorLearnerSupports(
+              context,
+              'Support events show follow-up debt only. They are not capability mastery.',
+            ),
+            style: const TextStyle(
+              color: ScholesaColors.textSecondary,
+              fontSize: 13,
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (supportsWithMiloOS.isEmpty)
+            Text(
+              _tEducatorLearnerSupports(
+                context,
+                'No MiloOS support provenance for this filtered roster yet.',
+              ),
+              style: const TextStyle(color: ScholesaColors.textSecondary),
+            )
+          else
+            ...supportsWithMiloOS.map((support) {
+              final _MiloOSLearnerSupportProvenance provenance =
+                  _miloosSupportByLearner[support.learnerId]!;
+              return Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: _buildMiloOSSupportRow(support, provenance),
+              );
+            }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMiloOSSupportRow(
+    _LearnerSupport support,
+    _MiloOSLearnerSupportProvenance provenance,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            support.learnerName,
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              color: ScholesaColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: <Widget>[
+              _SupportPill(
+                label:
+                    '${_tEducatorLearnerSupports(context, 'Opened')}: ${provenance.opened}',
+                color: ScholesaColors.educator,
+              ),
+              _SupportPill(
+                label:
+                    '${_tEducatorLearnerSupports(context, 'Used')}: ${provenance.used}',
+                color: ScholesaColors.futureSkills,
+              ),
+              _SupportPill(
+                label:
+                    '${_tEducatorLearnerSupports(context, 'Explained')}: ${provenance.explainBackSubmitted}',
+                color: ScholesaColors.success,
+              ),
+              _SupportPill(
+                label:
+                    '${_tEducatorLearnerSupports(context, 'Pending')}: ${provenance.pending}',
+                color: provenance.pending > 0 ? Colors.orange : ScholesaColors.success,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildSearchBanner() {
@@ -1445,6 +1677,96 @@ class _EducatorLearnerSupportsPageState
 }
 
 enum _Priority { high, medium, low }
+
+String _trimmed(dynamic value) {
+  if (value is String) {
+    return value.trim();
+  }
+  return '';
+}
+
+class _SupportPill extends StatelessWidget {
+  const _SupportPill({
+    required this.label,
+    required this.color,
+  });
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.24)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+class _MiloOSLearnerSupportProvenance {
+  const _MiloOSLearnerSupportProvenance({
+    required this.learnerId,
+    this.opened = 0,
+    this.used = 0,
+    this.responses = 0,
+    this.explainBackSubmitted = 0,
+  });
+
+  final String learnerId;
+  final int opened;
+  final int used;
+  final int responses;
+  final int explainBackSubmitted;
+
+  int get pending {
+    final int unanswered = opened - explainBackSubmitted;
+    return unanswered < 0 ? 0 : unanswered;
+  }
+
+  bool get hasSupport => opened > 0 || used > 0 || responses > 0 || explainBackSubmitted > 0;
+
+  _MiloOSLearnerSupportProvenance withEvent(String eventType) {
+    switch (eventType) {
+      case 'ai_help_opened':
+        return _copyWith(opened: opened + 1);
+      case 'ai_help_used':
+        return _copyWith(used: used + 1);
+      case 'ai_coach_response':
+        return _copyWith(responses: responses + 1);
+      case 'explain_it_back_submitted':
+        return _copyWith(explainBackSubmitted: explainBackSubmitted + 1);
+      default:
+        return this;
+    }
+  }
+
+  _MiloOSLearnerSupportProvenance _copyWith({
+    int? opened,
+    int? used,
+    int? responses,
+    int? explainBackSubmitted,
+  }) {
+    return _MiloOSLearnerSupportProvenance(
+      learnerId: learnerId,
+      opened: opened ?? this.opened,
+      used: used ?? this.used,
+      responses: responses ?? this.responses,
+      explainBackSubmitted: explainBackSubmitted ?? this.explainBackSubmitted,
+    );
+  }
+}
 
 class _LearnerSupport {
   const _LearnerSupport({

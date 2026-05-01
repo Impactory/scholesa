@@ -465,6 +465,21 @@ describe('Renderers delegate to real evidence components', () => {
     expect(syntheticStateTest).toContain('miloosGoldInteractionEvents: 13');
   });
 
+  it('MiloOS gold-candidate scope is explicit about Flutter parity', () => {
+    const planSource = fs.readFileSync(
+      path.join(process.cwd(), 'docs', 'MILOOS_GOLD_READINESS_PLAN_APRIL_30_2026.md'),
+      'utf8'
+    );
+    const checklistSource = fs.readFileSync(
+      path.join(process.cwd(), 'docs', 'MILOOS_GOLD_READINESS_EXECUTION_CHECKLIST_APRIL_30_2026.md'),
+      'utf8'
+    );
+
+    expect(planSource).toContain('The gold-candidate claim is web-only.');
+    expect(planSource).toContain('Flutter remains beta for MiloOS');
+    expect(checklistSource).toContain('Flutter MiloOS role parity is explicitly out of the current gold-candidate scope.');
+  });
+
   it('PageTransition keeps reduced-motion MiloOS routes hydration-stable', () => {
     const source = readSrcFile('components', 'layout', 'PageTransition.tsx');
 

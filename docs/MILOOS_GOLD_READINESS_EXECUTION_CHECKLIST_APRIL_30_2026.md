@@ -4,15 +4,17 @@
 
 Work from top to bottom. Do not mark a milestone complete because UI exists. Mark it complete only when the listed proof commands pass and `AUDIT_TODO_APRIL_2026.md` is updated.
 
-Current verdict remains: **beta-ready, not gold-ready**.
+Current verdict: **web MiloOS gold-candidate gate passed; broader Scholesa remains beta-ready, not platform gold-ready**.
 
 ## Milestone 0 - Preserve The Truth Boundary
 
-- [ ] Confirm every changed MiloOS surface says support/provenance, not mastery.
-- [ ] Confirm no support event writes `capabilityMastery`.
-- [ ] Confirm no support event writes `capabilityGrowthEvents`.
-- [ ] Confirm explain-back status is verification debt only.
-- [ ] Confirm `applyRubricToEvidence` and `processCheckpointMasteryUpdate` remain the growth paths.
+- [x] Confirm every changed MiloOS surface says support/provenance, not mastery.
+- [x] Confirm no support event writes `capabilityMastery`.
+- [x] Confirm no support event writes `capabilityGrowthEvents`.
+- [x] Confirm explain-back status is verification debt only.
+- [x] Confirm `applyRubricToEvidence` and `processCheckpointMasteryUpdate` remain the growth paths.
+
+Completed 2026-04-30: source contracts, Functions honesty tests, browser E2Es, and evidence-chain emulator tests verify MiloOS support remains provenance and verification debt only. Growth remains through rubric/checkpoint paths.
 
 Proof commands:
 
@@ -182,10 +184,12 @@ npm run test:integration:evidence-chain
 
 ## Milestone 8 - Flutter Scope Decision
 
-- [ ] Decide whether gold scope includes Flutter MiloOS role parity.
-- [ ] If yes, add Flutter learner support provenance tests beyond existing card coverage.
-- [ ] If yes, add Flutter educator/guardian/site support provenance surfaces or explicitly planned equivalents.
-- [ ] If no, document that web MiloOS is gold-candidate while Flutter MiloOS remains beta.
+- [x] Decide whether gold scope includes Flutter MiloOS role parity.
+- [x] Not applicable: Flutter learner support provenance tests are not required for the current web-only gold-candidate scope.
+- [x] Not applicable: Flutter educator/guardian/site support provenance surfaces are not required for the current web-only gold-candidate scope.
+- [x] Document that web MiloOS is gold-candidate while Flutter MiloOS remains beta.
+
+Completed 2026-04-30: Flutter MiloOS role parity is explicitly out of the current gold-candidate scope. Web MiloOS remains the gold-candidate surface; Flutter MiloOS remains beta because it has learner/card and related parent AI-disclosure coverage but does not yet prove learner, educator, guardian, and site support provenance parity. The unchecked `if yes` work is intentionally not required for this web-only gold candidate.
 
 Proof commands if Flutter is in scope:
 
@@ -196,18 +200,20 @@ cd apps/empire_flutter/app && flutter analyze
 
 ## Milestone 9 - Gold Release Bundle
 
-- [ ] Run typecheck.
-- [ ] Run lint.
-- [ ] Run focused web source/component tests.
-- [ ] Run focused Functions tests.
-- [ ] Run Functions build.
-- [ ] Run Firestore rules integration.
-- [ ] Run evidence-chain emulator integration.
-- [ ] Run MiloOS browser E2E suite.
-- [ ] Run MiloOS WCAG E2E suite.
-- [ ] Run Flutter tests/analyzer if in scope.
-- [ ] Run `git diff --check`.
-- [ ] Update `AUDIT_TODO_APRIL_2026.md` with exact commands and verdict.
+- [x] Run typecheck.
+- [x] Run lint.
+- [x] Run focused web source/component tests.
+- [x] Run focused Functions tests.
+- [x] Run Functions build.
+- [x] Run Firestore rules integration.
+- [x] Run evidence-chain emulator integration.
+- [x] Run MiloOS browser E2E suite.
+- [x] Run MiloOS WCAG E2E suite.
+- [x] Run Flutter tests/analyzer if in scope.
+- [x] Run `git diff --check`.
+- [x] Update `AUDIT_TODO_APRIL_2026.md` with exact commands and verdict.
+
+Completed 2026-04-30: the web-only MiloOS gold-candidate release bundle passed. Flutter tests/analyzer were not run because Milestone 8 explicitly scoped Flutter MiloOS role parity out of this gold-candidate gate.
 
 Minimum command bundle:
 
@@ -235,3 +241,5 @@ When all milestones pass, the gold signoff must state:
 - How guardians see support provenance.
 - How site leaders see support health.
 - What remains beta, especially Flutter if not included.
+
+Final signoff is recorded in `docs/MILOOS_GOLD_READINESS_PLAN_APRIL_30_2026.md` and `AUDIT_TODO_APRIL_2026.md`.

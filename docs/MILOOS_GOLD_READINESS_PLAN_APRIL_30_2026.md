@@ -2,9 +2,9 @@
 
 ## Status
 
-**Current verdict: beta-ready, not gold-ready.**
+**Current verdict: web MiloOS gold-candidate gate passed; broader Scholesa remains beta-ready, not platform gold-ready.**
 
-MiloOS is materially stronger: learner support, explain-back, educator visibility, guardian provenance, and Admin-School support health now have real persistence paths, role-scoped visibility, protected-route browser proof, and focused accessibility coverage. That is still not enough to call it gold.
+MiloOS web is materially stronger: learner support, explain-back, educator visibility, guardian provenance, and Admin-School support health now have real persistence paths, role-scoped visibility, protected-route browser proof, focused accessibility coverage, canonical synthetic states, and release-bundle proof. This is a scoped web MiloOS gold-candidate signoff, not a blanket Scholesa or Flutter gold claim.
 
 MiloOS can be called gold-ready only when the support loop is verified end to end across real services, role surfaces, permissions, observability, mobile classroom constraints, and release operations without presenting support activity as capability mastery.
 
@@ -25,14 +25,14 @@ Gold readiness requires these boundaries to stay true everywhere:
 
 | Surface | Current proof | Gold state |
 | --- | --- | --- |
-| Learner `/learner/miloos` | Browser E2E proves support request, transcript, pending explain-back, returned pending explain-back completion, refreshed counters, phone-width usability, keyboard-only support completion, focus preservation, traceable support-turn events, and no `capabilityMastery` write. | Needs canonical synthetic states and release-gate hardening. |
-| Educator `/educator/learners` | Browser E2E proves same-site MiloOS support provenance and pending follow-up debt, including cross-role and phone-width paths. | Needs workflow proof for teacher action after seeing debt. |
-| Guardian `/parent/summary` | Browser E2E proves linked guardian sees same-site support provenance and non-mastery language, including after learner explain-back completion. | Needs share/export and family comprehension proof in the same browser flow. |
-| Admin-School `/site/dashboard` | Browser E2E proves site-wide same-site support health aggregation, including after cross-role support completion and on phone-width viewport. | Needs operational thresholding, drill-down, and alert/action workflow. |
-| Accessibility | Focused Axe WCAG 2.2 AA checks pass on protected MiloOS support regions, and PageTransition reduced-motion/hydration warnings are cleaned up. | Needs broader page-level, keyboard, and mobile coverage. |
-| Firestore rules | Educator and site-admin same-site `interactionEvents` reads are tested; other-site/missing-site denied; linked and unlinked parent raw-event reads and queries are denied. | Needs HQ/network scope proof or explicit exclusion from MiloOS gold scope. |
-| Functions/emulator | `genAiCoach` -> `submitExplainBack` -> `bosGetLearnerLoopInsights` path is emulator-tested and no mastery write is asserted. | Needs one combined cross-role emulator-to-browser release gate. |
-| Flutter | Learner-loop cards show support gaps. | Needs role parity or explicit web-only gold scope. |
+| Learner `/learner/miloos` | Browser E2E proves support request, transcript, pending explain-back, returned pending explain-back completion, refreshed counters, phone-width usability, keyboard-only support completion, focus preservation, traceable support-turn events, and no `capabilityMastery` write. | Web gold-candidate gate passed. |
+| Educator `/educator/learners` | Browser E2E proves same-site MiloOS support provenance and pending follow-up debt, including cross-role and phone-width paths. | Web gold-candidate gate passed for support visibility and follow-up debt. |
+| Guardian `/parent/summary` | Browser E2E proves linked guardian sees same-site support provenance and non-mastery language, including after learner explain-back completion. | Web gold-candidate gate passed for support provenance. |
+| Admin-School `/site/dashboard` | Browser E2E proves site-wide same-site support health aggregation, including after cross-role support completion and on phone-width viewport. | Web gold-candidate gate passed for support health visibility. |
+| Accessibility | Focused Axe WCAG 2.2 AA checks pass on protected MiloOS support regions, PageTransition reduced-motion/hydration warnings are cleaned up, and keyboard-only support completion is verified. | Scoped web gold-candidate gate passed. |
+| Firestore rules | Educator and site-admin same-site `interactionEvents` reads are tested; other-site/missing-site denied; linked and unlinked parent raw-event reads and queries are denied. | Scoped web gold-candidate gate passed. |
+| Functions/emulator | `genAiCoach` -> `submitExplainBack` -> `bosGetLearnerLoopInsights` path is emulator-tested and no mastery write is asserted. | Scoped web gold-candidate gate passed. |
+| Flutter | Learner-loop cards show support gaps. | Explicitly beta and out of current web-only gold-candidate scope. |
 
 ## Gold Definition
 
@@ -242,6 +242,10 @@ Verified with `npm run seed:synthetic-data:dry-run`, `npm run test:integration:r
 
 ### 7. Decide Flutter Scope
 
+Status: completed 2026-04-30.
+
+Flutter MiloOS role parity is not in the current MiloOS gold-candidate scope. The gold-candidate claim is web-only. Flutter remains beta for MiloOS until it has role-parity support provenance across learner, educator, guardian, and site surfaces plus focused Flutter tests/analyzer proof. Existing Flutter learner-loop/card and parent AI-disclosure coverage are useful, but not enough to certify MiloOS gold parity.
+
 Flutter has learner-loop card coverage, but gold needs role parity or explicit web-only scope.
 
 Done when one of these is true:
@@ -260,3 +264,16 @@ Do not call MiloOS gold-ready if any of these are true:
 - Focused accessibility passes but full route has unresolved critical keyboard or mobile blockers.
 - Operators cannot reproduce the validation sequence from a clean checkout.
 - Flutter scope is unclear.
+
+## Final Web MiloOS Gold-Candidate Signoff
+
+- Support evidence created: `ai_help_opened`, `ai_help_used`, `ai_coach_response`, and `explain_it_back_submitted` records in `interactionEvents`, joined by `aiHelpOpenedEventId` and trace metadata.
+- Observers: learners see their support loop and pending checks; educators see same-site support provenance and pending follow-up debt; guardians see linked learner support provenance through server-owned summaries; site leaders see site-scoped support health.
+- Authenticity verification: learners must submit explain-back evidence tied to the opened support turn; pending explain-back remains verification debt until completed.
+- Support is not mastery: MiloOS support events do not write `capabilityMastery` or `capabilityGrowthEvents`; rubric application and checkpoint mastery processing remain the growth paths.
+- Educator action: pending explain-back debt appears in educator support provenance surfaces so educators can follow up without treating support usage as capability evidence.
+- Guardian interpretation: guardian surfaces show support provenance and explain-back status without exposing raw `interactionEvents` or making mastery claims.
+- Site interpretation: site leaders see aggregate support opened/used/explain-back/pending counts for implementation health and stuck-debt discovery.
+- Remaining beta scope: Flutter MiloOS role parity remains beta and out of this web-only gold-candidate signoff.
+
+Final gate commands passed 2026-04-30: typecheck, lint, focused web/source tests, focused Functions honesty tests, Functions build, Firestore rules integration, evidence-chain emulator integration, MiloOS browser/WCAG/mobile/keyboard E2E suite, synthetic-data dry-run, and `git diff --check`.
