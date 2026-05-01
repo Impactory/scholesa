@@ -295,6 +295,9 @@ describe('Renderers delegate to real evidence components', () => {
     expect(source).toContain('resolveActiveSiteId');
     expect(source).toContain('getMiloOSLearnerLoopInsights');
     expect(source).toContain('pendingExplainBack');
+    expect(source).toContain('pendingSupportInteractions');
+    expect(source).toContain('data-testid="learner-miloos-pending-explain-back"');
+    expect(source).toContain('learner-miloos-submit-pending-explain-back');
     expect(source).toContain('onLearnerLoopUpdated');
     expect(source).toContain('support provenance, not capability mastery');
     expect(source).not.toContain('aiInteractionLogs');
@@ -367,6 +370,50 @@ describe('Renderers delegate to real evidence components', () => {
     expect(e2eSource).toContain('site-miloos-support-health');
     expect(e2eSource).toContain('not capability mastery');
     expect(e2eSource).toContain('site-miloos-pending-checks');
+  });
+
+  it('MiloOS protected support surfaces have focused WCAG browser coverage', () => {
+    const e2eSource = fs.readFileSync(
+      path.join(process.cwd(), 'test', 'e2e', 'miloos-accessibility.e2e.spec.ts'),
+      'utf8'
+    );
+
+    expect(e2eSource).toContain("import AxeBuilder from '@axe-core/playwright'");
+    expect(e2eSource).toContain("withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])");
+    expect(e2eSource).toContain("page.goto('/en/learner/miloos')");
+    expect(e2eSource).toContain("page.goto('/en/educator/learners')");
+    expect(e2eSource).toContain("page.goto('/en/parent/summary')");
+    expect(e2eSource).toContain("page.goto('/en/site/dashboard')");
+    expect(e2eSource).toContain('learner-miloos-loop-status');
+    expect(e2eSource).toContain('miloos-support-');
+    expect(e2eSource).toContain('guardian-miloos-support-');
+    expect(e2eSource).toContain('site-miloos-support-health');
+    expect(e2eSource).toContain('seedInteractionEvents');
+  });
+
+  it('MiloOS has a cross-role golden path browser proof', () => {
+    const e2eSource = fs.readFileSync(
+      path.join(process.cwd(), 'test', 'e2e', 'miloos-cross-role-golden-path.e2e.spec.ts'),
+      'utf8'
+    );
+
+    expect(e2eSource).toContain("gotoProtectedRoute(page, '/en/learner/miloos')");
+    expect(e2eSource).toContain("gotoProtectedRoute(page, '/en/educator/learners')");
+    expect(e2eSource).toContain("gotoProtectedRoute(page, '/en/parent/summary')");
+    expect(e2eSource).toContain("gotoProtectedRoute(page, '/en/site/dashboard')");
+    expect(e2eSource).toContain('learner-miloos-pending-explain-back');
+    expect(e2eSource).toContain('learner-miloos-submit-pending-explain-back');
+    expect(e2eSource).toContain('explain_it_back_submitted');
+    expect(e2eSource).toContain("getCollection(page, 'capabilityMastery')");
+    expect(e2eSource).toContain('not capability mastery');
+  });
+
+  it('PageTransition keeps reduced-motion MiloOS routes hydration-stable', () => {
+    const source = readSrcFile('components', 'layout', 'PageTransition.tsx');
+
+    expect(source).toContain("window.matchMedia('(prefers-reduced-motion: reduce)')");
+    expect(source).toContain('if (!hasMounted || prefersReducedMotion)');
+    expect(source).not.toContain('useReducedMotion');
   });
 
   it('SiteEvidenceHealthRenderer delegates to SiteEvidenceHealthDashboard', () => {
@@ -719,6 +766,7 @@ describe('EducatorAiAuditRenderer motivation feedback wiring', () => {
     'features', 'workflows', 'renderers', 'EducatorAiAuditRenderer.tsx'
   );
   const rulesSource = readSrcFile('..', 'firestore.rules');
+  const rulesTestSource = readSrcFile('..', 'test', 'firestore-rules.test.js');
 
   it('imports EducatorFeedbackForm', () => {
     expect(source).toContain('EducatorFeedbackForm');
@@ -755,6 +803,15 @@ describe('EducatorAiAuditRenderer motivation feedback wiring', () => {
   it('allows educator reads of interactionEvents only through site-scoped rules', () => {
     expect(rulesSource).toContain(
       'allow read: if isHQ() || isAdminOrHQ() || (isEducator() && hasSiteField(resource.data) && isSiteScopedRead(resource.data));'
+    );
+  });
+
+  it('blocks parents from raw MiloOS interactionEvents in Firestore rules tests', () => {
+    expect(rulesTestSource).toContain(
+      'linked parent cannot read raw MiloOS interaction events directly'
+    );
+    expect(rulesTestSource).toContain(
+      'unlinked parent cannot read raw MiloOS interaction events directly'
     );
   });
 

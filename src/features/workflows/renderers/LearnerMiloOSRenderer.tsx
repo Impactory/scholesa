@@ -15,6 +15,7 @@ import {
   getMiloOSLearnerLoopInsights,
   type MiloOSLearnerLoopInsights,
 } from '@/src/lib/miloos/learnerLoopInsights';
+import { sdtMotivation } from '@/src/lib/motivation/sdtMotivation';
 import type { CustomRouteRendererProps } from '../customRouteRenderers';
 import {
   BrainIcon,
@@ -54,6 +55,9 @@ export default function LearnerMiloOSRenderer({ ctx }: CustomRouteRendererProps)
   const [insights, setInsights] = useState<MiloOSLearnerLoopInsights | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pendingExplainBackText, setPendingExplainBackText] = useState('');
+  const [pendingSubmitStatus, setPendingSubmitStatus] = useState<string | null>(null);
+  const [submittingPendingExplainBack, setSubmittingPendingExplainBack] = useState(false);
 
   const loadInsights = useCallback(async (isCancelled: () => boolean = () => false) => {
     if (!learnerId || !siteId) {
@@ -128,6 +132,35 @@ export default function LearnerMiloOSRenderer({ ctx }: CustomRouteRendererProps)
   const pendingExplainBack = formatCount(insights?.verification.pendingExplainBack);
   const activeMvl = formatCount(insights?.mvl.active);
   const validSamples = formatCount(insights?.stateAvailability.validSamples);
+  const pendingSupportInteraction = insights?.verification.pendingSupportInteractions?.[0] ?? null;
+
+  const submitPendingExplainBack = useCallback(async () => {
+    const explanation = pendingExplainBackText.trim();
+    if (!learnerId || !siteId || !pendingSupportInteraction || !explanation) return;
+
+    setSubmittingPendingExplainBack(true);
+    setPendingSubmitStatus(null);
+    setError(null);
+    try {
+      const result = await sdtMotivation.submitExplainBack(
+        learnerId,
+        siteId,
+        pendingSupportInteraction.interactionId,
+        explanation
+      );
+      setPendingExplainBackText('');
+      setPendingSubmitStatus(
+        result.feedback?.trim() ||
+          'Explain-back submitted. Your reflection is now attached to this MiloOS session.'
+      );
+      await loadInsights();
+    } catch (err) {
+      console.error('Failed to submit pending MiloOS explain-back:', err);
+      setError('Unable to submit your pending explain-back right now. Try again in a moment.');
+    } finally {
+      setSubmittingPendingExplainBack(false);
+    }
+  }, [learnerId, loadInsights, pendingExplainBackText, pendingSupportInteraction, siteId]);
 
   if (!siteId) {
     return (
@@ -224,6 +257,49 @@ export default function LearnerMiloOSRenderer({ ctx }: CustomRouteRendererProps)
             {activeMvl} active verification checks and {validSamples} learner-loop state samples are
             visible here as support provenance, not capability mastery.
           </p>
+        </div>
+      ) : null}
+
+      {!loading && pendingSupportInteraction ? (
+        <div
+          className="rounded-lg border-2 border-yellow-300 bg-yellow-50 p-4"
+          data-testid="learner-miloos-pending-explain-back"
+        >
+          <div className="flex items-start gap-2">
+            <CheckCircleIcon className="mt-0.5 h-5 w-5 flex-shrink-0 text-yellow-700" />
+            <div className="flex-1 space-y-3">
+              <div>
+                <p className="font-medium text-yellow-950">Finish your pending MiloOS explain-back</p>
+                <p className="text-sm text-yellow-900">
+                  This completes support verification for a prior MiloOS help turn. It is evidence
+                  provenance, not capability mastery.
+                </p>
+              </div>
+              {pendingSupportInteraction.studentInput ? (
+                <p className="rounded-md bg-white/70 p-3 text-sm text-yellow-950">
+                  Prior question: {pendingSupportInteraction.studentInput}
+                </p>
+              ) : null}
+              <textarea
+                className="h-24 w-full rounded-lg border border-yellow-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-yellow-500"
+                data-testid="learner-miloos-pending-explain-back-input"
+                onChange={(event) => setPendingExplainBackText(event.target.value)}
+                placeholder="Explain what MiloOS helped you understand and how you used it in your own work."
+                value={pendingExplainBackText}
+              />
+              <button
+                className="w-full rounded-lg bg-yellow-700 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-800 disabled:cursor-not-allowed disabled:bg-gray-300"
+                data-testid="learner-miloos-submit-pending-explain-back"
+                disabled={!pendingExplainBackText.trim() || submittingPendingExplainBack}
+                onClick={submitPendingExplainBack}
+              >
+                {submittingPendingExplainBack ? 'Submitting...' : 'Submit Pending Explain-Back'}
+              </button>
+              {pendingSubmitStatus ? (
+                <p className="text-sm font-medium text-yellow-950">{pendingSubmitStatus}</p>
+              ) : null}
+            </div>
+          </div>
         </div>
       ) : null}
 

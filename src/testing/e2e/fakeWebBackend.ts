@@ -717,6 +717,21 @@ export async function getE2EMiloOSLearnerLoopInsights(params: {
   const aiHelpOpened = countEvents(events, 'ai_help_opened');
   const aiHelpUsed = countEvents(events, 'ai_help_used');
   const explainBackSubmitted = countEvents(events, 'explain_it_back_submitted');
+  const explainedInteractionIds = new Set(
+    events
+      .filter((event) => event.eventType === 'explain_it_back_submitted')
+      .map((event) => event.interactionId)
+      .filter((interactionId): interactionId is string => Boolean(interactionId))
+  );
+  const pendingSupportInteractions = events
+    .filter((event) => event.eventType === 'ai_help_opened' && !explainedInteractionIds.has(event.id))
+    .map((event) => ({
+      interactionId: event.id,
+      mode: event.mode,
+      studentInput: event.studentInput,
+      createdAt: event.createdAt,
+    }))
+    .slice(0, 5);
 
   return {
     siteId: params.siteId,
@@ -740,6 +755,7 @@ export async function getE2EMiloOSLearnerLoopInsights(params: {
       aiHelpUsed,
       explainBackSubmitted,
       pendingExplainBack: Math.max(aiHelpOpened - explainBackSubmitted, 0),
+      pendingSupportInteractions,
     },
     mvl: {
       active: 0,

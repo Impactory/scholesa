@@ -728,6 +728,24 @@ describe('Interaction Events Collection', () => {
     await assertFails(getDoc(doc(db, 'interactionEvents', 'event-site2')));
     await assertFails(getDoc(doc(db, 'interactionEvents', 'event-nosite')));
   });
+
+  test('linked parent cannot read raw MiloOS interaction events directly', async () => {
+    await seedInteractionEvents();
+    const db = testEnv.authenticatedContext(parentUser.uid).firestore();
+    await assertFails(getDoc(doc(db, 'interactionEvents', 'event-site1')));
+    await assertFails(
+      getDocs(query(collection(db, 'interactionEvents'), where('siteId', '==', 'site1')))
+    );
+  });
+
+  test('unlinked parent cannot read raw MiloOS interaction events directly', async () => {
+    await seedInteractionEvents();
+    const db = testEnv.authenticatedContext(otherParentUser.uid).firestore();
+    await assertFails(getDoc(doc(db, 'interactionEvents', 'event-site1')));
+    await assertFails(
+      getDocs(query(collection(db, 'interactionEvents'), where('siteId', '==', 'site1')))
+    );
+  });
 });
 
 describe('Federated Learning Prototype Collections', () => {

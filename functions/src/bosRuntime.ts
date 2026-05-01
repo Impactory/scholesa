@@ -333,6 +333,26 @@ function buildLearnerLoopInsightsResponse(params: {
   const aiHelpUsed = eventCounts.ai_help_used ?? 0;
   const explainBackSubmitted = eventCounts.explain_it_back_submitted ?? 0;
   const pendingExplainBack = Math.max(0, Math.max(aiHelpOpened, aiHelpUsed) - explainBackSubmitted);
+  const explainedInteractionIds = new Set<string>();
+  for (const row of eventRows) {
+    const eventType = normalizeString(row.data.eventType) ?? '';
+    if (eventType !== 'explain_it_back_submitted') continue;
+    const interactionId = normalizeString(row.data.interactionId)
+      ?? normalizeString(row.data.aiHelpOpenedEventId);
+    if (interactionId) {
+      explainedInteractionIds.add(interactionId);
+    }
+  }
+  const pendingSupportInteractions = eventRows
+    .filter((row) => (normalizeString(row.data.eventType) ?? '') === 'ai_help_opened')
+    .filter((row) => !explainedInteractionIds.has(row.id))
+    .map((row) => ({
+      interactionId: row.id,
+      mode: normalizeString(row.data.mode) ?? undefined,
+      studentInput: normalizeString(row.data.studentInput) ?? undefined,
+      createdAt: normalizeString(row.data.createdAt) ?? normalizeString(row.data.timestamp) ?? undefined,
+    }))
+    .slice(0, 5);
 
   let mvlActive = 0;
   let mvlPassed = 0;
@@ -383,6 +403,7 @@ function buildLearnerLoopInsightsResponse(params: {
       aiHelpUsed,
       explainBackSubmitted,
       pendingExplainBack,
+      pendingSupportInteractions,
     },
     mvl: {
       active: mvlActive,

@@ -32,6 +32,12 @@ export interface MiloOSLearnerLoopInsights {
     aiHelpUsed: number;
     explainBackSubmitted: number;
     pendingExplainBack: number;
+    pendingSupportInteractions?: Array<{
+      interactionId: string;
+      mode?: string;
+      studentInput?: string;
+      createdAt?: string;
+    }>;
   };
   mvl: {
     active: number;
