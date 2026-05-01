@@ -245,6 +245,7 @@ void main() {
                   'eventCounts': <String, dynamic>{
                     'ai_help_opened': 2,
                     'ai_help_used': 2,
+                    'ai_coach_response': 2,
                     'explain_it_back_submitted': 1,
                   },
                   'verification': <String, dynamic>{
@@ -270,7 +271,11 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-          find.textContaining('Support Journey 2/1/1 pending'), findsOneWidget);
+        find.textContaining(
+          'Support Journey 2 opened/2 responses/1 explained/1 pending',
+        ),
+        findsOneWidget,
+      );
       expect(find.textContaining('Understanding Check 0/1/0'), findsOneWidget);
     });
 

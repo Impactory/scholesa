@@ -67,6 +67,7 @@ test('learner MiloOS route records support provenance and explain-back without m
   await expect(page.getByTestId('learner-miloos-loop-status')).toContainText('Learning Loop Ready');
   await expect(page.getByTestId('learner-miloos-support-opened')).toContainText('0');
   await expect(page.getByTestId('learner-miloos-support-used')).toContainText('0');
+  await expect(page.getByTestId('learner-miloos-coach-responses')).toContainText('0');
   await expect(page.getByTestId('learner-miloos-explain-backs')).toContainText('0');
   await expect(page.getByTestId('learner-miloos-pending-checks')).toContainText('0');
   await expect(page.getByText('support provenance, not capability mastery')).toBeVisible();
@@ -84,6 +85,7 @@ test('learner MiloOS route records support provenance and explain-back without m
   await expect(page.getByTestId('learner-miloos-loop-status')).toContainText('Explain-Back Needed');
   await expect(page.getByTestId('learner-miloos-support-opened')).toContainText('1');
   await expect(page.getByTestId('learner-miloos-support-used')).toContainText('1');
+  await expect(page.getByTestId('learner-miloos-coach-responses')).toContainText('1');
   await expect(page.getByTestId('learner-miloos-pending-checks')).toContainText('1');
 
   await page.getByTestId('ai-coach-explain-back-input').fill(

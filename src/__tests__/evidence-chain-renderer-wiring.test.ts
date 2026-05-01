@@ -295,6 +295,8 @@ describe('Renderers delegate to real evidence components', () => {
     expect(source).toContain('resolveActiveSiteId');
     expect(source).toContain('getMiloOSLearnerLoopInsights');
     expect(source).toContain('pendingExplainBack');
+    expect(source).toContain('ai_coach_response');
+    expect(source).toContain('data-testid="learner-miloos-coach-responses"');
     expect(source).toContain('pendingSupportInteractions');
     expect(source).toContain('data-testid="learner-miloos-pending-explain-back"');
     expect(source).toContain('learner-miloos-submit-pending-explain-back');
@@ -331,6 +333,7 @@ describe('Renderers delegate to real evidence components', () => {
     expect(e2eSource).toContain("getCollection(page, 'capabilityMastery')");
     expect(e2eSource).toContain("getCollection(page, 'capabilityGrowthEvents')");
     expect(e2eSource).toContain('ai_coach_response');
+    expect(e2eSource).toContain('learner-miloos-coach-responses');
     expect(e2eSource).toContain('expect(masteryRecords).toEqual([])');
     expect(e2eSource).toContain('expect(growthRecords).toEqual([])');
   });
@@ -731,6 +734,9 @@ describe('Renderers delegate to real evidence components', () => {
     expect(flutterMobileRouteMatrixSource).toContain('Do not call Flutter/mobile gold-ready');
     expect(flutterMobileRouteMatrixSource).toContain('current-worktree live or `CLOUD_RUN_NO_TRAFFIC=1` rehearsal');
     expect(flutterBosSource).toContain('pendingExplainBack');
+    expect(flutterBosSource).toContain('aiCoachResponses');
+    expect(flutterBosSource).toContain("_readInt(eventCounts, 'ai_coach_response')");
+    expect(flutterBosTestSource).toContain('2 opened/2 responses/1 explained/1 pending');
     expect(flutterEducatorSource).toContain('MiloOS Support Provenance');
     expect(flutterEducatorSource).toContain('Support events show follow-up debt only. They are not capability mastery.');
     expect(flutterEducatorSource).toContain("collection('interactionEvents')");

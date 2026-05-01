@@ -92,6 +92,7 @@ test('MiloOS support journey flows across learner, educator, guardian, and site 
     'Try one small comparison test'
   );
   await expect(page.getByTestId('learner-miloos-loop-status')).toContainText('Explain-Back Needed');
+  await expect(page.getByTestId('learner-miloos-coach-responses')).toContainText('1');
   await expect(page.getByTestId('learner-miloos-pending-checks')).toContainText('1');
 
   await signInAs(page, EDUCATOR_ALPHA);

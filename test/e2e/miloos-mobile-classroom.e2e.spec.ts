@@ -107,6 +107,7 @@ test.describe('MiloOS mobile classroom proof', () => {
     await expectWithinMobileWidth(page.getByTestId('learner-miloos-loop-status'));
     await expectWithinMobileWidth(page.getByTestId('learner-miloos-support-opened'));
     await expectWithinMobileWidth(page.getByTestId('learner-miloos-support-used'));
+    await expectWithinMobileWidth(page.getByTestId('learner-miloos-coach-responses'));
     await expectWithinMobileWidth(page.getByTestId('learner-miloos-explain-backs'));
     await expectWithinMobileWidth(page.getByTestId('learner-miloos-pending-checks'));
 
@@ -124,6 +125,7 @@ test.describe('MiloOS mobile classroom proof', () => {
     await expectWithinMobileWidth(page.getByTestId('ai-coach-response-transcript'));
     await expectWithinMobileWidth(page.getByTestId('ai-coach-explain-back-input'));
     await expectWithinMobileWidth(page.getByTestId('ai-coach-submit-explain-back'));
+    await expect(page.getByTestId('learner-miloos-coach-responses')).toContainText('1');
     await expect(page.getByTestId('learner-miloos-pending-checks')).toContainText('1');
     await expectNoHorizontalOverflow(page);
   });

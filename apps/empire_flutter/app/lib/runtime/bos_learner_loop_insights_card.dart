@@ -538,6 +538,7 @@ class _LearnerLoopInsights {
     required this.failedMvl,
     required this.aiHelpOpened,
     required this.aiHelpUsed,
+    required this.aiCoachResponses,
     required this.explainBackSubmitted,
     required this.pendingExplainBack,
     required this.activeGoals,
@@ -558,6 +559,7 @@ class _LearnerLoopInsights {
   final int? failedMvl;
   final int? aiHelpOpened;
   final int? aiHelpUsed;
+  final int? aiCoachResponses;
   final int? explainBackSubmitted;
   final int? pendingExplainBack;
   final List<String> activeGoals;
@@ -584,6 +586,8 @@ class _LearnerLoopInsights {
         _readInt(eventCounts, 'ai_help_opened');
     final int? aiHelpUsed = _readInt(verification, 'aiHelpUsed') ??
         _readInt(eventCounts, 'ai_help_used');
+    final int? aiCoachResponses = _readInt(verification, 'aiCoachResponses') ??
+        _readInt(eventCounts, 'ai_coach_response');
     final int? explainBackSubmitted =
         _readInt(verification, 'explainBackSubmitted') ??
             _readInt(eventCounts, 'explain_it_back_submitted');
@@ -629,6 +633,7 @@ class _LearnerLoopInsights {
       failedMvl: _readInt(mvl, 'failed'),
       aiHelpOpened: aiHelpOpened,
       aiHelpUsed: aiHelpUsed,
+      aiCoachResponses: aiCoachResponses,
       explainBackSubmitted: explainBackSubmitted,
       pendingExplainBack: pendingExplainBack,
       activeGoals: _readTrimmedStringList(payload, 'activeGoals'),
@@ -656,6 +661,7 @@ class _LearnerLoopInsights {
       failedMvl != null ||
       aiHelpOpened != null ||
       aiHelpUsed != null ||
+      aiCoachResponses != null ||
       explainBackSubmitted != null ||
       pendingExplainBack != null ||
       activeGoals.isNotEmpty;
@@ -689,11 +695,12 @@ class _LearnerLoopInsights {
 
   String supportJourneySummary(BuildContext context) {
     if (aiHelpOpened == null ||
+        aiCoachResponses == null ||
         explainBackSubmitted == null ||
         pendingExplainBack == null) {
       return BosCoachingI18n.signalUnavailable(context);
     }
-    return '$aiHelpOpened/$explainBackSubmitted/$pendingExplainBack pending';
+    return '$aiHelpOpened opened/$aiCoachResponses responses/$explainBackSubmitted explained/$pendingExplainBack pending';
   }
 }
 

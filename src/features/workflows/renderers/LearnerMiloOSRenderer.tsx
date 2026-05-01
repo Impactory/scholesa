@@ -128,6 +128,7 @@ export default function LearnerMiloOSRenderer({ ctx }: CustomRouteRendererProps)
 
   const supportOpened = formatCount(insights?.verification.aiHelpOpened);
   const supportUsed = formatCount(insights?.verification.aiHelpUsed);
+  const coachResponses = formatCount(insights?.eventCounts.ai_coach_response);
   const explainBackSubmitted = formatCount(insights?.verification.explainBackSubmitted);
   const pendingExplainBack = formatCount(insights?.verification.pendingExplainBack);
   const activeMvl = formatCount(insights?.mvl.active);
@@ -218,7 +219,7 @@ export default function LearnerMiloOSRenderer({ ctx }: CustomRouteRendererProps)
       )}
 
       {!loading ? (
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
           <div
             className="bg-white border border-gray-200 rounded-lg p-3 text-center"
             data-testid="learner-miloos-support-opened"
@@ -232,6 +233,13 @@ export default function LearnerMiloOSRenderer({ ctx }: CustomRouteRendererProps)
           >
             <p className="text-lg font-bold text-purple-600">{supportUsed}</p>
             <p className="text-xs text-gray-500">Support used</p>
+          </div>
+          <div
+            className="bg-white border border-gray-200 rounded-lg p-3 text-center"
+            data-testid="learner-miloos-coach-responses"
+          >
+            <p className="text-lg font-bold text-sky-600">{coachResponses}</p>
+            <p className="text-xs text-gray-500">Coach responses</p>
           </div>
           <div
             className="bg-white border border-gray-200 rounded-lg p-3 text-center"
