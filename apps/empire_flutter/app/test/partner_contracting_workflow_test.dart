@@ -57,7 +57,8 @@ class _FakePartnerService extends PartnerService {
   })  : _contractsValue = List<PartnerContract>.from(
           contracts ?? <PartnerContract>[],
         ),
-        _launchesValue = List<PartnerLaunch>.from(launches ?? <PartnerLaunch>[]),
+        _launchesValue =
+            List<PartnerLaunch>.from(launches ?? <PartnerLaunch>[]),
         super(
           partnerId: 'partner-1',
           workflowBridgeService: _FakeWorkflowBridgeService(),
@@ -259,7 +260,8 @@ void main() {
 
     expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(find.text('Studio Launch Agreement'), findsOneWidget);
-    expect(find.textContaining('Showing last loaded workflow data.'), findsOneWidget);
+    expect(find.textContaining('Showing last loaded workflow data.'),
+        findsOneWidget);
 
     await tester.tap(find.text('Launches'));
     await tester.pumpAndSettle();
@@ -269,7 +271,8 @@ void main() {
     expect(find.text('No Launches Yet'), findsNothing);
   });
 
-  testWidgets('partner contracts keeps stale contracts visible after refresh failure',
+  testWidgets(
+      'partner contracts keeps stale contracts visible after refresh failure',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     final FirestoreService firestoreService = FirestoreService(
@@ -307,15 +310,18 @@ void main() {
 
     expect(find.text('Studio Launch Agreement'), findsOneWidget);
 
-    await tester.drag(find.byType(RefreshIndicator).first, const Offset(0, 300));
+    await tester.drag(
+        find.byType(RefreshIndicator).first, const Offset(0, 300));
     await tester.pump();
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('Showing last loaded workflow data.'), findsOneWidget);
+    expect(find.textContaining('Showing last loaded workflow data.'),
+        findsOneWidget);
     expect(find.text('Studio Launch Agreement'), findsOneWidget);
   });
 
-  testWidgets('partner contracts keeps stale launches visible after refresh failure',
+  testWidgets(
+      'partner contracts keeps stale launches visible after refresh failure',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     final FirestoreService firestoreService = FirestoreService(
@@ -365,11 +371,13 @@ void main() {
 
     expect(find.text('North Hub'), findsOneWidget);
 
-    await tester.drag(find.byType(RefreshIndicator).first, const Offset(0, 300));
+    await tester.drag(
+        find.byType(RefreshIndicator).first, const Offset(0, 300));
     await tester.pump();
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('Showing last loaded workflow data.'), findsOneWidget);
+    expect(find.textContaining('Showing last loaded workflow data.'),
+        findsOneWidget);
     expect(find.text('North Hub'), findsOneWidget);
   });
 
@@ -412,7 +420,8 @@ void main() {
     expect(find.text('Approved: Studio Launch Agreement'), findsOneWidget);
   });
 
-  test('partner workflow repositories persist approvals, payouts, and audit evidence',
+  test(
+      'partner workflow repositories persist approvals, payouts, and audit evidence',
       () async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     final AuditLogRepository auditLogRepository =
@@ -429,7 +438,8 @@ void main() {
     final List<Map<String, dynamic>> telemetryPayloads =
         <Map<String, dynamic>>[];
 
-    await TelemetryService.runWithDispatcher((Map<String, dynamic> payload) async {
+    await TelemetryService.runWithDispatcher(
+        (Map<String, dynamic> payload) async {
       telemetryPayloads.add(payload);
     }, () async {
       final String contractId = await contractRepository.createDraft(
@@ -440,7 +450,7 @@ void main() {
         createdBy: 'partner-1',
       );
       await firestore.collection('partnerContracts').doc(contractId).set(
-        <String, dynamic>{'siteId': 'site-1'},
+        <String, dynamic>{'partnerId': 'partner-1', 'siteId': 'site-1'},
         SetOptions(merge: true),
       );
 
@@ -475,6 +485,8 @@ void main() {
           .doc(deliverableId)
           .get();
       expect(acceptedDeliverable.data()?['status'], 'accepted');
+      expect(acceptedDeliverable.data()?['partnerId'], 'partner-1');
+      expect(acceptedDeliverable.data()?['siteId'], 'site-1');
       expect(acceptedDeliverable.data()?['acceptedBy'], 'hq-1');
       expect(acceptedDeliverable.data()?['evidenceUrl'],
           'https://files.scholesa.test/evidence-pack.pdf');
@@ -491,7 +503,8 @@ void main() {
       );
 
       final pendingPayouts = await payoutRepository.listPendingApproval();
-      expect(pendingPayouts.map((payout) => payout.id).toList(), <String>[payoutId]);
+      expect(pendingPayouts.map((payout) => payout.id).toList(),
+          <String>[payoutId]);
 
       await payoutRepository.approve(id: payoutId, approvedBy: 'hq-1');
 
@@ -508,7 +521,9 @@ void main() {
       );
 
       expect(
-        telemetryPayloads.map((Map<String, dynamic> payload) => payload['event']).toList(),
+        telemetryPayloads
+            .map((Map<String, dynamic> payload) => payload['event'])
+            .toList(),
         containsAll(<String>[
           'contract.created',
           'contract.approved',

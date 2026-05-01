@@ -2,7 +2,7 @@
 
 ## Current Verdict
 
-**Flutter/mobile is not gold-ready yet.** The focused MiloOS support-provenance mobile gate has passed, but the broader Flutter app remains beta until the full evidence chain is verified across learner, educator, guardian, site, offline, report/export, and release operations.
+**Flutter/mobile is not blanket gold-ready yet.** The focused Flutter/mobile release bundle has passed across the validated learner, educator, guardian, site, offline, report/export, permission, analyzer, and source-contract slices. The April 30 route-level evidence blockers are now closed, the current-worktree full Flutter test/analyzer gate now passes, and the local web/functions/root test gates are clean. The broader Flutter app remains beta until the reproducible release/deploy script itself is clean from the current worktree.
 
 Do not promote Flutter/mobile to gold-ready because a widget renders or a focused test passes. Gold requires end-to-end evidence capture, verification, interpretation, portfolio/report communication, site scoping, offline behavior, and role-safe outputs.
 
@@ -15,6 +15,18 @@ Do not promote Flutter/mobile to gold-ready because a widget renders or a focuse
 | MiloOS site health | Focused gold-candidate slice passed | `SiteDashboardPage` renders same-site support health from `interactionEvents`. |
 | MiloOS truth boundary | Passed for focused slice | Support events are framed as support/provenance and follow-up debt, not capability mastery. |
 | Guardian portfolio/passport workflows | Passed | `parent_surfaces_workflow_test.dart` proves linked guardian schedule, portfolio, reviewed artifacts, passport export/copy, provenance-gated downloads, and billing unavailable state. |
+| Flutter route proof matrix | Passed as classification artifact | `docs/FLUTTER_MOBILE_ROUTE_PROOF_MATRIX_APRIL_30_2026.md` maps current Flutter routes, dashboard cards, persistence/service paths, proof files, and remaining blockers. |
+| Offline evidence-chain gate | Passed | Focused offline/growth tests prove queued rubric/checkpoint paths preserve server-owned interpretation and block direct capability growth writes. |
+| Mobile classroom ergonomics | Passed | Phone-width learner mission submission, educator quick evidence capture, educator support debt, site support health, and dashboard overflow tests pass after responsive fixes. |
+| Role permission and site-boundary review | Passed | Flutter boundary tests and Firestore rules integration prove role/site scoping, linked guardian summaries, raw support-event denial, and missing-site support-event exclusion. |
+| Focused Flutter/mobile release bundle | Passed | Combined mobile test bundle, full Flutter analyzer, source contract, Firestore rules integration, and diff hygiene passed on 2026-04-30. Current-worktree full `flutter test` now passes 1075 tests and full `flutter analyze` reports no issues. |
+| Flutter `/learner/miloos` parity | Passed | Flutter now registers and routes `/learner/miloos` to a learner support/provenance page; the web workflow loader uses the `bosGetLearnerLoopInsights` callable boundary. `test/web-route-parity.test.ts` and `test/workflow-security-contract.test.ts` pass. |
+| Local release gate expansion | Passed locally | Root `npm test` passes 524 tests, `npm run build` passes, `npm run typecheck -- --pretty false` passes, `npm run lint` passes, Functions build and Gen 2 verification pass, 37 non-emulator Functions suites pass 184 tests, and `npm run test:integration:evidence-chain` passes 3 emulator-backed tests. |
+| Direct parent growth timeline route proof | Passed | `parent_growth_timeline_page_test.dart` proves `/parent/growth-timeline` renders linked learner growth, educator provenance, and evidence linkage while excluding unlinked learner growth. |
+| Mobile HQ authoring persistence | Passed | `hq_authoring_persistence_test.dart` proves mobile HQ creates active-site capability records and canonical `rubricTemplates` records while excluding other-site authoring data. |
+| Peer-feedback persistence and role safety | Passed | `peer_feedback_page_test.dart` proves same-site peer submissions only and canonical peer feedback writes; Firestore rules now deny cross-site, missing-site, and wrong-author peer feedback access. |
+| Partner deliverable evidence output trust | Passed | `partner_deliverables_page_test.dart`, `partner_contracting_workflow_test.dart`, and Firestore rules prove partner deliverables carry `partnerId`, `siteId`, contract, submitter, and evidence URL provenance, while partners cannot accept their own deliverables. |
+| Learner credential evidence provenance | Passed | `learner_credentials_page_test.dart` proves credentials show issuer, source evidence, portfolio, proof bundle, growth, and rubric links while excluding other-site credentials; Firestore rules require educator-issued credentials to carry evidence provenance. |
 | Analyzer | Passed for current mobile slice | `flutter analyze` is clean after the MiloOS mobile parity changes. |
 
 Focused proof commands that passed:
@@ -26,10 +38,7 @@ cd apps/empire_flutter/app && flutter analyze
 
 ## Known Blockers Before Full Flutter/Mobile Gold
 
-1. **Route matrix needs current classification**: older route proof matrices exist, but the plan needs a current April 30 classification of direct, partial, fake/stubbed, and missing mobile evidence-chain surfaces.
-2. **Offline evidence ops need a full gate**: prior offline/growth boundary tests exist, but mobile gold needs one current bundle proving offline queue behavior for evidence capture, proof, rubric/checkpoint replay, and failed server-owned writes.
-3. **Mobile classroom ergonomics need current proof**: learner/educator small-screen evidence capture and live support flows need a focused Flutter viewport gate.
-4. **End-to-end mobile release gate is not bundled**: focused tests have passed in slices, but there is no single documented Flutter/mobile gold command bundle that operators can run and interpret.
+1. **Release reproducibility remains before blanket gold**: the route-level evidence blockers from the April 30 matrix are closed and current-worktree local gates pass, but the full current-worktree release/deploy script gate still needs to pass cleanly.
 
 ## Plan Of Attack
 
@@ -56,6 +65,8 @@ cd apps/empire_flutter/app && flutter test test/parent_surfaces_workflow_test.da
 
 ### Phase 2 - Build A Current Flutter Route Proof Matrix
 
+Status: completed 2026-04-30.
+
 Primary roles: learner, educator, guardian, site, HQ.
 
 Evidence-chain step: classify every mobile route by evidence function and readiness.
@@ -69,9 +80,11 @@ Actions:
 
 Exit proof:
 
-- A current route matrix document lists each mobile evidence-chain route, owner role, persistence path, test file, and blocker.
+- `docs/FLUTTER_MOBILE_ROUTE_PROOF_MATRIX_APRIL_30_2026.md` lists current mobile evidence-chain routes, owner roles, persistence paths, test files, classifications, and blockers.
 
 ### Phase 3 - Prove Offline Evidence Chain Behavior
+
+Status: completed 2026-04-30.
 
 Primary roles: learner and educator.
 
@@ -90,7 +103,11 @@ cd apps/empire_flutter/app && flutter test test/growth_engine_service_test.dart 
 cd apps/empire_flutter/app && flutter analyze lib/modules/missions/mission_service.dart lib/services/capability_growth_engine.dart lib/services/firestore_service.dart lib/offline/sync_coordinator.dart test/growth_engine_service_test.dart test/evidence_chain_firestore_service_test.dart test/sync_coordinator_test.dart test/evidence_chain_sync_coordinator_test.dart test/evidence_chain_offline_queue_test.dart
 ```
 
+Passed result: `flutter test` completed with 46 passing tests, and focused `flutter analyze` reported no issues.
+
 ### Phase 4 - Prove Mobile Classroom Ergonomics
+
+Status: completed 2026-04-30.
 
 Primary roles: learner and educator.
 
@@ -104,9 +121,29 @@ Actions:
 
 Exit proof:
 
-- Focused mobile viewport tests cover the critical learner/educator classroom surfaces.
+- Focused mobile viewport tests cover learner mission evidence submission, educator quick evidence capture, educator support debt, site support health, and dashboard overflow behavior.
 
-### Phase 5 - Bundle Full Flutter/Mobile Gold Gate
+### Phase 5 - Prove Role Permission And Site Boundaries
+
+Status: completed 2026-04-30.
+
+Primary roles: learner, educator, guardian, site.
+
+Evidence-chain step: protect evidence and support provenance at role/site boundaries.
+
+Actions:
+
+- Bundle Flutter route/service tests for learner-owned evidence, educator same-site data, site-scoped support health, and linked guardian summaries.
+- Add explicit missing-site support-event coverage to mobile support-health tests.
+- Run Firestore rules integration as the source of truth for direct collection access.
+
+Exit proof:
+
+- Focused Flutter boundary tests pass, missing-site support events are ignored by mobile surfaces, and Firestore rules integration denies cross-site and raw parent support-event reads.
+
+### Phase 6 - Bundle Full Flutter/Mobile Gold Gate
+
+Status: completed 2026-04-30 as a focused release-bundle gate for validated mobile slices. This does not erase route-level partials from the matrix.
 
 Primary role: operators.
 
@@ -130,7 +167,7 @@ cd apps/empire_flutter/app && flutter analyze
 cd /Users/impactory/Documents/GitHub/scholesa && git diff --check
 ```
 
-The final bundle will expand as phases 2-4 promote more focused tests into the required gate.
+Passed result: the expanded focused bundle ran 133 Flutter tests, full `flutter analyze` reported no issues, the source contract passed 187 Jest tests, Firestore rules integration now passes 118 tests after peer-feedback, partner deliverable, and credential provenance rule coverage, and `git diff --check` passed.
 
 ## Gold Stop Conditions
 
@@ -141,9 +178,10 @@ Do not call Flutter/mobile gold-ready if any of these are true:
 - Offline queue can directly write `capabilityMastery` or `capabilityGrowthEvents` without the server-owned interpretation path.
 - Guardian exports/share actions can succeed without evidence provenance when provenance is required.
 - A route proof matrix item is marked fake/stubbed, partial, or missing for a core evidence-chain workflow.
+- The full release/deploy gate fails from the current worktree.
 - Analyzer or diff hygiene fails.
 - The final command bundle cannot be reproduced from a clean checkout.
 
 ## Next Slice
 
-The next highest-risk break is **the missing current Flutter route proof matrix**. Build `docs/FLUTTER_MOBILE_ROUTE_PROOF_MATRIX_APRIL_30_2026.md` from the current route registry, role dashboards, persistence paths, and tests before expanding the final mobile release gate.
+The next highest-risk break is **full release/deploy gate reproducibility**. The latest failed `./scripts/deploy.sh all` stopped at Flutter tests; current-worktree full `flutter test` now passes 1075 tests, full app-scoped `flutter analyze` is clean, root `npm test` passes 524 tests, production `npm run build` passes, Firestore rules pass 118 tests, and functions gates pass when emulator-backed tests use the required emulator wrapper. Re-run the release/deploy script gate itself before making any blanket mobile gold claim.

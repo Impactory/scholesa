@@ -197,6 +197,11 @@ beforeEach(async () => {
       title: 'Studio Systems Badge',
       issuerId: educatorUser.uid,
       status: 'issued',
+      evidenceIds: ['evidence-1'],
+      portfolioItemIds: ['portfolio-1'],
+      proofBundleIds: ['proof-1'],
+      growthEventIds: ['growth-1'],
+      rubricApplicationId: 'rubric-application-1',
     });
 
     await setDoc(doc(db, 'messageThreads', 'thread-1'), {
@@ -1217,6 +1222,84 @@ describe('Mission Attempts', () => {
   });
 });
 
+describe('Peer Feedback Collection', () => {
+  async function seedPeerFeedback() {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await setDoc(doc(db, 'peerFeedback', 'feedback-site1'), {
+        siteId: 'site1',
+        authorId: learnerUser.uid,
+        fromLearnerId: learnerUser.uid,
+        toLearnerId: 'learner-2',
+        missionAttemptId: 'attempt-1',
+        rating: 4,
+      });
+      await setDoc(doc(db, 'peerFeedback', 'feedback-site2'), {
+        siteId: 'site2',
+        authorId: 'learner-site2',
+        fromLearnerId: 'learner-site2',
+        toLearnerId: learnerUser.uid,
+        missionAttemptId: 'attempt-site2',
+        rating: 5,
+      });
+      await setDoc(doc(db, 'peerFeedback', 'feedback-nosite'), {
+        authorId: learnerUser.uid,
+        fromLearnerId: learnerUser.uid,
+        toLearnerId: 'learner-2',
+        missionAttemptId: 'attempt-nosite',
+        rating: 3,
+      });
+    });
+  }
+
+  test('learner can read same-site peer feedback', async () => {
+    await seedPeerFeedback();
+    const db = testEnv.authenticatedContext(learnerUser.uid).firestore();
+    await assertSucceeds(getDoc(doc(db, 'peerFeedback', 'feedback-site1')));
+    await assertSucceeds(
+      getDocs(query(collection(db, 'peerFeedback'), where('siteId', '==', 'site1')))
+    );
+  });
+
+  test('learner cannot read other-site or missing-site peer feedback', async () => {
+    await seedPeerFeedback();
+    const db = testEnv.authenticatedContext(learnerUser.uid).firestore();
+    await assertFails(getDoc(doc(db, 'peerFeedback', 'feedback-site2')));
+    await assertFails(getDoc(doc(db, 'peerFeedback', 'feedback-nosite')));
+  });
+
+  test('learner can create own same-site peer feedback', async () => {
+    const db = testEnv.authenticatedContext(learnerUser.uid).firestore();
+    await assertSucceeds(setDoc(doc(db, 'peerFeedback', 'feedback-new'), {
+      siteId: 'site1',
+      authorId: learnerUser.uid,
+      fromLearnerId: learnerUser.uid,
+      toLearnerId: 'learner-2',
+      missionAttemptId: 'attempt-1',
+      rating: 4,
+    }));
+  });
+
+  test('learner cannot create peer feedback for another author or without siteId', async () => {
+    const db = testEnv.authenticatedContext(learnerUser.uid).firestore();
+    await assertFails(setDoc(doc(db, 'peerFeedback', 'feedback-wrong-author'), {
+      siteId: 'site1',
+      authorId: 'learner-2',
+      fromLearnerId: learnerUser.uid,
+      toLearnerId: 'learner-2',
+      missionAttemptId: 'attempt-1',
+      rating: 4,
+    }));
+    await assertFails(setDoc(doc(db, 'peerFeedback', 'feedback-missing-site'), {
+      authorId: learnerUser.uid,
+      fromLearnerId: learnerUser.uid,
+      toLearnerId: 'learner-2',
+      missionAttemptId: 'attempt-1',
+      rating: 4,
+    }));
+  });
+});
+
 describe('Portfolio Access', () => {
   test('linked parent can read learner portfolio item', async () => {
     const db = testEnv.authenticatedContext(parentUser.uid).firestore();
@@ -1285,6 +1368,44 @@ describe('Credentials Access', () => {
       title: 'Capability Evidence Verified',
       issuerId: educatorUser.uid,
       status: 'issued',
+      evidenceIds: ['evidence-1'],
+      portfolioItemIds: ['portfolio-1'],
+      proofBundleIds: ['proof-1'],
+      growthEventIds: ['growth-1'],
+      rubricApplicationId: 'rubric-application-1',
+    }));
+  });
+
+  test('educator cannot issue credential without evidence provenance or as another issuer', async () => {
+    const db = testEnv.authenticatedContext(educatorUser.uid).firestore();
+    await assertFails(setDoc(doc(db, 'credentials', 'credential-no-evidence'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      title: 'Unsupported Credential',
+      issuerId: educatorUser.uid,
+      status: 'issued',
+      evidenceIds: [],
+    }));
+    await assertFails(setDoc(doc(db, 'credentials', 'credential-wrong-issuer'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      title: 'Wrong Issuer Credential',
+      issuerId: 'educator-2',
+      status: 'issued',
+      evidenceIds: ['evidence-1'],
+    }));
+  });
+
+  test('other-site educator cannot read or issue site1 learner credential', async () => {
+    const db = testEnv.authenticatedContext(otherSiteUser.uid).firestore();
+    await assertFails(getDoc(doc(db, 'credentials', 'credential-1')));
+    await assertFails(setDoc(doc(db, 'credentials', 'credential-other-site'), {
+      siteId: 'site1',
+      learnerId: learnerUser.uid,
+      title: 'Cross Site Credential',
+      issuerId: otherSiteUser.uid,
+      status: 'issued',
+      evidenceIds: ['evidence-1'],
     }));
   });
 
@@ -1381,6 +1502,47 @@ describe('Partner Ownership Rules', () => {
     const db = testEnv.authenticatedContext(partnerUser.uid).firestore();
     await assertFails(updateDoc(doc(db, 'marketplaceListings', 'listing-foreign'), {
       status: 'archived',
+    }));
+  });
+
+  test('partner can create own evidence-backed deliverable for a contract', async () => {
+    const db = testEnv.authenticatedContext(partnerUser.uid).firestore();
+    await assertSucceeds(setDoc(doc(db, 'partnerDeliverables', 'deliverable-1'), {
+      partnerId: partnerUser.uid,
+      submittedBy: partnerUser.uid,
+      contractId: 'contract-1',
+      siteId: 'site1',
+      title: 'Evidence Pack',
+      evidenceUrl: 'https://files.scholesa.test/evidence-pack.pdf',
+      status: 'submitted',
+    }));
+  });
+
+  test('partner cannot create deliverable for another partner or accept it directly', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const adminDb = context.firestore();
+      await setDoc(doc(adminDb, 'partnerDeliverables', 'deliverable-owned'), {
+        partnerId: partnerUser.uid,
+        submittedBy: partnerUser.uid,
+        contractId: 'contract-1',
+        siteId: 'site1',
+        title: 'Evidence Pack',
+        status: 'submitted',
+      });
+    });
+
+    const db = testEnv.authenticatedContext(partnerUser.uid).firestore();
+    await assertFails(setDoc(doc(db, 'partnerDeliverables', 'deliverable-foreign'), {
+      partnerId: 'partner-2',
+      submittedBy: partnerUser.uid,
+      contractId: 'contract-1',
+      siteId: 'site1',
+      title: 'Unauthorized Evidence Pack',
+      status: 'submitted',
+    }));
+    await assertFails(updateDoc(doc(db, 'partnerDeliverables', 'deliverable-owned'), {
+      status: 'accepted',
+      acceptedBy: partnerUser.uid,
     }));
   });
 });

@@ -13,7 +13,8 @@ class CapabilityFrameworkPage extends StatefulWidget {
   const CapabilityFrameworkPage({super.key});
 
   @override
-  State<CapabilityFrameworkPage> createState() => _CapabilityFrameworkPageState();
+  State<CapabilityFrameworkPage> createState() =>
+      _CapabilityFrameworkPageState();
 }
 
 class _CapabilityFrameworkPageState extends State<CapabilityFrameworkPage> {
@@ -71,9 +72,15 @@ class _CapabilityFrameworkPageState extends State<CapabilityFrameworkPage> {
       _error = null;
     });
     try {
+      final String? siteId = context.read<AppState>().activeSiteId;
       final List<Map<String, dynamic>> caps =
           await _firestoreService.queryCollection(
         'capabilities',
+        where: siteId == null || siteId.isEmpty
+            ? null
+            : <List<dynamic>>[
+                <dynamic>['siteId', siteId],
+              ],
         orderBy: 'createdAt',
         descending: true,
       );
@@ -113,10 +120,11 @@ class _CapabilityFrameworkPageState extends State<CapabilityFrameworkPage> {
           CurriculumLegacyFamilyCode.future_skills,
         );
     final Map<String, dynamic> levels =
-        cap['progressionLevels'] as Map<String, dynamic>? ?? <String, dynamic>{};
+        cap['progressionLevels'] as Map<String, dynamic>? ??
+            <String, dynamic>{};
     _progressionLevels = levels.entries
-        .map((MapEntry<String, dynamic> e) =>
-            _ProgressionLevel(name: e.key, descriptor: e.value as String? ?? ''))
+        .map((MapEntry<String, dynamic> e) => _ProgressionLevel(
+            name: e.key, descriptor: e.value as String? ?? ''))
         .toList();
     if (_progressionLevels.isEmpty) {
       _progressionLevels = <_ProgressionLevel>[
@@ -142,6 +150,13 @@ class _CapabilityFrameworkPageState extends State<CapabilityFrameworkPage> {
 
     try {
       final AppState appState = context.read<AppState>();
+      final String? siteId = appState.activeSiteId;
+      if (siteId == null || siteId.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(_t('Active site is required.'))),
+        );
+        return;
+      }
       final Map<String, String> levelsMap = <String, String>{};
       for (final _ProgressionLevel level in _progressionLevels) {
         if (level.name.trim().isNotEmpty) {
@@ -151,14 +166,19 @@ class _CapabilityFrameworkPageState extends State<CapabilityFrameworkPage> {
 
       final Map<String, dynamic> data = <String, dynamic>{
         'name': _nameController.text.trim(),
+        'title': _nameController.text.trim(),
         'description': _descriptionController.text.trim(),
+        'descriptor': _descriptionController.text.trim(),
         'pillarCode': _selectedPillar,
         'progressionLevels': levelsMap,
+        'siteId': siteId,
+        'status': 'active',
         'createdBy': appState.userId,
       };
 
       if (_editingId != null) {
-        await _firestoreService.updateDocument('capabilities', _editingId!, data);
+        await _firestoreService.updateDocument(
+            'capabilities', _editingId!, data);
       } else {
         await _firestoreService.createDocument('capabilities', data);
       }
@@ -167,7 +187,9 @@ class _CapabilityFrameworkPageState extends State<CapabilityFrameworkPage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_editingId != null ? _t('Capability updated.') : _t('Capability created.')),
+          content: Text(_editingId != null
+              ? _t('Capability updated.')
+              : _t('Capability created.')),
         ),
       );
 
@@ -193,8 +215,12 @@ class _CapabilityFrameworkPageState extends State<CapabilityFrameworkPage> {
         title: Text(_t('Delete Capability')),
         content: Text(_t('Are you sure you want to delete this capability?')),
         actions: <Widget>[
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(_t('Cancel'))),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(_t('Delete'))),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(_t('Cancel'))),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(_t('Delete'))),
         ],
       ),
     );
@@ -238,7 +264,8 @@ class _CapabilityFrameworkPageState extends State<CapabilityFrameworkPage> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
-                      Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
+                      Icon(Icons.error_outline,
+                          size: 48, color: theme.colorScheme.error),
                       const SizedBox(height: 12),
                       Text(_error!, style: theme.textTheme.bodyLarge),
                       const SizedBox(height: 12),
@@ -341,8 +368,8 @@ class _CapabilityFrameworkPageState extends State<CapabilityFrameworkPage> {
                       _buildLevelRow(entry.key, entry.value),
                 ),
             TextButton.icon(
-              onPressed: () => setState(() =>
-                  _progressionLevels.add(_ProgressionLevel(name: '', descriptor: ''))),
+              onPressed: () => setState(() => _progressionLevels
+                  .add(_ProgressionLevel(name: '', descriptor: ''))),
               icon: const Icon(Icons.add, size: 18),
               label: Text(_t('Add Level')),
             ),
@@ -401,7 +428,8 @@ class _CapabilityFrameworkPageState extends State<CapabilityFrameworkPage> {
                 border: OutlineInputBorder(),
               ),
               controller: TextEditingController(text: level.descriptor),
-              onChanged: (String val) => _progressionLevels[index].descriptor = val,
+              onChanged: (String val) =>
+                  _progressionLevels[index].descriptor = val,
             ),
           ),
           IconButton(
@@ -422,7 +450,8 @@ class _CapabilityFrameworkPageState extends State<CapabilityFrameworkPage> {
     final String description = cap['description'] as String? ?? '';
     final String pillar = cap['pillarCode'] as String? ?? '';
     final Map<String, dynamic> levels =
-        cap['progressionLevels'] as Map<String, dynamic>? ?? <String, dynamic>{};
+        cap['progressionLevels'] as Map<String, dynamic>? ??
+            <String, dynamic>{};
 
     final Color pillarColor = _pillarColor(pillar);
 
@@ -436,7 +465,8 @@ class _CapabilityFrameworkPageState extends State<CapabilityFrameworkPage> {
             Row(
               children: <Widget>[
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: pillarColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
@@ -444,7 +474,9 @@ class _CapabilityFrameworkPageState extends State<CapabilityFrameworkPage> {
                   child: Text(
                     pillar,
                     style: TextStyle(
-                        fontSize: 12, fontWeight: FontWeight.w600, color: pillarColor),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: pillarColor),
                   ),
                 ),
                 const Spacer(),

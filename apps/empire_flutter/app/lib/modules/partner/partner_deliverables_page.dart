@@ -19,7 +19,8 @@ class PartnerDeliverablesPage extends StatefulWidget {
   const PartnerDeliverablesPage({super.key});
 
   @override
-  State<PartnerDeliverablesPage> createState() => _PartnerDeliverablesPageState();
+  State<PartnerDeliverablesPage> createState() =>
+      _PartnerDeliverablesPageState();
 }
 
 class _PartnerDeliverablesPageState extends State<PartnerDeliverablesPage> {
@@ -92,13 +93,13 @@ class _PartnerDeliverablesPageState extends State<PartnerDeliverablesPage> {
           await Future.wait<_PartnerContractDeliverables>(
         contractDocs.map((Map<String, dynamic> doc) async {
           final String contractId = doc['id'] as String? ?? '';
-          final List<PartnerDeliverableModel> deliverables =
-              contractId.isEmpty
-                  ? const <PartnerDeliverableModel>[]
-                  : await deliverableRepository.listByContract(
-                      contractId,
-                      limit: 50,
-                    );
+          final List<PartnerDeliverableModel> deliverables = contractId.isEmpty
+              ? const <PartnerDeliverableModel>[]
+              : await deliverableRepository.listByContract(
+                  contractId,
+                  partnerId: partnerId,
+                  limit: 50,
+                );
           return _PartnerContractDeliverables(
             contractId: contractId,
             title: doc['title'] as String? ?? '',
@@ -109,8 +110,8 @@ class _PartnerDeliverablesPageState extends State<PartnerDeliverablesPage> {
         }),
       );
 
-      contractDeliverables.sort((_PartnerContractDeliverables a,
-          _PartnerContractDeliverables b) {
+      contractDeliverables.sort(
+          (_PartnerContractDeliverables a, _PartnerContractDeliverables b) {
         final int aCount = a.deliverables.length;
         final int bCount = b.deliverables.length;
         if (aCount != bCount) {
@@ -148,10 +149,8 @@ class _PartnerDeliverablesPageState extends State<PartnerDeliverablesPage> {
 
     final GlobalKey<FormState> formKey = GlobalKey<FormState>();
     final TextEditingController titleController = TextEditingController();
-    final TextEditingController descriptionController =
-        TextEditingController();
-    final TextEditingController evidenceUrlController =
-        TextEditingController();
+    final TextEditingController descriptionController = TextEditingController();
+    final TextEditingController evidenceUrlController = TextEditingController();
     String selectedContractId = _contractDeliverables.first.contractId;
 
     await showDialog<void>(
@@ -265,7 +264,8 @@ class _PartnerDeliverablesPageState extends State<PartnerDeliverablesPage> {
     if (firestoreService == null || partnerId.isEmpty) {
       return;
     }
-    final PartnerDeliverableRepository repository = PartnerDeliverableRepository(
+    final PartnerDeliverableRepository repository =
+        PartnerDeliverableRepository(
       firestore: firestoreService.firestore,
     );
     try {
@@ -377,7 +377,8 @@ class _PartnerDeliverablesPageState extends State<PartnerDeliverablesPage> {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: _statusColor(contract.status).withValues(alpha: 0.12),
+                    color:
+                        _statusColor(contract.status).withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
@@ -397,7 +398,8 @@ class _PartnerDeliverablesPageState extends State<PartnerDeliverablesPage> {
                 style: TextStyle(color: context.schTextSecondary),
               )
             else
-              ...contract.deliverables.map((PartnerDeliverableModel deliverable) {
+              ...contract.deliverables
+                  .map((PartnerDeliverableModel deliverable) {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: Container(
@@ -431,8 +433,9 @@ class _PartnerDeliverablesPageState extends State<PartnerDeliverablesPage> {
                             ),
                           ],
                         ),
-                        if ((deliverable.description ?? '').trim().isNotEmpty) ...<
-                            Widget>[
+                        if ((deliverable.description ?? '')
+                            .trim()
+                            .isNotEmpty) ...<Widget>[
                           const SizedBox(height: 6),
                           Text(deliverable.description!.trim()),
                         ],
@@ -538,8 +541,7 @@ class _PartnerDeliverablesPageState extends State<PartnerDeliverablesPage> {
                       style: TextStyle(color: Colors.blue.shade800),
                     ),
                   ),
-                ..._contractDeliverables
-                    .map(_buildContractSection),
+                ..._contractDeliverables.map(_buildContractSection),
               ],
             ),
           );
@@ -563,7 +565,8 @@ class _PartnerDeliverablesPageState extends State<PartnerDeliverablesPage> {
         children: <Widget>[
           Row(
             children: <Widget>[
-              const Icon(Icons.error_outline_rounded, color: ScholesaColors.error),
+              const Icon(Icons.error_outline_rounded,
+                  color: ScholesaColors.error),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -614,7 +617,8 @@ class _PartnerDeliverablesPageState extends State<PartnerDeliverablesPage> {
             children: <Widget>[
               const Padding(
                 padding: EdgeInsets.only(top: 2),
-                child: Icon(Icons.warning_amber_rounded, color: Color(0xFFB45309)),
+                child:
+                    Icon(Icons.warning_amber_rounded, color: Color(0xFFB45309)),
               ),
               const SizedBox(width: 8),
               Expanded(

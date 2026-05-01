@@ -46,6 +46,7 @@ final Map<String, bool> kKnownRoutes = <String, bool>{
   '/learner/reflections': true,
   '/learner/proof-assembly': true,
   '/learner/peer-feedback': true,
+  '/learner/miloos': true,
 
   // Educator
   '/educator/today': true,
@@ -124,7 +125,8 @@ const Map<String, String> kRouteAliases = <String, String>{
 String normalizeAppRoute(String route) => kRouteAliases[route] ?? route;
 
 /// Check if a route is enabled
-bool isRouteEnabled(String route) => kKnownRoutes[normalizeAppRoute(route)] ?? false;
+bool isRouteEnabled(String route) =>
+    kKnownRoutes[normalizeAppRoute(route)] ?? false;
 
 const Map<UserRole, String> kRoleDefaultWorkflowRoute = <UserRole, String>{
   UserRole.learner: '/learner/today',
@@ -429,7 +431,8 @@ GoRouter createAppRouter(
       ),
       GoRoute(
         path: '/site/scheduling',
-        redirect: (BuildContext context, GoRouterState state) => '/site/sessions',
+        redirect: (BuildContext context, GoRouterState state) =>
+            '/site/sessions',
       ),
 
       // HQ routes
@@ -544,6 +547,13 @@ GoRouter createAppRouter(
         builder: (BuildContext context, GoRouterState state) => const RoleGate(
           allowedRoles: <UserRole>[UserRole.learner],
           child: LearnerOnboardingGate(child: PeerFeedbackPage()),
+        ),
+      ),
+      GoRoute(
+        path: '/learner/miloos',
+        builder: (BuildContext context, GoRouterState state) => const RoleGate(
+          allowedRoles: <UserRole>[UserRole.learner],
+          child: LearnerOnboardingGate(child: LearnerMiloOSPage()),
         ),
       ),
 
@@ -780,7 +790,8 @@ GoRouter createAppRouter(
       ),
       GoRoute(
         path: '/hq/cms',
-        redirect: (BuildContext context, GoRouterState state) => '/hq/curriculum',
+        redirect: (BuildContext context, GoRouterState state) =>
+            '/hq/curriculum',
       ),
       GoRoute(
         path: '/hq/curriculum',

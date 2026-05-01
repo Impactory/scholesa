@@ -364,7 +364,7 @@ void main() {
   });
 
   testWidgets(
-      'missions page submits learner evidence into canonical review collections',
+      'missions page submits learner evidence into canonical review collections on mobile',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     await _seedCompletedMissionReadyForReview(firestore);
@@ -377,7 +377,8 @@ void main() {
       learnerId: 'learner-1',
     );
 
-    await tester.binding.setSurfaceSize(const Size(1280, 1800));
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(
       _buildHarness(
         firestoreService: firestoreService,

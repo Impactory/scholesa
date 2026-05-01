@@ -82,7 +82,8 @@ void main() {
       expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     });
 
-    testWidgets('site dashboard export CTA downloads a real report when data exists',
+    testWidgets(
+        'site dashboard export CTA downloads a real report when data exists',
         (WidgetTester tester) async {
       final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
       await firestore.collection('siteOpsEvents').doc('event-1').set(
@@ -141,7 +142,8 @@ void main() {
       expect(_savedFileContent, contains('Check-in'));
     });
 
-    testWidgets('site dashboard export CTA copies report when file export is unsupported',
+    testWidgets(
+        'site dashboard export CTA copies report when file export is unsupported',
         (WidgetTester tester) async {
       String? copiedText;
       tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
@@ -188,7 +190,8 @@ void main() {
         required String content,
         required String mimeType,
       }) async {
-        throw UnsupportedError('File export is not supported on this platform.');
+        throw UnsupportedError(
+            'File export is not supported on this platform.');
       };
       await tester.binding.setSurfaceSize(const Size(1280, 1800));
       await tester.pumpWidget(
@@ -523,7 +526,7 @@ void main() {
               child: BosClassInsightsCard(
                 title: 'Class Support Snapshot',
                 subtitle:
-                  'Class learning signals, learners who may need support, and active understanding checks',
+                    'Class learning signals, learners who may need support, and active understanding checks',
                 emptyLabel: 'No class insights yet',
                 sessionOccurrenceId: 'occ-1',
                 siteId: 'site-1',
@@ -564,6 +567,11 @@ void main() {
 
       expect(find.textContaining('Learner unavailable'), findsOneWidget);
       expect(find.text('Learner 7f9c'), findsNothing);
+      await tester.scrollUntilVisible(
+        find.text('View Support List'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.tap(find.text('View Support List'));
       await tester.pumpAndSettle();
 

@@ -1667,6 +1667,67 @@ export async function loadWorkflowRecords(ctx: WorkflowContext): Promise<Workflo
       const records = await loadLearnerToday(ctx);
       return { records, canCreate: false, canRefresh: true, createLabel: 'Create', createConfig: null };
     }
+    case '/learner/miloos': {
+      if (!siteId) {
+        return {
+          records: [buildRecord({
+            routePath: ctx.routePath,
+            collectionName: 'miloosLearnerLoopInsights',
+            id: `${ctx.uid}-miloos-blocked`,
+            raw: {
+              title: 'MiloOS support requires an active site',
+              description: 'Select a site before loading support-loop provenance.',
+              status: 'blocked',
+              updatedAt: new Date().toISOString(),
+            },
+            titleKeys: ['title'],
+            subtitleKeys: ['description'],
+            statusKeys: ['status'],
+            editable: false,
+            deletable: false,
+          })],
+          canCreate: false,
+          canRefresh: true,
+          createLabel: 'Create',
+          createConfig: null,
+        };
+      }
+
+      const callable = httpsCallable(functions, 'bosGetLearnerLoopInsights');
+      const result = await callable({ learnerId: ctx.uid, siteId, lookbackDays: 14 });
+      const payload = (result.data || {}) as Record<string, unknown>;
+      const verification = (payload.verification || {}) as Record<string, unknown>;
+      const eventCounts = (payload.eventCounts || {}) as Record<string, unknown>;
+      return {
+        records: [buildRecord({
+          routePath: ctx.routePath,
+          collectionName: 'miloosLearnerLoopInsights',
+          id: `${ctx.uid}-miloos`,
+          raw: {
+            title: 'MiloOS learner support loop',
+            description: 'Support provenance, explain-back debt, and learner-loop context.',
+            status: payload.error ? 'degraded' : 'active',
+            siteId,
+            updatedAt: payload.generatedAt,
+            lookbackDays: payload.lookbackDays,
+            aiHelpOpened: verification.aiHelpOpened,
+            aiHelpUsed: verification.aiHelpUsed,
+            explainBackSubmitted: verification.explainBackSubmitted,
+            pendingExplainBack: verification.pendingExplainBack,
+            eventTypes: Object.keys(eventCounts).join(', '),
+          },
+          titleKeys: ['title'],
+          subtitleKeys: ['description'],
+          statusKeys: ['status'],
+          editable: false,
+          deletable: false,
+        })],
+        canCreate: false,
+        canRefresh: true,
+        createLabel: 'Create',
+        createConfig: null,
+      };
+    }
     case '/learner/missions': {
       const missionOptions = await loadMissionOptions(ctx.profile?.stageId);
       const siteId2 = activeSiteId(ctx.profile);

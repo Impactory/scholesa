@@ -988,6 +988,7 @@ void main() {
           'evidenceId': 'evidence-1',
           'missionAttemptId': 'mission-attempt-1',
           'rubricApplicationId': 'rubric-app-1',
+          'educatorId': 'mx-educator',
           'progressionDescriptors': const <String>[
             'Tests prototype decisions against evidence.',
           ],
@@ -1036,6 +1037,8 @@ void main() {
                         'Completed the working prototype before review.',
                     aiDisclosureStatus: 'learner-ai-not-used',
                     verificationStatus: 'reviewed',
+                    verificationPrompt:
+                        'Justify the prototype path with evidence.',
                     updatedAt: Timestamp.fromDate(DateTime(2026, 3, 17, 10)),
                   ),
                 ],

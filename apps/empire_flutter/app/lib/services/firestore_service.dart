@@ -640,14 +640,22 @@ class FirestoreService {
     final DocumentReference<Map<String, dynamic>> docRef =
         await _firestore.collection('peerFeedback').add(<String, dynamic>{
       'fromLearnerId': fromLearnerId,
+      'authorId': fromLearnerId,
       'toLearnerId': toLearnerId,
+      'targetLearnerId': toLearnerId,
       'missionAttemptId': missionAttemptId,
       'siteId': siteId,
       'sessionId': sessionId,
       'rating': rating,
       'strengths': strengths,
       'suggestions': suggestions,
+      'iLike': strengths,
+      'iWonder': suggestions,
+      'nextStep': null,
+      'status': 'submitted',
+      'flagged': false,
       'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
     });
     return docRef.id;
   }

@@ -63,8 +63,7 @@ class _PeerFeedbackPageState extends State<PeerFeedbackPage>
     super.dispose();
   }
 
-  String _learnerId(AppState appState) =>
-      appState.userId?.trim() ?? '';
+  String _learnerId(AppState appState) => appState.userId?.trim() ?? '';
 
   String _siteId(AppState appState) {
     final String active = appState.activeSiteId?.trim() ?? '';
@@ -82,8 +81,7 @@ class _PeerFeedbackPageState extends State<PeerFeedbackPage>
   }
 
   TextEditingController _strengthsController(String id) {
-    return _strengthsControllers.putIfAbsent(
-        id, () => TextEditingController());
+    return _strengthsControllers.putIfAbsent(id, () => TextEditingController());
   }
 
   TextEditingController _suggestionsController(String id) {
@@ -126,12 +124,14 @@ class _PeerFeedbackPageState extends State<PeerFeedbackPage>
         service.firestore
             .collection('peerFeedback')
             .where('fromLearnerId', isEqualTo: learnerId)
+            .where('siteId', isEqualTo: siteId)
             .orderBy('createdAt', descending: true)
             .get(),
         // Feedback this learner has received.
         service.firestore
             .collection('peerFeedback')
             .where('toLearnerId', isEqualTo: learnerId)
+            .where('siteId', isEqualTo: siteId)
             .orderBy('createdAt', descending: true)
             .get(),
       ]);
@@ -228,8 +228,7 @@ class _PeerFeedbackPageState extends State<PeerFeedbackPage>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor:
-            isError ? Theme.of(context).colorScheme.error : null,
+        backgroundColor: isError ? Theme.of(context).colorScheme.error : null,
       ),
     );
   }
@@ -322,8 +321,7 @@ class _PeerFeedbackPageState extends State<PeerFeedbackPage>
         itemCount: _peerAttempts.length,
         separatorBuilder: (_, __) => const SizedBox(height: 12.0),
         itemBuilder: (BuildContext context, int index) {
-          return _buildPeerAttemptCard(
-              _peerAttempts[index], theme, colors);
+          return _buildPeerAttemptCard(_peerAttempts[index], theme, colors);
         },
       ),
     );
@@ -359,8 +357,7 @@ class _PeerFeedbackPageState extends State<PeerFeedbackPage>
               padding: const EdgeInsets.all(16.0),
               child: Row(
                 children: <Widget>[
-                  Icon(Icons.person_outline,
-                      size: 24, color: colors.primary),
+                  Icon(Icons.person_outline, size: 24, color: colors.primary),
                   const SizedBox(width: 12.0),
                   Expanded(
                     child: Column(
@@ -434,8 +431,7 @@ class _PeerFeedbackPageState extends State<PeerFeedbackPage>
                       final int starValue = index + 1;
                       return IconButton(
                         onPressed: () {
-                          setState(
-                              () => _ratings[attempt.id] = starValue);
+                          setState(() => _ratings[attempt.id] = starValue);
                         },
                         icon: Icon(
                           starValue <= currentRating
@@ -488,8 +484,7 @@ class _PeerFeedbackPageState extends State<PeerFeedbackPage>
                           ? const SizedBox(
                               width: 18,
                               height: 18,
-                              child: CircularProgressIndicator(
-                                  strokeWidth: 2),
+                              child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : const Icon(Icons.send, size: 18),
                       label: Text(_t('Submit Feedback')),
@@ -524,8 +519,7 @@ class _PeerFeedbackPageState extends State<PeerFeedbackPage>
       itemCount: _feedbackGiven.length,
       separatorBuilder: (_, __) => const SizedBox(height: 12.0),
       itemBuilder: (BuildContext context, int index) {
-        return _buildFeedbackCard(
-            _feedbackGiven[index], theme, colors,
+        return _buildFeedbackCard(_feedbackGiven[index], theme, colors,
             showRecipient: true);
       },
     );
@@ -552,8 +546,7 @@ class _PeerFeedbackPageState extends State<PeerFeedbackPage>
       itemCount: _feedbackReceived.length,
       separatorBuilder: (_, __) => const SizedBox(height: 12.0),
       itemBuilder: (BuildContext context, int index) {
-        return _buildFeedbackCard(
-            _feedbackReceived[index], theme, colors,
+        return _buildFeedbackCard(_feedbackReceived[index], theme, colors,
             showRecipient: false);
       },
     );
@@ -604,9 +597,7 @@ class _PeerFeedbackPageState extends State<PeerFeedbackPage>
               Row(
                 children: List<Widget>.generate(5, (int index) {
                   return Icon(
-                    index < feedback.rating!
-                        ? Icons.star
-                        : Icons.star_border,
+                    index < feedback.rating! ? Icons.star : Icons.star_border,
                     color: index < feedback.rating!
                         ? Colors.amber
                         : colors.outline,
@@ -634,8 +625,7 @@ class _PeerFeedbackPageState extends State<PeerFeedbackPage>
                   style: theme.textTheme.labelMedium
                       ?.copyWith(fontWeight: FontWeight.w600)),
               const SizedBox(height: 4.0),
-              Text(feedback.suggestions!,
-                  style: theme.textTheme.bodyMedium),
+              Text(feedback.suggestions!, style: theme.textTheme.bodyMedium),
             ],
           ],
         ),

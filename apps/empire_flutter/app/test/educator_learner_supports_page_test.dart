@@ -473,6 +473,10 @@ void main() {
       'actorId': 'learner-2',
       'eventType': 'ai_help_opened',
     });
+    await firestore.collection('interactionEvents').add(<String, dynamic>{
+      'actorId': 'learner-1',
+      'eventType': 'ai_help_opened',
+    });
 
     final FirestoreService firestoreService = FirestoreService(
       firestore: firestore,
@@ -506,6 +510,7 @@ void main() {
     expect(find.text('Learner Two'), findsWidgets);
     expect(find.text('Opened: 2'), findsOneWidget);
     expect(find.text('Opened: 1'), findsOneWidget);
+    expect(find.text('Opened: 3'), findsNothing);
     expect(find.text('Explained: 1'), findsNWidgets(2));
     expect(find.text('Pending: 1'), findsWidgets);
     expect(find.text('Pending: 0'), findsOneWidget);

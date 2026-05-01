@@ -120,6 +120,10 @@ void main() {
       'actorId': 'learner-3',
       'eventType': 'ai_help_opened',
     });
+    await firestore.collection('interactionEvents').add(<String, dynamic>{
+      'actorId': 'learner-missing-site',
+      'eventType': 'ai_help_opened',
+    });
     final FirestoreService firestoreService = FirestoreService(
       firestore: firestore,
       auth: _MockFirebaseAuth(),
@@ -146,6 +150,7 @@ void main() {
     expect(find.text('Used: 1'), findsOneWidget);
     expect(find.text('Explained: 2'), findsOneWidget);
     expect(find.text('Opened: 4'), findsNothing);
+    expect(find.text('Opened: 5'), findsNothing);
     expect(find.textContaining('mastery: 100'), findsNothing);
   });
 

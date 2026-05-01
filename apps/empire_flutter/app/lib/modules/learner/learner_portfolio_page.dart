@@ -1645,6 +1645,14 @@ class _LearnerPortfolioPageState extends State<LearnerPortfolioPage>
       final List<String> lines = <String>[
         '${_t('Capability update')}: ${parts.join(' • ')}',
       ];
+      if ((growthEvent.rubricApplicationId?.trim().isNotEmpty ?? false)) {
+        lines.add(
+            '${_t('Rubric application')}: ${growthEvent.rubricApplicationId!.trim()}');
+      }
+      if ((growthEvent.educatorId?.trim().isNotEmpty ?? false)) {
+        lines.add(
+            '${_t('Reviewed by educator')}: ${growthEvent.educatorId!.trim()}');
+      }
       if (growthEvent.progressionDescriptors.isNotEmpty) {
         lines.add(
             '${_t('Progression descriptors')}: ${growthEvent.progressionDescriptors.join(' | ')}');

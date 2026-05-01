@@ -56,9 +56,8 @@ AppState _buildPartnerState({Locale locale = const Locale('en')}) {
     'role': 'partner',
     'activeSiteId': 'site-1',
     'siteIds': const <String>['site-1'],
-    'localeCode': locale.languageCode == 'zh'
-        ? 'zh-${locale.countryCode}'
-        : 'en',
+    'localeCode':
+        locale.languageCode == 'zh' ? 'zh-${locale.countryCode}' : 'en',
     'entitlements': const <Map<String, dynamic>>[],
   });
   return state;
@@ -113,6 +112,8 @@ Future<void> _seedDeliverable(FakeFirebaseFirestore firestore) async {
   await firestore.collection('partnerDeliverables').doc('deliverable-1').set(
     <String, dynamic>{
       'contractId': 'contract-1',
+      'partnerId': 'partner-1',
+      'siteId': 'site-1',
       'title': 'Evidence Pack',
       'description': 'Pilot summary and session assets',
       'evidenceUrl': 'https://files.scholesa.test/evidence-pack.pdf',
@@ -147,7 +148,8 @@ void main() {
     expect(find.text('North Hub Launch'), findsOneWidget);
     expect(find.text('No deliverables submitted yet'), findsAtLeastNWidgets(1));
     expect(
-      find.text('Deliverables linked to your partner contracts will appear here.'),
+      find.text(
+          'Deliverables linked to your partner contracts will appear here.'),
       findsOneWidget,
     );
   });
@@ -195,10 +197,12 @@ void main() {
         .get();
     expect(snapshot.docs, hasLength(1));
     final Map<String, dynamic> saved = snapshot.docs.first.data();
+    expect(saved['partnerId'], 'partner-1');
+    expect(saved['siteId'], 'site-1');
     expect(saved['title'], 'Evidence Pack');
     expect(saved['description'], 'Pilot summary and session assets');
-    expect(saved['evidenceUrl'],
-        'https://files.scholesa.test/evidence-pack.pdf');
+    expect(
+        saved['evidenceUrl'], 'https://files.scholesa.test/evidence-pack.pdf');
     expect(saved['submittedBy'], 'partner-1');
   });
 
@@ -226,7 +230,8 @@ void main() {
     expect(find.text('尚未提交交付项'), findsAtLeastNWidgets(1));
   });
 
-  testWidgets('partner deliverables page blocks on first-load outages instead of showing empty states',
+  testWidgets(
+      'partner deliverables page blocks on first-load outages instead of showing empty states',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     final FirestoreService firestoreService = _SequencedPartnerFirestoreService(
@@ -244,14 +249,16 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('We could not load partner deliverables right now. Retry to check the current state.'),
+      find.text(
+          'We could not load partner deliverables right now. Retry to check the current state.'),
       findsOneWidget,
     );
     expect(find.text('No partner contracts available yet'), findsNothing);
     expect(find.text('No deliverables submitted yet'), findsNothing);
   });
 
-  testWidgets('partner deliverables page keeps stale contract data visible after refresh failure',
+  testWidgets(
+      'partner deliverables page keeps stale contract data visible after refresh failure',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     await _seedContract(firestore);
@@ -277,7 +284,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.textContaining('Unable to refresh partner deliverables right now. Showing the last successful data.'),
+      find.textContaining(
+          'Unable to refresh partner deliverables right now. Showing the last successful data.'),
       findsOneWidget,
     );
     expect(find.text('North Hub Launch'), findsOneWidget);

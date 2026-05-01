@@ -482,6 +482,10 @@ describe('Renderers delegate to real evidence components', () => {
       path.join(process.cwd(), 'docs', 'FLUTTER_MOBILE_GOLD_READINESS_EXECUTION_CHECKLIST_APRIL_30_2026.md'),
       'utf8'
     );
+    const flutterMobileRouteMatrixSource = fs.readFileSync(
+      path.join(process.cwd(), 'docs', 'FLUTTER_MOBILE_ROUTE_PROOF_MATRIX_APRIL_30_2026.md'),
+      'utf8'
+    );
     const flutterBosSource = fs.readFileSync(
       path.join(process.cwd(), 'apps', 'empire_flutter', 'app', 'lib', 'runtime', 'bos_learner_loop_insights_card.dart'),
       'utf8'
@@ -502,15 +506,82 @@ describe('Renderers delegate to real evidence components', () => {
       path.join(process.cwd(), 'apps', 'empire_flutter', 'app', 'test', 'site_dashboard_page_test.dart'),
       'utf8'
     );
+    const flutterParentGrowthTimelineTestSource = fs.readFileSync(
+      path.join(process.cwd(), 'apps', 'empire_flutter', 'app', 'test', 'parent_growth_timeline_page_test.dart'),
+      'utf8'
+    );
+    const flutterHqAuthoringTestSource = fs.readFileSync(
+      path.join(process.cwd(), 'apps', 'empire_flutter', 'app', 'test', 'hq_authoring_persistence_test.dart'),
+      'utf8'
+    );
+    const flutterPeerFeedbackTestSource = fs.readFileSync(
+      path.join(process.cwd(), 'apps', 'empire_flutter', 'app', 'test', 'peer_feedback_page_test.dart'),
+      'utf8'
+    );
+    const flutterPartnerDeliverablesTestSource = fs.readFileSync(
+      path.join(process.cwd(), 'apps', 'empire_flutter', 'app', 'test', 'partner_deliverables_page_test.dart'),
+      'utf8'
+    );
+    const flutterPartnerWorkflowTestSource = fs.readFileSync(
+      path.join(process.cwd(), 'apps', 'empire_flutter', 'app', 'test', 'partner_contracting_workflow_test.dart'),
+      'utf8'
+    );
+    const flutterLearnerCredentialsTestSource = fs.readFileSync(
+      path.join(process.cwd(), 'apps', 'empire_flutter', 'app', 'test', 'learner_credentials_page_test.dart'),
+      'utf8'
+    );
+    const firestoreRulesTestSource = fs.readFileSync(
+      path.join(process.cwd(), 'test', 'firestore-rules.test.js'),
+      'utf8'
+    );
 
     expect(planSource).toContain('focused Flutter/mobile role-parity gate passed');
     expect(planSource).toContain('This does not make the full Flutter app gold-ready.');
     expect(checklistSource).toContain('Flutter MiloOS role parity is now in scope for the focused support-provenance gate.');
     expect(checklistSource).toContain('flutter test test/bos_insights_cards_test.dart test/educator_learner_supports_page_test.dart test/site_dashboard_page_test.dart');
-    expect(flutterMobilePlanSource).toContain('Flutter/mobile is not gold-ready yet.');
-    expect(flutterMobilePlanSource).toContain('The next highest-risk break is **the missing current Flutter route proof matrix**.');
+    expect(flutterMobilePlanSource).toContain('Flutter/mobile is not blanket gold-ready yet.');
+    expect(flutterMobilePlanSource).toContain('Flutter route proof matrix');
+    expect(flutterMobilePlanSource).toContain('Offline evidence-chain gate');
+    expect(flutterMobilePlanSource).toContain('Mobile classroom ergonomics');
+    expect(flutterMobilePlanSource).toContain('Role permission and site-boundary review');
+    expect(flutterMobilePlanSource).toContain('Focused Flutter/mobile release bundle');
+    expect(flutterMobilePlanSource).toContain('Direct parent growth timeline route proof');
+    expect(flutterMobilePlanSource).toContain('Mobile HQ authoring persistence');
+    expect(flutterMobilePlanSource).toContain('Peer-feedback persistence and role safety');
+    expect(flutterMobilePlanSource).toContain('Partner deliverable evidence output trust');
+    expect(flutterMobilePlanSource).toContain('Learner credential evidence provenance');
+    expect(flutterMobilePlanSource).toContain('The next highest-risk break is **full release/deploy gate reproducibility**.');
     expect(flutterMobileChecklistSource).toContain('Milestone 1 - Guardian And Report Workflow Stabilization');
+    expect(flutterMobileChecklistSource).toContain('Completed 2026-04-30: `docs/FLUTTER_MOBILE_ROUTE_PROOF_MATRIX_APRIL_30_2026.md`');
+    expect(flutterMobileChecklistSource).toContain('Completed 2026-04-30: the focused offline evidence-chain suite passed as a bundle with 46 tests.');
+    expect(flutterMobileChecklistSource).toContain('Completed 2026-04-30: the mobile classroom slice now runs learner mission evidence submission and educator quick evidence capture at phone width');
+    expect(flutterMobileChecklistSource).toContain('Completed 2026-04-30: the mobile boundary bundle passed with 50 Flutter tests');
+    expect(flutterMobileChecklistSource).toContain('Completed 2026-04-30: the focused Flutter/mobile release bundle passed.');
     expect(flutterMobileChecklistSource).toContain('No final signoff may describe Flutter/mobile as gold-ready while any milestone above is incomplete.');
+    expect(flutterMobileRouteMatrixSource).toContain('mobile route coverage is mapped, but Flutter/mobile is not gold-ready yet');
+    expect(flutterMobileRouteMatrixSource).toContain('| Learner | `/learner/missions` | `MissionsPage` | Capture mission attempts, proof bundle fields, AI disclosure |');
+    expect(flutterMobileRouteMatrixSource).toContain('| Learner | `/learner/peer-feedback` | `PeerFeedbackPage` | Capture peer evidence/feedback | active-site `missionAttempts`, active-site `peerFeedback`, Firestore rules | `peer_feedback_page_test.dart`, `evidence_chain_routes_test.dart`, `test/firestore-rules.test.js` | aligned and reusable |');
+    expect(flutterMobileRouteMatrixSource).toContain('| Learner | `/learner/credentials` | `LearnerCredentialsPage` | Communicate recognitions/credentials | active-site `credentials`, Firestore rules | `learner_credentials_page_test.dart`, `test/firestore-rules.test.js` | aligned and reusable |');
+    expect(flutterMobileRouteMatrixSource).toContain('| Educator | `/educator/rubrics/apply` | `RubricApplicationPage` | Interpret evidence through rubric |');
+    expect(flutterMobileRouteMatrixSource).toContain('| Parent | `/parent/portfolio` | `ParentPortfolioPage` | Communicate reviewed portfolio artifacts |');
+    expect(flutterMobileRouteMatrixSource).toContain('| Parent | `/parent/growth-timeline` | `GrowthTimelinePage` | Communicate capability growth over time | `guardianLinks`, `capabilityGrowthEvents`, `capabilities` | `parent_growth_timeline_page_test.dart`, `parent_surfaces_workflow_test.dart` | aligned and reusable |');
+    expect(flutterMobileRouteMatrixSource).toContain('| HQ | `/hq/capability-frameworks` | `CapabilityFrameworkPage` | Capability framework setup | active-site `capabilities` records | `hq_authoring_persistence_test.dart`, `evidence_chain_routes_test.dart`, `hq_curriculum_workflow_test.dart` | aligned and reusable |');
+    expect(flutterMobileRouteMatrixSource).toContain('| HQ | `/hq/rubric-builder` | `RubricBuilderPage` | Rubric setup | canonical active-site `rubricTemplates` records | `hq_authoring_persistence_test.dart`, `evidence_chain_routes_test.dart`, `hq_curriculum_workflow_test.dart` | aligned and reusable |');
+    expect(flutterMobileRouteMatrixSource).toContain('| Site | `/site/dashboard` | `SiteDashboardPage` | Communicate implementation/support health |');
+    expect(flutterMobileRouteMatrixSource).toContain('| HQ | `/hq/capability-frameworks` | `CapabilityFrameworkPage` | Capability framework setup |');
+    expect(flutterMobileRouteMatrixSource).toContain('| Partner | `/partner/deliverables` | `PartnerDeliverablesPage` | External evidence-facing deliverables | `partnerContracts`, `partnerDeliverables`, audit logs, Firestore rules | `partner_deliverables_page_test.dart`, `partner_contracting_workflow_test.dart`, `test/firestore-rules.test.js` | aligned and reusable |');
+    expect(flutterMobileRouteMatrixSource).toContain('Offline evidence chain gate** passed after this matrix');
+    expect(flutterMobileRouteMatrixSource).toContain('Mobile classroom ergonomics gate** passed after this matrix');
+    expect(flutterMobileRouteMatrixSource).toContain('Role permission and site-boundary review** passed after this matrix');
+    expect(flutterMobileRouteMatrixSource).toContain('Focused Flutter/mobile release bundle** passed after this matrix');
+    expect(flutterMobileRouteMatrixSource).toContain('Direct parent growth timeline route proof** passed after this matrix');
+    expect(flutterMobileRouteMatrixSource).toContain('Mobile HQ authoring persistence** passed after this matrix');
+    expect(flutterMobileRouteMatrixSource).toContain('Peer-feedback persistence and role-safety proof** passed after this matrix');
+    expect(flutterMobileRouteMatrixSource).toContain('Partner deliverable evidence output trust** passed after this matrix');
+    expect(flutterMobileRouteMatrixSource).toContain('Learner credential evidence provenance** passed after this matrix');
+    expect(flutterMobileRouteMatrixSource).toContain('Proceed to full release/deploy gate reproducibility.');
+    expect(flutterMobileRouteMatrixSource).toContain('Do not call Flutter/mobile gold-ready');
+    expect(flutterMobileRouteMatrixSource).toContain('current-worktree release gate');
     expect(flutterBosSource).toContain('pendingExplainBack');
     expect(flutterEducatorSource).toContain('MiloOS Support Provenance');
     expect(flutterEducatorSource).toContain('Support events show follow-up debt only. They are not capability mastery.');
@@ -520,6 +591,28 @@ describe('Renderers delegate to real evidence components', () => {
     expect(flutterSiteSource).toContain("collection('interactionEvents')");
     expect(flutterEducatorTestSource).toContain('shows MiloOS support debt for every learner');
     expect(flutterSiteTestSource).toContain('shows site-scoped MiloOS support health without mastery claims');
+    expect(flutterParentGrowthTimelineTestSource).toContain('parent growth timeline shows only linked learner growth provenance');
+    expect(flutterParentGrowthTimelineTestSource).toContain("collection('capabilityGrowthEvents')");
+    expect(flutterParentGrowthTimelineTestSource).toContain('Unlinked capability');
+    expect(flutterHqAuthoringTestSource).toContain('mobile HQ creates site-scoped capability framework records');
+    expect(flutterHqAuthoringTestSource).toContain("collection('rubricTemplates')");
+    expect(flutterHqAuthoringTestSource).toContain('Other Site Rubric');
+    expect(flutterPeerFeedbackTestSource).toContain('learner peer feedback persists same-site structured review only');
+    expect(flutterPeerFeedbackTestSource).toContain("collection('peerFeedback')");
+    expect(flutterPeerFeedbackTestSource).toContain('mission-other-site');
+    expect(flutterPartnerDeliverablesTestSource).toContain('partner deliverables page submits a deliverable end to end');
+    expect(flutterPartnerDeliverablesTestSource).toContain("collection('partnerDeliverables')");
+    expect(flutterPartnerDeliverablesTestSource).toContain("saved['partnerId'], 'partner-1'");
+    expect(flutterPartnerWorkflowTestSource).toContain('partner workflow repositories persist approvals, payouts, and audit evidence');
+    expect(flutterPartnerWorkflowTestSource).toContain("acceptedDeliverable.data()?['partnerId'], 'partner-1'");
+    expect(flutterLearnerCredentialsTestSource).toContain('learner credentials page renders live credentials');
+    expect(flutterLearnerCredentialsTestSource).toContain("collection('credentials')");
+    expect(flutterLearnerCredentialsTestSource).toContain("find.text('Evidence provenance')");
+    expect(flutterLearnerCredentialsTestSource).toContain("find.text('Other Site Credential'), findsNothing");
+    expect(firestoreRulesTestSource).toContain('partner can create own evidence-backed deliverable for a contract');
+    expect(firestoreRulesTestSource).toContain('partner cannot create deliverable for another partner or accept it directly');
+    expect(firestoreRulesTestSource).toContain('educator cannot issue credential without evidence provenance or as another issuer');
+    expect(firestoreRulesTestSource).toContain('other-site educator cannot read or issue site1 learner credential');
   });
 
   it('PageTransition keeps reduced-motion MiloOS routes hydration-stable', () => {

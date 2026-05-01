@@ -1405,8 +1405,15 @@ class CredentialModel {
     required this.learnerId,
     required this.title,
     required this.issuedAt,
+    this.issuerId,
+    this.status = 'issued',
     this.pillarCodes = const <String>[],
     this.skillIds = const <String>[],
+    this.evidenceIds = const <String>[],
+    this.portfolioItemIds = const <String>[],
+    this.proofBundleIds = const <String>[],
+    this.growthEventIds = const <String>[],
+    this.rubricApplicationId,
     this.createdAt,
     this.updatedAt,
   });
@@ -1416,8 +1423,15 @@ class CredentialModel {
   final String learnerId;
   final String title;
   final Timestamp issuedAt;
+  final String? issuerId;
+  final String status;
   final List<String> pillarCodes;
   final List<String> skillIds;
+  final List<String> evidenceIds;
+  final List<String> portfolioItemIds;
+  final List<String> proofBundleIds;
+  final List<String> growthEventIds;
+  final String? rubricApplicationId;
   final Timestamp? createdAt;
   final Timestamp? updatedAt;
 
@@ -1429,10 +1443,21 @@ class CredentialModel {
       learnerId: data['learnerId'] as String? ?? '',
       title: data['title'] as String? ?? '',
       issuedAt: data['issuedAt'] as Timestamp? ?? Timestamp.now(),
+      issuerId: data['issuerId'] as String?,
+      status: data['status'] as String? ?? 'issued',
       pillarCodes:
           List<String>.from(data['pillarCodes'] as List? ?? const <String>[]),
       skillIds:
           List<String>.from(data['skillIds'] as List? ?? const <String>[]),
+      evidenceIds:
+          List<String>.from(data['evidenceIds'] as List? ?? const <String>[]),
+      portfolioItemIds: List<String>.from(
+          data['portfolioItemIds'] as List? ?? const <String>[]),
+      proofBundleIds: List<String>.from(
+          data['proofBundleIds'] as List? ?? const <String>[]),
+      growthEventIds: List<String>.from(
+          data['growthEventIds'] as List? ?? const <String>[]),
+      rubricApplicationId: data['rubricApplicationId'] as String?,
       createdAt: data['createdAt'] as Timestamp?,
       updatedAt: data['updatedAt'] as Timestamp?,
     );
@@ -1443,8 +1468,15 @@ class CredentialModel {
         'learnerId': learnerId,
         'title': title,
         'issuedAt': issuedAt,
+        'issuerId': issuerId,
+        'status': status,
         'pillarCodes': pillarCodes,
         'skillIds': skillIds,
+        'evidenceIds': evidenceIds,
+        'portfolioItemIds': portfolioItemIds,
+        'proofBundleIds': proofBundleIds,
+        'growthEventIds': growthEventIds,
+        'rubricApplicationId': rubricApplicationId,
         'createdAt': createdAt ?? Timestamp.now(),
         'updatedAt': updatedAt ?? Timestamp.now(),
       };
@@ -2031,7 +2063,9 @@ class PartnerDeliverableModel {
   const PartnerDeliverableModel({
     required this.id,
     required this.contractId,
+    required this.partnerId,
     required this.title,
+    this.siteId,
     this.description,
     this.evidenceUrl,
     this.status = 'submitted',
@@ -2043,7 +2077,9 @@ class PartnerDeliverableModel {
 
   final String id;
   final String contractId;
+  final String partnerId;
   final String title;
+  final String? siteId;
   final String? description;
   final String? evidenceUrl;
   final String status;
@@ -2058,7 +2094,9 @@ class PartnerDeliverableModel {
     return PartnerDeliverableModel(
       id: doc.id,
       contractId: data['contractId'] as String? ?? '',
+      partnerId: data['partnerId'] as String? ?? '',
       title: data['title'] as String? ?? '',
+      siteId: data['siteId'] as String?,
       description: data['description'] as String?,
       evidenceUrl: data['evidenceUrl'] as String?,
       status: data['status'] as String? ?? 'submitted',
@@ -2071,6 +2109,8 @@ class PartnerDeliverableModel {
 
   Map<String, dynamic> toMap() => <String, dynamic>{
         'contractId': contractId,
+        'partnerId': partnerId,
+        'siteId': siteId,
         'title': title,
         'description': description,
         'evidenceUrl': evidenceUrl,

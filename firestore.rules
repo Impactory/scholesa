@@ -402,9 +402,16 @@ service cloud.firestore {
     
     // Peer Feedback: Users can give feedback, educators can moderate
     match /peerFeedback/{id} {
-      allow read: if isAuthenticated(); // Anyone can read peer feedback
-      allow create: if isAuthenticated() && request.resource.data.authorId == request.auth.uid;
-      allow update, delete: if isEducator(); // Educators can moderate
+      allow read: if isAuthenticated()
+        && hasSiteField(resource.data)
+        && (isHQ() || userHasSite(resource.data.siteId));
+      allow create: if isAuthenticated()
+        && hasSiteField(request.resource.data)
+        && request.resource.data.authorId == request.auth.uid
+        && (isHQ() || userHasSite(request.resource.data.siteId));
+      allow update, delete: if isEducator()
+        && hasSiteField(resource.data)
+        && (isHQ() || userHasSite(resource.data.siteId)); // Educators can moderate
     }
     
     // Vector Documents: Server-only (AI/embedding management)
@@ -516,8 +523,18 @@ service cloud.firestore {
 
     // Credentials
     match /credentials/{id} {
-      allow read: if isAuthenticated() && (resource.data.learnerId == request.auth.uid || isEducator());
-      allow create, update: if isEducator();
+      allow read: if isAuthenticated() && (
+        resource.data.learnerId == request.auth.uid
+        || isHQ()
+        || (isEducator() && hasSiteField(resource.data) && isSiteScopedRead(resource.data))
+      );
+      allow create: if isEducator()
+        && request.resource.data.issuerId == request.auth.uid
+        && hasSiteField(request.resource.data)
+        && isSiteScopedWrite(request.resource.data)
+        && request.resource.data.evidenceIds is list
+        && request.resource.data.evidenceIds.size() > 0;
+      allow update: if false;
       allow delete: if false;
     }
 
@@ -711,8 +728,11 @@ service cloud.firestore {
     }
     match /partnerDeliverables/{id} {
       allow read: if isAuthenticated() && (resource.data.partnerId == request.auth.uid || isHQ());
-      allow create: if isAuthenticated() && request.resource.data.partnerId == request.auth.uid;
-      allow update: if isAuthenticated() && (resource.data.partnerId == request.auth.uid || isHQ());
+      allow create: if isAuthenticated()
+        && request.resource.data.partnerId == request.auth.uid
+        && request.resource.data.submittedBy == request.auth.uid
+        && request.resource.data.contractId is string;
+      allow update: if isHQ();
       allow delete: if false;
     }
     match /payouts/{id} {

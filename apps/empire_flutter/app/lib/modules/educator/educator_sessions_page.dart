@@ -333,7 +333,8 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
 
   @override
   Widget build(BuildContext context) {
-    return MiloRuntimeScope(child: Scaffold(
+    return MiloRuntimeScope(
+        child: Scaffold(
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -593,7 +594,8 @@ class _EducatorSessionsPageState extends State<EducatorSessionsPage>
             const SizedBox(width: 8),
             ...CurriculumLegacyFamilyCode.values
                 .expand<Widget>((CurriculumLegacyFamilyCode code) {
-              final String filterValue = curriculumLegacyFamilyMissionCode(code);
+              final String filterValue =
+                  curriculumLegacyFamilyMissionCode(code);
               final bool isLast =
                   code == CurriculumLegacyFamilyCode.values.last;
               return <Widget>[
@@ -1657,6 +1659,7 @@ class _StudioLaunchCard extends StatelessWidget {
             children: _studioFlowSteps
                 .map(
                   (_StudioFlowStep step) => Container(
+                    constraints: const BoxConstraints(maxWidth: 280),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
                       vertical: 10,
@@ -1672,9 +1675,12 @@ class _StudioLaunchCard extends StatelessWidget {
                         Icon(step.icon,
                             size: 16, color: ScholesaColors.educator),
                         const SizedBox(width: 8),
-                        Text(
-                          _tEducatorSessions(context, step.label),
-                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        Flexible(
+                          child: Text(
+                            _tEducatorSessions(context, step.label),
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                            softWrap: true,
+                          ),
                         ),
                       ],
                     ),
@@ -1699,7 +1705,8 @@ class _StudioLaunchCard extends StatelessWidget {
                     _tEducatorSessions(context, 'HQ teaching guidance'),
                     style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
-                  if ((session.rubricTitle?.trim().isNotEmpty ?? false)) ...<Widget>[
+                  if ((session.rubricTitle?.trim().isNotEmpty ??
+                      false)) ...<Widget>[
                     const SizedBox(height: 8),
                     Text(
                       _tEducatorSessions(
@@ -2432,10 +2439,10 @@ class _QuickEvidenceDialogState extends State<_QuickEvidenceDialog> {
                     const SizedBox(height: 6),
                     Text(
                       _phaseTeacherPrompt(context),
-                      style:
-                          TextStyle(color: Colors.grey[700], height: 1.35),
+                      style: TextStyle(color: Colors.grey[700], height: 1.35),
                     ),
-                    if ((widget.session.rubricTitle?.trim().isNotEmpty ?? false)) ...<Widget>[
+                    if ((widget.session.rubricTitle?.trim().isNotEmpty ??
+                        false)) ...<Widget>[
                       const SizedBox(height: 8),
                       Text(
                         _tEducatorSessions(
@@ -2453,6 +2460,7 @@ class _QuickEvidenceDialogState extends State<_QuickEvidenceDialog> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
+                isExpanded: true,
                 initialValue:
                     _selectedLearnerId.isEmpty ? null : _selectedLearnerId,
                 decoration: InputDecoration(
@@ -2474,6 +2482,7 @@ class _QuickEvidenceDialogState extends State<_QuickEvidenceDialog> {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
+                isExpanded: true,
                 initialValue: _selectedPhaseKey,
                 decoration: InputDecoration(
                   labelText: _tEducatorSessions(context, 'Learning phase'),
@@ -2505,6 +2514,7 @@ class _QuickEvidenceDialogState extends State<_QuickEvidenceDialog> {
                 ),
               if (_availableCapabilities.isNotEmpty)
                 DropdownButtonFormField<String>(
+                  isExpanded: true,
                   initialValue: _selectedCapabilityId.isEmpty
                       ? null
                       : _selectedCapabilityId,
@@ -2603,6 +2613,7 @@ class _QuickEvidenceDialogState extends State<_QuickEvidenceDialog> {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
+                isExpanded: true,
                 initialValue:
                     _selectedAiUsage.isEmpty ? null : _selectedAiUsage,
                 decoration: InputDecoration(

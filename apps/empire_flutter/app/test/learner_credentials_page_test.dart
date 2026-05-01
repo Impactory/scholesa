@@ -79,8 +79,27 @@ void main() {
         'learnerId': 'learner-1',
         'title': 'Future Skills Sprint',
         'issuedAt': Timestamp.fromDate(DateTime(2026, 3, 18)),
+        'issuerId': 'educator-1',
+        'status': 'issued',
         'pillarCodes': const <String>['future_skills', 'leadership'],
         'skillIds': const <String>['collaboration', 'python'],
+        'evidenceIds': const <String>['evidence-1', 'evidence-2'],
+        'portfolioItemIds': const <String>['portfolio-1'],
+        'proofBundleIds': const <String>['proof-1'],
+        'growthEventIds': const <String>['growth-1'],
+        'rubricApplicationId': 'rubric-application-1',
+      },
+    );
+
+    await firestore.collection('credentials').doc('credential-other-site').set(
+      <String, dynamic>{
+        'siteId': 'site-2',
+        'learnerId': 'learner-1',
+        'title': 'Other Site Credential',
+        'issuedAt': Timestamp.fromDate(DateTime(2026, 3, 19)),
+        'issuerId': 'educator-2',
+        'status': 'issued',
+        'evidenceIds': const <String>['evidence-other-site'],
       },
     );
 
@@ -102,6 +121,15 @@ void main() {
     expect(find.text('Think, Make & Navigate AI'), findsOneWidget);
     expect(find.text('Communicate & Lead'), findsOneWidget);
     expect(find.text('Skills tagged: 2'), findsOneWidget);
+    expect(find.text('Credential site: site-1'), findsOneWidget);
+    expect(find.text('Issued by: educator-1'), findsOneWidget);
+    expect(find.text('Evidence provenance'), findsOneWidget);
+    expect(find.text('Source evidence: 2'), findsOneWidget);
+    expect(find.text('Portfolio artifacts: 1'), findsOneWidget);
+    expect(find.text('Proof bundles: 1'), findsOneWidget);
+    expect(find.text('Growth events: 1'), findsOneWidget);
+    expect(find.text('Rubric review: rubric-application-1'), findsOneWidget);
+    expect(find.text('Other Site Credential'), findsNothing);
   });
 
   testWidgets('learner credentials page reports missing storage honestly',
@@ -112,12 +140,13 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
-    expect(find.text('Credential storage unavailable right now.'),
-        findsOneWidget);
+    expect(
+        find.text('Credential storage unavailable right now.'), findsOneWidget);
     expect(find.text('No credentials issued yet'), findsNothing);
   });
 
-  testWidgets('learner credentials page keeps stale credentials visible after refresh failure',
+  testWidgets(
+      'learner credentials page keeps stale credentials visible after refresh failure',
       (WidgetTester tester) async {
     int loadCount = 0;
 
@@ -139,8 +168,14 @@ void main() {
                   learnerId: learnerId,
                   title: 'Future Skills Sprint',
                   issuedAt: Timestamp.fromDate(DateTime(2026, 3, 18)),
+                  issuerId: 'educator-1',
                   pillarCodes: const <String>['future_skills'],
                   skillIds: const <String>['collaboration'],
+                  evidenceIds: const <String>['evidence-1'],
+                  portfolioItemIds: const <String>['portfolio-1'],
+                  proofBundleIds: const <String>['proof-1'],
+                  growthEventIds: const <String>['growth-1'],
+                  rubricApplicationId: 'rubric-application-1',
                 ),
               ];
             }

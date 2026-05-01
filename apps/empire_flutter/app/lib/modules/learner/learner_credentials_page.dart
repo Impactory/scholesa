@@ -255,6 +255,15 @@ class _LearnerCredentialsPageState extends State<LearnerCredentialsPage> {
   }
 
   Widget _buildCredentialCard(CredentialModel credential) {
+    final String issuer = credential.issuerId?.trim() ?? '';
+    final String rubricApplicationId =
+        credential.rubricApplicationId?.trim() ?? '';
+    final bool hasEvidenceProvenance = credential.evidenceIds.isNotEmpty ||
+        credential.portfolioItemIds.isNotEmpty ||
+        credential.proofBundleIds.isNotEmpty ||
+        credential.growthEventIds.isNotEmpty ||
+        rubricApplicationId.isNotEmpty;
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
@@ -337,6 +346,59 @@ class _LearnerCredentialsPageState extends State<LearnerCredentialsPage> {
               '${_t('Credential site')}: ${credential.siteId.trim().isEmpty ? _t('Site unavailable') : credential.siteId.trim()}',
               style: TextStyle(color: context.schTextSecondary),
             ),
+            const SizedBox(height: 4),
+            Text(
+              '${_t('Issued by')}: ${issuer.isEmpty ? _t('Issuer unavailable') : issuer}',
+              style: TextStyle(color: context.schTextSecondary),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: hasEvidenceProvenance
+                    ? ScholesaColors.success.withValues(alpha: 0.08)
+                    : ScholesaColors.warning.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: hasEvidenceProvenance
+                      ? ScholesaColors.success.withValues(alpha: 0.3)
+                      : ScholesaColors.warning.withValues(alpha: 0.35),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    hasEvidenceProvenance
+                        ? _t('Evidence provenance')
+                        : _t('Evidence provenance missing'),
+                    style: TextStyle(
+                      color: hasEvidenceProvenance
+                          ? ScholesaColors.success
+                          : ScholesaColors.warning,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '${_t('Source evidence')}: ${credential.evidenceIds.length}',
+                  ),
+                  Text(
+                    '${_t('Portfolio artifacts')}: ${credential.portfolioItemIds.length}',
+                  ),
+                  Text(
+                    '${_t('Proof bundles')}: ${credential.proofBundleIds.length}',
+                  ),
+                  Text(
+                    '${_t('Growth events')}: ${credential.growthEventIds.length}',
+                  ),
+                  Text(
+                    '${_t('Rubric review')}: ${rubricApplicationId.isEmpty ? _t('Not linked') : rubricApplicationId}',
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -366,7 +428,7 @@ class _LearnerCredentialsPageState extends State<LearnerCredentialsPage> {
           Expanded(
             child: Text(
               _t(
-                'This view shows issued credential records. Evidence, rubric, and growth links are not shown on this screen yet.',
+                'Credentials here show issuer and evidence provenance when linked. They do not replace portfolio artifacts, proof bundles, or rubric review.',
               ),
               style: TextStyle(
                 color: context.schTextSecondary,

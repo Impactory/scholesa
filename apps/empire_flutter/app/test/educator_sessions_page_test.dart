@@ -448,6 +448,11 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
+    await tester.scrollUntilVisible(
+      find.text('Robotics Warm-up').first,
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.tap(find.text('Robotics Warm-up').first);
     await tester.pumpAndSettle();
 
@@ -544,6 +549,11 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
+    await tester.scrollUntilVisible(
+      find.text('Robotics Warm-up').first,
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.tap(find.text('Robotics Warm-up').first);
     await tester.pumpAndSettle();
 
@@ -669,9 +679,9 @@ void main() {
   });
 
   testWidgets(
-      'educator sessions quick evidence capture persists structured artifact, checkpoint, and AI disclosure fields',
+      'educator sessions quick evidence capture persists structured artifact, checkpoint, and AI disclosure fields on mobile',
       (WidgetTester tester) async {
-    await tester.binding.setSurfaceSize(const Size(900, 1400));
+    await tester.binding.setSurfaceSize(const Size(430, 932));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
@@ -723,6 +733,7 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
+    await tester.ensureVisible(find.text('Robotics Warm-up').first);
     await tester.tap(find.text('Robotics Warm-up').first);
     await tester.pumpAndSettle();
 

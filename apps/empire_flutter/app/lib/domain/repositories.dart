@@ -513,13 +513,12 @@ class CredentialRepository {
 
   Future<List<CredentialModel>> listByLearner(String learnerId,
       {String? siteId, int limit = 10}) async {
-    Query<Map<String, dynamic>> query = _col
-        .where('learnerId', isEqualTo: learnerId)
-        .orderBy('issuedAt', descending: true)
-        .limit(limit);
+    Query<Map<String, dynamic>> query =
+        _col.where('learnerId', isEqualTo: learnerId);
     if (siteId != null && siteId.isNotEmpty) {
       query = query.where('siteId', isEqualTo: siteId);
     }
+    query = query.orderBy('issuedAt', descending: true).limit(limit);
     final snap = await query.get();
     return snap.docs.map(CredentialModel.fromDoc).toList();
   }
@@ -1919,15 +1918,26 @@ class PartnerDeliverableRepository {
     String? submittedBy,
     String actorRole = 'partner',
   }) async {
+    final DocumentSnapshot<Map<String, dynamic>> contractSnapshot =
+        await _firestore.collection('partnerContracts').doc(contractId).get();
+    final Map<String, dynamic>? contractData = contractSnapshot.data();
+    final String partnerId =
+        (contractData?['partnerId'] as String? ?? submittedBy ?? '').trim();
+    final String? siteId = (contractData?['siteId'] as String?)?.trim();
+    if (partnerId.isEmpty) {
+      throw StateError('Partner deliverable requires partner provenance');
+    }
     final doc = _col.doc();
     final model = PartnerDeliverableModel(
       id: doc.id,
       contractId: contractId,
+      partnerId: partnerId,
       title: title,
+      siteId: siteId == null || siteId.isEmpty ? null : siteId,
       description: description,
       evidenceUrl: evidenceUrl,
       status: 'submitted',
-      submittedBy: submittedBy,
+      submittedBy: submittedBy ?? partnerId,
       submittedAt: Timestamp.now(),
     );
     await doc.set(model.toMap());
@@ -1942,6 +1952,8 @@ class PartnerDeliverableRepository {
           entityId: doc.id,
           details: {
             'contractId': contractId,
+            'partnerId': partnerId,
+            if (siteId != null && siteId.isNotEmpty) 'siteId': siteId,
             'title': title,
             if (evidenceUrl != null) 'evidenceUrl': evidenceUrl,
           },
@@ -1955,7 +1967,8 @@ class PartnerDeliverableRepository {
         event: 'deliverable.submitted',
         metadata: <String, dynamic>{
           'deliverableId': doc.id,
-          'contractId': contractId
+          'contractId': contractId,
+          'partnerId': partnerId,
         },
       );
     } catch (_) {}
@@ -1996,13 +2009,19 @@ class PartnerDeliverableRepository {
     } catch (_) {}
   }
 
-  Future<List<PartnerDeliverableModel>> listByContract(String contractId,
-      {int limit = 20}) async {
-    final snap = await _col
-        .where('contractId', isEqualTo: contractId)
-        .orderBy('submittedAt', descending: true)
-        .limit(limit)
-        .get();
+  Future<List<PartnerDeliverableModel>> listByContract(
+    String contractId, {
+    String? partnerId,
+    int limit = 20,
+  }) async {
+    Query<Map<String, dynamic>> query =
+        _col.where('contractId', isEqualTo: contractId);
+    final String normalizedPartnerId = partnerId?.trim() ?? '';
+    if (normalizedPartnerId.isNotEmpty) {
+      query = query.where('partnerId', isEqualTo: normalizedPartnerId);
+    }
+    final snap =
+        await query.orderBy('submittedAt', descending: true).limit(limit).get();
     return snap.docs.map(PartnerDeliverableModel.fromDoc).toList();
   }
 

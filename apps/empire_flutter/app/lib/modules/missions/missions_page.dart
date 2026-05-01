@@ -313,8 +313,9 @@ class _MissionsPageState extends State<MissionsPage>
                 ],
               ),
               const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
+              Wrap(
+                alignment: WrapAlignment.spaceAround,
+                runSpacing: 12,
                 children: <Widget>[
                   _ProgressStat(
                     icon: Icons.verified_outlined,
@@ -508,22 +509,25 @@ class _MissionsPageState extends State<MissionsPage>
     }
 
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: ScholesaColors.learner.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: ScholesaColors.learner.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 40, color: ScholesaColors.learner),
             ),
-            child: Icon(icon, size: 48, color: ScholesaColors.learner),
-          ),
-          const SizedBox(height: 16),
-          Text(title, style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 8),
-          Text(subtitle, style: TextStyle(color: context.schTextSecondary)),
-        ],
+            const SizedBox(height: 16),
+            Text(title, style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 8),
+            Text(subtitle, style: TextStyle(color: context.schTextSecondary)),
+          ],
+        ),
       ),
     );
   }
@@ -709,7 +713,11 @@ class _MissionCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Row(
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: <Widget>[
                   // Pillar badge
                   Container(
@@ -736,7 +744,6 @@ class _MissionCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const Spacer(),
                   // XP badge
                   Container(
                     padding:
@@ -809,37 +816,47 @@ class _MissionCard extends StatelessWidget {
                 const SizedBox(height: 8),
               ],
               // Bottom row
-              Row(
+              Wrap(
+                spacing: 12,
+                runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: <Widget>[
-                  // Difficulty
-                  Icon(
-                    Icons.signal_cellular_alt,
-                    size: 14,
-                    color: context.schTextSecondary.withValues(alpha: 0.74),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Icon(
+                        Icons.signal_cellular_alt,
+                        size: 14,
+                        color: context.schTextSecondary.withValues(alpha: 0.74),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        mission.difficulty.label,
+                        style: TextStyle(
+                            color: context.schTextSecondary
+                                .withValues(alpha: 0.88),
+                            fontSize: 12),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 4),
-                  Text(
-                    mission.difficulty.label,
-                    style: TextStyle(
-                        color: context.schTextSecondary.withValues(alpha: 0.88),
-                        fontSize: 12),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Icon(
+                        Icons.checklist,
+                        size: 14,
+                        color: context.schTextSecondary.withValues(alpha: 0.74),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${mission.completedStepsCount}/${mission.totalStepsCount} ${_tMissions(context, 'steps')}',
+                        style: TextStyle(
+                            color: context.schTextSecondary
+                                .withValues(alpha: 0.88),
+                            fontSize: 12),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 12),
-                  // Steps
-                  Icon(
-                    Icons.checklist,
-                    size: 14,
-                    color: context.schTextSecondary.withValues(alpha: 0.74),
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${mission.completedStepsCount}/${mission.totalStepsCount} ${_tMissions(context, 'steps')}',
-                    style: TextStyle(
-                        color: context.schTextSecondary.withValues(alpha: 0.88),
-                        fontSize: 12),
-                  ),
-                  const Spacer(),
-                  // Status badge
                   Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -1150,27 +1167,35 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
             style: TextStyle(color: context.schTextSecondary, height: 1.4),
           ),
           const SizedBox(height: 8),
-          RadioListTile<bool>(
-            value: false,
-            groupValue: _aiAssistanceUsed, // ignore: deprecated_member_use
-            onChanged: (bool? value) { // ignore: deprecated_member_use
+          ListTile(
+            onTap: () {
               setState(() {
-                _aiAssistanceUsed = value;
+                _aiAssistanceUsed = false;
                 _aiDisclosureController.clear();
               });
             },
+            leading: Icon(
+              _aiAssistanceUsed == false
+                  ? Icons.radio_button_checked
+                  : Icons.radio_button_unchecked,
+              color: _pillarColor,
+            ),
             title: Text(
                 _tMissions(context, 'No AI support used for this mission')),
             contentPadding: EdgeInsets.zero,
           ),
-          RadioListTile<bool>(
-            value: true,
-            groupValue: _aiAssistanceUsed, // ignore: deprecated_member_use
-            onChanged: (bool? value) { // ignore: deprecated_member_use
+          ListTile(
+            onTap: () {
               setState(() {
-                _aiAssistanceUsed = value;
+                _aiAssistanceUsed = true;
               });
             },
+            leading: Icon(
+              _aiAssistanceUsed == true
+                  ? Icons.radio_button_checked
+                  : Icons.radio_button_unchecked,
+              color: _pillarColor,
+            ),
             title:
                 Text(_tMissions(context, 'AI supported part of this mission')),
             subtitle: Text(
@@ -1485,20 +1510,20 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
                             const SizedBox(height: 20),
 
                             // Stats row
-                            Row(
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
                               children: <Widget>[
                                 _StatChip(
                                   icon: Icons.star,
                                   value: '${mission.xpReward} XP',
                                   color: const Color(0xFFF59E0B),
                                 ),
-                                const SizedBox(width: 8),
                                 _StatChip(
                                   icon: Icons.signal_cellular_alt,
                                   value: mission.difficulty.label,
                                   color: Colors.grey,
                                 ),
-                                const SizedBox(width: 8),
                                 _StatChip(
                                   icon: Icons.checklist,
                                   value:
@@ -1642,11 +1667,13 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
                                         'mission_id': mission.id,
                                       },
                                     );
-                                    final AppState? appState = context.read<AppState?>();
+                                    final AppState? appState =
+                                        context.read<AppState?>();
                                     BosEventBus.instance.track(
                                       eventType: 'mission_selected',
                                       siteId: appState?.activeSiteId ?? '',
-                                      gradeBand: gradeBandForRole(appState?.role ?? UserRole.learner),
+                                      gradeBand: gradeBandForRole(
+                                          appState?.role ?? UserRole.learner),
                                       actorRole: 'learner',
                                       missionId: mission.id,
                                     );
@@ -1660,7 +1687,8 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
                                       BosEventBus.instance.track(
                                         eventType: 'mission_started',
                                         siteId: appState?.activeSiteId ?? '',
-                                        gradeBand: gradeBandForRole(appState?.role ?? UserRole.learner),
+                                        gradeBand: gradeBandForRole(
+                                            appState?.role ?? UserRole.learner),
                                         actorRole: 'learner',
                                         missionId: mission.id,
                                       );
@@ -1735,7 +1763,8 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
                                           final ScaffoldMessengerState
                                               messenger =
                                               ScaffoldMessenger.of(context);
-                                          final AppState? appState = context.read<AppState?>();
+                                          final AppState? appState =
+                                              context.read<AppState?>();
                                           await _saveProofBundle();
                                           TelemetryService.instance.logEvent(
                                             event: 'cta.clicked',
@@ -1775,8 +1804,11 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
                                           );
                                           BosEventBus.instance.track(
                                             eventType: 'mission_completed',
-                                            siteId: appState?.activeSiteId ?? '',
-                                            gradeBand: gradeBandForRole(appState?.role ?? UserRole.learner),
+                                            siteId:
+                                                appState?.activeSiteId ?? '',
+                                            gradeBand: gradeBandForRole(
+                                                appState?.role ??
+                                                    UserRole.learner),
                                             actorRole: 'learner',
                                             missionId: mission.id,
                                             payload: <String, dynamic>{
@@ -1785,8 +1817,11 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
                                           );
                                           BosEventBus.instance.track(
                                             eventType: 'artifact_submitted',
-                                            siteId: appState?.activeSiteId ?? '',
-                                            gradeBand: gradeBandForRole(appState?.role ?? UserRole.learner),
+                                            siteId:
+                                                appState?.activeSiteId ?? '',
+                                            gradeBand: gradeBandForRole(
+                                                appState?.role ??
+                                                    UserRole.learner),
                                             actorRole: 'learner',
                                             missionId: mission.id,
                                             payload: <String, dynamic>{
@@ -2381,22 +2416,26 @@ class _MissionDetailsSheetState extends State<_MissionDetailsSheet> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
-                  Row(
-                    children: <Widget>[
-                      Icon(Icons.smart_toy_rounded,
-                          color: pillarColor, size: 20),
-                      const SizedBox(width: 8),
-                      Text(
-                        _tMissions(context, 'Get MiloOS Help'),
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: pillarColor,
-                          fontSize: 16,
+                  Expanded(
+                    child: Row(
+                      children: <Widget>[
+                        Icon(Icons.smart_toy_rounded,
+                            color: pillarColor, size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _tMissions(context, 'Get MiloOS Help'),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: pillarColor,
+                              fontSize: 16,
+                            ),
+                            softWrap: true,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                   IconButton(
                     key: const Key('mission-ai-toggle'),

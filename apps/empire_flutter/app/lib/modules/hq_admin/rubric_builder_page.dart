@@ -66,10 +66,16 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
       _error = null;
     });
     try {
+      final String? siteId = context.read<AppState>().activeSiteId;
       final List<Map<String, dynamic>> rubrics =
           await _firestoreService.queryCollection(
-        'rubrics',
-        orderBy: 'createdAt',
+        'rubricTemplates',
+        where: siteId == null || siteId.isEmpty
+            ? null
+            : <List<dynamic>>[
+                <dynamic>['siteId', siteId],
+              ],
+        orderBy: 'updatedAt',
         descending: true,
       );
       setState(() {
@@ -110,16 +116,15 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
 
     final List<dynamic> rawLevels =
         rubric['levels'] as List<dynamic>? ?? <dynamic>[];
-    _levels = rawLevels
-        .map((dynamic l) {
-          final Map<String, dynamic> m = l as Map<String, dynamic>? ?? <String, dynamic>{};
-          return _RubricLevel(
-            name: m['name'] as String? ?? '',
-            criteria: m['criteria'] as String? ?? '',
-            score: (m['score'] as num?)?.toInt() ?? 0,
-          );
-        })
-        .toList();
+    _levels = rawLevels.map((dynamic l) {
+      final Map<String, dynamic> m =
+          l as Map<String, dynamic>? ?? <String, dynamic>{};
+      return _RubricLevel(
+        name: m['name'] as String? ?? '',
+        criteria: m['criteria'] as String? ?? '',
+        score: (m['score'] as num?)?.toInt() ?? 0,
+      );
+    }).toList();
     if (_levels.isEmpty) {
       _levels = <_RubricLevel>[
         _RubricLevel(name: 'Emerging', criteria: '', score: 1),
@@ -145,6 +150,13 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
 
     try {
       final AppState appState = context.read<AppState>();
+      final String? siteId = appState.activeSiteId;
+      if (siteId == null || siteId.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(_t('Active site is required.'))),
+        );
+        return;
+      }
 
       final List<Map<String, dynamic>> levelsData = _levels
           .where((_RubricLevel l) => l.name.trim().isNotEmpty)
@@ -154,27 +166,52 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
                 'score': l.score,
               })
           .toList();
+      final List<Map<String, dynamic>> criteriaData = levelsData
+          .map((Map<String, dynamic> level) => <String, dynamic>{
+                'id': (level['name'] as String)
+                    .toLowerCase()
+                    .replaceAll(' ', '_'),
+                'label': level['name'],
+                'capabilityId': '',
+                'pillarCode': _selectedPillar,
+                'maxScore': level['score'],
+                'descriptors': <String, String>{
+                  'beginning': level['criteria'] as String,
+                  'developing': level['criteria'] as String,
+                  'proficient': level['criteria'] as String,
+                  'advanced': level['criteria'] as String,
+                },
+              })
+          .toList(growable: false);
 
       final Map<String, dynamic> data = <String, dynamic>{
         'name': _nameController.text.trim(),
+        'title': _nameController.text.trim(),
         'description': _descriptionController.text.trim(),
         'pillarCode': _selectedPillar,
         'levels': levelsData,
         'levelCount': levelsData.length,
+        'siteId': siteId,
+        'capabilityIds': const <String>[],
+        'criteria': criteriaData,
+        'status': 'draft',
         'createdBy': appState.userId,
       };
 
       if (_editingId != null) {
-        await _firestoreService.updateDocument('rubrics', _editingId!, data);
+        await _firestoreService.updateDocument(
+            'rubricTemplates', _editingId!, data);
       } else {
-        await _firestoreService.createDocument('rubrics', data);
+        await _firestoreService.createDocument('rubricTemplates', data);
       }
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_editingId != null ? _t('Rubric updated.') : _t('Rubric created.')),
+          content: Text(_editingId != null
+              ? _t('Rubric updated.')
+              : _t('Rubric created.')),
         ),
       );
 
@@ -198,10 +235,15 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
       context: context,
       builder: (BuildContext ctx) => AlertDialog(
         title: Text(_t('Delete Rubric')),
-        content: Text(_t('Are you sure you want to delete this rubric template?')),
+        content:
+            Text(_t('Are you sure you want to delete this rubric template?')),
         actions: <Widget>[
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(_t('Cancel'))),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(_t('Delete'))),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(_t('Cancel'))),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(_t('Delete'))),
         ],
       ),
     );
@@ -209,7 +251,10 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
     if (confirmed != true) return;
 
     try {
-      await _firestoreService.deleteDocument('rubrics', id);
+      await _firestoreService
+          .updateDocument('rubricTemplates', id, <String, dynamic>{
+        'status': 'archived',
+      });
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(_t('Rubric deleted.'))),
@@ -245,7 +290,8 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
-                      Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
+                      Icon(Icons.error_outline,
+                          size: 48, color: theme.colorScheme.error),
                       const SizedBox(height: 12),
                       Text(_error!, style: theme.textTheme.bodyLarge),
                       const SizedBox(height: 12),
@@ -347,8 +393,8 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
                       _buildLevelRow(entry.key, entry.value),
                 ),
             TextButton.icon(
-              onPressed: () => setState(
-                  () => _levels.add(_RubricLevel(name: '', criteria: '', score: _levels.length + 1))),
+              onPressed: () => setState(() => _levels.add(_RubricLevel(
+                  name: '', criteria: '', score: _levels.length + 1))),
               icon: const Icon(Icons.add, size: 18),
               label: Text(_t('Add Level')),
             ),
@@ -440,7 +486,9 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
   Widget _buildRubricCard(Map<String, dynamic> rubric) {
     final ThemeData theme = Theme.of(context);
     final String id = rubric['id'] as String? ?? '';
-    final String name = rubric['name'] as String? ?? 'Untitled Rubric';
+    final String name = rubric['title'] as String? ??
+        rubric['name'] as String? ??
+        'Untitled Rubric';
     final String description = rubric['description'] as String? ?? '';
     final String pillar = rubric['pillarCode'] as String? ?? '';
     final int levelCount = rubric['levelCount'] as int? ??
@@ -459,7 +507,8 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
             Row(
               children: <Widget>[
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: pillarColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
@@ -467,12 +516,15 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
                   child: Text(
                     pillar,
                     style: TextStyle(
-                        fontSize: 12, fontWeight: FontWeight.w600, color: pillarColor),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: pillarColor),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Chip(
-                  label: Text('$levelCount ${_t('levels')}', style: const TextStyle(fontSize: 12)),
+                  label: Text('$levelCount ${_t('levels')}',
+                      style: const TextStyle(fontSize: 12)),
                   visualDensity: VisualDensity.compact,
                 ),
                 const Spacer(),
@@ -515,7 +567,8 @@ class _RubricBuilderPageState extends State<RubricBuilderPage> {
 }
 
 class _RubricLevel {
-  _RubricLevel({required this.name, required this.criteria, required this.score});
+  _RubricLevel(
+      {required this.name, required this.criteria, required this.score});
 
   String name;
   String criteria;

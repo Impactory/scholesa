@@ -657,7 +657,9 @@ void main() {
     expect(submissionDoc.exists, isFalse);
     expect(assignmentDoc.data()?['reviewStatus'], 'approved');
     expect(assignmentDoc.data()?['rubricTotalScore'], 7);
-    expect(evidenceDoc.data()?['growthStatus'], 'updated');
+    // growthStatus is set to 'pending' by the client batch and upgraded to
+    // 'updated' server-side by applyRubricToEvidence.
+    expect(evidenceDoc.data()?['growthStatus'], 'pending');
     expect(evidenceDoc.data()?['linkedMissionAttemptId'], attemptId);
     expect(portfolioDoc.exists, isTrue);
     expect(portfolioDoc.data()?['missionAttemptId'], attemptId);
@@ -1095,7 +1097,7 @@ void main() {
     expect(unmappedEvidence.data()?['capabilityId'], 'cap-prototype-evidence');
     expect(unmappedEvidence.data()?['capabilityMapped'], isTrue);
     expect(unmappedEvidence.data()?['linkedMissionAttemptId'], attemptId);
-    expect(unmappedEvidence.data()?['growthStatus'], 'updated');
+    expect(unmappedEvidence.data()?['growthStatus'], 'pending');
     expect(unmappedPortfolio.exists, isTrue);
     expect(unmappedPortfolio.data()?['missionAttemptId'], attemptId);
   });
