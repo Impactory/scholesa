@@ -326,6 +326,248 @@ function parseRawEvent(event, cohortById, sessionById, rowByRecordId) {
   };
 }
 
+function addMiloOSGoldSyntheticStates(bundle, startedAt) {
+  const siteId = 'synthetic-site-miloos-gold';
+  const otherSiteId = 'synthetic-site-miloos-other';
+  const sessionOccurrenceId = 'synthetic-miloos-gold-occurrence-01';
+  const missionId = 'synthetic-miloos-gold-mission';
+  const learners = {
+    noSupport: 'synthetic-miloos-no-support-learner',
+    pendingExplainBack: 'synthetic-miloos-pending-explain-back-learner',
+    supportCurrent: 'synthetic-miloos-support-current-learner',
+    crossSite: 'synthetic-miloos-cross-site-denial-learner',
+    missingSite: 'synthetic-miloos-missing-site-denial-learner',
+  };
+
+  upsertDoc(bundle, 'sites', siteId, {
+    id: siteId,
+    name: 'Synthetic MiloOS Gold Readiness Site',
+    synthetic: true,
+    sourcePack: 'miloos-gold-readiness',
+    purpose: 'MiloOS demo, UAT, and regression support-state coverage',
+  });
+  upsertDoc(bundle, 'sites', otherSiteId, {
+    id: otherSiteId,
+    name: 'Synthetic MiloOS Cross-Site Denial Site',
+    synthetic: true,
+    sourcePack: 'miloos-gold-readiness',
+    purpose: 'Cross-site raw interactionEvents denial coverage',
+  });
+  upsertDoc(bundle, 'missions', missionId, {
+    id: missionId,
+    siteId,
+    title: 'MiloOS Gold Readiness Support Mission',
+    description: 'Canonical synthetic mission for MiloOS support provenance and verification debt.',
+    pillarCodes: ['tech', 'lead'],
+    difficulty: 'intermediate',
+    estimatedDurationMinutes: 45,
+    synthetic: true,
+    sourcePack: 'miloos-gold-readiness',
+  });
+  upsertDoc(bundle, 'sessions', 'synthetic-miloos-gold-session', {
+    id: 'synthetic-miloos-gold-session',
+    siteId,
+    title: 'MiloOS Gold Readiness Studio',
+    educatorIds: ['synthetic-miloos-gold-educator'],
+    synthetic: true,
+    sourcePack: 'miloos-gold-readiness',
+  });
+  upsertDoc(bundle, 'sessionOccurrences', sessionOccurrenceId, {
+    id: sessionOccurrenceId,
+    sessionId: 'synthetic-miloos-gold-session',
+    siteId,
+    educatorId: 'synthetic-miloos-gold-educator',
+    startTime: startedAt,
+    endTime: new Date(startedAt.getTime() + 45 * 60 * 1000),
+    status: 'completed',
+    synthetic: true,
+    sourcePack: 'miloos-gold-readiness',
+  });
+  upsertDoc(bundle, 'users', 'synthetic-miloos-gold-educator', {
+    uid: 'synthetic-miloos-gold-educator',
+    displayName: 'Synthetic MiloOS Educator',
+    email: 'miloos.educator@synthetic.scholesa.test',
+    role: 'educator',
+    siteIds: [siteId],
+    synthetic: true,
+    sourcePack: 'miloos-gold-readiness',
+  });
+  upsertDoc(bundle, 'users', 'synthetic-miloos-gold-site-lead', {
+    uid: 'synthetic-miloos-gold-site-lead',
+    displayName: 'Synthetic MiloOS Site Lead',
+    email: 'miloos.site@synthetic.scholesa.test',
+    role: 'siteLead',
+    siteIds: [siteId],
+    synthetic: true,
+    sourcePack: 'miloos-gold-readiness',
+  });
+
+  Object.entries(learners).forEach(([stateKey, learnerId]) => {
+    const learnerSiteIds = stateKey === 'crossSite' ? [otherSiteId] : [siteId];
+    upsertDoc(bundle, 'users', learnerId, {
+      uid: learnerId,
+      displayName: titleCaseFromSlug(learnerId),
+      email: `${learnerId}@synthetic.scholesa.test`,
+      role: 'learner',
+      siteIds: learnerSiteIds,
+      activeSiteId: learnerSiteIds[0],
+      synthetic: true,
+      sourcePack: 'miloos-gold-readiness',
+      miloosGoldState: stateKey,
+    });
+    upsertDoc(bundle, 'enrollments', `synthetic-miloos-enrollment-${stateKey}`, {
+      learnerId,
+      sessionId: 'synthetic-miloos-gold-session',
+      siteId: learnerSiteIds[0],
+      status: 'active',
+      synthetic: true,
+      sourcePack: 'miloos-gold-readiness',
+    });
+  });
+
+  const writeSupportTurn = ({ learnerId, openedId, site, submitted, minutesOffset }) => {
+    const timestamp = new Date(startedAt.getTime() + minutesOffset * 60 * 1000);
+    upsertDoc(bundle, 'interactionEvents', openedId, {
+      eventType: 'ai_help_opened',
+      siteId: site,
+      actorId: learnerId,
+      actorRole: 'learner',
+      learnerId,
+      gradeBand: 'G7_9',
+      missionId,
+      sessionOccurrenceId,
+      traceId: openedId,
+      payload: {
+        mode: 'hint',
+        aiHelpOpenedEventId: openedId,
+        conceptTags: ['prototype testing'],
+        aiResponseText: 'Compare one prototype variable at a time and explain what the evidence shows.',
+      },
+      timestamp,
+      createdAt: timestamp,
+      synthetic: true,
+      sourcePack: 'miloos-gold-readiness',
+    });
+    upsertDoc(bundle, 'interactionEvents', `${openedId}-used`, {
+      eventType: 'ai_help_used',
+      siteId: site,
+      actorId: learnerId,
+      actorRole: 'learner',
+      learnerId,
+      gradeBand: 'G7_9',
+      missionId,
+      sessionOccurrenceId,
+      payload: {
+        mode: 'hint',
+        aiHelpOpenedEventId: openedId,
+        traceId: openedId,
+        requiresExplainBack: true,
+        safetyOutcome: 'allowed',
+        safetyReasonCode: 'none',
+      },
+      timestamp: new Date(timestamp.getTime() + 30 * 1000),
+      createdAt: new Date(timestamp.getTime() + 30 * 1000),
+      synthetic: true,
+      sourcePack: 'miloos-gold-readiness',
+    });
+    upsertDoc(bundle, 'interactionEvents', `${openedId}-response`, {
+      eventType: 'ai_coach_response',
+      siteId: site,
+      actorId: learnerId,
+      actorRole: 'learner',
+      learnerId,
+      gradeBand: 'G7_9',
+      missionId,
+      sessionOccurrenceId,
+      payload: {
+        mode: 'hint',
+        aiHelpOpenedEventId: openedId,
+        traceId: openedId,
+        safetyOutcome: 'allowed',
+        safetyReasonCode: 'none',
+        aiResponseText: 'Compare one prototype variable at a time and explain what the evidence shows.',
+      },
+      timestamp: new Date(timestamp.getTime() + 45 * 1000),
+      createdAt: new Date(timestamp.getTime() + 45 * 1000),
+      synthetic: true,
+      sourcePack: 'miloos-gold-readiness',
+    });
+    if (submitted) {
+      upsertDoc(bundle, 'interactionEvents', `${openedId}-explain-back`, {
+        eventType: 'explain_it_back_submitted',
+        siteId: site,
+        actorId: learnerId,
+        actorRole: 'learner',
+        learnerId,
+        gradeBand: 'G7_9',
+        missionId,
+        sessionOccurrenceId,
+        payload: {
+          mode: 'hint',
+          aiHelpOpenedEventId: openedId,
+          approved: true,
+          explainBackLength: 116,
+          feedback: 'Explain-back attached to the MiloOS support turn.',
+        },
+        timestamp: new Date(timestamp.getTime() + 3 * 60 * 1000),
+        createdAt: new Date(timestamp.getTime() + 3 * 60 * 1000),
+        synthetic: true,
+        sourcePack: 'miloos-gold-readiness',
+      });
+    }
+  };
+
+  writeSupportTurn({
+    learnerId: learners.pendingExplainBack,
+    openedId: 'synthetic-miloos-pending-opened-01',
+    site: siteId,
+    submitted: false,
+    minutesOffset: 5,
+  });
+  writeSupportTurn({
+    learnerId: learners.supportCurrent,
+    openedId: 'synthetic-miloos-current-opened-01',
+    site: siteId,
+    submitted: true,
+    minutesOffset: 15,
+  });
+  writeSupportTurn({
+    learnerId: learners.crossSite,
+    openedId: 'synthetic-miloos-cross-site-opened-01',
+    site: otherSiteId,
+    submitted: false,
+    minutesOffset: 25,
+  });
+  writeSupportTurn({
+    learnerId: learners.missingSite,
+    openedId: 'synthetic-miloos-missing-site-opened-01',
+    site: null,
+    submitted: false,
+    minutesOffset: 35,
+  });
+
+  upsertDoc(bundle, 'syntheticMiloOSGoldStates', 'latest', {
+    id: 'latest',
+    siteId,
+    modeSupport: ['starter', 'full', 'all'],
+    states: {
+      noSupportLearnerId: learners.noSupport,
+      pendingExplainBackLearnerId: learners.pendingExplainBack,
+      supportCurrentLearnerId: learners.supportCurrent,
+      crossSiteDenialLearnerId: learners.crossSite,
+      missingSiteDenialLearnerId: learners.missingSite,
+    },
+    usage: 'Use these synthetic states for MiloOS demos, UAT, rules tests, and regression checks only.',
+    noMasteryWrites: true,
+    synthetic: true,
+    sourcePack: 'miloos-gold-readiness',
+    importedAt: startedAt,
+  });
+
+  incrementCount(bundle.sourceCounts, 'miloosGoldLearnerStates', 5);
+  incrementCount(bundle.sourceCounts, 'miloosGoldInteractionEvents', 13);
+}
+
 function starterContextForRow(row) {
   const unitSlug = slugify(row.unit_family || 'starter-unit');
   const gradeSlug = slugify(row.grade_band || 'starter');
@@ -1063,6 +1305,8 @@ function buildImportBundle(options) {
     });
   }
 
+  addMiloOSGoldSyntheticStates(bundle, startedAt);
+
   const trainingArtifacts = buildBosMiaSyntheticTrainingArtifacts({
     importedAt: startedAt,
     sourcePacks: bundle.sourcePacks,
@@ -1101,6 +1345,12 @@ function buildImportBundle(options) {
         : 'docs/scholesa_synthetic_fulltesting_pack_v2',
     ),
     bosMiaTraining: trainingArtifacts.summary,
+    miloosGoldReadinessStates: {
+      collection: 'syntheticMiloOSGoldStates',
+      documentId: 'latest',
+      seedModes: ['starter', 'full', 'all'],
+      purpose: 'MiloOS demos, UAT, rules tests, and regression checks without support-only mastery writes.',
+    },
     synthetic: true,
   };
   upsertDoc(bundle, 'syntheticDatasetImports', summary.id, summary);

@@ -157,12 +157,14 @@ npm test -- --runTestsByPath src/__tests__/evidence-chain-renderer-wiring.test.t
 
 ## Milestone 7 - Canonical Synthetic States
 
-- [ ] Add canonical seed data for no-support learner.
-- [ ] Add canonical seed data for pending explain-back learner.
-- [ ] Add canonical seed data for support-current learner.
-- [ ] Add canonical seed data for cross-site event denial.
-- [ ] Add canonical seed data for missing-site event denial.
-- [ ] Document which seed mode supports MiloOS demos/UAT.
+- [x] Add canonical seed data for no-support learner.
+- [x] Add canonical seed data for pending explain-back learner.
+- [x] Add canonical seed data for support-current learner.
+- [x] Add canonical seed data for cross-site event denial.
+- [x] Add canonical seed data for missing-site event denial.
+- [x] Document which seed mode supports MiloOS demos/UAT.
+
+Completed 2026-04-30: `scripts/import_synthetic_data.js` now always adds `syntheticMiloOSGoldStates/latest` with five canonical learner states for MiloOS demos, UAT, rules tests, and regression checks. The states are available in `starter`, `full`, and `all` seed modes; `test/synthetic_miloos_gold_states.test.js` proves they do not seed support-only `capabilityMastery` or `capabilityGrowthEvents` writes.
 
 Candidate files:
 

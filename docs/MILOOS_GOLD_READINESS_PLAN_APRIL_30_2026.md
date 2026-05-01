@@ -224,6 +224,10 @@ Done when:
 
 ### 6. Promote Canonical Synthetic MiloOS States
 
+Status: completed 2026-04-30.
+
+`scripts/import_synthetic_data.js` now adds `syntheticMiloOSGoldStates/latest` in every seed mode (`starter`, `full`, and `all`). The canonical pack includes learner IDs for no-support, pending explain-back, support-current, cross-site denial, and missing-site denial states. It writes only support/provenance `interactionEvents` and a manifest, not support-only mastery or growth documents.
+
 The gold demo/UAT pack needs repeatable states.
 
 Required synthetic states:
@@ -233,6 +237,8 @@ Required synthetic states:
 - Learner with support and explain-back current.
 - Multi-site event that must not leak.
 - Missing-site event that must not be readable by educator/site admin.
+
+Verified with `npm run seed:synthetic-data:dry-run`, `npm run test:integration:rules`, `npm run test:integration:evidence-chain`, and `npm test -- --runTestsByPath test/synthetic_miloos_gold_states.test.js`.
 
 ### 7. Decide Flutter Scope
 

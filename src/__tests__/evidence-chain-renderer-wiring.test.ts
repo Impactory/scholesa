@@ -444,6 +444,27 @@ describe('Renderers delegate to real evidence components', () => {
     expect(coachSource).toContain('data-testid="ai-coach-status-message"');
   });
 
+  it('MiloOS has canonical synthetic gold-readiness states', () => {
+    const importerSource = fs.readFileSync(
+      path.join(process.cwd(), 'scripts', 'import_synthetic_data.js'),
+      'utf8'
+    );
+    const syntheticStateTest = fs.readFileSync(
+      path.join(process.cwd(), 'test', 'synthetic_miloos_gold_states.test.js'),
+      'utf8'
+    );
+
+    expect(importerSource).toContain('addMiloOSGoldSyntheticStates');
+    expect(importerSource).toContain('synthetic-miloos-no-support-learner');
+    expect(importerSource).toContain('synthetic-miloos-pending-explain-back-learner');
+    expect(importerSource).toContain('synthetic-miloos-support-current-learner');
+    expect(importerSource).toContain('synthetic-miloos-cross-site-denial-learner');
+    expect(importerSource).toContain('synthetic-miloos-missing-site-denial-learner');
+    expect(importerSource).toContain('syntheticMiloOSGoldStates');
+    expect(syntheticStateTest).toContain('does not seed support-only capability mastery or growth writes');
+    expect(syntheticStateTest).toContain('miloosGoldInteractionEvents: 13');
+  });
+
   it('PageTransition keeps reduced-motion MiloOS routes hydration-stable', () => {
     const source = readSrcFile('components', 'layout', 'PageTransition.tsx');
 

@@ -23,6 +23,8 @@
 
 **MiloOS observability progress**: Milestone 6 is complete. MiloOS support-turn events now carry joinable opened-event trace metadata across opened, used, response, and explain-back records; emulator-backed tests prove pending explain-back derivation and no support-only mastery writes.
 
+**MiloOS synthetic-state progress**: Milestone 7 is complete. The canonical synthetic importer now creates `syntheticMiloOSGoldStates/latest` plus no-support, pending explain-back, support-current, cross-site denial, and missing-site denial learner states in every seed mode without writing support-only mastery or growth.
+
 | Metric | Value |
 |--------|-------|
 | Web routes | 70 total app routes per current Next.js build; 63 protected workflow paths in `workflowRoutes.ts` (30 dedicated custom-rendered evidence surfaces + 33 generic workflow routes) |
