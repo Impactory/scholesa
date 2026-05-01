@@ -4,7 +4,7 @@
 
 Work from top to bottom. Do not mark a milestone complete because UI exists. Mark it complete only when the listed proof commands pass and `AUDIT_TODO_APRIL_2026.md` is updated.
 
-Current verdict: **web MiloOS gold-candidate gate passed; broader Scholesa remains beta-ready, not platform gold-ready**.
+Current verdict: **MiloOS web plus focused Flutter/mobile support-provenance gate passed; broader Scholesa remains beta-ready, not platform gold-ready**.
 
 ## Milestone 0 - Preserve The Truth Boundary
 
@@ -185,16 +185,17 @@ npm run test:integration:evidence-chain
 ## Milestone 8 - Flutter Scope Decision
 
 - [x] Decide whether gold scope includes Flutter MiloOS role parity.
-- [x] Not applicable: Flutter learner support provenance tests are not required for the current web-only gold-candidate scope.
-- [x] Not applicable: Flutter educator/guardian/site support provenance surfaces are not required for the current web-only gold-candidate scope.
-- [x] Document that web MiloOS is gold-candidate while Flutter MiloOS remains beta.
+- [x] Add focused Flutter learner support provenance test coverage through `BosLearnerLoopInsightsCard`.
+- [x] Add Flutter educator per-learner support provenance and pending explain-back debt from site-scoped `interactionEvents`.
+- [x] Add Flutter Admin-School site support health aggregation from same-site `interactionEvents`.
+- [x] Document that the focused Flutter/mobile MiloOS support-provenance gate passed while broader Flutter workflows remain beta.
 
-Completed 2026-04-30: Flutter MiloOS role parity is explicitly out of the current gold-candidate scope. Web MiloOS remains the gold-candidate surface; Flutter MiloOS remains beta because it has learner/card and related parent AI-disclosure coverage but does not yet prove learner, educator, guardian, and site support provenance parity. The unchecked `if yes` work is intentionally not required for this web-only gold candidate.
+Completed 2026-04-30: Flutter MiloOS role parity is now in scope for the focused support-provenance gate. Learner-loop support cards, educator learner-support provenance, and site support health are tested with fake Firestore and analyzer-clean Dart. This does not certify unrelated Flutter parent portfolio/export workflows or the whole Flutter app as gold-ready.
 
-Proof commands if Flutter is in scope:
+Proof commands:
 
 ```bash
-cd apps/empire_flutter/app && flutter test test/bos_insights_cards_test.dart
+cd apps/empire_flutter/app && flutter test test/bos_insights_cards_test.dart test/educator_learner_supports_page_test.dart test/site_dashboard_page_test.dart
 cd apps/empire_flutter/app && flutter analyze
 ```
 
@@ -213,7 +214,7 @@ cd apps/empire_flutter/app && flutter analyze
 - [x] Run `git diff --check`.
 - [x] Update `AUDIT_TODO_APRIL_2026.md` with exact commands and verdict.
 
-Completed 2026-04-30: the web-only MiloOS gold-candidate release bundle passed. Flutter tests/analyzer were not run because Milestone 8 explicitly scoped Flutter MiloOS role parity out of this gold-candidate gate.
+Completed 2026-04-30: the web MiloOS gold-candidate release bundle passed, and the focused Flutter/mobile MiloOS support-provenance gate passed with learner-loop, educator, and site widget tests plus `flutter analyze`.
 
 Minimum command bundle:
 
@@ -226,6 +227,8 @@ npm --prefix functions run build
 npm run test:integration:rules
 npm run test:integration:evidence-chain
 npx playwright test --config playwright.config.ts test/e2e/miloos-learner-loop.e2e.spec.ts test/e2e/miloos-educator-support-provenance.e2e.spec.ts test/e2e/miloos-guardian-support-provenance.e2e.spec.ts test/e2e/miloos-site-support-health.e2e.spec.ts test/e2e/miloos-accessibility.e2e.spec.ts
+cd apps/empire_flutter/app && flutter test test/bos_insights_cards_test.dart test/educator_learner_supports_page_test.dart test/site_dashboard_page_test.dart
+cd apps/empire_flutter/app && flutter analyze
 git diff --check
 ```
 

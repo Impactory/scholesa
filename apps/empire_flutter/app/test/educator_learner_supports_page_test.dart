@@ -99,6 +99,7 @@ Widget _buildHarness({
   required FirestoreService firestoreService,
   required EducatorService educatorService,
   LearnerSupportPlansLoader? supportPlansLoader,
+  MiloOSSupportProvenanceLoader? miloosSupportProvenanceLoader,
 }) {
   return MultiProvider(
     providers: <SingleChildWidget>[
@@ -121,6 +122,7 @@ Widget _buildHarness({
       ],
       home: EducatorLearnerSupportsPage(
         supportPlansLoader: supportPlansLoader,
+        miloosSupportProvenanceLoader: miloosSupportProvenanceLoader,
       ),
     ),
   );
@@ -158,7 +160,10 @@ Future<void> _seedLearner(FakeFirebaseFirestore firestore) async {
     'impactProgress': 0.41,
     'enrolledSessionIds': <String>['session-1'],
   });
-  await firestore.collection('enrollments').doc('enrollment-1').set(<String, dynamic>{
+  await firestore
+      .collection('enrollments')
+      .doc('enrollment-1')
+      .set(<String, dynamic>{
     'siteId': 'site-1',
     'learnerId': 'learner-1',
     'educatorId': 'educator-1',
@@ -178,7 +183,10 @@ Future<void> _seedSecondLearner(FakeFirebaseFirestore firestore) async {
     'impactProgress': 0.59,
     'enrolledSessionIds': <String>['session-2'],
   });
-  await firestore.collection('enrollments').doc('enrollment-2').set(<String, dynamic>{
+  await firestore
+      .collection('enrollments')
+      .doc('enrollment-2')
+      .set(<String, dynamic>{
     'siteId': 'site-1',
     'learnerId': 'learner-2',
     'educatorId': 'educator-1',
@@ -390,7 +398,8 @@ void main() {
     expect(find.text('No support plans yet'), findsNothing);
   });
 
-  testWidgets('educator learner supports page renders support plan from live learner data',
+  testWidgets(
+      'educator learner supports page renders support plan from live learner data',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     await _seedLearner(firestore);
@@ -423,7 +432,88 @@ void main() {
     expect(find.text('No support plans yet'), findsNothing);
   });
 
-  testWidgets('educator learner supports page shows a blocking error when learner load fails on first load',
+  testWidgets(
+      'educator learner supports page shows MiloOS support debt for every learner',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedLearner(firestore);
+    await _seedSecondLearner(firestore);
+    await firestore.collection('interactionEvents').add(<String, dynamic>{
+      'siteId': 'site-1',
+      'actorId': 'learner-1',
+      'eventType': 'ai_help_opened',
+    });
+    await firestore.collection('interactionEvents').add(<String, dynamic>{
+      'siteId': 'site-1',
+      'actorId': 'learner-1',
+      'eventType': 'ai_help_opened',
+    });
+    await firestore.collection('interactionEvents').add(<String, dynamic>{
+      'siteId': 'site-1',
+      'actorId': 'learner-1',
+      'eventType': 'ai_help_used',
+    });
+    await firestore.collection('interactionEvents').add(<String, dynamic>{
+      'siteId': 'site-1',
+      'actorId': 'learner-1',
+      'eventType': 'explain_it_back_submitted',
+    });
+    await firestore.collection('interactionEvents').add(<String, dynamic>{
+      'siteId': 'site-1',
+      'actorId': 'learner-2',
+      'eventType': 'ai_help_opened',
+    });
+    await firestore.collection('interactionEvents').add(<String, dynamic>{
+      'siteId': 'site-1',
+      'actorId': 'learner-2',
+      'eventType': 'explain_it_back_submitted',
+    });
+    await firestore.collection('interactionEvents').add(<String, dynamic>{
+      'siteId': 'other-site',
+      'actorId': 'learner-2',
+      'eventType': 'ai_help_opened',
+    });
+
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+    final EducatorService educatorService = EducatorService(
+      firestoreService: firestoreService,
+      educatorId: 'educator-1',
+      siteId: 'site-1',
+    );
+
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      _buildHarness(
+        firestoreService: firestoreService,
+        educatorService: educatorService,
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+
+    expect(find.text('MiloOS Support Provenance'), findsOneWidget);
+    expect(
+      find.text(
+          'Support events show follow-up debt only. They are not capability mastery.'),
+      findsOneWidget,
+    );
+    expect(find.text('Learner One'), findsWidgets);
+    expect(find.text('Learner Two'), findsWidgets);
+    expect(find.text('Opened: 2'), findsOneWidget);
+    expect(find.text('Opened: 1'), findsOneWidget);
+    expect(find.text('Explained: 1'), findsNWidgets(2));
+    expect(find.text('Pending: 1'), findsWidgets);
+    expect(find.text('Pending: 0'), findsOneWidget);
+    expect(find.textContaining('mastery: 100'), findsNothing);
+  });
+
+  testWidgets(
+      'educator learner supports page shows a blocking error when learner load fails on first load',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     final FirestoreService firestoreService = FirestoreService(
@@ -449,7 +539,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(
-      find.text('We could not load learner supports right now. Retry to check the current state.'),
+      find.text(
+          'We could not load learner supports right now. Retry to check the current state.'),
       findsOneWidget,
     );
     expect(find.textContaining('Failed to load learners:'), findsOneWidget);
@@ -457,7 +548,8 @@ void main() {
     expect(find.text('Learner One'), findsNothing);
   });
 
-  testWidgets('educator learner supports page shows a blocking error when saved support plans fail on first load',
+  testWidgets(
+      'educator learner supports page shows a blocking error when saved support plans fail on first load',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     final FirestoreService firestoreService = FirestoreService(
@@ -486,10 +578,12 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(
-      find.text('We could not load learner supports right now. Retry to check the current state.'),
+      find.text(
+          'We could not load learner supports right now. Retry to check the current state.'),
       findsOneWidget,
     );
-    expect(find.textContaining('Failed to load learner supports:'), findsOneWidget);
+    expect(find.textContaining('Failed to load learner supports:'),
+        findsOneWidget);
     expect(find.text('Active Support Plans'), findsNothing);
     expect(find.text('No support plans yet'), findsNothing);
   });
@@ -558,18 +652,16 @@ void main() {
     await tester.tap(find.text('Helped'));
     await tester.pumpAndSettle();
 
-    final List<Map<String, dynamic>> plans = (await firestore
-            .collection('learnerSupportPlans')
-            .get())
-        .docs
-        .map((doc) => doc.data())
-        .toList();
-    final List<Map<String, dynamic>> outcomes = (await firestore
-        .collection('learnerSupportOutcomes')
-        .get())
-      .docs
-      .map((doc) => doc.data())
-      .toList();
+    final List<Map<String, dynamic>> plans =
+        (await firestore.collection('learnerSupportPlans').get())
+            .docs
+            .map((doc) => doc.data())
+            .toList();
+    final List<Map<String, dynamic>> outcomes =
+        (await firestore.collection('learnerSupportOutcomes').get())
+            .docs
+            .map((doc) => doc.data())
+            .toList();
 
     expect(plans, hasLength(1));
     expect(plans.single['siteId'], 'site-1');
@@ -593,7 +685,8 @@ void main() {
     expect(find.text('Flexible seating'), findsOneWidget);
   });
 
-  testWidgets('educator learner supports page re-reads persisted plan before settling success',
+  testWidgets(
+      'educator learner supports page re-reads persisted plan before settling success',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     await _seedLearner(firestore);
@@ -624,7 +717,10 @@ void main() {
               'documentId': 'plan-1',
               'learnerId': 'learner-1',
               'supportType': 'Behavioral',
-              'accommodations': <String>['Visual checklist', 'Teacher conference'],
+              'accommodations': <String>[
+                'Visual checklist',
+                'Teacher conference'
+              ],
               'notes': 'Persisted canonical support plan.',
               'priority': 'medium',
               'lastUpdated': Timestamp.fromDate(DateTime(2026, 3, 21, 10)),
@@ -675,7 +771,8 @@ void main() {
     expect(find.text('Teacher conference'), findsOneWidget);
   });
 
-  testWidgets('educator learner supports page fails closed when persisted reload fails after save',
+  testWidgets(
+      'educator learner supports page fails closed when persisted reload fails after save',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     await _seedLearner(firestore);
@@ -729,11 +826,13 @@ void main() {
     );
   });
 
-  testWidgets('educator learner supports page fails closed when support plan save fails',
+  testWidgets(
+      'educator learner supports page fails closed when support plan save fails',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     await _seedLearner(firestore);
-    final FirestoreService firestoreService = _FailingSupportPlanFirestoreService(
+    final FirestoreService firestoreService =
+        _FailingSupportPlanFirestoreService(
       firestore: firestore,
       auth: _MockFirebaseAuth(),
     );
@@ -763,12 +862,14 @@ void main() {
     await tester.tap(find.text('Save').last);
     await tester.pumpAndSettle();
 
-    expect(find.text('Unable to update support plan right now.'), findsOneWidget);
+    expect(
+        find.text('Unable to update support plan right now.'), findsOneWidget);
     expect(find.text('Log Support Outcome'), findsNothing);
     expect(find.text('Edit Support Plan'), findsOneWidget);
   });
 
-  testWidgets('educator learner supports page logs support plan update telemetry',
+  testWidgets(
+      'educator learner supports page logs support plan update telemetry',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     await _seedLearner(firestore);
@@ -880,7 +981,8 @@ void main() {
     expect(find.textContaining('Showing results for'), findsOneWidget);
     expect(find.text('Learner Two'), findsOneWidget);
     expect(find.text('Learner One'), findsNothing);
-    expect(find.textContaining('Found 1 matching support plans'), findsOneWidget);
+    expect(
+        find.textContaining('Found 1 matching support plans'), findsOneWidget);
 
     await tester.tap(find.text('Clear Search'));
     await tester.pumpAndSettle();
@@ -890,7 +992,8 @@ void main() {
     expect(find.text('Learner Two'), findsOneWidget);
   });
 
-  testWidgets('educator learner supports page keeps stale plans visible after a refresh failure',
+  testWidgets(
+      'educator learner supports page keeps stale plans visible after a refresh failure',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     final FirestoreService firestoreService = FirestoreService(
@@ -942,10 +1045,12 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(
-      find.textContaining('Unable to refresh learner supports right now. Showing the last successful data.'),
+      find.textContaining(
+          'Unable to refresh learner supports right now. Showing the last successful data.'),
       findsOneWidget,
     );
-    expect(find.textContaining('Failed to load learner supports:'), findsOneWidget);
+    expect(find.textContaining('Failed to load learner supports:'),
+        findsOneWidget);
     expect(find.text('Learner One'), findsOneWidget);
     expect(find.text('Behavioral'), findsOneWidget);
     expect(find.text('Visual checklist'), findsOneWidget);

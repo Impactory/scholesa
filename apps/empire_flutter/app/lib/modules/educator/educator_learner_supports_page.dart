@@ -21,10 +21,8 @@ typedef LearnerSupportPlansLoader = Future<List<Map<String, dynamic>>> Function(
   String siteId,
 );
 
-typedef MiloOSSupportProvenanceLoader = Future<List<Map<String, dynamic>>> Function(
-  BuildContext context,
-  String siteId,
-);
+typedef MiloOSSupportProvenanceLoader = Future<List<Map<String, dynamic>>>
+    Function(String siteId);
 
 /// Educator learner supports page for tracking learner wellbeing & accommodations
 /// Based on docs/09_LEARNER_SUPPORT_ACCOMMODATIONS_SPEC.md
@@ -50,7 +48,7 @@ class _EducatorLearnerSupportsPageState
 
   Map<String, _PersistedSupportPlan> _supportPlanOverrides =
       <String, _PersistedSupportPlan>{};
-    Map<String, _MiloOSLearnerSupportProvenance> _miloosSupportByLearner =
+  Map<String, _MiloOSLearnerSupportProvenance> _miloosSupportByLearner =
       <String, _MiloOSLearnerSupportProvenance>{};
   String _searchQuery = '';
   String? _loadError;
@@ -95,7 +93,8 @@ class _EducatorLearnerSupportsPageState
       // ignore: use_build_context_synchronously
       final BuildContext ctx = context;
       final List<Map<String, dynamic>> rows = widget.supportPlansLoader != null
-          ? await widget.supportPlansLoader!(ctx, siteId) // ignore: use_build_context_synchronously
+          ? await widget.supportPlansLoader!(
+              ctx, siteId) // ignore: use_build_context_synchronously
           : await _loadPersistedSupportPlanRows(siteId);
       final Map<String, _PersistedSupportPlan> nextOverrides =
           <String, _PersistedSupportPlan>{};
@@ -137,13 +136,11 @@ class _EducatorLearnerSupportsPageState
         .where('siteId', isEqualTo: siteId)
         .get();
 
-    return snapshot.docs
-        .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
-          final Map<String, dynamic> row = Map<String, dynamic>.from(doc.data());
-          row['documentId'] = doc.id;
-          return row;
-        })
-        .toList(growable: false);
+    return snapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+      final Map<String, dynamic> row = Map<String, dynamic>.from(doc.data());
+      row['documentId'] = doc.id;
+      return row;
+    }).toList(growable: false);
   }
 
   Future<void> _loadMiloOSSupportProvenance() async {
@@ -153,10 +150,9 @@ class _EducatorLearnerSupportsPageState
     }
 
     try {
-      final BuildContext ctx = context;
       final List<Map<String, dynamic>> rows =
           widget.miloosSupportProvenanceLoader != null
-            ? await widget.miloosSupportProvenanceLoader!(ctx, siteId)
+              ? await widget.miloosSupportProvenanceLoader!(siteId)
               : await _loadMiloOSSupportRows(siteId);
       final Map<String, _MiloOSLearnerSupportProvenance> next =
           _deriveMiloOSSupportByLearner(rows);
@@ -187,13 +183,11 @@ class _EducatorLearnerSupportsPageState
         .where('siteId', isEqualTo: siteId)
         .get();
 
-    return snapshot.docs
-        .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
-          final Map<String, dynamic> row = Map<String, dynamic>.from(doc.data());
-          row['documentId'] = doc.id;
-          return row;
-        })
-        .toList(growable: false);
+    return snapshot.docs.map((QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+      final Map<String, dynamic> row = Map<String, dynamic>.from(doc.data());
+      row['documentId'] = doc.id;
+      return row;
+    }).toList(growable: false);
   }
 
   Map<String, _MiloOSLearnerSupportProvenance> _deriveMiloOSSupportByLearner(
@@ -218,9 +212,8 @@ class _EducatorLearnerSupportsPageState
       }.contains(eventType)) {
         continue;
       }
-      final _MiloOSLearnerSupportProvenance current =
-          byLearner[learnerId] ??
-              _MiloOSLearnerSupportProvenance(learnerId: learnerId);
+      final _MiloOSLearnerSupportProvenance current = byLearner[learnerId] ??
+          _MiloOSLearnerSupportProvenance(learnerId: learnerId);
       byLearner[learnerId] = current.withEvent(eventType);
     }
 
@@ -229,7 +222,8 @@ class _EducatorLearnerSupportsPageState
 
   @override
   Widget build(BuildContext context) {
-    return MiloRuntimeScope(child: Scaffold(
+    return MiloRuntimeScope(
+        child: Scaffold(
       backgroundColor: ScholesaColors.background,
       appBar: AppBar(
         title: Text(_tEducatorLearnerSupports(context, 'Learner Supports')),
@@ -352,7 +346,6 @@ class _EducatorLearnerSupportsPageState
                   learnerName: service.learners.first.name,
                   accentColor: ScholesaColors.educator,
                 ),
-              _buildMiloOSSupportProvenanceSection(visibleSupports),
               _buildSummaryCards(visibleSupports),
               if (_searchQuery.isNotEmpty) ...<Widget>[
                 const SizedBox(height: 16),
@@ -369,6 +362,7 @@ class _EducatorLearnerSupportsPageState
               ),
               const SizedBox(height: 12),
               ...visibleSupports.map((support) => _buildSupportCard(support)),
+              _buildMiloOSSupportProvenanceSection(visibleSupports),
             ],
           );
         },
@@ -425,7 +419,8 @@ class _EducatorLearnerSupportsPageState
               _SupportPill(
                 label:
                     '${_tEducatorLearnerSupports(context, 'Pending')}: $pendingCount',
-                color: pendingCount > 0 ? Colors.orange : ScholesaColors.success,
+                color:
+                    pendingCount > 0 ? Colors.orange : ScholesaColors.success,
               ),
             ],
           ),
@@ -507,7 +502,9 @@ class _EducatorLearnerSupportsPageState
               _SupportPill(
                 label:
                     '${_tEducatorLearnerSupports(context, 'Pending')}: ${provenance.pending}',
-                color: provenance.pending > 0 ? Colors.orange : ScholesaColors.success,
+                color: provenance.pending > 0
+                    ? Colors.orange
+                    : ScholesaColors.success,
               ),
             ],
           ),
@@ -564,7 +561,8 @@ class _EducatorLearnerSupportsPageState
         children: <Widget>[
           Row(
             children: <Widget>[
-              const Icon(Icons.error_outline_rounded, color: ScholesaColors.error),
+              const Icon(Icons.error_outline_rounded,
+                  color: ScholesaColors.error),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -1241,7 +1239,8 @@ class _EducatorLearnerSupportsPageState
     }
 
     try {
-      final FirestoreService firestoreService = context.read<FirestoreService>();
+      final FirestoreService firestoreService =
+          context.read<FirestoreService>();
       final AppState appState = context.read<AppState>();
       await firestoreService.createDocument(
         _supportOutcomesCollection,
@@ -1337,7 +1336,8 @@ class _EducatorLearnerSupportsPageState
                         child: Text(
                           _tEducatorLearnerSupports(
                             context,
-                            value.name[0].toUpperCase() + value.name.substring(1),
+                            value.name[0].toUpperCase() +
+                                value.name.substring(1),
                           ),
                         ),
                       );
@@ -1451,7 +1451,8 @@ class _EducatorLearnerSupportsPageState
     }
 
     try {
-      final FirestoreService firestoreService = context.read<FirestoreService>();
+      final FirestoreService firestoreService =
+          context.read<FirestoreService>();
       final AppState appState = context.read<AppState>();
       final _PersistedSupportPlan? existing =
           _supportPlanOverrides[support.learnerId];
@@ -1574,15 +1575,15 @@ class _EducatorLearnerSupportsPageState
       supports.add(
         _mergeSupportPlan(
           _LearnerSupport(
-          learnerId: learner.id,
-          learnerName: learner.name,
-          avatarUrl: learner.photoUrl,
-          supportType: supportType,
-          accommodations: _accommodationsForPriority(priority),
-          notes: _supportNoteForPriority(priority),
-          lastUpdated:
-              DateTime.now().subtract(Duration(days: (index % 10) + 1)),
-          priority: priority,
+            learnerId: learner.id,
+            learnerName: learner.name,
+            avatarUrl: learner.photoUrl,
+            supportType: supportType,
+            accommodations: _accommodationsForPriority(priority),
+            notes: _supportNoteForPriority(priority),
+            lastUpdated:
+                DateTime.now().subtract(Duration(days: (index % 10) + 1)),
+            priority: priority,
           ),
         ),
       );
@@ -1735,7 +1736,8 @@ class _MiloOSLearnerSupportProvenance {
     return unanswered < 0 ? 0 : unanswered;
   }
 
-  bool get hasSupport => opened > 0 || used > 0 || responses > 0 || explainBackSubmitted > 0;
+  bool get hasSupport =>
+      opened > 0 || used > 0 || responses > 0 || explainBackSubmitted > 0;
 
   _MiloOSLearnerSupportProvenance withEvent(String eventType) {
     switch (eventType) {
@@ -1843,7 +1845,8 @@ class _PersistedSupportPlan {
             .where((String value) => value.isNotEmpty)
             .toList(growable: false);
     final String notes = (data['notes'] as String? ?? '').trim();
-    final String priorityName = (data['priority'] as String? ?? 'medium').trim();
+    final String priorityName =
+        (data['priority'] as String? ?? 'medium').trim();
     final dynamic lastUpdatedRaw = data['lastUpdated'];
     final DateTime lastUpdated = lastUpdatedRaw is Timestamp
         ? lastUpdatedRaw.toDate()

@@ -19,6 +19,7 @@ class SiteDashboardPage extends StatefulWidget {
     this.sharedPreferences,
     this.kpiPacksLoader,
     this.recentActivityLoader,
+    this.miloosSupportHealthLoader,
   });
 
   final SharedPreferences? sharedPreferences;
@@ -26,6 +27,8 @@ class SiteDashboardPage extends StatefulWidget {
       kpiPacksLoader;
   final Future<List<Map<String, dynamic>>> Function(String siteId)?
       recentActivityLoader;
+  final Future<List<Map<String, dynamic>>> Function(String siteId)?
+      miloosSupportHealthLoader;
 
   @override
   State<SiteDashboardPage> createState() => _SiteDashboardPageState();
@@ -46,11 +49,15 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
   bool _isLoadingMetrics = true;
   bool _isLoadingKpiPacks = true;
   bool _isLoadingActivities = true;
+  bool _isLoadingMiloOSSupportHealth = true;
   String? _metricsError;
   String? _kpiPacksError;
   String? _activitiesError;
+  String? _miloOSSupportHealthError;
   List<_KpiPackSummary> _kpiPacks = <_KpiPackSummary>[];
   List<_SiteActivity> _activities = <_SiteActivity>[];
+  _MiloOSSiteSupportHealth _miloOSSupportHealth =
+      const _MiloOSSiteSupportHealth();
 
   String _t(String input) {
     return SiteDashboardI18n.text(context, input);
@@ -72,6 +79,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
         if (!mounted) return;
         _loadMetrics();
         _loadKpiPacks();
+        _loadMiloOSSupportHealth();
       });
       _loadRecentActivity();
     });
@@ -253,6 +261,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
       _loadMetrics(),
       _loadKpiPacks(),
       _loadRecentActivity(),
+      _loadMiloOSSupportHealth(),
     ]);
   }
 
@@ -293,6 +302,7 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
             SliverToBoxAdapter(child: _buildHeader()),
             SliverToBoxAdapter(child: _buildPeriodSelector()),
             SliverToBoxAdapter(child: _buildKeyMetrics()),
+            SliverToBoxAdapter(child: _buildMiloOSSupportHealth()),
             SliverToBoxAdapter(child: _buildKpiPackSection()),
             SliverToBoxAdapter(child: _buildAttendanceChart()),
             SliverToBoxAdapter(child: _buildRecentActivity()),
@@ -505,6 +515,96 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
               const SizedBox(height: 8),
               _buildKpiPackCard(_kpiPacks.first),
             ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMiloOSSupportHealth() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: _dashboardCardDecoration(context),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                const Icon(Icons.psychology_alt_rounded,
+                    color: ScholesaColors.site),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _t('MiloOS Support Health'),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+                _DashboardPill(
+                  label:
+                      '${_t('Pending')}: ${_miloOSSupportHealth.pendingExplainBack}',
+                  color: _miloOSSupportHealth.pendingExplainBack > 0
+                      ? ScholesaColors.warning
+                      : ScholesaColors.success,
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _t('Site-scoped support provenance and explain-back debt. Not capability mastery.'),
+              style: TextStyle(color: context.schTextSecondary, fontSize: 13),
+            ),
+            const SizedBox(height: 16),
+            if (_isLoadingMiloOSSupportHealth)
+              const Center(child: CircularProgressIndicator())
+            else if (_miloOSSupportHealthError != null)
+              _buildRetryLoadErrorCard(
+                title: _t('MiloOS support health is temporarily unavailable'),
+                message: _miloOSSupportHealthError!,
+                onRetry: _loadMiloOSSupportHealth,
+              )
+            else if (!_miloOSSupportHealth.hasSupport)
+              Text(
+                _t('No MiloOS support events for this site yet.'),
+                style: TextStyle(color: context.schTextSecondary),
+              )
+            else
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: <Widget>[
+                  _DashboardPill(
+                    label:
+                        '${_t('Learners with support')}: ${_miloOSSupportHealth.learnersWithSupport}',
+                    color: ScholesaColors.site,
+                  ),
+                  _DashboardPill(
+                    label:
+                        '${_t('Learners pending')}: ${_miloOSSupportHealth.learnersWithPendingExplainBack}',
+                    color:
+                        _miloOSSupportHealth.learnersWithPendingExplainBack > 0
+                            ? ScholesaColors.warning
+                            : ScholesaColors.success,
+                  ),
+                  _DashboardPill(
+                    label: '${_t('Opened')}: ${_miloOSSupportHealth.opened}',
+                    color: ScholesaColors.futureSkills,
+                  ),
+                  _DashboardPill(
+                    label: '${_t('Used')}: ${_miloOSSupportHealth.used}',
+                    color: ScholesaColors.site,
+                  ),
+                  _DashboardPill(
+                    label:
+                        '${_t('Explained')}: ${_miloOSSupportHealth.explainBackSubmitted}',
+                    color: ScholesaColors.success,
+                  ),
+                ],
+              ),
           ],
         ),
       ),
@@ -1539,6 +1639,73 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
     }
   }
 
+  Future<void> _loadMiloOSSupportHealth() async {
+    final AppState? appState = _maybeAppState();
+    final String siteId = ((appState?.activeSiteId) ??
+            ((appState?.siteIds.isNotEmpty ?? false)
+                ? appState!.siteIds.first
+                : ''))
+        .trim();
+
+    if (!mounted) return;
+    setState(() {
+      _isLoadingMiloOSSupportHealth = true;
+      _miloOSSupportHealthError = null;
+    });
+
+    try {
+      if (siteId.isEmpty) {
+        if (!mounted) return;
+        setState(() {
+          _miloOSSupportHealth = const _MiloOSSiteSupportHealth();
+          _miloOSSupportHealthError = null;
+        });
+        return;
+      }
+
+      final List<Map<String, dynamic>> rows =
+          widget.miloosSupportHealthLoader != null
+              ? await widget.miloosSupportHealthLoader!(siteId)
+              : await _loadMiloOSSupportHealthRows(siteId);
+      final _MiloOSSiteSupportHealth health =
+          _MiloOSSiteSupportHealth.fromRows(rows, siteId: siteId);
+      if (!mounted) return;
+      setState(() {
+        _miloOSSupportHealth = health;
+        _miloOSSupportHealthError = null;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _miloOSSupportHealthError = _t(
+          'We could not load MiloOS support health right now. Retry to check the current state.',
+        );
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingMiloOSSupportHealth = false);
+      }
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> _loadMiloOSSupportHealthRows(
+    String siteId,
+  ) async {
+    final FirestoreService? firestoreService = _maybeFirestoreService();
+    if (firestoreService == null) {
+      return <Map<String, dynamic>>[];
+    }
+    final QuerySnapshot<Map<String, dynamic>> snapshot = await firestoreService
+        .firestore
+        .collection('interactionEvents')
+        .where('siteId', isEqualTo: siteId)
+        .get();
+
+    return snapshot.docs
+        .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) => doc.data())
+        .toList(growable: false);
+  }
+
   _SiteActivity _siteActivityFromLoaderRow(Map<String, dynamic> row) {
     return _SiteActivity(
       icon: _activityIconFromKey((row['icon'] as String?)?.trim()),
@@ -1641,6 +1808,108 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
     final String trimmed = value.trim();
     return trimmed.isEmpty ? null : trimmed;
   }
+}
+
+class _MiloOSSiteSupportHealth {
+  const _MiloOSSiteSupportHealth({
+    this.opened = 0,
+    this.used = 0,
+    this.responses = 0,
+    this.explainBackSubmitted = 0,
+    this.learnersWithSupport = 0,
+    this.learnersWithPendingExplainBack = 0,
+    this.pendingExplainBack = 0,
+  });
+
+  final int opened;
+  final int used;
+  final int responses;
+  final int explainBackSubmitted;
+  final int learnersWithSupport;
+  final int learnersWithPendingExplainBack;
+  final int pendingExplainBack;
+
+  bool get hasSupport =>
+      opened > 0 || used > 0 || responses > 0 || explainBackSubmitted > 0;
+
+  static _MiloOSSiteSupportHealth fromRows(
+    List<Map<String, dynamic>> rows, {
+    required String siteId,
+  }) {
+    int opened = 0;
+    int used = 0;
+    int responses = 0;
+    int explainBackSubmitted = 0;
+    final Map<String, int> openedByLearner = <String, int>{};
+    final Map<String, int> explainedByLearner = <String, int>{};
+    final Set<String> learnersWithSupport = <String>{};
+
+    for (final Map<String, dynamic> row in rows) {
+      final String rowSiteId = _trimmed(row['siteId']);
+      if (rowSiteId.isNotEmpty && rowSiteId != siteId) {
+        continue;
+      }
+      final String eventType = _trimmed(row['eventType']).toLowerCase();
+      final String learnerId = _trimmed(row['actorId']).isNotEmpty
+          ? _trimmed(row['actorId'])
+          : _trimmed(row['learnerId']);
+      if (learnerId.isEmpty) {
+        continue;
+      }
+      switch (eventType) {
+        case 'ai_help_opened':
+          opened += 1;
+          openedByLearner.update(learnerId, (int value) => value + 1,
+              ifAbsent: () => 1);
+          learnersWithSupport.add(learnerId);
+          break;
+        case 'ai_help_used':
+          used += 1;
+          learnersWithSupport.add(learnerId);
+          break;
+        case 'ai_coach_response':
+          responses += 1;
+          learnersWithSupport.add(learnerId);
+          break;
+        case 'explain_it_back_submitted':
+          explainBackSubmitted += 1;
+          explainedByLearner.update(learnerId, (int value) => value + 1,
+              ifAbsent: () => 1);
+          learnersWithSupport.add(learnerId);
+          break;
+        default:
+          break;
+      }
+    }
+
+    int pending = 0;
+    int learnersPending = 0;
+    for (final MapEntry<String, int> entry in openedByLearner.entries) {
+      final int learnerPending =
+          entry.value - (explainedByLearner[entry.key] ?? 0);
+      if (learnerPending > 0) {
+        pending += learnerPending;
+        learnersPending += 1;
+      }
+    }
+
+    return _MiloOSSiteSupportHealth(
+      opened: opened,
+      used: used,
+      responses: responses,
+      explainBackSubmitted: explainBackSubmitted,
+      learnersWithSupport: learnersWithSupport.length,
+      learnersWithPendingExplainBack: learnersPending,
+      pendingExplainBack: pending,
+    );
+  }
+}
+
+String _trimmed(dynamic value) {
+  if (value is String) {
+    return value.trim();
+  }
+  return '';
 }
 
 class _TimedSiteActivity {

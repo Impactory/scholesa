@@ -81,6 +81,74 @@ void main() {
     expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
   });
 
+  testWidgets(
+      'site dashboard shows site-scoped MiloOS support health without mastery claims',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await firestore.collection('interactionEvents').add(<String, dynamic>{
+      'siteId': 'site-1',
+      'actorId': 'learner-1',
+      'eventType': 'ai_help_opened',
+    });
+    await firestore.collection('interactionEvents').add(<String, dynamic>{
+      'siteId': 'site-1',
+      'actorId': 'learner-1',
+      'eventType': 'ai_help_opened',
+    });
+    await firestore.collection('interactionEvents').add(<String, dynamic>{
+      'siteId': 'site-1',
+      'actorId': 'learner-1',
+      'eventType': 'ai_help_used',
+    });
+    await firestore.collection('interactionEvents').add(<String, dynamic>{
+      'siteId': 'site-1',
+      'actorId': 'learner-1',
+      'eventType': 'explain_it_back_submitted',
+    });
+    await firestore.collection('interactionEvents').add(<String, dynamic>{
+      'siteId': 'site-1',
+      'actorId': 'learner-2',
+      'eventType': 'ai_help_opened',
+    });
+    await firestore.collection('interactionEvents').add(<String, dynamic>{
+      'siteId': 'site-1',
+      'actorId': 'learner-2',
+      'eventType': 'explain_it_back_submitted',
+    });
+    await firestore.collection('interactionEvents').add(<String, dynamic>{
+      'siteId': 'other-site',
+      'actorId': 'learner-3',
+      'eventType': 'ai_help_opened',
+    });
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: firestore,
+      auth: _MockFirebaseAuth(),
+    );
+
+    await tester.binding.setSurfaceSize(const Size(1280, 1800));
+    await tester.pumpWidget(
+      _buildHarness(
+        firestoreService: firestoreService,
+        appState: _buildSiteState(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('MiloOS Support Health'), findsOneWidget);
+    expect(
+      find.text(
+          'Site-scoped support provenance and explain-back debt. Not capability mastery.'),
+      findsOneWidget,
+    );
+    expect(find.text('Learners with support: 2'), findsOneWidget);
+    expect(find.text('Learners pending: 1'), findsOneWidget);
+    expect(find.text('Opened: 3'), findsOneWidget);
+    expect(find.text('Used: 1'), findsOneWidget);
+    expect(find.text('Explained: 2'), findsOneWidget);
+    expect(find.text('Opened: 4'), findsNothing);
+    expect(find.textContaining('mastery: 100'), findsNothing);
+  });
+
   testWidgets('site dashboard exports a real report when activity exists',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
@@ -272,14 +340,16 @@ void main() {
 
     expect(find.text('KPI packs are temporarily unavailable'), findsOneWidget);
     expect(
-      find.text('We could not load KPI packs right now. Retry to check the current state.'),
+      find.text(
+          'We could not load KPI packs right now. Retry to check the current state.'),
       findsOneWidget,
     );
     expect(find.text('No KPI packs yet'), findsNothing);
     expect(find.text('Retry'), findsOneWidget);
   });
 
-  testWidgets('site dashboard keeps stale KPI pack visible after refresh failure',
+  testWidgets(
+      'site dashboard keeps stale KPI pack visible after refresh failure',
       (WidgetTester tester) async {
     final FirestoreService firestoreService = FirestoreService(
       firestore: FakeFirebaseFirestore(),
@@ -328,14 +398,16 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('Unable to refresh KPI packs right now. Showing the last successful data.'),
+      find.text(
+          'Unable to refresh KPI packs right now. Showing the last successful data.'),
       findsOneWidget,
     );
     expect(find.text('March KPI Pack'), findsOneWidget);
     expect(find.text('No KPI packs yet'), findsNothing);
   });
 
-  testWidgets('site dashboard shows recent activity unavailable instead of fake emptiness',
+  testWidgets(
+      'site dashboard shows recent activity unavailable instead of fake emptiness',
       (WidgetTester tester) async {
     final FirestoreService firestoreService = FirestoreService(
       firestore: FakeFirebaseFirestore(),
@@ -356,16 +428,19 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Recent activity is temporarily unavailable'), findsOneWidget);
+    expect(find.text('Recent activity is temporarily unavailable'),
+        findsOneWidget);
     expect(
-      find.text('We could not load recent activity right now. Retry to check the current state.'),
+      find.text(
+          'We could not load recent activity right now. Retry to check the current state.'),
       findsOneWidget,
     );
     expect(find.text('No recent activity yet'), findsNothing);
     expect(find.text('Retry'), findsWidgets);
   });
 
-  testWidgets('site dashboard keeps stale recent activity visible after refresh failure',
+  testWidgets(
+      'site dashboard keeps stale recent activity visible after refresh failure',
       (WidgetTester tester) async {
     final FirestoreService firestoreService = FirestoreService(
       firestore: FakeFirebaseFirestore(),
@@ -406,7 +481,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('Unable to refresh recent activity right now. Showing the last successful data.'),
+      find.text(
+          'Unable to refresh recent activity right now. Showing the last successful data.'),
       findsOneWidget,
     );
     expect(find.text('Microscope kit spill in Studio B'), findsOneWidget);

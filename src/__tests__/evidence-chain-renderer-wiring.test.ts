@@ -465,7 +465,7 @@ describe('Renderers delegate to real evidence components', () => {
     expect(syntheticStateTest).toContain('miloosGoldInteractionEvents: 13');
   });
 
-  it('MiloOS gold-candidate scope is explicit about Flutter parity', () => {
+  it('MiloOS gold-candidate scope pins focused Flutter mobile parity', () => {
     const planSource = fs.readFileSync(
       path.join(process.cwd(), 'docs', 'MILOOS_GOLD_READINESS_PLAN_APRIL_30_2026.md'),
       'utf8'
@@ -474,10 +474,52 @@ describe('Renderers delegate to real evidence components', () => {
       path.join(process.cwd(), 'docs', 'MILOOS_GOLD_READINESS_EXECUTION_CHECKLIST_APRIL_30_2026.md'),
       'utf8'
     );
+    const flutterMobilePlanSource = fs.readFileSync(
+      path.join(process.cwd(), 'docs', 'FLUTTER_MOBILE_GOLD_READINESS_PLAN_APRIL_30_2026.md'),
+      'utf8'
+    );
+    const flutterMobileChecklistSource = fs.readFileSync(
+      path.join(process.cwd(), 'docs', 'FLUTTER_MOBILE_GOLD_READINESS_EXECUTION_CHECKLIST_APRIL_30_2026.md'),
+      'utf8'
+    );
+    const flutterBosSource = fs.readFileSync(
+      path.join(process.cwd(), 'apps', 'empire_flutter', 'app', 'lib', 'runtime', 'bos_learner_loop_insights_card.dart'),
+      'utf8'
+    );
+    const flutterEducatorSource = fs.readFileSync(
+      path.join(process.cwd(), 'apps', 'empire_flutter', 'app', 'lib', 'modules', 'educator', 'educator_learner_supports_page.dart'),
+      'utf8'
+    );
+    const flutterSiteSource = fs.readFileSync(
+      path.join(process.cwd(), 'apps', 'empire_flutter', 'app', 'lib', 'modules', 'site', 'site_dashboard_page.dart'),
+      'utf8'
+    );
+    const flutterEducatorTestSource = fs.readFileSync(
+      path.join(process.cwd(), 'apps', 'empire_flutter', 'app', 'test', 'educator_learner_supports_page_test.dart'),
+      'utf8'
+    );
+    const flutterSiteTestSource = fs.readFileSync(
+      path.join(process.cwd(), 'apps', 'empire_flutter', 'app', 'test', 'site_dashboard_page_test.dart'),
+      'utf8'
+    );
 
-    expect(planSource).toContain('The gold-candidate claim is web-only.');
-    expect(planSource).toContain('Flutter remains beta for MiloOS');
-    expect(checklistSource).toContain('Flutter MiloOS role parity is explicitly out of the current gold-candidate scope.');
+    expect(planSource).toContain('focused Flutter/mobile role-parity gate passed');
+    expect(planSource).toContain('This does not make the full Flutter app gold-ready.');
+    expect(checklistSource).toContain('Flutter MiloOS role parity is now in scope for the focused support-provenance gate.');
+    expect(checklistSource).toContain('flutter test test/bos_insights_cards_test.dart test/educator_learner_supports_page_test.dart test/site_dashboard_page_test.dart');
+    expect(flutterMobilePlanSource).toContain('Flutter/mobile is not gold-ready yet.');
+    expect(flutterMobilePlanSource).toContain('The next highest-risk break is **the missing current Flutter route proof matrix**.');
+    expect(flutterMobileChecklistSource).toContain('Milestone 1 - Guardian And Report Workflow Stabilization');
+    expect(flutterMobileChecklistSource).toContain('No final signoff may describe Flutter/mobile as gold-ready while any milestone above is incomplete.');
+    expect(flutterBosSource).toContain('pendingExplainBack');
+    expect(flutterEducatorSource).toContain('MiloOS Support Provenance');
+    expect(flutterEducatorSource).toContain('Support events show follow-up debt only. They are not capability mastery.');
+    expect(flutterEducatorSource).toContain("collection('interactionEvents')");
+    expect(flutterSiteSource).toContain('MiloOS Support Health');
+    expect(flutterSiteSource).toContain('Site-scoped support provenance and explain-back debt. Not capability mastery.');
+    expect(flutterSiteSource).toContain("collection('interactionEvents')");
+    expect(flutterEducatorTestSource).toContain('shows MiloOS support debt for every learner');
+    expect(flutterSiteTestSource).toContain('shows site-scoped MiloOS support health without mastery claims');
   });
 
   it('PageTransition keeps reduced-motion MiloOS routes hydration-stable', () => {

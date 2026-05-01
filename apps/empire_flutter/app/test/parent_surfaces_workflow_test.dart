@@ -150,6 +150,11 @@ Future<void> _seedParentData(FakeFirebaseFirestore firestore) async {
     'displayName': 'Unaffiliated Learner',
     'parentIds': <String>['other-parent'],
   });
+  await firestore.collection('users').doc('educator-1').set(<String, dynamic>{
+    'role': 'educator',
+    'displayName': 'Educator One',
+    'siteIds': <String>['site-1'],
+  });
   await firestore
       .collection('learnerProgress')
       .doc('learner-1')
@@ -214,7 +219,22 @@ Future<void> _seedParentData(FakeFirebaseFirestore firestore) async {
       'title': 'Build a Robot',
       'description': 'Linked Update',
       'pillarCodes': const <String>['future_skills'],
+      'siteId': 'site-1',
+      'evidenceRecordIds': const <String>['evidence-portfolio-1'],
+      'capabilityIds': const <String>['future-capability'],
+      'capabilityTitles': const <String>['Future capability'],
+      'missionAttemptId': 'attempt-portfolio-1',
+      'proofOfLearningStatus': 'verified',
+      'aiDisclosureStatus': 'learner-ai-not-used',
+      'educatorId': 'educator-1',
+      'reviewedBy': 'educator-1',
+      'reviewedAt':
+          Timestamp.fromDate(anchor.subtract(const Duration(hours: 1))),
+      'rubricTotalScore': 7,
+      'rubricMaxScore': 8,
       'verificationStatus': 'reviewed',
+      'verificationPrompt':
+          'Explain how the robot evidence supports this capability claim.',
       'progressionDescriptors': const <String>[
         'Learner justifies prototype choices with direct evidence.',
       ],
@@ -229,6 +249,38 @@ Future<void> _seedParentData(FakeFirebaseFirestore firestore) async {
           Timestamp.fromDate(anchor.subtract(const Duration(hours: 2))),
       'updatedAt':
           Timestamp.fromDate(anchor.subtract(const Duration(hours: 1))),
+    },
+  );
+  await firestore.collection('evidenceRecords').doc('evidence-portfolio-1').set(
+    <String, dynamic>{
+      'learnerId': 'learner-1',
+      'siteId': 'site-1',
+      'capabilityId': 'future-capability',
+      'capabilityLabel': 'Future capability',
+      'linkedMissionAttemptId': 'attempt-portfolio-1',
+      'observedAt':
+          Timestamp.fromDate(anchor.subtract(const Duration(hours: 2))),
+    },
+  );
+  await firestore.collection('missionAttempts').doc('attempt-portfolio-1').set(
+    <String, dynamic>{
+      'learnerId': 'learner-1',
+      'missionId': 'mission-portfolio-1',
+      'siteId': 'site-1',
+      'status': 'reviewed',
+      'reviewedBy': 'educator-1',
+      'reviewedAt':
+          Timestamp.fromDate(anchor.subtract(const Duration(hours: 1))),
+      'proofBundleSummary': <String, dynamic>{
+        'hasExplainItBack': true,
+        'hasOralCheck': true,
+        'hasMiniRebuild': true,
+        'hasLearnerAiDisclosure': true,
+        'aiAssistanceUsed': false,
+        'checkpointCount': 1,
+      },
+      'rubricTotalScore': 7,
+      'rubricMaxScore': 8,
     },
   );
   await firestore
@@ -579,6 +631,11 @@ Future<void> _seedMissionReviewData(
       'observedAt': Timestamp.fromDate(DateTime(2026, 3, 18, 8, 45)),
     },
   );
+  await firestore.collection('users').doc('educator-1').set(<String, dynamic>{
+    'role': 'educator',
+    'displayName': 'Educator One',
+    'siteIds': <String>['site-1'],
+  }, SetOptions(merge: true));
 }
 
 Future<void> _submitMissionForReview(
@@ -1950,7 +2007,24 @@ void main() {
         'capabilityId': 'cap-prototype-evidence',
         'capabilityTitle': 'Prototype evidence',
         'level': 4,
+        'rawScore': 7,
+        'maxScore': 8,
+        'educatorId': 'educator-1',
         'missionAttemptId': missionAttemptId,
+        'linkedEvidenceRecordIds': <String>['evidence-1'],
+        'linkedPortfolioItemIds': <String>[portfolioItemId],
+        'proofOfLearningStatus': 'verified',
+        'progressionDescriptors': const <String>[
+          'Learner explains why the prototype choice fits the observed evidence.',
+          'Learner identifies a tradeoff and defends the decision with examples.',
+        ],
+        'checkpointMappings': const <Map<String, dynamic>>[
+          <String, dynamic>{
+            'phase': 'review',
+            'guidance':
+                'Ask the learner to justify the prototype path without prompts.',
+          },
+        ],
         'siteId': 'site-1',
         'createdAt': Timestamp.fromDate(DateTime(2026, 3, 18, 10, 20)),
       });

@@ -112,6 +112,7 @@ class ReportActions {
         normalized.contains('educator verifier');
     final bool hasVerificationPrompt =
         normalized.contains('verification prompt') ||
+            normalized.contains('verification criteria') ||
             normalized.contains('verify next') ||
             normalized.contains('next verification prompt');
     final Map<String, bool> signalPresence = <String, bool>{

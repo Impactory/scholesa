@@ -2408,6 +2408,17 @@ class MissionService extends ChangeNotifier {
                   existingPortfolioItemSnapshot.exists)
                 'aiFeedbackAt': FieldValue.delete(),
               'educatorId': reviewerId,
+              'reviewedBy': reviewerId,
+              'reviewedAt': FieldValue.serverTimestamp(),
+              if (resolvedRubricId.isNotEmpty) 'rubricId': resolvedRubricId,
+              if (resolvedRubricTitle != null && resolvedRubricTitle.isNotEmpty)
+                'rubricTitle': resolvedRubricTitle,
+              if (normalizedRubricScores.isNotEmpty)
+                'rubricScores': normalizedRubricScores,
+              if (normalizedRubricScores.isNotEmpty)
+                'rubricTotalScore': rubricTotalScore,
+              if (normalizedRubricScores.isNotEmpty)
+                'rubricMaxScore': rubricMaxScore,
               if (resolvedVerificationPrompt.isNotEmpty)
                 'verificationPrompt': resolvedVerificationPrompt,
               if (resolvedVerificationPrompt.isNotEmpty)

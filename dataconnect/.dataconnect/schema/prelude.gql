@@ -2417,3 +2417,89 @@ scalar Vector_Embed_Model
 
 # Intentionally left blank.
 
+"""
+Make the query reactive with customized refresh policy.
+
+###### Example: Refresh Stock Price Periodically
+
+Periodically refresh the Stock graph every minute.
+
+```graphql
+query Stock($ticker: String!) @refresh(every: { minutes: 1 }) {
+  stock(key: {ticker: $ticker}) {
+    name
+    latestPrice
+    prices { time price }
+  }
+}
+```
+
+###### Example: Realtime User Profile
+
+You can configure the `UserProfile` query to be refreshed after `UpdateUser`
+mutation.
+
+```graphql
+mutation UpdateUser($newName: String!) @auth(level: USER)
+{
+  user_update(id_expr: "auth.uid", { name: $newName })
+}
+
+query MyProfile @auth(level: USER)
+  @refresh(onMutationExecuted: {
+    operation: "UpdateUser",
+    condition: "mutation.auth.uid == request.auth.uid"
+  })
+{
+  user(uid_expr: "auth.uid") { id name }
+}
+```
+
+###### Example: Realtime Chat Room
+
+Refresh the last 50 messages in the chat room after each `SendMessage`.
+
+```graphql
+query ChatRoom($roomId: UUID!) @auth(level: PUBLIC)
+  @refresh(onMutationExecuted: {
+    operation: "SendMessage",
+    condition: "mutation.variables.roomId == request.variables.roomId"
+  })
+{
+  messages(where: {roomId: {eq: $roomId}}, order: {createTime: DESC}, limit: 50) {
+    author content createTime
+  }
+}
+
+mutation SendMessage($roomId: UUID!, $message: String) @auth(level: PUBLIC)
+{
+  message_insert(data: {roomId: $roomId, message: $message})
+}
+```
+
+"""
+directive @refresh(
+  """
+  Define the interval to periodically refresh the query.
+  """
+  every: Timestamp_Duration
+  """
+  Define the mutation that will trigger this query to refresh.
+  """
+  onMutationExecuted: OnMutationExecuted_Event
+) repeatable on QUERY
+
+"""
+Defines the mutation that will trigger the query to refresh.
+"""
+input OnMutationExecuted_Event {
+  """
+  The name of the mutation.
+  """
+  operation: String!
+  """
+  Additional conditions for a mutation event to trigger refresh.
+  """
+  condition: Boolean_Expr
+}
+
