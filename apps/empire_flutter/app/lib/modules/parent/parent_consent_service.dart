@@ -11,6 +11,7 @@ class ParentConsentRecord {
     this.siteId,
     this.mediaConsent,
     this.researchConsent,
+    this.activeReportShares = const <ParentReportShareRequest>[],
   });
 
   final String learnerId;
@@ -18,6 +19,43 @@ class ParentConsentRecord {
   final String? siteId;
   final MediaConsentModel? mediaConsent;
   final ResearchConsentModel? researchConsent;
+  final List<ParentReportShareRequest> activeReportShares;
+}
+
+class ParentReportShareRequest {
+  const ParentReportShareRequest({
+    required this.id,
+    required this.learnerId,
+    required this.status,
+    required this.reportAction,
+    required this.audience,
+    required this.visibility,
+    required this.meetsDeliveryContract,
+    required this.meetsProvenanceContract,
+    this.siteId,
+    this.reportDelivery,
+    this.source,
+    this.surface,
+    this.fileName,
+    this.createdAt,
+    this.expiresAt,
+  });
+
+  final String id;
+  final String learnerId;
+  final String? siteId;
+  final String status;
+  final String reportAction;
+  final String? reportDelivery;
+  final String audience;
+  final String visibility;
+  final String? source;
+  final String? surface;
+  final String? fileName;
+  final bool meetsDeliveryContract;
+  final bool meetsProvenanceContract;
+  final DateTime? createdAt;
+  final DateTime? expiresAt;
 }
 
 class ParentConsentService {
@@ -88,6 +126,8 @@ class ParentConsentService {
             .where('parentId', isEqualTo: parentId)
             .limit(1)
             .get();
+    final List<ParentReportShareRequest> activeReportShares =
+        await _listActiveReportShares(learnerId);
 
     return ParentConsentRecord(
       learnerId: learnerId,
@@ -105,6 +145,55 @@ class ParentConsentService {
       researchConsent: researchSnapshot.docs.isEmpty
           ? null
           : ResearchConsentModel.fromDoc(researchSnapshot.docs.first),
+      activeReportShares: activeReportShares,
+    );
+  }
+
+  Future<List<ParentReportShareRequest>> _listActiveReportShares(
+    String learnerId,
+  ) async {
+    final QuerySnapshot<Map<String, dynamic>> sharesSnapshot = await _firestore
+        .collection('reportShareRequests')
+        .where('learnerId', isEqualTo: learnerId)
+        .get();
+    final List<ParentReportShareRequest> shares = sharesSnapshot.docs
+        .map(_buildReportShareRequest)
+        .where((ParentReportShareRequest share) => share.status == 'active')
+        .toList(growable: false);
+    shares.sort((ParentReportShareRequest a, ParentReportShareRequest b) {
+      final DateTime left =
+          a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final DateTime right =
+          b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      return right.compareTo(left);
+    });
+    return shares;
+  }
+
+  ParentReportShareRequest _buildReportShareRequest(
+    QueryDocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    final Map<String, dynamic> data = doc.data();
+    final Map<String, dynamic> provenance =
+        data['provenance'] is Map<String, dynamic>
+            ? data['provenance'] as Map<String, dynamic>
+            : const <String, dynamic>{};
+    return ParentReportShareRequest(
+      id: _nonEmptyOrNull(data['id']) ?? doc.id,
+      learnerId: _nonEmptyOrNull(data['learnerId']) ?? '',
+      siteId: _nonEmptyOrNull(data['siteId']),
+      status: _nonEmptyOrNull(data['status']) ?? 'unknown',
+      reportAction: _nonEmptyOrNull(data['reportAction']) ?? 'unknown',
+      reportDelivery: _nonEmptyOrNull(data['reportDelivery']),
+      audience: _nonEmptyOrNull(data['audience']) ?? 'unknown',
+      visibility: _nonEmptyOrNull(data['visibility']) ?? 'unknown',
+      source: _nonEmptyOrNull(data['source']),
+      surface: _nonEmptyOrNull(data['surface']),
+      fileName: _nonEmptyOrNull(data['fileName']),
+      meetsDeliveryContract: provenance['meetsDeliveryContract'] == true,
+      meetsProvenanceContract: provenance['meetsProvenanceContract'] == true,
+      createdAt: _dateTimeOrNull(data['createdAt']),
+      expiresAt: _dateTimeOrNull(data['expiresAt']),
     );
   }
 
@@ -173,5 +262,15 @@ class ParentConsentService {
   String? _nonEmptyOrNull(dynamic value) {
     final String normalized = value?.toString().trim() ?? '';
     return normalized.isEmpty ? null : normalized;
+  }
+
+  DateTime? _dateTimeOrNull(dynamic value) {
+    if (value is Timestamp) {
+      return value.toDate();
+    }
+    if (value is DateTime) {
+      return value;
+    }
+    return null;
   }
 }

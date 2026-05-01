@@ -13,6 +13,7 @@ import 'package:scholesa_app/modules/parent/parent_consent_page.dart';
 import 'package:scholesa_app/modules/parent/parent_consent_service.dart';
 import 'package:scholesa_app/services/api_client.dart';
 import 'package:scholesa_app/services/firestore_service.dart';
+import 'package:scholesa_app/services/report_share_request_service.dart';
 
 class _FakeFirebaseAuth implements FirebaseAuth {
   @override
@@ -102,7 +103,8 @@ Future<void> _pumpProvisioningPage(
   required FakeFirebaseFirestore firestore,
 }) async {
   final ProvisioningService service = ProvisioningService(
-    apiClient: ApiClient(auth: _FakeFirebaseAuth(), baseUrl: 'http://localhost'),
+    apiClient:
+        ApiClient(auth: _FakeFirebaseAuth(), baseUrl: 'http://localhost'),
     firestore: firestore,
     auth: _FakeFirebaseAuth(),
     useProvisioningApi: false,
@@ -137,7 +139,10 @@ Future<void> _seedConsentData(FakeFirebaseFirestore firestore) async {
     'displayName': 'Hidden Learner',
     'parentIds': <String>['other-parent'],
   });
-  await firestore.collection('guardianLinks').doc('link-1').set(<String, dynamic>{
+  await firestore
+      .collection('guardianLinks')
+      .doc('link-1')
+      .set(<String, dynamic>{
     'parentId': 'parent-1',
     'learnerId': 'learner-1',
     'siteId': 'site-1',
@@ -182,6 +187,67 @@ Future<void> _seedConsentData(FakeFirebaseFirestore firestore) async {
   );
 }
 
+Future<void> _seedReportShareRequests(FakeFirebaseFirestore firestore) async {
+  await firestore.collection('reportShareRequests').doc('share-active-1').set(
+    <String, dynamic>{
+      'id': 'share-active-1',
+      'siteId': 'site-1',
+      'learnerId': 'learner-1',
+      'createdBy': 'parent-1',
+      'createdByRole': 'parent',
+      'status': 'active',
+      'reportAction': 'share',
+      'reportDelivery': 'copied',
+      'audience': 'guardian',
+      'visibility': 'family',
+      'source': 'guardian_passport',
+      'surface': 'parent_consent',
+      'fileName': 'Ava Evidence Summary',
+      'createdAt': Timestamp.fromDate(DateTime.utc(2026, 5)),
+      'expiresAt': Timestamp.fromDate(DateTime.utc(2026, 6)),
+      'provenance': <String, dynamic>{
+        'meetsDeliveryContract': true,
+        'meetsProvenanceContract': true,
+      },
+    },
+  );
+  await firestore.collection('reportShareRequests').doc('share-hidden-1').set(
+    <String, dynamic>{
+      'id': 'share-hidden-1',
+      'siteId': 'site-1',
+      'learnerId': 'learner-2',
+      'createdBy': 'other-parent',
+      'createdByRole': 'parent',
+      'status': 'active',
+      'reportAction': 'share',
+      'audience': 'guardian',
+      'visibility': 'family',
+      'provenance': <String, dynamic>{
+        'meetsDeliveryContract': true,
+        'meetsProvenanceContract': true,
+      },
+    },
+  );
+  await firestore.collection('reportShareRequests').doc('share-revoked-1').set(
+    <String, dynamic>{
+      'id': 'share-revoked-1',
+      'siteId': 'site-1',
+      'learnerId': 'learner-1',
+      'createdBy': 'parent-1',
+      'createdByRole': 'parent',
+      'status': 'revoked',
+      'reportAction': 'export_pdf',
+      'audience': 'guardian',
+      'visibility': 'family',
+      'fileName': 'Revoked Passport',
+      'provenance': <String, dynamic>{
+        'meetsDeliveryContract': true,
+        'meetsProvenanceContract': true,
+      },
+    },
+  );
+}
+
 void main() {
   testWidgets('parent consent page shows linked learner consent records only',
       (WidgetTester tester) async {
@@ -205,7 +271,8 @@ void main() {
     expect(find.text('Ava Stone'), findsOneWidget);
     expect(find.text('Hidden Learner'), findsNothing);
     expect(find.textContaining('Photo capture: Allowed'), findsOneWidget);
-    expect(find.textContaining('Data share scope: Pseudonymised'), findsOneWidget);
+    expect(
+        find.textContaining('Data share scope: Pseudonymised'), findsOneWidget);
     expect(
       find.text(
         'This screen is view-only. Use the request flow below if any consent details need to change.',
@@ -213,6 +280,73 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Request Consent Review'), findsWidgets);
+  });
+
+  testWidgets('parent consent page manages active report share revocation',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedConsentData(firestore);
+    await _seedReportShareRequests(firestore);
+
+    await tester.binding.setSurfaceSize(const Size(1280, 2000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await ReportShareRequestService.runWithCallableInvoker(
+      (String callableName, Map<String, dynamic> payload) async {
+        expect(callableName, 'revokeReportShareRequest');
+        expect(payload['shareRequestId'], 'share-active-1');
+        await firestore
+            .collection('reportShareRequests')
+            .doc(payload['shareRequestId'] as String)
+            .update(<String, dynamic>{
+          'status': 'revoked',
+          'revocationReason': payload['reason'],
+        });
+        return <String, dynamic>{'ok': true};
+      },
+      () async {
+        await tester.pumpWidget(
+          _buildHarness(
+            appState: _buildParentState(),
+            child: ParentConsentPage(
+              service: ParentConsentService(firestore: firestore),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Active Report Shares'), findsOneWidget);
+        expect(find.text('Active Shares'), findsOneWidget);
+        expect(find.text('Ava Evidence Summary'), findsOneWidget);
+        expect(find.text('Revoked Passport'), findsNothing);
+        expect(find.text('Hidden Learner'), findsNothing);
+        expect(find.textContaining('Audience: Guardian'), findsOneWidget);
+        expect(find.textContaining('Provenance contract: Verified'),
+            findsOneWidget);
+
+        await tester.tap(find.text('Revoke Share'));
+        await tester.pump();
+        await tester.pumpAndSettle();
+
+        expect(find.text('Report share revoked.'), findsOneWidget);
+        expect(find.text('Ava Evidence Summary'), findsNothing);
+        expect(
+          find.text(
+              'No active report shares are currently recorded for this learner.'),
+          findsOneWidget,
+        );
+        final DocumentSnapshot<Map<String, dynamic>> revokedShare =
+            await firestore
+                .collection('reportShareRequests')
+                .doc('share-active-1')
+                .get();
+        expect(revokedShare.data()?['status'], 'revoked');
+        expect(
+          revokedShare.data()?['revocationReason'],
+          'Guardian revoked from parent consent surface',
+        );
+      },
+    );
   });
 
   testWidgets(
@@ -347,7 +481,8 @@ void main() {
     expect(find.text('Nia Consent'), findsOneWidget);
     expect(find.text('Hidden Learner'), findsNothing);
     expect(find.textContaining('Photo capture: Allowed'), findsOneWidget);
-    expect(find.textContaining('Data share scope: Pseudonymised'), findsOneWidget);
+    expect(
+        find.textContaining('Data share scope: Pseudonymised'), findsOneWidget);
   });
 
   testWidgets('parent consent page persists consent review requests',
@@ -379,9 +514,11 @@ void main() {
     final requests = await firestore.collection('supportRequests').get();
     expect(requests.docs, hasLength(1));
     expect(requests.docs.single.data()['requestType'], 'parent_consent_review');
-    expect(requests.docs.single.data()['source'], 'parent_consent_request_review');
     expect(
-      (requests.docs.single.data()['metadata'] as Map<String, dynamic>)['learnerId'],
+        requests.docs.single.data()['source'], 'parent_consent_request_review');
+    expect(
+      (requests.docs.single.data()['metadata']
+          as Map<String, dynamic>)['learnerId'],
       'learner-1',
     );
   });
@@ -524,7 +661,8 @@ void main() {
     );
   });
 
-  testWidgets('parent consent page fails closed when support requests are unavailable',
+  testWidgets(
+      'parent consent page fails closed when support requests are unavailable',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
     await _seedConsentData(firestore);
@@ -544,10 +682,12 @@ void main() {
     await tester.tap(find.text('Request Consent Review').first);
     await tester.pumpAndSettle();
 
-    expect(find.text('Support requests are unavailable right now.'), findsOneWidget);
+    expect(find.text('Support requests are unavailable right now.'),
+        findsOneWidget);
   });
 
-  testWidgets('parent consent page shows explicit error state when loading fails',
+  testWidgets(
+      'parent consent page shows explicit error state when loading fails',
       (WidgetTester tester) async {
     await tester.binding.setSurfaceSize(const Size(1024, 1400));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -563,7 +703,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
-    expect(find.text('Unable to load consent records right now'), findsOneWidget);
+    expect(
+        find.text('Unable to load consent records right now'), findsOneWidget);
     expect(find.text('Retry'), findsOneWidget);
   });
 }

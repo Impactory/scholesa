@@ -5,6 +5,7 @@ import '../../auth/app_state.dart';
 import '../../domain/models.dart';
 import '../../i18n/parent_surface_i18n.dart';
 import '../../services/firestore_service.dart';
+import '../../services/report_share_request_service.dart';
 import '../../services/telemetry_service.dart';
 import '../../ui/auth/global_session_menu.dart';
 import '../../ui/theme/scholesa_theme.dart';
@@ -27,6 +28,7 @@ class _ParentConsentPageState extends State<ParentConsentPage> {
       widget.service ?? ParentConsentService();
 
   List<ParentConsentRecord> _records = <ParentConsentRecord>[];
+  final Set<String> _revokingShareIds = <String>{};
   bool _isLoading = false;
   String? _loadError;
 
@@ -177,6 +179,11 @@ class _ParentConsentPageState extends State<ParentConsentPage> {
     final int researchConfiguredCount = _records
         .where((ParentConsentRecord record) => record.researchConsent != null)
         .length;
+    final int activeShareCount = _records.fold<int>(
+      0,
+      (int total, ParentConsentRecord record) =>
+          total + record.activeReportShares.length,
+    );
 
     return Wrap(
       spacing: 12,
@@ -191,6 +198,7 @@ class _ParentConsentPageState extends State<ParentConsentPage> {
           _t('Research Configured'),
           researchConfiguredCount.toString(),
         ),
+        _buildSummaryCard(_t('Active Shares'), activeShareCount.toString()),
       ],
     );
   }
@@ -275,6 +283,8 @@ class _ParentConsentPageState extends State<ParentConsentPage> {
               status: _researchStatusLabel(record.researchConsent),
               details: _researchDetails(record.researchConsent),
             ),
+            const SizedBox(height: 16),
+            _buildReportSharesSection(record),
             const SizedBox(height: 12),
             Text(
               _t(
@@ -294,6 +304,172 @@ class _ParentConsentPageState extends State<ParentConsentPage> {
         ),
       ),
     );
+  }
+
+  Widget _buildReportSharesSection(ParentConsentRecord record) {
+    final List<ParentReportShareRequest> shares = record.activeReportShares;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: ScholesaColors.background,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              const Icon(
+                Icons.ios_share_rounded,
+                color: ScholesaColors.parent,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  _t('Active Report Shares'),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: ScholesaColors.textPrimary,
+                  ),
+                ),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: ScholesaColors.parent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  shares.length.toString(),
+                  style: const TextStyle(
+                    color: ScholesaColors.parent,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          if (shares.isEmpty)
+            Text(
+              _t('No active report shares are currently recorded for this learner.'),
+              style: const TextStyle(color: ScholesaColors.textSecondary),
+            )
+          else ...<Widget>[
+            Text(
+              _t(
+                'These records show completed evidence-bearing report deliveries that can still be revoked without deleting the audit trail.',
+              ),
+              style: const TextStyle(color: ScholesaColors.textSecondary),
+            ),
+            const SizedBox(height: 10),
+            ...shares.map(_buildReportShareRow),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReportShareRow(ParentReportShareRequest share) {
+    final bool isRevoking = _revokingShareIds.contains(share.id);
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: ScholesaColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: ScholesaColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            _reportShareTitle(share),
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              color: ScholesaColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '${_t('Audience')}: ${_titleCase(share.audience)} · ${_t('Visibility')}: ${_titleCase(share.visibility)}',
+            style: const TextStyle(color: ScholesaColors.textSecondary),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${_t('Delivery')}: ${_titleCase((share.reportDelivery ?? share.reportAction).replaceAll('_', ' '))}',
+            style: const TextStyle(color: ScholesaColors.textSecondary),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${_t('Provenance contract')}: ${share.meetsProvenanceContract && share.meetsDeliveryContract ? _t('Verified') : _t('Needs review')}',
+            style: const TextStyle(color: ScholesaColors.textSecondary),
+          ),
+          if (share.expiresAt != null) ...<Widget>[
+            const SizedBox(height: 4),
+            Text(
+              '${_t('Expires')}: ${_dateLabel(share.expiresAt!)}',
+              style: const TextStyle(color: ScholesaColors.textSecondary),
+            ),
+          ],
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: OutlinedButton.icon(
+              onPressed: isRevoking ? null : () => _revokeReportShare(share),
+              icon: isRevoking
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.link_off_rounded),
+              label: Text(_t('Revoke Share')),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _revokeReportShare(ParentReportShareRequest share) async {
+    TelemetryService.instance.logEvent(
+      event: 'parent.consent.report_share_revoke_clicked',
+      metadata: <String, dynamic>{
+        'share_request_id': share.id,
+        'learner_id': share.learnerId,
+        'site_id': share.siteId,
+      },
+    );
+    setState(() {
+      _revokingShareIds.add(share.id);
+    });
+
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+    final bool revoked = await ReportShareRequestService.instance.revoke(
+      shareRequestId: share.id,
+      reason: 'Guardian revoked from parent consent surface',
+    );
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _revokingShareIds.remove(share.id);
+    });
+    if (revoked) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(_t('Report share revoked.'))),
+      );
+      await _loadData();
+    } else {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(_t('Unable to revoke report share right now.')),
+        ),
+      );
+    }
   }
 
   Future<void> _submitConsentReviewRequest(ParentConsentRecord record) async {
@@ -508,6 +684,24 @@ class _ParentConsentPageState extends State<ParentConsentPage> {
     return trimmed.isEmpty ? _t('Not provided') : trimmed;
   }
 
+  String _reportShareTitle(ParentReportShareRequest share) {
+    final String fileName = share.fileName?.trim() ?? '';
+    if (fileName.isNotEmpty) {
+      return fileName;
+    }
+    final String source = share.source?.trim().isNotEmpty == true
+        ? share.source!.trim()
+        : share.surface?.trim() ?? '';
+    final String label = source.isEmpty ? share.reportAction : source;
+    return _titleCase(label.replaceAll('_', ' '));
+  }
+
+  String _dateLabel(DateTime date) {
+    final String month = date.month.toString().padLeft(2, '0');
+    final String day = date.day.toString().padLeft(2, '0');
+    return '${date.year}-$month-$day';
+  }
+
   Future<void> _loadData() async {
     final String parentId = context.read<AppState>().userId?.trim() ?? '';
     if (parentId.isEmpty) {
@@ -524,7 +718,8 @@ class _ParentConsentPageState extends State<ParentConsentPage> {
     });
 
     try {
-      final List<ParentConsentRecord> records = await _service.listRecords(parentId);
+      final List<ParentConsentRecord> records =
+          await _service.listRecords(parentId);
       if (!mounted) {
         return;
       }

@@ -530,6 +530,18 @@ describe('Renderers delegate to real evidence components', () => {
       path.join(process.cwd(), 'apps', 'empire_flutter', 'app', 'test', 'learner_credentials_page_test.dart'),
       'utf8'
     );
+    const flutterParentConsentSource = fs.readFileSync(
+      path.join(process.cwd(), 'apps', 'empire_flutter', 'app', 'lib', 'modules', 'parent', 'parent_consent_page.dart'),
+      'utf8'
+    );
+    const flutterParentConsentServiceSource = fs.readFileSync(
+      path.join(process.cwd(), 'apps', 'empire_flutter', 'app', 'lib', 'modules', 'parent', 'parent_consent_service.dart'),
+      'utf8'
+    );
+    const flutterParentConsentTestSource = fs.readFileSync(
+      path.join(process.cwd(), 'apps', 'empire_flutter', 'app', 'test', 'parent_consent_page_test.dart'),
+      'utf8'
+    );
     const firestoreRulesTestSource = fs.readFileSync(
       path.join(process.cwd(), 'test', 'firestore-rules.test.js'),
       'utf8'
@@ -552,6 +564,7 @@ describe('Renderers delegate to real evidence components', () => {
     expect(flutterMobilePlanSource).toContain('Peer-feedback persistence and role safety');
     expect(flutterMobilePlanSource).toContain('Partner deliverable evidence output trust');
     expect(flutterMobilePlanSource).toContain('Learner credential evidence provenance');
+    expect(flutterMobilePlanSource).toContain('Parent active report-share revocation');
     expect(flutterMobilePlanSource).toContain('The next highest-risk break is **approved deploy rehearsal reproducibility**.');
     expect(flutterMobilePlanSource).toContain('`./scripts/deploy.sh release-gate` now passes without deploying');
     expect(flutterMobilePlanSource).toContain('The full `all` target now runs the Flutter gate before any live deploy action.');
@@ -562,6 +575,7 @@ describe('Renderers delegate to real evidence components', () => {
     expect(flutterMobileChecklistSource).toContain('Completed 2026-04-30: the mobile boundary bundle passed with 50 Flutter tests');
     expect(flutterMobileChecklistSource).toContain('Completed 2026-04-30: the focused Flutter/mobile release bundle passed.');
     expect(flutterMobileChecklistSource).toContain('No final signoff may describe Flutter/mobile as gold-ready while any milestone above is incomplete.');
+    expect(flutterMobileChecklistSource).toContain('guardian active report-share visibility and revocation from the parent consent surface');
     expect(flutterMobileRouteMatrixSource).toContain('mobile route coverage is mapped, but Flutter/mobile is not gold-ready yet');
     expect(flutterMobileRouteMatrixSource).toContain('| Learner | `/learner/missions` | `MissionsPage` | Capture mission attempts, proof bundle fields, AI disclosure |');
     expect(flutterMobileRouteMatrixSource).toContain('| Learner | `/learner/peer-feedback` | `PeerFeedbackPage` | Capture peer evidence/feedback | active-site `missionAttempts`, active-site `peerFeedback`, Firestore rules | `peer_feedback_page_test.dart`, `evidence_chain_routes_test.dart`, `test/firestore-rules.test.js` | aligned and reusable |');
@@ -583,6 +597,7 @@ describe('Renderers delegate to real evidence components', () => {
     expect(flutterMobileRouteMatrixSource).toContain('Peer-feedback persistence and role-safety proof** passed after this matrix');
     expect(flutterMobileRouteMatrixSource).toContain('Partner deliverable evidence output trust** passed after this matrix');
     expect(flutterMobileRouteMatrixSource).toContain('Learner credential evidence provenance** passed after this matrix');
+    expect(flutterMobileRouteMatrixSource).toContain('Parent active report-share revocation** passed after this matrix');
     expect(flutterMobileRouteMatrixSource).toContain('Non-deploying release script gate** passed after route-level blocker closure');
     expect(flutterMobileRouteMatrixSource).toContain('Proceed to approved live or no-traffic deploy rehearsal reproducibility.');
     expect(flutterMobileRouteMatrixSource).toContain('Do not call Flutter/mobile gold-ready');
@@ -614,6 +629,14 @@ describe('Renderers delegate to real evidence components', () => {
     expect(flutterLearnerCredentialsTestSource).toContain("collection('credentials')");
     expect(flutterLearnerCredentialsTestSource).toContain("find.text('Evidence provenance')");
     expect(flutterLearnerCredentialsTestSource).toContain("find.text('Other Site Credential'), findsNothing");
+    expect(flutterParentConsentSource).toContain('Active Report Shares');
+    expect(flutterParentConsentSource).toContain('ReportShareRequestService.instance.revoke');
+    expect(flutterParentConsentSource).toContain('Report share revoked.');
+    expect(flutterParentConsentServiceSource).toContain("collection('reportShareRequests')");
+    expect(flutterParentConsentServiceSource).toContain('ParentReportShareRequest');
+    expect(flutterParentConsentTestSource).toContain('parent consent page manages active report share revocation');
+    expect(flutterParentConsentTestSource).toContain('share-hidden-1');
+    expect(flutterParentConsentTestSource).toContain('revokeReportShareRequest');
     expect(firestoreRulesTestSource).toContain('partner can create own evidence-backed deliverable for a contract');
     expect(firestoreRulesTestSource).toContain('partner cannot create deliverable for another partner or accept it directly');
     expect(firestoreRulesTestSource).toContain('educator cannot issue credential without evidence provenance or as another issuer');
