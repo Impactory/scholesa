@@ -534,6 +534,18 @@ describe('Renderers delegate to real evidence components', () => {
       path.join(process.cwd(), 'apps', 'empire_flutter', 'app', 'test', 'learner_today_page_test.dart'),
       'utf8'
     );
+    const flutterCheckpointPageSource = fs.readFileSync(
+      path.join(process.cwd(), 'apps', 'empire_flutter', 'app', 'lib', 'modules', 'learner', 'checkpoint_submission_page.dart'),
+      'utf8'
+    );
+    const flutterCheckpointTestSource = fs.readFileSync(
+      path.join(process.cwd(), 'apps', 'empire_flutter', 'app', 'test', 'checkpoint_submission_page_test.dart'),
+      'utf8'
+    );
+    const flutterSyncCoordinatorTestSource = fs.readFileSync(
+      path.join(process.cwd(), 'apps', 'empire_flutter', 'app', 'test', 'sync_coordinator_test.dart'),
+      'utf8'
+    );
     const flutterParentConsentSource = fs.readFileSync(
       path.join(process.cwd(), 'apps', 'empire_flutter', 'app', 'lib', 'modules', 'parent', 'parent_consent_page.dart'),
       'utf8'
@@ -570,6 +582,7 @@ describe('Renderers delegate to real evidence components', () => {
     expect(flutterMobilePlanSource).toContain('Learner credential evidence provenance');
     expect(flutterMobilePlanSource).toContain('Parent active report-share revocation');
     expect(flutterMobilePlanSource).toContain('Learner today classroom evidence actions');
+    expect(flutterMobilePlanSource).toContain('Learner checkpoint same-site capture');
     expect(flutterMobilePlanSource).toContain('The next highest-risk break is **approved deploy rehearsal reproducibility**.');
     expect(flutterMobilePlanSource).toContain('`./scripts/deploy.sh release-gate` now passes without deploying');
     expect(flutterMobilePlanSource).toContain('The full `all` target now runs the Flutter gate before any live deploy action.');
@@ -604,6 +617,7 @@ describe('Renderers delegate to real evidence components', () => {
     expect(flutterMobileRouteMatrixSource).toContain('Learner credential evidence provenance** passed after this matrix');
     expect(flutterMobileRouteMatrixSource).toContain('Parent active report-share revocation** passed after this matrix');
     expect(flutterMobileRouteMatrixSource).toContain('Learner today classroom evidence-action proof** passed after this matrix');
+    expect(flutterMobileRouteMatrixSource).toContain('Learner checkpoint same-site mobile capture proof** passed after this matrix');
     expect(flutterMobileRouteMatrixSource).toContain('Non-deploying release script gate** passed after route-level blocker closure');
     expect(flutterMobileRouteMatrixSource).toContain('Proceed to approved live or no-traffic deploy rehearsal reproducibility.');
     expect(flutterMobileRouteMatrixSource).toContain('Do not call Flutter/mobile gold-ready');
@@ -639,6 +653,13 @@ describe('Renderers delegate to real evidence components', () => {
     expect(flutterLearnerTodayTestSource).toContain("find.text('My Evidence Loop')");
     expect(flutterLearnerTodayTestSource).toContain("find.text('What evidence I have shown')");
     expect(flutterLearnerTodayTestSource).toContain('expect(tester.takeException(), isNull)');
+    expect(flutterCheckpointPageSource).toContain("where('siteId', isEqualTo: siteId)");
+    expect(flutterCheckpointTestSource).toContain('checkpoint page captures same-site learner response on classroom mobile width');
+    expect(flutterCheckpointTestSource).toContain('Other-site checkpoint should stay hidden');
+    expect(flutterCheckpointTestSource).toContain("collection('checkpointHistory')");
+    expect(flutterCheckpointTestSource).toContain('expect(tester.takeException(), isNull)');
+    expect(flutterSyncCoordinatorTestSource).toContain('checkpointSubmit captures history and routes eligible mastery');
+    expect(flutterSyncCoordinatorTestSource).toContain("httpsCallable('processCheckpointMasteryUpdate')");
     expect(flutterParentConsentSource).toContain('Active Report Shares');
     expect(flutterParentConsentSource).toContain('ReportShareRequestService.instance.revoke');
     expect(flutterParentConsentSource).toContain('Report share revoked.');

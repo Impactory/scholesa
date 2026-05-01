@@ -54,8 +54,7 @@ class _CheckpointSubmissionPageState extends State<CheckpointSubmissionPage> {
     super.dispose();
   }
 
-  String _learnerId(AppState appState) =>
-      appState.userId?.trim() ?? '';
+  String _learnerId(AppState appState) => appState.userId?.trim() ?? '';
 
   String _siteId(AppState appState) {
     final String active = appState.activeSiteId?.trim() ?? '';
@@ -76,8 +75,9 @@ class _CheckpointSubmissionPageState extends State<CheckpointSubmissionPage> {
     final AppState appState = context.read<AppState>();
     final FirestoreService? service = _maybeFirestoreService();
     final String learnerId = _learnerId(appState);
+    final String siteId = _siteId(appState);
 
-    if (service == null || learnerId.isEmpty) {
+    if (service == null || learnerId.isEmpty || siteId.isEmpty) {
       if (!mounted) return;
       setState(() {
         _loadError = 'Checkpoint data unavailable right now.';
@@ -96,6 +96,7 @@ class _CheckpointSubmissionPageState extends State<CheckpointSubmissionPage> {
           .firestore
           .collection('checkpointHistory')
           .where('learnerId', isEqualTo: learnerId)
+          .where('siteId', isEqualTo: siteId)
           .orderBy('createdAt', descending: true)
           .get();
 
@@ -157,20 +158,17 @@ class _CheckpointSubmissionPageState extends State<CheckpointSubmissionPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor:
-            isError ? Theme.of(context).colorScheme.error : null,
+        backgroundColor: isError ? Theme.of(context).colorScheme.error : null,
       ),
     );
   }
 
   TextEditingController _responseController(String id) {
-    return _responseControllers.putIfAbsent(
-        id, () => TextEditingController());
+    return _responseControllers.putIfAbsent(id, () => TextEditingController());
   }
 
   TextEditingController _explainController(String id) {
-    return _explainControllers.putIfAbsent(
-        id, () => TextEditingController());
+    return _explainControllers.putIfAbsent(id, () => TextEditingController());
   }
 
   @override
@@ -242,12 +240,12 @@ class _CheckpointSubmissionPageState extends State<CheckpointSubmissionPage> {
             Row(
               children: <Widget>[
                 Icon(
-                  isCompleted ? Icons.check_circle : Icons.radio_button_unchecked,
+                  isCompleted
+                      ? Icons.check_circle
+                      : Icons.radio_button_unchecked,
                   size: 20,
                   color: isCompleted
-                      ? (checkpoint.isCorrect
-                          ? colors.primary
-                          : colors.error)
+                      ? (checkpoint.isCorrect ? colors.primary : colors.error)
                       : colors.outline,
                 ),
                 const SizedBox(width: 8.0),
@@ -298,7 +296,9 @@ class _CheckpointSubmissionPageState extends State<CheckpointSubmissionPage> {
               ),
               if (checkpoint.explainItBackRequired &&
                   checkpoint.explainItBackResponse != null &&
-                  checkpoint.explainItBackResponse!.trim().isNotEmpty) ...<Widget>[
+                  checkpoint.explainItBackResponse!
+                      .trim()
+                      .isNotEmpty) ...<Widget>[
                 const SizedBox(height: 8.0),
                 Text(
                   _t('Explain-it-back:'),
@@ -368,8 +368,7 @@ class _CheckpointSubmissionPageState extends State<CheckpointSubmissionPage> {
                   padding: const EdgeInsets.only(bottom: 8.0),
                   child: Row(
                     children: <Widget>[
-                      Icon(Icons.info_outline,
-                          size: 16, color: colors.primary),
+                      Icon(Icons.info_outline, size: 16, color: colors.primary),
                       const SizedBox(width: 4.0),
                       Expanded(
                         child: Text(
@@ -415,8 +414,7 @@ class _CheckpointSubmissionPageState extends State<CheckpointSubmissionPage> {
                       ? const SizedBox(
                           width: 20,
                           height: 20,
-                          child:
-                              CircularProgressIndicator(strokeWidth: 2),
+                          child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : Text(_t('Submit')),
                 ),
@@ -429,8 +427,7 @@ class _CheckpointSubmissionPageState extends State<CheckpointSubmissionPage> {
   }
 
   Future<void> _submitExplainItBack(CheckpointModel checkpoint) async {
-    final String explanation =
-        _explainController(checkpoint.id).text.trim();
+    final String explanation = _explainController(checkpoint.id).text.trim();
     if (explanation.isEmpty) {
       _showSnackBar(_t('Please write your explanation.'), isError: true);
       return;
