@@ -1,3 +1,4 @@
+import type { Page } from '@playwright/test';
 import { buildImportBundle } from '../../scripts/import_synthetic_data';
 
 export const WEB_MILOOS_SYNTHETIC_IDS = {
@@ -15,8 +16,16 @@ type CanonicalBundle = {
 
 type CanonicalSyntheticManifest = {
   siteId: string;
+  sourcePack?: string;
   states: Record<string, string>;
   noMasteryWrites: boolean;
+  modeSupport?: string[];
+  usage?: string;
+};
+
+type MiloOSGoldWebSeed = {
+  interactionEvents: Array<Record<string, unknown>>;
+  syntheticStates: Array<Record<string, unknown>>;
 };
 
 function collectionMap(bundle: CanonicalBundle, name: string): Map<string, Record<string, unknown>> {
@@ -80,6 +89,10 @@ function interactionIdFor(event: Record<string, unknown>): string | undefined {
 }
 
 export function canonicalMiloOSGoldWebEvents(): Array<Record<string, unknown>> {
+  return canonicalMiloOSGoldWebSeed().interactionEvents;
+}
+
+export function canonicalMiloOSGoldWebSeed(): MiloOSGoldWebSeed {
   const bundle = buildImportBundle({ mode: 'starter' }) as CanonicalBundle;
   const manifest = canonicalManifest(bundle);
   const interactionEvents = collectionMap(bundle, 'interactionEvents');
@@ -88,7 +101,25 @@ export function canonicalMiloOSGoldWebEvents(): Array<Record<string, unknown>> {
     throw new Error('Canonical MiloOS synthetic manifest no longer matches web E2E expectations.');
   }
 
-  return Array.from(interactionEvents.entries()).map(([id, event]) => {
+  const mappedStates = {
+    ...manifest.states,
+    pendingExplainBackLearnerId: WEB_MILOOS_SYNTHETIC_IDS.pendingExplainBackLearnerId,
+    supportCurrentLearnerId: WEB_MILOOS_SYNTHETIC_IDS.supportCurrentLearnerId,
+    crossSiteDenialLearnerId: WEB_MILOOS_SYNTHETIC_IDS.crossSiteDenialLearnerId,
+    missingSiteDenialLearnerId: WEB_MILOOS_SYNTHETIC_IDS.missingSiteDenialLearnerId,
+  };
+
+  const syntheticStates = [{
+    id: 'latest',
+    siteId: WEB_MILOOS_SYNTHETIC_IDS.siteId,
+    sourcePack: manifest.sourcePack || 'miloos-gold-readiness',
+    noMasteryWrites: manifest.noMasteryWrites,
+    states: mappedStates,
+    modeSupport: manifest.modeSupport,
+    usage: manifest.usage,
+  }];
+
+  const mappedEvents = Array.from(interactionEvents.entries()).map(([id, event]) => {
     const learnerId = mappedLearnerId(event.learnerId ?? event.actorId, manifest);
     const timestamp = timestampIso(event.timestamp) || timestampIso(event.createdAt);
     const payload = event.payload as Record<string, unknown> | undefined;
@@ -104,4 +135,23 @@ export function canonicalMiloOSGoldWebEvents(): Array<Record<string, unknown>> {
       mode: typeof payload?.mode === 'string' ? payload.mode : undefined,
     };
   });
+
+  return {
+    interactionEvents: mappedEvents,
+    syntheticStates,
+  };
+}
+
+export async function seedCanonicalMiloOSGoldWebState(page: Page): Promise<void> {
+  await page.evaluate((seed) => {
+    const harness = (window as Window & {
+      __scholesaE2E?: {
+        seedInteractionEvents: (events: Array<Record<string, unknown>>) => void;
+        seedSyntheticMiloOSGoldStates?: (records: Array<Record<string, unknown>>) => void;
+      };
+    }).__scholesaE2E;
+
+    harness?.seedSyntheticMiloOSGoldStates?.(seed.syntheticStates);
+    harness?.seedInteractionEvents(seed.interactionEvents);
+  }, canonicalMiloOSGoldWebSeed());
 }

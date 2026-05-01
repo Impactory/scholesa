@@ -174,6 +174,8 @@ Completed 2026-05-01: `synthetic_miloos_gold_states_mobile_test.dart` now loads 
 
 Completed 2026-05-01: web MiloOS Playwright proofs now derive support events through `test/e2e/miloos-synthetic-gold-fixture.ts`, which calls the same `buildImportBundle({ mode: 'starter' })` synthetic importer and maps the canonical `syntheticMiloOSGoldStates/latest` support turns into the existing browser E2E users. Educator, guardian, site, WCAG, and phone-width classroom proofs now consume importer-derived pending, current, cross-site, and missing-site states instead of local ad hoc support arrays.
 
+Completed 2026-05-01: learner-facing web and Flutter support summaries now expose MiloOS coach responses as support provenance alongside opened, used, explained, and pending counts. This keeps learner usability consistent with site support-health reporting while preserving the boundary that coach responses are not capability mastery or growth.
+
 Candidate files:
 
 - `firestore_seed.ts`
@@ -188,6 +190,7 @@ npm run test:integration:rules
 npm run test:integration:evidence-chain
 cd apps/empire_flutter/app && flutter test test/synthetic_miloos_gold_states_mobile_test.dart
 npx playwright test test/e2e/miloos-educator-support-provenance.e2e.spec.ts test/e2e/miloos-site-support-health.e2e.spec.ts test/e2e/miloos-guardian-support-provenance.e2e.spec.ts test/e2e/miloos-mobile-classroom.e2e.spec.ts test/e2e/miloos-accessibility.e2e.spec.ts
+cd apps/empire_flutter/app && flutter test test/bos_insights_cards_test.dart
 ```
 
 ## Milestone 8 - Flutter Scope Decision

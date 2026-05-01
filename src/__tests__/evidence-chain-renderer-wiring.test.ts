@@ -533,6 +533,10 @@ describe('Renderers delegate to real evidence components', () => {
       path.join(process.cwd(), 'apps', 'empire_flutter', 'app', 'lib', 'runtime', 'bos_learner_loop_insights_card.dart'),
       'utf8'
     );
+    const flutterBosTestSource = fs.readFileSync(
+      path.join(process.cwd(), 'apps', 'empire_flutter', 'app', 'test', 'bos_insights_cards_test.dart'),
+      'utf8'
+    );
     const flutterEducatorSource = fs.readFileSync(
       path.join(process.cwd(), 'apps', 'empire_flutter', 'app', 'lib', 'modules', 'educator', 'educator_learner_supports_page.dart'),
       'utf8'

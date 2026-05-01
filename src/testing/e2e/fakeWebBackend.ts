@@ -136,7 +136,7 @@ type MarketplaceListingRecord = {
 
 type InteractionEventRecord = {
   id: string;
-  siteId: string;
+  siteId: string | null;
   actorId: string;
   learnerId?: string;
   eventType: string;
@@ -150,7 +150,7 @@ type InteractionEventRecord = {
 
 type SeedInteractionEventInput = {
   id?: string;
-  siteId: string;
+  siteId: string | null;
   actorId: string;
   learnerId?: string;
   eventType: string;
@@ -161,6 +161,18 @@ type SeedInteractionEventInput = {
   studentInput?: string;
   explainBack?: string;
 };
+
+type SyntheticMiloOSGoldStateRecord = {
+  id: string;
+  siteId: string;
+  sourcePack: string;
+  noMasteryWrites: boolean;
+  states: Record<string, string>;
+  modeSupport?: string[];
+  usage?: string;
+};
+
+type SeedSyntheticMiloOSGoldStateInput = SyntheticMiloOSGoldStateRecord;
 
 type StoreState = {
   users: SeedUser[];
@@ -176,6 +188,7 @@ type StoreState = {
   missionAttempts: MissionAttemptRecord[];
   marketplaceListings: MarketplaceListingRecord[];
   interactionEvents: InteractionEventRecord[];
+  syntheticMiloOSGoldStates: SyntheticMiloOSGoldStateRecord[];
 };
 
 const USERS: SeedUser[] = [
@@ -340,6 +353,7 @@ function defaultState(): StoreState {
     missionAttempts: [],
     marketplaceListings: [],
     interactionEvents: [],
+    syntheticMiloOSGoldStates: [],
   };
 }
 
@@ -590,6 +604,20 @@ export function seedE2EInteractionEvents(events: SeedInteractionEventInput[]): v
       explainBack: input.explainBack,
     });
   });
+  writeStore(state);
+}
+
+export function seedE2ESyntheticMiloOSGoldStates(
+  records: SeedSyntheticMiloOSGoldStateInput[]
+): void {
+  const state = readStore();
+  const nextById = new Map(
+    state.syntheticMiloOSGoldStates.map((record) => [record.id, record])
+  );
+  records.forEach((record) => {
+    nextById.set(record.id, cloneState(record));
+  });
+  state.syntheticMiloOSGoldStates = Array.from(nextById.values());
   writeStore(state);
 }
 

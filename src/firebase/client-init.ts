@@ -153,6 +153,7 @@ if (typeof window !== 'undefined' && isE2ETestMode) {
       currentUid: () => string | null;
       getCollection: (collectionName: string) => Array<Record<string, unknown>>;
       seedInteractionEvents: (events: Array<Record<string, unknown>>) => void;
+      seedSyntheticMiloOSGoldStates: (records: Array<Record<string, unknown>>) => void;
     };
   }).__scholesaE2E = {
     signInAs: async (uid: string, locale?: string) => {
@@ -171,6 +172,9 @@ if (typeof window !== 'undefined' && isE2ETestMode) {
     getCollection: (collectionName: string) => e2eBackendModule?.getE2ECollection(collectionName) ?? [],
     seedInteractionEvents: (events: Array<Record<string, unknown>>) => {
       e2eBackendModule?.seedE2EInteractionEvents(events as Parameters<E2EBackendModule['seedE2EInteractionEvents']>[0]);
+    },
+    seedSyntheticMiloOSGoldStates: (records: Array<Record<string, unknown>>) => {
+      e2eBackendModule?.seedE2ESyntheticMiloOSGoldStates(records as Parameters<E2EBackendModule['seedE2ESyntheticMiloOSGoldStates']>[0]);
     },
   };
 }
