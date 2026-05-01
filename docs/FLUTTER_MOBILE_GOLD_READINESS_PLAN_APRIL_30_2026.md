@@ -32,6 +32,7 @@ Do not promote Flutter/mobile to gold-ready because a widget renders or a focuse
 | Parent active report-share revocation | Passed | `parent_consent_page_test.dart` proves linked guardians see same-site active evidence-bearing report shares for their learner, exclude unrelated, other-site, and revoked shares, revoke an active share through the server-owned `revokeReportShareRequest` callable without deleting the lifecycle record, and keep the share visible/active when revocation fails. |
 | Learner today classroom evidence actions | Passed | `learner_today_page_test.dart` proves `/learner/today` renders the current evidence loop, habit action, and active mission progress at 390px classroom width without layout overflow. |
 | Learner checkpoint same-site capture | Passed | `checkpoint_submission_page_test.dart` proves `/learner/checkpoints` renders only same-site checkpoint prompts at 390px classroom width and captures learner responses into active-site `checkpointHistory`; `sync_coordinator_test.dart` pins eligible offline checkpoint replay to `processCheckpointMasteryUpdate` instead of direct mastery writes. |
+| Learner reflection portfolio provenance | Passed | `reflection_journal_page_test.dart` proves `/learner/reflections` reads only active-site `learnerReflections` and renders mission, session, and portfolio provenance at 390px classroom width without presenting reflection capture as mastery. |
 | Analyzer | Passed for current mobile slice | `flutter analyze` is clean after the MiloOS mobile parity changes. |
 
 Focused proof commands that passed:

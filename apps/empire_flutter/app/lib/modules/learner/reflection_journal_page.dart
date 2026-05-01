@@ -74,8 +74,9 @@ class _ReflectionJournalPageState extends State<ReflectionJournalPage> {
     final AppState appState = context.read<AppState>();
     final FirestoreService? service = _maybeFirestoreService();
     final String learnerId = _learnerId(appState);
+    final String siteId = _siteId(appState);
 
-    if (service == null || learnerId.isEmpty) {
+    if (service == null || learnerId.isEmpty || siteId.isEmpty) {
       if (!mounted) return;
       setState(() {
         _loadError = 'Reflection data unavailable right now.';
@@ -94,6 +95,7 @@ class _ReflectionJournalPageState extends State<ReflectionJournalPage> {
           .firestore
           .collection('learnerReflections')
           .where('learnerId', isEqualTo: learnerId)
+          .where('siteId', isEqualTo: siteId)
           .orderBy('createdAt', descending: true)
           .get();
 
@@ -460,9 +462,61 @@ class _ReflectionJournalPageState extends State<ReflectionJournalPage> {
                   ),
                 ),
             ],
+            if (_hasProvenance(reflection)) ...<Widget>[
+              const SizedBox(height: 10.0),
+              _buildProvenanceChips(reflection, colors, theme),
+            ],
           ],
         ),
       ),
+    );
+  }
+
+  bool _hasProvenance(ReflectionEntryModel reflection) {
+    return (reflection.missionId?.trim().isNotEmpty ?? false) ||
+        (reflection.portfolioItemId?.trim().isNotEmpty ?? false) ||
+        (reflection.sessionId?.trim().isNotEmpty ?? false);
+  }
+
+  Widget _buildProvenanceChips(
+    ReflectionEntryModel reflection,
+    ColorScheme colors,
+    ThemeData theme,
+  ) {
+    final List<String> labels = <String>[
+      if (reflection.missionId?.trim().isNotEmpty ?? false)
+        _t('Mission-linked reflection'),
+      if (reflection.portfolioItemId?.trim().isNotEmpty ?? false)
+        _t('Portfolio-linked reflection'),
+      if (reflection.sessionId?.trim().isNotEmpty ?? false)
+        _t('Session-linked reflection'),
+    ];
+
+    return Wrap(
+      spacing: 8.0,
+      runSpacing: 8.0,
+      children: labels
+          .map(
+            (String label) => Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+              decoration: BoxDecoration(
+                color: colors.secondaryContainer.withValues(alpha: 0.72),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(
+                  color: colors.outlineVariant.withValues(alpha: 0.7),
+                ),
+              ),
+              child: Text(
+                label,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: colors.onSecondaryContainer,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          )
+          .toList(),
     );
   }
 

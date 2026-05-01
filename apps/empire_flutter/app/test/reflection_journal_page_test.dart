@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -12,9 +13,9 @@ import 'package:scholesa_app/services/firestore_service.dart';
 class _MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
 class _CapturingFirestoreService extends FirestoreService {
-  _CapturingFirestoreService()
+  _CapturingFirestoreService({FakeFirebaseFirestore? firestore})
       : super(
-          firestore: FakeFirebaseFirestore(),
+          firestore: firestore ?? FakeFirebaseFirestore(),
           auth: _MockFirebaseAuth(),
         );
 
@@ -64,8 +65,12 @@ AppState _buildLearnerState() {
   return state;
 }
 
-Future<_CapturingFirestoreService> _pumpPage(WidgetTester tester) async {
-  final _CapturingFirestoreService service = _CapturingFirestoreService();
+Future<_CapturingFirestoreService> _pumpPage(
+  WidgetTester tester, {
+  FakeFirebaseFirestore? firestore,
+}) async {
+  final _CapturingFirestoreService service =
+      _CapturingFirestoreService(firestore: firestore);
 
   await tester.pumpWidget(
     MultiProvider(
@@ -81,6 +86,33 @@ Future<_CapturingFirestoreService> _pumpPage(WidgetTester tester) async {
 
   await tester.pumpAndSettle();
   return service;
+}
+
+Future<void> _seedReflections(FakeFirebaseFirestore firestore) async {
+  await firestore.collection('learnerReflections').doc('reflection-site-1').set(
+    <String, dynamic>{
+      'learnerId': 'learner-1',
+      'siteId': 'site-1',
+      'missionId': 'mission-1',
+      'portfolioItemId': 'portfolio-1',
+      'sessionId': 'session-1',
+      'prompt': 'What evidence belongs in my portfolio?',
+      'response': 'The second prototype photo shows clearer water.',
+      'aiAssistanceUsed': false,
+      'createdAt': Timestamp.fromDate(DateTime(2026, 5, 1, 10)),
+    },
+  );
+  await firestore.collection('learnerReflections').doc('reflection-site-2').set(
+    <String, dynamic>{
+      'learnerId': 'learner-1',
+      'siteId': 'site-2',
+      'missionId': 'mission-other-site',
+      'portfolioItemId': 'portfolio-other-site',
+      'prompt': 'Other-site reflection should stay hidden',
+      'response': 'This belongs to another site.',
+      'createdAt': Timestamp.fromDate(DateTime(2026, 5, 1, 11)),
+    },
+  );
 }
 
 void main() {
@@ -125,5 +157,28 @@ void main() {
       service.lastSubmitPayload!['aiAssistanceDetails'],
       'Used Scholesa AI coach to draft my first outline.',
     );
+  });
+
+  testWidgets(
+      'reflection journal renders same-site portfolio provenance on classroom mobile width',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedReflections(firestore);
+
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await _pumpPage(tester, firestore: firestore);
+
+    expect(find.text('Reflection Journal'), findsOneWidget);
+    expect(find.text('What evidence belongs in my portfolio?'), findsOneWidget);
+    expect(
+      find.text('The second prototype photo shows clearer water.'),
+      findsOneWidget,
+    );
+    expect(find.text('Mission-linked reflection'), findsOneWidget);
+    expect(find.text('Portfolio-linked reflection'), findsOneWidget);
+    expect(find.text('Session-linked reflection'), findsOneWidget);
+    expect(find.text('Other-site reflection should stay hidden'), findsNothing);
+    expect(tester.takeException(), isNull);
   });
 }
