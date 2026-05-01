@@ -88,7 +88,7 @@ These routes are enabled and useful, but they are not sufficient evidence-chain 
 9. **Partner deliverable evidence output trust** passed after this matrix via `partner_deliverables_page_test.dart`, `partner_contracting_workflow_test.dart`, and 116 Firestore rules tests, proving partner/site/contract/evidence provenance and blocking partner self-acceptance.
 10. **Learner credential evidence provenance** passed after this matrix via `learner_credentials_page_test.dart` and 118 Firestore rules tests, proving source evidence, issuer, learner ownership, site scoping, portfolio/proof/growth/rubric links, and evidence-required issuance.
 11. **Flutter `/learner/miloos` route parity** passed after this matrix via `test/web-route-parity.test.ts` and `test/workflow-security-contract.test.ts`; Flutter now registers/routes the learner support surface, and the web workflow data loader calls `bosGetLearnerLoopInsights` for support-loop provenance.
-12. **Parent active report-share revocation** passed after this matrix via `parent_consent_page_test.dart`, proving linked guardians see active report-share lifecycle records for their learner, exclude unrelated or revoked shares, and revoke active shares through the existing server-owned callable boundary.
+12. **Parent active report-share revocation** passed after this matrix via `parent_consent_page_test.dart`, proving linked guardians see same-site active report-share lifecycle records for their learner, exclude unrelated, other-site, or revoked shares, and revoke active shares through the existing server-owned callable boundary.
 
 ## Next Gate
 

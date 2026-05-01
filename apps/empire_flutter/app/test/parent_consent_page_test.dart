@@ -228,6 +228,27 @@ Future<void> _seedReportShareRequests(FakeFirebaseFirestore firestore) async {
       },
     },
   );
+  await firestore
+      .collection('reportShareRequests')
+      .doc('share-other-site-1')
+      .set(
+    <String, dynamic>{
+      'id': 'share-other-site-1',
+      'siteId': 'site-2',
+      'learnerId': 'learner-1',
+      'createdBy': 'parent-1',
+      'createdByRole': 'parent',
+      'status': 'active',
+      'reportAction': 'share',
+      'audience': 'guardian',
+      'visibility': 'family',
+      'fileName': 'Other Site Evidence Summary',
+      'provenance': <String, dynamic>{
+        'meetsDeliveryContract': true,
+        'meetsProvenanceContract': true,
+      },
+    },
+  );
   await firestore.collection('reportShareRequests').doc('share-revoked-1').set(
     <String, dynamic>{
       'id': 'share-revoked-1',
@@ -318,6 +339,7 @@ void main() {
         expect(find.text('Active Report Shares'), findsOneWidget);
         expect(find.text('Active Shares'), findsOneWidget);
         expect(find.text('Ava Evidence Summary'), findsOneWidget);
+        expect(find.text('Other Site Evidence Summary'), findsNothing);
         expect(find.text('Revoked Passport'), findsNothing);
         expect(find.text('Hidden Learner'), findsNothing);
         expect(find.textContaining('Audience: Guardian'), findsOneWidget);

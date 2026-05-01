@@ -126,8 +126,11 @@ class ParentConsentService {
             .where('parentId', isEqualTo: parentId)
             .limit(1)
             .get();
+    final String? siteId = _nonEmptyOrNull(
+      learnerProfile['siteId'] ?? learnerData['activeSiteId'],
+    );
     final List<ParentReportShareRequest> activeReportShares =
-        await _listActiveReportShares(learnerId);
+        await _listActiveReportShares(learnerId: learnerId, siteId: siteId);
 
     return ParentConsentRecord(
       learnerId: learnerId,
@@ -136,9 +139,7 @@ class ParentConsentService {
         learnerData: learnerData,
         learnerProfile: learnerProfile,
       ),
-      siteId: _nonEmptyOrNull(
-        learnerProfile['siteId'] ?? learnerData['activeSiteId'],
-      ),
+      siteId: siteId,
       mediaConsent: mediaSnapshot.docs.isEmpty
           ? null
           : MediaConsentModel.fromDoc(mediaSnapshot.docs.first),
@@ -150,11 +151,14 @@ class ParentConsentService {
   }
 
   Future<List<ParentReportShareRequest>> _listActiveReportShares(
-    String learnerId,
-  ) async {
+      {required String learnerId, required String? siteId}) async {
+    if ((siteId ?? '').trim().isEmpty) {
+      return const <ParentReportShareRequest>[];
+    }
     final QuerySnapshot<Map<String, dynamic>> sharesSnapshot = await _firestore
         .collection('reportShareRequests')
         .where('learnerId', isEqualTo: learnerId)
+        .where('siteId', isEqualTo: siteId!.trim())
         .get();
     final List<ParentReportShareRequest> shares = sharesSnapshot.docs
         .map(_buildReportShareRequest)
