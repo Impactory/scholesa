@@ -62,8 +62,14 @@ class _ProofAssemblyPageState extends State<ProofAssemblyPage> {
     super.dispose();
   }
 
-  String _learnerId(AppState appState) =>
-      appState.userId?.trim() ?? '';
+  String _learnerId(AppState appState) => appState.userId?.trim() ?? '';
+
+  String _siteId(AppState appState) {
+    final String active = appState.activeSiteId?.trim() ?? '';
+    if (active.isNotEmpty) return active;
+    if (appState.siteIds.isNotEmpty) return appState.siteIds.first.trim();
+    return '';
+  }
 
   FirestoreService? _maybeFirestoreService() {
     try {
@@ -74,26 +80,24 @@ class _ProofAssemblyPageState extends State<ProofAssemblyPage> {
   }
 
   TextEditingController _explainController(String id) {
-    return _explainControllers.putIfAbsent(
-        id, () => TextEditingController());
+    return _explainControllers.putIfAbsent(id, () => TextEditingController());
   }
 
   TextEditingController _rebuildController(String id) {
-    return _rebuildControllers.putIfAbsent(
-        id, () => TextEditingController());
+    return _rebuildControllers.putIfAbsent(id, () => TextEditingController());
   }
 
   TextEditingController _oralController(String id) {
-    return _oralControllers.putIfAbsent(
-        id, () => TextEditingController());
+    return _oralControllers.putIfAbsent(id, () => TextEditingController());
   }
 
   Future<void> _loadData() async {
     final AppState appState = context.read<AppState>();
     final FirestoreService? service = _maybeFirestoreService();
     final String learnerId = _learnerId(appState);
+    final String siteId = _siteId(appState);
 
-    if (service == null || learnerId.isEmpty) {
+    if (service == null || learnerId.isEmpty || siteId.isEmpty) {
       if (!mounted) return;
       setState(() {
         _loadError = 'Portfolio data unavailable right now.';
@@ -113,6 +117,7 @@ class _ProofAssemblyPageState extends State<ProofAssemblyPage> {
         service.firestore
             .collection('portfolioItems')
             .where('learnerId', isEqualTo: learnerId)
+            .where('siteId', isEqualTo: siteId)
             .orderBy('createdAt', descending: true)
             .get(),
         service.firestore
@@ -130,6 +135,8 @@ class _ProofAssemblyPageState extends State<ProofAssemblyPage> {
           .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
               PortfolioItemModel.fromDoc(doc))
           .toList();
+      final Set<String> activePortfolioItemIds =
+          items.map((PortfolioItemModel item) => item.id).toSet();
 
       final Map<String, ProofOfLearningBundleModel> bundles =
           <String, ProofOfLearningBundleModel>{};
@@ -137,7 +144,9 @@ class _ProofAssemblyPageState extends State<ProofAssemblyPage> {
           in bundlesSnapshot.docs) {
         final ProofOfLearningBundleModel bundle =
             ProofOfLearningBundleModel.fromDoc(doc);
-        bundles[bundle.portfolioItemId] = bundle;
+        if (activePortfolioItemIds.contains(bundle.portfolioItemId)) {
+          bundles[bundle.portfolioItemId] = bundle;
+        }
       }
 
       // Pre-populate controllers with existing excerpts.
@@ -200,31 +209,29 @@ class _ProofAssemblyPageState extends State<ProofAssemblyPage> {
           hasExplainItBack: explainText.isNotEmpty,
           hasMiniRebuild: rebuildText.isNotEmpty,
           hasOralCheck: oralText.isNotEmpty,
-          explainItBackExcerpt:
-              explainText.isNotEmpty ? explainText : null,
-          oralCheckExcerpt:
-              oralText.isNotEmpty ? oralText : null,
-          miniRebuildExcerpt:
-              rebuildText.isNotEmpty ? rebuildText : null,
+          explainItBackExcerpt: explainText.isNotEmpty ? explainText : null,
+          oralCheckExcerpt: oralText.isNotEmpty ? oralText : null,
+          miniRebuildExcerpt: rebuildText.isNotEmpty ? rebuildText : null,
         );
       } else {
         // Create new bundle, then update with content.
         final String bundleId = await service.createProofOfLearningBundle(
           learnerId: learnerId,
           portfolioItemId: item.id,
+          capabilityId:
+              item.capabilityIds.isNotEmpty ? item.capabilityIds.first : null,
         );
-        if (explainText.isNotEmpty || rebuildText.isNotEmpty || oralText.isNotEmpty) {
+        if (explainText.isNotEmpty ||
+            rebuildText.isNotEmpty ||
+            oralText.isNotEmpty) {
           await service.updateProofOfLearningBundle(
             bundleId: bundleId,
             hasExplainItBack: explainText.isNotEmpty,
             hasMiniRebuild: rebuildText.isNotEmpty,
             hasOralCheck: oralText.isNotEmpty,
-            explainItBackExcerpt:
-                explainText.isNotEmpty ? explainText : null,
-            oralCheckExcerpt:
-                oralText.isNotEmpty ? oralText : null,
-            miniRebuildExcerpt:
-                rebuildText.isNotEmpty ? rebuildText : null,
+            explainItBackExcerpt: explainText.isNotEmpty ? explainText : null,
+            oralCheckExcerpt: oralText.isNotEmpty ? oralText : null,
+            miniRebuildExcerpt: rebuildText.isNotEmpty ? rebuildText : null,
           );
         }
       }
@@ -243,8 +250,7 @@ class _ProofAssemblyPageState extends State<ProofAssemblyPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor:
-            isError ? Theme.of(context).colorScheme.error : null,
+        backgroundColor: isError ? Theme.of(context).colorScheme.error : null,
       ),
     );
   }
@@ -514,8 +520,7 @@ class _ProofAssemblyPageState extends State<ProofAssemblyPage> {
                           ? const SizedBox(
                               width: 18,
                               height: 18,
-                              child: CircularProgressIndicator(
-                                  strokeWidth: 2),
+                              child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : const Icon(Icons.save, size: 18),
                       label: Text(

@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:scholesa_app/offline/offline_queue.dart';
@@ -521,6 +523,72 @@ void main() {
         proofSection,
         contains('StateError'),
         reason: 'proofBundleUpdate must throw on empty bundleId',
+      );
+    });
+
+    test('proofBundleCreate and proofBundleUpdate replay to proof bundles',
+        () async {
+      final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+      when(() => mockFirestore.firestore).thenReturn(firestore);
+
+      final SyncCoordinator coordinator = SyncCoordinator(
+        queue: mockQueue,
+        firestoreService: mockFirestore,
+        connectivity: mockConnectivity,
+      );
+
+      await coordinator.processOperation(
+        QueuedOp(
+          type: OpType.proofBundleCreate,
+          idempotencyKey: 'queued-proof-1',
+          payload: <String, dynamic>{
+            'learnerId': 'learner-1',
+            'portfolioItemId': 'portfolio-1',
+            'capabilityId': 'capability-evidence-reasoning',
+            'hasExplainItBack': true,
+            'hasOralCheck': false,
+            'hasMiniRebuild': false,
+            'explainItBackExcerpt': 'I can explain the filter change.',
+            'verificationStatus': 'partial',
+            'version': 1,
+          },
+        ),
+      );
+
+      DocumentSnapshot<Map<String, dynamic>> proofDoc = await firestore
+          .collection('proofOfLearningBundles')
+          .doc('queued-proof-1')
+          .get();
+      expect(proofDoc.exists, isTrue);
+      expect(proofDoc.data()?['portfolioItemId'], 'portfolio-1');
+      expect(proofDoc.data()?['capabilityId'], 'capability-evidence-reasoning');
+      expect(proofDoc.data()?['hasExplainItBack'], true);
+
+      await coordinator.processOperation(
+        QueuedOp(
+          type: OpType.proofBundleUpdate,
+          payload: <String, dynamic>{
+            'bundleId': 'queued-proof-1',
+            'hasExplainItBack': true,
+            'hasOralCheck': true,
+            'hasMiniRebuild': true,
+            'oralCheckExcerpt': 'I explained the design out loud.',
+            'miniRebuildExcerpt': 'I can rebuild the prototype from scratch.',
+            'verificationStatus': 'pending_review',
+          },
+        ),
+      );
+
+      proofDoc = await firestore
+          .collection('proofOfLearningBundles')
+          .doc('queued-proof-1')
+          .get();
+      expect(proofDoc.data()?['hasOralCheck'], true);
+      expect(proofDoc.data()?['hasMiniRebuild'], true);
+      expect(proofDoc.data()?['verificationStatus'], 'pending_review');
+      expect(
+        proofDoc.data()?['miniRebuildExcerpt'],
+        'I can rebuild the prototype from scratch.',
       );
     });
 

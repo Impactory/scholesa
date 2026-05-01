@@ -33,6 +33,7 @@ Do not promote Flutter/mobile to gold-ready because a widget renders or a focuse
 | Learner today classroom evidence actions | Passed | `learner_today_page_test.dart` proves `/learner/today` renders the current evidence loop, habit action, and active mission progress at 390px classroom width without layout overflow. |
 | Learner checkpoint same-site capture | Passed | `checkpoint_submission_page_test.dart` proves `/learner/checkpoints` renders only same-site checkpoint prompts at 390px classroom width and captures learner responses into active-site `checkpointHistory`; `sync_coordinator_test.dart` pins eligible offline checkpoint replay to `processCheckpointMasteryUpdate` instead of direct mastery writes. |
 | Learner reflection portfolio provenance | Passed | `reflection_journal_page_test.dart` proves `/learner/reflections` reads only active-site `learnerReflections` and renders mission, session, and portfolio provenance at 390px classroom width without presenting reflection capture as mastery. |
+| Learner proof assembly small-screen and offline replay | Passed | `proof_assembly_page_test.dart` proves `/learner/proof-assembly` captures Explain-It-Back, Oral Check, and Mini Rebuild into same-site proof bundles at 390px classroom width; `sync_coordinator_test.dart` proves queued proof bundle create/update replay writes `proofOfLearningBundles` without local mastery writes. |
 | Analyzer | Passed for current mobile slice | `flutter analyze` is clean after the MiloOS mobile parity changes. |
 
 Focused proof commands that passed:
