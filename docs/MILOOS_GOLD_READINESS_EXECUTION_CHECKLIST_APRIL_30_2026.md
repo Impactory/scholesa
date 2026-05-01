@@ -174,6 +174,8 @@ Completed 2026-05-01: `synthetic_miloos_gold_states_mobile_test.dart` now loads 
 
 Completed 2026-05-01: web MiloOS Playwright proofs now derive support events through `test/e2e/miloos-synthetic-gold-fixture.ts`, which calls the same `buildImportBundle({ mode: 'starter' })` synthetic importer and maps the canonical `syntheticMiloOSGoldStates/latest` support turns into the existing browser E2E users. Educator, guardian, site, WCAG, and phone-width classroom proofs now consume importer-derived pending, current, cross-site, and missing-site states instead of local ad hoc support arrays.
 
+Updated 2026-05-01: the web browser E2E harness now also stores the mapped `syntheticMiloOSGoldStates/latest` manifest via `seedSyntheticMiloOSGoldStates`, so current web tests can assert the canonical state record is present alongside the importer-derived support events. This closes the event-only fixture gap between web and Flutter fake Firestore.
+
 Completed 2026-05-01: learner-facing web and Flutter support summaries now expose MiloOS coach responses as support provenance alongside opened, used, explained, and pending counts. This keeps learner usability consistent with site support-health reporting while preserving the boundary that coach responses are not capability mastery or growth.
 
 Candidate files:

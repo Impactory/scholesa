@@ -372,11 +372,14 @@ describe('Renderers delegate to real evidence components', () => {
     );
 
     expect(clientInitSource).toContain('seedInteractionEvents');
+    expect(clientInitSource).toContain('seedSyntheticMiloOSGoldStates');
     expect(clientInitSource).toContain('isE2ETestMode');
     expect(fakeBackendSource).toContain('seedE2EInteractionEvents');
-    expect(e2eSource).toContain('canonicalMiloOSGoldWebEvents');
+    expect(fakeBackendSource).toContain('seedE2ESyntheticMiloOSGoldStates');
+    expect(fakeBackendSource).toContain('syntheticMiloOSGoldStates');
+    expect(e2eSource).toContain('seedCanonicalMiloOSGoldWebState');
+    expect(e2eSource).toContain("getCollection('syntheticMiloOSGoldStates')");
     expect(e2eSource).toContain("page.goto('/en/site/dashboard')");
-    expect(e2eSource).toContain('seedInteractionEvents');
     expect(e2eSource).toContain('site-miloos-support-health');
     expect(e2eSource).toContain('not capability mastery');
     expect(e2eSource).toContain('site-miloos-coach-responses');
@@ -403,11 +406,13 @@ describe('Renderers delegate to real evidence components', () => {
 
     expect(fixtureSource).toContain("buildImportBundle({ mode: 'starter' })");
     expect(fixtureSource).toContain('syntheticMiloOSGoldStates');
+    expect(fixtureSource).toContain('canonicalMiloOSGoldWebSeed');
+    expect(fixtureSource).toContain('seedSyntheticMiloOSGoldStates');
     expect(fixtureSource).toContain('noMasteryWrites');
     expect(fixtureSource).toContain('pendingExplainBackLearnerId');
-    expect(educatorE2ESource).toContain('canonicalMiloOSGoldWebEvents');
-    expect(guardianE2ESource).toContain('canonicalMiloOSGoldWebEvents');
-    expect(mobileE2ESource).toContain('canonicalMiloOSGoldWebEvents');
+    expect(educatorE2ESource).toContain('seedCanonicalMiloOSGoldWebState');
+    expect(guardianE2ESource).toContain('seedCanonicalMiloOSGoldWebState');
+    expect(mobileE2ESource).toContain('seedCanonicalMiloOSGoldWebState');
   });
 
   it('MiloOS protected support surfaces have focused WCAG browser coverage', () => {
@@ -426,8 +431,7 @@ describe('Renderers delegate to real evidence components', () => {
     expect(e2eSource).toContain('miloos-support-');
     expect(e2eSource).toContain('guardian-miloos-support-');
     expect(e2eSource).toContain('site-miloos-support-health');
-    expect(e2eSource).toContain('canonicalMiloOSGoldWebEvents');
-    expect(e2eSource).toContain('seedInteractionEvents');
+    expect(e2eSource).toContain('seedCanonicalMiloOSGoldWebState');
   });
 
   it('MiloOS has a cross-role golden path browser proof', () => {
@@ -888,10 +892,10 @@ describe('Renderers delegate to real evidence components', () => {
     expect(source).toContain('trackInteractionRef');
     expect(fakeBackendSource).toContain('getE2EParentDashboardBundle');
     expect(e2eSource).toContain("page.goto('/en/parent/summary')");
-    expect(e2eSource).toContain('seedInteractionEvents');
+    expect(e2eSource).toContain('seedCanonicalMiloOSGoldWebState');
     expect(e2eSource).toContain('guardian-miloos-support-');
     expect(e2eSource).toContain('not capability mastery');
-    expect(e2eSource).toContain('canonicalMiloOSGoldWebEvents');
+    expect(e2eSource).toContain('seedCanonicalMiloOSGoldWebState');
     expect(e2eSource).toContain('WEB_MILOOS_SYNTHETIC_IDS');
   });
 
@@ -1264,10 +1268,10 @@ describe('EducatorAiAuditRenderer motivation feedback wiring', () => {
       'utf8'
     );
     expect(e2eSource).toContain("page.goto('/en/educator/learners')");
-    expect(e2eSource).toContain('seedInteractionEvents');
+    expect(e2eSource).toContain('seedCanonicalMiloOSGoldWebState');
     expect(e2eSource).toContain('miloos-support-');
     expect(e2eSource).toContain('support signals and verification gaps, not capability mastery');
-    expect(e2eSource).toContain('canonicalMiloOSGoldWebEvents');
+    expect(e2eSource).toContain('seedCanonicalMiloOSGoldWebState');
     expect(e2eSource).toContain('WEB_MILOOS_SYNTHETIC_IDS');
   });
 });
