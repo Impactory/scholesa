@@ -12,6 +12,9 @@ export const WEB_MILOOS_SYNTHETIC_IDS = {
 
 type CanonicalBundle = {
   collections: Map<string, Map<string, Record<string, unknown>>>;
+  summary?: {
+    sourceCounts?: Record<string, number>;
+  };
 };
 
 type CanonicalSyntheticManifest = {
@@ -115,6 +118,7 @@ export function canonicalMiloOSGoldWebSeed(): MiloOSGoldWebSeed {
     sourcePack: manifest.sourcePack || 'miloos-gold-readiness',
     noMasteryWrites: manifest.noMasteryWrites,
     states: mappedStates,
+    sourceCounts: bundle.summary?.sourceCounts,
     modeSupport: manifest.modeSupport,
     usage: manifest.usage,
   }];

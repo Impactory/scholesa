@@ -379,6 +379,8 @@ describe('Renderers delegate to real evidence components', () => {
     expect(fakeBackendSource).toContain('syntheticMiloOSGoldStates');
     expect(e2eSource).toContain('seedCanonicalMiloOSGoldWebState');
     expect(e2eSource).toContain("getCollection('syntheticMiloOSGoldStates')");
+    expect(e2eSource).toContain('miloosGoldLearnerStates: 5');
+    expect(e2eSource).toContain('miloosGoldInteractionEvents: 13');
     expect(e2eSource).toContain("page.goto('/en/site/dashboard')");
     expect(e2eSource).toContain('site-miloos-support-health');
     expect(e2eSource).toContain('not capability mastery');
@@ -408,6 +410,7 @@ describe('Renderers delegate to real evidence components', () => {
     expect(fixtureSource).toContain('syntheticMiloOSGoldStates');
     expect(fixtureSource).toContain('canonicalMiloOSGoldWebSeed');
     expect(fixtureSource).toContain('seedSyntheticMiloOSGoldStates');
+    expect(fixtureSource).toContain('sourceCounts: bundle.summary?.sourceCounts');
     expect(fixtureSource).toContain('noMasteryWrites');
     expect(fixtureSource).toContain('pendingExplainBackLearnerId');
     expect(educatorE2ESource).toContain('seedCanonicalMiloOSGoldWebState');

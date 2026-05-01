@@ -64,6 +64,10 @@ test('site dashboard shows MiloOS support health without treating support as mas
       noMasteryWrites: true,
       sourcePack: 'miloos-gold-readiness',
       siteId: 'site-alpha',
+      sourceCounts: expect.objectContaining({
+        miloosGoldLearnerStates: 5,
+        miloosGoldInteractionEvents: 13,
+      }),
     }),
   ]));
 
