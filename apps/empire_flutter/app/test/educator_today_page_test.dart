@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
@@ -63,6 +64,60 @@ Widget _buildHarness({
   );
 }
 
+Widget _buildRouterHarness({
+  required AppState appState,
+  required EducatorService educatorService,
+}) {
+  final GoRouter router = GoRouter(
+    initialLocation: '/educator/today',
+    routes: <RouteBase>[
+      GoRoute(
+        path: '/educator/today',
+        builder: (BuildContext context, GoRouterState state) =>
+            EducatorTodayPage(
+          classInsightsLoader: ({
+            required String sessionOccurrenceId,
+            required String siteId,
+          }) async =>
+              <String, dynamic>{
+            'sessionOccurrenceId': sessionOccurrenceId,
+            'siteId': siteId,
+            'learners': <Map<String, dynamic>>[],
+          },
+        ),
+      ),
+      GoRoute(
+        path: '/educator/observations',
+        builder: (BuildContext context, GoRouterState state) => const Scaffold(
+          body: Center(child: Text('Quick Observation Capture')),
+        ),
+      ),
+    ],
+  );
+
+  return MultiProvider(
+    providers: <SingleChildWidget>[
+      ChangeNotifierProvider<AppState>.value(value: appState),
+      ChangeNotifierProvider<EducatorService>.value(value: educatorService),
+    ],
+    child: MaterialApp.router(
+      theme: ScholesaTheme.light,
+      locale: const Locale('en'),
+      localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const <Locale>[
+        Locale('en'),
+        Locale('zh', 'CN'),
+        Locale('zh', 'TW'),
+      ],
+      routerConfig: router,
+    ),
+  );
+}
+
 Future<void> _scrollUntilVisible(
   WidgetTester tester,
   Finder finder,
@@ -77,6 +132,61 @@ Future<void> _scrollUntilVisible(
 
 void main() {
   testWidgets(
+      'educator today exposes under-10-second evidence capture on classroom mobile width',
+      (WidgetTester tester) async {
+    final AppState appState = _buildAppState();
+    final _MockEducatorService educatorService = _MockEducatorService();
+    final TodayClass currentClass = TodayClass(
+      id: 'occ-1',
+      sessionId: 'session-1',
+      title: 'Robotics Studio',
+      startTime: DateTime(2026, 3, 21, 9),
+      endTime: DateTime(2026, 3, 21, 10),
+      enrolledCount: 12,
+      presentCount: 10,
+      status: 'in_progress',
+    );
+
+    when(() => educatorService.loadTodaySchedule()).thenAnswer((_) async {});
+    when(() => educatorService.loadLearners()).thenAnswer((_) async {});
+    when(() => educatorService.isLoading).thenReturn(false);
+    when(() => educatorService.todayClasses)
+        .thenReturn(<TodayClass>[currentClass]);
+    when(() => educatorService.currentClass).thenReturn(currentClass);
+    when(() => educatorService.learners).thenReturn(const <EducatorLearner>[]);
+    when(() => educatorService.dayStats).thenReturn(
+      const EducatorDayStats(
+        totalClasses: 1,
+        completedClasses: 0,
+        totalLearners: 12,
+        presentLearners: 10,
+        missionsToReview: 0,
+        unreadMessages: 0,
+      ),
+    );
+    when(() => educatorService.siteId).thenReturn('site-1');
+
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    await tester.pumpWidget(
+      _buildRouterHarness(
+        appState: appState,
+        educatorService: educatorService,
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+
+    await _scrollUntilVisible(tester, find.text('Log Evidence'));
+    expect(find.text('Log Evidence'), findsOneWidget);
+    await tester.tap(find.text('Log Evidence'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Quick Observation Capture'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
       'educator today shows honest empty schedule and unavailable stats on mobile',
       (WidgetTester tester) async {
     final AppState appState = _buildAppState();
@@ -87,8 +197,7 @@ void main() {
     when(() => educatorService.isLoading).thenReturn(false);
     when(() => educatorService.todayClasses).thenReturn(const <TodayClass>[]);
     when(() => educatorService.currentClass).thenReturn(null);
-    when(() => educatorService.learners)
-        .thenReturn(const <EducatorLearner>[]);
+    when(() => educatorService.learners).thenReturn(const <EducatorLearner>[]);
     when(() => educatorService.dayStats).thenReturn(null);
     when(() => educatorService.siteId).thenReturn('site-1');
 
@@ -142,8 +251,7 @@ void main() {
     when(() => educatorService.isLoading).thenReturn(false);
     when(() => educatorService.todayClasses).thenReturn(const <TodayClass>[]);
     when(() => educatorService.currentClass).thenReturn(null);
-    when(() => educatorService.learners)
-        .thenReturn(const <EducatorLearner>[]);
+    when(() => educatorService.learners).thenReturn(const <EducatorLearner>[]);
     when(() => educatorService.dayStats).thenReturn(
       const EducatorDayStats(
         totalClasses: 0,
@@ -172,7 +280,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Mission Review Queue'), findsOneWidget);
-    expect(find.text('You have 0 missions pending review today.'), findsOneWidget);
+    expect(
+        find.text('You have 0 missions pending review today.'), findsOneWidget);
     expect(find.text('Open Queue'), findsOneWidget);
   });
 
@@ -187,8 +296,7 @@ void main() {
     when(() => educatorService.isLoading).thenReturn(false);
     when(() => educatorService.todayClasses).thenReturn(const <TodayClass>[]);
     when(() => educatorService.currentClass).thenReturn(null);
-    when(() => educatorService.learners)
-        .thenReturn(const <EducatorLearner>[]);
+    when(() => educatorService.learners).thenReturn(const <EducatorLearner>[]);
     when(() => educatorService.dayStats).thenReturn(null);
     when(() => educatorService.error)
         .thenReturn('Failed to load schedule from test');
@@ -205,7 +313,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     await tester.pumpAndSettle();
 
-    await _scrollUntilVisible(tester, find.text("Unable to load today's schedule"));
+    await _scrollUntilVisible(
+        tester, find.text("Unable to load today's schedule"));
 
     expect(find.text("Unable to load today's schedule"), findsOneWidget);
     expect(
@@ -236,10 +345,10 @@ void main() {
     when(() => educatorService.loadTodaySchedule()).thenAnswer((_) async {});
     when(() => educatorService.loadLearners()).thenAnswer((_) async {});
     when(() => educatorService.isLoading).thenReturn(false);
-    when(() => educatorService.todayClasses).thenReturn(<TodayClass>[staleClass]);
+    when(() => educatorService.todayClasses)
+        .thenReturn(<TodayClass>[staleClass]);
     when(() => educatorService.currentClass).thenReturn(null);
-    when(() => educatorService.learners)
-        .thenReturn(const <EducatorLearner>[]);
+    when(() => educatorService.learners).thenReturn(const <EducatorLearner>[]);
     when(() => educatorService.dayStats).thenReturn(
       const EducatorDayStats(
         totalClasses: 1,

@@ -53,121 +53,123 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
 
   @override
   Widget build(BuildContext context) {
-    return MiloRuntimeScope(child: Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: <Color>[
-              ScholesaColors.educator.withValues(alpha: 0.05),
-              context.schSurface,
-              const Color(0xFF10B981).withValues(alpha: 0.03),
-            ],
+    return MiloRuntimeScope(
+      child: Scaffold(
+        body: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: <Color>[
+                ScholesaColors.educator.withValues(alpha: 0.05),
+                context.schSurface,
+                const Color(0xFF10B981).withValues(alpha: 0.03),
+              ],
+            ),
+          ),
+          child: Consumer<EducatorService>(
+            builder: (BuildContext context, EducatorService service, _) {
+              if (service.isLoading) {
+                return const Center(
+                  child:
+                      CircularProgressIndicator(color: ScholesaColors.educator),
+                );
+              }
+
+              return CustomScrollView(
+                slivers: <Widget>[
+                  SliverToBoxAdapter(child: _buildHeader()),
+                  SliverToBoxAdapter(child: _buildAiCoachingSection(context)),
+                  SliverToBoxAdapter(
+                    child: BosClassInsightsCard(
+                      title: BosCoachingI18n.classInsightsTitle(context),
+                      subtitle: BosCoachingI18n.classInsightsSubtitle(context),
+                      emptyLabel: BosCoachingI18n.classInsightsEmpty(context),
+                      sessionOccurrenceId:
+                          _sessionOccurrenceIdForInsights(service),
+                      siteId: _siteIdForInsights(service),
+                      learnerNamesById: <String, String>{
+                        for (final EducatorLearner learner in service.learners)
+                          learner.id: learner.name,
+                      },
+                      accentColor: ScholesaColors.educator,
+                      insightsLoader: widget.classInsightsLoader,
+                    ),
+                  ),
+                  SliverToBoxAdapter(child: _buildQuickStats(service)),
+                  SliverToBoxAdapter(child: _buildQuickActions()),
+                  if (service.error != null && service.todayClasses.isNotEmpty)
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                        child: _EducatorStatusBanner(
+                          message: _tEducatorToday(context,
+                                  'Unable to refresh today\'s schedule right now. Showing the last successful data. ') +
+                              service.error!,
+                        ),
+                      ),
+                    ),
+                  SliverToBoxAdapter(child: _buildCurrentClass(service)),
+                  SliverToBoxAdapter(child: _buildScheduleHeader()),
+                  if (service.error != null && service.todayClasses.isEmpty)
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                        child: _buildScheduleLoadErrorCard(service.error!),
+                      ),
+                    )
+                  else if (service.todayClasses.isEmpty)
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.grey.shade200),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text(
+                                _tEducatorToday(
+                                    context, 'No classes scheduled yet'),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                _tEducatorToday(context,
+                                    'Add or sync classes to populate today’s schedule.'),
+                                style: TextStyle(
+                                    color: Colors.grey[700], fontSize: 12),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (BuildContext context, int index) => _ClassCard(
+                        todayClass: service.todayClasses[index],
+                        onTap: () =>
+                            _openClassDetail(service.todayClasses[index]),
+                      ),
+                      childCount: service.todayClasses.length,
+                    ),
+                  ),
+                  const SliverPadding(padding: EdgeInsets.only(bottom: 32)),
+                ],
+              );
+            },
           ),
         ),
-        child: Consumer<EducatorService>(
-          builder: (BuildContext context, EducatorService service, _) {
-            if (service.isLoading) {
-              return const Center(
-                child:
-                    CircularProgressIndicator(color: ScholesaColors.educator),
-              );
-            }
-
-            return CustomScrollView(
-              slivers: <Widget>[
-                SliverToBoxAdapter(child: _buildHeader()),
-                SliverToBoxAdapter(child: _buildAiCoachingSection(context)),
-                SliverToBoxAdapter(
-                  child: BosClassInsightsCard(
-                    title: BosCoachingI18n.classInsightsTitle(context),
-                    subtitle: BosCoachingI18n.classInsightsSubtitle(context),
-                    emptyLabel: BosCoachingI18n.classInsightsEmpty(context),
-                    sessionOccurrenceId:
-                        _sessionOccurrenceIdForInsights(service),
-                    siteId: _siteIdForInsights(service),
-                    learnerNamesById: <String, String>{
-                      for (final EducatorLearner learner in service.learners)
-                        learner.id: learner.name,
-                    },
-                    accentColor: ScholesaColors.educator,
-                    insightsLoader: widget.classInsightsLoader,
-                  ),
-                ),
-                SliverToBoxAdapter(child: _buildQuickStats(service)),
-                SliverToBoxAdapter(child: _buildQuickActions()),
-                if (service.error != null && service.todayClasses.isNotEmpty)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                      child: _EducatorStatusBanner(
-                        message: _tEducatorToday(context,
-                                'Unable to refresh today\'s schedule right now. Showing the last successful data. ') +
-                            service.error!,
-                      ),
-                    ),
-                  ),
-                SliverToBoxAdapter(child: _buildCurrentClass(service)),
-                SliverToBoxAdapter(child: _buildScheduleHeader()),
-                if (service.error != null && service.todayClasses.isEmpty)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                      child: _buildScheduleLoadErrorCard(service.error!),
-                    ),
-                  )
-                else if (service.todayClasses.isEmpty)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.grey.shade200),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Text(
-                              _tEducatorToday(
-                                  context, 'No classes scheduled yet'),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              _tEducatorToday(context,
-                                  'Add or sync classes to populate today’s schedule.'),
-                              style: TextStyle(
-                                  color: Colors.grey[700], fontSize: 12),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (BuildContext context, int index) => _ClassCard(
-                      todayClass: service.todayClasses[index],
-                      onTap: () =>
-                          _openClassDetail(service.todayClasses[index]),
-                    ),
-                    childCount: service.todayClasses.length,
-                  ),
-                ),
-                const SliverPadding(padding: EdgeInsets.only(bottom: 32)),
-              ],
-            );
-          },
-        ),
       ),
-    ));
+    );
   }
 
   String? _sessionOccurrenceIdForInsights(EducatorService service) {
@@ -233,14 +235,18 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
             final bool compactHeader = constraints.maxWidth < 420;
 
             return Row(
-              crossAxisAlignment:
-                  compactHeader ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+              crossAxisAlignment: compactHeader
+                  ? CrossAxisAlignment.start
+                  : CrossAxisAlignment.center,
               children: <Widget>[
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: <Color>[ScholesaColors.educator, Color(0xFF10B981)],
+                      colors: <Color>[
+                        ScholesaColors.educator,
+                        Color(0xFF10B981)
+                      ],
                     ),
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: <BoxShadow>[
@@ -262,15 +268,18 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
                             Text(
                               _tEducatorToday(context, greeting),
                               style: TextStyle(
-                                  color: context.schTextSecondary, fontSize: 14),
+                                  color: context.schTextSecondary,
+                                  fontSize: 14),
                             ),
                             Text(
                               _tEducatorToday(context, "Today's Schedule"),
-                              style:
-                                  Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color: ScholesaColors.educator,
-                                      ),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .headlineSmall
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: ScholesaColors.educator,
+                                  ),
                             ),
                             const SizedBox(height: 10),
                             Wrap(
@@ -294,10 +303,12 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
                                   Text(
                                     _tEducatorToday(context, greeting),
                                     style: TextStyle(
-                                        color: context.schTextSecondary, fontSize: 14),
+                                        color: context.schTextSecondary,
+                                        fontSize: 14),
                                   ),
                                   Text(
-                                    _tEducatorToday(context, "Today's Schedule"),
+                                    _tEducatorToday(
+                                        context, "Today's Schedule"),
                                     style: Theme.of(context)
                                         .textTheme
                                         .headlineSmall
@@ -453,10 +464,10 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
   Widget _buildQuickActions() {
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: Row(
-        children: <Widget>[
-          Expanded(
-            child: _QuickActionButton(
+      child: LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+          final List<Widget> actions = <Widget>[
+            _QuickActionButton(
               icon: Icons.how_to_reg,
               label: _tEducatorToday(context, 'Take Attendance'),
               color: ScholesaColors.educator,
@@ -464,25 +475,33 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
                 TelemetryService.instance.logEvent(
                   event: 'cta.clicked',
                   metadata: const <String, dynamic>{
-                    'cta': 'educator_today_take_attendance'
+                    'cta': 'educator_today_take_attendance',
                   },
                 );
                 context.push('/educator/attendance');
               },
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _QuickActionButton(
+            _QuickActionButton(
+              icon: Icons.add_task_rounded,
+              label: _tEducatorToday(context, 'Log Evidence'),
+              color: const Color(0xFF059669),
+              onTap: () {
+                TelemetryService.instance.logEvent(
+                  event: 'cta.clicked',
+                  metadata: const <String, dynamic>{
+                    'cta': 'educator_today_log_evidence',
+                  },
+                );
+                context.push('/educator/observations');
+              },
+            ),
+            _QuickActionButton(
               icon: Icons.rate_review,
               label: _tEducatorToday(context, 'Review Missions'),
               color: const Color(0xFF8B5CF6),
               onTap: _showReviewMissionsDialog,
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _QuickActionButton(
+            _QuickActionButton(
               icon: Icons.message,
               label: _tEducatorToday(context, 'Messages'),
               color: const Color(0xFF3B82F6),
@@ -490,14 +509,37 @@ class _EducatorTodayPageState extends State<EducatorTodayPage> {
                 TelemetryService.instance.logEvent(
                   event: 'cta.clicked',
                   metadata: const <String, dynamic>{
-                    'cta': 'educator_today_open_messages'
+                    'cta': 'educator_today_open_messages',
                   },
                 );
                 context.push('/messages');
               },
             ),
-          ),
-        ],
+          ];
+
+          if (constraints.maxWidth < 460) {
+            final double itemWidth = (constraints.maxWidth - 12) / 2;
+            return Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: actions
+                  .map((Widget action) => SizedBox(
+                        width: itemWidth,
+                        child: action,
+                      ))
+                  .toList(),
+            );
+          }
+
+          return Row(
+            children: actions
+                .expand((Widget action) => <Widget>[
+                      Expanded(child: action),
+                      if (action != actions.last) const SizedBox(width: 12),
+                    ])
+                .toList(),
+          );
+        },
       ),
     );
   }
