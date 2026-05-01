@@ -372,6 +372,55 @@ void main() {
   });
 
   testWidgets(
+      'parent consent page keeps active shares visible when revocation fails',
+      (WidgetTester tester) async {
+    final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();
+    await _seedConsentData(firestore);
+    await _seedReportShareRequests(firestore);
+
+    await tester.binding.setSurfaceSize(const Size(1280, 2000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await ReportShareRequestService.runWithCallableInvoker(
+      (String callableName, Map<String, dynamic> payload) async {
+        expect(callableName, 'revokeReportShareRequest');
+        expect(payload['shareRequestId'], 'share-active-1');
+        throw StateError('revoke unavailable');
+      },
+      () async {
+        await tester.pumpWidget(
+          _buildHarness(
+            appState: _buildParentState(),
+            child: ParentConsentPage(
+              service: ParentConsentService(firestore: firestore),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Ava Evidence Summary'), findsOneWidget);
+
+        await tester.tap(find.text('Revoke Share'));
+        await tester.pump();
+        await tester.pumpAndSettle();
+
+        expect(
+          find.text('Unable to revoke report share right now.'),
+          findsOneWidget,
+        );
+        expect(find.text('Ava Evidence Summary'), findsOneWidget);
+        final DocumentSnapshot<Map<String, dynamic>> activeShare =
+            await firestore
+                .collection('reportShareRequests')
+                .doc('share-active-1')
+                .get();
+        expect(activeShare.data()?['status'], 'active');
+        expect(activeShare.data()?['revocationReason'], isNull);
+      },
+    );
+  });
+
+  testWidgets(
       'parent consent page shows provisioning-linked learner consent records only',
       (WidgetTester tester) async {
     final FakeFirebaseFirestore firestore = FakeFirebaseFirestore();

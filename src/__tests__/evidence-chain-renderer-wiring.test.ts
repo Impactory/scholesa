@@ -640,6 +640,8 @@ describe('Renderers delegate to real evidence components', () => {
     expect(flutterParentConsentTestSource).toContain('share-other-site-1');
     expect(flutterParentConsentTestSource).toContain("find.text('Other Site Evidence Summary'), findsNothing");
     expect(flutterParentConsentTestSource).toContain('revokeReportShareRequest');
+    expect(flutterParentConsentTestSource).toContain('parent consent page keeps active shares visible when revocation fails');
+    expect(flutterParentConsentTestSource).toContain('Unable to revoke report share right now.');
     expect(firestoreRulesTestSource).toContain('partner can create own evidence-backed deliverable for a contract');
     expect(firestoreRulesTestSource).toContain('partner cannot create deliverable for another partner or accept it directly');
     expect(firestoreRulesTestSource).toContain('educator cannot issue credential without evidence provenance or as another issuer');
