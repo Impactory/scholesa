@@ -13,6 +13,7 @@ Do not promote Flutter/mobile to gold-ready because a widget renders or a focuse
 | MiloOS learner support journey | Focused gold-candidate slice passed | `BosLearnerLoopInsightsCard` parses opened, used, explain-back, and pending support journey gaps. |
 | MiloOS educator visibility | Focused gold-candidate slice passed | `EducatorLearnerSupportsPage` renders per-learner support provenance and pending explain-back debt from same-site `interactionEvents`. |
 | MiloOS site health | Focused gold-candidate slice passed | `SiteDashboardPage` renders same-site support health from `interactionEvents`. |
+| Canonical MiloOS synthetic mobile consumption | Passed | `synthetic_miloos_gold_states_mobile_test.dart` loads the actual `buildImportBundle({ mode: 'starter' })` output, hydrates Flutter fake Firestore, and proves educator support provenance plus site support health consume `syntheticMiloOSGoldStates/latest` without local mastery/growth writes. |
 | MiloOS truth boundary | Passed for focused slice | Support events are framed as support/provenance and follow-up debt, not capability mastery. |
 | Guardian portfolio/passport workflows | Passed | `parent_surfaces_workflow_test.dart` proves linked guardian schedule, portfolio, reviewed artifacts, passport export/copy, provenance-gated downloads, and billing unavailable state. |
 | Flutter route proof matrix | Passed as classification artifact | `docs/FLUTTER_MOBILE_ROUTE_PROOF_MATRIX_APRIL_30_2026.md` maps current Flutter routes, dashboard cards, persistence/service paths, proof files, and remaining blockers. |
@@ -38,12 +39,13 @@ Do not promote Flutter/mobile to gold-ready because a widget renders or a focuse
 | Educator today mobile evidence capture access | Passed | `educator_today_page_test.dart` proves `/educator/today` exposes a 390px classroom-width `Log Evidence` action that opens `/educator/observations`, reusing the existing observation capture flow without writing mastery or growth locally. |
 | Educator observation capture small-screen and site-boundary proof | Passed | `observation_capture_page_test.dart` proves `/educator/observations` hides other-site learners and observations at 390px classroom width, records same-site `evidenceRecords`, and leaves rubric/growth interpretation pending for server or educator review. |
 | Educator proof-review persistence and site-boundary proof | Passed | `proof_verification_page_test.dart` proves `/educator/proof-review` reads only active-site `proofOfLearningBundles`, stays usable at 390px classroom width, and persists same-site revision requests without mutating other-site proof bundles. |
+| Site support-health signal completeness | Passed | `SiteDashboardPage` now renders opened, used, responses, explained, learners pending, and pending explain-back counts from same-site support events at mobile width. |
 | Analyzer | Passed for current mobile slice | `flutter analyze` is clean after the MiloOS mobile parity changes. |
 
 Focused proof commands that passed:
 
 ```bash
-cd apps/empire_flutter/app && flutter test test/bos_insights_cards_test.dart test/educator_learner_supports_page_test.dart test/site_dashboard_page_test.dart
+cd apps/empire_flutter/app && flutter test test/bos_insights_cards_test.dart test/educator_learner_supports_page_test.dart test/site_dashboard_page_test.dart test/synthetic_miloos_gold_states_mobile_test.dart
 cd apps/empire_flutter/app && flutter analyze
 ```
 

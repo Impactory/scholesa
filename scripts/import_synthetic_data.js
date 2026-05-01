@@ -389,6 +389,7 @@ function addMiloOSGoldSyntheticStates(bundle, startedAt) {
     email: 'miloos.educator@synthetic.scholesa.test',
     role: 'educator',
     siteIds: [siteId],
+    activeSiteId: siteId,
     synthetic: true,
     sourcePack: 'miloos-gold-readiness',
   });
@@ -398,6 +399,7 @@ function addMiloOSGoldSyntheticStates(bundle, startedAt) {
     email: 'miloos.site@synthetic.scholesa.test',
     role: 'siteLead',
     siteIds: [siteId],
+    activeSiteId: siteId,
     synthetic: true,
     sourcePack: 'miloos-gold-readiness',
   });

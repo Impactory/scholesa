@@ -392,7 +392,9 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
   Widget _buildPeriodSelector() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
         children: <Widget>[
           _PeriodChip(
             label: _t('Today'),
@@ -600,8 +602,20 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
                   ),
                   _DashboardPill(
                     label:
+                        '${_t('Responses')}: ${_miloOSSupportHealth.responses}',
+                    color: ScholesaColors.impact,
+                  ),
+                  _DashboardPill(
+                    label:
                         '${_t('Explained')}: ${_miloOSSupportHealth.explainBackSubmitted}',
                     color: ScholesaColors.success,
+                  ),
+                  _DashboardPill(
+                    label:
+                        '${_t('Pending explain-backs')}: ${_miloOSSupportHealth.pendingExplainBack}',
+                    color: _miloOSSupportHealth.pendingExplainBack > 0
+                        ? ScholesaColors.warning
+                        : ScholesaColors.success,
                   ),
                 ],
               ),
@@ -1073,8 +1087,11 @@ class _SiteDashboardPageState extends State<SiteDashboardPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: <Widget>[
               Text(
                 _t('Recent Activity'),

@@ -97,6 +97,7 @@ These routes are enabled and useful, but they are not sufficient evidence-chain 
 18. **Educator today mobile evidence capture access proof** passed after this matrix via `educator_today_page_test.dart`, proving `/educator/today` exposes a phone-width `Log Evidence` action that opens the existing `/educator/observations` capture route without local mastery or growth writes.
 19. **Educator observation capture small-screen and site-boundary proof** passed after this matrix via `observation_capture_page_test.dart`, proving `/educator/observations` uses a site-bound learner query, hides other-site learners and recent observations at 390px classroom width, and records same-site `evidenceRecords` with pending rubric/growth status rather than local mastery writes.
 20. **Educator proof-review persistence and site-boundary proof** passed after this matrix via `proof_verification_page_test.dart`, proving `/educator/proof-review` loads only active-site `proofOfLearningBundles` at 390px classroom width and persists same-site revision requests without touching other-site bundles.
+21. **Canonical MiloOS synthetic mobile consumption proof** passed after this matrix via `synthetic_miloos_gold_states_mobile_test.dart`, proving Flutter educator support provenance and site support health consume the actual `scripts/import_synthetic_data.js` `syntheticMiloOSGoldStates/latest` output, exclude cross-site/missing-site support events, and avoid support-only mastery or growth writes.
 
 ## Next Gate
 

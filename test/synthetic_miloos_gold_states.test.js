@@ -27,6 +27,16 @@ describe('synthetic MiloOS gold-readiness states', () => {
       documentId: 'latest',
       seedModes: ['starter', 'full', 'all'],
     });
+    expect(users.get('synthetic-miloos-gold-educator')).toMatchObject({
+      role: 'educator',
+      siteIds: ['synthetic-site-miloos-gold'],
+      activeSiteId: 'synthetic-site-miloos-gold',
+    });
+    expect(users.get('synthetic-miloos-gold-site-lead')).toMatchObject({
+      role: 'siteLead',
+      siteIds: ['synthetic-site-miloos-gold'],
+      activeSiteId: 'synthetic-site-miloos-gold',
+    });
     expect(users.get(manifest.states.noSupportLearnerId)).toMatchObject({
       role: 'learner',
       miloosGoldState: 'noSupport',

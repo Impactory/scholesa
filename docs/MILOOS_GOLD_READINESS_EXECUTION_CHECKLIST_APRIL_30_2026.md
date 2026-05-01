@@ -165,8 +165,11 @@ npm test -- --runTestsByPath src/__tests__/evidence-chain-renderer-wiring.test.t
 - [x] Add canonical seed data for cross-site event denial.
 - [x] Add canonical seed data for missing-site event denial.
 - [x] Document which seed mode supports MiloOS demos/UAT.
+- [x] Prove Flutter/mobile support surfaces consume the canonical importer output.
 
 Completed 2026-04-30: `scripts/import_synthetic_data.js` now always adds `syntheticMiloOSGoldStates/latest` with five canonical learner states for MiloOS demos, UAT, rules tests, and regression checks. The states are available in `starter`, `full`, and `all` seed modes; `test/synthetic_miloos_gold_states.test.js` proves they do not seed support-only `capabilityMastery` or `capabilityGrowthEvents` writes.
+
+Completed 2026-05-01: `synthetic_miloos_gold_states_mobile_test.dart` now loads the actual `buildImportBundle({ mode: 'starter' })` output from `scripts/import_synthetic_data.js`, hydrates Flutter fake Firestore with the canonical `syntheticMiloOSGoldStates/latest` users, enrollments, sessions, and `interactionEvents`, and proves educator support provenance plus site support health consume those records without local mastery or growth writes. The synthetic educator and site-lead users now carry `activeSiteId` so current mobile AppState/site-context consumers can use the pack directly.
 
 Candidate files:
 
@@ -180,6 +183,7 @@ Proof commands:
 npm run seed:synthetic-data:dry-run
 npm run test:integration:rules
 npm run test:integration:evidence-chain
+cd apps/empire_flutter/app && flutter test test/synthetic_miloos_gold_states_mobile_test.dart
 ```
 
 ## Milestone 8 - Flutter Scope Decision
@@ -192,10 +196,12 @@ npm run test:integration:evidence-chain
 
 Completed 2026-04-30: Flutter MiloOS role parity is now in scope for the focused support-provenance gate. Learner-loop support cards, educator learner-support provenance, and site support health are tested with fake Firestore and analyzer-clean Dart. This does not certify unrelated Flutter parent portfolio/export workflows or the whole Flutter app as gold-ready.
 
+Updated 2026-05-01: the Flutter support-provenance gate now also consumes canonical MiloOS synthetic importer output through `synthetic_miloos_gold_states_mobile_test.dart`; this prevents the mobile tests from drifting into ad hoc `site-1` seed data while the JS synthetic pack evolves.
+
 Proof commands:
 
 ```bash
-cd apps/empire_flutter/app && flutter test test/bos_insights_cards_test.dart test/educator_learner_supports_page_test.dart test/site_dashboard_page_test.dart
+cd apps/empire_flutter/app && flutter test test/bos_insights_cards_test.dart test/educator_learner_supports_page_test.dart test/site_dashboard_page_test.dart test/synthetic_miloos_gold_states_mobile_test.dart
 cd apps/empire_flutter/app && flutter analyze
 ```
 
