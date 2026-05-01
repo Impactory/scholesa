@@ -57,8 +57,8 @@ class _FakeHabitService extends HabitService {
   int get totalTodayCount => todayHabits.length;
 
   @override
-  int get totalStreak =>
-      todayHabits.fold<int>(0, (int sum, Habit habit) => sum + habit.currentStreak);
+  int get totalStreak => todayHabits.fold<int>(
+      0, (int sum, Habit habit) => sum + habit.currentStreak);
 
   @override
   Future<void> loadHabits() async {
@@ -278,7 +278,8 @@ void main() {
 
     expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
     expect(
-      find.text('Showing last loaded habits. Failed to refresh habits from test'),
+      find.text(
+          'Showing last loaded habits. Failed to refresh habits from test'),
       findsOneWidget,
     );
     await _scrollUntilTextVisible(tester, 'Active Missions');
@@ -290,5 +291,89 @@ void main() {
     );
     expect(find.text('Read for 10 minutes'), findsOneWidget);
     expect(find.text('Prototype a water filter'), findsWidgets);
+  });
+
+  testWidgets(
+      'learner today renders current evidence actions on classroom mobile width',
+      (WidgetTester tester) async {
+    final FirestoreService firestoreService = FirestoreService(
+      firestore: FakeFirebaseFirestore(),
+      auth: _MockFirebaseAuth(),
+    );
+    final HabitService habitService = _FakeHabitService(
+      firestoreService: firestoreService,
+      learnerId: 'learner-1',
+      habits: <Habit>[
+        Habit(
+          id: 'habit-1',
+          title: 'Capture one prototype photo',
+          emoji: 'P',
+          category: HabitCategory.learning,
+          createdAt: DateTime(2026, 3, 18),
+          targetMinutes: 10,
+          currentStreak: 2,
+        ),
+      ],
+    );
+    final MissionService missionService = _FakeMissionService(
+      firestoreService: firestoreService,
+      learnerId: 'learner-1',
+      missions: <Mission>[
+        const Mission(
+          id: 'mission-1',
+          title: 'Prototype a water filter',
+          description: 'Build and test a working prototype.',
+          pillar: Pillar.futureSkills,
+          difficulty: DifficultyLevel.intermediate,
+          status: MissionStatus.inProgress,
+          progress: 0.45,
+          educatorFeedback: 'Explain what changed after the first test.',
+          reflectionPrompt: 'What evidence shows your filter improved?',
+          skills: <Skill>[
+            Skill(
+              id: 'skill-1',
+              name: 'Prototype testing',
+              pillar: Pillar.futureSkills,
+            ),
+          ],
+        ),
+      ],
+    );
+    final MessageService messageService = MessageService(
+      firestoreService: firestoreService,
+      userId: 'learner-1',
+    );
+
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      _buildHarness(
+        firestoreService: firestoreService,
+        habitService: habitService,
+        missionService: missionService,
+        messageService: messageService,
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.bySemanticsLabel('Account menu'), findsOneWidget);
+    expect(find.text('My Evidence Loop'), findsOneWidget);
+    expect(find.text('What I am building'), findsOneWidget);
+    expect(find.text('Prototype a water filter'), findsWidgets);
+    expect(find.text('What evidence I have shown'), findsOneWidget);
+    expect(find.text('Explain what changed after the first test.'),
+        findsOneWidget);
+    expect(find.text('What capability I am growing'), findsOneWidget);
+    expect(find.text('Prototype testing'), findsOneWidget);
+    expect(find.text('What I need to explain or verify next'), findsOneWidget);
+    expect(
+        find.text('What evidence shows your filter improved?'), findsOneWidget);
+
+    await _scrollUntilTextVisible(tester, 'Capture one prototype photo');
+    expect(find.text('Start'), findsOneWidget);
+    await _scrollUntilTextVisible(tester, 'Active Missions');
+    expect(find.text('45%'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }

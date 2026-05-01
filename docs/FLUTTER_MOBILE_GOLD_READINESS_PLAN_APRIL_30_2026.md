@@ -30,6 +30,7 @@ Do not promote Flutter/mobile to gold-ready because a widget renders or a focuse
 | Partner deliverable evidence output trust | Passed | `partner_deliverables_page_test.dart`, `partner_contracting_workflow_test.dart`, and Firestore rules prove partner deliverables carry `partnerId`, `siteId`, contract, submitter, and evidence URL provenance, while partners cannot accept their own deliverables. |
 | Learner credential evidence provenance | Passed | `learner_credentials_page_test.dart` proves credentials show issuer, source evidence, portfolio, proof bundle, growth, and rubric links while excluding other-site credentials; Firestore rules require educator-issued credentials to carry evidence provenance. |
 | Parent active report-share revocation | Passed | `parent_consent_page_test.dart` proves linked guardians see same-site active evidence-bearing report shares for their learner, exclude unrelated, other-site, and revoked shares, revoke an active share through the server-owned `revokeReportShareRequest` callable without deleting the lifecycle record, and keep the share visible/active when revocation fails. |
+| Learner today classroom evidence actions | Passed | `learner_today_page_test.dart` proves `/learner/today` renders the current evidence loop, habit action, and active mission progress at 390px classroom width without layout overflow. |
 | Analyzer | Passed for current mobile slice | `flutter analyze` is clean after the MiloOS mobile parity changes. |
 
 Focused proof commands that passed:

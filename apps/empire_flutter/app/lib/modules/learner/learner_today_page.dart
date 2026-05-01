@@ -62,7 +62,8 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
       return MiloRuntimeScope(child: _buildOnboardingScaffold(scheme, isDark));
     }
 
-    return MiloRuntimeScope(child: Scaffold(
+    return MiloRuntimeScope(
+        child: Scaffold(
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -182,26 +183,32 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
             ),
             child: const Icon(Icons.wb_sunny, color: Colors.white, size: 28),
           ),
-          const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                _getGreeting(),
-                style: TextStyle(
-                  color: scheme.onSurfaceVariant,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  _getGreeting(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: scheme.onSurfaceVariant,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-              ),
-              Text(
-                _t('Today'),
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: scheme.onSurface,
-                    ),
-              ),
-            ],
+                Text(
+                  _t('Today'),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: scheme.onSurface,
+                      ),
+                ),
+              ],
+            ),
           ),
         ],
       );
@@ -464,8 +471,9 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
   Widget _buildEvidenceLoopCard() {
     return Consumer<MissionService>(
       builder: (BuildContext context, MissionService service, _) {
-        final Mission? mission =
-            service.activeMissions.isNotEmpty ? service.activeMissions.first : null;
+        final Mission? mission = service.activeMissions.isNotEmpty
+            ? service.activeMissions.first
+            : null;
         final String building = mission?.title ??
             ((_learnerProfile?.goals.isNotEmpty ?? false)
                 ? _learnerProfile!.goals.first
@@ -475,25 +483,33 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
             : mission?.pillar.label ??
                 ((_learnerProfile?.strengths.isNotEmpty ?? false)
                     ? _learnerProfile!.strengths.first
-                    : _t('Your next capability focus appears when a mission is active.'));
-        final String evidenceShown =
-            (mission?.educatorFeedback?.trim().isNotEmpty ?? false)
-                ? mission!.educatorFeedback!.trim()
-                : (mission != null &&
-                        (mission.status == MissionStatus.submitted ||
-                            mission.status == MissionStatus.completed))
-                    ? _t('Your mission work is ready for educator review.')
-                    : _t('Show your thinking through a checkpoint, share-out, or reflection.');
+                    : _t(
+                        'Your next capability focus appears when a mission is active.'));
+        final String evidenceShown = (mission?.educatorFeedback
+                    ?.trim()
+                    .isNotEmpty ??
+                false)
+            ? mission!.educatorFeedback!.trim()
+            : (mission != null &&
+                    (mission.status == MissionStatus.submitted ||
+                        mission.status == MissionStatus.completed))
+                ? _t('Your mission work is ready for educator review.')
+                : _t(
+                    'Show your thinking through a checkpoint, share-out, or reflection.');
         final String nextVerify =
             (mission?.reflectionPrompt?.trim().isNotEmpty ?? false)
                 ? mission!.reflectionPrompt!.trim()
                 : _t('Be ready to explain your next step in your own words.');
-        final String portfolioArtifact =
-            ((_learnerProfile?.portfolioHighlight?.trim().isNotEmpty ?? false))
-                ? _learnerProfile!.portfolioHighlight!.trim()
-                : mission != null
-                    ? _t('Save the strongest draft, screenshot, photo, or demo from this mission.')
-                    : _t('Your best artifact will appear here after you build something worth keeping.');
+        final String portfolioArtifact = ((_learnerProfile?.portfolioHighlight
+                    ?.trim()
+                    .isNotEmpty ??
+                false))
+            ? _learnerProfile!.portfolioHighlight!.trim()
+            : mission != null
+                ? _t(
+                    'Save the strongest draft, screenshot, photo, or demo from this mission.')
+                : _t(
+                    'Your best artifact will appear here after you build something worth keeping.');
 
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -659,17 +675,22 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                 Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: _SectionHealthBanner(
-                    message: _t('Showing last loaded habits. ') + service.error!,
+                    message:
+                        _t('Showing last loaded habits. ') + service.error!,
                   ),
                 ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
-                  Text(
-                    _t("Today's Habits"),
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                  Expanded(
+                    child: Text(
+                      _t("Today's Habits"),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   TextButton(
@@ -758,19 +779,22 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                 Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: _SectionHealthBanner(
-                    message:
-                        _t('Showing last loaded mission progress. ') +
-                            service.error!,
+                    message: _t('Showing last loaded mission progress. ') +
+                        service.error!,
                   ),
                 ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
-                  Text(
-                    _t('Active Missions'),
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                  Expanded(
+                    child: Text(
+                      _t('Active Missions'),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   TextButton(
@@ -1484,7 +1508,7 @@ class _LearnerTodayPageState extends State<LearnerTodayPage> {
                                         goals: _splitCsv(goalsController.text),
                                         readingLevelSelfCheck: readingLevel,
                                         diagnosticConfidenceBand:
-                                          diagnosticBand,
+                                            diagnosticBand,
                                         weeklyTargetMinutes:
                                             weeklyTargetMinutes.round(),
                                         reminderSchedule: reminderSchedule,
@@ -2129,12 +2153,16 @@ class _ProgressCard extends StatelessWidget {
             children: <Widget>[
               Icon(icon, color: color, size: 20),
               const SizedBox(width: 8),
-              Text(
-                title,
-                style: TextStyle(
-                  color: scheme.onSurface,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: scheme.onSurface,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],
@@ -2158,12 +2186,16 @@ class _ProgressCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              Text(
-                LearnerSurfaceI18n.text(context, label ?? 'done'),
-                style: TextStyle(
-                  color: scheme.onSurfaceVariant.withValues(alpha: 0.9),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
+              Flexible(
+                child: Text(
+                  LearnerSurfaceI18n.text(context, label ?? 'done'),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: scheme.onSurfaceVariant.withValues(alpha: 0.9),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],
