@@ -17,6 +17,12 @@
 
 **MiloOS cross-role progress**: Milestone 3 is complete. A single browser E2E now drives learner help, educator pending-debt visibility, returned learner explain-back completion, guardian support provenance, and site support health without `capabilityMastery` writes. Learner-loop insights now expose pending support interaction IDs so a learner can return to `/learner/miloos` and complete prior pending explain-back verification.
 
+**MiloOS mobile progress**: Milestone 4 is complete. A phone-width browser E2E now proves the learner MiloOS prompt/transcript/explain-back controls, educator follow-up debt card, and site support health tiles remain usable without horizontal overflow.
+
+**MiloOS keyboard progress**: Milestone 5 is complete. A keyboard-only browser E2E now proves the learner can tab through MiloOS mode selection, submit a question, land on the explain-back input, submit verification, and retain focus on the live status message.
+
+**MiloOS observability progress**: Milestone 6 is complete. MiloOS support-turn events now carry joinable opened-event trace metadata across opened, used, response, and explain-back records; emulator-backed tests prove pending explain-back derivation and no support-only mastery writes.
+
 | Metric | Value |
 |--------|-------|
 | Web routes | 70 total app routes per current Next.js build; 63 protected workflow paths in `workflowRoutes.ts` (30 dedicated custom-rendered evidence surfaces + 33 generic workflow routes) |

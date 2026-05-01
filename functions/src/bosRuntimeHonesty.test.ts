@@ -86,7 +86,7 @@ describe('bosRuntime honesty guards', () => {
         { id: 'opened-2', data: { eventType: 'ai_help_opened' } },
         { id: 'help-1', data: { eventType: 'ai_help_used' } },
         { id: 'response-1', data: { eventType: 'ai_coach_response' } },
-        { id: 'explain-1', data: { eventType: 'explain_it_back_submitted' } },
+        { id: 'explain-1', data: { eventType: 'explain_it_back_submitted', interactionId: 'opened-1' } },
         { id: 'mvl-1', data: { eventType: 'mvl_gate_triggered' } },
         ...Array.from({ length: 6 }, (_, index) => ({
           id: `goal-${index + 1}`,
@@ -133,6 +133,14 @@ describe('bosRuntime honesty guards', () => {
       aiHelpUsed: 1,
       explainBackSubmitted: 1,
       pendingExplainBack: 1,
+      pendingSupportInteractions: [
+        {
+          interactionId: 'opened-2',
+          mode: undefined,
+          studentInput: undefined,
+          createdAt: undefined,
+        },
+      ],
     });
     expect(response.mvl).toEqual({ active: 2, passed: 1, failed: 1 });
     expect(response.activeGoals).toEqual(['Goal 1', 'Goal 2', 'Goal 3', 'Goal 4', 'Goal 5']);

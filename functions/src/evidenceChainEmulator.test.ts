@@ -571,6 +571,30 @@ describe('Evidence chain emulator integration', () => {
       expect(event.data.timestamp).toBeDefined();
       expect(event.data.createdAt).toBeDefined();
     }
+    expect(events.find((event) => event.id === firstOpenedEventId)?.data).toMatchObject({
+      eventType: 'ai_help_opened',
+      siteId: SITE_ID,
+      actorId: miloLearnerId,
+      traceId: firstOpenedEventId,
+      payload: {
+        aiHelpOpenedEventId: firstOpenedEventId,
+        mode: 'explain',
+      },
+    });
+    expect(events.find((event) => (
+      event.data.eventType === 'ai_help_used' &&
+      event.data.payload?.aiHelpOpenedEventId === firstOpenedEventId
+    ))?.data.payload).toMatchObject({
+      aiHelpOpenedEventId: firstOpenedEventId,
+      mode: 'explain',
+    });
+    expect(events.find((event) => (
+      event.data.eventType === 'ai_coach_response' &&
+      event.data.payload?.aiHelpOpenedEventId === firstOpenedEventId
+    ))?.data.payload).toMatchObject({
+      aiHelpOpenedEventId: firstOpenedEventId,
+      mode: 'explain',
+    });
     expect(events.find((event) => event.data.eventType === 'explain_it_back_submitted')?.data.payload).toMatchObject({
       aiHelpOpenedEventId: firstOpenedEventId,
       approved: true,
@@ -598,12 +622,21 @@ describe('Evidence chain emulator integration', () => {
       ai_coach_response: 2,
       explain_it_back_submitted: 1,
     });
-    expect(insights.verification).toEqual({
+    expect(insights.verification).toMatchObject({
       aiHelpOpened: 2,
       aiHelpUsed: 2,
       explainBackSubmitted: 1,
       pendingExplainBack: 1,
     });
+    const verification = insights.verification as typeof insights.verification & {
+      pendingSupportInteractions: Array<Record<string, unknown>>;
+    };
+    expect(verification.pendingSupportInteractions).toEqual([
+      expect.objectContaining({
+        interactionId: expect.any(String),
+        mode: 'hint',
+      }),
+    ]);
     expect(insights.mvl).toEqual({ active: 0, passed: 0, failed: 0 });
     expect(insights).not.toHaveProperty('capabilityMastery');
     expect(insights).not.toHaveProperty('masteryLevel');
@@ -771,6 +804,7 @@ describe('Evidence chain emulator integration', () => {
         aiHelpUsed: 1,
         explainBackSubmitted: 1,
         pendingExplainBack: 0,
+        pendingSupportInteractions: [],
       });
     } finally {
       restoreEnvVar('INTERNAL_LLM_INFERENCE_URL', previousLlmUrl);

@@ -408,6 +408,42 @@ describe('Renderers delegate to real evidence components', () => {
     expect(e2eSource).toContain('not capability mastery');
   });
 
+  it('MiloOS has phone-width classroom browser proof', () => {
+    const e2eSource = fs.readFileSync(
+      path.join(process.cwd(), 'test', 'e2e', 'miloos-mobile-classroom.e2e.spec.ts'),
+      'utf8'
+    );
+
+    expect(e2eSource).toContain('MOBILE_VIEWPORT');
+    expect(e2eSource).toContain("gotoProtectedRoute(page, '/en/learner/miloos')");
+    expect(e2eSource).toContain("gotoProtectedRoute(page, '/en/educator/learners')");
+    expect(e2eSource).toContain("gotoProtectedRoute(page, '/en/site/dashboard')");
+    expect(e2eSource).toContain('ai-coach-response-transcript');
+    expect(e2eSource).toContain('ai-coach-explain-back-input');
+    expect(e2eSource).toContain('miloos-support-');
+    expect(e2eSource).toContain('site-miloos-support-health');
+    expect(e2eSource).toContain('expectNoHorizontalOverflow');
+  });
+
+  it('MiloOS has keyboard and focus browser proof', () => {
+    const e2eSource = fs.readFileSync(
+      path.join(process.cwd(), 'test', 'e2e', 'miloos-keyboard.e2e.spec.ts'),
+      'utf8'
+    );
+    const coachSource = readSrcFile('components', 'sdt', 'AICoachScreen.tsx');
+
+    expect(e2eSource).toContain('tabUntilTestId');
+    expect(e2eSource).toContain('ai-coach-mode-hint');
+    expect(e2eSource).toContain('ai-coach-question-input');
+    expect(e2eSource).toContain('ai-coach-submit-question');
+    expect(e2eSource).toContain('ai-coach-explain-back-input');
+    expect(e2eSource).toContain('ai-coach-submit-explain-back');
+    expect(e2eSource).toContain('ai-coach-status-message');
+    expect(coachSource).toContain('explainBackInputRef.current?.focus()');
+    expect(coachSource).toContain('statusMessageRef.current?.focus()');
+    expect(coachSource).toContain('data-testid="ai-coach-status-message"');
+  });
+
   it('PageTransition keeps reduced-motion MiloOS routes hydration-stable', () => {
     const source = readSrcFile('components', 'layout', 'PageTransition.tsx');
 

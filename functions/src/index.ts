@@ -1290,7 +1290,8 @@ export const genAiCoach = onCall(async (request) => {
   }
 
   // ── Emit ai_help_opened event ──────────────────
-  const aiHelpOpenedRef = await admin.firestore().collection('interactionEvents').add({
+  const aiHelpOpenedRef = admin.firestore().collection('interactionEvents').doc();
+  await aiHelpOpenedRef.set({
     eventType: 'ai_help_opened',
     siteId,
     actorId: userId,
@@ -1299,7 +1300,14 @@ export const genAiCoach = onCall(async (request) => {
     sessionOccurrenceId: sessionOccurrenceId || null,
     missionId: missionId || null,
     checkpointId: checkpointId || null,
-    payload: { mode: coachMode, conceptTags: tags, coppaBand, gradeBandSource },
+    traceId: aiHelpOpenedRef.id,
+    payload: {
+      mode: coachMode,
+      aiHelpOpenedEventId: aiHelpOpenedRef.id,
+      conceptTags: tags,
+      coppaBand,
+      gradeBandSource,
+    },
     timestamp: FieldValue.serverTimestamp(),
     createdAt: FieldValue.serverTimestamp(),
   });
@@ -1469,6 +1477,7 @@ export const genAiCoach = onCall(async (request) => {
     checkpointId: checkpointId || null,
     payload: {
       mode: coachMode,
+      aiHelpOpenedEventId: aiHelpOpenedRef.id,
       traceId: responseTraceId,
       policyVersion: responsePolicyVersion,
       safetyOutcome,

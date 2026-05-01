@@ -25,10 +25,10 @@ Gold readiness requires these boundaries to stay true everywhere:
 
 | Surface | Current proof | Gold state |
 | --- | --- | --- |
-| Learner `/learner/miloos` | Browser E2E proves support request, transcript, pending explain-back, returned pending explain-back completion, refreshed counters, and no `capabilityMastery` write. | Needs keyboard and mobile proof. |
-| Educator `/educator/learners` | Browser E2E proves same-site MiloOS support provenance and pending follow-up debt, including in the cross-role path. | Needs workflow proof for teacher action after seeing debt. |
+| Learner `/learner/miloos` | Browser E2E proves support request, transcript, pending explain-back, returned pending explain-back completion, refreshed counters, phone-width usability, keyboard-only support completion, focus preservation, traceable support-turn events, and no `capabilityMastery` write. | Needs canonical synthetic states and release-gate hardening. |
+| Educator `/educator/learners` | Browser E2E proves same-site MiloOS support provenance and pending follow-up debt, including cross-role and phone-width paths. | Needs workflow proof for teacher action after seeing debt. |
 | Guardian `/parent/summary` | Browser E2E proves linked guardian sees same-site support provenance and non-mastery language, including after learner explain-back completion. | Needs share/export and family comprehension proof in the same browser flow. |
-| Admin-School `/site/dashboard` | Browser E2E proves site-wide same-site support health aggregation, including after cross-role support completion. | Needs operational thresholding, drill-down, and alert/action workflow. |
+| Admin-School `/site/dashboard` | Browser E2E proves site-wide same-site support health aggregation, including after cross-role support completion and on phone-width viewport. | Needs operational thresholding, drill-down, and alert/action workflow. |
 | Accessibility | Focused Axe WCAG 2.2 AA checks pass on protected MiloOS support regions, and PageTransition reduced-motion/hydration warnings are cleaned up. | Needs broader page-level, keyboard, and mobile coverage. |
 | Firestore rules | Educator and site-admin same-site `interactionEvents` reads are tested; other-site/missing-site denied; linked and unlinked parent raw-event reads and queries are denied. | Needs HQ/network scope proof or explicit exclusion from MiloOS gold scope. |
 | Functions/emulator | `genAiCoach` -> `submitExplainBack` -> `bosGetLearnerLoopInsights` path is emulator-tested and no mastery write is asserted. | Needs one combined cross-role emulator-to-browser release gate. |
@@ -183,6 +183,8 @@ Flow:
 
 ### 4. Prove Mobile Classroom Use
 
+Status: completed 2026-04-30.
+
 The teacher and learner flows need phone-width checks.
 
 Target routes:
@@ -197,6 +199,13 @@ Done when:
 - No overflow or overlapping text appears in support tiles.
 
 ### 5. Harden Observability
+
+Status: completed 2026-04-30.
+
+- `ai_help_opened` self-stamps `traceId` and `payload.aiHelpOpenedEventId`.
+- `ai_help_used`, `ai_coach_response`, and `explain_it_back_submitted` all link back to the opened support turn.
+- Emulator-backed tests now prove persisted events can derive pending explain-back debt without writing mastery.
+- Site implementation health exposes stuck pending explain-back debt for operators.
 
 The event chain must be operator-debuggable.
 

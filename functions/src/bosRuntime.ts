@@ -337,8 +337,10 @@ function buildLearnerLoopInsightsResponse(params: {
   for (const row of eventRows) {
     const eventType = normalizeString(row.data.eventType) ?? '';
     if (eventType !== 'explain_it_back_submitted') continue;
+    const payload = asRecord(row.data.payload);
     const interactionId = normalizeString(row.data.interactionId)
-      ?? normalizeString(row.data.aiHelpOpenedEventId);
+      ?? normalizeString(row.data.aiHelpOpenedEventId)
+      ?? normalizeString(payload?.aiHelpOpenedEventId);
     if (interactionId) {
       explainedInteractionIds.add(interactionId);
     }
@@ -348,7 +350,7 @@ function buildLearnerLoopInsightsResponse(params: {
     .filter((row) => !explainedInteractionIds.has(row.id))
     .map((row) => ({
       interactionId: row.id,
-      mode: normalizeString(row.data.mode) ?? undefined,
+      mode: normalizeString(row.data.mode) ?? normalizeString(asRecord(row.data.payload)?.mode) ?? undefined,
       studentInput: normalizeString(row.data.studentInput) ?? undefined,
       createdAt: normalizeString(row.data.createdAt) ?? normalizeString(row.data.timestamp) ?? undefined,
     }))

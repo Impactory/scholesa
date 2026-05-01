@@ -8,7 +8,7 @@
  * Guardrails: Student must explain back and show proof of work
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   LightbulbIcon,
   ClipboardCheckIcon,
@@ -60,6 +60,8 @@ export function AICoachScreen({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const explainBackInputRef = useRef<HTMLTextAreaElement | null>(null);
+  const statusMessageRef = useRef<HTMLDivElement | null>(null);
   const {
     spokenResponseStatus,
     play: playSpokenResponse,
@@ -79,6 +81,17 @@ export function AICoachScreen({
       console.error('Failed to refresh MiloOS learner-loop state:', notifyError);
     }
   };
+
+  useEffect(() => {
+    if (response?.requiresExplainBack) {
+      explainBackInputRef.current?.focus();
+      return;
+    }
+
+    if (response && statusMessage) {
+      statusMessageRef.current?.focus();
+    }
+  }, [response, statusMessage]);
 
   const handleSubmitQuestion = async (questionOverride?: string) => {
     const resolvedQuestion = (questionOverride ?? question).trim();
@@ -312,8 +325,11 @@ export function AICoachScreen({
           <div className="space-y-4">
             {statusMessage ? (
               <div
+                data-testid="ai-coach-status-message"
                 role="status"
                 aria-live="polite"
+                ref={statusMessageRef}
+                tabIndex={-1}
                 className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900"
               >
                 {statusMessage}
@@ -394,8 +410,11 @@ export function AICoachScreen({
         <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-4">
           {statusMessage ? (
             <div
+              data-testid="ai-coach-status-message"
               role="status"
               aria-live="polite"
+              ref={statusMessageRef}
+              tabIndex={-1}
               className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900"
             >
               {statusMessage}
@@ -454,6 +473,7 @@ export function AICoachScreen({
                   </p>
                   <textarea
                     data-testid="ai-coach-explain-back-input"
+                    ref={explainBackInputRef}
                     value={explainBack}
                     onChange={(e) => setExplainBack(e.target.value)}
                     placeholder="Example: I learned that I need to use addEventListener to make the button interactive. I'll add that to my code and test it..."

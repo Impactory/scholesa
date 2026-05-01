@@ -89,12 +89,14 @@ npx playwright test --config playwright.config.ts test/e2e/miloos-cross-role-gol
 
 ## Milestone 4 - Mobile Classroom Proof
 
-- [ ] Add phone-width Playwright coverage for `/en/learner/miloos`.
-- [ ] Assert prompt input, transcript, explain-back input, and counters do not overlap.
-- [ ] Add phone-width Playwright coverage for `/en/educator/learners`.
-- [ ] Assert educator can scan pending MiloOS follow-up debt without horizontal overflow.
-- [ ] Add phone-width Playwright coverage for `/en/site/dashboard` support health.
-- [ ] Assert support count tiles remain readable.
+- [x] Add phone-width Playwright coverage for `/en/learner/miloos`.
+- [x] Assert prompt input, transcript, explain-back input, and counters do not overlap.
+- [x] Add phone-width Playwright coverage for `/en/educator/learners`.
+- [x] Assert educator can scan pending MiloOS follow-up debt without horizontal overflow.
+- [x] Add phone-width Playwright coverage for `/en/site/dashboard` support health.
+- [x] Assert support count tiles remain readable.
+
+Completed 2026-04-30: `test/e2e/miloos-mobile-classroom.e2e.spec.ts` now proves the learner MiloOS support loop, educator pending follow-up card, and site support health tiles remain usable on a 390px phone viewport without horizontal overflow.
 
 Suggested command:
 
@@ -104,12 +106,14 @@ npx playwright test --config playwright.config.ts test/e2e/miloos-mobile-classro
 
 ## Milestone 5 - Keyboard And Focus Proof
 
-- [ ] Tab to the MiloOS question input.
-- [ ] Submit a question without mouse input.
-- [ ] Tab to transcript/explain-back area.
-- [ ] Submit explain-back without mouse input.
-- [ ] Verify focus is not lost after submit.
-- [ ] Verify screen-reader names for submit controls are clear.
+- [x] Tab to the MiloOS question input.
+- [x] Submit a question without mouse input.
+- [x] Tab to transcript/explain-back area.
+- [x] Submit explain-back without mouse input.
+- [x] Verify focus is not lost after submit.
+- [x] Verify screen-reader names for submit controls are clear.
+
+Completed 2026-04-30: `test/e2e/miloos-keyboard.e2e.spec.ts` now proves a learner can complete the MiloOS support loop with keyboard-only Tab/Enter flow. `AICoachScreen` now moves focus to the explain-back input after a response and to the live status message after explain-back submission.
 
 Candidate files:
 
@@ -125,13 +129,15 @@ npx playwright test --config playwright.config.ts test/e2e/miloos-keyboard.e2e.s
 
 ## Milestone 6 - Observability And Traceability
 
-- [ ] Confirm `ai_help_opened` has learner, site, interaction, and timestamp fields.
-- [ ] Confirm `ai_help_used` links to the support turn.
-- [ ] Confirm `ai_coach_response` links to the support turn.
-- [ ] Confirm `explain_it_back_submitted` links to the support turn.
-- [ ] Confirm pending explain-back is derivable from persisted events.
-- [ ] Confirm telemetry does not emit mastery-like signals for support-only journeys.
-- [ ] Add an operator-readable way to locate stuck pending explain-back debt.
+- [x] Confirm `ai_help_opened` has learner, site, interaction, and timestamp fields.
+- [x] Confirm `ai_help_used` links to the support turn.
+- [x] Confirm `ai_coach_response` links to the support turn.
+- [x] Confirm `explain_it_back_submitted` links to the support turn.
+- [x] Confirm pending explain-back is derivable from persisted events.
+- [x] Confirm telemetry does not emit mastery-like signals for support-only journeys.
+- [x] Add an operator-readable way to locate stuck pending explain-back debt.
+
+Completed 2026-04-30: `ai_help_opened` now self-stamps `traceId` and `payload.aiHelpOpenedEventId`; `ai_coach_response` now links to the same opened support turn. The emulator-backed evidence-chain test asserts opened/used/response/explain-back linkage, timestamps, pending explain-back derivation, and no support-only mastery writes. Site implementation health remains the operator-readable surface for stuck pending explain-back debt.
 
 Candidate files:
 
