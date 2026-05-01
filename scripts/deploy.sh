@@ -15,6 +15,7 @@
 #   ./scripts/deploy.sh flutter-ios  # Build Flutter iOS (release)
 #   ./scripts/deploy.sh flutter-macos # Build Flutter macOS app (release)
 #   ./scripts/deploy.sh flutter-android # Build Flutter Android release bundle + APK
+#   ./scripts/deploy.sh release-gate # Run non-deploying release reproducibility gates
 # ──────────────────────────────────────────────────────────────
 set -euo pipefail
 
@@ -160,10 +161,14 @@ preflight() {
     fail "Node 24.x is required for deploy reproducibility (detected $(node -v)). Run: nvm use 24"
   fi
 
-  if [[ "$TARGET" == flutter-* || "$TARGET" == "web" || "$TARGET" == "cloudrun-web" || "$TARGET" == "all" ]]; then
+  if [[ "$TARGET" == flutter-* || "$TARGET" == "web" || "$TARGET" == "cloudrun-web" || "$TARGET" == "all" || "$TARGET" == "release-gate" ]]; then
     if [[ ! -x "$FVM_FLUTTER" ]]; then
       command -v flutter >/dev/null 2>&1 || fail "flutter not found on PATH and FVM SDK missing at $FVM_FLUTTER"
     fi
+  fi
+
+  if [[ "$TARGET" == "release-gate" ]]; then
+    command -v java >/dev/null 2>&1 || fail "java not found on PATH; Firestore emulator rules tests require a Java runtime"
   fi
 
   if [[ "$TARGET" == "primary-web" || "$TARGET" == "web" || "$TARGET" == "cloudrun-web" || "$TARGET" == "flutter-web" || "$TARGET" == "compliance-operator" || "$TARGET" == "all" ]]; then
@@ -222,6 +227,54 @@ functions_build() {
   (cd "$FUNCTIONS_DIR" && npm run verify:gen2) || fail "Functions Gen 2 verification failed"
 
   log "Functions build passed ✓"
+}
+
+functions_unit_tests() {
+  local function_tests=()
+  while IFS= read -r test_file; do
+    function_tests+=("$test_file")
+  done < <(cd "$FUNCTIONS_DIR" && find src -name '*.test.ts' ! -name 'evidenceChainEmulator.test.ts' | sort)
+
+  if [[ ${#function_tests[@]} -eq 0 ]]; then
+    fail "No non-emulator Functions test files found"
+  fi
+
+  log "Running Functions unit tests (${#function_tests[@]} files)..."
+  (cd "$FUNCTIONS_DIR" && npm run test -- --runInBand "${function_tests[@]}") || fail "Functions unit tests failed"
+  log "Functions unit tests passed ✓"
+}
+
+release_gate_emulator_tests() {
+  log "Running Firestore rules and evidence-chain emulator tests..."
+  (cd "$REPO_ROOT" && npx --yes firebase-tools emulators:exec --only firestore \
+    "FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 npx jest --runInBand --config jest.rules.config.js && FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 npm --prefix functions run test -- --runInBand src/evidenceChainEmulator.test.ts") \
+    || fail "Firestore emulator release tests failed"
+  log "Firestore emulator release tests passed ✓"
+}
+
+release_gate() {
+  log "Running non-deploying release reproducibility gate..."
+
+  log "Running root typecheck..."
+  (cd "$REPO_ROOT" && npm run typecheck -- --pretty false) || fail "Root typecheck failed"
+
+  log "Running root lint..."
+  (cd "$REPO_ROOT" && npm run lint) || fail "Root lint failed"
+
+  log "Running root Jest suite..."
+  (cd "$REPO_ROOT" && npm test) || fail "Root Jest suite failed"
+
+  release_gate_emulator_tests
+
+  functions_build
+  functions_unit_tests
+
+  ensure_flutter_gate
+
+  log "Running diff hygiene..."
+  (cd "$REPO_ROOT" && git diff --check) || fail "Diff hygiene failed"
+
+  log "Release reproducibility gate passed ✓"
 }
 
 resolve_project_id() {
@@ -485,6 +538,7 @@ deploy_flutter_android() {
 }
 
 deploy_all() {
+  ensure_flutter_gate
   deploy_functions
   deploy_rules
   deploy_cloud_run_web
@@ -507,5 +561,6 @@ case "$TARGET" in
   flutter-ios)      deploy_flutter_ios ;;
   flutter-macos)    deploy_flutter_macos ;;
   flutter-android)  deploy_flutter_android ;;
-  *)                fail "Unknown target: $TARGET. Use: all | functions | rules | web | cloudrun-web | primary-web | compliance-operator | flutter-web | flutter-ios | flutter-macos | flutter-android" ;;
+  release-gate)     release_gate ;;
+  *)                fail "Unknown target: $TARGET. Use: all | functions | rules | web | cloudrun-web | primary-web | compliance-operator | flutter-web | flutter-ios | flutter-macos | flutter-android | release-gate" ;;
 esac

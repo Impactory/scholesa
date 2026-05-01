@@ -2,7 +2,21 @@
 **Date:** 2026-03-30
 **Platform:** Scholesa Empire Flutter App
 **Target:** Google Cloud Run (Flutter Web)
-**Assessment:** Beta-ready after Blockers 1 and 2 resolved
+**Assessment:** Historical snapshot; superseded by the April 30 / May 1 Flutter-mobile and MiloOS release-gate records
+
+> **Current status note - 2026-05-01**
+>
+> This report is preserved as a March 30 audit snapshot. It no longer represents the current Flutter/mobile or MiloOS release state.
+>
+> Current authoritative status lives in:
+>
+> - `docs/FLUTTER_MOBILE_GOLD_READINESS_PLAN_APRIL_30_2026.md`
+> - `docs/FLUTTER_MOBILE_GOLD_READINESS_EXECUTION_CHECKLIST_APRIL_30_2026.md`
+> - `docs/FLUTTER_MOBILE_ROUTE_PROOF_MATRIX_APRIL_30_2026.md`
+> - `docs/MILOOS_GOLD_READINESS_PLAN_APRIL_30_2026.md`
+> - `docs/MILOOS_GOLD_READINESS_EXECUTION_CHECKLIST_APRIL_30_2026.md`
+>
+> The prior hard blockers for Cloud Run deployment path and end-to-end evidence-chain Flutter failures are closed in the current worktree: `scripts/deploy.sh` now includes Cloud Run deployment targets and the non-deploying `./scripts/deploy.sh release-gate`; the validated Flutter/mobile bundle now passes full app-scoped Flutter tests/analyzer, root tests, Firestore rules plus evidence-chain integration in one emulator session, Functions build/verify and split tests, production web build, and diff hygiene. The full Flutter/mobile app still must not be called blanket gold-ready until an approved live or `CLOUD_RUN_NO_TRAFFIC=1` deploy rehearsal passes from the current worktree.
 
 ---
 
@@ -12,7 +26,7 @@ The Flutter app is in a fundamentally different state than the web platform. Whe
 
 This changes the question from "does the evidence chain exist" to "is it stable enough to deploy and trust in production."
 
-The honest answer is: **close, but not yet.** Four specific blockers stand between the current state and a deployable build.
+Historical March 30 answer: **close, but not yet.** The sections below describe the four blockers as they existed at that audit date. For current release status, use the May 1 status note above.
 
 ---
 
@@ -25,9 +39,9 @@ The honest answer is: **close, but not yet.** Four specific blockers stand betwe
 | Firebase project configured (Android, iOS, Web) | Real | Ready |
 | `firebase_options.dart` generated for all platforms | Real | Ready |
 | `flutter analyze` | 0 errors, 24 infos/warnings | Ready |
-| Flutter web build script (`scripts/deploy.sh`) | Builds only, no Docker, no Cloud Run push | **Blocked** |
-| Dockerfile for Cloud Run | Does not exist | **Blocked** |
-| CI/CD pipeline | Not in repo | **Blocked** |
+| Flutter web build script (`scripts/deploy.sh`) | Historical March 30 state: builds only, no Docker, no Cloud Run push. Current state: scripted Cloud Run targets and `release-gate` exist. | Historical blocker, closed in current worktree except approved deploy rehearsal |
+| Dockerfile for Cloud Run | Historical March 30 state: did not exist. Current state: repo includes Cloud Run Dockerfiles for web surfaces. | Historical blocker, superseded |
+| CI/CD pipeline | Historical March 30 state: not assessed in this report. Current state should be read from repo workflows and current release docs. | Historical blocker, superseded |
 | Environment variable strategy (`--dart-define`) | Defined in `app_config.dart` | Ready |
 | Emulator switching for dev/prod | Real | Ready |
 
@@ -66,9 +80,9 @@ The honest answer is: **close, but not yet.** Four specific blockers stand betwe
 
 ---
 
-## The Four Blockers
+## The Four Blockers (Historical March 30 Snapshot)
 
-### Blocker 1 — No deployment path to Cloud Run
+### Blocker 1 — No deployment path to Cloud Run (closed in current worktree)
 
 `scripts/deploy.sh` runs `flutter build web --release --no-tree-shake-icons --no-wasm-dry-run` and stops. No Docker build, no image tag, no `gcloud run deploy`, no staging step, no rollback plan.
 
@@ -81,11 +95,11 @@ Missing:
 
 Note: `flutter_tts` and voice stack are not WASM-clean (noted in deploy.sh). WASM builds intentionally disabled. Cloud Run with JS build path is fine — known trade-off, not a blocker.
 
-**Severity: Hard blocker.**
+**Historical severity: Hard blocker. Current status: closed for local release-gate and scripted Cloud Run deploy path; live/no-traffic deploy rehearsal still required before blanket mobile gold.**
 
 ---
 
-### Blocker 2 — End-to-end evidence chain tests failing
+### Blocker 2 — End-to-end evidence chain tests failing (closed in current worktree)
 
 Three failures that are not noise — they are the platform's core proof that the evidence chain works end to end:
 
@@ -104,11 +118,11 @@ Root cause hypothesis: `learner_portfolio_page.dart` and `parent_portfolio_page.
 
 Also: `_portfolioItemRepo` field is unused in `capability_growth_engine.dart` — `_enrichPortfolioItem()` bypasses injected repo and calls Firestore directly, breaking mock injection in tests.
 
-**Severity: Hard blocker for evidence chain.**
+**Historical severity: Hard blocker for evidence chain. Current status: closed for the validated Flutter/mobile release bundle and MiloOS support-provenance slice.**
 
 ---
 
-### Blocker 3 — Offline queue does not cover evidence operations
+### Blocker 3 — Offline queue does not cover evidence operations (closed for validated evidence replay boundaries)
 
 Current op types: `attendanceRecord`, `presenceCheckin`, `presenceCheckout`, `incidentSubmit`, `messageSend`, `attemptSaveDraft`.
 
@@ -120,15 +134,15 @@ Missing evidence chain ops:
 
 Hive infrastructure is sound. `SyncCoordinator` handles retry and deduplication. Gap is that evidence-critical operations were never registered as queueable op types.
 
-**Severity: Medium — not blocking for stable-connectivity deploy, but must be resolved before offline-first claim.**
+**Historical severity: Medium. Current status: focused offline evidence-chain gates prove queued evidence/rubric/checkpoint behavior and block direct support-only or client-owned mastery/growth writes. Broader offline claims remain bounded by the current Flutter/mobile readiness plan.**
 
 ---
 
-### Blocker 4 — No CI/CD pipeline
+### Blocker 4 — No CI/CD pipeline (superseded by current release-gate path)
 
 No `.github/workflows/`, no `Makefile`, no automated gate between commit and deployment. 54 failing tests reached main without automated catch. Golden images drifted without signal.
 
-**Severity: Must have before production. Acceptable to deploy to internal staging without it.**
+**Historical severity: Must have before production. Current status: the non-deploying `./scripts/deploy.sh release-gate` is the current local reproducibility gate; CI/CD breadth should be assessed against the current repo workflows and release docs, not this March 30 snapshot.**
 
 ---
 
@@ -192,9 +206,9 @@ Before any build reaches production:
 |------|---------|
 | Architecture | Solid |
 | Evidence engine | Real, working |
-| Evidence chain end-to-end (educator → learner portfolio → parent) | **Broken at display layer** |
-| Test suite | 760 pass / 54 fail — fixable in one pass |
-| Deployment infrastructure | **Does not exist** |
-| CI/CD | **Does not exist** |
-| Offline evidence coverage | Gap, not critical for initial deploy |
-| **Overall Flutter deployment readiness** | **Beta-ready after Blockers 1 and 2 resolved** |
+| Evidence chain end-to-end (educator → learner portfolio → parent) | Historical March 30 finding; current Flutter/mobile readiness docs record the validated guardian/portfolio/passport and parent growth slices. |
+| Test suite | Historical March 30 finding; current release-gate records full Flutter tests/analyzer and root gates passing from the current worktree. |
+| Deployment infrastructure | Historical March 30 finding; current deploy script includes Cloud Run deploy paths and a non-deploying release gate. |
+| CI/CD | Historical March 30 finding; assess current automation separately from this superseded report. |
+| Offline evidence coverage | Historical March 30 finding; current Flutter/mobile readiness docs record the validated offline evidence-chain boundaries and remaining beta scope. |
+| **Overall Flutter deployment readiness** | **Historical March 30 snapshot; superseded by current Flutter/mobile beta-ready / gold-candidate release-gate docs** |

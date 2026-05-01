@@ -11,6 +11,7 @@ Sources checked:
 - `apps/empire_flutter/app/lib/offline/offline_queue.dart`
 - `apps/empire_flutter/app/lib/offline/sync_coordinator.dart`
 - `apps/empire_flutter/app/test/`
+- `./scripts/deploy.sh release-gate`
 
 Classification key:
 
@@ -78,15 +79,16 @@ These routes are enabled and useful, but they are not sufficient evidence-chain 
 
 1. **Offline evidence chain gate** passed after this matrix via the Milestone 3 bundle: 46 focused offline/growth tests and focused analyzer on growth, Firestore, mission, and sync files.
 2. **Mobile classroom ergonomics gate** passed after this matrix via phone-width learner mission submission, educator quick evidence capture, educator support, site support health, and dashboard overflow tests.
-3. **Role permission and site-boundary review** passed after this matrix via 50 focused Flutter boundary tests and 118 Firestore rules integration tests after peer-feedback, partner deliverable, and credential provenance boundary coverage was added.
-4. **Focused Flutter/mobile release bundle** passed after this matrix via 133 Flutter tests, full Flutter analyzer, 187-test source contract, 118-test Firestore rules integration, and diff hygiene. Current-worktree full `flutter test` now passes 1075 tests, and full app-scoped `flutter analyze` reports no issues.
-5. **Direct parent growth timeline route proof** passed after this matrix via `parent_growth_timeline_page_test.dart`, proving linked learner growth provenance while excluding unlinked learner growth.
-6. **Mobile HQ authoring persistence** passed after this matrix via `hq_authoring_persistence_test.dart`, proving active-site capability creation and canonical active-site `rubricTemplates` creation while excluding other-site authoring data.
-7. **Peer-feedback persistence and role-safety proof** passed after this matrix via `peer_feedback_page_test.dart` and 114 Firestore rules tests, proving same-site peer review capture, author-owned writes, and cross-site/missing-site denial.
-8. **Partner deliverable evidence output trust** passed after this matrix via `partner_deliverables_page_test.dart`, `partner_contracting_workflow_test.dart`, and 116 Firestore rules tests, proving partner/site/contract/evidence provenance and blocking partner self-acceptance.
-9. **Learner credential evidence provenance** passed after this matrix via `learner_credentials_page_test.dart` and 118 Firestore rules tests, proving source evidence, issuer, learner ownership, site scoping, portfolio/proof/growth/rubric links, and evidence-required issuance.
-10. **Flutter `/learner/miloos` route parity** passed after this matrix via `test/web-route-parity.test.ts` and `test/workflow-security-contract.test.ts`; Flutter now registers/routes the learner support surface, and the web workflow data loader calls `bosGetLearnerLoopInsights` for support-loop provenance.
+3. **Non-deploying release script gate** passed after route-level blocker closure via `./scripts/deploy.sh release-gate`, covering root typecheck/lint/Jest, Firestore rules and evidence-chain integration in one emulator session, Functions build/verify and split tests, full Flutter analyze/test, and diff hygiene.
+4. **Role permission and site-boundary review** passed after this matrix via 50 focused Flutter boundary tests and 118 Firestore rules integration tests after peer-feedback, partner deliverable, and credential provenance boundary coverage was added.
+5. **Focused Flutter/mobile release bundle** passed after this matrix via 133 Flutter tests, full Flutter analyzer, 187-test source contract, 118-test Firestore rules integration, and diff hygiene. Current-worktree full `flutter test` now passes 1075 tests, and full app-scoped `flutter analyze` reports no issues.
+6. **Direct parent growth timeline route proof** passed after this matrix via `parent_growth_timeline_page_test.dart`, proving linked learner growth provenance while excluding unlinked learner growth.
+7. **Mobile HQ authoring persistence** passed after this matrix via `hq_authoring_persistence_test.dart`, proving active-site capability creation and canonical active-site `rubricTemplates` creation while excluding other-site authoring data.
+8. **Peer-feedback persistence and role-safety proof** passed after this matrix via `peer_feedback_page_test.dart` and 114 Firestore rules tests, proving same-site peer review capture, author-owned writes, and cross-site/missing-site denial.
+9. **Partner deliverable evidence output trust** passed after this matrix via `partner_deliverables_page_test.dart`, `partner_contracting_workflow_test.dart`, and 116 Firestore rules tests, proving partner/site/contract/evidence provenance and blocking partner self-acceptance.
+10. **Learner credential evidence provenance** passed after this matrix via `learner_credentials_page_test.dart` and 118 Firestore rules tests, proving source evidence, issuer, learner ownership, site scoping, portfolio/proof/growth/rubric links, and evidence-required issuance.
+11. **Flutter `/learner/miloos` route parity** passed after this matrix via `test/web-route-parity.test.ts` and `test/workflow-security-contract.test.ts`; Flutter now registers/routes the learner support surface, and the web workflow data loader calls `bosGetLearnerLoopInsights` for support-loop provenance.
 
 ## Next Gate
 
-Proceed to full release/deploy gate reproducibility. Do not call Flutter/mobile gold-ready until the current-worktree release gate is clean. The latest failed `./scripts/deploy.sh all` stopped at Flutter tests; current full Flutter tests/analyzer, root tests, production build, Firestore rules, and Functions gates now pass locally, but the release/deploy script itself still needs a clean rerun.
+Proceed to approved live or no-traffic deploy rehearsal reproducibility. Do not call Flutter/mobile gold-ready until the current-worktree live or `CLOUD_RUN_NO_TRAFFIC=1` rehearsal is clean. The latest failed `./scripts/deploy.sh all` stopped at Flutter tests; current full Flutter tests/analyzer, root tests, production build, Firestore rules, Functions gates, and `./scripts/deploy.sh release-gate` now pass locally, and `deploy_all` now runs the Flutter gate before live deploy actions.

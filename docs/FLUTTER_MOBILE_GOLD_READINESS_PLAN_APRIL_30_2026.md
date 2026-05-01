@@ -2,7 +2,7 @@
 
 ## Current Verdict
 
-**Flutter/mobile is not blanket gold-ready yet.** The focused Flutter/mobile release bundle has passed across the validated learner, educator, guardian, site, offline, report/export, permission, analyzer, and source-contract slices. The April 30 route-level evidence blockers are now closed, the current-worktree full Flutter test/analyzer gate now passes, and the local web/functions/root test gates are clean. The broader Flutter app remains beta until the reproducible release/deploy script itself is clean from the current worktree.
+**Flutter/mobile is not blanket gold-ready yet.** The focused Flutter/mobile release bundle has passed across the validated learner, educator, guardian, site, offline, report/export, permission, analyzer, and source-contract slices. The April 30 route-level evidence blockers are now closed, the current-worktree full Flutter test/analyzer gate now passes, the local web/functions/root test gates are clean, and the new non-deploying `./scripts/deploy.sh release-gate` passes from the current worktree. The broader Flutter app remains beta until an approved live or no-traffic deploy rehearsal is clean.
 
 Do not promote Flutter/mobile to gold-ready because a widget renders or a focused test passes. Gold requires end-to-end evidence capture, verification, interpretation, portfolio/report communication, site scoping, offline behavior, and role-safe outputs.
 
@@ -22,6 +22,8 @@ Do not promote Flutter/mobile to gold-ready because a widget renders or a focuse
 | Focused Flutter/mobile release bundle | Passed | Combined mobile test bundle, full Flutter analyzer, source contract, Firestore rules integration, and diff hygiene passed on 2026-04-30. Current-worktree full `flutter test` now passes 1075 tests and full `flutter analyze` reports no issues. |
 | Flutter `/learner/miloos` parity | Passed | Flutter now registers and routes `/learner/miloos` to a learner support/provenance page; the web workflow loader uses the `bosGetLearnerLoopInsights` callable boundary. `test/web-route-parity.test.ts` and `test/workflow-security-contract.test.ts` pass. |
 | Local release gate expansion | Passed locally | Root `npm test` passes 524 tests, `npm run build` passes, `npm run typecheck -- --pretty false` passes, `npm run lint` passes, Functions build and Gen 2 verification pass, 37 non-emulator Functions suites pass 184 tests, and `npm run test:integration:evidence-chain` passes 3 emulator-backed tests. |
+| Non-deploying release script gate | Passed locally | `./scripts/deploy.sh release-gate` runs root typecheck/lint/Jest, Firestore rules and evidence-chain integration inside one Firestore emulator session, Functions build/verify and split tests, full Flutter analyze/test, and diff hygiene without deploying. |
+| Full deploy fail-fast ordering | Hardened | `deploy_all` now runs `ensure_flutter_gate` before live Functions, rules, web, or compliance deploys, so mobile regressions stop the full deploy before any live deploy action. |
 | Direct parent growth timeline route proof | Passed | `parent_growth_timeline_page_test.dart` proves `/parent/growth-timeline` renders linked learner growth, educator provenance, and evidence linkage while excluding unlinked learner growth. |
 | Mobile HQ authoring persistence | Passed | `hq_authoring_persistence_test.dart` proves mobile HQ creates active-site capability records and canonical `rubricTemplates` records while excluding other-site authoring data. |
 | Peer-feedback persistence and role safety | Passed | `peer_feedback_page_test.dart` proves same-site peer submissions only and canonical peer feedback writes; Firestore rules now deny cross-site, missing-site, and wrong-author peer feedback access. |
@@ -38,7 +40,7 @@ cd apps/empire_flutter/app && flutter analyze
 
 ## Known Blockers Before Full Flutter/Mobile Gold
 
-1. **Release reproducibility remains before blanket gold**: the route-level evidence blockers from the April 30 matrix are closed and current-worktree local gates pass, but the full current-worktree release/deploy script gate still needs to pass cleanly.
+1. **Live deploy rehearsal remains before blanket gold**: the route-level evidence blockers from the April 30 matrix are closed, current-worktree local gates pass, and the non-deploying release script gate passes, but an approved live or `CLOUD_RUN_NO_TRAFFIC=1` deploy rehearsal still needs to pass cleanly.
 
 ## Plan Of Attack
 
@@ -178,10 +180,10 @@ Do not call Flutter/mobile gold-ready if any of these are true:
 - Offline queue can directly write `capabilityMastery` or `capabilityGrowthEvents` without the server-owned interpretation path.
 - Guardian exports/share actions can succeed without evidence provenance when provenance is required.
 - A route proof matrix item is marked fake/stubbed, partial, or missing for a core evidence-chain workflow.
-- The full release/deploy gate fails from the current worktree.
+- The approved live or no-traffic deploy rehearsal fails, has not been run, or cannot be reproduced from the current worktree.
 - Analyzer or diff hygiene fails.
 - The final command bundle cannot be reproduced from a clean checkout.
 
 ## Next Slice
 
-The next highest-risk break is **full release/deploy gate reproducibility**. The latest failed `./scripts/deploy.sh all` stopped at Flutter tests; current-worktree full `flutter test` now passes 1075 tests, full app-scoped `flutter analyze` is clean, root `npm test` passes 524 tests, production `npm run build` passes, Firestore rules pass 118 tests, and functions gates pass when emulator-backed tests use the required emulator wrapper. Re-run the release/deploy script gate itself before making any blanket mobile gold claim.
+The next highest-risk break is **approved deploy rehearsal reproducibility**. The latest failed `./scripts/deploy.sh all` stopped at Flutter tests; current-worktree full `flutter test` now passes 1075 tests, full app-scoped `flutter analyze` is clean, root `npm test` passes 524 tests, production `npm run build` passes, Firestore rules pass 118 tests, functions gates pass when emulator-backed tests use the required emulator wrapper, and `./scripts/deploy.sh release-gate` now passes without deploying. The full `all` target now runs the Flutter gate before any live deploy action. Run an approved live or `CLOUD_RUN_NO_TRAFFIC=1` deploy rehearsal before making any blanket mobile gold claim.

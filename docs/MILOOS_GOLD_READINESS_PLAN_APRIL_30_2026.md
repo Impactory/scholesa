@@ -51,7 +51,7 @@ Flutter/mobile is now included in the scoped MiloOS support-provenance gate. The
 - Admin-School same-site MiloOS support health aggregation;
 - analyzer-clean Dart implementation.
 
-This does not make the full Flutter app gold-ready. Broader Flutter workflows, including unrelated parent portfolio/export paths, remain beta unless separately validated. A full run of `parent_surfaces_workflow_test.dart` still has unrelated portfolio/export failures around Firebase app setup and report delivery expectations; those are outside this MiloOS mobile parity slice and must be fixed before any blanket Flutter gold claim.
+This does not make the full Flutter app gold-ready. Broader Flutter workflows remain beta unless separately validated; the later Flutter/mobile release bundle now covers guardian portfolio/export paths, full Flutter tests/analyzer, root tests, Functions/rules gates, and the non-deploying `./scripts/deploy.sh release-gate`. MiloOS still remains a focused support-provenance gold-candidate slice rather than a blanket mobile or platform gold claim.
 
 ## Gold Stop Conditions
 
@@ -76,7 +76,7 @@ Do not call MiloOS gold-ready if any of these are true:
 - Site interpretation: site leaders see aggregate support opened/used/explain-back/pending counts for implementation health and stuck-debt discovery.
 - Remaining beta scope: broader Scholesa and broader Flutter workflows remain beta outside the focused MiloOS support-provenance parity gate.
 
-Final web gate commands passed 2026-04-30: typecheck, lint, focused web/source tests, focused Functions honesty tests, Functions build, Firestore rules integration, evidence-chain emulator integration, MiloOS browser/WCAG/mobile/keyboard E2E suite, synthetic-data dry-run, and `git diff --check`.
+Final web gate commands passed 2026-04-30: typecheck, lint, focused web/source tests, focused Functions honesty tests, Functions build, Firestore rules integration, evidence-chain emulator integration, MiloOS browser/WCAG/mobile/keyboard E2E suite, synthetic-data dry-run, and `git diff --check`. On 2026-05-01, the non-deploying `./scripts/deploy.sh release-gate` also passed from the current worktree, including root tests, combined Firestore emulator release tests, Functions gates, full Flutter analyze/test, and diff hygiene.
 
 Final focused Flutter/mobile gate passed 2026-04-30:
 

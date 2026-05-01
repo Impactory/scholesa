@@ -2,6 +2,8 @@
 
 Current verdict: **the focused Flutter/mobile release bundle passed; full Flutter/mobile app remains beta-ready, not blanket gold-ready**.
 
+Latest release-gate status: `./scripts/deploy.sh release-gate` passes from the current worktree without deploying. Emulator-backed rules and evidence-chain tests run inside one Firestore emulator session, and `./scripts/deploy.sh all` now runs the Flutter gate before any live deploy action. A live or no-traffic deploy rehearsal remains required before any blanket Flutter/mobile gold claim.
+
 ## Milestone 0 - Scope And Truth Boundary
 
 - [x] Record that focused MiloOS mobile parity passed.
@@ -142,4 +144,4 @@ When the full mobile gate passes, the signoff must state:
 
 No final signoff may describe Flutter/mobile as gold-ready while any milestone above is incomplete.
 
-Current signoff boundary after Milestone 6 plus direct route proofs: the validated mobile release bundle covers learner evidence submission, educator evidence/support workflows, guardian portfolio/passport communication, direct parent growth-timeline communication, mobile HQ capability/rubric authoring persistence, learner peer-feedback persistence and role-safety, partner deliverable evidence output trust, learner credential evidence provenance, Flutter `/learner/miloos` route parity with callable-backed web workflow loading, site support health, offline evidence replay ownership, role/site boundaries, source-contract wiring, and analyzer/diff hygiene. The current-worktree full Flutter gate now passes with 1075 tests and full app-scoped `flutter analyze` clean; root `npm test`, production `npm run build`, Firestore rules, Functions build/verify, and split Functions tests also pass locally. Remaining beta scope is release/deploy script reproducibility from the current worktree.
+Current signoff boundary after Milestone 6 plus direct route proofs: the validated mobile release bundle covers learner evidence submission, educator evidence/support workflows, guardian portfolio/passport communication, direct parent growth-timeline communication, mobile HQ capability/rubric authoring persistence, learner peer-feedback persistence and role-safety, partner deliverable evidence output trust, learner credential evidence provenance, Flutter `/learner/miloos` route parity with callable-backed web workflow loading, site support health, offline evidence replay ownership, role/site boundaries, source-contract wiring, and analyzer/diff hygiene. The current-worktree full Flutter gate now passes with 1075 tests and full app-scoped `flutter analyze` clean; root `npm test`, production `npm run build`, Firestore rules plus evidence-chain integration in one emulator session, Functions build/verify, split Functions tests, and the non-deploying `./scripts/deploy.sh release-gate` also pass locally. Remaining beta scope is an approved live or no-traffic deploy rehearsal from the current worktree.

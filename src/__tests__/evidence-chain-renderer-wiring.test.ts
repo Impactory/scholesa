@@ -537,8 +537,10 @@ describe('Renderers delegate to real evidence components', () => {
 
     expect(planSource).toContain('focused Flutter/mobile role-parity gate passed');
     expect(planSource).toContain('This does not make the full Flutter app gold-ready.');
+    expect(planSource).toContain('the non-deploying `./scripts/deploy.sh release-gate` also passed from the current worktree');
     expect(checklistSource).toContain('Flutter MiloOS role parity is now in scope for the focused support-provenance gate.');
     expect(checklistSource).toContain('flutter test test/bos_insights_cards_test.dart test/educator_learner_supports_page_test.dart test/site_dashboard_page_test.dart');
+    expect(checklistSource).toContain('./scripts/deploy.sh release-gate');
     expect(flutterMobilePlanSource).toContain('Flutter/mobile is not blanket gold-ready yet.');
     expect(flutterMobilePlanSource).toContain('Flutter route proof matrix');
     expect(flutterMobilePlanSource).toContain('Offline evidence-chain gate');
@@ -550,7 +552,9 @@ describe('Renderers delegate to real evidence components', () => {
     expect(flutterMobilePlanSource).toContain('Peer-feedback persistence and role safety');
     expect(flutterMobilePlanSource).toContain('Partner deliverable evidence output trust');
     expect(flutterMobilePlanSource).toContain('Learner credential evidence provenance');
-    expect(flutterMobilePlanSource).toContain('The next highest-risk break is **full release/deploy gate reproducibility**.');
+    expect(flutterMobilePlanSource).toContain('The next highest-risk break is **approved deploy rehearsal reproducibility**.');
+    expect(flutterMobilePlanSource).toContain('`./scripts/deploy.sh release-gate` now passes without deploying');
+    expect(flutterMobilePlanSource).toContain('The full `all` target now runs the Flutter gate before any live deploy action.');
     expect(flutterMobileChecklistSource).toContain('Milestone 1 - Guardian And Report Workflow Stabilization');
     expect(flutterMobileChecklistSource).toContain('Completed 2026-04-30: `docs/FLUTTER_MOBILE_ROUTE_PROOF_MATRIX_APRIL_30_2026.md`');
     expect(flutterMobileChecklistSource).toContain('Completed 2026-04-30: the focused offline evidence-chain suite passed as a bundle with 46 tests.');
@@ -579,9 +583,10 @@ describe('Renderers delegate to real evidence components', () => {
     expect(flutterMobileRouteMatrixSource).toContain('Peer-feedback persistence and role-safety proof** passed after this matrix');
     expect(flutterMobileRouteMatrixSource).toContain('Partner deliverable evidence output trust** passed after this matrix');
     expect(flutterMobileRouteMatrixSource).toContain('Learner credential evidence provenance** passed after this matrix');
-    expect(flutterMobileRouteMatrixSource).toContain('Proceed to full release/deploy gate reproducibility.');
+    expect(flutterMobileRouteMatrixSource).toContain('Non-deploying release script gate** passed after route-level blocker closure');
+    expect(flutterMobileRouteMatrixSource).toContain('Proceed to approved live or no-traffic deploy rehearsal reproducibility.');
     expect(flutterMobileRouteMatrixSource).toContain('Do not call Flutter/mobile gold-ready');
-    expect(flutterMobileRouteMatrixSource).toContain('current-worktree release gate');
+    expect(flutterMobileRouteMatrixSource).toContain('current-worktree live or `CLOUD_RUN_NO_TRAFFIC=1` rehearsal');
     expect(flutterBosSource).toContain('pendingExplainBack');
     expect(flutterEducatorSource).toContain('MiloOS Support Provenance');
     expect(flutterEducatorSource).toContain('Support events show follow-up debt only. They are not capability mastery.');
